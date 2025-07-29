@@ -1,5 +1,10 @@
 package stream
 
+import (
+	"fmt"
+	"reflect"
+)
+
 // Iterator defines an interface for iterating over a sequence of values.
 // The Next() method returns the next value and whether iteration is complete.
 type Iterator[T any] interface {
@@ -642,7 +647,37 @@ func toString(item any) string {
 	if stringer, ok := item.(interface{ String() string }); ok {
 		return stringer.String()
 	}
-	return "unknown"
+	// Handle basic types
+	switch v := item.(type) {
+	case int:
+		return fmt.Sprintf("%d", v)
+	case int8:
+		return fmt.Sprintf("%d", v)
+	case int16:
+		return fmt.Sprintf("%d", v)
+	case int32:
+		return fmt.Sprintf("%d", v)
+	case int64:
+		return fmt.Sprintf("%d", v)
+	case uint:
+		return fmt.Sprintf("%d", v)
+	case uint8:
+		return fmt.Sprintf("%d", v)
+	case uint16:
+		return fmt.Sprintf("%d", v)
+	case uint32:
+		return fmt.Sprintf("%d", v)
+	case uint64:
+		return fmt.Sprintf("%d", v)
+	case float32:
+		return fmt.Sprintf("%g", v)
+	case float64:
+		return fmt.Sprintf("%g", v)
+	case bool:
+		return fmt.Sprintf("%t", v)
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }
 
 func equals(a, b any) bool {
@@ -650,5 +685,43 @@ func equals(a, b any) bool {
 }
 
 func isZero(value any) bool {
-	return value == nil || value == *new(any)
+	if value == nil {
+		return true
+	}
+
+	// Use reflection to check if value is the zero value of its type
+	switch v := value.(type) {
+	case int:
+		return v == 0
+	case int8:
+		return v == 0
+	case int16:
+		return v == 0
+	case int32:
+		return v == 0
+	case int64:
+		return v == 0
+	case uint:
+		return v == 0
+	case uint8:
+		return v == 0
+	case uint16:
+		return v == 0
+	case uint32:
+		return v == 0
+	case uint64:
+		return v == 0
+	case float32:
+		return v == 0.0
+	case float64:
+		return v == 0.0
+	case string:
+		return v == ""
+	case bool:
+		return !v
+	default:
+		// For other types, use reflection
+		val := reflect.ValueOf(value)
+		return val.IsZero()
+	}
 }
