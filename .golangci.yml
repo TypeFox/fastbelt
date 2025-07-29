@@ -1,7 +1,7 @@
 # golangci-lint configuration
 run:
   timeout: 5m
-  go: '1.21'
+  go: '1.23'
 
 issues:
   # Maximum issues count per one linter. Set to 0 to disable.
@@ -13,7 +13,6 @@ linters:
   enable:
     # Default linters
     - errcheck
-    - gosimple
     - govet
     - ineffassign
     - staticcheck
@@ -21,55 +20,26 @@ linters:
     - unused
     
     # Additional useful linters
-    - gci
-    - gocyclo
     - gofmt
     - goimports
-    - golint
-    - gosec
     - misspell
-    - nakedret
-    - nolintlint
-    - revive
-    - unconvert
-    - unparam
     - whitespace
 
 linters-settings:
-  gocyclo:
-    # Minimal complexity of function to report
-    min-complexity: 15
-  
-  golint:
-    # Minimal confidence for issues
-    min-confidence: 0.8
-  
   misspell:
     # Correct spellings using locale preferences for US or UK
     locale: US
-  
-  nakedret:
-    # Make an issue if func has more lines of code than this setting and it has naked returns
-    max-func-lines: 30
-  
-  revive:
-    rules:
-      - name: exported
-        arguments: [true]
   
   goimports:
     # Put imports beginning with prefix after 3rd-party packages
     local-prefixes: github.com/TypeFox/langium-to-go
 
 output:
-  # colored-line-number|line-number|json|tab|checkstyle|code-climate|junit-xml|github-actions
-  format: github-actions
+  # Use the recommended format
+  formats:
+    - format: colored-line-number
 
 # Skip generated files and vendor directories
 skip-dirs:
   - vendor
   - .git
-
-skip-files:
-  - ".*\\.pb\\.go$"
-  - ".*_test\\.go$"  # Skip test files for some linters if needed

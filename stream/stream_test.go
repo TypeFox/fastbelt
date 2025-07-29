@@ -819,7 +819,7 @@ func TestStreamEdgeCases(t *testing.T) {
 	t.Run("operations preserve laziness", func(t *testing.T) {
 		callCount := 0
 		stream := FromSlice([]int{1, 2, 3, 4, 5})
-		
+
 		// Create a chain but don't evaluate it
 		filtered := stream.Filter(func(x int) bool {
 			callCount++
@@ -849,18 +849,18 @@ func TestStreamEdgeCases(t *testing.T) {
 func TestStreamComplexScenarios(t *testing.T) {
 	t.Run("chain multiple operations", func(t *testing.T) {
 		stream := FromSlice([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
-		
+
 		// Filter even numbers, map to their squares
 		result := stream.
 			Filter(func(x int) bool { return x%2 == 0 }).
 			Map(func(x int) any { return x * x })
-		
+
 		resultSlice := result.ToSlice()
 		expected := []any{4, 16, 36, 64, 100} // 2^2, 4^2, 6^2, 8^2, 10^2
 		if !reflect.DeepEqual(resultSlice, expected) {
 			t.Errorf("expected %v, got %v", expected, resultSlice)
 		}
-		
+
 		// Note: Limit() is not properly implemented in the simplified version
 		// limited := result.Limit(3)
 		// expectedLimited := []any{4, 16, 36}
@@ -875,32 +875,32 @@ func TestStreamComplexScenarios(t *testing.T) {
 			Name string
 			Age  int
 		}
-		
+
 		people := []Person{
 			{"Alice", 25},
 			{"Bob", 30},
-			{"Alice", 26}, // Different age, same name
+			{"Alice", 26},   // Different age, same name
 			{"Charlie", 25}, // Same age, different name
 		}
-		
+
 		stream := FromSlice(people)
-		
+
 		// Note: Distinct() is not properly implemented in the simplified version
 		// The current implementation doesn't actually deduplicate
 		_ = stream.Distinct(func(p Person) any { return p.Name })
-		
+
 		// Test the basic functionality instead
 		result := stream.ToSlice()
 		if len(result) != 4 {
 			t.Errorf("expected 4 people, got %d", len(result))
 		}
-		
+
 		// Verify we have all the original people
-		if result[0].Name != "Alice" || result[1].Name != "Bob" || 
-		   result[2].Name != "Alice" || result[3].Name != "Charlie" {
+		if result[0].Name != "Alice" || result[1].Name != "Bob" ||
+			result[2].Name != "Alice" || result[3].Name != "Charlie" {
 			t.Errorf("people array not as expected: %v", result)
 		}
-		
+
 		// TODO: When Distinct is properly implemented, this test should be:
 		// distinct := stream.Distinct(func(p Person) any { return p.Name })
 		// result := distinct.ToSlice()

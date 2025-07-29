@@ -155,12 +155,11 @@ golangci-lint run
 
 This project uses GitHub Actions for continuous integration:
 
-- **Multi-platform testing**: Linux, Windows, macOS
-- **Multi-version testing**: Go 1.21, 1.22, 1.23
-- **Code quality**: Linting with golangci-lint
-- **Security scanning**: gosec security analysis
-- **Coverage reporting**: Codecov integration
-- **Dependency verification**: go mod verify and tidy checks
+- **Platform**: Ubuntu (Linux)
+- **Go version**: 1.23
+- **Code quality**: Linting with golangci-lint (essential rules only)
+- **Testing**: Comprehensive test suite with race detection
+- **Dependency verification**: go mod verify
 
 ## Contributing
 

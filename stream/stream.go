@@ -688,7 +688,7 @@ func isZero(value any) bool {
 	if value == nil {
 		return true
 	}
-	
+
 	// Use reflection to check if value is the zero value of its type
 	switch v := value.(type) {
 	case int:
@@ -718,7 +718,7 @@ func isZero(value any) bool {
 	case string:
 		return v == ""
 	case bool:
-		return v == false
+		return !v
 	default:
 		// For other types, use reflection
 		val := reflect.ValueOf(value)
