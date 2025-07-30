@@ -50,110 +50,7 @@ func TestIsEmpty(t *testing.T) {
 	})
 }
 
-func TestToSet(t *testing.T) {
-	t.Run("empty sequence", func(t *testing.T) {
-		seq := slices.Values([]int{})
-		result := ToSet(seq)
-		expected := make(map[any]struct{})
-		if !reflect.DeepEqual(result, expected) {
-			t.Errorf("expected %v, got %v", expected, result)
-		}
-	})
 
-	t.Run("non-empty sequence", func(t *testing.T) {
-		seq := slices.Values([]int{1, 2, 3})
-		result := ToSet(seq)
-		expected := map[any]struct{}{
-			1: {},
-			2: {},
-			3: {},
-		}
-		if !reflect.DeepEqual(result, expected) {
-			t.Errorf("expected %v, got %v", expected, result)
-		}
-	})
-
-	t.Run("duplicate elements", func(t *testing.T) {
-		seq := slices.Values([]int{1, 2, 2, 3, 1})
-		result := ToSet(seq)
-		expected := map[any]struct{}{
-			1: {},
-			2: {},
-			3: {},
-		}
-		if !reflect.DeepEqual(result, expected) {
-			t.Errorf("expected %v, got %v", expected, result)
-		}
-	})
-}
-
-func TestToMap(t *testing.T) {
-	type testStruct struct {
-		A int
-		B string
-	}
-
-	t.Run("empty sequence", func(t *testing.T) {
-		seq := slices.Values([]testStruct{})
-		result := ToMap(seq, nil, nil)
-		expected := make(map[any]any)
-		if !reflect.DeepEqual(result, expected) {
-			t.Errorf("expected %v, got %v", expected, result)
-		}
-	})
-
-	t.Run("key and value unmapped", func(t *testing.T) {
-		data := []testStruct{{1, "foo"}, {2, "bar"}}
-		seq := slices.Values(data)
-		result := ToMap(seq, nil, nil)
-		expected := map[any]any{
-			testStruct{1, "foo"}: testStruct{1, "foo"},
-			testStruct{2, "bar"}: testStruct{2, "bar"},
-		}
-		if !reflect.DeepEqual(result, expected) {
-			t.Errorf("expected %v, got %v", expected, result)
-		}
-	})
-
-	t.Run("key mapped", func(t *testing.T) {
-		data := []testStruct{{1, "foo"}, {2, "bar"}}
-		seq := slices.Values(data)
-		result := ToMap(seq, func(e testStruct) any { return e.B }, nil)
-		expected := map[any]any{
-			"foo": testStruct{1, "foo"},
-			"bar": testStruct{2, "bar"},
-		}
-		if !reflect.DeepEqual(result, expected) {
-			t.Errorf("expected %v, got %v", expected, result)
-		}
-	})
-
-	t.Run("value mapped", func(t *testing.T) {
-		data := []testStruct{{1, "foo"}, {2, "bar"}}
-		seq := slices.Values(data)
-		result := ToMap(seq, nil, func(e testStruct) any { return e.A })
-		expected := map[any]any{
-			testStruct{1, "foo"}: 1,
-			testStruct{2, "bar"}: 2,
-		}
-		if !reflect.DeepEqual(result, expected) {
-			t.Errorf("expected %v, got %v", expected, result)
-		}
-	})
-
-	t.Run("key and value mapped", func(t *testing.T) {
-		data := []testStruct{{1, "foo"}, {2, "bar"}}
-		seq := slices.Values(data)
-		result := ToMap(seq, func(e testStruct) any { return e.B }, func(e testStruct) any { return e.A })
-		expected := map[any]any{
-			"foo": 1,
-			"bar": 2,
-		}
-		if !reflect.DeepEqual(result, expected) {
-			t.Errorf("expected %v, got %v", expected, result)
-		}
-	})
-}
 
 func TestJoin(t *testing.T) {
 	t.Run("empty sequence", func(t *testing.T) {
@@ -164,10 +61,10 @@ func TestJoin(t *testing.T) {
 		}
 	})
 
-	t.Run("string sequence with default separator", func(t *testing.T) {
+	t.Run("string sequence with empty separator", func(t *testing.T) {
 		seq := slices.Values([]string{"a", "b"})
 		result := Join(seq, "")
-		expected := "a,b"
+		expected := "ab"
 		if result != expected {
 			t.Errorf("expected %q, got %q", expected, result)
 		}
@@ -209,13 +106,7 @@ func TestIndexOf(t *testing.T) {
 		}
 	})
 
-	t.Run("with fromIndex", func(t *testing.T) {
-		seq := slices.Values([]int{1, 2, 3, 2, 4})
-		index := IndexOf(seq, 2, 2)
-		if index != 3 {
-			t.Errorf("expected index 3, got %d", index)
-		}
-	})
+
 }
 
 func TestEvery(t *testing.T) {
@@ -332,10 +223,10 @@ func TestFilter(t *testing.T) {
 	})
 }
 
-func TestNonNullable(t *testing.T) {
+func TestNonZero(t *testing.T) {
 	t.Run("filter zero values", func(t *testing.T) {
 		seq := slices.Values([]int{0, 1, 0, 2, 3})
-		filtered := NonNullable(seq)
+		filtered := NonZero(seq)
 		result := slices.Collect(filtered)
 		expected := []int{1, 2, 3}
 		if !reflect.DeepEqual(result, expected) {
@@ -469,36 +360,24 @@ func TestReduceRightWithInitial(t *testing.T) {
 func TestFind(t *testing.T) {
 	t.Run("number found", func(t *testing.T) {
 		seq := slices.Values([]int{1, 2, 3, 4, 5})
-		result, found := Find(seq, func(value int) bool { return value > 3 })
+		result, index, found := Find(seq, func(value int) bool { return value > 3 })
 		if !found {
 			t.Error("expected to find value")
 		}
 		if result != 4 {
 			t.Errorf("expected 4, got %d", result)
 		}
-	})
-
-	t.Run("number not found", func(t *testing.T) {
-		seq := slices.Values([]int{1, 2, 3})
-		_, found := Find(seq, func(value int) bool { return value > 5 })
-		if found {
-			t.Error("expected not to find value")
-		}
-	})
-}
-
-func TestFindIndex(t *testing.T) {
-	t.Run("found at index", func(t *testing.T) {
-		seq := slices.Values([]int{1, 2, 3, 4, 5})
-		index := FindIndex(seq, func(value int) bool { return value > 3 })
 		if index != 3 {
 			t.Errorf("expected index 3, got %d", index)
 		}
 	})
 
-	t.Run("not found", func(t *testing.T) {
+	t.Run("number not found", func(t *testing.T) {
 		seq := slices.Values([]int{1, 2, 3})
-		index := FindIndex(seq, func(value int) bool { return value > 5 })
+		_, index, found := Find(seq, func(value int) bool { return value > 5 })
+		if found {
+			t.Error("expected not to find value")
+		}
 		if index != -1 {
 			t.Errorf("expected index -1, got %d", index)
 		}
@@ -628,7 +507,7 @@ func TestDistinct(t *testing.T) {
 }
 
 func TestExclude(t *testing.T) {
-	t.Run("exclude overlapping string values", func(t *testing.T) {
+	t.Run("exclude overlapping string values with keyFn", func(t *testing.T) {
 		seq1 := slices.Values([]string{"a", "b", "c"})
 		seq2 := slices.Values([]string{"b", "d"})
 		result := Exclude(seq1, seq2, func(s string) any { return s })
@@ -639,10 +518,21 @@ func TestExclude(t *testing.T) {
 		}
 	})
 
+	t.Run("exclude overlapping string values without keyFn", func(t *testing.T) {
+		seq1 := slices.Values([]string{"a", "b", "c"})
+		seq2 := slices.Values([]string{"b", "d"})
+		result := Exclude(seq1, seq2, nil)
+		actual := slices.Collect(result)
+		expected := []string{"a", "c"}
+		if !reflect.DeepEqual(actual, expected) {
+			t.Errorf("expected %v, got %v", expected, actual)
+		}
+	})
+
 	t.Run("no overlapping values", func(t *testing.T) {
 		seq1 := slices.Values([]string{"a", "b"})
 		seq2 := slices.Values([]string{"c", "d"})
-		result := Exclude(seq1, seq2, func(s string) any { return s })
+		result := Exclude(seq1, seq2, nil)
 		actual := slices.Collect(result)
 		expected := []string{"a", "b"}
 		if !reflect.DeepEqual(actual, expected) {
@@ -764,11 +654,5 @@ func TestEdgeCases(t *testing.T) {
 		}
 	})
 
-	t.Run("indexOf with fromIndex beyond sequence", func(t *testing.T) {
-		seq := slices.Values([]int{1, 2, 3})
-		index := IndexOf(seq, 1, 10)
-		if index != -1 {
-			t.Errorf("expected -1, got %d", index)
-		}
-	})
+
 }

@@ -29,44 +29,10 @@ func IsEmpty[T any](seq iter.Seq[T]) bool {
 	return true
 }
 
-// ToSet collects all elements of the sequence into a set (map[any]struct{})
-func ToSet[T any](seq iter.Seq[T]) map[any]struct{} {
-	result := make(map[any]struct{})
-	for value := range seq {
-		result[value] = struct{}{}
-	}
-	return result
-}
 
-// ToMap collects all elements into a map, using the provided functions to determine keys and values
-// If keyFn is nil, the sequence elements are used as keys
-// If valueFn is nil, the sequence elements are used as values
-func ToMap[T any](seq iter.Seq[T], keyFn func(T) any, valueFn func(T) any) map[any]any {
-	result := make(map[any]any)
-	for value := range seq {
-		var key, mapValue any
-		if keyFn != nil {
-			key = keyFn(value)
-		} else {
-			key = value
-		}
-		if valueFn != nil {
-			mapValue = valueFn(value)
-		} else {
-			mapValue = value
-		}
-		result[key] = mapValue
-	}
-	return result
-}
 
 // Join concatenates all elements into a string, separated by the specified separator
-// If separator is empty, elements are separated by commas
 func Join[T any](seq iter.Seq[T], separator string) string {
-	if separator == "" {
-		separator = ","
-	}
-
 	var parts []string
 	for value := range seq {
 		parts = append(parts, toString(value))
@@ -75,16 +41,10 @@ func Join[T any](seq iter.Seq[T], separator string) string {
 }
 
 // IndexOf returns the index of the first occurrence of a value, or -1 if not found
-// If fromIndex is provided, the search starts from that position
-func IndexOf[T comparable](seq iter.Seq[T], searchElement T, fromIndex ...int) int {
-	startIndex := 0
-	if len(fromIndex) > 0 {
-		startIndex = fromIndex[0]
-	}
-
+func IndexOf[T comparable](seq iter.Seq[T], searchElement T) int {
 	index := 0
 	for value := range seq {
-		if index >= startIndex && value == searchElement {
+		if value == searchElement {
 			return index
 		}
 		index++
@@ -145,8 +105,8 @@ func Filter[T any](seq iter.Seq[T], predicate func(T) bool) iter.Seq[T] {
 	}
 }
 
-// NonNullable returns a sequence containing only non-zero values
-func NonNullable[T any](seq iter.Seq[T]) iter.Seq[T] {
+// NonZero returns a sequence containing only non-zero values
+func NonZero[T any](seq iter.Seq[T]) iter.Seq[T] {
 	return Filter(seq, func(value T) bool {
 		return !isZero(value)
 	})
@@ -156,7 +116,7 @@ func NonNullable[T any](seq iter.Seq[T]) iter.Seq[T] {
 func Reduce[T any](seq iter.Seq[T], fn func(T, T) T) (T, bool) {
 	var result T
 	found := false
-	
+
 	for value := range seq {
 		if !found {
 			result = value
@@ -203,27 +163,17 @@ func ReduceRightWithInitial[T, U any](seq iter.Seq[T], fn func(U, T) U, initialV
 	return result
 }
 
-// Find returns the first element that satisfies the predicate, or the zero value and false
-func Find[T any](seq iter.Seq[T], predicate func(T) bool) (T, bool) {
-	for value := range seq {
-		if predicate(value) {
-			return value, true
-		}
-	}
-	var zero T
-	return zero, false
-}
-
-// FindIndex returns the index of the first element that satisfies the predicate, or -1
-func FindIndex[T any](seq iter.Seq[T], predicate func(T) bool) int {
+// Find returns the first element that satisfies the predicate, its index, and whether it was found
+func Find[T any](seq iter.Seq[T], predicate func(T) bool) (T, int, bool) {
 	index := 0
 	for value := range seq {
 		if predicate(value) {
-			return index
+			return value, index, true
 		}
 		index++
 	}
-	return -1
+	var zero T
+	return zero, -1, false
 }
 
 // Contains returns true if the sequence contains the specified element
@@ -318,12 +268,22 @@ func Exclude[T any](seq iter.Seq[T], other iter.Seq[T], keyFn func(T) any) iter.
 	// Collect keys from the other sequence
 	otherKeySet := make(map[any]struct{})
 	for value := range other {
-		key := keyFn(value)
+		var key any
+		if keyFn != nil {
+			key = keyFn(value)
+		} else {
+			key = value
+		}
 		otherKeySet[key] = struct{}{}
 	}
 
 	return Filter(seq, func(e T) bool {
-		ownKey := keyFn(e)
+		var ownKey any
+		if keyFn != nil {
+			ownKey = keyFn(e)
+		} else {
+			ownKey = e
+		}
 		_, exists := otherKeySet[ownKey]
 		return !exists
 	})
