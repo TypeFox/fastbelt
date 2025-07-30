@@ -50,8 +50,6 @@ func TestIsEmpty(t *testing.T) {
 	})
 }
 
-
-
 func TestJoin(t *testing.T) {
 	t.Run("empty sequence", func(t *testing.T) {
 		seq := slices.Values([]string{})
@@ -105,8 +103,6 @@ func TestIndexOf(t *testing.T) {
 			t.Errorf("expected index -1, got %d", index)
 		}
 	})
-
-
 }
 
 func TestEvery(t *testing.T) {
@@ -653,6 +649,4 @@ func TestEdgeCases(t *testing.T) {
 			t.Errorf("expected empty slice, got %v", result)
 		}
 	})
-
-
 }

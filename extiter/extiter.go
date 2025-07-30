@@ -29,8 +29,6 @@ func IsEmpty[T any](seq iter.Seq[T]) bool {
 	return true
 }
 
-
-
 // Join concatenates all elements into a string, separated by the specified separator
 func Join[T any](seq iter.Seq[T], separator string) string {
 	var parts []string
@@ -251,7 +249,7 @@ func Distinct[T any](seq iter.Seq[T], keyFn func(T) any) iter.Seq[T] {
 			} else {
 				key = value
 			}
-			
+
 			if _, exists := seen[key]; !exists {
 				seen[key] = struct{}{}
 				if !yield(value) {
