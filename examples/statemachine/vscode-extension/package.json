@@ -1,0 +1,43 @@
+{
+  "name": "statemachine-vscode",
+  "displayName": "statemachine-vscode",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.104.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [{
+      "id": "statemachine",
+      "aliases": ["Statemachine", "statemachine"],
+      "extensions": ["statemachine"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "statemachine",
+      "scopeName": "source.statemachine",
+      "path": "./syntaxes/statemachine.tmLanguage.json"
+    }]
+  },
+  "scripts": {
+    "build": "npm run check-types && node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch",
+    "vscode:prepublish": "npm run check-types && node esbuild.js --production",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "vscode-languageclient": "~9.0.1"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.104.0",
+    "@types/node": "22.x",
+    "esbuild": "^0.25.9",
+    "typescript": "^5.9.2"
+  }
+}
