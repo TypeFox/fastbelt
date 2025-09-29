@@ -56,7 +56,7 @@ type languageServer struct {
 }
 
 func (s *languageServer) Initialize(ctx context.Context, params *protocol.ParamInitialize) (*protocol.InitializeResult, error) {
-	if s.handlers.Initialize != nil {
+	if s.handlers != nil && s.handlers.Initialize != nil {
 		return s.handlers.Initialize(ctx, params)
 	}
 	// Default implementation with basic capabilities
@@ -71,35 +71,35 @@ func (s *languageServer) Initialize(ctx context.Context, params *protocol.ParamI
 }
 
 func (s *languageServer) Initialized(ctx context.Context, params *protocol.InitializedParams) error {
-	if s.handlers.Initialized != nil {
+	if s.handlers != nil && s.handlers.Initialized != nil {
 		return s.handlers.Initialized(ctx, params)
 	}
 	return nil
 }
 
 func (s *languageServer) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) error {
-	if s.handlers.DidOpen != nil {
+	if s.handlers != nil && s.handlers.DidOpen != nil {
 		return s.handlers.DidOpen(ctx, params)
 	}
 	return nil
 }
 
 func (s *languageServer) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) error {
-	if s.handlers.DidChange != nil {
+	if s.handlers != nil && s.handlers.DidChange != nil {
 		return s.handlers.DidChange(ctx, params)
 	}
 	return nil
 }
 
 func (s *languageServer) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) error {
-	if s.handlers.DidClose != nil {
+	if s.handlers != nil && s.handlers.DidClose != nil {
 		return s.handlers.DidClose(ctx, params)
 	}
 	return nil
 }
 
 func (s *languageServer) Completion(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
-	if s.handlers.Completion != nil {
+	if s.handlers != nil && s.handlers.Completion != nil {
 		return s.handlers.Completion(ctx, params)
 	}
 	// Default empty completion list
