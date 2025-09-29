@@ -77,6 +77,7 @@ func TestLanguageServerHandlers(t *testing.T) {
 	}
 	if initResult == nil {
 		t.Error("Initialize returned nil result")
+		return
 	}
 	if initResult.Capabilities.TextDocumentSync != protocol.Incremental {
 		t.Errorf("Expected TextDocumentSync to be Incremental, got %v", initResult.Capabilities.TextDocumentSync)
@@ -113,6 +114,7 @@ func TestLanguageServerHandlers(t *testing.T) {
 	}
 	if completionResult == nil {
 		t.Error("Completion returned nil result")
+		return
 	}
 	if len(completionResult.Items) != 1 {
 		t.Errorf("Expected 1 completion item, got %d", len(completionResult.Items))
@@ -159,6 +161,7 @@ func TestLanguageServerNilHandlers(t *testing.T) {
 	}
 	if initResult == nil {
 		t.Error("Initialize returned nil result with nil handlers")
+		return
 	}
 	if initResult.Capabilities.TextDocumentSync != protocol.Incremental {
 		t.Errorf("Expected default TextDocumentSync to be Incremental, got %v", initResult.Capabilities.TextDocumentSync)
@@ -192,6 +195,7 @@ func TestLanguageServerNilHandlers(t *testing.T) {
 	}
 	if completionResult == nil {
 		t.Error("Completion returned nil result with nil handlers")
+		return
 	}
 	if len(completionResult.Items) != 0 {
 		t.Errorf("Expected 0 completion items with nil handlers, got %d", len(completionResult.Items))

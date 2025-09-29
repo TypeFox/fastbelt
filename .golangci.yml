@@ -1,7 +1,8 @@
 # golangci-lint configuration
+version: 2
+
 run:
   timeout: 5m
-  go: '1.23'
 
 issues:
   # Maximum issues count per one linter. Set to 0 to disable.
@@ -16,12 +17,9 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-    - typecheck
     - unused
     
     # Additional useful linters
-    - gofmt
-    - goimports
     - misspell
     - whitespace
 
@@ -29,15 +27,12 @@ linters-settings:
   misspell:
     # Correct spellings using locale preferences for US or UK
     locale: US
-  
-  goimports:
-    # Put imports beginning with prefix after 3rd-party packages
-    local-prefixes: github.com/TypeFox/langium-to-go
 
 output:
   # Use the recommended format
   formats:
-    - format: colored-line-number
+    colored-line-number:
+      path: stdout
 
 # Skip generated files and vendor directories
 skip-dirs:

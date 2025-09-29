@@ -215,7 +215,9 @@ func StartLanguageServer(ctx context.Context, handlers *LanguageServerHandlers) 
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close() // Ignore error in defer
+	}()
 	
 	// Wait for the connection to close
 	return conn.Wait()
