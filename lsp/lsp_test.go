@@ -60,10 +60,6 @@ func TestLanguageServerHandlers(t *testing.T) {
 			handlersCalled = append(handlersCalled, "shutdown")
 			return nil
 		},
-		Exit: func(ctx context.Context) error {
-			handlersCalled = append(handlersCalled, "exit")
-			return nil
-		},
 	}
 	
 	// Create language server instance
@@ -136,7 +132,7 @@ func TestLanguageServerHandlers(t *testing.T) {
 	}
 	
 	// Verify all handlers were called in the expected order
-	expectedCalls := []string{"initialize", "initialized", "didOpen", "didChange", "didClose", "completion", "shutdown", "exit"}
+	expectedCalls := []string{"initialize", "initialized", "didOpen", "didChange", "didClose", "completion", "shutdown"}
 	if len(handlersCalled) != len(expectedCalls) {
 		t.Errorf("Expected %d handler calls, got %d", len(expectedCalls), len(handlersCalled))
 	}

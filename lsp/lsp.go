@@ -29,8 +29,6 @@ type LanguageServerHandlers struct {
 	Completion func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error)
 	// Shutdown handles the shutdown request - server should shut down but not exit
 	Shutdown func(ctx context.Context) error
-	// Exit handles the exit notification - server should exit its process
-	Exit func(ctx context.Context) error
 }
 
 // stdioDialer implements jsonrpc2.Dialer for stdio communication
@@ -57,6 +55,7 @@ func (rw *stdioReadWriteCloser) Close() error {
 // languageServer implements the protocol.Server interface
 type languageServer struct {
 	handlers *LanguageServerHandlers
+	conn     *jsonrpc2.Connection
 }
 
 func (s *languageServer) Initialize(ctx context.Context, params *protocol.ParamInitialize) (*protocol.InitializeResult, error) {
@@ -123,8 +122,9 @@ func (s *languageServer) ResolveCodeLens(ctx context.Context, params *protocol.C
 func (s *languageServer) ResolveCompletionItem(ctx context.Context, params *protocol.CompletionItem) (*protocol.CompletionItem, error) { return nil, nil }
 func (s *languageServer) ResolveDocumentLink(ctx context.Context, params *protocol.DocumentLink) (*protocol.DocumentLink, error) { return nil, nil }
 func (s *languageServer) Exit(ctx context.Context) error {
-	if s.handlers != nil && s.handlers.Exit != nil {
-		return s.handlers.Exit(ctx)
+	// Close the connection to allow the server to exit
+	if s.conn != nil {
+		return s.conn.Close()
 	}
 	return nil
 }
@@ -195,10 +195,12 @@ func (s *languageServer) WorkDoneProgressCancel(ctx context.Context, params *pro
 
 // simpleBinder implements jsonrpc2.Binder
 type simpleBinder struct {
-	server protocol.Server
+	server *languageServer
 }
 
 func (b *simpleBinder) Bind(ctx context.Context, conn *jsonrpc2.Connection) (jsonrpc2.ConnectionOptions, error) {
+	// Store the connection reference in the server so it can be closed on exit
+	b.server.conn = conn
 	return jsonrpc2.ConnectionOptions{
 		Handler: protocol.ServerHandler(b.server),
 	}, nil
