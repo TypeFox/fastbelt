@@ -2,8 +2,6 @@ module github.com/TypeFox/langium-to-go
 
 go 1.23.0
 
-toolchain go1.24.5
-
 require golang.org/x/exp/jsonrpc2 v0.0.0-20250718183923-645b1fa84792
 
 require (
