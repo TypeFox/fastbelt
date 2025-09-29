@@ -27,6 +27,10 @@ type LanguageServerHandlers struct {
 	DidClose func(ctx context.Context, params *protocol.DidCloseTextDocumentParams) error
 	// Completion handles textDocument/completion requests
 	Completion func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error)
+	// Shutdown handles the shutdown request - server should shut down but not exit
+	Shutdown func(ctx context.Context) error
+	// Exit handles the exit notification - server should exit its process
+	Exit func(ctx context.Context) error
 }
 
 // stdioDialer implements jsonrpc2.Dialer for stdio communication
@@ -118,13 +122,23 @@ func (s *languageServer) ResolveCodeAction(ctx context.Context, params *protocol
 func (s *languageServer) ResolveCodeLens(ctx context.Context, params *protocol.CodeLens) (*protocol.CodeLens, error) { return nil, nil }
 func (s *languageServer) ResolveCompletionItem(ctx context.Context, params *protocol.CompletionItem) (*protocol.CompletionItem, error) { return nil, nil }
 func (s *languageServer) ResolveDocumentLink(ctx context.Context, params *protocol.DocumentLink) (*protocol.DocumentLink, error) { return nil, nil }
-func (s *languageServer) Exit(ctx context.Context) error { return nil }
+func (s *languageServer) Exit(ctx context.Context) error {
+	if s.handlers != nil && s.handlers.Exit != nil {
+		return s.handlers.Exit(ctx)
+	}
+	return nil
+}
 func (s *languageServer) Resolve(ctx context.Context, params *protocol.InlayHint) (*protocol.InlayHint, error) { return nil, nil }
 func (s *languageServer) DidChangeNotebookDocument(ctx context.Context, params *protocol.DidChangeNotebookDocumentParams) error { return nil }
 func (s *languageServer) DidCloseNotebookDocument(ctx context.Context, params *protocol.DidCloseNotebookDocumentParams) error { return nil }
 func (s *languageServer) DidOpenNotebookDocument(ctx context.Context, params *protocol.DidOpenNotebookDocumentParams) error { return nil }
 func (s *languageServer) DidSaveNotebookDocument(ctx context.Context, params *protocol.DidSaveNotebookDocumentParams) error { return nil }
-func (s *languageServer) Shutdown(ctx context.Context) error { return nil }
+func (s *languageServer) Shutdown(ctx context.Context) error {
+	if s.handlers != nil && s.handlers.Shutdown != nil {
+		return s.handlers.Shutdown(ctx)
+	}
+	return nil
+}
 func (s *languageServer) CodeAction(ctx context.Context, params *protocol.CodeActionParams) ([]protocol.CodeAction, error) { return nil, nil }
 func (s *languageServer) CodeLens(ctx context.Context, params *protocol.CodeLensParams) ([]protocol.CodeLens, error) { return nil, nil }
 func (s *languageServer) ColorPresentation(ctx context.Context, params *protocol.ColorPresentationParams) ([]protocol.ColorPresentation, error) { return nil, nil }
