@@ -15,10 +15,24 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v4
 
+    - name: Clone go-lsp dependency
+      run: git clone https://github.com/TypeFox/go-lsp.git
+
+    - name: Fix Go version in go-lsp
+      run: sed -i 's/go 1.24.5/go 1.23/' go-lsp/go.mod
+
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
         go-version: '1.23'
+
+    - name: Verify workspace setup
+      run: |
+        echo "Checking go.work file:"
+        cat go.work
+        echo "Verifying workspace modules:"
+        go work use -r .
+        go work sync
 
     - name: Download dependencies
       run: go mod download
@@ -39,10 +53,24 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v4
 
+    - name: Clone go-lsp dependency
+      run: git clone https://github.com/TypeFox/go-lsp.git
+
+    - name: Fix Go version in go-lsp
+      run: sed -i 's/go 1.24.5/go 1.23/' go-lsp/go.mod
+
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
         go-version: '1.23'
+
+    - name: Verify workspace setup
+      run: |
+        echo "Checking go.work file:"
+        cat go.work
+        echo "Verifying workspace modules:"
+        go work use -r .
+        go work sync
 
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v4
