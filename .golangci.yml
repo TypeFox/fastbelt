@@ -1,5 +1,5 @@
 # golangci-lint configuration
-version: 2
+version: "2"
 
 run:
   timeout: 5m
@@ -17,16 +17,3 @@ linters:
     - unused
     - misspell
     - whitespace
-
-linters-settings:
-  misspell:
-    locale: US
-
-output:
-  formats:
-    colored-line-number:
-      path: stdout
-
-skip-dirs:
-  - vendor
-  - .git
