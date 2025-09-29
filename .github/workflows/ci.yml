@@ -15,16 +15,16 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v4
 
-    - name: Clone go-lsp dependency
-      run: git clone https://github.com/TypeFox/go-lsp.git
-
-    - name: Fix Go version in go-lsp
-      run: sed -i 's/go 1.24.5/go 1.23/' go-lsp/go.mod
+    - name: Check out go-lsp dependency
+      uses: actions/checkout@v4
+      with:
+        repository: TypeFox/go-lsp
+        path: go-lsp
 
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.23'
+        go-version: '1.22'
 
     - name: Verify workspace setup
       run: |
@@ -53,16 +53,16 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v4
 
-    - name: Clone go-lsp dependency
-      run: git clone https://github.com/TypeFox/go-lsp.git
-
-    - name: Fix Go version in go-lsp
-      run: sed -i 's/go 1.24.5/go 1.23/' go-lsp/go.mod
+    - name: Check out go-lsp dependency
+      uses: actions/checkout@v4
+      with:
+        repository: TypeFox/go-lsp
+        path: go-lsp
 
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.23'
+        go-version: '1.22'
 
     - name: Verify workspace setup
       run: |
