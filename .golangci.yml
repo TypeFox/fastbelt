@@ -5,36 +5,28 @@ run:
   timeout: 5m
 
 issues:
-  # Maximum issues count per one linter. Set to 0 to disable.
   max-issues-per-linter: 0
-  # Maximum count of issues with the same text. Set to 0 to disable.
   max-same-issues: 0
 
 linters:
   enable:
-    # Default linters
     - errcheck
     - govet
     - ineffassign
     - staticcheck
     - unused
-    
-    # Additional useful linters
     - misspell
     - whitespace
 
 linters-settings:
   misspell:
-    # Correct spellings using locale preferences for US or UK
     locale: US
 
 output:
-  # Use the recommended format
   formats:
     colored-line-number:
       path: stdout
 
-# Skip generated files and vendor directories
 skip-dirs:
   - vendor
   - .git
