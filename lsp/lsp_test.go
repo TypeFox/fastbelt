@@ -142,7 +142,9 @@ func TestLanguageServerHandlers(t *testing.T) {
 	}
 	
 	for i, expected := range expectedCalls {
-		if i >= len(handlersCalled) || handlersCalled[i] != expected {
+		if i >= len(handlersCalled) {
+			t.Errorf("Expected handler call %d to be '%s', got <missing>", i, expected)
+		} else if handlersCalled[i] != expected {
 			t.Errorf("Expected handler call %d to be '%s', got '%s'", i, expected, handlersCalled[i])
 		}
 	}
