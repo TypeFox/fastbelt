@@ -300,17 +300,3 @@ func getWellFormedEdit(edit protocol.TextEdit) protocol.TextEdit {
 	return edit
 }
 
-// Helper functions for min/max since Go 1.21+ has these in the standard library
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
