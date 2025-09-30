@@ -7,6 +7,7 @@ package lsp
 import (
 	"errors"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/TypeFox/go-lsp/protocol"
@@ -75,7 +76,7 @@ func Update(document TextDocument, changes []protocol.TextDocumentContentChangeE
 
 	for i, change := range changes {
 		if err := doc.applyChange(change); err != nil {
-			return errors.New("failed to apply change " + string(rune(i)) + ": " + err.Error())
+			return errors.New("failed to apply change " + strconv.Itoa(i) + ": " + err.Error())
 		}
 	}
 	doc.version = version
