@@ -40,6 +40,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestPositionAt(t *testing.T) {
+	// Test with multi-line document
 	doc, err := Create("file:///test.txt", "plaintext", 1, "ab\ncd")
 	if err != nil {
 		t.Fatalf("Create failed: %v", err)
@@ -63,6 +64,99 @@ func TestPositionAt(t *testing.T) {
 			t.Errorf("PositionAt(%d): expected {%d, %d}, got {%d, %d}",
 				test.offset, test.expected.Line, test.expected.Character, pos.Line, pos.Character)
 		}
+	}
+}
+
+func TestPositionAtEdgeCases(t *testing.T) {
+	testCases := []struct {
+		name     string
+		content  string
+		tests    []struct {
+			offset   int
+			expected protocol.Position
+		}
+	}{
+		{
+			name:    "empty document",
+			content: "",
+			tests: []struct {
+				offset   int
+				expected protocol.Position
+			}{
+				{0, protocol.Position{Line: 0, Character: 0}},
+				{1, protocol.Position{Line: 0, Character: 0}}, // Beyond end, should clamp
+				{-1, protocol.Position{Line: 0, Character: 0}}, // Negative, should clamp
+			},
+		},
+		{
+			name:    "single character",
+			content: "a",
+			tests: []struct {
+				offset   int
+				expected protocol.Position
+			}{
+				{0, protocol.Position{Line: 0, Character: 0}},
+				{1, protocol.Position{Line: 0, Character: 1}}, // At end
+				{2, protocol.Position{Line: 0, Character: 1}}, // Beyond end, should clamp
+			},
+		},
+		{
+			name:    "single line with newline",
+			content: "hello\n",
+			tests: []struct {
+				offset   int
+				expected protocol.Position
+			}{
+				{0, protocol.Position{Line: 0, Character: 0}},
+				{5, protocol.Position{Line: 0, Character: 5}}, // At \n
+				{6, protocol.Position{Line: 1, Character: 0}}, // After \n
+				{7, protocol.Position{Line: 1, Character: 0}}, // Beyond end
+			},
+		},
+		{
+			name:    "windows line endings",
+			content: "a\r\nb",
+			tests: []struct {
+				offset   int
+				expected protocol.Position
+			}{
+				{0, protocol.Position{Line: 0, Character: 0}},
+				{1, protocol.Position{Line: 0, Character: 1}}, // At \r
+				{2, protocol.Position{Line: 0, Character: 1}}, // At \n (should be before EOL)
+				{3, protocol.Position{Line: 1, Character: 0}}, // After \r\n
+				{4, protocol.Position{Line: 1, Character: 1}}, // At 'b'
+			},
+		},
+		{
+			name:    "multiple empty lines",
+			content: "\n\n\n",
+			tests: []struct {
+				offset   int
+				expected protocol.Position
+			}{
+				{0, protocol.Position{Line: 0, Character: 0}}, // At first \n
+				{1, protocol.Position{Line: 1, Character: 0}}, // At second \n
+				{2, protocol.Position{Line: 2, Character: 0}}, // At third \n
+				{3, protocol.Position{Line: 3, Character: 0}}, // After all \n
+			},
+		},
+	}
+	
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			doc, err := Create("file:///test.txt", "plaintext", 1, tc.content)
+			if err != nil {
+				t.Fatalf("Create failed: %v", err)
+			}
+			
+			for _, test := range tc.tests {
+				pos := doc.PositionAt(test.offset)
+				if pos.Line != test.expected.Line || pos.Character != test.expected.Character {
+					t.Errorf("PositionAt(%d): expected {%d, %d}, got {%d, %d}",
+						test.offset, test.expected.Line, test.expected.Character, pos.Line, pos.Character)
+				}
+			}
+		})
 	}
 }
 

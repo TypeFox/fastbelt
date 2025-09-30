@@ -157,8 +157,15 @@ func (d *fullTextDocument) PositionAt(offset int) protocol.Position {
 	offset = max(min(offset, len(d.content)), 0)
 	lineOffsets := d.getLineOffsets()
 	
-	if len(lineOffsets) == 0 {
-		return protocol.Position{Line: 0, Character: uint32(offset)}
+	// lineOffsets always has at least one element (offset 0), so len(lineOffsets) == 0 is impossible
+	// Handle the case where we only have one line (empty document or single line)
+	if len(lineOffsets) == 1 {
+		// Only one line, so we're on line 0
+		offset = d.ensureBeforeEOL(offset, lineOffsets[0])
+		return protocol.Position{
+			Line:      0,
+			Character: uint32(offset - lineOffsets[0]),
+		}
 	}
 	
 	// Binary search for the line
@@ -172,7 +179,15 @@ func (d *fullTextDocument) PositionAt(offset int) protocol.Position {
 		}
 	}
 	
+	// low is the least x for which lineOffsets[x] > offset
+	// So the line we want is low - 1
 	line := low - 1
+	
+	// Ensure line is valid (should never be negative, but be defensive)
+	if line < 0 {
+		line = 0
+	}
+	
 	offset = d.ensureBeforeEOL(offset, lineOffsets[line])
 	return protocol.Position{
 		Line:      uint32(line),
