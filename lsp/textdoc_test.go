@@ -103,7 +103,7 @@ func TestUpdate(t *testing.T) {
 	doc := Create("file:///test.txt", "plaintext", 1, "hello world")
 	
 	// Test incremental change
-	changes := []TextDocumentContentChangeEvent{
+	changes := []protocol.TextDocumentContentChangeEvent{
 		{
 			Range: &protocol.Range{
 				Start: protocol.Position{Line: 0, Character: 6},
@@ -131,7 +131,7 @@ func TestUpdateFullDocument(t *testing.T) {
 	doc := Create("file:///test.txt", "plaintext", 1, "hello world")
 	
 	// Test full document change
-	changes := []TextDocumentContentChangeEvent{
+	changes := []protocol.TextDocumentContentChangeEvent{
 		{
 			Text: "new content",
 		},
@@ -202,14 +202,14 @@ func TestLineOffsets(t *testing.T) {
 
 func TestErrorHandling(t *testing.T) {
 	// Test nil document
-	err := Update(nil, []TextDocumentContentChangeEvent{}, 1)
+	err := Update(nil, []protocol.TextDocumentContentChangeEvent{}, 1)
 	if err == nil {
 		t.Error("Expected error for nil document")
 	}
 	
 	// Test invalid document type
 	var invalidDoc TextDocument = &struct{ TextDocument }{}
-	err = Update(invalidDoc, []TextDocumentContentChangeEvent{}, 1)
+	err = Update(invalidDoc, []protocol.TextDocumentContentChangeEvent{}, 1)
 	if err == nil {
 		t.Error("Expected error for invalid document type")
 	}

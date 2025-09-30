@@ -15,16 +15,6 @@ import (
 // DocumentURI represents a URI for a text document
 type DocumentURI = string
 
-// TextDocumentContentChangeEvent represents a change to a text document
-type TextDocumentContentChangeEvent struct {
-	// Range of the document that changed (nil for full document changes)
-	Range *protocol.Range `json:"range,omitempty"`
-	// Length of the range that got replaced (deprecated, use Range instead)
-	RangeLength *uint32 `json:"rangeLength,omitempty"`
-	// New text for the provided range or full document
-	Text string `json:"text"`
-}
-
 // TextDocument represents a simple text document that keeps content as string
 type TextDocument interface {
 	// URI returns the associated URI for this document
@@ -69,7 +59,7 @@ func Create(uri DocumentURI, languageID string, version int32, content string) T
 }
 
 // Update updates a TextDocument by modifying its content
-func Update(document TextDocument, changes []TextDocumentContentChangeEvent, version int32) error {
+func Update(document TextDocument, changes []protocol.TextDocumentContentChangeEvent, version int32) error {
 	if document == nil {
 		return errors.New("document cannot be nil")
 	}
@@ -220,7 +210,7 @@ func (d *fullTextDocument) LineCount() int {
 }
 
 // applyChange applies a single content change to the document
-func (d *fullTextDocument) applyChange(change TextDocumentContentChangeEvent) error {
+func (d *fullTextDocument) applyChange(change protocol.TextDocumentContentChangeEvent) error {
 	if change.Range != nil {
 		// Incremental change
 		wellFormedRange := getWellFormedRange(*change.Range)
