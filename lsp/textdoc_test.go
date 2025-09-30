@@ -13,7 +13,10 @@ import (
 )
 
 func TestCreate(t *testing.T) {
-	doc := Create("file:///test.txt", "plaintext", 1, "hello\nworld")
+	doc, err := Create("file:///test.txt", "plaintext", 1, "hello\nworld")
+	if err != nil {
+		t.Fatalf("Create failed: %v", err)
+	}
 	
 	if doc.URI() != "file:///test.txt" {
 		t.Errorf("Expected URI 'file:///test.txt', got '%s'", doc.URI())
@@ -37,7 +40,10 @@ func TestCreate(t *testing.T) {
 }
 
 func TestPositionAt(t *testing.T) {
-	doc := Create("file:///test.txt", "plaintext", 1, "ab\ncd")
+	doc, err := Create("file:///test.txt", "plaintext", 1, "ab\ncd")
+	if err != nil {
+		t.Fatalf("Create failed: %v", err)
+	}
 	
 	tests := []struct {
 		offset   int
@@ -61,7 +67,10 @@ func TestPositionAt(t *testing.T) {
 }
 
 func TestOffsetAt(t *testing.T) {
-	doc := Create("file:///test.txt", "plaintext", 1, "ab\ncd")
+	doc, err := Create("file:///test.txt", "plaintext", 1, "ab\ncd")
+	if err != nil {
+		t.Fatalf("Create failed: %v", err)
+	}
 	
 	tests := []struct {
 		position protocol.Position
@@ -86,7 +95,10 @@ func TestOffsetAt(t *testing.T) {
 }
 
 func TestGetTextWithRange(t *testing.T) {
-	doc := Create("file:///test.txt", "plaintext", 1, "hello\nworld")
+	doc, err := Create("file:///test.txt", "plaintext", 1, "hello\nworld")
+	if err != nil {
+		t.Fatalf("Create failed: %v", err)
+	}
 	
 	// Get substring
 	r := &protocol.Range{
@@ -102,7 +114,10 @@ func TestGetTextWithRange(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	doc := Create("file:///test.txt", "plaintext", 1, "hello world")
+	doc, err := Create("file:///test.txt", "plaintext", 1, "hello world")
+	if err != nil {
+		t.Fatalf("Create failed: %v", err)
+	}
 	
 	// Test incremental change
 	changes := []protocol.TextDocumentContentChangeEvent{
@@ -115,7 +130,7 @@ func TestUpdate(t *testing.T) {
 		},
 	}
 	
-	err := Update(doc, changes, 2)
+	err = Update(doc, changes, 2)
 	if err != nil {
 		t.Errorf("Update failed: %v", err)
 	}
@@ -130,7 +145,10 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestUpdateFullDocument(t *testing.T) {
-	doc := Create("file:///test.txt", "plaintext", 1, "hello world")
+	doc, err := Create("file:///test.txt", "plaintext", 1, "hello world")
+	if err != nil {
+		t.Fatalf("Create failed: %v", err)
+	}
 	
 	// Test full document change
 	changes := []protocol.TextDocumentContentChangeEvent{
@@ -139,7 +157,7 @@ func TestUpdateFullDocument(t *testing.T) {
 		},
 	}
 	
-	err := Update(doc, changes, 2)
+	err = Update(doc, changes, 2)
 	if err != nil {
 		t.Errorf("Update failed: %v", err)
 	}
@@ -150,7 +168,10 @@ func TestUpdateFullDocument(t *testing.T) {
 }
 
 func TestApplyEdits(t *testing.T) {
-	doc := Create("file:///test.txt", "plaintext", 1, "hello world")
+	doc, err := Create("file:///test.txt", "plaintext", 1, "hello world")
+	if err != nil {
+		t.Fatalf("Create failed: %v", err)
+	}
 	
 	edits := []protocol.TextEdit{
 		{
@@ -194,7 +215,10 @@ func TestLineOffsets(t *testing.T) {
 	}
 	
 	for _, test := range tests {
-		doc := Create("file:///test.txt", "plaintext", 1, test.content)
+		doc, err := Create("file:///test.txt", "plaintext", 1, test.content)
+		if err != nil {
+			t.Fatalf("Create failed: %v", err)
+		}
 		lineCount := doc.LineCount()
 		if lineCount != len(test.expected) {
 			t.Errorf("Content '%s': expected %d lines, got %d", test.content, len(test.expected), lineCount)
@@ -252,20 +276,57 @@ func TestUpdateErrorMessageFormat(t *testing.T) {
 	}
 }
 
-func TestPanicConditions(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("Expected panic for empty URI")
+func TestCreateValidation(t *testing.T) {
+	// Test empty URI
+	_, err := Create("", "plaintext", 1, "content")
+	if err == nil {
+		t.Error("Expected error for empty URI")
+	}
+	if !strings.Contains(err.Error(), "uri cannot be empty") {
+		t.Errorf("Expected 'uri cannot be empty' error, got: %s", err.Error())
+	}
+	
+	// Test empty language ID
+	_, err = Create("file:///test.txt", "", 1, "content")
+	if err == nil {
+		t.Error("Expected error for empty language ID")
+	}
+	if !strings.Contains(err.Error(), "languageID cannot be empty") {
+		t.Errorf("Expected 'languageID cannot be empty' error, got: %s", err.Error())
+	}
+	
+	// Test valid input with various edge cases
+	testCases := []struct {
+		uri        string
+		languageID string
+		version    int32
+		content    string
+		shouldFail bool
+	}{
+		{"file:///test.txt", "plaintext", 1, "content", false},
+		{"file:///test.txt", "plaintext", 0, "", false}, // Empty content is valid
+		{"file:///test.txt", "plaintext", -1, "content", false}, // Negative version is valid
+		{"https://example.com/doc", "javascript", 1, "content", false}, // Non-file URI is valid
+		{"", "plaintext", 1, "content", true}, // Empty URI should fail
+		{"file:///test.txt", "", 1, "content", true}, // Empty language ID should fail
+	}
+	
+	for i, tc := range testCases {
+		doc, err := Create(protocol.DocumentURI(tc.uri), tc.languageID, tc.version, tc.content)
+		if tc.shouldFail {
+			if err == nil {
+				t.Errorf("Test case %d: expected error but got none", i)
+			}
+			if doc != nil {
+				t.Errorf("Test case %d: expected nil document but got non-nil", i)
+			}
+		} else {
+			if err != nil {
+				t.Errorf("Test case %d: expected no error but got: %v", i, err)
+			}
+			if doc == nil {
+				t.Errorf("Test case %d: expected non-nil document but got nil", i)
+			}
 		}
-	}()
-	Create("", "plaintext", 1, "content")
-}
-
-func TestPanicConditionsLanguageID(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("Expected panic for empty language ID")
-		}
-	}()
-	Create("file:///test.txt", "", 1, "content")
+	}
 }

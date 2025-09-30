@@ -43,19 +43,19 @@ type fullTextDocument struct {
 }
 
 // Create creates a new text document
-func Create(uri protocol.DocumentURI, languageID string, version int32, content string) TextDocument {
+func Create(uri protocol.DocumentURI, languageID string, version int32, content string) (TextDocument, error) {
 	if uri == "" {
-		panic("uri cannot be empty")
+		return nil, errors.New("uri cannot be empty")
 	}
 	if languageID == "" {
-		panic("languageID cannot be empty")
+		return nil, errors.New("languageID cannot be empty")
 	}
 	return &fullTextDocument{
 		uri:        uri,
 		languageID: languageID,
 		version:    version,
 		content:    content,
-	}
+	}, nil
 }
 
 // Update updates a TextDocument by modifying its content
