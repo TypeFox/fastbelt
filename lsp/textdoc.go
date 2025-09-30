@@ -13,13 +13,12 @@ import (
 	"github.com/TypeFox/go-lsp/protocol"
 )
 
-// DocumentURI represents a URI for a text document
-type DocumentURI = string
+
 
 // TextDocument represents a simple text document that keeps content as string
 type TextDocument interface {
 	// URI returns the associated URI for this document
-	URI() DocumentURI
+	URI() protocol.DocumentURI
 	// LanguageID returns the identifier of the language associated with this document
 	LanguageID() string
 	// Version returns the version number of this document
@@ -36,7 +35,7 @@ type TextDocument interface {
 
 // fullTextDocument implements TextDocument interface
 type fullTextDocument struct {
-	uri         DocumentURI
+	uri         protocol.DocumentURI
 	languageID  string
 	version     int32
 	content     string
@@ -44,7 +43,7 @@ type fullTextDocument struct {
 }
 
 // Create creates a new text document
-func Create(uri DocumentURI, languageID string, version int32, content string) TextDocument {
+func Create(uri protocol.DocumentURI, languageID string, version int32, content string) TextDocument {
 	if uri == "" {
 		panic("uri cannot be empty")
 	}
@@ -129,7 +128,7 @@ func ApplyEdits(document TextDocument, edits []protocol.TextEdit) (string, error
 }
 
 // URI returns the document URI
-func (d *fullTextDocument) URI() DocumentURI {
+func (d *fullTextDocument) URI() protocol.DocumentURI {
 	return d.uri
 }
 
