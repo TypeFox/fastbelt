@@ -9,12 +9,23 @@ import (
 	"log"
 
 	"github.com/TypeFox/go-lsp/protocol"
+	"github.com/TypeFox/langium-to-go/inject"
 	"github.com/TypeFox/langium-to-go/lsp"
 )
 
 func main() {
 	ctx := context.Background()
-	
+	services := createServices()
+
+	if err := lsp.StartLanguageServer(ctx, services); err != nil {
+		log.Fatalf("Failed to start language server: %v", err)
+	}
+}
+
+func createServices() *inject.ServiceContainer {
+	services := inject.NewServiceContainer()
+
+	// Create and register the language server handlers
 	handlers := &lsp.LanguageServerHandlers{
 		Completion: func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
 			// Return dummy completions for testing
@@ -43,8 +54,32 @@ func main() {
 			}, nil
 		},
 	}
-	
-	if err := lsp.StartLanguageServer(ctx, handlers); err != nil {
-		log.Fatalf("Failed to start language server: %v", err)
+	if err := inject.Register(lsp.LanguageServerHandlersKey, handlers, services); err != nil {
+		log.Fatalf("Failed to register handlers: %v", err)
 	}
+
+	// Create and register the connection binder
+	binder := &lsp.DefaultBinder{}
+	if err := inject.Register(lsp.ConnectionBinderKey, lsp.ConnectionBinder(binder), services); err != nil {
+		log.Fatalf("Failed to register connection binder: %v", err)
+	}
+
+	// Create and register the connection dialer
+	dialer := &lsp.StdioDialer{}
+	if err := inject.Register(lsp.ConnectionDialerKey, lsp.ConnectionDialer(dialer), services); err != nil {
+		log.Fatalf("Failed to register connection dialer: %v", err)
+	}
+
+	// Create and register the language server
+	server := &lsp.DefaultLanguageServer{}
+	if err := inject.Register(lsp.LanguageServerKey, lsp.LanguageServer(server), services); err != nil {
+		log.Fatalf("Failed to register language server: %v", err)
+	}
+
+	// Inject dependencies into all registered services
+	if err := inject.InjectAll(services); err != nil {
+		log.Fatalf("Failed to inject dependencies: %v", err)
+	}
+
+	return services
 }
