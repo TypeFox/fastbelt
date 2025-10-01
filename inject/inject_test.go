@@ -8,6 +8,22 @@ import (
 	"testing"
 )
 
+// TestServices extends Services with test-specific services using embedding
+type TestServices struct {
+	*Services
+	TestService          *TestService
+	TestDependentService *TestDependentService
+	CircularServiceA     *CircularServiceA
+	CircularServiceB     *CircularServiceB
+}
+
+// NewTestServices creates a new test services container
+func NewTestServices() *TestServices {
+	return &TestServices{
+		Services: NewServices(),
+	}
+}
+
 // TestService is a simple service that doesn't need other dependencies
 type TestService struct {
 	Name string
@@ -15,12 +31,12 @@ type TestService struct {
 
 // TestDependentService is a service that depends on TestService
 type TestDependentService struct {
-	services *Services
+	services *TestServices
 	Value    string
 }
 
 // NewTestDependentService creates a new TestDependentService with access to services
-func NewTestDependentService(services *Services, value string) *TestDependentService {
+func NewTestDependentService(services *TestServices, value string) *TestDependentService {
 	return &TestDependentService{
 		services: services,
 		Value:    value,
@@ -29,15 +45,12 @@ func NewTestDependentService(services *Services, value string) *TestDependentSer
 
 // GetDependency accesses the dependency directly from services
 func (s *TestDependentService) GetDependency() *TestService {
-	if s.services.TestService != nil {
-		return s.services.TestService.(*TestService)
-	}
-	return nil
+	return s.services.TestService
 }
 
 func TestDependencyInjection(t *testing.T) {
-	// Create service container
-	services := NewServices()
+	// Create service container with embedded base services
+	services := NewTestServices()
 
 	// Create and set services
 	dependency := &TestService{Name: "dependency"}
@@ -61,12 +74,12 @@ func TestDependencyInjection(t *testing.T) {
 	}
 
 	// Verify we can access services from container
-	retrievedFromContainer := services.TestService.(*TestService)
+	retrievedFromContainer := services.TestService
 	if retrievedFromContainer.Name != "dependency" {
 		t.Errorf("Expected retrieved dependency name 'dependency', got '%s'", retrievedFromContainer.Name)
 	}
 
-	retrievedDependentFromContainer := services.TestDependentService.(*TestDependentService)
+	retrievedDependentFromContainer := services.TestDependentService
 	if retrievedDependentFromContainer.Value != "dependent-value" {
 		t.Errorf("Expected retrieved dependent value 'dependent-value', got '%s'", retrievedDependentFromContainer.Value)
 	}
@@ -79,7 +92,7 @@ func TestDependencyInjection(t *testing.T) {
 
 func TestOverride(t *testing.T) {
 	// Create service container
-	services := NewServices()
+	services := NewTestServices()
 
 	// Create initial service
 	originalService := &TestService{Name: "original"}
@@ -88,7 +101,7 @@ func TestOverride(t *testing.T) {
 	services.TestService = originalService
 
 	// Verify original service is set
-	retrieved := services.TestService.(*TestService)
+	retrieved := services.TestService
 	if retrieved.Name != "original" {
 		t.Errorf("Expected original name 'original', got '%s'", retrieved.Name)
 	}
@@ -100,7 +113,7 @@ func TestOverride(t *testing.T) {
 	services.TestService = replacementService
 
 	// Verify service was overridden
-	retrieved = services.TestService.(*TestService)
+	retrieved = services.TestService
 	if retrieved.Name != "replacement" {
 		t.Errorf("Expected overridden name 'replacement', got '%s'", retrieved.Name)
 	}
@@ -113,12 +126,12 @@ func TestOverride(t *testing.T) {
 
 // CircularServiceA depends on CircularServiceB
 type CircularServiceA struct {
-	services *Services
+	services *TestServices
 	Value    string
 }
 
 // NewCircularServiceA creates a new CircularServiceA
-func NewCircularServiceA(services *Services, value string) *CircularServiceA {
+func NewCircularServiceA(services *TestServices, value string) *CircularServiceA {
 	return &CircularServiceA{
 		services: services,
 		Value:    value,
@@ -127,20 +140,17 @@ func NewCircularServiceA(services *Services, value string) *CircularServiceA {
 
 // GetServiceB accesses ServiceB from services
 func (s *CircularServiceA) GetServiceB() *CircularServiceB {
-	if s.services.CircularServiceB != nil {
-		return s.services.CircularServiceB.(*CircularServiceB)
-	}
-	return nil
+	return s.services.CircularServiceB
 }
 
 // CircularServiceB depends on CircularServiceA
 type CircularServiceB struct {
-	services *Services
+	services *TestServices
 	Value    string
 }
 
 // NewCircularServiceB creates a new CircularServiceB
-func NewCircularServiceB(services *Services, value string) *CircularServiceB {
+func NewCircularServiceB(services *TestServices, value string) *CircularServiceB {
 	return &CircularServiceB{
 		services: services,
 		Value:    value,
@@ -149,15 +159,12 @@ func NewCircularServiceB(services *Services, value string) *CircularServiceB {
 
 // GetServiceA accesses ServiceA from services
 func (s *CircularServiceB) GetServiceA() *CircularServiceA {
-	if s.services.CircularServiceA != nil {
-		return s.services.CircularServiceA.(*CircularServiceA)
-	}
-	return nil
+	return s.services.CircularServiceA
 }
 
 func TestCircularDependency(t *testing.T) {
 	// Create service container
-	services := NewServices()
+	services := NewTestServices()
 
 	// Create services
 	serviceA := NewCircularServiceA(services, "service-a")
@@ -195,12 +202,12 @@ func TestCircularDependency(t *testing.T) {
 	}
 
 	// Verify we can retrieve services from container
-	retrievedAFromContainer := services.CircularServiceA.(*CircularServiceA)
+	retrievedAFromContainer := services.CircularServiceA
 	if retrievedAFromContainer.Value != "service-a" {
 		t.Errorf("Expected retrieved serviceA value 'service-a', got '%s'", retrievedAFromContainer.Value)
 	}
 
-	retrievedBFromContainer := services.CircularServiceB.(*CircularServiceB)
+	retrievedBFromContainer := services.CircularServiceB
 	if retrievedBFromContainer.Value != "service-b" {
 		t.Errorf("Expected retrieved serviceB value 'service-b', got '%s'", retrievedBFromContainer.Value)
 	}

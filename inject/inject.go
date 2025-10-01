@@ -8,6 +8,16 @@ package inject
 // This is a fixed struct with known keys and known service types.
 // Services are added as fields with their concrete types.
 // To avoid import cycles, services are defined using interface{} and cast in usage sites.
+//
+// Library consumers can extend Services using struct embedding:
+//
+//	type MyAppServices struct {
+//	    *inject.Services
+//	    Database   *DatabaseService
+//	    Cache      *CacheService
+//	}
+//
+// This allows consumers to add their own services while maintaining access to base services.
 type Services struct {
 	// LSP services - using interface{} to avoid import cycles
 	// Actual types are defined in the lsp package:
@@ -19,12 +29,6 @@ type Services struct {
 	LanguageServer         interface{}
 	ConnectionBinder       interface{}
 	ConnectionDialer       interface{}
-
-	// Test services - used only in tests
-	TestService          interface{}
-	TestDependentService interface{}
-	CircularServiceA     interface{}
-	CircularServiceB     interface{}
 }
 
 // NewServices creates a new Services container.
