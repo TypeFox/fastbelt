@@ -367,27 +367,23 @@ type ConnectionBinder interface {
 
 // DefaultBinder implements the ConnectionBinder interface
 type DefaultBinder struct {
-	// server retrieves the LanguageServer lazily to avoid a circular dependency
-	server func() (LanguageServer, error)
-	// connection stores the JSON-RPC connection for other services to use
+	server     LanguageServer
 	connection *jsonrpc2.Connection
 }
 
 func (b *DefaultBinder) Inject(container *inject.ServiceContainer) error {
-	b.server = func() (LanguageServer, error) {
-		return inject.Get(LanguageServerKey, container)
+	server, err := inject.Get(LanguageServerKey, container)
+	if err != nil {
+		return err
 	}
+	b.server = server
 	return nil
 }
 
 func (b *DefaultBinder) Bind(ctx context.Context, conn *jsonrpc2.Connection) (jsonrpc2.ConnectionOptions, error) {
 	b.connection = conn
-	server, err := b.server()
-	if err != nil {
-		return jsonrpc2.ConnectionOptions{}, err
-	}
 	return jsonrpc2.ConnectionOptions{
-		Handler: protocol.ServerHandler(server),
+		Handler: protocol.ServerHandler(b.server),
 	}, nil
 }
 

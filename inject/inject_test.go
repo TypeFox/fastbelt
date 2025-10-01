@@ -167,3 +167,121 @@ func TestOverrideNonExistentService(t *testing.T) {
 		t.Errorf("Expected error '%s', got '%s'", expectedError, err.Error())
 	}
 }
+
+// CircularServiceA depends on CircularServiceB
+type CircularServiceA struct {
+	ServiceB *CircularServiceB
+	Value    string
+}
+
+// Inject implements the Injectable interface for CircularServiceA
+func (s *CircularServiceA) Inject(container *ServiceContainer) error {
+	key := NewServiceKey[*CircularServiceB]("circular-service-b")
+	serviceB, err := Get(key, container)
+	if err != nil {
+		return err
+	}
+	s.ServiceB = serviceB
+	return nil
+}
+
+// CircularServiceB depends on CircularServiceA
+type CircularServiceB struct {
+	ServiceA *CircularServiceA
+	Value    string
+}
+
+// Inject implements the Injectable interface for CircularServiceB
+func (s *CircularServiceB) Inject(container *ServiceContainer) error {
+	key := NewServiceKey[*CircularServiceA]("circular-service-a")
+	serviceA, err := Get(key, container)
+	if err != nil {
+		return err
+	}
+	s.ServiceA = serviceA
+	return nil
+}
+
+func TestCircularDependency(t *testing.T) {
+	// Create service keys
+	serviceAKey := NewServiceKey[*CircularServiceA]("circular-service-a")
+	serviceBKey := NewServiceKey[*CircularServiceB]("circular-service-b")
+
+	// Create service container
+	container := NewServiceContainer()
+
+	// Create services
+	serviceA := &CircularServiceA{Value: "service-a"}
+	serviceB := &CircularServiceB{Value: "service-b"}
+
+	// Register services
+	if err := Register(serviceAKey, serviceA, container); err != nil {
+		t.Fatalf("Failed to register service A: %v", err)
+	}
+
+	if err := Register(serviceBKey, serviceB, container); err != nil {
+		t.Fatalf("Failed to register service B: %v", err)
+	}
+
+	// Verify dependencies are not set before injection
+	if serviceA.ServiceB != nil {
+		t.Error("ServiceA.ServiceB should be nil before injection")
+	}
+	if serviceB.ServiceA != nil {
+		t.Error("ServiceB.ServiceA should be nil before injection")
+	}
+
+	// Inject dependencies - this should work despite circular dependency
+	if err := InjectAll(container); err != nil {
+		t.Fatalf("Failed to inject circular dependencies: %v", err)
+	}
+
+	// Verify circular dependency injection worked
+	if serviceA.ServiceB == nil {
+		t.Error("ServiceA.ServiceB should be set after injection")
+	}
+	if serviceB.ServiceA == nil {
+		t.Error("ServiceB.ServiceA should be set after injection")
+	}
+
+	// Verify the services reference each other correctly
+	if serviceA.ServiceB != serviceB {
+		t.Error("ServiceA.ServiceB should reference the same instance as serviceB")
+	}
+	if serviceB.ServiceA != serviceA {
+		t.Error("ServiceB.ServiceA should reference the same instance as serviceA")
+	}
+
+	// Verify original values are preserved
+	if serviceA.Value != "service-a" {
+		t.Errorf("Expected serviceA value 'service-a', got '%s'", serviceA.Value)
+	}
+	if serviceB.Value != "service-b" {
+		t.Errorf("Expected serviceB value 'service-b', got '%s'", serviceB.Value)
+	}
+
+	// Verify we can retrieve services from container
+	retrievedA, err := Get(serviceAKey, container)
+	if err != nil {
+		t.Fatalf("Failed to retrieve service A: %v", err)
+	}
+	if retrievedA.Value != "service-a" {
+		t.Errorf("Expected retrieved serviceA value 'service-a', got '%s'", retrievedA.Value)
+	}
+
+	retrievedB, err := Get(serviceBKey, container)
+	if err != nil {
+		t.Fatalf("Failed to retrieve service B: %v", err)
+	}
+	if retrievedB.Value != "service-b" {
+		t.Errorf("Expected retrieved serviceB value 'service-b', got '%s'", retrievedB.Value)
+	}
+
+	// Verify the circular references are maintained in retrieved services
+	if retrievedA.ServiceB != retrievedB {
+		t.Error("Retrieved serviceA.ServiceB should reference the same instance as retrieved serviceB")
+	}
+	if retrievedB.ServiceA != retrievedA {
+		t.Error("Retrieved serviceB.ServiceA should reference the same instance as retrieved serviceA")
+	}
+}
