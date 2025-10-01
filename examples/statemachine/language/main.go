@@ -22,10 +22,10 @@ func main() {
 	}
 }
 
-func createServices() *inject.ServiceContainer {
-	services := inject.NewServiceContainer()
+func createServices() *inject.Services {
+	services := inject.NewServices()
 
-	// Create and register the language server handlers
+	// Create and set the language server handlers
 	handlers := &lsp.LanguageServerHandlers{
 		Completion: func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
 			// Return dummy completions for testing
@@ -54,32 +54,19 @@ func createServices() *inject.ServiceContainer {
 			}, nil
 		},
 	}
-	if err := inject.Register(lsp.LanguageServerHandlersKey, handlers, services); err != nil {
-		log.Fatalf("Failed to register handlers: %v", err)
-	}
+	services.LanguageServerHandlers = handlers
 
-	// Create and register the connection binder
-	binder := &lsp.DefaultBinder{}
-	if err := inject.Register(lsp.ConnectionBinderKey, lsp.ConnectionBinder(binder), services); err != nil {
-		log.Fatalf("Failed to register connection binder: %v", err)
-	}
-
-	// Create and register the connection dialer
+	// Create and set the connection dialer
 	dialer := &lsp.StdioDialer{}
-	if err := inject.Register(lsp.ConnectionDialerKey, lsp.ConnectionDialer(dialer), services); err != nil {
-		log.Fatalf("Failed to register connection dialer: %v", err)
-	}
+	services.ConnectionDialer = dialer
 
-	// Create and register the language server
-	server := &lsp.DefaultLanguageServer{}
-	if err := inject.Register(lsp.LanguageServerKey, lsp.LanguageServer(server), services); err != nil {
-		log.Fatalf("Failed to register language server: %v", err)
-	}
+	// Create and set the connection binder (needs services first)
+	binder := lsp.NewDefaultBinder(services)
+	services.ConnectionBinder = binder
 
-	// Inject dependencies into all registered services
-	if err := inject.InjectAll(services); err != nil {
-		log.Fatalf("Failed to inject dependencies: %v", err)
-	}
+	// Create and set the language server (needs services first)
+	server := lsp.NewDefaultLanguageServer(services)
+	services.LanguageServer = server
 
 	return services
 }

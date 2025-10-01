@@ -15,9 +15,9 @@ import (
 // TestLanguageServerPartialHandlers tests that the language server works with some handlers nil
 func TestLanguageServerPartialHandlers(t *testing.T) {
 	var completionCalled bool
-	services := inject.NewServiceContainer()
+	services := inject.NewServices()
 
-	// Create and register the language server handlers
+	// Create and set the language server handlers
 	handlers := &LanguageServerHandlers{
 		Completion: func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
 			completionCalled = true
@@ -33,26 +33,15 @@ func TestLanguageServerPartialHandlers(t *testing.T) {
 		},
 		// All other handlers are nil
 	}
-	if err := inject.Register(LanguageServerHandlersKey, handlers, services); err != nil {
-		t.Fatalf("Failed to register handlers: %v", err)
-	}
+	services.LanguageServerHandlers = handlers
 
-	// Create and register the connection binder
-	binder := &DefaultBinder{}
-	if err := inject.Register(ConnectionBinderKey, ConnectionBinder(binder), services); err != nil {
-		t.Fatalf("Failed to register connection binder: %v", err)
-	}
+	// Create and set the connection binder
+	binder := NewDefaultBinder(services)
+	services.ConnectionBinder = binder
 
-	// Create and register the language server
-	server := &DefaultLanguageServer{}
-	if err := inject.Register(LanguageServerKey, LanguageServer(server), services); err != nil {
-		t.Fatalf("Failed to register language server: %v", err)
-	}
-
-	// Inject dependencies into all registered services
-	if err := inject.InjectAll(services); err != nil {
-		t.Fatalf("Failed to inject dependencies: %v", err)
-	}
+	// Create and set the language server
+	server := NewDefaultLanguageServer(services)
+	services.LanguageServer = server
 
 	ctx := context.Background()
 

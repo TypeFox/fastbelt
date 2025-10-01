@@ -14,14 +14,6 @@ import (
 	"golang.org/x/exp/jsonrpc2"
 )
 
-// ServiceKey definitions for dependency injection
-var (
-	LanguageServerHandlersKey = inject.NewServiceKey[*LanguageServerHandlers]("LanguageServerHandlers")
-	LanguageServerKey         = inject.NewServiceKey[LanguageServer]("LanguageServer")
-	ConnectionBinderKey       = inject.NewServiceKey[ConnectionBinder]("ConnectionBinder")
-	ConnectionDialerKey       = inject.NewServiceKey[ConnectionDialer]("ConnectionDialer")
-)
-
 // LanguageServerHandlers contains the handlers for various LSP requests.
 // TODO extract these handlers into separate services instead of having them all here.
 type LanguageServerHandlers struct {
@@ -41,30 +33,18 @@ type LanguageServerHandlers struct {
 
 type LanguageServer interface {
 	protocol.Server
-	inject.Injectable
 }
 
 // DefaultLanguageServer implements the LanguageServer interface
 type DefaultLanguageServer struct {
-	handlers *LanguageServerHandlers
-	binder   ConnectionBinder
+	services *inject.Services
 }
 
-// Inject retrieves dependencies from the DI container
-func (s *DefaultLanguageServer) Inject(container *inject.ServiceContainer) error {
-	handlers, err := inject.Get(LanguageServerHandlersKey, container)
-	if err != nil {
-		return err
+// NewDefaultLanguageServer creates a new DefaultLanguageServer with access to services
+func NewDefaultLanguageServer(services *inject.Services) *DefaultLanguageServer {
+	return &DefaultLanguageServer{
+		services: services,
 	}
-	s.handlers = handlers
-
-	binder, err := inject.Get(ConnectionBinderKey, container)
-	if err != nil {
-		return err
-	}
-	s.binder = binder
-
-	return nil
 }
 
 func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *protocol.ParamInitialize) (*protocol.InitializeResult, error) {
@@ -80,51 +60,51 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *protocol
 }
 
 func (s *DefaultLanguageServer) Initialized(ctx context.Context, params *protocol.InitializedParams) error {
-	if s.handlers != nil && s.handlers.Initialized != nil {
-		return s.handlers.Initialized(ctx, params)
+	if h, ok := s.services.LanguageServerHandlers.(*LanguageServerHandlers); ok && h != nil && h.Initialized != nil {
+		return h.Initialized(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) Shutdown(ctx context.Context) error {
-	if s.handlers != nil && s.handlers.Shutdown != nil {
-		return s.handlers.Shutdown(ctx)
+	if h, ok := s.services.LanguageServerHandlers.(*LanguageServerHandlers); ok && h != nil && h.Shutdown != nil {
+		return h.Shutdown(ctx)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) Exit(ctx context.Context) error {
 	// Close the connection to allow the server to exit
-	if s.binder != nil && s.binder.Connection() != nil {
-		return s.binder.Connection().Close()
+	if b, ok := s.services.ConnectionBinder.(ConnectionBinder); ok && b != nil && b.Connection() != nil {
+		return b.Connection().Close()
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) error {
-	if s.handlers != nil && s.handlers.DidOpen != nil {
-		return s.handlers.DidOpen(ctx, params)
+	if h, ok := s.services.LanguageServerHandlers.(*LanguageServerHandlers); ok && h != nil && h.DidOpen != nil {
+		return h.DidOpen(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) error {
-	if s.handlers != nil && s.handlers.DidChange != nil {
-		return s.handlers.DidChange(ctx, params)
+	if h, ok := s.services.LanguageServerHandlers.(*LanguageServerHandlers); ok && h != nil && h.DidChange != nil {
+		return h.DidChange(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) error {
-	if s.handlers != nil && s.handlers.DidClose != nil {
-		return s.handlers.DidClose(ctx, params)
+	if h, ok := s.services.LanguageServerHandlers.(*LanguageServerHandlers); ok && h != nil && h.DidClose != nil {
+		return h.DidClose(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) Completion(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
-	if s.handlers != nil && s.handlers.Completion != nil {
-		return s.handlers.Completion(ctx, params)
+	if h, ok := s.services.LanguageServerHandlers.(*LanguageServerHandlers); ok && h != nil && h.Completion != nil {
+		return h.Completion(ctx, params)
 	}
 	// Default empty completion list
 	return &protocol.CompletionList{
@@ -333,18 +313,11 @@ func (s *DefaultLanguageServer) WorkDoneProgressCancel(ctx context.Context, para
 	return nil
 }
 
-// StartLanguageServer starts a language server using the services from the DI container.
+// StartLanguageServer starts a language server using the services from the Services container.
 // It sets up JSON-RPC communication over stdio and handles the essential LSP messages.
-func StartLanguageServer(ctx context.Context, services *inject.ServiceContainer) error {
-	dialer, err := inject.Get(ConnectionDialerKey, services)
-	if err != nil {
-		return err
-	}
-
-	binder, err := inject.Get(ConnectionBinderKey, services)
-	if err != nil {
-		return err
-	}
+func StartLanguageServer(ctx context.Context, services *inject.Services) error {
+	dialer := services.ConnectionDialer.(ConnectionDialer)
+	binder := services.ConnectionBinder.(ConnectionBinder)
 
 	// Create a connection using the configured dialer and binder
 	conn, err := jsonrpc2.Dial(ctx, dialer, binder)
@@ -361,29 +334,27 @@ func StartLanguageServer(ctx context.Context, services *inject.ServiceContainer)
 
 type ConnectionBinder interface {
 	jsonrpc2.Binder
-	inject.Injectable
 	Connection() *jsonrpc2.Connection
 }
 
 // DefaultBinder implements the ConnectionBinder interface
 type DefaultBinder struct {
-	server     LanguageServer
+	services   *inject.Services
 	connection *jsonrpc2.Connection
 }
 
-func (b *DefaultBinder) Inject(container *inject.ServiceContainer) error {
-	server, err := inject.Get(LanguageServerKey, container)
-	if err != nil {
-		return err
+// NewDefaultBinder creates a new DefaultBinder with access to services
+func NewDefaultBinder(services *inject.Services) *DefaultBinder {
+	return &DefaultBinder{
+		services: services,
 	}
-	b.server = server
-	return nil
 }
 
 func (b *DefaultBinder) Bind(ctx context.Context, conn *jsonrpc2.Connection) (jsonrpc2.ConnectionOptions, error) {
 	b.connection = conn
+	server := b.services.LanguageServer.(LanguageServer)
 	return jsonrpc2.ConnectionOptions{
-		Handler: protocol.ServerHandler(b.server),
+		Handler: protocol.ServerHandler(server),
 	}, nil
 }
 
