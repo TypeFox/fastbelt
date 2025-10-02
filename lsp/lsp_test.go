@@ -9,51 +9,29 @@ import (
 	"testing"
 
 	"github.com/TypeFox/go-lsp/protocol"
-	"github.com/TypeFox/langium-to-go/inject"
 )
 
 // TestLanguageServerPartialHandlers tests that the language server works with some handlers nil
 func TestLanguageServerPartialHandlers(t *testing.T) {
 	var completionCalled bool
-	services := inject.NewServiceContainer()
+	services := &LspServices{}
+	LoadDefaultServices(services)
 
-	// Create and register the language server handlers
-	handlers := &LanguageServerHandlers{
-		Completion: func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
-			completionCalled = true
-			return &protocol.CompletionList{
-				IsIncomplete: false,
-				Items: []protocol.CompletionItem{
-					{
-						Label: "partial-test",
-						Kind:  protocol.KeywordCompletion,
-					},
+	// Create a test completion handler
+	services.LanguageServerHandlers.Completion = func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
+		completionCalled = true
+		return &protocol.CompletionList{
+			IsIncomplete: false,
+			Items: []protocol.CompletionItem{
+				{
+					Label: "partial-test",
+					Kind:  protocol.KeywordCompletion,
 				},
-			}, nil
-		},
-		// All other handlers are nil
-	}
-	if err := inject.Register(LanguageServerHandlersKey, handlers, services); err != nil {
-		t.Fatalf("Failed to register handlers: %v", err)
+			},
+		}, nil
 	}
 
-	// Create and register the connection binder
-	binder := &DefaultBinder{}
-	if err := inject.Register(ConnectionBinderKey, ConnectionBinder(binder), services); err != nil {
-		t.Fatalf("Failed to register connection binder: %v", err)
-	}
-
-	// Create and register the language server
-	server := &DefaultLanguageServer{}
-	if err := inject.Register(LanguageServerKey, LanguageServer(server), services); err != nil {
-		t.Fatalf("Failed to register language server: %v", err)
-	}
-
-	// Inject dependencies into all registered services
-	if err := inject.InjectAll(services); err != nil {
-		t.Fatalf("Failed to inject dependencies: %v", err)
-	}
-
+	server := services.LanguageServer
 	ctx := context.Background()
 
 	// Test Initialize - should use default implementation
