@@ -16,6 +16,7 @@ import (
 type LspServices struct {
 	LanguageServerHandlers *LanguageServerHandlers
 	LanguageServer         LanguageServer
+	TextDocuments          *TextDocuments
 	// Connection is assigned by ConnectionBinder when the language server is started
 	Connection       *jsonrpc2.Connection
 	ConnectionBinder jsonrpc2.Binder
@@ -25,8 +26,12 @@ type LspServices struct {
 func LoadDefaultServices(s *LspServices) {
 	s.LanguageServerHandlers = &LanguageServerHandlers{}
 	s.LanguageServer = &DefaultLanguageServer{srv: s}
+	s.TextDocuments = NewTextDocuments()
 	s.ConnectionBinder = &DefaultBinder{srv: s}
 	s.ConnectionDialer = &StdioDialer{}
+	
+	// Register TextDocuments with the language server handlers
+	s.TextDocuments.Listen(s.LanguageServerHandlers)
 }
 
 // LanguageServerHandlers contains the handlers for various LSP requests.
