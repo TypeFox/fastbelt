@@ -332,21 +332,4 @@ func TestTextDocuments_DidSave(t *testing.T) {
 	}
 }
 
-func TestTextDocuments_Listen(t *testing.T) {
-	td := NewTextDocuments()
-	handlers := &LanguageServerHandlers{}
 
-	// Register with handlers
-	td.Listen(handlers)
-
-	// Verify handlers are set
-	if handlers.DidOpen == nil {
-		t.Error("DidOpen handler not set")
-	}
-	if handlers.DidChange == nil {
-		t.Error("DidChange handler not set")
-	}
-	if handlers.DidClose == nil {
-		t.Error("DidClose handler not set")
-	}
-}

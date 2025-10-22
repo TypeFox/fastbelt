@@ -29,9 +29,6 @@ func LoadDefaultServices(s *LspServices) {
 	s.TextDocuments = NewTextDocuments()
 	s.ConnectionBinder = &DefaultBinder{srv: s}
 	s.ConnectionDialer = &StdioDialer{}
-	
-	// Register TextDocuments with the language server handlers
-	s.TextDocuments.Listen(s.LanguageServerHandlers)
 }
 
 // LanguageServerHandlers contains the handlers for various LSP requests.
@@ -43,14 +40,6 @@ type LanguageServerHandlers struct {
 	Completion func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error)
 	// Shutdown handles the shutdown request - server should shut down but not exit
 	Shutdown func(ctx context.Context) error
-	
-	// Document lifecycle handlers (managed by TextDocuments service)
-	// DidOpen handles textDocument/didOpen notifications
-	DidOpen func(ctx context.Context, params *protocol.DidOpenTextDocumentParams) error
-	// DidChange handles textDocument/didChange notifications
-	DidChange func(ctx context.Context, params *protocol.DidChangeTextDocumentParams) error
-	// DidClose handles textDocument/didClose notifications
-	DidClose func(ctx context.Context, params *protocol.DidCloseTextDocumentParams) error
 }
 
 type LanguageServer interface {
@@ -100,28 +89,22 @@ func (s *DefaultLanguageServer) Exit(ctx context.Context) error {
 }
 
 func (s *DefaultLanguageServer) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) error {
-	// Delegate to TextDocuments service
-	handlers := s.srv.LanguageServerHandlers
-	if handlers != nil && handlers.DidOpen != nil {
-		return handlers.DidOpen(ctx, params)
+	if s.srv.TextDocuments != nil {
+		return s.srv.TextDocuments.handleDidOpen(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) error {
-	// Delegate to TextDocuments service
-	handlers := s.srv.LanguageServerHandlers
-	if handlers != nil && handlers.DidChange != nil {
-		return handlers.DidChange(ctx, params)
+	if s.srv.TextDocuments != nil {
+		return s.srv.TextDocuments.handleDidChange(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) error {
-	// Delegate to TextDocuments service
-	handlers := s.srv.LanguageServerHandlers
-	if handlers != nil && handlers.DidClose != nil {
-		return handlers.DidClose(ctx, params)
+	if s.srv.TextDocuments != nil {
+		return s.srv.TextDocuments.handleDidClose(ctx, params)
 	}
 	return nil
 }

@@ -273,10 +273,4 @@ func (td *TextDocuments) handleDidSave(ctx context.Context, params *protocol.Did
 	return nil
 }
 
-// Listen registers the TextDocuments manager with the language server handlers.
-// This connects the document lifecycle events to the manager's internal handlers.
-func (td *TextDocuments) Listen(handlers *LanguageServerHandlers) {
-	handlers.DidOpen = td.handleDidOpen
-	handlers.DidChange = td.handleDidChange
-	handlers.DidClose = td.handleDidClose
-}
+
