@@ -88,7 +88,11 @@ func (node *AstNodeBase) WithTokens(tokens []*lexer.Token) {
 }
 
 func (node *AstNodeBase) Text() string {
-	return node.document.Text[node.segment.Indices.Start:node.segment.Indices.End]
+	if node == nil || node.document == nil || node.segment == nil {
+		return ""
+	} else {
+		return node.document.Text[node.segment.Indices.Start:node.segment.Indices.End]
+	}
 }
 
 type AstNodeCallback func(AstNode)

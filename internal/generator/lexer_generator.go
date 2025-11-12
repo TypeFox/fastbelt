@@ -195,7 +195,7 @@ func getStartCharsFromRegex(regex *syntax.Regexp) ([]rune, bool) {
 	case syntax.OpAnyCharNotNL:
 	case syntax.OpAnyChar:
 		size := 256
-		runes := []rune{}
+		runes := make([]rune, size)
 		for r := range size {
 			runes[r] = rune(r)
 		}

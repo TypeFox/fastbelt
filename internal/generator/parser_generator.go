@@ -256,13 +256,8 @@ func generateGroupParser(node generator.Node, context *ParserGeneratorContext, g
 
 func generateKeywordParser(node generator.Node, context *ParserGeneratorContext, keyword generated.Keyword) string {
 	lookahead := "p.state.LA(1) == " + GeneratedKeywordIdxName(keyword)
-	first := true
 	generateCardinality(node, func(n generator.Node) {
-		eq := "="
-		if first {
-			eq = ":="
-		}
-		n.AppendLine("token ", eq, " p.state.Consume(", GeneratedKeywordIdxName(keyword), ")")
+		n.AppendLine("token := p.state.Consume(", GeneratedKeywordIdxName(keyword), ")")
 		n.AppendLine("node.WithToken(token, ", context.accessNames[keyword], ")")
 	}, func(n generator.Node) { n.Append(lookahead) }, keyword.Cardinality())
 	return "token"

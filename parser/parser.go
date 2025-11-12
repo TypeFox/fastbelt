@@ -62,6 +62,8 @@ func (p *ParserState) Consume(tokenType int) *lexer.Token {
 	p.Index++
 	if p.Index < p.Length {
 		p.next = p.Tokens[p.Index]
+	} else {
+		p.next = nil
 	}
 	return current
 }
