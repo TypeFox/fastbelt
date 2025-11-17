@@ -90,21 +90,21 @@ func (s *DefaultLanguageServer) Exit(ctx context.Context) error {
 
 func (s *DefaultLanguageServer) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) error {
 	if s.srv.TextDocuments != nil {
-		return s.srv.TextDocuments.handleDidOpen(ctx, params)
+		s.srv.TextDocuments.DidOpen(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) error {
 	if s.srv.TextDocuments != nil {
-		return s.srv.TextDocuments.handleDidChange(ctx, params)
+		s.srv.TextDocuments.DidChange(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) error {
 	if s.srv.TextDocuments != nil {
-		return s.srv.TextDocuments.handleDidClose(ctx, params)
+		s.srv.TextDocuments.DidClose(ctx, params)
 	}
 	return nil
 }

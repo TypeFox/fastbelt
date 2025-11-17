@@ -20,7 +20,7 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	td.OnDidOpen(func(ctx context.Context, event *TextDocumentChangeEvent) {
 		openedDoc = event
 	})
-	td.OnDidChangeContent(func(ctx context.Context, event *TextDocumentChangeEvent) {
+	td.OnDidChange(func(ctx context.Context, event *TextDocumentChangeEvent) {
 		changedDoc = event
 	})
 	td.OnDidClose(func(ctx context.Context, event *TextDocumentChangeEvent) {
@@ -29,7 +29,7 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 
 	// Open a document
 	uri := protocol.DocumentURI("file:///test.txt")
-	err := td.handleDidOpen(ctx, &protocol.DidOpenTextDocumentParams{
+	td.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
 			LanguageID: "plaintext",
@@ -37,9 +37,6 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 			Text:       "Hello, World!",
 		},
 	})
-	if err != nil {
-		t.Fatalf("handleDidOpen failed: %v", err)
-	}
 
 	// Verify document was opened
 	if openedDoc == nil {
@@ -63,7 +60,7 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 
 	// Change the document
 	changedDoc = nil
-	err = td.handleDidChange(ctx, &protocol.DidChangeTextDocumentParams{
+	td.DidChange(ctx, &protocol.DidChangeTextDocumentParams{
 		TextDocument: protocol.VersionedTextDocumentIdentifier{
 			TextDocumentIdentifier: protocol.TextDocumentIdentifier{URI: uri},
 			Version:                2,
@@ -72,9 +69,6 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 			{Text: "Hello, Go!"},
 		},
 	})
-	if err != nil {
-		t.Fatalf("handleDidChange failed: %v", err)
-	}
 
 	// Verify change event
 	if changedDoc == nil {
@@ -88,12 +82,9 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	}
 
 	// Close the document
-	err = td.handleDidClose(ctx, &protocol.DidCloseTextDocumentParams{
+	td.DidClose(ctx, &protocol.DidCloseTextDocumentParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
 	})
-	if err != nil {
-		t.Fatalf("handleDidClose failed: %v", err)
-	}
 
 	// Verify close event
 	if closedDoc == nil {
@@ -121,7 +112,7 @@ func TestTextDocuments_MultipleDocuments(t *testing.T) {
 	}
 
 	for i, uri := range uris {
-		err := td.handleDidOpen(ctx, &protocol.DidOpenTextDocumentParams{
+		td.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
 			TextDocument: protocol.TextDocumentItem{
 				URI:        uri,
 				LanguageID: "plaintext",
@@ -129,9 +120,6 @@ func TestTextDocuments_MultipleDocuments(t *testing.T) {
 				Text:       "content",
 			},
 		})
-		if err != nil {
-			t.Fatalf("handleDidOpen failed for %s: %v", uri, err)
-		}
 	}
 
 	// Verify all documents are present
@@ -159,7 +147,7 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 	ctx := context.Background()
 
 	uri := protocol.DocumentURI("file:///test.txt")
-	err := td.handleDidOpen(ctx, &protocol.DidOpenTextDocumentParams{
+	td.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
 			LanguageID: "plaintext",
@@ -167,12 +155,9 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 			Text:       "Hello, World!",
 		},
 	})
-	if err != nil {
-		t.Fatalf("handleDidOpen failed: %v", err)
-	}
 
 	// Apply incremental change
-	err = td.handleDidChange(ctx, &protocol.DidChangeTextDocumentParams{
+	td.DidChange(ctx, &protocol.DidChangeTextDocumentParams{
 		TextDocument: protocol.VersionedTextDocumentIdentifier{
 			TextDocumentIdentifier: protocol.TextDocumentIdentifier{URI: uri},
 			Version:                2,
@@ -183,13 +168,10 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 					Start: protocol.Position{Line: 0, Character: 7},
 					End:   protocol.Position{Line: 0, Character: 12},
 				},
-				Text: "Go",
-			},
+			Text: "Go",
 		},
+	},
 	})
-	if err != nil {
-		t.Fatalf("handleDidChange failed: %v", err)
-	}
 
 	doc := td.Get(uri)
 	if doc == nil {
@@ -207,7 +189,7 @@ func TestTextDocuments_WillSave(t *testing.T) {
 	ctx := context.Background()
 
 	uri := protocol.DocumentURI("file:///test.txt")
-	err := td.handleDidOpen(ctx, &protocol.DidOpenTextDocumentParams{
+	td.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
 			LanguageID: "plaintext",
@@ -215,9 +197,6 @@ func TestTextDocuments_WillSave(t *testing.T) {
 			Text:       "content",
 		},
 	})
-	if err != nil {
-		t.Fatalf("handleDidOpen failed: %v", err)
-	}
 
 	// Track will-save event
 	var willSaveEvent *TextDocumentWillSaveEvent
@@ -226,13 +205,10 @@ func TestTextDocuments_WillSave(t *testing.T) {
 	})
 
 	// Trigger will-save
-	err = td.handleWillSave(ctx, &protocol.WillSaveTextDocumentParams{
+	td.WillSave(ctx, &protocol.WillSaveTextDocumentParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
 		Reason:       protocol.Manual,
 	})
-	if err != nil {
-		t.Fatalf("handleWillSave failed: %v", err)
-	}
 
 	// Verify event
 	if willSaveEvent == nil {
@@ -251,7 +227,7 @@ func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
 	ctx := context.Background()
 
 	uri := protocol.DocumentURI("file:///test.txt")
-	err := td.handleDidOpen(ctx, &protocol.DidOpenTextDocumentParams{
+	td.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
 			LanguageID: "plaintext",
@@ -259,9 +235,6 @@ func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
 			Text:       "content",
 		},
 	})
-	if err != nil {
-		t.Fatalf("handleDidOpen failed: %v", err)
-	}
 
 	// Register handler that returns edits
 	expectedEdits := []protocol.TextEdit{
@@ -278,12 +251,12 @@ func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
 	})
 
 	// Trigger will-save-wait-until
-	edits, err := td.handleWillSaveWaitUntil(ctx, &protocol.WillSaveTextDocumentParams{
+	edits, err := td.WillSaveWaitUntil(ctx, &protocol.WillSaveTextDocumentParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
 		Reason:       protocol.Manual,
 	})
 	if err != nil {
-		t.Fatalf("handleWillSaveWaitUntil failed: %v", err)
+		t.Fatalf("WillSaveWaitUntil failed: %v", err)
 	}
 
 	// Verify edits
@@ -297,7 +270,7 @@ func TestTextDocuments_DidSave(t *testing.T) {
 	ctx := context.Background()
 
 	uri := protocol.DocumentURI("file:///test.txt")
-	err := td.handleDidOpen(ctx, &protocol.DidOpenTextDocumentParams{
+	td.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
 			LanguageID: "plaintext",
@@ -305,9 +278,6 @@ func TestTextDocuments_DidSave(t *testing.T) {
 			Text:       "content",
 		},
 	})
-	if err != nil {
-		t.Fatalf("handleDidOpen failed: %v", err)
-	}
 
 	// Track save event
 	var savedDoc *TextDocumentChangeEvent
@@ -316,12 +286,9 @@ func TestTextDocuments_DidSave(t *testing.T) {
 	})
 
 	// Trigger save
-	err = td.handleDidSave(ctx, &protocol.DidSaveTextDocumentParams{
+	td.DidSave(ctx, &protocol.DidSaveTextDocumentParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
 	})
-	if err != nil {
-		t.Fatalf("handleDidSave failed: %v", err)
-	}
 
 	// Verify event
 	if savedDoc == nil {
