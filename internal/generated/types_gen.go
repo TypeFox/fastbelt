@@ -1,17 +1,16 @@
 package generated
 
 import (
-	"github.com/TypeFox/langium-to-go/ast"
-	"github.com/TypeFox/langium-to-go/lexer"
+	"github.com/TypeFox/langium-to-go/core"
 )
 
 type Grammar interface {
-	ast.AstNode
+	core.AstNode
 
 	IsGrammar()
 	Name() string
-	NameToken() *lexer.Token
-	WithName(value *lexer.Token)
+	NameToken() *core.Token
+	WithName(value *core.Token)
 	Rules() []ParserRule
 	WithRulesItem(item ParserRule)
 	Terminals() []Token
@@ -22,13 +21,13 @@ type Grammar interface {
 
 func NewGrammar() Grammar {
 	return &GrammarImpl{
-		AstNodeBase: ast.NewAstNode(),
+		AstNodeBase: core.NewAstNode(),
 		GrammarData: NewGrammarData(),
 	}
 }
 
 type GrammarData struct {
-	name       *lexer.Token
+	name       *core.Token
 	rules      []ParserRule
 	terminals  []Token
 	interfaces []Interface
@@ -44,7 +43,7 @@ func NewGrammarData() GrammarData {
 
 func (i *GrammarData) IsGrammar() {}
 
-func (i *GrammarData) ForEachNode(fn func(ast.AstNode)) {
+func (i *GrammarData) ForEachNode(fn func(core.AstNode)) {
 	for _, item := range i.rules {
 		fn(item)
 	}
@@ -64,11 +63,11 @@ func (i *GrammarData) Name() string {
 	}
 }
 
-func (i *GrammarData) NameToken() *lexer.Token {
+func (i *GrammarData) NameToken() *core.Token {
 	return i.name
 }
 
-func (i *GrammarData) WithName(value *lexer.Token) {
+func (i *GrammarData) WithName(value *core.Token) {
 	i.name = value
 }
 
@@ -97,50 +96,50 @@ func (i *GrammarData) WithInterfacesItem(item Interface) {
 }
 
 type GrammarImpl struct {
-	ast.AstNodeBase
+	core.AstNodeBase
 	GrammarData
 }
 
-func (i *GrammarImpl) ForEachNode(fn func(ast.AstNode)) {
+func (i *GrammarImpl) ForEachNode(fn func(core.AstNode)) {
 	i.GrammarData.ForEachNode(fn)
 }
 
 type Interface interface {
-	ast.AstNode
+	core.AstNode
 
 	IsInterface()
 	Name() string
-	NameToken() *lexer.Token
-	WithName(value *lexer.Token)
-	Extends() []*lexer.Token
-	WithExtendsItem(item *lexer.Token)
+	NameToken() *core.Token
+	WithName(value *core.Token)
+	Extends() []*core.Token
+	WithExtendsItem(item *core.Token)
 	Fields() []Field
 	WithFieldsItem(item Field)
 }
 
 func NewInterface() Interface {
 	return &InterfaceImpl{
-		AstNodeBase:   ast.NewAstNode(),
+		AstNodeBase:   core.NewAstNode(),
 		InterfaceData: NewInterfaceData(),
 	}
 }
 
 type InterfaceData struct {
-	name    *lexer.Token
-	extends []*lexer.Token
+	name    *core.Token
+	extends []*core.Token
 	fields  []Field
 }
 
 func NewInterfaceData() InterfaceData {
 	return InterfaceData{
-		extends: []*lexer.Token{},
+		extends: []*core.Token{},
 		fields:  []Field{},
 	}
 }
 
 func (i *InterfaceData) IsInterface() {}
 
-func (i *InterfaceData) ForEachNode(fn func(ast.AstNode)) {
+func (i *InterfaceData) ForEachNode(fn func(core.AstNode)) {
 	for _, item := range i.fields {
 		fn(item)
 	}
@@ -154,19 +153,19 @@ func (i *InterfaceData) Name() string {
 	}
 }
 
-func (i *InterfaceData) NameToken() *lexer.Token {
+func (i *InterfaceData) NameToken() *core.Token {
 	return i.name
 }
 
-func (i *InterfaceData) WithName(value *lexer.Token) {
+func (i *InterfaceData) WithName(value *core.Token) {
 	i.name = value
 }
 
-func (i *InterfaceData) Extends() []*lexer.Token {
+func (i *InterfaceData) Extends() []*core.Token {
 	return i.extends
 }
 
-func (i *InterfaceData) WithExtendsItem(item *lexer.Token) {
+func (i *InterfaceData) WithExtendsItem(item *core.Token) {
 	i.extends = append(i.extends, item)
 }
 
@@ -179,40 +178,40 @@ func (i *InterfaceData) WithFieldsItem(item Field) {
 }
 
 type InterfaceImpl struct {
-	ast.AstNodeBase
+	core.AstNodeBase
 	InterfaceData
 }
 
-func (i *InterfaceImpl) ForEachNode(fn func(ast.AstNode)) {
+func (i *InterfaceImpl) ForEachNode(fn func(core.AstNode)) {
 	i.InterfaceData.ForEachNode(fn)
 }
 
 type Field interface {
-	ast.AstNode
+	core.AstNode
 
 	IsField()
 	Name() string
-	NameToken() *lexer.Token
-	WithName(value *lexer.Token)
+	NameToken() *core.Token
+	WithName(value *core.Token)
 	IsArray() bool
-	ArrayToken() *lexer.Token
-	WithArray(value *lexer.Token)
+	ArrayToken() *core.Token
+	WithArray(value *core.Token)
 	Type() string
-	TypeToken() *lexer.Token
-	WithType(value *lexer.Token)
+	TypeToken() *core.Token
+	WithType(value *core.Token)
 }
 
 func NewField() Field {
 	return &FieldImpl{
-		AstNodeBase: ast.NewAstNode(),
+		AstNodeBase: core.NewAstNode(),
 		FieldData:   NewFieldData(),
 	}
 }
 
 type FieldData struct {
-	name  *lexer.Token
-	array *lexer.Token
-	_Type *lexer.Token
+	name  *core.Token
+	array *core.Token
+	_Type *core.Token
 }
 
 func NewFieldData() FieldData {
@@ -221,7 +220,7 @@ func NewFieldData() FieldData {
 
 func (i *FieldData) IsField() {}
 
-func (i *FieldData) ForEachNode(fn func(ast.AstNode)) {
+func (i *FieldData) ForEachNode(fn func(core.AstNode)) {
 }
 
 func (i *FieldData) Name() string {
@@ -232,11 +231,11 @@ func (i *FieldData) Name() string {
 	}
 }
 
-func (i *FieldData) NameToken() *lexer.Token {
+func (i *FieldData) NameToken() *core.Token {
 	return i.name
 }
 
-func (i *FieldData) WithName(value *lexer.Token) {
+func (i *FieldData) WithName(value *core.Token) {
 	i.name = value
 }
 
@@ -244,11 +243,11 @@ func (i *FieldData) IsArray() bool {
 	return i != nil && i.array != nil
 }
 
-func (i *FieldData) ArrayToken() *lexer.Token {
+func (i *FieldData) ArrayToken() *core.Token {
 	return i.array
 }
 
-func (i *FieldData) WithArray(value *lexer.Token) {
+func (i *FieldData) WithArray(value *core.Token) {
 	i.array = value
 }
 
@@ -260,47 +259,47 @@ func (i *FieldData) Type() string {
 	}
 }
 
-func (i *FieldData) TypeToken() *lexer.Token {
+func (i *FieldData) TypeToken() *core.Token {
 	return i._Type
 }
 
-func (i *FieldData) WithType(value *lexer.Token) {
+func (i *FieldData) WithType(value *core.Token) {
 	i._Type = value
 }
 
 type FieldImpl struct {
-	ast.AstNodeBase
+	core.AstNodeBase
 	FieldData
 }
 
-func (i *FieldImpl) ForEachNode(fn func(ast.AstNode)) {
+func (i *FieldImpl) ForEachNode(fn func(core.AstNode)) {
 	i.FieldData.ForEachNode(fn)
 }
 
 type ParserRule interface {
-	ast.AstNode
+	core.AstNode
 
 	IsParserRule()
 	Name() string
-	NameToken() *lexer.Token
-	WithName(value *lexer.Token)
+	NameToken() *core.Token
+	WithName(value *core.Token)
 	ReturnType() string
-	ReturnTypeToken() *lexer.Token
-	WithReturnType(value *lexer.Token)
+	ReturnTypeToken() *core.Token
+	WithReturnType(value *core.Token)
 	Body() Alternatives
 	WithBody(value Alternatives)
 }
 
 func NewParserRule() ParserRule {
 	return &ParserRuleImpl{
-		AstNodeBase:    ast.NewAstNode(),
+		AstNodeBase:    core.NewAstNode(),
 		ParserRuleData: NewParserRuleData(),
 	}
 }
 
 type ParserRuleData struct {
-	name       *lexer.Token
-	returnType *lexer.Token
+	name       *core.Token
+	returnType *core.Token
 	body       Alternatives
 }
 
@@ -310,7 +309,7 @@ func NewParserRuleData() ParserRuleData {
 
 func (i *ParserRuleData) IsParserRule() {}
 
-func (i *ParserRuleData) ForEachNode(fn func(ast.AstNode)) {
+func (i *ParserRuleData) ForEachNode(fn func(core.AstNode)) {
 	if i.body != nil {
 		fn(i.body)
 	}
@@ -324,11 +323,11 @@ func (i *ParserRuleData) Name() string {
 	}
 }
 
-func (i *ParserRuleData) NameToken() *lexer.Token {
+func (i *ParserRuleData) NameToken() *core.Token {
 	return i.name
 }
 
-func (i *ParserRuleData) WithName(value *lexer.Token) {
+func (i *ParserRuleData) WithName(value *core.Token) {
 	i.name = value
 }
 
@@ -340,11 +339,11 @@ func (i *ParserRuleData) ReturnType() string {
 	}
 }
 
-func (i *ParserRuleData) ReturnTypeToken() *lexer.Token {
+func (i *ParserRuleData) ReturnTypeToken() *core.Token {
 	return i.returnType
 }
 
-func (i *ParserRuleData) WithReturnType(value *lexer.Token) {
+func (i *ParserRuleData) WithReturnType(value *core.Token) {
 	i.returnType = value
 }
 
@@ -361,40 +360,40 @@ func (i *ParserRuleData) WithBody(value Alternatives) {
 }
 
 type ParserRuleImpl struct {
-	ast.AstNodeBase
+	core.AstNodeBase
 	ParserRuleData
 }
 
-func (i *ParserRuleImpl) ForEachNode(fn func(ast.AstNode)) {
+func (i *ParserRuleImpl) ForEachNode(fn func(core.AstNode)) {
 	i.ParserRuleData.ForEachNode(fn)
 }
 
 type Token interface {
-	ast.AstNode
+	core.AstNode
 
 	IsToken()
 	Type() string
-	TypeToken() *lexer.Token
-	WithType(value *lexer.Token)
+	TypeToken() *core.Token
+	WithType(value *core.Token)
 	Name() string
-	NameToken() *lexer.Token
-	WithName(value *lexer.Token)
+	NameToken() *core.Token
+	WithName(value *core.Token)
 	Regexp() string
-	RegexpToken() *lexer.Token
-	WithRegexp(value *lexer.Token)
+	RegexpToken() *core.Token
+	WithRegexp(value *core.Token)
 }
 
 func NewToken() Token {
 	return &TokenImpl{
-		AstNodeBase: ast.NewAstNode(),
+		AstNodeBase: core.NewAstNode(),
 		TokenData:   NewTokenData(),
 	}
 }
 
 type TokenData struct {
-	_Type  *lexer.Token
-	name   *lexer.Token
-	regexp *lexer.Token
+	_Type  *core.Token
+	name   *core.Token
+	regexp *core.Token
 }
 
 func NewTokenData() TokenData {
@@ -403,7 +402,7 @@ func NewTokenData() TokenData {
 
 func (i *TokenData) IsToken() {}
 
-func (i *TokenData) ForEachNode(fn func(ast.AstNode)) {
+func (i *TokenData) ForEachNode(fn func(core.AstNode)) {
 }
 
 func (i *TokenData) Type() string {
@@ -414,11 +413,11 @@ func (i *TokenData) Type() string {
 	}
 }
 
-func (i *TokenData) TypeToken() *lexer.Token {
+func (i *TokenData) TypeToken() *core.Token {
 	return i._Type
 }
 
-func (i *TokenData) WithType(value *lexer.Token) {
+func (i *TokenData) WithType(value *core.Token) {
 	i._Type = value
 }
 
@@ -430,11 +429,11 @@ func (i *TokenData) Name() string {
 	}
 }
 
-func (i *TokenData) NameToken() *lexer.Token {
+func (i *TokenData) NameToken() *core.Token {
 	return i.name
 }
 
-func (i *TokenData) WithName(value *lexer.Token) {
+func (i *TokenData) WithName(value *core.Token) {
 	i.name = value
 }
 
@@ -446,41 +445,41 @@ func (i *TokenData) Regexp() string {
 	}
 }
 
-func (i *TokenData) RegexpToken() *lexer.Token {
+func (i *TokenData) RegexpToken() *core.Token {
 	return i.regexp
 }
 
-func (i *TokenData) WithRegexp(value *lexer.Token) {
+func (i *TokenData) WithRegexp(value *core.Token) {
 	i.regexp = value
 }
 
 type TokenImpl struct {
-	ast.AstNodeBase
+	core.AstNodeBase
 	TokenData
 }
 
-func (i *TokenImpl) ForEachNode(fn func(ast.AstNode)) {
+func (i *TokenImpl) ForEachNode(fn func(core.AstNode)) {
 	i.TokenData.ForEachNode(fn)
 }
 
 type Element interface {
-	ast.AstNode
+	core.AstNode
 
 	IsElement()
 	Cardinality() string
-	CardinalityToken() *lexer.Token
-	WithCardinality(value *lexer.Token)
+	CardinalityToken() *core.Token
+	WithCardinality(value *core.Token)
 }
 
 func NewElement() Element {
 	return &ElementImpl{
-		AstNodeBase: ast.NewAstNode(),
+		AstNodeBase: core.NewAstNode(),
 		ElementData: NewElementData(),
 	}
 }
 
 type ElementData struct {
-	cardinality *lexer.Token
+	cardinality *core.Token
 }
 
 func NewElementData() ElementData {
@@ -489,7 +488,7 @@ func NewElementData() ElementData {
 
 func (i *ElementData) IsElement() {}
 
-func (i *ElementData) ForEachNode(fn func(ast.AstNode)) {
+func (i *ElementData) ForEachNode(fn func(core.AstNode)) {
 }
 
 func (i *ElementData) Cardinality() string {
@@ -500,25 +499,25 @@ func (i *ElementData) Cardinality() string {
 	}
 }
 
-func (i *ElementData) CardinalityToken() *lexer.Token {
+func (i *ElementData) CardinalityToken() *core.Token {
 	return i.cardinality
 }
 
-func (i *ElementData) WithCardinality(value *lexer.Token) {
+func (i *ElementData) WithCardinality(value *core.Token) {
 	i.cardinality = value
 }
 
 type ElementImpl struct {
-	ast.AstNodeBase
+	core.AstNodeBase
 	ElementData
 }
 
-func (i *ElementImpl) ForEachNode(fn func(ast.AstNode)) {
+func (i *ElementImpl) ForEachNode(fn func(core.AstNode)) {
 	i.ElementData.ForEachNode(fn)
 }
 
 type Alternatives interface {
-	ast.AstNode
+	core.AstNode
 	Element
 
 	IsAlternatives()
@@ -528,7 +527,7 @@ type Alternatives interface {
 
 func NewAlternatives() Alternatives {
 	return &AlternativesImpl{
-		AstNodeBase:      ast.NewAstNode(),
+		AstNodeBase:      core.NewAstNode(),
 		ElementData:      NewElementData(),
 		AlternativesData: NewAlternativesData(),
 	}
@@ -546,7 +545,7 @@ func NewAlternativesData() AlternativesData {
 
 func (i *AlternativesData) IsAlternatives() {}
 
-func (i *AlternativesData) ForEachNode(fn func(ast.AstNode)) {
+func (i *AlternativesData) ForEachNode(fn func(core.AstNode)) {
 	for _, item := range i.alts {
 		fn(item)
 	}
@@ -561,18 +560,18 @@ func (i *AlternativesData) WithAltsItem(item Group) {
 }
 
 type AlternativesImpl struct {
-	ast.AstNodeBase
+	core.AstNodeBase
 	ElementData
 	AlternativesData
 }
 
-func (i *AlternativesImpl) ForEachNode(fn func(ast.AstNode)) {
+func (i *AlternativesImpl) ForEachNode(fn func(core.AstNode)) {
 	i.ElementData.ForEachNode(fn)
 	i.AlternativesData.ForEachNode(fn)
 }
 
 type Group interface {
-	ast.AstNode
+	core.AstNode
 	Element
 
 	IsGroup()
@@ -582,7 +581,7 @@ type Group interface {
 
 func NewGroup() Group {
 	return &GroupImpl{
-		AstNodeBase: ast.NewAstNode(),
+		AstNodeBase: core.NewAstNode(),
 		ElementData: NewElementData(),
 		GroupData:   NewGroupData(),
 	}
@@ -600,7 +599,7 @@ func NewGroupData() GroupData {
 
 func (i *GroupData) IsGroup() {}
 
-func (i *GroupData) ForEachNode(fn func(ast.AstNode)) {
+func (i *GroupData) ForEachNode(fn func(core.AstNode)) {
 	for _, item := range i.elements {
 		fn(item)
 	}
@@ -615,30 +614,30 @@ func (i *GroupData) WithElementsItem(item Element) {
 }
 
 type GroupImpl struct {
-	ast.AstNodeBase
+	core.AstNodeBase
 	ElementData
 	GroupData
 }
 
-func (i *GroupImpl) ForEachNode(fn func(ast.AstNode)) {
+func (i *GroupImpl) ForEachNode(fn func(core.AstNode)) {
 	i.ElementData.ForEachNode(fn)
 	i.GroupData.ForEachNode(fn)
 }
 
 type Keyword interface {
-	ast.AstNode
+	core.AstNode
 	Element
 	Assignable
 
 	IsKeyword()
 	Value() string
-	ValueToken() *lexer.Token
-	WithValue(value *lexer.Token)
+	ValueToken() *core.Token
+	WithValue(value *core.Token)
 }
 
 func NewKeyword() Keyword {
 	return &KeywordImpl{
-		AstNodeBase:    ast.NewAstNode(),
+		AstNodeBase:    core.NewAstNode(),
 		ElementData:    NewElementData(),
 		AssignableData: NewAssignableData(),
 		KeywordData:    NewKeywordData(),
@@ -646,7 +645,7 @@ func NewKeyword() Keyword {
 }
 
 type KeywordData struct {
-	value *lexer.Token
+	value *core.Token
 }
 
 func NewKeywordData() KeywordData {
@@ -655,7 +654,7 @@ func NewKeywordData() KeywordData {
 
 func (i *KeywordData) IsKeyword() {}
 
-func (i *KeywordData) ForEachNode(fn func(ast.AstNode)) {
+func (i *KeywordData) ForEachNode(fn func(core.AstNode)) {
 }
 
 func (i *KeywordData) Value() string {
@@ -666,53 +665,53 @@ func (i *KeywordData) Value() string {
 	}
 }
 
-func (i *KeywordData) ValueToken() *lexer.Token {
+func (i *KeywordData) ValueToken() *core.Token {
 	return i.value
 }
 
-func (i *KeywordData) WithValue(value *lexer.Token) {
+func (i *KeywordData) WithValue(value *core.Token) {
 	i.value = value
 }
 
 type KeywordImpl struct {
-	ast.AstNodeBase
+	core.AstNodeBase
 	ElementData
 	AssignableData
 	KeywordData
 }
 
-func (i *KeywordImpl) ForEachNode(fn func(ast.AstNode)) {
+func (i *KeywordImpl) ForEachNode(fn func(core.AstNode)) {
 	i.ElementData.ForEachNode(fn)
 	i.AssignableData.ForEachNode(fn)
 	i.KeywordData.ForEachNode(fn)
 }
 
 type Assignment interface {
-	ast.AstNode
+	core.AstNode
 	Element
 
 	IsAssignment()
 	Property() string
-	PropertyToken() *lexer.Token
-	WithProperty(value *lexer.Token)
+	PropertyToken() *core.Token
+	WithProperty(value *core.Token)
 	Operator() string
-	OperatorToken() *lexer.Token
-	WithOperator(value *lexer.Token)
+	OperatorToken() *core.Token
+	WithOperator(value *core.Token)
 	Value() Assignable
 	WithValue(value Assignable)
 }
 
 func NewAssignment() Assignment {
 	return &AssignmentImpl{
-		AstNodeBase:    ast.NewAstNode(),
+		AstNodeBase:    core.NewAstNode(),
 		ElementData:    NewElementData(),
 		AssignmentData: NewAssignmentData(),
 	}
 }
 
 type AssignmentData struct {
-	property *lexer.Token
-	operator *lexer.Token
+	property *core.Token
+	operator *core.Token
 	value    Assignable
 }
 
@@ -722,7 +721,7 @@ func NewAssignmentData() AssignmentData {
 
 func (i *AssignmentData) IsAssignment() {}
 
-func (i *AssignmentData) ForEachNode(fn func(ast.AstNode)) {
+func (i *AssignmentData) ForEachNode(fn func(core.AstNode)) {
 	if i.value != nil {
 		fn(i.value)
 	}
@@ -736,11 +735,11 @@ func (i *AssignmentData) Property() string {
 	}
 }
 
-func (i *AssignmentData) PropertyToken() *lexer.Token {
+func (i *AssignmentData) PropertyToken() *core.Token {
 	return i.property
 }
 
-func (i *AssignmentData) WithProperty(value *lexer.Token) {
+func (i *AssignmentData) WithProperty(value *core.Token) {
 	i.property = value
 }
 
@@ -752,11 +751,11 @@ func (i *AssignmentData) Operator() string {
 	}
 }
 
-func (i *AssignmentData) OperatorToken() *lexer.Token {
+func (i *AssignmentData) OperatorToken() *core.Token {
 	return i.operator
 }
 
-func (i *AssignmentData) WithOperator(value *lexer.Token) {
+func (i *AssignmentData) WithOperator(value *core.Token) {
 	i.operator = value
 }
 
@@ -773,25 +772,25 @@ func (i *AssignmentData) WithValue(value Assignable) {
 }
 
 type AssignmentImpl struct {
-	ast.AstNodeBase
+	core.AstNodeBase
 	ElementData
 	AssignmentData
 }
 
-func (i *AssignmentImpl) ForEachNode(fn func(ast.AstNode)) {
+func (i *AssignmentImpl) ForEachNode(fn func(core.AstNode)) {
 	i.ElementData.ForEachNode(fn)
 	i.AssignmentData.ForEachNode(fn)
 }
 
 type Assignable interface {
-	ast.AstNode
+	core.AstNode
 
 	IsAssignable()
 }
 
 func NewAssignable() Assignable {
 	return &AssignableImpl{
-		AstNodeBase:    ast.NewAstNode(),
+		AstNodeBase:    core.NewAstNode(),
 		AssignableData: NewAssignableData(),
 	}
 }
@@ -805,40 +804,40 @@ func NewAssignableData() AssignableData {
 
 func (i *AssignableData) IsAssignable() {}
 
-func (i *AssignableData) ForEachNode(fn func(ast.AstNode)) {
+func (i *AssignableData) ForEachNode(fn func(core.AstNode)) {
 }
 
 type AssignableImpl struct {
-	ast.AstNodeBase
+	core.AstNodeBase
 	AssignableData
 }
 
-func (i *AssignableImpl) ForEachNode(fn func(ast.AstNode)) {
+func (i *AssignableImpl) ForEachNode(fn func(core.AstNode)) {
 	i.AssignableData.ForEachNode(fn)
 }
 
 type CrossRef interface {
-	ast.AstNode
+	core.AstNode
 	Assignable
 
 	IsCrossRef()
 	Type() string
-	TypeToken() *lexer.Token
-	WithType(value *lexer.Token)
+	TypeToken() *core.Token
+	WithType(value *core.Token)
 	Rule() RuleCall
 	WithRule(value RuleCall)
 }
 
 func NewCrossRef() CrossRef {
 	return &CrossRefImpl{
-		AstNodeBase:    ast.NewAstNode(),
+		AstNodeBase:    core.NewAstNode(),
 		AssignableData: NewAssignableData(),
 		CrossRefData:   NewCrossRefData(),
 	}
 }
 
 type CrossRefData struct {
-	_Type *lexer.Token
+	_Type *core.Token
 	rule  RuleCall
 }
 
@@ -848,7 +847,7 @@ func NewCrossRefData() CrossRefData {
 
 func (i *CrossRefData) IsCrossRef() {}
 
-func (i *CrossRefData) ForEachNode(fn func(ast.AstNode)) {
+func (i *CrossRefData) ForEachNode(fn func(core.AstNode)) {
 	if i.rule != nil {
 		fn(i.rule)
 	}
@@ -862,11 +861,11 @@ func (i *CrossRefData) Type() string {
 	}
 }
 
-func (i *CrossRefData) TypeToken() *lexer.Token {
+func (i *CrossRefData) TypeToken() *core.Token {
 	return i._Type
 }
 
-func (i *CrossRefData) WithType(value *lexer.Token) {
+func (i *CrossRefData) WithType(value *core.Token) {
 	i._Type = value
 }
 
@@ -883,30 +882,30 @@ func (i *CrossRefData) WithRule(value RuleCall) {
 }
 
 type CrossRefImpl struct {
-	ast.AstNodeBase
+	core.AstNodeBase
 	AssignableData
 	CrossRefData
 }
 
-func (i *CrossRefImpl) ForEachNode(fn func(ast.AstNode)) {
+func (i *CrossRefImpl) ForEachNode(fn func(core.AstNode)) {
 	i.AssignableData.ForEachNode(fn)
 	i.CrossRefData.ForEachNode(fn)
 }
 
 type RuleCall interface {
-	ast.AstNode
+	core.AstNode
 	Element
 	Assignable
 
 	IsRuleCall()
 	Rule() string
-	RuleToken() *lexer.Token
-	WithRule(value *lexer.Token)
+	RuleToken() *core.Token
+	WithRule(value *core.Token)
 }
 
 func NewRuleCall() RuleCall {
 	return &RuleCallImpl{
-		AstNodeBase:    ast.NewAstNode(),
+		AstNodeBase:    core.NewAstNode(),
 		ElementData:    NewElementData(),
 		AssignableData: NewAssignableData(),
 		RuleCallData:   NewRuleCallData(),
@@ -914,7 +913,7 @@ func NewRuleCall() RuleCall {
 }
 
 type RuleCallData struct {
-	rule *lexer.Token
+	rule *core.Token
 }
 
 func NewRuleCallData() RuleCallData {
@@ -923,7 +922,7 @@ func NewRuleCallData() RuleCallData {
 
 func (i *RuleCallData) IsRuleCall() {}
 
-func (i *RuleCallData) ForEachNode(fn func(ast.AstNode)) {
+func (i *RuleCallData) ForEachNode(fn func(core.AstNode)) {
 }
 
 func (i *RuleCallData) Rule() string {
@@ -934,51 +933,51 @@ func (i *RuleCallData) Rule() string {
 	}
 }
 
-func (i *RuleCallData) RuleToken() *lexer.Token {
+func (i *RuleCallData) RuleToken() *core.Token {
 	return i.rule
 }
 
-func (i *RuleCallData) WithRule(value *lexer.Token) {
+func (i *RuleCallData) WithRule(value *core.Token) {
 	i.rule = value
 }
 
 type RuleCallImpl struct {
-	ast.AstNodeBase
+	core.AstNodeBase
 	ElementData
 	AssignableData
 	RuleCallData
 }
 
-func (i *RuleCallImpl) ForEachNode(fn func(ast.AstNode)) {
+func (i *RuleCallImpl) ForEachNode(fn func(core.AstNode)) {
 	i.ElementData.ForEachNode(fn)
 	i.AssignableData.ForEachNode(fn)
 	i.RuleCallData.ForEachNode(fn)
 }
 
 type Action interface {
-	ast.AstNode
+	core.AstNode
 	Element
 
 	IsAction()
 	Type() string
-	TypeToken() *lexer.Token
-	WithType(value *lexer.Token)
+	TypeToken() *core.Token
+	WithType(value *core.Token)
 	Property() string
-	PropertyToken() *lexer.Token
-	WithProperty(value *lexer.Token)
+	PropertyToken() *core.Token
+	WithProperty(value *core.Token)
 }
 
 func NewAction() Action {
 	return &ActionImpl{
-		AstNodeBase: ast.NewAstNode(),
+		AstNodeBase: core.NewAstNode(),
 		ElementData: NewElementData(),
 		ActionData:  NewActionData(),
 	}
 }
 
 type ActionData struct {
-	_Type    *lexer.Token
-	property *lexer.Token
+	_Type    *core.Token
+	property *core.Token
 }
 
 func NewActionData() ActionData {
@@ -987,7 +986,7 @@ func NewActionData() ActionData {
 
 func (i *ActionData) IsAction() {}
 
-func (i *ActionData) ForEachNode(fn func(ast.AstNode)) {
+func (i *ActionData) ForEachNode(fn func(core.AstNode)) {
 }
 
 func (i *ActionData) Type() string {
@@ -998,11 +997,11 @@ func (i *ActionData) Type() string {
 	}
 }
 
-func (i *ActionData) TypeToken() *lexer.Token {
+func (i *ActionData) TypeToken() *core.Token {
 	return i._Type
 }
 
-func (i *ActionData) WithType(value *lexer.Token) {
+func (i *ActionData) WithType(value *core.Token) {
 	i._Type = value
 }
 
@@ -1014,21 +1013,21 @@ func (i *ActionData) Property() string {
 	}
 }
 
-func (i *ActionData) PropertyToken() *lexer.Token {
+func (i *ActionData) PropertyToken() *core.Token {
 	return i.property
 }
 
-func (i *ActionData) WithProperty(value *lexer.Token) {
+func (i *ActionData) WithProperty(value *core.Token) {
 	i.property = value
 }
 
 type ActionImpl struct {
-	ast.AstNodeBase
+	core.AstNodeBase
 	ElementData
 	ActionData
 }
 
-func (i *ActionImpl) ForEachNode(fn func(ast.AstNode)) {
+func (i *ActionImpl) ForEachNode(fn func(core.AstNode)) {
 	i.ElementData.ForEachNode(fn)
 	i.ActionData.ForEachNode(fn)
 }

@@ -5,16 +5,16 @@
 package parser
 
 import (
-	"github.com/TypeFox/langium-to-go/lexer"
+	"github.com/TypeFox/langium-to-go/core"
 )
 
 type ParserState struct {
-	Tokens []*lexer.Token
+	Tokens []*core.Token
 	Length int
 	Index  int
 	State  int
 
-	next *lexer.Token
+	next *core.Token
 	// Indicates whether a parsing error has occurred
 	// to prevent further processing
 	//
@@ -26,8 +26,8 @@ type LookaheadPath []int
 type LookaheadOption []LookaheadPath
 type LLkLookahead []LookaheadOption
 
-func NewParserState(tokens []*lexer.Token) *ParserState {
-	var next *lexer.Token
+func NewParserState(tokens []*core.Token) *ParserState {
+	var next *core.Token
 	if len(tokens) > 0 {
 		next = tokens[0]
 	}
@@ -41,14 +41,23 @@ func NewParserState(tokens []*lexer.Token) *ParserState {
 	}
 }
 
-func (p *ParserState) LA(offset int) int {
+func (p *ParserState) LA(offset int) *core.Token {
 	pos := p.Index + offset - 1
-	if pos >= p.Length || p.err {
-		return -1
+	if pos < 0 || pos >= p.Length || p.err {
+		return nil
 	}
-	return p.Tokens[pos].TypeId
+	return p.Tokens[pos]
 }
-func (p *ParserState) Consume(tokenType int) *lexer.Token {
+
+func (p *ParserState) LAId(offset int) int {
+	la := p.LA(offset)
+	if la == nil {
+		return core.EOF.Id
+	}
+	return la.TypeId
+}
+
+func (p *ParserState) Consume(tokenType int) *core.Token {
 	current := p.next
 	if current == nil || p.err {
 		// EOF reached
@@ -67,12 +76,13 @@ func (p *ParserState) Consume(tokenType int) *lexer.Token {
 	}
 	return current
 }
+
 func (p *ParserState) Lookahead(value LLkLookahead) int {
 	for i, option := range value {
 	outer:
 		for _, path := range option {
 			for j, tokenType := range path {
-				if p.LA(j+1) != tokenType {
+				if p.LAId(j+1) != tokenType {
 					continue outer
 				}
 			}

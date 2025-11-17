@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/TypeFox/langium-to-go/ast"
+	"github.com/TypeFox/langium-to-go/core"
 	"github.com/TypeFox/langium-to-go/internal/generated"
 )
 
@@ -48,16 +48,16 @@ func WriteSB(sb *strings.Builder, texts ...string) {
 	}
 }
 
-func Traverse(node ast.AstNode, fn func(ast.AstNode)) {
+func Traverse(node core.AstNode, fn func(core.AstNode)) {
 	fn(node)
-	node.ForEachNode(func(child ast.AstNode) {
+	node.ForEachNode(func(child core.AstNode) {
 		Traverse(child, fn)
 	})
 }
 
 func GetAllKeywords(grammar generated.Grammar) []generated.Keyword {
 	keywords := map[string]generated.Keyword{}
-	Traverse(grammar, func(node ast.AstNode) {
+	Traverse(grammar, func(node core.AstNode) {
 		if keyword, ok := node.(generated.Keyword); ok {
 			keywords[keyword.Value()] = keyword
 		}

@@ -6,12 +6,14 @@ package lexer
 
 import (
 	"unicode/utf8"
+
+	"github.com/TypeFox/langium-to-go/core"
 )
 
 type LexerResult struct {
-	Tokens []*Token
+	Tokens []*core.Token
 	Errors []*LexerError
-	Groups map[int][]*Token
+	Groups map[int][]*core.Token
 }
 
 type LexerError struct {
@@ -41,15 +43,15 @@ type Lexer interface {
 }
 
 type lexer struct {
-	tokenTypes []*TokenType
-	tokenMap   [][]*TokenType
+	tokenTypes []*core.TokenType
+	tokenMap   [][]*core.TokenType
 }
 
 func (l *lexer) Lex(input string) *LexerResult {
 	length := len(input)
-	tokens := make([]*Token, 0, length/5) // rough estimate
+	tokens := make([]*core.Token, 0, length/5) // rough estimate
 	errors := make([]*LexerError, 0)
-	groups := make(map[int][]*Token)
+	groups := make(map[int][]*core.Token)
 
 	var offset, line, column int
 	line = 0
@@ -62,7 +64,7 @@ func (l *lexer) Lex(input string) *LexerResult {
 		mapIndex := int(r) % maxChar
 		candidates := l.tokenMap[mapIndex]
 		longestMatch := 0
-		var longestType *TokenType
+		var longestType *core.TokenType
 		for _, tokenType := range candidates {
 			tokenMatch := tokenType.Match(input, offset)
 			if tokenMatch > longestMatch {
@@ -90,7 +92,7 @@ func (l *lexer) Lex(input string) *LexerResult {
 
 		if longestType != nil {
 			if !longestType.IsSkipped() {
-				tokens = append(tokens, NewToken(
+				tokens = append(tokens, core.NewToken(
 					longestType,
 					input[offset:end],
 					offset, end,
@@ -123,10 +125,10 @@ func (l *lexer) Lex(input string) *LexerResult {
 
 const maxChar = 256
 
-func NewLexer(tokenTypes ...*TokenType) Lexer {
-	tokenMap := make([][]*TokenType, maxChar)
+func NewLexer(tokenTypes ...*core.TokenType) Lexer {
+	tokenMap := make([][]*core.TokenType, maxChar)
 	for i := range maxChar {
-		tokenMap[i] = make([]*TokenType, 0)
+		tokenMap[i] = make([]*core.TokenType, 0)
 	}
 	for _, tokenType := range tokenTypes {
 		for _, r := range tokenType.StartChars {

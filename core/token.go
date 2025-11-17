@@ -2,11 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package lexer
-
-import (
-	"github.com/TypeFox/langium-to-go/core"
-)
+package core
 
 const SkippedGroup = -1
 
@@ -57,9 +53,9 @@ type Token struct {
 	Type    *TokenType
 	Image   string
 	TypeId  int
-	Segment core.TextSegment
+	Segment TextSegment
 	// Semantic information
-	Element any
+	Element AstNode
 	Kind    int
 }
 
@@ -67,19 +63,19 @@ func NewToken(tokenType *TokenType, image string, startOffset, endOffset, startL
 	return &Token{
 		Type:  tokenType,
 		Image: image,
-		Segment: core.TextSegment{
-			Indices: core.TextIndexRange{
-				Start: core.TextIndex(startOffset),
-				End:   core.TextIndex(endOffset),
+		Segment: TextSegment{
+			Indices: TextIndexRange{
+				Start: TextIndex(startOffset),
+				End:   TextIndex(endOffset),
 			},
-			Range: core.TextRange{
-				Start: core.TextLocation{
-					Line:   core.TextLine(startLine),
-					Column: core.TextColumn(startColumn),
+			Range: TextRange{
+				Start: TextLocation{
+					Line:   TextLine(startLine),
+					Column: TextColumn(startColumn),
 				},
-				End: core.TextLocation{
-					Line:   core.TextLine(endLine),
-					Column: core.TextColumn(endColumn),
+				End: TextLocation{
+					Line:   TextLine(endLine),
+					Column: TextColumn(endColumn),
 				},
 			},
 		},
@@ -96,7 +92,7 @@ func (t *Token) IsEOF() bool {
 	return t.Type == EOF
 }
 
-func (t *Token) Assign(element any, kind int) {
+func (t *Token) Assign(element AstNode, kind int) {
 	t.Element = element
 	t.Kind = kind
 }

@@ -29,6 +29,8 @@ func GenerateLexer(grammar generated.Grammar) string {
 		"\"strings\"",
 		EOL,
 		EOLIndent(1),
+		"\"github.com/TypeFox/langium-to-go/core\"",
+		EOLIndent(1),
 		"\"github.com/TypeFox/langium-to-go/lexer\"",
 		EOL,
 		")",
@@ -66,7 +68,7 @@ func generateMainLexerFunction(sb *strings.Builder, tokens []generated.Token, ke
 
 func generateKeywordTokenType(sb *strings.Builder, keyword generated.Keyword, id int) {
 	WriteSB(sb, "const ", GeneratedKeywordIdxName(keyword), " = ", strconv.Itoa(id), EOL, EOL)
-	WriteSB(sb, "var ", GeneratedKeywordName(keyword), " = lexer.NewTokenType(", EOL)
+	WriteSB(sb, "var ", GeneratedKeywordName(keyword), " = core.NewTokenType(", EOL)
 	WriteSB(sb, Indent, GeneratedKeywordIdxName(keyword), ",", EOL)
 	WriteSB(sb, Indent, "\"", KeywordValue(keyword), "\",", EOL)
 	WriteSB(sb, Indent, "\"", KeywordValue(keyword), "\",", EOL)
@@ -95,7 +97,7 @@ func generateTokenType(sb *strings.Builder, token generated.Token, id int) {
 	regex = regex.Simplify()
 	WriteSB(sb, "const ", GeneratedTokenIdxName(token), " = ", strconv.Itoa(id), EOL)
 	WriteSB(sb, "var ", GeneratedTokenName(token), "_Regexp = regexp.MustCompile(`^(", regex.String(), ")`) ", EOL)
-	WriteSB(sb, "var ", GeneratedTokenName(token), " = lexer.NewTokenType(", EOL)
+	WriteSB(sb, "var ", GeneratedTokenName(token), " = core.NewTokenType(", EOL)
 	WriteSB(sb, Indent, GeneratedTokenIdxName(token), ",", EOL)
 	WriteSB(sb, Indent, "\"", token.Name(), "\",", EOL)
 	WriteSB(sb, Indent, "\"", token.Name(), "\",", EOL)

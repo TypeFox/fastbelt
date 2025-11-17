@@ -1,7 +1,7 @@
 package generated
 
 import (
-	"github.com/TypeFox/langium-to-go/lexer"
+	"github.com/TypeFox/langium-to-go/core"
 	"github.com/TypeFox/langium-to-go/parser"
 )
 
@@ -9,7 +9,7 @@ type Parser struct {
 	state *parser.ParserState
 }
 
-func (p *Parser) Parse(tokens []*lexer.Token) Grammar {
+func (p *Parser) Parse(tokens []*core.Token) Grammar {
 	p.state = parser.NewParserState(tokens)
 	return p.ParseGrammar()
 }
@@ -186,20 +186,21 @@ var TokenLookahead5 = parser.LLkLookahead{
 
 func (p *Parser) ParseGrammar() Grammar {
 	node := NewGrammar()
+	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_grammar_Idx)
-		node.WithToken(token, Grammargrammar_0)
+		core.AssignToken(node, token, Grammargrammar_0)
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		node.WithToken(token, GrammarNameID_0)
+		core.AssignToken(node, token, GrammarNameID_0)
 		if token != nil {
 			node.WithName(token)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_Semicolon_Idx)
-		node.WithToken(token, GrammarSemicolon_0)
+		core.AssignToken(node, token, GrammarSemicolon_0)
 	}
 	for p.state.Lookahead(GrammarLookahead0) == 0 {
 		switch p.state.Lookahead(GrammarLookaheadOr0) {
@@ -226,18 +227,20 @@ func (p *Parser) ParseGrammar() Grammar {
 			}
 		}
 	}
+	node.WithSegmentEndToken(p.state.LA(0))
 	return node
 }
 
 func (p *Parser) ParseInterface() Interface {
 	node := NewInterface()
+	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_interface_Idx)
-		node.WithToken(token, Interfaceinterface_0)
+		core.AssignToken(node, token, Interfaceinterface_0)
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		node.WithToken(token, InterfaceNameID_0)
+		core.AssignToken(node, token, InterfaceNameID_0)
 		if token != nil {
 			node.WithName(token)
 		}
@@ -245,11 +248,11 @@ func (p *Parser) ParseInterface() Interface {
 	if p.state.Lookahead(InterfaceLookahead1) == 0 {
 		{
 			token := p.state.Consume(Keyword_extends_Idx)
-			node.WithToken(token, Interfaceextends_0)
+			core.AssignToken(node, token, Interfaceextends_0)
 		}
 		{
 			token := p.state.Consume(Token_ID_Idx)
-			node.WithToken(token, InterfaceExtendsID_0)
+			core.AssignToken(node, token, InterfaceExtendsID_0)
 			if token != nil {
 				node.WithExtendsItem(token)
 			}
@@ -257,11 +260,11 @@ func (p *Parser) ParseInterface() Interface {
 		for p.state.Lookahead(InterfaceLookahead2) == 0 {
 			{
 				token := p.state.Consume(Keyword_Comma_Idx)
-				node.WithToken(token, InterfaceComma_0)
+				core.AssignToken(node, token, InterfaceComma_0)
 			}
 			{
 				token := p.state.Consume(Token_ID_Idx)
-				node.WithToken(token, InterfaceExtendsID_1)
+				core.AssignToken(node, token, InterfaceExtendsID_1)
 				if token != nil {
 					node.WithExtendsItem(token)
 				}
@@ -270,7 +273,7 @@ func (p *Parser) ParseInterface() Interface {
 	}
 	{
 		token := p.state.Consume(Keyword_LeftBrace_Idx)
-		node.WithToken(token, InterfaceLeftBrace_0)
+		core.AssignToken(node, token, InterfaceLeftBrace_0)
 	}
 	{
 		for p.state.Lookahead(InterfaceLookahead3) == 0 {
@@ -282,16 +285,18 @@ func (p *Parser) ParseInterface() Interface {
 	}
 	{
 		token := p.state.Consume(Keyword_RightBrace_Idx)
-		node.WithToken(token, InterfaceRightBrace_0)
+		core.AssignToken(node, token, InterfaceRightBrace_0)
 	}
+	node.WithSegmentEndToken(p.state.LA(0))
 	return node
 }
 
 func (p *Parser) ParseField() Field {
 	node := NewField()
+	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		node.WithToken(token, FieldNameID_0)
+		core.AssignToken(node, token, FieldNameID_0)
 		if token != nil {
 			node.WithName(token)
 		}
@@ -299,49 +304,51 @@ func (p *Parser) ParseField() Field {
 	if p.state.Lookahead(FieldLookahead4) == 0 {
 		{
 			token := p.state.Consume(Keyword_LeftBracket_Idx)
-			node.WithToken(token, FieldArrayLeftBracket_0)
+			core.AssignToken(node, token, FieldArrayLeftBracket_0)
 			if token != nil {
 				node.WithArray(token)
 			}
 		}
 		{
 			token := p.state.Consume(Keyword_RightBracket_Idx)
-			node.WithToken(token, FieldRightBracket_0)
+			core.AssignToken(node, token, FieldRightBracket_0)
 		}
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		node.WithToken(token, FieldTypeID_0)
+		core.AssignToken(node, token, FieldTypeID_0)
 		if token != nil {
 			node.WithType(token)
 		}
 	}
+	node.WithSegmentEndToken(p.state.LA(0))
 	return node
 }
 
 func (p *Parser) ParseParserRule() ParserRule {
 	node := NewParserRule()
+	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		node.WithToken(token, ParserRuleNameID_0)
+		core.AssignToken(node, token, ParserRuleNameID_0)
 		if token != nil {
 			node.WithName(token)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_returns_Idx)
-		node.WithToken(token, ParserRulereturns_0)
+		core.AssignToken(node, token, ParserRulereturns_0)
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		node.WithToken(token, ParserRuleReturnTypeID_0)
+		core.AssignToken(node, token, ParserRuleReturnTypeID_0)
 		if token != nil {
 			node.WithReturnType(token)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_Colon_Idx)
-		node.WithToken(token, ParserRuleColon_0)
+		core.AssignToken(node, token, ParserRuleColon_0)
 	}
 	{
 		result := p.ParseAlternatives()
@@ -351,17 +358,19 @@ func (p *Parser) ParseParserRule() ParserRule {
 	}
 	{
 		token := p.state.Consume(Keyword_Semicolon_Idx)
-		node.WithToken(token, ParserRuleSemicolon_0)
+		core.AssignToken(node, token, ParserRuleSemicolon_0)
 	}
+	node.WithSegmentEndToken(p.state.LA(0))
 	return node
 }
 
 func (p *Parser) ParseToken() Token {
 	node := NewToken()
+	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		if p.state.Lookahead(TokenLookahead5) == 0 {
 			token := p.state.Consume(Keyword_hidden_Idx)
-			node.WithToken(token, TokenTypehidden_0)
+			core.AssignToken(node, token, TokenTypehidden_0)
 			if token != nil {
 				node.WithType(token)
 			}
@@ -369,35 +378,37 @@ func (p *Parser) ParseToken() Token {
 	}
 	{
 		token := p.state.Consume(Keyword_token_Idx)
-		node.WithToken(token, Tokentoken_0)
+		core.AssignToken(node, token, Tokentoken_0)
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		node.WithToken(token, TokenNameID_0)
+		core.AssignToken(node, token, TokenNameID_0)
 		if token != nil {
 			node.WithName(token)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_Colon_Idx)
-		node.WithToken(token, TokenColon_0)
+		core.AssignToken(node, token, TokenColon_0)
 	}
 	{
 		token := p.state.Consume(Token_RegexLiteral_Idx)
-		node.WithToken(token, TokenRegexpRegexLiteral_0)
+		core.AssignToken(node, token, TokenRegexpRegexLiteral_0)
 		if token != nil {
 			node.WithRegexp(token)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_Semicolon_Idx)
-		node.WithToken(token, TokenSemicolon_0)
+		core.AssignToken(node, token, TokenSemicolon_0)
 	}
+	node.WithSegmentEndToken(p.state.LA(0))
 	return node
 }
 
 func (p *Parser) ParseAlternatives() Alternatives {
 	node := NewAlternatives()
+	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		result := p.ParseGroup()
 		if result != nil {
@@ -407,7 +418,7 @@ func (p *Parser) ParseAlternatives() Alternatives {
 	for p.state.Lookahead(AlternativesLookahead6) == 0 {
 		{
 			token := p.state.Consume(Keyword_Pipe_Idx)
-			node.WithToken(token, AlternativesPipe_0)
+			core.AssignToken(node, token, AlternativesPipe_0)
 		}
 		{
 			result := p.ParseGroup()
@@ -416,11 +427,13 @@ func (p *Parser) ParseAlternatives() Alternatives {
 			}
 		}
 	}
+	node.WithSegmentEndToken(p.state.LA(0))
 	return node
 }
 
 func (p *Parser) ParseGroup() Group {
 	node := NewGroup()
+	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		for ok := true; ok; ok = p.state.Lookahead(GroupLookahead7) == 0 {
 			result := p.ParseElement()
@@ -429,87 +442,93 @@ func (p *Parser) ParseGroup() Group {
 			}
 		}
 	}
+	node.WithSegmentEndToken(p.state.LA(0))
 	return node
 }
 
 func (p *Parser) ParseElement() Element {
 	node := NewElement()
+	node.WithSegmentStartToken(p.state.LA(1))
 	switch p.state.Lookahead(ElementLookaheadOr1) {
 	case 0:
 		{
 			result := p.ParseKeyword()
-			result.WithTokens(node.Tokens())
+			core.AssignTokens(result, node.Tokens())
 			node = result
 		}
 	case 1:
 		{
 			result := p.ParseAssignment()
-			result.WithTokens(node.Tokens())
+			core.AssignTokens(result, node.Tokens())
 			node = result
 		}
 	case 2:
 		{
 			result := p.ParseRuleCall()
-			result.WithTokens(node.Tokens())
+			core.AssignTokens(result, node.Tokens())
 			node = result
 		}
 	case 3:
 		{
 			result := p.ParseAction()
-			result.WithTokens(node.Tokens())
+			core.AssignTokens(result, node.Tokens())
 			node = result
 		}
 	case 4:
 		{
 			token := p.state.Consume(Keyword_LeftParen_Idx)
-			node.WithToken(token, ElementLeftParen_0)
+			core.AssignToken(node, token, ElementLeftParen_0)
 		}
 		{
 			result := p.ParseAlternatives()
-			result.WithTokens(node.Tokens())
+			core.AssignTokens(result, node.Tokens())
 			node = result
 		}
 		{
 			token := p.state.Consume(Keyword_RightParen_Idx)
-			node.WithToken(token, ElementRightParen_0)
+			core.AssignToken(node, token, ElementRightParen_0)
 		}
 	}
 	{
 		if p.state.Lookahead(ElementLookahead8) == 0 {
 			token := p.state.Consume(Token_Cardinality_Idx)
-			node.WithToken(token, ElementCardinalityCardinality_0)
+			core.AssignToken(node, token, ElementCardinalityCardinality_0)
 			if token != nil {
 				node.WithCardinality(token)
 			}
 		}
 	}
+	node.WithSegmentEndToken(p.state.LA(0))
 	return node
 }
 
 func (p *Parser) ParseKeyword() Keyword {
 	node := NewKeyword()
+	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Token_String_Idx)
-		node.WithToken(token, KeywordValueString_0)
+		core.AssignToken(node, token, KeywordValueString_0)
 		if token != nil {
 			node.WithValue(token)
 		}
 	}
+	node.WithSegmentEndToken(p.state.LA(0))
 	return node
 }
 
 func (p *Parser) ParseAssignment() Assignment {
 	node := NewAssignment()
+	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		node.WithToken(token, AssignmentPropertyID_0)
+		core.AssignToken(node, token, AssignmentPropertyID_0)
 		if token != nil {
 			node.WithProperty(token)
 		}
 	}
 	{
 		token := p.state.Consume(Token_AssignmentOperator_Idx)
-		node.WithToken(token, AssignmentOperatorAssignmentOperator_0)
+		core.AssignToken(node, token, AssignmentOperatorAssignmentOperator_0)
 		if token != nil {
 			node.WithOperator(token)
 		}
@@ -520,43 +539,47 @@ func (p *Parser) ParseAssignment() Assignment {
 			node.WithValue(result)
 		}
 	}
+	node.WithSegmentEndToken(p.state.LA(0))
 	return node
 }
 
 func (p *Parser) ParseAssignable() Assignable {
 	node := NewAssignable()
+	node.WithSegmentStartToken(p.state.LA(1))
 	switch p.state.Lookahead(AssignableLookaheadOr2) {
 	case 0:
 		{
 			result := p.ParseKeyword()
-			result.WithTokens(node.Tokens())
+			core.AssignTokens(result, node.Tokens())
 			node = result
 		}
 	case 1:
 		{
 			result := p.ParseRuleCall()
-			result.WithTokens(node.Tokens())
+			core.AssignTokens(result, node.Tokens())
 			node = result
 		}
 	case 2:
 		{
 			result := p.ParseCrossRef()
-			result.WithTokens(node.Tokens())
+			core.AssignTokens(result, node.Tokens())
 			node = result
 		}
 	}
+	node.WithSegmentEndToken(p.state.LA(0))
 	return node
 }
 
 func (p *Parser) ParseCrossRef() CrossRef {
 	node := NewCrossRef()
+	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_LeftBracket_Idx)
-		node.WithToken(token, CrossRefLeftBracket_0)
+		core.AssignToken(node, token, CrossRefLeftBracket_0)
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		node.WithToken(token, CrossRefTypeID_0)
+		core.AssignToken(node, token, CrossRefTypeID_0)
 		if token != nil {
 			node.WithType(token)
 		}
@@ -564,7 +587,7 @@ func (p *Parser) ParseCrossRef() CrossRef {
 	if p.state.Lookahead(CrossRefLookahead9) == 0 {
 		{
 			token := p.state.Consume(Keyword_Colon_Idx)
-			node.WithToken(token, CrossRefColon_0)
+			core.AssignToken(node, token, CrossRefColon_0)
 		}
 		{
 			result := p.ParseRuleCall()
@@ -575,32 +598,36 @@ func (p *Parser) ParseCrossRef() CrossRef {
 	}
 	{
 		token := p.state.Consume(Keyword_RightBracket_Idx)
-		node.WithToken(token, CrossRefRightBracket_0)
+		core.AssignToken(node, token, CrossRefRightBracket_0)
 	}
+	node.WithSegmentEndToken(p.state.LA(0))
 	return node
 }
 
 func (p *Parser) ParseRuleCall() RuleCall {
 	node := NewRuleCall()
+	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		node.WithToken(token, RuleCallRuleID_0)
+		core.AssignToken(node, token, RuleCallRuleID_0)
 		if token != nil {
 			node.WithRule(token)
 		}
 	}
+	node.WithSegmentEndToken(p.state.LA(0))
 	return node
 }
 
 func (p *Parser) ParseAction() Action {
 	node := NewAction()
+	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_LeftBrace_Idx)
-		node.WithToken(token, ActionLeftBrace_0)
+		core.AssignToken(node, token, ActionLeftBrace_0)
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		node.WithToken(token, ActionTypeID_0)
+		core.AssignToken(node, token, ActionTypeID_0)
 		if token != nil {
 			node.WithType(token)
 		}
@@ -608,11 +635,11 @@ func (p *Parser) ParseAction() Action {
 	if p.state.Lookahead(ActionLookahead10) == 0 {
 		{
 			token := p.state.Consume(Keyword_Dot_Idx)
-			node.WithToken(token, ActionDot_0)
+			core.AssignToken(node, token, ActionDot_0)
 		}
 		{
 			token := p.state.Consume(Token_ID_Idx)
-			node.WithToken(token, ActionPropertyID_0)
+			core.AssignToken(node, token, ActionPropertyID_0)
 			if token != nil {
 				node.WithProperty(token)
 			}
@@ -620,7 +647,8 @@ func (p *Parser) ParseAction() Action {
 	}
 	{
 		token := p.state.Consume(Keyword_RightBrace_Idx)
-		node.WithToken(token, ActionRightBrace_0)
+		core.AssignToken(node, token, ActionRightBrace_0)
 	}
+	node.WithSegmentEndToken(p.state.LA(0))
 	return node
 }

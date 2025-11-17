@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/TypeFox/langium-to-go/ast"
+	"github.com/TypeFox/langium-to-go/core"
 	"github.com/TypeFox/langium-to-go/generator"
 	"github.com/TypeFox/langium-to-go/internal/generated"
 )
@@ -17,9 +17,9 @@ import (
 type ParserGeneratorContext struct {
 	grammar            generated.Grammar
 	accessNamesCounter map[string]int
-	accessNames        map[ast.AstNode]string
-	lookaheads         map[ast.AstNode]LookaheadValue
-	orLookaheads       map[ast.AstNode]LookaheadValue
+	accessNames        map[core.AstNode]string
+	lookaheads         map[core.AstNode]LookaheadValue
+	orLookaheads       map[core.AstNode]LookaheadValue
 }
 
 type LookaheadValue struct {
@@ -27,7 +27,7 @@ type LookaheadValue struct {
 	llk  LLkLookahead
 }
 
-func (context *ParserGeneratorContext) SetAccessName(node ast.AstNode, name string) {
+func (context *ParserGeneratorContext) SetAccessName(node core.AstNode, name string) {
 	index := context.accessNamesCounter[name]
 	context.accessNames[node] = name + "_" + strconv.Itoa(index)
 	index++
@@ -38,9 +38,9 @@ func GenerateParser(grammar generated.Grammar) string {
 	context := &ParserGeneratorContext{
 		grammar:            grammar,
 		accessNamesCounter: make(map[string]int),
-		accessNames:        make(map[ast.AstNode]string),
-		lookaheads:         make(map[ast.AstNode]LookaheadValue),
-		orLookaheads:       make(map[ast.AstNode]LookaheadValue),
+		accessNames:        make(map[core.AstNode]string),
+		lookaheads:         make(map[core.AstNode]LookaheadValue),
+		orLookaheads:       make(map[core.AstNode]LookaheadValue),
 	}
 	populateContext(context)
 	node := generator.NewNode()
@@ -48,7 +48,7 @@ func GenerateParser(grammar generated.Grammar) string {
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("\"github.com/TypeFox/langium-to-go/lexer\"")
+		n.AppendLine("\"github.com/TypeFox/langium-to-go/core\"")
 		n.AppendLine("\"github.com/TypeFox/langium-to-go/parser\"")
 	})
 	node.AppendLine(")")
@@ -61,7 +61,7 @@ func GenerateParser(grammar generated.Grammar) string {
 	node.AppendLine("}")
 	node.AppendLine()
 	firstRule := grammar.Rules()[0]
-	node.AppendLine("func (p *Parser) Parse(tokens []*lexer.Token) ", firstRule.Name(), " {")
+	node.AppendLine("func (p *Parser) Parse(tokens []*core.Token) ", firstRule.Name(), " {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("p.state = parser.NewParserState(tokens)")
 		n.AppendLine("return p.Parse", firstRule.Name(), "()")
@@ -125,7 +125,7 @@ func populateContext(context *ParserGeneratorContext) {
 	}
 }
 
-func populateContextWithNode(context *ParserGeneratorContext, prefix string, node ast.AstNode) {
+func populateContextWithNode(context *ParserGeneratorContext, prefix string, node core.AstNode) {
 	if _, exists := context.accessNames[node]; exists {
 		return
 	}
@@ -183,7 +183,9 @@ func generateParseFunction(node generator.Node, context *ParserGeneratorContext,
 	node.AppendLine("func (p *Parser) Parse", rule.Name(), "() ", rule.ReturnType(), " {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("node := New", rule.ReturnType(), "()")
+		n.AppendLine("node.WithSegmentStartToken(p.state.LA(1))")
 		generateAbstractElementParser(n, context, rule.Body())
+		n.AppendLine("node.WithSegmentEndToken(p.state.LA(0))")
 		n.AppendLine("return node")
 	})
 	node.AppendLine("}")
@@ -203,7 +205,7 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 			} else if ruleCall, ok := element.(generated.RuleCall); ok {
 				resultName := generateRuleCallParser(indent, context, ruleCall)
 				if resultName == "result" {
-					indent.AppendLine("result.WithTokens(node.Tokens())")
+					indent.AppendLine("core.AssignTokens(result, node.Tokens())")
 					indent.AppendLine("node = result")
 				}
 			} else if assignment, ok := element.(generated.Assignment); ok {
@@ -258,7 +260,7 @@ func generateKeywordParser(node generator.Node, context *ParserGeneratorContext,
 	lookahead := "p.state.LA(1) == " + GeneratedKeywordIdxName(keyword)
 	generateCardinality(node, func(n generator.Node) {
 		n.AppendLine("token := p.state.Consume(", GeneratedKeywordIdxName(keyword), ")")
-		n.AppendLine("node.WithToken(token, ", context.accessNames[keyword], ")")
+		n.AppendLine("core.AssignToken(node, token, ", context.accessNames[keyword], ")")
 	}, func(n generator.Node) { n.Append(lookahead) }, keyword.Cardinality())
 	return "token"
 }
@@ -285,7 +287,7 @@ func generateRuleCallParser(node generator.Node, context *ParserGeneratorContext
 		}
 		if token != nil {
 			n.AppendLine("token ", eq, " p.state.Consume(", GeneratedTokenIdxName(token), ")")
-			n.AppendLine("node.WithToken(token, ", context.accessNames[ruleCall], ")")
+			n.AppendLine("core.AssignToken(node, token, ", context.accessNames[ruleCall], ")")
 		} else if rule != nil {
 			n.AppendLine("result ", eq, " p.Parse", rule.Name(), "()")
 		}

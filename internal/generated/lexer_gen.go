@@ -4,12 +4,13 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/TypeFox/langium-to-go/core"
 	"github.com/TypeFox/langium-to-go/lexer"
 )
 
 const Keyword_LeftParen_Idx = 1
 
-var Keyword_LeftParen = lexer.NewTokenType(
+var Keyword_LeftParen = core.NewTokenType(
 	Keyword_LeftParen_Idx,
 	"(",
 	"(",
@@ -29,7 +30,7 @@ var Keyword_LeftParen = lexer.NewTokenType(
 
 const Keyword_RightParen_Idx = 2
 
-var Keyword_RightParen = lexer.NewTokenType(
+var Keyword_RightParen = core.NewTokenType(
 	Keyword_RightParen_Idx,
 	")",
 	")",
@@ -49,7 +50,7 @@ var Keyword_RightParen = lexer.NewTokenType(
 
 const Keyword_Comma_Idx = 3
 
-var Keyword_Comma = lexer.NewTokenType(
+var Keyword_Comma = core.NewTokenType(
 	Keyword_Comma_Idx,
 	",",
 	",",
@@ -69,7 +70,7 @@ var Keyword_Comma = lexer.NewTokenType(
 
 const Keyword_Dot_Idx = 4
 
-var Keyword_Dot = lexer.NewTokenType(
+var Keyword_Dot = core.NewTokenType(
 	Keyword_Dot_Idx,
 	".",
 	".",
@@ -89,7 +90,7 @@ var Keyword_Dot = lexer.NewTokenType(
 
 const Keyword_Colon_Idx = 5
 
-var Keyword_Colon = lexer.NewTokenType(
+var Keyword_Colon = core.NewTokenType(
 	Keyword_Colon_Idx,
 	":",
 	":",
@@ -109,7 +110,7 @@ var Keyword_Colon = lexer.NewTokenType(
 
 const Keyword_Semicolon_Idx = 6
 
-var Keyword_Semicolon = lexer.NewTokenType(
+var Keyword_Semicolon = core.NewTokenType(
 	Keyword_Semicolon_Idx,
 	";",
 	";",
@@ -129,7 +130,7 @@ var Keyword_Semicolon = lexer.NewTokenType(
 
 const Keyword_LeftBracket_Idx = 7
 
-var Keyword_LeftBracket = lexer.NewTokenType(
+var Keyword_LeftBracket = core.NewTokenType(
 	Keyword_LeftBracket_Idx,
 	"[",
 	"[",
@@ -149,7 +150,7 @@ var Keyword_LeftBracket = lexer.NewTokenType(
 
 const Keyword_RightBracket_Idx = 8
 
-var Keyword_RightBracket = lexer.NewTokenType(
+var Keyword_RightBracket = core.NewTokenType(
 	Keyword_RightBracket_Idx,
 	"]",
 	"]",
@@ -169,7 +170,7 @@ var Keyword_RightBracket = lexer.NewTokenType(
 
 const Keyword_extends_Idx = 9
 
-var Keyword_extends = lexer.NewTokenType(
+var Keyword_extends = core.NewTokenType(
 	Keyword_extends_Idx,
 	"extends",
 	"extends",
@@ -189,7 +190,7 @@ var Keyword_extends = lexer.NewTokenType(
 
 const Keyword_grammar_Idx = 10
 
-var Keyword_grammar = lexer.NewTokenType(
+var Keyword_grammar = core.NewTokenType(
 	Keyword_grammar_Idx,
 	"grammar",
 	"grammar",
@@ -209,7 +210,7 @@ var Keyword_grammar = lexer.NewTokenType(
 
 const Keyword_hidden_Idx = 11
 
-var Keyword_hidden = lexer.NewTokenType(
+var Keyword_hidden = core.NewTokenType(
 	Keyword_hidden_Idx,
 	"hidden",
 	"hidden",
@@ -229,7 +230,7 @@ var Keyword_hidden = lexer.NewTokenType(
 
 const Keyword_interface_Idx = 12
 
-var Keyword_interface = lexer.NewTokenType(
+var Keyword_interface = core.NewTokenType(
 	Keyword_interface_Idx,
 	"interface",
 	"interface",
@@ -249,7 +250,7 @@ var Keyword_interface = lexer.NewTokenType(
 
 const Keyword_returns_Idx = 13
 
-var Keyword_returns = lexer.NewTokenType(
+var Keyword_returns = core.NewTokenType(
 	Keyword_returns_Idx,
 	"returns",
 	"returns",
@@ -269,7 +270,7 @@ var Keyword_returns = lexer.NewTokenType(
 
 const Keyword_token_Idx = 14
 
-var Keyword_token = lexer.NewTokenType(
+var Keyword_token = core.NewTokenType(
 	Keyword_token_Idx,
 	"token",
 	"token",
@@ -289,7 +290,7 @@ var Keyword_token = lexer.NewTokenType(
 
 const Keyword_LeftBrace_Idx = 15
 
-var Keyword_LeftBrace = lexer.NewTokenType(
+var Keyword_LeftBrace = core.NewTokenType(
 	Keyword_LeftBrace_Idx,
 	"{",
 	"{",
@@ -309,7 +310,7 @@ var Keyword_LeftBrace = lexer.NewTokenType(
 
 const Keyword_Pipe_Idx = 16
 
-var Keyword_Pipe = lexer.NewTokenType(
+var Keyword_Pipe = core.NewTokenType(
 	Keyword_Pipe_Idx,
 	"|",
 	"|",
@@ -329,7 +330,7 @@ var Keyword_Pipe = lexer.NewTokenType(
 
 const Keyword_RightBrace_Idx = 17
 
-var Keyword_RightBrace = lexer.NewTokenType(
+var Keyword_RightBrace = core.NewTokenType(
 	Keyword_RightBrace_Idx,
 	"}",
 	"}",
@@ -350,7 +351,7 @@ var Keyword_RightBrace = lexer.NewTokenType(
 const Token_AssignmentOperator_Idx = 18
 
 var Token_AssignmentOperator_Regexp = regexp.MustCompile(`^(=|\+=|\?=)`)
-var Token_AssignmentOperator = lexer.NewTokenType(
+var Token_AssignmentOperator = core.NewTokenType(
 	Token_AssignmentOperator_Idx,
 	"AssignmentOperator",
 	"AssignmentOperator",
@@ -372,7 +373,7 @@ var Token_AssignmentOperator = lexer.NewTokenType(
 const Token_Cardinality_Idx = 19
 
 var Token_Cardinality_Regexp = regexp.MustCompile(`^([\*\+\?])`)
-var Token_Cardinality = lexer.NewTokenType(
+var Token_Cardinality = core.NewTokenType(
 	Token_Cardinality_Idx,
 	"Cardinality",
 	"Cardinality",
@@ -394,7 +395,7 @@ var Token_Cardinality = lexer.NewTokenType(
 const Token_String_Idx = 20
 
 var Token_String_Regexp = regexp.MustCompile(`^("[^"]+")`)
-var Token_String = lexer.NewTokenType(
+var Token_String = core.NewTokenType(
 	Token_String_Idx,
 	"String",
 	"String",
@@ -416,7 +417,7 @@ var Token_String = lexer.NewTokenType(
 const Token_ID_Idx = 21
 
 var Token_ID_Regexp = regexp.MustCompile(`^([A-Z_a-z][0-9A-Z_a-z]*)`)
-var Token_ID = lexer.NewTokenType(
+var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
 	"ID",
 	"ID",
@@ -443,7 +444,7 @@ var Token_ID = lexer.NewTokenType(
 const Token_RegexLiteral_Idx = 22
 
 var Token_RegexLiteral_Regexp = regexp.MustCompile(`^((?-s:/([^\n\r/\[\\]|\\.|\[([^\n\r\\\]]|\\.)*\])+/))`)
-var Token_RegexLiteral = lexer.NewTokenType(
+var Token_RegexLiteral = core.NewTokenType(
 	Token_RegexLiteral_Idx,
 	"RegexLiteral",
 	"RegexLiteral",
@@ -465,7 +466,7 @@ var Token_RegexLiteral = lexer.NewTokenType(
 const Token_WS_Idx = 23
 
 var Token_WS_Regexp = regexp.MustCompile(`^([\t\n\r ]+)`)
-var Token_WS = lexer.NewTokenType(
+var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
 	"WS",
 	"WS",
