@@ -64,7 +64,9 @@ func GenerateParser(grammar generated.Grammar) string {
 	node.AppendLine("func (p *Parser) Parse(tokens []*core.Token) ", firstRule.Name(), " {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("p.state = parser.NewParserState(tokens)")
-		n.AppendLine("return p.Parse", firstRule.Name(), "()")
+		n.AppendLine("result := p.Parse", firstRule.Name(), "()")
+		n.AppendLine("core.AssignContainers(result)")
+		n.AppendLine("return result")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
@@ -197,6 +199,23 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 		generateAlternativesParser(node, context, alts)
 	} else if group, ok := element.(generated.Group); ok {
 		generateGroupParser(node, context, group)
+	} else if action, ok := element.(generated.Action); ok {
+		node.AppendLine("{")
+		node.Indent(func(n generator.Node) {
+			n.AppendLine("result := New", action.Type(), "()")
+			if action.Property() != "" {
+				if action.Operator() == "+=" {
+					n.AppendLine("result.With", action.Property(), "Item(node)")
+				} else {
+					n.AppendLine("result.With", action.Property(), "(node)")
+				}
+				n.AppendLine("node = result")
+			} else {
+				n.AppendLine("core.AssignTokens(result, node.Tokens())")
+				n.AppendLine("node = result")
+			}
+		})
+		node.AppendLine("}")
 	} else {
 		node.AppendLine("{")
 		node.Indent(func(indent generator.Node) {
@@ -209,23 +228,28 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 					indent.AppendLine("node = result")
 				}
 			} else if assignment, ok := element.(generated.Assignment); ok {
+				previousAction := getPreviousAction(element)
 				generateCardinality(indent, func(n generator.Node) {
 					resultName := generateAssignable(n, context, assignment.Value())
 					n.AppendLine("if ", resultName, " != nil {")
 					n.Indent(func(in generator.Node) {
+						in.Append("node.")
+						if previousAction != nil {
+							in.Append("(", previousAction.Type(), ").")
+						}
 						switch assignment.Operator() {
 						case "+=":
 							// Append to slice
-							in.AppendLine("node.With", assignment.Property(), "Item(", resultName, ")")
+							in.AppendLine("With", assignment.Property(), "Item(", resultName, ")")
 						default:
 							// Single assignment
-							in.AppendLine("node.With", assignment.Property(), "(", resultName, ")")
+							in.AppendLine("With", assignment.Property(), "(", resultName, ")")
 						}
 					})
 					n.AppendLine("}")
 				}, func(n generator.Node) {
 					lookaheadName := context.lookaheads[element].name
-					lookahead := generateLookaheadString2(lookaheadName)
+					lookahead := generateLookaheadString(lookaheadName)
 					n.Append(lookahead)
 				}, element.Cardinality())
 			}
@@ -251,9 +275,15 @@ func generateCrossReferenceParser(node generator.Node, context *ParserGeneratorC
 }
 
 func generateGroupParser(node generator.Node, context *ParserGeneratorContext, group generated.Group) {
-	for _, element := range group.Elements() {
-		generateAbstractElementParser(node, context, element)
-	}
+	lookaheadName := context.lookaheads[group].name
+	lookahead := generateLookaheadString(lookaheadName)
+	generateCardinality(node, func(n generator.Node) {
+		for _, element := range group.Elements() {
+			generateAbstractElementParser(n, context, element)
+		}
+	}, func(n generator.Node) {
+		n.Append(lookahead)
+	}, group.Cardinality())
 }
 
 func generateKeywordParser(node generator.Node, context *ParserGeneratorContext, keyword generated.Keyword) string {
@@ -269,7 +299,7 @@ func generateRuleCallParser(node generator.Node, context *ParserGeneratorContext
 	token := getTokenWithName(context.grammar, ruleCall.Rule())
 	rule := getRuleWithName(context.grammar, ruleCall.Rule())
 	lookaheadName := context.lookaheads[ruleCall].name
-	lookahead := generateLookaheadString2(lookaheadName)
+	lookahead := generateLookaheadString(lookaheadName)
 	var result string
 	if token != nil {
 		result = "token"
@@ -295,27 +325,13 @@ func generateRuleCallParser(node generator.Node, context *ParserGeneratorContext
 	return result
 }
 
-func generateLookaheadString2(name string) string {
+func generateLookaheadString(name string) string {
 	return "p.state.Lookahead(" + name + ") == 0"
 }
 
 func generateAlternativesParser(node generator.Node, context *ParserGeneratorContext, alts generated.Alternatives) {
-	if len(alts.Alts()) == 0 {
-		// Empty alts?
-		return
-	}
-	if len(alts.Alts()) == 1 {
-		lookaheadName := context.lookaheads[alts].name
-		lookahead := generateLookaheadString2(lookaheadName)
-		generateCardinality(node, func(n generator.Node) {
-			generateAbstractElementParser(n, context, alts.Alts()[0])
-		}, func(n generator.Node) {
-			n.Append(lookahead)
-		}, alts.Cardinality())
-		return
-	}
 	allLookaheadName := context.lookaheads[alts].name
-	allLookahead := generateLookaheadString2(allLookaheadName)
+	allLookahead := generateLookaheadString(allLookaheadName)
 	lookaheadName := context.orLookaheads[alts].name
 	generateCardinality(node, func(n generator.Node) {
 		n.AppendLine("switch p.state.Lookahead(", lookaheadName, ") {")
@@ -549,6 +565,32 @@ func getRuleWithName(grammar generated.Grammar, name string) generated.ParserRul
 		if r.Name() == name {
 			return r
 		}
+	}
+	return nil
+}
+
+func getPreviousAction(node core.AstNode) generated.Action {
+	container := node.Container()
+	if container == nil {
+		return nil
+	}
+	if group, ok := container.(generated.Group); ok {
+		elements := group.Elements()
+		for i, element := range elements {
+			if element == node {
+				if i > 0 {
+					for j := i - 1; j >= 0; j-- {
+						if action, ok := elements[j].(generated.Action); ok {
+							return action
+						}
+					}
+				}
+				break
+			}
+		}
+		return getPreviousAction(container)
+	} else if _, ok := container.(generated.Alternatives); ok {
+		return getPreviousAction(container)
 	}
 	return nil
 }

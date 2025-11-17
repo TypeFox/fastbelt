@@ -148,3 +148,10 @@ func AssignTokens(node AstNode, tokens []*Token) {
 		}
 	}
 }
+
+func AssignContainers(root AstNode) {
+	root.ForEachNode(func(child AstNode) {
+		child.WithContainer(root)
+		AssignContainers(child)
+	})
+}

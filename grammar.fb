@@ -34,7 +34,7 @@ Field returns Field: Name=ID (Array?="[" "]")? Type=ID;
 interface ParserRule {
     Name string
     ReturnType string
-    Body Alternatives
+    Body Element
 }
 
 ParserRule returns ParserRule: Name=ID "returns" ReturnType=ID ":" Body=Alternatives ";";
@@ -52,16 +52,16 @@ interface Element {
 }
 
 interface Alternatives extends Element {
-    Alts []Group
+    Alts []Element
 }
 
-Alternatives returns Alternatives: Alts+=Group ("|" Alts+=Group)*;
+Alternatives returns Element: Group ({Alternatives.Alts+=current} ("|" Alts+=Group)+)?;
 
 interface Group extends Element {
     Elements []Element
 }
 
-Group returns Group: Elements+=Element+;
+Group returns Element: Element ({Group.Elements+=current} Elements+=Element+)?;
 
 Element returns Element: (Keyword | Assignment | RuleCall | Action | "(" Alternatives ")") Cardinality=Cardinality?;
 
@@ -98,10 +98,11 @@ RuleCall returns RuleCall: Rule=ID;
 
 interface Action extends Element {
     Type string
+    Operator string
     Property string
 }
 
-Action returns Action: "{" Type=ID ("." Property=ID)? "}";
+Action returns Action: "{" Type=ID ("." Property=ID Operator=AssignmentOperator "current")? "}";
 
 token AssignmentOperator: /=|\+=|\?=/;
 token Cardinality: /[*+?]/;

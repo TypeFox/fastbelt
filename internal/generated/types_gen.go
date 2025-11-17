@@ -286,8 +286,8 @@ type ParserRule interface {
 	ReturnType() string
 	ReturnTypeToken() *core.Token
 	WithReturnType(value *core.Token)
-	Body() Alternatives
-	WithBody(value Alternatives)
+	Body() Element
+	WithBody(value Element)
 }
 
 func NewParserRule() ParserRule {
@@ -300,7 +300,7 @@ func NewParserRule() ParserRule {
 type ParserRuleData struct {
 	name       *core.Token
 	returnType *core.Token
-	body       Alternatives
+	body       Element
 }
 
 func NewParserRuleData() ParserRuleData {
@@ -347,7 +347,7 @@ func (i *ParserRuleData) WithReturnType(value *core.Token) {
 	i.returnType = value
 }
 
-func (i *ParserRuleData) Body() Alternatives {
+func (i *ParserRuleData) Body() Element {
 	if i != nil && i.body != nil {
 		return i.body
 	} else {
@@ -355,7 +355,7 @@ func (i *ParserRuleData) Body() Alternatives {
 	}
 }
 
-func (i *ParserRuleData) WithBody(value Alternatives) {
+func (i *ParserRuleData) WithBody(value Element) {
 	i.body = value
 }
 
@@ -521,8 +521,8 @@ type Alternatives interface {
 	Element
 
 	IsAlternatives()
-	Alts() []Group
-	WithAltsItem(item Group)
+	Alts() []Element
+	WithAltsItem(item Element)
 }
 
 func NewAlternatives() Alternatives {
@@ -534,12 +534,12 @@ func NewAlternatives() Alternatives {
 }
 
 type AlternativesData struct {
-	alts []Group
+	alts []Element
 }
 
 func NewAlternativesData() AlternativesData {
 	return AlternativesData{
-		alts: []Group{},
+		alts: []Element{},
 	}
 }
 
@@ -551,11 +551,11 @@ func (i *AlternativesData) ForEachNode(fn func(core.AstNode)) {
 	}
 }
 
-func (i *AlternativesData) Alts() []Group {
+func (i *AlternativesData) Alts() []Element {
 	return i.alts
 }
 
-func (i *AlternativesData) WithAltsItem(item Group) {
+func (i *AlternativesData) WithAltsItem(item Element) {
 	i.alts = append(i.alts, item)
 }
 
@@ -962,6 +962,9 @@ type Action interface {
 	Type() string
 	TypeToken() *core.Token
 	WithType(value *core.Token)
+	Operator() string
+	OperatorToken() *core.Token
+	WithOperator(value *core.Token)
 	Property() string
 	PropertyToken() *core.Token
 	WithProperty(value *core.Token)
@@ -977,6 +980,7 @@ func NewAction() Action {
 
 type ActionData struct {
 	_Type    *core.Token
+	operator *core.Token
 	property *core.Token
 }
 
@@ -1003,6 +1007,22 @@ func (i *ActionData) TypeToken() *core.Token {
 
 func (i *ActionData) WithType(value *core.Token) {
 	i._Type = value
+}
+
+func (i *ActionData) Operator() string {
+	if i != nil && i.operator != nil {
+		return i.operator.Image
+	} else {
+		return ""
+	}
+}
+
+func (i *ActionData) OperatorToken() *core.Token {
+	return i.operator
+}
+
+func (i *ActionData) WithOperator(value *core.Token) {
+	i.operator = value
 }
 
 func (i *ActionData) Property() string {

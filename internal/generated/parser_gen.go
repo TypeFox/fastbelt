@@ -11,7 +11,9 @@ type Parser struct {
 
 func (p *Parser) Parse(tokens []*core.Token) Grammar {
 	p.state = parser.NewParserState(tokens)
-	return p.ParseGrammar()
+	result := p.ParseGrammar()
+	core.AssignContainers(result)
+	return result
 }
 
 func NewParser() *Parser {
@@ -21,9 +23,11 @@ func NewParser() *Parser {
 const (
 	ActionDot_0 = iota + 1
 	ActionLeftBrace_0
+	ActionOperatorAssignmentOperator_0
 	ActionPropertyID_0
 	ActionRightBrace_0
 	ActionTypeID_0
+	Actioncurrent_0
 	AlternativesPipe_0
 	AssignmentOperatorAssignmentOperator_0
 	AssignmentPropertyID_0
@@ -64,13 +68,19 @@ const (
 	Tokentoken_0
 )
 
-var ActionLookahead10 = parser.LLkLookahead{
+var ActionLookahead12 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_Dot_Idx},
 	},
 }
 
 var AlternativesLookahead6 = parser.LLkLookahead{
+	parser.LookaheadOption{
+		parser.LookaheadPath{Keyword_Pipe_Idx},
+	},
+}
+
+var AlternativesLookahead7 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_Pipe_Idx},
 	},
@@ -88,13 +98,13 @@ var AssignableLookaheadOr2 = parser.LLkLookahead{
 	},
 }
 
-var CrossRefLookahead9 = parser.LLkLookahead{
+var CrossRefLookahead11 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_Colon_Idx},
 	},
 }
 
-var ElementLookahead8 = parser.LLkLookahead{
+var ElementLookahead10 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Token_Cardinality_Idx},
 	},
@@ -150,7 +160,17 @@ var GrammarLookaheadOr0 = parser.LLkLookahead{
 	},
 }
 
-var GroupLookahead7 = parser.LLkLookahead{
+var GroupLookahead8 = parser.LLkLookahead{
+	parser.LookaheadOption{
+		parser.LookaheadPath{Token_String_Idx},
+		parser.LookaheadPath{Token_ID_Idx},
+		parser.LookaheadPath{Token_ID_Idx},
+		parser.LookaheadPath{Keyword_LeftBrace_Idx},
+		parser.LookaheadPath{Keyword_LeftParen_Idx},
+	},
+}
+
+var GroupLookahead9 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Token_String_Idx},
 		parser.LookaheadPath{Token_ID_Idx},
@@ -406,24 +426,30 @@ func (p *Parser) ParseToken() Token {
 	return node
 }
 
-func (p *Parser) ParseAlternatives() Alternatives {
-	node := NewAlternatives()
+func (p *Parser) ParseAlternatives() Element {
+	node := NewElement()
 	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		result := p.ParseGroup()
-		if result != nil {
-			node.WithAltsItem(result)
-		}
+		core.AssignTokens(result, node.Tokens())
+		node = result
 	}
-	for p.state.Lookahead(AlternativesLookahead6) == 0 {
+	if p.state.Lookahead(AlternativesLookahead6) == 0 {
 		{
-			token := p.state.Consume(Keyword_Pipe_Idx)
-			core.AssignToken(node, token, AlternativesPipe_0)
+			result := NewAlternatives()
+			result.WithAltsItem(node)
+			node = result
 		}
-		{
-			result := p.ParseGroup()
-			if result != nil {
-				node.WithAltsItem(result)
+		for ok := true; ok; ok = p.state.Lookahead(AlternativesLookahead7) == 0 {
+			{
+				token := p.state.Consume(Keyword_Pipe_Idx)
+				core.AssignToken(node, token, AlternativesPipe_0)
+			}
+			{
+				result := p.ParseGroup()
+				if result != nil {
+					node.(Alternatives).WithAltsItem(result)
+				}
 			}
 		}
 	}
@@ -431,14 +457,26 @@ func (p *Parser) ParseAlternatives() Alternatives {
 	return node
 }
 
-func (p *Parser) ParseGroup() Group {
-	node := NewGroup()
+func (p *Parser) ParseGroup() Element {
+	node := NewElement()
 	node.WithSegmentStartToken(p.state.LA(1))
 	{
-		for ok := true; ok; ok = p.state.Lookahead(GroupLookahead7) == 0 {
-			result := p.ParseElement()
-			if result != nil {
-				node.WithElementsItem(result)
+		result := p.ParseElement()
+		core.AssignTokens(result, node.Tokens())
+		node = result
+	}
+	if p.state.Lookahead(GroupLookahead8) == 0 {
+		{
+			result := NewGroup()
+			result.WithElementsItem(node)
+			node = result
+		}
+		{
+			for ok := true; ok; ok = p.state.Lookahead(GroupLookahead9) == 0 {
+				result := p.ParseElement()
+				if result != nil {
+					node.(Group).WithElementsItem(result)
+				}
 			}
 		}
 	}
@@ -490,7 +528,7 @@ func (p *Parser) ParseElement() Element {
 		}
 	}
 	{
-		if p.state.Lookahead(ElementLookahead8) == 0 {
+		if p.state.Lookahead(ElementLookahead10) == 0 {
 			token := p.state.Consume(Token_Cardinality_Idx)
 			core.AssignToken(node, token, ElementCardinalityCardinality_0)
 			if token != nil {
@@ -584,7 +622,7 @@ func (p *Parser) ParseCrossRef() CrossRef {
 			node.WithType(token)
 		}
 	}
-	if p.state.Lookahead(CrossRefLookahead9) == 0 {
+	if p.state.Lookahead(CrossRefLookahead11) == 0 {
 		{
 			token := p.state.Consume(Keyword_Colon_Idx)
 			core.AssignToken(node, token, CrossRefColon_0)
@@ -632,7 +670,7 @@ func (p *Parser) ParseAction() Action {
 			node.WithType(token)
 		}
 	}
-	if p.state.Lookahead(ActionLookahead10) == 0 {
+	if p.state.Lookahead(ActionLookahead12) == 0 {
 		{
 			token := p.state.Consume(Keyword_Dot_Idx)
 			core.AssignToken(node, token, ActionDot_0)
@@ -643,6 +681,17 @@ func (p *Parser) ParseAction() Action {
 			if token != nil {
 				node.WithProperty(token)
 			}
+		}
+		{
+			token := p.state.Consume(Token_AssignmentOperator_Idx)
+			core.AssignToken(node, token, ActionOperatorAssignmentOperator_0)
+			if token != nil {
+				node.WithOperator(token)
+			}
+		}
+		{
+			token := p.state.Consume(Keyword_current_Idx)
+			core.AssignToken(node, token, Actioncurrent_0)
 		}
 	}
 	{
