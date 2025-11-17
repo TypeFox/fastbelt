@@ -180,6 +180,9 @@ func (s *DefaultLanguageServer) Diagnostic(ctx context.Context, params *protocol
 	return nil, nil
 }
 func (s *DefaultLanguageServer) DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams) error {
+	if s.srv.TextDocuments != nil {
+		s.srv.TextDocuments.DidSave(ctx, params)
+	}
 	return nil
 }
 func (s *DefaultLanguageServer) DocumentColor(ctx context.Context, params *protocol.DocumentColorParams) ([]protocol.ColorInformation, error) {
@@ -306,10 +309,16 @@ func (s *DefaultLanguageServer) TypeDefinition(ctx context.Context, params *prot
 	return nil, nil
 }
 func (s *DefaultLanguageServer) WillSave(ctx context.Context, params *protocol.WillSaveTextDocumentParams) error {
+	if s.srv.TextDocuments != nil {
+		s.srv.TextDocuments.WillSave(ctx, params)
+	}
 	return nil
 }
 func (s *DefaultLanguageServer) WillSaveWaitUntil(ctx context.Context, params *protocol.WillSaveTextDocumentParams) ([]protocol.TextEdit, error) {
-	return nil, nil
+	if s.srv.TextDocuments != nil {
+		return s.srv.TextDocuments.WillSaveWaitUntil(ctx, params)
+	}
+	return []protocol.TextEdit{}, nil
 }
 func (s *DefaultLanguageServer) Subtypes(ctx context.Context, params *protocol.TypeHierarchySubtypesParams) ([]protocol.TypeHierarchyItem, error) {
 	return nil, nil
