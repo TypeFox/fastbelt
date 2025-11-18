@@ -230,23 +230,24 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 			} else if assignment, ok := element.(generated.Assignment); ok {
 				previousAction := getPreviousAction(element)
 				generateCardinality(indent, func(n generator.Node) {
-					resultName := generateAssignable(n, context, assignment.Value())
-					n.AppendLine("if ", resultName, " != nil {")
-					n.Indent(func(in generator.Node) {
-						in.Append("node.")
-						if previousAction != nil {
-							in.Append("(", previousAction.Type(), ").")
-						}
-						switch assignment.Operator() {
-						case "+=":
-							// Append to slice
-							in.AppendLine("With", assignment.Property(), "Item(", resultName, ")")
-						default:
-							// Single assignment
-							in.AppendLine("With", assignment.Property(), "(", resultName, ")")
-						}
+					generateAssignable(n, context, assignment.Value(), func(n2 generator.Node, resultName string) {
+						n2.AppendLine("if ", resultName, " != nil {")
+						n2.Indent(func(in generator.Node) {
+							in.Append("node.")
+							if previousAction != nil {
+								in.Append("(", previousAction.Type(), ").")
+							}
+							switch assignment.Operator() {
+							case "+=":
+								// Append to slice
+								in.AppendLine("With", assignment.Property(), "Item(", resultName, ")")
+							default:
+								// Single assignment
+								in.AppendLine("With", assignment.Property(), "(", resultName, ")")
+							}
+						})
+						n2.AppendLine("}")
 					})
-					n.AppendLine("}")
 				}, func(n generator.Node) {
 					lookaheadName := context.lookaheads[element].name
 					lookahead := generateLookaheadString(lookaheadName)
@@ -258,16 +259,35 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 	}
 }
 
-func generateAssignable(node generator.Node, context *ParserGeneratorContext, assignable generated.Assignable) string {
+func generateAssignable(node generator.Node, context *ParserGeneratorContext, assignable generated.Assignable, cb func(node generator.Node, resultName string)) {
 	if crossRef, ok := assignable.(generated.CrossRef); ok {
-		return generateCrossReferenceParser(node, context, crossRef)
+		resultName := generateCrossReferenceParser(node, context, crossRef)
+		cb(node, resultName)
 	} else if keyword, ok := assignable.(generated.Keyword); ok {
-		return generateKeywordParser(node, context, keyword)
+		resultName := generateKeywordParser(node, context, keyword)
+		cb(node, resultName)
 	} else if ruleCall, ok := assignable.(generated.RuleCall); ok {
-		return generateRuleCallParser(node, context, ruleCall)
+		resultName := generateRuleCallParser(node, context, ruleCall)
+		cb(node, resultName)
+	} else if alts, ok := assignable.(generated.Alternatives); ok {
+		generateAssignableAlternatives(node, context, alts, cb)
 	} else {
 		panic("Unresolved assignment assignable")
 	}
+}
+
+func generateAssignableAlternatives(node generator.Node, context *ParserGeneratorContext, alts generated.Alternatives, cb func(node generator.Node, resultName string)) {
+	lookaheadName := context.orLookaheads[alts].name
+	node.AppendLine("switch p.state.Lookahead(", lookaheadName, ") {")
+	for i, alt := range alts.Alts() {
+		node.AppendLine("case ", strconv.Itoa(i), ":")
+		node.Indent(func(in generator.Node) {
+			if assignable, ok := alt.(generated.Assignable); ok {
+				generateAssignable(in, context, assignable, cb)
+			}
+		})
+	}
+	node.AppendLine("}")
 }
 
 func generateCrossReferenceParser(node generator.Node, context *ParserGeneratorContext, crossRef generated.CrossRef) string {
@@ -439,6 +459,12 @@ func possiblePathsFrom(grammar generated.Grammar, maxLength int, elements []gene
 					result = getAlternativesFor(grammar, result, remain, maxLength, currPath)
 					return result
 				}
+			} else if alts, ok := assignment.Value().(generated.Alternatives); ok {
+				for _, alt := range alts.Alts() {
+					remain := remainingPathWith([]generated.Element{alt}, elements, i)
+					result = getAlternativesFor(grammar, result, remain, maxLength, currPath)
+				}
+				return result
 			}
 		} else if ruleCall, ok := element.(generated.RuleCall); ok {
 			token := getTokenWithName(grammar, ruleCall.Rule())
@@ -466,11 +492,7 @@ type LookaheadOption []LookaheadPath
 type LLkLookahead []LookaheadOption
 
 func GetLLkLookaheadOr(grammar generated.Grammar, element generated.Alternatives) LLkLookahead {
-	elements := []generated.Element{}
-	for _, alt := range element.Alts() {
-		elements = append(elements, alt)
-	}
-	return generateCommonLLkLookahead(grammar, elements)
+	return generateCommonLLkLookahead(grammar, element.Alts())
 }
 
 func generateCommonLLkLookahead(grammar generated.Grammar, elements []generated.Element) LLkLookahead {

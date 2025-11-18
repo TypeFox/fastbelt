@@ -518,7 +518,7 @@ func (i *ElementImpl) ForEachNode(fn func(core.AstNode)) {
 
 type Alternatives interface {
 	core.AstNode
-	Element
+	Assignable
 
 	IsAlternatives()
 	Alts() []Element
@@ -528,6 +528,7 @@ type Alternatives interface {
 func NewAlternatives() Alternatives {
 	return &AlternativesImpl{
 		AstNodeBase:      core.NewAstNode(),
+		AssignableData:   NewAssignableData(),
 		ElementData:      NewElementData(),
 		AlternativesData: NewAlternativesData(),
 	}
@@ -561,11 +562,13 @@ func (i *AlternativesData) WithAltsItem(item Element) {
 
 type AlternativesImpl struct {
 	core.AstNodeBase
+	AssignableData
 	ElementData
 	AlternativesData
 }
 
 func (i *AlternativesImpl) ForEachNode(fn func(core.AstNode)) {
+	i.AssignableData.ForEachNode(fn)
 	i.ElementData.ForEachNode(fn)
 	i.AlternativesData.ForEachNode(fn)
 }
@@ -626,7 +629,6 @@ func (i *GroupImpl) ForEachNode(fn func(core.AstNode)) {
 
 type Keyword interface {
 	core.AstNode
-	Element
 	Assignable
 
 	IsKeyword()
@@ -638,8 +640,8 @@ type Keyword interface {
 func NewKeyword() Keyword {
 	return &KeywordImpl{
 		AstNodeBase:    core.NewAstNode(),
-		ElementData:    NewElementData(),
 		AssignableData: NewAssignableData(),
+		ElementData:    NewElementData(),
 		KeywordData:    NewKeywordData(),
 	}
 }
@@ -675,14 +677,14 @@ func (i *KeywordData) WithValue(value *core.Token) {
 
 type KeywordImpl struct {
 	core.AstNodeBase
-	ElementData
 	AssignableData
+	ElementData
 	KeywordData
 }
 
 func (i *KeywordImpl) ForEachNode(fn func(core.AstNode)) {
-	i.ElementData.ForEachNode(fn)
 	i.AssignableData.ForEachNode(fn)
+	i.ElementData.ForEachNode(fn)
 	i.KeywordData.ForEachNode(fn)
 }
 
@@ -784,6 +786,7 @@ func (i *AssignmentImpl) ForEachNode(fn func(core.AstNode)) {
 
 type Assignable interface {
 	core.AstNode
+	Element
 
 	IsAssignable()
 }
@@ -791,6 +794,7 @@ type Assignable interface {
 func NewAssignable() Assignable {
 	return &AssignableImpl{
 		AstNodeBase:    core.NewAstNode(),
+		ElementData:    NewElementData(),
 		AssignableData: NewAssignableData(),
 	}
 }
@@ -809,10 +813,12 @@ func (i *AssignableData) ForEachNode(fn func(core.AstNode)) {
 
 type AssignableImpl struct {
 	core.AstNodeBase
+	ElementData
 	AssignableData
 }
 
 func (i *AssignableImpl) ForEachNode(fn func(core.AstNode)) {
+	i.ElementData.ForEachNode(fn)
 	i.AssignableData.ForEachNode(fn)
 }
 
@@ -832,6 +838,7 @@ func NewCrossRef() CrossRef {
 	return &CrossRefImpl{
 		AstNodeBase:    core.NewAstNode(),
 		AssignableData: NewAssignableData(),
+		ElementData:    NewElementData(),
 		CrossRefData:   NewCrossRefData(),
 	}
 }
@@ -884,17 +891,18 @@ func (i *CrossRefData) WithRule(value RuleCall) {
 type CrossRefImpl struct {
 	core.AstNodeBase
 	AssignableData
+	ElementData
 	CrossRefData
 }
 
 func (i *CrossRefImpl) ForEachNode(fn func(core.AstNode)) {
 	i.AssignableData.ForEachNode(fn)
+	i.ElementData.ForEachNode(fn)
 	i.CrossRefData.ForEachNode(fn)
 }
 
 type RuleCall interface {
 	core.AstNode
-	Element
 	Assignable
 
 	IsRuleCall()
@@ -906,8 +914,8 @@ type RuleCall interface {
 func NewRuleCall() RuleCall {
 	return &RuleCallImpl{
 		AstNodeBase:    core.NewAstNode(),
-		ElementData:    NewElementData(),
 		AssignableData: NewAssignableData(),
+		ElementData:    NewElementData(),
 		RuleCallData:   NewRuleCallData(),
 	}
 }
@@ -943,14 +951,14 @@ func (i *RuleCallData) WithRule(value *core.Token) {
 
 type RuleCallImpl struct {
 	core.AstNodeBase
-	ElementData
 	AssignableData
+	ElementData
 	RuleCallData
 }
 
 func (i *RuleCallImpl) ForEachNode(fn func(core.AstNode)) {
-	i.ElementData.ForEachNode(fn)
 	i.AssignableData.ForEachNode(fn)
+	i.ElementData.ForEachNode(fn)
 	i.RuleCallData.ForEachNode(fn)
 }
 

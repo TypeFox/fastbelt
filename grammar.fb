@@ -51,7 +51,7 @@ interface Element {
     Cardinality string
 }
 
-interface Alternatives extends Element {
+interface Alternatives extends Assignable {
     Alts []Element
 }
 
@@ -63,9 +63,9 @@ interface Group extends Element {
 
 Group returns Element: Element ({Group.Elements+=current} Elements+=Element+)?;
 
-Element returns Element: (Keyword | Assignment | RuleCall | Action | "(" Alternatives ")") Cardinality=Cardinality?;
+Element returns Element: (Keyword | Assignment | RuleCall | Action | "(" Alternatives ")") Cardinality=("*" | "+" | "?")?;
 
-interface Keyword extends Element, Assignable {
+interface Keyword extends Assignable {
     Value string
 }
 
@@ -77,11 +77,15 @@ interface Assignment extends Element {
     Value Assignable
 }
 
-Assignment returns Assignment: Property=ID Operator=AssignmentOperator Value=Assignable;
+Assignment returns Assignment: Property=ID Operator=("+=" | "=" | "?=") Value=Assignable;
 
-interface Assignable {}
+interface Assignable extends Element {}
 
-Assignable returns Assignable: Keyword | RuleCall | CrossRef;
+Assignable returns Assignable: Keyword | RuleCall | CrossRef | "(" AssignableAlternatives ")";
+
+AssignableWithoutAlts returns Assignable: Keyword | RuleCall | CrossRef;
+
+AssignableAlternatives returns Assignable: AssignableWithoutAlts ({Alternatives.Alts+=current} ("|" Alts+=AssignableWithoutAlts)+)?;
 
 interface CrossRef extends Assignable {
     Type string
@@ -90,7 +94,7 @@ interface CrossRef extends Assignable {
 
 CrossRef returns CrossRef: "[" Type=ID (":" Rule=RuleCall)? "]";
 
-interface RuleCall extends Element, Assignable {
+interface RuleCall extends Assignable {
     Rule string
 }
 
@@ -102,10 +106,8 @@ interface Action extends Element {
     Property string
 }
 
-Action returns Action: "{" Type=ID ("." Property=ID Operator=AssignmentOperator "current")? "}";
+Action returns Action: "{" Type=ID ("." Property=ID Operator=("+=" | "=") "current")? "}";
 
-token AssignmentOperator: /=|\+=|\?=/;
-token Cardinality: /[*+?]/;
 token String: /"[^"]+"/;
 token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
 token RegexLiteral: /\/([^\r\n\[\/\\]|\\.|\[([^\r\n\]\\]|\\.)*\])+\//;

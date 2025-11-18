@@ -5,6 +5,7 @@
 package generator
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/TypeFox/langium-to-go/generator"
@@ -102,6 +103,26 @@ func getFieldInfo(field generated.Field) FieldInfo {
 	}
 }
 
+func getAllExtends(grammar generated.Grammar, iface generated.Interface) []string {
+	result := []string{}
+	return llExtends(grammar, iface, result)
+}
+
+func llExtends(grammar generated.Grammar, iface generated.Interface, result []string) []string {
+	for _, ext := range iface.Extends() {
+		if slices.Contains(result, ext.Image) {
+			continue
+		}
+		result = append(result, ext.Image)
+		for _, parentExt := range grammar.Interfaces() {
+			if parentExt.Name() == ext.Image {
+				result = llExtends(grammar, parentExt, result)
+			}
+		}
+	}
+	return result
+}
+
 func generateInterface(node generator.Node, grammar generated.Grammar, iface generated.Interface) {
 	fields := []FieldInfo{}
 	for _, field := range iface.Fields() {
@@ -147,8 +168,8 @@ func generateInterface(node generator.Node, grammar generated.Grammar, iface gen
 		n.AppendLine("return &", iface.Name(), "Impl{")
 		n.Indent(func(n2 generator.Node) {
 			n2.AppendLine("AstNodeBase: core.NewAstNode(),")
-			for _, extend := range iface.Extends() {
-				n2.AppendLine(extend.Image, "Data: New", extend.Image, "Data(),")
+			for _, extend := range getAllExtends(grammar, iface) {
+				n2.AppendLine(extend, "Data: New", extend, "Data(),")
 			}
 			n2.AppendLine(iface.Name(), "Data: New", iface.Name(), "Data(),")
 		})
@@ -157,15 +178,15 @@ func generateInterface(node generator.Node, grammar generated.Grammar, iface gen
 	node.AppendLine("}")
 	node.AppendLine()
 	generateDataStruct(node, iface, fields)
-	generateImplStruct(node, iface, fields)
+	generateImplStruct(node, grammar, iface, fields)
 }
 
-func generateImplStruct(node generator.Node, iface generated.Interface, fields []FieldInfo) {
+func generateImplStruct(node generator.Node, grammar generated.Grammar, iface generated.Interface, fields []FieldInfo) {
 	node.AppendLine("type ", iface.Name(), "Impl struct {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("core.AstNodeBase")
-		for _, extends := range iface.Extends() {
-			n.AppendLine(extends.Image, "Data")
+		for _, extends := range getAllExtends(grammar, iface) {
+			n.AppendLine(extends, "Data")
 		}
 		n.AppendLine(iface.Name(), "Data")
 	})
@@ -174,8 +195,8 @@ func generateImplStruct(node generator.Node, iface generated.Interface, fields [
 
 	node.AppendLine("func (i *", iface.Name(), "Impl) ForEachNode(fn func(core.AstNode)) {")
 	node.Indent(func(n generator.Node) {
-		for _, extends := range iface.Extends() {
-			n.AppendLine("i.", extends.Image, "Data.ForEachNode(fn)")
+		for _, extends := range getAllExtends(grammar, iface) {
+			n.AppendLine("i.", extends, "Data.ForEachNode(fn)")
 		}
 		n.AppendLine("i.", iface.Name(), "Data.ForEachNode(fn)")
 	})

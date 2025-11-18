@@ -48,7 +48,67 @@ var Keyword_RightParen = core.NewTokenType(
 	},
 )
 
-const Keyword_Comma_Idx = 3
+const Keyword_Asterisk_Idx = 3
+
+var Keyword_Asterisk = core.NewTokenType(
+	Keyword_Asterisk_Idx,
+	"*",
+	"*",
+	0,
+	0,
+	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "*") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{
+		'*',
+	},
+)
+
+const Keyword_Plus_Idx = 4
+
+var Keyword_Plus = core.NewTokenType(
+	Keyword_Plus_Idx,
+	"+",
+	"+",
+	0,
+	0,
+	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "+") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{
+		'+',
+	},
+)
+
+const Keyword_PlusEquals_Idx = 5
+
+var Keyword_PlusEquals = core.NewTokenType(
+	Keyword_PlusEquals_Idx,
+	"+=",
+	"+=",
+	0,
+	0,
+	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "+=") {
+			return 2
+		}
+		return 0
+	},
+	[]rune{
+		'+',
+	},
+)
+
+const Keyword_Comma_Idx = 6
 
 var Keyword_Comma = core.NewTokenType(
 	Keyword_Comma_Idx,
@@ -68,7 +128,7 @@ var Keyword_Comma = core.NewTokenType(
 	},
 )
 
-const Keyword_Dot_Idx = 4
+const Keyword_Dot_Idx = 7
 
 var Keyword_Dot = core.NewTokenType(
 	Keyword_Dot_Idx,
@@ -88,7 +148,7 @@ var Keyword_Dot = core.NewTokenType(
 	},
 )
 
-const Keyword_Colon_Idx = 5
+const Keyword_Colon_Idx = 8
 
 var Keyword_Colon = core.NewTokenType(
 	Keyword_Colon_Idx,
@@ -108,7 +168,7 @@ var Keyword_Colon = core.NewTokenType(
 	},
 )
 
-const Keyword_Semicolon_Idx = 6
+const Keyword_Semicolon_Idx = 9
 
 var Keyword_Semicolon = core.NewTokenType(
 	Keyword_Semicolon_Idx,
@@ -128,7 +188,67 @@ var Keyword_Semicolon = core.NewTokenType(
 	},
 )
 
-const Keyword_LeftBracket_Idx = 7
+const Keyword_Equals_Idx = 10
+
+var Keyword_Equals = core.NewTokenType(
+	Keyword_Equals_Idx,
+	"=",
+	"=",
+	0,
+	0,
+	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "=") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{
+		'=',
+	},
+)
+
+const Keyword_Question_Idx = 11
+
+var Keyword_Question = core.NewTokenType(
+	Keyword_Question_Idx,
+	"?",
+	"?",
+	0,
+	0,
+	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "?") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{
+		'?',
+	},
+)
+
+const Keyword_QuestionEquals_Idx = 12
+
+var Keyword_QuestionEquals = core.NewTokenType(
+	Keyword_QuestionEquals_Idx,
+	"?=",
+	"?=",
+	0,
+	0,
+	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "?=") {
+			return 2
+		}
+		return 0
+	},
+	[]rune{
+		'?',
+	},
+)
+
+const Keyword_LeftBracket_Idx = 13
 
 var Keyword_LeftBracket = core.NewTokenType(
 	Keyword_LeftBracket_Idx,
@@ -148,7 +268,7 @@ var Keyword_LeftBracket = core.NewTokenType(
 	},
 )
 
-const Keyword_RightBracket_Idx = 8
+const Keyword_RightBracket_Idx = 14
 
 var Keyword_RightBracket = core.NewTokenType(
 	Keyword_RightBracket_Idx,
@@ -168,7 +288,7 @@ var Keyword_RightBracket = core.NewTokenType(
 	},
 )
 
-const Keyword_current_Idx = 9
+const Keyword_current_Idx = 15
 
 var Keyword_current = core.NewTokenType(
 	Keyword_current_Idx,
@@ -188,7 +308,7 @@ var Keyword_current = core.NewTokenType(
 	},
 )
 
-const Keyword_extends_Idx = 10
+const Keyword_extends_Idx = 16
 
 var Keyword_extends = core.NewTokenType(
 	Keyword_extends_Idx,
@@ -208,7 +328,7 @@ var Keyword_extends = core.NewTokenType(
 	},
 )
 
-const Keyword_grammar_Idx = 11
+const Keyword_grammar_Idx = 17
 
 var Keyword_grammar = core.NewTokenType(
 	Keyword_grammar_Idx,
@@ -228,7 +348,7 @@ var Keyword_grammar = core.NewTokenType(
 	},
 )
 
-const Keyword_hidden_Idx = 12
+const Keyword_hidden_Idx = 18
 
 var Keyword_hidden = core.NewTokenType(
 	Keyword_hidden_Idx,
@@ -248,7 +368,7 @@ var Keyword_hidden = core.NewTokenType(
 	},
 )
 
-const Keyword_interface_Idx = 13
+const Keyword_interface_Idx = 19
 
 var Keyword_interface = core.NewTokenType(
 	Keyword_interface_Idx,
@@ -268,7 +388,7 @@ var Keyword_interface = core.NewTokenType(
 	},
 )
 
-const Keyword_returns_Idx = 14
+const Keyword_returns_Idx = 20
 
 var Keyword_returns = core.NewTokenType(
 	Keyword_returns_Idx,
@@ -288,7 +408,7 @@ var Keyword_returns = core.NewTokenType(
 	},
 )
 
-const Keyword_token_Idx = 15
+const Keyword_token_Idx = 21
 
 var Keyword_token = core.NewTokenType(
 	Keyword_token_Idx,
@@ -308,7 +428,7 @@ var Keyword_token = core.NewTokenType(
 	},
 )
 
-const Keyword_LeftBrace_Idx = 16
+const Keyword_LeftBrace_Idx = 22
 
 var Keyword_LeftBrace = core.NewTokenType(
 	Keyword_LeftBrace_Idx,
@@ -328,7 +448,7 @@ var Keyword_LeftBrace = core.NewTokenType(
 	},
 )
 
-const Keyword_Pipe_Idx = 17
+const Keyword_Pipe_Idx = 23
 
 var Keyword_Pipe = core.NewTokenType(
 	Keyword_Pipe_Idx,
@@ -348,7 +468,7 @@ var Keyword_Pipe = core.NewTokenType(
 	},
 )
 
-const Keyword_RightBrace_Idx = 18
+const Keyword_RightBrace_Idx = 24
 
 var Keyword_RightBrace = core.NewTokenType(
 	Keyword_RightBrace_Idx,
@@ -368,51 +488,7 @@ var Keyword_RightBrace = core.NewTokenType(
 	},
 )
 
-const Token_AssignmentOperator_Idx = 19
-
-var Token_AssignmentOperator_Regexp = regexp.MustCompile(`^(=|\+=|\?=)`)
-var Token_AssignmentOperator = core.NewTokenType(
-	Token_AssignmentOperator_Idx,
-	"AssignmentOperator",
-	"AssignmentOperator",
-	0,
-	0,
-	false,
-	func(text string, offset int) int {
-		matches := Token_AssignmentOperator_Regexp.FindStringIndex(text[offset:])
-		if matches != nil {
-			return matches[1]
-		}
-		return 0
-	},
-	[]rune{
-		'+', '=', '?',
-	},
-)
-
-const Token_Cardinality_Idx = 20
-
-var Token_Cardinality_Regexp = regexp.MustCompile(`^([\*\+\?])`)
-var Token_Cardinality = core.NewTokenType(
-	Token_Cardinality_Idx,
-	"Cardinality",
-	"Cardinality",
-	0,
-	0,
-	false,
-	func(text string, offset int) int {
-		matches := Token_Cardinality_Regexp.FindStringIndex(text[offset:])
-		if matches != nil {
-			return matches[1]
-		}
-		return 0
-	},
-	[]rune{
-		'*', '+', '?',
-	},
-)
-
-const Token_String_Idx = 21
+const Token_String_Idx = 25
 
 var Token_String_Regexp = regexp.MustCompile(`^("[^"]+")`)
 var Token_String = core.NewTokenType(
@@ -434,7 +510,7 @@ var Token_String = core.NewTokenType(
 	},
 )
 
-const Token_ID_Idx = 22
+const Token_ID_Idx = 26
 
 var Token_ID_Regexp = regexp.MustCompile(`^([A-Z_a-z][0-9A-Z_a-z]*)`)
 var Token_ID = core.NewTokenType(
@@ -461,7 +537,7 @@ var Token_ID = core.NewTokenType(
 	},
 )
 
-const Token_RegexLiteral_Idx = 23
+const Token_RegexLiteral_Idx = 27
 
 var Token_RegexLiteral_Regexp = regexp.MustCompile(`^((?-s:/([^\n\r/\[\\]|\\.|\[([^\n\r\\\]]|\\.)*\])+/))`)
 var Token_RegexLiteral = core.NewTokenType(
@@ -483,7 +559,7 @@ var Token_RegexLiteral = core.NewTokenType(
 	},
 )
 
-const Token_WS_Idx = 24
+const Token_WS_Idx = 28
 
 var Token_WS_Regexp = regexp.MustCompile(`^([\t\n\r ]+)`)
 var Token_WS = core.NewTokenType(
@@ -509,10 +585,16 @@ func NewLexer() lexer.Lexer {
 	return lexer.NewLexer(
 		Keyword_LeftParen,
 		Keyword_RightParen,
+		Keyword_Asterisk,
+		Keyword_Plus,
+		Keyword_PlusEquals,
 		Keyword_Comma,
 		Keyword_Dot,
 		Keyword_Colon,
 		Keyword_Semicolon,
+		Keyword_Equals,
+		Keyword_Question,
+		Keyword_QuestionEquals,
 		Keyword_LeftBracket,
 		Keyword_RightBracket,
 		Keyword_current,
@@ -525,8 +607,6 @@ func NewLexer() lexer.Lexer {
 		Keyword_LeftBrace,
 		Keyword_Pipe,
 		Keyword_RightBrace,
-		Token_AssignmentOperator,
-		Token_Cardinality,
 		Token_String,
 		Token_ID,
 		Token_RegexLiteral,
