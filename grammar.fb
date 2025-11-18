@@ -1,0 +1,114 @@
+grammar Fastbelt;
+
+interface Grammar {
+    Name string
+    Rules []ParserRule
+    Terminals []Token
+    Interfaces []Interface
+}
+
+Grammar returns Grammar: "grammar" Name=ID ";"
+    (Rules+=ParserRule | Terminals+=Token | Interfaces+=Interface)*
+;
+
+interface Interface {
+    Name string
+    Extends []string
+    Fields []Field
+}
+
+Interface returns Interface: 
+    "interface" Name=ID ("extends" Extends+=ID ("," Extends+=ID)*)? "{"
+        Fields+=Field*
+    "}"
+;
+
+interface Field {
+    Name string
+    Array bool
+    Type string
+}
+
+Field returns Field: Name=ID (Array?="[" "]")? Type=ID;
+
+interface ParserRule {
+    Name string
+    ReturnType string
+    Body Element
+}
+
+ParserRule returns ParserRule: Name=ID "returns" ReturnType=ID ":" Body=Alternatives ";";
+
+interface Token {
+    Type string
+    Name string
+    Regexp string
+}
+
+Token returns Token: Type="hidden"? "token" Name=ID ":" Regexp=RegexLiteral ";";
+
+interface Element {
+    Cardinality string
+}
+
+interface Alternatives extends Assignable {
+    Alts []Element
+}
+
+Alternatives returns Element: Group ({Alternatives.Alts+=current} ("|" Alts+=Group)+)?;
+
+interface Group extends Element {
+    Elements []Element
+}
+
+Group returns Element: Element ({Group.Elements+=current} Elements+=Element+)?;
+
+Element returns Element: (Keyword | Assignment | RuleCall | Action | "(" Alternatives ")") Cardinality=("*" | "+" | "?")?;
+
+interface Keyword extends Assignable {
+    Value string
+}
+
+Keyword returns Keyword: Value=String;
+
+interface Assignment extends Element {
+    Property string
+    Operator string
+    Value Assignable
+}
+
+Assignment returns Assignment: Property=ID Operator=("+=" | "=" | "?=") Value=Assignable;
+
+interface Assignable extends Element {}
+
+Assignable returns Assignable: Keyword | RuleCall | CrossRef | "(" AssignableAlternatives ")";
+
+AssignableWithoutAlts returns Assignable: Keyword | RuleCall | CrossRef;
+
+AssignableAlternatives returns Assignable: AssignableWithoutAlts ({Alternatives.Alts+=current} ("|" Alts+=AssignableWithoutAlts)+)?;
+
+interface CrossRef extends Assignable {
+    Type string
+    Rule RuleCall
+}
+
+CrossRef returns CrossRef: "[" Type=ID (":" Rule=RuleCall)? "]";
+
+interface RuleCall extends Assignable {
+    Rule string
+}
+
+RuleCall returns RuleCall: Rule=ID;
+
+interface Action extends Element {
+    Type string
+    Operator string
+    Property string
+}
+
+Action returns Action: "{" Type=ID ("." Property=ID Operator=("+=" | "=") "current")? "}";
+
+token String: /"[^"]+"/;
+token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
+token RegexLiteral: /\/([^\r\n\[\/\\]|\\.|\[([^\r\n\]\\]|\\.)*\])+\//;
+hidden token WS: /[ \n\r\t]+/;
