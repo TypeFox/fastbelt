@@ -67,22 +67,25 @@ func generateMainLexerFunction(sb *strings.Builder, tokens []generated.Token, ke
 }
 
 func generateKeywordTokenType(sb *strings.Builder, keyword generated.Keyword, id int) {
+	keywordValue := KeywordValue(keyword)
 	WriteSB(sb, "const ", GeneratedKeywordIdxName(keyword), " = ", strconv.Itoa(id), EOL, EOL)
 	WriteSB(sb, "var ", GeneratedKeywordName(keyword), " = core.NewTokenType(", EOL)
 	WriteSB(sb, Indent, GeneratedKeywordIdxName(keyword), ",", EOL)
-	WriteSB(sb, Indent, "\"", KeywordValue(keyword), "\",", EOL)
-	WriteSB(sb, Indent, "\"", KeywordValue(keyword), "\",", EOL)
+	WriteSB(sb, Indent, "\"", keywordValue, "\",", EOL)
+	WriteSB(sb, Indent, "\"", keywordValue, "\",", EOL)
 	WriteSB(sb, Indent, "0,", EOL)
 	WriteSB(sb, Indent, "0,", EOL)
 	WriteSB(sb, Indent, "false,", EOL)
 	WriteSB(sb, Indent, "func (text string, offset int) int {", EOL)
-	WriteSB(sb, Indent, Indent, "if strings.HasPrefix(text[offset:], \"", KeywordValue(keyword), "\") {", EOL)
-	WriteSB(sb, Indent, Indent, Indent, "return ", strconv.Itoa(utf8.RuneCountInString(KeywordValue(keyword))), EOL)
+	WriteSB(sb, Indent, Indent, "if strings.HasPrefix(text[offset:], \"", keywordValue, "\") {", EOL)
+	// Return the length of the keyword in bytes
+	WriteSB(sb, Indent, Indent, Indent, "return ", strconv.Itoa(len(keywordValue)), EOL)
 	WriteSB(sb, Indent, Indent, "}", EOL)
 	WriteSB(sb, Indent, Indent, "return 0", EOL)
 	WriteSB(sb, Indent, "},", EOL)
 	WriteSB(sb, Indent, "[]rune{", EOLIndent(2))
-	runeArrayToString([]rune{rune(KeywordValue(keyword)[0])}, sb)
+	firstRune, _ := utf8.DecodeRune([]byte(keywordValue))
+	runeArrayToString([]rune{firstRune}, sb)
 	WriteSB(sb, EOLIndent(1), "},", EOL)
 	WriteSB(sb, ")", EOL)
 }

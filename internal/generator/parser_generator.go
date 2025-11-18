@@ -224,7 +224,7 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 			} else if ruleCall, ok := element.(generated.RuleCall); ok {
 				resultName := generateRuleCallParser(indent, context, ruleCall)
 				if resultName == "result" {
-					indent.AppendLine("core.AssignTokens(result, node.Tokens())")
+					indent.AppendLine("core.MergeTokens(result, node.Tokens())")
 					indent.AppendLine("node = result")
 				}
 			} else if assignment, ok := element.(generated.Assignment); ok {

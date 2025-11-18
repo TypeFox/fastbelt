@@ -132,9 +132,8 @@ func NewLexer(tokenTypes ...*core.TokenType) Lexer {
 	}
 	for _, tokenType := range tokenTypes {
 		for _, r := range tokenType.StartChars {
-			if r < maxChar {
-				tokenMap[int(r)] = append(tokenMap[int(r)], tokenType)
-			}
+			index := int(r) % maxChar
+			tokenMap[index] = append(tokenMap[index], tokenType)
 		}
 	}
 

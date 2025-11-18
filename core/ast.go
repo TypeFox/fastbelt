@@ -149,6 +149,13 @@ func AssignTokens(node AstNode, tokens []*Token) {
 	}
 }
 
+func MergeTokens(newNode AstNode, oldTokens []*Token) {
+	if newNode != nil && len(oldTokens) > 0 {
+		// Prepend old tokens to the new node's tokens
+		AssignTokens(newNode, append(oldTokens, newNode.Tokens()...))
+	}
+}
+
 func AssignContainers(root AstNode) {
 	root.ForEachNode(func(child AstNode) {
 		child.WithContainer(root)

@@ -503,7 +503,7 @@ func (p *Parser) ParseAlternatives() Element {
 	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		result := p.ParseGroup()
-		core.AssignTokens(result, node.Tokens())
+		core.MergeTokens(result, node.Tokens())
 		node = result
 	}
 	if p.state.Lookahead(AlternativesLookahead6) == 0 {
@@ -534,7 +534,7 @@ func (p *Parser) ParseGroup() Element {
 	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		result := p.ParseElement()
-		core.AssignTokens(result, node.Tokens())
+		core.MergeTokens(result, node.Tokens())
 		node = result
 	}
 	if p.state.Lookahead(GroupLookahead8) == 0 {
@@ -563,25 +563,25 @@ func (p *Parser) ParseElement() Element {
 	case 0:
 		{
 			result := p.ParseKeyword()
-			core.AssignTokens(result, node.Tokens())
+			core.MergeTokens(result, node.Tokens())
 			node = result
 		}
 	case 1:
 		{
 			result := p.ParseAssignment()
-			core.AssignTokens(result, node.Tokens())
+			core.MergeTokens(result, node.Tokens())
 			node = result
 		}
 	case 2:
 		{
 			result := p.ParseRuleCall()
-			core.AssignTokens(result, node.Tokens())
+			core.MergeTokens(result, node.Tokens())
 			node = result
 		}
 	case 3:
 		{
 			result := p.ParseAction()
-			core.AssignTokens(result, node.Tokens())
+			core.MergeTokens(result, node.Tokens())
 			node = result
 		}
 	case 4:
@@ -591,7 +591,7 @@ func (p *Parser) ParseElement() Element {
 		}
 		{
 			result := p.ParseAlternatives()
-			core.AssignTokens(result, node.Tokens())
+			core.MergeTokens(result, node.Tokens())
 			node = result
 		}
 		{
@@ -690,19 +690,19 @@ func (p *Parser) ParseAssignable() Assignable {
 	case 0:
 		{
 			result := p.ParseKeyword()
-			core.AssignTokens(result, node.Tokens())
+			core.MergeTokens(result, node.Tokens())
 			node = result
 		}
 	case 1:
 		{
 			result := p.ParseRuleCall()
-			core.AssignTokens(result, node.Tokens())
+			core.MergeTokens(result, node.Tokens())
 			node = result
 		}
 	case 2:
 		{
 			result := p.ParseCrossRef()
-			core.AssignTokens(result, node.Tokens())
+			core.MergeTokens(result, node.Tokens())
 			node = result
 		}
 	case 3:
@@ -712,7 +712,7 @@ func (p *Parser) ParseAssignable() Assignable {
 		}
 		{
 			result := p.ParseAssignableAlternatives()
-			core.AssignTokens(result, node.Tokens())
+			core.MergeTokens(result, node.Tokens())
 			node = result
 		}
 		{
@@ -731,19 +731,19 @@ func (p *Parser) ParseAssignableWithoutAlts() Assignable {
 	case 0:
 		{
 			result := p.ParseKeyword()
-			core.AssignTokens(result, node.Tokens())
+			core.MergeTokens(result, node.Tokens())
 			node = result
 		}
 	case 1:
 		{
 			result := p.ParseRuleCall()
-			core.AssignTokens(result, node.Tokens())
+			core.MergeTokens(result, node.Tokens())
 			node = result
 		}
 	case 2:
 		{
 			result := p.ParseCrossRef()
-			core.AssignTokens(result, node.Tokens())
+			core.MergeTokens(result, node.Tokens())
 			node = result
 		}
 	}
@@ -756,7 +756,7 @@ func (p *Parser) ParseAssignableAlternatives() Assignable {
 	node.WithSegmentStartToken(p.state.LA(1))
 	{
 		result := p.ParseAssignableWithoutAlts()
-		core.AssignTokens(result, node.Tokens())
+		core.MergeTokens(result, node.Tokens())
 		node = result
 	}
 	if p.state.Lookahead(AssignableAlternativesLookahead11) == 0 {
