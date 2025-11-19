@@ -216,6 +216,7 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 			}
 		})
 		node.AppendLine("}")
+		node.AppendLine("node := node.(", action.Type(), ")")
 	} else {
 		node.AppendLine("{")
 		node.Indent(func(indent generator.Node) {
@@ -228,22 +229,17 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 					indent.AppendLine("node = result")
 				}
 			} else if assignment, ok := element.(generated.Assignment); ok {
-				previousAction := getPreviousAction(element)
 				generateCardinality(indent, func(n generator.Node) {
 					generateAssignable(n, context, assignment.Value(), func(n2 generator.Node, resultName string) {
 						n2.AppendLine("if ", resultName, " != nil {")
 						n2.Indent(func(in generator.Node) {
-							in.Append("node.")
-							if previousAction != nil {
-								in.Append("(", previousAction.Type(), ").")
-							}
 							switch assignment.Operator() {
 							case "+=":
 								// Append to slice
-								in.AppendLine("With", assignment.Property(), "Item(", resultName, ")")
+								in.AppendLine("node.With", assignment.Property(), "Item(", resultName, ")")
 							default:
 								// Single assignment
-								in.AppendLine("With", assignment.Property(), "(", resultName, ")")
+								in.AppendLine("node.With", assignment.Property(), "(", resultName, ")")
 							}
 						})
 						n2.AppendLine("}")
@@ -587,32 +583,6 @@ func getRuleWithName(grammar generated.Grammar, name string) generated.ParserRul
 		if r.Name() == name {
 			return r
 		}
-	}
-	return nil
-}
-
-func getPreviousAction(node core.AstNode) generated.Action {
-	container := node.Container()
-	if container == nil {
-		return nil
-	}
-	if group, ok := container.(generated.Group); ok {
-		elements := group.Elements()
-		for i, element := range elements {
-			if element == node {
-				if i > 0 {
-					for j := i - 1; j >= 0; j-- {
-						if action, ok := elements[j].(generated.Action); ok {
-							return action
-						}
-					}
-				}
-				break
-			}
-		}
-		return getPreviousAction(container)
-	} else if _, ok := container.(generated.Alternatives); ok {
-		return getPreviousAction(container)
 	}
 	return nil
 }

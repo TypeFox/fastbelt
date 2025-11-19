@@ -512,6 +512,7 @@ func (p *Parser) ParseAlternatives() Element {
 			result.WithAltsItem(node)
 			node = result
 		}
+		node := node.(Alternatives)
 		for ok := true; ok; ok = p.state.Lookahead(AlternativesLookahead7) == 0 {
 			{
 				token := p.state.Consume(Keyword_Pipe_Idx)
@@ -520,7 +521,7 @@ func (p *Parser) ParseAlternatives() Element {
 			{
 				result := p.ParseGroup()
 				if result != nil {
-					node.(Alternatives).WithAltsItem(result)
+					node.WithAltsItem(result)
 				}
 			}
 		}
@@ -543,11 +544,12 @@ func (p *Parser) ParseGroup() Element {
 			result.WithElementsItem(node)
 			node = result
 		}
+		node := node.(Group)
 		{
 			for ok := true; ok; ok = p.state.Lookahead(GroupLookahead9) == 0 {
 				result := p.ParseElement()
 				if result != nil {
-					node.(Group).WithElementsItem(result)
+					node.WithElementsItem(result)
 				}
 			}
 		}
@@ -765,6 +767,7 @@ func (p *Parser) ParseAssignableAlternatives() Assignable {
 			result.WithAltsItem(node)
 			node = result
 		}
+		node := node.(Alternatives)
 		for ok := true; ok; ok = p.state.Lookahead(AssignableAlternativesLookahead12) == 0 {
 			{
 				token := p.state.Consume(Keyword_Pipe_Idx)
@@ -773,7 +776,7 @@ func (p *Parser) ParseAssignableAlternatives() Assignable {
 			{
 				result := p.ParseAssignableWithoutAlts()
 				if result != nil {
-					node.(Alternatives).WithAltsItem(result)
+					node.WithAltsItem(result)
 				}
 			}
 		}
