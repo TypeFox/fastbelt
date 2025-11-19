@@ -40,8 +40,8 @@ func (o *Overlay) Update(changes []protocol.TextDocumentContentChangeEvent, vers
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
-	if version < o.File.version {
-		return fmt.Errorf("textdoc: version %d < current version %d", version, o.File.version)
+	if version < o.version {
+		return fmt.Errorf("textdoc: version %d < current version %d", version, o.version)
 	}
 
 	for i, change := range changes {
@@ -49,7 +49,7 @@ func (o *Overlay) Update(changes []protocol.TextDocumentContentChangeEvent, vers
 			return fmt.Errorf("textdoc: change %d: %w", i, err)
 		}
 	}
-	o.File.version = version
+	o.version = version
 	return nil
 }
 
@@ -60,7 +60,7 @@ func (o *Overlay) ApplyEdits(edits []protocol.TextEdit) (string, error) {
 	o.mu.RLock()
 	defer o.mu.RUnlock()
 
-	content := o.File.content
+	content := o.content
 
 	// Sort edits by position (start line, then start character)
 	sortedEdits := make([]protocol.TextEdit, len(edits))
@@ -115,7 +115,7 @@ func (o *Overlay) ApplyEdits(edits []protocol.TextEdit) (string, error) {
 func (o *Overlay) Version() int32 {
 	o.mu.RLock()
 	defer o.mu.RUnlock()
-	return o.File.version
+	return o.version
 }
 
 // Content returns a copy of the document content as a byte slice.
@@ -154,7 +154,7 @@ func (o *Overlay) OffsetAt(position protocol.Position) int {
 
 // offsetAtLocked is the internal implementation of OffsetAt that assumes the lock is held.
 func (o *Overlay) offsetAtLocked(position protocol.Position) int {
-	return o.File.offsetAt(position)
+	return o.offsetAt(position)
 }
 
 // LineCount returns the number of lines in the document.
@@ -188,7 +188,7 @@ func (o *Overlay) applyChangeLocked(change protocol.TextDocumentContentChangeEve
 			if int(pos.Line+1) < len(lineOffsets) {
 				lineEnd = lineOffsets[pos.Line+1]
 			} else {
-				lineEnd = len(o.File.content)
+				lineEnd = len(o.content)
 			}
 			maxChar := lineEnd - lineStart
 			if int(pos.Character) > maxChar {
@@ -201,18 +201,18 @@ func (o *Overlay) applyChangeLocked(change protocol.TextDocumentContentChangeEve
 		endOffset := o.offsetAtLocked(wellFormedRange.End)
 
 		// Update content using []byte operations for efficiency
-		newContent := make([]byte, 0, startOffset+len(change.Text)+(len(o.File.content)-endOffset))
-		newContent = append(newContent, o.File.content[:startOffset]...)
+		newContent := make([]byte, 0, startOffset+len(change.Text)+(len(o.content)-endOffset))
+		newContent = append(newContent, o.content[:startOffset]...)
 		newContent = append(newContent, change.Text...)
-		newContent = append(newContent, o.File.content[endOffset:]...)
-		o.File.content = newContent
+		newContent = append(newContent, o.content[endOffset:]...)
+		o.content = newContent
 
 		// Invalidate line offsets cache
-		o.File.lineOffsets = nil
+		o.lineOffsets = nil
 	} else {
 		// Full document change
-		o.File.content = []byte(change.Text)
-		o.File.lineOffsets = nil
+		o.content = []byte(change.Text)
+		o.lineOffsets = nil
 	}
 	return nil
 }
@@ -221,22 +221,16 @@ func (o *Overlay) applyChangeLocked(change protocol.TextDocumentContentChangeEve
 // content. This method assumes the lock is already held (at least for reading),
 // and fills the cache on first use.
 func (o *Overlay) getLineOffsetsLocked() []int {
-	if o.File.lineOffsets != nil {
-		return o.File.lineOffsets
+	if o.lineOffsets != nil {
+		return o.lineOffsets
 	}
 
 	// Need to compute line offsets
 	// Note: This is called from methods that already hold at least a read lock.
 	// For simplicity, we compute inline. A more sophisticated approach would
 	// upgrade to a write lock, but that requires releasing the read lock first.
-	o.File.lineOffsets = computeLineOffsets(o.File.content, true, 0)
-	return o.File.lineOffsets
-}
-
-// ensureBeforeEOLLocked ensures the offset is before any end-of-line characters.
-// This method assumes the lock is already held.
-func (o *Overlay) ensureBeforeEOLLocked(offset, lineOffset int) int {
-	return o.File.ensureBeforeEOL(offset, lineOffset)
+	o.lineOffsets = computeLineOffsets(o.content, true, 0)
+	return o.lineOffsets
 }
 
 // computeLineOffsets computes line offsets for the given content.

@@ -55,8 +55,6 @@ func (f *File) Version() int32 {
 }
 
 // Content returns a copy of the document content as a byte slice.
-// Returning bytes enables efficient manipulation; a copy is returned to prevent
-// external modification of internal state.
 func (f *File) Content() []byte {
 	return f.content
 }
