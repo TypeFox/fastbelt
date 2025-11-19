@@ -9,13 +9,14 @@ import (
 	"testing"
 
 	"github.com/TypeFox/go-lsp/protocol"
+	"github.com/TypeFox/langium-to-go/textdoc"
 )
 
 // TestLanguageServerPartialHandlers tests that the language server works with some handlers nil
 func TestLanguageServerPartialHandlers(t *testing.T) {
 	var completionCalled bool
 	services := &LspServices{}
-	LoadDefaultServices(services)
+	LoadDefaultServices(services, &textdoc.TextdocServices{})
 
 	// Create a test completion handler
 	services.LanguageServerHandlers.Completion = func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {

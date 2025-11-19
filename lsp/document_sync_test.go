@@ -9,10 +9,20 @@ import (
 	"testing"
 
 	"github.com/TypeFox/go-lsp/protocol"
+	"github.com/TypeFox/langium-to-go/textdoc"
 )
 
+func createTestServices() *LspServices {
+	s := &LspServices{
+		TextdocServices: &textdoc.TextdocServices{},
+	}
+	textdoc.LoadDefaultServices(s.TextdocServices)
+	return s
+}
+
 func TestTextDocuments_Lifecycle(t *testing.T) {
-	td := NewTextDocuments()
+	s := createTestServices()
+	td := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
 	// Track events
@@ -50,7 +60,7 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	}
 
 	// Verify document is in collection
-	doc := td.Get(uri)
+	doc := s.TextdocServices.Store.GetOverlay(uri)
 	if doc == nil {
 		t.Fatal("document not found in collection")
 	}
@@ -95,13 +105,14 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	}
 
 	// Verify document was removed
-	if td.Get(uri) != nil {
+	if s.TextdocServices.Store.GetOverlay(uri) != nil {
 		t.Error("document should have been removed from collection")
 	}
 }
 
 func TestTextDocuments_MultipleDocuments(t *testing.T) {
-	td := NewTextDocuments()
+	s := createTestServices()
+	td := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
 	// Open multiple documents
@@ -123,19 +134,19 @@ func TestTextDocuments_MultipleDocuments(t *testing.T) {
 	}
 
 	// Verify all documents are present
-	all := td.All()
+	all := s.TextdocServices.Store.AllOverlays()
 	if len(all) != len(uris) {
 		t.Errorf("expected %d documents, got %d", len(uris), len(all))
 	}
 
-	keys := td.Keys()
+	keys := s.TextdocServices.Store.KeysOverlays()
 	if len(keys) != len(uris) {
 		t.Errorf("expected %d keys, got %d", len(uris), len(keys))
 	}
 
 	// Verify each document
 	for _, uri := range uris {
-		doc := td.Get(uri)
+		doc := s.TextdocServices.Store.GetOverlay(uri)
 		if doc == nil {
 			t.Errorf("document %s not found", uri)
 		}
@@ -143,7 +154,8 @@ func TestTextDocuments_MultipleDocuments(t *testing.T) {
 }
 
 func TestTextDocuments_IncrementalChanges(t *testing.T) {
-	td := NewTextDocuments()
+	s := createTestServices()
+	td := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
 	uri := protocol.DocumentURI("file:///test.txt")
@@ -168,12 +180,12 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 					Start: protocol.Position{Line: 0, Character: 7},
 					End:   protocol.Position{Line: 0, Character: 12},
 				},
-			Text: "Go",
+				Text: "Go",
+			},
 		},
-	},
 	})
 
-	doc := td.Get(uri)
+	doc := s.TextdocServices.Store.GetOverlay(uri)
 	if doc == nil {
 		t.Fatal("document not found")
 	}
@@ -185,7 +197,8 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 }
 
 func TestTextDocuments_WillSave(t *testing.T) {
-	td := NewTextDocuments()
+	s := createTestServices()
+	td := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
 	uri := protocol.DocumentURI("file:///test.txt")
@@ -223,7 +236,8 @@ func TestTextDocuments_WillSave(t *testing.T) {
 }
 
 func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
-	td := NewTextDocuments()
+	s := createTestServices()
+	td := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
 	uri := protocol.DocumentURI("file:///test.txt")
@@ -266,7 +280,8 @@ func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
 }
 
 func TestTextDocuments_DidSave(t *testing.T) {
-	td := NewTextDocuments()
+	s := createTestServices()
+	td := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
 	uri := protocol.DocumentURI("file:///test.txt")
@@ -298,5 +313,3 @@ func TestTextDocuments_DidSave(t *testing.T) {
 		t.Errorf("expected URI %s, got %s", uri, savedDoc.Document.URI())
 	}
 }
-
-

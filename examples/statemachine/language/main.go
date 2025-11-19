@@ -10,6 +10,7 @@ import (
 
 	"github.com/TypeFox/go-lsp/protocol"
 	"github.com/TypeFox/langium-to-go/lsp"
+	"github.com/TypeFox/langium-to-go/textdoc"
 )
 
 func main() {
@@ -22,6 +23,7 @@ func main() {
 }
 
 type StatemachineServices struct {
+	textdoc.TextdocServices
 	lsp.LspServices
 	DummyServiceA string
 	DummyServiceB string
@@ -29,7 +31,8 @@ type StatemachineServices struct {
 
 func createServices() *StatemachineServices {
 	services := &StatemachineServices{}
-	lsp.LoadDefaultServices(&services.LspServices)
+	textdoc.LoadDefaultServices(&services.TextdocServices)
+	lsp.LoadDefaultServices(&services.LspServices, &services.TextdocServices)
 
 	// Create a dummy completion handler for testing
 	services.LanguageServerHandlers.Completion = func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {

@@ -6,7 +6,7 @@ package lsp
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"sync"
 
 	"github.com/TypeFox/go-lsp/protocol"
@@ -37,22 +37,36 @@ type TextDocumentWillSaveHandler func(ctx context.Context, event *TextDocumentWi
 // Only one handler can be registered for this event to ensure deterministic edit behavior.
 type TextDocumentWillSaveWaitUntilHandler func(ctx context.Context, event *TextDocumentWillSaveEvent) ([]protocol.TextEdit, error)
 
-// TextDocuments manages a collection of text documents synchronized with the client.
-// It handles document lifecycle events (open, change, close, save) and maintains
-// in-memory representations using the textdoc.Overlay type.
+// DocumentSyncher is the interface for handling LSP text document synchronization notifications.
+// It processes document lifecycle events (open, change, close, save) and manages
+// event handlers.
 //
 // Thread Safety:
-// All methods are safe for concurrent use. Document access uses a read-write mutex
-// for efficient concurrent reads, while handler registration uses a separate mutex
-// to avoid contention.
+// All methods are safe for concurrent use. Handler registration uses a mutex
+// to ensure thread-safe handler management.
 //
 // Handler Execution:
 // Handlers registered via OnDidOpen, OnDidChange, etc. are executed synchronously
 // in the order they were registered. The context passed to handlers respects
 // cancellation, and handlers should check ctx.Err() if they perform long operations.
-type TextDocuments struct {
-	documentsMu         sync.RWMutex
-	documents           map[protocol.DocumentURI]*textdoc.Overlay
+type DocumentSyncher interface {
+	OnDidOpen(handler TextDocumentChangeHandler)
+	OnDidChange(handler TextDocumentChangeHandler)
+	OnDidClose(handler TextDocumentChangeHandler)
+	OnDidSave(handler TextDocumentChangeHandler)
+	OnWillSave(handler TextDocumentWillSaveHandler)
+	OnWillSaveWaitUntil(handler TextDocumentWillSaveWaitUntilHandler)
+	DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams)
+	DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams)
+	DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams)
+	WillSave(ctx context.Context, params *protocol.WillSaveTextDocumentParams)
+	WillSaveWaitUntil(ctx context.Context, params *protocol.WillSaveTextDocumentParams) ([]protocol.TextEdit, error)
+	DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams)
+}
+
+// DefaultDocumentSyncher is the default implementation of DocumentSyncher.
+type DefaultDocumentSyncher struct {
+	srv                 *LspServices
 	handlersMu          sync.Mutex
 	onDidOpen           []TextDocumentChangeHandler
 	onDidChange         []TextDocumentChangeHandler
@@ -62,74 +76,36 @@ type TextDocuments struct {
 	onWillSaveWaitUntil TextDocumentWillSaveWaitUntilHandler
 }
 
-// NewTextDocuments creates a new TextDocuments manager.
-func NewTextDocuments() *TextDocuments {
-	return &TextDocuments{
-		documents: make(map[protocol.DocumentURI]*textdoc.Overlay),
-	}
-}
-
-// Get retrieves a document by URI. Returns nil if the document is not managed.
-func (td *TextDocuments) Get(uri protocol.DocumentURI) *textdoc.Overlay {
-	td.documentsMu.RLock()
-	defer td.documentsMu.RUnlock()
-	return td.documents[uri]
-}
-
-// All returns all managed documents.
-func (td *TextDocuments) All() []*textdoc.Overlay {
-	td.documentsMu.RLock()
-	defer td.documentsMu.RUnlock()
-
-	docs := make([]*textdoc.Overlay, 0, len(td.documents))
-	for _, doc := range td.documents {
-		docs = append(docs, doc)
-	}
-	return docs
-}
-
-// Keys returns the URIs of all managed documents.
-func (td *TextDocuments) Keys() []protocol.DocumentURI {
-	td.documentsMu.RLock()
-	defer td.documentsMu.RUnlock()
-
-	keys := make([]protocol.DocumentURI, 0, len(td.documents))
-	for uri := range td.documents {
-		keys = append(keys, uri)
-	}
-	return keys
-}
-
 // OnDidOpen registers a handler for document open events.
-func (td *TextDocuments) OnDidOpen(handler TextDocumentChangeHandler) {
+func (td *DefaultDocumentSyncher) OnDidOpen(handler TextDocumentChangeHandler) {
 	td.handlersMu.Lock()
 	defer td.handlersMu.Unlock()
 	td.onDidOpen = append(td.onDidOpen, handler)
 }
 
 // OnDidChange registers a handler for document change events.
-func (td *TextDocuments) OnDidChange(handler TextDocumentChangeHandler) {
+func (td *DefaultDocumentSyncher) OnDidChange(handler TextDocumentChangeHandler) {
 	td.handlersMu.Lock()
 	defer td.handlersMu.Unlock()
 	td.onDidChange = append(td.onDidChange, handler)
 }
 
 // OnDidClose registers a handler for document close events.
-func (td *TextDocuments) OnDidClose(handler TextDocumentChangeHandler) {
+func (td *DefaultDocumentSyncher) OnDidClose(handler TextDocumentChangeHandler) {
 	td.handlersMu.Lock()
 	defer td.handlersMu.Unlock()
 	td.onDidClose = append(td.onDidClose, handler)
 }
 
 // OnDidSave registers a handler for document save events.
-func (td *TextDocuments) OnDidSave(handler TextDocumentChangeHandler) {
+func (td *DefaultDocumentSyncher) OnDidSave(handler TextDocumentChangeHandler) {
 	td.handlersMu.Lock()
 	defer td.handlersMu.Unlock()
 	td.onDidSave = append(td.onDidSave, handler)
 }
 
 // OnWillSave registers a handler for document will-save events.
-func (td *TextDocuments) OnWillSave(handler TextDocumentWillSaveHandler) {
+func (td *DefaultDocumentSyncher) OnWillSave(handler TextDocumentWillSaveHandler) {
 	td.handlersMu.Lock()
 	defer td.handlersMu.Unlock()
 	td.onWillSave = append(td.onWillSave, handler)
@@ -137,14 +113,14 @@ func (td *TextDocuments) OnWillSave(handler TextDocumentWillSaveHandler) {
 
 // OnWillSaveWaitUntil registers a handler that can provide edits during save.
 // Only one handler can be registered; calling this multiple times will replace the previous handler.
-func (td *TextDocuments) OnWillSaveWaitUntil(handler TextDocumentWillSaveWaitUntilHandler) {
+func (td *DefaultDocumentSyncher) OnWillSaveWaitUntil(handler TextDocumentWillSaveWaitUntilHandler) {
 	td.handlersMu.Lock()
 	defer td.handlersMu.Unlock()
 	td.onWillSaveWaitUntil = handler
 }
 
 // DidOpen processes a textDocument/didOpen notification.
-func (td *TextDocuments) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) {
+func (td *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) {
 	doc, err := textdoc.NewOverlay(
 		params.TextDocument.URI,
 		string(params.TextDocument.LanguageID),
@@ -153,13 +129,13 @@ func (td *TextDocuments) DidOpen(ctx context.Context, params *protocol.DidOpenTe
 	)
 	if err != nil {
 		// Log error but continue - this is a notification, not a request
-		fmt.Printf("failed to create document overlay: %v\n", err)
+		log.Printf("failed to create document overlay: %v", err)
 		return
 	}
 
-	td.documentsMu.Lock()
-	td.documents[params.TextDocument.URI] = doc
-	td.documentsMu.Unlock()
+	if td.srv != nil && td.srv.TextdocServices != nil && td.srv.TextdocServices.Store != nil {
+		td.srv.TextdocServices.Store.AddOverlay(doc)
+	}
 
 	// Copy handlers while holding lock
 	td.handlersMu.Lock()
@@ -189,22 +165,23 @@ func (td *TextDocuments) DidOpen(ctx context.Context, params *protocol.DidOpenTe
 }
 
 // DidChange processes a textDocument/didChange notification.
-func (td *TextDocuments) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) {
+func (td *DefaultDocumentSyncher) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) {
 	if len(params.ContentChanges) == 0 {
 		return
 	}
 
-	td.documentsMu.RLock()
-	doc := td.documents[params.TextDocument.URI]
-	td.documentsMu.RUnlock()
+	if td.srv == nil || td.srv.TextdocServices == nil || td.srv.TextdocServices.Store == nil {
+		return
+	}
 
+	doc := td.srv.TextdocServices.Store.GetOverlay(params.TextDocument.URI)
 	if doc == nil {
 		return
 	}
 
 	if err := doc.Update(params.ContentChanges, params.TextDocument.Version); err != nil {
 		// Log error but continue - this is a notification, not a request
-		fmt.Printf("failed to update document: %v\n", err)
+		log.Printf("failed to update document: %v", err)
 		return
 	}
 
@@ -223,17 +200,17 @@ func (td *TextDocuments) DidChange(ctx context.Context, params *protocol.DidChan
 }
 
 // DidClose processes a textDocument/didClose notification.
-func (td *TextDocuments) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) {
-	td.documentsMu.Lock()
-	doc := td.documents[params.TextDocument.URI]
-	if doc != nil {
-		delete(td.documents, params.TextDocument.URI)
+func (td *DefaultDocumentSyncher) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) {
+	if td.srv == nil || td.srv.TextdocServices == nil || td.srv.TextdocServices.Store == nil {
+		return
 	}
-	td.documentsMu.Unlock()
 
+	doc := td.srv.TextdocServices.Store.GetOverlay(params.TextDocument.URI)
 	if doc == nil {
 		return
 	}
+
+	td.srv.TextdocServices.Store.RemoveOverlay(params.TextDocument.URI)
 
 	td.handlersMu.Lock()
 	closeHandlers := make([]TextDocumentChangeHandler, len(td.onDidClose))
@@ -250,11 +227,12 @@ func (td *TextDocuments) DidClose(ctx context.Context, params *protocol.DidClose
 }
 
 // WillSave processes a textDocument/willSave notification.
-func (td *TextDocuments) WillSave(ctx context.Context, params *protocol.WillSaveTextDocumentParams) {
-	td.documentsMu.RLock()
-	doc := td.documents[params.TextDocument.URI]
-	td.documentsMu.RUnlock()
+func (td *DefaultDocumentSyncher) WillSave(ctx context.Context, params *protocol.WillSaveTextDocumentParams) {
+	if td.srv == nil || td.srv.TextdocServices == nil || td.srv.TextdocServices.Store == nil {
+		return
+	}
 
+	doc := td.srv.TextdocServices.Store.GetOverlay(params.TextDocument.URI)
 	if doc == nil {
 		return
 	}
@@ -277,10 +255,11 @@ func (td *TextDocuments) WillSave(ctx context.Context, params *protocol.WillSave
 }
 
 // WillSaveWaitUntil processes a textDocument/willSaveWaitUntil request.
-func (td *TextDocuments) WillSaveWaitUntil(ctx context.Context, params *protocol.WillSaveTextDocumentParams) ([]protocol.TextEdit, error) {
-	td.documentsMu.RLock()
-	doc := td.documents[params.TextDocument.URI]
-	td.documentsMu.RUnlock()
+func (td *DefaultDocumentSyncher) WillSaveWaitUntil(ctx context.Context, params *protocol.WillSaveTextDocumentParams) ([]protocol.TextEdit, error) {
+	var doc *textdoc.Overlay
+	if td.srv != nil && td.srv.TextdocServices != nil && td.srv.TextdocServices.Store != nil {
+		doc = td.srv.TextdocServices.Store.GetOverlay(params.TextDocument.URI)
+	}
 
 	td.handlersMu.Lock()
 	handler := td.onWillSaveWaitUntil
@@ -298,11 +277,12 @@ func (td *TextDocuments) WillSaveWaitUntil(ctx context.Context, params *protocol
 }
 
 // DidSave processes a textDocument/didSave notification.
-func (td *TextDocuments) DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams) {
-	td.documentsMu.RLock()
-	doc := td.documents[params.TextDocument.URI]
-	td.documentsMu.RUnlock()
+func (td *DefaultDocumentSyncher) DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams) {
+	if td.srv == nil || td.srv.TextdocServices == nil || td.srv.TextdocServices.Store == nil {
+		return
+	}
 
+	doc := td.srv.TextdocServices.Store.GetOverlay(params.TextDocument.URI)
 	if doc == nil {
 		return
 	}

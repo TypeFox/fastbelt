@@ -10,25 +10,41 @@ import (
 	"os"
 
 	"github.com/TypeFox/go-lsp/protocol"
+	"github.com/TypeFox/langium-to-go/textdoc"
 	"golang.org/x/exp/jsonrpc2"
 )
 
+// LspServices contains the services for the lsp package.
 type LspServices struct {
+	TextdocServices        *textdoc.TextdocServices
 	LanguageServerHandlers *LanguageServerHandlers
 	LanguageServer         LanguageServer
-	TextDocuments          *TextDocuments
+	DocumentSyncher        DocumentSyncher
 	// Connection is assigned by ConnectionBinder when the language server is started
 	Connection       *jsonrpc2.Connection
 	ConnectionBinder jsonrpc2.Binder
 	ConnectionDialer jsonrpc2.Dialer
 }
 
-func LoadDefaultServices(s *LspServices) {
-	s.LanguageServerHandlers = &LanguageServerHandlers{}
-	s.LanguageServer = &DefaultLanguageServer{srv: s}
-	s.TextDocuments = NewTextDocuments()
-	s.ConnectionBinder = &DefaultBinder{srv: s}
-	s.ConnectionDialer = &StdioDialer{}
+// LoadDefaultServices creates the default services for the language server.
+// If the services are already set, they are not overwritten.
+func LoadDefaultServices(s *LspServices, textdocServices *textdoc.TextdocServices) {
+	s.TextdocServices = textdocServices
+	if s.LanguageServerHandlers == nil {
+		s.LanguageServerHandlers = &LanguageServerHandlers{}
+	}
+	if s.LanguageServer == nil {
+		s.LanguageServer = &DefaultLanguageServer{srv: s}
+	}
+	if s.DocumentSyncher == nil {
+		s.DocumentSyncher = &DefaultDocumentSyncher{srv: s}
+	}
+	if s.ConnectionBinder == nil {
+		s.ConnectionBinder = &DefaultBinder{srv: s}
+	}
+	if s.ConnectionDialer == nil {
+		s.ConnectionDialer = &StdioDialer{}
+	}
 }
 
 // LanguageServerHandlers contains the handlers for various LSP requests.
@@ -89,22 +105,22 @@ func (s *DefaultLanguageServer) Exit(ctx context.Context) error {
 }
 
 func (s *DefaultLanguageServer) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) error {
-	if s.srv.TextDocuments != nil {
-		s.srv.TextDocuments.DidOpen(ctx, params)
+	if s.srv.DocumentSyncher != nil {
+		s.srv.DocumentSyncher.DidOpen(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) error {
-	if s.srv.TextDocuments != nil {
-		s.srv.TextDocuments.DidChange(ctx, params)
+	if s.srv.DocumentSyncher != nil {
+		s.srv.DocumentSyncher.DidChange(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) error {
-	if s.srv.TextDocuments != nil {
-		s.srv.TextDocuments.DidClose(ctx, params)
+	if s.srv.DocumentSyncher != nil {
+		s.srv.DocumentSyncher.DidClose(ctx, params)
 	}
 	return nil
 }
@@ -180,8 +196,8 @@ func (s *DefaultLanguageServer) Diagnostic(ctx context.Context, params *protocol
 	return nil, nil
 }
 func (s *DefaultLanguageServer) DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams) error {
-	if s.srv.TextDocuments != nil {
-		s.srv.TextDocuments.DidSave(ctx, params)
+	if s.srv.DocumentSyncher != nil {
+		s.srv.DocumentSyncher.DidSave(ctx, params)
 	}
 	return nil
 }
@@ -309,14 +325,14 @@ func (s *DefaultLanguageServer) TypeDefinition(ctx context.Context, params *prot
 	return nil, nil
 }
 func (s *DefaultLanguageServer) WillSave(ctx context.Context, params *protocol.WillSaveTextDocumentParams) error {
-	if s.srv.TextDocuments != nil {
-		s.srv.TextDocuments.WillSave(ctx, params)
+	if s.srv.DocumentSyncher != nil {
+		s.srv.DocumentSyncher.WillSave(ctx, params)
 	}
 	return nil
 }
 func (s *DefaultLanguageServer) WillSaveWaitUntil(ctx context.Context, params *protocol.WillSaveTextDocumentParams) ([]protocol.TextEdit, error) {
-	if s.srv.TextDocuments != nil {
-		return s.srv.TextDocuments.WillSaveWaitUntil(ctx, params)
+	if s.srv.DocumentSyncher != nil {
+		return s.srv.DocumentSyncher.WillSaveWaitUntil(ctx, params)
 	}
 	return []protocol.TextEdit{}, nil
 }
