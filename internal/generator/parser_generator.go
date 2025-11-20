@@ -184,11 +184,11 @@ func populateContextWithNode(context *ParserGeneratorContext, prefix string, nod
 func generateParseFunction(node generator.Node, context *ParserGeneratorContext, rule generated.ParserRule) {
 	node.AppendLine("func (p *Parser) Parse", rule.Name(), "() ", rule.ReturnType(), " {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("node := New", rule.ReturnType(), "()")
-		n.AppendLine("node.WithSegmentStartToken(p.state.LA(1))")
+		n.AppendLine("current := New", rule.ReturnType(), "()")
+		n.AppendLine("current.WithSegmentStartToken(p.state.LA(1))")
 		generateAbstractElementParser(n, context, rule.Body())
-		n.AppendLine("node.WithSegmentEndToken(p.state.LA(0))")
-		n.AppendLine("return node")
+		n.AppendLine("current.WithSegmentEndToken(p.state.LA(0))")
+		n.AppendLine("return current")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
@@ -203,20 +203,25 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 		node.AppendLine("{")
 		node.Indent(func(n generator.Node) {
 			n.AppendLine("result := New", action.Type(), "()")
+			// Inherit segment from previous node
+			n.AppendLine("result.WithSegment(current.Segment())")
 			if action.Property() != "" {
 				if action.Operator() == "+=" {
-					n.AppendLine("result.With", action.Property(), "Item(node)")
+					n.AppendLine("result.With", action.Property(), "Item(current)")
 				} else {
-					n.AppendLine("result.With", action.Property(), "(node)")
+					n.AppendLine("result.With", action.Property(), "(current)")
 				}
-				n.AppendLine("node = result")
+				// Ensure that the previous node has a valid segment ending
+				n.AppendLine("current.WithSegmentEndToken(p.state.LA(0))")
+				n.AppendLine("current = result")
 			} else {
-				n.AppendLine("core.AssignTokens(result, node.Tokens())")
-				n.AppendLine("node = result")
+				// If there is no property to assign, just merge tokens
+				n.AppendLine("core.AssignTokens(result, current.Tokens())")
+				n.AppendLine("current = result")
 			}
 		})
 		node.AppendLine("}")
-		node.AppendLine("node := node.(", action.Type(), ")")
+		node.AppendLine("current := current.(", action.Type(), ")")
 	} else {
 		node.AppendLine("{")
 		node.Indent(func(indent generator.Node) {
@@ -225,8 +230,10 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 			} else if ruleCall, ok := element.(generated.RuleCall); ok {
 				resultName := generateRuleCallParser(indent, context, ruleCall)
 				if resultName == "result" {
-					indent.AppendLine("core.MergeTokens(result, node.Tokens())")
-					indent.AppendLine("node = result")
+					// Unassigned rule call result
+					// Needs to be merged into current node
+					indent.AppendLine("core.MergeTokens(result, current.Tokens())")
+					indent.AppendLine("current = result")
 				}
 			} else if assignment, ok := element.(generated.Assignment); ok {
 				generateCardinality(indent, func(n generator.Node) {
@@ -236,10 +243,10 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 							switch assignment.Operator() {
 							case "+=":
 								// Append to slice
-								in.AppendLine("node.With", assignment.Property(), "Item(", resultName, ")")
+								in.AppendLine("current.With", assignment.Property(), "Item(", resultName, ")")
 							default:
 								// Single assignment
-								in.AppendLine("node.With", assignment.Property(), "(", resultName, ")")
+								in.AppendLine("current.With", assignment.Property(), "(", resultName, ")")
 							}
 						})
 						n2.AppendLine("}")
@@ -306,7 +313,7 @@ func generateKeywordParser(node generator.Node, context *ParserGeneratorContext,
 	lookahead := "p.state.LA(1) == " + GeneratedKeywordIdxName(keyword)
 	generateCardinality(node, func(n generator.Node) {
 		n.AppendLine("token := p.state.Consume(", GeneratedKeywordIdxName(keyword), ")")
-		n.AppendLine("core.AssignToken(node, token, ", context.accessNames[keyword], ")")
+		n.AppendLine("core.AssignToken(current, token, ", context.accessNames[keyword], ")")
 	}, func(n generator.Node) { n.Append(lookahead) }, keyword.Cardinality())
 	return "token"
 }
@@ -333,7 +340,7 @@ func generateRuleCallParser(node generator.Node, context *ParserGeneratorContext
 		}
 		if token != nil {
 			n.AppendLine("token ", eq, " p.state.Consume(", GeneratedTokenIdxName(token), ")")
-			n.AppendLine("core.AssignToken(node, token, ", context.accessNames[ruleCall], ")")
+			n.AppendLine("core.AssignToken(current, token, ", context.accessNames[ruleCall], ")")
 		} else if rule != nil {
 			n.AppendLine("result ", eq, " p.Parse", rule.Name(), "()")
 		}

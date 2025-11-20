@@ -277,22 +277,22 @@ var TokenLookahead5 = parser.LLkLookahead{
 }
 
 func (p *Parser) ParseGrammar() Grammar {
-	node := NewGrammar()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewGrammar()
+	current.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_grammar_Idx)
-		core.AssignToken(node, token, Grammargrammar_0)
+		core.AssignToken(current, token, Grammargrammar_0)
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(node, token, GrammarNameID_0)
+		core.AssignToken(current, token, GrammarNameID_0)
 		if token != nil {
-			node.WithName(token)
+			current.WithName(token)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_Semicolon_Idx)
-		core.AssignToken(node, token, GrammarSemicolon_0)
+		core.AssignToken(current, token, GrammarSemicolon_0)
 	}
 	for p.state.Lookahead(GrammarLookahead0) == 0 {
 		switch p.state.Lookahead(GrammarLookaheadOr0) {
@@ -300,305 +300,309 @@ func (p *Parser) ParseGrammar() Grammar {
 			{
 				result := p.ParseParserRule()
 				if result != nil {
-					node.WithRulesItem(result)
+					current.WithRulesItem(result)
 				}
 			}
 		case 1:
 			{
 				result := p.ParseToken()
 				if result != nil {
-					node.WithTerminalsItem(result)
+					current.WithTerminalsItem(result)
 				}
 			}
 		case 2:
 			{
 				result := p.ParseInterface()
 				if result != nil {
-					node.WithInterfacesItem(result)
+					current.WithInterfacesItem(result)
 				}
 			}
 		}
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
 
 func (p *Parser) ParseInterface() Interface {
-	node := NewInterface()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewInterface()
+	current.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_interface_Idx)
-		core.AssignToken(node, token, Interfaceinterface_0)
+		core.AssignToken(current, token, Interfaceinterface_0)
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(node, token, InterfaceNameID_0)
+		core.AssignToken(current, token, InterfaceNameID_0)
 		if token != nil {
-			node.WithName(token)
+			current.WithName(token)
 		}
 	}
 	if p.state.Lookahead(InterfaceLookahead1) == 0 {
 		{
 			token := p.state.Consume(Keyword_extends_Idx)
-			core.AssignToken(node, token, Interfaceextends_0)
+			core.AssignToken(current, token, Interfaceextends_0)
 		}
 		{
 			token := p.state.Consume(Token_ID_Idx)
-			core.AssignToken(node, token, InterfaceExtendsID_0)
+			core.AssignToken(current, token, InterfaceExtendsID_0)
 			if token != nil {
-				node.WithExtendsItem(token)
+				current.WithExtendsItem(token)
 			}
 		}
 		for p.state.Lookahead(InterfaceLookahead2) == 0 {
 			{
 				token := p.state.Consume(Keyword_Comma_Idx)
-				core.AssignToken(node, token, InterfaceComma_0)
+				core.AssignToken(current, token, InterfaceComma_0)
 			}
 			{
 				token := p.state.Consume(Token_ID_Idx)
-				core.AssignToken(node, token, InterfaceExtendsID_1)
+				core.AssignToken(current, token, InterfaceExtendsID_1)
 				if token != nil {
-					node.WithExtendsItem(token)
+					current.WithExtendsItem(token)
 				}
 			}
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_LeftBrace_Idx)
-		core.AssignToken(node, token, InterfaceLeftBrace_0)
+		core.AssignToken(current, token, InterfaceLeftBrace_0)
 	}
 	{
 		for p.state.Lookahead(InterfaceLookahead3) == 0 {
 			result := p.ParseField()
 			if result != nil {
-				node.WithFieldsItem(result)
+				current.WithFieldsItem(result)
 			}
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_RightBrace_Idx)
-		core.AssignToken(node, token, InterfaceRightBrace_0)
+		core.AssignToken(current, token, InterfaceRightBrace_0)
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
 
 func (p *Parser) ParseField() Field {
-	node := NewField()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewField()
+	current.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(node, token, FieldNameID_0)
+		core.AssignToken(current, token, FieldNameID_0)
 		if token != nil {
-			node.WithName(token)
+			current.WithName(token)
 		}
 	}
 	if p.state.Lookahead(FieldLookahead4) == 0 {
 		{
 			token := p.state.Consume(Keyword_LeftBracket_Idx)
-			core.AssignToken(node, token, FieldArrayLeftBracket_0)
+			core.AssignToken(current, token, FieldArrayLeftBracket_0)
 			if token != nil {
-				node.WithArray(token)
+				current.WithArray(token)
 			}
 		}
 		{
 			token := p.state.Consume(Keyword_RightBracket_Idx)
-			core.AssignToken(node, token, FieldRightBracket_0)
+			core.AssignToken(current, token, FieldRightBracket_0)
 		}
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(node, token, FieldTypeID_0)
+		core.AssignToken(current, token, FieldTypeID_0)
 		if token != nil {
-			node.WithType(token)
+			current.WithType(token)
 		}
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
 
 func (p *Parser) ParseParserRule() ParserRule {
-	node := NewParserRule()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewParserRule()
+	current.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(node, token, ParserRuleNameID_0)
+		core.AssignToken(current, token, ParserRuleNameID_0)
 		if token != nil {
-			node.WithName(token)
+			current.WithName(token)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_returns_Idx)
-		core.AssignToken(node, token, ParserRulereturns_0)
+		core.AssignToken(current, token, ParserRulereturns_0)
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(node, token, ParserRuleReturnTypeID_0)
+		core.AssignToken(current, token, ParserRuleReturnTypeID_0)
 		if token != nil {
-			node.WithReturnType(token)
+			current.WithReturnType(token)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_Colon_Idx)
-		core.AssignToken(node, token, ParserRuleColon_0)
+		core.AssignToken(current, token, ParserRuleColon_0)
 	}
 	{
 		result := p.ParseAlternatives()
 		if result != nil {
-			node.WithBody(result)
+			current.WithBody(result)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_Semicolon_Idx)
-		core.AssignToken(node, token, ParserRuleSemicolon_0)
+		core.AssignToken(current, token, ParserRuleSemicolon_0)
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
 
 func (p *Parser) ParseToken() Token {
-	node := NewToken()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewToken()
+	current.WithSegmentStartToken(p.state.LA(1))
 	{
 		if p.state.Lookahead(TokenLookahead5) == 0 {
 			token := p.state.Consume(Keyword_hidden_Idx)
-			core.AssignToken(node, token, TokenTypehidden_0)
+			core.AssignToken(current, token, TokenTypehidden_0)
 			if token != nil {
-				node.WithType(token)
+				current.WithType(token)
 			}
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_token_Idx)
-		core.AssignToken(node, token, Tokentoken_0)
+		core.AssignToken(current, token, Tokentoken_0)
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(node, token, TokenNameID_0)
+		core.AssignToken(current, token, TokenNameID_0)
 		if token != nil {
-			node.WithName(token)
+			current.WithName(token)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_Colon_Idx)
-		core.AssignToken(node, token, TokenColon_0)
+		core.AssignToken(current, token, TokenColon_0)
 	}
 	{
 		token := p.state.Consume(Token_RegexLiteral_Idx)
-		core.AssignToken(node, token, TokenRegexpRegexLiteral_0)
+		core.AssignToken(current, token, TokenRegexpRegexLiteral_0)
 		if token != nil {
-			node.WithRegexp(token)
+			current.WithRegexp(token)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_Semicolon_Idx)
-		core.AssignToken(node, token, TokenSemicolon_0)
+		core.AssignToken(current, token, TokenSemicolon_0)
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
 
 func (p *Parser) ParseAlternatives() Element {
-	node := NewElement()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewElement()
+	current.WithSegmentStartToken(p.state.LA(1))
 	{
 		result := p.ParseGroup()
-		core.MergeTokens(result, node.Tokens())
-		node = result
+		core.MergeTokens(result, current.Tokens())
+		current = result
 	}
 	if p.state.Lookahead(AlternativesLookahead6) == 0 {
 		{
 			result := NewAlternatives()
-			result.WithAltsItem(node)
-			node = result
+			result.WithSegment(current.Segment())
+			result.WithAltsItem(current)
+			current.WithSegmentEndToken(p.state.LA(0))
+			current = result
 		}
-		node := node.(Alternatives)
+		current := current.(Alternatives)
 		for ok := true; ok; ok = p.state.Lookahead(AlternativesLookahead7) == 0 {
 			{
 				token := p.state.Consume(Keyword_Pipe_Idx)
-				core.AssignToken(node, token, AlternativesPipe_0)
+				core.AssignToken(current, token, AlternativesPipe_0)
 			}
 			{
 				result := p.ParseGroup()
 				if result != nil {
-					node.WithAltsItem(result)
+					current.WithAltsItem(result)
 				}
 			}
 		}
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
 
 func (p *Parser) ParseGroup() Element {
-	node := NewElement()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewElement()
+	current.WithSegmentStartToken(p.state.LA(1))
 	{
 		result := p.ParseElement()
-		core.MergeTokens(result, node.Tokens())
-		node = result
+		core.MergeTokens(result, current.Tokens())
+		current = result
 	}
 	if p.state.Lookahead(GroupLookahead8) == 0 {
 		{
 			result := NewGroup()
-			result.WithElementsItem(node)
-			node = result
+			result.WithSegment(current.Segment())
+			result.WithElementsItem(current)
+			current.WithSegmentEndToken(p.state.LA(0))
+			current = result
 		}
-		node := node.(Group)
+		current := current.(Group)
 		{
 			for ok := true; ok; ok = p.state.Lookahead(GroupLookahead9) == 0 {
 				result := p.ParseElement()
 				if result != nil {
-					node.WithElementsItem(result)
+					current.WithElementsItem(result)
 				}
 			}
 		}
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
 
 func (p *Parser) ParseElement() Element {
-	node := NewElement()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewElement()
+	current.WithSegmentStartToken(p.state.LA(1))
 	switch p.state.Lookahead(ElementLookaheadOr1) {
 	case 0:
 		{
 			result := p.ParseKeyword()
-			core.MergeTokens(result, node.Tokens())
-			node = result
+			core.MergeTokens(result, current.Tokens())
+			current = result
 		}
 	case 1:
 		{
 			result := p.ParseAssignment()
-			core.MergeTokens(result, node.Tokens())
-			node = result
+			core.MergeTokens(result, current.Tokens())
+			current = result
 		}
 	case 2:
 		{
 			result := p.ParseRuleCall()
-			core.MergeTokens(result, node.Tokens())
-			node = result
+			core.MergeTokens(result, current.Tokens())
+			current = result
 		}
 	case 3:
 		{
 			result := p.ParseAction()
-			core.MergeTokens(result, node.Tokens())
-			node = result
+			core.MergeTokens(result, current.Tokens())
+			current = result
 		}
 	case 4:
 		{
 			token := p.state.Consume(Keyword_LeftParen_Idx)
-			core.AssignToken(node, token, ElementLeftParen_0)
+			core.AssignToken(current, token, ElementLeftParen_0)
 		}
 		{
 			result := p.ParseAlternatives()
-			core.MergeTokens(result, node.Tokens())
-			node = result
+			core.MergeTokens(result, current.Tokens())
+			current = result
 		}
 		{
 			token := p.state.Consume(Keyword_RightParen_Idx)
-			core.AssignToken(node, token, ElementRightParen_0)
+			core.AssignToken(current, token, ElementRightParen_0)
 		}
 	}
 	{
@@ -606,284 +610,286 @@ func (p *Parser) ParseElement() Element {
 			switch p.state.Lookahead(ElementCardinalityLookaheadOr2) {
 			case 0:
 				token := p.state.Consume(Keyword_Asterisk_Idx)
-				core.AssignToken(node, token, ElementCardinalityAsterisk_0)
+				core.AssignToken(current, token, ElementCardinalityAsterisk_0)
 				if token != nil {
-					node.WithCardinality(token)
+					current.WithCardinality(token)
 				}
 			case 1:
 				token := p.state.Consume(Keyword_Plus_Idx)
-				core.AssignToken(node, token, ElementCardinalityPlus_0)
+				core.AssignToken(current, token, ElementCardinalityPlus_0)
 				if token != nil {
-					node.WithCardinality(token)
+					current.WithCardinality(token)
 				}
 			case 2:
 				token := p.state.Consume(Keyword_Question_Idx)
-				core.AssignToken(node, token, ElementCardinalityQuestion_0)
+				core.AssignToken(current, token, ElementCardinalityQuestion_0)
 				if token != nil {
-					node.WithCardinality(token)
+					current.WithCardinality(token)
 				}
 			}
 		}
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
 
 func (p *Parser) ParseKeyword() Keyword {
-	node := NewKeyword()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewKeyword()
+	current.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Token_String_Idx)
-		core.AssignToken(node, token, KeywordValueString_0)
+		core.AssignToken(current, token, KeywordValueString_0)
 		if token != nil {
-			node.WithValue(token)
+			current.WithValue(token)
 		}
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
 
 func (p *Parser) ParseAssignment() Assignment {
-	node := NewAssignment()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewAssignment()
+	current.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(node, token, AssignmentPropertyID_0)
+		core.AssignToken(current, token, AssignmentPropertyID_0)
 		if token != nil {
-			node.WithProperty(token)
+			current.WithProperty(token)
 		}
 	}
 	{
 		switch p.state.Lookahead(AssignmentOperatorLookaheadOr3) {
 		case 0:
 			token := p.state.Consume(Keyword_PlusEquals_Idx)
-			core.AssignToken(node, token, AssignmentOperatorPlusEquals_0)
+			core.AssignToken(current, token, AssignmentOperatorPlusEquals_0)
 			if token != nil {
-				node.WithOperator(token)
+				current.WithOperator(token)
 			}
 		case 1:
 			token := p.state.Consume(Keyword_Equals_Idx)
-			core.AssignToken(node, token, AssignmentOperatorEquals_0)
+			core.AssignToken(current, token, AssignmentOperatorEquals_0)
 			if token != nil {
-				node.WithOperator(token)
+				current.WithOperator(token)
 			}
 		case 2:
 			token := p.state.Consume(Keyword_QuestionEquals_Idx)
-			core.AssignToken(node, token, AssignmentOperatorQuestionEquals_0)
+			core.AssignToken(current, token, AssignmentOperatorQuestionEquals_0)
 			if token != nil {
-				node.WithOperator(token)
+				current.WithOperator(token)
 			}
 		}
 	}
 	{
 		result := p.ParseAssignable()
 		if result != nil {
-			node.WithValue(result)
+			current.WithValue(result)
 		}
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
 
 func (p *Parser) ParseAssignable() Assignable {
-	node := NewAssignable()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewAssignable()
+	current.WithSegmentStartToken(p.state.LA(1))
 	switch p.state.Lookahead(AssignableLookaheadOr4) {
 	case 0:
 		{
 			result := p.ParseKeyword()
-			core.MergeTokens(result, node.Tokens())
-			node = result
+			core.MergeTokens(result, current.Tokens())
+			current = result
 		}
 	case 1:
 		{
 			result := p.ParseRuleCall()
-			core.MergeTokens(result, node.Tokens())
-			node = result
+			core.MergeTokens(result, current.Tokens())
+			current = result
 		}
 	case 2:
 		{
 			result := p.ParseCrossRef()
-			core.MergeTokens(result, node.Tokens())
-			node = result
+			core.MergeTokens(result, current.Tokens())
+			current = result
 		}
 	case 3:
 		{
 			token := p.state.Consume(Keyword_LeftParen_Idx)
-			core.AssignToken(node, token, AssignableLeftParen_0)
+			core.AssignToken(current, token, AssignableLeftParen_0)
 		}
 		{
 			result := p.ParseAssignableAlternatives()
-			core.MergeTokens(result, node.Tokens())
-			node = result
+			core.MergeTokens(result, current.Tokens())
+			current = result
 		}
 		{
 			token := p.state.Consume(Keyword_RightParen_Idx)
-			core.AssignToken(node, token, AssignableRightParen_0)
+			core.AssignToken(current, token, AssignableRightParen_0)
 		}
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
 
 func (p *Parser) ParseAssignableWithoutAlts() Assignable {
-	node := NewAssignable()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewAssignable()
+	current.WithSegmentStartToken(p.state.LA(1))
 	switch p.state.Lookahead(AssignableWithoutAltsLookaheadOr5) {
 	case 0:
 		{
 			result := p.ParseKeyword()
-			core.MergeTokens(result, node.Tokens())
-			node = result
+			core.MergeTokens(result, current.Tokens())
+			current = result
 		}
 	case 1:
 		{
 			result := p.ParseRuleCall()
-			core.MergeTokens(result, node.Tokens())
-			node = result
+			core.MergeTokens(result, current.Tokens())
+			current = result
 		}
 	case 2:
 		{
 			result := p.ParseCrossRef()
-			core.MergeTokens(result, node.Tokens())
-			node = result
+			core.MergeTokens(result, current.Tokens())
+			current = result
 		}
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
 
 func (p *Parser) ParseAssignableAlternatives() Assignable {
-	node := NewAssignable()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewAssignable()
+	current.WithSegmentStartToken(p.state.LA(1))
 	{
 		result := p.ParseAssignableWithoutAlts()
-		core.MergeTokens(result, node.Tokens())
-		node = result
+		core.MergeTokens(result, current.Tokens())
+		current = result
 	}
 	if p.state.Lookahead(AssignableAlternativesLookahead11) == 0 {
 		{
 			result := NewAlternatives()
-			result.WithAltsItem(node)
-			node = result
+			result.WithSegment(current.Segment())
+			result.WithAltsItem(current)
+			current.WithSegmentEndToken(p.state.LA(0))
+			current = result
 		}
-		node := node.(Alternatives)
+		current := current.(Alternatives)
 		for ok := true; ok; ok = p.state.Lookahead(AssignableAlternativesLookahead12) == 0 {
 			{
 				token := p.state.Consume(Keyword_Pipe_Idx)
-				core.AssignToken(node, token, AssignableAlternativesPipe_0)
+				core.AssignToken(current, token, AssignableAlternativesPipe_0)
 			}
 			{
 				result := p.ParseAssignableWithoutAlts()
 				if result != nil {
-					node.WithAltsItem(result)
+					current.WithAltsItem(result)
 				}
 			}
 		}
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
 
 func (p *Parser) ParseCrossRef() CrossRef {
-	node := NewCrossRef()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewCrossRef()
+	current.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_LeftBracket_Idx)
-		core.AssignToken(node, token, CrossRefLeftBracket_0)
+		core.AssignToken(current, token, CrossRefLeftBracket_0)
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(node, token, CrossRefTypeID_0)
+		core.AssignToken(current, token, CrossRefTypeID_0)
 		if token != nil {
-			node.WithType(token)
+			current.WithType(token)
 		}
 	}
 	if p.state.Lookahead(CrossRefLookahead13) == 0 {
 		{
 			token := p.state.Consume(Keyword_Colon_Idx)
-			core.AssignToken(node, token, CrossRefColon_0)
+			core.AssignToken(current, token, CrossRefColon_0)
 		}
 		{
 			result := p.ParseRuleCall()
 			if result != nil {
-				node.WithRule(result)
+				current.WithRule(result)
 			}
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_RightBracket_Idx)
-		core.AssignToken(node, token, CrossRefRightBracket_0)
+		core.AssignToken(current, token, CrossRefRightBracket_0)
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
 
 func (p *Parser) ParseRuleCall() RuleCall {
-	node := NewRuleCall()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewRuleCall()
+	current.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(node, token, RuleCallRuleID_0)
+		core.AssignToken(current, token, RuleCallRuleID_0)
 		if token != nil {
-			node.WithRule(token)
+			current.WithRule(token)
 		}
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
 
 func (p *Parser) ParseAction() Action {
-	node := NewAction()
-	node.WithSegmentStartToken(p.state.LA(1))
+	current := NewAction()
+	current.WithSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_LeftBrace_Idx)
-		core.AssignToken(node, token, ActionLeftBrace_0)
+		core.AssignToken(current, token, ActionLeftBrace_0)
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(node, token, ActionTypeID_0)
+		core.AssignToken(current, token, ActionTypeID_0)
 		if token != nil {
-			node.WithType(token)
+			current.WithType(token)
 		}
 	}
 	if p.state.Lookahead(ActionLookahead14) == 0 {
 		{
 			token := p.state.Consume(Keyword_Dot_Idx)
-			core.AssignToken(node, token, ActionDot_0)
+			core.AssignToken(current, token, ActionDot_0)
 		}
 		{
 			token := p.state.Consume(Token_ID_Idx)
-			core.AssignToken(node, token, ActionPropertyID_0)
+			core.AssignToken(current, token, ActionPropertyID_0)
 			if token != nil {
-				node.WithProperty(token)
+				current.WithProperty(token)
 			}
 		}
 		{
 			switch p.state.Lookahead(ActionOperatorLookaheadOr6) {
 			case 0:
 				token := p.state.Consume(Keyword_PlusEquals_Idx)
-				core.AssignToken(node, token, ActionOperatorPlusEquals_0)
+				core.AssignToken(current, token, ActionOperatorPlusEquals_0)
 				if token != nil {
-					node.WithOperator(token)
+					current.WithOperator(token)
 				}
 			case 1:
 				token := p.state.Consume(Keyword_Equals_Idx)
-				core.AssignToken(node, token, ActionOperatorEquals_0)
+				core.AssignToken(current, token, ActionOperatorEquals_0)
 				if token != nil {
-					node.WithOperator(token)
+					current.WithOperator(token)
 				}
 			}
 		}
 		{
 			token := p.state.Consume(Keyword_current_Idx)
-			core.AssignToken(node, token, Actioncurrent_0)
+			core.AssignToken(current, token, Actioncurrent_0)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_RightBrace_Idx)
-		core.AssignToken(node, token, ActionRightBrace_0)
+		core.AssignToken(current, token, ActionRightBrace_0)
 	}
-	node.WithSegmentEndToken(p.state.LA(0))
-	return node
+	current.WithSegmentEndToken(p.state.LA(0))
+	return current
 }
