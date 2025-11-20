@@ -78,11 +78,17 @@ func (node *AstNodeBase) WithSegmentEndToken(token *Token) {
 	}
 }
 
-func (node *AstNodeBase) Segment() *TextSegment {
+func (node *AstNodeBase) WithSegment(segment TextSegment) {
 	if node != nil {
-		return &node.segment
+		node.segment = segment
+	}
+}
+
+func (node *AstNodeBase) Segment() TextSegment {
+	if node != nil {
+		return node.segment
 	} else {
-		return nil
+		return TextSegment{}
 	}
 }
 
@@ -110,19 +116,22 @@ func (node *AstNodeBase) Text() string {
 }
 
 type AstNode interface {
-	// Getters and setters
 	Document() *Document
 	WithDocument(document *Document)
 	Container() AstNode
 	WithContainer(container AstNode)
+	Tokens() []*Token
 	WithToken(token *Token)
 	WithTokens(tokens []*Token)
+	Segment() TextSegment
+	WithSegment(segment TextSegment)
+	// Sets the start of the node's segment to the start of the given token's segment.
+	// Should only be called by the parser. Use WithSegment to set both start and end manually.
 	WithSegmentStartToken(token *Token)
+	// Sets the end of the node's segment to the end of the given token's segment.
+	// Should only be called by the parser. Use WithSegment to set both start and end manually.
 	WithSegmentEndToken(token *Token)
-	// Getter only
 	Text() string
-	Tokens() []*Token
-	Segment() *TextSegment
 	ForEachNode(func(AstNode))
 }
 
