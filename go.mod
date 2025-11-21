@@ -1,4 +1,4 @@
-module github.com/TypeFox/langium-to-go
+module typefox.dev/fastbelt
 
 go 1.24.5
 

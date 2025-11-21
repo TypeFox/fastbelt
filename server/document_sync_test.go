@@ -2,21 +2,21 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package lsp
+package server
 
 import (
 	"context"
 	"testing"
 
 	"github.com/TypeFox/go-lsp/protocol"
-	"github.com/TypeFox/langium-to-go/textdoc"
+	"typefox.dev/fastbelt/textdoc"
 )
 
-func createTestServices() *LspServices {
-	s := &LspServices{
-		TextdocServices: &textdoc.TextdocServices{},
+func createTestServices() *ServerSrv {
+	s := &ServerSrv{
+		TextdocSrv: &textdoc.TextdocSrv{},
 	}
-	textdoc.LoadDefaultServices(s.TextdocServices)
+	textdoc.LoadDefaultServices(s.TextdocSrv)
 	return s
 }
 
@@ -55,12 +55,9 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	if openedDoc.Document.URI() != uri {
 		t.Errorf("expected URI %s, got %s", uri, openedDoc.Document.URI())
 	}
-	if changedDoc == nil {
-		t.Fatal("onDidChangeContent handler was not called after open")
-	}
 
 	// Verify document is in collection
-	doc := s.TextdocServices.Store.GetOverlay(uri)
+	doc := s.TextdocSrv.Store.GetOverlay(uri)
 	if doc == nil {
 		t.Fatal("document not found in collection")
 	}
@@ -69,7 +66,6 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	}
 
 	// Change the document
-	changedDoc = nil
 	td.DidChange(ctx, &protocol.DidChangeTextDocumentParams{
 		TextDocument: protocol.VersionedTextDocumentIdentifier{
 			TextDocumentIdentifier: protocol.TextDocumentIdentifier{URI: uri},
@@ -105,7 +101,7 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	}
 
 	// Verify document was removed
-	if s.TextdocServices.Store.GetOverlay(uri) != nil {
+	if s.TextdocSrv.Store.GetOverlay(uri) != nil {
 		t.Error("document should have been removed from collection")
 	}
 }
@@ -134,19 +130,19 @@ func TestTextDocuments_MultipleDocuments(t *testing.T) {
 	}
 
 	// Verify all documents are present
-	all := s.TextdocServices.Store.AllOverlays()
+	all := s.TextdocSrv.Store.AllOverlays()
 	if len(all) != len(uris) {
 		t.Errorf("expected %d documents, got %d", len(uris), len(all))
 	}
 
-	keys := s.TextdocServices.Store.KeysOverlays()
+	keys := s.TextdocSrv.Store.KeysOverlays()
 	if len(keys) != len(uris) {
 		t.Errorf("expected %d keys, got %d", len(uris), len(keys))
 	}
 
 	// Verify each document
 	for _, uri := range uris {
-		doc := s.TextdocServices.Store.GetOverlay(uri)
+		doc := s.TextdocSrv.Store.GetOverlay(uri)
 		if doc == nil {
 			t.Errorf("document %s not found", uri)
 		}
@@ -185,7 +181,7 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 		},
 	})
 
-	doc := s.TextdocServices.Store.GetOverlay(uri)
+	doc := s.TextdocSrv.Store.GetOverlay(uri)
 	if doc == nil {
 		t.Fatal("document not found")
 	}

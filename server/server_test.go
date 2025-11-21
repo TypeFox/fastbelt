@@ -2,21 +2,21 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package lsp
+package server
 
 import (
 	"context"
 	"testing"
 
 	"github.com/TypeFox/go-lsp/protocol"
-	"github.com/TypeFox/langium-to-go/textdoc"
+	"typefox.dev/fastbelt/textdoc"
 )
 
 // TestLanguageServerPartialHandlers tests that the language server works with some handlers nil
 func TestLanguageServerPartialHandlers(t *testing.T) {
 	var completionCalled bool
-	services := &LspServices{}
-	LoadDefaultServices(services, &textdoc.TextdocServices{})
+	services := &ServerSrv{}
+	LoadDefaultServices(services, &textdoc.TextdocSrv{})
 
 	// Create a test completion handler
 	services.LanguageServerHandlers.Completion = func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {

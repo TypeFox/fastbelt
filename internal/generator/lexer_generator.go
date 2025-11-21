@@ -12,7 +12,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/TypeFox/langium-to-go/internal/generated"
+	"typefox.dev/fastbelt/internal/generated"
 )
 
 func GenerateLexer(grammar generated.Grammar) string {
@@ -29,9 +29,9 @@ func GenerateLexer(grammar generated.Grammar) string {
 		"\"strings\"",
 		EOL,
 		EOLIndent(1),
-		"\"github.com/TypeFox/langium-to-go/core\"",
+		"core \"typefox.dev/fastbelt\"",
 		EOLIndent(1),
-		"\"github.com/TypeFox/langium-to-go/lexer\"",
+		"\"typefox.dev/fastbelt/lexer\"",
 		EOL,
 		")",
 		EOL,

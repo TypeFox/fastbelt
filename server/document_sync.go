@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package lsp
+package server
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"sync"
 
 	"github.com/TypeFox/go-lsp/protocol"
-	"github.com/TypeFox/langium-to-go/textdoc"
+	"typefox.dev/fastbelt/textdoc"
 )
 
 // TextDocumentChangeEvent signals changes to a text document.
@@ -66,7 +66,7 @@ type DocumentSyncher interface {
 
 // DefaultDocumentSyncher is the default implementation of DocumentSyncher.
 type DefaultDocumentSyncher struct {
-	srv                 *LspServices
+	srv                 *ServerSrv
 	handlersMu          sync.Mutex
 	onDidOpen           []TextDocumentChangeHandler
 	onDidChange         []TextDocumentChangeHandler
@@ -74,6 +74,11 @@ type DefaultDocumentSyncher struct {
 	onDidSave           []TextDocumentChangeHandler
 	onWillSave          []TextDocumentWillSaveHandler
 	onWillSaveWaitUntil TextDocumentWillSaveWaitUntilHandler
+}
+
+// NewDefaultDocumentSyncher creates a new default document syncher.
+func NewDefaultDocumentSyncher(srv *ServerSrv) DocumentSyncher {
+	return &DefaultDocumentSyncher{srv: srv}
 }
 
 // OnDidOpen registers a handler for document open events.
@@ -133,30 +138,20 @@ func (td *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *protocol.
 		return
 	}
 
-	if td.srv != nil && td.srv.TextdocServices != nil && td.srv.TextdocServices.Store != nil {
-		td.srv.TextdocServices.Store.AddOverlay(doc)
+	if td.srv != nil && td.srv.TextdocSrv != nil && td.srv.TextdocSrv.Store != nil {
+		td.srv.TextdocSrv.Store.AddOverlay(doc)
 	}
 
 	// Copy handlers while holding lock
 	td.handlersMu.Lock()
 	openHandlers := make([]TextDocumentChangeHandler, len(td.onDidOpen))
 	copy(openHandlers, td.onDidOpen)
-	changeHandlers := make([]TextDocumentChangeHandler, len(td.onDidChange))
-	copy(changeHandlers, td.onDidChange)
 	td.handlersMu.Unlock()
 
 	event := &TextDocumentChangeEvent{Document: doc}
 
 	// Fire onDidOpen handlers
 	for _, handler := range openHandlers {
-		if ctx.Err() != nil {
-			return
-		}
-		handler(ctx, event)
-	}
-
-	// Fire onDidChange handlers (as per TypeScript implementation)
-	for _, handler := range changeHandlers {
 		if ctx.Err() != nil {
 			return
 		}
@@ -170,11 +165,11 @@ func (td *DefaultDocumentSyncher) DidChange(ctx context.Context, params *protoco
 		return
 	}
 
-	if td.srv == nil || td.srv.TextdocServices == nil || td.srv.TextdocServices.Store == nil {
+	if td.srv == nil || td.srv.TextdocSrv == nil || td.srv.TextdocSrv.Store == nil {
 		return
 	}
 
-	doc := td.srv.TextdocServices.Store.GetOverlay(params.TextDocument.URI)
+	doc := td.srv.TextdocSrv.Store.GetOverlay(params.TextDocument.URI)
 	if doc == nil {
 		return
 	}
@@ -201,16 +196,16 @@ func (td *DefaultDocumentSyncher) DidChange(ctx context.Context, params *protoco
 
 // DidClose processes a textDocument/didClose notification.
 func (td *DefaultDocumentSyncher) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) {
-	if td.srv == nil || td.srv.TextdocServices == nil || td.srv.TextdocServices.Store == nil {
+	if td.srv == nil || td.srv.TextdocSrv == nil || td.srv.TextdocSrv.Store == nil {
 		return
 	}
 
-	doc := td.srv.TextdocServices.Store.GetOverlay(params.TextDocument.URI)
+	doc := td.srv.TextdocSrv.Store.GetOverlay(params.TextDocument.URI)
 	if doc == nil {
 		return
 	}
 
-	td.srv.TextdocServices.Store.RemoveOverlay(params.TextDocument.URI)
+	td.srv.TextdocSrv.Store.RemoveOverlay(params.TextDocument.URI)
 
 	td.handlersMu.Lock()
 	closeHandlers := make([]TextDocumentChangeHandler, len(td.onDidClose))
@@ -228,11 +223,11 @@ func (td *DefaultDocumentSyncher) DidClose(ctx context.Context, params *protocol
 
 // WillSave processes a textDocument/willSave notification.
 func (td *DefaultDocumentSyncher) WillSave(ctx context.Context, params *protocol.WillSaveTextDocumentParams) {
-	if td.srv == nil || td.srv.TextdocServices == nil || td.srv.TextdocServices.Store == nil {
+	if td.srv == nil || td.srv.TextdocSrv == nil || td.srv.TextdocSrv.Store == nil {
 		return
 	}
 
-	doc := td.srv.TextdocServices.Store.GetOverlay(params.TextDocument.URI)
+	doc := td.srv.TextdocSrv.Store.GetOverlay(params.TextDocument.URI)
 	if doc == nil {
 		return
 	}
@@ -257,8 +252,8 @@ func (td *DefaultDocumentSyncher) WillSave(ctx context.Context, params *protocol
 // WillSaveWaitUntil processes a textDocument/willSaveWaitUntil request.
 func (td *DefaultDocumentSyncher) WillSaveWaitUntil(ctx context.Context, params *protocol.WillSaveTextDocumentParams) ([]protocol.TextEdit, error) {
 	var doc *textdoc.Overlay
-	if td.srv != nil && td.srv.TextdocServices != nil && td.srv.TextdocServices.Store != nil {
-		doc = td.srv.TextdocServices.Store.GetOverlay(params.TextDocument.URI)
+	if td.srv != nil && td.srv.TextdocSrv != nil && td.srv.TextdocSrv.Store != nil {
+		doc = td.srv.TextdocSrv.Store.GetOverlay(params.TextDocument.URI)
 	}
 
 	td.handlersMu.Lock()
@@ -278,11 +273,11 @@ func (td *DefaultDocumentSyncher) WillSaveWaitUntil(ctx context.Context, params 
 
 // DidSave processes a textDocument/didSave notification.
 func (td *DefaultDocumentSyncher) DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams) {
-	if td.srv == nil || td.srv.TextdocServices == nil || td.srv.TextdocServices.Store == nil {
+	if td.srv == nil || td.srv.TextdocSrv == nil || td.srv.TextdocSrv.Store == nil {
 		return
 	}
 
-	doc := td.srv.TextdocServices.Store.GetOverlay(params.TextDocument.URI)
+	doc := td.srv.TextdocSrv.Store.GetOverlay(params.TextDocument.URI)
 	if doc == nil {
 		return
 	}

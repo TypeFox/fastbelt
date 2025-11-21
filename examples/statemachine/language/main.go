@@ -9,30 +9,30 @@ import (
 	"log"
 
 	"github.com/TypeFox/go-lsp/protocol"
-	"github.com/TypeFox/langium-to-go/lsp"
-	"github.com/TypeFox/langium-to-go/textdoc"
+	"typefox.dev/fastbelt/server"
+	"typefox.dev/fastbelt/textdoc"
 )
 
 func main() {
 	ctx := context.Background()
 	services := createServices()
 
-	if err := lsp.StartLanguageServer(ctx, &services.LspServices); err != nil {
+	if err := server.StartLanguageServer(ctx, &services.ServerSrv); err != nil {
 		log.Fatalf("Failed to start language server: %v", err)
 	}
 }
 
 type StatemachineServices struct {
-	textdoc.TextdocServices
-	lsp.LspServices
+	textdoc.TextdocSrv
+	server.ServerSrv
 	DummyServiceA string
 	DummyServiceB string
 }
 
 func createServices() *StatemachineServices {
 	services := &StatemachineServices{}
-	textdoc.LoadDefaultServices(&services.TextdocServices)
-	lsp.LoadDefaultServices(&services.LspServices, &services.TextdocServices)
+	textdoc.LoadDefaultServices(&services.TextdocSrv)
+	server.LoadDefaultServices(&services.ServerSrv, &services.TextdocSrv)
 
 	// Create a dummy completion handler for testing
 	services.LanguageServerHandlers.Completion = func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {

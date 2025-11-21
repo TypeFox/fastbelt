@@ -8,8 +8,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/TypeFox/langium-to-go/generator"
-	"github.com/TypeFox/langium-to-go/internal/generated"
+	"typefox.dev/fastbelt/generator"
+	"typefox.dev/fastbelt/internal/generated"
 )
 
 const TOKEN_TYPE = "*core.Token"
@@ -20,7 +20,7 @@ func GenerateTypes(grammar generated.Grammar) string {
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("\"github.com/TypeFox/langium-to-go/core\"")
+		n.AppendLine("core \"typefox.dev/fastbelt\"")
 	})
 	node.AppendLine(")")
 	node.AppendLine()

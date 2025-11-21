@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package lsp
+package server
 
 import (
 	"context"
@@ -10,13 +10,13 @@ import (
 	"os"
 
 	"github.com/TypeFox/go-lsp/protocol"
-	"github.com/TypeFox/langium-to-go/textdoc"
 	"golang.org/x/exp/jsonrpc2"
+	"typefox.dev/fastbelt/textdoc"
 )
 
-// LspServices contains the services for the lsp package.
-type LspServices struct {
-	TextdocServices        *textdoc.TextdocServices
+// ServerSrv contains the LSP-related services for the server package.
+type ServerSrv struct {
+	TextdocSrv             *textdoc.TextdocSrv
 	LanguageServerHandlers *LanguageServerHandlers
 	LanguageServer         LanguageServer
 	DocumentSyncher        DocumentSyncher
@@ -28,19 +28,19 @@ type LspServices struct {
 
 // LoadDefaultServices creates the default services for the language server.
 // If the services are already set, they are not overwritten.
-func LoadDefaultServices(s *LspServices, textdocServices *textdoc.TextdocServices) {
-	s.TextdocServices = textdocServices
+func LoadDefaultServices(s *ServerSrv, textdocSrv *textdoc.TextdocSrv) {
+	s.TextdocSrv = textdocSrv
 	if s.LanguageServerHandlers == nil {
 		s.LanguageServerHandlers = &LanguageServerHandlers{}
 	}
 	if s.LanguageServer == nil {
-		s.LanguageServer = &DefaultLanguageServer{srv: s}
+		s.LanguageServer = NewDefaultLanguageServer(s)
 	}
 	if s.DocumentSyncher == nil {
-		s.DocumentSyncher = &DefaultDocumentSyncher{srv: s}
+		s.DocumentSyncher = NewDefaultDocumentSyncher(s)
 	}
 	if s.ConnectionBinder == nil {
-		s.ConnectionBinder = &DefaultBinder{srv: s}
+		s.ConnectionBinder = NewDefaultBinder(s)
 	}
 	if s.ConnectionDialer == nil {
 		s.ConnectionDialer = &StdioDialer{}
@@ -64,7 +64,12 @@ type LanguageServer interface {
 
 // DefaultLanguageServer implements the LanguageServer interface
 type DefaultLanguageServer struct {
-	srv *LspServices
+	srv *ServerSrv
+}
+
+// NewDefaultLanguageServer creates a new default language server.
+func NewDefaultLanguageServer(srv *ServerSrv) LanguageServer {
+	return &DefaultLanguageServer{srv: srv}
 }
 
 func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *protocol.ParamInitialize) (*protocol.InitializeResult, error) {
@@ -348,7 +353,7 @@ func (s *DefaultLanguageServer) WorkDoneProgressCancel(ctx context.Context, para
 
 // StartLanguageServer starts a language server using the services from the DI container.
 // It sets up JSON-RPC communication over stdio and handles the essential LSP messages.
-func StartLanguageServer(ctx context.Context, services *LspServices) error {
+func StartLanguageServer(ctx context.Context, services *ServerSrv) error {
 	dialer := services.ConnectionDialer
 	binder := services.ConnectionBinder
 
@@ -365,9 +370,14 @@ func StartLanguageServer(ctx context.Context, services *LspServices) error {
 	return conn.Wait()
 }
 
-// DefaultBinder implements the ConnectionBinder interface
+// DefaultBinder implements the jsonrpc2.Binder interface
 type DefaultBinder struct {
-	srv *LspServices
+	srv *ServerSrv
+}
+
+// NewDefaultBinder creates a new default binder.
+func NewDefaultBinder(srv *ServerSrv) jsonrpc2.Binder {
+	return &DefaultBinder{srv: srv}
 }
 
 func (b *DefaultBinder) Bind(ctx context.Context, conn *jsonrpc2.Connection) (jsonrpc2.ConnectionOptions, error) {
@@ -377,7 +387,7 @@ func (b *DefaultBinder) Bind(ctx context.Context, conn *jsonrpc2.Connection) (js
 	}, nil
 }
 
-// StdioDialer implements ConnectionDialer for stdio communication
+// StdioDialer implements jsonrpc2.Dialer for stdio communication
 type StdioDialer struct{}
 
 func (d StdioDialer) Dial(ctx context.Context) (io.ReadWriteCloser, error) {

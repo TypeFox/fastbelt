@@ -8,14 +8,14 @@ import (
 	"github.com/TypeFox/go-lsp/protocol"
 )
 
-// TextdocServices contains the services for the textdoc package.
-type TextdocServices struct {
+// TextdocSrv contains the services for the textdoc package.
+type TextdocSrv struct {
 	Store Store
 }
 
 // LoadDefaultServices creates the default services for the textdoc package.
 // If the services are already set, they are not overwritten.
-func LoadDefaultServices(s *TextdocServices) {
+func LoadDefaultServices(s *TextdocSrv) {
 	if s.Store == nil {
 		s.Store = NewDefaultStore()
 	}

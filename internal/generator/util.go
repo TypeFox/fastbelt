@@ -10,8 +10,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/TypeFox/langium-to-go/core"
-	"github.com/TypeFox/langium-to-go/internal/generated"
+	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/internal/generated"
 )
 
 const CardinalityOne = ""

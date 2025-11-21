@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package core
+package fastbelt
 
 type TextIndex int32
 type TextLine int32

@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/TypeFox/langium-to-go/core"
-	"github.com/TypeFox/langium-to-go/generator"
-	"github.com/TypeFox/langium-to-go/internal/generated"
+	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/generator"
+	"typefox.dev/fastbelt/internal/generated"
 )
 
 type ParserGeneratorContext struct {
@@ -48,8 +48,8 @@ func GenerateParser(grammar generated.Grammar) string {
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("\"github.com/TypeFox/langium-to-go/core\"")
-		n.AppendLine("\"github.com/TypeFox/langium-to-go/parser\"")
+		n.AppendLine("core \"typefox.dev/fastbelt\"")
+		n.AppendLine("\"typefox.dev/fastbelt/parser\"")
 	})
 	node.AppendLine(")")
 	node.AppendLine()

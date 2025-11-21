@@ -5,7 +5,7 @@
 package parser
 
 import (
-	"github.com/TypeFox/langium-to-go/core"
+	core "typefox.dev/fastbelt"
 )
 
 type ParserState struct {

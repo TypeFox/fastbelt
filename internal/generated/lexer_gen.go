@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/TypeFox/langium-to-go/core"
-	"github.com/TypeFox/langium-to-go/lexer"
+	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/lexer"
 )
 
 const Keyword_LeftParen_Idx = 1

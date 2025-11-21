@@ -7,7 +7,7 @@ package lexer
 import (
 	"unicode/utf8"
 
-	"github.com/TypeFox/langium-to-go/core"
+	core "typefox.dev/fastbelt"
 )
 
 type LexerResult struct {

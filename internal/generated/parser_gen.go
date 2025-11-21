@@ -1,8 +1,8 @@
 package generated
 
 import (
-	"github.com/TypeFox/langium-to-go/core"
-	"github.com/TypeFox/langium-to-go/parser"
+	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/parser"
 )
 
 type Parser struct {

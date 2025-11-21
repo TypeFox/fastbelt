@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/TypeFox/langium-to-go/internal/generated"
-	"github.com/TypeFox/langium-to-go/internal/generator"
+	"typefox.dev/fastbelt/internal/generated"
+	"typefox.dev/fastbelt/internal/generator"
 )
 
 func main() {
