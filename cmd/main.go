@@ -5,11 +5,12 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"path/filepath"
 
-	"typefox.dev/fastbelt/internal/generated"
 	"typefox.dev/fastbelt/internal/generator"
+	"typefox.dev/fastbelt/internal/grammar/generated"
 )
 
 func main() {
@@ -17,7 +18,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	grammarPath := filepath.Join(cwd, "..", "grammar.fb")
+
+	grammarPathFlag := flag.String("g", filepath.Join(cwd, "..", "grammar.fb"), "Path to the grammar file")
+	outputPathFlag := flag.String("o", filepath.Join(cwd, "..", "internal", "generated"), "Path to the output directory")
+	flag.Parse()
+
+	grammarPath := *grammarPathFlag
+	outputPath := *outputPathFlag
+
+	err = os.MkdirAll(outputPath, 0755)
+	if err != nil {
+		panic(err)
+	}
+
 	grammarText, err := os.ReadFile(grammarPath)
 	if err != nil {
 		panic(err)
@@ -27,17 +40,17 @@ func main() {
 	parser_test := generated.NewParser()
 	parserResult := parser_test.Parse(lexerResult.Tokens)
 	types := generator.GenerateTypes(parserResult)
-	err = os.WriteFile(filepath.Join(cwd, "..", "internal", "generated", "types_gen.go"), []byte(types), 0644)
+	err = os.WriteFile(filepath.Join(outputPath, "types_gen.go"), []byte(types), 0644)
 	if err != nil {
 		panic(err)
 	}
 	generatedParser := generator.GenerateParser(parserResult)
-	err = os.WriteFile(filepath.Join(cwd, "..", "internal", "generated", "parser_gen.go"), []byte(generatedParser), 0644)
+	err = os.WriteFile(filepath.Join(outputPath, "parser_gen.go"), []byte(generatedParser), 0644)
 	if err != nil {
 		panic(err)
 	}
 	lexer := generator.GenerateLexer(parserResult)
-	err = os.WriteFile(filepath.Join(cwd, "..", "internal", "generated", "lexer_gen.go"), []byte(lexer), 0644)
+	err = os.WriteFile(filepath.Join(outputPath, "lexer_gen.go"), []byte(lexer), 0644)
 	if err != nil {
 		panic(err)
 	}

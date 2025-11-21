@@ -582,7 +582,7 @@ var Token_WS = core.NewTokenType(
 )
 
 func NewLexer() lexer.Lexer {
-	return lexer.NewLexer(
+	return lexer.NewDefaultLexer(
 		Keyword_LeftParen,
 		Keyword_RightParen,
 		Keyword_Asterisk,

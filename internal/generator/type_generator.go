@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"typefox.dev/fastbelt/generator"
-	"typefox.dev/fastbelt/internal/generated"
+	"typefox.dev/fastbelt/internal/grammar/generated"
 )
 
 const TOKEN_TYPE = "*core.Token"

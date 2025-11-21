@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/internal/generated"
+	"typefox.dev/fastbelt/internal/grammar/generated"
 )
 
 const CardinalityOne = ""

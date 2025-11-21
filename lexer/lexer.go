@@ -42,12 +42,12 @@ type Lexer interface {
 	Lex(input string) *LexerResult
 }
 
-type lexer struct {
+type DefaultLexer struct {
 	tokenTypes []*core.TokenType
 	tokenMap   [][]*core.TokenType
 }
 
-func (l *lexer) Lex(input string) *LexerResult {
+func (l *DefaultLexer) Lex(input string) *LexerResult {
 	length := len(input)
 	tokens := make([]*core.Token, 0, length/5) // rough estimate
 	errors := make([]*LexerError, 0)
@@ -125,7 +125,7 @@ func (l *lexer) Lex(input string) *LexerResult {
 
 const maxChar = 256
 
-func NewLexer(tokenTypes ...*core.TokenType) Lexer {
+func NewDefaultLexer(tokenTypes ...*core.TokenType) *DefaultLexer {
 	tokenMap := make([][]*core.TokenType, maxChar)
 	for i := range maxChar {
 		tokenMap[i] = make([]*core.TokenType, 0)
@@ -137,7 +137,7 @@ func NewLexer(tokenTypes ...*core.TokenType) Lexer {
 		}
 	}
 
-	return &lexer{
+	return &DefaultLexer{
 		tokenTypes: tokenTypes,
 		tokenMap:   tokenMap,
 	}

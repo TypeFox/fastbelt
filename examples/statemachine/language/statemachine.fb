@@ -1,0 +1,71 @@
+grammar StatemachineModel
+
+interface Statemachine {
+    Name string
+    Events []Event
+    Commands []Command
+    Init string // Reference to State
+    States []State
+}
+
+/** A textual representation of a state machine */
+entry Statemachine returns Statemachine:
+    'statemachine'
+    /** The name of the machine */
+    Name=ID
+    ('events'
+        /** The list of recognized event names */
+        Events+=Event+)?
+    ('commands'    Commands+=Command+)?
+    'initialState'
+    /** The starting state for the machine */
+    Init=ID
+    /** Definitions of available states */
+    States+=State*;
+
+/** An event is the trigger for a transition */
+interface Event {
+    Name string
+}
+
+Event returns Event:
+    Name=ID;
+
+interface Command {
+    Name string
+}
+
+Command returns Command:
+    Name=ID;
+
+/** A description of the status of a system */
+interface State {
+    Name string
+    Actions []string // Reference to Command
+    Transitions []Transition
+}
+
+State returns State:
+    'state' Name=ID
+        ('actions' '{' Actions+=ID+ '}')?
+        /** The transitions to other states that can take place from the current one */
+        Transitions+=Transition*
+    'end';
+
+/** A change from one state to another */
+interface Transition {
+    Event string // Reference to Event
+    State string // Reference to State
+}
+
+Transition returns Transition:
+    /** The event triggering the transition */
+    Event=ID '=>'
+    /** The target state */
+    State=ID;
+
+terminal ID: /[_a-zA-Z][\w_]*/;
+
+hidden terminal WS: /\s+/;
+hidden terminal ML_COMMENT: /\/\*[\s\S]*?\*\//;
+hidden terminal SL_COMMENT: /\/\/[^\n\r]*/;

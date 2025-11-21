@@ -11,7 +11,7 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/generator"
-	"typefox.dev/fastbelt/internal/generated"
+	"typefox.dev/fastbelt/internal/grammar/generated"
 )
 
 type ParserGeneratorContext struct {

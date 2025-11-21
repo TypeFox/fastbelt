@@ -12,7 +12,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"typefox.dev/fastbelt/internal/generated"
+	"typefox.dev/fastbelt/internal/grammar/generated"
 )
 
 func GenerateLexer(grammar generated.Grammar) string {
@@ -55,7 +55,7 @@ func GenerateLexer(grammar generated.Grammar) string {
 
 func generateMainLexerFunction(sb *strings.Builder, tokens []generated.Token, keywords []generated.Keyword) {
 	WriteSB(sb, "func NewLexer() lexer.Lexer {", EOL)
-	WriteSB(sb, Indent, "return lexer.NewLexer(", EOL)
+	WriteSB(sb, Indent, "return lexer.NewDefaultLexer(", EOL)
 	for _, keyword := range keywords {
 		WriteSB(sb, Indent, Indent, GeneratedKeywordName(keyword), ",", EOL)
 	}
