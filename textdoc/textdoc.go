@@ -8,19 +8,6 @@ import (
 	"github.com/TypeFox/go-lsp/protocol"
 )
 
-// TextdocSrv contains the services for the textdoc package.
-type TextdocSrv struct {
-	Store Store
-}
-
-// LoadDefaultServices creates the default services for the textdoc package.
-// If the services are already set, they are not overwritten.
-func LoadDefaultServices(s *TextdocSrv) {
-	if s.Store == nil {
-		s.Store = NewDefaultStore()
-	}
-}
-
 // Handle represents a reference to a text document's content and metadata.
 type Handle interface {
 	// URI returns the associated URI for this document.
@@ -31,6 +18,8 @@ type Handle interface {
 	Version() int32
 	// Content returns the document content as a byte slice.
 	Content() []byte
+	// Text returns the text content or a substring if range is provided.
+	Text(r *protocol.Range) string
 	// PositionAt converts a zero-based offset to a position.
 	PositionAt(offset int) protocol.Position
 	// OffsetAt converts a position to a zero-based offset.

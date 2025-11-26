@@ -11,41 +11,8 @@ import (
 
 	"github.com/TypeFox/go-lsp/protocol"
 	"golang.org/x/exp/jsonrpc2"
-	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/fastbelt/workspace"
 )
-
-// ServerSrv contains the LSP-related services for the server package.
-type ServerSrv struct {
-	TextdocSrv             *textdoc.TextdocSrv
-	LanguageServerHandlers *LanguageServerHandlers
-	LanguageServer         LanguageServer
-	DocumentSyncher        DocumentSyncher
-	// Connection is assigned by ConnectionBinder when the language server is started
-	Connection       *jsonrpc2.Connection
-	ConnectionBinder jsonrpc2.Binder
-	ConnectionDialer jsonrpc2.Dialer
-}
-
-// LoadDefaultServices creates the default services for the language server.
-// If the services are already set, they are not overwritten.
-func LoadDefaultServices(s *ServerSrv, textdocSrv *textdoc.TextdocSrv) {
-	s.TextdocSrv = textdocSrv
-	if s.LanguageServerHandlers == nil {
-		s.LanguageServerHandlers = &LanguageServerHandlers{}
-	}
-	if s.LanguageServer == nil {
-		s.LanguageServer = NewDefaultLanguageServer(s)
-	}
-	if s.DocumentSyncher == nil {
-		s.DocumentSyncher = NewDefaultDocumentSyncher(s)
-	}
-	if s.ConnectionBinder == nil {
-		s.ConnectionBinder = NewDefaultBinder(s)
-	}
-	if s.ConnectionDialer == nil {
-		s.ConnectionDialer = &StdioDialer{}
-	}
-}
 
 // LanguageServerHandlers contains the handlers for various LSP requests.
 // TODO extract these handlers into separate services instead of having them all here.
@@ -64,11 +31,11 @@ type LanguageServer interface {
 
 // DefaultLanguageServer implements the LanguageServer interface
 type DefaultLanguageServer struct {
-	srv *ServerSrv
+	srv ServerSrvCont
 }
 
 // NewDefaultLanguageServer creates a new default language server.
-func NewDefaultLanguageServer(srv *ServerSrv) LanguageServer {
+func NewDefaultLanguageServer(srv ServerSrvCont) LanguageServer {
 	return &DefaultLanguageServer{srv: srv}
 }
 
@@ -85,7 +52,7 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *protocol
 }
 
 func (s *DefaultLanguageServer) Initialized(ctx context.Context, params *protocol.InitializedParams) error {
-	handlers := s.srv.LanguageServerHandlers
+	handlers := s.srv.Server().LanguageServerHandlers
 	if handlers != nil && handlers.Initialized != nil {
 		return handlers.Initialized(ctx, params)
 	}
@@ -93,7 +60,7 @@ func (s *DefaultLanguageServer) Initialized(ctx context.Context, params *protoco
 }
 
 func (s *DefaultLanguageServer) Shutdown(ctx context.Context) error {
-	handlers := s.srv.LanguageServerHandlers
+	handlers := s.srv.Server().LanguageServerHandlers
 	if handlers != nil && handlers.Shutdown != nil {
 		return handlers.Shutdown(ctx)
 	}
@@ -102,7 +69,7 @@ func (s *DefaultLanguageServer) Shutdown(ctx context.Context) error {
 
 func (s *DefaultLanguageServer) Exit(ctx context.Context) error {
 	// Close the connection to allow the server to exit
-	connection := s.srv.Connection
+	connection := s.srv.Server().Connection
 	if connection != nil {
 		return connection.Close()
 	}
@@ -110,28 +77,28 @@ func (s *DefaultLanguageServer) Exit(ctx context.Context) error {
 }
 
 func (s *DefaultLanguageServer) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) error {
-	if s.srv.DocumentSyncher != nil {
-		s.srv.DocumentSyncher.DidOpen(ctx, params)
+	if s.srv.Server().DocumentSyncher != nil {
+		s.srv.Server().DocumentSyncher.DidOpen(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) error {
-	if s.srv.DocumentSyncher != nil {
-		s.srv.DocumentSyncher.DidChange(ctx, params)
+	if s.srv.Server().DocumentSyncher != nil {
+		s.srv.Server().DocumentSyncher.DidChange(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) error {
-	if s.srv.DocumentSyncher != nil {
-		s.srv.DocumentSyncher.DidClose(ctx, params)
+	if s.srv.Server().DocumentSyncher != nil {
+		s.srv.Server().DocumentSyncher.DidClose(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) Completion(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
-	handlers := s.srv.LanguageServerHandlers
+	handlers := s.srv.Server().LanguageServerHandlers
 	if handlers != nil && handlers.Completion != nil {
 		return handlers.Completion(ctx, params)
 	}
@@ -201,8 +168,8 @@ func (s *DefaultLanguageServer) Diagnostic(ctx context.Context, params *protocol
 	return nil, nil
 }
 func (s *DefaultLanguageServer) DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams) error {
-	if s.srv.DocumentSyncher != nil {
-		s.srv.DocumentSyncher.DidSave(ctx, params)
+	if s.srv.Server().DocumentSyncher != nil {
+		s.srv.Server().DocumentSyncher.DidSave(ctx, params)
 	}
 	return nil
 }
@@ -330,14 +297,14 @@ func (s *DefaultLanguageServer) TypeDefinition(ctx context.Context, params *prot
 	return nil, nil
 }
 func (s *DefaultLanguageServer) WillSave(ctx context.Context, params *protocol.WillSaveTextDocumentParams) error {
-	if s.srv.DocumentSyncher != nil {
-		s.srv.DocumentSyncher.WillSave(ctx, params)
+	if s.srv.Server().DocumentSyncher != nil {
+		s.srv.Server().DocumentSyncher.WillSave(ctx, params)
 	}
 	return nil
 }
 func (s *DefaultLanguageServer) WillSaveWaitUntil(ctx context.Context, params *protocol.WillSaveTextDocumentParams) ([]protocol.TextEdit, error) {
-	if s.srv.DocumentSyncher != nil {
-		return s.srv.DocumentSyncher.WillSaveWaitUntil(ctx, params)
+	if s.srv.Server().DocumentSyncher != nil {
+		return s.srv.Server().DocumentSyncher.WillSaveWaitUntil(ctx, params)
 	}
 	return []protocol.TextEdit{}, nil
 }
@@ -351,11 +318,11 @@ func (s *DefaultLanguageServer) WorkDoneProgressCancel(ctx context.Context, para
 	return nil
 }
 
-// StartLanguageServer starts a language server using the services from the DI container.
+// StartLanguageServer starts a language server using the service container.
 // It sets up JSON-RPC communication over stdio and handles the essential LSP messages.
-func StartLanguageServer(ctx context.Context, services *ServerSrv) error {
-	dialer := services.ConnectionDialer
-	binder := services.ConnectionBinder
+func StartLanguageServer(ctx context.Context, srv ServerSrvCont) error {
+	dialer := srv.Server().ConnectionDialer
+	binder := srv.Server().ConnectionBinder
 
 	// Create a connection using the configured dialer and binder
 	conn, err := jsonrpc2.Dial(ctx, dialer, binder)
@@ -366,24 +333,46 @@ func StartLanguageServer(ctx context.Context, services *ServerSrv) error {
 		_ = conn.Close() // Ignore error in defer
 	}()
 
+	// Register validation listener to publish diagnostics
+	client := protocol.ClientDispatcher(conn)
+	srv.Workspace().Builder.AddValidationListener(func(ctx context.Context, results []workspace.ValidationResult) error {
+		for _, result := range results {
+			// Collect diagnostics from lexer and parser errors
+			diagnostics := []protocol.Diagnostic{}
+			diagnostics = append(diagnostics, workspace.CreateLexerDiagnostics(result.Result.LexerErrors)...)
+			diagnostics = append(diagnostics, workspace.CreateParserDiagnostics(result.Document, result.Result.ParserErrors)...)
+
+			// Publish diagnostics (empty array if no errors to clear previous diagnostics)
+			params := &protocol.PublishDiagnosticsParams{
+				URI:         result.Document.URI(),
+				Version:     result.Document.Version(),
+				Diagnostics: diagnostics,
+			}
+			if err := client.PublishDiagnostics(ctx, params); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
 	// Wait for the connection to close
 	return conn.Wait()
 }
 
 // DefaultBinder implements the jsonrpc2.Binder interface
 type DefaultBinder struct {
-	srv *ServerSrv
+	srv ServerSrvCont
 }
 
 // NewDefaultBinder creates a new default binder.
-func NewDefaultBinder(srv *ServerSrv) jsonrpc2.Binder {
+func NewDefaultBinder(srv ServerSrvCont) jsonrpc2.Binder {
 	return &DefaultBinder{srv: srv}
 }
 
 func (b *DefaultBinder) Bind(ctx context.Context, conn *jsonrpc2.Connection) (jsonrpc2.ConnectionOptions, error) {
-	b.srv.Connection = conn
+	b.srv.Server().Connection = conn
 	return jsonrpc2.ConnectionOptions{
-		Handler: protocol.ServerHandler(b.srv.LanguageServer),
+		Handler: protocol.ServerHandler(b.srv.Server().LanguageServer),
 	}, nil
 }
 

@@ -7,7 +7,6 @@ package server
 import (
 	"context"
 	"log"
-	"sync"
 
 	"github.com/TypeFox/go-lsp/protocol"
 	"typefox.dev/fastbelt/textdoc"
@@ -38,24 +37,11 @@ type TextDocumentWillSaveHandler func(ctx context.Context, event *TextDocumentWi
 type TextDocumentWillSaveWaitUntilHandler func(ctx context.Context, event *TextDocumentWillSaveEvent) ([]protocol.TextEdit, error)
 
 // DocumentSyncher is the interface for handling LSP text document synchronization notifications.
-// It processes document lifecycle events (open, change, close, save) and manages
-// event handlers.
+// It processes document lifecycle events (open, change, close, save).
 //
 // Thread Safety:
-// All methods are safe for concurrent use. Handler registration uses a mutex
-// to ensure thread-safe handler management.
-//
-// Handler Execution:
-// Handlers registered via OnDidOpen, OnDidChange, etc. are executed synchronously
-// in the order they were registered. The context passed to handlers respects
-// cancellation, and handlers should check ctx.Err() if they perform long operations.
+// All methods are safe for concurrent use.
 type DocumentSyncher interface {
-	OnDidOpen(handler TextDocumentChangeHandler)
-	OnDidChange(handler TextDocumentChangeHandler)
-	OnDidClose(handler TextDocumentChangeHandler)
-	OnDidSave(handler TextDocumentChangeHandler)
-	OnWillSave(handler TextDocumentWillSaveHandler)
-	OnWillSaveWaitUntil(handler TextDocumentWillSaveWaitUntilHandler)
 	DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams)
 	DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams)
 	DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams)
@@ -66,66 +52,16 @@ type DocumentSyncher interface {
 
 // DefaultDocumentSyncher is the default implementation of DocumentSyncher.
 type DefaultDocumentSyncher struct {
-	srv                 *ServerSrv
-	handlersMu          sync.Mutex
-	onDidOpen           []TextDocumentChangeHandler
-	onDidChange         []TextDocumentChangeHandler
-	onDidClose          []TextDocumentChangeHandler
-	onDidSave           []TextDocumentChangeHandler
-	onWillSave          []TextDocumentWillSaveHandler
-	onWillSaveWaitUntil TextDocumentWillSaveWaitUntilHandler
+	srv ServerSrvCont
 }
 
 // NewDefaultDocumentSyncher creates a new default document syncher.
-func NewDefaultDocumentSyncher(srv *ServerSrv) DocumentSyncher {
+func NewDefaultDocumentSyncher(srv ServerSrvCont) DocumentSyncher {
 	return &DefaultDocumentSyncher{srv: srv}
 }
 
-// OnDidOpen registers a handler for document open events.
-func (td *DefaultDocumentSyncher) OnDidOpen(handler TextDocumentChangeHandler) {
-	td.handlersMu.Lock()
-	defer td.handlersMu.Unlock()
-	td.onDidOpen = append(td.onDidOpen, handler)
-}
-
-// OnDidChange registers a handler for document change events.
-func (td *DefaultDocumentSyncher) OnDidChange(handler TextDocumentChangeHandler) {
-	td.handlersMu.Lock()
-	defer td.handlersMu.Unlock()
-	td.onDidChange = append(td.onDidChange, handler)
-}
-
-// OnDidClose registers a handler for document close events.
-func (td *DefaultDocumentSyncher) OnDidClose(handler TextDocumentChangeHandler) {
-	td.handlersMu.Lock()
-	defer td.handlersMu.Unlock()
-	td.onDidClose = append(td.onDidClose, handler)
-}
-
-// OnDidSave registers a handler for document save events.
-func (td *DefaultDocumentSyncher) OnDidSave(handler TextDocumentChangeHandler) {
-	td.handlersMu.Lock()
-	defer td.handlersMu.Unlock()
-	td.onDidSave = append(td.onDidSave, handler)
-}
-
-// OnWillSave registers a handler for document will-save events.
-func (td *DefaultDocumentSyncher) OnWillSave(handler TextDocumentWillSaveHandler) {
-	td.handlersMu.Lock()
-	defer td.handlersMu.Unlock()
-	td.onWillSave = append(td.onWillSave, handler)
-}
-
-// OnWillSaveWaitUntil registers a handler that can provide edits during save.
-// Only one handler can be registered; calling this multiple times will replace the previous handler.
-func (td *DefaultDocumentSyncher) OnWillSaveWaitUntil(handler TextDocumentWillSaveWaitUntilHandler) {
-	td.handlersMu.Lock()
-	defer td.handlersMu.Unlock()
-	td.onWillSaveWaitUntil = handler
-}
-
 // DidOpen processes a textDocument/didOpen notification.
-func (td *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) {
+func (ds *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) {
 	doc, err := textdoc.NewOverlay(
 		params.TextDocument.URI,
 		string(params.TextDocument.LanguageID),
@@ -138,38 +74,24 @@ func (td *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *protocol.
 		return
 	}
 
-	if td.srv != nil && td.srv.TextdocSrv != nil && td.srv.TextdocSrv.Store != nil {
-		td.srv.TextdocSrv.Store.AddOverlay(doc)
-	}
+	ds.srv.Textdoc().Store.AddOverlay(doc)
 
-	// Copy handlers while holding lock
-	td.handlersMu.Lock()
-	openHandlers := make([]TextDocumentChangeHandler, len(td.onDidOpen))
-	copy(openHandlers, td.onDidOpen)
-	td.handlersMu.Unlock()
-
-	event := &TextDocumentChangeEvent{Document: doc}
-
-	// Fire onDidOpen handlers
-	for _, handler := range openHandlers {
-		if ctx.Err() != nil {
-			return
+	// Call Builder directly if available
+	if ds.srv.Workspace().Builder != nil {
+		docs := []textdoc.Handle{doc}
+		if err := ds.srv.Workspace().Builder.Update(ctx, docs); err != nil {
+			log.Printf("failed to update workspace for document open: %v", err)
 		}
-		handler(ctx, event)
 	}
 }
 
 // DidChange processes a textDocument/didChange notification.
-func (td *DefaultDocumentSyncher) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) {
+func (ds *DefaultDocumentSyncher) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) {
 	if len(params.ContentChanges) == 0 {
 		return
 	}
 
-	if td.srv == nil || td.srv.TextdocSrv == nil || td.srv.TextdocSrv.Store == nil {
-		return
-	}
-
-	doc := td.srv.TextdocSrv.Store.GetOverlay(params.TextDocument.URI)
+	doc := ds.srv.Textdoc().Store.GetOverlay(params.TextDocument.URI)
 	if doc == nil {
 		return
 	}
@@ -180,118 +102,34 @@ func (td *DefaultDocumentSyncher) DidChange(ctx context.Context, params *protoco
 		return
 	}
 
-	td.handlersMu.Lock()
-	changeHandlers := make([]TextDocumentChangeHandler, len(td.onDidChange))
-	copy(changeHandlers, td.onDidChange)
-	td.handlersMu.Unlock()
-
-	event := &TextDocumentChangeEvent{Document: doc}
-	for _, handler := range changeHandlers {
-		if ctx.Err() != nil {
-			return
+	// Call Builder directly if available
+	if ds.srv.Workspace().Builder != nil {
+		docs := []textdoc.Handle{doc}
+		if err := ds.srv.Workspace().Builder.Update(ctx, docs); err != nil {
+			log.Printf("failed to update workspace for document change: %v", err)
 		}
-		handler(ctx, event)
 	}
 }
 
 // DidClose processes a textDocument/didClose notification.
-func (td *DefaultDocumentSyncher) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) {
-	if td.srv == nil || td.srv.TextdocSrv == nil || td.srv.TextdocSrv.Store == nil {
-		return
-	}
-
-	doc := td.srv.TextdocSrv.Store.GetOverlay(params.TextDocument.URI)
+func (ds *DefaultDocumentSyncher) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) {
+	doc := ds.srv.Textdoc().Store.GetOverlay(params.TextDocument.URI)
 	if doc == nil {
 		return
 	}
 
-	td.srv.TextdocSrv.Store.RemoveOverlay(params.TextDocument.URI)
-
-	td.handlersMu.Lock()
-	closeHandlers := make([]TextDocumentChangeHandler, len(td.onDidClose))
-	copy(closeHandlers, td.onDidClose)
-	td.handlersMu.Unlock()
-
-	event := &TextDocumentChangeEvent{Document: doc}
-	for _, handler := range closeHandlers {
-		if ctx.Err() != nil {
-			return
-		}
-		handler(ctx, event)
-	}
+	ds.srv.Textdoc().Store.RemoveOverlay(params.TextDocument.URI)
 }
 
 // WillSave processes a textDocument/willSave notification.
-func (td *DefaultDocumentSyncher) WillSave(ctx context.Context, params *protocol.WillSaveTextDocumentParams) {
-	if td.srv == nil || td.srv.TextdocSrv == nil || td.srv.TextdocSrv.Store == nil {
-		return
-	}
-
-	doc := td.srv.TextdocSrv.Store.GetOverlay(params.TextDocument.URI)
-	if doc == nil {
-		return
-	}
-
-	td.handlersMu.Lock()
-	willSaveHandlers := make([]TextDocumentWillSaveHandler, len(td.onWillSave))
-	copy(willSaveHandlers, td.onWillSave)
-	td.handlersMu.Unlock()
-
-	event := &TextDocumentWillSaveEvent{
-		Document: doc,
-		Reason:   params.Reason,
-	}
-	for _, handler := range willSaveHandlers {
-		if ctx.Err() != nil {
-			return
-		}
-		handler(ctx, event)
-	}
+func (ds *DefaultDocumentSyncher) WillSave(ctx context.Context, params *protocol.WillSaveTextDocumentParams) {
 }
 
 // WillSaveWaitUntil processes a textDocument/willSaveWaitUntil request.
-func (td *DefaultDocumentSyncher) WillSaveWaitUntil(ctx context.Context, params *protocol.WillSaveTextDocumentParams) ([]protocol.TextEdit, error) {
-	var doc *textdoc.Overlay
-	if td.srv != nil && td.srv.TextdocSrv != nil && td.srv.TextdocSrv.Store != nil {
-		doc = td.srv.TextdocSrv.Store.GetOverlay(params.TextDocument.URI)
-	}
-
-	td.handlersMu.Lock()
-	handler := td.onWillSaveWaitUntil
-	td.handlersMu.Unlock()
-
-	if doc != nil && handler != nil {
-		event := &TextDocumentWillSaveEvent{
-			Document: doc,
-			Reason:   params.Reason,
-		}
-		return handler(ctx, event)
-	}
-
+func (ds *DefaultDocumentSyncher) WillSaveWaitUntil(ctx context.Context, params *protocol.WillSaveTextDocumentParams) ([]protocol.TextEdit, error) {
 	return []protocol.TextEdit{}, nil
 }
 
 // DidSave processes a textDocument/didSave notification.
-func (td *DefaultDocumentSyncher) DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams) {
-	if td.srv == nil || td.srv.TextdocSrv == nil || td.srv.TextdocSrv.Store == nil {
-		return
-	}
-
-	doc := td.srv.TextdocSrv.Store.GetOverlay(params.TextDocument.URI)
-	if doc == nil {
-		return
-	}
-
-	td.handlersMu.Lock()
-	saveHandlers := make([]TextDocumentChangeHandler, len(td.onDidSave))
-	copy(saveHandlers, td.onDidSave)
-	td.handlersMu.Unlock()
-
-	event := &TextDocumentChangeEvent{Document: doc}
-	for _, handler := range saveHandlers {
-		if ctx.Err() != nil {
-			return
-		}
-		handler(ctx, event)
-	}
+func (ds *DefaultDocumentSyncher) DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams) {
 }

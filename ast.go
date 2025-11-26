@@ -14,7 +14,7 @@ func (r *Reference[T]) Get() *T {
 	return r.ref
 }
 
-// TODO: implement this properly. This probably should point to `textdoc.Overlay`
+// TODO: implement this properly. This probably should point to `textdoc.Handle`
 type Document struct {
 	Text string
 }
