@@ -77,11 +77,9 @@ func (ds *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *protocol.
 	ds.srv.Textdoc().Store.AddOverlay(doc)
 
 	// Call Builder directly if available
-	if ds.srv.Workspace().Builder != nil {
-		docs := []textdoc.Handle{doc}
-		if err := ds.srv.Workspace().Builder.Update(ctx, docs); err != nil {
-			log.Printf("failed to update workspace for document open: %v", err)
-		}
+	docs := []textdoc.Handle{doc}
+	if err := ds.srv.Workspace().Builder.Update(ctx, docs); err != nil {
+		log.Printf("failed to update workspace for document open: %v", err)
 	}
 }
 
@@ -103,11 +101,9 @@ func (ds *DefaultDocumentSyncher) DidChange(ctx context.Context, params *protoco
 	}
 
 	// Call Builder directly if available
-	if ds.srv.Workspace().Builder != nil {
-		docs := []textdoc.Handle{doc}
-		if err := ds.srv.Workspace().Builder.Update(ctx, docs); err != nil {
-			log.Printf("failed to update workspace for document change: %v", err)
-		}
+	docs := []textdoc.Handle{doc}
+	if err := ds.srv.Workspace().Builder.Update(ctx, docs); err != nil {
+		log.Printf("failed to update workspace for document change: %v", err)
 	}
 }
 
