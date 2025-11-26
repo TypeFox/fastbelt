@@ -16,7 +16,7 @@
     "languages": [{
       "id": "fastbelt",
       "aliases": ["Fastbelt", "fastbelt"],
-      "extensions": ["fb"],
+      "extensions": [".fb"],
       "configuration": "./data/fastbelt.configuration.json"
     }],
     "grammars": [{
@@ -31,7 +31,7 @@
     "watch:tsc": "tsc --noEmit --watch",
     "vscode:prepublish": "npm run check-types && node esbuild.js --production",
     "check-types": "tsc --noEmit",
-    "build-server": "go build -o dist/server ../../grammar/server"
+    "build-server": "go build -o dist/ ../../grammar/server"
   },
   "dependencies": {
     "vscode-languageclient": "~9.0.1"

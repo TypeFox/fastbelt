@@ -61,12 +61,12 @@ func GenerateParser(grammar generated.Grammar) string {
 	node.AppendLine("}")
 	node.AppendLine()
 	firstRule := grammar.Rules()[0]
-	node.AppendLine("func (p *Parser) Parse(tokens []*core.Token) core.AstNode {")
+	node.AppendLine("func (p *Parser) Parse(tokens []*core.Token) *parser.ParseResult {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("p.state = parser.NewParserState(tokens)")
 		n.AppendLine("result := p.Parse", firstRule.Name(), "()")
 		n.AppendLine("core.AssignContainers(result)")
-		n.AppendLine("return result")
+		n.AppendLine("return &parser.ParseResult{Node: result, Errors: p.state.Errors()}")
 	})
 	node.AppendLine("}")
 	node.AppendLine()

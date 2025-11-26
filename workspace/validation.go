@@ -7,6 +7,7 @@ package workspace
 import (
 	"github.com/TypeFox/go-lsp/protocol"
 	"typefox.dev/fastbelt/lexer"
+	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/textdoc"
 )
 
@@ -31,44 +32,39 @@ func CreateLexerDiagnostics(errors []*lexer.LexerError) []protocol.Diagnostic {
 			},
 			Severity: protocol.SeverityError,
 			Message:  lexErr.Msg,
-			Source:   "fastbelt",
 		})
 	}
 	return diagnostics
 }
 
 // CreateParserDiagnostics creates diagnostics from parser errors.
-// Currently, parser errors are represented by a placeholder string.
-// More detailed information will be added later.
-func CreateParserDiagnostics(doc textdoc.Handle, parserError string) []protocol.Diagnostic {
-	if parserError == "" {
+func CreateParserDiagnostics(doc textdoc.Handle, parserErrors []*parser.ParserError) []protocol.Diagnostic {
+	if len(parserErrors) == 0 {
 		return []protocol.Diagnostic{}
 	}
-
-	content := doc.Content()
-	endLine := uint32(0)
-	endChar := uint32(0)
-	if len(content) > 0 {
-		endPos := doc.PositionAt(len(content))
-		endLine = endPos.Line
-		endChar = endPos.Character
-	}
-
-	return []protocol.Diagnostic{
-		{
-			Range: protocol.Range{
-				Start: protocol.Position{
-					Line:      0,
-					Character: 0,
+	diagnostics := make([]protocol.Diagnostic, 0, len(parserErrors))
+	for _, err := range parserErrors {
+		token := err.Token
+		if token == nil {
+			endPosition := doc.PositionAt(len(doc.Content()))
+			eofDiagnostic := protocol.Diagnostic{
+				Range: protocol.Range{
+					Start: endPosition,
+					End:   endPosition,
 				},
-				End: protocol.Position{
-					Line:      endLine,
-					Character: endChar,
-				},
-			},
-			Severity: protocol.SeverityError,
-			Message:  parserError,
-			Source:   "fastbelt",
-		},
+				Severity: protocol.SeverityError,
+				Message:  err.Msg,
+			}
+			diagnostics = append(diagnostics, eofDiagnostic)
+		} else {
+			tokenRange := token.Segment.Range.LspRange()
+			diagnostic := protocol.Diagnostic{
+				Range:    tokenRange,
+				Severity: protocol.SeverityError,
+				Message:  err.Msg,
+			}
+			diagnostics = append(diagnostics, diagnostic)
+		}
 	}
+	return diagnostics
 }
