@@ -7,6 +7,7 @@ package workspace
 import (
 	"context"
 	"log"
+	"reflect"
 	"sync"
 
 	"typefox.dev/fastbelt/textdoc"
@@ -96,9 +97,9 @@ func (b *DefaultBuilder) RemoveValidationListener(listener ValidationListener) {
 	}
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	listenerPtr := reflect.ValueOf(listener).Pointer()
 	for i, l := range b.listeners {
-		// Compare function pointers
-		if &l == &listener {
+		if reflect.ValueOf(l).Pointer() == listenerPtr {
 			b.listeners = append(b.listeners[:i], b.listeners[i+1:]...)
 			return
 		}
