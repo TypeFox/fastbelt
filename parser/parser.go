@@ -8,6 +8,11 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
+// Parser defines the interface for parsing tokens (lexer output) into AST nodes.
+type Parser interface {
+	Parse(tokens []*core.Token) core.AstNode
+}
+
 type ParserState struct {
 	Tokens []*core.Token
 	Length int

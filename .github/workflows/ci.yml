@@ -54,8 +54,8 @@ jobs:
         version: v2.2.1
         args: --timeout=5m
 
-  examples:
-    name: Examples
+  vscode:
+    name: VS Code Extensions
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
@@ -66,12 +66,12 @@ jobs:
       with:
         node-version: '22'
         cache: 'npm'
-        cache-dependency-path: examples/statemachine/vscode-extension/package-lock.json
+        cache-dependency-path: internal/vscode-extensions/package-lock.json
 
     - name: Install dependencies
       run: npm install
-      working-directory: examples/statemachine/vscode-extension
+      working-directory: internal/vscode-extensions
 
-    - name: Build extension
+    - name: Build extensions
       run: npm run build
-      working-directory: examples/statemachine/vscode-extension
+      working-directory: internal/vscode-extensions

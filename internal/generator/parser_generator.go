@@ -61,7 +61,7 @@ func GenerateParser(grammar generated.Grammar) string {
 	node.AppendLine("}")
 	node.AppendLine()
 	firstRule := grammar.Rules()[0]
-	node.AppendLine("func (p *Parser) Parse(tokens []*core.Token) ", firstRule.Name(), " {")
+	node.AppendLine("func (p *Parser) Parse(tokens []*core.Token) core.AstNode {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("p.state = parser.NewParserState(tokens)")
 		n.AppendLine("result := p.Parse", firstRule.Name(), "()")

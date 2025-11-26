@@ -1,5 +1,6 @@
 {
   "name": "statemachine-vscode",
+  "publisher": "typefox",
   "displayName": "statemachine-vscode",
   "description": "",
   "version": "0.0.1",
@@ -25,19 +26,14 @@
     }]
   },
   "scripts": {
-    "build": "npm run check-types && node esbuild.js",
+    "build": "npm run check-types && node esbuild.js && npm run build-server",
     "watch": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch",
     "vscode:prepublish": "npm run check-types && node esbuild.js --production",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "build-server": "go build -o dist/server ../../../examples/statemachine"
   },
   "dependencies": {
     "vscode-languageclient": "~9.0.1"
-  },
-  "devDependencies": {
-    "@types/vscode": "^1.104.0",
-    "@types/node": "22.x",
-    "esbuild": "^0.25.9",
-    "typescript": "^5.9.2"
   }
 }

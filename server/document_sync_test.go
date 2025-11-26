@@ -6,40 +6,74 @@ package server
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/TypeFox/go-lsp/protocol"
 	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/fastbelt/workspace"
 )
 
-func createTestServices() *ServerSrv {
-	s := &ServerSrv{
-		TextdocSrv: &textdoc.TextdocSrv{},
-	}
-	textdoc.LoadDefaultServices(s.TextdocSrv)
+// mockBuilder is a test implementation of Builder that tracks calls
+type mockBuilder struct {
+	mu          sync.Mutex
+	updateCalls []updateCall
+}
+
+type updateCall struct {
+	docs []textdoc.Handle
+}
+
+func (m *mockBuilder) Update(ctx context.Context, docs []textdoc.Handle) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.updateCalls = append(m.updateCalls, updateCall{docs: docs})
+	return nil
+}
+
+func (m *mockBuilder) AddValidationListener(listener workspace.ValidationListener) {
+	// No-op for tests
+}
+
+func (m *mockBuilder) RemoveValidationListener(listener workspace.ValidationListener) {
+	// No-op for tests
+}
+
+func (m *mockBuilder) getUpdateCalls() []updateCall {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	result := make([]updateCall, len(m.updateCalls))
+	copy(result, m.updateCalls)
+	return result
+}
+
+func (m *mockBuilder) reset() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.updateCalls = nil
+}
+
+func createTestServices() ServerSrvCont {
+	s := &serverSrvContTest{}
+	textdoc.CreateDefaultServices(s)
 	return s
 }
 
-func TestTextDocuments_Lifecycle(t *testing.T) {
+func createTestServicesWithBuilder() (ServerSrvCont, *mockBuilder) {
 	s := createTestServices()
-	td := &DefaultDocumentSyncher{srv: s}
-	ctx := context.Background()
+	mockBuilder := &mockBuilder{}
+	s.Workspace().Builder = mockBuilder
+	return s, mockBuilder
+}
 
-	// Track events
-	var openedDoc, changedDoc, closedDoc *TextDocumentChangeEvent
-	td.OnDidOpen(func(ctx context.Context, event *TextDocumentChangeEvent) {
-		openedDoc = event
-	})
-	td.OnDidChange(func(ctx context.Context, event *TextDocumentChangeEvent) {
-		changedDoc = event
-	})
-	td.OnDidClose(func(ctx context.Context, event *TextDocumentChangeEvent) {
-		closedDoc = event
-	})
+func TestTextDocuments_Lifecycle(t *testing.T) {
+	s, mockBuilder := createTestServicesWithBuilder()
+	ds := &DefaultDocumentSyncher{srv: s}
+	ctx := context.Background()
 
 	// Open a document
 	uri := protocol.DocumentURI("file:///test.txt")
-	td.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
+	ds.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
 			LanguageID: "plaintext",
@@ -48,16 +82,20 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 		},
 	})
 
-	// Verify document was opened
-	if openedDoc == nil {
-		t.Fatal("onDidOpen handler was not called")
+	// Verify Builder.Update was called for DidOpen
+	updateCalls := mockBuilder.getUpdateCalls()
+	if len(updateCalls) != 1 {
+		t.Fatalf("expected 1 update call, got %d", len(updateCalls))
 	}
-	if openedDoc.Document.URI() != uri {
-		t.Errorf("expected URI %s, got %s", uri, openedDoc.Document.URI())
+	if len(updateCalls[0].docs) != 1 {
+		t.Fatalf("expected 1 document in update call, got %d", len(updateCalls[0].docs))
+	}
+	if updateCalls[0].docs[0].URI() != uri {
+		t.Errorf("expected URI %s, got %s", uri, updateCalls[0].docs[0].URI())
 	}
 
 	// Verify document is in collection
-	doc := s.TextdocSrv.Store.GetOverlay(uri)
+	doc := s.Textdoc().Store.GetOverlay(uri)
 	if doc == nil {
 		t.Fatal("document not found in collection")
 	}
@@ -66,7 +104,8 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	}
 
 	// Change the document
-	td.DidChange(ctx, &protocol.DidChangeTextDocumentParams{
+	mockBuilder.reset()
+	ds.DidChange(ctx, &protocol.DidChangeTextDocumentParams{
 		TextDocument: protocol.VersionedTextDocumentIdentifier{
 			TextDocumentIdentifier: protocol.TextDocumentIdentifier{URI: uri},
 			Version:                2,
@@ -76,9 +115,10 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 		},
 	})
 
-	// Verify change event
-	if changedDoc == nil {
-		t.Fatal("onDidChangeContent handler was not called after change")
+	// Verify Builder.Update was called for DidChange
+	updateCalls = mockBuilder.getUpdateCalls()
+	if len(updateCalls) != 1 {
+		t.Fatalf("expected 1 update call after change, got %d", len(updateCalls))
 	}
 	if doc.Version() != 2 {
 		t.Errorf("expected version 2, got %d", doc.Version())
@@ -88,27 +128,19 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	}
 
 	// Close the document
-	td.DidClose(ctx, &protocol.DidCloseTextDocumentParams{
+	ds.DidClose(ctx, &protocol.DidCloseTextDocumentParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
 	})
 
-	// Verify close event
-	if closedDoc == nil {
-		t.Fatal("onDidClose handler was not called")
-	}
-	if closedDoc.Document.URI() != uri {
-		t.Errorf("expected URI %s, got %s", uri, closedDoc.Document.URI())
-	}
-
 	// Verify document was removed
-	if s.TextdocSrv.Store.GetOverlay(uri) != nil {
+	if s.Textdoc().Store.GetOverlay(uri) != nil {
 		t.Error("document should have been removed from collection")
 	}
 }
 
 func TestTextDocuments_MultipleDocuments(t *testing.T) {
-	s := createTestServices()
-	td := &DefaultDocumentSyncher{srv: s}
+	s, _ := createTestServicesWithBuilder()
+	ds := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
 	// Open multiple documents
@@ -119,7 +151,7 @@ func TestTextDocuments_MultipleDocuments(t *testing.T) {
 	}
 
 	for i, uri := range uris {
-		td.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
+		ds.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
 			TextDocument: protocol.TextDocumentItem{
 				URI:        uri,
 				LanguageID: "plaintext",
@@ -130,19 +162,19 @@ func TestTextDocuments_MultipleDocuments(t *testing.T) {
 	}
 
 	// Verify all documents are present
-	all := s.TextdocSrv.Store.AllOverlays()
+	all := s.Textdoc().Store.AllOverlays()
 	if len(all) != len(uris) {
 		t.Errorf("expected %d documents, got %d", len(uris), len(all))
 	}
 
-	keys := s.TextdocSrv.Store.KeysOverlays()
+	keys := s.Textdoc().Store.KeysOverlays()
 	if len(keys) != len(uris) {
 		t.Errorf("expected %d keys, got %d", len(uris), len(keys))
 	}
 
 	// Verify each document
 	for _, uri := range uris {
-		doc := s.TextdocSrv.Store.GetOverlay(uri)
+		doc := s.Textdoc().Store.GetOverlay(uri)
 		if doc == nil {
 			t.Errorf("document %s not found", uri)
 		}
@@ -150,12 +182,12 @@ func TestTextDocuments_MultipleDocuments(t *testing.T) {
 }
 
 func TestTextDocuments_IncrementalChanges(t *testing.T) {
-	s := createTestServices()
-	td := &DefaultDocumentSyncher{srv: s}
+	s, _ := createTestServicesWithBuilder()
+	ds := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
 	uri := protocol.DocumentURI("file:///test.txt")
-	td.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
+	ds.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
 			LanguageID: "plaintext",
@@ -165,7 +197,7 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 	})
 
 	// Apply incremental change
-	td.DidChange(ctx, &protocol.DidChangeTextDocumentParams{
+	ds.DidChange(ctx, &protocol.DidChangeTextDocumentParams{
 		TextDocument: protocol.VersionedTextDocumentIdentifier{
 			TextDocumentIdentifier: protocol.TextDocumentIdentifier{URI: uri},
 			Version:                2,
@@ -181,7 +213,7 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 		},
 	})
 
-	doc := s.TextdocSrv.Store.GetOverlay(uri)
+	doc := s.Textdoc().Store.GetOverlay(uri)
 	if doc == nil {
 		t.Fatal("document not found")
 	}
@@ -193,12 +225,12 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 }
 
 func TestTextDocuments_WillSave(t *testing.T) {
-	s := createTestServices()
-	td := &DefaultDocumentSyncher{srv: s}
+	s, _ := createTestServicesWithBuilder()
+	ds := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
 	uri := protocol.DocumentURI("file:///test.txt")
-	td.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
+	ds.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
 			LanguageID: "plaintext",
@@ -207,37 +239,26 @@ func TestTextDocuments_WillSave(t *testing.T) {
 		},
 	})
 
-	// Track will-save event
-	var willSaveEvent *TextDocumentWillSaveEvent
-	td.OnWillSave(func(ctx context.Context, event *TextDocumentWillSaveEvent) {
-		willSaveEvent = event
-	})
-
 	// Trigger will-save
-	td.WillSave(ctx, &protocol.WillSaveTextDocumentParams{
+	ds.WillSave(ctx, &protocol.WillSaveTextDocumentParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
 		Reason:       protocol.Manual,
 	})
 
-	// Verify event
-	if willSaveEvent == nil {
-		t.Fatal("onWillSave handler was not called")
-	}
-	if willSaveEvent.Document.URI() != uri {
-		t.Errorf("expected URI %s, got %s", uri, willSaveEvent.Document.URI())
-	}
-	if willSaveEvent.Reason != protocol.Manual {
-		t.Errorf("expected reason Manual, got %v", willSaveEvent.Reason)
+	// Verify document still exists
+	doc := s.Textdoc().Store.GetOverlay(uri)
+	if doc == nil {
+		t.Fatal("document should still exist after WillSave")
 	}
 }
 
 func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
-	s := createTestServices()
-	td := &DefaultDocumentSyncher{srv: s}
+	s, _ := createTestServicesWithBuilder()
+	ds := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
 	uri := protocol.DocumentURI("file:///test.txt")
-	td.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
+	ds.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
 			LanguageID: "plaintext",
@@ -246,22 +267,8 @@ func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
 		},
 	})
 
-	// Register handler that returns edits
-	expectedEdits := []protocol.TextEdit{
-		{
-			Range: protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 0},
-				End:   protocol.Position{Line: 0, Character: 7},
-			},
-			NewText: "modified",
-		},
-	}
-	td.OnWillSaveWaitUntil(func(ctx context.Context, event *TextDocumentWillSaveEvent) ([]protocol.TextEdit, error) {
-		return expectedEdits, nil
-	})
-
 	// Trigger will-save-wait-until
-	edits, err := td.WillSaveWaitUntil(ctx, &protocol.WillSaveTextDocumentParams{
+	edits, err := ds.WillSaveWaitUntil(ctx, &protocol.WillSaveTextDocumentParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
 		Reason:       protocol.Manual,
 	})
@@ -269,19 +276,19 @@ func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
 		t.Fatalf("WillSaveWaitUntil failed: %v", err)
 	}
 
-	// Verify edits
-	if len(edits) != len(expectedEdits) {
-		t.Errorf("expected %d edits, got %d", len(expectedEdits), len(edits))
+	// Verify empty edits are returned
+	if len(edits) != 0 {
+		t.Errorf("expected 0 edits, got %d", len(edits))
 	}
 }
 
 func TestTextDocuments_DidSave(t *testing.T) {
-	s := createTestServices()
-	td := &DefaultDocumentSyncher{srv: s}
+	s, _ := createTestServicesWithBuilder()
+	ds := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
 	uri := protocol.DocumentURI("file:///test.txt")
-	td.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
+	ds.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
 			LanguageID: "plaintext",
@@ -290,22 +297,17 @@ func TestTextDocuments_DidSave(t *testing.T) {
 		},
 	})
 
-	// Track save event
-	var savedDoc *TextDocumentChangeEvent
-	td.OnDidSave(func(ctx context.Context, event *TextDocumentChangeEvent) {
-		savedDoc = event
-	})
-
 	// Trigger save
-	td.DidSave(ctx, &protocol.DidSaveTextDocumentParams{
+	ds.DidSave(ctx, &protocol.DidSaveTextDocumentParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
 	})
 
-	// Verify event
-	if savedDoc == nil {
-		t.Fatal("onDidSave handler was not called")
+	// Verify document still exists
+	doc := s.Textdoc().Store.GetOverlay(uri)
+	if doc == nil {
+		t.Fatal("document should still exist after DidSave")
 	}
-	if savedDoc.Document.URI() != uri {
-		t.Errorf("expected URI %s, got %s", uri, savedDoc.Document.URI())
+	if doc.URI() != uri {
+		t.Errorf("expected URI %s, got %s", uri, doc.URI())
 	}
 }

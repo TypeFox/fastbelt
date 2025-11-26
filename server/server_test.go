@@ -10,16 +10,24 @@ import (
 
 	"github.com/TypeFox/go-lsp/protocol"
 	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/fastbelt/workspace"
 )
+
+type serverSrvContTest struct {
+	textdoc.TextdocSrvContBlock
+	workspace.WorkspaceSrvContBlock
+	workspace.GeneratedSrvContBlock
+	ServerSrvContBlock
+}
 
 // TestLanguageServerPartialHandlers tests that the language server works with some handlers nil
 func TestLanguageServerPartialHandlers(t *testing.T) {
 	var completionCalled bool
-	services := &ServerSrv{}
-	LoadDefaultServices(services, &textdoc.TextdocSrv{})
+	srv := &serverSrvContTest{}
+	CreateDefaultServices(srv)
 
 	// Create a test completion handler
-	services.LanguageServerHandlers.Completion = func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
+	srv.Server().LanguageServerHandlers.Completion = func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
 		completionCalled = true
 		return &protocol.CompletionList{
 			IsIncomplete: false,
@@ -32,7 +40,7 @@ func TestLanguageServerPartialHandlers(t *testing.T) {
 		}, nil
 	}
 
-	server := services.LanguageServer
+	server := srv.Server().LanguageServer
 	ctx := context.Background()
 
 	// Test Initialize - should use default implementation

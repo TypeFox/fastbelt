@@ -4,6 +4,8 @@
 
 package main
 
+//go:generate go run ../../../cmd/main.go -g ./statemachine.fb -o ./generated -v
+
 import (
 	"context"
 	"log"
@@ -11,31 +13,33 @@ import (
 	"github.com/TypeFox/go-lsp/protocol"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/fastbelt/workspace"
 )
 
 func main() {
 	ctx := context.Background()
-	services := createServices()
+	srv := createServices()
 
-	if err := server.StartLanguageServer(ctx, &services.ServerSrv); err != nil {
-		log.Fatalf("Failed to start language server: %v", err)
+	if err := server.StartLanguageServer(ctx, srv); err != nil {
+		log.Fatalf("Error: %v", err)
 	}
 }
 
-type StatemachineServices struct {
-	textdoc.TextdocSrv
-	server.ServerSrv
-	DummyServiceA string
-	DummyServiceB string
+type StatemachineSrv struct {
+	textdoc.TextdocSrvContBlock
+	workspace.GeneratedSrvContBlock
+	workspace.WorkspaceSrvContBlock
+	server.ServerSrvContBlock
 }
 
-func createServices() *StatemachineServices {
-	services := &StatemachineServices{}
-	textdoc.LoadDefaultServices(&services.TextdocSrv)
-	server.LoadDefaultServices(&services.ServerSrv, &services.TextdocSrv)
+func createServices() *StatemachineSrv {
+	srv := &StatemachineSrv{}
+	textdoc.CreateDefaultServices(srv)
+	workspace.CreateDefaultServices(srv)
+	server.CreateDefaultServices(srv)
 
 	// Create a dummy completion handler for testing
-	services.LanguageServerHandlers.Completion = func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
+	srv.Server().LanguageServerHandlers.Completion = func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
 		return &protocol.CompletionList{
 			IsIncomplete: false,
 			Items: []protocol.CompletionItem{
@@ -61,5 +65,5 @@ func createServices() *StatemachineServices {
 		}, nil
 	}
 
-	return services
+	return srv
 }

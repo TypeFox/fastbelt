@@ -4,33 +4,39 @@
 
 package main
 
-//go:generate go run ../../../cmd/main.go -g grammar.fb -o internal/generated
+//go:generate go run ../../../cmd/main.go -g ../grammar.fb -o ../generated -v
 
 import (
 	"context"
 	"log"
 
+	"typefox.dev/fastbelt/internal/grammar/generated"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/fastbelt/workspace"
 )
 
 func main() {
 	ctx := context.Background()
-	services := createServices()
+	srv := createServices()
 
-	if err := server.StartLanguageServer(ctx, &services.ServerSrv); err != nil {
-		log.Fatalf("Failed to start language server: %v", err)
+	if err := server.StartLanguageServer(ctx, srv); err != nil {
+		log.Fatalf("Error: %v", err)
 	}
 }
 
-type GrammarServices struct {
-	textdoc.TextdocSrv
-	server.ServerSrv
+type GrammarSrv struct {
+	textdoc.TextdocSrvContBlock
+	workspace.GeneratedSrvContBlock
+	workspace.WorkspaceSrvContBlock
+	server.ServerSrvContBlock
 }
 
-func createServices() *GrammarServices {
-	services := &GrammarServices{}
-	textdoc.LoadDefaultServices(&services.TextdocSrv)
-	server.LoadDefaultServices(&services.ServerSrv, &services.TextdocSrv)
-	return services
+func createServices() *GrammarSrv {
+	srv := &GrammarSrv{}
+	textdoc.CreateDefaultServices(srv)
+	generated.CreateDefaultServices(srv)
+	workspace.CreateDefaultServices(srv)
+	server.CreateDefaultServices(srv)
+	return srv
 }

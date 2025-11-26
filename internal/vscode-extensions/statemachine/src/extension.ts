@@ -25,7 +25,7 @@ export function deactivate(): Thenable<void> | undefined {
 async function startLanguageClient(context: vscode.ExtensionContext): Promise<LanguageClient> {
     // Options to control the language server
     const serverOptions: ServerOptions = {
-		command: context.asAbsolutePath(path.join('..', 'language', 'language')),
+		command: context.asAbsolutePath(path.join('dist', 'server')),
 		args: [],
 		transport: TransportKind.stdio
     };

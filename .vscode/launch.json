@@ -14,15 +14,29 @@
 			"cwd": "${workspaceFolder}/cmd"
 		},
 		{
+			"name": "Fastbelt Extension",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"${workspaceFolder}/internal/grammar",
+				"--extensionDevelopmentPath=${workspaceFolder}/internal/vscode-extensions/fastbelt"
+			],
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/internal/vscode-extensions/fastbelt/dist/**/*.js"
+            ]
+		},
+		{
 			"name": "Statemachine Extension",
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}/examples/statemachine/vscode-extension"
+				"${workspaceFolder}/examples/statemachine",
+				"--extensionDevelopmentPath=${workspaceFolder}/internal/vscode-extensions/statemachine"
 			],
             "sourceMaps": true,
             "outFiles": [
-                "${workspaceFolder}/examples/statemachine/vscode-extension/dist/**/*.js"
+                "${workspaceFolder}/internal/vscode-extensions/statemachine/dist/**/*.js"
             ]
 		}
 	]

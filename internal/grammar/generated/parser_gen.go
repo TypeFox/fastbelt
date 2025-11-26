@@ -9,7 +9,7 @@ type Parser struct {
 	state *parser.ParserState
 }
 
-func (p *Parser) Parse(tokens []*core.Token) Grammar {
+func (p *Parser) Parse(tokens []*core.Token) core.AstNode {
 	p.state = parser.NewParserState(tokens)
 	result := p.ParseGrammar()
 	core.AssignContainers(result)
