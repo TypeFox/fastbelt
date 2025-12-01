@@ -7,6 +7,7 @@ package workspace
 import (
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
+	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/textdoc"
 )
 
@@ -14,7 +15,7 @@ import (
 type ParseResult struct {
 	Root         core.AstNode
 	LexerErrors  []*lexer.LexerError
-	ParserErrors string
+	ParserErrors []*parser.ParserError
 }
 
 // DocumentParser defines the interface for parsing a document into an AST node.
@@ -38,10 +39,7 @@ func (p *DefaultDocumentParser) Parse(doc textdoc.Handle) ParseResult {
 	lexerRes := p.srv.Generated().Lexer.Lex(text)
 	result.LexerErrors = lexerRes.Errors
 	parserRes := p.srv.Generated().Parser.Parse(lexerRes.Tokens)
-	if parserRes == nil {
-		result.ParserErrors = "parser error"
-	} else {
-		result.Root = parserRes
-	}
+	result.Root = parserRes.Node
+	result.ParserErrors = parserRes.Errors
 	return result
 }

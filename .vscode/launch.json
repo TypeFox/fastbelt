@@ -11,7 +11,11 @@
 			"request": "launch",
 			"mode": "debug",
 			"program": "${workspaceFolder}/cmd/main.go",
-			"cwd": "${workspaceFolder}/cmd"
+			"cwd": "${workspaceFolder}/internal/grammar",
+			"args": [
+				"--g=grammar.fb",
+				"--o=generated"
+			]
 		},
 		{
 			"name": "Fastbelt Extension",

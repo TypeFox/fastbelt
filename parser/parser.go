@@ -10,7 +10,19 @@ import (
 
 // Parser defines the interface for parsing tokens (lexer output) into AST nodes.
 type Parser interface {
-	Parse(tokens []*core.Token) core.AstNode
+	Parse(tokens []*core.Token) *ParseResult
+}
+
+type ParseResult struct {
+	Node   core.AstNode
+	Errors []*ParserError
+}
+
+type ParserError struct {
+	Msg string
+	// The token this error is associated with.
+	// `nil` if the error is due to EOF.
+	Token *core.Token
 }
 
 type ParserState struct {
@@ -21,10 +33,24 @@ type ParserState struct {
 
 	next *core.Token
 	// Indicates whether a parsing error has occurred
-	// to prevent further processing
+	// and the parser is in error recovery mode.
+	// The parser will not consume any more tokens while in error mode.
 	//
 	// TODO: implement proper error handling
-	err bool
+	inError bool
+	errors  []*ParserError
+}
+
+func (p *ParserState) Errors() []*ParserError {
+	return p.errors
+}
+
+func (p *ParserState) appendError(msg string, token *core.Token) {
+	p.errors = append(p.errors, &ParserError{
+		Msg:   msg,
+		Token: token,
+	})
+	p.inError = true
 }
 
 type LookaheadPath []int
@@ -37,18 +63,19 @@ func NewParserState(tokens []*core.Token) *ParserState {
 		next = tokens[0]
 	}
 	return &ParserState{
-		Tokens: tokens,
-		Length: len(tokens),
-		Index:  0,
-		State:  0,
-		next:   next,
-		err:    false,
+		Tokens:  tokens,
+		Length:  len(tokens),
+		Index:   0,
+		State:   0,
+		next:    next,
+		inError: false,
+		errors:  []*ParserError{},
 	}
 }
 
 func (p *ParserState) LA(offset int) *core.Token {
 	pos := p.Index + offset - 1
-	if pos < 0 || pos >= p.Length || p.err {
+	if pos < 0 || pos >= p.Length || p.inError {
 		return nil
 	}
 	return p.Tokens[pos]
@@ -63,14 +90,18 @@ func (p *ParserState) LAId(offset int) int {
 }
 
 func (p *ParserState) Consume(tokenType int) *core.Token {
+	if p.inError {
+		return nil
+	}
 	current := p.next
-	if current == nil || p.err {
+	if current == nil {
 		// EOF reached
+		p.appendError("Unexpected end of input.", nil)
 		return nil
 	}
 	if current.TypeId != tokenType {
 		// Generate error
-		p.err = true
+		p.appendError("Unexpected token '"+current.Image+"'.", current)
 		return nil
 	}
 	p.Index++

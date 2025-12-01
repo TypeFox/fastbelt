@@ -49,7 +49,7 @@ func main() {
 	lexerResult := lexer_test.Lex(string(grammarText))
 
 	parser_test := generated.NewParser()
-	parserResult := parser_test.Parse(lexerResult.Tokens)
+	parserResult := parser_test.Parse(lexerResult.Tokens).Node
 	if grammar, ok := parserResult.(generated.Grammar); !ok {
 		panic("Parser result is not a Grammar")
 	} else {

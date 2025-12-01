@@ -9,11 +9,11 @@ type Parser struct {
 	state *parser.ParserState
 }
 
-func (p *Parser) Parse(tokens []*core.Token) core.AstNode {
+func (p *Parser) Parse(tokens []*core.Token) *parser.ParseResult {
 	p.state = parser.NewParserState(tokens)
 	result := p.ParseGrammar()
 	core.AssignContainers(result)
-	return result
+	return &parser.ParseResult{Node: result, Errors: p.state.Errors()}
 }
 
 func NewParser() *Parser {
