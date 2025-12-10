@@ -2,7 +2,6 @@ package automatons
 
 import (
 	"reflect"
-	"sort"
 	"testing"
 )
 
@@ -240,46 +239,6 @@ func TestMaxMin(t *testing.T) {
 			t.Errorf("min(%c, %c): expected %c, got %c", tc.a, tc.b, tc.expected, result)
 		}
 	}
-}
-
-// Benchmark the epsilon closure algorithm
-func BenchmarkGetEpsilonClosure_LinearChain(b *testing.B) {
-	// Create a long linear chain for benchmarking
-	builder := NewNFABuilder()
-
-	const chainLength = 100
-	states := make([]int, chainLength)
-	emptyCharset := NewRuneSet_Empty()
-
-	for i := 0; i < chainLength; i++ {
-		states[i] = builder.AddState()
-		if i > 0 {
-			builder.AddTransition(states[i-1], states[i], emptyCharset)
-		}
-	}
-
-	builder.SetStartState(states[0])
-	builder.AcceptState(states[chainLength-1])
-
-	nfa, err := builder.Build()
-	if err != nil {
-		b.Fatalf("Failed to build benchmark NFA: %v", err)
-	}
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		GetEpsilonClosure(nfa, states[0])
-	}
-}
-
-// Helper function to convert map[int]bool to sorted slice for easier testing
-func closureToSortedSlice(closure map[int]bool) []int {
-	result := make([]int, 0, len(closure))
-	for state := range closure {
-		result = append(result, state)
-	}
-	sort.Ints(result)
-	return result
 }
 
 func TestGetEpsilonClosure_ConsistentResults(t *testing.T) {

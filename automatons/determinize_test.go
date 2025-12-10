@@ -309,34 +309,6 @@ func TestRemoveDuplicateCharSets(t *testing.T) {
 	}
 }
 
-// Benchmark tests
-func BenchmarkDeterminizeSimple(b *testing.B) {
-	nfa := createSimpleNFA()
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		Determinize(nfa)
-	}
-}
-
-func BenchmarkDeterminizeWithEpsilons(b *testing.B) {
-	nfa := createNFAWithEpsilons()
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		Determinize(nfa)
-	}
-}
-
-func BenchmarkDeterminizeNonDeterministic(b *testing.B) {
-	nfa := createNonDeterministicNFA()
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		Determinize(nfa)
-	}
-}
-
 // Test that demonstrates correct determinization behavior
 func TestDeterminizationCorrectness(t *testing.T) {
 	// Create NFA that accepts strings containing 'ab' or 'ba'
