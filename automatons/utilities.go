@@ -46,14 +46,12 @@ func min(a, b rune) rune {
 //
 // Time Complexity: O(V + E) where V is the number of states and E is the number of epsilon transitions.
 // Space Complexity: O(V) for the closure set and internal queue.
-func GetEpsilonClosure(nfa NFA, states ...int) map[int]bool {
-	closure := make(map[int]bool)
+func GetEpsilonClosure(nfa NFA, states ...int) BitMask {
+	closure := NewBitMask_Empty(nfa.GetStateCount())
 	queue := make([]int, 0, len(states))
 
 	// Initialize with input states
-	for _, state := range states {
-		queue = append(queue, state)
-	}
+	queue = append(queue, states...)
 
 	// Process queue until empty
 	for len(queue) > 0 {
@@ -62,12 +60,12 @@ func GetEpsilonClosure(nfa NFA, states ...int) map[int]bool {
 		queue = queue[:len(queue)-1]
 
 		// Skip if already processed
-		if closure[source] {
+		if closure.IsSet(source) {
 			continue
 		}
 
 		// Mark as visited
-		closure[source] = true
+		closure.Set(source)
 
 		// Get transitions from this state
 		targets := nfa.GetTransitionsBySource()[source]
@@ -77,7 +75,7 @@ func GetEpsilonClosure(nfa NFA, states ...int) map[int]bool {
 
 		// Add epsilon targets to queue
 		for _, target := range targets.GetEpsilonTargets() {
-			if !closure[target] {
+			if !closure.IsSet(target) {
 				queue = append(queue, target)
 			}
 		}

@@ -50,7 +50,7 @@ func TestGetEpsilonClosure_SingleState(t *testing.T) {
 
 	// Test closure of state 0 (should include 0, 1, 2, 3, 4)
 	closure := GetEpsilonClosure(nfa, 0)
-	expected := map[int]bool{0: true, 1: true, 2: true, 3: true, 4: true}
+	expected := NewBitMask_Bits(5, []bool{true, true, true, true, true})
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of state 0: expected %v, got %v", expected, closure)
@@ -62,7 +62,7 @@ func TestGetEpsilonClosure_MultipleStates(t *testing.T) {
 
 	// Test closure of states 1 and 3
 	closure := GetEpsilonClosure(nfa, 1, 3)
-	expected := map[int]bool{1: true, 2: true, 3: true, 4: true}
+	expected := NewBitMask_Bits(5, []bool{false, true, true, true, true})
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of states 1,3: expected %v, got %v", expected, closure)
@@ -74,7 +74,7 @@ func TestGetEpsilonClosure_LeafState(t *testing.T) {
 
 	// Test closure of state 4 (leaf state with no epsilon transitions)
 	closure := GetEpsilonClosure(nfa, 4)
-	expected := map[int]bool{4: true}
+	expected := NewBitMask_Bits(5, []bool{false, false, false, false, true})
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of state 4: expected %v, got %v", expected, closure)
@@ -86,7 +86,7 @@ func TestGetEpsilonClosure_EmptyInput(t *testing.T) {
 
 	// Test closure with no input states
 	closure := GetEpsilonClosure(nfa)
-	expected := map[int]bool{}
+	expected := NewBitMask_Empty(5)
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of no states: expected %v, got %v", expected, closure)
@@ -98,7 +98,7 @@ func TestGetEpsilonClosure_DuplicateStates(t *testing.T) {
 
 	// Test closure with duplicate input states
 	closure := GetEpsilonClosure(nfa, 2, 2, 2)
-	expected := map[int]bool{2: true, 4: true}
+	expected := NewBitMask_Bits(5, []bool{false, false, true, false, true})
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of duplicate states: expected %v, got %v", expected, closure)
@@ -129,7 +129,7 @@ func TestGetEpsilonClosure_LinearChain(t *testing.T) {
 
 	// Test closure of state 0
 	closure := GetEpsilonClosure(nfa, s0)
-	expected := map[int]bool{s0: true, s1: true, s2: true, s3: true}
+	expected := NewBitMask_Bits(4, []bool{true, true, true, true})
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of linear chain: expected %v, got %v", expected, closure)
@@ -137,7 +137,7 @@ func TestGetEpsilonClosure_LinearChain(t *testing.T) {
 
 	// Test closure of state 1
 	closure = GetEpsilonClosure(nfa, s1)
-	expected = map[int]bool{s1: true, s2: true, s3: true}
+	expected = NewBitMask_Bits(4, []bool{false, true, true, true})
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of state 1 in linear chain: expected %v, got %v", expected, closure)
@@ -167,7 +167,7 @@ func TestGetEpsilonClosure_CyclicGraph(t *testing.T) {
 
 	// Test closure should include all states in the cycle
 	closure := GetEpsilonClosure(nfa, s0)
-	expected := map[int]bool{s0: true, s1: true, s2: true}
+	expected := NewBitMask_Bits(3, []bool{true, true, true})
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of cyclic graph: expected %v, got %v", expected, closure)
@@ -197,8 +197,8 @@ func TestGetEpsilonClosure_IsolatedStates(t *testing.T) {
 	// Each state should only contain itself in epsilon closure
 	for _, state := range []int{s0, s1, s2} {
 		closure := GetEpsilonClosure(nfa, state)
-		expected := map[int]bool{state: true}
-
+		expected := NewBitMask_Empty(3)
+		expected.Set(state)
 		if !reflect.DeepEqual(closure, expected) {
 			t.Errorf("Epsilon closure of isolated state %d: expected %v, got %v", state, expected, closure)
 		}
@@ -269,15 +269,6 @@ func BenchmarkGetEpsilonClosure_LinearChain(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		GetEpsilonClosure(nfa, states[0])
-	}
-}
-
-func BenchmarkGetEpsilonClosure_ComplexGraph(b *testing.B) {
-	nfa := createTestNFA()
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		GetEpsilonClosure(nfa, 0)
 	}
 }
 
