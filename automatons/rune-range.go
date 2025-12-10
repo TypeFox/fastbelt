@@ -1,5 +1,7 @@
 package automatons
 
+import "iter"
+
 type RuneRange struct {
 	Start    rune
 	End      rune
@@ -7,6 +9,9 @@ type RuneRange struct {
 }
 
 func NewRuneRange(start, end rune, includes bool) *RuneRange {
+	if start > end {
+		panic("Start must be less or equal to End")
+	}
 	return &RuneRange{
 		Start:    start,
 		End:      end,
@@ -27,4 +32,14 @@ func (r RuneRange) String() string {
 		return "[" + string(r.Start) + "-" + string(r.End) + "]"
 	}
 	return "[^" + string(r.Start) + "-" + string(r.End) + "]"
+}
+
+func (lst RuneRange) All() iter.Seq[rune] {
+	return func(yield func(rune) bool) {
+		for e := lst.Start; e <= lst.End; e++ {
+			if !yield(e) {
+				return
+			}
+		}
+	}
 }
