@@ -2,6 +2,14 @@ package automatons
 
 const MaxRune = 0xFFFF
 
+// Helper function for max of integers
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
 type RuneSet struct {
 	Ranges []RuneRange
 }
@@ -165,7 +173,7 @@ func (set *RuneSet) change(included bool, start rune, end rune) {
 
 	set.Ranges = newRanges
 
-	leftIndex := max(0, leftMostIndex-1)
+	leftIndex := maxInt(0, leftMostIndex-1)
 	set.tryMergeRange(leftIndex, leftIndex+4)
 }
 
