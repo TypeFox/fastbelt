@@ -58,10 +58,55 @@ func NewRuneSet_Full() *RuneSet {
 	}}
 }
 
-func (set RuneSet) change(included bool, start rune, end rune) {
+func (set *RuneSet) AddRange(start rune, end rune) {
+	set.change(true, start, end)
+}
+
+func (set *RuneSet) AddRune(r rune) {
+	set.change(true, r, r)
+}
+
+func (set *RuneSet) RemoveRange(start rune, end rune) {
+	set.change(false, start, end)
+}
+
+func (set *RuneSet) RemoveRune(r rune) {
+	set.change(false, r, r)
+}
+
+func (set RuneSet) IncludesRune(r rune) bool {
+	return set.isXXcluded(true, r, r)
+}
+
+func (set RuneSet) IncludesRange(start rune, end rune) bool {
+	return set.isXXcluded(true, start, end)
+}
+
+func (set RuneSet) ExcludesRune(r rune) bool {
+	return set.isXXcluded(false, r, r)
+}
+
+func (set RuneSet) ExcludesRange(start rune, end rune) bool {
+	return set.isXXcluded(false, start, end)
+}
+
+func (set RuneSet) isXXcluded(included bool, start rune, end rune) bool {
+	var index int = 0
+	for index < len(set.Ranges) && start > set.Ranges[index].End {
+		index++
+	}
+	if index >= len(set.Ranges) {
+		return false
+	}
+	var r = set.Ranges[index]
+	return start >= r.Start && end <= r.End && r.Includes == included
+}
+
+func (set *RuneSet) change(included bool, start rune, end rune) {
 	if start > end || start < 0 || end > MaxRune {
 		panic("Range limit order is invalid!")
 	}
+
 	var leftMostIndex int = 0
 	for leftMostIndex < len(set.Ranges) && start > set.Ranges[leftMostIndex].End {
 		leftMostIndex++
@@ -70,63 +115,64 @@ func (set RuneSet) change(included bool, start rune, end rune) {
 	var rightMostIndex int = len(set.Ranges) - 1
 	for rightMostIndex >= 0 && end < set.Ranges[rightMostIndex].Start {
 		rightMostIndex--
+	}
 
-		var leftMostRange = set.Ranges[leftMostIndex]
-		var rightMostRange = set.Ranges[rightMostIndex]
-		var leftMost = leftMostRange.Start
-		var rightMost = rightMostRange.End
+	var leftMostRange = set.Ranges[leftMostIndex]
+	var rightMostRange = set.Ranges[rightMostIndex]
+	var leftMost = leftMostRange.Start
+	var rightMost = rightMostRange.End
 
-		var leftList = set.Ranges[0:leftMostIndex]
-		var rightList = set.Ranges[rightMostIndex+1:]
+	var leftList = make([]RuneRange, leftMostIndex)
+	copy(leftList, set.Ranges[0:leftMostIndex])
+	var rightList = make([]RuneRange, len(set.Ranges)-(rightMostIndex+1))
+	copy(rightList, set.Ranges[rightMostIndex+1:])
 
-		ranges := make([]RuneRange, len(set.Ranges)+3)
-		if leftMost < start {
-			if rightMost > end {
-				set.Ranges = append(ranges,
-					leftList,
-					NewRuneRange(leftMost, start-1, leftMostRange.Includes),
-					NewRuneRange(start, end, included),
-					NewRuneRange(end+1, rightMost, rightMostRange.Includes),
-					rightList,
-				)
-			} else {
-				set.Ranges = append(ranges,
-					leftList,
-					NewRuneRange(leftMost, start-1, leftMostRange.Includes),
-					NewRuneRange(start, end, included),
-					rightList,
-				)
-			}
+	var newRanges []RuneRange
+
+	if leftMost < start {
+		if rightMost > end {
+			newRanges = append(newRanges, leftList...)
+			newRanges = append(newRanges, *NewRuneRange(leftMost, start-1, leftMostRange.Includes))
+			newRanges = append(newRanges, *NewRuneRange(start, end, included))
+			newRanges = append(newRanges, *NewRuneRange(end+1, rightMost, rightMostRange.Includes))
+			newRanges = append(newRanges, rightList...)
 		} else {
-			if rightMost > end {
-				set.Ranges = append(ranges,
-					leftList,
-					NewRuneRange(start, end, included),
-					NewRuneRange(end+1, rightMost, rightMostRange.Includes),
-					rightList,
-				)
-			} else {
-				set.Ranges = append(ranges,
-					leftList,
-					NewRuneRange(start, end, included),
-					rightList,
-				)
-			}
+			newRanges = append(newRanges, leftList...)
+			newRanges = append(newRanges, *NewRuneRange(leftMost, start-1, leftMostRange.Includes))
+			newRanges = append(newRanges, *NewRuneRange(start, end, included))
+			newRanges = append(newRanges, rightList...)
 		}
+	} else {
+		if rightMost > end {
+			newRanges = append(newRanges, leftList...)
+			newRanges = append(newRanges, *NewRuneRange(start, end, included))
+			newRanges = append(newRanges, *NewRuneRange(end+1, rightMost, rightMostRange.Includes))
+			newRanges = append(newRanges, rightList...)
+		} else {
+			newRanges = append(newRanges, leftList...)
+			newRanges = append(newRanges, *NewRuneRange(start, end, included))
+			newRanges = append(newRanges, rightList...)
+		}
+	}
 
-		const leftIndex = math.max(0, leftMostIndex-1)
-		const startRange = leftIndex
-		const endRange = leftIndex + 4
+	set.Ranges = newRanges
 
-		var index = startRange
-		for index < endRange && index+1 < len(set.Ranges) {
-			current = set.Ranges[index]
-			next = set.Ranges[index+1]
-			if current.mode == next.mode && current.to+1 == next.from {
-				set.Ranges.splice(index, 2, NewRuneRange(current.from, next.to, current.mode))
-			} else {
-				index++
-			}
+	leftIndex := max(0, leftMostIndex-1)
+	set.tryMergeRange(leftIndex, leftIndex+4)
+}
+
+func (set *RuneSet) tryMergeRange(fromRange int, toRange int) {
+	var index = fromRange
+	for index < toRange && index+1 < len(set.Ranges) {
+		current := set.Ranges[index]
+		next := set.Ranges[index+1]
+		if current.Includes == next.Includes && current.End+1 == next.Start {
+			// Merge the two ranges
+			merged := *NewRuneRange(current.Start, next.End, current.Includes)
+			// Remove the two ranges and insert the merged one
+			set.Ranges = append(set.Ranges[:index], append([]RuneRange{merged}, set.Ranges[index+2:]...)...)
+		} else {
+			index++
 		}
 	}
 }
