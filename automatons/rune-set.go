@@ -52,6 +52,14 @@ func NewRuneSet_Empty() *RuneSet {
 	}}
 }
 
+func NewRuneSet_OneOf(chars []rune) *RuneSet {
+	runeSet := NewRuneSet_Empty()
+	for _, c := range chars {
+		runeSet.AddRune(c)
+	}
+	return runeSet
+}
+
 func NewRuneSet_Full() *RuneSet {
 	return &RuneSet{Ranges: []RuneRange{
 		{Start: 0, End: MaxRune, Includes: true},
@@ -175,4 +183,41 @@ func (set *RuneSet) tryMergeRange(fromRange int, toRange int) {
 			index++
 		}
 	}
+}
+
+// Equals checks if this RuneSet is equal to another RuneSet
+func (set RuneSet) Equals(other RuneSet) bool {
+	if len(set.Ranges) != len(other.Ranges) {
+		return false
+	}
+	for i := range set.Ranges {
+		if !set.Ranges[i].Equals(other.Ranges[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns a string representation of the RuneSet showing only included ranges
+func (set RuneSet) String() string {
+	if len(set.Ranges) == 0 {
+		return ""
+	}
+
+	var result string
+	first := true
+	for _, r := range set.Ranges {
+		if r.Includes {
+			if !first {
+				result += ","
+			}
+			first = false
+			if r.Start == r.End {
+				result += "[" + string(rune(r.Start)) + "]"
+			} else {
+				result += "[" + string(rune(r.Start)) + "-" + string(rune(r.End)) + "]"
+			}
+		}
+	}
+	return result
 }
