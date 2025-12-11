@@ -16,12 +16,14 @@ type regexpImpl struct {
 	dfa     automatons.NFA
 }
 
-func NewRegexp(pattern string) (Regexp, error) {
+func CompileRegexp(pattern string) (Regexp, error) {
 	op, error := syntax.Parse(pattern, syntax.Perl)
 	if error != nil {
 		return nil, error
 	}
 	nfa, err := newNFAFromSyntax(op)
+	nfa = automatons.Determinize(nfa)
+	nfa = automatons.Minimize(nfa)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +33,29 @@ func NewRegexp(pattern string) (Regexp, error) {
 	}, nil
 }
 
+func MustCompilRegexp(pattern string) Regexp {
+	regexp, error := CompileRegexp(pattern)
+	if error != nil {
+		panic(error)
+	}
+	return regexp
+}
+
 func (r *regexpImpl) FindStringIndex(s string) (loc []int) {
+	dfa := r.dfa.(*automatons.NFAImpl)
+	state := dfa.InitializeReducerState(s)
+
+	for !state.Halted {
+		nextState, err := dfa.Step(state)
+		if err != nil {
+			return nil
+		}
+		state = nextState
+	}
+
+	if state.AcceptedIdx != -1 {
+		return []int{0, state.AcceptedIdx}
+	}
 	return nil
 }
 
