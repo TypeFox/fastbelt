@@ -12,12 +12,17 @@ type ReducerState struct {
 
 func (nfa NFAImpl) InitializeReducerState(input string) ReducerState {
 	start := nfa.GetStartState()
+	isAccepted := nfa.GetAcceptingStates()[start]
+	acceptedIdx := -1
+	if isAccepted {
+		acceptedIdx = 0
+	}
 	return ReducerState{
 		State:       start,
 		Index:       0,
 		Input:       input,
-		AcceptedIdx: -1,
-		Halted:      false,
+		AcceptedIdx: acceptedIdx,
+		Halted:      len(input) == 0,
 	}
 }
 
@@ -37,7 +42,18 @@ func (nfa NFAImpl) Step(state ReducerState) (ReducerState, error) {
 	}
 
 	runeSet := NewRuneSet_Rune(rune(state.Input[state.Index]))
-	nextStates := nfa.GetTransitionsBySource()[state.State].GetTargets(runeSet)
+	transitions := nfa.GetTransitionsBySource()
+	bySource := transitions[state.State]
+	if bySource == nil {
+		return ReducerState{
+			State:       state.State,
+			Index:       state.Index,
+			Input:       state.Input,
+			AcceptedIdx: state.AcceptedIdx,
+			Halted:      true,
+		}, nil
+	}
+	nextStates := bySource.GetTargets(runeSet)
 	if len(nextStates) == 0 {
 		return ReducerState{
 			State:       state.State,

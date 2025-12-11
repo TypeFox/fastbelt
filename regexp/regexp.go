@@ -16,6 +16,10 @@ type regexpImpl struct {
 	dfa     automatons.NFA
 }
 
+func (re regexpImpl) String() string {
+	return re.dfa.(*automatons.NFAImpl).String()
+}
+
 func CompileRegexp(pattern string) (Regexp, error) {
 	op, error := syntax.Parse(pattern, syntax.Perl)
 	if error != nil {
@@ -102,7 +106,7 @@ func newNFAFromSyntax(op *syntax.Regexp) (automatons.NFA, error) {
 			}
 			alternatives[i] = nfa
 		}
-		return kit.Concat(alternatives...)
+		return kit.Alternate(alternatives...)
 	case syntax.OpStar:
 		nfa, error := newNFAFromSyntax(op.Sub[0])
 		if error != nil {

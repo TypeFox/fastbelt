@@ -1,6 +1,7 @@
 package automatons
 
 import (
+	"fmt"
 	"iter"
 )
 
@@ -393,4 +394,28 @@ func (nfa *NFAImpl) AddTransition(source int, charset *RuneSet, target int) {
 		nfa.transitionsBySource[source] = NewTransitionTargets()
 	}
 	nfa.transitionsBySource[source].(*TransitionTargetsImpl).Add(charset, target)
+}
+
+func (nfa NFAImpl) String() string {
+	result := "NFA:\n"
+	result += "Start State: " + fmt.Sprintf("%d", nfa.startState) + "\n"
+	result += "Accepting States: "
+	for state := range nfa.acceptingStates {
+		result += fmt.Sprintf("%d ", state)
+	}
+	result += "\nTransitions:\n"
+	for source, targets := range nfa.transitionsBySource {
+		for info := range targets.AllTransitions() {
+			var charset *RuneSet
+			if info.CharRange != nil {
+				charset = NewRuneSet_Range(info.CharRange.Start, info.CharRange.End)
+			} else {
+				charset = NewRuneSet_Empty()
+			}
+			for _, target := range info.Targets {
+				result += fmt.Sprintf("  %d --%v--> %d\n", source, charset, target)
+			}
+		}
+	}
+	return result
 }

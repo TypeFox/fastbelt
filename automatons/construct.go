@@ -13,6 +13,7 @@ func NewConstructionKit() *ConstructionKit {
 func (ck *ConstructionKit) Empty() (NFA, error) {
 	builder := NewNFABuilder()
 	start := builder.AddState()
+	builder.SetStartState(start)
 	builder.AcceptState(start)
 	return builder.Build()
 }
@@ -20,6 +21,7 @@ func (ck *ConstructionKit) Empty() (NFA, error) {
 func (ck *ConstructionKit) Reject() (NFA, error) {
 	builder := NewNFABuilder()
 	start := builder.AddState()
+	builder.SetStartState(start)
 	builder.AddTransition(start, start, NewRuneSet_Full())
 	return builder.Build()
 }
@@ -82,6 +84,10 @@ func (ck *ConstructionKit) Alternate(automata ...NFA) (NFA, error) {
 		}
 	}
 
+	return ck.finalize(builder)
+}
+
+func (*ConstructionKit) finalize(builder *NFABuilderImpl) (NFA, error) {
 	nfa, err := builder.Build()
 	if err != nil {
 		return nil, fmt.Errorf("failed to build alternation NFA: %v", err)
@@ -135,7 +141,7 @@ func (ck *ConstructionKit) Concat(automata ...NFA) (NFA, error) {
 		return nil, fmt.Errorf("failed to set final accepting state: %v", err)
 	}
 
-	return builder.Build()
+	return ck.finalize(builder)
 }
 
 // Repeat creates an NFA that matches the given automaton repeated min to max times
@@ -252,7 +258,7 @@ func (ck *ConstructionKit) Repeat(automaton NFA, min, max int) (NFA, error) {
 		}
 	}
 
-	return builder.Build()
+	return ck.finalize(builder)
 }
 
 // Complement creates an NFA that matches the complement of the given automaton
@@ -278,7 +284,7 @@ func (ck *ConstructionKit) Complement(automaton NFA) (NFA, error) {
 		}
 	}
 
-	return builder.Build()
+	return ck.finalize(builder)
 }
 
 // IntersectNFA creates an NFA that matches the intersection of two automata
@@ -305,12 +311,7 @@ func (ck *ConstructionKit) IntersectNFA(a, b NFA) (NFA, error) {
 	normalized := Minimize(Determinize(notAOrB))
 
 	// Return complement of the union
-	result, err := ck.Complement(normalized)
-	if err != nil {
-		return nil, fmt.Errorf("failed to complement union: %v", err)
-	}
-
-	return result, nil
+	return ck.Complement(normalized)
 }
 
 // Default instance for package-level functions
