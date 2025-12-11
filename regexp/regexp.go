@@ -63,6 +63,80 @@ func (r *regexpImpl) FindStringIndex(s string) (loc []int) {
 	return nil
 }
 
+func (r *regexpImpl) GenerateFindStringIndex(name string) Node {
+	root := NewNode()
+	root.AppendLine(fmt.Sprintf("func %s_FindStringIndex(input string) (loc []int) {", name))
+	root.Indent(func(n Node) {
+		n.AppendLine("length := len(input)")
+		n.Append("accepted := map[int]bool{")
+		acceptingStates := r.dfa.GetAcceptingStates()
+		for state, isAccepting := range acceptingStates {
+			if isAccepting {
+				n.Append(fmt.Sprintf("%d: true, ", state))
+			}
+		}
+		n.AppendLine("}")
+		n.AppendLine(fmt.Sprintf("state := %d", r.dfa.GetStartState()))
+		n.AppendLine("acceptedIndex := -1")
+		n.AppendLine("if accepted[state] {")
+		n.Indent(func(n Node) {
+			n.AppendLine("acceptedIndex = 0")
+		})
+		n.AppendLine("}")
+		n.AppendLine("index := 0")
+		n.AppendLine("halted := false")
+		n.AppendLine("for !halted {")
+		n.Indent(func(n Node) {
+			n.AppendLine("if index >= length {")
+			n.Indent(func(n Node) {
+				n.AppendLine("halted = true")
+				n.AppendLine("continue")
+			})
+			n.AppendLine("} else {")
+			n.Indent(func(n Node) {
+				n.AppendLine("r := rune(input[index])")
+				n.AppendLine("switch state {")
+				transitions := r.dfa.GetTransitionsBySource()
+				for source, bySource := range transitions {
+					n.AppendLine(fmt.Sprintf("case %d:", source))
+					n.Indent(func(n Node) {
+						for transition := range bySource.AllTransitions() {
+							n.Append("if ")
+							if transition.CharRange.Start == transition.CharRange.End {
+								n.Append(fmt.Sprintf("r == '%c'", transition.CharRange.Start))
+							} else {
+								n.Append(fmt.Sprintf("r >= '%c' && r <= '%c'", transition.CharRange.Start, transition.CharRange.End))
+							}
+							n.AppendLine(" {")
+							n.Indent(func(n Node) {
+								n.AppendLine(fmt.Sprintf("state = %d", transition.Targets[0]))
+							})
+							n.Append("} else ")
+						}
+						n.AppendLine("{")
+						n.Indent(func(n Node) {
+							n.AppendLine("halted = true")
+						})
+						n.AppendLine("}")
+					})
+				}
+				n.AppendLine("}")
+			})
+			n.AppendLine("}")
+			n.AppendLine("if !halted && accepted[state] {")
+			n.Indent(func(n Node) {
+				n.AppendLine("acceptedIndex = index")
+			})
+			n.AppendLine("}")
+			n.AppendLine("index++")
+		})
+		n.AppendLine("}")
+		n.AppendLine("return []int{0, acceptedIndex}")
+	})
+	root.AppendLine("}")
+	return root
+}
+
 func newNFAFromSyntax(op *syntax.Regexp) (automatons.NFA, error) {
 	kit := automatons.NewConstructionKit()
 	switch op.Op {

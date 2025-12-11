@@ -1,6 +1,9 @@
 package regexp
 
 import (
+	"fmt"
+	"log"
+	"os"
 	"testing"
 )
 
@@ -55,4 +58,21 @@ func TestIP(t *testing.T) {
 	if loc == nil || loc[0] != 0 || loc[1] != 14 {
 		panic("TestIP failed")
 	}
+}
+
+func TestGenerator(t *testing.T) {
+	//regexp := MustCompilRegexp("a+b")
+	regexp := MustCompilRegexp(`(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9])`)
+	file, err := os.Create("../example.go")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	// Write a string to the file
+	root := NewNode()
+	root.AppendLine("package main")
+	root.AppendLine("")
+	root.AppendNode(regexp.(*regexpImpl).GenerateFindStringIndex("APlusB"))
+	file.WriteString(fmt.Sprintf("%s", root))
 }
