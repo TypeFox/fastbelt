@@ -10,6 +10,20 @@ func NewConstructionKit() *ConstructionKit {
 	return &ConstructionKit{}
 }
 
+func (ck *ConstructionKit) Empty() (NFA, error) {
+	builder := NewNFABuilder()
+	start := builder.AddState()
+	builder.AcceptState(start)
+	return builder.Build()
+}
+
+func (ck *ConstructionKit) Reject() (NFA, error) {
+	builder := NewNFABuilder()
+	start := builder.AddState()
+	builder.AddTransition(start, start, NewRuneSet_Full())
+	return builder.Build()
+}
+
 // Consume creates an NFA that matches the given character set
 func (ck *ConstructionKit) Consume(characters *RuneSet) (NFA, error) {
 	builder := NewNFABuilder()
