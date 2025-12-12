@@ -5,13 +5,12 @@
 package generator
 
 import (
-	"fmt"
-	"regexp/syntax"
 	"sort"
 	"strconv"
 	"unicode/utf8"
 
 	gen "typefox.dev/fastbelt/generator"
+	"typefox.dev/fastbelt/internal/automatons"
 	"typefox.dev/fastbelt/internal/grammar/generated"
 	"typefox.dev/fastbelt/internal/regexp"
 )
@@ -87,9 +86,7 @@ func generateKeywordTokenType(node gen.Node, keyword generated.Keyword, id int) 
 		n.AppendLine("},")
 		n.Append("[]rune{")
 		firstRune, _ := utf8.DecodeRune([]byte(keywordValue))
-		n.Indent(func(nn gen.Node) {
-			runeArrayToString([]rune{firstRune}, nn)
-		})
+		n.Append(automatons.FormatRune(firstRune))
 		n.AppendLine("},")
 	})
 	node.AppendLine(")")
@@ -115,11 +112,11 @@ func generateTokenType(node gen.Node, token generated.Token, id int) {
 		}
 		n.AppendLine("0,")
 		n.AppendLine("false,")
-		n.AppendNode(regex.(*regexp.RegexpImpl).GenerateLambda())
+		impl := regex.(*regexp.RegexpImpl)
+		n.AppendNode(impl.GenerateLambda())
 		n.Append("[]rune{")
-		n.Indent(func(nn gen.Node) {
-			runeArrayToString(getStartChars(regexPattern), nn)
-		})
+		startCharsSet := impl.GetStartChars()
+		n.AppendNode(runeSetToNode(startCharsSet))
 		n.AppendLine("},")
 	})
 	node.AppendLine(")")
@@ -134,99 +131,20 @@ func (x RuneSlice) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
 // Sort is a convenience method: x.Sort() calls Sort(x).
 func (x RuneSlice) Sort() { sort.Sort(x) }
 
-func runeArrayToString(runes RuneSlice, node gen.Node) {
-	runes.Sort()
-	for i, r := range runes {
-		var runeStr string
-		if r == '\'' {
-			runeStr = "'\\'"
-		} else if r == '\\' {
-			runeStr = "'\\\\'"
-		} else if r >= 32 && r <= 126 {
-			runeStr = "'" + string(r) + "'"
-		} else {
-			runeStr = fmt.Sprint(int64(r))
+func runeSetToNode(set *automatons.RuneSet) gen.Node {
+	root := gen.NewNode()
+	for _, rng := range set.Ranges {
+		if !rng.Includes {
+			continue
 		}
-
-		if (i+1)%10 == 0 && i < len(runes)-1 {
-			node.AppendLine(runeStr, ",")
-		} else if i < len(runes)-1 {
-			node.Append(runeStr, ", ")
+		if rng.Start == rng.End {
+			root.Append(automatons.FormatRune(rng.Start), ", ")
 		} else {
-			node.Append(runeStr, ",")
-		}
-	}
-}
-
-func getStartChars(pattern string) []rune {
-	runes := map[rune]bool{}
-	regex, err := syntax.Parse(pattern, syntax.POSIX)
-	if err != nil {
-		panic(err)
-	}
-	regex = regex.Simplify()
-	startChars, _ := getStartCharsFromRegex(regex)
-	for _, r := range startChars {
-		runes[r] = true
-	}
-	returnValue := []rune{}
-	for k := range runes {
-		returnValue = append(returnValue, k)
-	}
-	return returnValue
-}
-
-func getStartCharsFromRegex(regex *syntax.Regexp) ([]rune, bool) {
-	switch regex.Op {
-	case syntax.OpConcat:
-		runes := []rune{}
-		for _, sub := range regex.Sub {
-			subRunes, isOptional := getStartCharsFromRegex(sub)
-			runes = append(runes, subRunes...)
-			if !isOptional {
-				return runes, false
+			for r := rng.Start; r <= rng.End; r++ {
+				root.Append(automatons.FormatRune(r))
+				root.Append(", ")
 			}
 		}
-		return runes, true
-	case syntax.OpLiteral:
-		return []rune{regex.Rune[0]}, false
-	case syntax.OpCharClass:
-		runes := []rune{}
-		// The rune slice contains pairs of runes that form ranges
-		// e.g. [a-zA-Z] is represented as []rune{'a', 'z', 'A', 'Z'}
-		// so we need to iterate over the slice in steps of 2
-		for i := 0; i < len(regex.Rune); i += 2 {
-			for r := regex.Rune[i]; r <= regex.Rune[i+1]; r++ {
-				runes = append(runes, r)
-			}
-		}
-		return runes, false
-	case syntax.OpAnyCharNotNL:
-	case syntax.OpAnyChar:
-		size := 256
-		runes := make([]rune, size)
-		for r := range size {
-			runes[r] = rune(r)
-		}
-		return runes, false
-	case syntax.OpCapture:
-		return getStartCharsFromRegex(regex.Sub[0])
-	case syntax.OpStar:
-	case syntax.OpQuest:
-		runes, _ := getStartCharsFromRegex(regex.Sub[0])
-		return runes, true
-	case syntax.OpPlus:
-		runes, _ := getStartCharsFromRegex(regex.Sub[0])
-		return runes, false
-	case syntax.OpAlternate:
-		runes := []rune{}
-		for _, sub := range regex.Sub {
-			subRunes, _ := getStartCharsFromRegex(sub)
-			runes = append(runes, subRunes...)
-		}
-		return runes, false
-	case syntax.OpEmptyMatch:
-		return []rune{}, false
 	}
-	return []rune{}, false
+	return root
 }

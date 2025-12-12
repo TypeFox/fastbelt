@@ -1,6 +1,26 @@
 package automatons
 
+import (
+	"fmt"
+)
+
 const MaxRune = 0x10FFFF
+const MinAscii = 0x20
+const MaxAscii = 0x7E
+
+func FormatRune(r rune) string {
+	runeStr := ""
+	if r == '\'' {
+		runeStr = "'\\'"
+	} else if r == '\\' {
+		runeStr = "'\\\\'"
+	} else if r >= MinAscii && r <= MaxAscii {
+		runeStr = "'" + string(r) + "'"
+	} else {
+		runeStr = fmt.Sprintf("'\\u%04X'", int64(r))
+	}
+	return runeStr
+}
 
 // Helper function for max of integers
 func maxInt(a, b int) int {

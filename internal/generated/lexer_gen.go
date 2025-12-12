@@ -22,8 +22,7 @@ var Keyword_LeftParen = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'('},
+	[]rune{'('},
 )
 
 const Keyword_RightParen_Idx = 2
@@ -41,8 +40,7 @@ var Keyword_RightParen = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		')'},
+	[]rune{')'},
 )
 
 const Keyword_Asterisk_Idx = 3
@@ -60,8 +58,7 @@ var Keyword_Asterisk = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'*'},
+	[]rune{'*'},
 )
 
 const Keyword_Plus_Idx = 4
@@ -79,8 +76,7 @@ var Keyword_Plus = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'+'},
+	[]rune{'+'},
 )
 
 const Keyword_PlusEquals_Idx = 5
@@ -98,8 +94,7 @@ var Keyword_PlusEquals = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'+'},
+	[]rune{'+'},
 )
 
 const Keyword_Comma_Idx = 6
@@ -117,8 +112,7 @@ var Keyword_Comma = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		','},
+	[]rune{','},
 )
 
 const Keyword_Dot_Idx = 7
@@ -136,8 +130,7 @@ var Keyword_Dot = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'.'},
+	[]rune{'.'},
 )
 
 const Keyword_Colon_Idx = 8
@@ -155,8 +148,7 @@ var Keyword_Colon = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		':'},
+	[]rune{':'},
 )
 
 const Keyword_Semicolon_Idx = 9
@@ -174,8 +166,7 @@ var Keyword_Semicolon = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		';'},
+	[]rune{';'},
 )
 
 const Keyword_Equals_Idx = 10
@@ -193,8 +184,7 @@ var Keyword_Equals = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'='},
+	[]rune{'='},
 )
 
 const Keyword_Question_Idx = 11
@@ -212,8 +202,7 @@ var Keyword_Question = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'?'},
+	[]rune{'?'},
 )
 
 const Keyword_QuestionEquals_Idx = 12
@@ -231,8 +220,7 @@ var Keyword_QuestionEquals = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'?'},
+	[]rune{'?'},
 )
 
 const Keyword_LeftBracket_Idx = 13
@@ -250,8 +238,7 @@ var Keyword_LeftBracket = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'['},
+	[]rune{'['},
 )
 
 const Keyword_RightBracket_Idx = 14
@@ -269,8 +256,7 @@ var Keyword_RightBracket = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		']'},
+	[]rune{']'},
 )
 
 const Keyword_current_Idx = 15
@@ -288,8 +274,7 @@ var Keyword_current = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'c'},
+	[]rune{'c'},
 )
 
 const Keyword_extends_Idx = 16
@@ -307,8 +292,7 @@ var Keyword_extends = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'e'},
+	[]rune{'e'},
 )
 
 const Keyword_grammar_Idx = 17
@@ -326,8 +310,7 @@ var Keyword_grammar = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'g'},
+	[]rune{'g'},
 )
 
 const Keyword_hidden_Idx = 18
@@ -345,8 +328,7 @@ var Keyword_hidden = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'h'},
+	[]rune{'h'},
 )
 
 const Keyword_interface_Idx = 19
@@ -364,8 +346,7 @@ var Keyword_interface = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'i'},
+	[]rune{'i'},
 )
 
 const Keyword_returns_Idx = 20
@@ -383,8 +364,7 @@ var Keyword_returns = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'r'},
+	[]rune{'r'},
 )
 
 const Keyword_token_Idx = 21
@@ -402,8 +382,7 @@ var Keyword_token = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		't'},
+	[]rune{'t'},
 )
 
 const Keyword_LeftBrace_Idx = 22
@@ -421,8 +400,7 @@ var Keyword_LeftBrace = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'{'},
+	[]rune{'{'},
 )
 
 const Keyword_Pipe_Idx = 23
@@ -440,8 +418,7 @@ var Keyword_Pipe = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'|'},
+	[]rune{'|'},
 )
 
 const Keyword_RightBrace_Idx = 24
@@ -459,8 +436,7 @@ var Keyword_RightBrace = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'}'},
+	[]rune{'}'},
 )
 
 const Token_String_Idx = 25
@@ -487,21 +463,21 @@ var Token_String = core.NewTokenType(
 			r := rune(input[index])
 			switch state {
 			case 0:
-				if r == 34 { // ",
+				if r == 34 { // '"',
 					state = 1
 				} else {
 					break loop
 				}
 			case 1:
-				if r >= 0 && r <= 33 || r >= 35 && r <= 1114111 { // \u0000..!, #..\u10FFFF,
+				if r >= 0 && r <= 33 || r >= 35 && r <= 1114111 { // '\u0000'..'!', '#'..'\u10FFFF',
 					state = 2
 				} else {
 					break loop
 				}
 			case 2:
-				if r >= 0 && r <= 33 || r >= 35 && r <= 1114111 { // \u0000..!, #..\u10FFFF,
+				if r >= 0 && r <= 33 || r >= 35 && r <= 1114111 { // '\u0000'..'!', '#'..'\u10FFFF',
 					state = 2
-				} else if r == 34 { // ",
+				} else if r == 34 { // '"',
 					state = 3
 				} else {
 					break loop
@@ -514,8 +490,7 @@ var Token_String = core.NewTokenType(
 		}
 		return acceptedIndex
 	},
-	[]rune{
-		'"'},
+	[]rune{'"'},
 )
 
 const Token_ID_Idx = 26
@@ -542,13 +517,13 @@ var Token_ID = core.NewTokenType(
 			r := rune(input[index])
 			switch state {
 			case 0:
-				if r >= 65 && r <= 90 || r == 95 || r >= 97 && r <= 122 { // A..Z, _, a..z,
+				if r >= 65 && r <= 90 || r == 95 || r >= 97 && r <= 122 { // 'A'..'Z', '_', 'a'..'z',
 					state = 1
 				} else {
 					break loop
 				}
 			case 1:
-				if r >= 48 && r <= 57 || r >= 65 && r <= 90 || r == 95 || r >= 97 && r <= 122 { // 0..9, A..Z, _, a..z,
+				if r >= 48 && r <= 57 || r >= 65 && r <= 90 || r == 95 || r >= 97 && r <= 122 { // '0'..'9', 'A'..'Z', '_', 'a'..'z',
 					state = 1
 				} else {
 					break loop
@@ -561,13 +536,7 @@ var Token_ID = core.NewTokenType(
 		}
 		return acceptedIndex
 	},
-	[]rune{
-		'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-		'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-		'U', 'V', 'W', 'X', 'Y', 'Z', '_', 'a', 'b', 'c',
-		'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-		'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
-		'x', 'y', 'z'},
+	[]rune{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'},
 )
 
 const Token_RegexLiteral_Idx = 27
@@ -594,51 +563,51 @@ var Token_RegexLiteral = core.NewTokenType(
 			r := rune(input[index])
 			switch state {
 			case 0:
-				if r == 47 { // /,
+				if r == 47 { // '/',
 					state = 1
 				} else {
 					break loop
 				}
 			case 1:
-				if r >= 0 && r <= 9 || r >= 11 && r <= 12 || r >= 14 && r <= 46 || r >= 48 && r <= 90 || r >= 93 && r <= 1114111 { // \u0000..\u0009, \u000B..\u000C, \u000E..., 0..Z, ]..\u10FFFF,
+				if r >= 0 && r <= 9 || r >= 11 && r <= 12 || r >= 14 && r <= 46 || r >= 48 && r <= 90 || r >= 93 && r <= 1114111 { // '\u0000'..'\u0009', '\u000B'..'\u000C', '\u000E'..'.', '0'..'Z', ']'..'\u10FFFF',
 					state = 2
-				} else if r == 91 { // [,
+				} else if r == 91 { // '[',
 					state = 3
-				} else if r == 92 { // \,
+				} else if r == 92 { // '\\',
 					state = 4
 				} else {
 					break loop
 				}
 			case 2:
-				if r >= 0 && r <= 9 || r >= 11 && r <= 12 || r >= 14 && r <= 46 || r >= 48 && r <= 90 || r >= 93 && r <= 1114111 { // \u0000..\u0009, \u000B..\u000C, \u000E..., 0..Z, ]..\u10FFFF,
+				if r >= 0 && r <= 9 || r >= 11 && r <= 12 || r >= 14 && r <= 46 || r >= 48 && r <= 90 || r >= 93 && r <= 1114111 { // '\u0000'..'\u0009', '\u000B'..'\u000C', '\u000E'..'.', '0'..'Z', ']'..'\u10FFFF',
 					state = 2
-				} else if r == 47 { // /,
+				} else if r == 47 { // '/',
 					state = 5
-				} else if r == 91 { // [,
+				} else if r == 91 { // '[',
 					state = 3
-				} else if r == 92 { // \,
+				} else if r == 92 { // '\\',
 					state = 4
 				} else {
 					break loop
 				}
 			case 3:
-				if r >= 0 && r <= 9 || r >= 11 && r <= 12 || r >= 14 && r <= 91 || r >= 94 && r <= 1114111 { // \u0000..\u0009, \u000B..\u000C, \u000E..[, ^..\u10FFFF,
-					state = 3
-				} else if r == 92 { // \,
+				if r == 92 { // '\\',
 					state = 6
-				} else if r == 93 { // ],
+				} else if r == 93 { // ']',
 					state = 2
+				} else if r >= 0 && r <= 9 || r >= 11 && r <= 12 || r >= 14 && r <= 91 || r >= 94 && r <= 1114111 { // '\u0000'..'\u0009', '\u000B'..'\u000C', '\u000E'..'[', '^'..'\u10FFFF',
+					state = 3
 				} else {
 					break loop
 				}
 			case 4:
-				if r >= 0 && r <= 9 || r >= 11 && r <= 1114111 { // \u0000..\u0009, \u000B..\u10FFFF,
+				if r >= 0 && r <= 9 || r >= 11 && r <= 1114111 { // '\u0000'..'\u0009', '\u000B'..'\u10FFFF',
 					state = 2
 				} else {
 					break loop
 				}
 			case 6:
-				if r >= 0 && r <= 9 || r >= 11 && r <= 1114111 { // \u0000..\u0009, \u000B..\u10FFFF,
+				if r >= 0 && r <= 9 || r >= 11 && r <= 1114111 { // '\u0000'..'\u0009', '\u000B'..'\u10FFFF',
 					state = 3
 				} else {
 					break loop
@@ -651,8 +620,7 @@ var Token_RegexLiteral = core.NewTokenType(
 		}
 		return acceptedIndex
 	},
-	[]rune{
-		'/'},
+	[]rune{'/'},
 )
 
 const Token_WS_Idx = 28
@@ -679,13 +647,13 @@ var Token_WS = core.NewTokenType(
 			r := rune(input[index])
 			switch state {
 			case 0:
-				if r >= 9 && r <= 10 || r == 13 || r == 32 { // \u0009..\u000A, \u000D,  ,
+				if r >= 9 && r <= 10 || r == 13 || r == 32 { // '\u0009'..'\u000A', '\u000D', ' ',
 					state = 1
 				} else {
 					break loop
 				}
 			case 1:
-				if r >= 9 && r <= 10 || r == 13 || r == 32 { // \u0009..\u000A, \u000D,  ,
+				if r >= 9 && r <= 10 || r == 13 || r == 32 { // '\u0009'..'\u000A', '\u000D', ' ',
 					state = 1
 				} else {
 					break loop
@@ -698,8 +666,7 @@ var Token_WS = core.NewTokenType(
 		}
 		return acceptedIndex
 	},
-	[]rune{
-		9, 10, 13, ' '},
+	[]rune{'\u0009', '\u000A', '\u000D', ' '},
 )
 
 func NewLexer() lexer.Lexer {

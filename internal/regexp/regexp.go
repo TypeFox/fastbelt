@@ -65,6 +65,19 @@ func (r *RegexpImpl) FindStringIndex(s string) (loc []int) {
 	return nil
 }
 
+func (r *RegexpImpl) GetStartChars() *automatons.RuneSet {
+	startCharsSet := automatons.NewRuneSet_Empty()
+	transitions := r.dfa.GetTransitionsBySource()
+	startState := r.dfa.GetStartState()
+	for transition := range transitions[startState].AllTransitions() {
+		if !transition.CharRange.Includes {
+			continue
+		}
+		startCharsSet.AddRange(transition.CharRange.Start, transition.CharRange.End)
+	}
+	return startCharsSet
+}
+
 func (r *RegexpImpl) GenerateLambda() generator.Node {
 	root := generator.NewNode()
 	root.AppendLine("func (s string, offset int) int {")
@@ -127,10 +140,10 @@ func (r *RegexpImpl) GenerateLambda() generator.Node {
 								first = false
 							}
 							if charRange.Start == charRange.End {
-								comment += fmt.Sprintf("%s, ", formatRune(charRange.Start))
+								comment += fmt.Sprintf("%s, ", automatons.FormatRune(charRange.Start))
 								n.Append(fmt.Sprintf("r == %d", charRange.Start))
 							} else {
-								comment += fmt.Sprintf("%s..%s, ", formatRune(charRange.Start), formatRune(charRange.End))
+								comment += fmt.Sprintf("%s..%s, ", automatons.FormatRune(charRange.Start), automatons.FormatRune(charRange.End))
 								n.Append(fmt.Sprintf("r >= %d && r <= %d", charRange.Start, charRange.End))
 							}
 						}
@@ -160,14 +173,6 @@ func (r *RegexpImpl) GenerateLambda() generator.Node {
 	})
 	root.AppendLine("},")
 	return root
-}
-
-func formatRune(r rune) string {
-	single := fmt.Sprintf("\\u%04X", r)
-	if r >= 0x20 && r <= 0xff {
-		single = fmt.Sprintf("%c", r)
-	}
-	return single
 }
 
 func newNFAFromSyntax(op *syntax.Regexp) (automatons.NFA, error) {
