@@ -1,7 +1,6 @@
 package generated
 
 import (
-	"regexp"
 	"strings"
 
 	core "typefox.dev/fastbelt"
@@ -466,7 +465,6 @@ var Keyword_RightBrace = core.NewTokenType(
 
 const Token_String_Idx = 25
 
-var Token_String_Regexp = regexp.MustCompile(`^("[^"]+")`)
 var Token_String = core.NewTokenType(
 	Token_String_Idx,
 	"String",
@@ -474,12 +472,47 @@ var Token_String = core.NewTokenType(
 	0,
 	0,
 	false,
-	func(text string, offset int) int {
-		matches := Token_String_Regexp.FindStringIndex(text[offset:])
-		if matches != nil {
-			return matches[1]
+	func(s string, offset int) int {
+		input := s[offset:]
+		length := len(input)
+		accepted := map[int]bool{3: true}
+		state := 0
+		acceptedIndex := -1
+		if accepted[state] {
+			acceptedIndex = 0
 		}
-		return 0
+		index := 0
+	loop:
+		for index < length {
+			r := rune(input[index])
+			switch state {
+			case 0:
+				if r == 34 { // ",
+					state = 1
+				} else {
+					break loop
+				}
+			case 1:
+				if r >= 0 && r <= 33 || r >= 35 && r <= 1114111 { // \u0000..!, #..\u10FFFF,
+					state = 2
+				} else {
+					break loop
+				}
+			case 2:
+				if r >= 0 && r <= 33 || r >= 35 && r <= 1114111 { // \u0000..!, #..\u10FFFF,
+					state = 2
+				} else if r == 34 { // ",
+					state = 3
+				} else {
+					break loop
+				}
+			}
+			if accepted[state] {
+				acceptedIndex = index
+			}
+			index++
+		}
+		return acceptedIndex
 	},
 	[]rune{
 		'"'},
@@ -487,7 +520,6 @@ var Token_String = core.NewTokenType(
 
 const Token_ID_Idx = 26
 
-var Token_ID_Regexp = regexp.MustCompile(`^([A-Z_a-z][0-9A-Z_a-z]*)`)
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
 	"ID",
@@ -495,12 +527,39 @@ var Token_ID = core.NewTokenType(
 	0,
 	0,
 	false,
-	func(text string, offset int) int {
-		matches := Token_ID_Regexp.FindStringIndex(text[offset:])
-		if matches != nil {
-			return matches[1]
+	func(s string, offset int) int {
+		input := s[offset:]
+		length := len(input)
+		accepted := map[int]bool{1: true}
+		state := 0
+		acceptedIndex := -1
+		if accepted[state] {
+			acceptedIndex = 0
 		}
-		return 0
+		index := 0
+	loop:
+		for index < length {
+			r := rune(input[index])
+			switch state {
+			case 0:
+				if r >= 65 && r <= 90 || r == 95 || r >= 97 && r <= 122 { // A..Z, _, a..z,
+					state = 1
+				} else {
+					break loop
+				}
+			case 1:
+				if r >= 48 && r <= 57 || r >= 65 && r <= 90 || r == 95 || r >= 97 && r <= 122 { // 0..9, A..Z, _, a..z,
+					state = 1
+				} else {
+					break loop
+				}
+			}
+			if accepted[state] {
+				acceptedIndex = index
+			}
+			index++
+		}
+		return acceptedIndex
 	},
 	[]rune{
 		'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
@@ -513,7 +572,6 @@ var Token_ID = core.NewTokenType(
 
 const Token_RegexLiteral_Idx = 27
 
-var Token_RegexLiteral_Regexp = regexp.MustCompile(`^((?-s:/([^\n\r/\[\\]|\\.|\[([^\n\r\\\]]|\\.)*\])+/))`)
 var Token_RegexLiteral = core.NewTokenType(
 	Token_RegexLiteral_Idx,
 	"RegexLiteral",
@@ -521,12 +579,77 @@ var Token_RegexLiteral = core.NewTokenType(
 	0,
 	0,
 	false,
-	func(text string, offset int) int {
-		matches := Token_RegexLiteral_Regexp.FindStringIndex(text[offset:])
-		if matches != nil {
-			return matches[1]
+	func(s string, offset int) int {
+		input := s[offset:]
+		length := len(input)
+		accepted := map[int]bool{5: true}
+		state := 0
+		acceptedIndex := -1
+		if accepted[state] {
+			acceptedIndex = 0
 		}
-		return 0
+		index := 0
+	loop:
+		for index < length {
+			r := rune(input[index])
+			switch state {
+			case 0:
+				if r == 47 { // /,
+					state = 1
+				} else {
+					break loop
+				}
+			case 1:
+				if r >= 0 && r <= 9 || r >= 11 && r <= 12 || r >= 14 && r <= 46 || r >= 48 && r <= 90 || r >= 93 && r <= 1114111 { // \u0000..\u0009, \u000B..\u000C, \u000E..., 0..Z, ]..\u10FFFF,
+					state = 2
+				} else if r == 91 { // [,
+					state = 3
+				} else if r == 92 { // \,
+					state = 4
+				} else {
+					break loop
+				}
+			case 2:
+				if r >= 0 && r <= 9 || r >= 11 && r <= 12 || r >= 14 && r <= 46 || r >= 48 && r <= 90 || r >= 93 && r <= 1114111 { // \u0000..\u0009, \u000B..\u000C, \u000E..., 0..Z, ]..\u10FFFF,
+					state = 2
+				} else if r == 47 { // /,
+					state = 5
+				} else if r == 91 { // [,
+					state = 3
+				} else if r == 92 { // \,
+					state = 4
+				} else {
+					break loop
+				}
+			case 3:
+				if r >= 0 && r <= 9 || r >= 11 && r <= 12 || r >= 14 && r <= 91 || r >= 94 && r <= 1114111 { // \u0000..\u0009, \u000B..\u000C, \u000E..[, ^..\u10FFFF,
+					state = 3
+				} else if r == 92 { // \,
+					state = 6
+				} else if r == 93 { // ],
+					state = 2
+				} else {
+					break loop
+				}
+			case 4:
+				if r >= 0 && r <= 9 || r >= 11 && r <= 1114111 { // \u0000..\u0009, \u000B..\u10FFFF,
+					state = 2
+				} else {
+					break loop
+				}
+			case 6:
+				if r >= 0 && r <= 9 || r >= 11 && r <= 1114111 { // \u0000..\u0009, \u000B..\u10FFFF,
+					state = 3
+				} else {
+					break loop
+				}
+			}
+			if accepted[state] {
+				acceptedIndex = index
+			}
+			index++
+		}
+		return acceptedIndex
 	},
 	[]rune{
 		'/'},
@@ -534,7 +657,6 @@ var Token_RegexLiteral = core.NewTokenType(
 
 const Token_WS_Idx = 28
 
-var Token_WS_Regexp = regexp.MustCompile(`^([\t\n\r ]+)`)
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
 	"WS",
@@ -542,12 +664,39 @@ var Token_WS = core.NewTokenType(
 	-1,
 	0,
 	false,
-	func(text string, offset int) int {
-		matches := Token_WS_Regexp.FindStringIndex(text[offset:])
-		if matches != nil {
-			return matches[1]
+	func(s string, offset int) int {
+		input := s[offset:]
+		length := len(input)
+		accepted := map[int]bool{1: true}
+		state := 0
+		acceptedIndex := -1
+		if accepted[state] {
+			acceptedIndex = 0
 		}
-		return 0
+		index := 0
+	loop:
+		for index < length {
+			r := rune(input[index])
+			switch state {
+			case 0:
+				if r >= 9 && r <= 10 || r == 13 || r == 32 { // \u0009..\u000A, \u000D,  ,
+					state = 1
+				} else {
+					break loop
+				}
+			case 1:
+				if r >= 9 && r <= 10 || r == 13 || r == 32 { // \u0009..\u000A, \u000D,  ,
+					state = 1
+				} else {
+					break loop
+				}
+			}
+			if accepted[state] {
+				acceptedIndex = index
+			}
+			index++
+		}
+		return acceptedIndex
 	},
 	[]rune{
 		9, 10, 13, ' '},

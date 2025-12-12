@@ -13,6 +13,7 @@ import (
 
 	gen "typefox.dev/fastbelt/generator"
 	"typefox.dev/fastbelt/internal/grammar/generated"
+	"typefox.dev/fastbelt/internal/regexp"
 )
 
 func GenerateLexer(grammar generated.Grammar) string {
@@ -97,13 +98,11 @@ func generateKeywordTokenType(node gen.Node, keyword generated.Keyword, id int) 
 func generateTokenType(node gen.Node, token generated.Token, id int) {
 	regexPattern := token.Regexp()
 	regexPattern = regexPattern[1 : len(regexPattern)-1] // remove leading and trailing backticks
-	regex, err := syntax.Parse(regexPattern, syntax.Perl)
+	regex, err := regexp.Compile(regexPattern)
 	if err != nil {
 		panic(err)
 	}
-	regex = regex.Simplify()
 	node.AppendLine("const ", GeneratedTokenIdxName(token), " = ", strconv.Itoa(id))
-	node.AppendLine("var ", GeneratedTokenName(token), "_Regexp = regexp.MustCompile(`^(", regex.String(), ")`) ")
 	node.AppendLine("var ", GeneratedTokenName(token), " = core.NewTokenType(")
 	node.Indent(func(n gen.Node) {
 		n.AppendLine(GeneratedTokenIdxName(token), ",")
@@ -116,17 +115,7 @@ func generateTokenType(node gen.Node, token generated.Token, id int) {
 		}
 		n.AppendLine("0,")
 		n.AppendLine("false,")
-		n.AppendLine("func (text string, offset int) int {")
-		n.Indent(func(nn gen.Node) {
-			nn.AppendLine("matches := ", GeneratedTokenName(token), "_Regexp.FindStringIndex(text[offset:])")
-			nn.AppendLine("if matches != nil {")
-			nn.Indent(func(nnn gen.Node) {
-				nnn.AppendLine("return matches[1]")
-			})
-			nn.AppendLine("}")
-			nn.AppendLine("return 0")
-		})
-		n.AppendLine("},")
+		n.AppendNode(regex.(*regexp.RegexpImpl).GenerateLambda())
 		n.Append("[]rune{")
 		n.Indent(func(nn gen.Node) {
 			runeArrayToString(getStartChars(regexPattern), nn)

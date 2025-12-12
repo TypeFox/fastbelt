@@ -13,16 +13,16 @@ type Regexp interface {
 	FindStringIndex(s string) (loc []int)
 }
 
-type regexpImpl struct {
+type RegexpImpl struct {
 	pattern string
 	dfa     automatons.NFA
 }
 
-func (re regexpImpl) String() string {
+func (re RegexpImpl) String() string {
 	return re.dfa.(*automatons.NFAImpl).String()
 }
 
-func CompileRegexp(pattern string) (Regexp, error) {
+func Compile(pattern string) (Regexp, error) {
 	op, error := syntax.Parse(pattern, syntax.Perl)
 	if error != nil {
 		return nil, error
@@ -33,21 +33,21 @@ func CompileRegexp(pattern string) (Regexp, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &regexpImpl{
+	return &RegexpImpl{
 		pattern: pattern,
 		dfa:     nfa,
 	}, nil
 }
 
-func MustCompileRegexp(pattern string) Regexp {
-	regexp, error := CompileRegexp(pattern)
+func MustCompile(pattern string) Regexp {
+	regexp, error := Compile(pattern)
 	if error != nil {
 		panic(error)
 	}
 	return regexp
 }
 
-func (r *regexpImpl) FindStringIndex(s string) (loc []int) {
+func (r *RegexpImpl) FindStringIndex(s string) (loc []int) {
 	dfa := r.dfa.(*automatons.NFAImpl)
 	state := dfa.InitializeReducerState(s)
 
@@ -65,10 +65,11 @@ func (r *regexpImpl) FindStringIndex(s string) (loc []int) {
 	return nil
 }
 
-func (r *regexpImpl) GenerateFindStringIndex(name string) generator.Node {
+func (r *RegexpImpl) GenerateLambda() generator.Node {
 	root := generator.NewNode()
-	root.AppendLine(fmt.Sprintf("func %s_FindStringIndex(input string) (loc []int) {", name))
+	root.AppendLine("func (s string, offset int) int {")
 	root.Indent(func(n generator.Node) {
+		n.AppendLine("input := s[offset:]")
 		n.AppendLine("length := len(input)")
 		n.Append("accepted := map[int]bool{")
 		acceptingStates := r.dfa.GetAcceptingStates()
@@ -126,10 +127,10 @@ func (r *regexpImpl) GenerateFindStringIndex(name string) generator.Node {
 								first = false
 							}
 							if charRange.Start == charRange.End {
-								comment += fmt.Sprintf("%c, ", charRange.Start)
+								comment += fmt.Sprintf("%s, ", formatRune(charRange.Start))
 								n.Append(fmt.Sprintf("r == %d", charRange.Start))
 							} else {
-								comment += fmt.Sprintf("%c..%c, ", charRange.Start, charRange.End)
+								comment += fmt.Sprintf("%s..%s, ", formatRune(charRange.Start), formatRune(charRange.End))
 								n.Append(fmt.Sprintf("r >= %d && r <= %d", charRange.Start, charRange.End))
 							}
 						}
@@ -155,15 +156,18 @@ func (r *regexpImpl) GenerateFindStringIndex(name string) generator.Node {
 			n.AppendLine("index++")
 		})
 		n.AppendLine("}")
-		n.AppendLine("if acceptedIndex == -1 {")
-		n.Indent(func(n generator.Node) {
-			n.AppendLine("return nil")
-		})
-		n.AppendLine("}")
-		n.AppendLine("return []int{0, acceptedIndex}")
+		n.AppendLine("return acceptedIndex")
 	})
-	root.AppendLine("}")
+	root.AppendLine("},")
 	return root
+}
+
+func formatRune(r rune) string {
+	single := fmt.Sprintf("\\u%04X", r)
+	if r >= 0x20 && r <= 0xff {
+		single = fmt.Sprintf("%c", r)
+	}
+	return single
 }
 
 func newNFAFromSyntax(op *syntax.Regexp) (automatons.NFA, error) {

@@ -1,6 +1,6 @@
 package automatons
 
-const MaxRune = 0xFFFF
+const MaxRune = 0x10FFFF
 
 // Helper function for max of integers
 func maxInt(a, b int) int {
