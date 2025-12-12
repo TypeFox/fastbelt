@@ -5,7 +5,8 @@ import (
 	"regexp/syntax"
 	"sort"
 
-	"abc.de/regex/internal/automatons"
+	"typefox.dev/fastbelt/generator"
+	"typefox.dev/fastbelt/internal/automatons"
 )
 
 type Regexp interface {
@@ -38,7 +39,7 @@ func CompileRegexp(pattern string) (Regexp, error) {
 	}, nil
 }
 
-func MustCompilRegexp(pattern string) Regexp {
+func MustCompileRegexp(pattern string) Regexp {
 	regexp, error := CompileRegexp(pattern)
 	if error != nil {
 		panic(error)
@@ -64,10 +65,10 @@ func (r *regexpImpl) FindStringIndex(s string) (loc []int) {
 	return nil
 }
 
-func (r *regexpImpl) GenerateFindStringIndex(name string) Node {
-	root := NewNode()
+func (r *regexpImpl) GenerateFindStringIndex(name string) generator.Node {
+	root := generator.NewNode()
 	root.AppendLine(fmt.Sprintf("func %s_FindStringIndex(input string) (loc []int) {", name))
-	root.Indent(func(n Node) {
+	root.Indent(func(n generator.Node) {
 		n.AppendLine("length := len(input)")
 		n.Append("accepted := map[int]bool{")
 		acceptingStates := r.dfa.GetAcceptingStates()
@@ -80,13 +81,13 @@ func (r *regexpImpl) GenerateFindStringIndex(name string) Node {
 		n.AppendLine(fmt.Sprintf("state := %d", r.dfa.GetStartState()))
 		n.AppendLine("acceptedIndex := -1")
 		n.AppendLine("if accepted[state] {")
-		n.Indent(func(n Node) {
+		n.Indent(func(n generator.Node) {
 			n.AppendLine("acceptedIndex = 0")
 		})
 		n.AppendLine("}")
 		n.AppendLine("index := 0")
 		n.AppendLine("loop: for index < length {")
-		n.Indent(func(n Node) {
+		n.Indent(func(n generator.Node) {
 			n.AppendLine("r := rune(input[index])")
 			n.AppendLine("switch state {")
 			transitions := r.dfa.GetTransitionsBySource()
@@ -100,7 +101,7 @@ func (r *regexpImpl) GenerateFindStringIndex(name string) Node {
 			for _, source := range sources {
 				bySource := transitions[source]
 				n.AppendLine(fmt.Sprintf("case %d:", source))
-				n.Indent(func(n Node) {
+				n.Indent(func(n generator.Node) {
 					targets := make(map[int]automatons.RuneSet)
 					for transition := range bySource.AllTransitions() {
 						target := transition.Targets[0]
@@ -133,13 +134,13 @@ func (r *regexpImpl) GenerateFindStringIndex(name string) Node {
 							}
 						}
 						n.AppendLine(fmt.Sprintf(" { // %s", comment))
-						n.Indent(func(n Node) {
+						n.Indent(func(n generator.Node) {
 							n.AppendLine(fmt.Sprintf("state = %d", target))
 						})
 						n.Append("} else ")
 					}
 					n.AppendLine("{")
-					n.Indent(func(n Node) {
+					n.Indent(func(n generator.Node) {
 						n.AppendLine("break loop")
 					})
 					n.AppendLine("}")
@@ -147,7 +148,7 @@ func (r *regexpImpl) GenerateFindStringIndex(name string) Node {
 			}
 			n.AppendLine("}")
 			n.AppendLine("if accepted[state] {")
-			n.Indent(func(n Node) {
+			n.Indent(func(n generator.Node) {
 				n.AppendLine("acceptedIndex = index")
 			})
 			n.AppendLine("}")
@@ -155,7 +156,7 @@ func (r *regexpImpl) GenerateFindStringIndex(name string) Node {
 		})
 		n.AppendLine("}")
 		n.AppendLine("if acceptedIndex == -1 {")
-		n.Indent(func(n Node) {
+		n.Indent(func(n generator.Node) {
 			n.AppendLine("return nil")
 		})
 		n.AppendLine("}")
