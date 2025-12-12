@@ -9,88 +9,92 @@ import (
 	"regexp/syntax"
 	"sort"
 	"strconv"
-	"strings"
 	"unicode/utf8"
 
+	gen "typefox.dev/fastbelt/generator"
 	"typefox.dev/fastbelt/internal/grammar/generated"
 )
 
 func GenerateLexer(grammar generated.Grammar) string {
-	sb := &strings.Builder{}
-	WriteSB(
-		sb,
-		"package generated",
-		EOL,
-		EOL,
-		"import (",
-		EOLIndent(1),
-		"\"regexp\"",
-		EOLIndent(1),
-		"\"strings\"",
-		EOL,
-		EOLIndent(1),
-		"core \"typefox.dev/fastbelt\"",
-		EOLIndent(1),
-		"\"typefox.dev/fastbelt/lexer\"",
-		EOL,
-		")",
-		EOL,
-		EOL,
-	)
-	// keywords := GetAllKeywords(grammar)
+	node := gen.NewNode()
+	node.AppendLine("package generated")
+	node.AppendLine()
+	node.AppendLine("import (")
+	node.Indent(func(n gen.Node) {
+		n.AppendLine("\"regexp\"")
+		n.AppendLine("\"strings\"")
+		n.AppendLine()
+		n.AppendLine("core \"typefox.dev/fastbelt\"")
+		n.AppendLine("\"typefox.dev/fastbelt/lexer\"")
+	})
+	node.AppendLine(")")
+	node.AppendLine()
+
 	tokens := grammar.Terminals()
 	keywords := GetAllKeywords(grammar)
 	id := 1
 	for _, keyword := range keywords {
-		generateKeywordTokenType(sb, keyword, id)
+		generateKeywordTokenType(node, keyword, id)
 		id++
 	}
 	for _, token := range tokens {
-		generateTokenType(sb, token, id)
+		generateTokenType(node, token, id)
 		id++
 	}
-	generateMainLexerFunction(sb, tokens, keywords)
-	return formatIfPossible(sb.String())
+	generateMainLexerFunction(node, tokens, keywords)
+	return formatIfPossible(node.String())
 }
 
-func generateMainLexerFunction(sb *strings.Builder, tokens []generated.Token, keywords []generated.Keyword) {
-	WriteSB(sb, "func NewLexer() lexer.Lexer {", EOL)
-	WriteSB(sb, Indent, "return lexer.NewDefaultLexer(", EOL)
-	for _, keyword := range keywords {
-		WriteSB(sb, Indent, Indent, GeneratedKeywordName(keyword), ",", EOL)
-	}
-	for _, token := range tokens {
-		WriteSB(sb, Indent, Indent, GeneratedTokenName(token), ",", EOL)
-	}
-	WriteSB(sb, Indent, ")", EOL)
-	WriteSB(sb, "}", EOL)
+func generateMainLexerFunction(node gen.Node, tokens []generated.Token, keywords []generated.Keyword) {
+	node.AppendLine("func NewLexer() lexer.Lexer {")
+	node.Indent(func(n gen.Node) {
+		n.AppendLine("return lexer.NewDefaultLexer(")
+		n.Indent(func(nn gen.Node) {
+			for _, keyword := range keywords {
+				nn.AppendLine(GeneratedKeywordName(keyword), ",")
+			}
+			for _, token := range tokens {
+				nn.AppendLine(GeneratedTokenName(token), ",")
+			}
+		})
+		n.AppendLine(")")
+	})
+	node.AppendLine("}")
 }
 
-func generateKeywordTokenType(sb *strings.Builder, keyword generated.Keyword, id int) {
+func generateKeywordTokenType(node gen.Node, keyword generated.Keyword, id int) {
 	keywordValue := KeywordValue(keyword)
-	WriteSB(sb, "const ", GeneratedKeywordIdxName(keyword), " = ", strconv.Itoa(id), EOL, EOL)
-	WriteSB(sb, "var ", GeneratedKeywordName(keyword), " = core.NewTokenType(", EOL)
-	WriteSB(sb, Indent, GeneratedKeywordIdxName(keyword), ",", EOL)
-	WriteSB(sb, Indent, "\"", keywordValue, "\",", EOL)
-	WriteSB(sb, Indent, "\"", keywordValue, "\",", EOL)
-	WriteSB(sb, Indent, "0,", EOL)
-	WriteSB(sb, Indent, "0,", EOL)
-	WriteSB(sb, Indent, "false,", EOL)
-	WriteSB(sb, Indent, "func (text string, offset int) int {", EOL)
-	WriteSB(sb, Indent, Indent, "if strings.HasPrefix(text[offset:], \"", keywordValue, "\") {", EOL)
-	// Return the length of the keyword in bytes
-	WriteSB(sb, Indent, Indent, Indent, "return ", strconv.Itoa(len(keywordValue)), EOL)
-	WriteSB(sb, Indent, Indent, "}", EOL)
-	WriteSB(sb, Indent, Indent, "return 0", EOL)
-	WriteSB(sb, Indent, "},", EOL)
-	WriteSB(sb, Indent, "[]rune{", EOLIndent(2))
-	firstRune, _ := utf8.DecodeRune([]byte(keywordValue))
-	runeArrayToString([]rune{firstRune}, sb)
-	WriteSB(sb, EOLIndent(1), "},", EOL)
-	WriteSB(sb, ")", EOL)
+	node.AppendLine("const ", GeneratedKeywordIdxName(keyword), " = ", strconv.Itoa(id))
+	node.AppendLine()
+	node.AppendLine("var ", GeneratedKeywordName(keyword), " = core.NewTokenType(")
+	node.Indent(func(n gen.Node) {
+		n.AppendLine(GeneratedKeywordIdxName(keyword), ",")
+		n.AppendLine("\"", keywordValue, "\",")
+		n.AppendLine("\"", keywordValue, "\",")
+		n.AppendLine("0,")
+		n.AppendLine("0,")
+		n.AppendLine("false,")
+		n.AppendLine("func (text string, offset int) int {")
+		n.Indent(func(nn gen.Node) {
+			nn.AppendLine("if strings.HasPrefix(text[offset:], \"", keywordValue, "\") {")
+			nn.Indent(func(nnn gen.Node) {
+				nnn.AppendLine("return ", strconv.Itoa(len(keywordValue)))
+			})
+			nn.AppendLine("}")
+			nn.AppendLine("return 0")
+		})
+		n.AppendLine("},")
+		n.Append("[]rune{")
+		firstRune, _ := utf8.DecodeRune([]byte(keywordValue))
+		n.Indent(func(nn gen.Node) {
+			runeArrayToString([]rune{firstRune}, nn)
+		})
+		n.AppendLine("},")
+	})
+	node.AppendLine(")")
 }
 
-func generateTokenType(sb *strings.Builder, token generated.Token, id int) {
+func generateTokenType(node gen.Node, token generated.Token, id int) {
 	regexPattern := token.Regexp()
 	regexPattern = regexPattern[1 : len(regexPattern)-1] // remove leading and trailing backticks
 	regex, err := syntax.Parse(regexPattern, syntax.Perl)
@@ -98,30 +102,38 @@ func generateTokenType(sb *strings.Builder, token generated.Token, id int) {
 		panic(err)
 	}
 	regex = regex.Simplify()
-	WriteSB(sb, "const ", GeneratedTokenIdxName(token), " = ", strconv.Itoa(id), EOL)
-	WriteSB(sb, "var ", GeneratedTokenName(token), "_Regexp = regexp.MustCompile(`^(", regex.String(), ")`) ", EOL)
-	WriteSB(sb, "var ", GeneratedTokenName(token), " = core.NewTokenType(", EOL)
-	WriteSB(sb, Indent, GeneratedTokenIdxName(token), ",", EOL)
-	WriteSB(sb, Indent, "\"", token.Name(), "\",", EOL)
-	WriteSB(sb, Indent, "\"", token.Name(), "\",", EOL)
-	if token.Type() == "hidden" {
-		WriteSB(sb, Indent, "-1,", EOL)
-	} else {
-		WriteSB(sb, Indent, "0,", EOL)
-	}
-	WriteSB(sb, Indent, "0,", EOL)
-	WriteSB(sb, Indent, "false,", EOL)
-	WriteSB(sb, Indent, "func (text string, offset int) int {", EOL)
-	WriteSB(sb, Indent, Indent, "matches := ", GeneratedTokenName(token), "_Regexp.FindStringIndex(text[offset:])", EOL)
-	WriteSB(sb, Indent, Indent, "if matches != nil {", EOL)
-	WriteSB(sb, Indent, Indent, Indent, "return matches[1]", EOL)
-	WriteSB(sb, Indent, Indent, "}", EOL)
-	WriteSB(sb, Indent, Indent, "return 0", EOL)
-	WriteSB(sb, Indent, "},", EOL)
-	WriteSB(sb, Indent, "[]rune{", EOLIndent(2))
-	runeArrayToString(getStartChars(regexPattern), sb)
-	WriteSB(sb, EOLIndent(1), "},", EOL)
-	WriteSB(sb, ")", EOL)
+	node.AppendLine("const ", GeneratedTokenIdxName(token), " = ", strconv.Itoa(id))
+	node.AppendLine("var ", GeneratedTokenName(token), "_Regexp = regexp.MustCompile(`^(", regex.String(), ")`) ")
+	node.AppendLine("var ", GeneratedTokenName(token), " = core.NewTokenType(")
+	node.Indent(func(n gen.Node) {
+		n.AppendLine(GeneratedTokenIdxName(token), ",")
+		n.AppendLine("\"", token.Name(), "\",")
+		n.AppendLine("\"", token.Name(), "\",")
+		if token.Type() == "hidden" {
+			n.AppendLine("-1,")
+		} else {
+			n.AppendLine("0,")
+		}
+		n.AppendLine("0,")
+		n.AppendLine("false,")
+		n.AppendLine("func (text string, offset int) int {")
+		n.Indent(func(nn gen.Node) {
+			nn.AppendLine("matches := ", GeneratedTokenName(token), "_Regexp.FindStringIndex(text[offset:])")
+			nn.AppendLine("if matches != nil {")
+			nn.Indent(func(nnn gen.Node) {
+				nnn.AppendLine("return matches[1]")
+			})
+			nn.AppendLine("}")
+			nn.AppendLine("return 0")
+		})
+		n.AppendLine("},")
+		n.Append("[]rune{")
+		n.Indent(func(nn gen.Node) {
+			runeArrayToString(getStartChars(regexPattern), nn)
+		})
+		n.AppendLine("},")
+	})
+	node.AppendLine(")")
 }
 
 type RuneSlice []rune
@@ -133,23 +145,26 @@ func (x RuneSlice) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
 // Sort is a convenience method: x.Sort() calls Sort(x).
 func (x RuneSlice) Sort() { sort.Sort(x) }
 
-func runeArrayToString(runes RuneSlice, sb *strings.Builder) {
+func runeArrayToString(runes RuneSlice, node gen.Node) {
 	runes.Sort()
 	for i, r := range runes {
+		var runeStr string
 		if r == '\'' {
-			sb.WriteString("'\\''")
+			runeStr = "'\\'"
 		} else if r == '\\' {
-			sb.WriteString("'\\\\'")
+			runeStr = "'\\\\'"
 		} else if r >= 32 && r <= 126 {
-			WriteSB(sb, "'", string(r), "'")
+			runeStr = "'" + string(r) + "'"
 		} else {
-			WriteSB(sb, fmt.Sprint(int64(r)))
+			runeStr = fmt.Sprint(int64(r))
 		}
-		sb.WriteString(",")
+
 		if (i+1)%10 == 0 && i < len(runes)-1 {
-			sb.WriteString(EOLIndent(2))
+			node.AppendLine(runeStr, ",")
 		} else if i < len(runes)-1 {
-			sb.WriteString(" ")
+			node.Append(runeStr, ", ")
+		} else {
+			node.Append(runeStr, ",")
 		}
 	}
 }
