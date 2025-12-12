@@ -5,7 +5,7 @@ import (
 	"regexp/syntax"
 	"sort"
 
-	"abc.de/regex/automatons"
+	"abc.de/regex/internal/automatons"
 )
 
 type Regexp interface {
