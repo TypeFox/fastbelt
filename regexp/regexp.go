@@ -3,6 +3,7 @@ package regexp
 import (
 	"fmt"
 	"regexp/syntax"
+	"sort"
 
 	"abc.de/regex/automatons"
 )
@@ -84,51 +85,78 @@ func (r *regexpImpl) GenerateFindStringIndex(name string) Node {
 		})
 		n.AppendLine("}")
 		n.AppendLine("index := 0")
-		n.AppendLine("halted := false")
-		n.AppendLine("for !halted {")
+		n.AppendLine("loop: for index < length {")
 		n.Indent(func(n Node) {
-			n.AppendLine("if index >= length {")
-			n.Indent(func(n Node) {
-				n.AppendLine("halted = true")
-				n.AppendLine("continue")
-			})
-			n.AppendLine("} else {")
-			n.Indent(func(n Node) {
-				n.AppendLine("r := rune(input[index])")
-				n.AppendLine("switch state {")
-				transitions := r.dfa.GetTransitionsBySource()
-				for source, bySource := range transitions {
-					n.AppendLine(fmt.Sprintf("case %d:", source))
-					n.Indent(func(n Node) {
-						for transition := range bySource.AllTransitions() {
-							n.Append("if ")
-							if transition.CharRange.Start == transition.CharRange.End {
-								n.Append(fmt.Sprintf("r == '%c'", transition.CharRange.Start))
-							} else {
-								n.Append(fmt.Sprintf("r >= '%c' && r <= '%c'", transition.CharRange.Start, transition.CharRange.End))
-							}
-							n.AppendLine(" {")
-							n.Indent(func(n Node) {
-								n.AppendLine(fmt.Sprintf("state = %d", transition.Targets[0]))
-							})
-							n.Append("} else ")
+			n.AppendLine("r := rune(input[index])")
+			n.AppendLine("switch state {")
+			transitions := r.dfa.GetTransitionsBySource()
+
+			sources := make([]int, 0, len(transitions))
+			for k := range transitions {
+				sources = append(sources, k)
+			}
+			sort.Ints(sources)
+
+			for _, source := range sources {
+				bySource := transitions[source]
+				n.AppendLine(fmt.Sprintf("case %d:", source))
+				n.Indent(func(n Node) {
+					targets := make(map[int]automatons.RuneSet)
+					for transition := range bySource.AllTransitions() {
+						target := transition.Targets[0]
+						runeSet, exists := targets[target]
+						if !exists {
+							runeSet = *automatons.NewRuneSet_Empty()
 						}
-						n.AppendLine("{")
+						runeSet.AddRange(transition.CharRange.Start, transition.CharRange.End)
+						targets[target] = runeSet
+					}
+					for target, runeSet := range targets {
+						n.Append("if ")
+						first := true
+						comment := ""
+						for _, charRange := range runeSet.Ranges {
+							if !charRange.Includes {
+								continue
+							}
+							if !first {
+								n.Append(" || ")
+							} else {
+								first = false
+							}
+							if charRange.Start == charRange.End {
+								comment += fmt.Sprintf("%c, ", charRange.Start)
+								n.Append(fmt.Sprintf("r == %d", charRange.Start))
+							} else {
+								comment += fmt.Sprintf("%c..%c, ", charRange.Start, charRange.End)
+								n.Append(fmt.Sprintf("r >= %d && r <= %d", charRange.Start, charRange.End))
+							}
+						}
+						n.AppendLine(fmt.Sprintf(" { // %s", comment))
 						n.Indent(func(n Node) {
-							n.AppendLine("halted = true")
+							n.AppendLine(fmt.Sprintf("state = %d", target))
 						})
-						n.AppendLine("}")
+						n.Append("} else ")
+					}
+					n.AppendLine("{")
+					n.Indent(func(n Node) {
+						n.AppendLine("break loop")
 					})
-				}
-				n.AppendLine("}")
-			})
+					n.AppendLine("}")
+				})
+			}
 			n.AppendLine("}")
-			n.AppendLine("if !halted && accepted[state] {")
+			n.AppendLine("if accepted[state] {")
 			n.Indent(func(n Node) {
 				n.AppendLine("acceptedIndex = index")
 			})
 			n.AppendLine("}")
 			n.AppendLine("index++")
+		})
+		n.AppendLine("}")
+		n.AppendLine("if acceptedIndex == -1 {")
+		n.Indent(func(n Node) {
+			n.AppendLine("return nil")
 		})
 		n.AppendLine("}")
 		n.AppendLine("return []int{0, acceptedIndex}")

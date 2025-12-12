@@ -191,19 +191,6 @@ func (tt *TransitionTargetsImpl) rangesIntersect(r1, r2 RuneRange) bool {
 	return start <= end
 }
 
-// rangeIntersection returns the intersection of two RuneRanges, or nil if no intersection
-func (tt *TransitionTargetsImpl) rangeIntersection(r1, r2 RuneRange) *RuneRange {
-	if !r1.Includes || !r2.Includes {
-		return nil
-	}
-	start := max(r1.Start, r2.Start)
-	end := min(r1.End, r2.End)
-	if start <= end {
-		return NewRuneRange(start, end, true)
-	}
-	return nil
-}
-
 // Add adds a transition for the given character set to the target state
 func (tt *TransitionTargetsImpl) Add(charset *RuneSet, target int) {
 	if charset.Length() == 0 {
@@ -226,16 +213,6 @@ func (tt *TransitionTargetsImpl) addRange(charRange RuneRange, target int) {
 	// Find the position to insert/modify
 	for nodeIndex < len(tt.nodes) && tt.nodes[nodeIndex].Range.End < charRange.Start {
 		nodeIndex++
-	}
-
-	if nodeIndex >= len(tt.nodes) {
-		// Add at the end
-		newNode := &TargetGroupNode{
-			Range:   charRange,
-			Targets: NewTargetGroup(charRange, target),
-		}
-		tt.nodes = append(tt.nodes, newNode)
-		return
 	}
 
 	// Handle overlapping ranges by splitting and merging
