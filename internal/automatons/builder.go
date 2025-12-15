@@ -3,6 +3,7 @@ package automatons
 import "fmt"
 
 // NFABuilder interface defines methods for building an NFA
+
 type NFABuilder interface {
 	AddState() int
 	AddTransition(source int, target int, characters *RuneSet) error

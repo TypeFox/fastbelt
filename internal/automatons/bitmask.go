@@ -1,12 +1,13 @@
 package automatons
 
-import "math"
+import (
+	"bytes"
+)
 
-type BitMask []uint
+type BitMask []byte
 
 func NewBitMask_Empty(bits int) BitMask {
-	words := math.Ceil(float64(bits) / 32)
-	return make(BitMask, int(words))
+	return BitMask(bytes.Repeat([]byte{'0'}, bits))
 }
 
 func NewBitMask_Bits(bits int, set []bool) BitMask {
@@ -19,24 +20,34 @@ func NewBitMask_Bits(bits int, set []bool) BitMask {
 	return result
 }
 
+func (bm BitMask) String() string {
+	return string(bm)
+}
+
 func (bm BitMask) Set(bit int) {
-	word, bitPos := bit/32, bit%32
-	bm[word] |= 1 << bitPos
+	if bit >= 0 && bit < len(bm) {
+		bm[bit] = '1'
+	}
 }
 
 func (bm BitMask) Clear(bit int) {
-	word, bitPos := bit/32, bit%32
-	bm[word] &^= 1 << bitPos
+	if bit >= 0 && bit < len(bm) {
+		bm[bit] = '0'
+	}
 }
 
 func (bm BitMask) IsSet(bit int) bool {
-	word, bitPos := bit/32, bit%32
-	return (bm[word] & (1 << bitPos)) != 0
+	if bit >= 0 && bit < len(bm) {
+		return bm[bit] == '1'
+	}
+	return false
 }
 
 func (bm BitMask) Get(bit int) bool {
-	word, bitPos := bit/32, bit%32
-	return (bm[word] & (1 << bitPos)) != 0
+	if bit >= 0 && bit < len(bm) {
+		return bm[bit] == '1'
+	}
+	return false
 }
 
 func (bm BitMask) Equals(other BitMask) bool {
@@ -49,12 +60,4 @@ func (bm BitMask) Equals(other BitMask) bool {
 		}
 	}
 	return true
-}
-
-func (bm BitMask) Hash() int {
-	hash := 17
-	for _, word := range bm {
-		hash = hash*31 + int(word)
-	}
-	return hash
 }

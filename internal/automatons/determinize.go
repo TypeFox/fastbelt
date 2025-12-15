@@ -4,29 +4,24 @@ import (
 	"slices"
 )
 
-// statesToBitMask converts a slice of state IDs to a BitMask representation
 func statesToBitMask(states []int, stateCount int) BitMask {
 	mask := NewBitMask_Empty(stateCount)
 	for _, state := range states {
-		if state >= 0 && state < stateCount {
-			mask.Set(state)
-		}
+		mask.Set(state)
 	}
 	return mask
 }
 
-// bitMaskToStates converts a BitMask back to a slice of state IDs
-func bitMaskToStates(mask BitMask, stateCount int) []int {
+func bitMaskToStates(mask BitMask) []int {
 	states := make([]int, 0)
-	for i := 0; i < stateCount; i++ {
-		if mask.IsSet(i) {
-			states = append(states, i)
+	for index := range len(mask) {
+		if mask.IsSet(index) {
+			states = append(states, index)
 		}
 	}
 	return states
 }
 
-// rangeToRuneSet converts a RuneRange to a RuneSet (equivalent to TypeScript's rangeToCharSet)
 func rangeToRuneSet(runeRange *RuneRange) *RuneSet {
 	if runeRange == nil {
 		return NewRuneSet_Empty()
@@ -34,7 +29,6 @@ func rangeToRuneSet(runeRange *RuneRange) *RuneSet {
 	if runeRange.Includes {
 		return NewRuneSet_Range(runeRange.Start, runeRange.End)
 	}
-	// For excluded ranges, create the complement
 	full := NewRuneSet_Full()
 	excluded := NewRuneSet_Range(runeRange.Start, runeRange.End)
 	return Except(full, excluded)
@@ -43,23 +37,22 @@ func rangeToRuneSet(runeRange *RuneRange) *RuneSet {
 // Determinize converts an NFA to a DFA using the subset construction algorithm
 func Determinize(nfa NFA) NFA {
 	builder := NewNFABuilder()
-	stateCount := nfa.GetStateCount()
 
 	// Map from BitMask to new DFA state ID
-	newStates := make(map[int]int) // Using BitMask.Hash() as key
+	newStates := make(map[string]int) // Using BitMask.String() as key
 
 	// Get initial epsilon closure of start state
 	startClosure := GetEpsilonClosure(nfa, nfa.GetStartState())
-	startHash := startClosure.Hash()
+	startHash := startClosure.String()
 
 	// Queue of state sets to process (as BitMasks)
 	queue := []BitMask{startClosure}
 
 	// Transitions to be added after all states are created
 	type transitionInfo struct {
-		sourceHash int
-		targetHash int
-		charset    *RuneSet
+		sourceDFAState string
+		targetDFAState string
+		charset        *RuneSet
 	}
 	transitions := make([]transitionInfo, 0)
 
@@ -69,24 +62,24 @@ func Determinize(nfa NFA) NFA {
 		sourceSet := queue[0]
 		queue = queue[1:]
 
-		sourceHash := sourceSet.Hash()
+		sourceDFAState := sourceSet.String()
 
 		// Skip if already processed
-		if _, exists := newStates[sourceHash]; exists {
+		if _, exists := newStates[sourceDFAState]; exists {
 			continue
 		}
 
 		// Create new DFA state
 		newState := builder.AddState()
-		newStates[sourceHash] = newState
+		newStates[sourceDFAState] = newState
 
 		// Set as start state if this is the initial set
-		if sourceHash == startHash {
+		if sourceDFAState == startHash {
 			builder.SetStartState(newState)
 		}
 
 		// Check if any of the NFA states in this set are accepting
-		sourceStates := bitMaskToStates(sourceSet, stateCount)
+		sourceStates := bitMaskToStates(sourceSet)
 		acceptingStates := nfa.GetAcceptingStates()
 		for _, state := range sourceStates {
 			if acceptingStates[state] {
@@ -124,17 +117,17 @@ func Determinize(nfa NFA) NFA {
 				}
 
 				epsilonTarget := GetEpsilonClosure(nfa, targetSlice...)
-				targetHash := epsilonTarget.Hash()
+				targetDFAState := epsilonTarget.String()
 
 				// Record transition to be added later
 				transitions = append(transitions, transitionInfo{
-					sourceHash: sourceHash,
-					targetHash: targetHash,
-					charset:    inputCharSet,
+					sourceDFAState: sourceDFAState,
+					targetDFAState: targetDFAState,
+					charset:        inputCharSet,
 				})
 
 				// Add target set to queue if not already processed
-				if _, exists := newStates[targetHash]; !exists {
+				if _, exists := newStates[targetDFAState]; !exists {
 					queue = append(queue, epsilonTarget)
 				}
 			}
@@ -143,8 +136,8 @@ func Determinize(nfa NFA) NFA {
 
 	// Add all transitions
 	for _, trans := range transitions {
-		sourceState := newStates[trans.sourceHash]
-		targetState := newStates[trans.targetHash]
+		sourceState := newStates[trans.sourceDFAState]
+		targetState := newStates[trans.targetDFAState]
 		builder.AddTransition(sourceState, targetState, trans.charset)
 	}
 

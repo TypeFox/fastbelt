@@ -122,7 +122,7 @@ func TestBitMaskToStates(t *testing.T) {
 	mask.Set(2)
 	mask.Set(4)
 
-	states := bitMaskToStates(mask, stateCount)
+	states := bitMaskToStates(mask)
 
 	expected := []int{0, 2, 4}
 	if len(states) != len(expected) {
