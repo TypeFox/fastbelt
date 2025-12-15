@@ -219,3 +219,11 @@ func (t *NFATargets) AddRuneRangeTargets(start rune, end rune, targets ...int) {
 	}
 	t.Ranges = newRanges
 }
+
+func (t *NFATargets) MergeNonEpsilonInto(target *NFATargets) {
+	for _, section := range t.Ranges {
+		if section.Range.Includes && len(section.Targets) > 0 {
+			target.AddRuneRangeTargets(section.Range.Start, section.Range.End, section.Targets...)
+		}
+	}
+}

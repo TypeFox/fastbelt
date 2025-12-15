@@ -69,7 +69,7 @@ func (builder *NFABuilderImpl) AddTransitionForRuneSet(source int, target int, c
 	return nil
 }
 
-func (builder *NFABuilderImpl) AddTransitionForRuneRange(source int, target int, rng RuneRange) error {
+func (builder *NFABuilderImpl) AddTransitionForRuneRange(source int, target int, rng *RuneRange) error {
 	if source < 0 || source >= builder.stateCounter {
 		return fmt.Errorf("invalid source state: %d", source)
 	}
@@ -82,7 +82,28 @@ func (builder *NFABuilderImpl) AddTransitionForRuneRange(source int, target int,
 	}
 
 	targets := builder.transitions[source]
+	if rng == nil {
+		targets.AddEpsilonTargets(target)
+		return nil
+	}
 	targets.AddRuneRangeTargets(rng.Start, rng.End, target)
+	return nil
+}
+
+func (builder *NFABuilderImpl) AddTransitionForSingleRune(source int, target int, rn rune) error {
+	if source < 0 || source >= builder.stateCounter {
+		return fmt.Errorf("invalid source state: %d", source)
+	}
+	if target < 0 || target >= builder.stateCounter {
+		return fmt.Errorf("invalid target state: %d", target)
+	}
+
+	if builder.transitions[source] == nil {
+		builder.transitions[source] = NewNFATargets()
+	}
+
+	targets := builder.transitions[source]
+	targets.AddRuneRangeTargets(rn, rn, target)
 	return nil
 }
 
@@ -139,7 +160,7 @@ func (builder *NFABuilderImpl) CopyFrom(nfa NFA) (*StateMapping, error) {
 		for section := range targets.All() {
 			for _, target := range section.Targets {
 				targetState := stateMapping[target]
-				err := builder.AddTransitionForRuneRange(sourceState, targetState, *section.Range)
+				err := builder.AddTransitionForRuneRange(sourceState, targetState, section.Range)
 				if err != nil {
 					return nil, fmt.Errorf("failed to copy transition: %v", err)
 				}
