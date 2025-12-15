@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+const MinRune = 0x0000
 const MaxRune = 0x10FFFF
 const MinAscii = 0x20
 const MaxAscii = 0x7E
