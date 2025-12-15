@@ -32,7 +32,7 @@ type NFAMutableTargets_ArrayImpl struct {
 
 func NewNFAMutableTargets() *NFAMutableTargets_ArrayImpl {
 	return &NFAMutableTargets_ArrayImpl{
-		Epsilon: make([]int, 1),
+		Epsilon: make([]int, 0),
 		Ranges: append(make([]RuneTargetsSection, 0), RuneTargetsSection{
 			Range:   NewRuneRange(MinRune, MaxRune, false),
 			Targets: make([]int, 0),
@@ -43,7 +43,7 @@ func NewNFAMutableTargets() *NFAMutableTargets_ArrayImpl {
 func (t *NFAMutableTargets_ArrayImpl) Contains(c rune) bool {
 	startFromIndex := sort.Search(len(t.Ranges), func(i int) bool {
 		return t.Ranges[i].Range.Start >= c
-	})
+	}) - 1
 	if startFromIndex > -1 {
 		return t.Ranges[startFromIndex].Range.Contains(c) && t.Ranges[startFromIndex].Range.Includes
 	}
@@ -61,7 +61,7 @@ func (t *NFAMutableTargets_ArrayImpl) GetEpsilonTargets() []int {
 func (t *NFAMutableTargets_ArrayImpl) GetRuneTargets(c rune) []int {
 	startFromIndex := sort.Search(len(t.Ranges), func(i int) bool {
 		return t.Ranges[i].Range.Start >= c
-	})
+	}) - 1
 	if startFromIndex > -1 {
 		if t.Ranges[startFromIndex].Range.Contains(c) && t.Ranges[startFromIndex].Range.Includes {
 			return append([]int{}, t.Ranges[startFromIndex].Targets...)
@@ -94,20 +94,20 @@ func (t *NFAMutableTargets_ArrayImpl) AddRuneTarget(r rune, targets ...int) {
 
 func (t *NFAMutableTargets_ArrayImpl) AddRuneRangeTarget(start rune, end rune, targets ...int) {
 	indexStart := sort.Search(len(t.Ranges), func(i int) bool {
-		return t.Ranges[i].Range.Start >= start
-	})
+		return t.Ranges[i].Range.Start > start
+	}) - 1
 	indexEnd := sort.Search(len(t.Ranges), func(i int) bool {
-		return t.Ranges[i].Range.End <= end
-	})
+		return t.Ranges[i].Range.End < end
+	}) - 1
 	newRanges := make([]RuneTargetsSection, 0)
-	if indexStart > -1 && indexStart-1 >= 0 {
-		newRanges = append(newRanges, t.Ranges[:indexStart-1]...)
+	if indexStart > -1 && indexStart >= 0 {
+		newRanges = append(newRanges, t.Ranges[:indexStart]...)
 	}
 	if indexEnd == -1 {
 		indexEnd = len(t.Ranges) - 1
 	}
 	currentRange := NewRuneRange(start, end, true)
-	for i := indexStart; i <= indexEnd; i++ {
+	for i := indexStart; i <= indexEnd && currentRange != nil; i++ {
 		section := &t.Ranges[i]
 		switch {
 		//   CCCCCCC...
@@ -128,6 +128,7 @@ func (t *NFAMutableTargets_ArrayImpl) AddRuneRangeTarget(start rune, end rune, t
 					Range:   NewRuneRange(rune(currentRange.End+1), section.Range.End, section.Range.Includes),
 					Targets: append([]int{}, section.Targets...),
 				})
+				currentRange = nil
 			//   CCCCCCCC
 			//NNNSSSSSSSS
 			case currentRange.End == section.Range.End:
@@ -135,16 +136,15 @@ func (t *NFAMutableTargets_ArrayImpl) AddRuneRangeTarget(start rune, end rune, t
 					Range:   NewRuneRange(currentRange.Start, currentRange.End, currentRange.Includes || section.Range.Includes),
 					Targets: append(append([]int{}, section.Targets...), targets...),
 				})
+				currentRange = nil
 			//   CCCCCCCCCCC
 			//NNNSSSSSSSSS
 			case currentRange.End < section.Range.End:
 				newRanges = append(newRanges, RuneTargetsSection{
 					Range:   NewRuneRange(currentRange.Start, section.Range.End, currentRange.Includes || section.Range.Includes),
 					Targets: append(append([]int{}, section.Targets...), targets...),
-				}, RuneTargetsSection{
-					Range:   NewRuneRange(rune(section.Range.End+1), currentRange.End, currentRange.Includes),
-					Targets: append([]int{}, section.Targets...),
 				})
+				currentRange = NewRuneRange(rune(section.Range.End+1), currentRange.End, currentRange.Includes)
 			}
 		//CCCCCC...
 		//SSSSSS...
@@ -156,10 +156,8 @@ func (t *NFAMutableTargets_ArrayImpl) AddRuneRangeTarget(start rune, end rune, t
 				newRanges = append(newRanges, RuneTargetsSection{
 					Range:   NewRuneRange(section.Range.Start, section.Range.End, currentRange.Includes || section.Range.Includes),
 					Targets: append(append([]int{}, section.Targets...), targets...),
-				}, RuneTargetsSection{
-					Range:   NewRuneRange(rune(section.Range.End+1), currentRange.End, currentRange.Includes),
-					Targets: append([]int{}, targets...),
 				})
+				currentRange = NewRuneRange(rune(section.Range.End+1), currentRange.End, currentRange.Includes)
 			//CCCCCCCCCC
 			//SSSSSSSSSS
 			case currentRange.End == section.Range.End:
@@ -167,6 +165,7 @@ func (t *NFAMutableTargets_ArrayImpl) AddRuneRangeTarget(start rune, end rune, t
 					Range:   NewRuneRange(currentRange.Start, currentRange.End, currentRange.Includes || section.Range.Includes),
 					Targets: append(append([]int{}, section.Targets...), targets...),
 				})
+				currentRange = nil
 			//CCCCC
 			//SSSSSSSSS
 			case currentRange.End < section.Range.End:
@@ -177,6 +176,7 @@ func (t *NFAMutableTargets_ArrayImpl) AddRuneRangeTarget(start rune, end rune, t
 					Range:   NewRuneRange(rune(currentRange.End+1), section.Range.End, section.Range.Includes),
 					Targets: append([]int{}, section.Targets...),
 				})
+				currentRange = nil
 			}
 		//CCCCCCCC...
 		//  SSSSSS...
@@ -192,7 +192,11 @@ func (t *NFAMutableTargets_ArrayImpl) AddRuneRangeTarget(start rune, end rune, t
 				newRanges = append(newRanges, RuneTargetsSection{
 					Range:   NewRuneRange(section.Range.Start, currentRange.End, currentRange.Includes || section.Range.Includes),
 					Targets: append(append([]int{}, section.Targets...), targets...),
+				}, RuneTargetsSection{
+					Range:   NewRuneRange(rune(currentRange.End+1), section.Range.End, section.Range.Includes),
+					Targets: append([]int{}, section.Targets...),
 				})
+				currentRange = nil
 			//NNNCCCCCCCC
 			//   SSSSSSSS
 			case currentRange.End == section.Range.End:
@@ -200,20 +204,28 @@ func (t *NFAMutableTargets_ArrayImpl) AddRuneRangeTarget(start rune, end rune, t
 					Range:   NewRuneRange(section.Range.Start, currentRange.End, currentRange.Includes || section.Range.Includes),
 					Targets: append(append([]int{}, section.Targets...), targets...),
 				})
+				currentRange = nil
 			//NNNCCCCCCCCCCCC
 			//   SSSSSSSS
 			case currentRange.End > section.Range.End:
 				newRanges = append(newRanges, RuneTargetsSection{
 					Range:   NewRuneRange(section.Range.Start, section.Range.End, currentRange.Includes || section.Range.Includes),
 					Targets: append(append([]int{}, section.Targets...), targets...),
-				}, RuneTargetsSection{
-					Range:   NewRuneRange(rune(section.Range.End+1), currentRange.End, currentRange.Includes),
-					Targets: append([]int{}, targets...),
 				})
+				currentRange = NewRuneRange(rune(section.Range.End+1), currentRange.End, currentRange.Includes)
 			}
 		}
+		if currentRange == nil {
+			indexEnd = i
+		}
 	}
-	if indexEnd+1 <= len(t.Ranges) {
+	if currentRange != nil {
+		newRanges = append(newRanges, RuneTargetsSection{
+			Range:   currentRange,
+			Targets: append([]int{}, targets...),
+		})
+	}
+	if indexEnd+1 < len(t.Ranges) {
 		newRanges = append(newRanges, t.Ranges[indexEnd+1:]...)
 	}
 	t.Ranges = newRanges
