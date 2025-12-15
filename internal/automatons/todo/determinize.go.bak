@@ -42,7 +42,7 @@ func Determinize(nfa NFA) NFA {
 	newStates := make(map[string]int) // Using BitMask.String() as key
 
 	// Get initial epsilon closure of start state
-	startClosure := GetEpsilonClosure(nfa, nfa.GetStartState())
+	startClosure := nfa.GetEpsilonClosure(nfa.StartState)
 	startHash := startClosure.String()
 
 	// Queue of state sets to process (as BitMasks)
@@ -80,7 +80,7 @@ func Determinize(nfa NFA) NFA {
 
 		// Check if any of the NFA states in this set are accepting
 		sourceStates := bitMaskToStates(sourceSet)
-		acceptingStates := nfa.GetAcceptingStates()
+		acceptingStates := nfa.AcceptingStates
 		for _, state := range sourceStates {
 			if acceptingStates[state] {
 				builder.AcceptState(newState)
@@ -100,7 +100,7 @@ func Determinize(nfa NFA) NFA {
 			// Collect all target states for this input
 			targetStates := make(map[int]bool)
 			for _, sourceState := range sourceStates {
-				transitionTargets := nfa.GetTransitionsBySource()[sourceState]
+				transitionTargets := nfa.TransitionsBySource[sourceState]
 				if transitionTargets != nil {
 					targets := transitionTargets.GetTargets(inputCharSet)
 					for _, target := range targets {
@@ -116,7 +116,7 @@ func Determinize(nfa NFA) NFA {
 					targetSlice = append(targetSlice, target)
 				}
 
-				epsilonTarget := GetEpsilonClosure(nfa, targetSlice...)
+				epsilonTarget := nfa.GetEpsilonClosure(targetSlice...)
 				targetDFAState := epsilonTarget.String()
 
 				// Record transition to be added later
@@ -138,7 +138,7 @@ func Determinize(nfa NFA) NFA {
 	for _, trans := range transitions {
 		sourceState := newStates[trans.sourceDFAState]
 		targetState := newStates[trans.targetDFAState]
-		builder.AddTransition(sourceState, targetState, trans.charset)
+		builder.AddTransitionForRuneSet(sourceState, targetState, trans.charset)
 	}
 
 	result, err := builder.Build()
@@ -146,7 +146,7 @@ func Determinize(nfa NFA) NFA {
 		panic("Failed to build DFA: " + err.Error())
 	}
 
-	return result
+	return *result
 }
 
 // getDistinctInputs partitions the alphabet based on all transition character sets
@@ -156,18 +156,18 @@ func getDistinctInputs(nfa NFA, states []int) []*RuneSet {
 
 	// Collect all character ranges from transitions
 	for _, state := range states {
-		transitionTargets := nfa.GetTransitionsBySource()[state]
+		transitionTargets := nfa.TransitionsBySource[state]
 		if transitionTargets == nil {
 			continue
 		}
 
 		// Process all character transitions (skip epsilon)
-		for transitionInfo := range transitionTargets.AllTransitions() {
-			if transitionInfo.CharRange == nil {
+		for transitionInfo := range transitionTargets.All() {
+			if transitionInfo.Range == nil {
 				continue // Skip epsilon transitions
 			}
 
-			lhs := rangeToRuneSet(transitionInfo.CharRange)
+			lhs := rangeToRuneSet(transitionInfo.Range)
 			if lhs.Length() == 0 {
 				continue
 			}

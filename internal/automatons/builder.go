@@ -2,11 +2,10 @@ package automatons
 
 import "fmt"
 
-// NFABuilder interface defines methods for building an NFA
-
 type NFABuilder interface {
 	AddState() int
-	AddTransition(source int, target int, characters *RuneSet) error
+	AddTransitionForRuneSet(source int, target int, characters RuneSet) error
+	AddTransitionForRuneRange(source int, target int, rng RuneRange) error
 	SetStartState(state int) error
 	AcceptState(state int) error
 	Build() (NFA, error)
@@ -24,7 +23,7 @@ type StateMapping struct {
 type NFABuilderImpl struct {
 	stateCounter    int
 	startState      int
-	transitions     map[int]*TransitionTargetsImpl
+	transitions     map[int]*NFATargets
 	acceptingStates map[int]bool
 }
 
@@ -33,7 +32,7 @@ func NewNFABuilder() *NFABuilderImpl {
 	return &NFABuilderImpl{
 		stateCounter:    0,
 		startState:      -1,
-		transitions:     make(map[int]*TransitionTargetsImpl),
+		transitions:     make(map[int]*NFATargets),
 		acceptingStates: make(map[int]bool),
 	}
 }
@@ -45,8 +44,7 @@ func (builder *NFABuilderImpl) AddState() int {
 	return stateID
 }
 
-// AddTransition adds a transition from source to target with the given character set
-func (builder *NFABuilderImpl) AddTransition(source int, target int, characters *RuneSet) error {
+func (builder *NFABuilderImpl) AddTransitionForRuneSet(source int, target int, characters *RuneSet) error {
 	if source < 0 || source >= builder.stateCounter {
 		return fmt.Errorf("invalid source state: %d", source)
 	}
@@ -55,11 +53,36 @@ func (builder *NFABuilderImpl) AddTransition(source int, target int, characters 
 	}
 
 	if builder.transitions[source] == nil {
-		builder.transitions[source] = NewTransitionTargets()
+		builder.transitions[source] = NewNFATargets()
 	}
 
 	targets := builder.transitions[source]
-	targets.Add(characters, target)
+	if characters == nil {
+		targets.AddEpsilonTargets(target)
+		return nil
+	}
+	for _, rng := range characters.Ranges {
+		if rng.Includes {
+			targets.AddRuneRangeTargets(rng.Start, rng.End, target)
+		}
+	}
+	return nil
+}
+
+func (builder *NFABuilderImpl) AddTransitionForRuneRange(source int, target int, rng RuneRange) error {
+	if source < 0 || source >= builder.stateCounter {
+		return fmt.Errorf("invalid source state: %d", source)
+	}
+	if target < 0 || target >= builder.stateCounter {
+		return fmt.Errorf("invalid target state: %d", target)
+	}
+
+	if builder.transitions[source] == nil {
+		builder.transitions[source] = NewNFATargets()
+	}
+
+	targets := builder.transitions[source]
+	targets.AddRuneRangeTargets(rng.Start, rng.End, target)
 	return nil
 }
 
@@ -82,7 +105,7 @@ func (builder *NFABuilderImpl) AcceptState(state int) error {
 }
 
 // Build constructs and returns the NFA
-func (builder *NFABuilderImpl) Build() (NFA, error) {
+func (builder *NFABuilderImpl) Build() (*NFA, error) {
 	if builder.stateCounter == 0 {
 		return nil, fmt.Errorf("no states defined")
 	}
@@ -90,16 +113,11 @@ func (builder *NFABuilderImpl) Build() (NFA, error) {
 		return nil, fmt.Errorf("no start state defined")
 	}
 
-	nfa := NewNFA(builder.startState, builder.stateCounter)
-
-	// Copy accepting states
-	for state := range builder.acceptingStates {
-		nfa.AddAcceptingState(state)
-	}
-
-	// Copy transitions
-	for source, targets := range builder.transitions {
-		nfa.transitionsBySource[source] = targets
+	nfa := &NFA{
+		StartState:          builder.startState,
+		StateCount:          builder.stateCounter,
+		TransitionsBySource: CopyMap(builder.transitions),
+		AcceptingStates:     CopyMap(builder.acceptingStates),
 	}
 
 	return nfa, nil
@@ -110,24 +128,28 @@ func (builder *NFABuilderImpl) CopyFrom(nfa NFA) (*StateMapping, error) {
 	stateMapping := make(map[int]int)
 
 	// Create new states for each state in the source NFA
-	for state := 0; state < nfa.GetStateCount(); state++ {
+	for state := 0; state < nfa.StateCount; state++ {
 		newState := builder.AddState()
 		stateMapping[state] = newState
 	}
 
 	// Copy transitions
-	for transition := range nfa.AllTransitions() {
-		sourceState := stateMapping[transition.Source]
-		targetState := stateMapping[transition.Target]
-		err := builder.AddTransition(sourceState, targetState, transition.Chars)
-		if err != nil {
-			return nil, fmt.Errorf("failed to copy transition: %v", err)
+	for source, targets := range nfa.TransitionsBySource {
+		sourceState := stateMapping[source]
+		for section := range targets.All() {
+			for _, target := range section.Targets {
+				targetState := stateMapping[target]
+				err := builder.AddTransitionForRuneRange(sourceState, targetState, *section.Range)
+				if err != nil {
+					return nil, fmt.Errorf("failed to copy transition: %v", err)
+				}
+			}
 		}
 	}
 
 	// Collect accepting states
 	acceptings := make([]int, 0)
-	for state := range nfa.GetAcceptingStates() {
+	for state := range nfa.AcceptingStates {
 		if newState, exists := stateMapping[state]; exists {
 			acceptings = append(acceptings, newState)
 		}
@@ -135,7 +157,7 @@ func (builder *NFABuilderImpl) CopyFrom(nfa NFA) (*StateMapping, error) {
 
 	return &StateMapping{
 		Mapping:    stateMapping,
-		Start:      stateMapping[nfa.GetStartState()],
+		Start:      stateMapping[nfa.StartState],
 		Acceptings: acceptings,
 	}, nil
 }

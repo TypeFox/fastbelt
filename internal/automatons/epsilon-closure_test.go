@@ -16,22 +16,18 @@ func createTestNFA() NFA {
 	s3 := builder.AddState()
 	s4 := builder.AddState()
 
-	// Set up epsilon transitions (using empty RuneSet)
-	emptyCharset := NewRuneSet_Empty()
-
 	// s0 -ε-> s1
-	builder.AddTransition(s0, s1, emptyCharset)
+	builder.AddTransitionForRuneSet(s0, s1, nil)
 	// s1 -ε-> s2
-	builder.AddTransition(s1, s2, emptyCharset)
+	builder.AddTransitionForRuneSet(s1, s2, nil)
 	// s0 -ε-> s3
-	builder.AddTransition(s0, s3, emptyCharset)
+	builder.AddTransitionForRuneSet(s0, s3, nil)
 	// s3 -ε-> s4
-	builder.AddTransition(s3, s4, emptyCharset)
+	builder.AddTransitionForRuneSet(s3, s4, nil)
 	// s2 -ε-> s4
-	builder.AddTransition(s2, s4, emptyCharset)
-
+	builder.AddTransitionForRuneSet(s2, s4, nil)
 	// Add a regular (non-epsilon) transition for completeness
-	builder.AddTransition(s1, s3, NewRuneSet_Rune('a'))
+	builder.AddTransitionForRuneSet(s1, s3, NewRuneSet_Rune('a'))
 
 	builder.SetStartState(s0)
 	builder.AcceptState(s4)
@@ -41,14 +37,14 @@ func createTestNFA() NFA {
 		panic("Failed to build test NFA: " + err.Error())
 	}
 
-	return nfa
+	return *nfa
 }
 
 func TestGetEpsilonClosure_SingleState(t *testing.T) {
 	nfa := createTestNFA()
 
 	// Test closure of state 0 (should include 0, 1, 2, 3, 4)
-	closure := GetEpsilonClosure(nfa, 0)
+	closure := nfa.GetEpsilonClosure(0)
 	expected := NewBitMask_Bits(5, []bool{true, true, true, true, true})
 
 	if !reflect.DeepEqual(closure, expected) {
@@ -60,7 +56,7 @@ func TestGetEpsilonClosure_MultipleStates(t *testing.T) {
 	nfa := createTestNFA()
 
 	// Test closure of states 1 and 3
-	closure := GetEpsilonClosure(nfa, 1, 3)
+	closure := nfa.GetEpsilonClosure(1, 3)
 	expected := NewBitMask_Bits(5, []bool{false, true, true, true, true})
 
 	if !reflect.DeepEqual(closure, expected) {
@@ -72,7 +68,7 @@ func TestGetEpsilonClosure_LeafState(t *testing.T) {
 	nfa := createTestNFA()
 
 	// Test closure of state 4 (leaf state with no epsilon transitions)
-	closure := GetEpsilonClosure(nfa, 4)
+	closure := nfa.GetEpsilonClosure(4)
 	expected := NewBitMask_Bits(5, []bool{false, false, false, false, true})
 
 	if !reflect.DeepEqual(closure, expected) {
@@ -84,7 +80,7 @@ func TestGetEpsilonClosure_EmptyInput(t *testing.T) {
 	nfa := createTestNFA()
 
 	// Test closure with no input states
-	closure := GetEpsilonClosure(nfa)
+	closure := nfa.GetEpsilonClosure()
 	expected := NewBitMask_Empty(5)
 
 	if !reflect.DeepEqual(closure, expected) {
@@ -96,7 +92,7 @@ func TestGetEpsilonClosure_DuplicateStates(t *testing.T) {
 	nfa := createTestNFA()
 
 	// Test closure with duplicate input states
-	closure := GetEpsilonClosure(nfa, 2, 2, 2)
+	closure := nfa.GetEpsilonClosure(2, 2, 2)
 	expected := NewBitMask_Bits(5, []bool{false, false, true, false, true})
 
 	if !reflect.DeepEqual(closure, expected) {
@@ -113,10 +109,9 @@ func TestGetEpsilonClosure_LinearChain(t *testing.T) {
 	s2 := builder.AddState()
 	s3 := builder.AddState()
 
-	emptyCharset := NewRuneSet_Empty()
-	builder.AddTransition(s0, s1, emptyCharset)
-	builder.AddTransition(s1, s2, emptyCharset)
-	builder.AddTransition(s2, s3, emptyCharset)
+	builder.AddTransitionForRuneSet(s0, s1, nil)
+	builder.AddTransitionForRuneSet(s1, s2, nil)
+	builder.AddTransitionForRuneSet(s2, s3, nil)
 
 	builder.SetStartState(s0)
 	builder.AcceptState(s3)
@@ -127,7 +122,7 @@ func TestGetEpsilonClosure_LinearChain(t *testing.T) {
 	}
 
 	// Test closure of state 0
-	closure := GetEpsilonClosure(nfa, s0)
+	closure := nfa.GetEpsilonClosure(s0)
 	expected := NewBitMask_Bits(4, []bool{true, true, true, true})
 
 	if !reflect.DeepEqual(closure, expected) {
@@ -135,7 +130,7 @@ func TestGetEpsilonClosure_LinearChain(t *testing.T) {
 	}
 
 	// Test closure of state 1
-	closure = GetEpsilonClosure(nfa, s1)
+	closure = nfa.GetEpsilonClosure(s1)
 	expected = NewBitMask_Bits(4, []bool{false, true, true, true})
 
 	if !reflect.DeepEqual(closure, expected) {
@@ -151,10 +146,9 @@ func TestGetEpsilonClosure_CyclicGraph(t *testing.T) {
 	s1 := builder.AddState()
 	s2 := builder.AddState()
 
-	emptyCharset := NewRuneSet_Empty()
-	builder.AddTransition(s0, s1, emptyCharset)
-	builder.AddTransition(s1, s2, emptyCharset)
-	builder.AddTransition(s2, s0, emptyCharset)
+	builder.AddTransitionForRuneSet(s0, s1, nil)
+	builder.AddTransitionForRuneSet(s1, s2, nil)
+	builder.AddTransitionForRuneSet(s2, s0, nil)
 
 	builder.SetStartState(s0)
 	builder.AcceptState(s2)
@@ -165,7 +159,7 @@ func TestGetEpsilonClosure_CyclicGraph(t *testing.T) {
 	}
 
 	// Test closure should include all states in the cycle
-	closure := GetEpsilonClosure(nfa, s0)
+	closure := nfa.GetEpsilonClosure(s0)
 	expected := NewBitMask_Bits(3, []bool{true, true, true})
 
 	if !reflect.DeepEqual(closure, expected) {
@@ -182,8 +176,8 @@ func TestGetEpsilonClosure_IsolatedStates(t *testing.T) {
 	s2 := builder.AddState()
 
 	// Add only regular transitions, no epsilon
-	builder.AddTransition(s0, s1, NewRuneSet_Rune('a'))
-	builder.AddTransition(s1, s2, NewRuneSet_Rune('b'))
+	builder.AddTransitionForRuneSet(s0, s1, NewRuneSet_Rune('a'))
+	builder.AddTransitionForRuneSet(s1, s2, NewRuneSet_Rune('b'))
 
 	builder.SetStartState(s0)
 	builder.AcceptState(s2)
@@ -195,7 +189,7 @@ func TestGetEpsilonClosure_IsolatedStates(t *testing.T) {
 
 	// Each state should only contain itself in epsilon closure
 	for _, state := range []int{s0, s1, s2} {
-		closure := GetEpsilonClosure(nfa, state)
+		closure := nfa.GetEpsilonClosure(state)
 		expected := NewBitMask_Empty(3)
 		expected.Set(state)
 		if !reflect.DeepEqual(closure, expected) {
@@ -245,17 +239,17 @@ func TestGetEpsilonClosure_ConsistentResults(t *testing.T) {
 	nfa := createTestNFA()
 
 	// Run the same closure multiple times and ensure consistent results
-	closure1 := GetEpsilonClosure(nfa, 0)
-	closure2 := GetEpsilonClosure(nfa, 0)
-	closure3 := GetEpsilonClosure(nfa, 0)
+	closure1 := nfa.GetEpsilonClosure(0)
+	closure2 := nfa.GetEpsilonClosure(0)
+	closure3 := nfa.GetEpsilonClosure(0)
 
 	if !reflect.DeepEqual(closure1, closure2) || !reflect.DeepEqual(closure2, closure3) {
 		t.Error("Epsilon closure results are not consistent across multiple runs")
 	}
 
 	// Test with different input orderings
-	closure4 := GetEpsilonClosure(nfa, 0)
-	closure5 := GetEpsilonClosure(nfa, 0, 0, 0) // duplicates
+	closure4 := nfa.GetEpsilonClosure(0)
+	closure5 := nfa.GetEpsilonClosure(0, 0, 0) // duplicates
 
 	if !reflect.DeepEqual(closure1, closure4) || !reflect.DeepEqual(closure1, closure5) {
 		t.Error("Epsilon closure results vary with different input orderings")

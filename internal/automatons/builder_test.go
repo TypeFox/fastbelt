@@ -29,29 +29,29 @@ func TestNFABuilderImpl_AddTransitionValidation(t *testing.T) {
 	chars := NewRuneSet_Rune('a')
 
 	// Test invalid source state
-	err := builder.AddTransition(-1, s1, chars)
+	err := builder.AddTransitionForRuneSet(-1, s1, chars)
 	if err == nil {
 		t.Error("Expected error for invalid source state")
 	}
 
-	err = builder.AddTransition(2, s1, chars)
+	err = builder.AddTransitionForRuneSet(2, s1, chars)
 	if err == nil {
 		t.Error("Expected error for source state out of range")
 	}
 
 	// Test invalid target state
-	err = builder.AddTransition(s0, -1, chars)
+	err = builder.AddTransitionForRuneSet(s0, -1, chars)
 	if err == nil {
 		t.Error("Expected error for invalid target state")
 	}
 
-	err = builder.AddTransition(s0, 2, chars)
+	err = builder.AddTransitionForRuneSet(s0, 2, chars)
 	if err == nil {
 		t.Error("Expected error for target state out of range")
 	}
 
 	// Test valid transition
-	err = builder.AddTransition(s0, s1, chars)
+	err = builder.AddTransitionForRuneSet(s0, s1, chars)
 	if err != nil {
 		t.Errorf("Expected no error for valid transition, got: %v", err)
 	}
@@ -63,7 +63,7 @@ func TestNFABuilderImpl_AddTransitions(t *testing.T) {
 	s1 := builder.AddState()
 	chars := NewRuneSet_Rune('a')
 
-	err := builder.AddTransition(s0, s1, chars)
+	err := builder.AddTransitionForRuneSet(s0, s1, chars)
 	if err != nil {
 		t.Fatalf("Failed to add transition: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestNFABuilderImpl_AddTransitions(t *testing.T) {
 	}
 
 	// Verify the transition exists
-	transitionsBySource := nfa.GetTransitionsBySource()
+	transitionsBySource := nfa.TransitionsBySource
 	targets, exists := transitionsBySource[s0]
 	if !exists {
 		t.Fatal("No transitions found for source state")
@@ -92,8 +92,8 @@ func TestNFABuilderImpl_AddTransitions(t *testing.T) {
 
 	// Check if the transition contains our character and target
 	found := false
-	for info := range targets.AllTransitions() {
-		if info.CharRange != nil && info.CharRange.Contains('a') {
+	for info := range targets.All() {
+		if info.Range != nil && info.Range.Contains('a') {
 			for _, target := range info.Targets {
 				if target == s1 {
 					found = true
@@ -203,7 +203,7 @@ func TestNFABuilderImpl_BuildValidNFA(t *testing.T) {
 	}
 
 	chars := NewRuneSet_Rune('a')
-	err = builder.AddTransition(s0, s1, chars)
+	err = builder.AddTransitionForRuneSet(s0, s1, chars)
 	if err != nil {
 		t.Fatalf("Failed to add transition: %v", err)
 	}
@@ -213,20 +213,20 @@ func TestNFABuilderImpl_BuildValidNFA(t *testing.T) {
 		t.Fatalf("Failed to build NFA: %v", err)
 	}
 
-	if nfa.GetStartState() != s0 {
-		t.Errorf("Expected start state %d, got %d", s0, nfa.GetStartState())
+	if nfa.StartState != s0 {
+		t.Errorf("Expected start state %d, got %d", s0, nfa.StartState)
 	}
 
-	if nfa.GetStateCount() != 2 {
-		t.Errorf("Expected state count 2, got %d", nfa.GetStateCount())
+	if nfa.StateCount != 2 {
+		t.Errorf("Expected state count 2, got %d", nfa.StateCount)
 	}
 
-	acceptingStates := nfa.GetAcceptingStates()
+	acceptingStates := nfa.AcceptingStates
 	if !acceptingStates[s1] {
 		t.Error("Expected s1 to be an accepting state")
 	}
 
-	transitionsBySource := nfa.GetTransitionsBySource()
+	transitionsBySource := nfa.TransitionsBySource
 	if _, exists := transitionsBySource[s0]; !exists {
 		t.Error("Expected transitions from s0")
 	}
@@ -249,7 +249,7 @@ func TestNFABuilderImpl_CopyFrom(t *testing.T) {
 	}
 
 	chars := NewRuneSet_Rune('b')
-	err = builder1.AddTransition(s0, s1, chars)
+	err = builder1.AddTransitionForRuneSet(s0, s1, chars)
 	if err != nil {
 		t.Fatalf("Failed to add transition: %v", err)
 	}
@@ -261,7 +261,7 @@ func TestNFABuilderImpl_CopyFrom(t *testing.T) {
 
 	// Copy to new builder
 	builder2 := NewNFABuilder()
-	stateMapping, err := builder2.CopyFrom(nfa1)
+	stateMapping, err := builder2.CopyFrom(*nfa1)
 	if err != nil {
 		t.Fatalf("Failed to copy NFA: %v", err)
 	}
@@ -283,18 +283,18 @@ func TestNFABuilderImpl_CopyFrom(t *testing.T) {
 		t.Fatalf("Failed to build copied NFA: %v", err)
 	}
 
-	if nfa2.GetStateCount() != nfa1.GetStateCount() {
+	if nfa2.StateCount != nfa1.StateCount {
 		t.Errorf("Expected copied NFA to have %d states, got %d",
-			nfa1.GetStateCount(), nfa2.GetStateCount())
+			nfa1.StateCount, nfa2.StateCount)
 	}
 
-	if len(nfa2.GetAcceptingStates()) != len(nfa1.GetAcceptingStates()) {
+	if len(nfa2.AcceptingStates) != len(nfa1.AcceptingStates) {
 		t.Errorf("Expected copied NFA to have %d accepting states, got %d",
-			len(nfa1.GetAcceptingStates()), len(nfa2.GetAcceptingStates()))
+			len(nfa1.AcceptingStates), len(nfa2.AcceptingStates))
 	}
 
-	if len(nfa2.GetTransitionsBySource()) != len(nfa1.GetTransitionsBySource()) {
+	if len(nfa2.TransitionsBySource) != len(nfa1.TransitionsBySource) {
 		t.Errorf("Expected copied NFA to have %d transition sources, got %d",
-			len(nfa1.GetTransitionsBySource()), len(nfa2.GetTransitionsBySource()))
+			len(nfa1.TransitionsBySource), len(nfa2.TransitionsBySource))
 	}
 }

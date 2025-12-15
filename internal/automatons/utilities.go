@@ -15,3 +15,11 @@ func min(a, b rune) rune {
 	}
 	return b
 }
+
+func CopyMap[K comparable, V any](m map[K]V) map[K]V {
+	cp := make(map[K]V)
+	for k, v := range m {
+		cp[k] = v
+	}
+	return cp
+}

@@ -7,8 +7,8 @@ import (
 // Minimize minimizes a DFA using the table-filling algorithm
 // This removes unreachable states and merges equivalent states
 func Minimize(dfa NFA) NFA {
-	stateCount := dfa.GetStateCount()
-	acceptingStates := dfa.GetAcceptingStates()
+	stateCount := dfa.StateCount
+	acceptingStates := dfa.AcceptingStates
 
 	// Create a distinguishability table
 	table := make([][]bool, stateCount)
@@ -83,7 +83,7 @@ func Minimize(dfa NFA) NFA {
 	}
 
 	// Set start state
-	builder.SetStartState(oldToNew[dfa.GetStartState()])
+	builder.SetStartState(oldToNew[dfa.StartState])
 
 	// Mark accepting states
 	for oldState := range acceptingStates {
@@ -93,17 +93,17 @@ func Minimize(dfa NFA) NFA {
 	}
 
 	// Add transitions
-	transitionsBySource := dfa.GetTransitionsBySource()
+	transitionsBySource := dfa.TransitionsBySource
 	for newState, oldState := range newToOld {
 		if targets, exists := transitionsBySource[oldState]; exists {
-			for info := range targets.AllTransitions() {
-				if info.CharRange != nil {
-					charset := rangeToRuneSet(info.CharRange)
+			for info := range targets.All() {
+				if info.Range != nil {
+					charset := rangeToRuneSet(info.Range)
 					// Since this is a DFA, there should be only one target per character
 					if len(info.Targets) > 0 {
 						targetOldState := info.Targets[0]
 						if targetNewState, exists := oldToNew[targetOldState]; exists {
-							builder.AddTransition(newState, targetNewState, charset)
+							builder.AddTransitionForRuneSet(newState, targetNewState, charset)
 						}
 					}
 				}
@@ -115,13 +115,13 @@ func Minimize(dfa NFA) NFA {
 	if err != nil {
 		panic("Failed to build minimized DFA: " + err.Error())
 	}
-	return result
+	return *result
 }
 
 // shouldMarkDistinguishable checks if two states should be marked as distinguishable
 // based on their transitions
 func shouldMarkDistinguishable(dfa NFA, table [][]bool, state1, state2 int) bool {
-	transitionsBySource := dfa.GetTransitionsBySource()
+	transitionsBySource := dfa.TransitionsBySource
 
 	// Get all possible input characters from both states
 	inputs1 := getInputCharSets(transitionsBySource, state1)
@@ -170,23 +170,16 @@ func shouldMarkDistinguishable(dfa NFA, table [][]bool, state1, state2 int) bool
 
 // Helper functions for working with character sets and transitions
 
-func getInputCharSets(transitionsBySource map[int]TransitionTargets, state int) []*RuneSet {
+func getInputCharSets(transitionsBySource map[int]*NFATargets, state int) []*RuneSet {
 	var charSets []*RuneSet
 	if targets, exists := transitionsBySource[state]; exists {
-		for info := range targets.AllTransitions() {
-			if info.CharRange != nil {
-				charSets = append(charSets, rangeToRuneSet(info.CharRange))
+		for info := range targets.All() {
+			if info.Range != nil {
+				charSets = append(charSets, rangeToRuneSet(info.Range))
 			}
 		}
 	}
 	return charSets
-}
-
-func getTargets(transitionsBySource map[int]TransitionTargets, state int, charset *RuneSet) []int {
-	if targets, exists := transitionsBySource[state]; exists {
-		return targets.GetTargets(charset)
-	}
-	return nil
 }
 
 func unionCharSets(charSets ...*RuneSet) *RuneSet {

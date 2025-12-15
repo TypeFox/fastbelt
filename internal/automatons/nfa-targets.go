@@ -10,28 +10,13 @@ type RuneTargetsSection struct {
 	Targets []int
 }
 
-type NFATargets interface {
-	Contains(c rune) bool
-	ContainsEpsilon() bool
-	GetEpsilonTargets() []int
-	GetRuneTargets(c rune) []int
-	All() iter.Seq[RuneTargetsSection]
-}
-
-type NFAMutableTargets interface {
-	NFATargets
-	AddRuneTarget(r rune, targets ...int)
-	AddRuneRangeTarget(rng *RuneRange, targets ...int)
-	AddEpsilonTarget(targets ...int)
-}
-
-type NFAMutableTargets_ArrayImpl struct {
+type NFATargets struct {
 	Epsilon []int
 	Ranges  []RuneTargetsSection
 }
 
-func NewNFAMutableTargets() *NFAMutableTargets_ArrayImpl {
-	return &NFAMutableTargets_ArrayImpl{
+func NewNFATargets() *NFATargets {
+	return &NFATargets{
 		Epsilon: make([]int, 0),
 		Ranges: append(make([]RuneTargetsSection, 0), RuneTargetsSection{
 			Range:   NewRuneRange(MinRune, MaxRune, false),
@@ -40,7 +25,7 @@ func NewNFAMutableTargets() *NFAMutableTargets_ArrayImpl {
 	}
 }
 
-func (t *NFAMutableTargets_ArrayImpl) Contains(c rune) bool {
+func (t *NFATargets) Contains(c rune) bool {
 	startFromIndex := sort.Search(len(t.Ranges), func(i int) bool {
 		return t.Ranges[i].Range.Start >= c
 	}) - 1
@@ -50,15 +35,15 @@ func (t *NFAMutableTargets_ArrayImpl) Contains(c rune) bool {
 	return false
 }
 
-func (t *NFAMutableTargets_ArrayImpl) ContainsEpsilon() bool {
+func (t *NFATargets) ContainsEpsilon() bool {
 	return len(t.Epsilon) > 0
 }
 
-func (t *NFAMutableTargets_ArrayImpl) GetEpsilonTargets() []int {
+func (t *NFATargets) GetEpsilonTargets() []int {
 	return append([]int{}, t.Epsilon...)
 }
 
-func (t *NFAMutableTargets_ArrayImpl) GetRuneTargets(c rune) []int {
+func (t *NFATargets) GetRuneTargets(c rune) []int {
 	startFromIndex := sort.Search(len(t.Ranges), func(i int) bool {
 		return t.Ranges[i].Range.Start >= c
 	}) - 1
@@ -70,7 +55,7 @@ func (t *NFAMutableTargets_ArrayImpl) GetRuneTargets(c rune) []int {
 	return []int{}
 }
 
-func (t *NFAMutableTargets_ArrayImpl) All() iter.Seq[RuneTargetsSection] {
+func (t *NFATargets) All() iter.Seq[RuneTargetsSection] {
 	return func(yield func(RuneTargetsSection) bool) {
 		if t.ContainsEpsilon() {
 			if !yield(RuneTargetsSection{
@@ -88,11 +73,15 @@ func (t *NFAMutableTargets_ArrayImpl) All() iter.Seq[RuneTargetsSection] {
 	}
 }
 
-func (t *NFAMutableTargets_ArrayImpl) AddRuneTarget(r rune, targets ...int) {
-	t.AddRuneRangeTarget(r, r, targets...)
+func (t *NFATargets) AddEpsilonTargets(targets ...int) {
+	t.Epsilon = append(t.Epsilon, targets...)
 }
 
-func (t *NFAMutableTargets_ArrayImpl) AddRuneRangeTarget(start rune, end rune, targets ...int) {
+func (t *NFATargets) AddRuneTargets(r rune, targets ...int) {
+	t.AddRuneRangeTargets(r, r, targets...)
+}
+
+func (t *NFATargets) AddRuneRangeTargets(start rune, end rune, targets ...int) {
 	indexStart := sort.Search(len(t.Ranges), func(i int) bool {
 		return t.Ranges[i].Range.Start > start
 	}) - 1

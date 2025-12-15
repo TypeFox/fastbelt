@@ -10,9 +10,9 @@ type ReducerState struct {
 	Halted      bool
 }
 
-func (nfa NFAImpl) InitializeReducerState(input string) ReducerState {
-	start := nfa.GetStartState()
-	isAccepted := nfa.GetAcceptingStates()[start]
+func (nfa NFA) InitializeReducerState(input string) ReducerState {
+	start := nfa.StartState
+	isAccepted := nfa.AcceptingStates[start]
 	acceptedIdx := -1
 	if isAccepted {
 		acceptedIdx = 0
@@ -26,7 +26,7 @@ func (nfa NFAImpl) InitializeReducerState(input string) ReducerState {
 	}
 }
 
-func (nfa NFAImpl) Step(state ReducerState) (ReducerState, error) {
+func (nfa NFA) Step(state ReducerState) (ReducerState, error) {
 	if state.Halted {
 		return state, fmt.Errorf("cannot step from halted state")
 	}
@@ -41,8 +41,8 @@ func (nfa NFAImpl) Step(state ReducerState) (ReducerState, error) {
 		}, nil
 	}
 
-	runeSet := NewRuneSet_Rune(rune(state.Input[state.Index]))
-	transitions := nfa.GetTransitionsBySource()
+	rn := rune(state.Input[state.Index])
+	transitions := nfa.TransitionsBySource
 	bySource := transitions[state.State]
 	if bySource == nil {
 		return ReducerState{
@@ -53,7 +53,7 @@ func (nfa NFAImpl) Step(state ReducerState) (ReducerState, error) {
 			Halted:      true,
 		}, nil
 	}
-	nextStates := bySource.GetTargets(runeSet)
+	nextStates := bySource.GetRuneTargets(rn)
 	if len(nextStates) == 0 {
 		return ReducerState{
 			State:       state.State,
@@ -70,7 +70,7 @@ func (nfa NFAImpl) Step(state ReducerState) (ReducerState, error) {
 	nextState := nextStates[0]
 	nextIndex := state.Index + 1
 	acceptedIdx := state.AcceptedIdx
-	if nfa.GetAcceptingStates()[nextState] {
+	if nfa.AcceptingStates[nextState] {
 		acceptedIdx = nextIndex
 	}
 

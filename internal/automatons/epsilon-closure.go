@@ -1,7 +1,7 @@
 package automatons
 
-func GetEpsilonClosure(nfa NFA, states ...int) BitMask {
-	closure := NewBitMask_Empty(nfa.GetStateCount())
+func (nfa NFA) GetEpsilonClosure(states ...int) BitMask {
+	closure := NewBitMask_Empty(nfa.StateCount)
 	queue := make([]int, 0, len(states))
 	queue = append(queue, states...)
 	for len(queue) > 0 {
@@ -11,7 +11,7 @@ func GetEpsilonClosure(nfa NFA, states ...int) BitMask {
 			continue
 		}
 		closure.Set(source)
-		targets := nfa.GetTransitionsBySource()[source]
+		targets := nfa.TransitionsBySource[source]
 		if targets == nil {
 			continue
 		}
