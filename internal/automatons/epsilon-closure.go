@@ -15,7 +15,11 @@ func (nfa NFA) GetEpsilonClosure(states ...int) BitMask {
 		if targets == nil {
 			continue
 		}
-		for _, target := range targets.GetEpsilonTargets() {
+		epsilonTargets := targets.GetEpsilonValues()
+		if epsilonTargets == nil {
+			continue
+		}
+		for _, target := range *epsilonTargets {
 			if !closure.IsSet(target) {
 				queue = append(queue, target)
 			}

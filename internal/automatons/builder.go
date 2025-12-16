@@ -23,7 +23,7 @@ type StateMapping struct {
 type NFABuilderImpl struct {
 	stateCounter    int
 	startState      int
-	transitions     map[int]*NFATargets
+	transitions     map[int]*RuneRangeTargetsMapping
 	acceptingStates map[int]bool
 }
 
@@ -32,7 +32,7 @@ func NewNFABuilder() *NFABuilderImpl {
 	return &NFABuilderImpl{
 		stateCounter:    0,
 		startState:      -1,
-		transitions:     make(map[int]*NFATargets),
+		transitions:     make(map[int]*RuneRangeTargetsMapping),
 		acceptingStates: make(map[int]bool),
 	}
 }
@@ -53,17 +53,17 @@ func (builder *NFABuilderImpl) AddTransitionForRuneSet(source int, target int, c
 	}
 
 	if builder.transitions[source] == nil {
-		builder.transitions[source] = NewNFATargets()
+		builder.transitions[source] = NewRuneRangeTargets()
 	}
 
 	targets := builder.transitions[source]
 	if characters == nil {
-		targets.AddEpsilonTargets(target)
+		targets.AddEpsilonValues(Targets{target})
 		return nil
 	}
 	for _, rng := range characters.Ranges {
 		if rng.Includes {
-			targets.AddRuneRangeTargets(rng.Start, rng.End, target)
+			targets.AddRuneRangeValues(rng.Start, rng.End, Targets{target})
 		}
 	}
 	return nil
@@ -78,15 +78,15 @@ func (builder *NFABuilderImpl) AddTransitionForRuneRange(source int, target int,
 	}
 
 	if builder.transitions[source] == nil {
-		builder.transitions[source] = NewNFATargets()
+		builder.transitions[source] = NewRuneRangeTargets()
 	}
 
 	targets := builder.transitions[source]
 	if rng == nil {
-		targets.AddEpsilonTargets(target)
+		targets.AddEpsilonValues(Targets{target})
 		return nil
 	}
-	targets.AddRuneRangeTargets(rng.Start, rng.End, target)
+	targets.AddRuneRangeValues(rng.Start, rng.End, Targets{target})
 	return nil
 }
 
@@ -99,11 +99,11 @@ func (builder *NFABuilderImpl) AddTransitionForSingleRune(source int, target int
 	}
 
 	if builder.transitions[source] == nil {
-		builder.transitions[source] = NewNFATargets()
+		builder.transitions[source] = NewRuneRangeTargets()
 	}
 
 	targets := builder.transitions[source]
-	targets.AddRuneRangeTargets(rn, rn, target)
+	targets.AddRuneRangeValues(rn, rn, Targets{target})
 	return nil
 }
 
@@ -158,7 +158,7 @@ func (builder *NFABuilderImpl) CopyFrom(nfa NFA) (*StateMapping, error) {
 	for source, targets := range nfa.TransitionsBySource {
 		sourceState := stateMapping[source]
 		for section := range targets.All() {
-			for _, target := range section.Targets {
+			for _, target := range section.Values {
 				targetState := stateMapping[target]
 				err := builder.AddTransitionForRuneRange(sourceState, targetState, section.Range)
 				if err != nil {

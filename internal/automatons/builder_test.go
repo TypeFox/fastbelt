@@ -94,7 +94,7 @@ func TestNFABuilderImpl_AddTransitions(t *testing.T) {
 	found := false
 	for info := range targets.All() {
 		if info.Range != nil && info.Range.Contains('a') {
-			for _, target := range info.Targets {
+			for _, target := range info.Values {
 				if target == s1 {
 					found = true
 					break

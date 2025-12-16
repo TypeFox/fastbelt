@@ -23,14 +23,6 @@ func FormatRune(r rune) string {
 	return runeStr
 }
 
-// Helper function for max of integers
-func maxInt(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 type RuneSet struct {
 	Ranges []RuneRange
 }

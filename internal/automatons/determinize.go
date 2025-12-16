@@ -46,16 +46,16 @@ func (nfa NFA) Determinize() NFA {
 			}
 		}
 
-		nfaTargets := NewNFATargets()
+		nfaTargets := NewRuneRangeTargets()
 		for _, sourceState := range sourceStates {
 			xxx := nfa.TransitionsBySource[sourceState]
 			if xxx != nil {
-				xxx.MergeNonEpsilonInto(nfaTargets)
+				xxx.MergeNonEpsilonInto(&nfaTargets.RuneRangeMappingBase)
 			}
 		}
 		for _, section := range nfaTargets.Ranges {
 			if section.Range.Includes {
-				targetDFAState := nfa.GetEpsilonClosure(section.Targets...).String()
+				targetDFAState := nfa.GetEpsilonClosure(section.Values...).String()
 				transitions = append(transitions, transitionInfo{
 					Source: sourceDFAState,
 					Target: targetDFAState,

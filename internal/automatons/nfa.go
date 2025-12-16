@@ -8,7 +8,7 @@ type NFA struct {
 	StartState          int
 	StateCount          int
 	AcceptingStates     map[int]bool
-	TransitionsBySource map[int]*NFATargets
+	TransitionsBySource map[int]*RuneRangeTargetsMapping
 }
 
 func (nfa NFA) String() string {
@@ -27,7 +27,7 @@ func (nfa NFA) String() string {
 			} else {
 				charset = NewRuneSet_Empty()
 			}
-			for _, target := range info.Targets {
+			for _, target := range info.Values {
 				result += fmt.Sprintf("  %d --%v--> %d\n", source, charset, target)
 			}
 		}

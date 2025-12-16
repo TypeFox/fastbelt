@@ -10,18 +10,18 @@ func Minimize(dfa NFA) NFA {
 	stateCount := dfa.StateCount
 	acceptingStates := dfa.AcceptingStates
 
-	// Create a distinguishability table
-	table := make([][]bool, stateCount)
-	for i := range table {
-		table[i] = make([]bool, stateCount)
+	// Create a distinguishability different
+	different := make([][]bool, stateCount)
+	for i := range different {
+		different[i] = make([]bool, stateCount)
 	}
 
 	// Mark pairs where one state is accepting and the other is not
 	for i := 0; i < stateCount; i++ {
 		for j := i + 1; j < stateCount; j++ {
 			if (acceptingStates[i] && !acceptingStates[j]) || (!acceptingStates[i] && acceptingStates[j]) {
-				table[i][j] = true
-				table[j][i] = true
+				different[i][j] = true
+				different[j][i] = true
 			}
 		}
 	}
@@ -32,11 +32,11 @@ func Minimize(dfa NFA) NFA {
 		changed = false
 		for i := 0; i < stateCount; i++ {
 			for j := i + 1; j < stateCount; j++ {
-				if !table[i][j] {
+				if !different[i][j] {
 					// Check if these states should be marked as distinguishable
-					if shouldMarkDistinguishable(dfa, table, i, j) {
-						table[i][j] = true
-						table[j][i] = true
+					if shouldMarkDistinguishable(dfa, different, i, j) {
+						different[i][j] = true
+						different[j][i] = true
 						changed = true
 					}
 				}
@@ -57,7 +57,7 @@ func Minimize(dfa NFA) NFA {
 		processed[i] = true
 
 		for j := i + 1; j < stateCount; j++ {
-			if !processed[j] && !table[i][j] {
+			if !processed[j] && !different[i][j] {
 				group = append(group, j)
 				processed[j] = true
 			}
@@ -118,10 +118,11 @@ func Minimize(dfa NFA) NFA {
 	return *result
 }
 
-// shouldMarkDistinguishable checks if two states should be marked as distinguishable
-// based on their transitions
-func shouldMarkDistinguishable(dfa NFA, table [][]bool, state1, state2 int) bool {
+func shouldMarkDistinguishable(dfa NFA, different [][]bool, state1, state2 int) bool {
 	transitionsBySource := dfa.TransitionsBySource
+
+	targets1 := dfa.TransitionsBySource[state1]
+	targets2 := dfa.TransitionsBySource[state2]
 
 	// Get all possible input characters from both states
 	inputs1 := getInputCharSets(transitionsBySource, state1)
@@ -167,8 +168,6 @@ func shouldMarkDistinguishable(dfa NFA, table [][]bool, state1, state2 int) bool
 
 	return false
 }
-
-// Helper functions for working with character sets and transitions
 
 func getInputCharSets(transitionsBySource map[int]*NFATargets, state int) []*RuneSet {
 	var charSets []*RuneSet

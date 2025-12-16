@@ -211,7 +211,7 @@ func TestMaxMin(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		result := max(tc.a, tc.b)
+		result := maxRune(tc.a, tc.b)
 		if result != tc.expected {
 			t.Errorf("max(%c, %c): expected %c, got %c", tc.a, tc.b, tc.expected, result)
 		}
@@ -228,7 +228,7 @@ func TestMaxMin(t *testing.T) {
 	}
 
 	for _, tc := range minTestCases {
-		result := min(tc.a, tc.b)
+		result := minRune(tc.a, tc.b)
 		if result != tc.expected {
 			t.Errorf("min(%c, %c): expected %c, got %c", tc.a, tc.b, tc.expected, result)
 		}

@@ -53,8 +53,8 @@ func (nfa NFA) Step(state ReducerState) (ReducerState, error) {
 			Halted:      true,
 		}, nil
 	}
-	nextStates := bySource.GetRuneTargets(rn)
-	if len(nextStates) == 0 {
+	nextStates := bySource.GetRuneValues(rn)
+	if len(*nextStates) == 0 {
 		return ReducerState{
 			State:       state.State,
 			Index:       state.Index,
@@ -63,11 +63,11 @@ func (nfa NFA) Step(state ReducerState) (ReducerState, error) {
 			Halted:      true,
 		}, nil
 	}
-	if len(nextStates) > 1 {
+	if len(*nextStates) > 1 {
 		return state, fmt.Errorf("automaton is non-deterministic: multiple next states for state %d on input '%c'", state.State, state.Input[state.Index])
 	}
 	// For DFA, there should be exactly one next state
-	nextState := nextStates[0]
+	nextState := (*nextStates)[0]
 	nextIndex := state.Index + 1
 	acceptedIdx := state.AcceptedIdx
 	if nfa.AcceptingStates[nextState] {
