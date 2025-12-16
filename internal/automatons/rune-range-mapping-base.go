@@ -1,6 +1,7 @@
 package automatons
 
 import (
+	"fmt"
 	"iter"
 	"sort"
 )
@@ -9,6 +10,7 @@ type Value[T any] interface {
 	Join(other T) T
 	Clone() T
 	Empty() bool
+	String() string
 }
 
 type RuneRangeMapping[T Value[T]] interface {
@@ -34,6 +36,13 @@ type RuneRangeMappingSection[T Value[T]] struct {
 type RuneRangeMappingBase[T Value[T]] struct {
 	Epsilon T
 	Ranges  []RuneRangeMappingSection[T]
+}
+
+func MappingBaseSection_String[T Value[T]](s RuneRangeMappingSection[T]) string {
+	if s.Range == nil {
+		return "ε -> " + fmt.Sprintf("%v", s.Values)
+	}
+	return fmt.Sprintf("%v -> %v", s.Range, s.Values)
 }
 
 func MappingBase_Contains[T Value[T]](t *RuneRangeMappingBase[T], c rune) bool {

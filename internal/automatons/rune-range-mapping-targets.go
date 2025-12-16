@@ -1,6 +1,9 @@
 package automatons
 
-import "iter"
+import (
+	"fmt"
+	"iter"
+)
 
 type Targets []int
 
@@ -23,6 +26,10 @@ func (t Targets) Clone() Targets {
 
 func (t Targets) Empty() bool {
 	return len(t) == 0
+}
+
+func (t Targets) String() string {
+	return fmt.Sprintf("%v", []int(t))
 }
 
 type RuneRangeTargetsMapping struct {
