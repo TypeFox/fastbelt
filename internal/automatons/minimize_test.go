@@ -128,7 +128,7 @@ func createDFAWithEquivalentStates() NFA {
 
 func TestMinimize_SimpleCase(t *testing.T) {
 	dfa := createMinimizableDFA()
-	minimized := Minimize(dfa)
+	minimized := dfa.Minimize()
 
 	// Check that the minimized DFA has fewer states
 	if minimized.StateCount >= dfa.StateCount {
@@ -154,7 +154,7 @@ func TestMinimize_AlreadyMinimal(t *testing.T) {
 	dfa := createMinimalDFA()
 	originalStateCount := dfa.StateCount
 
-	minimized := Minimize(dfa)
+	minimized := dfa.Minimize()
 	minimizedStateCount := minimized.StateCount
 
 	// Should not reduce the number of states significantly for an already minimal DFA
@@ -175,7 +175,7 @@ func TestMinimize_AlreadyMinimal(t *testing.T) {
 
 func TestMinimize_TwoStates(t *testing.T) {
 	dfa := createTwoStateDFA()
-	minimized := Minimize(dfa)
+	minimized := dfa.Minimize()
 
 	// A two-state DFA with different behavior should remain two states
 	expectedStates := 2
@@ -198,7 +198,7 @@ func TestMinimize_TwoStates(t *testing.T) {
 
 func TestMinimize_MultipleEquivalentStates(t *testing.T) {
 	dfa := createDFAWithEquivalentStates()
-	minimized := Minimize(dfa)
+	minimized := dfa.Minimize()
 
 	// Should significantly reduce the number of states
 	originalCount := dfa.StateCount
@@ -224,7 +224,7 @@ func TestMinimize_MultipleEquivalentStates(t *testing.T) {
 
 func TestMinimize_PreservesLanguage(t *testing.T) {
 	dfa := createMinimizableDFA()
-	minimized := Minimize(dfa)
+	minimized := dfa.Minimize()
 
 	// Test some basic properties that should be preserved
 	if minimized.StartState < 0 {

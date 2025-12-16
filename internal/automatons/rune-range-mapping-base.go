@@ -47,7 +47,7 @@ func MappingBaseSection_String[T Value[T]](s RuneRangeMappingSection[T]) string 
 
 func MappingBase_Contains[T Value[T]](t *RuneRangeMappingBase[T], c rune) bool {
 	startFromIndex := sort.Search(len(t.Ranges), func(i int) bool {
-		return t.Ranges[i].Range.Start >= c
+		return t.Ranges[i].Range.Start > c
 	}) - 1
 	if startFromIndex > -1 {
 		return t.Ranges[startFromIndex].Range.Contains(c) && t.Ranges[startFromIndex].Range.Includes
@@ -68,7 +68,7 @@ func MappingBase_GetEpsilonValues[T Value[T]](t *RuneRangeMappingBase[T]) *T {
 
 func MappingBase_GetRuneValues[T Value[T]](t *RuneRangeMappingBase[T], c rune) *T {
 	startFromIndex := sort.Search(len(t.Ranges), func(i int) bool {
-		return t.Ranges[i].Range.Start >= c
+		return t.Ranges[i].Range.Start > c
 	}) - 1
 	if startFromIndex > -1 {
 		if t.Ranges[startFromIndex].Range.Contains(c) && t.Ranges[startFromIndex].Range.Includes {

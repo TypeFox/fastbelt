@@ -2,18 +2,18 @@ package automatons
 
 // Minimize minimizes a DFA using the table-filling algorithm
 // This removes unreachable states and merges equivalent states
-func Minimize(dfa NFA) NFA {
+func (dfa *NFA) Minimize() *NFA {
 	stateCount := dfa.StateCount
 	acceptingStates := dfa.AcceptingStates
 	areDifferent := initializeDistinguishabilityTable(stateCount)
 	prefillByAccept(stateCount, acceptingStates, areDifferent)
-	for fillIterate(stateCount, areDifferent, dfa) {
+	for fillIterate(stateCount, areDifferent, *dfa) {
 	}
 	groups := getEquivalentGroups(stateCount, areDifferent)
-	return buildNewAutomaton(groups, dfa, acceptingStates)
+	return buildNewAutomaton(groups, *dfa, acceptingStates)
 }
 
-func buildNewAutomaton(groups [][]int, dfa NFA, acceptingStates map[int]bool) NFA {
+func buildNewAutomaton(groups [][]int, dfa NFA, acceptingStates map[int]bool) *NFA {
 	oldToNew := make(map[int]int)
 	newToOld := make(map[int]int)
 
@@ -63,7 +63,7 @@ func buildNewAutomaton(groups [][]int, dfa NFA, acceptingStates map[int]bool) NF
 	if err != nil {
 		panic("Failed to build minimized DFA: " + err.Error())
 	}
-	return *result
+	return result
 }
 
 func getEquivalentGroups(stateCount int, areDifferent [][]bool) [][]int {
@@ -126,8 +126,16 @@ func initializeDistinguishabilityTable(stateCount int) [][]bool {
 
 func shouldMarkDistinguishable(dfa NFA, areDifferent [][]bool, state1, state2 int) bool {
 	targets := NewRuneRangeTargets()
-	dfa.TransitionsBySource[state1].MergeNonEpsilonInto(&targets.RuneRangeMappingBase)
-	dfa.TransitionsBySource[state2].MergeNonEpsilonInto(&targets.RuneRangeMappingBase)
+	targets1 := dfa.TransitionsBySource[state1]
+	targets2 := dfa.TransitionsBySource[state2]
+	if targets1 == nil && targets2 == nil {
+		return false
+	}
+	if targets1 == nil || targets2 == nil {
+		return true
+	}
+	targets1.MergeNonEpsilonInto(&targets.RuneRangeMappingBase)
+	targets2.MergeNonEpsilonInto(&targets.RuneRangeMappingBase)
 
 	for _, section := range targets.Ranges {
 		if !section.Range.Includes {

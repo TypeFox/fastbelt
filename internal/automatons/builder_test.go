@@ -261,7 +261,7 @@ func TestNFABuilderImpl_CopyFrom(t *testing.T) {
 
 	// Copy to new builder
 	builder2 := NewNFABuilder()
-	stateMapping, err := builder2.CopyFrom(*nfa1)
+	stateMapping, err := builder2.CopyFrom(nfa1)
 	if err != nil {
 		t.Fatalf("Failed to copy NFA: %v", err)
 	}

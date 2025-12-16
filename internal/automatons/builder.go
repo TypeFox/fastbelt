@@ -145,7 +145,7 @@ func (builder *NFABuilderImpl) Build() (*NFA, error) {
 }
 
 // CopyFrom copies states and transitions from another NFA into this builder
-func (builder *NFABuilderImpl) CopyFrom(nfa NFA) (*StateMapping, error) {
+func (builder *NFABuilderImpl) CopyFrom(nfa *NFA) (*StateMapping, error) {
 	stateMapping := make(map[int]int)
 
 	// Create new states for each state in the source NFA
