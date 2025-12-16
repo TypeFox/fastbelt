@@ -54,7 +54,7 @@ func (nfa NFA) Step(state ReducerState) (ReducerState, error) {
 		}, nil
 	}
 	nextStates := bySource.GetRuneValues(rn)
-	if len(*nextStates) == 0 {
+	if nextStates == nil || len(*nextStates) == 0 {
 		return ReducerState{
 			State:       state.State,
 			Index:       state.Index,

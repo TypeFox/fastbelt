@@ -18,7 +18,7 @@ type transitionInfo struct {
 }
 
 // Determinize converts an NFA to a DFA using the subset construction algorithm
-func (nfa NFA) Determinize() NFA {
+func (nfa *NFA) Determinize() *NFA {
 	builder := NewNFABuilder()
 	dfaStateMapping := make(map[string]int) // Using BitMask.String() as key
 
@@ -79,5 +79,5 @@ func (nfa NFA) Determinize() NFA {
 		panic("Failed to build DFA: " + err.Error())
 	}
 
-	return *result
+	return result
 }

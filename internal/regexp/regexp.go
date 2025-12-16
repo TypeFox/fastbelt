@@ -15,11 +15,11 @@ type Regexp interface {
 
 type RegexpImpl struct {
 	pattern string
-	dfa     automatons.NFA
+	dfa     *automatons.NFA
 }
 
 func (re RegexpImpl) String() string {
-	return re.dfa.(*automatons.NFAImpl).String()
+	return re.dfa.String()
 }
 
 func Compile(pattern string) (Regexp, error) {
@@ -28,8 +28,8 @@ func Compile(pattern string) (Regexp, error) {
 		return nil, error
 	}
 	nfa, err := newNFAFromSyntax(op)
-	nfa = automatons.Determinize(nfa)
-	nfa = automatons.Minimize(nfa)
+	nfa = nfa.Determinize()
+	nfa = nfa.Minimize()
 	if err != nil {
 		return nil, err
 	}
@@ -48,11 +48,10 @@ func MustCompile(pattern string) Regexp {
 }
 
 func (r *RegexpImpl) FindStringIndex(s string) (loc []int) {
-	dfa := r.dfa.(*automatons.NFAImpl)
-	state := dfa.InitializeReducerState(s)
+	state := r.dfa.InitializeReducerState(s)
 
 	for !state.Halted {
-		nextState, err := dfa.Step(state)
+		nextState, err := r.dfa.Step(state)
 		if err != nil {
 			return nil
 		}
@@ -67,13 +66,13 @@ func (r *RegexpImpl) FindStringIndex(s string) (loc []int) {
 
 func (r *RegexpImpl) GetStartChars() *automatons.RuneSet {
 	startCharsSet := automatons.NewRuneSet_Empty()
-	transitions := r.dfa.GetTransitionsBySource()
-	startState := r.dfa.GetStartState()
-	for transition := range transitions[startState].AllTransitions() {
-		if !transition.CharRange.Includes {
+	transitions := r.dfa.TransitionsBySource
+	startState := r.dfa.StartState
+	for transition := range transitions[startState].All() {
+		if !transition.Range.Includes {
 			continue
 		}
-		startCharsSet.AddRange(transition.CharRange.Start, transition.CharRange.End)
+		startCharsSet.AddRange(transition.Range.Start, transition.Range.End)
 	}
 	return startCharsSet
 }
@@ -85,14 +84,14 @@ func (r *RegexpImpl) GenerateLambda() generator.Node {
 		n.AppendLine("input := s[offset:]")
 		n.AppendLine("length := len(input)")
 		n.Append("accepted := map[int]bool{")
-		acceptingStates := r.dfa.GetAcceptingStates()
+		acceptingStates := r.dfa.AcceptingStates
 		for state, isAccepting := range acceptingStates {
 			if isAccepting {
 				n.Append(fmt.Sprintf("%d: true, ", state))
 			}
 		}
 		n.AppendLine("}")
-		n.AppendLine(fmt.Sprintf("state := %d", r.dfa.GetStartState()))
+		n.AppendLine(fmt.Sprintf("state := %d", r.dfa.StartState))
 		n.AppendLine("acceptedIndex := -1")
 		n.AppendLine("if accepted[state] {")
 		n.Indent(func(n generator.Node) {
@@ -104,7 +103,7 @@ func (r *RegexpImpl) GenerateLambda() generator.Node {
 		n.Indent(func(n generator.Node) {
 			n.AppendLine("r := rune(input[index])")
 			n.AppendLine("switch state {")
-			transitions := r.dfa.GetTransitionsBySource()
+			transitions := r.dfa.TransitionsBySource
 
 			sources := make([]int, 0, len(transitions))
 			for k := range transitions {
@@ -117,13 +116,13 @@ func (r *RegexpImpl) GenerateLambda() generator.Node {
 				n.AppendLine(fmt.Sprintf("case %d:", source))
 				n.Indent(func(n generator.Node) {
 					targets := make(map[int]automatons.RuneSet)
-					for transition := range bySource.AllTransitions() {
-						target := transition.Targets[0]
+					for transition := range bySource.All() {
+						target := transition.Values[0]
 						runeSet, exists := targets[target]
 						if !exists {
 							runeSet = *automatons.NewRuneSet_Empty()
 						}
-						runeSet.AddRange(transition.CharRange.Start, transition.CharRange.End)
+						runeSet.AddRange(transition.Range.Start, transition.Range.End)
 						targets[target] = runeSet
 					}
 					for target, runeSet := range targets {
@@ -175,11 +174,11 @@ func (r *RegexpImpl) GenerateLambda() generator.Node {
 	return root
 }
 
-func newNFAFromSyntax(op *syntax.Regexp) (automatons.NFA, error) {
+func newNFAFromSyntax(op *syntax.Regexp) (*automatons.NFA, error) {
 	kit := automatons.NewConstructionKit()
 	switch op.Op {
 	case syntax.OpLiteral:
-		chain := make([]automatons.NFA, len(op.Rune))
+		chain := make([]*automatons.NFA, len(op.Rune))
 		for i, r := range op.Rune {
 			nfa, error := kit.Consume(automatons.NewRuneSet_Rune(r))
 			if error != nil {
@@ -200,7 +199,7 @@ func newNFAFromSyntax(op *syntax.Regexp) (automatons.NFA, error) {
 		runeSet := automatons.NewRuneSet_Full()
 		return kit.Consume(runeSet)
 	case syntax.OpConcat:
-		chain := make([]automatons.NFA, len(op.Sub))
+		chain := make([]*automatons.NFA, len(op.Sub))
 		for i, sub := range op.Sub {
 			nfa, error := newNFAFromSyntax(sub)
 			if error != nil {
@@ -210,7 +209,7 @@ func newNFAFromSyntax(op *syntax.Regexp) (automatons.NFA, error) {
 		}
 		return kit.Concat(chain...)
 	case syntax.OpAlternate:
-		alternatives := make([]automatons.NFA, len(op.Sub))
+		alternatives := make([]*automatons.NFA, len(op.Sub))
 		for i, sub := range op.Sub {
 			nfa, error := newNFAFromSyntax(sub)
 			if error != nil {
