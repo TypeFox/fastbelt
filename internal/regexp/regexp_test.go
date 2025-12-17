@@ -67,8 +67,8 @@ func TestWhitespace(t *testing.T) {
 
 func TestRegexpLiteral(t *testing.T) {
 	regexp := MustCompile("/([^\\r\\n\\[\\/\\\\]|\\\\.|\\[([^\\r\\n\\]\\\\]|\\\\.)*\\])+/")
-	loc := regexp.FindStringIndex("/github.com/adambard/learnxinyminutes-docs)/")
-	if loc == nil || loc[0] != 0 || loc[1] != 5 {
+	loc := regexp.FindStringIndex("/github.com/")
+	if loc == nil || loc[0] != 0 || loc[1] != 12 {
 		panic("TestRegexpLiteral failed")
 	}
 }
