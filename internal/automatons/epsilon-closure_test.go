@@ -6,7 +6,7 @@ import (
 )
 
 // Test helper to create a simple NFA for testing epsilon closures
-func createTestNFA() NFA {
+func createTestNFA() *NFA {
 	builder := NewNFABuilder()
 
 	// Create states
@@ -32,12 +32,7 @@ func createTestNFA() NFA {
 	builder.SetStartState(s0)
 	builder.AcceptState(s4)
 
-	nfa, err := builder.Build()
-	if err != nil {
-		panic("Failed to build test NFA: " + err.Error())
-	}
-
-	return *nfa
+	return builder.Build()
 }
 
 func TestGetEpsilonClosure_SingleState(t *testing.T) {
@@ -116,10 +111,7 @@ func TestGetEpsilonClosure_LinearChain(t *testing.T) {
 	builder.SetStartState(s0)
 	builder.AcceptState(s3)
 
-	nfa, err := builder.Build()
-	if err != nil {
-		t.Fatalf("Failed to build linear chain NFA: %v", err)
-	}
+	nfa := builder.Build()
 
 	// Test closure of state 0
 	closure := nfa.GetEpsilonClosure(s0)
@@ -153,10 +145,7 @@ func TestGetEpsilonClosure_CyclicGraph(t *testing.T) {
 	builder.SetStartState(s0)
 	builder.AcceptState(s2)
 
-	nfa, err := builder.Build()
-	if err != nil {
-		t.Fatalf("Failed to build cyclic NFA: %v", err)
-	}
+	nfa := builder.Build()
 
 	// Test closure should include all states in the cycle
 	closure := nfa.GetEpsilonClosure(s0)
@@ -182,10 +171,7 @@ func TestGetEpsilonClosure_IsolatedStates(t *testing.T) {
 	builder.SetStartState(s0)
 	builder.AcceptState(s2)
 
-	nfa, err := builder.Build()
-	if err != nil {
-		t.Fatalf("Failed to build isolated states NFA: %v", err)
-	}
+	nfa := builder.Build()
 
 	// Each state should only contain itself in epsilon closure
 	for _, state := range []int{s0, s1, s2} {

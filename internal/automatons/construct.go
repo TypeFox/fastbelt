@@ -8,7 +8,7 @@ func NewConstructionKit() *ConstructionKit {
 	return &ConstructionKit{}
 }
 
-func (ck *ConstructionKit) Empty() (*NFA, error) {
+func (ck *ConstructionKit) Empty() *NFA {
 	builder := NewNFABuilder()
 	start := builder.AddState()
 	builder.SetStartState(start)
@@ -16,7 +16,7 @@ func (ck *ConstructionKit) Empty() (*NFA, error) {
 	return builder.Build()
 }
 
-func (ck *ConstructionKit) Reject() (*NFA, error) {
+func (ck *ConstructionKit) Reject() *NFA {
 	builder := NewNFABuilder()
 	start := builder.AddState()
 	builder.SetStartState(start)
@@ -24,125 +24,83 @@ func (ck *ConstructionKit) Reject() (*NFA, error) {
 	return builder.Build()
 }
 
-func (ck *ConstructionKit) Consume(characters *RuneSet) (*NFA, error) {
+func (ck *ConstructionKit) Consume(characters *RuneSet) *NFA {
 	builder := NewNFABuilder()
 	start := builder.AddState()
 	end := builder.AddState()
 
-	if err := builder.SetStartState(start); err != nil {
-		return nil, fmt.Errorf("failed to set start state: %v", err)
-	}
-
-	if err := builder.AcceptState(end); err != nil {
-		return nil, fmt.Errorf("failed to set accepting state: %v", err)
-	}
-
-	if err := builder.AddTransitionForRuneSet(start, end, characters); err != nil {
-		return nil, fmt.Errorf("failed to add transition: %v", err)
-	}
+	builder.SetStartState(start)
+	builder.AcceptState(end)
+	builder.AddTransitionForRuneSet(start, end, characters)
 
 	return builder.Build()
 }
 
-func (ck *ConstructionKit) Alternate(automata ...*NFA) (*NFA, error) {
+func (ck *ConstructionKit) Alternate(automata ...*NFA) *NFA {
 	if len(automata) == 0 {
-		return nil, fmt.Errorf("no automata provided for alternation")
+		panic(fmt.Sprintf("no automata provided for alternation"))
 	}
 
 	builder := NewNFABuilder()
 	start := builder.AddState()
 	end := builder.AddState()
 
-	if err := builder.SetStartState(start); err != nil {
-		return nil, fmt.Errorf("failed to set start state: %v", err)
-	}
-
-	if err := builder.AcceptState(end); err != nil {
-		return nil, fmt.Errorf("failed to set accepting state: %v", err)
-	}
+	builder.SetStartState(start)
+	builder.AcceptState(end)
 
 	for _, automaton := range automata {
-		stateMapping, err := builder.CopyFrom(automaton)
-		if err != nil {
-			return nil, fmt.Errorf("failed to copy automaton: %v", err)
-		}
+		stateMapping := builder.CopyFrom(automaton)
 
-		if err := builder.AddTransitionForRuneSet(start, stateMapping.Start, nil); err != nil {
-			return nil, fmt.Errorf("failed to add start transition: %v", err)
-		}
-
+		builder.AddTransitionForRuneSet(start, stateMapping.Start, nil)
 		for _, accepting := range stateMapping.Acceptings {
-			if err := builder.AddTransitionForRuneSet(accepting, end, nil); err != nil {
-				return nil, fmt.Errorf("failed to add accepting transition: %v", err)
-			}
+			builder.AddTransitionForRuneSet(accepting, end, nil)
 		}
 	}
 
 	return ck.finalize(builder)
 }
 
-func (*ConstructionKit) finalize(builder *NFABuilderImpl) (*NFA, error) {
-	nfa, err := builder.Build()
-	if err != nil {
-		return nil, fmt.Errorf("failed to build alternation NFA: %v", err)
-	}
-
-	// Minimize and determinize the result
+func (*ConstructionKit) finalize(builder *NFABuilderImpl) *NFA {
+	nfa := builder.Build()
 	dfa := nfa.Determinize()
-	return dfa.Minimize(), nil
+	return dfa.Minimize()
 }
 
 // Concat creates an NFA that matches the concatenation of the given automata
-func (ck *ConstructionKit) Concat(automata ...*NFA) (*NFA, error) {
+func (ck *ConstructionKit) Concat(automata ...*NFA) *NFA {
 	if len(automata) == 0 {
-		return nil, fmt.Errorf("no automata provided for concatenation")
+		panic(fmt.Sprintf("no automata provided for concatenation"))
 	}
 
 	builder := NewNFABuilder()
 	start := builder.AddState()
-
-	if err := builder.SetStartState(start); err != nil {
-		return nil, fmt.Errorf("failed to set start state: %v", err)
-	}
+	builder.SetStartState(start)
 
 	currentStart := start
 
 	for _, automaton := range automata {
 		end := builder.AddState()
 
-		stateMapping, err := builder.CopyFrom(automaton)
-		if err != nil {
-			return nil, fmt.Errorf("failed to copy automaton: %v", err)
-		}
+		stateMapping := builder.CopyFrom(automaton)
 
-		// Add epsilon transition from current start to copied start
-		if err := builder.AddTransitionForRuneSet(currentStart, stateMapping.Start, nil); err != nil {
-			return nil, fmt.Errorf("failed to add start transition: %v", err)
-		}
-
-		// Add epsilon transitions from all accepting states to end
+		builder.AddTransitionForRuneSet(currentStart, stateMapping.Start, nil)
 		for _, accepting := range stateMapping.Acceptings {
-			if err := builder.AddTransitionForRuneSet(accepting, end, nil); err != nil {
-				return nil, fmt.Errorf("failed to add accepting transition: %v", err)
-			}
+			builder.AddTransitionForRuneSet(accepting, end, nil)
 		}
 
 		currentStart = end
 	}
 
-	// Mark the final state as accepting
-	if err := builder.AcceptState(currentStart); err != nil {
-		return nil, fmt.Errorf("failed to set final accepting state: %v", err)
-	}
+	builder.AcceptState(currentStart)
 
 	return ck.finalize(builder)
 }
 
 // Repeat creates an NFA that matches the given automaton repeated min to max times
 // If max is -1, there is no upper limit
-func (ck *ConstructionKit) Repeat(automaton *NFA, min, max int) (*NFA, error) {
+func (ck *ConstructionKit) Repeat(automaton *NFA, min, max int) *NFA {
 	if min < 0 || (max >= 0 && min > max) {
-		return nil, fmt.Errorf("invalid range: min=%d, max=%d", min, max)
+		panic(fmt.Sprintf("invalid range: min=%d, max=%d", min, max))
 	}
 
 	builder := NewNFABuilder()
@@ -150,13 +108,8 @@ func (ck *ConstructionKit) Repeat(automaton *NFA, min, max int) (*NFA, error) {
 	accept := builder.AddState()
 	previousStart := -1
 
-	if err := builder.SetStartState(start); err != nil {
-		return nil, fmt.Errorf("failed to set start state: %v", err)
-	}
-
-	if err := builder.AcceptState(accept); err != nil {
-		return nil, fmt.Errorf("failed to set accepting state: %v", err)
-	}
+	builder.SetStartState(start)
+	builder.AcceptState(accept)
 
 	var count *int
 	if max != -1 {
@@ -168,19 +121,11 @@ func (ck *ConstructionKit) Repeat(automaton *NFA, min, max int) (*NFA, error) {
 	for min > 0 {
 		end := builder.AddState()
 
-		stateMapping, err := builder.CopyFrom(automaton)
-		if err != nil {
-			return nil, fmt.Errorf("failed to copy automaton: %v", err)
-		}
+		stateMapping := builder.CopyFrom(automaton)
 
-		if err := builder.AddTransitionForRuneSet(start, stateMapping.Start, nil); err != nil {
-			return nil, fmt.Errorf("failed to add start transition: %v", err)
-		}
-
+		builder.AddTransitionForRuneSet(start, stateMapping.Start, nil)
 		for _, accepting := range stateMapping.Acceptings {
-			if err := builder.AddTransitionForRuneSet(accepting, end, nil); err != nil {
-				return nil, fmt.Errorf("failed to add accepting transition: %v", err)
-			}
+			builder.AddTransitionForRuneSet(accepting, end, nil)
 		}
 
 		min--
@@ -189,31 +134,18 @@ func (ck *ConstructionKit) Repeat(automaton *NFA, min, max int) (*NFA, error) {
 	}
 
 	// Add epsilon transition to accept state
-	if err := builder.AddTransitionForRuneSet(start, accept, nil); err != nil {
-		return nil, fmt.Errorf("failed to add transition to accept: %v", err)
-	}
+	builder.AddTransitionForRuneSet(start, accept, nil)
 
 	if count == nil { // No upper limit, loop!
 		if previousStart == -1 {
 			end := builder.AddState()
 
-			stateMapping, err := builder.CopyFrom(automaton)
-			if err != nil {
-				return nil, fmt.Errorf("failed to copy automaton: %v", err)
-			}
+			stateMapping := builder.CopyFrom(automaton)
 
-			if err := builder.AddTransitionForRuneSet(start, stateMapping.Start, nil); err != nil {
-				return nil, fmt.Errorf("failed to add start transition: %v", err)
-			}
-
-			if err := builder.AddTransitionForRuneSet(end, accept, nil); err != nil {
-				return nil, fmt.Errorf("failed to add transition to accept: %v", err)
-			}
-
+			builder.AddTransitionForRuneSet(start, stateMapping.Start, nil)
+			builder.AddTransitionForRuneSet(end, accept, nil)
 			for _, accepting := range stateMapping.Acceptings {
-				if err := builder.AddTransitionForRuneSet(accepting, end, nil); err != nil {
-					return nil, fmt.Errorf("failed to add accepting transition: %v", err)
-				}
+				builder.AddTransitionForRuneSet(accepting, end, nil)
 			}
 
 			previousStart = start
@@ -221,31 +153,18 @@ func (ck *ConstructionKit) Repeat(automaton *NFA, min, max int) (*NFA, error) {
 		}
 
 		// Add loop back transition
-		if err := builder.AddTransitionForRuneSet(start, previousStart, nil); err != nil {
-			return nil, fmt.Errorf("failed to add loop transition: %v", err)
-		}
+		builder.AddTransitionForRuneSet(start, previousStart, nil)
 	} else { // Existing upper limit, no loop!
 		for *count > 0 {
 			end := builder.AddState()
 
-			stateMapping, err := builder.CopyFrom(automaton)
-			if err != nil {
-				return nil, fmt.Errorf("failed to copy automaton: %v", err)
-			}
+			stateMapping := builder.CopyFrom(automaton)
 
-			if err := builder.AddTransitionForRuneSet(start, stateMapping.Start, nil); err != nil {
-				return nil, fmt.Errorf("failed to add start transition: %v", err)
-			}
-
+			builder.AddTransitionForRuneSet(start, stateMapping.Start, nil)
 			for _, accepting := range stateMapping.Acceptings {
-				if err := builder.AddTransitionForRuneSet(accepting, end, nil); err != nil {
-					return nil, fmt.Errorf("failed to add accepting transition: %v", err)
-				}
+				builder.AddTransitionForRuneSet(accepting, end, nil)
 			}
-
-			if err := builder.AddTransitionForRuneSet(end, accept, nil); err != nil {
-				return nil, fmt.Errorf("failed to add transition to accept: %v", err)
-			}
+			builder.AddTransitionForRuneSet(end, accept, nil)
 
 			*count--
 			start = end
@@ -256,25 +175,17 @@ func (ck *ConstructionKit) Repeat(automaton *NFA, min, max int) (*NFA, error) {
 }
 
 // Complement creates an NFA that matches the complement of the given automaton
-func (ck *ConstructionKit) Complement(automaton *NFA) (*NFA, error) {
+func (ck *ConstructionKit) Complement(automaton *NFA) *NFA {
 	builder := NewNFABuilder()
 
-	stateMapping, err := builder.CopyFrom(automaton)
-	if err != nil {
-		return nil, fmt.Errorf("failed to copy automaton: %v", err)
-	}
-
-	if err := builder.SetStartState(stateMapping.Start); err != nil {
-		return nil, fmt.Errorf("failed to set start state: %v", err)
-	}
+	stateMapping := builder.CopyFrom(automaton)
+	builder.SetStartState(stateMapping.Start)
 
 	// Accept all non-accepting states from the original automaton
 	acceptingStates := automaton.AcceptingStates
 	for oldState, newState := range stateMapping.Mapping {
 		if !acceptingStates[oldState] {
-			if err := builder.AcceptState(newState); err != nil {
-				return nil, fmt.Errorf("failed to set accepting state: %v", err)
-			}
+			builder.AcceptState(newState)
 		}
 	}
 
@@ -283,28 +194,10 @@ func (ck *ConstructionKit) Complement(automaton *NFA) (*NFA, error) {
 
 // IntersectNFA creates an NFA that matches the intersection of two automata
 // Uses De Morgan's law: A ∩ B = ¬(¬A ∪ ¬B)
-func (ck *ConstructionKit) Intersect(a, b *NFA) (*NFA, error) {
+func (ck *ConstructionKit) Intersect(a, b *NFA) *NFA {
 	// Get complements
-	notA, err := ck.Complement(a)
-	if err != nil {
-		return nil, fmt.Errorf("failed to complement first automaton: %v", err)
-	}
-
-	notB, err := ck.Complement(b)
-	if err != nil {
-		return nil, fmt.Errorf("failed to complement second automaton: %v", err)
-	}
-
-	// Get union of complements
-	notAOrB, err := ck.Alternate(notA, notB)
-	if err != nil {
-		return nil, fmt.Errorf("failed to alternate complements: %v", err)
-	}
-
-	// Normalize the result
-	dfa := notAOrB.Determinize()
-	normalized := dfa.Minimize()
-
-	// Return complement of the union
-	return ck.Complement(normalized)
+	notA := ck.Complement(a)
+	notB := ck.Complement(b)
+	notAOrB := ck.Alternate(notA, notB)
+	return ck.Complement(notAOrB)
 }

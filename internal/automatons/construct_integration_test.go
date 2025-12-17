@@ -10,62 +10,30 @@ func TestConstruct_IntegrationExample(t *testing.T) {
 	// This means: zero or more 'a' or 'b', followed by one or more 'c'
 
 	// First create automata for individual characters
-	charA, err := kit.Consume(NewRuneSet_Range('a', 'a'))
-	if err != nil {
-		t.Fatalf("Failed to create automaton for 'a': %v", err)
-	}
-
-	charB, err := kit.Consume(NewRuneSet_Range('b', 'b'))
-	if err != nil {
-		t.Fatalf("Failed to create automaton for 'b': %v", err)
-	}
-
-	charC, err := kit.Consume(NewRuneSet_Range('c', 'c'))
-	if err != nil {
-		t.Fatalf("Failed to create automaton for 'c': %v", err)
-	}
+	charA := kit.Consume(NewRuneSet_Range('a', 'a'))
+	charB := kit.Consume(NewRuneSet_Range('b', 'b'))
+	charC := kit.Consume(NewRuneSet_Range('c', 'c'))
 
 	// Create (a|b)
-	aOrB, err := kit.Alternate(charA, charB)
-	if err != nil {
-		t.Fatalf("Failed to create alternation a|b: %v", err)
-	}
+	aOrB := kit.Alternate(charA, charB)
 
 	// Create (a|b)*
-	aOrBStar, err := kit.Repeat(aOrB, 0, -1)
-	if err != nil {
-		t.Fatalf("Failed to create (a|b)*: %v", err)
-	}
+	aOrBStar := kit.Repeat(aOrB, 0, -1)
 
 	// Create c+
-	cPlus, err := kit.Repeat(charC, 1, -1)
-	if err != nil {
-		t.Fatalf("Failed to create c+: %v", err)
-	}
+	cPlus := kit.Repeat(charC, 1, -1)
 
 	// Create (a|b)*c+
-	final, err := kit.Concat(aOrBStar, cPlus)
-	if err != nil {
-		t.Fatalf("Failed to create final automaton: %v", err)
-	}
+	final := kit.Concat(aOrBStar, cPlus)
 
 	// Basic validation
-	if final.StateCount == 0 {
-		t.Error("Expected non-empty final automaton")
-	}
+	Expect(final.StateCount).ToBeGreaterThan(0)
 
 	// Should have exactly one accepting state
-	acceptingStates := final.AcceptingStates
-	if len(acceptingStates) != 1 {
-		t.Errorf("Expected exactly 1 accepting state, got %d", len(acceptingStates))
-	}
+	Expect(len(final.AcceptingStates)).ToEqual(1)
 
 	// Should have a valid start state
-	if final.StartState < 0 {
-		t.Error("Invalid start state")
-	}
-
-	t.Logf("Successfully created complex automaton with %d states", final.StateCount)
+	Expect(final.StartState).ToBeGreaterThanOrEqual(0)
 }
 
 // TestConstruct_RegexLikePatterns tests common regex-like patterns
@@ -73,95 +41,74 @@ func TestConstruct_RegexLikePatterns(t *testing.T) {
 	tests := []struct {
 		name        string
 		description string
-		builder     func() (*NFA, error)
+		builder     func() *NFA
 	}{
 		{
 			name:        "optional_char",
 			description: "a?  (zero or one 'a')",
-			builder: func() (*NFA, error) {
-				charA, err := kit.Consume(NewRuneSet_Range('a', 'a'))
-				if err != nil {
-					return nil, err
-				}
+			builder: func() *NFA {
+				charA := kit.Consume(NewRuneSet_Range('a', 'a'))
 				return kit.Repeat(charA, 0, 1)
 			},
 		},
 		{
 			name:        "kleene_star",
 			description: "a*  (zero or more 'a')",
-			builder: func() (*NFA, error) {
-				charA, err := kit.Consume(NewRuneSet_Range('a', 'a'))
-				if err != nil {
-					return nil, err
-				}
+			builder: func() *NFA {
+				charA := kit.Consume(NewRuneSet_Range('a', 'a'))
 				return kit.Repeat(charA, 0, -1)
 			},
 		},
 		{
 			name:        "kleene_plus",
 			description: "a+  (one or more 'a')",
-			builder: func() (*NFA, error) {
-				charA, err := kit.Consume(NewRuneSet_Range('a', 'a'))
-				if err != nil {
-					return nil, err
-				}
+			builder: func() *NFA {
+				charA := kit.Consume(NewRuneSet_Range('a', 'a'))
 				return kit.Repeat(charA, 1, -1)
 			},
 		},
 		{
 			name:        "exact_count",
 			description: "a{3}  (exactly three 'a')",
-			builder: func() (*NFA, error) {
-				charA, err := kit.Consume(NewRuneSet_Range('a', 'a'))
-				if err != nil {
-					return nil, err
-				}
+			builder: func() *NFA {
+				charA := kit.Consume(NewRuneSet_Range('a', 'a'))
 				return kit.Repeat(charA, 3, 3)
 			},
 		},
 		{
 			name:        "range_count",
 			description: "a{2,5}  (two to five 'a')",
-			builder: func() (*NFA, error) {
-				charA, err := kit.Consume(NewRuneSet_Range('a', 'a'))
-				if err != nil {
-					return nil, err
-				}
+			builder: func() *NFA {
+				charA := kit.Consume(NewRuneSet_Range('a', 'a'))
 				return kit.Repeat(charA, 2, 5)
 			},
 		},
 		{
 			name:        "character_class",
 			description: "[a-z]  (any lowercase letter)",
-			builder: func() (*NFA, error) {
+			builder: func() *NFA {
 				return kit.Consume(NewRuneSet_Range('a', 'z'))
 			},
 		},
 		{
 			name:        "alternation",
 			description: "(hello|world)  (either 'hello' or 'world')",
-			builder: func() (*NFA, error) {
+			builder: func() *NFA {
 				// Create "hello"
-				h, _ := kit.Consume(NewRuneSet_Range('h', 'h'))
-				e, _ := kit.Consume(NewRuneSet_Range('e', 'e'))
-				l1, _ := kit.Consume(NewRuneSet_Range('l', 'l'))
-				l2, _ := kit.Consume(NewRuneSet_Range('l', 'l'))
-				o, _ := kit.Consume(NewRuneSet_Range('o', 'o'))
-				hello, err := kit.Concat(h, e, l1, l2, o)
-				if err != nil {
-					return nil, err
-				}
+				h := kit.Consume(NewRuneSet_Range('h', 'h'))
+				e := kit.Consume(NewRuneSet_Range('e', 'e'))
+				l1 := kit.Consume(NewRuneSet_Range('l', 'l'))
+				l2 := kit.Consume(NewRuneSet_Range('l', 'l'))
+				o := kit.Consume(NewRuneSet_Range('o', 'o'))
+				hello := kit.Concat(h, e, l1, l2, o)
 
 				// Create "world"
-				w, _ := kit.Consume(NewRuneSet_Range('w', 'w'))
-				o2, _ := kit.Consume(NewRuneSet_Range('o', 'o'))
-				r, _ := kit.Consume(NewRuneSet_Range('r', 'r'))
-				l3, _ := kit.Consume(NewRuneSet_Range('l', 'l'))
-				d, _ := kit.Consume(NewRuneSet_Range('d', 'd'))
-				world, err := kit.Concat(w, o2, r, l3, d)
-				if err != nil {
-					return nil, err
-				}
+				w := kit.Consume(NewRuneSet_Range('w', 'w'))
+				o2 := kit.Consume(NewRuneSet_Range('o', 'o'))
+				r := kit.Consume(NewRuneSet_Range('r', 'r'))
+				l3 := kit.Consume(NewRuneSet_Range('l', 'l'))
+				d := kit.Consume(NewRuneSet_Range('d', 'd'))
+				world := kit.Concat(w, o2, r, l3, d)
 
 				return kit.Alternate(hello, world)
 			},
@@ -170,27 +117,10 @@ func TestConstruct_RegexLikePatterns(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nfa, err := tt.builder()
-			if err != nil {
-				t.Fatalf("Failed to build %s: %v", tt.description, err)
-			}
-
-			// Basic validation
-			if nfa.StateCount == 0 {
-				t.Errorf("Pattern %s produced empty automaton", tt.description)
-			}
-
-			acceptingStates := nfa.AcceptingStates
-			if len(acceptingStates) == 0 {
-				t.Errorf("Pattern %s has no accepting states", tt.description)
-			}
-
-			if nfa.StartState < 0 {
-				t.Errorf("Pattern %s has invalid start state", tt.description)
-			}
-
-			t.Logf("Pattern %s: %d states, %d accepting states",
-				tt.description, nfa.StateCount, len(acceptingStates))
+			nfa := tt.builder()
+			Expect(nfa.StateCount).ToBeGreaterThan(0)
+			Expect(len(nfa.AcceptingStates)).ToBeGreaterThan(0)
+			Expect(nfa.StartState).ToBeGreaterThanOrEqual(0)
 		})
 	}
 }
@@ -198,33 +128,17 @@ func TestConstruct_RegexLikePatterns(t *testing.T) {
 // TestConstruct_SetOperations tests set-like operations on automata
 func TestConstruct_SetOperations(t *testing.T) {
 	// Create test sets: [a-m] and [h-z]
-	setAM, err := kit.Consume(NewRuneSet_Range('a', 'm'))
-	if err != nil {
-		t.Fatalf("Failed to create set [a-m]: %v", err)
-	}
-
-	setHZ, err := kit.Consume(NewRuneSet_Range('h', 'z'))
-	if err != nil {
-		t.Fatalf("Failed to create set [h-z]: %v", err)
-	}
+	setAM := kit.Consume(NewRuneSet_Range('a', 'm'))
+	setHZ := kit.Consume(NewRuneSet_Range('h', 'z'))
 
 	// Test complement
-	notAM, err := kit.Complement(setAM)
-	if err != nil {
-		t.Fatalf("Failed to create complement of [a-m]: %v", err)
-	}
+	notAM := kit.Complement(setAM)
 
 	// Test intersection: [a-m] ∩ [h-z] should be [h-m]
-	intersection, err := kit.Intersect(setAM, setHZ)
-	if err != nil {
-		t.Fatalf("Failed to create intersection: %v", err)
-	}
+	intersection := kit.Intersect(setAM, setHZ)
 
 	// Test union using alternation: [a-m] ∪ [h-z]
-	union, err := kit.Alternate(setAM, setHZ)
-	if err != nil {
-		t.Fatalf("Failed to create union: %v", err)
-	}
+	union := kit.Alternate(setAM, setHZ)
 
 	// Basic validation for all results
 	automata := map[string]*NFA{
@@ -235,21 +149,9 @@ func TestConstruct_SetOperations(t *testing.T) {
 		"union":        union,
 	}
 
-	for name, nfa := range automata {
-		if nfa.StateCount == 0 {
-			t.Errorf("%s produced empty automaton", name)
-		}
-
-		acceptingStates := nfa.AcceptingStates
-		if len(acceptingStates) == 0 {
-			t.Errorf("%s has no accepting states", name)
-		}
-
-		if nfa.StartState < 0 {
-			t.Errorf("%s has invalid start state", name)
-		}
-
-		t.Logf("%s: %d states, %d accepting states",
-			name, nfa.StateCount, len(acceptingStates))
+	for _, nfa := range automata {
+		Expect(nfa.StateCount).ToBeGreaterThan(0)
+		Expect(len(nfa.AcceptingStates)).ToBeGreaterThan(0)
+		Expect(nfa.StartState).ToBeGreaterThanOrEqual(0)
 	}
 }

@@ -59,11 +59,7 @@ func buildNewAutomaton(groups [][]int, dfa NFA, acceptingStates map[int]bool) *N
 		}
 	}
 
-	result, err := builder.Build()
-	if err != nil {
-		panic("Failed to build minimized DFA: " + err.Error())
-	}
-	return result
+	return builder.Build()
 }
 
 func getEquivalentGroups(stateCount int, areDifferent [][]bool) [][]int {

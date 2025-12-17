@@ -8,6 +8,24 @@ type expectation struct {
 	value any
 }
 
+func (e *expectation) ToNotBeNil() {
+	if e.value == nil {
+		panic("Expected value to not be nil")
+	}
+}
+
+func (e *expectation) ToPanic() {
+	switch v := e.value.(type) {
+	case func():
+		defer func() {
+			if r := recover(); r == nil {
+				panic("Expected function to panic")
+			}
+		}()
+		v()
+	}
+}
+
 func (e *expectation) ToBeLesserThan(expected int) {
 	switch v := e.value.(type) {
 	case int:

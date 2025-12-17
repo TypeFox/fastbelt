@@ -5,7 +5,7 @@ import (
 )
 
 // Helper function to create a simple DFA that can be minimized
-func createMinimizableDFA() NFA {
+func createMinimizableDFA() *NFA {
 	builder := NewNFABuilder()
 
 	// Create 5 states: 0, 1, 2, 3, 4
@@ -43,12 +43,12 @@ func createMinimizableDFA() NFA {
 	// From state 4: a->3, b->4  (same as state 2 behavior)
 	builder.AddTransitionForSingleRune(s4, s3, 'a')
 	builder.AddTransitionForSingleRune(s4, s4, 'b')
-	dfa, _ := builder.Build()
-	return *dfa
+
+	return builder.Build()
 }
 
 // Helper function to create a DFA that cannot be minimized further (already minimal)
-func createMinimalDFA() NFA {
+func createMinimalDFA() *NFA {
 	builder := NewNFABuilder()
 
 	// Create 3 states
@@ -71,12 +71,11 @@ func createMinimalDFA() NFA {
 	builder.AddTransitionForSingleRune(s2, s0, 'b') // b->0
 	builder.AddTransitionForSingleRune(s2, s1, 'a') // a->1
 
-	dfa, _ := builder.Build()
-	return *dfa
+	return builder.Build()
 }
 
 // Helper function to create a simple two-state DFA
-func createTwoStateDFA() NFA {
+func createTwoStateDFA() *NFA {
 	builder := NewNFABuilder()
 
 	s0 := builder.AddState() // 0
@@ -88,12 +87,11 @@ func createTwoStateDFA() NFA {
 	builder.AddTransitionForSingleRune(s0, s1, 'a')
 	builder.AddTransitionForSingleRune(s1, s1, 'a')
 
-	dfa, _ := builder.Build()
-	return *dfa
+	return builder.Build()
 }
 
 // Helper function to create a DFA with multiple equivalent states
-func createDFAWithEquivalentStates() NFA {
+func createDFAWithEquivalentStates() *NFA {
 	builder := NewNFABuilder()
 
 	// Create 4 states where states 1 and 3 are equivalent, and states 2 and 0 are unique
@@ -122,8 +120,7 @@ func createDFAWithEquivalentStates() NFA {
 	builder.AddTransitionForSingleRune(s2, s2, 'a') // 2 -a-> 2
 	builder.AddTransitionForSingleRune(s2, s2, 'b') // 2 -b-> 2
 
-	dfa, _ := builder.Build()
-	return *dfa
+	return builder.Build()
 }
 
 func TestMinimize_SimpleCase(t *testing.T) {

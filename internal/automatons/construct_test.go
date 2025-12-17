@@ -47,55 +47,28 @@ func TestConstruct_Consume(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nfa, err := kit.Consume(tt.charset)
-			if err != nil {
-				t.Fatalf("Consume() error = %v", err)
-			}
+			nfa := kit.Consume(tt.charset)
 
 			// Test basic properties
-			if nfa.StateCount < 2 {
-				t.Errorf("Expected at least 2 states, got %d", nfa.StateCount)
-			}
-
-			acceptingStates := nfa.AcceptingStates
-			if len(acceptingStates) != 1 {
-				t.Errorf("Expected 1 accepting state, got %d", len(acceptingStates))
-			}
+			Expect(nfa.StateCount).ToBeGreaterThanOrEqual(2)
+			Expect(len(nfa.AcceptingStates)).ToEqual(1)
 
 			// Test character matching by checking transitions
 			startState := nfa.StartState
 			transitions := nfa.TransitionsBySource[startState]
-			if transitions == nil {
-				if tt.expectMatch {
-					t.Error("Expected transitions from start state, but found none")
-				}
-				return
-			}
+			Expect(transitions).ToNotBeNil()
 
 			hasMatch := transitions.Contains(tt.testRune)
-			if hasMatch != tt.expectMatch {
-				t.Errorf("Contains('%c') = %v, want %v", tt.testRune, hasMatch, tt.expectMatch)
-			}
+			Expect(hasMatch).ToEqual(tt.expectMatch)
 		})
 	}
 }
 
 func TestConstruct_Alternate(t *testing.T) {
 	// Create test automata
-	charA, err := kit.Consume(NewRuneSet_Range('a', 'a'))
-	if err != nil {
-		t.Fatalf("Failed to create test automaton: %v", err)
-	}
-
-	charB, err := kit.Consume(NewRuneSet_Range('b', 'b'))
-	if err != nil {
-		t.Fatalf("Failed to create test automaton: %v", err)
-	}
-
-	charC, err := kit.Consume(NewRuneSet_Range('c', 'c'))
-	if err != nil {
-		t.Fatalf("Failed to create test automaton: %v", err)
-	}
+	charA := kit.Consume(NewRuneSet_Range('a', 'a'))
+	charB := kit.Consume(NewRuneSet_Range('b', 'b'))
+	charC := kit.Consume(NewRuneSet_Range('c', 'c'))
 
 	tests := []struct {
 		name        string
@@ -131,55 +104,26 @@ func TestConstruct_Alternate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nfa, err := kit.Alternate(tt.automata...)
-			if err != nil {
-				t.Fatalf("Alternate() error = %v", err)
-			}
+			nfa := kit.Alternate(tt.automata...)
 
-			// Basic validation
-			if nfa.StateCount == 0 {
-				t.Error("Expected non-empty automaton")
-			}
-
-			acceptingStates := nfa.AcceptingStates
-			if len(acceptingStates) == 0 {
-				t.Error("Expected at least one accepting state")
-			}
-
-			// Test by examining the structure - for alternation, start state should have epsilon transitions
-			startState := nfa.StartState
-			transitions := nfa.TransitionsBySource[startState]
-			if transitions != nil && transitions.ContainsEpsilon() {
-				// This is expected for alternation
-			}
+			Expect(nfa.StateCount).ToBeGreaterThan(0)
+			Expect(len(nfa.AcceptingStates)).ToBeGreaterThan(0)
 		})
 	}
 
 	// Test error case
 	t.Run("empty alternation", func(t *testing.T) {
-		_, err := kit.Alternate()
-		if err == nil {
-			t.Error("Expected error for empty alternation")
-		}
+		Expect(func() {
+			kit.Alternate()
+		}).ToPanic()
 	})
 }
 
 func TestConstruct_Concat(t *testing.T) {
 	// Create test automata
-	charA, err := kit.Consume(NewRuneSet_Range('a', 'a'))
-	if err != nil {
-		t.Fatalf("Failed to create test automaton: %v", err)
-	}
-
-	charB, err := kit.Consume(NewRuneSet_Range('b', 'b'))
-	if err != nil {
-		t.Fatalf("Failed to create test automaton: %v", err)
-	}
-
-	charC, err := kit.Consume(NewRuneSet_Range('c', 'c'))
-	if err != nil {
-		t.Fatalf("Failed to create test automaton: %v", err)
-	}
+	charA := kit.Consume(NewRuneSet_Range('a', 'a'))
+	charB := kit.Consume(NewRuneSet_Range('b', 'b'))
+	charC := kit.Consume(NewRuneSet_Range('c', 'c'))
 
 	tests := []struct {
 		name     string
@@ -201,44 +145,28 @@ func TestConstruct_Concat(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nfa, err := kit.Concat(tt.automata...)
-			if err != nil {
-				t.Fatalf("Concat() error = %v", err)
-			}
+			nfa := kit.Concat(tt.automata...)
 
 			// Basic validation
-			if nfa.StateCount == 0 {
-				t.Error("Expected non-empty automaton")
-			}
-
-			acceptingStates := nfa.AcceptingStates
-			if len(acceptingStates) != 1 {
-				t.Errorf("Expected exactly 1 accepting state, got %d", len(acceptingStates))
-			}
+			Expect(nfa.StateCount).ToBeGreaterThan(0)
+			Expect(len(nfa.AcceptingStates)).ToEqual(1)
 
 			// For concatenation, we expect a linear structure with epsilon transitions
-			startState := nfa.StartState
-			if startState < 0 {
-				t.Error("Invalid start state")
-			}
+			Expect(nfa.StartState).ToBeGreaterThanOrEqual(0)
 		})
 	}
 
 	// Test error case
 	t.Run("empty concatenation", func(t *testing.T) {
-		_, err := kit.Concat()
-		if err == nil {
-			t.Error("Expected error for empty concatenation")
-		}
+		Expect(func() {
+			kit.Concat()
+		}).ToPanic()
 	})
 }
 
 func TestConstruct_Repeat(t *testing.T) {
 	// Create test automaton
-	charA, err := kit.Consume(NewRuneSet_Range('a', 'a'))
-	if err != nil {
-		t.Fatalf("Failed to create test automaton: %v", err)
-	}
+	charA := kit.Consume(NewRuneSet_Range('a', 'a'))
 
 	tests := []struct {
 		name        string
@@ -300,57 +228,28 @@ func TestConstruct_Repeat(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nfa, err := kit.Repeat(tt.automaton, tt.min, tt.max)
-
 			if tt.expectError {
-				if err == nil {
-					t.Error("Expected error but got none")
-				}
+				Expect(func() {
+					kit.Repeat(tt.automaton, tt.min, tt.max)
+				}).ToPanic()
 				return
 			}
 
-			if err != nil {
-				t.Fatalf("Repeat() error = %v", err)
-			}
-
+			nfa := kit.Repeat(tt.automaton, tt.min, tt.max)
 			// Basic validation
-			if nfa.StateCount == 0 {
-				t.Error("Expected non-empty automaton")
-			}
-
-			acceptingStates := nfa.AcceptingStates
-			if len(acceptingStates) == 0 {
-				t.Error("Expected at least one accepting state")
-			}
-
-			// For min=0 cases, start state should be able to reach accept state via epsilon
-			if tt.min == 0 {
-				startState := nfa.StartState
-				transitions := nfa.TransitionsBySource[startState]
-				if transitions != nil && transitions.ContainsEpsilon() {
-					// This is expected for optional patterns
-				}
-			}
+			Expect(nfa.StateCount).ToBeGreaterThan(0)
+			Expect(len(nfa.AcceptingStates)).ToBeGreaterThan(0)
 		})
 	}
 }
 
 func TestConstruct_Complement(t *testing.T) {
 	// Create test automaton
-	charA, err := kit.Consume(NewRuneSet_Range('a', 'a'))
-	if err != nil {
-		t.Fatalf("Failed to create test automaton: %v", err)
-	}
-
-	nfa, err := kit.Complement(charA)
-	if err != nil {
-		t.Fatalf("Complement() error = %v", err)
-	}
+	charA := kit.Consume(NewRuneSet_Range('a', 'a'))
+	nfa := kit.Complement(charA)
 
 	// Basic validation
-	if nfa.StateCount == 0 {
-		t.Error("Expected non-empty automaton")
-	}
+	Expect(nfa.StateCount).ToBeGreaterThan(0)
 
 	// The complement should have the same structure but different accepting states
 	originalAccepting := charA.AcceptingStates
@@ -381,36 +280,17 @@ func TestConstruct_Complement(t *testing.T) {
 
 func TestConstruct_IntersectNFA(t *testing.T) {
 	// Create test automata
-	rangeAB, err := kit.Consume(NewRuneSet_Range('a', 'b'))
-	if err != nil {
-		t.Fatalf("Failed to create test automaton: %v", err)
-	}
-
-	rangeBC, err := kit.Consume(NewRuneSet_Range('b', 'c'))
-	if err != nil {
-		t.Fatalf("Failed to create test automaton: %v", err)
-	}
-
-	nfa, err := kit.Intersect(rangeAB, rangeBC)
-	if err != nil {
-		t.Fatalf("IntersectNFA() error = %v", err)
-	}
+	rangeAB := kit.Consume(NewRuneSet_Range('a', 'b'))
+	rangeBC := kit.Consume(NewRuneSet_Range('b', 'c'))
+	nfa := kit.Intersect(rangeAB, rangeBC)
 
 	// Basic validation
-	if nfa.StateCount == 0 {
-		t.Error("Expected non-empty automaton")
-	}
+	Expect(nfa.StateCount).ToBeGreaterThan(0)
 
 	// The intersection of [a-b] and [b-c] should match only 'b'
 	startState := nfa.StartState
 	transitions := nfa.TransitionsBySource[startState]
-	if transitions != nil {
-		// Should contain 'b'
-		if !transitions.Contains('b') {
-			t.Error("IntersectNFA should contain 'b'")
-		}
-		// Should not contain 'a' or 'c' (this is harder to test without a full runner)
-	}
+	Expect(transitions.Contains('b')).ToEqual(true)
 }
 
 func TestConstruct_PackageLevelFunctions(t *testing.T) {
@@ -418,19 +298,9 @@ func TestConstruct_PackageLevelFunctions(t *testing.T) {
 	charset := NewRuneSet_Range('x', 'x')
 
 	// Test Consume
-	nfa1, err1 := kit.Consume(charset)
+	kit.Consume(charset)
 	kit := NewConstructionKit()
-	nfa2, err2 := kit.Consume(charset)
-
-	if (err1 == nil) != (err2 == nil) {
-		t.Error("Package function and method should have same error behavior")
-	}
-
-	if err1 == nil && err2 == nil {
-		if nfa1.StateCount != nfa2.StateCount {
-			t.Error("Package function and method should produce equivalent results")
-		}
-	}
+	kit.Consume(charset)
 }
 
 func TestConstruct_ErrorHandling(t *testing.T) {
@@ -440,22 +310,12 @@ func TestConstruct_ErrorHandling(t *testing.T) {
 	t.Run("nil automaton handling", func(t *testing.T) {
 		// This tests the robustness of our implementation
 		// Most functions should handle the case where automata might have issues
-
-		validNFA, err := kit.Consume(charset)
-		if err != nil {
-			t.Fatalf("Failed to create valid NFA: %v", err)
-		}
+		validNFA := kit.Consume(charset)
 
 		// Test Alternate with valid automaton
-		_, err = kit.Alternate(validNFA)
-		if err != nil {
-			t.Errorf("Alternate with single valid NFA should not error: %v", err)
-		}
+		kit.Alternate(validNFA)
 
 		// Test Concat with valid automaton
-		_, err = kit.Concat(validNFA)
-		if err != nil {
-			t.Errorf("Concat with single valid NFA should not error: %v", err)
-		}
+		kit.Concat(validNFA)
 	})
 }

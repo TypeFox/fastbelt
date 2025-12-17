@@ -27,12 +27,9 @@ func Compile(pattern string) (Regexp, error) {
 	if error != nil {
 		return nil, error
 	}
-	nfa, err := newNFAFromSyntax(op)
+	nfa := newNFAFromSyntax(op)
 	nfa = nfa.Determinize()
 	nfa = nfa.Minimize()
-	if err != nil {
-		return nil, err
-	}
 	return &RegexpImpl{
 		pattern: pattern,
 		dfa:     nfa,
@@ -174,17 +171,13 @@ func (r *RegexpImpl) GenerateLambda() generator.Node {
 	return root
 }
 
-func newNFAFromSyntax(op *syntax.Regexp) (*automatons.NFA, error) {
+func newNFAFromSyntax(op *syntax.Regexp) *automatons.NFA {
 	kit := automatons.NewConstructionKit()
 	switch op.Op {
 	case syntax.OpLiteral:
 		chain := make([]*automatons.NFA, len(op.Rune))
 		for i, r := range op.Rune {
-			nfa, error := kit.Consume(automatons.NewRuneSet_Rune(r))
-			if error != nil {
-				return nil, error
-			}
-			chain[i] = nfa
+			chain[i] = kit.Consume(automatons.NewRuneSet_Rune(r))
 		}
 		return kit.Concat(chain...)
 	case syntax.OpCharClass:
@@ -201,46 +194,26 @@ func newNFAFromSyntax(op *syntax.Regexp) (*automatons.NFA, error) {
 	case syntax.OpConcat:
 		chain := make([]*automatons.NFA, len(op.Sub))
 		for i, sub := range op.Sub {
-			nfa, error := newNFAFromSyntax(sub)
-			if error != nil {
-				return nil, error
-			}
-			chain[i] = nfa
+			chain[i] = newNFAFromSyntax(sub)
 		}
 		return kit.Concat(chain...)
 	case syntax.OpAlternate:
 		alternatives := make([]*automatons.NFA, len(op.Sub))
 		for i, sub := range op.Sub {
-			nfa, error := newNFAFromSyntax(sub)
-			if error != nil {
-				return nil, error
-			}
-			alternatives[i] = nfa
+			alternatives[i] = newNFAFromSyntax(sub)
 		}
 		return kit.Alternate(alternatives...)
 	case syntax.OpStar:
-		nfa, error := newNFAFromSyntax(op.Sub[0])
-		if error != nil {
-			return nil, error
-		}
+		nfa := newNFAFromSyntax(op.Sub[0])
 		return kit.Repeat(nfa, 0, -1)
 	case syntax.OpPlus:
-		nfa, error := newNFAFromSyntax(op.Sub[0])
-		if error != nil {
-			return nil, error
-		}
+		nfa := newNFAFromSyntax(op.Sub[0])
 		return kit.Repeat(nfa, 1, -1)
 	case syntax.OpQuest:
-		nfa, error := newNFAFromSyntax(op.Sub[0])
-		if error != nil {
-			return nil, error
-		}
+		nfa := newNFAFromSyntax(op.Sub[0])
 		return kit.Repeat(nfa, 0, 1)
 	case syntax.OpRepeat:
-		nfa, error := newNFAFromSyntax(op.Sub[0])
-		if error != nil {
-			return nil, error
-		}
+		nfa := newNFAFromSyntax(op.Sub[0])
 		return kit.Repeat(nfa, int(op.Min), int(op.Max))
 	case syntax.OpCapture:
 		return newNFAFromSyntax(op.Sub[0])
@@ -265,6 +238,6 @@ func newNFAFromSyntax(op *syntax.Regexp) (*automatons.NFA, error) {
 	case syntax.OpNoMatch:
 		return kit.Reject()
 	default:
-		return nil, fmt.Errorf("unsupported syntax operation: %v", op.Op)
+		panic(fmt.Sprintf("unsupported syntax operation: %v", op.Op))
 	}
 }

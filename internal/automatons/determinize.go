@@ -74,10 +74,5 @@ func (nfa *NFA) Determinize() *NFA {
 		builder.AddTransitionForRuneRange(sourceState, targetState, &trans.Range)
 	}
 
-	result, err := builder.Build()
-	if err != nil {
-		panic("Failed to build DFA: " + err.Error())
-	}
-
-	return result
+	return builder.Build()
 }

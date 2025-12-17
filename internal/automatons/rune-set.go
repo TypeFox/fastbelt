@@ -28,7 +28,7 @@ type RuneSet struct {
 }
 
 func (set RuneSet) Length() int {
-	var length int = 0
+	var length = 0
 	for _, r := range set.Ranges {
 		if r.Includes {
 			length += int(r.End) - int(r.Start) + 1
@@ -120,7 +120,7 @@ func (set RuneSet) ExcludesRange(start rune, end rune) bool {
 }
 
 func (set RuneSet) isXXcluded(included bool, start rune, end rune) bool {
-	var index int = 0
+	var index = 0
 	for index < len(set.Ranges) && start > set.Ranges[index].End {
 		index++
 	}
@@ -136,12 +136,12 @@ func (set *RuneSet) change(included bool, start rune, end rune) {
 		panic("Range limit order is invalid!")
 	}
 
-	var leftMostIndex int = 0
+	var leftMostIndex = 0
 	for leftMostIndex < len(set.Ranges) && start > set.Ranges[leftMostIndex].End {
 		leftMostIndex++
 	}
 
-	var rightMostIndex int = len(set.Ranges) - 1
+	var rightMostIndex = len(set.Ranges) - 1
 	for rightMostIndex >= 0 && end < set.Ranges[rightMostIndex].Start {
 		rightMostIndex--
 	}

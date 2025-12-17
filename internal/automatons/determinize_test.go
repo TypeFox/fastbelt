@@ -23,8 +23,7 @@ func createSimpleNFA() *NFA {
 	builder.AddTransitionForSingleRune(s0, s1, 'a')
 	builder.AddTransitionForSingleRune(s1, s2, 'b')
 
-	nfa, _ := builder.Build()
-	return nfa
+	return builder.Build()
 }
 
 // Helper function to create an NFA with epsilon transitions
@@ -49,8 +48,7 @@ func createNFAWithEpsilons() *NFA {
 	builder.AddTransitionForSingleRune(s0, s2, 'a')
 	builder.AddTransitionForSingleRune(s1, s3, 'b')
 
-	nfa, _ := builder.Build()
-	return nfa
+	return builder.Build()
 }
 
 // Helper function to create an NFA with non-deterministic transitions
@@ -75,8 +73,7 @@ func createNonDeterministicNFA() *NFA {
 	builder.AddTransitionForSingleRune(s0, s2, 'a') // Non-deterministic: same input, different targets
 	builder.AddTransitionForSingleRune(s1, s3, 'b')
 
-	nfa, _ := builder.Build()
-	return nfa
+	return builder.Build()
 }
 
 func TestDeterminizeSimpleNFA(t *testing.T) {
@@ -137,7 +134,7 @@ func TestDeterminizePreservesLanguage(t *testing.T) {
 	builder.AddTransitionForSingleRune(s0, s1, 'a')                         // Transition on 'a'
 	builder.AddTransitionForSingleRune(s1, s2, 'b')                         // Transition on 'b'
 
-	nfa, _ := builder.Build()
+	nfa := builder.Build()
 	dfa := nfa.Determinize()
 
 	Expect(dfa.StartState).ToBeGreaterThanOrEqual(0)
@@ -177,10 +174,7 @@ func TestDeterminizationCorrectness(t *testing.T) {
 	builder.AddTransitionForRuneRange(acceptAB, start, runeRangeAny)
 	builder.AddTransitionForRuneRange(acceptBA, start, runeRangeAny)
 
-	nfa, err := builder.Build()
-	if err != nil {
-		t.Fatalf("Failed to build NFA: %v", err)
-	}
+	nfa := builder.Build()
 
 	// Determinize it
 	dfa := nfa.Determinize()

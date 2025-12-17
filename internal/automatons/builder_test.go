@@ -28,33 +28,24 @@ func TestNFABuilderImpl_AddTransitionValidation(t *testing.T) {
 	s1 := builder.AddState()
 	chars := NewRuneSet_Rune('a')
 
-	// Test invalid source state
-	err := builder.AddTransitionForRuneSet(-1, s1, chars)
-	if err == nil {
-		t.Error("Expected error for invalid source state")
-	}
+	Expect(func() {
+		builder.AddTransitionForRuneSet(-1, s1, chars)
+	}).ToPanic()
 
-	err = builder.AddTransitionForRuneSet(2, s1, chars)
-	if err == nil {
-		t.Error("Expected error for source state out of range")
-	}
+	Expect(func() {
+		builder.AddTransitionForRuneSet(2, s1, chars)
+	}).ToPanic()
 
 	// Test invalid target state
-	err = builder.AddTransitionForRuneSet(s0, -1, chars)
-	if err == nil {
-		t.Error("Expected error for invalid target state")
-	}
+	Expect(func() {
+		builder.AddTransitionForRuneSet(s0, -1, chars)
+	}).ToPanic()
 
-	err = builder.AddTransitionForRuneSet(s0, 2, chars)
-	if err == nil {
-		t.Error("Expected error for target state out of range")
-	}
+	Expect(func() {
+		builder.AddTransitionForRuneSet(s0, 2, chars)
+	}).ToPanic()
 
-	// Test valid transition
-	err = builder.AddTransitionForRuneSet(s0, s1, chars)
-	if err != nil {
-		t.Errorf("Expected no error for valid transition, got: %v", err)
-	}
+	builder.AddTransitionForRuneSet(s0, s1, chars)
 }
 
 func TestNFABuilderImpl_AddTransitions(t *testing.T) {
@@ -63,25 +54,10 @@ func TestNFABuilderImpl_AddTransitions(t *testing.T) {
 	s1 := builder.AddState()
 	chars := NewRuneSet_Rune('a')
 
-	err := builder.AddTransitionForRuneSet(s0, s1, chars)
-	if err != nil {
-		t.Fatalf("Failed to add transition: %v", err)
-	}
-
-	err = builder.SetStartState(s0)
-	if err != nil {
-		t.Fatalf("Failed to set start state: %v", err)
-	}
-
-	err = builder.AcceptState(s1)
-	if err != nil {
-		t.Fatalf("Failed to accept state: %v", err)
-	}
-
-	nfa, err := builder.Build()
-	if err != nil {
-		t.Fatalf("Failed to build NFA: %v", err)
-	}
+	builder.AddTransitionForRuneSet(s0, s1, chars)
+	builder.SetStartState(s0)
+	builder.AcceptState(s1)
+	nfa := builder.Build()
 
 	// Verify the transition exists
 	transitionsBySource := nfa.TransitionsBySource
@@ -114,77 +90,57 @@ func TestNFABuilderImpl_AddTransitions(t *testing.T) {
 func TestNFABuilderImpl_SetStartStateValidation(t *testing.T) {
 	builder := NewNFABuilder()
 
-	// Test setting start state with no states
-	err := builder.SetStartState(0)
-	if err == nil {
-		t.Error("Expected error when setting start state with no states")
-	}
+	Expect(func() {
+		builder.SetStartState(0)
+	}).ToPanic()
 
 	builder.AddState()
 
-	// Test invalid start state
-	err = builder.SetStartState(-1)
-	if err == nil {
-		t.Error("Expected error for negative start state")
-	}
+	Expect(func() {
+		builder.SetStartState(-1)
+	}).ToPanic()
 
-	err = builder.SetStartState(1)
-	if err == nil {
-		t.Error("Expected error for start state out of range")
-	}
+	Expect(func() {
+		builder.SetStartState(1)
+	}).ToPanic()
 
-	// Test valid start state
-	err = builder.SetStartState(0)
-	if err != nil {
-		t.Errorf("Expected no error for valid start state, got: %v", err)
-	}
+	builder.SetStartState(0)
 }
 
 func TestNFABuilderImpl_AcceptStateValidation(t *testing.T) {
 	builder := NewNFABuilder()
 
 	// Test accepting state with no states
-	err := builder.AcceptState(0)
-	if err == nil {
-		t.Error("Expected error when accepting state with no states")
-	}
+	Expect(func() {
+		builder.AcceptState(0)
+	}).ToPanic()
 
 	builder.AddState()
 
 	// Test invalid accepting state
-	err = builder.AcceptState(-1)
-	if err == nil {
-		t.Error("Expected error for negative accepting state")
-	}
+	Expect(func() {
+		builder.AcceptState(-1)
+	}).ToPanic()
 
-	err = builder.AcceptState(1)
-	if err == nil {
-		t.Error("Expected error for accepting state out of range")
-	}
+	Expect(func() {
+		builder.AcceptState(1)
+	}).ToPanic()
 
-	// Test valid accepting state
-	err = builder.AcceptState(0)
-	if err != nil {
-		t.Errorf("Expected no error for valid accepting state, got: %v", err)
-	}
+	builder.AcceptState(0)
 }
 
 func TestNFABuilderImpl_BuildValidation(t *testing.T) {
 	builder := NewNFABuilder()
 
-	// Test building with no states
-	_, err := builder.Build()
-	if err == nil || err.Error() != "no states defined" {
-		t.Errorf("Expected 'no states defined' error, got: %v", err)
-	}
+	Expect(func() {
+		builder.Build()
+	}).ToPanic()
 
 	builder.AddState()
 
-	// Test building with no start state
-	_, err = builder.Build()
-	if err == nil || err.Error() != "no start state defined" {
-		t.Errorf("Expected 'no start state defined' error, got: %v", err)
-	}
+	Expect(func() {
+		builder.Build()
+	}).ToPanic()
 }
 
 func TestNFABuilderImpl_BuildValidNFA(t *testing.T) {
@@ -192,44 +148,18 @@ func TestNFABuilderImpl_BuildValidNFA(t *testing.T) {
 	s0 := builder.AddState()
 	s1 := builder.AddState()
 
-	err := builder.SetStartState(s0)
-	if err != nil {
-		t.Fatalf("Failed to set start state: %v", err)
-	}
-
-	err = builder.AcceptState(s1)
-	if err != nil {
-		t.Fatalf("Failed to accept state: %v", err)
-	}
+	builder.SetStartState(s0)
+	builder.AcceptState(s1)
 
 	chars := NewRuneSet_Rune('a')
-	err = builder.AddTransitionForRuneSet(s0, s1, chars)
-	if err != nil {
-		t.Fatalf("Failed to add transition: %v", err)
-	}
+	builder.AddTransitionForRuneSet(s0, s1, chars)
 
-	nfa, err := builder.Build()
-	if err != nil {
-		t.Fatalf("Failed to build NFA: %v", err)
-	}
+	nfa := builder.Build()
 
-	if nfa.StartState != s0 {
-		t.Errorf("Expected start state %d, got %d", s0, nfa.StartState)
-	}
-
-	if nfa.StateCount != 2 {
-		t.Errorf("Expected state count 2, got %d", nfa.StateCount)
-	}
-
-	acceptingStates := nfa.AcceptingStates
-	if !acceptingStates[s1] {
-		t.Error("Expected s1 to be an accepting state")
-	}
-
-	transitionsBySource := nfa.TransitionsBySource
-	if _, exists := transitionsBySource[s0]; !exists {
-		t.Error("Expected transitions from s0")
-	}
+	Expect(nfa.StartState).ToEqual(s0)
+	Expect(nfa.StateCount).ToEqual(2)
+	Expect(bool(nfa.AcceptingStates[s1])).ToEqual(true)
+	Expect(nfa.TransitionsBySource[s0] != nil).ToEqual(true)
 }
 
 func TestNFABuilderImpl_CopyFrom(t *testing.T) {
@@ -238,63 +168,22 @@ func TestNFABuilderImpl_CopyFrom(t *testing.T) {
 	s0 := builder1.AddState()
 	s1 := builder1.AddState()
 
-	err := builder1.SetStartState(s0)
-	if err != nil {
-		t.Fatalf("Failed to set start state: %v", err)
-	}
-
-	err = builder1.AcceptState(s1)
-	if err != nil {
-		t.Fatalf("Failed to accept state: %v", err)
-	}
-
+	builder1.SetStartState(s0)
+	builder1.AcceptState(s1)
 	chars := NewRuneSet_Rune('b')
-	err = builder1.AddTransitionForRuneSet(s0, s1, chars)
-	if err != nil {
-		t.Fatalf("Failed to add transition: %v", err)
-	}
-
-	nfa1, err := builder1.Build()
-	if err != nil {
-		t.Fatalf("Failed to build original NFA: %v", err)
-	}
+	builder1.AddTransitionForRuneSet(s0, s1, chars)
+	nfa1 := builder1.Build()
 
 	// Copy to new builder
 	builder2 := NewNFABuilder()
-	stateMapping, err := builder2.CopyFrom(nfa1)
-	if err != nil {
-		t.Fatalf("Failed to copy NFA: %v", err)
-	}
-
-	err = builder2.SetStartState(stateMapping.Start)
-	if err != nil {
-		t.Fatalf("Failed to set start state in copy: %v", err)
-	}
-
+	stateMapping := builder2.CopyFrom(nfa1)
+	builder2.SetStartState(stateMapping.Start)
 	for _, acc := range stateMapping.Acceptings {
-		err = builder2.AcceptState(acc)
-		if err != nil {
-			t.Fatalf("Failed to accept state in copy: %v", err)
-		}
+		builder2.AcceptState(acc)
 	}
+	nfa2 := builder2.Build()
 
-	nfa2, err := builder2.Build()
-	if err != nil {
-		t.Fatalf("Failed to build copied NFA: %v", err)
-	}
-
-	if nfa2.StateCount != nfa1.StateCount {
-		t.Errorf("Expected copied NFA to have %d states, got %d",
-			nfa1.StateCount, nfa2.StateCount)
-	}
-
-	if len(nfa2.AcceptingStates) != len(nfa1.AcceptingStates) {
-		t.Errorf("Expected copied NFA to have %d accepting states, got %d",
-			len(nfa1.AcceptingStates), len(nfa2.AcceptingStates))
-	}
-
-	if len(nfa2.TransitionsBySource) != len(nfa1.TransitionsBySource) {
-		t.Errorf("Expected copied NFA to have %d transition sources, got %d",
-			len(nfa1.TransitionsBySource), len(nfa2.TransitionsBySource))
-	}
+	Expect(nfa2.StateCount).ToEqual(nfa1.StateCount)
+	Expect(len(nfa2.AcceptingStates)).ToEqual(len(nfa1.AcceptingStates))
+	Expect(len(nfa2.TransitionsBySource)).ToEqual(len(nfa1.TransitionsBySource))
 }
