@@ -156,13 +156,17 @@ func (r *RegexpImpl) GenerateLambda() generator.Node {
 					n.AppendLine("}")
 				})
 			}
+			n.AppendLine("default:")
+			n.Indent(func(n generator.Node) {
+				n.AppendLine("break loop")
+			})
 			n.AppendLine("}")
+			n.AppendLine("index++")
 			n.AppendLine("if accepted[state] {")
 			n.Indent(func(n generator.Node) {
 				n.AppendLine("acceptedIndex = index")
 			})
 			n.AppendLine("}")
-			n.AppendLine("index++")
 		})
 		n.AppendLine("}")
 		n.AppendLine("return acceptedIndex")

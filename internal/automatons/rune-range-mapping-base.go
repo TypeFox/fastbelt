@@ -89,8 +89,10 @@ func MappingBase_All[T Value[T]](t *RuneRangeMappingBase[T]) iter.Seq[RuneRangeM
 			}
 		}
 		for _, section := range t.Ranges {
-			if !yield(section) {
-				return
+			if section.Range.Includes {
+				if !yield(section) {
+					return
+				}
 			}
 		}
 	}

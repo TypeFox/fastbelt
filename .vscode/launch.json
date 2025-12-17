@@ -53,6 +53,13 @@
 				"--g=./internal/grammar/grammar.fb",
 				"--o=./internal/generated"
 			]
+		}, {
+			"name": "Benchmark",
+			"type": "go",
+			"request": "launch",
+			"mode": "debug",
+			"program": "${workspaceFolder}/benchmark/main.go",
+			"cwd": "${workspaceFolder}/"
 		}
 	]
 }

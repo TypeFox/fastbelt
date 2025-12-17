@@ -56,3 +56,19 @@ func TestIP(t *testing.T) {
 		panic("TestIP failed")
 	}
 }
+
+func TestWhitespace(t *testing.T) {
+	regexp := MustCompile(`[ \n\r\t]+`)
+	loc := regexp.FindStringIndex(" ")
+	if loc == nil || loc[0] != 0 || loc[1] != 1 {
+		panic("TestWhitespace failed")
+	}
+}
+
+func TestRegexpLiteral(t *testing.T) {
+	regexp := MustCompile("/([^\\r\\n\\[\\/\\\\]|\\\\.|\\[([^\\r\\n\\]\\\\]|\\\\.)*\\])+/")
+	loc := regexp.FindStringIndex("/github.com/adambard/learnxinyminutes-docs)/")
+	if loc == nil || loc[0] != 0 || loc[1] != 5 {
+		panic("TestRegexpLiteral failed")
+	}
+}
