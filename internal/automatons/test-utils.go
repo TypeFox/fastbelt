@@ -74,10 +74,9 @@ func (e *expectation) ToContain(expected any) {
 				found = true
 				break
 			}
-			if !found {
-				panic("Expected slice to contain expected value")
-			}
-			panic("ToContain expectation only supports []int slices")
+		}
+		if !found {
+			panic("Expected slice to contain expected value")
 		}
 	}
 }

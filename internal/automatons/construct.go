@@ -38,7 +38,7 @@ func (ck *ConstructionKit) Consume(characters *RuneSet) *NFA {
 
 func (ck *ConstructionKit) Alternate(automata ...*NFA) *NFA {
 	if len(automata) == 0 {
-		panic(fmt.Sprintf("no automata provided for alternation"))
+		panic("no automata provided for alternation")
 	}
 
 	builder := NewNFABuilder()
@@ -69,7 +69,7 @@ func (*ConstructionKit) finalize(builder *NFABuilderImpl) *NFA {
 // Concat creates an NFA that matches the concatenation of the given automata
 func (ck *ConstructionKit) Concat(automata ...*NFA) *NFA {
 	if len(automata) == 0 {
-		panic(fmt.Sprintf("no automata provided for concatenation"))
+		panic("no automata provided for concatenation")
 	}
 
 	builder := NewNFABuilder()
