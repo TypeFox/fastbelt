@@ -74,7 +74,89 @@ func (r *RegexpImpl) GetStartChars() *automatons.RuneSet {
 	return startCharsSet
 }
 
-func (r *RegexpImpl) GenerateLambda() generator.Node {
+func GenerateTransitions_UsingBranching(bySource *automatons.RuneRangeTargetsMapping) generator.Node {
+	n := generator.NewNode()
+	targets := make(map[int]automatons.RuneSet)
+	for transition := range bySource.All() {
+		target := transition.Values[0]
+		runeSet, exists := targets[target]
+		if !exists {
+			runeSet = *automatons.NewRuneSet_Empty()
+		}
+		runeSet.AddRange(transition.Range.Start, transition.Range.End)
+		targets[target] = runeSet
+	}
+	for target, runeSet := range targets {
+		n.Append("if ")
+		first := true
+		comment := ""
+		for _, charRange := range runeSet.Ranges {
+			if !charRange.Includes {
+				continue
+			}
+			if !first {
+				n.Append(" || ")
+			} else {
+				first = false
+			}
+			if charRange.Start == charRange.End {
+				comment += fmt.Sprintf("%s, ", automatons.FormatRune(charRange.Start))
+				n.Append(fmt.Sprintf("r == %s", automatons.FormatInt(charRange.Start)))
+			} else {
+				comment += fmt.Sprintf("%s..%s, ", automatons.FormatRune(charRange.Start), automatons.FormatRune(charRange.End))
+				n.Append(fmt.Sprintf("r >= %s && r <= %s", automatons.FormatInt(charRange.Start), automatons.FormatInt(charRange.End)))
+			}
+		}
+		n.AppendLine(fmt.Sprintf(" { // %s", comment))
+		n.Indent(func(n generator.Node) {
+			n.AppendLine(fmt.Sprintf("state = %d", target))
+		})
+		n.Append("} else ")
+	}
+	n.AppendLine("{")
+	n.Indent(func(n generator.Node) {
+		n.AppendLine("break loop")
+	})
+	n.AppendLine("}")
+	return n
+}
+
+func GenerateTransitions_UsingBinarySearch(bySource *automatons.RuneRangeTargetsMapping) generator.Node {
+	n := generator.NewNode()
+	n.Append("lookup := []rune{")
+	for transition := range bySource.All() {
+		n.Append(fmt.Sprintf("%s, %s, ", automatons.FormatInt(transition.Range.Start), automatons.FormatInt(transition.Range.End)))
+	}
+	n.AppendLine("}")
+	n.Append("next := []int{")
+	for transition := range bySource.All() {
+		n.Append(fmt.Sprintf("%d, ", transition.Values[0]))
+	}
+	n.AppendLine("}")
+	n.AppendLine("nextState := regexp.BinarySearch_NextState(r, lookup, next)")
+	n.AppendLine("if nextState > -1 {")
+	n.Indent(func(n generator.Node) {
+		n.AppendLine("state = nextState")
+	})
+	n.AppendLine("} else {")
+	n.Indent(func(n generator.Node) {
+		n.AppendLine("break loop")
+	})
+	n.AppendLine("}")
+	return n
+}
+
+func BinarySearch_NextState(r rune, lookup []rune, next []int) int {
+	searchIndex := sort.Search(len(next), func(i int) bool {
+		return lookup[i*2] > r
+	}) - 1
+	if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+		return next[searchIndex]
+	}
+	return -1
+}
+
+func (r *RegexpImpl) GenerateRegExp() generator.Node {
 	root := generator.NewNode()
 	root.AppendLine("func (s string, offset int) int {")
 	root.Indent(func(n generator.Node) {
@@ -112,48 +194,11 @@ func (r *RegexpImpl) GenerateLambda() generator.Node {
 				bySource := transitions[source]
 				n.AppendLine(fmt.Sprintf("case %d:", source))
 				n.Indent(func(n generator.Node) {
-					targets := make(map[int]automatons.RuneSet)
-					for transition := range bySource.All() {
-						target := transition.Values[0]
-						runeSet, exists := targets[target]
-						if !exists {
-							runeSet = *automatons.NewRuneSet_Empty()
-						}
-						runeSet.AddRange(transition.Range.Start, transition.Range.End)
-						targets[target] = runeSet
+					if len(bySource.Ranges) >= 4 {
+						n.AppendNode(GenerateTransitions_UsingBinarySearch(bySource))
+					} else {
+						n.AppendNode(GenerateTransitions_UsingBranching(bySource))
 					}
-					for target, runeSet := range targets {
-						n.Append("if ")
-						first := true
-						comment := ""
-						for _, charRange := range runeSet.Ranges {
-							if !charRange.Includes {
-								continue
-							}
-							if !first {
-								n.Append(" || ")
-							} else {
-								first = false
-							}
-							if charRange.Start == charRange.End {
-								comment += fmt.Sprintf("%s, ", automatons.FormatRune(charRange.Start))
-								n.Append(fmt.Sprintf("r == %d", charRange.Start))
-							} else {
-								comment += fmt.Sprintf("%s..%s, ", automatons.FormatRune(charRange.Start), automatons.FormatRune(charRange.End))
-								n.Append(fmt.Sprintf("r >= %d && r <= %d", charRange.Start, charRange.End))
-							}
-						}
-						n.AppendLine(fmt.Sprintf(" { // %s", comment))
-						n.Indent(func(n generator.Node) {
-							n.AppendLine(fmt.Sprintf("state = %d", target))
-						})
-						n.Append("} else ")
-					}
-					n.AppendLine("{")
-					n.Indent(func(n generator.Node) {
-						n.AppendLine("break loop")
-					})
-					n.AppendLine("}")
 				})
 			}
 			n.AppendLine("default:")

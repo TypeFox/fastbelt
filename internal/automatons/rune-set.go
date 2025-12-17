@@ -9,6 +9,16 @@ const MaxRune = 0x10FFFF
 const MinAscii = 0x20
 const MaxAscii = 0x7E
 
+func FormatInt(r rune) string {
+	intStr := ""
+	if r >= 0 && r <= 0xff {
+		intStr = fmt.Sprintf("0x%02X", r)
+	} else {
+		intStr = fmt.Sprintf("0x%04X", r)
+	}
+	return intStr
+}
+
 func FormatRune(r rune) string {
 	runeStr := ""
 	if r == '\'' {
