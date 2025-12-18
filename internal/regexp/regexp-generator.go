@@ -145,7 +145,7 @@ func (r *RegexpImpl) GenerateRegExp() generator.Node {
 		n.AppendLine("index := 0")
 		n.AppendLine("loop: for index < length {")
 		n.Indent(func(n generator.Node) {
-			n.AppendLine("r := rune(input[index])")
+			n.AppendLine("r, runeSize := utf8.DecodeRuneInString(input[index:])")
 			n.AppendLine("switch state {")
 			transitions := r.dfa.TransitionsBySource
 
@@ -173,7 +173,7 @@ func (r *RegexpImpl) GenerateRegExp() generator.Node {
 				n.AppendLine("break loop")
 			})
 			n.AppendLine("}")
-			n.AppendLine("index++")
+			n.AppendLine("index += runeSize")
 			n.AppendLine("if accepted[state] {")
 			n.Indent(func(n generator.Node) {
 				n.AppendLine("acceptedIndex = index")
