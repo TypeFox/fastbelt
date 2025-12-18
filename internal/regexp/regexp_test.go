@@ -2,6 +2,8 @@ package regexp
 
 import (
 	"testing"
+
+	"typefox.dev/fastbelt/internal/automatons"
 )
 
 func checkRegexp(regexp Regexp, input string, expected []int) {
@@ -10,13 +12,9 @@ func checkRegexp(regexp Regexp, input string, expected []int) {
 		panic("Location mismatch")
 	}
 	if loc != nil && expected != nil {
-		if len(loc) != len(expected) {
-			panic("Location length mismatch")
-		}
+		automatons.Expect(len(loc)).ToEqual(len(expected))
 		for i := range loc {
-			if loc[i] != expected[i] {
-				panic("Location value mismatch")
-			}
+			automatons.Expect(loc[i]).ToEqual(expected[i])
 		}
 	}
 }
@@ -43,32 +41,20 @@ func TestStar(t *testing.T) {
 
 func TestEmail(t *testing.T) {
 	regexp := MustCompile(`[\w\.+-]+@[\w\.-]+\.[\w\.-]+`)
-	loc := regexp.FindStringIndex("a.b@c.de")
-	if loc[0] != 0 || loc[1] != 8 {
-		panic("TestEmail failed")
-	}
+	checkRegexp(regexp, "a.b@c.de", []int{0, 8})
 }
 
 func TestIP(t *testing.T) {
 	regexp := MustCompile(`(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9])`)
-	loc := regexp.FindStringIndex("255.241.123.10")
-	if loc == nil || loc[0] != 0 || loc[1] != 14 {
-		panic("TestIP failed")
-	}
+	checkRegexp(regexp, "255.241.123.10", []int{0, 14})
 }
 
 func TestWhitespace(t *testing.T) {
 	regexp := MustCompile(`[ \n\r\t]+`)
-	loc := regexp.FindStringIndex(" ")
-	if loc == nil || loc[0] != 0 || loc[1] != 1 {
-		panic("TestWhitespace failed")
-	}
+	checkRegexp(regexp, " ", []int{0, 1})
 }
 
 func TestRegexpLiteral(t *testing.T) {
 	regexp := MustCompile("/([^\\r\\n\\[\\/\\\\]|\\\\.|\\[([^\\r\\n\\]\\\\]|\\\\.)*\\])+/")
-	loc := regexp.FindStringIndex("/github.com/")
-	if loc == nil || loc[0] != 0 || loc[1] != 12 {
-		panic("TestRegexpLiteral failed")
-	}
+	checkRegexp(regexp, "/github.com/", []int{0, 12})
 }
