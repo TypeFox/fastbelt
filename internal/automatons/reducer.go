@@ -1,6 +1,9 @@
 package automatons
 
-import "fmt"
+import (
+	"fmt"
+	"unicode/utf8"
+)
 
 type ReducerState struct {
 	State       int
@@ -41,7 +44,7 @@ func (nfa NFA) Step(state ReducerState) (ReducerState, error) {
 		}, nil
 	}
 
-	rn := rune(state.Input[state.Index])
+	r, runeSize := utf8.DecodeRuneInString(state.Input[state.Index:])
 	transitions := nfa.TransitionsBySource
 	bySource := transitions[state.State]
 	if bySource == nil {
@@ -53,7 +56,7 @@ func (nfa NFA) Step(state ReducerState) (ReducerState, error) {
 			Halted:      true,
 		}, nil
 	}
-	nextStates := bySource.GetRuneValues(rn)
+	nextStates := bySource.GetRuneValues(r)
 	if nextStates == nil || len(*nextStates) == 0 {
 		return ReducerState{
 			State:       state.State,
@@ -68,7 +71,7 @@ func (nfa NFA) Step(state ReducerState) (ReducerState, error) {
 	}
 	// For DFA, there should be exactly one next state
 	nextState := (*nextStates)[0]
-	nextIndex := state.Index + 1
+	nextIndex := state.Index + runeSize
 	acceptedIdx := state.AcceptedIdx
 	if nfa.AcceptingStates[nextState] {
 		acceptedIdx = nextIndex

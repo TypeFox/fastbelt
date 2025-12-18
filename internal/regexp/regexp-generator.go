@@ -11,16 +11,20 @@ import (
 func GenerateTransitions_UsingBranching(bySource *automatons.RuneRangeTargetsMapping) generator.Node {
 	n := generator.NewNode()
 	targets := make(map[int]automatons.RuneSet)
+	keys := make([]int, 0)
 	for transition := range bySource.All() {
 		target := transition.Values[0]
 		runeSet, exists := targets[target]
 		if !exists {
 			runeSet = *automatons.NewRuneSet_Empty()
+			keys = append(keys, target)
 		}
 		runeSet.AddRange(transition.Range.Start, transition.Range.End)
 		targets[target] = runeSet
 	}
-	for target, runeSet := range targets {
+	sort.Ints(keys)
+	for _, target := range keys {
+		runeSet := targets[target]
 		n.Append("if ")
 		first := true
 		comment := ""

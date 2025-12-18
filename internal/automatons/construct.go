@@ -195,7 +195,6 @@ func (ck *ConstructionKit) Complement(automaton *NFA) *NFA {
 // IntersectNFA creates an NFA that matches the intersection of two automata
 // Uses De Morgan's law: A ∩ B = ¬(¬A ∪ ¬B)
 func (ck *ConstructionKit) Intersect(a, b *NFA) *NFA {
-	// Get complements
 	notA := ck.Complement(a)
 	notB := ck.Complement(b)
 	notAOrB := ck.Alternate(notA, notB)

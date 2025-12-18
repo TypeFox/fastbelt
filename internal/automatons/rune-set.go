@@ -65,12 +65,12 @@ func NewRuneSet_Rune(r rune) *RuneSet {
 }
 
 func NewRuneSet_Range(start, end rune) *RuneSet {
-	middle := RuneRange{Start: start, End: end, Includes: true}
-	ranges := make([]RuneRange, 1)
+	ranges := make([]RuneRange, 0)
 	if start-1 >= 0 {
 		left := RuneRange{Start: 0, End: start - 1, Includes: false}
 		ranges = append(ranges, left)
 	}
+	middle := RuneRange{Start: start, End: end, Includes: true}
 	ranges = append(ranges, middle)
 	if end+1 <= MaxRune {
 		right := RuneRange{Start: end + 1, End: MaxRune, Includes: false}
