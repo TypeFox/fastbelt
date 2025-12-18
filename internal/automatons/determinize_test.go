@@ -2,6 +2,8 @@ package automatons
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // Helper function to create a simple NFA for testing
@@ -82,13 +84,13 @@ func TestDeterminizeSimpleNFA(t *testing.T) {
 
 	// The DFA should have the same number of states as the original NFA
 	// since it's already deterministic
-	Expect(dfa.StateCount).ToEqual(nfa.StateCount)
+	assert.Equal(t, nfa.StateCount, dfa.StateCount)
 
 	// Check that start state is set
-	Expect(dfa.StartState).ToBeGreaterThanOrEqual(0)
+	assert.GreaterOrEqual(t, dfa.StartState, 0)
 
 	// Check that there are accepting states
-	Expect(len(dfa.AcceptingStates)).ToEqual(1)
+	assert.Equal(t, 1, len(dfa.AcceptingStates))
 }
 
 func TestDeterminizeNFAWithEpsilons(t *testing.T) {
@@ -96,14 +98,14 @@ func TestDeterminizeNFAWithEpsilons(t *testing.T) {
 	dfa := nfa.Determinize()
 
 	// Check that start state is set
-	Expect(dfa.StartState).ToBeGreaterThanOrEqual(0)
+	assert.GreaterOrEqual(t, dfa.StartState, 0)
 
 	// Check that there are accepting states
-	Expect(len(dfa.AcceptingStates)).ToBeGreaterThanOrEqual(1)
+	assert.GreaterOrEqual(t, len(dfa.AcceptingStates), 1)
 
 	// The DFA should have fewer or equal states than the original NFA
 	// since epsilon closures can combine states
-	Expect(dfa.StateCount).ToBeLesserThan(nfa.StateCount)
+	assert.Less(t, dfa.StateCount, nfa.StateCount)
 }
 
 func TestDeterminizeNonDeterministicNFA(t *testing.T) {
@@ -111,13 +113,13 @@ func TestDeterminizeNonDeterministicNFA(t *testing.T) {
 	dfa := nfa.Determinize()
 
 	// Check that start state is set
-	Expect(dfa.StartState).ToBeGreaterThanOrEqual(0)
+	assert.GreaterOrEqual(t, dfa.StartState, 0)
 
 	// Check that there are accepting states
-	Expect(len(dfa.AcceptingStates)).ToBeGreaterThanOrEqual(1)
+	assert.GreaterOrEqual(t, len(dfa.AcceptingStates), 1)
 
 	// The DFA might have more states due to the subset construction
-	Expect(dfa.StateCount).ToBeGreaterThanOrEqual(1)
+	assert.GreaterOrEqual(t, dfa.StateCount, 1)
 }
 
 func TestDeterminizePreservesLanguage(t *testing.T) {
@@ -137,8 +139,8 @@ func TestDeterminizePreservesLanguage(t *testing.T) {
 	nfa := builder.Build()
 	dfa := nfa.Determinize()
 
-	Expect(dfa.StartState).ToBeGreaterThanOrEqual(0)
-	Expect(len(dfa.AcceptingStates)).ToBeGreaterThanOrEqual(1)
+	assert.GreaterOrEqual(t, dfa.StartState, 0)
+	assert.GreaterOrEqual(t, len(dfa.AcceptingStates), 1)
 }
 
 func TestDeterminizationCorrectness(t *testing.T) {
@@ -180,9 +182,9 @@ func TestDeterminizationCorrectness(t *testing.T) {
 	dfa := nfa.Determinize()
 
 	// Verify basic properties
-	Expect(dfa.StartState).ToBeGreaterThanOrEqual(0)
-	Expect(len(dfa.AcceptingStates)).ToBeGreaterThanOrEqual(1)
-	Expect(dfa.StateCount).ToBeGreaterThan(0)
+	assert.GreaterOrEqual(t, dfa.StartState, 0)
+	assert.GreaterOrEqual(t, len(dfa.AcceptingStates), 1)
+	assert.Greater(t, dfa.StateCount, 0)
 
 	// Test that DFA has deterministic transitions (each state should have
 	// at most one transition per character)

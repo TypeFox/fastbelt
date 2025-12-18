@@ -22,9 +22,9 @@ func FormatInt(r rune) string {
 func FormatRune(r rune) string {
 	runeStr := ""
 	if r == '\'' {
-		runeStr = "'\\'"
+		runeStr = "'\\''"
 	} else if r == '\\' {
-		runeStr = "'\\\\'"
+		runeStr = "'\\'"
 	} else if r >= MinAscii && r <= MaxAscii {
 		runeStr = "'" + string(r) + "'"
 	} else if r <= 0xffff {

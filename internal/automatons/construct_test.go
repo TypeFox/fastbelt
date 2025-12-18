@@ -2,6 +2,8 @@ package automatons
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var kit = NewConstructionKit()
@@ -50,16 +52,16 @@ func TestConstruct_Consume(t *testing.T) {
 			nfa := kit.Consume(tt.charset)
 
 			// Test basic properties
-			Expect(nfa.StateCount).ToBeGreaterThanOrEqual(2)
-			Expect(len(nfa.AcceptingStates)).ToEqual(1)
+			assert.GreaterOrEqual(t, nfa.StateCount, 2)
+			assert.Equal(t, 1, len(nfa.AcceptingStates))
 
 			// Test character matching by checking transitions
 			startState := nfa.StartState
 			transitions := nfa.TransitionsBySource[startState]
-			Expect(transitions).ToNotBeNil()
+			assert.NotNil(t, transitions)
 
 			hasMatch := transitions.Contains(tt.testRune)
-			Expect(hasMatch).ToEqual(tt.expectMatch)
+			assert.Equal(t, tt.expectMatch, hasMatch)
 		})
 	}
 }
@@ -106,16 +108,16 @@ func TestConstruct_Alternate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			nfa := kit.Alternate(tt.automata...)
 
-			Expect(nfa.StateCount).ToBeGreaterThan(0)
-			Expect(len(nfa.AcceptingStates)).ToBeGreaterThan(0)
+			assert.Greater(t, nfa.StateCount, 0)
+			assert.Greater(t, len(nfa.AcceptingStates), 0)
 		})
 	}
 
 	// Test error case
 	t.Run("empty alternation", func(t *testing.T) {
-		Expect(func() {
+		assert.Panics(t, func() {
 			kit.Alternate()
-		}).ToPanic()
+		})
 	})
 }
 
@@ -148,19 +150,19 @@ func TestConstruct_Concat(t *testing.T) {
 			nfa := kit.Concat(tt.automata...)
 
 			// Basic validation
-			Expect(nfa.StateCount).ToBeGreaterThan(0)
-			Expect(len(nfa.AcceptingStates)).ToEqual(1)
+			assert.Greater(t, nfa.StateCount, 0)
+			assert.Equal(t, 1, len(nfa.AcceptingStates))
 
 			// For concatenation, we expect a linear structure with epsilon transitions
-			Expect(nfa.StartState).ToBeGreaterThanOrEqual(0)
+			assert.GreaterOrEqual(t, nfa.StartState, 0)
 		})
 	}
 
 	// Test error case
 	t.Run("empty concatenation", func(t *testing.T) {
-		Expect(func() {
+		assert.Panics(t, func() {
 			kit.Concat()
-		}).ToPanic()
+		})
 	})
 }
 
@@ -229,16 +231,16 @@ func TestConstruct_Repeat(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.expectError {
-				Expect(func() {
+				assert.Panics(t, func() {
 					kit.Repeat(tt.automaton, tt.min, tt.max)
-				}).ToPanic()
+				})
 				return
 			}
 
 			nfa := kit.Repeat(tt.automaton, tt.min, tt.max)
 			// Basic validation
-			Expect(nfa.StateCount).ToBeGreaterThan(0)
-			Expect(len(nfa.AcceptingStates)).ToBeGreaterThan(0)
+			assert.Greater(t, nfa.StateCount, 0)
+			assert.Greater(t, len(nfa.AcceptingStates), 0)
 		})
 	}
 }
@@ -249,7 +251,7 @@ func TestConstruct_Complement(t *testing.T) {
 	nfa := kit.Complement(charA)
 
 	// Basic validation
-	Expect(nfa.StateCount).ToBeGreaterThan(0)
+	assert.Greater(t, nfa.StateCount, 0)
 
 	// The complement should have the same structure but different accepting states
 	originalAccepting := charA.AcceptingStates
@@ -285,12 +287,12 @@ func TestConstruct_IntersectNFA(t *testing.T) {
 	nfa := kit.Intersect(rangeAB, rangeBC)
 
 	// Basic validation
-	Expect(nfa.StateCount).ToBeGreaterThan(0)
+	assert.Greater(t, nfa.StateCount, 0)
 
 	// The intersection of [a-b] and [b-c] should match only 'b'
 	startState := nfa.StartState
 	transitions := nfa.TransitionsBySource[startState]
-	Expect(transitions.Contains('b')).ToEqual(true)
+	assert.Equal(t, true, transitions.Contains('b'))
 }
 
 func TestConstruct_PackageLevelFunctions(t *testing.T) {

@@ -2,6 +2,8 @@ package automatons
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNFABuilderImpl_AddState(t *testing.T) {
@@ -11,15 +13,9 @@ func TestNFABuilderImpl_AddState(t *testing.T) {
 	state1 := builder.AddState()
 	state2 := builder.AddState()
 
-	if state0 != 0 {
-		t.Errorf("Expected first state to be 0, got %d", state0)
-	}
-	if state1 != 1 {
-		t.Errorf("Expected second state to be 1, got %d", state1)
-	}
-	if state2 != 2 {
-		t.Errorf("Expected third state to be 2, got %d", state2)
-	}
+	assert.Equal(t, 0, state0)
+	assert.Equal(t, 1, state1)
+	assert.Equal(t, 2, state2)
 }
 
 func TestNFABuilderImpl_AddTransitionValidation(t *testing.T) {
@@ -28,22 +24,22 @@ func TestNFABuilderImpl_AddTransitionValidation(t *testing.T) {
 	s1 := builder.AddState()
 	chars := NewRuneSetRune('a')
 
-	Expect(func() {
+	assert.Panics(t, func() {
 		builder.AddTransitionForRuneSet(-1, s1, chars)
-	}).ToPanic()
+	})
 
-	Expect(func() {
+	assert.Panics(t, func() {
 		builder.AddTransitionForRuneSet(2, s1, chars)
-	}).ToPanic()
+	})
 
 	// Test invalid target state
-	Expect(func() {
+	assert.Panics(t, func() {
 		builder.AddTransitionForRuneSet(s0, -1, chars)
-	}).ToPanic()
+	})
 
-	Expect(func() {
+	assert.Panics(t, func() {
 		builder.AddTransitionForRuneSet(s0, 2, chars)
-	}).ToPanic()
+	})
 
 	builder.AddTransitionForRuneSet(s0, s1, chars)
 }
@@ -62,9 +58,7 @@ func TestNFABuilderImpl_AddTransitions(t *testing.T) {
 	// Verify the transition exists
 	transitionsBySource := nfa.TransitionsBySource
 	targets, exists := transitionsBySource[s0]
-	if !exists {
-		t.Fatal("No transitions found for source state")
-	}
+	assert.True(t, exists, "Expected transitions for source state not found")
 
 	// Check if the transition contains our character and target
 	found := false
@@ -82,27 +76,25 @@ func TestNFABuilderImpl_AddTransitions(t *testing.T) {
 		}
 	}
 
-	if !found {
-		t.Error("Expected transition from s0 to s1 with character 'a' not found")
-	}
+	assert.True(t, found, "Expected transition from s0 to s1 with character 'a' not found")
 }
 
 func TestNFABuilderImpl_SetStartStateValidation(t *testing.T) {
 	builder := NewNFABuilder()
 
-	Expect(func() {
+	assert.Panics(t, func() {
 		builder.SetStartState(0)
-	}).ToPanic()
+	})
 
 	builder.AddState()
 
-	Expect(func() {
+	assert.Panics(t, func() {
 		builder.SetStartState(-1)
-	}).ToPanic()
+	})
 
-	Expect(func() {
+	assert.Panics(t, func() {
 		builder.SetStartState(1)
-	}).ToPanic()
+	})
 
 	builder.SetStartState(0)
 }
@@ -111,20 +103,20 @@ func TestNFABuilderImpl_AcceptStateValidation(t *testing.T) {
 	builder := NewNFABuilder()
 
 	// Test accepting state with no states
-	Expect(func() {
+	assert.Panics(t, func() {
 		builder.AcceptState(0)
-	}).ToPanic()
+	})
 
 	builder.AddState()
 
 	// Test invalid accepting state
-	Expect(func() {
+	assert.Panics(t, func() {
 		builder.AcceptState(-1)
-	}).ToPanic()
+	})
 
-	Expect(func() {
+	assert.Panics(t, func() {
 		builder.AcceptState(1)
-	}).ToPanic()
+	})
 
 	builder.AcceptState(0)
 }
@@ -132,15 +124,15 @@ func TestNFABuilderImpl_AcceptStateValidation(t *testing.T) {
 func TestNFABuilderImpl_BuildValidation(t *testing.T) {
 	builder := NewNFABuilder()
 
-	Expect(func() {
+	assert.Panics(t, func() {
 		builder.Build()
-	}).ToPanic()
+	})
 
 	builder.AddState()
 
-	Expect(func() {
+	assert.Panics(t, func() {
 		builder.Build()
-	}).ToPanic()
+	})
 }
 
 func TestNFABuilderImpl_BuildValidNFA(t *testing.T) {
@@ -156,10 +148,10 @@ func TestNFABuilderImpl_BuildValidNFA(t *testing.T) {
 
 	nfa := builder.Build()
 
-	Expect(nfa.StartState).ToEqual(s0)
-	Expect(nfa.StateCount).ToEqual(2)
-	Expect(bool(nfa.AcceptingStates[s1])).ToEqual(true)
-	Expect(nfa.TransitionsBySource[s0] != nil).ToEqual(true)
+	assert.Equal(t, s0, nfa.StartState)
+	assert.Equal(t, 2, nfa.StateCount)
+	assert.True(t, nfa.AcceptingStates[s1])
+	assert.NotNil(t, nfa.TransitionsBySource[s0])
 }
 
 func TestNFABuilderImpl_CopyFrom(t *testing.T) {
@@ -183,7 +175,7 @@ func TestNFABuilderImpl_CopyFrom(t *testing.T) {
 	}
 	nfa2 := builder2.Build()
 
-	Expect(nfa2.StateCount).ToEqual(nfa1.StateCount)
-	Expect(len(nfa2.AcceptingStates)).ToEqual(len(nfa1.AcceptingStates))
-	Expect(len(nfa2.TransitionsBySource)).ToEqual(len(nfa1.TransitionsBySource))
+	assert.Equal(t, nfa1.StateCount, nfa2.StateCount)
+	assert.Equal(t, len(nfa1.AcceptingStates), len(nfa2.AcceptingStates))
+	assert.Equal(t, len(nfa1.TransitionsBySource), len(nfa2.TransitionsBySource))
 }

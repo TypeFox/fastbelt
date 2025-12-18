@@ -3,17 +3,19 @@ package automatons
 import (
 	"slices"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRuneRange_IncludesSingleChar(t *testing.T) {
 	r := NewRuneRange('A', 'A', true)
 
-	Expect(r.Start).ToEqual('A')
-	Expect(r.End).ToEqual('A')
-	Expect(r.Includes).ToEqual(true)
-	Expect(r.Contains('A')).ToEqual(true)
-	Expect(r.Contains('@')).ToEqual(false)
-	Expect(r.Contains('B')).ToEqual(false)
+	assert.Equal(t, 'A', r.Start)
+	assert.Equal(t, 'A', r.End)
+	assert.Equal(t, true, r.Includes)
+	assert.Equal(t, true, r.Contains('A'))
+	assert.Equal(t, false, r.Contains('@'))
+	assert.Equal(t, false, r.Contains('B'))
 
 	// Test iterator
 	var collected []rune
@@ -21,20 +23,20 @@ func TestRuneRange_IncludesSingleChar(t *testing.T) {
 		collected = append(collected, ch)
 	}
 	expected := []rune{'A'}
-	Expect(slices.Equal(collected, expected)).ToEqual(true)
-	Expect(r.String()).ToEqual("[A-A]")
+	assert.True(t, slices.Equal(collected, expected))
+	assert.Equal(t, "[A-A]", r.String())
 }
 
 func TestRuneRange_IncludesRange(t *testing.T) {
 	r := NewRuneRange('A', 'Z', true)
 
-	Expect(r.Start).ToEqual('A')
-	Expect(r.End).ToEqual('Z')
-	Expect(r.Includes).ToEqual(true)
-	Expect(r.Contains('A')).ToEqual(true)
-	Expect(r.Contains('Z')).ToEqual(true)
-	Expect(r.Contains('@')).ToEqual(false)
-	Expect(r.Contains('[')).ToEqual(false)
+	assert.Equal(t, 'A', r.Start)
+	assert.Equal(t, 'Z', r.End)
+	assert.Equal(t, true, r.Includes)
+	assert.Equal(t, true, r.Contains('A'))
+	assert.Equal(t, true, r.Contains('Z'))
+	assert.Equal(t, false, r.Contains('@'))
+	assert.Equal(t, false, r.Contains('['))
 
 	// Test iterator
 	var collected []rune
@@ -46,19 +48,19 @@ func TestRuneRange_IncludesRange(t *testing.T) {
 		expected = append(expected, i)
 	}
 
-	Expect(slices.Equal(collected, expected)).ToEqual(true)
-	Expect(r.String()).ToEqual("[A-Z]")
+	assert.True(t, slices.Equal(collected, expected))
+	assert.Equal(t, "[A-Z]", r.String())
 }
 
 func TestRuneRange_ExcludesSingleChar(t *testing.T) {
 	r := NewRuneRange('A', 'A', false)
 
-	Expect(r.Start).ToEqual('A')
-	Expect(r.End).ToEqual('A')
-	Expect(r.Includes).ToEqual(false)
-	Expect(r.Contains('A')).ToEqual(true)
-	Expect(r.Contains('@')).ToEqual(false)
-	Expect(r.Contains('B')).ToEqual(false)
+	assert.Equal(t, 'A', r.Start)
+	assert.Equal(t, 'A', r.End)
+	assert.Equal(t, false, r.Includes)
+	assert.Equal(t, true, r.Contains('A'))
+	assert.Equal(t, false, r.Contains('@'))
+	assert.Equal(t, false, r.Contains('B'))
 
 	// Test iterator
 	var collected []rune
@@ -66,20 +68,20 @@ func TestRuneRange_ExcludesSingleChar(t *testing.T) {
 		collected = append(collected, ch)
 	}
 	expected := []rune{'A'}
-	Expect(slices.Equal(collected, expected)).ToEqual(true)
-	Expect(r.String()).ToEqual("[^A-A]")
+	assert.True(t, slices.Equal(collected, expected))
+	assert.Equal(t, "[^A-A]", r.String())
 }
 
 func TestRuneRange_ExcludesRange(t *testing.T) {
 	r := NewRuneRange('A', 'Z', false)
 
-	Expect(r.Start).ToEqual('A')
-	Expect(r.End).ToEqual('Z')
-	Expect(r.Includes).ToEqual(false)
-	Expect(r.Contains('A')).ToEqual(true)
-	Expect(r.Contains('Z')).ToEqual(true)
-	Expect(r.Contains('@')).ToEqual(false)
-	Expect(r.Contains('[')).ToEqual(false)
+	assert.Equal(t, 'A', r.Start)
+	assert.Equal(t, 'Z', r.End)
+	assert.Equal(t, false, r.Includes)
+	assert.Equal(t, true, r.Contains('A'))
+	assert.Equal(t, true, r.Contains('Z'))
+	assert.Equal(t, false, r.Contains('@'))
+	assert.Equal(t, false, r.Contains('['))
 
 	// Test iterator
 	var collected []rune
@@ -91,14 +93,14 @@ func TestRuneRange_ExcludesRange(t *testing.T) {
 		expected = append(expected, i)
 	}
 
-	Expect(slices.Equal(collected, expected)).ToEqual(true)
-	Expect(r.String()).ToEqual("[^A-Z]")
+	assert.True(t, slices.Equal(collected, expected))
+	assert.Equal(t, "[^A-Z]", r.String())
 }
 
 func TestRuneRange_InvalidRange(t *testing.T) {
-	Expect(func() {
+	assert.Panics(t, func() {
 		NewRuneRange('Z', 'A', true)
-	}).ToPanic()
+	})
 }
 
 func TestRuneRange_Equals(t *testing.T) {
@@ -107,7 +109,7 @@ func TestRuneRange_Equals(t *testing.T) {
 	range3 := NewRuneRange('A', 'Z', false)
 	range4 := NewRuneRange('B', 'Z', true)
 
-	Expect(range1.Equals(*range2)).ToEqual(true)
-	Expect(range1.Equals(*range3)).ToEqual(false)
-	Expect(range1.Equals(*range4)).ToEqual(false)
+	assert.True(t, range1.Equals(*range2))
+	assert.False(t, range1.Equals(*range3))
+	assert.False(t, range1.Equals(*range4))
 }

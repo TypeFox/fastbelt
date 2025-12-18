@@ -2,6 +2,8 @@ package automatons
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // TestConstruct_IntegrationExample demonstrates a complex example using multiple construction functions
@@ -27,13 +29,13 @@ func TestConstruct_IntegrationExample(t *testing.T) {
 	final := kit.Concat(aOrBStar, cPlus)
 
 	// Basic validation
-	Expect(final.StateCount).ToBeGreaterThan(0)
+	assert.Greater(t, final.StateCount, 0)
 
 	// Should have exactly one accepting state
-	Expect(len(final.AcceptingStates)).ToEqual(1)
+	assert.Equal(t, 1, len(final.AcceptingStates))
 
 	// Should have a valid start state
-	Expect(final.StartState).ToBeGreaterThanOrEqual(0)
+	assert.GreaterOrEqual(t, final.StartState, 0)
 }
 
 // TestConstruct_RegexLikePatterns tests common regex-like patterns
@@ -118,9 +120,9 @@ func TestConstruct_RegexLikePatterns(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			nfa := tt.builder()
-			Expect(nfa.StateCount).ToBeGreaterThan(0)
-			Expect(len(nfa.AcceptingStates)).ToBeGreaterThan(0)
-			Expect(nfa.StartState).ToBeGreaterThanOrEqual(0)
+			assert.Greater(t, nfa.StateCount, 0)
+			assert.Greater(t, len(nfa.AcceptingStates), 0)
+			assert.GreaterOrEqual(t, nfa.StartState, 0)
 		})
 	}
 }
@@ -150,8 +152,8 @@ func TestConstruct_SetOperations(t *testing.T) {
 	}
 
 	for _, nfa := range automata {
-		Expect(nfa.StateCount).ToBeGreaterThan(0)
-		Expect(len(nfa.AcceptingStates)).ToBeGreaterThan(0)
-		Expect(nfa.StartState).ToBeGreaterThanOrEqual(0)
+		assert.Greater(t, nfa.StateCount, 0)
+		assert.Greater(t, len(nfa.AcceptingStates), 0)
+		assert.GreaterOrEqual(t, nfa.StartState, 0)
 	}
 }

@@ -2,6 +2,8 @@ package automatons
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestContains(t *testing.T) {
@@ -9,10 +11,10 @@ func TestContains(t *testing.T) {
 	setAZ := NewRuneSetRange('a', 'z')
 	setCF := NewRuneSetRange('c', 'f')
 
-	Expect(setAZ.Contains(setCF)).ToEqual(true)
+	assert.Equal(t, true, setAZ.Contains(setCF))
 
 	// Test case: [c-f] does not contain [a-z]
-	Expect(setCF.Contains(setAZ)).ToEqual(false)
+	assert.Equal(t, false, setCF.Contains(setAZ))
 }
 
 func TestAdd(t *testing.T) {
@@ -21,9 +23,9 @@ func TestAdd(t *testing.T) {
 
 	set.Add(other)
 
-	Expect(set.IncludesRune('a') && set.IncludesRune('b') && set.IncludesRune('c')).ToEqual(true)
-	Expect(set.IncludesRune('x') && set.IncludesRune('y') && set.IncludesRune('z')).ToEqual(true)
-	Expect(set.IncludesRune('m')).ToEqual(false)
+	assert.Equal(t, true, set.IncludesRune('a') && set.IncludesRune('b') && set.IncludesRune('c'))
+	assert.Equal(t, true, set.IncludesRune('x') && set.IncludesRune('y') && set.IncludesRune('z'))
+	assert.Equal(t, false, set.IncludesRune('m'))
 }
 
 func TestRemove(t *testing.T) {
@@ -32,9 +34,9 @@ func TestRemove(t *testing.T) {
 
 	set.Remove(toRemove)
 
-	Expect(set.IncludesRune('a') && set.IncludesRune('l')).ToEqual(true)
-	Expect(set.IncludesRune('q') && set.IncludesRune('z')).ToEqual(true)
-	Expect(set.IncludesRune('m') || set.IncludesRune('n') || set.IncludesRune('o') || set.IncludesRune('p')).ToEqual(false)
+	assert.Equal(t, true, set.IncludesRune('a') && set.IncludesRune('l'))
+	assert.Equal(t, true, set.IncludesRune('q') && set.IncludesRune('z'))
+	assert.Equal(t, false, set.IncludesRune('m') || set.IncludesRune('n') || set.IncludesRune('o') || set.IncludesRune('p'))
 }
 
 func TestUnion(t *testing.T) {
@@ -43,9 +45,9 @@ func TestUnion(t *testing.T) {
 
 	result := Union(setAC, setXZ)
 
-	Expect(result.IncludesRune('a') && result.IncludesRune('b') && result.IncludesRune('c')).ToEqual(true)
-	Expect(result.IncludesRune('x') && result.IncludesRune('y') && result.IncludesRune('z')).ToEqual(true)
-	Expect(result.IncludesRune('m')).ToEqual(false)
+	assert.Equal(t, true, result.IncludesRune('a') && result.IncludesRune('b') && result.IncludesRune('c'))
+	assert.Equal(t, true, result.IncludesRune('x') && result.IncludesRune('y') && result.IncludesRune('z'))
+	assert.Equal(t, false, result.IncludesRune('m'))
 }
 
 func TestExcept(t *testing.T) {
@@ -54,9 +56,9 @@ func TestExcept(t *testing.T) {
 
 	result := Except(setAZ, setMP)
 
-	Expect(result.IncludesRune('a') && result.IncludesRune('l')).ToEqual(true)
-	Expect(result.IncludesRune('q') && result.IncludesRune('z')).ToEqual(true)
-	Expect(result.IncludesRune('m') || result.IncludesRune('n') || result.IncludesRune('o') || result.IncludesRune('p')).ToEqual(false)
+	assert.Equal(t, true, result.IncludesRune('a') && result.IncludesRune('l'))
+	assert.Equal(t, true, result.IncludesRune('q') && result.IncludesRune('z'))
+	assert.Equal(t, false, result.IncludesRune('m') || result.IncludesRune('n') || result.IncludesRune('o') || result.IncludesRune('p'))
 }
 
 func TestNegate(t *testing.T) {
@@ -64,8 +66,8 @@ func TestNegate(t *testing.T) {
 
 	result := Negate(setAC)
 
-	Expect(result.IncludesRune('a') || result.IncludesRune('b') || result.IncludesRune('c')).ToEqual(false)
-	Expect(result.IncludesRune('A') && result.IncludesRune('d') && result.IncludesRune('z')).ToEqual(true)
+	assert.Equal(t, false, result.IncludesRune('a') || result.IncludesRune('b') || result.IncludesRune('c'))
+	assert.Equal(t, true, result.IncludesRune('A') && result.IncludesRune('d') && result.IncludesRune('z'))
 }
 
 func TestIntersect(t *testing.T) {
@@ -75,8 +77,8 @@ func TestIntersect(t *testing.T) {
 	result := Intersect(setAM, setHZ)
 
 	// Intersection should be [h-m]
-	Expect(result.IncludesRune('h') && result.IncludesRune('i') && result.IncludesRune('m')).ToEqual(true)
-	Expect(result.IncludesRune('g') || result.IncludesRune('n')).ToEqual(false)
+	assert.Equal(t, true, result.IncludesRune('h') && result.IncludesRune('i') && result.IncludesRune('m'))
+	assert.Equal(t, false, result.IncludesRune('g') || result.IncludesRune('n'))
 }
 
 func TestUnionMultiple(t *testing.T) {
@@ -86,6 +88,6 @@ func TestUnionMultiple(t *testing.T) {
 
 	result := Union(setAC, setGI, setXZ)
 
-	Expect(result.IncludesRune('a') && result.IncludesRune('h') && result.IncludesRune('y')).ToEqual(true)
-	Expect(result.IncludesRune('d') || result.IncludesRune('m')).ToEqual(false)
+	assert.Equal(t, true, result.IncludesRune('a') && result.IncludesRune('h') && result.IncludesRune('y'))
+	assert.Equal(t, false, result.IncludesRune('d') || result.IncludesRune('m'))
 }

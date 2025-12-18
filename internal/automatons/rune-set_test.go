@@ -2,6 +2,8 @@ package automatons
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRuneSet_Add(t *testing.T) {
@@ -9,8 +11,8 @@ func TestRuneSet_Add(t *testing.T) {
 		c := rune(123)
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRune(c)
-		Expect(runeSet.Length()).ToEqual(1)
-		Expect(runeSet.IncludesRune(c)).ToEqual(true)
+		assert.Equal(t, 1, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRune(c))
 	})
 
 	t.Run("EmptySet_AddCharacterRange_Success", func(t *testing.T) {
@@ -18,18 +20,18 @@ func TestRuneSet_Add(t *testing.T) {
 		cTo := rune(125)
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange(cFrom, cTo)
-		Expect(runeSet.Length()).ToEqual(3)
-		Expect(runeSet.IncludesRange(cFrom, cTo)).ToEqual(true)
-		Expect(runeSet.IncludesRune(cFrom)).ToEqual(true)
-		Expect(runeSet.IncludesRune(cFrom + 1)).ToEqual(true)
-		Expect(runeSet.IncludesRune(cFrom + 2)).ToEqual(true)
+		assert.Equal(t, 3, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRange(cFrom, cTo))
+		assert.Equal(t, true, runeSet.IncludesRune(cFrom))
+		assert.Equal(t, true, runeSet.IncludesRune(cFrom+1))
+		assert.Equal(t, true, runeSet.IncludesRune(cFrom+2))
 	})
 
 	t.Run("EmptySet_AddBadCharacterRange_Fail", func(t *testing.T) {
-		Expect(func() {
+		assert.Panics(t, func() {
 			runeSet := NewRuneSetEmpty()
 			runeSet.AddRange(125, 123)
-		}).ToPanic()
+		})
 	})
 
 	t.Run("OneCharSet_AddSingleCharacterSame_Success", func(t *testing.T) {
@@ -37,8 +39,8 @@ func TestRuneSet_Add(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRune(c)
 		runeSet.AddRune(c)
-		Expect(runeSet.Length()).ToEqual(1)
-		Expect(runeSet.IncludesRune(c)).ToEqual(true)
+		assert.Equal(t, 1, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRune(c))
 	})
 
 	t.Run("OneCharSet_AddSingleCharacterBeside_Success", func(t *testing.T) {
@@ -47,8 +49,8 @@ func TestRuneSet_Add(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRune(c1)
 		runeSet.AddRune(c2)
-		Expect(runeSet.Length()).ToEqual(2)
-		Expect(runeSet.IncludesRange(c1, c2)).ToEqual(true)
+		assert.Equal(t, 2, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRange(c1, c2))
 	})
 
 	t.Run("OneCharSet_AddSingleCharacterWithGap_Success", func(t *testing.T) {
@@ -57,10 +59,10 @@ func TestRuneSet_Add(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRune(c1)
 		runeSet.AddRune(c2)
-		Expect(runeSet.Length()).ToEqual(2)
-		Expect(runeSet.IncludesRange(c1, c2)).ToEqual(false)
-		Expect(runeSet.IncludesRune(c1)).ToEqual(true)
-		Expect(runeSet.IncludesRune(c2)).ToEqual(true)
+		assert.Equal(t, 2, runeSet.Length())
+		assert.Equal(t, false, runeSet.IncludesRange(c1, c2))
+		assert.Equal(t, true, runeSet.IncludesRune(c1))
+		assert.Equal(t, true, runeSet.IncludesRune(c2))
 	})
 
 	t.Run("OneCharSet_AddCharacterRangeWithin_Success", func(t *testing.T) {
@@ -71,8 +73,8 @@ func TestRuneSet_Add(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange(cFrom1, cTo1)
 		runeSet.AddRange(cFrom2, cTo2)
-		Expect(runeSet.Length()).ToEqual(6)
-		Expect(runeSet.IncludesRange(cFrom1, cTo1)).ToEqual(true)
+		assert.Equal(t, 6, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRange(cFrom1, cTo1))
 	})
 
 	t.Run("OneCharSet_AddCharacterRangeOverlapping_Success", func(t *testing.T) {
@@ -83,91 +85,91 @@ func TestRuneSet_Add(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange(cFrom1, cTo1)
 		runeSet.AddRange(cFrom2, cTo2)
-		Expect(runeSet.Length()).ToEqual(6)
-		Expect(runeSet.IncludesRange(cFrom1, cTo1)).ToEqual(true)
-		Expect(runeSet.IncludesRange(cFrom2, cTo2)).ToEqual(true)
+		assert.Equal(t, 6, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRange(cFrom1, cTo1))
+		assert.Equal(t, true, runeSet.IncludesRange(cFrom2, cTo2))
 	})
 
 	t.Run("ThreeCharsSet_AddSingleCharacterAlreadyExists_Success", func(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRune('b')
-		Expect(runeSet.Length()).ToEqual(3)
-		Expect(runeSet.IncludesRange('a', 'c')).ToEqual(true)
+		assert.Equal(t, 3, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRange('a', 'c'))
 	})
 
 	t.Run("ThreeCharsSet_AddSingleCharacterBeside_Success", func(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRune('d')
-		Expect(runeSet.Length()).ToEqual(4)
-		Expect(runeSet.IncludesRange('a', 'd')).ToEqual(true)
+		assert.Equal(t, 4, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRange('a', 'd'))
 	})
 
 	t.Run("ThreeCharsSet_AddSingleCharacterWithGap_Success", func(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRune('e')
-		Expect(runeSet.Length()).ToEqual(4)
-		Expect(runeSet.IncludesRange('a', 'e')).ToEqual(false)
-		Expect(runeSet.IncludesRune('e')).ToEqual(true)
+		assert.Equal(t, 4, runeSet.Length())
+		assert.Equal(t, false, runeSet.IncludesRange('a', 'e'))
+		assert.Equal(t, true, runeSet.IncludesRune('e'))
 	})
 
 	t.Run("ThreeCharsSet_AddCharacterRangeWithin_Success", func(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRange('b', 'c')
-		Expect(runeSet.Length()).ToEqual(3)
-		Expect(runeSet.IncludesRange('a', 'c')).ToEqual(true)
+		assert.Equal(t, 3, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRange('a', 'c'))
 	})
 
 	t.Run("ThreeCharsSet_AddCharacterRangeOverlapping_Success", func(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRange('b', 'd')
-		Expect(runeSet.Length()).ToEqual(4)
-		Expect(runeSet.IncludesRange('a', 'd')).ToEqual(true)
+		assert.Equal(t, 4, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRange('a', 'd'))
 	})
 
 	t.Run("ThreeCharsSet_AddCharacterRangeBadRange_Fail", func(t *testing.T) {
-		Expect(func() {
+		assert.Panics(t, func() {
 			runeSet := NewRuneSetEmpty()
 			runeSet.AddRange('a', 'c')
 			runeSet.AddRange('d', 'b')
-		}).ToPanic()
+		})
 	})
 
 	t.Run("ThreeCharsSet_AddCharacterRangeOverlappingBothSides_Success", func(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('d', 'f')
 		runeSet.AddRange('b', 'h')
-		Expect(runeSet.Length()).ToEqual(7)
-		Expect(runeSet.IncludesRange('b', 'h')).ToEqual(true)
+		assert.Equal(t, 7, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRange('b', 'h'))
 	})
 
 	t.Run("ThreeCharsSet_AddCharacterRangeCoveringAll_Success", func(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('d', 'f')
 		runeSet.AddRange('a', 'z')
-		Expect(runeSet.Length()).ToEqual(26)
-		Expect(runeSet.IncludesRange('a', 'z')).ToEqual(true)
+		assert.Equal(t, 26, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRange('a', 'z'))
 	})
 
 	t.Run("ThreeCharsSet_AddCharacterRangeBeside_Success", func(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRange('d', 'f')
-		Expect(runeSet.Length()).ToEqual(6)
-		Expect(runeSet.IncludesRange('a', 'f')).ToEqual(true)
+		assert.Equal(t, 6, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRange('a', 'f'))
 	})
 
 	t.Run("ThreeCharsSet_AddCharacterRangeWithGap_Success", func(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRange('e', 'g')
-		Expect(runeSet.Length()).ToEqual(6)
-		Expect(runeSet.IncludesRange('a', 'g')).ToEqual(false)
-		Expect(runeSet.IncludesRange('e', 'g')).ToEqual(true)
+		assert.Equal(t, 6, runeSet.Length())
+		assert.Equal(t, false, runeSet.IncludesRange('a', 'g'))
+		assert.Equal(t, true, runeSet.IncludesRange('e', 'g'))
 	})
 
 	t.Run("TwoThreeGroupsCharsSet_AddCharacterFillGap_Success", func(t *testing.T) {
@@ -175,8 +177,8 @@ func TestRuneSet_Add(t *testing.T) {
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRange('e', 'g')
 		runeSet.AddRune('d')
-		Expect(runeSet.Length()).ToEqual(7)
-		Expect(runeSet.IncludesRange('a', 'g')).ToEqual(true)
+		assert.Equal(t, 7, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRange('a', 'g'))
 	})
 
 	t.Run("TwoThreeGroupsCharsSet_AddCharacterRangeFillGap_Success", func(t *testing.T) {
@@ -184,8 +186,8 @@ func TestRuneSet_Add(t *testing.T) {
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRange('g', 'i')
 		runeSet.AddRange('d', 'f')
-		Expect(runeSet.Length()).ToEqual(9)
-		Expect(runeSet.IncludesRange('a', 'i')).ToEqual(true)
+		assert.Equal(t, 9, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRange('a', 'i'))
 	})
 }
 
@@ -193,76 +195,76 @@ func TestRuneSet_Remove(t *testing.T) {
 	t.Run("EmptyCharSet_RemoveSingleCharacter_Success", func(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.RemoveRune('a')
-		Expect(runeSet.Length()).ToEqual(0)
+		assert.Equal(t, 0, runeSet.Length())
 	})
 
 	t.Run("EmptyCharSet_RemoveCharacterRange_Success", func(t *testing.T) {
 		runeSet := NewRuneSetEmpty()
 		runeSet.RemoveRange('a', 'c')
-		Expect(runeSet.Length()).ToEqual(0)
+		assert.Equal(t, 0, runeSet.Length())
 	})
 
 	t.Run("OneCharSet_RemoveSingleCharacter_Success", func(t *testing.T) {
 		runeSet := NewRuneSetRune('a')
 		runeSet.RemoveRune('a')
-		Expect(runeSet.Length()).ToEqual(0)
+		assert.Equal(t, 0, runeSet.Length())
 	})
 
 	t.Run("OneCharSet_RemoveCharacterRange_Success", func(t *testing.T) {
 		runeSet := NewRuneSetRune('b')
 		runeSet.RemoveRange('a', 'c')
-		Expect(runeSet.Length()).ToEqual(0)
+		assert.Equal(t, 0, runeSet.Length())
 	})
 
 	t.Run("ThreeCharsSet_RemoveSingleCharacterMiddle_Success", func(t *testing.T) {
 		runeSet := NewRuneSetRange('a', 'c')
 		runeSet.RemoveRune('b')
-		Expect(runeSet.Length()).ToEqual(2)
-		Expect(runeSet.IncludesRune('a')).ToEqual(true)
-		Expect(runeSet.IncludesRune('c')).ToEqual(true)
+		assert.Equal(t, 2, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRune('a'))
+		assert.Equal(t, true, runeSet.IncludesRune('c'))
 	})
 
 	t.Run("ThreeCharsSet_RemoveSingleCharacterLeft_Success", func(t *testing.T) {
 		runeSet := NewRuneSetRange('a', 'c')
 		runeSet.RemoveRune('a')
-		Expect(runeSet.Length()).ToEqual(2)
-		Expect(runeSet.IncludesRune('b')).ToEqual(true)
-		Expect(runeSet.IncludesRune('c')).ToEqual(true)
+		assert.Equal(t, 2, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRune('b'))
+		assert.Equal(t, true, runeSet.IncludesRune('c'))
 	})
 
 	t.Run("ThreeCharsSet_RemoveSingleCharacterRight_Success", func(t *testing.T) {
 		runeSet := NewRuneSetRange('a', 'c')
 		runeSet.RemoveRune('c')
-		Expect(runeSet.Length()).ToEqual(2)
-		Expect(runeSet.IncludesRune('a')).ToEqual(true)
-		Expect(runeSet.IncludesRune('b')).ToEqual(true)
+		assert.Equal(t, 2, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRune('a'))
+		assert.Equal(t, true, runeSet.IncludesRune('b'))
 	})
 
 	t.Run("ThreeCharsSet_RemoveCharacterRangeExact_Success", func(t *testing.T) {
 		runeSet := NewRuneSetRange('a', 'c')
 		runeSet.RemoveRange('a', 'c')
-		Expect(runeSet.Length()).ToEqual(0)
+		assert.Equal(t, 0, runeSet.Length())
 	})
 
 	t.Run("ThreeCharsSet_RemoveCharacterRangeOutside_Success", func(t *testing.T) {
 		runeSet := NewRuneSetRange('a', 'c')
 		runeSet.RemoveRange('d', 'f')
-		Expect(runeSet.Length()).ToEqual(3)
-		Expect(runeSet.IncludesRange('a', 'c')).ToEqual(true)
+		assert.Equal(t, 3, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRange('a', 'c'))
 	})
 
 	t.Run("ThreeCharsSet_RemoveCharacterRangeOverlapRight_Success", func(t *testing.T) {
 		runeSet := NewRuneSetRange('a', 'c')
 		runeSet.RemoveRange('b', 'd')
-		Expect(runeSet.Length()).ToEqual(1)
-		Expect(runeSet.IncludesRune('a')).ToEqual(true)
+		assert.Equal(t, 1, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRune('a'))
 	})
 
 	t.Run("ThreeCharsSet_RemoveCharacterRangeOverlapLeft_Success", func(t *testing.T) {
 		runeSet := NewRuneSetRange('b', 'd')
 		runeSet.RemoveRange('a', 'c')
-		Expect(runeSet.Length()).ToEqual(1)
-		Expect(runeSet.IncludesRune('d')).ToEqual(true)
+		assert.Equal(t, 1, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRune('d'))
 	})
 }
 
@@ -275,10 +277,10 @@ func TestRuneSet_Coverage(t *testing.T) {
 				*NewRuneRange(21, MaxRune, false),
 			},
 		}
-		Expect(runeSet.Length()).ToEqual(21)
-		Expect(runeSet.IncludesRange(0, 20)).ToEqual(true)
-		Expect(runeSet.ExcludesRange(21, MaxRune)).ToEqual(true)
-		Expect(runeSet.ExcludesRune(22)).ToEqual(true)
+		assert.Equal(t, 21, runeSet.Length())
+		assert.Equal(t, true, runeSet.IncludesRange(0, 20))
+		assert.Equal(t, true, runeSet.ExcludesRange(21, MaxRune))
+		assert.Equal(t, true, runeSet.ExcludesRune(22))
 	})
 
 	t.Run("CharSet_UseIterator", func(t *testing.T) {
@@ -299,18 +301,18 @@ func TestRuneSet_Coverage(t *testing.T) {
 			}
 		}
 
-		Expect(len(includedRanges)).ToEqual(2)
+		assert.Equal(t, 2, len(includedRanges))
 
 		if len(includedRanges) >= 1 {
 			left := includedRanges[0]
-			Expect(left.Start).ToEqual(rune(10))
-			Expect(left.End).ToEqual(rune(14))
+			assert.Equal(t, rune(10), left.Start)
+			assert.Equal(t, rune(14), left.End)
 		}
 
 		if len(includedRanges) >= 2 {
 			right := includedRanges[1]
-			Expect(right.Start).ToEqual(rune(19))
-			Expect(right.End).ToEqual(rune(20))
+			assert.Equal(t, rune(19), right.Start)
+			assert.Equal(t, rune(20), right.End)
 		}
 	})
 
@@ -323,7 +325,7 @@ func TestRuneSet_Coverage(t *testing.T) {
 			},
 		}
 		expected := "[" + string(rune(10)) + "-" + string(rune(14)) + "],[" + string(rune(19)) + "-" + string(rune(20)) + "]"
-		Expect(runeSet.String()).ToEqual(expected)
+		assert.Equal(t, expected, runeSet.String())
 	})
 
 	t.Run("RuneSet_Equals", func(t *testing.T) {
@@ -342,7 +344,7 @@ func TestRuneSet_Coverage(t *testing.T) {
 			},
 		}
 
-		Expect(runeSet1.Equals(*runeSet2)).ToEqual(true)
+		assert.Equal(t, true, runeSet1.Equals(*runeSet2))
 
 		runeSet3 := &RuneSet{
 			Ranges: []RuneRange{
@@ -351,7 +353,7 @@ func TestRuneSet_Coverage(t *testing.T) {
 				*NewRuneRange(19, 20, true),
 			},
 		}
-		Expect(runeSet1.Equals(*runeSet3)).ToEqual(false)
+		assert.Equal(t, false, runeSet1.Equals(*runeSet3))
 	})
 
 	t.Run("RuneSet_Equals_DifferentLength_False", func(t *testing.T) {
@@ -368,39 +370,39 @@ func TestRuneSet_Coverage(t *testing.T) {
 				*NewRuneRange(19, 21, true),
 			},
 		}
-		Expect(runeSet1.Equals(*runeSet2)).ToEqual(false)
+		assert.Equal(t, false, runeSet1.Equals(*runeSet2))
 	})
 
 	t.Run("Factories", func(t *testing.T) {
 		t.Run("RuneSet_OneOf", func(t *testing.T) {
 			chars := []rune{'a', 'b', 'c'}
 			runeSet := NewRuneSetOneOf(chars)
-			Expect(runeSet.Length()).ToEqual(3)
-			Expect(runeSet.IncludesRange('a', 'c')).ToEqual(true)
+			assert.Equal(t, 3, runeSet.Length())
+			assert.Equal(t, true, runeSet.IncludesRange('a', 'c'))
 		})
 
 		t.Run("RuneSet_Char", func(t *testing.T) {
 			runeSet := NewRuneSetRune('a')
-			Expect(runeSet.Length()).ToEqual(1)
-			Expect(runeSet.IncludesRune('a')).ToEqual(true)
+			assert.Equal(t, 1, runeSet.Length())
+			assert.Equal(t, true, runeSet.IncludesRune('a'))
 		})
 
 		t.Run("RuneSet_Range", func(t *testing.T) {
 			runeSet := NewRuneSetRange('a', 'c')
-			Expect(runeSet.Length()).ToEqual(3)
-			Expect(runeSet.IncludesRange('a', 'c')).ToEqual(true)
+			assert.Equal(t, 3, runeSet.Length())
+			assert.Equal(t, true, runeSet.IncludesRange('a', 'c'))
 		})
 
 		t.Run("RuneSet_Empty", func(t *testing.T) {
 			runeSet := NewRuneSetEmpty()
-			Expect(runeSet.Length()).ToEqual(0)
+			assert.Equal(t, 0, runeSet.Length())
 		})
 
 		t.Run("RuneSet_Full", func(t *testing.T) {
 			runeSet := NewRuneSetFull()
 			expectedLength := int(MaxRune) + 1
-			Expect(runeSet.Length()).ToEqual(expectedLength)
-			Expect(runeSet.IncludesRange(0, MaxRune)).ToEqual(true)
+			assert.Equal(t, expectedLength, runeSet.Length())
+			assert.Equal(t, true, runeSet.IncludesRange(0, MaxRune))
 		})
 	})
 }
