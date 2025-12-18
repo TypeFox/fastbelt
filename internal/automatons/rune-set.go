@@ -50,12 +50,12 @@ func (set RuneSet) Length() int {
 }
 
 func NewRuneSet_Rune(r rune) *RuneSet {
-	middle := RuneRange{Start: r, End: r, Includes: true}
-	ranges := make([]RuneRange, 1)
+	ranges := make([]RuneRange, 0)
 	if r-1 >= 0 {
 		left := RuneRange{Start: 0, End: r - 1, Includes: false}
 		ranges = append(ranges, left)
 	}
+	middle := RuneRange{Start: r, End: r, Includes: true}
 	ranges = append(ranges, middle)
 	if r+1 <= MaxRune {
 		right := RuneRange{Start: r + 1, End: MaxRune, Includes: false}
@@ -116,22 +116,22 @@ func (set *RuneSet) RemoveRune(r rune) {
 }
 
 func (set RuneSet) IncludesRune(r rune) bool {
-	return set.isXXcluded(true, r, r)
+	return set.isInOrExcluded(true, r, r)
 }
 
 func (set RuneSet) IncludesRange(start rune, end rune) bool {
-	return set.isXXcluded(true, start, end)
+	return set.isInOrExcluded(true, start, end)
 }
 
 func (set RuneSet) ExcludesRune(r rune) bool {
-	return set.isXXcluded(false, r, r)
+	return set.isInOrExcluded(false, r, r)
 }
 
 func (set RuneSet) ExcludesRange(start rune, end rune) bool {
-	return set.isXXcluded(false, start, end)
+	return set.isInOrExcluded(false, start, end)
 }
 
-func (set RuneSet) isXXcluded(included bool, start rune, end rune) bool {
+func (set RuneSet) isInOrExcluded(included bool, start rune, end rune) bool {
 	var index = 0
 	for index < len(set.Ranges) && start > set.Ranges[index].End {
 		index++
