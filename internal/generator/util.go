@@ -48,16 +48,9 @@ func WriteSB(sb *strings.Builder, texts ...string) {
 	}
 }
 
-func Traverse(node core.AstNode, fn func(core.AstNode)) {
-	fn(node)
-	node.ForEachNode(func(child core.AstNode) {
-		Traverse(child, fn)
-	})
-}
-
 func GetAllKeywords(grammar generated.Grammar) []generated.Keyword {
 	keywords := map[string]generated.Keyword{}
-	Traverse(grammar, func(node core.AstNode) {
+	core.Traverse(grammar, func(node core.AstNode) {
 		if keyword, ok := node.(generated.Keyword); ok {
 			keywords[keyword.Value()] = keyword
 		}

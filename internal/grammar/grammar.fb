@@ -25,19 +25,40 @@ Interface returns Interface:
 
 interface Field {
     Name string
-    Array bool
+    Type FieldType
+}
+
+interface FieldType {}
+
+interface ArrayType extends FieldType {
+    InternalType FieldType
+}
+
+interface ReferenceType extends FieldType {
     Type string
 }
 
-Field returns Field: Name=ID (Array?="[" "]")? Type=ID;
+interface SimpleType extends FieldType {
+    Type string
+}
+
+Field returns Field: Name=ID Type=FieldType;
+
+FieldType returns FieldType: SimpleType | ReferenceType | ArrayType;
+
+ArrayType returns ArrayType: "[" "]" InternalType=FieldType;
+
+ReferenceType returns ReferenceType: "@" Type=ID;
+
+SimpleType returns SimpleType: Type=ID;
 
 interface ParserRule {
     Name string
-    ReturnType string
+    ReturnType @Interface
     Body Element
 }
 
-ParserRule returns ParserRule: Name=ID "returns" ReturnType=ID ":" Body=Alternatives ";";
+ParserRule returns ParserRule: Name=ID "returns" ReturnType=[Interface:ID] ":" Body=Alternatives ";";
 
 interface Token {
     Type string

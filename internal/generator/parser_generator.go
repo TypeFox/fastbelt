@@ -57,9 +57,16 @@ func GenerateParser(grammar generated.Grammar) string {
 	node.AppendLine("type Parser struct {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("state *parser.ParserState")
+		n.AppendLine("srv ", grammar.Name(), "GeneratedSrvCont")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
+
+	node.AppendLine("func (p *Parser) references() ", grammar.Name(), "ReferenceGenerator {")
+	node.Indent(func(n generator.Node) {
+		n.AppendLine("return p.srv.", grammar.Name(), "Linking().ReferencesGenerator")
+	})
+	node.AppendLine("}").AppendLine()
 
 	rules := grammar.Rules()
 	if len(rules) == 0 {
@@ -76,9 +83,9 @@ func GenerateParser(grammar generated.Grammar) string {
 	})
 	node.AppendLine("}")
 	node.AppendLine()
-	node.AppendLine("func NewParser() *Parser {")
+	node.AppendLine("func New", grammar.Name(), "Parser(srv ", grammar.Name(), "GeneratedSrvCont) *Parser {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("return &Parser{}")
+		n.AppendLine("return &Parser{srv: srv}")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
@@ -188,9 +195,9 @@ func populateContextWithNode(context *ParserGeneratorContext, prefix string, nod
 }
 
 func generateParseFunction(node generator.Node, context *ParserGeneratorContext, rule generated.ParserRule) {
-	node.AppendLine("func (p *Parser) Parse", rule.Name(), "() ", rule.ReturnType(), " {")
+	node.AppendLine("func (p *Parser) Parse", rule.Name(), "() ", rule.ReturnType().Text, " {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("current := New", rule.ReturnType(), "()")
+		n.AppendLine("current := New", rule.ReturnType().Text, "()")
 		n.AppendLine("current.SetSegmentStartToken(p.state.LA(1))")
 		generateAbstractElementParser(n, context, rule.Body())
 		n.AppendLine("current.SetSegmentEndToken(p.state.LA(0))")
@@ -245,6 +252,11 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 				generateCardinality(indent, func(n generator.Node) {
 					generateAssignable(n, context, assignment.Value(), func(n2 generator.Node, resultName string) {
 						n2.AppendLine("if ", resultName, " != nil {")
+						if _, ok := assignment.Value().(generated.CrossRef); ok {
+							parserRuleName := getParserRuleName(assignment)
+							// For cross-references, we need to create a Reference object
+							resultName = "p.references()." + parserRuleName + assignment.Property() + "(current, " + resultName + ")"
+						}
 						n2.Indent(func(in generator.Node) {
 							switch assignment.Operator() {
 							case "+=":
@@ -598,4 +610,15 @@ func getRuleWithName(grammar generated.Grammar, name string) generated.ParserRul
 		}
 	}
 	return nil
+}
+
+func getParserRuleName(element generated.Element) string {
+	cont := element.Container()
+	if rule, ok := cont.(generated.ParserRule); ok {
+		return rule.Name()
+	} else if parent, ok := cont.(generated.Element); ok {
+		return getParserRuleName(parent)
+	} else {
+		panic("Unable to find parser rule for element")
+	}
 }

@@ -4,16 +4,6 @@
 
 package fastbelt
 
-type Reference[T AstNode] struct {
-	Token *Token
-	Text  string
-	ref   *T
-}
-
-func (r *Reference[T]) Get() *T {
-	return r.ref
-}
-
 // TODO: implement this properly. This probably should point to `textdoc.Handle`
 type Document struct {
 	Text string
@@ -78,17 +68,17 @@ func (node *AstNodeBase) SetSegmentEndToken(token *Token) {
 	}
 }
 
-func (node *AstNodeBase) SetSegment(segment TextSegment) {
+func (node *AstNodeBase) SetSegment(segment *TextSegment) {
 	if node != nil {
-		node.segment = segment
+		node.segment = *segment
 	}
 }
 
-func (node *AstNodeBase) Segment() TextSegment {
+func (node *AstNodeBase) Segment() *TextSegment {
 	if node != nil {
-		return node.segment
+		return &node.segment
 	} else {
-		return TextSegment{}
+		return nil
 	}
 }
 
@@ -123,8 +113,8 @@ type AstNode interface {
 	Tokens() []*Token
 	SetToken(token *Token)
 	SetTokens(tokens []*Token)
-	Segment() TextSegment
-	SetSegment(segment TextSegment)
+	Segment() *TextSegment
+	SetSegment(segment *TextSegment)
 	// Sets the start of the node's segment to the start of the given token's segment.
 	// Should only be called by the parser. Use SetSegment to set both start and end manually.
 	SetSegmentStartToken(token *Token)
@@ -133,6 +123,14 @@ type AstNode interface {
 	SetSegmentEndToken(token *Token)
 	Text() string
 	ForEachNode(func(AstNode))
+	ForEachReference(fn func(UntypedReference))
+}
+
+func Traverse(node AstNode, fn func(AstNode)) {
+	fn(node)
+	node.ForEachNode(func(child AstNode) {
+		Traverse(child, fn)
+	})
 }
 
 func NewAstNode() AstNodeBase {
@@ -170,4 +168,10 @@ func AssignContainers(root AstNode) {
 		child.SetContainer(root)
 		AssignContainers(child)
 	})
+}
+
+type NamedNode interface {
+	AstNode
+	Name() string
+	NameToken() *Token
 }

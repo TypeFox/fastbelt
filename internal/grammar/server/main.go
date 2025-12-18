@@ -10,33 +10,15 @@ import (
 	"context"
 	"log"
 
-	"typefox.dev/fastbelt/internal/grammar/generated"
+	"typefox.dev/fastbelt/internal/grammar/services"
 	"typefox.dev/fastbelt/server"
-	"typefox.dev/fastbelt/textdoc"
-	"typefox.dev/fastbelt/workspace"
 )
 
 func main() {
 	ctx := context.Background()
-	srv := createServices()
+	srv := services.CreateServices()
 
 	if err := server.StartLanguageServer(ctx, srv); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
-}
-
-type GrammarSrv struct {
-	textdoc.TextdocSrvContBlock
-	workspace.GeneratedSrvContBlock
-	workspace.WorkspaceSrvContBlock
-	server.ServerSrvContBlock
-}
-
-func createServices() *GrammarSrv {
-	srv := &GrammarSrv{}
-	textdoc.CreateDefaultServices(srv)
-	generated.CreateDefaultServices(srv)
-	workspace.CreateDefaultServices(srv)
-	server.CreateDefaultServices(srv)
-	return srv
 }

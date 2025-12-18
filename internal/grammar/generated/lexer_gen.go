@@ -225,7 +225,27 @@ var Keyword_QuestionEquals = core.NewTokenType(
 	[]rune{'?'},
 )
 
-const Keyword_LeftBracket_Idx = 13
+const Keyword_At_Idx = 13
+
+var Keyword_At = core.NewTokenType(
+	Keyword_At_Idx,
+	"@",
+	"@",
+	0,
+	0,
+	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "@") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{
+		'@',
+	},
+)
+
+const Keyword_LeftBracket_Idx = 14
 
 var Keyword_LeftBracket = core.NewTokenType(
 	Keyword_LeftBracket_Idx,
@@ -243,7 +263,7 @@ var Keyword_LeftBracket = core.NewTokenType(
 	[]rune{'['},
 )
 
-const Keyword_RightBracket_Idx = 14
+const Keyword_RightBracket_Idx = 15
 
 var Keyword_RightBracket = core.NewTokenType(
 	Keyword_RightBracket_Idx,
@@ -261,7 +281,7 @@ var Keyword_RightBracket = core.NewTokenType(
 	[]rune{']'},
 )
 
-const Keyword_current_Idx = 15
+const Keyword_current_Idx = 16
 
 var Keyword_current = core.NewTokenType(
 	Keyword_current_Idx,
@@ -279,7 +299,7 @@ var Keyword_current = core.NewTokenType(
 	[]rune{'c'},
 )
 
-const Keyword_extends_Idx = 16
+const Keyword_extends_Idx = 17
 
 var Keyword_extends = core.NewTokenType(
 	Keyword_extends_Idx,
@@ -297,7 +317,7 @@ var Keyword_extends = core.NewTokenType(
 	[]rune{'e'},
 )
 
-const Keyword_grammar_Idx = 17
+const Keyword_grammar_Idx = 18
 
 var Keyword_grammar = core.NewTokenType(
 	Keyword_grammar_Idx,
@@ -315,7 +335,7 @@ var Keyword_grammar = core.NewTokenType(
 	[]rune{'g'},
 )
 
-const Keyword_hidden_Idx = 18
+const Keyword_hidden_Idx = 19
 
 var Keyword_hidden = core.NewTokenType(
 	Keyword_hidden_Idx,
@@ -333,7 +353,7 @@ var Keyword_hidden = core.NewTokenType(
 	[]rune{'h'},
 )
 
-const Keyword_interface_Idx = 19
+const Keyword_interface_Idx = 20
 
 var Keyword_interface = core.NewTokenType(
 	Keyword_interface_Idx,
@@ -351,7 +371,7 @@ var Keyword_interface = core.NewTokenType(
 	[]rune{'i'},
 )
 
-const Keyword_returns_Idx = 20
+const Keyword_returns_Idx = 21
 
 var Keyword_returns = core.NewTokenType(
 	Keyword_returns_Idx,
@@ -369,7 +389,7 @@ var Keyword_returns = core.NewTokenType(
 	[]rune{'r'},
 )
 
-const Keyword_token_Idx = 21
+const Keyword_token_Idx = 22
 
 var Keyword_token = core.NewTokenType(
 	Keyword_token_Idx,
@@ -387,7 +407,7 @@ var Keyword_token = core.NewTokenType(
 	[]rune{'t'},
 )
 
-const Keyword_LeftBrace_Idx = 22
+const Keyword_LeftBrace_Idx = 23
 
 var Keyword_LeftBrace = core.NewTokenType(
 	Keyword_LeftBrace_Idx,
@@ -405,7 +425,7 @@ var Keyword_LeftBrace = core.NewTokenType(
 	[]rune{'{'},
 )
 
-const Keyword_Pipe_Idx = 23
+const Keyword_Pipe_Idx = 24
 
 var Keyword_Pipe = core.NewTokenType(
 	Keyword_Pipe_Idx,
@@ -423,7 +443,7 @@ var Keyword_Pipe = core.NewTokenType(
 	[]rune{'|'},
 )
 
-const Keyword_RightBrace_Idx = 24
+const Keyword_RightBrace_Idx = 25
 
 var Keyword_RightBrace = core.NewTokenType(
 	Keyword_RightBrace_Idx,
@@ -441,7 +461,7 @@ var Keyword_RightBrace = core.NewTokenType(
 	[]rune{'}'},
 )
 
-const Token_String_Idx = 25
+const Token_String_Idx = 26
 
 var Token_String = core.NewTokenType(
 	Token_String_Idx,
@@ -554,7 +574,7 @@ var Token_String_Next = [][]int{
 	{},
 }
 
-const Token_ID_Idx = 26
+const Token_ID_Idx = 27
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
@@ -629,7 +649,7 @@ var Token_ID_Next = [][]int{
 	{1, 1, 1, 1},
 }
 
-const Token_RegexLiteral_Idx = 27
+const Token_RegexLiteral_Idx = 28
 
 var Token_RegexLiteral = core.NewTokenType(
 	Token_RegexLiteral_Idx,
@@ -799,7 +819,7 @@ var Token_RegexLiteral_Next = [][]int{
 	{3, 3},
 }
 
-const Token_WS_Idx = 28
+const Token_WS_Idx = 29
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
@@ -888,6 +908,7 @@ func NewLexer() lexer.Lexer {
 		Keyword_Equals,
 		Keyword_Question,
 		Keyword_QuestionEquals,
+		Keyword_At,
 		Keyword_LeftBracket,
 		Keyword_RightBracket,
 		Keyword_current,
