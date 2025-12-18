@@ -51,7 +51,7 @@
 			"cwd": "${workspaceFolder}/",
 			"args": [
 				"--g=./internal/grammar/grammar.fb",
-				"--o=./internal/generated"
+				"--o=./internal/grammar/generated"
 			]
 		}, {
 			"name": "Benchmark",

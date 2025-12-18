@@ -55,6 +55,43 @@ func GenerateTransitions_UsingBranching(bySource *automatons.RuneRangeTargetsMap
 	return n
 }
 
+func GenerateTransitions_UsingSwitchCasing(bySource *automatons.RuneRangeTargetsMapping) generator.Node {
+	n := generator.NewNode()
+	n.AppendLine("switch r {")
+	var last *automatons.RuneRangeMappingSection[automatons.Targets] = nil
+	for transition := range bySource.All() {
+		if last != nil {
+			if last.Values[0] != transition.Values[0] {
+				n.Indent(func(n generator.Node) {
+					n.AppendLine(fmt.Sprintf("state = %d", last.Values[0]))
+				})
+			} else {
+				n.Indent(func(n generator.Node) {
+					n.AppendLine(" fallthrough")
+				})
+			}
+		}
+		for char := transition.Range.Start; char <= transition.Range.End; char++ {
+			n.AppendLine(fmt.Sprintf("case %s:", automatons.FormatInt(char)))
+			if char != transition.Range.End {
+				n.Indent(func(n generator.Node) {
+					n.AppendLine(" fallthrough")
+				})
+			}
+		}
+		last = &transition
+	}
+	n.Indent(func(n generator.Node) {
+		n.AppendLine(fmt.Sprintf("state = %d", last.Values[0]))
+	})
+	n.AppendLine("default:")
+	n.Indent(func(n generator.Node) {
+		n.AppendLine("break loop")
+	})
+	n.AppendLine("}")
+	return n
+}
+
 func GenerateTransitions_UsingBinarySearch(bySource *automatons.RuneRangeTargetsMapping) generator.Node {
 	n := generator.NewNode()
 	n.Append("lookup := []rune{")
@@ -118,10 +155,12 @@ func (r *RegexpImpl) GenerateRegExp() generator.Node {
 				bySource := transitions[source]
 				n.AppendLine(fmt.Sprintf("case %d:", source))
 				n.Indent(func(n generator.Node) {
-					if len(bySource.Ranges) >= 4 {
-						n.AppendNode(GenerateTransitions_UsingBinarySearch(bySource))
-					} else {
+					if len(bySource.Ranges) < 4 {
 						n.AppendNode(GenerateTransitions_UsingBranching(bySource))
+					} else if automatons.GetNumberOfRunes(bySource.Ranges) < 50 {
+						n.AppendNode(GenerateTransitions_UsingSwitchCasing(bySource))
+					} else {
+						n.AppendNode(GenerateTransitions_UsingBinarySearch(bySource))
 					}
 				})
 			}
@@ -142,14 +181,4 @@ func (r *RegexpImpl) GenerateRegExp() generator.Node {
 	})
 	root.AppendLine("},")
 	return root
-}
-
-func BinarySearch_NextState(r rune, lookup []rune, next []int) int {
-	searchIndex := sort.Search(len(next), func(i int) bool {
-		return lookup[i*2] > r
-	}) - 1
-	if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
-		return next[searchIndex]
-	}
-	return -1
 }

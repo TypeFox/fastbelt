@@ -38,6 +38,16 @@ type RuneRangeMappingBase[T Value[T]] struct {
 	Ranges  []RuneRangeMappingSection[T]
 }
 
+func GetNumberOfRunes[T Value[T]](sections []RuneRangeMappingSection[T]) int {
+	count := 0
+	for _, section := range sections {
+		if section.Range != nil && section.Range.Includes {
+			count += section.Range.Length()
+		}
+	}
+	return count
+}
+
 func MappingBaseSection_String[T Value[T]](s RuneRangeMappingSection[T]) string {
 	if s.Range == nil {
 		return "ε -> " + fmt.Sprintf("%v", s.Values)

@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	bytes, err := os.ReadFile("C:\\Users\\markh\\Desktop\\fastbelt\\input-text.txt")
+	bytes, err := os.ReadFile("/Users/lotes/Desktop/fastbelt/input-text.txt")
 	if err != nil {
 		panic(err)
 	}

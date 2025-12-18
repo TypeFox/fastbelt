@@ -34,6 +34,10 @@ func (r RuneRange) String() string {
 	return "[^" + string(r.Start) + "-" + string(r.End) + "]"
 }
 
+func (r RuneRange) Length() int {
+	return int(r.End - r.Start + 1)
+}
+
 func (lst RuneRange) All() iter.Seq[rune] {
 	return func(yield func(rune) bool) {
 		for e := lst.Start; e <= lst.End; e++ {
