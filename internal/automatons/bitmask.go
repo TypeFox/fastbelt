@@ -6,12 +6,12 @@ import (
 
 type BitMask []byte
 
-func NewBitMask_Empty(bits int) BitMask {
+func NewBitMaskEmpty(bits int) BitMask {
 	return BitMask(bytes.Repeat([]byte{'0'}, bits))
 }
 
-func NewBitMask_Bits(bits int, set []bool) BitMask {
-	result := NewBitMask_Empty(bits)
+func NewBitMaskBits(bits int, set []bool) BitMask {
+	result := NewBitMaskEmpty(bits)
 	for i, v := range set {
 		if v {
 			result.Set(i)

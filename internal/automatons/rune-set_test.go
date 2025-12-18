@@ -7,7 +7,7 @@ import (
 func TestRuneSet_Add(t *testing.T) {
 	t.Run("EmptySet_AddSingleCharacter_Success", func(t *testing.T) {
 		c := rune(123)
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRune(c)
 		Expect(runeSet.Length()).ToEqual(1)
 		Expect(runeSet.IncludesRune(c)).ToEqual(true)
@@ -16,7 +16,7 @@ func TestRuneSet_Add(t *testing.T) {
 	t.Run("EmptySet_AddCharacterRange_Success", func(t *testing.T) {
 		cFrom := rune(123)
 		cTo := rune(125)
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange(cFrom, cTo)
 		Expect(runeSet.Length()).ToEqual(3)
 		Expect(runeSet.IncludesRange(cFrom, cTo)).ToEqual(true)
@@ -27,14 +27,14 @@ func TestRuneSet_Add(t *testing.T) {
 
 	t.Run("EmptySet_AddBadCharacterRange_Fail", func(t *testing.T) {
 		Expect(func() {
-			runeSet := NewRuneSet_Empty()
+			runeSet := NewRuneSetEmpty()
 			runeSet.AddRange(125, 123)
 		}).ToPanic()
 	})
 
 	t.Run("OneCharSet_AddSingleCharacterSame_Success", func(t *testing.T) {
 		c := rune(123)
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRune(c)
 		runeSet.AddRune(c)
 		Expect(runeSet.Length()).ToEqual(1)
@@ -44,7 +44,7 @@ func TestRuneSet_Add(t *testing.T) {
 	t.Run("OneCharSet_AddSingleCharacterBeside_Success", func(t *testing.T) {
 		c1 := rune(123)
 		c2 := rune(124)
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRune(c1)
 		runeSet.AddRune(c2)
 		Expect(runeSet.Length()).ToEqual(2)
@@ -54,7 +54,7 @@ func TestRuneSet_Add(t *testing.T) {
 	t.Run("OneCharSet_AddSingleCharacterWithGap_Success", func(t *testing.T) {
 		c1 := rune(123)
 		c2 := rune(125)
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRune(c1)
 		runeSet.AddRune(c2)
 		Expect(runeSet.Length()).ToEqual(2)
@@ -68,7 +68,7 @@ func TestRuneSet_Add(t *testing.T) {
 		cTo1 := rune(3)
 		cFrom2 := rune(4)
 		cTo2 := rune(6)
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange(cFrom1, cTo1)
 		runeSet.AddRange(cFrom2, cTo2)
 		Expect(runeSet.Length()).ToEqual(6)
@@ -80,7 +80,7 @@ func TestRuneSet_Add(t *testing.T) {
 		cTo1 := rune(3)
 		cFrom2 := rune(5)
 		cTo2 := rune(7)
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange(cFrom1, cTo1)
 		runeSet.AddRange(cFrom2, cTo2)
 		Expect(runeSet.Length()).ToEqual(6)
@@ -89,7 +89,7 @@ func TestRuneSet_Add(t *testing.T) {
 	})
 
 	t.Run("ThreeCharsSet_AddSingleCharacterAlreadyExists_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRune('b')
 		Expect(runeSet.Length()).ToEqual(3)
@@ -97,7 +97,7 @@ func TestRuneSet_Add(t *testing.T) {
 	})
 
 	t.Run("ThreeCharsSet_AddSingleCharacterBeside_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRune('d')
 		Expect(runeSet.Length()).ToEqual(4)
@@ -105,7 +105,7 @@ func TestRuneSet_Add(t *testing.T) {
 	})
 
 	t.Run("ThreeCharsSet_AddSingleCharacterWithGap_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRune('e')
 		Expect(runeSet.Length()).ToEqual(4)
@@ -114,7 +114,7 @@ func TestRuneSet_Add(t *testing.T) {
 	})
 
 	t.Run("ThreeCharsSet_AddCharacterRangeWithin_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRange('b', 'c')
 		Expect(runeSet.Length()).ToEqual(3)
@@ -122,7 +122,7 @@ func TestRuneSet_Add(t *testing.T) {
 	})
 
 	t.Run("ThreeCharsSet_AddCharacterRangeOverlapping_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRange('b', 'd')
 		Expect(runeSet.Length()).ToEqual(4)
@@ -131,14 +131,14 @@ func TestRuneSet_Add(t *testing.T) {
 
 	t.Run("ThreeCharsSet_AddCharacterRangeBadRange_Fail", func(t *testing.T) {
 		Expect(func() {
-			runeSet := NewRuneSet_Empty()
+			runeSet := NewRuneSetEmpty()
 			runeSet.AddRange('a', 'c')
 			runeSet.AddRange('d', 'b')
 		}).ToPanic()
 	})
 
 	t.Run("ThreeCharsSet_AddCharacterRangeOverlappingBothSides_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('d', 'f')
 		runeSet.AddRange('b', 'h')
 		Expect(runeSet.Length()).ToEqual(7)
@@ -146,7 +146,7 @@ func TestRuneSet_Add(t *testing.T) {
 	})
 
 	t.Run("ThreeCharsSet_AddCharacterRangeCoveringAll_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('d', 'f')
 		runeSet.AddRange('a', 'z')
 		Expect(runeSet.Length()).ToEqual(26)
@@ -154,7 +154,7 @@ func TestRuneSet_Add(t *testing.T) {
 	})
 
 	t.Run("ThreeCharsSet_AddCharacterRangeBeside_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRange('d', 'f')
 		Expect(runeSet.Length()).ToEqual(6)
@@ -162,7 +162,7 @@ func TestRuneSet_Add(t *testing.T) {
 	})
 
 	t.Run("ThreeCharsSet_AddCharacterRangeWithGap_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRange('e', 'g')
 		Expect(runeSet.Length()).ToEqual(6)
@@ -171,7 +171,7 @@ func TestRuneSet_Add(t *testing.T) {
 	})
 
 	t.Run("TwoThreeGroupsCharsSet_AddCharacterFillGap_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRange('e', 'g')
 		runeSet.AddRune('d')
@@ -180,7 +180,7 @@ func TestRuneSet_Add(t *testing.T) {
 	})
 
 	t.Run("TwoThreeGroupsCharsSet_AddCharacterRangeFillGap_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.AddRange('a', 'c')
 		runeSet.AddRange('g', 'i')
 		runeSet.AddRange('d', 'f')
@@ -191,31 +191,31 @@ func TestRuneSet_Add(t *testing.T) {
 
 func TestRuneSet_Remove(t *testing.T) {
 	t.Run("EmptyCharSet_RemoveSingleCharacter_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.RemoveRune('a')
 		Expect(runeSet.Length()).ToEqual(0)
 	})
 
 	t.Run("EmptyCharSet_RemoveCharacterRange_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Empty()
+		runeSet := NewRuneSetEmpty()
 		runeSet.RemoveRange('a', 'c')
 		Expect(runeSet.Length()).ToEqual(0)
 	})
 
 	t.Run("OneCharSet_RemoveSingleCharacter_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Rune('a')
+		runeSet := NewRuneSetRune('a')
 		runeSet.RemoveRune('a')
 		Expect(runeSet.Length()).ToEqual(0)
 	})
 
 	t.Run("OneCharSet_RemoveCharacterRange_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Rune('b')
+		runeSet := NewRuneSetRune('b')
 		runeSet.RemoveRange('a', 'c')
 		Expect(runeSet.Length()).ToEqual(0)
 	})
 
 	t.Run("ThreeCharsSet_RemoveSingleCharacterMiddle_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Range('a', 'c')
+		runeSet := NewRuneSetRange('a', 'c')
 		runeSet.RemoveRune('b')
 		Expect(runeSet.Length()).ToEqual(2)
 		Expect(runeSet.IncludesRune('a')).ToEqual(true)
@@ -223,7 +223,7 @@ func TestRuneSet_Remove(t *testing.T) {
 	})
 
 	t.Run("ThreeCharsSet_RemoveSingleCharacterLeft_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Range('a', 'c')
+		runeSet := NewRuneSetRange('a', 'c')
 		runeSet.RemoveRune('a')
 		Expect(runeSet.Length()).ToEqual(2)
 		Expect(runeSet.IncludesRune('b')).ToEqual(true)
@@ -231,7 +231,7 @@ func TestRuneSet_Remove(t *testing.T) {
 	})
 
 	t.Run("ThreeCharsSet_RemoveSingleCharacterRight_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Range('a', 'c')
+		runeSet := NewRuneSetRange('a', 'c')
 		runeSet.RemoveRune('c')
 		Expect(runeSet.Length()).ToEqual(2)
 		Expect(runeSet.IncludesRune('a')).ToEqual(true)
@@ -239,27 +239,27 @@ func TestRuneSet_Remove(t *testing.T) {
 	})
 
 	t.Run("ThreeCharsSet_RemoveCharacterRangeExact_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Range('a', 'c')
+		runeSet := NewRuneSetRange('a', 'c')
 		runeSet.RemoveRange('a', 'c')
 		Expect(runeSet.Length()).ToEqual(0)
 	})
 
 	t.Run("ThreeCharsSet_RemoveCharacterRangeOutside_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Range('a', 'c')
+		runeSet := NewRuneSetRange('a', 'c')
 		runeSet.RemoveRange('d', 'f')
 		Expect(runeSet.Length()).ToEqual(3)
 		Expect(runeSet.IncludesRange('a', 'c')).ToEqual(true)
 	})
 
 	t.Run("ThreeCharsSet_RemoveCharacterRangeOverlapRight_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Range('a', 'c')
+		runeSet := NewRuneSetRange('a', 'c')
 		runeSet.RemoveRange('b', 'd')
 		Expect(runeSet.Length()).ToEqual(1)
 		Expect(runeSet.IncludesRune('a')).ToEqual(true)
 	})
 
 	t.Run("ThreeCharsSet_RemoveCharacterRangeOverlapLeft_Success", func(t *testing.T) {
-		runeSet := NewRuneSet_Range('b', 'd')
+		runeSet := NewRuneSetRange('b', 'd')
 		runeSet.RemoveRange('a', 'c')
 		Expect(runeSet.Length()).ToEqual(1)
 		Expect(runeSet.IncludesRune('d')).ToEqual(true)
@@ -374,30 +374,30 @@ func TestRuneSet_Coverage(t *testing.T) {
 	t.Run("Factories", func(t *testing.T) {
 		t.Run("RuneSet_OneOf", func(t *testing.T) {
 			chars := []rune{'a', 'b', 'c'}
-			runeSet := NewRuneSet_OneOf(chars)
+			runeSet := NewRuneSetOneOf(chars)
 			Expect(runeSet.Length()).ToEqual(3)
 			Expect(runeSet.IncludesRange('a', 'c')).ToEqual(true)
 		})
 
 		t.Run("RuneSet_Char", func(t *testing.T) {
-			runeSet := NewRuneSet_Rune('a')
+			runeSet := NewRuneSetRune('a')
 			Expect(runeSet.Length()).ToEqual(1)
 			Expect(runeSet.IncludesRune('a')).ToEqual(true)
 		})
 
 		t.Run("RuneSet_Range", func(t *testing.T) {
-			runeSet := NewRuneSet_Range('a', 'c')
+			runeSet := NewRuneSetRange('a', 'c')
 			Expect(runeSet.Length()).ToEqual(3)
 			Expect(runeSet.IncludesRange('a', 'c')).ToEqual(true)
 		})
 
 		t.Run("RuneSet_Empty", func(t *testing.T) {
-			runeSet := NewRuneSet_Empty()
+			runeSet := NewRuneSetEmpty()
 			Expect(runeSet.Length()).ToEqual(0)
 		})
 
 		t.Run("RuneSet_Full", func(t *testing.T) {
-			runeSet := NewRuneSet_Full()
+			runeSet := NewRuneSetFull()
 			expectedLength := int(MaxRune) + 1
 			Expect(runeSet.Length()).ToEqual(expectedLength)
 			Expect(runeSet.IncludesRange(0, MaxRune)).ToEqual(true)

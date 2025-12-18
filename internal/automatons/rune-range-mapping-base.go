@@ -48,14 +48,14 @@ func GetNumberOfRunes[T Value[T]](sections []RuneRangeMappingSection[T]) int {
 	return count
 }
 
-func MappingBaseSection_String[T Value[T]](s RuneRangeMappingSection[T]) string {
+func MappingBaseSectionString[T Value[T]](s RuneRangeMappingSection[T]) string {
 	if s.Range == nil {
 		return "ε -> " + fmt.Sprintf("%v", s.Values)
 	}
 	return fmt.Sprintf("%v -> %v", s.Range, s.Values)
 }
 
-func MappingBase_Contains[T Value[T]](t *RuneRangeMappingBase[T], c rune) bool {
+func MappingBaseContains[T Value[T]](t *RuneRangeMappingBase[T], c rune) bool {
 	startFromIndex := sort.Search(len(t.Ranges), func(i int) bool {
 		return t.Ranges[i].Range.Start > c
 	}) - 1
@@ -65,18 +65,18 @@ func MappingBase_Contains[T Value[T]](t *RuneRangeMappingBase[T], c rune) bool {
 	return false
 }
 
-func MappingBase_ContainsEpsilon[T Value[T]](t *RuneRangeMappingBase[T]) bool {
+func MappingBaseContainsEpsilon[T Value[T]](t *RuneRangeMappingBase[T]) bool {
 	return !t.Epsilon.Empty()
 }
 
-func MappingBase_GetEpsilonValues[T Value[T]](t *RuneRangeMappingBase[T]) *T {
+func MappingBaseGetEpsilonValues[T Value[T]](t *RuneRangeMappingBase[T]) *T {
 	if t.Epsilon.Empty() {
 		return nil
 	}
 	return &t.Epsilon
 }
 
-func MappingBase_GetRuneValues[T Value[T]](t *RuneRangeMappingBase[T], c rune) *T {
+func MappingBaseGetRuneValues[T Value[T]](t *RuneRangeMappingBase[T], c rune) *T {
 	startFromIndex := sort.Search(len(t.Ranges), func(i int) bool {
 		return t.Ranges[i].Range.Start > c
 	}) - 1
@@ -88,7 +88,7 @@ func MappingBase_GetRuneValues[T Value[T]](t *RuneRangeMappingBase[T], c rune) *
 	return nil
 }
 
-func MappingBase_All[T Value[T]](t *RuneRangeMappingBase[T]) iter.Seq[RuneRangeMappingSection[T]] {
+func MappingBaseAll[T Value[T]](t *RuneRangeMappingBase[T]) iter.Seq[RuneRangeMappingSection[T]] {
 	return func(yield func(RuneRangeMappingSection[T]) bool) {
 		if !t.Epsilon.Empty() {
 			if !yield(RuneRangeMappingSection[T]{
@@ -108,11 +108,11 @@ func MappingBase_All[T Value[T]](t *RuneRangeMappingBase[T]) iter.Seq[RuneRangeM
 	}
 }
 
-func MappingBase_AddEpsilonValues[T Value[T]](t *RuneRangeMappingBase[T], values T) {
+func MappingBaseAddEpsilonValues[T Value[T]](t *RuneRangeMappingBase[T], values T) {
 	t.Epsilon = t.Epsilon.Join(values)
 }
 
-func MappingBase_AddRuneRangeValues[T Value[T]](t *RuneRangeMappingBase[T], start, end rune, values T) {
+func MappingBaseAddRuneRangeValues[T Value[T]](t *RuneRangeMappingBase[T], start, end rune, values T) {
 	indexStart := sort.Search(len(t.Ranges), func(i int) bool {
 		return t.Ranges[i].Range.Start > start
 	}) - 1
@@ -251,10 +251,10 @@ func MappingBase_AddRuneRangeValues[T Value[T]](t *RuneRangeMappingBase[T], star
 	t.Ranges = newRanges
 }
 
-func MappingBase_MergeNonEpsilonInto[T Value[T]](t *RuneRangeMappingBase[T], target *RuneRangeMappingBase[T]) {
+func MappingBaseMergeNonEpsilonInto[T Value[T]](t *RuneRangeMappingBase[T], target *RuneRangeMappingBase[T]) {
 	for _, section := range t.Ranges {
 		if section.Range.Includes && !section.Values.Empty() {
-			MappingBase_AddRuneRangeValues(target, section.Range.Start, section.Range.End, section.Values)
+			MappingBaseAddRuneRangeValues(target, section.Range.Start, section.Range.End, section.Values)
 		}
 	}
 }

@@ -21,12 +21,12 @@ func GenerateLexer(grammar generated.Grammar) string {
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n gen.Node) {
+		n.AppendLine("\"sort\"")
 		n.AppendLine("\"strings\"")
 		n.AppendLine("\"unicode/utf8\"")
 		n.AppendLine()
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
 		n.AppendLine("\"typefox.dev/fastbelt/lexer\"")
-		n.AppendLine("\"typefox.dev/fastbelt/internal/regexp\"")
 	})
 	node.AppendLine(")")
 	node.AppendLine()

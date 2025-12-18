@@ -49,37 +49,37 @@ func NewRuneRangeTargets() *RuneRangeTargetsMapping {
 }
 
 func (t *RuneRangeTargetsMapping) Contains(c rune) bool {
-	return MappingBase_Contains[Targets](&t.RuneRangeMappingBase, c)
+	return MappingBaseContains[Targets](&t.RuneRangeMappingBase, c)
 }
 
 func (t *RuneRangeTargetsMapping) ContainsEpsilon() bool {
-	return MappingBase_ContainsEpsilon(&t.RuneRangeMappingBase)
+	return MappingBaseContainsEpsilon(&t.RuneRangeMappingBase)
 }
 
 func (t *RuneRangeTargetsMapping) GetEpsilonValues() *Targets {
-	return MappingBase_GetEpsilonValues[Targets](&t.RuneRangeMappingBase)
+	return MappingBaseGetEpsilonValues[Targets](&t.RuneRangeMappingBase)
 }
 
 func (t *RuneRangeTargetsMapping) GetRuneValues(c rune) *Targets {
-	return MappingBase_GetRuneValues[Targets](&t.RuneRangeMappingBase, c)
+	return MappingBaseGetRuneValues[Targets](&t.RuneRangeMappingBase, c)
 }
 
 func (t *RuneRangeTargetsMapping) All() iter.Seq[RuneRangeMappingSection[Targets]] {
-	return MappingBase_All(&t.RuneRangeMappingBase)
+	return MappingBaseAll(&t.RuneRangeMappingBase)
 }
 
 func (t *RuneRangeTargetsMapping) AddEpsilonValues(values Targets) {
-	MappingBase_AddEpsilonValues(&t.RuneRangeMappingBase, values)
+	MappingBaseAddEpsilonValues(&t.RuneRangeMappingBase, values)
 }
 
 func (t *RuneRangeTargetsMapping) AddRuneValues(r rune, targets Targets) {
-	MappingBase_AddRuneRangeValues(&t.RuneRangeMappingBase, r, r, targets)
+	MappingBaseAddRuneRangeValues(&t.RuneRangeMappingBase, r, r, targets)
 }
 
 func (t *RuneRangeTargetsMapping) AddRuneRangeValues(start, end rune, targets Targets) {
-	MappingBase_AddRuneRangeValues(&t.RuneRangeMappingBase, start, end, targets)
+	MappingBaseAddRuneRangeValues(&t.RuneRangeMappingBase, start, end, targets)
 }
 
 func (t *RuneRangeTargetsMapping) MergeNonEpsilonInto(target *RuneRangeMappingBase[Targets]) {
-	MappingBase_MergeNonEpsilonInto(&t.RuneRangeMappingBase, target)
+	MappingBaseMergeNonEpsilonInto(&t.RuneRangeMappingBase, target)
 }

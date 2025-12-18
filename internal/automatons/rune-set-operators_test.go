@@ -6,8 +6,8 @@ import (
 
 func TestContains(t *testing.T) {
 	// Test case: [a-z] contains [c-f]
-	setAZ := NewRuneSet_Range('a', 'z')
-	setCF := NewRuneSet_Range('c', 'f')
+	setAZ := NewRuneSetRange('a', 'z')
+	setCF := NewRuneSetRange('c', 'f')
 
 	Expect(setAZ.Contains(setCF)).ToEqual(true)
 
@@ -16,8 +16,8 @@ func TestContains(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
-	set := NewRuneSet_Range('a', 'c')
-	other := NewRuneSet_Range('x', 'z')
+	set := NewRuneSetRange('a', 'c')
+	other := NewRuneSetRange('x', 'z')
 
 	set.Add(other)
 
@@ -27,8 +27,8 @@ func TestAdd(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	set := NewRuneSet_Range('a', 'z')
-	toRemove := NewRuneSet_Range('m', 'p')
+	set := NewRuneSetRange('a', 'z')
+	toRemove := NewRuneSetRange('m', 'p')
 
 	set.Remove(toRemove)
 
@@ -38,8 +38,8 @@ func TestRemove(t *testing.T) {
 }
 
 func TestUnion(t *testing.T) {
-	setAC := NewRuneSet_Range('a', 'c')
-	setXZ := NewRuneSet_Range('x', 'z')
+	setAC := NewRuneSetRange('a', 'c')
+	setXZ := NewRuneSetRange('x', 'z')
 
 	result := Union(setAC, setXZ)
 
@@ -49,8 +49,8 @@ func TestUnion(t *testing.T) {
 }
 
 func TestExcept(t *testing.T) {
-	setAZ := NewRuneSet_Range('a', 'z')
-	setMP := NewRuneSet_Range('m', 'p')
+	setAZ := NewRuneSetRange('a', 'z')
+	setMP := NewRuneSetRange('m', 'p')
 
 	result := Except(setAZ, setMP)
 
@@ -60,7 +60,7 @@ func TestExcept(t *testing.T) {
 }
 
 func TestNegate(t *testing.T) {
-	setAC := NewRuneSet_Range('a', 'c')
+	setAC := NewRuneSetRange('a', 'c')
 
 	result := Negate(setAC)
 
@@ -69,8 +69,8 @@ func TestNegate(t *testing.T) {
 }
 
 func TestIntersect(t *testing.T) {
-	setAM := NewRuneSet_Range('a', 'm')
-	setHZ := NewRuneSet_Range('h', 'z')
+	setAM := NewRuneSetRange('a', 'm')
+	setHZ := NewRuneSetRange('h', 'z')
 
 	result := Intersect(setAM, setHZ)
 
@@ -80,9 +80,9 @@ func TestIntersect(t *testing.T) {
 }
 
 func TestUnionMultiple(t *testing.T) {
-	setAC := NewRuneSet_Range('a', 'c')
-	setGI := NewRuneSet_Range('g', 'i')
-	setXZ := NewRuneSet_Range('x', 'z')
+	setAC := NewRuneSetRange('a', 'c')
+	setGI := NewRuneSetRange('g', 'i')
+	setXZ := NewRuneSetRange('x', 'z')
 
 	result := Union(setAC, setGI, setXZ)
 

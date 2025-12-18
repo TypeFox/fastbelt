@@ -23,9 +23,9 @@ func (nfa NFA) String() string {
 		for info := range targets.All() {
 			var charset *RuneSet
 			if info.Range != nil {
-				charset = NewRuneSet_Range(info.Range.Start, info.Range.End)
+				charset = NewRuneSetRange(info.Range.Start, info.Range.End)
 			} else {
-				charset = NewRuneSet_Empty()
+				charset = NewRuneSetEmpty()
 			}
 			for _, target := range info.Values {
 				result += fmt.Sprintf("  %d --%v--> %d\n", source, charset, target)

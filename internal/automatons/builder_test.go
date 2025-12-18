@@ -26,7 +26,7 @@ func TestNFABuilderImpl_AddTransitionValidation(t *testing.T) {
 	builder := NewNFABuilder()
 	s0 := builder.AddState()
 	s1 := builder.AddState()
-	chars := NewRuneSet_Rune('a')
+	chars := NewRuneSetRune('a')
 
 	Expect(func() {
 		builder.AddTransitionForRuneSet(-1, s1, chars)
@@ -52,7 +52,7 @@ func TestNFABuilderImpl_AddTransitions(t *testing.T) {
 	builder := NewNFABuilder()
 	s0 := builder.AddState()
 	s1 := builder.AddState()
-	chars := NewRuneSet_Rune('a')
+	chars := NewRuneSetRune('a')
 
 	builder.AddTransitionForRuneSet(s0, s1, chars)
 	builder.SetStartState(s0)
@@ -151,7 +151,7 @@ func TestNFABuilderImpl_BuildValidNFA(t *testing.T) {
 	builder.SetStartState(s0)
 	builder.AcceptState(s1)
 
-	chars := NewRuneSet_Rune('a')
+	chars := NewRuneSetRune('a')
 	builder.AddTransitionForRuneSet(s0, s1, chars)
 
 	nfa := builder.Build()
@@ -170,7 +170,7 @@ func TestNFABuilderImpl_CopyFrom(t *testing.T) {
 
 	builder1.SetStartState(s0)
 	builder1.AcceptState(s1)
-	chars := NewRuneSet_Rune('b')
+	chars := NewRuneSetRune('b')
 	builder1.AddTransitionForRuneSet(s0, s1, chars)
 	nfa1 := builder1.Build()
 

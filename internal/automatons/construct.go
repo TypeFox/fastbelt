@@ -20,7 +20,7 @@ func (ck *ConstructionKit) Reject() *NFA {
 	builder := NewNFABuilder()
 	start := builder.AddState()
 	builder.SetStartState(start)
-	builder.AddTransitionForRuneSet(start, start, NewRuneSet_Full())
+	builder.AddTransitionForRuneSet(start, start, NewRuneSetFull())
 	return builder.Build()
 }
 

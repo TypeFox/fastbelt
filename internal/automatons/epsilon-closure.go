@@ -1,7 +1,7 @@
 package automatons
 
 func (nfa NFA) GetEpsilonClosure(states ...int) BitMask {
-	closure := NewBitMask_Empty(nfa.StateCount)
+	closure := NewBitMaskEmpty(nfa.StateCount)
 	queue := make([]int, 0, len(states))
 	queue = append(queue, states...)
 	for len(queue) > 0 {

@@ -48,9 +48,9 @@ func (nfa *NFA) Determinize() *NFA {
 
 		nfaTargets := NewRuneRangeTargets()
 		for _, sourceState := range sourceStates {
-			xxx := nfa.TransitionsBySource[sourceState]
-			if xxx != nil {
-				xxx.MergeNonEpsilonInto(&nfaTargets.RuneRangeMappingBase)
+			transitions := nfa.TransitionsBySource[sourceState]
+			if transitions != nil {
+				transitions.MergeNonEpsilonInto(&nfaTargets.RuneRangeMappingBase)
 			}
 		}
 		for _, section := range nfaTargets.Ranges {

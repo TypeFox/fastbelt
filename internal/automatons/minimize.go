@@ -46,7 +46,7 @@ func buildNewAutomaton(groups [][]int, dfa NFA, acceptingStates map[int]bool) *N
 		if targets, exists := transitionsBySource[oldState]; exists {
 			for info := range targets.All() {
 				if info.Range != nil {
-					charset := NewRuneSet_Range(info.Range.Start, info.Range.End)
+					charset := NewRuneSetRange(info.Range.Start, info.Range.End)
 					// Since this is a DFA, there should be only one target per character
 					if len(info.Values) > 0 {
 						targetOldState := info.Values[0]

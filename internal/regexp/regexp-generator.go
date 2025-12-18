@@ -8,7 +8,7 @@ import (
 	"typefox.dev/fastbelt/internal/automatons"
 )
 
-func GenerateTransitions_UsingBranching(bySource *automatons.RuneRangeTargetsMapping) generator.Node {
+func GenerateTransitionsUsingBranching(bySource *automatons.RuneRangeTargetsMapping) generator.Node {
 	n := generator.NewNode()
 	targets := make(map[int]automatons.RuneSet)
 	keys := make([]int, 0)
@@ -16,7 +16,7 @@ func GenerateTransitions_UsingBranching(bySource *automatons.RuneRangeTargetsMap
 		target := transition.Values[0]
 		runeSet, exists := targets[target]
 		if !exists {
-			runeSet = *automatons.NewRuneSet_Empty()
+			runeSet = *automatons.NewRuneSetEmpty()
 			keys = append(keys, target)
 		}
 		runeSet.AddRange(transition.Range.Start, transition.Range.End)
@@ -59,7 +59,7 @@ func GenerateTransitions_UsingBranching(bySource *automatons.RuneRangeTargetsMap
 	return n
 }
 
-func GenerateTransitions_UsingSwitchCasing(bySource *automatons.RuneRangeTargetsMapping) generator.Node {
+func GenerateTransitionsUsingSwitchCasing(bySource *automatons.RuneRangeTargetsMapping) generator.Node {
 	n := generator.NewNode()
 	n.AppendLine("switch r {")
 	var last *automatons.RuneRangeMappingSection[automatons.Targets] = nil
@@ -96,7 +96,7 @@ func GenerateTransitions_UsingSwitchCasing(bySource *automatons.RuneRangeTargets
 	return n
 }
 
-func GenerateTransitions_UsingBinarySearch(bySource *automatons.RuneRangeTargetsMapping) generator.Node {
+func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsMapping) generator.Node {
 	n := generator.NewNode()
 	n.Append("lookup := []rune{")
 	for transition := range bySource.All() {
@@ -108,7 +108,17 @@ func GenerateTransitions_UsingBinarySearch(bySource *automatons.RuneRangeTargets
 		n.Append(fmt.Sprintf("%d, ", transition.Values[0]))
 	}
 	n.AppendLine("}")
-	n.AppendLine("nextState := regexp.BinarySearch_NextState(r, lookup, next)")
+	n.AppendLine("nextState := -1")
+	n.AppendLine("searchIndex := sort.Search(len(next), func(i int) bool {")
+	n.Indent(func(n generator.Node) {
+		n.AppendLine("return lookup[i*2] > r")
+	})
+	n.AppendLine("}) - 1")
+	n.AppendLine("if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {")
+	n.Indent(func(n generator.Node) {
+		n.AppendLine("return next[searchIndex]")
+	})
+	n.AppendLine("}")
 	n.AppendLine("if nextState > -1 {")
 	n.Indent(func(n generator.Node) {
 		n.AppendLine("state = nextState")
@@ -160,11 +170,11 @@ func (r *RegexpImpl) GenerateRegExp() generator.Node {
 				n.AppendLine(fmt.Sprintf("case %d:", source))
 				n.Indent(func(n generator.Node) {
 					if len(bySource.Ranges) < 4 {
-						n.AppendNode(GenerateTransitions_UsingBranching(bySource))
+						n.AppendNode(GenerateTransitionsUsingBranching(bySource))
 					} else if automatons.GetNumberOfRunes(bySource.Ranges) < 50 {
-						n.AppendNode(GenerateTransitions_UsingSwitchCasing(bySource))
+						n.AppendNode(GenerateTransitionsUsingSwitchCasing(bySource))
 					} else {
-						n.AppendNode(GenerateTransitions_UsingBinarySearch(bySource))
+						n.AppendNode(GenerateTransitionsUsingBinarySearch(bySource))
 					}
 				})
 			}

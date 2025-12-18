@@ -10,9 +10,9 @@ func TestConstruct_IntegrationExample(t *testing.T) {
 	// This means: zero or more 'a' or 'b', followed by one or more 'c'
 
 	// First create automata for individual characters
-	charA := kit.Consume(NewRuneSet_Range('a', 'a'))
-	charB := kit.Consume(NewRuneSet_Range('b', 'b'))
-	charC := kit.Consume(NewRuneSet_Range('c', 'c'))
+	charA := kit.Consume(NewRuneSetRange('a', 'a'))
+	charB := kit.Consume(NewRuneSetRange('b', 'b'))
+	charC := kit.Consume(NewRuneSetRange('c', 'c'))
 
 	// Create (a|b)
 	aOrB := kit.Alternate(charA, charB)
@@ -47,7 +47,7 @@ func TestConstruct_RegexLikePatterns(t *testing.T) {
 			name:        "optional_char",
 			description: "a?  (zero or one 'a')",
 			builder: func() *NFA {
-				charA := kit.Consume(NewRuneSet_Range('a', 'a'))
+				charA := kit.Consume(NewRuneSetRange('a', 'a'))
 				return kit.Repeat(charA, 0, 1)
 			},
 		},
@@ -55,7 +55,7 @@ func TestConstruct_RegexLikePatterns(t *testing.T) {
 			name:        "kleene_star",
 			description: "a*  (zero or more 'a')",
 			builder: func() *NFA {
-				charA := kit.Consume(NewRuneSet_Range('a', 'a'))
+				charA := kit.Consume(NewRuneSetRange('a', 'a'))
 				return kit.Repeat(charA, 0, -1)
 			},
 		},
@@ -63,7 +63,7 @@ func TestConstruct_RegexLikePatterns(t *testing.T) {
 			name:        "kleene_plus",
 			description: "a+  (one or more 'a')",
 			builder: func() *NFA {
-				charA := kit.Consume(NewRuneSet_Range('a', 'a'))
+				charA := kit.Consume(NewRuneSetRange('a', 'a'))
 				return kit.Repeat(charA, 1, -1)
 			},
 		},
@@ -71,7 +71,7 @@ func TestConstruct_RegexLikePatterns(t *testing.T) {
 			name:        "exact_count",
 			description: "a{3}  (exactly three 'a')",
 			builder: func() *NFA {
-				charA := kit.Consume(NewRuneSet_Range('a', 'a'))
+				charA := kit.Consume(NewRuneSetRange('a', 'a'))
 				return kit.Repeat(charA, 3, 3)
 			},
 		},
@@ -79,7 +79,7 @@ func TestConstruct_RegexLikePatterns(t *testing.T) {
 			name:        "range_count",
 			description: "a{2,5}  (two to five 'a')",
 			builder: func() *NFA {
-				charA := kit.Consume(NewRuneSet_Range('a', 'a'))
+				charA := kit.Consume(NewRuneSetRange('a', 'a'))
 				return kit.Repeat(charA, 2, 5)
 			},
 		},
@@ -87,7 +87,7 @@ func TestConstruct_RegexLikePatterns(t *testing.T) {
 			name:        "character_class",
 			description: "[a-z]  (any lowercase letter)",
 			builder: func() *NFA {
-				return kit.Consume(NewRuneSet_Range('a', 'z'))
+				return kit.Consume(NewRuneSetRange('a', 'z'))
 			},
 		},
 		{
@@ -95,19 +95,19 @@ func TestConstruct_RegexLikePatterns(t *testing.T) {
 			description: "(hello|world)  (either 'hello' or 'world')",
 			builder: func() *NFA {
 				// Create "hello"
-				h := kit.Consume(NewRuneSet_Range('h', 'h'))
-				e := kit.Consume(NewRuneSet_Range('e', 'e'))
-				l1 := kit.Consume(NewRuneSet_Range('l', 'l'))
-				l2 := kit.Consume(NewRuneSet_Range('l', 'l'))
-				o := kit.Consume(NewRuneSet_Range('o', 'o'))
+				h := kit.Consume(NewRuneSetRange('h', 'h'))
+				e := kit.Consume(NewRuneSetRange('e', 'e'))
+				l1 := kit.Consume(NewRuneSetRange('l', 'l'))
+				l2 := kit.Consume(NewRuneSetRange('l', 'l'))
+				o := kit.Consume(NewRuneSetRange('o', 'o'))
 				hello := kit.Concat(h, e, l1, l2, o)
 
 				// Create "world"
-				w := kit.Consume(NewRuneSet_Range('w', 'w'))
-				o2 := kit.Consume(NewRuneSet_Range('o', 'o'))
-				r := kit.Consume(NewRuneSet_Range('r', 'r'))
-				l3 := kit.Consume(NewRuneSet_Range('l', 'l'))
-				d := kit.Consume(NewRuneSet_Range('d', 'd'))
+				w := kit.Consume(NewRuneSetRange('w', 'w'))
+				o2 := kit.Consume(NewRuneSetRange('o', 'o'))
+				r := kit.Consume(NewRuneSetRange('r', 'r'))
+				l3 := kit.Consume(NewRuneSetRange('l', 'l'))
+				d := kit.Consume(NewRuneSetRange('d', 'd'))
 				world := kit.Concat(w, o2, r, l3, d)
 
 				return kit.Alternate(hello, world)
@@ -128,8 +128,8 @@ func TestConstruct_RegexLikePatterns(t *testing.T) {
 // TestConstruct_SetOperations tests set-like operations on automata
 func TestConstruct_SetOperations(t *testing.T) {
 	// Create test sets: [a-m] and [h-z]
-	setAM := kit.Consume(NewRuneSet_Range('a', 'm'))
-	setHZ := kit.Consume(NewRuneSet_Range('h', 'z'))
+	setAM := kit.Consume(NewRuneSetRange('a', 'm'))
+	setHZ := kit.Consume(NewRuneSetRange('h', 'z'))
 
 	// Test complement
 	notAM := kit.Complement(setAM)

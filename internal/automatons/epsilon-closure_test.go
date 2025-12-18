@@ -27,7 +27,7 @@ func createTestNFA() *NFA {
 	// s2 -ε-> s4
 	builder.AddTransitionForRuneSet(s2, s4, nil)
 	// Add a regular (non-epsilon) transition for completeness
-	builder.AddTransitionForRuneSet(s1, s3, NewRuneSet_Rune('a'))
+	builder.AddTransitionForRuneSet(s1, s3, NewRuneSetRune('a'))
 
 	builder.SetStartState(s0)
 	builder.AcceptState(s4)
@@ -40,7 +40,7 @@ func TestGetEpsilonClosure_SingleState(t *testing.T) {
 
 	// Test closure of state 0 (should include 0, 1, 2, 3, 4)
 	closure := nfa.GetEpsilonClosure(0)
-	expected := NewBitMask_Bits(5, []bool{true, true, true, true, true})
+	expected := NewBitMaskBits(5, []bool{true, true, true, true, true})
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of state 0: expected %v, got %v", expected, closure)
@@ -52,7 +52,7 @@ func TestGetEpsilonClosure_MultipleStates(t *testing.T) {
 
 	// Test closure of states 1 and 3
 	closure := nfa.GetEpsilonClosure(1, 3)
-	expected := NewBitMask_Bits(5, []bool{false, true, true, true, true})
+	expected := NewBitMaskBits(5, []bool{false, true, true, true, true})
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of states 1,3: expected %v, got %v", expected, closure)
@@ -64,7 +64,7 @@ func TestGetEpsilonClosure_LeafState(t *testing.T) {
 
 	// Test closure of state 4 (leaf state with no epsilon transitions)
 	closure := nfa.GetEpsilonClosure(4)
-	expected := NewBitMask_Bits(5, []bool{false, false, false, false, true})
+	expected := NewBitMaskBits(5, []bool{false, false, false, false, true})
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of state 4: expected %v, got %v", expected, closure)
@@ -76,7 +76,7 @@ func TestGetEpsilonClosure_EmptyInput(t *testing.T) {
 
 	// Test closure with no input states
 	closure := nfa.GetEpsilonClosure()
-	expected := NewBitMask_Empty(5)
+	expected := NewBitMaskEmpty(5)
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of no states: expected %v, got %v", expected, closure)
@@ -88,7 +88,7 @@ func TestGetEpsilonClosure_DuplicateStates(t *testing.T) {
 
 	// Test closure with duplicate input states
 	closure := nfa.GetEpsilonClosure(2, 2, 2)
-	expected := NewBitMask_Bits(5, []bool{false, false, true, false, true})
+	expected := NewBitMaskBits(5, []bool{false, false, true, false, true})
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of duplicate states: expected %v, got %v", expected, closure)
@@ -115,7 +115,7 @@ func TestGetEpsilonClosure_LinearChain(t *testing.T) {
 
 	// Test closure of state 0
 	closure := nfa.GetEpsilonClosure(s0)
-	expected := NewBitMask_Bits(4, []bool{true, true, true, true})
+	expected := NewBitMaskBits(4, []bool{true, true, true, true})
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of linear chain: expected %v, got %v", expected, closure)
@@ -123,7 +123,7 @@ func TestGetEpsilonClosure_LinearChain(t *testing.T) {
 
 	// Test closure of state 1
 	closure = nfa.GetEpsilonClosure(s1)
-	expected = NewBitMask_Bits(4, []bool{false, true, true, true})
+	expected = NewBitMaskBits(4, []bool{false, true, true, true})
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of state 1 in linear chain: expected %v, got %v", expected, closure)
@@ -149,7 +149,7 @@ func TestGetEpsilonClosure_CyclicGraph(t *testing.T) {
 
 	// Test closure should include all states in the cycle
 	closure := nfa.GetEpsilonClosure(s0)
-	expected := NewBitMask_Bits(3, []bool{true, true, true})
+	expected := NewBitMaskBits(3, []bool{true, true, true})
 
 	if !reflect.DeepEqual(closure, expected) {
 		t.Errorf("Epsilon closure of cyclic graph: expected %v, got %v", expected, closure)
@@ -165,8 +165,8 @@ func TestGetEpsilonClosure_IsolatedStates(t *testing.T) {
 	s2 := builder.AddState()
 
 	// Add only regular transitions, no epsilon
-	builder.AddTransitionForRuneSet(s0, s1, NewRuneSet_Rune('a'))
-	builder.AddTransitionForRuneSet(s1, s2, NewRuneSet_Rune('b'))
+	builder.AddTransitionForRuneSet(s0, s1, NewRuneSetRune('a'))
+	builder.AddTransitionForRuneSet(s1, s2, NewRuneSetRune('b'))
 
 	builder.SetStartState(s0)
 	builder.AcceptState(s2)
@@ -176,7 +176,7 @@ func TestGetEpsilonClosure_IsolatedStates(t *testing.T) {
 	// Each state should only contain itself in epsilon closure
 	for _, state := range []int{s0, s1, s2} {
 		closure := nfa.GetEpsilonClosure(state)
-		expected := NewBitMask_Empty(3)
+		expected := NewBitMaskEmpty(3)
 		expected.Set(state)
 		if !reflect.DeepEqual(closure, expected) {
 			t.Errorf("Epsilon closure of isolated state %d: expected %v, got %v", state, expected, closure)

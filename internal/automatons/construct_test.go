@@ -15,31 +15,31 @@ func TestConstruct_Consume(t *testing.T) {
 	}{
 		{
 			name:        "single character",
-			charset:     NewRuneSet_Range('a', 'a'),
+			charset:     NewRuneSetRange('a', 'a'),
 			testRune:    'a',
 			expectMatch: true,
 		},
 		{
 			name:        "single character - no match",
-			charset:     NewRuneSet_Range('a', 'a'),
+			charset:     NewRuneSetRange('a', 'a'),
 			testRune:    'b',
 			expectMatch: false,
 		},
 		{
 			name:        "character range",
-			charset:     NewRuneSet_Range('a', 'z'),
+			charset:     NewRuneSetRange('a', 'z'),
 			testRune:    'm',
 			expectMatch: true,
 		},
 		{
 			name:        "character range - outside range",
-			charset:     NewRuneSet_Range('a', 'z'),
+			charset:     NewRuneSetRange('a', 'z'),
 			testRune:    'A',
 			expectMatch: false,
 		},
 		{
 			name:        "empty charset",
-			charset:     NewRuneSet_Empty(),
+			charset:     NewRuneSetEmpty(),
 			testRune:    'a',
 			expectMatch: false,
 		},
@@ -66,9 +66,9 @@ func TestConstruct_Consume(t *testing.T) {
 
 func TestConstruct_Alternate(t *testing.T) {
 	// Create test automata
-	charA := kit.Consume(NewRuneSet_Range('a', 'a'))
-	charB := kit.Consume(NewRuneSet_Range('b', 'b'))
-	charC := kit.Consume(NewRuneSet_Range('c', 'c'))
+	charA := kit.Consume(NewRuneSetRange('a', 'a'))
+	charB := kit.Consume(NewRuneSetRange('b', 'b'))
+	charC := kit.Consume(NewRuneSetRange('c', 'c'))
 
 	tests := []struct {
 		name        string
@@ -121,9 +121,9 @@ func TestConstruct_Alternate(t *testing.T) {
 
 func TestConstruct_Concat(t *testing.T) {
 	// Create test automata
-	charA := kit.Consume(NewRuneSet_Range('a', 'a'))
-	charB := kit.Consume(NewRuneSet_Range('b', 'b'))
-	charC := kit.Consume(NewRuneSet_Range('c', 'c'))
+	charA := kit.Consume(NewRuneSetRange('a', 'a'))
+	charB := kit.Consume(NewRuneSetRange('b', 'b'))
+	charC := kit.Consume(NewRuneSetRange('c', 'c'))
 
 	tests := []struct {
 		name     string
@@ -166,7 +166,7 @@ func TestConstruct_Concat(t *testing.T) {
 
 func TestConstruct_Repeat(t *testing.T) {
 	// Create test automaton
-	charA := kit.Consume(NewRuneSet_Range('a', 'a'))
+	charA := kit.Consume(NewRuneSetRange('a', 'a'))
 
 	tests := []struct {
 		name        string
@@ -245,7 +245,7 @@ func TestConstruct_Repeat(t *testing.T) {
 
 func TestConstruct_Complement(t *testing.T) {
 	// Create test automaton
-	charA := kit.Consume(NewRuneSet_Range('a', 'a'))
+	charA := kit.Consume(NewRuneSetRange('a', 'a'))
 	nfa := kit.Complement(charA)
 
 	// Basic validation
@@ -280,8 +280,8 @@ func TestConstruct_Complement(t *testing.T) {
 
 func TestConstruct_IntersectNFA(t *testing.T) {
 	// Create test automata
-	rangeAB := kit.Consume(NewRuneSet_Range('a', 'b'))
-	rangeBC := kit.Consume(NewRuneSet_Range('b', 'c'))
+	rangeAB := kit.Consume(NewRuneSetRange('a', 'b'))
+	rangeBC := kit.Consume(NewRuneSetRange('b', 'c'))
 	nfa := kit.Intersect(rangeAB, rangeBC)
 
 	// Basic validation
@@ -295,7 +295,7 @@ func TestConstruct_IntersectNFA(t *testing.T) {
 
 func TestConstruct_PackageLevelFunctions(t *testing.T) {
 	// Test that package-level functions work the same as method calls
-	charset := NewRuneSet_Range('x', 'x')
+	charset := NewRuneSetRange('x', 'x')
 
 	// Test Consume
 	kit.Consume(charset)
@@ -305,7 +305,7 @@ func TestConstruct_PackageLevelFunctions(t *testing.T) {
 
 func TestConstruct_ErrorHandling(t *testing.T) {
 	// Test various error conditions
-	charset := NewRuneSet_Range('a', 'a')
+	charset := NewRuneSetRange('a', 'a')
 
 	t.Run("nil automaton handling", func(t *testing.T) {
 		// This tests the robustness of our implementation

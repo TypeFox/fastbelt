@@ -54,7 +54,7 @@ func Except(first *RuneSet, second *RuneSet) *RuneSet {
 
 // Negate creates a new RuneSet containing all characters not in the given set
 func Negate(set *RuneSet) *RuneSet {
-	full := NewRuneSet_Full()
+	full := NewRuneSetFull()
 	return Except(full, set)
 }
 

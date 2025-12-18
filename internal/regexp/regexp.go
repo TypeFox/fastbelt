@@ -60,7 +60,7 @@ func (r *RegexpImpl) FindStringIndex(s string) (loc []int) {
 }
 
 func (r *RegexpImpl) GetStartChars() *automatons.RuneSet {
-	startCharsSet := automatons.NewRuneSet_Empty()
+	startCharsSet := automatons.NewRuneSetEmpty()
 	transitions := r.dfa.TransitionsBySource
 	startState := r.dfa.StartState
 	for transition := range transitions[startState].All() {
@@ -78,11 +78,11 @@ func newNFAFromSyntax(op *syntax.Regexp) *automatons.NFA {
 	case syntax.OpLiteral:
 		chain := make([]*automatons.NFA, len(op.Rune))
 		for i, r := range op.Rune {
-			chain[i] = kit.Consume(automatons.NewRuneSet_Rune(r))
+			chain[i] = kit.Consume(automatons.NewRuneSetRune(r))
 		}
 		return kit.Concat(chain...)
 	case syntax.OpCharClass:
-		runeSet := automatons.NewRuneSet_Empty()
+		runeSet := automatons.NewRuneSetEmpty()
 		for i := 0; i < len(op.Rune); i += 2 {
 			start := op.Rune[i]
 			end := op.Rune[i+1]
@@ -90,7 +90,7 @@ func newNFAFromSyntax(op *syntax.Regexp) *automatons.NFA {
 		}
 		return kit.Consume(runeSet)
 	case syntax.OpAnyChar:
-		runeSet := automatons.NewRuneSet_Full()
+		runeSet := automatons.NewRuneSetFull()
 		return kit.Consume(runeSet)
 	case syntax.OpConcat:
 		chain := make([]*automatons.NFA, len(op.Sub))
@@ -119,7 +119,7 @@ func newNFAFromSyntax(op *syntax.Regexp) *automatons.NFA {
 	case syntax.OpCapture:
 		return newNFAFromSyntax(op.Sub[0])
 	case syntax.OpAnyCharNotNL:
-		runeSet := automatons.NewRuneSet_Full()
+		runeSet := automatons.NewRuneSetFull()
 		runeSet.RemoveRune('\n')
 		return kit.Consume(runeSet)
 	case syntax.OpBeginLine:

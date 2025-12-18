@@ -49,7 +49,7 @@ func (set RuneSet) Length() int {
 	return length
 }
 
-func NewRuneSet_Rune(r rune) *RuneSet {
+func NewRuneSetRune(r rune) *RuneSet {
 	ranges := make([]RuneRange, 0)
 	if r-1 >= 0 {
 		left := RuneRange{Start: 0, End: r - 1, Includes: false}
@@ -64,7 +64,7 @@ func NewRuneSet_Rune(r rune) *RuneSet {
 	return &RuneSet{Ranges: ranges}
 }
 
-func NewRuneSet_Range(start, end rune) *RuneSet {
+func NewRuneSetRange(start, end rune) *RuneSet {
 	ranges := make([]RuneRange, 0)
 	if start-1 >= 0 {
 		left := RuneRange{Start: 0, End: start - 1, Includes: false}
@@ -79,21 +79,21 @@ func NewRuneSet_Range(start, end rune) *RuneSet {
 	return &RuneSet{Ranges: ranges}
 }
 
-func NewRuneSet_Empty() *RuneSet {
+func NewRuneSetEmpty() *RuneSet {
 	return &RuneSet{Ranges: []RuneRange{
 		{Start: 0, End: MaxRune, Includes: false},
 	}}
 }
 
-func NewRuneSet_OneOf(chars []rune) *RuneSet {
-	runeSet := NewRuneSet_Empty()
+func NewRuneSetOneOf(chars []rune) *RuneSet {
+	runeSet := NewRuneSetEmpty()
 	for _, c := range chars {
 		runeSet.AddRune(c)
 	}
 	return runeSet
 }
 
-func NewRuneSet_Full() *RuneSet {
+func NewRuneSetFull() *RuneSet {
 	return &RuneSet{Ranges: []RuneRange{
 		{Start: 0, End: MaxRune, Includes: true},
 	}}
