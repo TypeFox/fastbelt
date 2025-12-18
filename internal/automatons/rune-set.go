@@ -27,8 +27,10 @@ func FormatRune(r rune) string {
 		runeStr = "'\\\\'"
 	} else if r >= MinAscii && r <= MaxAscii {
 		runeStr = "'" + string(r) + "'"
-	} else {
+	} else if r <= 0xffff {
 		runeStr = fmt.Sprintf("'\\u%04X'", int64(r))
+	} else {
+		runeStr = fmt.Sprintf("'\\U%08X'", int64(r))
 	}
 	return runeStr
 }

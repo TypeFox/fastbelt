@@ -159,7 +159,7 @@ func MappingBase_AddRuneRangeValues[T Value[T]](t *RuneRangeMappingBase[T], star
 				currentRange = nil
 			//   CCCCCCCCCCC
 			//NNNSSSSSSSSS
-			case currentRange.End < section.Range.End:
+			case currentRange.End > section.Range.End:
 				newRanges = append(newRanges, RuneRangeMappingSection[T]{
 					Range:  NewRuneRange(currentRange.Start, section.Range.End, currentRange.Includes || section.Range.Includes),
 					Values: section.Values.Join(values),
