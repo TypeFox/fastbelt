@@ -155,9 +155,9 @@ func generateInterface(node generator.Node, grammar generated.Grammar, iface gen
 			}
 			// Setter
 			if field.Array {
-				n.AppendLine("With", field.Name, "Item(item ", field.GType, ")")
+				n.AppendLine("Set", field.Name, "Item(item ", field.GType, ")")
 			} else {
-				n.AppendLine("With", field.Name, "(value ", field.GType, ")")
+				n.AppendLine("Set", field.Name, "(value ", field.GType, ")")
 			}
 		}
 	})
@@ -315,12 +315,12 @@ func generateDataStruct(node generator.Node, iface generated.Interface, fields [
 
 		// Setter
 		if field.Array {
-			node.AppendLine("func (i *", iface.Name(), "Data) With", field.Name, "Item(item ", field.GType, ") {")
+			node.AppendLine("func (i *", iface.Name(), "Data) Set", field.Name, "Item(item ", field.GType, ") {")
 			node.Indent(func(n generator.Node) {
 				n.AppendLine("i.", field.PName, " = append(i.", field.PName, ", item)")
 			})
 		} else {
-			node.AppendLine("func (i *", iface.Name(), "Data) With", field.Name, "(value ", field.GType, ") {")
+			node.AppendLine("func (i *", iface.Name(), "Data) Set", field.Name, "(value ", field.GType, ") {")
 			node.Indent(func(n generator.Node) {
 				n.AppendLine("i.", field.PName, " = value")
 			})

@@ -36,7 +36,7 @@ func (node *AstNodeBase) Document() *Document {
 	}
 }
 
-func (node *AstNodeBase) WithDocument(document *Document) {
+func (node *AstNodeBase) SetDocument(document *Document) {
 	if node != nil {
 		node.document = document
 	}
@@ -50,7 +50,7 @@ func (node *AstNodeBase) Container() AstNode {
 	}
 }
 
-func (node *AstNodeBase) WithContainer(container AstNode) {
+func (node *AstNodeBase) SetContainer(container AstNode) {
 	if node != nil {
 		node.container = container
 	}
@@ -64,21 +64,21 @@ func (node *AstNodeBase) Tokens() []*Token {
 	}
 }
 
-func (node *AstNodeBase) WithSegmentStartToken(token *Token) {
+func (node *AstNodeBase) SetSegmentStartToken(token *Token) {
 	if node != nil && token != nil {
 		node.segment.Indices.Start = token.Segment.Indices.Start
 		node.segment.Range.Start = token.Segment.Range.Start
 	}
 }
 
-func (node *AstNodeBase) WithSegmentEndToken(token *Token) {
+func (node *AstNodeBase) SetSegmentEndToken(token *Token) {
 	if node != nil && token != nil {
 		node.segment.Indices.End = token.Segment.Indices.End
 		node.segment.Range.End = token.Segment.Range.End
 	}
 }
 
-func (node *AstNodeBase) WithSegment(segment TextSegment) {
+func (node *AstNodeBase) SetSegment(segment TextSegment) {
 	if node != nil {
 		node.segment = segment
 	}
@@ -92,13 +92,13 @@ func (node *AstNodeBase) Segment() TextSegment {
 	}
 }
 
-func (node *AstNodeBase) WithToken(token *Token) {
+func (node *AstNodeBase) SetToken(token *Token) {
 	if node != nil && token != nil {
 		node.tokens = append(node.tokens, token)
 	}
 }
 
-func (node *AstNodeBase) WithTokens(tokens []*Token) {
+func (node *AstNodeBase) SetTokens(tokens []*Token) {
 	if node != nil {
 		// The method is called to set all tokens of the node at once
 		// The old node is discarded in the process
@@ -117,20 +117,20 @@ func (node *AstNodeBase) Text() string {
 
 type AstNode interface {
 	Document() *Document
-	WithDocument(document *Document)
+	SetDocument(document *Document)
 	Container() AstNode
-	WithContainer(container AstNode)
+	SetContainer(container AstNode)
 	Tokens() []*Token
-	WithToken(token *Token)
-	WithTokens(tokens []*Token)
+	SetToken(token *Token)
+	SetTokens(tokens []*Token)
 	Segment() TextSegment
-	WithSegment(segment TextSegment)
+	SetSegment(segment TextSegment)
 	// Sets the start of the node's segment to the start of the given token's segment.
-	// Should only be called by the parser. Use WithSegment to set both start and end manually.
-	WithSegmentStartToken(token *Token)
+	// Should only be called by the parser. Use SetSegment to set both start and end manually.
+	SetSegmentStartToken(token *Token)
 	// Sets the end of the node's segment to the end of the given token's segment.
-	// Should only be called by the parser. Use WithSegment to set both start and end manually.
-	WithSegmentEndToken(token *Token)
+	// Should only be called by the parser. Use SetSegment to set both start and end manually.
+	SetSegmentEndToken(token *Token)
 	Text() string
 	ForEachNode(func(AstNode))
 }
@@ -143,7 +143,7 @@ func NewAstNode() AstNodeBase {
 
 func AssignToken(node AstNode, token *Token, kind int) {
 	if node != nil && token != nil {
-		node.WithToken(token)
+		node.SetToken(token)
 		token.Element = node
 		token.Kind = kind
 	}
@@ -151,7 +151,7 @@ func AssignToken(node AstNode, token *Token, kind int) {
 
 func AssignTokens(node AstNode, tokens []*Token) {
 	if node != nil {
-		node.WithTokens(tokens)
+		node.SetTokens(tokens)
 		for _, token := range tokens {
 			token.Element = node
 		}
@@ -167,7 +167,7 @@ func MergeTokens(newNode AstNode, oldTokens []*Token) {
 
 func AssignContainers(root AstNode) {
 	root.ForEachNode(func(child AstNode) {
-		child.WithContainer(root)
+		child.SetContainer(root)
 		AssignContainers(child)
 	})
 }

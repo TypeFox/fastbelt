@@ -60,7 +60,13 @@ func GenerateParser(grammar generated.Grammar) string {
 	})
 	node.AppendLine("}")
 	node.AppendLine()
-	firstRule := grammar.Rules()[0]
+
+	rules := grammar.Rules()
+	if len(rules) == 0 {
+		return formatIfPossible(node.String())
+	}
+
+	firstRule := rules[0]
 	node.AppendLine("func (p *Parser) Parse(tokens []*core.Token) *parser.ParseResult {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("p.state = parser.NewParserState(tokens)")
@@ -185,9 +191,9 @@ func generateParseFunction(node generator.Node, context *ParserGeneratorContext,
 	node.AppendLine("func (p *Parser) Parse", rule.Name(), "() ", rule.ReturnType(), " {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("current := New", rule.ReturnType(), "()")
-		n.AppendLine("current.WithSegmentStartToken(p.state.LA(1))")
+		n.AppendLine("current.SetSegmentStartToken(p.state.LA(1))")
 		generateAbstractElementParser(n, context, rule.Body())
-		n.AppendLine("current.WithSegmentEndToken(p.state.LA(0))")
+		n.AppendLine("current.SetSegmentEndToken(p.state.LA(0))")
 		n.AppendLine("return current")
 	})
 	node.AppendLine("}")
@@ -204,15 +210,15 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 		node.Indent(func(n generator.Node) {
 			n.AppendLine("result := New", action.Type(), "()")
 			// Inherit segment from previous node
-			n.AppendLine("result.WithSegment(current.Segment())")
+			n.AppendLine("result.SetSegment(current.Segment())")
 			if action.Property() != "" {
 				if action.Operator() == "+=" {
-					n.AppendLine("result.With", action.Property(), "Item(current)")
+					n.AppendLine("result.Set", action.Property(), "Item(current)")
 				} else {
-					n.AppendLine("result.With", action.Property(), "(current)")
+					n.AppendLine("result.Set", action.Property(), "(current)")
 				}
 				// Ensure that the previous node has a valid segment ending
-				n.AppendLine("current.WithSegmentEndToken(p.state.LA(0))")
+				n.AppendLine("current.SetSegmentEndToken(p.state.LA(0))")
 				n.AppendLine("current = result")
 			} else {
 				// If there is no property to assign, just merge tokens
@@ -243,10 +249,10 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 							switch assignment.Operator() {
 							case "+=":
 								// Append to slice
-								in.AppendLine("current.With", assignment.Property(), "Item(", resultName, ")")
+								in.AppendLine("current.Set", assignment.Property(), "Item(", resultName, ")")
 							default:
 								// Single assignment
-								in.AppendLine("current.With", assignment.Property(), "(", resultName, ")")
+								in.AppendLine("current.Set", assignment.Property(), "(", resultName, ")")
 							}
 						})
 						n2.AppendLine("}")

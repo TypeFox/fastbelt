@@ -10,13 +10,13 @@ type Grammar interface {
 	IsGrammar()
 	Name() string
 	NameToken() *core.Token
-	WithName(value *core.Token)
+	SetName(value *core.Token)
 	Rules() []ParserRule
-	WithRulesItem(item ParserRule)
+	SetRulesItem(item ParserRule)
 	Terminals() []Token
-	WithTerminalsItem(item Token)
+	SetTerminalsItem(item Token)
 	Interfaces() []Interface
-	WithInterfacesItem(item Interface)
+	SetInterfacesItem(item Interface)
 }
 
 func NewGrammar() Grammar {
@@ -67,7 +67,7 @@ func (i *GrammarData) NameToken() *core.Token {
 	return i.name
 }
 
-func (i *GrammarData) WithName(value *core.Token) {
+func (i *GrammarData) SetName(value *core.Token) {
 	i.name = value
 }
 
@@ -75,7 +75,7 @@ func (i *GrammarData) Rules() []ParserRule {
 	return i.rules
 }
 
-func (i *GrammarData) WithRulesItem(item ParserRule) {
+func (i *GrammarData) SetRulesItem(item ParserRule) {
 	i.rules = append(i.rules, item)
 }
 
@@ -83,7 +83,7 @@ func (i *GrammarData) Terminals() []Token {
 	return i.terminals
 }
 
-func (i *GrammarData) WithTerminalsItem(item Token) {
+func (i *GrammarData) SetTerminalsItem(item Token) {
 	i.terminals = append(i.terminals, item)
 }
 
@@ -91,7 +91,7 @@ func (i *GrammarData) Interfaces() []Interface {
 	return i.interfaces
 }
 
-func (i *GrammarData) WithInterfacesItem(item Interface) {
+func (i *GrammarData) SetInterfacesItem(item Interface) {
 	i.interfaces = append(i.interfaces, item)
 }
 
@@ -110,11 +110,11 @@ type Interface interface {
 	IsInterface()
 	Name() string
 	NameToken() *core.Token
-	WithName(value *core.Token)
+	SetName(value *core.Token)
 	Extends() []*core.Token
-	WithExtendsItem(item *core.Token)
+	SetExtendsItem(item *core.Token)
 	Fields() []Field
-	WithFieldsItem(item Field)
+	SetFieldsItem(item Field)
 }
 
 func NewInterface() Interface {
@@ -157,7 +157,7 @@ func (i *InterfaceData) NameToken() *core.Token {
 	return i.name
 }
 
-func (i *InterfaceData) WithName(value *core.Token) {
+func (i *InterfaceData) SetName(value *core.Token) {
 	i.name = value
 }
 
@@ -165,7 +165,7 @@ func (i *InterfaceData) Extends() []*core.Token {
 	return i.extends
 }
 
-func (i *InterfaceData) WithExtendsItem(item *core.Token) {
+func (i *InterfaceData) SetExtendsItem(item *core.Token) {
 	i.extends = append(i.extends, item)
 }
 
@@ -173,7 +173,7 @@ func (i *InterfaceData) Fields() []Field {
 	return i.fields
 }
 
-func (i *InterfaceData) WithFieldsItem(item Field) {
+func (i *InterfaceData) SetFieldsItem(item Field) {
 	i.fields = append(i.fields, item)
 }
 
@@ -192,13 +192,13 @@ type Field interface {
 	IsField()
 	Name() string
 	NameToken() *core.Token
-	WithName(value *core.Token)
+	SetName(value *core.Token)
 	IsArray() bool
 	ArrayToken() *core.Token
-	WithArray(value *core.Token)
+	SetArray(value *core.Token)
 	Type() string
 	TypeToken() *core.Token
-	WithType(value *core.Token)
+	SetType(value *core.Token)
 }
 
 func NewField() Field {
@@ -235,7 +235,7 @@ func (i *FieldData) NameToken() *core.Token {
 	return i.name
 }
 
-func (i *FieldData) WithName(value *core.Token) {
+func (i *FieldData) SetName(value *core.Token) {
 	i.name = value
 }
 
@@ -247,7 +247,7 @@ func (i *FieldData) ArrayToken() *core.Token {
 	return i.array
 }
 
-func (i *FieldData) WithArray(value *core.Token) {
+func (i *FieldData) SetArray(value *core.Token) {
 	i.array = value
 }
 
@@ -263,7 +263,7 @@ func (i *FieldData) TypeToken() *core.Token {
 	return i._Type
 }
 
-func (i *FieldData) WithType(value *core.Token) {
+func (i *FieldData) SetType(value *core.Token) {
 	i._Type = value
 }
 
@@ -282,12 +282,12 @@ type ParserRule interface {
 	IsParserRule()
 	Name() string
 	NameToken() *core.Token
-	WithName(value *core.Token)
+	SetName(value *core.Token)
 	ReturnType() string
 	ReturnTypeToken() *core.Token
-	WithReturnType(value *core.Token)
+	SetReturnType(value *core.Token)
 	Body() Element
-	WithBody(value Element)
+	SetBody(value Element)
 }
 
 func NewParserRule() ParserRule {
@@ -327,7 +327,7 @@ func (i *ParserRuleData) NameToken() *core.Token {
 	return i.name
 }
 
-func (i *ParserRuleData) WithName(value *core.Token) {
+func (i *ParserRuleData) SetName(value *core.Token) {
 	i.name = value
 }
 
@@ -343,7 +343,7 @@ func (i *ParserRuleData) ReturnTypeToken() *core.Token {
 	return i.returnType
 }
 
-func (i *ParserRuleData) WithReturnType(value *core.Token) {
+func (i *ParserRuleData) SetReturnType(value *core.Token) {
 	i.returnType = value
 }
 
@@ -355,7 +355,7 @@ func (i *ParserRuleData) Body() Element {
 	}
 }
 
-func (i *ParserRuleData) WithBody(value Element) {
+func (i *ParserRuleData) SetBody(value Element) {
 	i.body = value
 }
 
@@ -374,13 +374,13 @@ type Token interface {
 	IsToken()
 	Type() string
 	TypeToken() *core.Token
-	WithType(value *core.Token)
+	SetType(value *core.Token)
 	Name() string
 	NameToken() *core.Token
-	WithName(value *core.Token)
+	SetName(value *core.Token)
 	Regexp() string
 	RegexpToken() *core.Token
-	WithRegexp(value *core.Token)
+	SetRegexp(value *core.Token)
 }
 
 func NewToken() Token {
@@ -417,7 +417,7 @@ func (i *TokenData) TypeToken() *core.Token {
 	return i._Type
 }
 
-func (i *TokenData) WithType(value *core.Token) {
+func (i *TokenData) SetType(value *core.Token) {
 	i._Type = value
 }
 
@@ -433,7 +433,7 @@ func (i *TokenData) NameToken() *core.Token {
 	return i.name
 }
 
-func (i *TokenData) WithName(value *core.Token) {
+func (i *TokenData) SetName(value *core.Token) {
 	i.name = value
 }
 
@@ -449,7 +449,7 @@ func (i *TokenData) RegexpToken() *core.Token {
 	return i.regexp
 }
 
-func (i *TokenData) WithRegexp(value *core.Token) {
+func (i *TokenData) SetRegexp(value *core.Token) {
 	i.regexp = value
 }
 
@@ -468,7 +468,7 @@ type Element interface {
 	IsElement()
 	Cardinality() string
 	CardinalityToken() *core.Token
-	WithCardinality(value *core.Token)
+	SetCardinality(value *core.Token)
 }
 
 func NewElement() Element {
@@ -503,7 +503,7 @@ func (i *ElementData) CardinalityToken() *core.Token {
 	return i.cardinality
 }
 
-func (i *ElementData) WithCardinality(value *core.Token) {
+func (i *ElementData) SetCardinality(value *core.Token) {
 	i.cardinality = value
 }
 
@@ -522,7 +522,7 @@ type Alternatives interface {
 
 	IsAlternatives()
 	Alts() []Element
-	WithAltsItem(item Element)
+	SetAltsItem(item Element)
 }
 
 func NewAlternatives() Alternatives {
@@ -556,7 +556,7 @@ func (i *AlternativesData) Alts() []Element {
 	return i.alts
 }
 
-func (i *AlternativesData) WithAltsItem(item Element) {
+func (i *AlternativesData) SetAltsItem(item Element) {
 	i.alts = append(i.alts, item)
 }
 
@@ -579,7 +579,7 @@ type Group interface {
 
 	IsGroup()
 	Elements() []Element
-	WithElementsItem(item Element)
+	SetElementsItem(item Element)
 }
 
 func NewGroup() Group {
@@ -612,7 +612,7 @@ func (i *GroupData) Elements() []Element {
 	return i.elements
 }
 
-func (i *GroupData) WithElementsItem(item Element) {
+func (i *GroupData) SetElementsItem(item Element) {
 	i.elements = append(i.elements, item)
 }
 
@@ -634,7 +634,7 @@ type Keyword interface {
 	IsKeyword()
 	Value() string
 	ValueToken() *core.Token
-	WithValue(value *core.Token)
+	SetValue(value *core.Token)
 }
 
 func NewKeyword() Keyword {
@@ -671,7 +671,7 @@ func (i *KeywordData) ValueToken() *core.Token {
 	return i.value
 }
 
-func (i *KeywordData) WithValue(value *core.Token) {
+func (i *KeywordData) SetValue(value *core.Token) {
 	i.value = value
 }
 
@@ -695,12 +695,12 @@ type Assignment interface {
 	IsAssignment()
 	Property() string
 	PropertyToken() *core.Token
-	WithProperty(value *core.Token)
+	SetProperty(value *core.Token)
 	Operator() string
 	OperatorToken() *core.Token
-	WithOperator(value *core.Token)
+	SetOperator(value *core.Token)
 	Value() Assignable
-	WithValue(value Assignable)
+	SetValue(value Assignable)
 }
 
 func NewAssignment() Assignment {
@@ -741,7 +741,7 @@ func (i *AssignmentData) PropertyToken() *core.Token {
 	return i.property
 }
 
-func (i *AssignmentData) WithProperty(value *core.Token) {
+func (i *AssignmentData) SetProperty(value *core.Token) {
 	i.property = value
 }
 
@@ -757,7 +757,7 @@ func (i *AssignmentData) OperatorToken() *core.Token {
 	return i.operator
 }
 
-func (i *AssignmentData) WithOperator(value *core.Token) {
+func (i *AssignmentData) SetOperator(value *core.Token) {
 	i.operator = value
 }
 
@@ -769,7 +769,7 @@ func (i *AssignmentData) Value() Assignable {
 	}
 }
 
-func (i *AssignmentData) WithValue(value Assignable) {
+func (i *AssignmentData) SetValue(value Assignable) {
 	i.value = value
 }
 
@@ -829,9 +829,9 @@ type CrossRef interface {
 	IsCrossRef()
 	Type() string
 	TypeToken() *core.Token
-	WithType(value *core.Token)
+	SetType(value *core.Token)
 	Rule() RuleCall
-	WithRule(value RuleCall)
+	SetRule(value RuleCall)
 }
 
 func NewCrossRef() CrossRef {
@@ -872,7 +872,7 @@ func (i *CrossRefData) TypeToken() *core.Token {
 	return i._Type
 }
 
-func (i *CrossRefData) WithType(value *core.Token) {
+func (i *CrossRefData) SetType(value *core.Token) {
 	i._Type = value
 }
 
@@ -884,7 +884,7 @@ func (i *CrossRefData) Rule() RuleCall {
 	}
 }
 
-func (i *CrossRefData) WithRule(value RuleCall) {
+func (i *CrossRefData) SetRule(value RuleCall) {
 	i.rule = value
 }
 
@@ -908,7 +908,7 @@ type RuleCall interface {
 	IsRuleCall()
 	Rule() string
 	RuleToken() *core.Token
-	WithRule(value *core.Token)
+	SetRule(value *core.Token)
 }
 
 func NewRuleCall() RuleCall {
@@ -945,7 +945,7 @@ func (i *RuleCallData) RuleToken() *core.Token {
 	return i.rule
 }
 
-func (i *RuleCallData) WithRule(value *core.Token) {
+func (i *RuleCallData) SetRule(value *core.Token) {
 	i.rule = value
 }
 
@@ -969,13 +969,13 @@ type Action interface {
 	IsAction()
 	Type() string
 	TypeToken() *core.Token
-	WithType(value *core.Token)
+	SetType(value *core.Token)
 	Operator() string
 	OperatorToken() *core.Token
-	WithOperator(value *core.Token)
+	SetOperator(value *core.Token)
 	Property() string
 	PropertyToken() *core.Token
-	WithProperty(value *core.Token)
+	SetProperty(value *core.Token)
 }
 
 func NewAction() Action {
@@ -1013,7 +1013,7 @@ func (i *ActionData) TypeToken() *core.Token {
 	return i._Type
 }
 
-func (i *ActionData) WithType(value *core.Token) {
+func (i *ActionData) SetType(value *core.Token) {
 	i._Type = value
 }
 
@@ -1029,7 +1029,7 @@ func (i *ActionData) OperatorToken() *core.Token {
 	return i.operator
 }
 
-func (i *ActionData) WithOperator(value *core.Token) {
+func (i *ActionData) SetOperator(value *core.Token) {
 	i.operator = value
 }
 
@@ -1045,7 +1045,7 @@ func (i *ActionData) PropertyToken() *core.Token {
 	return i.property
 }
 
-func (i *ActionData) WithProperty(value *core.Token) {
+func (i *ActionData) SetProperty(value *core.Token) {
 	i.property = value
 }
 
