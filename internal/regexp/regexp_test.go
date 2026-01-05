@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	automatons "typefox.dev/fastbelt/internal/automatons"
 )
 
 func checkRegexp(t *testing.T, regexp Regexp, input string, expected []int) {
@@ -57,4 +58,32 @@ func TestWhitespace(t *testing.T) {
 func TestRegexpLiteral(t *testing.T) {
 	regexp := MustCompile("/([^\\r\\n\\[\\/\\\\]|\\\\.|\\[([^\\r\\n\\]\\\\]|\\\\.)*\\])+/")
 	checkRegexp(t, regexp, "/github.com/", []int{0, 12})
+}
+
+func TestStartChars_SingleRune(t *testing.T) {
+	regexp := MustCompile("a[bc]d")
+	startChars := regexp.(*RegexpImpl).GetStartChars()
+	expectedRunes := automatons.NewRuneSetRune('a')
+	assert.True(t, expectedRunes.Equals(*startChars))
+}
+
+func TestStartChars_RuneRange(t *testing.T) {
+	regexp := MustCompile("(a|b|c)")
+	startChars := regexp.(*RegexpImpl).GetStartChars()
+	expectedRunes := automatons.NewRuneSetOneOf([]rune{'a', 'b', 'c'})
+	assert.True(t, expectedRunes.Equals(*startChars))
+}
+
+func TestStartChars_RuneNonAscii(t *testing.T) {
+	regexp := MustCompile("🔥")
+	startChars := regexp.(*RegexpImpl).GetStartChars()
+	expectedRunes := automatons.NewRuneSetRune('🔥' % 0x100)
+	assert.True(t, expectedRunes.Equals(*startChars))
+}
+
+func TestStartChars_RuneNonAsciiBigRange(t *testing.T) {
+	regexp := MustCompile("[\U0001F525-\U0001F625]")
+	startChars := regexp.(*RegexpImpl).GetStartChars()
+	expectedRunes := automatons.NewRuneSetRange(0, 0xFF)
+	assert.True(t, expectedRunes.Equals(*startChars))
 }

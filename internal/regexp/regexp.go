@@ -67,7 +67,19 @@ func (r *RegexpImpl) GetStartChars() *automatons.RuneSet {
 		if !transition.Range.Includes {
 			continue
 		}
-		startCharsSet.AddRange(transition.Range.Start, transition.Range.End)
+		//only save lowest byte
+		modStart := transition.Range.Start % 0x100
+		modEnd := transition.Range.End % 0x100
+		if transition.Range.End-transition.Range.Start+1 < 0xFF {
+			if modStart <= modEnd {
+				startCharsSet.AddRange(modStart, modEnd)
+			} else {
+				startCharsSet.AddRange(modStart, 0xFF)
+				startCharsSet.AddRange(0x00, modEnd)
+			}
+		} else {
+			startCharsSet.AddRange(0x00, 0xFF)
+		}
 	}
 	return startCharsSet
 }
@@ -123,17 +135,17 @@ func newNFAFromSyntax(op *syntax.Regexp) *automatons.NFA {
 		runeSet.RemoveRune('\n')
 		return kit.Consume(runeSet)
 	case syntax.OpBeginLine:
-		return newNFAFromSyntax(op.Sub[0])
+		fallthrough
 	case syntax.OpEndLine:
-		return newNFAFromSyntax(op.Sub[0])
+		fallthrough
 	case syntax.OpBeginText:
-		return newNFAFromSyntax(op.Sub[0])
+		fallthrough
 	case syntax.OpEndText:
-		return newNFAFromSyntax(op.Sub[0])
+		fallthrough
 	case syntax.OpWordBoundary:
-		return newNFAFromSyntax(op.Sub[0])
+		fallthrough
 	case syntax.OpNoWordBoundary:
-		return newNFAFromSyntax(op.Sub[0])
+		panic(fmt.Sprintf("\\B, \\b, ^, $ are not supported yet: %v", op.Op))
 	case syntax.OpEmptyMatch:
 		return kit.Empty()
 	case syntax.OpNoMatch:
