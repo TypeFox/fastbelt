@@ -131,9 +131,9 @@ func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsM
 	return n
 }
 
-func (r *RegexpImpl) GenerateRegExp() generator.Node {
+func (r *RegexpImpl) GenerateRegExp(funcName string) generator.Node {
 	root := generator.NewNode()
-	root.AppendLine("func (s string, offset int) int {")
+	root.AppendLine(fmt.Sprintf("func %s(s string, offset int) int {", funcName))
 	root.Indent(func(n generator.Node) {
 		n.AppendLine("input := s[offset:]")
 		n.AppendLine("length := len(input)")
@@ -193,6 +193,10 @@ func (r *RegexpImpl) GenerateRegExp() generator.Node {
 		n.AppendLine("}")
 		n.AppendLine("return acceptedIndex")
 	})
-	root.AppendLine("},")
+	root.Append("}")
+	if funcName == "" {
+		root.Append(",")
+	}
+	root.AppendLine()
 	return root
 }

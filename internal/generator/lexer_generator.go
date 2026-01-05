@@ -114,7 +114,7 @@ func generateTokenType(node gen.Node, token generated.Token, id int) {
 		n.AppendLine("0,")
 		n.AppendLine("false,")
 		impl := regex.(*regexp.RegexpImpl)
-		n.AppendNode(impl.GenerateRegExp())
+		n.AppendNode(impl.GenerateRegExp(""))
 		n.Append("[]rune{")
 		startCharsSet := impl.GetStartChars()
 		n.AppendNode(runeSetToNode(startCharsSet))
