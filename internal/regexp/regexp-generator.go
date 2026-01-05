@@ -98,19 +98,31 @@ func GenerateTransitionsUsingSwitchCasing(bySource *automatons.RuneRangeTargetsM
 	return n
 }
 
-func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsMapping) generator.Node {
+type GenerateTransitionsUsingBinarySearchResult struct {
+	Lookup generator.Node
+	Next   generator.Node
+	Code   generator.Node
+}
+
+func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsMapping, source int, tokenName string) GenerateTransitionsUsingBinarySearchResult {
+	lookup := generator.NewNode()
+	lookup.Append("{")
+	for transition := range bySource.All() {
+		lookup.Append(fmt.Sprintf("%s, %s, ", automatons.FormatInt(transition.Range.Start), automatons.FormatInt(transition.Range.End)))
+	}
+	lookup.AppendLine("},")
+
+	next := generator.NewNode()
+	next.Append("{")
+	for transition := range bySource.All() {
+		next.Append(fmt.Sprintf("%d, ", transition.Values[0]))
+	}
+	next.AppendLine("},")
+
 	n := generator.NewNode()
-	n.Append("lookup := []rune{")
-	for transition := range bySource.All() {
-		n.Append(fmt.Sprintf("%s, %s, ", automatons.FormatInt(transition.Range.Start), automatons.FormatInt(transition.Range.End)))
-	}
-	n.AppendLine("}")
-	n.Append("next := []int{")
-	for transition := range bySource.All() {
-		n.Append(fmt.Sprintf("%d, ", transition.Values[0]))
-	}
-	n.AppendLine("}")
 	n.AppendLine("nextState := -1")
+	n.AppendLine(fmt.Sprintf("next := %s_Next[%d]", tokenName, source))
+	n.AppendLine(fmt.Sprintf("lookup := %s_Lookup[%d]", tokenName, source))
 	n.AppendLine("searchIndex := sort.Search(len(next), func(i int) bool {")
 	n.Indent(func(n generator.Node) {
 		n.AppendLine("return lookup[i*2] > r")
@@ -130,15 +142,25 @@ func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsM
 		n.AppendLine("break loop")
 	})
 	n.AppendLine("}")
-	return n
+	return GenerateTransitionsUsingBinarySearchResult{
+		Lookup: lookup,
+		Next:   next,
+		Code:   n,
+	}
 }
 
 type GenerateRegExpResult struct {
 	Imports map[string]bool
+	Lookup  generator.Node
+	Next    generator.Node
 	Code    generator.Node
 }
 
-func (r *RegexpImpl) GenerateRegExp(funcName string) GenerateRegExpResult {
+func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateRegExpResult {
+	lookup := generator.NewNode()
+	lookup.AppendLine(fmt.Sprintf("var %s_Lookup = map[int][]rune{", tokenName))
+	next := generator.NewNode()
+	next.AppendLine(fmt.Sprintf("var %s_Next = map[int][]int{", tokenName))
 	imports := map[string]bool{"unicode/utf8": true}
 	root := generator.NewNode()
 	root.AppendLine(fmt.Sprintf("func %s(s string, offset int) int {", funcName))
@@ -182,7 +204,12 @@ func (r *RegexpImpl) GenerateRegExp(funcName string) GenerateRegExpResult {
 					} else if automatons.GetNumberOfRunes(bySource.Ranges) < 50 {
 						n.AppendNode(GenerateTransitionsUsingSwitchCasing(bySource))
 					} else {
-						n.AppendNode(GenerateTransitionsUsingBinarySearch(bySource))
+						result := GenerateTransitionsUsingBinarySearch(bySource, source, tokenName)
+						n.AppendNode(result.Code)
+						lookup.Append(fmt.Sprintf("%d: ", source))
+						lookup.AppendNode(result.Lookup)
+						next.Append(fmt.Sprintf("%d: ", source))
+						next.AppendNode(result.Next)
 						imports["sort"] = true
 					}
 				})
@@ -203,12 +230,12 @@ func (r *RegexpImpl) GenerateRegExp(funcName string) GenerateRegExpResult {
 		n.AppendLine("return acceptedIndex")
 	})
 	root.Append("}")
-	if funcName == "" {
-		root.Append(",")
-	}
-	root.AppendLine()
+	lookup.AppendLine("}")
+	next.AppendLine("}")
 	return GenerateRegExpResult{
 		Imports: imports,
 		Code:    root,
+		Lookup:  lookup,
+		Next:    next,
 	}
 }

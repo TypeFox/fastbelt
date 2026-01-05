@@ -4,10 +4,13 @@ import (
 	"unicode/utf8"
 )
 
+var IPv4_Lookup = map[int][]rune{}
+var IPv4_Next = map[int][]int{}
+
 func IPv4(s string, offset int) int {
 	input := s[offset:]
 	length := len(input)
-	accepted := map[int]bool{20: true, 21: true, 22: true, 23: true, 19: true}
+	accepted := map[int]bool{19: true, 20: true, 21: true, 22: true, 23: true}
 	state := 0
 	acceptedIndex := -1
 	if accepted[state] {

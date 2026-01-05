@@ -496,6 +496,8 @@ var Token_String = core.NewTokenType(
 	},
 	[]rune{'"'},
 )
+var Token_String_Lookup = map[int][]rune{}
+var Token_String_Next = map[int][]int{}
 
 const Token_ID_Idx = 26
 
@@ -521,9 +523,9 @@ var Token_ID = core.NewTokenType(
 			r, runeSize := utf8.DecodeRuneInString(input[index:])
 			switch state {
 			case 0:
-				lookup := []rune{0x41, 0x5A, 0x5F, 0x5F, 0x61, 0x7A}
-				next := []int{1, 1, 1}
 				nextState := -1
+				next := Token_ID_Next[0]
+				lookup := Token_ID_Lookup[0]
 				searchIndex := sort.Search(len(next), func(i int) bool {
 					return lookup[i*2] > r
 				}) - 1
@@ -536,9 +538,9 @@ var Token_ID = core.NewTokenType(
 					break loop
 				}
 			case 1:
-				lookup := []rune{0x30, 0x39, 0x41, 0x5A, 0x5F, 0x5F, 0x61, 0x7A}
-				next := []int{1, 1, 1, 1}
 				nextState := -1
+				next := Token_ID_Next[1]
+				lookup := Token_ID_Lookup[1]
 				searchIndex := sort.Search(len(next), func(i int) bool {
 					return lookup[i*2] > r
 				}) - 1
@@ -562,6 +564,14 @@ var Token_ID = core.NewTokenType(
 	},
 	[]rune{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'},
 )
+var Token_ID_Lookup = map[int][]rune{
+	0: {0x41, 0x5A, 0x5F, 0x5F, 0x61, 0x7A},
+	1: {0x30, 0x39, 0x41, 0x5A, 0x5F, 0x5F, 0x61, 0x7A},
+}
+var Token_ID_Next = map[int][]int{
+	0: {1, 1, 1},
+	1: {1, 1, 1, 1},
+}
 
 const Token_RegexLiteral_Idx = 27
 
@@ -593,9 +603,9 @@ var Token_RegexLiteral = core.NewTokenType(
 					break loop
 				}
 			case 1:
-				lookup := []rune{0x00, 0x09, 0x0B, 0x0C, 0x0E, 0x2E, 0x30, 0x5A, 0x5B, 0x5B, 0x5C, 0x5C, 0x5D, 0x10FFFF}
-				next := []int{2, 2, 2, 2, 3, 4, 2}
 				nextState := -1
+				next := Token_RegexLiteral_Next[1]
+				lookup := Token_RegexLiteral_Lookup[1]
 				searchIndex := sort.Search(len(next), func(i int) bool {
 					return lookup[i*2] > r
 				}) - 1
@@ -608,9 +618,9 @@ var Token_RegexLiteral = core.NewTokenType(
 					break loop
 				}
 			case 2:
-				lookup := []rune{0x00, 0x09, 0x0B, 0x0C, 0x0E, 0x2E, 0x2F, 0x2F, 0x30, 0x5A, 0x5B, 0x5B, 0x5C, 0x5C, 0x5D, 0x10FFFF}
-				next := []int{2, 2, 2, 5, 2, 3, 4, 2}
 				nextState := -1
+				next := Token_RegexLiteral_Next[2]
+				lookup := Token_RegexLiteral_Lookup[2]
 				searchIndex := sort.Search(len(next), func(i int) bool {
 					return lookup[i*2] > r
 				}) - 1
@@ -623,9 +633,9 @@ var Token_RegexLiteral = core.NewTokenType(
 					break loop
 				}
 			case 3:
-				lookup := []rune{0x00, 0x09, 0x0B, 0x0C, 0x0E, 0x5B, 0x5C, 0x5C, 0x5D, 0x5D, 0x5E, 0x10FFFF}
-				next := []int{3, 3, 3, 6, 2, 3}
 				nextState := -1
+				next := Token_RegexLiteral_Next[3]
+				lookup := Token_RegexLiteral_Lookup[3]
 				searchIndex := sort.Search(len(next), func(i int) bool {
 					return lookup[i*2] > r
 				}) - 1
@@ -661,6 +671,16 @@ var Token_RegexLiteral = core.NewTokenType(
 	},
 	[]rune{'/'},
 )
+var Token_RegexLiteral_Lookup = map[int][]rune{
+	1: {0x00, 0x09, 0x0B, 0x0C, 0x0E, 0x2E, 0x30, 0x5A, 0x5B, 0x5B, 0x5C, 0x5C, 0x5D, 0x10FFFF},
+	2: {0x00, 0x09, 0x0B, 0x0C, 0x0E, 0x2E, 0x2F, 0x2F, 0x30, 0x5A, 0x5B, 0x5B, 0x5C, 0x5C, 0x5D, 0x10FFFF},
+	3: {0x00, 0x09, 0x0B, 0x0C, 0x0E, 0x5B, 0x5C, 0x5C, 0x5D, 0x5D, 0x5E, 0x10FFFF},
+}
+var Token_RegexLiteral_Next = map[int][]int{
+	1: {2, 2, 2, 2, 3, 4, 2},
+	2: {2, 2, 2, 5, 2, 3, 4, 2},
+	3: {3, 3, 3, 6, 2, 3},
+}
 
 const Token_WS_Idx = 28
 
@@ -723,6 +743,8 @@ var Token_WS = core.NewTokenType(
 	},
 	[]rune{'\u0009', '\u000A', '\u000D', ' '},
 )
+var Token_WS_Lookup = map[int][]rune{}
+var Token_WS_Next = map[int][]int{}
 
 func NewLexer() lexer.Lexer {
 	return lexer.NewDefaultLexer(

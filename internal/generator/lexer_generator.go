@@ -106,7 +106,7 @@ func generateKeywordTokenType(keyword generated.Keyword, id int) gen.Node {
 		n.Append(automatons.FormatRune(firstRune))
 		n.AppendLine("},")
 	})
-	code.AppendLine(")")
+	code.Append(")")
 	return code
 }
 
@@ -116,6 +116,7 @@ type GenerateLexerResult struct {
 }
 
 func generateTokenType(token generated.Token, id int) GenerateLexerResult {
+	var result regexp.GenerateRegExpResult
 	imports := map[string]bool{}
 	code := gen.NewNode()
 	regexPattern := token.Regexp()
@@ -138,17 +139,20 @@ func generateTokenType(token generated.Token, id int) GenerateLexerResult {
 		n.AppendLine("0,")
 		n.AppendLine("false,")
 		impl := regex.(*regexp.RegexpImpl)
-		result := impl.GenerateRegExp("")
+		result = impl.GenerateRegExp("", GeneratedTokenName(token))
 		for imp := range result.Imports {
 			imports[imp] = true
 		}
 		n.AppendNode(result.Code)
+		n.AppendLine(",")
 		n.Append("[]rune{")
 		startCharsSet := impl.GetStartChars()
 		n.AppendNode(runeSetToNode(startCharsSet))
 		n.AppendLine("},")
 	})
 	code.AppendLine(")")
+	code.AppendNode(result.Lookup)
+	code.AppendNode(result.Next)
 	return GenerateLexerResult{
 		Imports: imports,
 		Code:    code,
