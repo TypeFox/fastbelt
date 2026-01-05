@@ -133,7 +133,13 @@ func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsM
 	return n
 }
 
-func (r *RegexpImpl) GenerateRegExp(funcName string) generator.Node {
+type GenerateRegExpResult struct {
+	Imports map[string]bool
+	Code    generator.Node
+}
+
+func (r *RegexpImpl) GenerateRegExp(funcName string) GenerateRegExpResult {
+	imports := map[string]bool{"unicode/utf8": true}
 	root := generator.NewNode()
 	root.AppendLine(fmt.Sprintf("func %s(s string, offset int) int {", funcName))
 	root.Indent(func(n generator.Node) {
@@ -177,6 +183,7 @@ func (r *RegexpImpl) GenerateRegExp(funcName string) generator.Node {
 						n.AppendNode(GenerateTransitionsUsingSwitchCasing(bySource))
 					} else {
 						n.AppendNode(GenerateTransitionsUsingBinarySearch(bySource))
+						imports["sort"] = true
 					}
 				})
 			}
@@ -200,5 +207,8 @@ func (r *RegexpImpl) GenerateRegExp(funcName string) generator.Node {
 		root.Append(",")
 	}
 	root.AppendLine()
-	return root
+	return GenerateRegExpResult{
+		Imports: imports,
+		Code:    root,
+	}
 }

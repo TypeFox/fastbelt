@@ -1,6 +1,7 @@
 package benchmark
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -12,14 +13,16 @@ import (
 func writeRegexpFile(name string, pattern string) {
 	regexp := custom.MustCompile(pattern)
 	root := generator.NewNode()
+	result := regexp.(*custom.RegexpImpl).GenerateRegExp(name)
 	root.AppendLine("package benchmarkGenerated")
 	root.AppendLine()
 	root.AppendLine("import (")
-	root.AppendLine(`	"sort"`)
-	root.AppendLine(`	"unicode/utf8"`)
+	for imp := range result.Imports {
+		root.AppendLine(fmt.Sprintf(`	"%s"`, imp))
+	}
 	root.AppendLine(")")
 	root.AppendLine()
-	root.AppendNode(regexp.(*custom.RegexpImpl).GenerateRegExp(name))
+	root.AppendNode(result.Code)
 	os.WriteFile("generated/"+strings.ToLower(name)+".go", []byte(root.String()), 0644)
 }
 

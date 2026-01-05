@@ -5,6 +5,7 @@
 package generator
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 	"unicode/utf8"
@@ -16,14 +17,34 @@ import (
 )
 
 func GenerateLexer(grammar generated.Grammar) string {
+	nodes := []gen.Node{}
+
+	imports := map[string]bool{}
+	tokens := grammar.Terminals()
+	keywords := GetAllKeywords(grammar)
+	id := 1
+	for _, keyword := range keywords {
+		nodes = append(nodes, generateKeywordTokenType(keyword, id))
+		id++
+	}
+	for _, token := range tokens {
+		result := generateTokenType(token, id)
+		nodes = append(nodes, result.Code)
+		for imp := range result.Imports {
+			imports[imp] = true
+		}
+		id++
+	}
+
 	node := gen.NewNode()
 	node.AppendLine("package generated")
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n gen.Node) {
-		n.AppendLine("\"sort\"")
 		n.AppendLine("\"strings\"")
-		n.AppendLine("\"unicode/utf8\"")
+		for imp := range imports {
+			n.AppendLine(fmt.Sprintf(`"%s"`, imp))
+		}
 		n.AppendLine()
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
 		n.AppendLine("\"typefox.dev/fastbelt/lexer\"")
@@ -31,17 +52,11 @@ func GenerateLexer(grammar generated.Grammar) string {
 	node.AppendLine(")")
 	node.AppendLine()
 
-	tokens := grammar.Terminals()
-	keywords := GetAllKeywords(grammar)
-	id := 1
-	for _, keyword := range keywords {
-		generateKeywordTokenType(node, keyword, id)
-		id++
+	for _, n := range nodes {
+		node.AppendNode(n)
+		node.AppendLine()
 	}
-	for _, token := range tokens {
-		generateTokenType(node, token, id)
-		id++
-	}
+
 	generateMainLexerFunction(node, tokens, keywords)
 	return formatIfPossible(node.String())
 }
@@ -63,12 +78,13 @@ func generateMainLexerFunction(node gen.Node, tokens []generated.Token, keywords
 	node.AppendLine("}")
 }
 
-func generateKeywordTokenType(node gen.Node, keyword generated.Keyword, id int) {
+func generateKeywordTokenType(keyword generated.Keyword, id int) gen.Node {
+	code := gen.NewNode()
 	keywordValue := KeywordValue(keyword)
-	node.AppendLine("const ", GeneratedKeywordIdxName(keyword), " = ", strconv.Itoa(id))
-	node.AppendLine()
-	node.AppendLine("var ", GeneratedKeywordName(keyword), " = core.NewTokenType(")
-	node.Indent(func(n gen.Node) {
+	code.AppendLine("const ", GeneratedKeywordIdxName(keyword), " = ", strconv.Itoa(id))
+	code.AppendLine()
+	code.AppendLine("var ", GeneratedKeywordName(keyword), " = core.NewTokenType(")
+	code.Indent(func(n gen.Node) {
 		n.AppendLine(GeneratedKeywordIdxName(keyword), ",")
 		n.AppendLine("\"", keywordValue, "\",")
 		n.AppendLine("\"", keywordValue, "\",")
@@ -90,19 +106,27 @@ func generateKeywordTokenType(node gen.Node, keyword generated.Keyword, id int) 
 		n.Append(automatons.FormatRune(firstRune))
 		n.AppendLine("},")
 	})
-	node.AppendLine(")")
+	code.AppendLine(")")
+	return code
 }
 
-func generateTokenType(node gen.Node, token generated.Token, id int) {
+type GenerateLexerResult struct {
+	Imports map[string]bool
+	Code    gen.Node
+}
+
+func generateTokenType(token generated.Token, id int) GenerateLexerResult {
+	imports := map[string]bool{}
+	code := gen.NewNode()
 	regexPattern := token.Regexp()
 	regexPattern = regexPattern[1 : len(regexPattern)-1] // remove leading and trailing backticks
 	regex, err := regexp.Compile(regexPattern)
 	if err != nil {
 		panic(err)
 	}
-	node.AppendLine("const ", GeneratedTokenIdxName(token), " = ", strconv.Itoa(id))
-	node.AppendLine("var ", GeneratedTokenName(token), " = core.NewTokenType(")
-	node.Indent(func(n gen.Node) {
+	code.AppendLine("const ", GeneratedTokenIdxName(token), " = ", strconv.Itoa(id))
+	code.AppendLine("var ", GeneratedTokenName(token), " = core.NewTokenType(")
+	code.Indent(func(n gen.Node) {
 		n.AppendLine(GeneratedTokenIdxName(token), ",")
 		n.AppendLine("\"", token.Name(), "\",")
 		n.AppendLine("\"", token.Name(), "\",")
@@ -114,13 +138,21 @@ func generateTokenType(node gen.Node, token generated.Token, id int) {
 		n.AppendLine("0,")
 		n.AppendLine("false,")
 		impl := regex.(*regexp.RegexpImpl)
-		n.AppendNode(impl.GenerateRegExp(""))
+		result := impl.GenerateRegExp("")
+		for imp := range result.Imports {
+			imports[imp] = true
+		}
+		n.AppendNode(result.Code)
 		n.Append("[]rune{")
 		startCharsSet := impl.GetStartChars()
 		n.AppendNode(runeSetToNode(startCharsSet))
 		n.AppendLine("},")
 	})
-	node.AppendLine(")")
+	code.AppendLine(")")
+	return GenerateLexerResult{
+		Imports: imports,
+		Code:    code,
+	}
 }
 
 type RuneSlice []rune
