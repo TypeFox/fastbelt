@@ -118,7 +118,7 @@ func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsM
 	n.AppendLine("}) - 1")
 	n.AppendLine("if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {")
 	n.Indent(func(n generator.Node) {
-		n.AppendLine("return next[searchIndex]")
+		n.AppendLine("nextState = next[searchIndex]")
 	})
 	n.AppendLine("}")
 	n.AppendLine("if nextState > -1 {")

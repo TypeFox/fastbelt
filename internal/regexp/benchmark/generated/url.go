@@ -78,7 +78,7 @@ loop:
 				return lookup[i*2] > r
 			}) - 1
 			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
-				return next[searchIndex]
+				nextState = next[searchIndex]
 			}
 			if nextState > -1 {
 				state = nextState
@@ -93,7 +93,7 @@ loop:
 				return lookup[i*2] > r
 			}) - 1
 			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
-				return next[searchIndex]
+				nextState = next[searchIndex]
 			}
 			if nextState > -1 {
 				state = nextState
@@ -108,7 +108,7 @@ loop:
 				return lookup[i*2] > r
 			}) - 1
 			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
-				return next[searchIndex]
+				nextState = next[searchIndex]
 			}
 			if nextState > -1 {
 				state = nextState
@@ -123,7 +123,7 @@ loop:
 				return lookup[i*2] > r
 			}) - 1
 			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
-				return next[searchIndex]
+				nextState = next[searchIndex]
 			}
 			if nextState > -1 {
 				state = nextState
