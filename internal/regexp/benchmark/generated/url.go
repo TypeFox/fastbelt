@@ -1,4 +1,4 @@
-package generated
+package benchmarkGenerated
 
 import (
 	"sort"

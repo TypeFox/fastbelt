@@ -1,4 +1,4 @@
-package generated
+package benchmarkGenerated
 
 import (
 	"unicode/utf8"

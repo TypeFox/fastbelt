@@ -62,9 +62,10 @@ func GenerateTransitionsUsingBranching(bySource *automatons.RuneRangeTargetsMapp
 func GenerateTransitionsUsingSwitchCasing(bySource *automatons.RuneRangeTargetsMapping) generator.Node {
 	n := generator.NewNode()
 	n.AppendLine("switch r {")
-	var last *automatons.RuneRangeMappingSection[automatons.Targets] = nil
+	var first bool = true
+	var last automatons.RuneRangeMappingSection[automatons.Targets]
 	for transition := range bySource.All() {
-		if last != nil {
+		if !first {
 			if last.Values[0] != transition.Values[0] {
 				n.Indent(func(n generator.Node) {
 					n.AppendLine(fmt.Sprintf("state = %d", last.Values[0]))
@@ -83,7 +84,8 @@ func GenerateTransitionsUsingSwitchCasing(bySource *automatons.RuneRangeTargetsM
 				})
 			}
 		}
-		last = &transition
+		last = transition
+		first = false
 	}
 	n.Indent(func(n generator.Node) {
 		n.AppendLine(fmt.Sprintf("state = %d", last.Values[0]))
