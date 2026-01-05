@@ -61,9 +61,12 @@ func (r *RegexpImpl) FindStringIndex(s string) (loc []int) {
 
 func (r *RegexpImpl) GetStartChars() *automatons.RuneSet {
 	startCharsSet := automatons.NewRuneSetEmpty()
-	transitions := r.dfa.TransitionsBySource
 	startState := r.dfa.StartState
-	for transition := range transitions[startState].All() {
+	transitions := r.dfa.TransitionsBySource[startState]
+	if transitions == nil {
+		return startCharsSet
+	}
+	for transition := range transitions.All() {
 		if !transition.Range.Includes {
 			continue
 		}
