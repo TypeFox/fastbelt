@@ -1,16 +1,67 @@
 package benchmarkGenerated
 
 import (
+	"sort"
 	"unicode/utf8"
 )
 
-var IPv4_Lookup = map[int][]rune{}
-var IPv4_Next = map[int][]int{}
+var IPv4_Lookup = [][]rune{
+	{0x30, 0x31, 0x32, 0x32, 0x33, 0x39},
+	{0x2E, 0x2E, 0x30, 0x39},
+	{0x2E, 0x2E, 0x30, 0x34, 0x35, 0x35, 0x36, 0x39},
+	{0x2E, 0x2E, 0x30, 0x39},
+	{0x30, 0x31, 0x32, 0x32, 0x33, 0x39},
+	{0x2E, 0x2E, 0x30, 0x35},
+	{0x2E, 0x2E},
+	{0x2E, 0x2E, 0x30, 0x39},
+	{0x2E, 0x2E, 0x30, 0x34, 0x35, 0x35, 0x36, 0x39},
+	{0x2E, 0x2E, 0x30, 0x39},
+	{0x30, 0x31, 0x32, 0x32, 0x33, 0x39},
+	{0x2E, 0x2E, 0x30, 0x35},
+	{0x2E, 0x2E},
+	{0x2E, 0x2E, 0x30, 0x39},
+	{0x2E, 0x2E, 0x30, 0x34, 0x35, 0x35, 0x36, 0x39},
+	{0x2E, 0x2E, 0x30, 0x39},
+	{0x30, 0x31, 0x32, 0x32, 0x33, 0x39},
+	{0x2E, 0x2E, 0x30, 0x35},
+	{0x2E, 0x2E},
+	{0x30, 0x39},
+	{0x30, 0x34, 0x35, 0x35, 0x36, 0x39},
+	{0x30, 0x39},
+	{0x30, 0x35},
+	{},
+}
+var IPv4_Next = [][]int{
+	{1, 2, 3},
+	{4, 3},
+	{4, 3, 5, 6},
+	{4, 6},
+	{7, 8, 9},
+	{4, 6},
+	{4},
+	{10, 9},
+	{10, 9, 11, 12},
+	{10, 12},
+	{13, 14, 15},
+	{10, 12},
+	{10},
+	{16, 15},
+	{16, 15, 17, 18},
+	{16, 18},
+	{19, 20, 21},
+	{16, 18},
+	{16},
+	{21},
+	{21, 22, 23},
+	{23},
+	{23},
+	{},
+}
 
 func IPv4(s string, offset int) int {
 	input := s[offset:]
 	length := len(input)
-	accepted := map[int]bool{20: true, 21: true, 22: true, 23: true, 19: true}
+	accepted := map[int]bool{19: true, 20: true, 21: true, 22: true, 23: true}
 	state := 0
 	acceptedIndex := 0
 	index := 0
@@ -19,463 +70,362 @@ loop:
 		r, runeSize := utf8.DecodeRuneInString(input[index:])
 		switch state {
 		case 0:
-			switch r {
-			case 0x30:
-				fallthrough
-			case 0x31:
-				state = 1
-			case 0x32:
-				state = 2
-			case 0x33:
-				fallthrough
-			case 0x34:
-				fallthrough
-			case 0x35:
-				fallthrough
-			case 0x36:
-				fallthrough
-			case 0x37:
-				fallthrough
-			case 0x38:
-				fallthrough
-			case 0x39:
-				state = 3
-			default:
+			nextState := -1
+			next := IPv4_Next[0]
+			lookup := IPv4_Lookup[0]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 1:
-			switch r {
-			case 0x2E:
-				state = 4
-			case 0x30:
-				fallthrough
-			case 0x31:
-				fallthrough
-			case 0x32:
-				fallthrough
-			case 0x33:
-				fallthrough
-			case 0x34:
-				fallthrough
-			case 0x35:
-				fallthrough
-			case 0x36:
-				fallthrough
-			case 0x37:
-				fallthrough
-			case 0x38:
-				fallthrough
-			case 0x39:
-				state = 3
-			default:
+			nextState := -1
+			next := IPv4_Next[1]
+			lookup := IPv4_Lookup[1]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 2:
-			switch r {
-			case 0x2E:
-				state = 4
-			case 0x30:
-				fallthrough
-			case 0x31:
-				fallthrough
-			case 0x32:
-				fallthrough
-			case 0x33:
-				fallthrough
-			case 0x34:
-				state = 3
-			case 0x35:
-				state = 5
-			case 0x36:
-				fallthrough
-			case 0x37:
-				fallthrough
-			case 0x38:
-				fallthrough
-			case 0x39:
-				state = 6
-			default:
+			nextState := -1
+			next := IPv4_Next[2]
+			lookup := IPv4_Lookup[2]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 3:
-			switch r {
-			case 0x2E:
-				state = 4
-			case 0x30:
-				fallthrough
-			case 0x31:
-				fallthrough
-			case 0x32:
-				fallthrough
-			case 0x33:
-				fallthrough
-			case 0x34:
-				fallthrough
-			case 0x35:
-				fallthrough
-			case 0x36:
-				fallthrough
-			case 0x37:
-				fallthrough
-			case 0x38:
-				fallthrough
-			case 0x39:
-				state = 6
-			default:
+			nextState := -1
+			next := IPv4_Next[3]
+			lookup := IPv4_Lookup[3]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 4:
-			switch r {
-			case 0x30:
-				fallthrough
-			case 0x31:
-				state = 7
-			case 0x32:
-				state = 8
-			case 0x33:
-				fallthrough
-			case 0x34:
-				fallthrough
-			case 0x35:
-				fallthrough
-			case 0x36:
-				fallthrough
-			case 0x37:
-				fallthrough
-			case 0x38:
-				fallthrough
-			case 0x39:
-				state = 9
-			default:
+			nextState := -1
+			next := IPv4_Next[4]
+			lookup := IPv4_Lookup[4]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 5:
-			switch r {
-			case 0x2E:
-				state = 4
-			case 0x30:
-				fallthrough
-			case 0x31:
-				fallthrough
-			case 0x32:
-				fallthrough
-			case 0x33:
-				fallthrough
-			case 0x34:
-				fallthrough
-			case 0x35:
-				state = 6
-			default:
+			nextState := -1
+			next := IPv4_Next[5]
+			lookup := IPv4_Lookup[5]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 6:
-			if r == 0x2E { // '.',
-				state = 4
+			nextState := -1
+			next := IPv4_Next[6]
+			lookup := IPv4_Lookup[6]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
 			} else {
 				break loop
 			}
 		case 7:
-			switch r {
-			case 0x2E:
-				state = 10
-			case 0x30:
-				fallthrough
-			case 0x31:
-				fallthrough
-			case 0x32:
-				fallthrough
-			case 0x33:
-				fallthrough
-			case 0x34:
-				fallthrough
-			case 0x35:
-				fallthrough
-			case 0x36:
-				fallthrough
-			case 0x37:
-				fallthrough
-			case 0x38:
-				fallthrough
-			case 0x39:
-				state = 9
-			default:
+			nextState := -1
+			next := IPv4_Next[7]
+			lookup := IPv4_Lookup[7]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 8:
-			switch r {
-			case 0x2E:
-				state = 10
-			case 0x30:
-				fallthrough
-			case 0x31:
-				fallthrough
-			case 0x32:
-				fallthrough
-			case 0x33:
-				fallthrough
-			case 0x34:
-				state = 9
-			case 0x35:
-				state = 11
-			case 0x36:
-				fallthrough
-			case 0x37:
-				fallthrough
-			case 0x38:
-				fallthrough
-			case 0x39:
-				state = 12
-			default:
+			nextState := -1
+			next := IPv4_Next[8]
+			lookup := IPv4_Lookup[8]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 9:
-			switch r {
-			case 0x2E:
-				state = 10
-			case 0x30:
-				fallthrough
-			case 0x31:
-				fallthrough
-			case 0x32:
-				fallthrough
-			case 0x33:
-				fallthrough
-			case 0x34:
-				fallthrough
-			case 0x35:
-				fallthrough
-			case 0x36:
-				fallthrough
-			case 0x37:
-				fallthrough
-			case 0x38:
-				fallthrough
-			case 0x39:
-				state = 12
-			default:
+			nextState := -1
+			next := IPv4_Next[9]
+			lookup := IPv4_Lookup[9]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 10:
-			switch r {
-			case 0x30:
-				fallthrough
-			case 0x31:
-				state = 13
-			case 0x32:
-				state = 14
-			case 0x33:
-				fallthrough
-			case 0x34:
-				fallthrough
-			case 0x35:
-				fallthrough
-			case 0x36:
-				fallthrough
-			case 0x37:
-				fallthrough
-			case 0x38:
-				fallthrough
-			case 0x39:
-				state = 15
-			default:
+			nextState := -1
+			next := IPv4_Next[10]
+			lookup := IPv4_Lookup[10]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 11:
-			switch r {
-			case 0x2E:
-				state = 10
-			case 0x30:
-				fallthrough
-			case 0x31:
-				fallthrough
-			case 0x32:
-				fallthrough
-			case 0x33:
-				fallthrough
-			case 0x34:
-				fallthrough
-			case 0x35:
-				state = 12
-			default:
+			nextState := -1
+			next := IPv4_Next[11]
+			lookup := IPv4_Lookup[11]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 12:
-			if r == 0x2E { // '.',
-				state = 10
+			nextState := -1
+			next := IPv4_Next[12]
+			lookup := IPv4_Lookup[12]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
 			} else {
 				break loop
 			}
 		case 13:
-			switch r {
-			case 0x2E:
-				state = 16
-			case 0x30:
-				fallthrough
-			case 0x31:
-				fallthrough
-			case 0x32:
-				fallthrough
-			case 0x33:
-				fallthrough
-			case 0x34:
-				fallthrough
-			case 0x35:
-				fallthrough
-			case 0x36:
-				fallthrough
-			case 0x37:
-				fallthrough
-			case 0x38:
-				fallthrough
-			case 0x39:
-				state = 15
-			default:
+			nextState := -1
+			next := IPv4_Next[13]
+			lookup := IPv4_Lookup[13]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 14:
-			switch r {
-			case 0x2E:
-				state = 16
-			case 0x30:
-				fallthrough
-			case 0x31:
-				fallthrough
-			case 0x32:
-				fallthrough
-			case 0x33:
-				fallthrough
-			case 0x34:
-				state = 15
-			case 0x35:
-				state = 17
-			case 0x36:
-				fallthrough
-			case 0x37:
-				fallthrough
-			case 0x38:
-				fallthrough
-			case 0x39:
-				state = 18
-			default:
+			nextState := -1
+			next := IPv4_Next[14]
+			lookup := IPv4_Lookup[14]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 15:
-			switch r {
-			case 0x2E:
-				state = 16
-			case 0x30:
-				fallthrough
-			case 0x31:
-				fallthrough
-			case 0x32:
-				fallthrough
-			case 0x33:
-				fallthrough
-			case 0x34:
-				fallthrough
-			case 0x35:
-				fallthrough
-			case 0x36:
-				fallthrough
-			case 0x37:
-				fallthrough
-			case 0x38:
-				fallthrough
-			case 0x39:
-				state = 18
-			default:
+			nextState := -1
+			next := IPv4_Next[15]
+			lookup := IPv4_Lookup[15]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 16:
-			switch r {
-			case 0x30:
-				fallthrough
-			case 0x31:
-				state = 19
-			case 0x32:
-				state = 20
-			case 0x33:
-				fallthrough
-			case 0x34:
-				fallthrough
-			case 0x35:
-				fallthrough
-			case 0x36:
-				fallthrough
-			case 0x37:
-				fallthrough
-			case 0x38:
-				fallthrough
-			case 0x39:
-				state = 21
-			default:
+			nextState := -1
+			next := IPv4_Next[16]
+			lookup := IPv4_Lookup[16]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 17:
-			switch r {
-			case 0x2E:
-				state = 16
-			case 0x30:
-				fallthrough
-			case 0x31:
-				fallthrough
-			case 0x32:
-				fallthrough
-			case 0x33:
-				fallthrough
-			case 0x34:
-				fallthrough
-			case 0x35:
-				state = 18
-			default:
+			nextState := -1
+			next := IPv4_Next[17]
+			lookup := IPv4_Lookup[17]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 18:
-			if r == 0x2E { // '.',
-				state = 16
+			nextState := -1
+			next := IPv4_Next[18]
+			lookup := IPv4_Lookup[18]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
 			} else {
 				break loop
 			}
 		case 19:
-			if r >= 0x30 && r <= 0x39 { // '0'..'9',
-				state = 21
+			nextState := -1
+			next := IPv4_Next[19]
+			lookup := IPv4_Lookup[19]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
 			} else {
 				break loop
 			}
 		case 20:
-			switch r {
-			case 0x30:
-				fallthrough
-			case 0x31:
-				fallthrough
-			case 0x32:
-				fallthrough
-			case 0x33:
-				fallthrough
-			case 0x34:
-				state = 21
-			case 0x35:
-				state = 22
-			case 0x36:
-				fallthrough
-			case 0x37:
-				fallthrough
-			case 0x38:
-				fallthrough
-			case 0x39:
-				state = 23
-			default:
+			nextState := -1
+			next := IPv4_Next[20]
+			lookup := IPv4_Lookup[20]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
 				break loop
 			}
 		case 21:
-			if r >= 0x30 && r <= 0x39 { // '0'..'9',
-				state = 23
+			nextState := -1
+			next := IPv4_Next[21]
+			lookup := IPv4_Lookup[21]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
 			} else {
 				break loop
 			}
 		case 22:
-			if r >= 0x30 && r <= 0x35 { // '0'..'5',
-				state = 23
+			nextState := -1
+			next := IPv4_Next[22]
+			lookup := IPv4_Lookup[22]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
+			} else {
+				break loop
+			}
+		case 23:
+			nextState := -1
+			next := IPv4_Next[23]
+			lookup := IPv4_Lookup[23]
+			searchIndex := sort.Search(len(next), func(i int) bool {
+				return lookup[i*2] > r
+			}) - 1
+			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+				nextState = next[searchIndex]
+			}
+			if nextState > -1 {
+				state = nextState
 			} else {
 				break loop
 			}
