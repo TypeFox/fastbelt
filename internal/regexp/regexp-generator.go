@@ -176,12 +176,7 @@ func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateR
 		}
 		n.AppendLine("}")
 		n.AppendLine(fmt.Sprintf("state := %d", r.dfa.StartState))
-		n.AppendLine("acceptedIndex := -1")
-		n.AppendLine("if accepted[state] {")
-		n.Indent(func(n generator.Node) {
-			n.AppendLine("acceptedIndex = 0")
-		})
-		n.AppendLine("}")
+		n.AppendLine("acceptedIndex := 0")
 		n.AppendLine("index := 0")
 		n.AppendLine("loop: for index < length {")
 		n.Indent(func(n generator.Node) {

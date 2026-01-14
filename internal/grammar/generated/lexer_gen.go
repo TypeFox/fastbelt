@@ -455,10 +455,7 @@ var Token_String = core.NewTokenType(
 		length := len(input)
 		accepted := map[int]bool{3: true}
 		state := 0
-		acceptedIndex := -1
-		if accepted[state] {
-			acceptedIndex = 0
-		}
+		acceptedIndex := 0
 		index := 0
 	loop:
 		for index < length {
@@ -513,10 +510,7 @@ var Token_ID = core.NewTokenType(
 		length := len(input)
 		accepted := map[int]bool{1: true}
 		state := 0
-		acceptedIndex := -1
-		if accepted[state] {
-			acceptedIndex = 0
-		}
+		acceptedIndex := 0
 		index := 0
 	loop:
 		for index < length {
@@ -587,10 +581,7 @@ var Token_RegexLiteral = core.NewTokenType(
 		length := len(input)
 		accepted := map[int]bool{5: true}
 		state := 0
-		acceptedIndex := -1
-		if accepted[state] {
-			acceptedIndex = 0
-		}
+		acceptedIndex := 0
 		index := 0
 	loop:
 		for index < length {
@@ -696,10 +687,7 @@ var Token_WS = core.NewTokenType(
 		length := len(input)
 		accepted := map[int]bool{1: true}
 		state := 0
-		acceptedIndex := -1
-		if accepted[state] {
-			acceptedIndex = 0
-		}
+		acceptedIndex := 0
 		index := 0
 	loop:
 		for index < length {

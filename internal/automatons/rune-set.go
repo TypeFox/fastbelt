@@ -65,6 +65,9 @@ func NewRuneSetRune(r rune) *RuneSet {
 }
 
 func NewRuneSetRange(start, end rune) *RuneSet {
+	if start > end || start < 0 || end > MaxRune {
+		panic("Range limit order is invalid!")
+	}
 	ranges := make([]RuneRange, 0)
 	if start-1 >= 0 {
 		left := RuneRange{Start: 0, End: start - 1, Includes: false}

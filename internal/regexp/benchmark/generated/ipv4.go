@@ -10,12 +10,9 @@ var IPv4_Next = map[int][]int{}
 func IPv4(s string, offset int) int {
 	input := s[offset:]
 	length := len(input)
-	accepted := map[int]bool{19: true, 20: true, 21: true, 22: true, 23: true}
+	accepted := map[int]bool{20: true, 21: true, 22: true, 23: true, 19: true}
 	state := 0
-	acceptedIndex := -1
-	if accepted[state] {
-		acceptedIndex = 0
-	}
+	acceptedIndex := 0
 	index := 0
 loop:
 	for index < length {
