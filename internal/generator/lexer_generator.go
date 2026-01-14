@@ -6,122 +6,157 @@ package generator
 
 import (
 	"fmt"
-	"regexp/syntax"
 	"sort"
 	"strconv"
-	"strings"
 	"unicode/utf8"
 
+	gen "typefox.dev/fastbelt/generator"
+	"typefox.dev/fastbelt/internal/automatons"
 	"typefox.dev/fastbelt/internal/grammar/generated"
+	"typefox.dev/fastbelt/internal/regexp"
 )
 
 func GenerateLexer(grammar generated.Grammar) string {
-	sb := &strings.Builder{}
-	WriteSB(
-		sb,
-		"package generated",
-		EOL,
-		EOL,
-		"import (",
-		EOLIndent(1),
-		"\"regexp\"",
-		EOLIndent(1),
-		"\"strings\"",
-		EOL,
-		EOLIndent(1),
-		"core \"typefox.dev/fastbelt\"",
-		EOLIndent(1),
-		"\"typefox.dev/fastbelt/lexer\"",
-		EOL,
-		")",
-		EOL,
-		EOL,
-	)
-	// keywords := GetAllKeywords(grammar)
+	nodes := []gen.Node{}
+
+	imports := map[string]bool{}
 	tokens := grammar.Terminals()
 	keywords := GetAllKeywords(grammar)
 	id := 1
 	for _, keyword := range keywords {
-		generateKeywordTokenType(sb, keyword, id)
+		nodes = append(nodes, generateKeywordTokenType(keyword, id))
 		id++
 	}
 	for _, token := range tokens {
-		generateTokenType(sb, token, id)
+		result := generateTokenType(token, id)
+		nodes = append(nodes, result.Code)
+		for imp := range result.Imports {
+			imports[imp] = true
+		}
 		id++
 	}
-	generateMainLexerFunction(sb, tokens, keywords)
-	return formatIfPossible(sb.String())
+
+	node := gen.NewNode()
+	node.AppendLine("package generated")
+	node.AppendLine()
+	node.AppendLine("import (")
+	node.Indent(func(n gen.Node) {
+		n.AppendLine("\"strings\"")
+		for imp := range imports {
+			n.AppendLine(fmt.Sprintf(`"%s"`, imp))
+		}
+		n.AppendLine()
+		n.AppendLine("core \"typefox.dev/fastbelt\"")
+		n.AppendLine("\"typefox.dev/fastbelt/lexer\"")
+	})
+	node.AppendLine(")")
+	node.AppendLine()
+
+	for _, n := range nodes {
+		node.AppendNode(n)
+		node.AppendLine()
+	}
+
+	generateMainLexerFunction(node, tokens, keywords)
+	return formatIfPossible(node.String())
 }
 
-func generateMainLexerFunction(sb *strings.Builder, tokens []generated.Token, keywords []generated.Keyword) {
-	WriteSB(sb, "func NewLexer() lexer.Lexer {", EOL)
-	WriteSB(sb, Indent, "return lexer.NewDefaultLexer(", EOL)
-	for _, keyword := range keywords {
-		WriteSB(sb, Indent, Indent, GeneratedKeywordName(keyword), ",", EOL)
-	}
-	for _, token := range tokens {
-		WriteSB(sb, Indent, Indent, GeneratedTokenName(token), ",", EOL)
-	}
-	WriteSB(sb, Indent, ")", EOL)
-	WriteSB(sb, "}", EOL)
+func generateMainLexerFunction(node gen.Node, tokens []generated.Token, keywords []generated.Keyword) {
+	node.AppendLine("func NewLexer() lexer.Lexer {")
+	node.Indent(func(n gen.Node) {
+		n.AppendLine("return lexer.NewDefaultLexer(")
+		n.Indent(func(nn gen.Node) {
+			for _, keyword := range keywords {
+				nn.AppendLine(GeneratedKeywordName(keyword), ",")
+			}
+			for _, token := range tokens {
+				nn.AppendLine(GeneratedTokenName(token), ",")
+			}
+		})
+		n.AppendLine(")")
+	})
+	node.AppendLine("}")
 }
 
-func generateKeywordTokenType(sb *strings.Builder, keyword generated.Keyword, id int) {
+func generateKeywordTokenType(keyword generated.Keyword, id int) gen.Node {
+	code := gen.NewNode()
 	keywordValue := KeywordValue(keyword)
-	WriteSB(sb, "const ", GeneratedKeywordIdxName(keyword), " = ", strconv.Itoa(id), EOL, EOL)
-	WriteSB(sb, "var ", GeneratedKeywordName(keyword), " = core.NewTokenType(", EOL)
-	WriteSB(sb, Indent, GeneratedKeywordIdxName(keyword), ",", EOL)
-	WriteSB(sb, Indent, "\"", keywordValue, "\",", EOL)
-	WriteSB(sb, Indent, "\"", keywordValue, "\",", EOL)
-	WriteSB(sb, Indent, "0,", EOL)
-	WriteSB(sb, Indent, "0,", EOL)
-	WriteSB(sb, Indent, "false,", EOL)
-	WriteSB(sb, Indent, "func (text string, offset int) int {", EOL)
-	WriteSB(sb, Indent, Indent, "if strings.HasPrefix(text[offset:], \"", keywordValue, "\") {", EOL)
-	// Return the length of the keyword in bytes
-	WriteSB(sb, Indent, Indent, Indent, "return ", strconv.Itoa(len(keywordValue)), EOL)
-	WriteSB(sb, Indent, Indent, "}", EOL)
-	WriteSB(sb, Indent, Indent, "return 0", EOL)
-	WriteSB(sb, Indent, "},", EOL)
-	WriteSB(sb, Indent, "[]rune{", EOLIndent(2))
-	firstRune, _ := utf8.DecodeRune([]byte(keywordValue))
-	runeArrayToString([]rune{firstRune}, sb)
-	WriteSB(sb, EOLIndent(1), "},", EOL)
-	WriteSB(sb, ")", EOL)
+	code.AppendLine("const ", GeneratedKeywordIdxName(keyword), " = ", strconv.Itoa(id))
+	code.AppendLine()
+	code.AppendLine("var ", GeneratedKeywordName(keyword), " = core.NewTokenType(")
+	code.Indent(func(n gen.Node) {
+		n.AppendLine(GeneratedKeywordIdxName(keyword), ",")
+		n.AppendLine("\"", keywordValue, "\",")
+		n.AppendLine("\"", keywordValue, "\",")
+		n.AppendLine("0,")
+		n.AppendLine("0,")
+		n.AppendLine("false,")
+		n.AppendLine("func (text string, offset int) int {")
+		n.Indent(func(nn gen.Node) {
+			nn.AppendLine("if strings.HasPrefix(text[offset:], \"", keywordValue, "\") {")
+			nn.Indent(func(nnn gen.Node) {
+				nnn.AppendLine("return ", strconv.Itoa(len(keywordValue)))
+			})
+			nn.AppendLine("}")
+			nn.AppendLine("return 0")
+		})
+		n.AppendLine("},")
+		n.Append("[]rune{")
+		firstRune, _ := utf8.DecodeRune([]byte(keywordValue))
+		n.Append(automatons.FormatRune(firstRune))
+		n.AppendLine("},")
+	})
+	code.Append(")")
+	return code
 }
 
-func generateTokenType(sb *strings.Builder, token generated.Token, id int) {
+type GenerateLexerResult struct {
+	Imports map[string]bool
+	Code    gen.Node
+}
+
+func generateTokenType(token generated.Token, id int) GenerateLexerResult {
+	var result regexp.GenerateRegExpResult
+	imports := map[string]bool{}
+	code := gen.NewNode()
 	regexPattern := token.Regexp()
 	regexPattern = regexPattern[1 : len(regexPattern)-1] // remove leading and trailing backticks
-	regex, err := syntax.Parse(regexPattern, syntax.Perl)
+	regex, err := regexp.Compile(regexPattern)
 	if err != nil {
 		panic(err)
 	}
-	regex = regex.Simplify()
-	WriteSB(sb, "const ", GeneratedTokenIdxName(token), " = ", strconv.Itoa(id), EOL)
-	WriteSB(sb, "var ", GeneratedTokenName(token), "_Regexp = regexp.MustCompile(`^(", regex.String(), ")`) ", EOL)
-	WriteSB(sb, "var ", GeneratedTokenName(token), " = core.NewTokenType(", EOL)
-	WriteSB(sb, Indent, GeneratedTokenIdxName(token), ",", EOL)
-	WriteSB(sb, Indent, "\"", token.Name(), "\",", EOL)
-	WriteSB(sb, Indent, "\"", token.Name(), "\",", EOL)
-	if token.Type() == "hidden" {
-		WriteSB(sb, Indent, "-1,", EOL)
-	} else {
-		WriteSB(sb, Indent, "0,", EOL)
+	code.AppendLine("const ", GeneratedTokenIdxName(token), " = ", strconv.Itoa(id))
+	code.AppendLine("var ", GeneratedTokenName(token), " = core.NewTokenType(")
+	code.Indent(func(n gen.Node) {
+		n.AppendLine(GeneratedTokenIdxName(token), ",")
+		n.AppendLine("\"", token.Name(), "\",")
+		n.AppendLine("\"", token.Name(), "\",")
+		if token.Type() == "hidden" {
+			n.AppendLine("-1,")
+		} else {
+			n.AppendLine("0,")
+		}
+		n.AppendLine("0,")
+		n.AppendLine("false,")
+		impl := regex.(*regexp.RegexpImpl)
+		result = impl.GenerateRegExp("", GeneratedTokenName(token))
+		for imp := range result.Imports {
+			imports[imp] = true
+		}
+		n.AppendNode(result.Code)
+		n.AppendLine(",")
+		n.Append("[]rune{")
+		startCharsSet := impl.GetStartChars()
+		n.AppendNode(runeSetToNode(startCharsSet))
+		n.AppendLine("},")
+	})
+	code.AppendLine(")")
+	code.AppendNode(result.Lookup)
+	code.AppendNode(result.Next)
+	return GenerateLexerResult{
+		Imports: imports,
+		Code:    code,
 	}
-	WriteSB(sb, Indent, "0,", EOL)
-	WriteSB(sb, Indent, "false,", EOL)
-	WriteSB(sb, Indent, "func (text string, offset int) int {", EOL)
-	WriteSB(sb, Indent, Indent, "matches := ", GeneratedTokenName(token), "_Regexp.FindStringIndex(text[offset:])", EOL)
-	WriteSB(sb, Indent, Indent, "if matches != nil {", EOL)
-	WriteSB(sb, Indent, Indent, Indent, "return matches[1]", EOL)
-	WriteSB(sb, Indent, Indent, "}", EOL)
-	WriteSB(sb, Indent, Indent, "return 0", EOL)
-	WriteSB(sb, Indent, "},", EOL)
-	WriteSB(sb, Indent, "[]rune{", EOLIndent(2))
-	runeArrayToString(getStartChars(regexPattern), sb)
-	WriteSB(sb, EOLIndent(1), "},", EOL)
-	WriteSB(sb, ")", EOL)
 }
 
 type RuneSlice []rune
@@ -133,96 +168,20 @@ func (x RuneSlice) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
 // Sort is a convenience method: x.Sort() calls Sort(x).
 func (x RuneSlice) Sort() { sort.Sort(x) }
 
-func runeArrayToString(runes RuneSlice, sb *strings.Builder) {
-	runes.Sort()
-	for i, r := range runes {
-		if r == '\'' {
-			sb.WriteString("'\\''")
-		} else if r == '\\' {
-			sb.WriteString("'\\\\'")
-		} else if r >= 32 && r <= 126 {
-			WriteSB(sb, "'", string(r), "'")
+func runeSetToNode(set *automatons.RuneSet) gen.Node {
+	root := gen.NewNode()
+	for _, rng := range set.Ranges {
+		if !rng.Includes {
+			continue
+		}
+		if rng.Start == rng.End {
+			root.Append(automatons.FormatRune(rng.Start), ", ")
 		} else {
-			WriteSB(sb, fmt.Sprint(int64(r)))
-		}
-		sb.WriteString(",")
-		if (i+1)%10 == 0 && i < len(runes)-1 {
-			sb.WriteString(EOLIndent(2))
-		} else if i < len(runes)-1 {
-			sb.WriteString(" ")
-		}
-	}
-}
-
-func getStartChars(pattern string) []rune {
-	runes := map[rune]bool{}
-	regex, err := syntax.Parse(pattern, syntax.POSIX)
-	if err != nil {
-		panic(err)
-	}
-	regex = regex.Simplify()
-	startChars, _ := getStartCharsFromRegex(regex)
-	for _, r := range startChars {
-		runes[r] = true
-	}
-	returnValue := []rune{}
-	for k := range runes {
-		returnValue = append(returnValue, k)
-	}
-	return returnValue
-}
-
-func getStartCharsFromRegex(regex *syntax.Regexp) ([]rune, bool) {
-	switch regex.Op {
-	case syntax.OpConcat:
-		runes := []rune{}
-		for _, sub := range regex.Sub {
-			subRunes, isOptional := getStartCharsFromRegex(sub)
-			runes = append(runes, subRunes...)
-			if !isOptional {
-				return runes, false
+			for r := rng.Start; r <= rng.End; r++ {
+				root.Append(automatons.FormatRune(r))
+				root.Append(", ")
 			}
 		}
-		return runes, true
-	case syntax.OpLiteral:
-		return []rune{regex.Rune[0]}, false
-	case syntax.OpCharClass:
-		runes := []rune{}
-		// The rune slice contains pairs of runes that form ranges
-		// e.g. [a-zA-Z] is represented as []rune{'a', 'z', 'A', 'Z'}
-		// so we need to iterate over the slice in steps of 2
-		for i := 0; i < len(regex.Rune); i += 2 {
-			for r := regex.Rune[i]; r <= regex.Rune[i+1]; r++ {
-				runes = append(runes, r)
-			}
-		}
-		return runes, false
-	case syntax.OpAnyCharNotNL:
-	case syntax.OpAnyChar:
-		size := 256
-		runes := make([]rune, size)
-		for r := range size {
-			runes[r] = rune(r)
-		}
-		return runes, false
-	case syntax.OpCapture:
-		return getStartCharsFromRegex(regex.Sub[0])
-	case syntax.OpStar:
-	case syntax.OpQuest:
-		runes, _ := getStartCharsFromRegex(regex.Sub[0])
-		return runes, true
-	case syntax.OpPlus:
-		runes, _ := getStartCharsFromRegex(regex.Sub[0])
-		return runes, false
-	case syntax.OpAlternate:
-		runes := []rune{}
-		for _, sub := range regex.Sub {
-			subRunes, _ := getStartCharsFromRegex(sub)
-			runes = append(runes, subRunes...)
-		}
-		return runes, false
-	case syntax.OpEmptyMatch:
-		return []rune{}, false
 	}
-	return []rune{}, false
+	return root
 }

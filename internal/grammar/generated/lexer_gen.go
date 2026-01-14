@@ -1,8 +1,9 @@
 package generated
 
 import (
-	"regexp"
+	"slices"
 	"strings"
+	"unicode/utf8"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
@@ -23,9 +24,7 @@ var Keyword_LeftParen = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'(',
-	},
+	[]rune{'('},
 )
 
 const Keyword_RightParen_Idx = 2
@@ -43,9 +42,7 @@ var Keyword_RightParen = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		')',
-	},
+	[]rune{')'},
 )
 
 const Keyword_Asterisk_Idx = 3
@@ -63,9 +60,7 @@ var Keyword_Asterisk = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'*',
-	},
+	[]rune{'*'},
 )
 
 const Keyword_Plus_Idx = 4
@@ -83,9 +78,7 @@ var Keyword_Plus = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'+',
-	},
+	[]rune{'+'},
 )
 
 const Keyword_PlusEquals_Idx = 5
@@ -103,9 +96,7 @@ var Keyword_PlusEquals = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'+',
-	},
+	[]rune{'+'},
 )
 
 const Keyword_Comma_Idx = 6
@@ -123,9 +114,7 @@ var Keyword_Comma = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		',',
-	},
+	[]rune{','},
 )
 
 const Keyword_Dot_Idx = 7
@@ -143,9 +132,7 @@ var Keyword_Dot = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'.',
-	},
+	[]rune{'.'},
 )
 
 const Keyword_Colon_Idx = 8
@@ -163,9 +150,7 @@ var Keyword_Colon = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		':',
-	},
+	[]rune{':'},
 )
 
 const Keyword_Semicolon_Idx = 9
@@ -183,9 +168,7 @@ var Keyword_Semicolon = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		';',
-	},
+	[]rune{';'},
 )
 
 const Keyword_Equals_Idx = 10
@@ -203,9 +186,7 @@ var Keyword_Equals = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'=',
-	},
+	[]rune{'='},
 )
 
 const Keyword_Question_Idx = 11
@@ -223,9 +204,7 @@ var Keyword_Question = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'?',
-	},
+	[]rune{'?'},
 )
 
 const Keyword_QuestionEquals_Idx = 12
@@ -243,9 +222,7 @@ var Keyword_QuestionEquals = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'?',
-	},
+	[]rune{'?'},
 )
 
 const Keyword_LeftBracket_Idx = 13
@@ -263,9 +240,7 @@ var Keyword_LeftBracket = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'[',
-	},
+	[]rune{'['},
 )
 
 const Keyword_RightBracket_Idx = 14
@@ -283,9 +258,7 @@ var Keyword_RightBracket = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		']',
-	},
+	[]rune{']'},
 )
 
 const Keyword_current_Idx = 15
@@ -303,9 +276,7 @@ var Keyword_current = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'c',
-	},
+	[]rune{'c'},
 )
 
 const Keyword_extends_Idx = 16
@@ -323,9 +294,7 @@ var Keyword_extends = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'e',
-	},
+	[]rune{'e'},
 )
 
 const Keyword_grammar_Idx = 17
@@ -343,9 +312,7 @@ var Keyword_grammar = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'g',
-	},
+	[]rune{'g'},
 )
 
 const Keyword_hidden_Idx = 18
@@ -363,9 +330,7 @@ var Keyword_hidden = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'h',
-	},
+	[]rune{'h'},
 )
 
 const Keyword_interface_Idx = 19
@@ -383,9 +348,7 @@ var Keyword_interface = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'i',
-	},
+	[]rune{'i'},
 )
 
 const Keyword_returns_Idx = 20
@@ -403,9 +366,7 @@ var Keyword_returns = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'r',
-	},
+	[]rune{'r'},
 )
 
 const Keyword_token_Idx = 21
@@ -423,9 +384,7 @@ var Keyword_token = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		't',
-	},
+	[]rune{'t'},
 )
 
 const Keyword_LeftBrace_Idx = 22
@@ -443,9 +402,7 @@ var Keyword_LeftBrace = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'{',
-	},
+	[]rune{'{'},
 )
 
 const Keyword_Pipe_Idx = 23
@@ -463,9 +420,7 @@ var Keyword_Pipe = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'|',
-	},
+	[]rune{'|'},
 )
 
 const Keyword_RightBrace_Idx = 24
@@ -483,14 +438,11 @@ var Keyword_RightBrace = core.NewTokenType(
 		}
 		return 0
 	},
-	[]rune{
-		'}',
-	},
+	[]rune{'}'},
 )
 
 const Token_String_Idx = 25
 
-var Token_String_Regexp = regexp.MustCompile(`^("[^"]+")`)
 var Token_String = core.NewTokenType(
 	Token_String_Idx,
 	"String",
@@ -498,21 +450,112 @@ var Token_String = core.NewTokenType(
 	0,
 	0,
 	false,
-	func(text string, offset int) int {
-		matches := Token_String_Regexp.FindStringIndex(text[offset:])
-		if matches != nil {
-			return matches[1]
+	func(s string, offset int) int {
+		input := s[offset:]
+		length := len(input)
+		accepted := map[int]bool{3: true}
+		state := 0
+		acceptedIndex := 0
+		index := 0
+	loop:
+		for index < length {
+			r, runeSize := utf8.DecodeRuneInString(input[index:])
+			switch state {
+			case 0:
+				nextState := -1
+				next := Token_String_Next[0]
+				lookup := Token_String_Lookup[0]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 1:
+				nextState := -1
+				next := Token_String_Next[1]
+				lookup := Token_String_Lookup[1]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 2:
+				nextState := -1
+				next := Token_String_Next[2]
+				lookup := Token_String_Lookup[2]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 3:
+				nextState := -1
+				next := Token_String_Next[3]
+				lookup := Token_String_Lookup[3]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			default:
+				break loop
+			}
+			index += runeSize
+			if accepted[state] {
+				acceptedIndex = index
+			}
 		}
-		return 0
+		return acceptedIndex
 	},
-	[]rune{
-		'"',
-	},
+	[]rune{'"'},
 )
+var Token_String_Lookup = [][]int64{
+	{0x0000002200000022},
+	{0x0000002100000000, 0x0010FFFF00000023},
+	{0x0000002100000000, 0x0000002200000022, 0x0010FFFF00000023},
+	{},
+}
+var Token_String_Next = [][]int{
+	{1},
+	{2, 2},
+	{2, 3, 2},
+	{},
+}
 
 const Token_ID_Idx = 26
 
-var Token_ID_Regexp = regexp.MustCompile(`^([A-Z_a-z][0-9A-Z_a-z]*)`)
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
 	"ID",
@@ -520,26 +563,74 @@ var Token_ID = core.NewTokenType(
 	0,
 	0,
 	false,
-	func(text string, offset int) int {
-		matches := Token_ID_Regexp.FindStringIndex(text[offset:])
-		if matches != nil {
-			return matches[1]
+	func(s string, offset int) int {
+		input := s[offset:]
+		length := len(input)
+		accepted := map[int]bool{1: true}
+		state := 0
+		acceptedIndex := 0
+		index := 0
+	loop:
+		for index < length {
+			r, runeSize := utf8.DecodeRuneInString(input[index:])
+			switch state {
+			case 0:
+				nextState := -1
+				next := Token_ID_Next[0]
+				lookup := Token_ID_Lookup[0]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 1:
+				nextState := -1
+				next := Token_ID_Next[1]
+				lookup := Token_ID_Lookup[1]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			default:
+				break loop
+			}
+			index += runeSize
+			if accepted[state] {
+				acceptedIndex = index
+			}
 		}
-		return 0
+		return acceptedIndex
 	},
-	[]rune{
-		'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-		'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-		'U', 'V', 'W', 'X', 'Y', 'Z', '_', 'a', 'b', 'c',
-		'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-		'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
-		'x', 'y', 'z',
-	},
+	[]rune{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'},
 )
+var Token_ID_Lookup = [][]int64{
+	{0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
+	{0x0000003900000030, 0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
+}
+var Token_ID_Next = [][]int{
+	{1, 1, 1},
+	{1, 1, 1, 1},
+}
 
 const Token_RegexLiteral_Idx = 27
 
-var Token_RegexLiteral_Regexp = regexp.MustCompile(`^((?-s:/([^\n\r/\[\\]|\\.|\[([^\n\r\\\]]|\\.)*\])+/))`)
 var Token_RegexLiteral = core.NewTokenType(
 	Token_RegexLiteral_Idx,
 	"RegexLiteral",
@@ -547,21 +638,169 @@ var Token_RegexLiteral = core.NewTokenType(
 	0,
 	0,
 	false,
-	func(text string, offset int) int {
-		matches := Token_RegexLiteral_Regexp.FindStringIndex(text[offset:])
-		if matches != nil {
-			return matches[1]
+	func(s string, offset int) int {
+		input := s[offset:]
+		length := len(input)
+		accepted := map[int]bool{5: true}
+		state := 0
+		acceptedIndex := 0
+		index := 0
+	loop:
+		for index < length {
+			r, runeSize := utf8.DecodeRuneInString(input[index:])
+			switch state {
+			case 0:
+				nextState := -1
+				next := Token_RegexLiteral_Next[0]
+				lookup := Token_RegexLiteral_Lookup[0]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 1:
+				nextState := -1
+				next := Token_RegexLiteral_Next[1]
+				lookup := Token_RegexLiteral_Lookup[1]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 2:
+				nextState := -1
+				next := Token_RegexLiteral_Next[2]
+				lookup := Token_RegexLiteral_Lookup[2]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 3:
+				nextState := -1
+				next := Token_RegexLiteral_Next[3]
+				lookup := Token_RegexLiteral_Lookup[3]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 4:
+				nextState := -1
+				next := Token_RegexLiteral_Next[4]
+				lookup := Token_RegexLiteral_Lookup[4]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 5:
+				nextState := -1
+				next := Token_RegexLiteral_Next[5]
+				lookup := Token_RegexLiteral_Lookup[5]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 6:
+				nextState := -1
+				next := Token_RegexLiteral_Next[6]
+				lookup := Token_RegexLiteral_Lookup[6]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			default:
+				break loop
+			}
+			index += runeSize
+			if accepted[state] {
+				acceptedIndex = index
+			}
 		}
-		return 0
+		return acceptedIndex
 	},
-	[]rune{
-		'/',
-	},
+	[]rune{'/'},
 )
+var Token_RegexLiteral_Lookup = [][]int64{
+	{0x0000002F0000002F},
+	{0x0000000900000000, 0x0000000C0000000B, 0x0000002E0000000E, 0x0000005A00000030, 0x0000005B0000005B, 0x0000005C0000005C, 0x0010FFFF0000005D},
+	{0x0000000900000000, 0x0000000C0000000B, 0x0000002E0000000E, 0x0000002F0000002F, 0x0000005A00000030, 0x0000005B0000005B, 0x0000005C0000005C, 0x0010FFFF0000005D},
+	{0x0000000900000000, 0x0000000C0000000B, 0x0000005B0000000E, 0x0000005C0000005C, 0x0000005D0000005D, 0x0010FFFF0000005E},
+	{0x0000000900000000, 0x0010FFFF0000000B},
+	{},
+	{0x0000000900000000, 0x0010FFFF0000000B},
+}
+var Token_RegexLiteral_Next = [][]int{
+	{1},
+	{2, 2, 2, 2, 3, 4, 2},
+	{2, 2, 2, 5, 2, 3, 4, 2},
+	{3, 3, 3, 6, 2, 3},
+	{2, 2},
+	{},
+	{3, 3},
+}
 
 const Token_WS_Idx = 28
 
-var Token_WS_Regexp = regexp.MustCompile(`^([\t\n\r ]+)`)
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
 	"WS",
@@ -569,17 +808,71 @@ var Token_WS = core.NewTokenType(
 	-1,
 	0,
 	false,
-	func(text string, offset int) int {
-		matches := Token_WS_Regexp.FindStringIndex(text[offset:])
-		if matches != nil {
-			return matches[1]
+	func(s string, offset int) int {
+		input := s[offset:]
+		length := len(input)
+		accepted := map[int]bool{1: true}
+		state := 0
+		acceptedIndex := 0
+		index := 0
+	loop:
+		for index < length {
+			r, runeSize := utf8.DecodeRuneInString(input[index:])
+			switch state {
+			case 0:
+				nextState := -1
+				next := Token_WS_Next[0]
+				lookup := Token_WS_Lookup[0]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 1:
+				nextState := -1
+				next := Token_WS_Next[1]
+				lookup := Token_WS_Lookup[1]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			default:
+				break loop
+			}
+			index += runeSize
+			if accepted[state] {
+				acceptedIndex = index
+			}
 		}
-		return 0
+		return acceptedIndex
 	},
-	[]rune{
-		9, 10, 13, ' ',
-	},
+	[]rune{'\u0009', '\u000A', '\u000D', ' '},
 )
+var Token_WS_Lookup = [][]int64{
+	{0x0000000A00000009, 0x0000000D0000000D, 0x0000002000000020},
+	{0x0000000A00000009, 0x0000000D0000000D, 0x0000002000000020},
+}
+var Token_WS_Next = [][]int{
+	{1, 1, 1},
+	{1, 1, 1},
+}
 
 func NewLexer() lexer.Lexer {
 	return lexer.NewDefaultLexer(
