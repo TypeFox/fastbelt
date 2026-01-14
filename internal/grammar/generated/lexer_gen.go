@@ -1,7 +1,7 @@
 package generated
 
 import (
-	"sort"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -465,10 +465,12 @@ var Token_String = core.NewTokenType(
 				nextState := -1
 				next := Token_String_Next[0]
 				lookup := Token_String_Lookup[0]
-				searchIndex := sort.Search(len(next), func(i int) bool {
-					return rune(lookup[i]&0xFFFFFFFF) > r
-				}) - 1
-				if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
 					nextState = next[searchIndex]
 				}
 				if nextState > -1 {
@@ -480,10 +482,12 @@ var Token_String = core.NewTokenType(
 				nextState := -1
 				next := Token_String_Next[1]
 				lookup := Token_String_Lookup[1]
-				searchIndex := sort.Search(len(next), func(i int) bool {
-					return rune(lookup[i]&0xFFFFFFFF) > r
-				}) - 1
-				if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
 					nextState = next[searchIndex]
 				}
 				if nextState > -1 {
@@ -495,10 +499,12 @@ var Token_String = core.NewTokenType(
 				nextState := -1
 				next := Token_String_Next[2]
 				lookup := Token_String_Lookup[2]
-				searchIndex := sort.Search(len(next), func(i int) bool {
-					return rune(lookup[i]&0xFFFFFFFF) > r
-				}) - 1
-				if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
 					nextState = next[searchIndex]
 				}
 				if nextState > -1 {
@@ -510,10 +516,12 @@ var Token_String = core.NewTokenType(
 				nextState := -1
 				next := Token_String_Next[3]
 				lookup := Token_String_Lookup[3]
-				searchIndex := sort.Search(len(next), func(i int) bool {
-					return rune(lookup[i]&0xFFFFFFFF) > r
-				}) - 1
-				if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
 					nextState = next[searchIndex]
 				}
 				if nextState > -1 {
@@ -570,10 +578,12 @@ var Token_ID = core.NewTokenType(
 				nextState := -1
 				next := Token_ID_Next[0]
 				lookup := Token_ID_Lookup[0]
-				searchIndex := sort.Search(len(next), func(i int) bool {
-					return rune(lookup[i]&0xFFFFFFFF) > r
-				}) - 1
-				if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
 					nextState = next[searchIndex]
 				}
 				if nextState > -1 {
@@ -585,10 +595,12 @@ var Token_ID = core.NewTokenType(
 				nextState := -1
 				next := Token_ID_Next[1]
 				lookup := Token_ID_Lookup[1]
-				searchIndex := sort.Search(len(next), func(i int) bool {
-					return rune(lookup[i]&0xFFFFFFFF) > r
-				}) - 1
-				if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
 					nextState = next[searchIndex]
 				}
 				if nextState > -1 {
@@ -641,10 +653,12 @@ var Token_RegexLiteral = core.NewTokenType(
 				nextState := -1
 				next := Token_RegexLiteral_Next[0]
 				lookup := Token_RegexLiteral_Lookup[0]
-				searchIndex := sort.Search(len(next), func(i int) bool {
-					return rune(lookup[i]&0xFFFFFFFF) > r
-				}) - 1
-				if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
 					nextState = next[searchIndex]
 				}
 				if nextState > -1 {
@@ -656,10 +670,12 @@ var Token_RegexLiteral = core.NewTokenType(
 				nextState := -1
 				next := Token_RegexLiteral_Next[1]
 				lookup := Token_RegexLiteral_Lookup[1]
-				searchIndex := sort.Search(len(next), func(i int) bool {
-					return rune(lookup[i]&0xFFFFFFFF) > r
-				}) - 1
-				if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
 					nextState = next[searchIndex]
 				}
 				if nextState > -1 {
@@ -671,10 +687,12 @@ var Token_RegexLiteral = core.NewTokenType(
 				nextState := -1
 				next := Token_RegexLiteral_Next[2]
 				lookup := Token_RegexLiteral_Lookup[2]
-				searchIndex := sort.Search(len(next), func(i int) bool {
-					return rune(lookup[i]&0xFFFFFFFF) > r
-				}) - 1
-				if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
 					nextState = next[searchIndex]
 				}
 				if nextState > -1 {
@@ -686,10 +704,12 @@ var Token_RegexLiteral = core.NewTokenType(
 				nextState := -1
 				next := Token_RegexLiteral_Next[3]
 				lookup := Token_RegexLiteral_Lookup[3]
-				searchIndex := sort.Search(len(next), func(i int) bool {
-					return rune(lookup[i]&0xFFFFFFFF) > r
-				}) - 1
-				if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
 					nextState = next[searchIndex]
 				}
 				if nextState > -1 {
@@ -701,10 +721,12 @@ var Token_RegexLiteral = core.NewTokenType(
 				nextState := -1
 				next := Token_RegexLiteral_Next[4]
 				lookup := Token_RegexLiteral_Lookup[4]
-				searchIndex := sort.Search(len(next), func(i int) bool {
-					return rune(lookup[i]&0xFFFFFFFF) > r
-				}) - 1
-				if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
 					nextState = next[searchIndex]
 				}
 				if nextState > -1 {
@@ -716,10 +738,12 @@ var Token_RegexLiteral = core.NewTokenType(
 				nextState := -1
 				next := Token_RegexLiteral_Next[5]
 				lookup := Token_RegexLiteral_Lookup[5]
-				searchIndex := sort.Search(len(next), func(i int) bool {
-					return rune(lookup[i]&0xFFFFFFFF) > r
-				}) - 1
-				if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
 					nextState = next[searchIndex]
 				}
 				if nextState > -1 {
@@ -731,10 +755,12 @@ var Token_RegexLiteral = core.NewTokenType(
 				nextState := -1
 				next := Token_RegexLiteral_Next[6]
 				lookup := Token_RegexLiteral_Lookup[6]
-				searchIndex := sort.Search(len(next), func(i int) bool {
-					return rune(lookup[i]&0xFFFFFFFF) > r
-				}) - 1
-				if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
 					nextState = next[searchIndex]
 				}
 				if nextState > -1 {
@@ -797,10 +823,12 @@ var Token_WS = core.NewTokenType(
 				nextState := -1
 				next := Token_WS_Next[0]
 				lookup := Token_WS_Lookup[0]
-				searchIndex := sort.Search(len(next), func(i int) bool {
-					return rune(lookup[i]&0xFFFFFFFF) > r
-				}) - 1
-				if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
 					nextState = next[searchIndex]
 				}
 				if nextState > -1 {
@@ -812,10 +840,12 @@ var Token_WS = core.NewTokenType(
 				nextState := -1
 				next := Token_WS_Next[1]
 				lookup := Token_WS_Lookup[1]
-				searchIndex := sort.Search(len(next), func(i int) bool {
-					return rune(lookup[i]&0xFFFFFFFF) > r
-				}) - 1
-				if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
 					nextState = next[searchIndex]
 				}
 				if nextState > -1 {

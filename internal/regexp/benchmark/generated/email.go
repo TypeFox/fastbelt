@@ -1,7 +1,7 @@
 package benchmarkGenerated
 
 import (
-	"sort"
+	"slices"
 	"unicode/utf8"
 )
 
@@ -37,10 +37,12 @@ loop:
 			nextState := -1
 			next := Email_Next[0]
 			lookup := Email_Lookup[0]
-			searchIndex := sort.Search(len(next), func(i int) bool {
-				return rune(lookup[i]&0xFFFFFFFF) > r
-			}) - 1
-			if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+				lo := rune(lowHigh & 0xFFFFFFFF)
+				hi := rune(lowHigh >> 32)
+				return lo <= r && r <= hi
+			})
+			if searchIndex > -1 {
 				nextState = next[searchIndex]
 			}
 			if nextState > -1 {
@@ -52,10 +54,12 @@ loop:
 			nextState := -1
 			next := Email_Next[1]
 			lookup := Email_Lookup[1]
-			searchIndex := sort.Search(len(next), func(i int) bool {
-				return rune(lookup[i]&0xFFFFFFFF) > r
-			}) - 1
-			if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+				lo := rune(lowHigh & 0xFFFFFFFF)
+				hi := rune(lowHigh >> 32)
+				return lo <= r && r <= hi
+			})
+			if searchIndex > -1 {
 				nextState = next[searchIndex]
 			}
 			if nextState > -1 {
@@ -67,10 +71,12 @@ loop:
 			nextState := -1
 			next := Email_Next[2]
 			lookup := Email_Lookup[2]
-			searchIndex := sort.Search(len(next), func(i int) bool {
-				return rune(lookup[i]&0xFFFFFFFF) > r
-			}) - 1
-			if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+				lo := rune(lowHigh & 0xFFFFFFFF)
+				hi := rune(lowHigh >> 32)
+				return lo <= r && r <= hi
+			})
+			if searchIndex > -1 {
 				nextState = next[searchIndex]
 			}
 			if nextState > -1 {
@@ -82,10 +88,12 @@ loop:
 			nextState := -1
 			next := Email_Next[3]
 			lookup := Email_Lookup[3]
-			searchIndex := sort.Search(len(next), func(i int) bool {
-				return rune(lookup[i]&0xFFFFFFFF) > r
-			}) - 1
-			if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+				lo := rune(lowHigh & 0xFFFFFFFF)
+				hi := rune(lowHigh >> 32)
+				return lo <= r && r <= hi
+			})
+			if searchIndex > -1 {
 				nextState = next[searchIndex]
 			}
 			if nextState > -1 {
@@ -97,10 +105,12 @@ loop:
 			nextState := -1
 			next := Email_Next[4]
 			lookup := Email_Lookup[4]
-			searchIndex := sort.Search(len(next), func(i int) bool {
-				return rune(lookup[i]&0xFFFFFFFF) > r
-			}) - 1
-			if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+				lo := rune(lowHigh & 0xFFFFFFFF)
+				hi := rune(lowHigh >> 32)
+				return lo <= r && r <= hi
+			})
+			if searchIndex > -1 {
 				nextState = next[searchIndex]
 			}
 			if nextState > -1 {
@@ -112,10 +122,12 @@ loop:
 			nextState := -1
 			next := Email_Next[5]
 			lookup := Email_Lookup[5]
-			searchIndex := sort.Search(len(next), func(i int) bool {
-				return rune(lookup[i]&0xFFFFFFFF) > r
-			}) - 1
-			if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
+			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+				lo := rune(lowHigh & 0xFFFFFFFF)
+				hi := rune(lowHigh >> 32)
+				return lo <= r && r <= hi
+			})
+			if searchIndex > -1 {
 				nextState = next[searchIndex]
 			}
 			if nextState > -1 {

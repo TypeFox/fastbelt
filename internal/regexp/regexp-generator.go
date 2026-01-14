@@ -13,22 +13,25 @@ type GenerateTransitionsUsingBinarySearchResult struct {
 	Code   generator.Node
 }
 
-func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsMapping, source int, tokenName string) GenerateTransitionsUsingBinarySearchResult {
-	lookup := generator.NewNode()
-	lookup.Append("{")
+func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsMapping, source int, tokenName string, imports map[string]bool) GenerateTransitionsUsingBinarySearchResult {
+	transitions := make([]automatons.RuneRangeMappingSection[automatons.Targets], 0)
 	if bySource != nil {
 		for transition := range bySource.All() {
-			lookup.Append(fmt.Sprintf("%s, ", automatons.FormatLowHighInts(transition.Range.Start, transition.Range.End)))
+			transitions = append(transitions, transition)
 		}
+	}
+
+	lookup := generator.NewNode()
+	lookup.Append("{")
+	for _, transition := range transitions {
+		lookup.Append(fmt.Sprintf("%s, ", automatons.FormatLowHighInts(transition.Range.Start, transition.Range.End)))
 	}
 	lookup.AppendLine("},")
 
 	next := generator.NewNode()
 	next.Append("{")
-	if bySource != nil {
-		for transition := range bySource.All() {
-			next.Append(fmt.Sprintf("%d, ", transition.Values[0]))
-		}
+	for _, transition := range transitions {
+		next.Append(fmt.Sprintf("%d, ", transition.Values[0]))
 	}
 	next.AppendLine("},")
 
@@ -36,16 +39,34 @@ func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsM
 	n.AppendLine("nextState := -1")
 	n.AppendLine(fmt.Sprintf("next := %s_Next[%d]", tokenName, source))
 	n.AppendLine(fmt.Sprintf("lookup := %s_Lookup[%d]", tokenName, source))
-	n.AppendLine("searchIndex := sort.Search(len(next), func(i int) bool {")
-	n.Indent(func(n generator.Node) {
-		n.AppendLine("return rune(lookup[i] & 0xFFFFFFFF) > r")
-	})
-	n.AppendLine("}) - 1")
-	n.AppendLine("if searchIndex > -1 && rune(lookup[searchIndex] & 0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex] >> 32) {")
-	n.Indent(func(n generator.Node) {
-		n.AppendLine("nextState = next[searchIndex]")
-	})
-	n.AppendLine("}")
+
+	if len(transitions) < 16 {
+		imports["slices"] = true
+		n.AppendLine("searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {")
+		n.Indent(func(n generator.Node) {
+			n.AppendLine("lo := rune(lowHigh & 0xFFFFFFFF)")
+			n.AppendLine("hi := rune(lowHigh >> 32)")
+			n.AppendLine("return lo <= r && r <= hi")
+		})
+		n.AppendLine("})")
+		n.AppendLine("if searchIndex > -1 {")
+		n.Indent(func(n generator.Node) {
+			n.AppendLine("nextState = next[searchIndex]")
+		})
+		n.AppendLine("}")
+	} else {
+		imports["sort"] = true
+		n.AppendLine("searchIndex := sort.Search(len(next), func(i int) bool {")
+		n.Indent(func(n generator.Node) {
+			n.AppendLine("return rune(lookup[i] & 0xFFFFFFFF) > r")
+		})
+		n.AppendLine("}) - 1")
+		n.AppendLine("if searchIndex > -1 && rune(lookup[searchIndex] & 0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex] >> 32) {")
+		n.Indent(func(n generator.Node) {
+			n.AppendLine("nextState = next[searchIndex]")
+		})
+		n.AppendLine("}")
+	}
 	n.AppendLine("if nextState > -1 {")
 	n.Indent(func(n generator.Node) {
 		n.AppendLine("state = nextState")
@@ -101,11 +122,10 @@ func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateR
 				bySource := transitions[source]
 				n.AppendLine(fmt.Sprintf("case %d:", source))
 				n.Indent(func(n generator.Node) {
-					result := GenerateTransitionsUsingBinarySearch(bySource, source, tokenName)
+					result := GenerateTransitionsUsingBinarySearch(bySource, source, tokenName, imports)
 					n.AppendNode(result.Code)
 					lookup.AppendNode(result.Lookup)
 					next.AppendNode(result.Next)
-					imports["sort"] = true
 				})
 			}
 			n.AppendLine("default:")
