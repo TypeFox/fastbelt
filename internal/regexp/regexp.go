@@ -73,7 +73,7 @@ func (r *RegexpImpl) GetStartChars() *automatons.RuneSet {
 		//only save lowest byte
 		modStart := transition.Range.Start % 0x100
 		modEnd := transition.Range.End % 0x100
-		if transition.Range.End-transition.Range.Start+1 < 0xFF {
+		if transition.Range.End-transition.Range.Start+1 < 0x100 {
 			if modStart <= modEnd {
 				startCharsSet.AddRange(modStart, modEnd)
 			} else {
