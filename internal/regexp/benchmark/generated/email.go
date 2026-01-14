@@ -5,13 +5,13 @@ import (
 	"unicode/utf8"
 )
 
-var Email_Lookup = [][]rune{
-	{0x2B, 0x2B, 0x2D, 0x2E, 0x30, 0x39, 0x41, 0x5A, 0x5F, 0x5F, 0x61, 0x7A},
-	{0x2B, 0x2B, 0x2D, 0x2E, 0x30, 0x39, 0x40, 0x40, 0x41, 0x5A, 0x5F, 0x5F, 0x61, 0x7A},
-	{0x2D, 0x2E, 0x30, 0x39, 0x41, 0x5A, 0x5F, 0x5F, 0x61, 0x7A},
-	{0x2D, 0x2D, 0x2E, 0x2E, 0x30, 0x39, 0x41, 0x5A, 0x5F, 0x5F, 0x61, 0x7A},
-	{0x2D, 0x2D, 0x2E, 0x2E, 0x30, 0x39, 0x41, 0x5A, 0x5F, 0x5F, 0x61, 0x7A},
-	{0x2D, 0x2D, 0x2E, 0x2E, 0x30, 0x39, 0x41, 0x5A, 0x5F, 0x5F, 0x61, 0x7A},
+var Email_Lookup = [][]int64{
+	{0x0000002B0000002B, 0x0000002E0000002D, 0x0000003900000030, 0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
+	{0x0000002B0000002B, 0x0000002E0000002D, 0x0000003900000030, 0x0000004000000040, 0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
+	{0x0000002E0000002D, 0x0000003900000030, 0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
+	{0x0000002D0000002D, 0x0000002E0000002E, 0x0000003900000030, 0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
+	{0x0000002D0000002D, 0x0000002E0000002E, 0x0000003900000030, 0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
+	{0x0000002D0000002D, 0x0000002E0000002E, 0x0000003900000030, 0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
 }
 var Email_Next = [][]int{
 	{1, 1, 1, 1, 1, 1},
@@ -38,9 +38,9 @@ loop:
 			next := Email_Next[0]
 			lookup := Email_Lookup[0]
 			searchIndex := sort.Search(len(next), func(i int) bool {
-				return lookup[i*2] > r
+				return rune(lookup[i]&0xFFFFFFFF) > r
 			}) - 1
-			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+			if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
 				nextState = next[searchIndex]
 			}
 			if nextState > -1 {
@@ -53,9 +53,9 @@ loop:
 			next := Email_Next[1]
 			lookup := Email_Lookup[1]
 			searchIndex := sort.Search(len(next), func(i int) bool {
-				return lookup[i*2] > r
+				return rune(lookup[i]&0xFFFFFFFF) > r
 			}) - 1
-			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+			if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
 				nextState = next[searchIndex]
 			}
 			if nextState > -1 {
@@ -68,9 +68,9 @@ loop:
 			next := Email_Next[2]
 			lookup := Email_Lookup[2]
 			searchIndex := sort.Search(len(next), func(i int) bool {
-				return lookup[i*2] > r
+				return rune(lookup[i]&0xFFFFFFFF) > r
 			}) - 1
-			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+			if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
 				nextState = next[searchIndex]
 			}
 			if nextState > -1 {
@@ -83,9 +83,9 @@ loop:
 			next := Email_Next[3]
 			lookup := Email_Lookup[3]
 			searchIndex := sort.Search(len(next), func(i int) bool {
-				return lookup[i*2] > r
+				return rune(lookup[i]&0xFFFFFFFF) > r
 			}) - 1
-			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+			if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
 				nextState = next[searchIndex]
 			}
 			if nextState > -1 {
@@ -98,9 +98,9 @@ loop:
 			next := Email_Next[4]
 			lookup := Email_Lookup[4]
 			searchIndex := sort.Search(len(next), func(i int) bool {
-				return lookup[i*2] > r
+				return rune(lookup[i]&0xFFFFFFFF) > r
 			}) - 1
-			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+			if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
 				nextState = next[searchIndex]
 			}
 			if nextState > -1 {
@@ -113,9 +113,9 @@ loop:
 			next := Email_Next[5]
 			lookup := Email_Lookup[5]
 			searchIndex := sort.Search(len(next), func(i int) bool {
-				return lookup[i*2] > r
+				return rune(lookup[i]&0xFFFFFFFF) > r
 			}) - 1
-			if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {
+			if searchIndex > -1 && rune(lookup[searchIndex]&0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex]>>32) {
 				nextState = next[searchIndex]
 			}
 			if nextState > -1 {

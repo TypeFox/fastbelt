@@ -18,7 +18,7 @@ func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsM
 	lookup.Append("{")
 	if bySource != nil {
 		for transition := range bySource.All() {
-			lookup.Append(fmt.Sprintf("%s, %s, ", automatons.FormatInt(transition.Range.Start), automatons.FormatInt(transition.Range.End)))
+			lookup.Append(fmt.Sprintf("%s, ", automatons.FormatLowHighInts(transition.Range.Start, transition.Range.End)))
 		}
 	}
 	lookup.AppendLine("},")
@@ -38,10 +38,10 @@ func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsM
 	n.AppendLine(fmt.Sprintf("lookup := %s_Lookup[%d]", tokenName, source))
 	n.AppendLine("searchIndex := sort.Search(len(next), func(i int) bool {")
 	n.Indent(func(n generator.Node) {
-		n.AppendLine("return lookup[i*2] > r")
+		n.AppendLine("return rune(lookup[i] & 0xFFFFFFFF) > r")
 	})
 	n.AppendLine("}) - 1")
-	n.AppendLine("if searchIndex > -1 && lookup[searchIndex*2] <= r && r <= lookup[searchIndex*2+1] {")
+	n.AppendLine("if searchIndex > -1 && rune(lookup[searchIndex] & 0xFFFFFFFF) <= r && r <= rune(lookup[searchIndex] >> 32) {")
 	n.Indent(func(n generator.Node) {
 		n.AppendLine("nextState = next[searchIndex]")
 	})
@@ -71,7 +71,7 @@ type GenerateRegExpResult struct {
 
 func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateRegExpResult {
 	lookup := generator.NewNode()
-	lookup.AppendLine(fmt.Sprintf("var %s_Lookup = [][]rune{", tokenName))
+	lookup.AppendLine(fmt.Sprintf("var %s_Lookup = [][]int64{", tokenName))
 	next := generator.NewNode()
 	next.AppendLine(fmt.Sprintf("var %s_Next = [][]int{", tokenName))
 	imports := map[string]bool{"unicode/utf8": true}

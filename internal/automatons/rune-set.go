@@ -19,6 +19,10 @@ func FormatInt(r rune) string {
 	return intStr
 }
 
+func FormatLowHighInts(low rune, high rune) string {
+	return fmt.Sprintf("0x%08X%08X", high, low)
+}
+
 func FormatRune(r rune) string {
 	runeStr := ""
 	if r == '\'' {
