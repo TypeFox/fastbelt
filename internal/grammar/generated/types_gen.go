@@ -118,8 +118,8 @@ type Interface interface {
 	Name() string
 	NameToken() *core.Token
 	SetName(value *core.Token)
-	Extends() []*core.Token
-	SetExtendsItem(item *core.Token)
+	Extends() []*core.Reference[Interface]
+	SetExtendsItem(item *core.Reference[Interface])
 	Fields() []Field
 	SetFieldsItem(item Field)
 }
@@ -133,13 +133,13 @@ func NewInterface() Interface {
 
 type InterfaceData struct {
 	name    *core.Token
-	extends []*core.Token
+	extends []*core.Reference[Interface]
 	fields  []Field
 }
 
 func NewInterfaceData() InterfaceData {
 	return InterfaceData{
-		extends: []*core.Token{},
+		extends: []*core.Reference[Interface]{},
 		fields:  []Field{},
 	}
 }
@@ -153,6 +153,9 @@ func (i *InterfaceData) ForEachNode(fn func(core.AstNode)) {
 }
 
 func (i *InterfaceData) ForEachReference(fn func(core.UntypedReference)) {
+	for _, item := range i.extends {
+		fn(item)
+	}
 }
 
 func (i *InterfaceData) Name() string {
@@ -171,11 +174,11 @@ func (i *InterfaceData) SetName(value *core.Token) {
 	i.name = value
 }
 
-func (i *InterfaceData) Extends() []*core.Token {
+func (i *InterfaceData) Extends() []*core.Reference[Interface] {
 	return i.extends
 }
 
-func (i *InterfaceData) SetExtendsItem(item *core.Token) {
+func (i *InterfaceData) SetExtendsItem(item *core.Reference[Interface]) {
 	i.extends = append(i.extends, item)
 }
 
@@ -389,9 +392,8 @@ type ReferenceType interface {
 	FieldType
 
 	IsReferenceType()
-	Type() string
-	TypeToken() *core.Token
-	SetType(value *core.Token)
+	Type() *core.Reference[Interface]
+	SetType(value *core.Reference[Interface])
 }
 
 func NewReferenceType() ReferenceType {
@@ -403,7 +405,7 @@ func NewReferenceType() ReferenceType {
 }
 
 type ReferenceTypeData struct {
-	_Type *core.Token
+	_Type *core.Reference[Interface]
 }
 
 func NewReferenceTypeData() ReferenceTypeData {
@@ -416,21 +418,20 @@ func (i *ReferenceTypeData) ForEachNode(fn func(core.AstNode)) {
 }
 
 func (i *ReferenceTypeData) ForEachReference(fn func(core.UntypedReference)) {
-}
-
-func (i *ReferenceTypeData) Type() string {
-	if i != nil && i._Type != nil {
-		return i._Type.Image
-	} else {
-		return ""
+	if i._Type != nil {
+		fn(i._Type)
 	}
 }
 
-func (i *ReferenceTypeData) TypeToken() *core.Token {
-	return i._Type
+func (i *ReferenceTypeData) Type() *core.Reference[Interface] {
+	if i != nil && i._Type != nil {
+		return i._Type
+	} else {
+		return nil
+	}
 }
 
-func (i *ReferenceTypeData) SetType(value *core.Token) {
+func (i *ReferenceTypeData) SetType(value *core.Reference[Interface]) {
 	i._Type = value
 }
 
@@ -516,13 +517,72 @@ func (i *SimpleTypeImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.SimpleTypeData.ForEachReference(fn)
 }
 
-type ParserRule interface {
+type AbstractRule interface {
 	core.AstNode
 
-	IsParserRule()
+	IsAbstractRule()
 	Name() string
 	NameToken() *core.Token
 	SetName(value *core.Token)
+}
+
+func NewAbstractRule() AbstractRule {
+	return &AbstractRuleImpl{
+		AstNodeBase:      core.NewAstNode(),
+		AbstractRuleData: NewAbstractRuleData(),
+	}
+}
+
+type AbstractRuleData struct {
+	name *core.Token
+}
+
+func NewAbstractRuleData() AbstractRuleData {
+	return AbstractRuleData{}
+}
+
+func (i *AbstractRuleData) IsAbstractRule() {}
+
+func (i *AbstractRuleData) ForEachNode(fn func(core.AstNode)) {
+}
+
+func (i *AbstractRuleData) ForEachReference(fn func(core.UntypedReference)) {
+}
+
+func (i *AbstractRuleData) Name() string {
+	if i != nil && i.name != nil {
+		return i.name.Image
+	} else {
+		return ""
+	}
+}
+
+func (i *AbstractRuleData) NameToken() *core.Token {
+	return i.name
+}
+
+func (i *AbstractRuleData) SetName(value *core.Token) {
+	i.name = value
+}
+
+type AbstractRuleImpl struct {
+	core.AstNodeBase
+	AbstractRuleData
+}
+
+func (i *AbstractRuleImpl) ForEachNode(fn func(core.AstNode)) {
+	i.AbstractRuleData.ForEachNode(fn)
+}
+
+func (i *AbstractRuleImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.AbstractRuleData.ForEachReference(fn)
+}
+
+type ParserRule interface {
+	core.AstNode
+	AbstractRule
+
+	IsParserRule()
 	ReturnType() *core.Reference[Interface]
 	SetReturnType(value *core.Reference[Interface])
 	Body() Element
@@ -531,13 +591,13 @@ type ParserRule interface {
 
 func NewParserRule() ParserRule {
 	return &ParserRuleImpl{
-		AstNodeBase:    core.NewAstNode(),
-		ParserRuleData: NewParserRuleData(),
+		AstNodeBase:      core.NewAstNode(),
+		AbstractRuleData: NewAbstractRuleData(),
+		ParserRuleData:   NewParserRuleData(),
 	}
 }
 
 type ParserRuleData struct {
-	name       *core.Token
 	returnType *core.Reference[Interface]
 	body       Element
 }
@@ -558,22 +618,6 @@ func (i *ParserRuleData) ForEachReference(fn func(core.UntypedReference)) {
 	if i.returnType != nil {
 		fn(i.returnType)
 	}
-}
-
-func (i *ParserRuleData) Name() string {
-	if i != nil && i.name != nil {
-		return i.name.Image
-	} else {
-		return ""
-	}
-}
-
-func (i *ParserRuleData) NameToken() *core.Token {
-	return i.name
-}
-
-func (i *ParserRuleData) SetName(value *core.Token) {
-	i.name = value
 }
 
 func (i *ParserRuleData) ReturnType() *core.Reference[Interface] {
@@ -602,27 +646,28 @@ func (i *ParserRuleData) SetBody(value Element) {
 
 type ParserRuleImpl struct {
 	core.AstNodeBase
+	AbstractRuleData
 	ParserRuleData
 }
 
 func (i *ParserRuleImpl) ForEachNode(fn func(core.AstNode)) {
+	i.AbstractRuleData.ForEachNode(fn)
 	i.ParserRuleData.ForEachNode(fn)
 }
 
 func (i *ParserRuleImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.AbstractRuleData.ForEachReference(fn)
 	i.ParserRuleData.ForEachReference(fn)
 }
 
 type Token interface {
 	core.AstNode
+	AbstractRule
 
 	IsToken()
 	Type() string
 	TypeToken() *core.Token
 	SetType(value *core.Token)
-	Name() string
-	NameToken() *core.Token
-	SetName(value *core.Token)
 	Regexp() string
 	RegexpToken() *core.Token
 	SetRegexp(value *core.Token)
@@ -630,14 +675,14 @@ type Token interface {
 
 func NewToken() Token {
 	return &TokenImpl{
-		AstNodeBase: core.NewAstNode(),
-		TokenData:   NewTokenData(),
+		AstNodeBase:      core.NewAstNode(),
+		AbstractRuleData: NewAbstractRuleData(),
+		TokenData:        NewTokenData(),
 	}
 }
 
 type TokenData struct {
 	_Type  *core.Token
-	name   *core.Token
 	regexp *core.Token
 }
 
@@ -669,22 +714,6 @@ func (i *TokenData) SetType(value *core.Token) {
 	i._Type = value
 }
 
-func (i *TokenData) Name() string {
-	if i != nil && i.name != nil {
-		return i.name.Image
-	} else {
-		return ""
-	}
-}
-
-func (i *TokenData) NameToken() *core.Token {
-	return i.name
-}
-
-func (i *TokenData) SetName(value *core.Token) {
-	i.name = value
-}
-
 func (i *TokenData) Regexp() string {
 	if i != nil && i.regexp != nil {
 		return i.regexp.Image
@@ -703,14 +732,17 @@ func (i *TokenData) SetRegexp(value *core.Token) {
 
 type TokenImpl struct {
 	core.AstNodeBase
+	AbstractRuleData
 	TokenData
 }
 
 func (i *TokenImpl) ForEachNode(fn func(core.AstNode)) {
+	i.AbstractRuleData.ForEachNode(fn)
 	i.TokenData.ForEachNode(fn)
 }
 
 func (i *TokenImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.AbstractRuleData.ForEachReference(fn)
 	i.TokenData.ForEachReference(fn)
 }
 
@@ -1128,9 +1160,8 @@ type CrossRef interface {
 	Assignable
 
 	IsCrossRef()
-	Type() string
-	TypeToken() *core.Token
-	SetType(value *core.Token)
+	Type() *core.Reference[Interface]
+	SetType(value *core.Reference[Interface])
 	Rule() RuleCall
 	SetRule(value RuleCall)
 }
@@ -1145,7 +1176,7 @@ func NewCrossRef() CrossRef {
 }
 
 type CrossRefData struct {
-	_Type *core.Token
+	_Type *core.Reference[Interface]
 	rule  RuleCall
 }
 
@@ -1162,21 +1193,20 @@ func (i *CrossRefData) ForEachNode(fn func(core.AstNode)) {
 }
 
 func (i *CrossRefData) ForEachReference(fn func(core.UntypedReference)) {
-}
-
-func (i *CrossRefData) Type() string {
-	if i != nil && i._Type != nil {
-		return i._Type.Image
-	} else {
-		return ""
+	if i._Type != nil {
+		fn(i._Type)
 	}
 }
 
-func (i *CrossRefData) TypeToken() *core.Token {
-	return i._Type
+func (i *CrossRefData) Type() *core.Reference[Interface] {
+	if i != nil && i._Type != nil {
+		return i._Type
+	} else {
+		return nil
+	}
 }
 
-func (i *CrossRefData) SetType(value *core.Token) {
+func (i *CrossRefData) SetType(value *core.Reference[Interface]) {
 	i._Type = value
 }
 
@@ -1216,9 +1246,8 @@ type RuleCall interface {
 	Assignable
 
 	IsRuleCall()
-	Rule() string
-	RuleToken() *core.Token
-	SetRule(value *core.Token)
+	Rule() *core.Reference[AbstractRule]
+	SetRule(value *core.Reference[AbstractRule])
 }
 
 func NewRuleCall() RuleCall {
@@ -1231,7 +1260,7 @@ func NewRuleCall() RuleCall {
 }
 
 type RuleCallData struct {
-	rule *core.Token
+	rule *core.Reference[AbstractRule]
 }
 
 func NewRuleCallData() RuleCallData {
@@ -1244,21 +1273,20 @@ func (i *RuleCallData) ForEachNode(fn func(core.AstNode)) {
 }
 
 func (i *RuleCallData) ForEachReference(fn func(core.UntypedReference)) {
-}
-
-func (i *RuleCallData) Rule() string {
-	if i != nil && i.rule != nil {
-		return i.rule.Image
-	} else {
-		return ""
+	if i.rule != nil {
+		fn(i.rule)
 	}
 }
 
-func (i *RuleCallData) RuleToken() *core.Token {
-	return i.rule
+func (i *RuleCallData) Rule() *core.Reference[AbstractRule] {
+	if i != nil && i.rule != nil {
+		return i.rule
+	} else {
+		return nil
+	}
 }
 
-func (i *RuleCallData) SetRule(value *core.Token) {
+func (i *RuleCallData) SetRule(value *core.Reference[AbstractRule]) {
 	i.rule = value
 }
 
@@ -1286,15 +1314,13 @@ type Action interface {
 	Element
 
 	IsAction()
-	Type() string
-	TypeToken() *core.Token
-	SetType(value *core.Token)
+	Type() *core.Reference[Interface]
+	SetType(value *core.Reference[Interface])
 	Operator() string
 	OperatorToken() *core.Token
 	SetOperator(value *core.Token)
-	Property() string
-	PropertyToken() *core.Token
-	SetProperty(value *core.Token)
+	Property() *core.Reference[Field]
+	SetProperty(value *core.Reference[Field])
 }
 
 func NewAction() Action {
@@ -1306,9 +1332,9 @@ func NewAction() Action {
 }
 
 type ActionData struct {
-	_Type    *core.Token
+	_Type    *core.Reference[Interface]
 	operator *core.Token
-	property *core.Token
+	property *core.Reference[Field]
 }
 
 func NewActionData() ActionData {
@@ -1321,21 +1347,23 @@ func (i *ActionData) ForEachNode(fn func(core.AstNode)) {
 }
 
 func (i *ActionData) ForEachReference(fn func(core.UntypedReference)) {
-}
-
-func (i *ActionData) Type() string {
-	if i != nil && i._Type != nil {
-		return i._Type.Image
-	} else {
-		return ""
+	if i._Type != nil {
+		fn(i._Type)
+	}
+	if i.property != nil {
+		fn(i.property)
 	}
 }
 
-func (i *ActionData) TypeToken() *core.Token {
-	return i._Type
+func (i *ActionData) Type() *core.Reference[Interface] {
+	if i != nil && i._Type != nil {
+		return i._Type
+	} else {
+		return nil
+	}
 }
 
-func (i *ActionData) SetType(value *core.Token) {
+func (i *ActionData) SetType(value *core.Reference[Interface]) {
 	i._Type = value
 }
 
@@ -1355,19 +1383,15 @@ func (i *ActionData) SetOperator(value *core.Token) {
 	i.operator = value
 }
 
-func (i *ActionData) Property() string {
+func (i *ActionData) Property() *core.Reference[Field] {
 	if i != nil && i.property != nil {
-		return i.property.Image
+		return i.property
 	} else {
-		return ""
+		return nil
 	}
 }
 
-func (i *ActionData) PropertyToken() *core.Token {
-	return i.property
-}
-
-func (i *ActionData) SetProperty(value *core.Token) {
+func (i *ActionData) SetProperty(value *core.Reference[Field]) {
 	i.property = value
 }
 

@@ -71,7 +71,7 @@ const (
 	ParserRuleReturnTypeID_0
 	ParserRuleSemicolon_0
 	ParserRulereturns_0
-	ReferenceTypeAt_0
+	ReferenceTypeAsterisk_0
 	ReferenceTypeTypeID_0
 	RuleCallRuleID_0
 	SimpleTypeTypeID_0
@@ -216,7 +216,7 @@ var FieldTypeLookaheadOr1 = parser.LLkLookahead{
 		parser.LookaheadPath{Token_ID_Idx},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_At_Idx},
+		parser.LookaheadPath{Keyword_Asterisk_Idx},
 	},
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_LeftBracket_Idx},
@@ -359,7 +359,7 @@ func (p *Parser) ParseInterface() Interface {
 			token := p.state.Consume(Token_ID_Idx)
 			core.AssignToken(current, token, InterfaceExtendsID_0)
 			if token != nil {
-				current.SetExtendsItem(token)
+				current.SetExtendsItem(p.references().InterfaceExtends(current, token))
 			}
 		}
 		for p.state.Lookahead(InterfaceLookahead2) == 0 {
@@ -371,7 +371,7 @@ func (p *Parser) ParseInterface() Interface {
 				token := p.state.Consume(Token_ID_Idx)
 				core.AssignToken(current, token, InterfaceExtendsID_1)
 				if token != nil {
-					current.SetExtendsItem(token)
+					current.SetExtendsItem(p.references().InterfaceExtends(current, token))
 				}
 			}
 		}
@@ -468,14 +468,14 @@ func (p *Parser) ParseReferenceType() ReferenceType {
 	current := NewReferenceType()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Keyword_At_Idx)
-		core.AssignToken(current, token, ReferenceTypeAt_0)
+		token := p.state.Consume(Keyword_Asterisk_Idx)
+		core.AssignToken(current, token, ReferenceTypeAsterisk_0)
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, ReferenceTypeTypeID_0)
 		if token != nil {
-			current.SetType(token)
+			current.SetType(p.references().ReferenceTypeType(current, token))
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -881,7 +881,7 @@ func (p *Parser) ParseCrossRef() CrossRef {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, CrossRefTypeID_0)
 		if token != nil {
-			current.SetType(token)
+			current.SetType(p.references().CrossRefType(current, token))
 		}
 	}
 	if p.state.Lookahead(CrossRefLookahead12) == 0 {
@@ -911,7 +911,7 @@ func (p *Parser) ParseRuleCall() RuleCall {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, RuleCallRuleID_0)
 		if token != nil {
-			current.SetRule(token)
+			current.SetRule(p.references().RuleCallRule(current, token))
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -929,7 +929,7 @@ func (p *Parser) ParseAction() Action {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, ActionTypeID_0)
 		if token != nil {
-			current.SetType(token)
+			current.SetType(p.references().ActionType(current, token))
 		}
 	}
 	if p.state.Lookahead(ActionLookahead13) == 0 {
@@ -941,7 +941,7 @@ func (p *Parser) ParseAction() Action {
 			token := p.state.Consume(Token_ID_Idx)
 			core.AssignToken(current, token, ActionPropertyID_0)
 			if token != nil {
-				current.SetProperty(token)
+				current.SetProperty(p.references().ActionProperty(current, token))
 			}
 		}
 		{

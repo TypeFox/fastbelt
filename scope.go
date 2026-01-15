@@ -38,6 +38,18 @@ func NewMapScope(elements map[string][]*AstNodeDescription, outer Scope) *MapSco
 	}
 }
 
+func NewMapScopeFromArray(elements []*AstNodeDescription, outer Scope) *MapScope {
+	elemMap := map[string][]*AstNodeDescription{}
+	for _, desc := range elements {
+		name := desc.Name
+		if _, ok := elemMap[name]; !ok {
+			elemMap[name] = []*AstNodeDescription{}
+		}
+		elemMap[name] = append(elemMap[name], desc)
+	}
+	return NewMapScope(elemMap, outer)
+}
+
 func (s *MapScope) ElementsByName(name string) []*AstNodeDescription {
 	if elems, ok := s.elements[name]; ok {
 		return elems

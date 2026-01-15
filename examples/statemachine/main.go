@@ -4,7 +4,7 @@
 
 package main
 
-//go:generate go run ../../../cmd/main.go -g ./statemachine.fb -o ./generated -v
+//go:generate go run ../../cmd/main.go -g ./statemachine.fb -o ./generated -v
 
 import (
 	"context"

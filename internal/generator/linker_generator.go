@@ -1,6 +1,8 @@
 package generator
 
 import (
+	"context"
+
 	"typefox.dev/fastbelt/generator"
 	"typefox.dev/fastbelt/internal/grammar/generated"
 )
@@ -46,8 +48,16 @@ func generateContext(grammar generated.Grammar) *LinkerGeneratorContext {
 				fields = append(fields, LinkerField{
 					typeName: iface.Name(),
 					name:     field.Name(),
-					target:   refType.Type(),
+					target:   refType.Type().Ref(context.TODO()).Name(),
 				})
+			} else if arrayType, ok := field.Type().(generated.ArrayType); ok {
+				if refType, ok := arrayType.InternalType().(generated.ReferenceType); ok {
+					fields = append(fields, LinkerField{
+						typeName: iface.Name(),
+						name:     field.Name(),
+						target:   refType.Type().Ref(context.TODO()).Name(),
+					})
+				}
 			}
 		}
 	}

@@ -24,5 +24,9 @@ func CreateServices() *GrammarSrv {
 	server.CreateDefaultServices(srv)
 	linking.CreateDefaultServices(srv)
 	generated.CreateDefaultServices(srv)
+
+	linkingSrv := srv.FastbeltLinking()
+	linkingSrv.ScopeProvider = NewFastbeltScopeProvider(srv)
+
 	return srv
 }
