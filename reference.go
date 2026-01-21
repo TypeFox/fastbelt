@@ -70,6 +70,10 @@ func (r *Reference[T]) Resolve(ctx context.Context) {
 	// We can use the context to detect cyclic reference resolution attempts
 	// We are allowed to do this outside of the mutex lock because context is immutable
 	if ctx.Value(r) != nil {
+		// Note that we write directly to r.err without locking here
+		// This is safe, because:
+		// 1. The reference is already locked by the caller
+		// 2. Attempting to lock it again would cause a deadlock
 		r.err = NewReferenceError("Cyclic reference resolution detected")
 		// Return directly, do not set the resolved flag
 		return
@@ -89,11 +93,14 @@ func (r *Reference[T]) Resolve(ctx context.Context) {
 	result := <-ch
 	desc := result.desc
 	r.Description = desc
-	r.err = result.err
+	if r.err == nil {
+		// Do not overwrite existing errors
+		r.err = result.err
+	}
 	if desc != nil {
 		if node, ok := desc.Node.(T); ok {
 			r.ref = node
-		} else {
+		} else if r.err == nil {
 			expectedType := reflect.TypeOf(*new(T)).String()
 			actualType := reflect.TypeOf(desc.Node).String()
 			r.err = NewReferenceError("Reference resolution type mismatch: expected " + expectedType + ", got " + actualType)
