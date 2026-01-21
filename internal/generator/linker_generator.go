@@ -83,7 +83,7 @@ func generateScopeProvider(context *LinkerGeneratorContext) generator.Node {
 	node.AppendLine("}")
 	node.AppendLine()
 
-	node.AppendLine("func NewDefault", context.grammar.Name(), "ScopeProvider(srv ", context.grammar.Name(), "LinkingSrvCont) ", context.grammar.Name(), "ScopeProvider {")
+	node.AppendLine("func NewDefault", context.grammar.Name(), "ScopeProvider(srv ", context.grammar.Name(), "LinkingSrvCont) *Default", context.grammar.Name(), "ScopeProvider {")
 	node.AppendLine("	return &Default", context.grammar.Name(), "ScopeProvider{srv: srv}")
 	node.AppendLine("}")
 	node.AppendLine()
@@ -112,7 +112,7 @@ func generateLinker(context *LinkerGeneratorContext) generator.Node {
 	node.AppendLine("}")
 	node.AppendLine()
 
-	node.AppendLine("func NewDefault", context.grammar.Name(), "Linker(srv ", context.grammar.Name(), "LinkingSrvCont) ", context.grammar.Name(), "Linker {")
+	node.AppendLine("func NewDefault", context.grammar.Name(), "Linker(srv ", context.grammar.Name(), "LinkingSrvCont) *Default", context.grammar.Name(), "Linker {")
 	node.AppendLine("	return &Default", context.grammar.Name(), "Linker{srv: srv}")
 	node.AppendLine("}")
 	node.AppendLine()
@@ -142,7 +142,7 @@ func generateReferenceGenerator(context *LinkerGeneratorContext) generator.Node 
 	node.AppendLine("}")
 	node.AppendLine()
 
-	node.AppendLine("func NewDefault", context.grammar.Name(), "ReferenceGenerator(srv ", context.grammar.Name(), "LinkingSrvCont) ", context.grammar.Name(), "ReferenceGenerator {")
+	node.AppendLine("func NewDefault", context.grammar.Name(), "ReferenceGenerator(srv ", context.grammar.Name(), "LinkingSrvCont) *Default", context.grammar.Name(), "ReferenceGenerator {")
 	node.AppendLine("	return &Default", context.grammar.Name(), "ReferenceGenerator{srv: srv}")
 	node.AppendLine("}")
 	node.AppendLine()

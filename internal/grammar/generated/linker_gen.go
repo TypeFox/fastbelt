@@ -67,7 +67,7 @@ type DefaultFastbeltLinker struct {
 	srv FastbeltLinkingSrvCont
 }
 
-func NewDefaultFastbeltLinker(srv FastbeltLinkingSrvCont) FastbeltLinker {
+func NewDefaultFastbeltLinker(srv FastbeltLinkingSrvCont) *DefaultFastbeltLinker {
 	return &DefaultFastbeltLinker{srv: srv}
 }
 
@@ -120,7 +120,7 @@ type DefaultFastbeltReferenceGenerator struct {
 	srv FastbeltLinkingSrvCont
 }
 
-func NewDefaultFastbeltReferenceGenerator(srv FastbeltLinkingSrvCont) FastbeltReferenceGenerator {
+func NewDefaultFastbeltReferenceGenerator(srv FastbeltLinkingSrvCont) *DefaultFastbeltReferenceGenerator {
 	return &DefaultFastbeltReferenceGenerator{srv: srv}
 }
 
