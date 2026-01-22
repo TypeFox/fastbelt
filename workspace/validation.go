@@ -72,7 +72,7 @@ func CreateParserDiagnostics(doc textdoc.Handle, parserErrors []*parser.ParserEr
 
 func CreateLinkerDiagnostics(doc textdoc.Handle, root core.AstNode) []protocol.Diagnostic {
 	diagnostics := []protocol.Diagnostic{}
-	core.Traverse(root, func(node core.AstNode) {
+	core.TraverseNode(root, func(node core.AstNode) {
 		node.ForEachReference(func(ur core.UntypedReference) {
 			err := ur.Error()
 			segment := ur.Segment()

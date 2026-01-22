@@ -18,6 +18,8 @@ type AstNodeBase struct {
 
 func (node *AstNodeBase) ForEachNode(fn func(AstNode)) {}
 
+func (node *AstNodeBase) ForEachReference(fn func(UntypedReference)) {}
+
 func (node *AstNodeBase) Document() *Document {
 	if node != nil {
 		return node.document
@@ -126,10 +128,18 @@ type AstNode interface {
 	ForEachReference(fn func(UntypedReference))
 }
 
-func Traverse(node AstNode, fn func(AstNode)) {
+// Traverses the given node and all its children, calling the given function for each node.
+func TraverseNode(node AstNode, fn func(AstNode)) {
 	fn(node)
+	TraverseContent(node, fn)
+}
+
+// Traverses all children of the given node, calling the specified function for each child.
+// Does not call the function for the given node itself. Use TraverseNode for that.
+func TraverseContent(node AstNode, fn func(AstNode)) {
 	node.ForEachNode(func(child AstNode) {
-		Traverse(child, fn)
+		fn(child)
+		TraverseContent(child, fn)
 	})
 }
 

@@ -62,9 +62,9 @@ func GenerateParser(grammar generated.Grammar) string {
 	node.AppendLine("}")
 	node.AppendLine()
 
-	node.AppendLine("func (p *Parser) references() ", grammar.Name(), "ReferenceGenerator {")
+	node.AppendLine("func (p *Parser) references() ", grammar.Name(), "ReferencesConstructor {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("return p.srv.", grammar.Name(), "Linking().ReferencesGenerator")
+		n.AppendLine("return p.srv.", grammar.Name(), "Linking().ReferencesConstructor")
 	})
 	node.AppendLine("}").AppendLine()
 

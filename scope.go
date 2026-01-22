@@ -1,71 +1,112 @@
 package fastbelt
 
+import (
+	"iter"
+	"slices"
+
+	"typefox.dev/fastbelt/extiter"
+	"typefox.dev/fastbelt/utils"
+)
+
 func DefaultLink(scope Scope, text string) (*AstNodeDescription, *ReferenceError) {
-	descriptions := scope.ElementsByName(text)
-	if len(descriptions) == 0 {
+	description := scope.ElementByName(text)
+	if description == nil {
 		return nil, NewReferenceError("Could not resolve reference to '" + text + "'.")
 	} else {
-		return descriptions[0], nil
+		return description, nil
 	}
 }
 
 type Scope interface {
-	ElementsByName(name string) []*AstNodeDescription
-	AllElements() []*AstNodeDescription
+	ElementByName(name string) *AstNodeDescription
+	ElementsByName(name string) iter.Seq[*AstNodeDescription]
+	AllElements() iter.Seq[*AstNodeDescription]
 }
 
 type emptyScope struct{}
 
-func (s *emptyScope) ElementsByName(name string) []*AstNodeDescription {
-	return []*AstNodeDescription{}
+func (s *emptyScope) ElementByName(name string) *AstNodeDescription {
+	return nil
 }
 
-func (s *emptyScope) AllElements() []*AstNodeDescription {
-	return []*AstNodeDescription{}
+func (s *emptyScope) ElementsByName(name string) iter.Seq[*AstNodeDescription] {
+	return extiter.Empty[*AstNodeDescription]()
+}
+
+func (s *emptyScope) AllElements() iter.Seq[*AstNodeDescription] {
+	return extiter.Empty[*AstNodeDescription]()
 }
 
 var EmptyScope Scope = &emptyScope{}
 
 type MapScope struct {
-	elements map[string][]*AstNodeDescription
+	elements utils.MultiMap[string, *AstNodeDescription]
 	outer    Scope
 }
 
-func NewMapScope(elements map[string][]*AstNodeDescription, outer Scope) *MapScope {
+func NewMapScope(elements utils.MultiMap[string, *AstNodeDescription], outer Scope) *MapScope {
 	return &MapScope{
 		elements: elements,
 		outer:    outer,
 	}
 }
 
-func NewMapScopeFromArray(elements []*AstNodeDescription, outer Scope) *MapScope {
-	elemMap := map[string][]*AstNodeDescription{}
-	for _, desc := range elements {
-		name := desc.Name
-		if _, ok := elemMap[name]; !ok {
-			elemMap[name] = []*AstNodeDescription{}
-		}
-		elemMap[name] = append(elemMap[name], desc)
+func NewMapScopeFromSlice(elements []*AstNodeDescription, outer Scope) *MapScope {
+	return NewMapScopeFromSeq(slices.Values(elements), outer)
+}
+
+func NewMapScopeFromSeq(elements iter.Seq[*AstNodeDescription], outer Scope) *MapScope {
+	elemMap := utils.NewMultiMap[string, *AstNodeDescription]()
+	for desc := range elements {
+		elemMap.Put(desc.Name, desc)
 	}
 	return NewMapScope(elemMap, outer)
 }
 
-func (s *MapScope) ElementsByName(name string) []*AstNodeDescription {
-	if elems, ok := s.elements[name]; ok {
-		return elems
+func (s *MapScope) ElementByName(name string) *AstNodeDescription {
+	if elems, ok := s.elements.TryGet(name); ok && len(elems) > 0 {
+		return elems[0]
 	} else if s.outer != nil {
-		return s.outer.ElementsByName(name)
+		return s.outer.ElementByName(name)
 	}
-	return []*AstNodeDescription{}
+	return nil
 }
 
-func (s *MapScope) AllElements() []*AstNodeDescription {
-	result := []*AstNodeDescription{}
-	for _, elems := range s.elements {
-		result = append(result, elems...)
+func (s *MapScope) ElementsByName(name string) iter.Seq[*AstNodeDescription] {
+	elems := s.elements.Get(name)
+	if len(elems) == 0 {
+		if s.outer != nil {
+			// Delegate directly to outer scope
+			return s.outer.ElementsByName(name)
+		} else {
+			// No elements found and no outer scope
+			return extiter.Empty[*AstNodeDescription]()
+		}
+	} else {
+		seq := slices.Values(elems)
+		if s.outer == nil {
+			// No outer scope, return only the local elements
+			return seq
+		}
+		// Concatenate local elements with outer scope elements
+		return extiter.Concat(seq, s.outer.ElementsByName(name))
 	}
-	if s.outer != nil {
-		result = append(result, s.outer.AllElements()...)
+}
+
+func (s *MapScope) AllElements() iter.Seq[*AstNodeDescription] {
+	if s.elements.Size() == 0 {
+		if s.outer != nil {
+			// Delegate directly to outer scope
+			return s.outer.AllElements()
+		} else {
+			return extiter.Empty[*AstNodeDescription]()
+		}
 	}
-	return result
+	seq := s.elements.Values()
+	if s.outer == nil {
+		// No outer scope, return only the local elements
+		return seq
+	}
+	// Concatenate local elements with outer scope elements
+	return extiter.Concat(seq, s.outer.AllElements())
 }

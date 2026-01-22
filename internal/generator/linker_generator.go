@@ -35,7 +35,7 @@ func GenerateLinker(grammar generated.Grammar) string {
 	context := generateContext(grammar)
 	node.AppendNode(generateScopeProvider(context))
 	node.AppendNode(generateLinker(context))
-	node.AppendNode(generateReferenceGenerator(context))
+	node.AppendNode(generateReferenceConstructor(context))
 
 	return formatIfPossible(node.String())
 }
@@ -98,7 +98,7 @@ func generateScopeProvider(context *LinkerGeneratorContext) generator.Node {
 
 func generateLinker(context *LinkerGeneratorContext) generator.Node {
 	node := generator.NewNode()
-	node.AppendLine("type ", context.grammar.Name(), "Linker interface {")
+	node.AppendLine("type ", context.grammar.Name(), "ReferenceLinker interface {")
 	node.Indent(func(n generator.Node) {
 		for _, field := range context.fields {
 			n.AppendLine("Link", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) (*core.AstNodeDescription, *core.ReferenceError)")
@@ -107,18 +107,18 @@ func generateLinker(context *LinkerGeneratorContext) generator.Node {
 	node.AppendLine("}")
 	node.AppendLine()
 
-	node.AppendLine("type Default", context.grammar.Name(), "Linker struct {")
+	node.AppendLine("type Default", context.grammar.Name(), "ReferenceLinker struct {")
 	node.AppendLine("	srv ", context.grammar.Name(), "LinkingSrvCont")
 	node.AppendLine("}")
 	node.AppendLine()
 
-	node.AppendLine("func NewDefault", context.grammar.Name(), "Linker(srv ", context.grammar.Name(), "LinkingSrvCont) *Default", context.grammar.Name(), "Linker {")
-	node.AppendLine("	return &Default", context.grammar.Name(), "Linker{srv: srv}")
+	node.AppendLine("func NewDefault", context.grammar.Name(), "ReferenceLinker(srv ", context.grammar.Name(), "LinkingSrvCont) *Default", context.grammar.Name(), "ReferenceLinker {")
+	node.AppendLine("	return &Default", context.grammar.Name(), "ReferenceLinker{srv: srv}")
 	node.AppendLine("}")
 	node.AppendLine()
 
 	for _, field := range context.fields {
-		node.AppendLine("func (l *Default", context.grammar.Name(), "Linker) Link", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) (*core.AstNodeDescription, *core.ReferenceError) {")
+		node.AppendLine("func (l *Default", context.grammar.Name(), "ReferenceLinker) Link", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) (*core.AstNodeDescription, *core.ReferenceError) {")
 		node.AppendLine("    scope := l.srv.", context.grammar.Name(), "Linking().ScopeProvider.Scope", field.typeName, field.name, "(ctx, reference)")
 		node.AppendLine("    return core.DefaultLink(scope, reference.Text)")
 		node.AppendLine("}").AppendLine()
@@ -126,9 +126,9 @@ func generateLinker(context *LinkerGeneratorContext) generator.Node {
 	return node
 }
 
-func generateReferenceGenerator(context *LinkerGeneratorContext) generator.Node {
+func generateReferenceConstructor(context *LinkerGeneratorContext) generator.Node {
 	node := generator.NewNode()
-	node.AppendLine("type ", context.grammar.Name(), "ReferenceGenerator interface {")
+	node.AppendLine("type ", context.grammar.Name(), "ReferencesConstructor interface {")
 	node.Indent(func(n generator.Node) {
 		for _, field := range context.fields {
 			n.AppendLine(field.typeName, field.name, "(owner core.AstNode, token *core.Token) *core.Reference[", field.target, "]")
@@ -137,19 +137,19 @@ func generateReferenceGenerator(context *LinkerGeneratorContext) generator.Node 
 	node.AppendLine("}")
 	node.AppendLine()
 
-	node.AppendLine("type Default", context.grammar.Name(), "ReferenceGenerator struct {")
+	node.AppendLine("type Default", context.grammar.Name(), "ReferencesConstructor struct {")
 	node.AppendLine("	srv ", context.grammar.Name(), "LinkingSrvCont")
 	node.AppendLine("}")
 	node.AppendLine()
 
-	node.AppendLine("func NewDefault", context.grammar.Name(), "ReferenceGenerator(srv ", context.grammar.Name(), "LinkingSrvCont) *Default", context.grammar.Name(), "ReferenceGenerator {")
-	node.AppendLine("	return &Default", context.grammar.Name(), "ReferenceGenerator{srv: srv}")
+	node.AppendLine("func NewDefault", context.grammar.Name(), "ReferencesConstructor(srv ", context.grammar.Name(), "LinkingSrvCont) *Default", context.grammar.Name(), "ReferencesConstructor {")
+	node.AppendLine("	return &Default", context.grammar.Name(), "ReferencesConstructor{srv: srv}")
 	node.AppendLine("}")
 	node.AppendLine()
 
 	for _, field := range context.fields {
-		node.AppendLine("func (g *Default", context.grammar.Name(), "ReferenceGenerator) ", field.typeName, field.name, "(owner core.AstNode, token *core.Token) *core.Reference[", field.target, "] {")
-		node.AppendLine("    fn := g.srv.", context.grammar.Name(), "Linking().Linker.Link", field.typeName, field.name)
+		node.AppendLine("func (g *Default", context.grammar.Name(), "ReferencesConstructor) ", field.typeName, field.name, "(owner core.AstNode, token *core.Token) *core.Reference[", field.target, "] {")
+		node.AppendLine("    fn := g.srv.", context.grammar.Name(), "Linking().ReferenceLinker.Link", field.typeName, field.name)
 		node.AppendLine("    return core.NewReference(owner, token, fn)")
 		node.AppendLine("}").AppendLine()
 	}

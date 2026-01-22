@@ -10,8 +10,8 @@ type Parser struct {
 	srv   FastbeltGeneratedSrvCont
 }
 
-func (p *Parser) references() FastbeltReferenceGenerator {
-	return p.srv.FastbeltLinking().ReferencesGenerator
+func (p *Parser) references() FastbeltReferencesConstructor {
+	return p.srv.FastbeltLinking().ReferencesConstructor
 }
 
 func (p *Parser) Parse(tokens []*core.Token) *parser.ParseResult {

@@ -6,9 +6,9 @@ import (
 )
 
 type FastbeltLinkingSrv struct {
-	ScopeProvider       FastbeltScopeProvider
-	Linker              FastbeltLinker
-	ReferencesGenerator FastbeltReferenceGenerator
+	ScopeProvider         FastbeltScopeProvider
+	ReferenceLinker       FastbeltReferenceLinker
+	ReferencesConstructor FastbeltReferencesConstructor
 }
 
 type FastbeltLinkingSrvCont interface {
@@ -34,11 +34,11 @@ func CreateDefaultServices(srv FastbeltGeneratedSrvCont) {
 	if linking.ScopeProvider == nil {
 		linking.ScopeProvider = NewDefaultFastbeltScopeProvider(srv)
 	}
-	if linking.Linker == nil {
-		linking.Linker = NewDefaultFastbeltLinker(srv)
+	if linking.ReferenceLinker == nil {
+		linking.ReferenceLinker = NewDefaultFastbeltReferenceLinker(srv)
 	}
-	if linking.ReferencesGenerator == nil {
-		linking.ReferencesGenerator = NewDefaultFastbeltReferenceGenerator(srv)
+	if linking.ReferencesConstructor == nil {
+		linking.ReferencesConstructor = NewDefaultFastbeltReferencesConstructor(srv)
 	}
 	generated := srv.Generated()
 	if generated.Lexer == nil {

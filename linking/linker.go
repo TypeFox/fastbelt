@@ -19,13 +19,11 @@ func NewDefaultLinker() Linker {
 
 func (l *DefaultLinker) Link(ctx context.Context, root core.AstNode) {
 	waitgroup := sync.WaitGroup{}
-	core.Traverse(root, func(node core.AstNode) {
+	core.TraverseNode(root, func(node core.AstNode) {
 		node.ForEachReference(func(ref core.UntypedReference) {
-			waitgroup.Add(1)
-			go func() {
-				defer waitgroup.Done()
+			waitgroup.Go(func() {
 				ref.Resolve(ctx)
-			}()
+			})
 		})
 	})
 	waitgroup.Wait()

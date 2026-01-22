@@ -12,6 +12,10 @@ import (
 	"strings"
 )
 
+func Empty[T any]() iter.Seq[T] {
+	return func(yield func(T) bool) {}
+}
+
 // Count returns the number of elements in the sequence
 func Count[T any](seq iter.Seq[T]) int {
 	count := 0
@@ -96,6 +100,18 @@ func Filter[T any](seq iter.Seq[T], predicate func(T) bool) iter.Seq[T] {
 		for value := range seq {
 			if predicate(value) {
 				if !yield(value) {
+					return
+				}
+			}
+		}
+	}
+}
+
+func FilterType[T, U any](seq iter.Seq[T]) iter.Seq[U] {
+	return func(yield func(U) bool) {
+		for value := range seq {
+			if castValue, ok := any(value).(U); ok {
+				if !yield(castValue) {
 					return
 				}
 			}

@@ -27,7 +27,7 @@ func (s *FastbeltScopeProvider) ScopeActionProperty(ctx context.Context, referen
 					fieldDesc = append(fieldDesc, core.NewAstNodeDescription(field, field.Name(), &field.NameToken().Segment, field.Segment()))
 				}
 			}
-			return core.NewMapScopeFromArray(fieldDesc, nil)
+			return core.NewMapScopeFromSlice(fieldDesc, nil)
 		}
 	}
 	return core.EmptyScope

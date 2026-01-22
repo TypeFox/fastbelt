@@ -1,40 +1,39 @@
 package linking
 
 import (
+	"iter"
+	"slices"
+
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/extiter"
 )
 
-type LocalSymbols = []*core.AstNodeDescription
+type LocalSymbols = iter.Seq[*core.AstNodeDescription]
 
 func SymbolsOfType[T core.AstNode](s LocalSymbols) LocalSymbols {
-	result := LocalSymbols{}
-	for _, desc := range s {
-		if _, ok := desc.Node.(T); ok {
-			result = append(result, desc)
-		}
-	}
-	return result
+	return extiter.Filter(s, func(desc *core.AstNodeDescription) bool {
+		_, ok := desc.Node.(T)
+		return ok
+	})
 }
 
 func LocalScopeOfType[T core.AstNode](node core.AstNode, fn func(core.AstNode) LocalSymbols) core.Scope {
 	symbols := fn(node)
 	filtered := SymbolsOfType[T](symbols)
-	elements := map[string][]*core.AstNodeDescription{}
-	for _, desc := range filtered {
-		name := desc.Name
-		if _, ok := elements[name]; !ok {
-			elements[name] = []*core.AstNodeDescription{}
-		}
-		elements[name] = append(elements[name], desc)
-	}
 	var outer core.Scope = nil
 	if container := node.Container(); container != nil {
 		outer = LocalScopeOfType[T](container, fn)
 	}
-	return core.NewMapScope(elements, outer)
+	if extiter.IsEmpty(filtered) {
+		// Shortcut to generate fewer scopes
+		if outer != nil {
+			return outer
+		} else {
+			return core.EmptyScope
+		}
+	}
+	return core.NewMapScopeFromSeq(filtered, outer)
 }
-
-type SymbolTable = map[core.AstNode]LocalSymbols
 
 type LocalSymbolTableProvider interface {
 	Compute(key string, root core.AstNode)
@@ -42,46 +41,42 @@ type LocalSymbolTableProvider interface {
 	LocalSymbols(node core.AstNode) LocalSymbols
 }
 
-type DefaultSymbolTable struct {
+type DefaultLocalSymbolTableProvider struct {
 	srv       LinkingSrvCont
 	uriToNode map[string][]core.AstNode
-	symbols   SymbolTable
+	symbols   map[core.AstNode][]*core.AstNodeDescription
 }
 
-func NewDefaultSymbolTable(srv LinkingSrvCont) LocalSymbolTableProvider {
-	return &DefaultSymbolTable{
+func NewDefaultLocalSymbolTableProvider(srv LinkingSrvCont) LocalSymbolTableProvider {
+	return &DefaultLocalSymbolTableProvider{
 		srv:       srv,
 		uriToNode: map[string][]core.AstNode{},
-		symbols:   SymbolTable{},
+		symbols:   map[core.AstNode][]*core.AstNodeDescription{},
 	}
 }
 
-func (s *DefaultSymbolTable) Compute(key string, root core.AstNode) {
+func (s *DefaultLocalSymbolTableProvider) Compute(key string, root core.AstNode) {
 	s.Reset(key)
 	nodes := []core.AstNode{}
-	core.Traverse(root, func(node core.AstNode) {
+	core.TraverseContent(root, func(node core.AstNode) {
 		nodes = append(nodes, node)
+		// Container is never nil for all but the root node
 		container := node.Container()
-		if container != nil {
-			name, nameToken := s.srv.Linking().NameProvider.GetName(node)
-			if name != "" {
-				var segment *core.TextSegment
-				if nameToken != nil {
-					segment = &nameToken.Segment
-				}
-				desc := core.NewAstNodeDescription(node, name, segment, node.Segment())
-				symbols := s.symbols[container]
-				if symbols == nil {
-					symbols = LocalSymbols{}
-				}
-				s.symbols[container] = append(symbols, desc)
+		name, nameToken := s.srv.Linking().Namer.Name(node)
+		if name != "" {
+			var segment *core.TextSegment
+			if nameToken != nil {
+				segment = &nameToken.Segment
 			}
+			desc := core.NewAstNodeDescription(node, name, segment, node.Segment())
+			symbols := s.symbols[container]
+			s.symbols[container] = append(symbols, desc)
 		}
 	})
 	s.uriToNode[key] = nodes
 }
 
-func (s *DefaultSymbolTable) Reset(key string) {
+func (s *DefaultLocalSymbolTableProvider) Reset(key string) {
 	if nodes, ok := s.uriToNode[key]; ok {
 		for _, node := range nodes {
 			delete(s.symbols, node)
@@ -90,10 +85,10 @@ func (s *DefaultSymbolTable) Reset(key string) {
 	}
 }
 
-func (s *DefaultSymbolTable) LocalSymbols(node core.AstNode) LocalSymbols {
+func (s *DefaultLocalSymbolTableProvider) LocalSymbols(node core.AstNode) LocalSymbols {
 	if descs, ok := s.symbols[node]; ok {
-		return descs
+		return slices.Values(descs)
 	} else {
-		return LocalSymbols{}
+		return extiter.Empty[*core.AstNodeDescription]()
 	}
 }

@@ -1,6 +1,6 @@
 module typefox.dev/fastbelt
 
-go 1.24.5
+go 1.25.6
 
 require (
 	github.com/TypeFox/go-lsp v0.0.1

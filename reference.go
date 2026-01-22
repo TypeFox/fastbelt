@@ -61,19 +61,13 @@ func (r *Reference[T]) Segment() *TextSegment {
 	return nil
 }
 
-type getterResult struct {
-	desc *AstNodeDescription
-	err  *ReferenceError
-}
-
 func (r *Reference[T]) Resolve(ctx context.Context) {
 	// We can use the context to detect cyclic reference resolution attempts
 	// We are allowed to do this outside of the mutex lock because context is immutable
 	if ctx.Value(r) != nil {
 		// Note that we write directly to r.err without locking here
-		// This is safe, because:
-		// 1. The reference is already locked by the caller
-		// 2. Attempting to lock it again would cause a deadlock
+		// This is safe, because the reference is already locked by the caller
+		// Attempting to lock it again would cause a deadlock anyway
 		r.err = NewReferenceError("Cyclic reference resolution detected")
 		// Return directly, do not set the resolved flag
 		return
@@ -85,17 +79,11 @@ func (r *Reference[T]) Resolve(ctx context.Context) {
 		return
 	}
 	newCtx := context.WithValue(ctx, r, true)
-	ch := make(chan getterResult)
-	go func() {
-		desc, e := r.getter(newCtx, r)
-		ch <- getterResult{desc, e}
-	}()
-	result := <-ch
-	desc := result.desc
+	desc, e := r.getter(newCtx, r)
 	r.Description = desc
 	if r.err == nil {
 		// Do not overwrite existing errors
-		r.err = result.err
+		r.err = e
 	}
 	if desc != nil {
 		if node, ok := desc.Node.(T); ok {

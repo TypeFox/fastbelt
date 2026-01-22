@@ -1,9 +1,9 @@
 package linking
 
 type LinkingSrv struct {
-	SymbolTable  LocalSymbolTableProvider
-	NameProvider NameProvider
-	Linker       Linker
+	SymbolTable LocalSymbolTableProvider
+	Namer       Namer
+	Linker      Linker
 }
 
 type LinkingSrvCont interface {
@@ -21,10 +21,10 @@ func (b *LinkingSrvContBlock) Linking() *LinkingSrv {
 func CreateDefaultServices(srv LinkingSrvCont) {
 	linking := srv.Linking()
 	if linking.SymbolTable == nil {
-		linking.SymbolTable = NewDefaultSymbolTable(srv)
+		linking.SymbolTable = NewDefaultLocalSymbolTableProvider(srv)
 	}
-	if linking.NameProvider == nil {
-		linking.NameProvider = NewDefaultNameProvider()
+	if linking.Namer == nil {
+		linking.Namer = NewDefaultNamer()
 	}
 	if linking.Linker == nil {
 		linking.Linker = NewDefaultLinker()
