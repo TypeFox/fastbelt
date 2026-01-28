@@ -89,8 +89,11 @@ func (r *Reference[T]) Resolve(ctx context.Context) {
 		if node, ok := desc.Node.(T); ok {
 			r.ref = node
 		} else if r.err == nil {
-			expectedType := reflect.TypeOf(*new(T)).String()
-			actualType := reflect.TypeOf(desc.Node).String()
+			expectedType := reflect.TypeFor[T]().String()
+			actualType := "nil"
+			if desc.Node != nil {
+				actualType = reflect.TypeOf(desc.Node).String()
+			}
 			r.err = NewReferenceError("Reference resolution type mismatch: expected " + expectedType + ", got " + actualType)
 		}
 	}

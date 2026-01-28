@@ -36,11 +36,14 @@ func LocalScopeOfType[T core.AstNode](node core.AstNode, fn func(core.AstNode) L
 }
 
 type LocalSymbolTableProvider interface {
+	// TODO: Replace "key" with Document structure once we have it
 	Compute(key string, root core.AstNode)
+	// TODO: Might not be required once we have a Document structure
 	Reset(key string)
 	LocalSymbols(node core.AstNode) LocalSymbols
 }
 
+// TODO: Refactor this once we have a Document structure
 type DefaultLocalSymbolTableProvider struct {
 	srv       LinkingSrvCont
 	uriToNode map[string][]core.AstNode

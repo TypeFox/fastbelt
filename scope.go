@@ -64,7 +64,7 @@ func NewMapScopeFromSeq(elements iter.Seq[*AstNodeDescription], outer Scope) *Ma
 }
 
 func (s *MapScope) ElementByName(name string) *AstNodeDescription {
-	if elems, ok := s.elements.TryGet(name); ok && len(elems) > 0 {
+	if elems, exists := s.elements.TryGet(name); exists && len(elems) > 0 {
 		return elems[0]
 	} else if s.outer != nil {
 		return s.outer.ElementByName(name)
@@ -101,12 +101,13 @@ func (s *MapScope) AllElements() iter.Seq[*AstNodeDescription] {
 		} else {
 			return extiter.Empty[*AstNodeDescription]()
 		}
+	} else {
+		seq := s.elements.Values()
+		if s.outer == nil {
+			// No outer scope, return only the local elements
+			return seq
+		}
+		// Concatenate local elements with outer scope elements
+		return extiter.Concat(seq, s.outer.AllElements())
 	}
-	seq := s.elements.Values()
-	if s.outer == nil {
-		// No outer scope, return only the local elements
-		return seq
-	}
-	// Concatenate local elements with outer scope elements
-	return extiter.Concat(seq, s.outer.AllElements())
 }
