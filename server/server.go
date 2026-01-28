@@ -341,7 +341,7 @@ func StartLanguageServer(ctx context.Context, srv ServerSrvCont) error {
 			diagnostics := []protocol.Diagnostic{}
 			diagnostics = append(diagnostics, workspace.CreateLexerDiagnostics(result.Result.LexerErrors)...)
 			diagnostics = append(diagnostics, workspace.CreateParserDiagnostics(result.Document, result.Result.ParserErrors)...)
-
+			diagnostics = append(diagnostics, workspace.CreateLinkerDiagnostics(result.Document, result.Result.Root)...)
 			// Publish diagnostics (empty array if no errors to clear previous diagnostics)
 			params := &protocol.PublishDiagnosticsParams{
 				URI:         result.Document.URI(),

@@ -7,6 +7,11 @@ import (
 
 type Parser struct {
 	state *parser.ParserState
+	srv   FastbeltGeneratedSrvCont
+}
+
+func (p *Parser) references() FastbeltReferencesConstructor {
+	return p.srv.FastbeltLinking().ReferencesConstructor
 }
 
 func (p *Parser) Parse(tokens []*core.Token) *parser.ParseResult {
@@ -16,8 +21,8 @@ func (p *Parser) Parse(tokens []*core.Token) *parser.ParseResult {
 	return &parser.ParseResult{Node: result, Errors: p.state.Errors()}
 }
 
-func NewParser() *Parser {
-	return &Parser{}
+func NewFastbeltParser(srv FastbeltGeneratedSrvCont) *Parser {
+	return &Parser{srv: srv}
 }
 
 const (
@@ -30,6 +35,8 @@ const (
 	ActionTypeID_0
 	Actioncurrent_0
 	AlternativesPipe_0
+	ArrayTypeLeftBracket_0
+	ArrayTypeRightBracket_0
 	AssignableAlternativesPipe_0
 	AssignableLeftParen_0
 	AssignableRightParen_0
@@ -46,10 +53,7 @@ const (
 	ElementCardinalityQuestion_0
 	ElementLeftParen_0
 	ElementRightParen_0
-	FieldArrayLeftBracket_0
 	FieldNameID_0
-	FieldRightBracket_0
-	FieldTypeID_0
 	GrammarNameID_0
 	GrammarSemicolon_0
 	Grammargrammar_0
@@ -67,7 +71,10 @@ const (
 	ParserRuleReturnTypeID_0
 	ParserRuleSemicolon_0
 	ParserRulereturns_0
+	ReferenceTypeAsterisk_0
+	ReferenceTypeTypeID_0
 	RuleCallRuleID_0
+	SimpleTypeTypeID_0
 	TokenColon_0
 	TokenNameID_0
 	TokenRegexpRegexLiteral_0
@@ -76,18 +83,24 @@ const (
 	Tokentoken_0
 )
 
-var ActionLookahead14 = parser.LLkLookahead{
+var ActionLookahead13 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_Dot_Idx},
 	},
 }
 
-var ActionOperatorLookaheadOr6 = parser.LLkLookahead{
+var ActionOperatorLookaheadOr7 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_PlusEquals_Idx},
 	},
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_Equals_Idx},
+	},
+}
+
+var AlternativesLookahead5 = parser.LLkLookahead{
+	parser.LookaheadOption{
+		parser.LookaheadPath{Keyword_Pipe_Idx},
 	},
 }
 
@@ -97,7 +110,7 @@ var AlternativesLookahead6 = parser.LLkLookahead{
 	},
 }
 
-var AlternativesLookahead7 = parser.LLkLookahead{
+var AssignableAlternativesLookahead10 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_Pipe_Idx},
 	},
@@ -109,13 +122,7 @@ var AssignableAlternativesLookahead11 = parser.LLkLookahead{
 	},
 }
 
-var AssignableAlternativesLookahead12 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Pipe_Idx},
-	},
-}
-
-var AssignableLookaheadOr4 = parser.LLkLookahead{
+var AssignableLookaheadOr5 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Token_String_Idx},
 	},
@@ -130,7 +137,7 @@ var AssignableLookaheadOr4 = parser.LLkLookahead{
 	},
 }
 
-var AssignableWithoutAltsLookaheadOr5 = parser.LLkLookahead{
+var AssignableWithoutAltsLookaheadOr6 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Token_String_Idx},
 	},
@@ -142,7 +149,7 @@ var AssignableWithoutAltsLookaheadOr5 = parser.LLkLookahead{
 	},
 }
 
-var AssignmentOperatorLookaheadOr3 = parser.LLkLookahead{
+var AssignmentOperatorLookaheadOr4 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_PlusEquals_Idx},
 	},
@@ -154,13 +161,13 @@ var AssignmentOperatorLookaheadOr3 = parser.LLkLookahead{
 	},
 }
 
-var CrossRefLookahead13 = parser.LLkLookahead{
+var CrossRefLookahead12 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_Colon_Idx},
 	},
 }
 
-var ElementCardinalityLookaheadOr2 = parser.LLkLookahead{
+var ElementCardinalityLookaheadOr3 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_Asterisk_Idx},
 	},
@@ -172,7 +179,7 @@ var ElementCardinalityLookaheadOr2 = parser.LLkLookahead{
 	},
 }
 
-var ElementLookahead10 = parser.LLkLookahead{
+var ElementLookahead9 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_Asterisk_Idx},
 		parser.LookaheadPath{Keyword_Plus_Idx},
@@ -180,7 +187,7 @@ var ElementLookahead10 = parser.LLkLookahead{
 	},
 }
 
-var ElementLookaheadOr1 = parser.LLkLookahead{
+var ElementLookaheadOr2 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Token_String_Idx},
 	},
@@ -204,7 +211,13 @@ var ElementLookaheadOr1 = parser.LLkLookahead{
 	},
 }
 
-var FieldLookahead4 = parser.LLkLookahead{
+var FieldTypeLookaheadOr1 = parser.LLkLookahead{
+	parser.LookaheadOption{
+		parser.LookaheadPath{Token_ID_Idx},
+	},
+	parser.LookaheadOption{
+		parser.LookaheadPath{Keyword_Asterisk_Idx},
+	},
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_LeftBracket_Idx},
 	},
@@ -232,7 +245,7 @@ var GrammarLookaheadOr0 = parser.LLkLookahead{
 	},
 }
 
-var GroupLookahead8 = parser.LLkLookahead{
+var GroupLookahead7 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Token_String_Idx},
 		parser.LookaheadPath{Token_ID_Idx},
@@ -242,7 +255,7 @@ var GroupLookahead8 = parser.LLkLookahead{
 	},
 }
 
-var GroupLookahead9 = parser.LLkLookahead{
+var GroupLookahead8 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Token_String_Idx},
 		parser.LookaheadPath{Token_ID_Idx},
@@ -270,7 +283,7 @@ var InterfaceLookahead3 = parser.LLkLookahead{
 	},
 }
 
-var TokenLookahead5 = parser.LLkLookahead{
+var TokenLookahead4 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_hidden_Idx},
 	},
@@ -346,7 +359,7 @@ func (p *Parser) ParseInterface() Interface {
 			token := p.state.Consume(Token_ID_Idx)
 			core.AssignToken(current, token, InterfaceExtendsID_0)
 			if token != nil {
-				current.SetExtendsItem(token)
+				current.SetExtendsItem(p.references().InterfaceExtends(current, token))
 			}
 		}
 		for p.state.Lookahead(InterfaceLookahead2) == 0 {
@@ -358,7 +371,7 @@ func (p *Parser) ParseInterface() Interface {
 				token := p.state.Consume(Token_ID_Idx)
 				core.AssignToken(current, token, InterfaceExtendsID_1)
 				if token != nil {
-					current.SetExtendsItem(token)
+					current.SetExtendsItem(p.references().InterfaceExtends(current, token))
 				}
 			}
 		}
@@ -393,22 +406,88 @@ func (p *Parser) ParseField() Field {
 			current.SetName(token)
 		}
 	}
-	if p.state.Lookahead(FieldLookahead4) == 0 {
-		{
-			token := p.state.Consume(Keyword_LeftBracket_Idx)
-			core.AssignToken(current, token, FieldArrayLeftBracket_0)
-			if token != nil {
-				current.SetArray(token)
-			}
+	{
+		result := p.ParseFieldType()
+		if result != nil {
+			current.SetType(result)
 		}
+	}
+	current.SetSegmentEndToken(p.state.LA(0))
+	return current
+}
+
+func (p *Parser) ParseFieldType() FieldType {
+	current := NewFieldType()
+	current.SetSegmentStartToken(p.state.LA(1))
+	switch p.state.Lookahead(FieldTypeLookaheadOr1) {
+	case 0:
 		{
-			token := p.state.Consume(Keyword_RightBracket_Idx)
-			core.AssignToken(current, token, FieldRightBracket_0)
+			result := p.ParseSimpleType()
+			core.MergeTokens(result, current.Tokens())
+			current = result
 		}
+	case 1:
+		{
+			result := p.ParseReferenceType()
+			core.MergeTokens(result, current.Tokens())
+			current = result
+		}
+	case 2:
+		{
+			result := p.ParseArrayType()
+			core.MergeTokens(result, current.Tokens())
+			current = result
+		}
+	}
+	current.SetSegmentEndToken(p.state.LA(0))
+	return current
+}
+
+func (p *Parser) ParseArrayType() ArrayType {
+	current := NewArrayType()
+	current.SetSegmentStartToken(p.state.LA(1))
+	{
+		token := p.state.Consume(Keyword_LeftBracket_Idx)
+		core.AssignToken(current, token, ArrayTypeLeftBracket_0)
+	}
+	{
+		token := p.state.Consume(Keyword_RightBracket_Idx)
+		core.AssignToken(current, token, ArrayTypeRightBracket_0)
+	}
+	{
+		result := p.ParseFieldType()
+		if result != nil {
+			current.SetInternalType(result)
+		}
+	}
+	current.SetSegmentEndToken(p.state.LA(0))
+	return current
+}
+
+func (p *Parser) ParseReferenceType() ReferenceType {
+	current := NewReferenceType()
+	current.SetSegmentStartToken(p.state.LA(1))
+	{
+		token := p.state.Consume(Keyword_Asterisk_Idx)
+		core.AssignToken(current, token, ReferenceTypeAsterisk_0)
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(current, token, FieldTypeID_0)
+		core.AssignToken(current, token, ReferenceTypeTypeID_0)
+		if token != nil {
+			current.SetType(p.references().ReferenceTypeType(current, token))
+		}
+	}
+	current.SetSegmentEndToken(p.state.LA(0))
+	return current
+}
+
+func (p *Parser) ParseSimpleType() SimpleType {
+	current := NewSimpleType()
+	current.SetSegmentStartToken(p.state.LA(1))
+	{
+		token := p.state.Consume(Token_ID_Idx)
+		core.AssignToken(current, token, SimpleTypeTypeID_0)
 		if token != nil {
 			current.SetType(token)
 		}
@@ -435,7 +514,7 @@ func (p *Parser) ParseParserRule() ParserRule {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, ParserRuleReturnTypeID_0)
 		if token != nil {
-			current.SetReturnType(token)
+			current.SetReturnType(p.references().ParserRuleReturnType(current, token))
 		}
 	}
 	{
@@ -460,7 +539,7 @@ func (p *Parser) ParseToken() Token {
 	current := NewToken()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		if p.state.Lookahead(TokenLookahead5) == 0 {
+		if p.state.Lookahead(TokenLookahead4) == 0 {
 			token := p.state.Consume(Keyword_hidden_Idx)
 			core.AssignToken(current, token, TokenTypehidden_0)
 			if token != nil {
@@ -506,7 +585,7 @@ func (p *Parser) ParseAlternatives() Element {
 		core.MergeTokens(result, current.Tokens())
 		current = result
 	}
-	if p.state.Lookahead(AlternativesLookahead6) == 0 {
+	if p.state.Lookahead(AlternativesLookahead5) == 0 {
 		{
 			result := NewAlternatives()
 			result.SetSegment(current.Segment())
@@ -515,7 +594,7 @@ func (p *Parser) ParseAlternatives() Element {
 			current = result
 		}
 		current := current.(Alternatives)
-		for ok := true; ok; ok = p.state.Lookahead(AlternativesLookahead7) == 0 {
+		for ok := true; ok; ok = p.state.Lookahead(AlternativesLookahead6) == 0 {
 			{
 				token := p.state.Consume(Keyword_Pipe_Idx)
 				core.AssignToken(current, token, AlternativesPipe_0)
@@ -540,7 +619,7 @@ func (p *Parser) ParseGroup() Element {
 		core.MergeTokens(result, current.Tokens())
 		current = result
 	}
-	if p.state.Lookahead(GroupLookahead8) == 0 {
+	if p.state.Lookahead(GroupLookahead7) == 0 {
 		{
 			result := NewGroup()
 			result.SetSegment(current.Segment())
@@ -550,7 +629,7 @@ func (p *Parser) ParseGroup() Element {
 		}
 		current := current.(Group)
 		{
-			for ok := true; ok; ok = p.state.Lookahead(GroupLookahead9) == 0 {
+			for ok := true; ok; ok = p.state.Lookahead(GroupLookahead8) == 0 {
 				result := p.ParseElement()
 				if result != nil {
 					current.SetElementsItem(result)
@@ -565,7 +644,7 @@ func (p *Parser) ParseGroup() Element {
 func (p *Parser) ParseElement() Element {
 	current := NewElement()
 	current.SetSegmentStartToken(p.state.LA(1))
-	switch p.state.Lookahead(ElementLookaheadOr1) {
+	switch p.state.Lookahead(ElementLookaheadOr2) {
 	case 0:
 		{
 			result := p.ParseKeyword()
@@ -606,8 +685,8 @@ func (p *Parser) ParseElement() Element {
 		}
 	}
 	{
-		if p.state.Lookahead(ElementLookahead10) == 0 {
-			switch p.state.Lookahead(ElementCardinalityLookaheadOr2) {
+		if p.state.Lookahead(ElementLookahead9) == 0 {
+			switch p.state.Lookahead(ElementCardinalityLookaheadOr3) {
 			case 0:
 				token := p.state.Consume(Keyword_Asterisk_Idx)
 				core.AssignToken(current, token, ElementCardinalityAsterisk_0)
@@ -658,7 +737,7 @@ func (p *Parser) ParseAssignment() Assignment {
 		}
 	}
 	{
-		switch p.state.Lookahead(AssignmentOperatorLookaheadOr3) {
+		switch p.state.Lookahead(AssignmentOperatorLookaheadOr4) {
 		case 0:
 			token := p.state.Consume(Keyword_PlusEquals_Idx)
 			core.AssignToken(current, token, AssignmentOperatorPlusEquals_0)
@@ -692,7 +771,7 @@ func (p *Parser) ParseAssignment() Assignment {
 func (p *Parser) ParseAssignable() Assignable {
 	current := NewAssignable()
 	current.SetSegmentStartToken(p.state.LA(1))
-	switch p.state.Lookahead(AssignableLookaheadOr4) {
+	switch p.state.Lookahead(AssignableLookaheadOr5) {
 	case 0:
 		{
 			result := p.ParseKeyword()
@@ -733,7 +812,7 @@ func (p *Parser) ParseAssignable() Assignable {
 func (p *Parser) ParseAssignableWithoutAlts() Assignable {
 	current := NewAssignable()
 	current.SetSegmentStartToken(p.state.LA(1))
-	switch p.state.Lookahead(AssignableWithoutAltsLookaheadOr5) {
+	switch p.state.Lookahead(AssignableWithoutAltsLookaheadOr6) {
 	case 0:
 		{
 			result := p.ParseKeyword()
@@ -765,7 +844,7 @@ func (p *Parser) ParseAssignableAlternatives() Assignable {
 		core.MergeTokens(result, current.Tokens())
 		current = result
 	}
-	if p.state.Lookahead(AssignableAlternativesLookahead11) == 0 {
+	if p.state.Lookahead(AssignableAlternativesLookahead10) == 0 {
 		{
 			result := NewAlternatives()
 			result.SetSegment(current.Segment())
@@ -774,7 +853,7 @@ func (p *Parser) ParseAssignableAlternatives() Assignable {
 			current = result
 		}
 		current := current.(Alternatives)
-		for ok := true; ok; ok = p.state.Lookahead(AssignableAlternativesLookahead12) == 0 {
+		for ok := true; ok; ok = p.state.Lookahead(AssignableAlternativesLookahead11) == 0 {
 			{
 				token := p.state.Consume(Keyword_Pipe_Idx)
 				core.AssignToken(current, token, AssignableAlternativesPipe_0)
@@ -802,10 +881,10 @@ func (p *Parser) ParseCrossRef() CrossRef {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, CrossRefTypeID_0)
 		if token != nil {
-			current.SetType(token)
+			current.SetType(p.references().CrossRefType(current, token))
 		}
 	}
-	if p.state.Lookahead(CrossRefLookahead13) == 0 {
+	if p.state.Lookahead(CrossRefLookahead12) == 0 {
 		{
 			token := p.state.Consume(Keyword_Colon_Idx)
 			core.AssignToken(current, token, CrossRefColon_0)
@@ -832,7 +911,7 @@ func (p *Parser) ParseRuleCall() RuleCall {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, RuleCallRuleID_0)
 		if token != nil {
-			current.SetRule(token)
+			current.SetRule(p.references().RuleCallRule(current, token))
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -850,10 +929,10 @@ func (p *Parser) ParseAction() Action {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, ActionTypeID_0)
 		if token != nil {
-			current.SetType(token)
+			current.SetType(p.references().ActionType(current, token))
 		}
 	}
-	if p.state.Lookahead(ActionLookahead14) == 0 {
+	if p.state.Lookahead(ActionLookahead13) == 0 {
 		{
 			token := p.state.Consume(Keyword_Dot_Idx)
 			core.AssignToken(current, token, ActionDot_0)
@@ -862,11 +941,11 @@ func (p *Parser) ParseAction() Action {
 			token := p.state.Consume(Token_ID_Idx)
 			core.AssignToken(current, token, ActionPropertyID_0)
 			if token != nil {
-				current.SetProperty(token)
+				current.SetProperty(p.references().ActionProperty(current, token))
 			}
 		}
 		{
-			switch p.state.Lookahead(ActionOperatorLookaheadOr6) {
+			switch p.state.Lookahead(ActionOperatorLookaheadOr7) {
 			case 0:
 				token := p.state.Consume(Keyword_PlusEquals_Idx)
 				core.AssignToken(current, token, ActionOperatorPlusEquals_0)

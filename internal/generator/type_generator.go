@@ -64,6 +64,7 @@ type FieldInfo struct {
 	PName string
 
 	Array          bool
+	Reference      bool
 	Boolean        bool
 	Type           string
 	HasTokenGetter bool
@@ -78,8 +79,9 @@ func getFieldInfo(field generated.Field) FieldInfo {
 	if reservedKeywords[pname] {
 		pname = "_" + name
 	}
-	array := field.IsArray()
-	typ := field.Type()
+	_, array := field.Type().(generated.ArrayType)
+	typ := getTypeName(field.Type())
+	ref := isReferenceType(field.Type())
 	gtype := typ
 	hasTokenGetter := false
 	boolean := false
@@ -96,10 +98,33 @@ func getFieldInfo(field generated.Field) FieldInfo {
 		Name:           name,
 		PName:          pname,
 		Array:          array,
+		Reference:      ref,
 		Type:           typ,
 		HasTokenGetter: hasTokenGetter,
 		Boolean:        boolean,
 		GType:          gtype,
+	}
+}
+
+func getTypeName(fieldType generated.FieldType) string {
+	if arrayType, ok := fieldType.(generated.ArrayType); ok {
+		return getTypeName(arrayType.InternalType())
+	} else if refType, ok := fieldType.(generated.ReferenceType); ok {
+		return "*core.Reference[" + refType.Type().Text + "]"
+	} else if simpleType, ok := fieldType.(generated.SimpleType); ok {
+		return simpleType.Type()
+	} else {
+		panic("unknown field type")
+	}
+}
+
+func isReferenceType(fieldType generated.FieldType) bool {
+	if _, ok := fieldType.(generated.ReferenceType); ok {
+		return true
+	} else if arrayType, ok := fieldType.(generated.ArrayType); ok {
+		return isReferenceType(arrayType.InternalType())
+	} else {
+		return false
 	}
 }
 
@@ -110,12 +135,12 @@ func getAllExtends(grammar generated.Grammar, iface generated.Interface) []strin
 
 func llExtends(grammar generated.Grammar, iface generated.Interface, result []string) []string {
 	for _, ext := range iface.Extends() {
-		if slices.Contains(result, ext.Image) {
+		if slices.Contains(result, ext.Text) {
 			continue
 		}
-		result = append(result, ext.Image)
+		result = append(result, ext.Text)
 		for _, parentExt := range grammar.Interfaces() {
-			if parentExt.Name() == ext.Image {
+			if parentExt.Name() == ext.Text {
 				result = llExtends(grammar, parentExt, result)
 			}
 		}
@@ -132,7 +157,7 @@ func generateInterface(node generator.Node, grammar generated.Grammar, iface gen
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("core.AstNode")
 		for _, extends := range iface.Extends() {
-			n.AppendLine(extends.Image)
+			n.AppendLine(extends.Text)
 		}
 		n.AppendLine()
 		n.AppendLine("Is", iface.Name(), "()")
@@ -202,6 +227,15 @@ func generateImplStruct(node generator.Node, grammar generated.Grammar, iface ge
 	})
 	node.AppendLine("}")
 	node.AppendLine()
+	node.AppendLine("func (i *", iface.Name(), "Impl) ForEachReference(fn func(core.UntypedReference)) {")
+	node.Indent(func(n generator.Node) {
+		for _, extends := range getAllExtends(grammar, iface) {
+			n.AppendLine("i.", extends, "Data.ForEachReference(fn)")
+		}
+		n.AppendLine("i.", iface.Name(), "Data.ForEachReference(fn)")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
 }
 
 func generateDataStruct(node generator.Node, iface generated.Interface, fields []FieldInfo) {
@@ -238,10 +272,10 @@ func generateDataStruct(node generator.Node, iface generated.Interface, fields [
 	node.AppendLine("func (i *", iface.Name(), "Data) ForEachNode(fn func(core.AstNode)) {")
 	node.Indent(func(n generator.Node) {
 		for _, field := range fields {
-			name := field.PName
-			if field.GType == TOKEN_TYPE {
+			if field.GType == TOKEN_TYPE || field.Reference {
 				continue
 			}
+			name := field.PName
 			if field.Array {
 				n.AppendLine("for _, item := range i.", name, " {")
 				n.Indent(func(n2 generator.Node) {
@@ -249,9 +283,33 @@ func generateDataStruct(node generator.Node, iface generated.Interface, fields [
 				})
 				n.AppendLine("}")
 			} else {
-				n.AppendLine("if i.", field.PName, " != nil {")
+				n.AppendLine("if i.", name, " != nil {")
 				n.Indent(func(n2 generator.Node) {
-					n2.AppendLine("fn(i.", field.PName, ")")
+					n2.AppendLine("fn(i.", name, ")")
+				})
+				n.AppendLine("}")
+			}
+		}
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+	node.AppendLine("func (i *", iface.Name(), "Data) ForEachReference(fn func(core.UntypedReference)) {")
+	node.Indent(func(n generator.Node) {
+		for _, field := range fields {
+			if !field.Reference {
+				continue
+			}
+			name := field.PName
+			if field.Array {
+				n.AppendLine("for _, item := range i.", name, " {")
+				n.Indent(func(n2 generator.Node) {
+					n2.AppendLine("fn(item)")
+				})
+				n.AppendLine("}")
+			} else {
+				n.AppendLine("if i.", name, " != nil {")
+				n.Indent(func(n2 generator.Node) {
+					n2.AppendLine("fn(i.", name, ")")
 				})
 				n.AppendLine("}")
 			}

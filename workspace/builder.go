@@ -63,6 +63,8 @@ func (b *DefaultBuilder) Update(ctx context.Context, docs []textdoc.Handle) erro
 			Document: doc,
 			Result:   result,
 		})
+		b.srv.Linking().SymbolTable.Compute(string(doc.URI()), result.Root)
+		b.srv.Linking().Linker.Link(ctx, result.Root)
 	}
 
 	// Notify all registered listeners

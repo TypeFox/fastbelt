@@ -4,13 +4,14 @@
 
 package main
 
-//go:generate go run ../../../cmd/main.go -g ./statemachine.fb -o ./generated -v
+//go:generate go run ../../cmd/main.go -g ./statemachine.fb -o ./generated -v
 
 import (
 	"context"
 	"log"
 
 	"github.com/TypeFox/go-lsp/protocol"
+	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/workspace"
@@ -29,6 +30,7 @@ type StatemachineSrv struct {
 	textdoc.TextdocSrvContBlock
 	workspace.GeneratedSrvContBlock
 	workspace.WorkspaceSrvContBlock
+	linking.LinkingSrvContBlock
 	server.ServerSrvContBlock
 }
 

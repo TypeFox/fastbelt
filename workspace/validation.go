@@ -6,6 +6,7 @@ package workspace
 
 import (
 	"github.com/TypeFox/go-lsp/protocol"
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/textdoc"
@@ -66,5 +67,23 @@ func CreateParserDiagnostics(doc textdoc.Handle, parserErrors []*parser.ParserEr
 			diagnostics = append(diagnostics, diagnostic)
 		}
 	}
+	return diagnostics
+}
+
+func CreateLinkerDiagnostics(doc textdoc.Handle, root core.AstNode) []protocol.Diagnostic {
+	diagnostics := []protocol.Diagnostic{}
+	core.TraverseNode(root, func(node core.AstNode) {
+		node.ForEachReference(func(ur core.UntypedReference) {
+			err := ur.Error()
+			segment := ur.Segment()
+			if err != nil && segment != nil {
+				diagnostics = append(diagnostics, protocol.Diagnostic{
+					Range:    segment.Range.LspRange(),
+					Severity: protocol.DiagnosticSeverity(err.Severity),
+					Message:  err.Msg,
+				})
+			}
+		})
+	})
 	return diagnostics
 }

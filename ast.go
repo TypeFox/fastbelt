@@ -4,16 +4,6 @@
 
 package fastbelt
 
-type Reference[T AstNode] struct {
-	Token *Token
-	Text  string
-	ref   *T
-}
-
-func (r *Reference[T]) Get() *T {
-	return r.ref
-}
-
 // TODO: implement this properly. This probably should point to `textdoc.Handle`
 type Document struct {
 	Text string
@@ -27,6 +17,8 @@ type AstNodeBase struct {
 }
 
 func (node *AstNodeBase) ForEachNode(fn func(AstNode)) {}
+
+func (node *AstNodeBase) ForEachReference(fn func(UntypedReference)) {}
 
 func (node *AstNodeBase) Document() *Document {
 	if node != nil {
@@ -78,17 +70,17 @@ func (node *AstNodeBase) SetSegmentEndToken(token *Token) {
 	}
 }
 
-func (node *AstNodeBase) SetSegment(segment TextSegment) {
+func (node *AstNodeBase) SetSegment(segment *TextSegment) {
 	if node != nil {
-		node.segment = segment
+		node.segment = *segment
 	}
 }
 
-func (node *AstNodeBase) Segment() TextSegment {
+func (node *AstNodeBase) Segment() *TextSegment {
 	if node != nil {
-		return node.segment
+		return &node.segment
 	} else {
-		return TextSegment{}
+		return nil
 	}
 }
 
@@ -123,8 +115,8 @@ type AstNode interface {
 	Tokens() []*Token
 	SetToken(token *Token)
 	SetTokens(tokens []*Token)
-	Segment() TextSegment
-	SetSegment(segment TextSegment)
+	Segment() *TextSegment
+	SetSegment(segment *TextSegment)
 	// Sets the start of the node's segment to the start of the given token's segment.
 	// Should only be called by the parser. Use SetSegment to set both start and end manually.
 	SetSegmentStartToken(token *Token)
@@ -133,6 +125,22 @@ type AstNode interface {
 	SetSegmentEndToken(token *Token)
 	Text() string
 	ForEachNode(func(AstNode))
+	ForEachReference(fn func(UntypedReference))
+}
+
+// Traverses the given node and all its children, calling the given function for each node.
+func TraverseNode(node AstNode, fn func(AstNode)) {
+	fn(node)
+	TraverseContent(node, fn)
+}
+
+// Traverses all children of the given node, calling the specified function for each child.
+// Does not call the function for the given node itself. Use TraverseNode for that.
+func TraverseContent(node AstNode, fn func(AstNode)) {
+	node.ForEachNode(func(child AstNode) {
+		fn(child)
+		TraverseContent(child, fn)
+	})
 }
 
 func NewAstNode() AstNodeBase {
@@ -170,4 +178,10 @@ func AssignContainers(root AstNode) {
 		child.SetContainer(root)
 		AssignContainers(child)
 	})
+}
+
+type NamedNode interface {
+	AstNode
+	Name() string
+	NameToken() *Token
 }

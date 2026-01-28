@@ -5,13 +5,17 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/TypeFox/go-lsp/protocol"
 	"typefox.dev/fastbelt/internal/generator"
 	"typefox.dev/fastbelt/internal/grammar/generated"
+	"typefox.dev/fastbelt/internal/grammar/services"
+	"typefox.dev/fastbelt/textdoc"
 )
 
 func main() {
@@ -45,14 +49,25 @@ func main() {
 		panic(err)
 	}
 
-	lexer_test := generated.NewLexer()
-	lexerResult := lexer_test.Lex(string(grammarText))
+	srv := services.CreateServices()
+	file, _ := textdoc.NewFile(protocol.URIFromPath(grammarPath), "fb", 0, string(grammarText))
 
-	parser_test := generated.NewParser()
-	parserResult := parser_test.Parse(lexerResult.Tokens).Node
-	if grammar, ok := parserResult.(generated.Grammar); !ok {
+	parseResult := srv.Workspace().DocumentParser.Parse(file)
+	srv.Linking().SymbolTable.Compute(string(file.URI()), parseResult.Root)
+	srv.Linking().Linker.Link(context.Background(), parseResult.Root)
+
+	if grammar, ok := parseResult.Root.(generated.Grammar); !ok {
 		panic("Parser result is not a Grammar")
 	} else {
+		linker := generator.GenerateLinker(grammar)
+		linkerPath := filepath.Join(outputPath, "linker_gen.go")
+		err = os.WriteFile(linkerPath, []byte(linker), 0644)
+		if err != nil {
+			panic(err)
+		}
+		if verbose {
+			fmt.Printf("Written: %s\n", linkerPath)
+		}
 		types := generator.GenerateTypes(grammar)
 		typesPath := filepath.Join(outputPath, "types_gen.go")
 		err = os.WriteFile(typesPath, []byte(types), 0644)

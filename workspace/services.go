@@ -6,6 +6,7 @@ package workspace
 
 import (
 	"typefox.dev/fastbelt/lexer"
+	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/textdoc"
 )
@@ -13,6 +14,7 @@ import (
 // WorkspaceSrvCont is an interface for service containers which include the workspace services.
 type WorkspaceSrvCont interface {
 	textdoc.TextdocSrvCont
+	linking.LinkingSrvCont
 	GeneratedSrvCont
 	Workspace() *WorkspaceSrv
 }

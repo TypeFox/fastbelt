@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/TypeFox/go-lsp/protocol"
+	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/workspace"
 )
@@ -17,6 +18,7 @@ type serverSrvContTest struct {
 	textdoc.TextdocSrvContBlock
 	workspace.WorkspaceSrvContBlock
 	workspace.GeneratedSrvContBlock
+	linking.LinkingSrvContBlock
 	ServerSrvContBlock
 }
 

@@ -13,35 +13,58 @@ Grammar returns Grammar: "grammar" Name=ID ";"
 
 interface Interface {
     Name string
-    Extends []string
+    Extends []*Interface
     Fields []Field
 }
 
 Interface returns Interface: 
-    "interface" Name=ID ("extends" Extends+=ID ("," Extends+=ID)*)? "{"
+    "interface" Name=ID ("extends" Extends+=[Interface:ID] ("," Extends+=[Interface:ID])*)? "{"
         Fields+=Field*
     "}"
 ;
 
 interface Field {
     Name string
-    Array bool
+    Type FieldType
+}
+
+interface FieldType {}
+
+interface ArrayType extends FieldType {
+    InternalType FieldType
+}
+
+interface ReferenceType extends FieldType {
+    Type *Interface
+}
+
+interface SimpleType extends FieldType {
     Type string
 }
 
-Field returns Field: Name=ID (Array?="[" "]")? Type=ID;
+Field returns Field: Name=ID Type=FieldType;
 
-interface ParserRule {
+FieldType returns FieldType: SimpleType | ReferenceType | ArrayType;
+
+ArrayType returns ArrayType: "[" "]" InternalType=FieldType;
+
+ReferenceType returns ReferenceType: "*" Type=[Interface:ID];
+
+SimpleType returns SimpleType: Type=ID;
+
+interface AbstractRule {
     Name string
-    ReturnType string
+}
+
+interface ParserRule extends AbstractRule {
+    ReturnType *Interface
     Body Element
 }
 
-ParserRule returns ParserRule: Name=ID "returns" ReturnType=ID ":" Body=Alternatives ";";
+ParserRule returns ParserRule: Name=ID "returns" ReturnType=[Interface:ID] ":" Body=Alternatives ";";
 
-interface Token {
+interface Token extends AbstractRule {
     Type string
-    Name string
     Regexp string
 }
 
@@ -88,25 +111,25 @@ AssignableWithoutAlts returns Assignable: Keyword | RuleCall | CrossRef;
 AssignableAlternatives returns Assignable: AssignableWithoutAlts ({Alternatives.Alts+=current} ("|" Alts+=AssignableWithoutAlts)+)?;
 
 interface CrossRef extends Assignable {
-    Type string
+    Type *Interface
     Rule RuleCall
 }
 
-CrossRef returns CrossRef: "[" Type=ID (":" Rule=RuleCall)? "]";
+CrossRef returns CrossRef: "[" Type=[Interface:ID] (":" Rule=RuleCall)? "]";
 
 interface RuleCall extends Assignable {
-    Rule string
+    Rule *AbstractRule
 }
 
-RuleCall returns RuleCall: Rule=ID;
+RuleCall returns RuleCall: Rule=[AbstractRule:ID];
 
 interface Action extends Element {
-    Type string
+    Type *Interface
     Operator string
-    Property string
+    Property *Field
 }
 
-Action returns Action: "{" Type=ID ("." Property=ID Operator=("+=" | "=") "current")? "}";
+Action returns Action: "{" Type=[Interface:ID] ("." Property=[Field:ID] Operator=("+=" | "=") "current")? "}";
 
 token String: /"[^"]+"/;
 token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;

@@ -14,7 +14,8 @@
 			"cwd": "${workspaceFolder}/internal/grammar",
 			"args": [
 				"--g=grammar.fb",
-				"--o=generated"
+				"--o=generated",
+				"--v"
 			]
 		},
 		{

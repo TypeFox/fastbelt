@@ -57,9 +57,16 @@ func GenerateParser(grammar generated.Grammar) string {
 	node.AppendLine("type Parser struct {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("state *parser.ParserState")
+		n.AppendLine("srv ", grammar.Name(), "GeneratedSrvCont")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
+
+	node.AppendLine("func (p *Parser) references() ", grammar.Name(), "ReferencesConstructor {")
+	node.Indent(func(n generator.Node) {
+		n.AppendLine("return p.srv.", grammar.Name(), "Linking().ReferencesConstructor")
+	})
+	node.AppendLine("}").AppendLine()
 
 	rules := grammar.Rules()
 	if len(rules) == 0 {
@@ -76,9 +83,9 @@ func GenerateParser(grammar generated.Grammar) string {
 	})
 	node.AppendLine("}")
 	node.AppendLine()
-	node.AppendLine("func NewParser() *Parser {")
+	node.AppendLine("func New", grammar.Name(), "Parser(srv ", grammar.Name(), "GeneratedSrvCont) *Parser {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("return &Parser{}")
+		n.AppendLine("return &Parser{srv: srv}")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
@@ -179,7 +186,7 @@ func populateContextWithNode(context *ParserGeneratorContext, prefix string, nod
 			name := prefix + "Lookahead" + strconv.Itoa(len(context.lookaheads))
 			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n)}
 		}
-		token := getTokenWithName(context.grammar, n.Rule())
+		token := getTokenWithName(context.grammar, n.Rule().Text)
 		if token != nil {
 			name := prefix + token.Name()
 			context.SetAccessName(node, name)
@@ -188,9 +195,9 @@ func populateContextWithNode(context *ParserGeneratorContext, prefix string, nod
 }
 
 func generateParseFunction(node generator.Node, context *ParserGeneratorContext, rule generated.ParserRule) {
-	node.AppendLine("func (p *Parser) Parse", rule.Name(), "() ", rule.ReturnType(), " {")
+	node.AppendLine("func (p *Parser) Parse", rule.Name(), "() ", rule.ReturnType().Text, " {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("current := New", rule.ReturnType(), "()")
+		n.AppendLine("current := New", rule.ReturnType().Text, "()")
 		n.AppendLine("current.SetSegmentStartToken(p.state.LA(1))")
 		generateAbstractElementParser(n, context, rule.Body())
 		n.AppendLine("current.SetSegmentEndToken(p.state.LA(0))")
@@ -208,14 +215,14 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 	} else if action, ok := element.(generated.Action); ok {
 		node.AppendLine("{")
 		node.Indent(func(n generator.Node) {
-			n.AppendLine("result := New", action.Type(), "()")
+			n.AppendLine("result := New", action.Type().Text, "()")
 			// Inherit segment from previous node
 			n.AppendLine("result.SetSegment(current.Segment())")
-			if action.Property() != "" {
+			if action.Property() != nil {
 				if action.Operator() == "+=" {
-					n.AppendLine("result.Set", action.Property(), "Item(current)")
+					n.AppendLine("result.Set", action.Property().Text, "Item(current)")
 				} else {
-					n.AppendLine("result.Set", action.Property(), "(current)")
+					n.AppendLine("result.Set", action.Property().Text, "(current)")
 				}
 				// Ensure that the previous node has a valid segment ending
 				n.AppendLine("current.SetSegmentEndToken(p.state.LA(0))")
@@ -227,7 +234,7 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 			}
 		})
 		node.AppendLine("}")
-		node.AppendLine("current := current.(", action.Type(), ")")
+		node.AppendLine("current := current.(", action.Type().Text, ")")
 	} else {
 		node.AppendLine("{")
 		node.Indent(func(indent generator.Node) {
@@ -245,6 +252,11 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 				generateCardinality(indent, func(n generator.Node) {
 					generateAssignable(n, context, assignment.Value(), func(n2 generator.Node, resultName string) {
 						n2.AppendLine("if ", resultName, " != nil {")
+						if _, ok := assignment.Value().(generated.CrossRef); ok {
+							parserRuleName := getParserRuleName(assignment)
+							// For cross-references, we need to create a Reference object
+							resultName = "p.references()." + parserRuleName + assignment.Property() + "(current, " + resultName + ")"
+						}
 						n2.Indent(func(in generator.Node) {
 							switch assignment.Operator() {
 							case "+=":
@@ -325,8 +337,8 @@ func generateKeywordParser(node generator.Node, context *ParserGeneratorContext,
 }
 
 func generateRuleCallParser(node generator.Node, context *ParserGeneratorContext, ruleCall generated.RuleCall) string {
-	token := getTokenWithName(context.grammar, ruleCall.Rule())
-	rule := getRuleWithName(context.grammar, ruleCall.Rule())
+	token := getTokenWithName(context.grammar, ruleCall.Rule().Text)
+	rule := getRuleWithName(context.grammar, ruleCall.Rule().Text)
 	lookaheadName := context.lookaheads[ruleCall].name
 	lookahead := generateLookaheadString(lookaheadName)
 	var result string
@@ -335,7 +347,7 @@ func generateRuleCallParser(node generator.Node, context *ParserGeneratorContext
 	} else if rule != nil {
 		result = "result"
 	} else {
-		panic("Unresolved rule call: " + ruleCall.Rule())
+		panic("Unresolved rule call: " + ruleCall.Rule().Text)
 	}
 	first := true
 	generateCardinality(node, func(n generator.Node) {
@@ -449,8 +461,8 @@ func possiblePathsFrom(grammar generated.Grammar, maxLength int, elements []gene
 			if keyword, ok := assignment.Value().(generated.Keyword); ok {
 				currPath = append(currPath, GeneratedKeywordIdxName(keyword))
 			} else if ruleCall, ok := assignment.Value().(generated.RuleCall); ok {
-				token := getTokenWithName(grammar, ruleCall.Rule())
-				rule := getRuleWithName(grammar, ruleCall.Rule())
+				token := getTokenWithName(grammar, ruleCall.Rule().Text)
+				rule := getRuleWithName(grammar, ruleCall.Rule().Text)
 				if token != nil {
 					currPath = append(currPath, GeneratedTokenIdxName(token))
 				} else if rule != nil {
@@ -459,8 +471,8 @@ func possiblePathsFrom(grammar generated.Grammar, maxLength int, elements []gene
 					return result
 				}
 			} else if crossRef, ok := assignment.Value().(generated.CrossRef); ok {
-				token := getTokenWithName(grammar, crossRef.Rule().Rule())
-				rule := getRuleWithName(grammar, crossRef.Rule().Rule())
+				token := getTokenWithName(grammar, crossRef.Rule().Rule().Text)
+				rule := getRuleWithName(grammar, crossRef.Rule().Rule().Text)
 				if token != nil {
 					currPath = append(currPath, GeneratedTokenIdxName(token))
 				} else if rule != nil {
@@ -476,8 +488,8 @@ func possiblePathsFrom(grammar generated.Grammar, maxLength int, elements []gene
 				return result
 			}
 		} else if ruleCall, ok := element.(generated.RuleCall); ok {
-			token := getTokenWithName(grammar, ruleCall.Rule())
-			rule := getRuleWithName(grammar, ruleCall.Rule())
+			token := getTokenWithName(grammar, ruleCall.Rule().Text)
+			rule := getRuleWithName(grammar, ruleCall.Rule().Text)
 			if token != nil {
 				currPath = append(currPath, GeneratedTokenIdxName(token))
 			} else if rule != nil {
@@ -598,4 +610,15 @@ func getRuleWithName(grammar generated.Grammar, name string) generated.ParserRul
 		}
 	}
 	return nil
+}
+
+func getParserRuleName(element generated.Element) string {
+	cont := element.Container()
+	if rule, ok := cont.(generated.ParserRule); ok {
+		return rule.Name()
+	} else if parent, ok := cont.(generated.Element); ok {
+		return getParserRuleName(parent)
+	} else {
+		panic("Unable to find parser rule for element")
+	}
 }
