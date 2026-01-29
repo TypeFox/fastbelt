@@ -19,6 +19,10 @@ type ATNBuilder interface {
 	AddStarLoopEntryState(production *generated.Element, rule *generated.ParserRule, loopback *StarLoopbackState, decision int) StarLoopEntryState
 	AddLoopEndState(production *generated.Element, rule *generated.ParserRule, loopback *ATNState) LoopEndState
 
+	AddEpsilonTransition(from ATNState, to ATNState) EpsilonTransition
+	AddAtomTransition(from ATNState, to ATNState, atom int) AtomTransition
+	AddRuleTransition(from ATNState, to ATNState, rule *generated.ParserRule, followState *ATNState) RuleTransition
+
 	Build() *ATN
 }
 
@@ -96,6 +100,24 @@ func (b *ATNBuilderData) AddStarLoopEntryState(production *generated.Element, ru
 	state := NewStarLoopEntryStateData(&b.atn, production, rule, len(b.atn.States()), loopback, decision)
 	b.atn.AddState(state)
 	return state
+}
+
+func (b *ATNBuilderData) AddEpsilonTransition(from ATNState, to ATNState) EpsilonTransition {
+	transition := NewEpsilonTransitionData(to)
+	from.AddTransition(transition)
+	return transition
+}
+
+func (b *ATNBuilderData) AddAtomTransition(from ATNState, to ATNState, atom int) AtomTransition {
+	transition := NewAtomTransitionData(to, atom)
+	from.AddTransition(transition)
+	return transition
+}
+
+func (b *ATNBuilderData) AddRuleTransition(from ATNState, to ATNState, rule *generated.ParserRule, followState *ATNState) RuleTransition {
+	transition := NewRuleTransitionData(to, rule, followState)
+	from.AddTransition(transition)
+	return transition
 }
 
 func (b *ATNBuilderData) Build() *ATN {
