@@ -12,7 +12,7 @@ type DecisionStateData struct {
 	decision int
 }
 
-func NewDecisionStateData(atn ATN, production generated.Element, rule *generated.ParserRule, stateNumber int, decision int, ty int) *DecisionStateData {
+func NewDecisionStateData(atn *ATN, production *generated.Element, rule *generated.ParserRule, stateNumber int, decision int, ty int) *DecisionStateData {
 	return &DecisionStateData{
 		ATNStateData: *NewATNStateData(atn, production, rule, stateNumber, ty),
 		decision:     decision,

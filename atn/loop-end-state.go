@@ -12,7 +12,7 @@ type LoopEndStateData struct {
 	loopback *ATNState
 }
 
-func NewLoopEndStateData(atn ATN, production generated.Element, rule *generated.ParserRule, loopback *ATNState, stateNumber int) *LoopEndStateData {
+func NewLoopEndStateData(atn *ATN, production *generated.Element, rule *generated.ParserRule, loopback *ATNState, stateNumber int) *LoopEndStateData {
 	return &LoopEndStateData{
 		ATNStateData: *NewATNStateData(atn, production, rule, stateNumber, ATN_LOOP_END),
 		loopback:     loopback,

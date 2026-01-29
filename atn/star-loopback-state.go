@@ -10,7 +10,7 @@ type StarLoopbackStateData struct {
 	ATNStateData
 }
 
-func NewStarLoopbackStateData(atn ATN, production generated.Element, rule *generated.ParserRule, stateNumber int) *StarLoopbackStateData {
+func NewStarLoopbackStateData(atn *ATN, production *generated.Element, rule *generated.ParserRule, stateNumber int) *StarLoopbackStateData {
 	return &StarLoopbackStateData{
 		ATNStateData: *NewATNStateData(atn, production, rule, stateNumber, ATN_STAR_LOOP_BACK),
 	}

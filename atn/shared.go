@@ -11,7 +11,7 @@ type ATNData struct {
 	states []*ATNState
 }
 
-func NewATN() *ATNData {
+func NewATN() ATN {
 	return &ATNData{
 		states: []*ATNState{},
 	}
@@ -21,8 +21,8 @@ func (a *ATNData) States() []*ATNState {
 	return a.states
 }
 
-func (a *ATNData) AddState(state *ATNState) {
-	a.states = append(a.states, state)
+func (a *ATNData) AddState(state ATNState) {
+	a.states = append(a.states, &state)
 }
 
 const (
@@ -43,7 +43,7 @@ const (
 type ATNState interface {
 	Type() int
 	ATN() *ATN
-	Production() generated.Element
+	Production() *generated.Element
 	StateNumber() int
 	Rule() *generated.ParserRule
 	EpsilonOnlyTransitions() bool
@@ -53,7 +53,7 @@ type ATNState interface {
 
 type ATNStateData struct {
 	atn                    *ATN
-	production             generated.Element
+	production             *generated.Element
 	stateNumber            int
 	rule                   *generated.ParserRule
 	epsilonOnlyTransitions bool
@@ -62,9 +62,9 @@ type ATNStateData struct {
 	ty                     int
 }
 
-func NewATNStateData(atn ATN, production generated.Element, rule *generated.ParserRule, stateNumber int, ty int) *ATNStateData {
+func NewATNStateData(atn *ATN, production *generated.Element, rule *generated.ParserRule, stateNumber int, ty int) *ATNStateData {
 	return &ATNStateData{
-		atn:                    &atn,
+		atn:                    atn,
 		production:             production,
 		epsilonOnlyTransitions: false,
 		rule:                   rule,
@@ -83,7 +83,7 @@ func (b *ATNStateData) ATN() *ATN {
 	return b.atn
 }
 
-func (b *ATNStateData) Production() generated.Element {
+func (b *ATNStateData) Production() *generated.Element {
 	return b.production
 }
 
