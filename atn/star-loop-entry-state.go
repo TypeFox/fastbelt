@@ -12,7 +12,7 @@ type StarLoopEntryStateData struct {
 	loopback *StarLoopbackState
 }
 
-func NewStarLoopEntryStateData(atn *ATN, production *generated.Element, rule *generated.ParserRule, stateNumber int, decision int, loopback *StarLoopbackState) *StarLoopEntryStateData {
+func NewStarLoopEntryStateData(atn *ATN, production *generated.Element, rule *generated.ParserRule, stateNumber int, loopback *StarLoopbackState, decision int) *StarLoopEntryStateData {
 	return &StarLoopEntryStateData{
 		DecisionStateData: *NewDecisionStateData(atn, production, rule, stateNumber, decision, ATN_STAR_LOOP_ENTRY),
 		loopback:          loopback,

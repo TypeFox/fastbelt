@@ -12,7 +12,7 @@ type BlockEndStateData struct {
 	start *BlockStartState
 }
 
-func NewBlockEndState(atn *ATN, production *generated.Element, start *BlockStartState, stateNumber int, rule *generated.ParserRule) BlockEndState {
+func NewBlockEndStateData(atn *ATN, production *generated.Element, rule *generated.ParserRule, stateNumber int, start *BlockStartState) *BlockEndStateData {
 	return &BlockEndStateData{
 		ATNStateData: *NewATNStateData(atn, production, rule, stateNumber, ATN_BLOCK_END),
 		start:        start,

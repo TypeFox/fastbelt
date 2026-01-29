@@ -10,8 +10,8 @@ type BasicBlockStartStateData struct {
 	BlockStartStateData
 }
 
-func NewBasicBlockStartStateData(atn *ATN, production *generated.Element, end *BlockEndState, stateNumber int, rule *generated.ParserRule, ty int) *BasicBlockStartStateData {
+func NewBasicBlockStartStateData(atn *ATN, production *generated.Element, rule *generated.ParserRule, stateNumber int, end *BlockEndState, decision int) *BasicBlockStartStateData {
 	return &BasicBlockStartStateData{
-		BlockStartStateData: *NewBlockStartStateData(atn, production, rule, stateNumber, 0, end, ty),
+		BlockStartStateData: *NewBlockStartStateData(atn, production, rule, stateNumber, decision, end, ATN_BASIC),
 	}
 }
