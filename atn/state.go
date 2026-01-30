@@ -18,34 +18,34 @@ const (
 
 type ATNState interface {
 	Type() int
-	ATN() *ATN
-	Production() *generated.Element
+	ATN() ATN
+	Production() generated.Element
 	StateNumber() int
-	Rule() *generated.ParserRule
+	Rule() generated.ParserRule
 	EpsilonOnlyTransitions() bool
-	Transitions() []*Transition
+	Transitions() []Transition
 	NextTokenWithinRule() []int
 	AddTransition(transition Transition)
 }
 
 type ATNStateData struct {
-	atn                    *ATN
-	production             *generated.Element
+	atn                    ATN
+	production             generated.Element
 	stateNumber            int
-	rule                   *generated.ParserRule
+	rule                   generated.ParserRule
 	epsilonOnlyTransitions bool
-	transitions            []*Transition
+	transitions            []Transition
 	nextTokenWithinRule    []int
 	ty                     int
 }
 
-func NewATNStateData(atn *ATN, production *generated.Element, rule *generated.ParserRule, stateNumber int, ty int) *ATNStateData {
+func NewATNStateData(atn ATN, production generated.Element, rule generated.ParserRule, stateNumber int, ty int) *ATNStateData {
 	return &ATNStateData{
 		atn:                    atn,
 		production:             production,
 		epsilonOnlyTransitions: false,
 		rule:                   rule,
-		transitions:            []*Transition{},
+		transitions:            []Transition{},
 		nextTokenWithinRule:    []int{},
 		stateNumber:            stateNumber,
 		ty:                     ty,
@@ -56,11 +56,11 @@ func (b *ATNStateData) Type() int {
 	return b.ty
 }
 
-func (b *ATNStateData) ATN() *ATN {
+func (b *ATNStateData) ATN() ATN {
 	return b.atn
 }
 
-func (b *ATNStateData) Production() *generated.Element {
+func (b *ATNStateData) Production() generated.Element {
 	return b.production
 }
 
@@ -68,7 +68,7 @@ func (b *ATNStateData) StateNumber() int {
 	return b.stateNumber
 }
 
-func (b *ATNStateData) Rule() *generated.ParserRule {
+func (b *ATNStateData) Rule() generated.ParserRule {
 	return b.rule
 }
 
@@ -76,7 +76,7 @@ func (b *ATNStateData) EpsilonOnlyTransitions() bool {
 	return b.epsilonOnlyTransitions
 }
 
-func (b *ATNStateData) Transitions() []*Transition {
+func (b *ATNStateData) Transitions() []Transition {
 	return b.transitions
 }
 
@@ -85,5 +85,5 @@ func (b *ATNStateData) NextTokenWithinRule() []int {
 }
 
 func (b *ATNStateData) AddTransition(transition Transition) {
-	b.transitions = append(b.transitions, &transition)
+	b.transitions = append(b.transitions, transition)
 }

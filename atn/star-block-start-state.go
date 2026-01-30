@@ -10,7 +10,7 @@ type StarBlockStartStateData struct {
 	BlockStartStateData
 }
 
-func NewStarBlockStartStateData(atn *ATN, production *generated.Element, rule *generated.ParserRule, stateNumber int, end *BlockEndState) *StarBlockStartStateData {
+func NewStarBlockStartStateData(atn ATN, production generated.Element, rule generated.ParserRule, stateNumber int, end BlockEndState) *StarBlockStartStateData {
 	return &StarBlockStartStateData{
 		BlockStartStateData: *NewBlockStartStateData(atn, production, rule, stateNumber, 0, end, ATN_STAR_BLOCK_START),
 	}

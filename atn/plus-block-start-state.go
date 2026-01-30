@@ -12,7 +12,7 @@ type PlusBlockStartStateData struct {
 	loopback PlusLoopbackState
 }
 
-func NewPlusBlockStartStateData(atn *ATN, production *generated.Element, rule *generated.ParserRule, stateNumber int, end *BlockEndState, loopback PlusLoopbackState, decision int) *PlusBlockStartStateData {
+func NewPlusBlockStartStateData(atn ATN, production generated.Element, rule generated.ParserRule, stateNumber int, end BlockEndState, loopback PlusLoopbackState, decision int) *PlusBlockStartStateData {
 	return &PlusBlockStartStateData{
 		BlockStartStateData: *NewBlockStartStateData(atn, production, rule, stateNumber, decision, end, ATN_PLUS_BLOCK_START),
 		loopback:            loopback,
