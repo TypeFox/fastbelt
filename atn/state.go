@@ -23,7 +23,7 @@ type ATNState interface {
 	StateNumber() int
 	Rule() *generated.ParserRule
 	EpsilonOnlyTransitions() bool
-	Transitions() []Transition
+	Transitions() []*Transition
 	NextTokenWithinRule() []int
 	AddTransition(transition Transition)
 }
@@ -34,7 +34,7 @@ type ATNStateData struct {
 	stateNumber            int
 	rule                   *generated.ParserRule
 	epsilonOnlyTransitions bool
-	transitions            []Transition
+	transitions            []*Transition
 	nextTokenWithinRule    []int
 	ty                     int
 }
@@ -45,7 +45,7 @@ func NewATNStateData(atn *ATN, production *generated.Element, rule *generated.Pa
 		production:             production,
 		epsilonOnlyTransitions: false,
 		rule:                   rule,
-		transitions:            []Transition{},
+		transitions:            []*Transition{},
 		nextTokenWithinRule:    []int{},
 		stateNumber:            stateNumber,
 		ty:                     ty,
@@ -76,7 +76,7 @@ func (b *ATNStateData) EpsilonOnlyTransitions() bool {
 	return b.epsilonOnlyTransitions
 }
 
-func (b *ATNStateData) Transitions() []Transition {
+func (b *ATNStateData) Transitions() []*Transition {
 	return b.transitions
 }
 
@@ -85,5 +85,5 @@ func (b *ATNStateData) NextTokenWithinRule() []int {
 }
 
 func (b *ATNStateData) AddTransition(transition Transition) {
-	b.transitions = append(b.transitions, transition)
+	b.transitions = append(b.transitions, &transition)
 }

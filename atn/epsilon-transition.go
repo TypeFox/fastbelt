@@ -8,7 +8,7 @@ type EpsilonTransitionData struct {
 	AbstractTransitionData
 }
 
-func NewEpsilonTransitionData(target ATNState) *EpsilonTransitionData {
+func NewEpsilonTransitionData(target *ATNState) *EpsilonTransitionData {
 	return &EpsilonTransitionData{
 		AbstractTransitionData: NewTransitionData(target),
 	}

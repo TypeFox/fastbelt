@@ -10,7 +10,7 @@ type AtomTransitionData struct {
 	atom int
 }
 
-func NewAtomTransitionData(target ATNState, atom int) *AtomTransitionData {
+func NewAtomTransitionData(target *ATNState, atom int) *AtomTransitionData {
 	return &AtomTransitionData{
 		AbstractTransitionData: NewTransitionData(target),
 		atom:                   atom,

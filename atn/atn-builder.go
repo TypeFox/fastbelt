@@ -102,21 +102,21 @@ func (b *ATNBuilderData) AddStarLoopEntryState(production *generated.Element, ru
 	return state
 }
 
-func (b *ATNBuilderData) AddEpsilonTransition(from ATNState, to ATNState) EpsilonTransition {
+func (b *ATNBuilderData) AddEpsilonTransition(from *ATNState, to *ATNState) EpsilonTransition {
 	transition := NewEpsilonTransitionData(to)
-	from.AddTransition(transition)
+	(*from).AddTransition(transition)
 	return transition
 }
 
-func (b *ATNBuilderData) AddAtomTransition(from ATNState, to ATNState, atom int) AtomTransition {
+func (b *ATNBuilderData) AddAtomTransition(from *ATNState, to *ATNState, atom int) AtomTransition {
 	transition := NewAtomTransitionData(to, atom)
-	from.AddTransition(transition)
+	(*from).AddTransition(transition)
 	return transition
 }
 
-func (b *ATNBuilderData) AddRuleTransition(from ATNState, to ATNState, rule *generated.ParserRule, followState *ATNState) RuleTransition {
+func (b *ATNBuilderData) AddRuleTransition(from *ATNState, to *ATNState, rule *generated.ParserRule, followState *ATNState) RuleTransition {
 	transition := NewRuleTransitionData(to, rule, followState)
-	from.AddTransition(transition)
+	(*from).AddTransition(transition)
 	return transition
 }
 

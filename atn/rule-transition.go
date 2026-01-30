@@ -13,7 +13,7 @@ type RuleTransitionData struct {
 	followState *ATNState
 }
 
-func NewRuleTransitionData(target ATNState, rule *generated.ParserRule, followState *ATNState) *RuleTransitionData {
+func NewRuleTransitionData(target *ATNState, rule *generated.ParserRule, followState *ATNState) *RuleTransitionData {
 	return &RuleTransitionData{
 		AbstractTransitionData: NewTransitionData(target),
 		rule:                   rule,
