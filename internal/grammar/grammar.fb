@@ -39,18 +39,24 @@ interface ReferenceType extends FieldType {
 }
 
 interface SimpleType extends FieldType {
+    Type *Interface
+}
+
+interface PrimitiveType extends FieldType {
     Type string
 }
 
 Field returns Field: Name=ID Type=FieldType;
 
-FieldType returns FieldType: SimpleType | ReferenceType | ArrayType;
+FieldType returns FieldType: SimpleType | ReferenceType | ArrayType | PrimitiveType;
 
 ArrayType returns ArrayType: "[" "]" InternalType=FieldType;
 
 ReferenceType returns ReferenceType: "*" Type=[Interface:ID];
 
-SimpleType returns SimpleType: Type=ID;
+SimpleType returns SimpleType: Type=[Interface:ID];
+
+PrimitiveType returns PrimitiveType: Type=("string" | "bool");
 
 interface AbstractRule {
     Name string
@@ -95,12 +101,12 @@ interface Keyword extends Assignable {
 Keyword returns Keyword: Value=String;
 
 interface Assignment extends Element {
-    Property string
+    Property *Field
     Operator string
     Value Assignable
 }
 
-Assignment returns Assignment: Property=ID Operator=("+=" | "=" | "?=") Value=Assignable;
+Assignment returns Assignment: Property=[Field:ID] Operator=("+=" | "=" | "?=") Value=Assignable;
 
 interface Assignable extends Element {}
 

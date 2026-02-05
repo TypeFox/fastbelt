@@ -112,7 +112,9 @@ func getTypeName(fieldType generated.FieldType) string {
 	} else if refType, ok := fieldType.(generated.ReferenceType); ok {
 		return "*core.Reference[" + refType.Type().Text + "]"
 	} else if simpleType, ok := fieldType.(generated.SimpleType); ok {
-		return simpleType.Type()
+		return simpleType.Type().Text
+	} else if primitiveType, ok := fieldType.(generated.PrimitiveType); ok {
+		return primitiveType.Type()
 	} else {
 		panic("unknown field type")
 	}

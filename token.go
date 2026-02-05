@@ -96,3 +96,23 @@ func (t *Token) Assign(element AstNode, kind int) {
 	t.Element = element
 	t.Kind = kind
 }
+
+type TokenSlice []*Token
+
+// Searches for the token that contains the given offset.
+// Expects that the tokens are sorted by their offsets to perform a binary search.
+func (ts TokenSlice) SearchOffset(offset int) *Token {
+	low, high := 0, len(ts)-1
+	for low <= high {
+		mid := (low + high) / 2
+		token := ts[mid]
+		if offset < int(token.Segment.Indices.Start) {
+			high = mid - 1
+		} else if offset >= int(token.Segment.Indices.End) {
+			low = mid + 1
+		} else {
+			return token
+		}
+	}
+	return nil
+}

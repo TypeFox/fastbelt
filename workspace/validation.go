@@ -7,19 +7,16 @@ package workspace
 import (
 	"github.com/TypeFox/go-lsp/protocol"
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/lexer"
-	"typefox.dev/fastbelt/parser"
-	"typefox.dev/fastbelt/textdoc"
 )
 
 // CreateLexerDiagnostics creates diagnostics from lexer errors.
-func CreateLexerDiagnostics(errors []*lexer.LexerError) []protocol.Diagnostic {
-	if len(errors) == 0 {
+func CreateLexerDiagnostics(doc *core.Document) []protocol.Diagnostic {
+	if len(doc.LexerErrors) == 0 {
 		return []protocol.Diagnostic{}
 	}
 
-	diagnostics := make([]protocol.Diagnostic, 0, len(errors))
-	for _, lexErr := range errors {
+	diagnostics := make([]protocol.Diagnostic, 0, len(doc.LexerErrors))
+	for _, lexErr := range doc.LexerErrors {
 		diagnostics = append(diagnostics, protocol.Diagnostic{
 			Range: protocol.Range{
 				Start: protocol.Position{
@@ -39,19 +36,19 @@ func CreateLexerDiagnostics(errors []*lexer.LexerError) []protocol.Diagnostic {
 }
 
 // CreateParserDiagnostics creates diagnostics from parser errors.
-func CreateParserDiagnostics(doc textdoc.Handle, parserErrors []*parser.ParserError) []protocol.Diagnostic {
-	if len(parserErrors) == 0 {
+func CreateParserDiagnostics(doc *core.Document) []protocol.Diagnostic {
+	if len(doc.ParserErrors) == 0 {
 		return []protocol.Diagnostic{}
 	}
-	diagnostics := make([]protocol.Diagnostic, 0, len(parserErrors))
-	for _, err := range parserErrors {
+	end := doc.TextDoc.PositionAt(len(doc.TextDoc.Content()))
+	diagnostics := make([]protocol.Diagnostic, 0, len(doc.ParserErrors))
+	for _, err := range doc.ParserErrors {
 		token := err.Token
 		if token == nil {
-			endPosition := doc.PositionAt(len(doc.Content()))
 			eofDiagnostic := protocol.Diagnostic{
 				Range: protocol.Range{
-					Start: endPosition,
-					End:   endPosition,
+					Start: end,
+					End:   end,
 				},
 				Severity: protocol.SeverityError,
 				Message:  err.Msg,
@@ -70,20 +67,18 @@ func CreateParserDiagnostics(doc textdoc.Handle, parserErrors []*parser.ParserEr
 	return diagnostics
 }
 
-func CreateLinkerDiagnostics(doc textdoc.Handle, root core.AstNode) []protocol.Diagnostic {
+func CreateLinkerDiagnostics(doc *core.Document) []protocol.Diagnostic {
 	diagnostics := []protocol.Diagnostic{}
-	core.TraverseNode(root, func(node core.AstNode) {
-		node.ForEachReference(func(ur core.UntypedReference) {
-			err := ur.Error()
-			segment := ur.Segment()
-			if err != nil && segment != nil {
-				diagnostics = append(diagnostics, protocol.Diagnostic{
-					Range:    segment.Range.LspRange(),
-					Severity: protocol.DiagnosticSeverity(err.Severity),
-					Message:  err.Msg,
-				})
-			}
-		})
-	})
+	for _, ref := range doc.References {
+		err := ref.Error()
+		segment := ref.Segment()
+		if err != nil && segment != nil {
+			diagnostics = append(diagnostics, protocol.Diagnostic{
+				Range:    segment.Range.LspRange(),
+				Severity: protocol.DiagnosticSeverity(err.Severity),
+				Message:  err.Msg,
+			})
+		}
+	}
 	return diagnostics
 }

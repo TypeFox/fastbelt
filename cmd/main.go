@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 
 	"github.com/TypeFox/go-lsp/protocol"
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/internal/generator"
 	"typefox.dev/fastbelt/internal/grammar/generated"
 	"typefox.dev/fastbelt/internal/grammar/services"
@@ -52,11 +53,12 @@ func main() {
 	srv := services.CreateServices()
 	file, _ := textdoc.NewFile(protocol.URIFromPath(grammarPath), "fb", 0, string(grammarText))
 
-	parseResult := srv.Workspace().DocumentParser.Parse(file)
-	srv.Linking().SymbolTable.Compute(string(file.URI()), parseResult.Root)
-	srv.Linking().Linker.Link(context.Background(), parseResult.Root)
+	document := core.NewDocument(file)
+	srv.Workspace().DocumentParser.Parse(document)
+	srv.Linking().LocalSymbolTableProvider.Compute(context.Background(), document)
+	srv.Linking().Linker.Link(context.Background(), document)
 
-	if grammar, ok := parseResult.Root.(generated.Grammar); !ok {
+	if grammar, ok := document.Root.(generated.Grammar); !ok {
 		panic("Parser result is not a Grammar")
 	} else {
 		linker := generator.GenerateLinker(grammar)

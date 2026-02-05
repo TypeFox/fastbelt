@@ -1,3 +1,7 @@
+// Copyright 2025 TypeFox GmbH
+// This program and the accompanying materials are made available under the
+// terms of the MIT License, which is available in the project root.
+
 package fastbelt
 
 import (
@@ -9,12 +13,19 @@ import (
 )
 
 func DefaultLink(scope Scope, text string) (*AstNodeDescription, *ReferenceError) {
+	if scope == nil {
+		return nil, defaultRefError(text)
+	}
 	description := scope.ElementByName(text)
 	if description == nil {
-		return nil, NewReferenceError("Could not resolve reference to '" + text + "'.")
+		return nil, defaultRefError(text)
 	} else {
 		return description, nil
 	}
+}
+
+func defaultRefError(text string) *ReferenceError {
+	return NewReferenceError("Could not resolve reference to '" + text + "'.")
 }
 
 type Scope interface {

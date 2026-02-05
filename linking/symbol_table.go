@@ -1,23 +1,26 @@
+// Copyright 2025 TypeFox GmbH
+// This program and the accompanying materials are made available under the
+// terms of the MIT License, which is available in the project root.
+
 package linking
 
 import (
-	"iter"
+	"context"
 	"slices"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/extiter"
+	"typefox.dev/fastbelt/utils"
 )
 
-type LocalSymbols = iter.Seq[*core.AstNodeDescription]
-
-func SymbolsOfType[T core.AstNode](s LocalSymbols) LocalSymbols {
+func SymbolsOfType[T core.AstNode](s core.SymbolList) core.SymbolList {
 	return extiter.Filter(s, func(desc *core.AstNodeDescription) bool {
 		_, ok := desc.Node.(T)
 		return ok
 	})
 }
 
-func LocalScopeOfType[T core.AstNode](node core.AstNode, fn func(core.AstNode) LocalSymbols) core.Scope {
+func LocalScopeOfType[T core.AstNode](node core.AstNode, fn func(core.AstNode) core.SymbolList) core.Scope {
 	symbols := fn(node)
 	filtered := SymbolsOfType[T](symbols)
 	var outer core.Scope = nil
@@ -36,62 +39,102 @@ func LocalScopeOfType[T core.AstNode](node core.AstNode, fn func(core.AstNode) L
 }
 
 type LocalSymbolTableProvider interface {
-	// TODO: Replace "key" with Document structure once we have it
-	Compute(key string, root core.AstNode)
-	// TODO: Might not be required once we have a Document structure
-	Reset(key string)
-	LocalSymbols(node core.AstNode) LocalSymbols
+	Compute(ctx context.Context, document *core.Document)
+	LocalSymbols(node core.AstNode) core.SymbolList
 }
 
-// TODO: Refactor this once we have a Document structure
 type DefaultLocalSymbolTableProvider struct {
-	srv       LinkingSrvCont
-	uriToNode map[string][]core.AstNode
-	symbols   map[core.AstNode][]*core.AstNodeDescription
+	srv LinkingSrvCont
 }
 
 func NewDefaultLocalSymbolTableProvider(srv LinkingSrvCont) LocalSymbolTableProvider {
 	return &DefaultLocalSymbolTableProvider{
-		srv:       srv,
-		uriToNode: map[string][]core.AstNode{},
-		symbols:   map[core.AstNode][]*core.AstNodeDescription{},
+		srv: srv,
 	}
 }
 
-func (s *DefaultLocalSymbolTableProvider) Compute(key string, root core.AstNode) {
-	s.Reset(key)
-	nodes := []core.AstNode{}
+func (s *DefaultLocalSymbolTableProvider) Compute(ctx context.Context, document *core.Document) {
+	document.RLock()
+	root := document.Root
+	document.RUnlock()
+	symbols := utils.NewMultiMap[core.AstNode, *core.AstNodeDescription]()
+
 	core.TraverseContent(root, func(node core.AstNode) {
-		nodes = append(nodes, node)
-		// Container is never nil for all but the root node
-		container := node.Container()
-		name, nameToken := s.srv.Linking().Namer.Name(node)
-		if name != "" {
-			var segment *core.TextSegment
-			if nameToken != nil {
-				segment = &nameToken.Segment
-			}
-			desc := core.NewAstNodeDescription(node, name, segment, node.Segment())
-			symbols := s.symbols[container]
-			s.symbols[container] = append(symbols, desc)
+		item := s.srv.Linking().LocalSymbolTableItemProvider.Item(node)
+		if item != nil {
+			symbols.Put(item.Container, item.Description)
 		}
 	})
-	s.uriToNode[key] = nodes
+	document.Lock()
+	document.LocalSymbols = NewDefaultLocalSymbolsFromMap(symbols)
+	document.Unlock()
 }
 
-func (s *DefaultLocalSymbolTableProvider) Reset(key string) {
-	if nodes, ok := s.uriToNode[key]; ok {
-		for _, node := range nodes {
-			delete(s.symbols, node)
+func (s *DefaultLocalSymbolTableProvider) LocalSymbols(node core.AstNode) core.SymbolList {
+	doc := node.Document()
+	doc.RLock()
+	defer doc.RUnlock()
+	localSymbols := doc.LocalSymbols
+	return localSymbols.Iter(node)
+}
+
+type DefaultLocalSymbols struct {
+	Symbols utils.MultiMap[core.AstNode, *core.AstNodeDescription]
+}
+
+func NewDefaultLocalSymbols() *DefaultLocalSymbols {
+	return &DefaultLocalSymbols{
+		Symbols: utils.NewMultiMap[core.AstNode, *core.AstNodeDescription](),
+	}
+}
+
+func NewDefaultLocalSymbolsFromMap(m utils.MultiMap[core.AstNode, *core.AstNodeDescription]) *DefaultLocalSymbols {
+	return &DefaultLocalSymbols{
+		Symbols: m,
+	}
+}
+
+func (ls *DefaultLocalSymbols) Has(node core.AstNode) bool {
+	return ls.Symbols.Has(node)
+}
+
+func (ls *DefaultLocalSymbols) Iter(node core.AstNode) core.SymbolList {
+	symbols := ls.Symbols.Get(node)
+	return slices.Values(symbols)
+}
+
+type LocalSymbolTableItem struct {
+	Container   core.AstNode
+	Description *core.AstNodeDescription
+}
+
+type LocalSymbolTableItemProvider interface {
+	Item(node core.AstNode) *LocalSymbolTableItem
+}
+
+type DefaultLocalSymbolTableItemProvider struct {
+	srv LinkingSrvCont
+}
+
+func NewDefaultLocalSymbolTableItemProvider(srv LinkingSrvCont) LocalSymbolTableItemProvider {
+	return &DefaultLocalSymbolTableItemProvider{
+		srv: srv,
+	}
+}
+
+func (p *DefaultLocalSymbolTableItemProvider) Item(node core.AstNode) *LocalSymbolTableItem {
+	container := node.Container()
+	name, nameToken := p.srv.Linking().Namer.Name(node)
+	if name != "" {
+		var segment *core.TextSegment
+		if nameToken != nil {
+			segment = &nameToken.Segment
 		}
-		delete(s.uriToNode, key)
+		desc := core.NewAstNodeDescription(node, name, segment, node.Segment())
+		return &LocalSymbolTableItem{
+			Container:   container,
+			Description: desc,
+		}
 	}
-}
-
-func (s *DefaultLocalSymbolTableProvider) LocalSymbols(node core.AstNode) LocalSymbols {
-	if descs, ok := s.symbols[node]; ok {
-		return slices.Values(descs)
-	} else {
-		return extiter.Empty[*core.AstNodeDescription]()
-	}
+	return nil
 }

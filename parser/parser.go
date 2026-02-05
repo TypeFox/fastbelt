@@ -10,19 +10,12 @@ import (
 
 // Parser defines the interface for parsing tokens (lexer output) into AST nodes.
 type Parser interface {
-	Parse(tokens []*core.Token) *ParseResult
+	Parse(document *core.Document) *ParseResult
 }
 
 type ParseResult struct {
 	Node   core.AstNode
-	Errors []*ParserError
-}
-
-type ParserError struct {
-	Msg string
-	// The token this error is associated with.
-	// `nil` if the error is due to EOF.
-	Token *core.Token
+	Errors []*core.ParserError
 }
 
 type ParserState struct {
@@ -38,18 +31,15 @@ type ParserState struct {
 	//
 	// TODO: implement proper error handling
 	inError bool
-	errors  []*ParserError
+	errors  []*core.ParserError
 }
 
-func (p *ParserState) Errors() []*ParserError {
+func (p *ParserState) Errors() []*core.ParserError {
 	return p.errors
 }
 
 func (p *ParserState) appendError(msg string, token *core.Token) {
-	p.errors = append(p.errors, &ParserError{
-		Msg:   msg,
-		Token: token,
-	})
+	p.errors = append(p.errors, core.NewParserError(msg, token))
 	p.inError = true
 }
 
@@ -69,7 +59,7 @@ func NewParserState(tokens []*core.Token) *ParserState {
 		State:   0,
 		next:    next,
 		inError: false,
-		errors:  []*ParserError{},
+		errors:  []*core.ParserError{},
 	}
 }
 

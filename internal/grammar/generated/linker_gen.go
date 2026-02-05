@@ -10,7 +10,9 @@ import (
 type FastbeltScopeProvider interface {
 	ScopeInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
+	ScopeSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
+	ScopeAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope
 	ScopeCrossRefType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) core.Scope
 	ScopeActionType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
@@ -26,37 +28,47 @@ func NewDefaultFastbeltScopeProvider(srv FastbeltLinkingSrvCont) *DefaultFastbel
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
-	return linking.LocalScopeOfType[Interface](reference.Owner, s.srv.Linking().SymbolTable.LocalSymbols)
+	return linking.LocalScopeOfType[Interface](reference.Owner, s.srv.Linking().LocalSymbolTableProvider.LocalSymbols)
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
-	return linking.LocalScopeOfType[Interface](reference.Owner, s.srv.Linking().SymbolTable.LocalSymbols)
+	return linking.LocalScopeOfType[Interface](reference.Owner, s.srv.Linking().LocalSymbolTableProvider.LocalSymbols)
+}
+
+func (s *DefaultFastbeltScopeProvider) ScopeSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
+	return linking.LocalScopeOfType[Interface](reference.Owner, s.srv.Linking().LocalSymbolTableProvider.LocalSymbols)
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
-	return linking.LocalScopeOfType[Interface](reference.Owner, s.srv.Linking().SymbolTable.LocalSymbols)
+	return linking.LocalScopeOfType[Interface](reference.Owner, s.srv.Linking().LocalSymbolTableProvider.LocalSymbols)
+}
+
+func (s *DefaultFastbeltScopeProvider) ScopeAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope {
+	return linking.LocalScopeOfType[Field](reference.Owner, s.srv.Linking().LocalSymbolTableProvider.LocalSymbols)
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeCrossRefType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
-	return linking.LocalScopeOfType[Interface](reference.Owner, s.srv.Linking().SymbolTable.LocalSymbols)
+	return linking.LocalScopeOfType[Interface](reference.Owner, s.srv.Linking().LocalSymbolTableProvider.LocalSymbols)
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) core.Scope {
-	return linking.LocalScopeOfType[AbstractRule](reference.Owner, s.srv.Linking().SymbolTable.LocalSymbols)
+	return linking.LocalScopeOfType[AbstractRule](reference.Owner, s.srv.Linking().LocalSymbolTableProvider.LocalSymbols)
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeActionType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
-	return linking.LocalScopeOfType[Interface](reference.Owner, s.srv.Linking().SymbolTable.LocalSymbols)
+	return linking.LocalScopeOfType[Interface](reference.Owner, s.srv.Linking().LocalSymbolTableProvider.LocalSymbols)
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeActionProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope {
-	return linking.LocalScopeOfType[Field](reference.Owner, s.srv.Linking().SymbolTable.LocalSymbols)
+	return linking.LocalScopeOfType[Field](reference.Owner, s.srv.Linking().LocalSymbolTableProvider.LocalSymbols)
 }
 
 type FastbeltReferenceLinker interface {
 	LinkInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError)
 	LinkReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError)
+	LinkSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError)
 	LinkParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError)
+	LinkAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) (*core.AstNodeDescription, *core.ReferenceError)
 	LinkCrossRefType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError)
 	LinkRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) (*core.AstNodeDescription, *core.ReferenceError)
 	LinkActionType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError)
@@ -81,8 +93,18 @@ func (l *DefaultFastbeltReferenceLinker) LinkReferenceTypeType(ctx context.Conte
 	return core.DefaultLink(scope, reference.Text)
 }
 
+func (l *DefaultFastbeltReferenceLinker) LinkSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError) {
+	scope := l.srv.FastbeltLinking().ScopeProvider.ScopeSimpleTypeType(ctx, reference)
+	return core.DefaultLink(scope, reference.Text)
+}
+
 func (l *DefaultFastbeltReferenceLinker) LinkParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError) {
 	scope := l.srv.FastbeltLinking().ScopeProvider.ScopeParserRuleReturnType(ctx, reference)
+	return core.DefaultLink(scope, reference.Text)
+}
+
+func (l *DefaultFastbeltReferenceLinker) LinkAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) (*core.AstNodeDescription, *core.ReferenceError) {
+	scope := l.srv.FastbeltLinking().ScopeProvider.ScopeAssignmentProperty(ctx, reference)
 	return core.DefaultLink(scope, reference.Text)
 }
 
@@ -109,7 +131,9 @@ func (l *DefaultFastbeltReferenceLinker) LinkActionProperty(ctx context.Context,
 type FastbeltReferencesConstructor interface {
 	InterfaceExtends(owner core.AstNode, token *core.Token) *core.Reference[Interface]
 	ReferenceTypeType(owner core.AstNode, token *core.Token) *core.Reference[Interface]
+	SimpleTypeType(owner core.AstNode, token *core.Token) *core.Reference[Interface]
 	ParserRuleReturnType(owner core.AstNode, token *core.Token) *core.Reference[Interface]
+	AssignmentProperty(owner core.AstNode, token *core.Token) *core.Reference[Field]
 	CrossRefType(owner core.AstNode, token *core.Token) *core.Reference[Interface]
 	RuleCallRule(owner core.AstNode, token *core.Token) *core.Reference[AbstractRule]
 	ActionType(owner core.AstNode, token *core.Token) *core.Reference[Interface]
@@ -134,8 +158,18 @@ func (g *DefaultFastbeltReferencesConstructor) ReferenceTypeType(owner core.AstN
 	return core.NewReference(owner, token, fn)
 }
 
+func (g *DefaultFastbeltReferencesConstructor) SimpleTypeType(owner core.AstNode, token *core.Token) *core.Reference[Interface] {
+	fn := g.srv.FastbeltLinking().ReferenceLinker.LinkSimpleTypeType
+	return core.NewReference(owner, token, fn)
+}
+
 func (g *DefaultFastbeltReferencesConstructor) ParserRuleReturnType(owner core.AstNode, token *core.Token) *core.Reference[Interface] {
 	fn := g.srv.FastbeltLinking().ReferenceLinker.LinkParserRuleReturnType
+	return core.NewReference(owner, token, fn)
+}
+
+func (g *DefaultFastbeltReferencesConstructor) AssignmentProperty(owner core.AstNode, token *core.Token) *core.Reference[Field] {
+	fn := g.srv.FastbeltLinking().ReferenceLinker.LinkAssignmentProperty
 	return core.NewReference(owner, token, fn)
 }
 

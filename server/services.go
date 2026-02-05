@@ -31,6 +31,7 @@ type ServerSrv struct {
 	LanguageServerHandlers *LanguageServerHandlers
 	LanguageServer         LanguageServer
 	DocumentSyncher        DocumentSyncher
+	DefinitionProvider     DefinitionProvider
 	// Connection is assigned by ConnectionBinder when the language server is started
 	Connection       *jsonrpc2.Connection
 	ConnectionBinder jsonrpc2.Binder
@@ -49,6 +50,9 @@ func CreateDefaultServices(c ServerSrvCont) {
 	}
 	if s.DocumentSyncher == nil {
 		s.DocumentSyncher = NewDefaultDocumentSyncher(c)
+	}
+	if s.DefinitionProvider == nil {
+		s.DefinitionProvider = NewDefaultDefinitionProvider(c)
 	}
 	if s.ConnectionBinder == nil {
 		s.ConnectionBinder = NewDefaultBinder(c)

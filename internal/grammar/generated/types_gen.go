@@ -456,9 +456,8 @@ type SimpleType interface {
 	FieldType
 
 	IsSimpleType()
-	Type() string
-	TypeToken() *core.Token
-	SetType(value *core.Token)
+	Type() *core.Reference[Interface]
+	SetType(value *core.Reference[Interface])
 }
 
 func NewSimpleType() SimpleType {
@@ -470,7 +469,7 @@ func NewSimpleType() SimpleType {
 }
 
 type SimpleTypeData struct {
-	_Type *core.Token
+	_Type *core.Reference[Interface]
 }
 
 func NewSimpleTypeData() SimpleTypeData {
@@ -483,21 +482,20 @@ func (i *SimpleTypeData) ForEachNode(fn func(core.AstNode)) {
 }
 
 func (i *SimpleTypeData) ForEachReference(fn func(core.UntypedReference)) {
-}
-
-func (i *SimpleTypeData) Type() string {
-	if i != nil && i._Type != nil {
-		return i._Type.Image
-	} else {
-		return ""
+	if i._Type != nil {
+		fn(i._Type)
 	}
 }
 
-func (i *SimpleTypeData) TypeToken() *core.Token {
-	return i._Type
+func (i *SimpleTypeData) Type() *core.Reference[Interface] {
+	if i != nil && i._Type != nil {
+		return i._Type
+	} else {
+		return nil
+	}
 }
 
-func (i *SimpleTypeData) SetType(value *core.Token) {
+func (i *SimpleTypeData) SetType(value *core.Reference[Interface]) {
 	i._Type = value
 }
 
@@ -515,6 +513,72 @@ func (i *SimpleTypeImpl) ForEachNode(fn func(core.AstNode)) {
 func (i *SimpleTypeImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.FieldTypeData.ForEachReference(fn)
 	i.SimpleTypeData.ForEachReference(fn)
+}
+
+type PrimitiveType interface {
+	core.AstNode
+	FieldType
+
+	IsPrimitiveType()
+	Type() string
+	TypeToken() *core.Token
+	SetType(value *core.Token)
+}
+
+func NewPrimitiveType() PrimitiveType {
+	return &PrimitiveTypeImpl{
+		AstNodeBase:       core.NewAstNode(),
+		FieldTypeData:     NewFieldTypeData(),
+		PrimitiveTypeData: NewPrimitiveTypeData(),
+	}
+}
+
+type PrimitiveTypeData struct {
+	_Type *core.Token
+}
+
+func NewPrimitiveTypeData() PrimitiveTypeData {
+	return PrimitiveTypeData{}
+}
+
+func (i *PrimitiveTypeData) IsPrimitiveType() {}
+
+func (i *PrimitiveTypeData) ForEachNode(fn func(core.AstNode)) {
+}
+
+func (i *PrimitiveTypeData) ForEachReference(fn func(core.UntypedReference)) {
+}
+
+func (i *PrimitiveTypeData) Type() string {
+	if i != nil && i._Type != nil {
+		return i._Type.Image
+	} else {
+		return ""
+	}
+}
+
+func (i *PrimitiveTypeData) TypeToken() *core.Token {
+	return i._Type
+}
+
+func (i *PrimitiveTypeData) SetType(value *core.Token) {
+	i._Type = value
+}
+
+type PrimitiveTypeImpl struct {
+	core.AstNodeBase
+	FieldTypeData
+	PrimitiveTypeData
+}
+
+func (i *PrimitiveTypeImpl) ForEachNode(fn func(core.AstNode)) {
+	i.FieldTypeData.ForEachNode(fn)
+	i.PrimitiveTypeData.ForEachNode(fn)
+}
+
+func (i *PrimitiveTypeImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.FieldTypeData.ForEachReference(fn)
+	i.PrimitiveTypeData.ForEachReference(fn)
 }
 
 type AbstractRule interface {
@@ -1010,9 +1074,8 @@ type Assignment interface {
 	Element
 
 	IsAssignment()
-	Property() string
-	PropertyToken() *core.Token
-	SetProperty(value *core.Token)
+	Property() *core.Reference[Field]
+	SetProperty(value *core.Reference[Field])
 	Operator() string
 	OperatorToken() *core.Token
 	SetOperator(value *core.Token)
@@ -1029,7 +1092,7 @@ func NewAssignment() Assignment {
 }
 
 type AssignmentData struct {
-	property *core.Token
+	property *core.Reference[Field]
 	operator *core.Token
 	value    Assignable
 }
@@ -1047,21 +1110,20 @@ func (i *AssignmentData) ForEachNode(fn func(core.AstNode)) {
 }
 
 func (i *AssignmentData) ForEachReference(fn func(core.UntypedReference)) {
-}
-
-func (i *AssignmentData) Property() string {
-	if i != nil && i.property != nil {
-		return i.property.Image
-	} else {
-		return ""
+	if i.property != nil {
+		fn(i.property)
 	}
 }
 
-func (i *AssignmentData) PropertyToken() *core.Token {
-	return i.property
+func (i *AssignmentData) Property() *core.Reference[Field] {
+	if i != nil && i.property != nil {
+		return i.property
+	} else {
+		return nil
+	}
 }
 
-func (i *AssignmentData) SetProperty(value *core.Token) {
+func (i *AssignmentData) SetProperty(value *core.Reference[Field]) {
 	i.property = value
 }
 

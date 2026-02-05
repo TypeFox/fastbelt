@@ -6,21 +6,12 @@ package workspace
 
 import (
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/lexer"
-	"typefox.dev/fastbelt/parser"
-	"typefox.dev/fastbelt/textdoc"
 )
 
-// ParseResult contains the result of parsing a document, including errors from the lexer and parser.
-type ParseResult struct {
-	Root         core.AstNode
-	LexerErrors  []*lexer.LexerError
-	ParserErrors []*parser.ParserError
-}
-
-// DocumentParser defines the interface for parsing a document into an AST node.
+// DocumentParser defines the interface for parsing a document.
 type DocumentParser interface {
-	Parse(doc textdoc.Handle) ParseResult
+	// Parses the document and stores the resulting data back into the document.
+	Parse(doc *core.Document)
 }
 
 // DefaultDocumentParser is the default implementation of DocumentParser.
@@ -33,13 +24,12 @@ func NewDefaultDocumentParser(srv WorkspaceSrvCont) DocumentParser {
 	return &DefaultDocumentParser{srv: srv}
 }
 
-func (p *DefaultDocumentParser) Parse(doc textdoc.Handle) ParseResult {
-	result := ParseResult{}
-	text := doc.Text(nil)
+func (p *DefaultDocumentParser) Parse(doc *core.Document) {
+	text := doc.TextDoc.Text(nil)
 	lexerRes := p.srv.Generated().Lexer.Lex(text)
-	result.LexerErrors = lexerRes.Errors
-	parserRes := p.srv.Generated().Parser.Parse(lexerRes.Tokens)
-	result.Root = parserRes.Node
-	result.ParserErrors = parserRes.Errors
-	return result
+	doc.LexerErrors = lexerRes.Errors
+	doc.Tokens = lexerRes.Tokens
+	parserRes := p.srv.Generated().Parser.Parse(doc)
+	doc.ParserErrors = parserRes.Errors
+	doc.Root = parserRes.Node
 }

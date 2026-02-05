@@ -30,15 +30,19 @@ func (b *WorkspaceSrvContBlock) Workspace() *WorkspaceSrv {
 
 // WorkspaceSrv contains the services for the workspace package.
 type WorkspaceSrv struct {
-	Builder        Builder
-	DocumentParser DocumentParser
+	DocumentManager DocumentManager
+	Builder         Builder
+	DocumentParser  DocumentParser
 }
 
 // CreateDefaultServices creates the default services for the workspace package.
 // If the services are already set, they are not overwritten.
-// Package dependencies: textdoc, generated
+// Package dependencies: textdoc, linking, generated
 func CreateDefaultServices(c WorkspaceSrvCont) {
 	s := c.Workspace()
+	if s.DocumentManager == nil {
+		s.DocumentManager = NewDefaultDocumentManager()
+	}
 	if s.Builder == nil {
 		s.Builder = NewDefaultBuilder(c)
 	}

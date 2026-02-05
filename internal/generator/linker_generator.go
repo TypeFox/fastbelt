@@ -1,3 +1,7 @@
+// Copyright 2025 TypeFox GmbH
+// This program and the accompanying materials are made available under the
+// terms of the MIT License, which is available in the project root.
+
 package generator
 
 import (
@@ -90,7 +94,7 @@ func generateScopeProvider(context *LinkerGeneratorContext) generator.Node {
 
 	for _, field := range context.fields {
 		node.AppendLine("func (s *Default", context.grammar.Name(), "ScopeProvider) Scope", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) core.Scope {")
-		node.AppendLine("	return linking.LocalScopeOfType[", field.target, "](reference.Owner, s.srv.Linking().SymbolTable.LocalSymbols)")
+		node.AppendLine("	return linking.LocalScopeOfType[", field.target, "](reference.Owner, s.srv.Linking().LocalSymbolTableProvider.LocalSymbols)")
 		node.AppendLine("}").AppendLine()
 	}
 	return node

@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"sync"
 
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/textdoc"
 )
 
@@ -25,8 +26,7 @@ type Builder interface {
 
 // ValidationResult contains the result of validating a document.
 type ValidationResult struct {
-	Document textdoc.Handle
-	Result   ParseResult
+	Document *core.Document
 }
 
 // ValidationListener is a function that is called when validation completes for a set of documents.
@@ -51,20 +51,26 @@ func NewDefaultBuilder(srv WorkspaceSrvCont) Builder {
 
 // Update updates the workspace based on the provided documents.
 func (b *DefaultBuilder) Update(ctx context.Context, docs []textdoc.Handle) error {
-	if b.srv == nil || b.srv.Workspace().DocumentParser == nil {
+	if b.srv == nil {
 		return nil
 	}
+	// TODO: Do we need to check whether all services are set?
+	docManager := b.srv.Workspace().DocumentManager
+	parser := b.srv.Workspace().DocumentParser
+	symbolTableProvider := b.srv.Linking().LocalSymbolTableProvider
+	linker := b.srv.Linking().Linker
 
 	// Parse all documents and collect validation results
 	results := make([]ValidationResult, 0, len(docs))
 	for _, doc := range docs {
-		result := b.srv.Workspace().DocumentParser.Parse(doc)
+		document := core.NewDocument(doc)
+		docManager.Set(document)
+		parser.Parse(document)
+		symbolTableProvider.Compute(ctx, document)
+		linker.Link(ctx, document)
 		results = append(results, ValidationResult{
-			Document: doc,
-			Result:   result,
+			Document: document,
 		})
-		b.srv.Linking().SymbolTable.Compute(string(doc.URI()), result.Root)
-		b.srv.Linking().Linker.Link(ctx, result.Root)
 	}
 
 	// Notify all registered listeners

@@ -27,6 +27,9 @@ func Count[T any](seq iter.Seq[T]) int {
 
 // IsEmpty returns true if the sequence contains no elements
 func IsEmpty[T any](seq iter.Seq[T]) bool {
+	if seq == nil {
+		return true
+	}
 	for range seq {
 		return false
 	}

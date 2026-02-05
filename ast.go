@@ -4,11 +4,6 @@
 
 package fastbelt
 
-// TODO: implement this properly. This probably should point to `textdoc.Handle`
-type Document struct {
-	Text string
-}
-
 type AstNodeBase struct {
 	document  *Document
 	container AstNode
@@ -40,6 +35,23 @@ func (node *AstNodeBase) Container() AstNode {
 	} else {
 		return nil
 	}
+}
+
+// TODO: If concrete methods gain access to generics, refactor this into a method
+// See https://github.com/golang/go/issues/77273
+func ContainerOfType[T AstNode](node AstNode) T {
+	var zero T
+	if node == nil {
+		return zero
+	}
+	current := node.Container()
+	for current != nil {
+		if casted, ok := current.(T); ok {
+			return casted
+		}
+		current = current.Container()
+	}
+	return zero
 }
 
 func (node *AstNodeBase) SetContainer(container AstNode) {
@@ -100,10 +112,10 @@ func (node *AstNodeBase) SetTokens(tokens []*Token) {
 }
 
 func (node *AstNodeBase) Text() string {
-	if node == nil || node.document == nil {
+	if node == nil || node.document == nil || node.document.TextDoc == nil {
 		return ""
 	} else {
-		return node.document.Text[node.segment.Indices.Start:node.segment.Indices.End]
+		return node.document.TextDoc.Text(nil)[node.segment.Indices.Start:node.segment.Indices.End]
 	}
 }
 
@@ -173,10 +185,12 @@ func MergeTokens(newNode AstNode, oldTokens []*Token) {
 	}
 }
 
-func AssignContainers(root AstNode) {
+func AssignContainers(doc *Document, root AstNode) {
+	root.SetDocument(doc)
 	root.ForEachNode(func(child AstNode) {
+		child.SetDocument(doc)
 		child.SetContainer(root)
-		AssignContainers(child)
+		AssignContainers(doc, child)
 	})
 }
 

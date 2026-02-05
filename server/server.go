@@ -41,11 +41,15 @@ func NewDefaultLanguageServer(srv ServerSrvCont) LanguageServer {
 
 func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *protocol.ParamInitialize) (*protocol.InitializeResult, error) {
 	// Default implementation with basic capabilities
+	definitionProvider := s.srv.Server().DefinitionProvider
 	return &protocol.InitializeResult{
 		Capabilities: protocol.ServerCapabilities{
 			TextDocumentSync: protocol.Incremental,
 			CompletionProvider: &protocol.CompletionOptions{
 				ResolveProvider: false,
+			},
+			DefinitionProvider: &protocol.Or_ServerCapabilities_definitionProvider{
+				Value: definitionProvider != nil,
 			},
 		},
 	}, nil
@@ -162,6 +166,10 @@ func (s *DefaultLanguageServer) Declaration(ctx context.Context, params *protoco
 	return nil, nil
 }
 func (s *DefaultLanguageServer) Definition(ctx context.Context, params *protocol.DefinitionParams) ([]protocol.Location, error) {
+	definitionProvider := s.srv.Server().DefinitionProvider
+	if definitionProvider != nil {
+		return definitionProvider.HandleDefinitionRequest(ctx, params)
+	}
 	return nil, nil
 }
 func (s *DefaultLanguageServer) Diagnostic(ctx context.Context, params *protocol.DocumentDiagnosticParams) (*protocol.DocumentDiagnosticReport, error) {
@@ -339,13 +347,13 @@ func StartLanguageServer(ctx context.Context, srv ServerSrvCont) error {
 		for _, result := range results {
 			// Collect diagnostics from lexer and parser errors
 			diagnostics := []protocol.Diagnostic{}
-			diagnostics = append(diagnostics, workspace.CreateLexerDiagnostics(result.Result.LexerErrors)...)
-			diagnostics = append(diagnostics, workspace.CreateParserDiagnostics(result.Document, result.Result.ParserErrors)...)
-			diagnostics = append(diagnostics, workspace.CreateLinkerDiagnostics(result.Document, result.Result.Root)...)
+			diagnostics = append(diagnostics, workspace.CreateLexerDiagnostics(result.Document)...)
+			diagnostics = append(diagnostics, workspace.CreateParserDiagnostics(result.Document)...)
+			diagnostics = append(diagnostics, workspace.CreateLinkerDiagnostics(result.Document)...)
 			// Publish diagnostics (empty array if no errors to clear previous diagnostics)
 			params := &protocol.PublishDiagnosticsParams{
 				URI:         result.Document.URI(),
-				Version:     result.Document.Version(),
+				Version:     result.Document.TextDoc.Version(),
 				Diagnostics: diagnostics,
 			}
 			if err := client.PublishDiagnostics(ctx, params); err != nil {

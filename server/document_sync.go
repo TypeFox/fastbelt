@@ -109,12 +109,21 @@ func (ds *DefaultDocumentSyncher) DidChange(ctx context.Context, params *protoco
 
 // DidClose processes a textDocument/didClose notification.
 func (ds *DefaultDocumentSyncher) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) {
-	doc := ds.srv.Textdoc().Store.GetOverlay(params.TextDocument.URI)
-	if doc == nil {
-		return
-	}
-
 	ds.srv.Textdoc().Store.RemoveOverlay(params.TextDocument.URI)
+	// TODO msujew: Once we start handling cross-file references, we shouldn't delete the document.
+	ds.srv.Workspace().DocumentManager.Delete(params.TextDocument.URI)
+	connection := ds.srv.Server().Connection
+	if connection != nil {
+		// Ensure we clear diagnostics on close
+		client := protocol.ClientDispatcher(connection)
+		err := client.PublishDiagnostics(ctx, &protocol.PublishDiagnosticsParams{
+			URI:         params.TextDocument.URI,
+			Diagnostics: []protocol.Diagnostic{},
+		})
+		if err != nil {
+			log.Printf("failed to publish diagnostics after document close: %v", err)
+		}
+	}
 }
 
 // WillSave processes a textDocument/willSave notification.

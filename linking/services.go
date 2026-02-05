@@ -1,9 +1,14 @@
+// Copyright 2025 TypeFox GmbH
+// This program and the accompanying materials are made available under the
+// terms of the MIT License, which is available in the project root.
+
 package linking
 
 type LinkingSrv struct {
-	SymbolTable LocalSymbolTableProvider
-	Namer       Namer
-	Linker      Linker
+	LocalSymbolTableProvider     LocalSymbolTableProvider
+	LocalSymbolTableItemProvider LocalSymbolTableItemProvider
+	Namer                        Namer
+	Linker                       Linker
 }
 
 type LinkingSrvCont interface {
@@ -20,8 +25,11 @@ func (b *LinkingSrvContBlock) Linking() *LinkingSrv {
 
 func CreateDefaultServices(srv LinkingSrvCont) {
 	linking := srv.Linking()
-	if linking.SymbolTable == nil {
-		linking.SymbolTable = NewDefaultLocalSymbolTableProvider(srv)
+	if linking.LocalSymbolTableProvider == nil {
+		linking.LocalSymbolTableProvider = NewDefaultLocalSymbolTableProvider(srv)
+	}
+	if linking.LocalSymbolTableItemProvider == nil {
+		linking.LocalSymbolTableItemProvider = NewDefaultLocalSymbolTableItemProvider(srv)
 	}
 	if linking.Namer == nil {
 		linking.Namer = NewDefaultNamer()

@@ -12,30 +12,8 @@ import (
 
 type LexerResult struct {
 	Tokens []*core.Token
-	Errors []*LexerError
+	Errors []*core.LexerError
 	Groups map[int][]*core.Token
-}
-
-type LexerError struct {
-	Msg         string
-	StartOffset int
-	EndOffset   int
-	StartLine   int
-	EndLine     int
-	StartColumn int
-	EndColumn   int
-}
-
-func NewLexerError(msg string, startOffset, endOffset, startLine, endLine, startColumn, endColumn int) *LexerError {
-	return &LexerError{
-		Msg:         msg,
-		StartOffset: startOffset,
-		EndOffset:   endOffset,
-		StartLine:   startLine,
-		EndLine:     endLine,
-		StartColumn: startColumn,
-		EndColumn:   endColumn,
-	}
 }
 
 type Lexer interface {
@@ -50,7 +28,7 @@ type DefaultLexer struct {
 func (l *DefaultLexer) Lex(input string) *LexerResult {
 	length := len(input)
 	tokens := make([]*core.Token, 0, length/5) // rough estimate
-	errors := make([]*LexerError, 0)
+	errors := make([]*core.LexerError, 0)
 	groups := make(map[int][]*core.Token)
 
 	var offset, line, column int
@@ -103,7 +81,7 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 				))
 			}
 		} else {
-			errors = append(errors, NewLexerError(
+			errors = append(errors, core.NewLexerError(
 				"No matching token",
 				offset,
 				end,

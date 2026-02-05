@@ -1,12 +1,20 @@
+// Copyright 2025 TypeFox GmbH
+// This program and the accompanying materials are made available under the
+// terms of the MIT License, which is available in the project root.
+
 package fastbelt
 
 import (
 	"context"
 	"reflect"
 	"sync"
+
+	"github.com/TypeFox/go-lsp/protocol"
+	"typefox.dev/fastbelt/extiter"
 )
 
 type UntypedReference interface {
+	Description() *AstNodeDescription
 	RefNode(ctx context.Context) AstNode
 	Resolve(ctx context.Context)
 	Reset()
@@ -23,7 +31,7 @@ type Reference[T AstNode] struct {
 	Token       *Token
 	Text        string
 	Owner       AstNode
-	Description *AstNodeDescription
+	description *AstNodeDescription
 	err         *ReferenceError
 	ref         T
 	mu          sync.Mutex
@@ -32,13 +40,23 @@ type Reference[T AstNode] struct {
 }
 
 func (r *Reference[T]) Reset() {
+	if r == nil {
+		return
+	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.resolved = false
-	r.Description = nil
+	r.description = nil
 	r.err = nil
 	var zero T
 	r.ref = zero
+}
+
+func (r *Reference[T]) Description() *AstNodeDescription {
+	if r == nil {
+		return nil
+	}
+	return r.description
 }
 
 func (r *Reference[T]) RefNode(ctx context.Context) AstNode {
@@ -46,11 +64,18 @@ func (r *Reference[T]) RefNode(ctx context.Context) AstNode {
 }
 
 func (r *Reference[T]) Ref(ctx context.Context) T {
+	var zero T
+	if r == nil {
+		return zero
+	}
 	r.Resolve(ctx)
 	return r.ref
 }
 
 func (r *Reference[T]) Error() *ReferenceError {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -80,7 +105,7 @@ func (r *Reference[T]) Resolve(ctx context.Context) {
 	}
 	newCtx := context.WithValue(ctx, r, true)
 	desc, e := r.getter(newCtx, r)
-	r.Description = desc
+	r.description = desc
 	if r.err == nil {
 		// Do not overwrite existing errors
 		r.err = e
@@ -109,20 +134,29 @@ func NewReference[T AstNode](owner AstNode, token *Token, getter ReferenceGetter
 	}
 }
 
-type ReferenceError struct {
-	Msg      string
-	Severity int
-}
-
-func (e *ReferenceError) Error() string {
-	return e.Msg
-}
-
-func NewReferenceError(msg string) *ReferenceError {
-	return &ReferenceError{Msg: msg, Severity: 1}
+// Computes the reference that this token represents.
+// Returns nil if the token does not represent a reference.
+func ReferenceOfToken(token *Token) UntypedReference {
+	owner := token.Element
+	if owner == nil {
+		return nil
+	}
+	var ref UntypedReference = nil
+	// We don't have a direct reference from token -> reference, so we need to search for it
+	// We have to iterate over all references of the owner node
+	// This might seem inefficient, but in practice the number of references per node is usually very small
+	// Also, we only do this in select LSP requests, so the performance impact is negligible
+	owner.ForEachReference(func(ur UntypedReference) {
+		// Simply compare the text indices to find the matching reference
+		if ur.Segment().Indices == token.Segment.Indices {
+			ref = ur
+		}
+	})
+	return ref
 }
 
 type AstNodeDescription struct {
+	TargetURI   protocol.DocumentURI
 	Node        AstNode
 	Name        string
 	NameSegment *TextSegment
@@ -130,10 +164,15 @@ type AstNodeDescription struct {
 }
 
 func NewAstNodeDescription(node AstNode, name string, nameSegment, fullSegment *TextSegment) *AstNodeDescription {
+	doc := node.Document()
+	targetURI := doc.URI()
 	return &AstNodeDescription{
+		TargetURI:   targetURI,
 		Node:        node,
 		Name:        name,
 		NameSegment: nameSegment,
 		FullSegment: fullSegment,
 	}
 }
+
+var EmptyAstNodeDescriptions = extiter.Empty[*AstNodeDescription]()
