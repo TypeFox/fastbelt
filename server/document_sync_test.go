@@ -56,6 +56,7 @@ func (m *mockBuilder) reset() {
 func createTestServices() ServerSrvCont {
 	s := &serverSrvContTest{}
 	textdoc.CreateDefaultServices(s)
+	workspace.CreateDefaultServices(s)
 	return s
 }
 
