@@ -35,8 +35,8 @@ func (l *DefaultLinker) Link(ctx context.Context, document *core.Document) {
 			})
 		})
 	})
+	waitgroup.Wait()
 	document.Lock()
 	document.References = references
 	document.Unlock()
-	waitgroup.Wait()
 }

@@ -46,7 +46,7 @@ func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context
 		return nil, nil // No reference for the token, return empty result
 	}
 	target := ref.Description()
-	if target == nil {
+	if target == nil || target.NameSegment == nil {
 		return nil, nil // No target description, return empty result
 	}
 	link := protocol.Location{

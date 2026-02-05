@@ -27,9 +27,13 @@ func NewDefaultDocumentParser(srv WorkspaceSrvCont) DocumentParser {
 func (p *DefaultDocumentParser) Parse(doc *core.Document) {
 	text := doc.TextDoc.Text(nil)
 	lexerRes := p.srv.Generated().Lexer.Lex(text)
+	doc.Lock()
 	doc.LexerErrors = lexerRes.Errors
 	doc.Tokens = lexerRes.Tokens
+	doc.Unlock()
 	parserRes := p.srv.Generated().Parser.Parse(doc)
+	doc.Lock()
 	doc.ParserErrors = parserRes.Errors
 	doc.Root = parserRes.Node
+	doc.Unlock()
 }
