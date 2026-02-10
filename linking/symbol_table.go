@@ -9,8 +9,8 @@ import (
 	"slices"
 
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/extiter"
-	"typefox.dev/fastbelt/utils"
+	"typefox.dev/fastbelt/util/collections"
+	"typefox.dev/fastbelt/util/extiter"
 )
 
 func SymbolsOfType[T core.AstNode](s core.SymbolList) core.SymbolList {
@@ -54,10 +54,8 @@ func NewDefaultLocalSymbolTableProvider(srv LinkingSrvCont) LocalSymbolTableProv
 }
 
 func (s *DefaultLocalSymbolTableProvider) Compute(ctx context.Context, document *core.Document) {
-	document.RLock()
 	root := document.Root
-	document.RUnlock()
-	symbols := utils.NewMultiMap[core.AstNode, *core.AstNodeDescription]()
+	symbols := collections.NewMultiMap[core.AstNode, *core.AstNodeDescription]()
 
 	core.TraverseContent(root, func(node core.AstNode) {
 		item := s.srv.Linking().LocalSymbolTableItemProvider.Item(node)
@@ -65,9 +63,7 @@ func (s *DefaultLocalSymbolTableProvider) Compute(ctx context.Context, document 
 			symbols.Put(item.Container, item.Description)
 		}
 	})
-	document.Lock()
 	document.LocalSymbols = NewDefaultLocalSymbolsFromMap(symbols)
-	document.Unlock()
 }
 
 func (s *DefaultLocalSymbolTableProvider) LocalSymbols(node core.AstNode) core.SymbolList {
@@ -79,16 +75,16 @@ func (s *DefaultLocalSymbolTableProvider) LocalSymbols(node core.AstNode) core.S
 }
 
 type DefaultLocalSymbols struct {
-	Symbols utils.MultiMap[core.AstNode, *core.AstNodeDescription]
+	Symbols collections.MultiMap[core.AstNode, *core.AstNodeDescription]
 }
 
 func NewDefaultLocalSymbols() *DefaultLocalSymbols {
 	return &DefaultLocalSymbols{
-		Symbols: utils.NewMultiMap[core.AstNode, *core.AstNodeDescription](),
+		Symbols: collections.NewMultiMap[core.AstNode, *core.AstNodeDescription](),
 	}
 }
 
-func NewDefaultLocalSymbolsFromMap(m utils.MultiMap[core.AstNode, *core.AstNodeDescription]) *DefaultLocalSymbols {
+func NewDefaultLocalSymbolsFromMap(m collections.MultiMap[core.AstNode, *core.AstNodeDescription]) *DefaultLocalSymbols {
 	return &DefaultLocalSymbols{
 		Symbols: m,
 	}

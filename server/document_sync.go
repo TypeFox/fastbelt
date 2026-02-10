@@ -115,6 +115,7 @@ func (ds *DefaultDocumentSyncher) DidClose(ctx context.Context, params *protocol
 	connection := ds.srv.Server().Connection
 	if connection != nil {
 		// Ensure we clear diagnostics on close
+		// TODO: Make this configurable - some adopters might want to keep diagnostics for closed documents
 		client := protocol.ClientDispatcher(connection)
 		err := client.PublishDiagnostics(ctx, &protocol.PublishDiagnosticsParams{
 			URI:         params.TextDocument.URI,

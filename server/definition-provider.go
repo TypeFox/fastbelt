@@ -1,4 +1,4 @@
-// Copyright 2025 TypeFox GmbH
+// Copyright 2026 TypeFox GmbH
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
@@ -31,7 +31,7 @@ func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context
 	uri := params.TextDocument.URI
 	doc := dp.srv.Workspace().DocumentManager.Get(uri)
 	if doc == nil {
-		return nil, nil // Document not found, return empty result
+		return nil, nil // Document not found
 	}
 	offset := doc.TextDoc.OffsetAt(params.Position)
 	doc.RLock()
@@ -39,18 +39,18 @@ func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context
 	tokens := doc.Tokens
 	sourceToken := tokens.SearchOffset(offset)
 	if sourceToken == nil {
-		return nil, nil // No token at the given position, return empty result
+		return nil, nil // No token at the given position
 	}
 	ref := core.ReferenceOfToken(sourceToken)
 	if ref == nil {
-		return nil, nil // No reference for the token, return empty result
+		return nil, nil // No reference for the token
 	}
 	target := ref.Description()
 	if target == nil || target.NameSegment == nil {
-		return nil, nil // No target description, return empty result
+		return nil, nil // No target description
 	}
 	link := protocol.Location{
-		URI:   target.TargetURI,
+		URI:   target.URI,
 		Range: target.NameSegment.Range.LspRange(),
 	}
 	return []protocol.Location{link}, nil

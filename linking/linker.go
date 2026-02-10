@@ -24,9 +24,7 @@ func NewDefaultLinker() Linker {
 func (l *DefaultLinker) Link(ctx context.Context, document *core.Document) {
 	waitgroup := sync.WaitGroup{}
 	references := []core.UntypedReference{}
-	document.RLock()
 	root := document.Root
-	document.RUnlock()
 	core.TraverseNode(root, func(node core.AstNode) {
 		node.ForEachReference(func(ref core.UntypedReference) {
 			references = append(references, ref)
@@ -36,7 +34,5 @@ func (l *DefaultLinker) Link(ctx context.Context, document *core.Document) {
 		})
 	})
 	waitgroup.Wait()
-	document.Lock()
 	document.References = references
-	document.Unlock()
 }
