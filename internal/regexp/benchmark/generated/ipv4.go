@@ -61,7 +61,7 @@ var IPv4_Next = [][]int{
 func IPv4(s string, offset int) int {
 	input := s[offset:]
 	length := len(input)
-	accepted := map[int]bool{23: true, 19: true, 20: true, 21: true, 22: true}
+	accepted := map[int]bool{19: true, 20: true, 21: true, 22: true, 23: true}
 	state := 0
 	acceptedIndex := 0
 	index := 0

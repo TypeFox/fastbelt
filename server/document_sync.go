@@ -9,6 +9,7 @@ import (
 	"log"
 
 	"github.com/TypeFox/go-lsp/protocol"
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/textdoc"
 )
 
@@ -111,7 +112,10 @@ func (ds *DefaultDocumentSyncher) DidChange(ctx context.Context, params *protoco
 func (ds *DefaultDocumentSyncher) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) {
 	ds.srv.Textdoc().Store.RemoveOverlay(params.TextDocument.URI)
 	// TODO msujew: Once we start handling cross-file references, we shouldn't delete the document.
-	ds.srv.Workspace().DocumentManager.Delete(params.TextDocument.URI)
+	uri, err := core.ParseURI(string(params.TextDocument.URI))
+	if err == nil {
+		ds.srv.Workspace().DocumentManager.Delete(uri)
+	}
 	connection := ds.srv.Server().Connection
 	if connection != nil {
 		// Ensure we clear diagnostics on close

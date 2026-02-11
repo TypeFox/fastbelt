@@ -63,7 +63,10 @@ func (b *DefaultBuilder) Update(ctx context.Context, docs []textdoc.Handle) erro
 	// Parse all documents and collect validation results
 	results := make([]ValidationResult, 0, len(docs))
 	for _, doc := range docs {
-		document := core.NewDocument(doc)
+		document, err := core.NewDocument(doc)
+		if err != nil {
+			return err
+		}
 		docManager.Set(document)
 		parser.Parse(document)
 		symbolTableProvider.Compute(ctx, document)

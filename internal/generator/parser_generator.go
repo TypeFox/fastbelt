@@ -70,7 +70,7 @@ func GenerateParser(grammar generated.Grammar) string {
 
 	rules := grammar.Rules()
 	if len(rules) == 0 {
-		return formatIfPossible(node.String())
+		return FormatIfPossible(node.String())
 	}
 
 	firstRule := rules[0]
@@ -130,7 +130,7 @@ func GenerateParser(grammar generated.Grammar) string {
 		generateParseFunction(node, context, rule)
 	}
 
-	return formatIfPossible(node.String())
+	return FormatIfPossible(node.String())
 }
 
 func populateContext(context *ParserGeneratorContext) {

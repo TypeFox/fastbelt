@@ -19,7 +19,7 @@ const CardinalityOptional = "?"
 const CardinalityZeroOrMore = "*"
 const CardinalityOneOrMore = "+"
 
-func formatIfPossible(text string) string {
+func FormatIfPossible(text string) string {
 	formatted, err := format.Source([]byte(text))
 	if err != nil {
 		return text

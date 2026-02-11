@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"typefox.dev/fastbelt/generator"
+	format "typefox.dev/fastbelt/internal/generator"
 	custom "typefox.dev/fastbelt/internal/regexp"
 )
 
@@ -25,7 +26,7 @@ func writeRegexpFile(name string, pattern string) {
 	root.AppendNode(result.Lookup)
 	root.AppendNode(result.Next)
 	root.AppendNode(result.Code)
-	err := os.WriteFile("generated/"+strings.ToLower(name)+".go", []byte(root.String()), 0644)
+	err := os.WriteFile("generated/"+strings.ToLower(name)+".go", []byte(format.FormatIfPossible(root.String())), 0644)
 	if err != nil {
 		panic(err)
 	}

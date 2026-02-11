@@ -41,7 +41,7 @@ func GenerateLinker(grammar generated.Grammar) string {
 	node.AppendNode(generateLinker(context))
 	node.AppendNode(generateReferenceConstructor(context))
 
-	return formatIfPossible(node.String())
+	return FormatIfPossible(node.String())
 }
 
 func generateContext(grammar generated.Grammar) *LinkerGeneratorContext {

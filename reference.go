@@ -9,7 +9,6 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/TypeFox/go-lsp/protocol"
 	"typefox.dev/fastbelt/util/extiter"
 )
 
@@ -156,7 +155,7 @@ func ReferenceOfToken(token *Token) UntypedReference {
 }
 
 type AstNodeDescription struct {
-	URI         protocol.DocumentURI
+	URI         *URI
 	Node        AstNode
 	Name        string
 	NameSegment *TextSegment
@@ -165,9 +164,8 @@ type AstNodeDescription struct {
 
 func NewAstNodeDescription(node AstNode, name string, nameSegment, fullSegment *TextSegment) *AstNodeDescription {
 	doc := node.Document()
-	targetURI := doc.URI()
 	return &AstNodeDescription{
-		URI:         targetURI,
+		URI:         &doc.URI,
 		Node:        node,
 		Name:        name,
 		NameSegment: nameSegment,

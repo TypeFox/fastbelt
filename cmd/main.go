@@ -53,7 +53,7 @@ func main() {
 	srv := services.CreateServices()
 	file, _ := textdoc.NewFile(protocol.URIFromPath(grammarPath), "fb", 0, string(grammarText))
 
-	document := core.NewDocument(file)
+	document, _ := core.NewDocument(file)
 	srv.Workspace().DocumentParser.Parse(document)
 	srv.Linking().LocalSymbolTableProvider.Compute(context.Background(), document)
 	srv.Linking().Linker.Link(context.Background(), document)

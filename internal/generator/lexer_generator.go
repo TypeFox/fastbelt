@@ -58,7 +58,7 @@ func GenerateLexer(grammar generated.Grammar) string {
 	}
 
 	generateMainLexerFunction(node, tokens, keywords)
-	return formatIfPossible(node.String())
+	return FormatIfPossible(node.String())
 }
 
 func generateMainLexerFunction(node gen.Node, tokens []generated.Token, keywords []generated.Keyword) {

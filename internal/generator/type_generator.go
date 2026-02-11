@@ -27,7 +27,7 @@ func GenerateTypes(grammar generated.Grammar) string {
 	for _, iface := range grammar.Interfaces() {
 		generateInterface(node, grammar, iface)
 	}
-	return formatIfPossible(node.String())
+	return FormatIfPossible(node.String())
 }
 
 var reservedKeywords = map[string]bool{

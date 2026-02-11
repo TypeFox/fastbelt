@@ -28,7 +28,10 @@ func NewDefaultDefinitionProvider(srv ServerSrvCont) DefinitionProvider {
 }
 
 func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context, params *protocol.DefinitionParams) ([]protocol.Location, error) {
-	uri := params.TextDocument.URI
+	uri, err := core.ParseURI(string(params.TextDocument.URI))
+	if err != nil {
+		return nil, nil // Invalid URI
+	}
 	doc := dp.srv.Workspace().DocumentManager.Get(uri)
 	if doc == nil {
 		return nil, nil // Document not found
@@ -50,7 +53,7 @@ func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context
 		return nil, nil // No target description
 	}
 	link := protocol.Location{
-		URI:   target.URI,
+		URI:   target.URI.DocumentURI(),
 		Range: target.NameSegment.Range.LspRange(),
 	}
 	return []protocol.Location{link}, nil

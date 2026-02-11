@@ -72,5 +72,5 @@ func GenerateServices(grammar generated.Grammar) string {
 	})
 	node.AppendLine("}")
 	node.AppendLine()
-	return formatIfPossible(node.String())
+	return FormatIfPossible(node.String())
 }

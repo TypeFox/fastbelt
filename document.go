@@ -20,6 +20,7 @@ import (
 // The document struct should never be copied after creation.
 type Document struct {
 	sync.RWMutex
+	URI          URI
 	Root         AstNode
 	Tokens       TokenSlice
 	LocalSymbols LocalSymbols
@@ -31,17 +32,14 @@ type Document struct {
 	Data         map[any]any
 }
 
-func (doc *Document) URI() protocol.DocumentURI {
-	if doc.TextDoc != nil {
-		return doc.TextDoc.URI()
-	} else {
-		panic("Document has no TextDoc")
+func NewDocument(textDoc textdoc.Handle) (*Document, error) {
+	uri, err := ParseURI(string(textDoc.URI()))
+	if err != nil {
+		return nil, err
 	}
-}
-
-func NewDocument(textDoc textdoc.Handle) *Document {
 	return &Document{
 		RWMutex:      sync.RWMutex{},
+		URI:          uri,
 		TextDoc:      textDoc,
 		Root:         nil,
 		LocalSymbols: nil,
@@ -51,7 +49,7 @@ func NewDocument(textDoc textdoc.Handle) *Document {
 		LexerErrors:  []*LexerError{},
 		References:   []UntypedReference{},
 		Diagnostics:  []*protocol.Diagnostic{},
-	}
+	}, nil
 }
 
 func NewDocumentFromString(uri, languageId, content string) (*Document, error) {
@@ -59,7 +57,11 @@ func NewDocumentFromString(uri, languageId, content string) (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewDocument(textDoc), nil
+	doc, err := NewDocument(textDoc)
+	if err != nil {
+		return nil, err
+	}
+	return doc, nil
 }
 
 type SymbolList = iter.Seq[*AstNodeDescription]

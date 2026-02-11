@@ -9,22 +9,21 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/TypeFox/go-lsp/protocol"
 	core "typefox.dev/fastbelt"
 )
 
 // All methods of DocumentManager are thread-safe and can be called concurrently.
 type DocumentManager interface {
 	// Checks if a document with the given URI exists.
-	Has(uri protocol.DocumentURI) bool
+	Has(uri core.URI) bool
 	// Retrieves the document for the given URI, or nil if it does not exist.
-	Get(uri protocol.DocumentURI) *core.Document
+	Get(uri core.URI) *core.Document
 	// Adds or updates the given document.
 	Set(document *core.Document)
 	// Returns a sequence of all managed documents.
 	All() iter.Seq[*core.Document]
 	// Deletes the document with the given URI and returns it, or nil if it did not exist.
-	Delete(uri protocol.DocumentURI) *core.Document
+	Delete(uri core.URI) *core.Document
 }
 
 type DefaultDocumentManager struct {
@@ -37,13 +36,13 @@ func NewDefaultDocumentManager() DocumentManager {
 	}
 }
 
-func (d *DefaultDocumentManager) Has(uri protocol.DocumentURI) bool {
-	_, exists := d.documents.Load(uri)
+func (d *DefaultDocumentManager) Has(uri core.URI) bool {
+	_, exists := d.documents.Load(uri.StringUnencoded())
 	return exists
 }
 
-func (d *DefaultDocumentManager) Get(uri protocol.DocumentURI) *core.Document {
-	value, _ := d.documents.Load(uri)
+func (d *DefaultDocumentManager) Get(uri core.URI) *core.Document {
+	value, _ := d.documents.Load(uri.StringUnencoded())
 	if doc, ok := value.(*core.Document); ok {
 		return doc
 	}
@@ -51,7 +50,7 @@ func (d *DefaultDocumentManager) Get(uri protocol.DocumentURI) *core.Document {
 }
 
 func (d *DefaultDocumentManager) Set(document *core.Document) {
-	d.documents.Store(document.URI(), document)
+	d.documents.Store(document.URI.StringUnencoded(), document)
 }
 
 func (d *DefaultDocumentManager) All() iter.Seq[*core.Document] {
@@ -72,8 +71,8 @@ func (d *DefaultDocumentManager) All() iter.Seq[*core.Document] {
 	}
 }
 
-func (d *DefaultDocumentManager) Delete(uri protocol.DocumentURI) *core.Document {
-	document, _ := d.documents.LoadAndDelete(uri)
+func (d *DefaultDocumentManager) Delete(uri core.URI) *core.Document {
+	document, _ := d.documents.LoadAndDelete(uri.StringUnencoded())
 	if doc, ok := document.(*core.Document); ok {
 		return doc
 	}
