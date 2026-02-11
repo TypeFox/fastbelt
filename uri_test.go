@@ -771,3 +771,13 @@ func TestFileUri_UnixHandling(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, expected, uri.StringUnencoded())
 }
+
+func TestParseUri_DropsEmptyAuthority(t *testing.T) {
+	// By the RFC for URIs, empty authorities don't really exist
+	// The input "file:///path" becomes "file:/path" after parsing and reconstructing
+	input := "file:///absolute/path/to/file"
+	expected := "file:/absolute/path/to/file"
+	parsed, err := ParseURI(input)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, parsed.StringUnencoded())
+}
