@@ -28,10 +28,7 @@ func NewDefaultDefinitionProvider(srv ServerSrvCont) DefinitionProvider {
 }
 
 func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context, params *protocol.DefinitionParams) ([]protocol.Location, error) {
-	uri, err := core.ParseURI(string(params.TextDocument.URI))
-	if err != nil {
-		return nil, nil // Invalid URI
-	}
+	uri := core.ParseURI(string(params.TextDocument.URI))
 	doc := dp.srv.Workspace().DocumentManager.Get(uri)
 	if doc == nil {
 		return nil, nil // Document not found

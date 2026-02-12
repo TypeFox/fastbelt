@@ -32,11 +32,8 @@ type Document struct {
 	Data         map[any]any
 }
 
-func NewDocument(textDoc textdoc.Handle) (*Document, error) {
-	uri, err := ParseURI(string(textDoc.URI()))
-	if err != nil {
-		return nil, err
-	}
+func NewDocument(textDoc textdoc.Handle) *Document {
+	uri := ParseURI(string(textDoc.URI()))
 	return &Document{
 		RWMutex:      sync.RWMutex{},
 		URI:          uri,
@@ -49,7 +46,7 @@ func NewDocument(textDoc textdoc.Handle) (*Document, error) {
 		LexerErrors:  []*LexerError{},
 		References:   []UntypedReference{},
 		Diagnostics:  []*protocol.Diagnostic{},
-	}, nil
+	}
 }
 
 func NewDocumentFromString(uri, languageId, content string) (*Document, error) {
@@ -57,10 +54,7 @@ func NewDocumentFromString(uri, languageId, content string) (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	doc, err := NewDocument(textDoc)
-	if err != nil {
-		return nil, err
-	}
+	doc := NewDocument(textDoc)
 	return doc, nil
 }
 

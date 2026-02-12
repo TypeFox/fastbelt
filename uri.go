@@ -1,7 +1,6 @@
 package fastbelt
 
 import (
-	"fmt"
 	"net/url"
 	"regexp"
 	"strings"
@@ -9,178 +8,292 @@ import (
 	"github.com/TypeFox/go-lsp/protocol"
 )
 
-type URI struct {
-	Scheme    string
-	Authority string
-	Path      string
-	Query     string
-	Fragment  string
+const FileScheme = "file"
+
+type URI interface {
+	Scheme() string
+	Authority() string
+	Path() string
+	Query() string
+	Fragment() string
+	// Returns the URI as a string with percent-encoding applied to the components as needed.
+	// This is the standard way to serialize URIs and should be used when interoperability with other tools is required.
+	String() string
+	// Returns the URI as a string without percent-encoding.
+	// This is useful for debugging and logging purposes.
+	StringUnencoded() string
+	// Converts the URI to a protocol.DocumentURI, which is the format used by the LSP library.
+	DocumentURI() protocol.DocumentURI
+	// Returns a new URI with the specified scheme, keeping other components unchanged.
+	WithScheme(scheme string) URI
+	// Returns a new URI with the specified authority, keeping other components unchanged.
+	WithAuthority(authority string) URI
+	// Returns a new URI with the specified path, keeping other components unchanged.
+	WithPath(path string) URI
+	// Returns a new URI with the specified query, keeping other components unchanged.
+	WithQuery(query string) URI
+	// Returns a new URI with the specified fragment, keeping other components unchanged.
+	WithFragment(fragment string) URI
+	// Returns a new URI with the specified components, keeping other components unchanged.
+	// The components are pointers, so you can pass nil for components that should remain unchanged.
+	//
+	// Note that this method will not validate or normalize the components,
+	// so it's the caller's responsibility to ensure that the resulting URI is valid.
+	With(scheme, authority, path, query, fragment *string) URI
+	// Checks if this [URI] is equal to another [URI], based on their components.
+	// Note that this comparison is case-sensitive for all components.
+	// Use [FileURI] and [ParseURI] to ensure consistent normalization for reliable comparisons.
+	Equal(other URI) bool
 }
 
-// StringUnencoded returns the URI as a string without percent-encoding. This is useful for debugging and logging purposes.
-func (u URI) StringUnencoded() string {
+type uri struct {
+	scheme    string
+	authority string
+	path      string
+	query     string
+	fragment  string
+	encoded   *string
+	unencoded *string
+}
+
+func (u *uri) Scheme() string {
+	return u.scheme
+}
+
+func (u *uri) WithScheme(scheme string) URI {
+	return u.With(&scheme, nil, nil, nil, nil)
+}
+
+func (u *uri) Authority() string {
+	return u.authority
+}
+
+func (u *uri) WithAuthority(authority string) URI {
+	return u.With(nil, &authority, nil, nil, nil)
+}
+
+func (u *uri) Path() string {
+	return u.path
+}
+
+func (u *uri) WithPath(path string) URI {
+	return u.With(nil, nil, &path, nil, nil)
+}
+
+func (u *uri) Query() string {
+	return u.query
+}
+
+func (u *uri) WithQuery(query string) URI {
+	return u.With(nil, nil, nil, &query, nil)
+}
+
+func (u *uri) Fragment() string {
+	return u.fragment
+}
+
+func (u *uri) WithFragment(fragment string) URI {
+	return u.With(nil, nil, nil, nil, &fragment)
+}
+
+func (u *uri) Equal(other URI) bool {
+	if u == nil && other == nil {
+		return true
+	}
+	if u == nil || other == nil {
+		return false
+	}
+	return u.Scheme() == other.Scheme() &&
+		u.Authority() == other.Authority() &&
+		u.Path() == other.Path() &&
+		u.Query() == other.Query() &&
+		u.Fragment() == other.Fragment()
+}
+
+func (u *uri) StringUnencoded() string {
+	if u.unencoded != nil {
+		return *u.unencoded
+	}
 	var result strings.Builder
 
 	// Add scheme
-	if u.Scheme != "" {
-		result.WriteString(u.Scheme)
+	if u.scheme != "" {
+		result.WriteString(u.scheme)
 		result.WriteString(":")
 	}
 
-	// Add authority
-	if u.Authority != "" {
+	if u.authority != "" || u.scheme == FileScheme {
+		// Add authority prefix if authority is present or if it's a file URI (which can have an empty authority)
 		result.WriteString("//")
-		result.WriteString(u.Authority)
+	}
+
+	// Add authority
+	if u.authority != "" {
+		result.WriteString(u.authority)
 	}
 
 	// Add path
-	result.WriteString(u.Path)
+	result.WriteString(u.path)
 
 	// Add query
-	if u.Query != "" {
+	if u.query != "" {
 		result.WriteString("?")
-		result.WriteString(u.Query)
+		result.WriteString(u.query)
 	}
 
 	// Add fragment
-	if u.Fragment != "" {
+	if u.fragment != "" {
 		result.WriteString("#")
-		result.WriteString(u.Fragment)
+		result.WriteString(u.fragment)
 	}
 
-	return result.String()
+	value := result.String()
+	u.unencoded = &value
+	return value
 }
 
-// String returns the URI as a string with percent-encoding applied to the components as needed.
-func (u URI) String() string {
+func (u *uri) String() string {
+	if u.encoded != nil {
+		return *u.encoded
+	}
 	var result strings.Builder
 
 	// Add scheme
-	if u.Scheme != "" {
+	if u.scheme != "" {
 		// Scheme should not be escaped, because it cannot contain reserved characters
-		result.WriteString(u.Scheme)
+		result.WriteString(u.scheme)
 		result.WriteString(":")
 	}
 
-	// Add authority
-	if u.Authority != "" {
+	if u.authority != "" || u.scheme == FileScheme {
+		// Add authority prefix if authority is present or if it's a file URI (which can have an empty authority)
 		result.WriteString("//")
-		result.WriteString(encodeURIComponent(u.Authority, false, true))
+	}
+
+	// Add authority
+	if u.authority != "" {
+		result.WriteString(encodeURIComponent(u.authority, false, true))
 	}
 
 	// Add path
-	result.WriteString(encodeURIComponent(u.Path, true, false))
+	result.WriteString(encodeURIComponent(u.path, true, false))
 
 	// Add query
-	if u.Query != "" {
+	if u.query != "" {
 		result.WriteString("?")
-		result.WriteString(encodeURIComponent(u.Query, false, false))
+		result.WriteString(encodeURIComponent(u.query, false, false))
 	}
 
 	// Add fragment
-	if u.Fragment != "" {
+	if u.fragment != "" {
 		result.WriteString("#")
-		result.WriteString(encodeURIComponent(u.Fragment, false, false))
+		result.WriteString(encodeURIComponent(u.fragment, false, false))
 	}
 
-	return result.String()
+	value := result.String()
+	u.encoded = &value
+	return value
 }
 
-func (u URI) DocumentURI() protocol.DocumentURI {
+func (u *uri) DocumentURI() protocol.DocumentURI {
 	return protocol.DocumentURI(u.String())
 }
 
-func NewURI(scheme, authority, path, query, fragment string) (URI, error) {
-	if !isValidScheme(scheme) {
-		return URI{}, fmt.Errorf("invalid scheme: %s", scheme)
+// Constructs a new URI from the given components.
+// The components are not validated or normalized, so it's the caller's responsibility to ensure that they are valid.
+//
+// Instead of creating a new URI from scratch, it is recommended to parse URIs from a string using [ParseURI].
+func NewURI(scheme, authority, path, query, fragment string) URI {
+	return &uri{
+		scheme:    scheme,
+		authority: authority,
+		path:      path,
+		query:     query,
+		fragment:  fragment,
 	}
-	return URI{
-		Scheme:    strings.ToLower(scheme),
-		Authority: authority,
-		Path:      path,
-		Query:     query,
-		Fragment:  fragment,
-	}, nil
 }
 
-func (u URI) With(scheme, authority, path, query, fragment *string) URI {
+func (u *uri) With(scheme, authority, path, query, fragment *string) URI {
+	result := uri{}
+	if u != nil {
+		// Copy all existing components
+		result = uri{
+			scheme:    u.scheme,
+			authority: u.authority,
+			path:      u.path,
+			query:     u.query,
+			fragment:  u.fragment,
+		}
+	}
 	if scheme != nil {
-		u.Scheme = strings.ToLower(*scheme)
+		result.scheme = *scheme
 	}
 	if authority != nil {
-		u.Authority = *authority
+		result.authority = *authority
 	}
 	if path != nil {
-		u.Path = *path
+		result.path = *path
 	}
 	if query != nil {
-		u.Query = *query
+		result.query = *query
 	}
 	if fragment != nil {
-		u.Fragment = *fragment
+		result.fragment = *fragment
 	}
-	return u
+	return &result
 }
 
 var parseRegexp = regexp.MustCompile(`^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?`)
 
-func ParseURI(uri string) (URI, error) {
-	var result URI
-	matches := parseRegexp.FindStringSubmatch(uri)
+// Parses a URI from a string. The parsing is lenient and will not fail for invalid URIs, but it will try to extract the components as best as possible.
+func ParseURI(value string) URI {
+	result := uri{}
+	matches := parseRegexp.FindStringSubmatch(value)
 	if matches == nil {
-		return result, fmt.Errorf("invalid URI: %s", uri)
+		// Generally only an empty string would fail to parse
+		// But this is still a (mostly) valid URI
+		return &result
 	}
-
 	var err error
-
 	// Decode components that might contain percent-encoded characters
-	result.Scheme = strings.ToLower(matches[2]) // Schemes are not URL-encoded, but always lowercased
+	result.scheme = strings.ToLower(matches[2]) // Schemes are not URL-encoded, but always lowercased
 
 	if matches[4] != "" {
-		result.Authority, err = url.PathUnescape(matches[4])
+		result.authority, err = url.PathUnescape(matches[4])
 		if err != nil {
 			// If decoding fails, use original value
-			result.Authority = matches[4]
+			result.authority = matches[4]
 		}
+		// Authorities are case-insensitive, so we normalize to lowercase
+		result.authority = strings.ToLower(result.authority)
 	}
 
 	if matches[5] != "" {
-		result.Path, err = url.PathUnescape(matches[5])
+		result.path, err = url.PathUnescape(matches[5])
 		if err != nil {
-			// If decoding fails, use original value
-			result.Path = matches[5]
+			result.path = matches[5]
 		}
-		result.Path = normalizeDriveLetter(result.Path)
+		result.path = normalizeDriveLetter(result.path)
 	}
 
 	if matches[7] != "" {
-		result.Query, err = url.PathUnescape(matches[7])
+		result.query, err = url.PathUnescape(matches[7])
 		if err != nil {
-			// If decoding fails, use original value
-			result.Query = matches[7]
+			result.query = matches[7]
 		}
 	}
 
 	if matches[9] != "" {
-		result.Fragment, err = url.PathUnescape(matches[9])
+		result.fragment, err = url.PathUnescape(matches[9])
 		if err != nil {
-			// If decoding fails, use original value
-			result.Fragment = matches[9]
+			result.fragment = matches[9]
 		}
 	}
 
-	return result, nil
+	return &result
 }
 
-func MustParseURI(uri string) URI {
-	parsed, err := ParseURI(uri)
-	if err != nil {
-		panic(fmt.Sprintf("failed to parse URI '%s': %s", uri, err))
-	}
-	return parsed
-}
-
-func FileURI(path string) (URI, error) {
+func FileURI(path string) URI {
 	// Normalize Windows paths by replacing backslashes with forward slashes
 	normalized := strings.ReplaceAll(path, "\\", "/")
 	// Ensure the path starts with a slash
@@ -202,28 +315,6 @@ func normalizeDriveLetter(path string) string {
 		return path[0:offset] + strings.ToUpper(string(path[offset:1+offset])) + path[1+offset:]
 	}
 	return path
-}
-
-// isValidScheme checks if the scheme contains only valid characters
-func isValidScheme(scheme string) bool {
-	if len(scheme) == 0 {
-		return false
-	}
-
-	// First character must be a letter
-	if !isLetter(scheme[0]) {
-		return false
-	}
-
-	// Rest can be letters, digits, '+', '-', '.'
-	for i := 1; i < len(scheme); i++ {
-		c := scheme[i]
-		if !isLetter(c) && !isDigit(c) && c != '+' && c != '-' && c != '.' {
-			return false
-		}
-	}
-
-	return true
 }
 
 const upperhex = "0123456789ABCDEF"

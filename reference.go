@@ -155,7 +155,7 @@ func ReferenceOfToken(token *Token) UntypedReference {
 }
 
 type AstNodeDescription struct {
-	URI         *URI
+	URI         URI
 	Node        AstNode
 	Name        string
 	NameSegment *TextSegment
@@ -165,7 +165,7 @@ type AstNodeDescription struct {
 func NewAstNodeDescription(node AstNode, name string, nameSegment, fullSegment *TextSegment) *AstNodeDescription {
 	doc := node.Document()
 	return &AstNodeDescription{
-		URI:         &doc.URI,
+		URI:         doc.URI,
 		Node:        node,
 		Name:        name,
 		NameSegment: nameSegment,
