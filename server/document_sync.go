@@ -8,9 +8,9 @@ import (
 	"context"
 	"log"
 
-	"github.com/TypeFox/go-lsp/protocol"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/lsp"
 )
 
 // TextDocumentChangeEvent signals changes to a text document.
@@ -21,7 +21,7 @@ type TextDocumentChangeEvent struct {
 // TextDocumentWillSaveEvent signals that a document will be saved.
 type TextDocumentWillSaveEvent struct {
 	Document *textdoc.Overlay
-	Reason   protocol.TextDocumentSaveReason
+	Reason   lsp.TextDocumentSaveReason
 }
 
 // TextDocumentChangeHandler is called when a document changes.
@@ -35,7 +35,7 @@ type TextDocumentWillSaveHandler func(ctx context.Context, event *TextDocumentWi
 
 // TextDocumentWillSaveWaitUntilHandler is called when a document will be saved and can return edits.
 // Only one handler can be registered for this event to ensure deterministic edit behavior.
-type TextDocumentWillSaveWaitUntilHandler func(ctx context.Context, event *TextDocumentWillSaveEvent) ([]protocol.TextEdit, error)
+type TextDocumentWillSaveWaitUntilHandler func(ctx context.Context, event *TextDocumentWillSaveEvent) ([]lsp.TextEdit, error)
 
 // DocumentSyncher is the interface for handling LSP text document synchronization notifications.
 // It processes document lifecycle events (open, change, close, save).
@@ -43,12 +43,12 @@ type TextDocumentWillSaveWaitUntilHandler func(ctx context.Context, event *TextD
 // Thread Safety:
 // All methods are safe for concurrent use.
 type DocumentSyncher interface {
-	DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams)
-	DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams)
-	DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams)
-	WillSave(ctx context.Context, params *protocol.WillSaveTextDocumentParams)
-	WillSaveWaitUntil(ctx context.Context, params *protocol.WillSaveTextDocumentParams) ([]protocol.TextEdit, error)
-	DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams)
+	DidOpen(ctx context.Context, params *lsp.DidOpenTextDocumentParams)
+	DidChange(ctx context.Context, params *lsp.DidChangeTextDocumentParams)
+	DidClose(ctx context.Context, params *lsp.DidCloseTextDocumentParams)
+	WillSave(ctx context.Context, params *lsp.WillSaveTextDocumentParams)
+	WillSaveWaitUntil(ctx context.Context, params *lsp.WillSaveTextDocumentParams) ([]lsp.TextEdit, error)
+	DidSave(ctx context.Context, params *lsp.DidSaveTextDocumentParams)
 }
 
 // DefaultDocumentSyncher is the default implementation of DocumentSyncher.
@@ -62,7 +62,7 @@ func NewDefaultDocumentSyncher(srv ServerSrvCont) DocumentSyncher {
 }
 
 // DidOpen processes a textDocument/didOpen notification.
-func (ds *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) {
+func (ds *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *lsp.DidOpenTextDocumentParams) {
 	doc, err := textdoc.NewOverlay(
 		params.TextDocument.URI,
 		string(params.TextDocument.LanguageID),
@@ -85,7 +85,7 @@ func (ds *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *protocol.
 }
 
 // DidChange processes a textDocument/didChange notification.
-func (ds *DefaultDocumentSyncher) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) {
+func (ds *DefaultDocumentSyncher) DidChange(ctx context.Context, params *lsp.DidChangeTextDocumentParams) {
 	if len(params.ContentChanges) == 0 {
 		return
 	}
@@ -109,7 +109,7 @@ func (ds *DefaultDocumentSyncher) DidChange(ctx context.Context, params *protoco
 }
 
 // DidClose processes a textDocument/didClose notification.
-func (ds *DefaultDocumentSyncher) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) {
+func (ds *DefaultDocumentSyncher) DidClose(ctx context.Context, params *lsp.DidCloseTextDocumentParams) {
 	ds.srv.Textdoc().Store.RemoveOverlay(params.TextDocument.URI)
 	// TODO msujew: Once we start handling cross-file references, we shouldn't delete the document.
 	uri := core.ParseURI(string(params.TextDocument.URI))
@@ -118,10 +118,10 @@ func (ds *DefaultDocumentSyncher) DidClose(ctx context.Context, params *protocol
 	if connection != nil {
 		// Ensure we clear diagnostics on close
 		// TODO: Make this configurable - some adopters might want to keep diagnostics for closed documents
-		client := protocol.ClientDispatcher(connection)
-		err := client.PublishDiagnostics(ctx, &protocol.PublishDiagnosticsParams{
+		client := lsp.ClientDispatcher(connection)
+		err := client.PublishDiagnostics(ctx, &lsp.PublishDiagnosticsParams{
 			URI:         params.TextDocument.URI,
-			Diagnostics: []protocol.Diagnostic{},
+			Diagnostics: []lsp.Diagnostic{},
 		})
 		if err != nil {
 			log.Printf("failed to publish diagnostics after document close: %v", err)
@@ -130,14 +130,14 @@ func (ds *DefaultDocumentSyncher) DidClose(ctx context.Context, params *protocol
 }
 
 // WillSave processes a textDocument/willSave notification.
-func (ds *DefaultDocumentSyncher) WillSave(ctx context.Context, params *protocol.WillSaveTextDocumentParams) {
+func (ds *DefaultDocumentSyncher) WillSave(ctx context.Context, params *lsp.WillSaveTextDocumentParams) {
 }
 
 // WillSaveWaitUntil processes a textDocument/willSaveWaitUntil request.
-func (ds *DefaultDocumentSyncher) WillSaveWaitUntil(ctx context.Context, params *protocol.WillSaveTextDocumentParams) ([]protocol.TextEdit, error) {
-	return []protocol.TextEdit{}, nil
+func (ds *DefaultDocumentSyncher) WillSaveWaitUntil(ctx context.Context, params *lsp.WillSaveTextDocumentParams) ([]lsp.TextEdit, error) {
+	return []lsp.TextEdit{}, nil
 }
 
 // DidSave processes a textDocument/didSave notification.
-func (ds *DefaultDocumentSyncher) DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams) {
+func (ds *DefaultDocumentSyncher) DidSave(ctx context.Context, params *lsp.DidSaveTextDocumentParams) {
 }

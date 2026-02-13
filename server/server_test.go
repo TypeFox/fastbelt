@@ -8,10 +8,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/TypeFox/go-lsp/protocol"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/workspace"
+	"typefox.dev/lsp"
 )
 
 type serverSrvContTest struct {
@@ -29,14 +29,14 @@ func TestLanguageServerPartialHandlers(t *testing.T) {
 	CreateDefaultServices(srv)
 
 	// Create a test completion handler
-	srv.Server().LanguageServerHandlers.Completion = func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
+	srv.Server().LanguageServerHandlers.Completion = func(ctx context.Context, params *lsp.CompletionParams) (*lsp.CompletionList, error) {
 		completionCalled = true
-		return &protocol.CompletionList{
+		return &lsp.CompletionList{
 			IsIncomplete: false,
-			Items: []protocol.CompletionItem{
+			Items: []lsp.CompletionItem{
 				{
 					Label: "partial-test",
-					Kind:  protocol.KeywordCompletion,
+					Kind:  lsp.KeywordCompletion,
 				},
 			},
 		}, nil
@@ -46,7 +46,7 @@ func TestLanguageServerPartialHandlers(t *testing.T) {
 	ctx := context.Background()
 
 	// Test Initialize - should use default implementation
-	initResult, err := server.Initialize(ctx, &protocol.ParamInitialize{})
+	initResult, err := server.Initialize(ctx, &lsp.ParamInitialize{})
 	if err != nil {
 		t.Errorf("Initialize failed: %v", err)
 	}
@@ -55,13 +55,13 @@ func TestLanguageServerPartialHandlers(t *testing.T) {
 	}
 
 	// Test other methods - should use default implementations (no-op)
-	err = server.Initialized(ctx, &protocol.InitializedParams{})
+	err = server.Initialized(ctx, &lsp.InitializedParams{})
 	if err != nil {
 		t.Errorf("Initialized failed: %v", err)
 	}
 
 	// Test Completion - should call our handler
-	completionResult, err := server.Completion(ctx, &protocol.CompletionParams{})
+	completionResult, err := server.Completion(ctx, &lsp.CompletionParams{})
 	if err != nil {
 		t.Errorf("Completion failed: %v", err)
 	}

@@ -9,9 +9,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/TypeFox/go-lsp/protocol"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/workspace"
+	"typefox.dev/lsp"
 )
 
 // mockBuilder is a test implementation of Builder that tracks calls
@@ -73,9 +73,9 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	ctx := context.Background()
 
 	// Open a document
-	uri := protocol.DocumentURI("file:///test.txt")
-	ds.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
-		TextDocument: protocol.TextDocumentItem{
+	uri := lsp.DocumentURI("file:///test.txt")
+	ds.DidOpen(ctx, &lsp.DidOpenTextDocumentParams{
+		TextDocument: lsp.TextDocumentItem{
 			URI:        uri,
 			LanguageID: "plaintext",
 			Version:    1,
@@ -106,12 +106,12 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 
 	// Change the document
 	mockBuilder.reset()
-	ds.DidChange(ctx, &protocol.DidChangeTextDocumentParams{
-		TextDocument: protocol.VersionedTextDocumentIdentifier{
-			TextDocumentIdentifier: protocol.TextDocumentIdentifier{URI: uri},
+	ds.DidChange(ctx, &lsp.DidChangeTextDocumentParams{
+		TextDocument: lsp.VersionedTextDocumentIdentifier{
+			TextDocumentIdentifier: lsp.TextDocumentIdentifier{URI: uri},
 			Version:                2,
 		},
-		ContentChanges: []protocol.TextDocumentContentChangeEvent{
+		ContentChanges: []lsp.TextDocumentContentChangeEvent{
 			{Text: "Hello, Go!"},
 		},
 	})
@@ -129,8 +129,8 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	}
 
 	// Close the document
-	ds.DidClose(ctx, &protocol.DidCloseTextDocumentParams{
-		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+	ds.DidClose(ctx, &lsp.DidCloseTextDocumentParams{
+		TextDocument: lsp.TextDocumentIdentifier{URI: uri},
 	})
 
 	// Verify document was removed
@@ -145,15 +145,15 @@ func TestTextDocuments_MultipleDocuments(t *testing.T) {
 	ctx := context.Background()
 
 	// Open multiple documents
-	uris := []protocol.DocumentURI{
+	uris := []lsp.DocumentURI{
 		"file:///test1.txt",
 		"file:///test2.txt",
 		"file:///test3.txt",
 	}
 
 	for i, uri := range uris {
-		ds.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
-			TextDocument: protocol.TextDocumentItem{
+		ds.DidOpen(ctx, &lsp.DidOpenTextDocumentParams{
+			TextDocument: lsp.TextDocumentItem{
 				URI:        uri,
 				LanguageID: "plaintext",
 				Version:    int32(i + 1),
@@ -187,9 +187,9 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 	ds := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
-	uri := protocol.DocumentURI("file:///test.txt")
-	ds.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
-		TextDocument: protocol.TextDocumentItem{
+	uri := lsp.DocumentURI("file:///test.txt")
+	ds.DidOpen(ctx, &lsp.DidOpenTextDocumentParams{
+		TextDocument: lsp.TextDocumentItem{
 			URI:        uri,
 			LanguageID: "plaintext",
 			Version:    1,
@@ -198,16 +198,16 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 	})
 
 	// Apply incremental change
-	ds.DidChange(ctx, &protocol.DidChangeTextDocumentParams{
-		TextDocument: protocol.VersionedTextDocumentIdentifier{
-			TextDocumentIdentifier: protocol.TextDocumentIdentifier{URI: uri},
+	ds.DidChange(ctx, &lsp.DidChangeTextDocumentParams{
+		TextDocument: lsp.VersionedTextDocumentIdentifier{
+			TextDocumentIdentifier: lsp.TextDocumentIdentifier{URI: uri},
 			Version:                2,
 		},
-		ContentChanges: []protocol.TextDocumentContentChangeEvent{
+		ContentChanges: []lsp.TextDocumentContentChangeEvent{
 			{
-				Range: &protocol.Range{
-					Start: protocol.Position{Line: 0, Character: 7},
-					End:   protocol.Position{Line: 0, Character: 12},
+				Range: &lsp.Range{
+					Start: lsp.Position{Line: 0, Character: 7},
+					End:   lsp.Position{Line: 0, Character: 12},
 				},
 				Text: "Go",
 			},
@@ -230,9 +230,9 @@ func TestTextDocuments_WillSave(t *testing.T) {
 	ds := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
-	uri := protocol.DocumentURI("file:///test.txt")
-	ds.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
-		TextDocument: protocol.TextDocumentItem{
+	uri := lsp.DocumentURI("file:///test.txt")
+	ds.DidOpen(ctx, &lsp.DidOpenTextDocumentParams{
+		TextDocument: lsp.TextDocumentItem{
 			URI:        uri,
 			LanguageID: "plaintext",
 			Version:    1,
@@ -241,9 +241,9 @@ func TestTextDocuments_WillSave(t *testing.T) {
 	})
 
 	// Trigger will-save
-	ds.WillSave(ctx, &protocol.WillSaveTextDocumentParams{
-		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
-		Reason:       protocol.Manual,
+	ds.WillSave(ctx, &lsp.WillSaveTextDocumentParams{
+		TextDocument: lsp.TextDocumentIdentifier{URI: uri},
+		Reason:       lsp.Manual,
 	})
 
 	// Verify document still exists
@@ -258,9 +258,9 @@ func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
 	ds := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
-	uri := protocol.DocumentURI("file:///test.txt")
-	ds.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
-		TextDocument: protocol.TextDocumentItem{
+	uri := lsp.DocumentURI("file:///test.txt")
+	ds.DidOpen(ctx, &lsp.DidOpenTextDocumentParams{
+		TextDocument: lsp.TextDocumentItem{
 			URI:        uri,
 			LanguageID: "plaintext",
 			Version:    1,
@@ -269,9 +269,9 @@ func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
 	})
 
 	// Trigger will-save-wait-until
-	edits, err := ds.WillSaveWaitUntil(ctx, &protocol.WillSaveTextDocumentParams{
-		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
-		Reason:       protocol.Manual,
+	edits, err := ds.WillSaveWaitUntil(ctx, &lsp.WillSaveTextDocumentParams{
+		TextDocument: lsp.TextDocumentIdentifier{URI: uri},
+		Reason:       lsp.Manual,
 	})
 	if err != nil {
 		t.Fatalf("WillSaveWaitUntil failed: %v", err)
@@ -288,9 +288,9 @@ func TestTextDocuments_DidSave(t *testing.T) {
 	ds := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
-	uri := protocol.DocumentURI("file:///test.txt")
-	ds.DidOpen(ctx, &protocol.DidOpenTextDocumentParams{
-		TextDocument: protocol.TextDocumentItem{
+	uri := lsp.DocumentURI("file:///test.txt")
+	ds.DidOpen(ctx, &lsp.DidOpenTextDocumentParams{
+		TextDocument: lsp.TextDocumentItem{
 			URI:        uri,
 			LanguageID: "plaintext",
 			Version:    1,
@@ -299,8 +299,8 @@ func TestTextDocuments_DidSave(t *testing.T) {
 	})
 
 	// Trigger save
-	ds.DidSave(ctx, &protocol.DidSaveTextDocumentParams{
-		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+	ds.DidSave(ctx, &lsp.DidSaveTextDocumentParams{
+		TextDocument: lsp.TextDocumentIdentifier{URI: uri},
 	})
 
 	// Verify document still exists

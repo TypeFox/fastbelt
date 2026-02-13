@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/TypeFox/go-lsp/protocol"
+	"typefox.dev/lsp"
 )
 
 // Overlay represents an open text document in the editor.
@@ -24,7 +24,7 @@ type Overlay struct {
 
 // NewOverlay creates a new text document overlay.
 // The content parameter is accepted as a string and stored internally as bytes.
-func NewOverlay(uri protocol.DocumentURI, languageID string, version int32, content string) (*Overlay, error) {
+func NewOverlay(uri lsp.DocumentURI, languageID string, version int32, content string) (*Overlay, error) {
 	file, err := NewFile(uri, languageID, version, content)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func NewOverlay(uri protocol.DocumentURI, languageID string, version int32, cont
 
 // Update applies content changes to the overlay and updates its version.
 // Both incremental and full-document change events are supported. This method is thread-safe.
-func (o *Overlay) Update(changes []protocol.TextDocumentContentChangeEvent, version int32) error {
+func (o *Overlay) Update(changes []lsp.TextDocumentContentChangeEvent, version int32) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
@@ -56,14 +56,14 @@ func (o *Overlay) Update(changes []protocol.TextDocumentContentChangeEvent, vers
 // ApplyEdits applies a list of text edits and returns the resulting text.
 // The edits are automatically sorted by position, and overlapping edits return
 // an error. This method is thread-safe.
-func (o *Overlay) ApplyEdits(edits []protocol.TextEdit) (string, error) {
+func (o *Overlay) ApplyEdits(edits []lsp.TextEdit) (string, error) {
 	o.mu.RLock()
 	defer o.mu.RUnlock()
 
 	content := o.content
 
 	// Sort edits by position (start line, then start character)
-	sortedEdits := make([]protocol.TextEdit, len(edits))
+	sortedEdits := make([]lsp.TextEdit, len(edits))
 	copy(sortedEdits, edits)
 	sort.Slice(sortedEdits, func(i, j int) bool {
 		a, b := sortedEdits[i], sortedEdits[j]
@@ -130,7 +130,7 @@ func (o *Overlay) Content() []byte {
 // Text returns the text content or a substring if range is provided.
 // This is a convenience method that returns a string instead of []byte.
 // This method is thread-safe.
-func (o *Overlay) Text(r *protocol.Range) string {
+func (o *Overlay) Text(r *lsp.Range) string {
 	o.mu.RLock()
 	defer o.mu.RUnlock()
 	return o.File.Text(r)
@@ -138,7 +138,7 @@ func (o *Overlay) Text(r *protocol.Range) string {
 
 // PositionAt converts a zero-based offset to a position.
 // This method is thread-safe.
-func (o *Overlay) PositionAt(offset int) protocol.Position {
+func (o *Overlay) PositionAt(offset int) lsp.Position {
 	o.mu.RLock()
 	defer o.mu.RUnlock()
 	return o.File.PositionAt(offset)
@@ -146,14 +146,14 @@ func (o *Overlay) PositionAt(offset int) protocol.Position {
 
 // OffsetAt converts a position to a zero-based offset.
 // This method is thread-safe.
-func (o *Overlay) OffsetAt(position protocol.Position) int {
+func (o *Overlay) OffsetAt(position lsp.Position) int {
 	o.mu.RLock()
 	defer o.mu.RUnlock()
 	return o.File.OffsetAt(position)
 }
 
 // offsetAtLocked is the internal implementation of OffsetAt that assumes the lock is held.
-func (o *Overlay) offsetAtLocked(position protocol.Position) int {
+func (o *Overlay) offsetAtLocked(position lsp.Position) int {
 	return o.offsetAt(position)
 }
 
@@ -167,7 +167,7 @@ func (o *Overlay) LineCount() int {
 
 // applyChangeLocked applies a single content change to the overlay.
 // This method assumes the write lock is already held.
-func (o *Overlay) applyChangeLocked(change protocol.TextDocumentContentChangeEvent) error {
+func (o *Overlay) applyChangeLocked(change lsp.TextDocumentContentChangeEvent) error {
 	if change.Range != nil {
 		// Incremental change
 		wellFormedRange := getWellFormedRange(*change.Range)
@@ -182,7 +182,7 @@ func (o *Overlay) applyChangeLocked(change protocol.TextDocumentContentChangeEve
 		// We check against the maximum possible character position for each line.
 		// Note: offsetAtLocked will clamp positions and handle EOL positioning,
 		// but we want to reject positions that are clearly out of bounds.
-		for _, pos := range []protocol.Position{wellFormedRange.Start, wellFormedRange.End} {
+		for _, pos := range []lsp.Position{wellFormedRange.Start, wellFormedRange.End} {
 			lineStart := lineOffsets[pos.Line]
 			var lineEnd int
 			if int(pos.Line+1) < len(lineOffsets) {
@@ -259,19 +259,19 @@ func isEOL(ch byte) bool {
 }
 
 // getWellFormedRange ensures start is before end in a range
-func getWellFormedRange(r protocol.Range) protocol.Range {
+func getWellFormedRange(r lsp.Range) lsp.Range {
 	start, end := r.Start, r.End
 	if start.Line > end.Line || (start.Line == end.Line && start.Character > end.Character) {
-		return protocol.Range{Start: end, End: start}
+		return lsp.Range{Start: end, End: start}
 	}
 	return r
 }
 
 // getWellFormedEdit ensures the edit has a well-formed range
-func getWellFormedEdit(edit protocol.TextEdit) protocol.TextEdit {
+func getWellFormedEdit(edit lsp.TextEdit) lsp.TextEdit {
 	wellFormedRange := getWellFormedRange(edit.Range)
 	if wellFormedRange.Start != edit.Range.Start || wellFormedRange.End != edit.Range.End {
-		return protocol.TextEdit{
+		return lsp.TextEdit{
 			Range:   wellFormedRange,
 			NewText: edit.NewText,
 		}

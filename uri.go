@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/TypeFox/go-lsp/protocol"
+	"typefox.dev/lsp"
 )
 
 const FileScheme = "file"
@@ -22,8 +22,8 @@ type URI interface {
 	// Returns the URI as a string without percent-encoding.
 	// This is useful for debugging and logging purposes.
 	StringUnencoded() string
-	// Converts the URI to a protocol.DocumentURI, which is the format used by the LSP library.
-	DocumentURI() protocol.DocumentURI
+	// Converts the URI to a lsp.DocumentURI, which is the format used by the LSP library.
+	DocumentURI() lsp.DocumentURI
 	// Returns a new URI with the specified scheme, keeping other components unchanged.
 	WithScheme(scheme string) URI
 	// Returns a new URI with the specified authority, keeping other components unchanged.
@@ -195,8 +195,8 @@ func (u *uri) String() string {
 	return value
 }
 
-func (u *uri) DocumentURI() protocol.DocumentURI {
-	return protocol.DocumentURI(u.String())
+func (u *uri) DocumentURI() lsp.DocumentURI {
+	return lsp.DocumentURI(u.String())
 }
 
 // Constructs a new URI from the given components.

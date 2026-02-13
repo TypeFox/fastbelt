@@ -2,6 +2,7 @@ package regexp
 
 import (
 	"fmt"
+	"slices"
 
 	"typefox.dev/fastbelt/generator"
 	"typefox.dev/fastbelt/internal/automatons"
@@ -103,10 +104,15 @@ func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateR
 		n.AppendLine("length := len(input)")
 		n.Append("accepted := map[int]bool{")
 		acceptingStates := r.dfa.AcceptingStates
+		stateIDs := make([]int, 0, len(acceptingStates))
 		for state, isAccepting := range acceptingStates {
 			if isAccepting {
-				n.Append(fmt.Sprintf("%d: true, ", state))
+				stateIDs = append(stateIDs, state)
 			}
+		}
+		slices.Sort(stateIDs)
+		for _, state := range stateIDs {
+			n.Append(fmt.Sprintf("%d: true, ", state))
 		}
 		n.AppendLine("}")
 		n.AppendLine(fmt.Sprintf("state := %d", r.dfa.StartState))

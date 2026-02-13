@@ -11,12 +11,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/TypeFox/go-lsp/protocol"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/internal/generator"
 	"typefox.dev/fastbelt/internal/grammar/generated"
 	"typefox.dev/fastbelt/internal/grammar/services"
 	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/lsp"
 )
 
 func main() {
@@ -51,7 +51,7 @@ func main() {
 	}
 
 	srv := services.CreateServices()
-	file, _ := textdoc.NewFile(protocol.URIFromPath(grammarPath), "fb", 0, string(grammarText))
+	file, _ := textdoc.NewFile(lsp.URIFromPath(grammarPath), "fb", 0, string(grammarText))
 
 	document := core.NewDocument(file)
 	srv.Workspace().DocumentParser.Parse(document)

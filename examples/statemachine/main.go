@@ -10,11 +10,11 @@ import (
 	"context"
 	"log"
 
-	"github.com/TypeFox/go-lsp/protocol"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/workspace"
+	"typefox.dev/lsp"
 )
 
 func main() {
@@ -41,25 +41,25 @@ func createServices() *StatemachineSrv {
 	server.CreateDefaultServices(srv)
 
 	// Create a dummy completion handler for testing
-	srv.Server().LanguageServerHandlers.Completion = func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
-		return &protocol.CompletionList{
+	srv.Server().LanguageServerHandlers.Completion = func(ctx context.Context, params *lsp.CompletionParams) (*lsp.CompletionList, error) {
+		return &lsp.CompletionList{
 			IsIncomplete: false,
-			Items: []protocol.CompletionItem{
+			Items: []lsp.CompletionItem{
 				{
 					Label:      "state",
-					Kind:       protocol.KeywordCompletion,
+					Kind:       lsp.KeywordCompletion,
 					Detail:     "Define a state",
 					InsertText: "state ${1:name} {\n\t$0\n}",
 				},
 				{
 					Label:      "event",
-					Kind:       protocol.KeywordCompletion,
+					Kind:       lsp.KeywordCompletion,
 					Detail:     "Define an event",
 					InsertText: "event ${1:name}",
 				},
 				{
 					Label:      "transition",
-					Kind:       protocol.KeywordCompletion,
+					Kind:       lsp.KeywordCompletion,
 					Detail:     "Define a transition",
 					InsertText: "${1:from} -> ${2:to} on ${3:event}",
 				},

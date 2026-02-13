@@ -4,14 +4,12 @@
 
 package textdoc
 
-import (
-	"github.com/TypeFox/go-lsp/protocol"
-)
+import "typefox.dev/lsp"
 
 // Handle represents a reference to a text document's content and metadata.
 type Handle interface {
 	// URI returns the associated URI for this document.
-	URI() protocol.DocumentURI
+	URI() lsp.DocumentURI
 	// LanguageID returns the identifier of the language associated with this document.
 	LanguageID() string
 	// Version returns the version number of this document.
@@ -19,9 +17,9 @@ type Handle interface {
 	// Content returns the document content as a byte slice.
 	Content() []byte
 	// Text returns the text content or a substring if range is provided.
-	Text(r *protocol.Range) string
+	Text(r *lsp.Range) string
 	// PositionAt converts a zero-based offset to a position.
-	PositionAt(offset int) protocol.Position
+	PositionAt(offset int) lsp.Position
 	// OffsetAt converts a position to a zero-based offset.
-	OffsetAt(position protocol.Position) int
+	OffsetAt(position lsp.Position) int
 }

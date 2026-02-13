@@ -7,7 +7,7 @@ package textdoc
 import (
 	"testing"
 
-	"github.com/TypeFox/go-lsp/protocol"
+	"typefox.dev/lsp"
 )
 
 func TestNewFile(t *testing.T) {
@@ -52,14 +52,14 @@ func TestPositionAt(t *testing.T) {
 
 	tests := []struct {
 		offset   int
-		expected protocol.Position
+		expected lsp.Position
 	}{
-		{0, protocol.Position{Line: 0, Character: 0}},
-		{1, protocol.Position{Line: 0, Character: 1}},
-		{2, protocol.Position{Line: 0, Character: 2}}, // At \n
-		{3, protocol.Position{Line: 1, Character: 0}},
-		{4, protocol.Position{Line: 1, Character: 1}},
-		{5, protocol.Position{Line: 1, Character: 2}}, // Beyond end
+		{0, lsp.Position{Line: 0, Character: 0}},
+		{1, lsp.Position{Line: 0, Character: 1}},
+		{2, lsp.Position{Line: 0, Character: 2}}, // At \n
+		{3, lsp.Position{Line: 1, Character: 0}},
+		{4, lsp.Position{Line: 1, Character: 1}},
+		{5, lsp.Position{Line: 1, Character: 2}}, // Beyond end
 	}
 
 	for _, test := range tests {
@@ -77,7 +77,7 @@ func TestPositionAtEdgeCases(t *testing.T) {
 		content string
 		tests   []struct {
 			offset   int
-			expected protocol.Position
+			expected lsp.Position
 		}
 	}{
 		{
@@ -85,11 +85,11 @@ func TestPositionAtEdgeCases(t *testing.T) {
 			content: "",
 			tests: []struct {
 				offset   int
-				expected protocol.Position
+				expected lsp.Position
 			}{
-				{0, protocol.Position{Line: 0, Character: 0}},
-				{1, protocol.Position{Line: 0, Character: 0}},  // Beyond end, should clamp
-				{-1, protocol.Position{Line: 0, Character: 0}}, // Negative, should clamp
+				{0, lsp.Position{Line: 0, Character: 0}},
+				{1, lsp.Position{Line: 0, Character: 0}},  // Beyond end, should clamp
+				{-1, lsp.Position{Line: 0, Character: 0}}, // Negative, should clamp
 			},
 		},
 		{
@@ -97,11 +97,11 @@ func TestPositionAtEdgeCases(t *testing.T) {
 			content: "a",
 			tests: []struct {
 				offset   int
-				expected protocol.Position
+				expected lsp.Position
 			}{
-				{0, protocol.Position{Line: 0, Character: 0}},
-				{1, protocol.Position{Line: 0, Character: 1}}, // At end
-				{2, protocol.Position{Line: 0, Character: 1}}, // Beyond end, should clamp
+				{0, lsp.Position{Line: 0, Character: 0}},
+				{1, lsp.Position{Line: 0, Character: 1}}, // At end
+				{2, lsp.Position{Line: 0, Character: 1}}, // Beyond end, should clamp
 			},
 		},
 		{
@@ -109,12 +109,12 @@ func TestPositionAtEdgeCases(t *testing.T) {
 			content: "hello\n",
 			tests: []struct {
 				offset   int
-				expected protocol.Position
+				expected lsp.Position
 			}{
-				{0, protocol.Position{Line: 0, Character: 0}},
-				{5, protocol.Position{Line: 0, Character: 5}}, // At \n
-				{6, protocol.Position{Line: 1, Character: 0}}, // After \n
-				{7, protocol.Position{Line: 1, Character: 0}}, // Beyond end
+				{0, lsp.Position{Line: 0, Character: 0}},
+				{5, lsp.Position{Line: 0, Character: 5}}, // At \n
+				{6, lsp.Position{Line: 1, Character: 0}}, // After \n
+				{7, lsp.Position{Line: 1, Character: 0}}, // Beyond end
 			},
 		},
 		{
@@ -122,13 +122,13 @@ func TestPositionAtEdgeCases(t *testing.T) {
 			content: "a\r\nb",
 			tests: []struct {
 				offset   int
-				expected protocol.Position
+				expected lsp.Position
 			}{
-				{0, protocol.Position{Line: 0, Character: 0}},
-				{1, protocol.Position{Line: 0, Character: 1}}, // At \r
-				{2, protocol.Position{Line: 0, Character: 1}}, // At \n (should be before EOL)
-				{3, protocol.Position{Line: 1, Character: 0}}, // After \r\n
-				{4, protocol.Position{Line: 1, Character: 1}}, // At 'b'
+				{0, lsp.Position{Line: 0, Character: 0}},
+				{1, lsp.Position{Line: 0, Character: 1}}, // At \r
+				{2, lsp.Position{Line: 0, Character: 1}}, // At \n (should be before EOL)
+				{3, lsp.Position{Line: 1, Character: 0}}, // After \r\n
+				{4, lsp.Position{Line: 1, Character: 1}}, // At 'b'
 			},
 		},
 		{
@@ -136,12 +136,12 @@ func TestPositionAtEdgeCases(t *testing.T) {
 			content: "\n\n\n",
 			tests: []struct {
 				offset   int
-				expected protocol.Position
+				expected lsp.Position
 			}{
-				{0, protocol.Position{Line: 0, Character: 0}}, // At first \n
-				{1, protocol.Position{Line: 1, Character: 0}}, // At second \n
-				{2, protocol.Position{Line: 2, Character: 0}}, // At third \n
-				{3, protocol.Position{Line: 3, Character: 0}}, // After all \n
+				{0, lsp.Position{Line: 0, Character: 0}}, // At first \n
+				{1, lsp.Position{Line: 1, Character: 0}}, // At second \n
+				{2, lsp.Position{Line: 2, Character: 0}}, // At third \n
+				{3, lsp.Position{Line: 3, Character: 0}}, // After all \n
 			},
 		},
 	}
@@ -171,16 +171,16 @@ func TestOffsetAt(t *testing.T) {
 	}
 
 	tests := []struct {
-		position protocol.Position
+		position lsp.Position
 		expected int
 	}{
-		{protocol.Position{Line: 0, Character: 0}, 0},
-		{protocol.Position{Line: 0, Character: 1}, 1},
-		{protocol.Position{Line: 0, Character: 2}, 2},
-		{protocol.Position{Line: 1, Character: 0}, 3},
-		{protocol.Position{Line: 1, Character: 1}, 4},
-		{protocol.Position{Line: 1, Character: 2}, 5},
-		{protocol.Position{Line: 2, Character: 0}, 5}, // Beyond end
+		{lsp.Position{Line: 0, Character: 0}, 0},
+		{lsp.Position{Line: 0, Character: 1}, 1},
+		{lsp.Position{Line: 0, Character: 2}, 2},
+		{lsp.Position{Line: 1, Character: 0}, 3},
+		{lsp.Position{Line: 1, Character: 1}, 4},
+		{lsp.Position{Line: 1, Character: 2}, 5},
+		{lsp.Position{Line: 2, Character: 0}, 5}, // Beyond end
 	}
 
 	for _, test := range tests {
@@ -199,9 +199,9 @@ func TestTextWithRange(t *testing.T) {
 	}
 
 	// Get substring
-	r := &protocol.Range{
-		Start: protocol.Position{Line: 0, Character: 1},
-		End:   protocol.Position{Line: 1, Character: 2},
+	r := &lsp.Range{
+		Start: lsp.Position{Line: 0, Character: 1},
+		End:   lsp.Position{Line: 1, Character: 2},
 	}
 
 	text := doc.Text(r)

@@ -7,13 +7,13 @@ package textdoc
 import (
 	"errors"
 
-	"github.com/TypeFox/go-lsp/protocol"
+	"typefox.dev/lsp"
 )
 
 // File represents an immutable text document read from the file system.
 // It implements Handle but does not support modifications.
 type File struct {
-	uri         protocol.DocumentURI
+	uri         lsp.DocumentURI
 	languageID  string
 	version     int32
 	content     []byte
@@ -22,7 +22,7 @@ type File struct {
 
 // NewFile creates a new text document file.
 // The content parameter is accepted as a string and stored internally as bytes.
-func NewFile(uri protocol.DocumentURI, languageID string, version int32, content string) (*File, error) {
+func NewFile(uri lsp.DocumentURI, languageID string, version int32, content string) (*File, error) {
 	if uri == "" {
 		return nil, errors.New("textdoc: uri cannot be empty")
 	}
@@ -40,7 +40,7 @@ func NewFile(uri protocol.DocumentURI, languageID string, version int32, content
 }
 
 // URI returns the document URI.
-func (f *File) URI() protocol.DocumentURI {
+func (f *File) URI() lsp.DocumentURI {
 	return f.uri
 }
 
@@ -61,7 +61,7 @@ func (f *File) Content() []byte {
 
 // Text returns the text content or a substring if range is provided.
 // This is a convenience method that returns a string instead of []byte.
-func (f *File) Text(r *protocol.Range) string {
+func (f *File) Text(r *lsp.Range) string {
 	if r != nil {
 		start := f.offsetAt(r.Start)
 		end := f.offsetAt(r.End)
@@ -71,7 +71,7 @@ func (f *File) Text(r *protocol.Range) string {
 }
 
 // PositionAt converts a zero-based offset to a position.
-func (f *File) PositionAt(offset int) protocol.Position {
+func (f *File) PositionAt(offset int) lsp.Position {
 	offset = max(min(offset, len(f.content)), 0)
 	lineOffsets := f.getLineOffsets()
 
@@ -80,7 +80,7 @@ func (f *File) PositionAt(offset int) protocol.Position {
 	if len(lineOffsets) == 1 {
 		// Only one line, so we're on line 0
 		offset = f.ensureBeforeEOL(offset, lineOffsets[0])
-		return protocol.Position{
+		return lsp.Position{
 			Line:      0,
 			Character: uint32(offset - lineOffsets[0]),
 		}
@@ -107,19 +107,19 @@ func (f *File) PositionAt(offset int) protocol.Position {
 	}
 
 	offset = f.ensureBeforeEOL(offset, lineOffsets[line])
-	return protocol.Position{
+	return lsp.Position{
 		Line:      uint32(line),
 		Character: uint32(offset - lineOffsets[line]),
 	}
 }
 
 // OffsetAt converts a position to a zero-based offset.
-func (f *File) OffsetAt(position protocol.Position) int {
+func (f *File) OffsetAt(position lsp.Position) int {
 	return f.offsetAt(position)
 }
 
 // offsetAt is the internal implementation of OffsetAt.
-func (f *File) offsetAt(position protocol.Position) int {
+func (f *File) offsetAt(position lsp.Position) int {
 	lineOffsets := f.getLineOffsets()
 
 	if int(position.Line) >= len(lineOffsets) {

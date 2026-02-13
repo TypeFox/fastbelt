@@ -5,30 +5,30 @@
 package workspace
 
 import (
-	"github.com/TypeFox/go-lsp/protocol"
 	core "typefox.dev/fastbelt"
+	"typefox.dev/lsp"
 )
 
 // CreateLexerDiagnostics creates diagnostics from lexer errors.
-func CreateLexerDiagnostics(doc *core.Document) []protocol.Diagnostic {
+func CreateLexerDiagnostics(doc *core.Document) []lsp.Diagnostic {
 	if len(doc.LexerErrors) == 0 {
-		return []protocol.Diagnostic{}
+		return []lsp.Diagnostic{}
 	}
 
-	diagnostics := make([]protocol.Diagnostic, 0, len(doc.LexerErrors))
+	diagnostics := make([]lsp.Diagnostic, 0, len(doc.LexerErrors))
 	for _, lexErr := range doc.LexerErrors {
-		diagnostics = append(diagnostics, protocol.Diagnostic{
-			Range: protocol.Range{
-				Start: protocol.Position{
+		diagnostics = append(diagnostics, lsp.Diagnostic{
+			Range: lsp.Range{
+				Start: lsp.Position{
 					Line:      uint32(lexErr.StartLine),
 					Character: uint32(lexErr.StartColumn),
 				},
-				End: protocol.Position{
+				End: lsp.Position{
 					Line:      uint32(lexErr.EndLine),
 					Character: uint32(lexErr.EndColumn),
 				},
 			},
-			Severity: protocol.SeverityError,
+			Severity: lsp.SeverityError,
 			Message:  lexErr.Msg,
 		})
 	}
@@ -36,29 +36,29 @@ func CreateLexerDiagnostics(doc *core.Document) []protocol.Diagnostic {
 }
 
 // CreateParserDiagnostics creates diagnostics from parser errors.
-func CreateParserDiagnostics(doc *core.Document) []protocol.Diagnostic {
+func CreateParserDiagnostics(doc *core.Document) []lsp.Diagnostic {
 	if len(doc.ParserErrors) == 0 {
-		return []protocol.Diagnostic{}
+		return []lsp.Diagnostic{}
 	}
 	end := doc.TextDoc.PositionAt(len(doc.TextDoc.Content()))
-	diagnostics := make([]protocol.Diagnostic, 0, len(doc.ParserErrors))
+	diagnostics := make([]lsp.Diagnostic, 0, len(doc.ParserErrors))
 	for _, err := range doc.ParserErrors {
 		token := err.Token
 		if token == nil {
-			eofDiagnostic := protocol.Diagnostic{
-				Range: protocol.Range{
+			eofDiagnostic := lsp.Diagnostic{
+				Range: lsp.Range{
 					Start: end,
 					End:   end,
 				},
-				Severity: protocol.SeverityError,
+				Severity: lsp.SeverityError,
 				Message:  err.Msg,
 			}
 			diagnostics = append(diagnostics, eofDiagnostic)
 		} else {
 			tokenRange := token.Segment.Range.LspRange()
-			diagnostic := protocol.Diagnostic{
+			diagnostic := lsp.Diagnostic{
 				Range:    tokenRange,
-				Severity: protocol.SeverityError,
+				Severity: lsp.SeverityError,
 				Message:  err.Msg,
 			}
 			diagnostics = append(diagnostics, diagnostic)
@@ -67,15 +67,15 @@ func CreateParserDiagnostics(doc *core.Document) []protocol.Diagnostic {
 	return diagnostics
 }
 
-func CreateLinkerDiagnostics(doc *core.Document) []protocol.Diagnostic {
-	diagnostics := []protocol.Diagnostic{}
+func CreateLinkerDiagnostics(doc *core.Document) []lsp.Diagnostic {
+	diagnostics := []lsp.Diagnostic{}
 	for _, ref := range doc.References {
 		err := ref.Error()
 		segment := ref.Segment()
 		if err != nil && segment != nil {
-			diagnostics = append(diagnostics, protocol.Diagnostic{
+			diagnostics = append(diagnostics, lsp.Diagnostic{
 				Range:    segment.Range.LspRange(),
-				Severity: protocol.DiagnosticSeverity(err.Severity),
+				Severity: lsp.DiagnosticSeverity(err.Severity),
 				Message:  err.Msg,
 			})
 		}

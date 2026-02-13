@@ -7,7 +7,7 @@ package textdoc
 import (
 	"sync"
 
-	"github.com/TypeFox/go-lsp/protocol"
+	"typefox.dev/lsp"
 )
 
 // Store is responsible for storing cached file contents and overlays.
@@ -15,47 +15,47 @@ import (
 type Store interface {
 	// Get retrieves a handle by URI, checking overlays first, then files.
 	// Returns nil if neither an overlay nor a file is stored.
-	Get(uri protocol.DocumentURI) Handle
+	Get(uri lsp.DocumentURI) Handle
 	// GetOverlay retrieves an overlay by URI. Returns nil if the overlay is not stored.
-	GetOverlay(uri protocol.DocumentURI) *Overlay
+	GetOverlay(uri lsp.DocumentURI) *Overlay
 	// GetFile retrieves a file by URI. Returns nil if the file is not stored.
-	GetFile(uri protocol.DocumentURI) *File
+	GetFile(uri lsp.DocumentURI) *File
 	// AddOverlay adds or updates an overlay in the store.
 	AddOverlay(overlay *Overlay)
 	// AddFile adds or updates a file in the store.
 	AddFile(file *File)
 	// RemoveOverlay removes an overlay from the store by URI.
-	RemoveOverlay(uri protocol.DocumentURI)
+	RemoveOverlay(uri lsp.DocumentURI)
 	// RemoveFile removes a file from the store by URI.
-	RemoveFile(uri protocol.DocumentURI)
+	RemoveFile(uri lsp.DocumentURI)
 	// AllOverlays returns all stored overlays.
 	AllOverlays() []*Overlay
 	// AllFiles returns all stored files.
 	AllFiles() []*File
 	// KeysOverlays returns the URIs of all stored overlays.
-	KeysOverlays() []protocol.DocumentURI
+	KeysOverlays() []lsp.DocumentURI
 	// KeysFiles returns the URIs of all stored files.
-	KeysFiles() []protocol.DocumentURI
+	KeysFiles() []lsp.DocumentURI
 }
 
 // DefaultStore is an in-memory implementation of Store that manages files and overlays.
 type DefaultStore struct {
 	mu       sync.RWMutex
-	overlays map[protocol.DocumentURI]*Overlay
-	files    map[protocol.DocumentURI]*File
+	overlays map[lsp.DocumentURI]*Overlay
+	files    map[lsp.DocumentURI]*File
 }
 
 // NewDefaultStore creates a new store for files and overlays.
 func NewDefaultStore() Store {
 	return &DefaultStore{
-		overlays: make(map[protocol.DocumentURI]*Overlay),
-		files:    make(map[protocol.DocumentURI]*File),
+		overlays: make(map[lsp.DocumentURI]*Overlay),
+		files:    make(map[lsp.DocumentURI]*File),
 	}
 }
 
 // Get retrieves a handle by URI, checking overlays first, then files.
 // Returns nil if neither an overlay nor a file is stored.
-func (s *DefaultStore) Get(uri protocol.DocumentURI) Handle {
+func (s *DefaultStore) Get(uri lsp.DocumentURI) Handle {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if overlay, ok := s.overlays[uri]; ok {
@@ -68,14 +68,14 @@ func (s *DefaultStore) Get(uri protocol.DocumentURI) Handle {
 }
 
 // GetOverlay retrieves an overlay by URI. Returns nil if the overlay is not stored.
-func (s *DefaultStore) GetOverlay(uri protocol.DocumentURI) *Overlay {
+func (s *DefaultStore) GetOverlay(uri lsp.DocumentURI) *Overlay {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.overlays[uri]
 }
 
 // GetFile retrieves a file by URI. Returns nil if the file is not stored.
-func (s *DefaultStore) GetFile(uri protocol.DocumentURI) *File {
+func (s *DefaultStore) GetFile(uri lsp.DocumentURI) *File {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.files[uri]
@@ -96,14 +96,14 @@ func (s *DefaultStore) AddFile(file *File) {
 }
 
 // RemoveOverlay removes an overlay from the store by URI.
-func (s *DefaultStore) RemoveOverlay(uri protocol.DocumentURI) {
+func (s *DefaultStore) RemoveOverlay(uri lsp.DocumentURI) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.overlays, uri)
 }
 
 // RemoveFile removes a file from the store by URI.
-func (s *DefaultStore) RemoveFile(uri protocol.DocumentURI) {
+func (s *DefaultStore) RemoveFile(uri lsp.DocumentURI) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.files, uri)
@@ -134,11 +134,11 @@ func (s *DefaultStore) AllFiles() []*File {
 }
 
 // KeysOverlays returns the URIs of all stored overlays.
-func (s *DefaultStore) KeysOverlays() []protocol.DocumentURI {
+func (s *DefaultStore) KeysOverlays() []lsp.DocumentURI {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	keys := make([]protocol.DocumentURI, 0, len(s.overlays))
+	keys := make([]lsp.DocumentURI, 0, len(s.overlays))
 	for uri := range s.overlays {
 		keys = append(keys, uri)
 	}
@@ -146,11 +146,11 @@ func (s *DefaultStore) KeysOverlays() []protocol.DocumentURI {
 }
 
 // KeysFiles returns the URIs of all stored files.
-func (s *DefaultStore) KeysFiles() []protocol.DocumentURI {
+func (s *DefaultStore) KeysFiles() []lsp.DocumentURI {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	keys := make([]protocol.DocumentURI, 0, len(s.files))
+	keys := make([]lsp.DocumentURI, 0, len(s.files))
 	for uri := range s.files {
 		keys = append(keys, uri)
 	}

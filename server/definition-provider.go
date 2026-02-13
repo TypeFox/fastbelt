@@ -7,8 +7,8 @@ package server
 import (
 	"context"
 
-	"github.com/TypeFox/go-lsp/protocol"
 	core "typefox.dev/fastbelt"
+	"typefox.dev/lsp"
 )
 
 type DefinitionProvider interface {
@@ -16,7 +16,7 @@ type DefinitionProvider interface {
 	// Also, maybe add a separate params struct that doesn't directly depend on the lsp lib
 	// TODO: Use `LocationLink` instead of `Location` to support more advanced scenarios
 	// Requires a change in the LSP library
-	HandleDefinitionRequest(ctx context.Context, params *protocol.DefinitionParams) ([]protocol.Location, error)
+	HandleDefinitionRequest(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.Location, error)
 }
 
 type DefaultDefinitionProvider struct {
@@ -27,7 +27,7 @@ func NewDefaultDefinitionProvider(srv ServerSrvCont) DefinitionProvider {
 	return &DefaultDefinitionProvider{srv: srv}
 }
 
-func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context, params *protocol.DefinitionParams) ([]protocol.Location, error) {
+func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.Location, error) {
 	uri := core.ParseURI(string(params.TextDocument.URI))
 	doc := dp.srv.Workspace().DocumentManager.Get(uri)
 	if doc == nil {
@@ -49,9 +49,9 @@ func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context
 	if target == nil || target.NameSegment == nil {
 		return nil, nil // No target description
 	}
-	link := protocol.Location{
+	link := lsp.Location{
 		URI:   target.URI.DocumentURI(),
 		Range: target.NameSegment.Range.LspRange(),
 	}
-	return []protocol.Location{link}, nil
+	return []lsp.Location{link}, nil
 }

@@ -9,24 +9,24 @@ import (
 	"io"
 	"os"
 
-	"github.com/TypeFox/go-lsp/protocol"
 	"golang.org/x/exp/jsonrpc2"
 	"typefox.dev/fastbelt/workspace"
+	"typefox.dev/lsp"
 )
 
 // LanguageServerHandlers contains the handlers for various LSP requests.
 // TODO extract these handlers into separate services instead of having them all here.
 type LanguageServerHandlers struct {
 	// Initialized handles the initialized notification
-	Initialized func(ctx context.Context, params *protocol.InitializedParams) error
+	Initialized func(ctx context.Context, params *lsp.InitializedParams) error
 	// Completion handles textDocument/completion requests
-	Completion func(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error)
+	Completion func(ctx context.Context, params *lsp.CompletionParams) (*lsp.CompletionList, error)
 	// Shutdown handles the shutdown request - server should shut down but not exit
 	Shutdown func(ctx context.Context) error
 }
 
 type LanguageServer interface {
-	protocol.Server
+	lsp.Server
 }
 
 // DefaultLanguageServer implements the LanguageServer interface
@@ -35,27 +35,27 @@ type DefaultLanguageServer struct {
 }
 
 // NewDefaultLanguageServer creates a new default language server.
-func NewDefaultLanguageServer(srv ServerSrvCont) LanguageServer {
+func NewDefaultLanguageServer(srv ServerSrvCont) *DefaultLanguageServer {
 	return &DefaultLanguageServer{srv: srv}
 }
 
-func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *protocol.ParamInitialize) (*protocol.InitializeResult, error) {
+func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.ParamInitialize) (*lsp.InitializeResult, error) {
 	// Default implementation with basic capabilities
 	definitionProvider := s.srv.Server().DefinitionProvider
-	return &protocol.InitializeResult{
-		Capabilities: protocol.ServerCapabilities{
-			TextDocumentSync: protocol.Incremental,
-			CompletionProvider: &protocol.CompletionOptions{
+	return &lsp.InitializeResult{
+		Capabilities: lsp.ServerCapabilities{
+			TextDocumentSync: lsp.Incremental,
+			CompletionProvider: &lsp.CompletionOptions{
 				ResolveProvider: false,
 			},
-			DefinitionProvider: &protocol.Or_ServerCapabilities_definitionProvider{
+			DefinitionProvider: &lsp.Or_ServerCapabilities_definitionProvider{
 				Value: definitionProvider != nil,
 			},
 		},
 	}, nil
 }
 
-func (s *DefaultLanguageServer) Initialized(ctx context.Context, params *protocol.InitializedParams) error {
+func (s *DefaultLanguageServer) Initialized(ctx context.Context, params *lsp.InitializedParams) error {
 	handlers := s.srv.Server().LanguageServerHandlers
 	if handlers != nil && handlers.Initialized != nil {
 		return handlers.Initialized(ctx, params)
@@ -80,249 +80,249 @@ func (s *DefaultLanguageServer) Exit(ctx context.Context) error {
 	return nil
 }
 
-func (s *DefaultLanguageServer) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) error {
+func (s *DefaultLanguageServer) DidOpen(ctx context.Context, params *lsp.DidOpenTextDocumentParams) error {
 	if s.srv.Server().DocumentSyncher != nil {
 		s.srv.Server().DocumentSyncher.DidOpen(ctx, params)
 	}
 	return nil
 }
 
-func (s *DefaultLanguageServer) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) error {
+func (s *DefaultLanguageServer) DidChange(ctx context.Context, params *lsp.DidChangeTextDocumentParams) error {
 	if s.srv.Server().DocumentSyncher != nil {
 		s.srv.Server().DocumentSyncher.DidChange(ctx, params)
 	}
 	return nil
 }
 
-func (s *DefaultLanguageServer) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) error {
+func (s *DefaultLanguageServer) DidClose(ctx context.Context, params *lsp.DidCloseTextDocumentParams) error {
 	if s.srv.Server().DocumentSyncher != nil {
 		s.srv.Server().DocumentSyncher.DidClose(ctx, params)
 	}
 	return nil
 }
 
-func (s *DefaultLanguageServer) Completion(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
+func (s *DefaultLanguageServer) Completion(ctx context.Context, params *lsp.CompletionParams) (*lsp.CompletionList, error) {
 	handlers := s.srv.Server().LanguageServerHandlers
 	if handlers != nil && handlers.Completion != nil {
 		return handlers.Completion(ctx, params)
 	}
 	// Default empty completion list
-	return &protocol.CompletionList{
+	return &lsp.CompletionList{
 		IsIncomplete: false,
-		Items:        []protocol.CompletionItem{},
+		Items:        []lsp.CompletionItem{},
 	}, nil
 }
 
 // Implement other required Server interface methods with no-op implementations
-func (s *DefaultLanguageServer) Progress(ctx context.Context, params *protocol.ProgressParams) error {
+func (s *DefaultLanguageServer) Progress(ctx context.Context, params *lsp.ProgressParams) error {
 	return nil
 }
-func (s *DefaultLanguageServer) SetTrace(ctx context.Context, params *protocol.SetTraceParams) error {
+func (s *DefaultLanguageServer) SetTrace(ctx context.Context, params *lsp.SetTraceParams) error {
 	return nil
 }
-func (s *DefaultLanguageServer) IncomingCalls(ctx context.Context, params *protocol.CallHierarchyIncomingCallsParams) ([]protocol.CallHierarchyIncomingCall, error) {
+func (s *DefaultLanguageServer) IncomingCalls(ctx context.Context, params *lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) OutgoingCalls(ctx context.Context, params *protocol.CallHierarchyOutgoingCallsParams) ([]protocol.CallHierarchyOutgoingCall, error) {
+func (s *DefaultLanguageServer) OutgoingCalls(ctx context.Context, params *lsp.CallHierarchyOutgoingCallsParams) ([]lsp.CallHierarchyOutgoingCall, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) ResolveCodeAction(ctx context.Context, params *protocol.CodeAction) (*protocol.CodeAction, error) {
+func (s *DefaultLanguageServer) ResolveCodeAction(ctx context.Context, params *lsp.CodeAction) (*lsp.CodeAction, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) ResolveCodeLens(ctx context.Context, params *protocol.CodeLens) (*protocol.CodeLens, error) {
+func (s *DefaultLanguageServer) ResolveCodeLens(ctx context.Context, params *lsp.CodeLens) (*lsp.CodeLens, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) ResolveCompletionItem(ctx context.Context, params *protocol.CompletionItem) (*protocol.CompletionItem, error) {
+func (s *DefaultLanguageServer) ResolveCompletionItem(ctx context.Context, params *lsp.CompletionItem) (*lsp.CompletionItem, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) ResolveDocumentLink(ctx context.Context, params *protocol.DocumentLink) (*protocol.DocumentLink, error) {
+func (s *DefaultLanguageServer) ResolveDocumentLink(ctx context.Context, params *lsp.DocumentLink) (*lsp.DocumentLink, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) Resolve(ctx context.Context, params *protocol.InlayHint) (*protocol.InlayHint, error) {
+func (s *DefaultLanguageServer) Resolve(ctx context.Context, params *lsp.InlayHint) (*lsp.InlayHint, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) DidChangeNotebookDocument(ctx context.Context, params *protocol.DidChangeNotebookDocumentParams) error {
+func (s *DefaultLanguageServer) DidChangeNotebookDocument(ctx context.Context, params *lsp.DidChangeNotebookDocumentParams) error {
 	return nil
 }
-func (s *DefaultLanguageServer) DidCloseNotebookDocument(ctx context.Context, params *protocol.DidCloseNotebookDocumentParams) error {
+func (s *DefaultLanguageServer) DidCloseNotebookDocument(ctx context.Context, params *lsp.DidCloseNotebookDocumentParams) error {
 	return nil
 }
-func (s *DefaultLanguageServer) DidOpenNotebookDocument(ctx context.Context, params *protocol.DidOpenNotebookDocumentParams) error {
+func (s *DefaultLanguageServer) DidOpenNotebookDocument(ctx context.Context, params *lsp.DidOpenNotebookDocumentParams) error {
 	return nil
 }
-func (s *DefaultLanguageServer) DidSaveNotebookDocument(ctx context.Context, params *protocol.DidSaveNotebookDocumentParams) error {
+func (s *DefaultLanguageServer) DidSaveNotebookDocument(ctx context.Context, params *lsp.DidSaveNotebookDocumentParams) error {
 	return nil
 }
-func (s *DefaultLanguageServer) CodeAction(ctx context.Context, params *protocol.CodeActionParams) ([]protocol.CodeAction, error) {
+func (s *DefaultLanguageServer) CodeAction(ctx context.Context, params *lsp.CodeActionParams) ([]lsp.CodeAction, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) CodeLens(ctx context.Context, params *protocol.CodeLensParams) ([]protocol.CodeLens, error) {
+func (s *DefaultLanguageServer) CodeLens(ctx context.Context, params *lsp.CodeLensParams) ([]lsp.CodeLens, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) ColorPresentation(ctx context.Context, params *protocol.ColorPresentationParams) ([]protocol.ColorPresentation, error) {
+func (s *DefaultLanguageServer) ColorPresentation(ctx context.Context, params *lsp.ColorPresentationParams) ([]lsp.ColorPresentation, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) Declaration(ctx context.Context, params *protocol.DeclarationParams) (*protocol.Or_textDocument_declaration, error) {
+func (s *DefaultLanguageServer) Declaration(ctx context.Context, params *lsp.DeclarationParams) (*lsp.Or_textDocument_declaration, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) Definition(ctx context.Context, params *protocol.DefinitionParams) ([]protocol.Location, error) {
+func (s *DefaultLanguageServer) Definition(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.Location, error) {
 	definitionProvider := s.srv.Server().DefinitionProvider
 	if definitionProvider != nil {
 		return definitionProvider.HandleDefinitionRequest(ctx, params)
 	}
 	return nil, nil
 }
-func (s *DefaultLanguageServer) Diagnostic(ctx context.Context, params *protocol.DocumentDiagnosticParams) (*protocol.DocumentDiagnosticReport, error) {
+func (s *DefaultLanguageServer) Diagnostic(ctx context.Context, params *lsp.DocumentDiagnosticParams) (*lsp.DocumentDiagnosticReport, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams) error {
+func (s *DefaultLanguageServer) DidSave(ctx context.Context, params *lsp.DidSaveTextDocumentParams) error {
 	if s.srv.Server().DocumentSyncher != nil {
 		s.srv.Server().DocumentSyncher.DidSave(ctx, params)
 	}
 	return nil
 }
-func (s *DefaultLanguageServer) DocumentColor(ctx context.Context, params *protocol.DocumentColorParams) ([]protocol.ColorInformation, error) {
+func (s *DefaultLanguageServer) DocumentColor(ctx context.Context, params *lsp.DocumentColorParams) ([]lsp.ColorInformation, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) DocumentHighlight(ctx context.Context, params *protocol.DocumentHighlightParams) ([]protocol.DocumentHighlight, error) {
+func (s *DefaultLanguageServer) DocumentHighlight(ctx context.Context, params *lsp.DocumentHighlightParams) ([]lsp.DocumentHighlight, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) DocumentLink(ctx context.Context, params *protocol.DocumentLinkParams) ([]protocol.DocumentLink, error) {
+func (s *DefaultLanguageServer) DocumentLink(ctx context.Context, params *lsp.DocumentLinkParams) ([]lsp.DocumentLink, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) DocumentSymbol(ctx context.Context, params *protocol.DocumentSymbolParams) ([]any, error) {
+func (s *DefaultLanguageServer) DocumentSymbol(ctx context.Context, params *lsp.DocumentSymbolParams) ([]any, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) FoldingRange(ctx context.Context, params *protocol.FoldingRangeParams) ([]protocol.FoldingRange, error) {
+func (s *DefaultLanguageServer) FoldingRange(ctx context.Context, params *lsp.FoldingRangeParams) ([]lsp.FoldingRange, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) Formatting(ctx context.Context, params *protocol.DocumentFormattingParams) ([]protocol.TextEdit, error) {
+func (s *DefaultLanguageServer) Formatting(ctx context.Context, params *lsp.DocumentFormattingParams) ([]lsp.TextEdit, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) Hover(ctx context.Context, params *protocol.HoverParams) (*protocol.Hover, error) {
+func (s *DefaultLanguageServer) Hover(ctx context.Context, params *lsp.HoverParams) (*lsp.Hover, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) Implementation(ctx context.Context, params *protocol.ImplementationParams) ([]protocol.Location, error) {
+func (s *DefaultLanguageServer) Implementation(ctx context.Context, params *lsp.ImplementationParams) ([]lsp.Location, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) InlayHint(ctx context.Context, params *protocol.InlayHintParams) ([]protocol.InlayHint, error) {
+func (s *DefaultLanguageServer) InlayHint(ctx context.Context, params *lsp.InlayHintParams) ([]lsp.InlayHint, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) InlineCompletion(ctx context.Context, params *protocol.InlineCompletionParams) (*protocol.Or_Result_textDocument_inlineCompletion, error) {
+func (s *DefaultLanguageServer) InlineCompletion(ctx context.Context, params *lsp.InlineCompletionParams) (*lsp.Or_Result_textDocument_inlineCompletion, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) InlineValue(ctx context.Context, params *protocol.InlineValueParams) ([]protocol.InlineValue, error) {
+func (s *DefaultLanguageServer) InlineValue(ctx context.Context, params *lsp.InlineValueParams) ([]lsp.InlineValue, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) LinkedEditingRange(ctx context.Context, params *protocol.LinkedEditingRangeParams) (*protocol.LinkedEditingRanges, error) {
+func (s *DefaultLanguageServer) LinkedEditingRange(ctx context.Context, params *lsp.LinkedEditingRangeParams) (*lsp.LinkedEditingRanges, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) DiagnosticWorkspace(ctx context.Context, params *protocol.WorkspaceDiagnosticParams) (*protocol.WorkspaceDiagnosticReport, error) {
+func (s *DefaultLanguageServer) DiagnosticWorkspace(ctx context.Context, params *lsp.WorkspaceDiagnosticParams) (*lsp.WorkspaceDiagnosticReport, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) DidChangeConfiguration(ctx context.Context, params *protocol.DidChangeConfigurationParams) error {
+func (s *DefaultLanguageServer) DidChangeConfiguration(ctx context.Context, params *lsp.DidChangeConfigurationParams) error {
 	return nil
 }
-func (s *DefaultLanguageServer) DidChangeWatchedFiles(ctx context.Context, params *protocol.DidChangeWatchedFilesParams) error {
+func (s *DefaultLanguageServer) DidChangeWatchedFiles(ctx context.Context, params *lsp.DidChangeWatchedFilesParams) error {
 	return nil
 }
-func (s *DefaultLanguageServer) DidChangeWorkspaceFolders(ctx context.Context, params *protocol.DidChangeWorkspaceFoldersParams) error {
+func (s *DefaultLanguageServer) DidChangeWorkspaceFolders(ctx context.Context, params *lsp.DidChangeWorkspaceFoldersParams) error {
 	return nil
 }
-func (s *DefaultLanguageServer) DidCreateFiles(ctx context.Context, params *protocol.CreateFilesParams) error {
+func (s *DefaultLanguageServer) DidCreateFiles(ctx context.Context, params *lsp.CreateFilesParams) error {
 	return nil
 }
-func (s *DefaultLanguageServer) DidDeleteFiles(ctx context.Context, params *protocol.DeleteFilesParams) error {
+func (s *DefaultLanguageServer) DidDeleteFiles(ctx context.Context, params *lsp.DeleteFilesParams) error {
 	return nil
 }
-func (s *DefaultLanguageServer) DidRenameFiles(ctx context.Context, params *protocol.RenameFilesParams) error {
+func (s *DefaultLanguageServer) DidRenameFiles(ctx context.Context, params *lsp.RenameFilesParams) error {
 	return nil
 }
-func (s *DefaultLanguageServer) ExecuteCommand(ctx context.Context, params *protocol.ExecuteCommandParams) (any, error) {
+func (s *DefaultLanguageServer) ExecuteCommand(ctx context.Context, params *lsp.ExecuteCommandParams) (any, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) Symbol(ctx context.Context, params *protocol.WorkspaceSymbolParams) ([]protocol.SymbolInformation, error) {
+func (s *DefaultLanguageServer) Symbol(ctx context.Context, params *lsp.WorkspaceSymbolParams) ([]lsp.SymbolInformation, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) TextDocumentContent(ctx context.Context, params *protocol.TextDocumentContentParams) (*string, error) {
+func (s *DefaultLanguageServer) TextDocumentContent(ctx context.Context, params *lsp.TextDocumentContentParams) (*lsp.TextDocumentContentResult, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) WillCreateFiles(ctx context.Context, params *protocol.CreateFilesParams) (*protocol.WorkspaceEdit, error) {
+func (s *DefaultLanguageServer) WillCreateFiles(ctx context.Context, params *lsp.CreateFilesParams) (*lsp.WorkspaceEdit, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) WillDeleteFiles(ctx context.Context, params *protocol.DeleteFilesParams) (*protocol.WorkspaceEdit, error) {
+func (s *DefaultLanguageServer) WillDeleteFiles(ctx context.Context, params *lsp.DeleteFilesParams) (*lsp.WorkspaceEdit, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) WillRenameFiles(ctx context.Context, params *protocol.RenameFilesParams) (*protocol.WorkspaceEdit, error) {
+func (s *DefaultLanguageServer) WillRenameFiles(ctx context.Context, params *lsp.RenameFilesParams) (*lsp.WorkspaceEdit, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) ResolveWorkspaceSymbol(ctx context.Context, params *protocol.WorkspaceSymbol) (*protocol.WorkspaceSymbol, error) {
+func (s *DefaultLanguageServer) ResolveWorkspaceSymbol(ctx context.Context, params *lsp.WorkspaceSymbol) (*lsp.WorkspaceSymbol, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) Moniker(ctx context.Context, params *protocol.MonikerParams) ([]protocol.Moniker, error) {
+func (s *DefaultLanguageServer) Moniker(ctx context.Context, params *lsp.MonikerParams) ([]lsp.Moniker, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) OnTypeFormatting(ctx context.Context, params *protocol.DocumentOnTypeFormattingParams) ([]protocol.TextEdit, error) {
+func (s *DefaultLanguageServer) OnTypeFormatting(ctx context.Context, params *lsp.DocumentOnTypeFormattingParams) ([]lsp.TextEdit, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) PrepareCallHierarchy(ctx context.Context, params *protocol.CallHierarchyPrepareParams) ([]protocol.CallHierarchyItem, error) {
+func (s *DefaultLanguageServer) PrepareCallHierarchy(ctx context.Context, params *lsp.CallHierarchyPrepareParams) ([]lsp.CallHierarchyItem, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) PrepareRename(ctx context.Context, params *protocol.PrepareRenameParams) (*protocol.PrepareRenameResult, error) {
+func (s *DefaultLanguageServer) PrepareRename(ctx context.Context, params *lsp.PrepareRenameParams) (*lsp.PrepareRenameResult, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) PrepareTypeHierarchy(ctx context.Context, params *protocol.TypeHierarchyPrepareParams) ([]protocol.TypeHierarchyItem, error) {
+func (s *DefaultLanguageServer) PrepareTypeHierarchy(ctx context.Context, params *lsp.TypeHierarchyPrepareParams) ([]lsp.TypeHierarchyItem, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) RangeFormatting(ctx context.Context, params *protocol.DocumentRangeFormattingParams) ([]protocol.TextEdit, error) {
+func (s *DefaultLanguageServer) RangeFormatting(ctx context.Context, params *lsp.DocumentRangeFormattingParams) ([]lsp.TextEdit, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) RangesFormatting(ctx context.Context, params *protocol.DocumentRangesFormattingParams) ([]protocol.TextEdit, error) {
+func (s *DefaultLanguageServer) RangesFormatting(ctx context.Context, params *lsp.DocumentRangesFormattingParams) ([]lsp.TextEdit, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) References(ctx context.Context, params *protocol.ReferenceParams) ([]protocol.Location, error) {
+func (s *DefaultLanguageServer) References(ctx context.Context, params *lsp.ReferenceParams) ([]lsp.Location, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) Rename(ctx context.Context, params *protocol.RenameParams) (*protocol.WorkspaceEdit, error) {
+func (s *DefaultLanguageServer) Rename(ctx context.Context, params *lsp.RenameParams) (*lsp.WorkspaceEdit, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) SelectionRange(ctx context.Context, params *protocol.SelectionRangeParams) ([]protocol.SelectionRange, error) {
+func (s *DefaultLanguageServer) SelectionRange(ctx context.Context, params *lsp.SelectionRangeParams) ([]lsp.SelectionRange, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) SemanticTokensFull(ctx context.Context, params *protocol.SemanticTokensParams) (*protocol.SemanticTokens, error) {
+func (s *DefaultLanguageServer) SemanticTokensFull(ctx context.Context, params *lsp.SemanticTokensParams) (*lsp.SemanticTokens, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) SemanticTokensFullDelta(ctx context.Context, params *protocol.SemanticTokensDeltaParams) (any, error) {
+func (s *DefaultLanguageServer) SemanticTokensFullDelta(ctx context.Context, params *lsp.SemanticTokensDeltaParams) (any, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) SemanticTokensRange(ctx context.Context, params *protocol.SemanticTokensRangeParams) (*protocol.SemanticTokens, error) {
+func (s *DefaultLanguageServer) SemanticTokensRange(ctx context.Context, params *lsp.SemanticTokensRangeParams) (*lsp.SemanticTokens, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) SignatureHelp(ctx context.Context, params *protocol.SignatureHelpParams) (*protocol.SignatureHelp, error) {
+func (s *DefaultLanguageServer) SignatureHelp(ctx context.Context, params *lsp.SignatureHelpParams) (*lsp.SignatureHelp, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) TypeDefinition(ctx context.Context, params *protocol.TypeDefinitionParams) ([]protocol.Location, error) {
+func (s *DefaultLanguageServer) TypeDefinition(ctx context.Context, params *lsp.TypeDefinitionParams) ([]lsp.Location, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) WillSave(ctx context.Context, params *protocol.WillSaveTextDocumentParams) error {
+func (s *DefaultLanguageServer) WillSave(ctx context.Context, params *lsp.WillSaveTextDocumentParams) error {
 	if s.srv.Server().DocumentSyncher != nil {
 		s.srv.Server().DocumentSyncher.WillSave(ctx, params)
 	}
 	return nil
 }
-func (s *DefaultLanguageServer) WillSaveWaitUntil(ctx context.Context, params *protocol.WillSaveTextDocumentParams) ([]protocol.TextEdit, error) {
+func (s *DefaultLanguageServer) WillSaveWaitUntil(ctx context.Context, params *lsp.WillSaveTextDocumentParams) ([]lsp.TextEdit, error) {
 	if s.srv.Server().DocumentSyncher != nil {
 		return s.srv.Server().DocumentSyncher.WillSaveWaitUntil(ctx, params)
 	}
-	return []protocol.TextEdit{}, nil
+	return []lsp.TextEdit{}, nil
 }
-func (s *DefaultLanguageServer) Subtypes(ctx context.Context, params *protocol.TypeHierarchySubtypesParams) ([]protocol.TypeHierarchyItem, error) {
+func (s *DefaultLanguageServer) Subtypes(ctx context.Context, params *lsp.TypeHierarchySubtypesParams) ([]lsp.TypeHierarchyItem, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) Supertypes(ctx context.Context, params *protocol.TypeHierarchySupertypesParams) ([]protocol.TypeHierarchyItem, error) {
+func (s *DefaultLanguageServer) Supertypes(ctx context.Context, params *lsp.TypeHierarchySupertypesParams) ([]lsp.TypeHierarchyItem, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) WorkDoneProgressCancel(ctx context.Context, params *protocol.WorkDoneProgressCancelParams) error {
+func (s *DefaultLanguageServer) WorkDoneProgressCancel(ctx context.Context, params *lsp.WorkDoneProgressCancelParams) error {
 	return nil
 }
 
@@ -342,16 +342,16 @@ func StartLanguageServer(ctx context.Context, srv ServerSrvCont) error {
 	}()
 
 	// Register validation listener to publish diagnostics
-	client := protocol.ClientDispatcher(conn)
+	client := lsp.ClientDispatcher(conn)
 	srv.Workspace().Builder.AddValidationListener(func(ctx context.Context, results []workspace.ValidationResult) error {
 		for _, result := range results {
 			// Collect diagnostics from lexer and parser errors
-			diagnostics := []protocol.Diagnostic{}
+			diagnostics := []lsp.Diagnostic{}
 			diagnostics = append(diagnostics, workspace.CreateLexerDiagnostics(result.Document)...)
 			diagnostics = append(diagnostics, workspace.CreateParserDiagnostics(result.Document)...)
 			diagnostics = append(diagnostics, workspace.CreateLinkerDiagnostics(result.Document)...)
 			// Publish diagnostics (empty array if no errors to clear previous diagnostics)
-			params := &protocol.PublishDiagnosticsParams{
+			params := &lsp.PublishDiagnosticsParams{
 				URI:         result.Document.URI.DocumentURI(),
 				Version:     result.Document.TextDoc.Version(),
 				Diagnostics: diagnostics,
@@ -380,7 +380,7 @@ func NewDefaultBinder(srv ServerSrvCont) jsonrpc2.Binder {
 func (b *DefaultBinder) Bind(ctx context.Context, conn *jsonrpc2.Connection) (jsonrpc2.ConnectionOptions, error) {
 	b.srv.Server().Connection = conn
 	return jsonrpc2.ConnectionOptions{
-		Handler: protocol.ServerHandler(b.srv.Server().LanguageServer),
+		Handler: lsp.ServerHandler(b.srv.Server().LanguageServer),
 	}, nil
 }
 

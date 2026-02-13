@@ -4,7 +4,7 @@
 
 package fastbelt
 
-import "github.com/TypeFox/go-lsp/protocol"
+import "typefox.dev/lsp"
 
 type TextIndex int32
 type TextLine int32
@@ -20,8 +20,8 @@ type TextLocation struct {
 	Column TextColumn
 }
 
-func (l TextLocation) LspPosition() protocol.Position {
-	return protocol.Position{
+func (l TextLocation) LspPosition() lsp.Position {
+	return lsp.Position{
 		Line:      uint32(l.Line),
 		Character: uint32(l.Column),
 	}
@@ -32,8 +32,8 @@ type TextRange struct {
 	End   TextLocation
 }
 
-func (r TextRange) LspRange() protocol.Range {
-	return protocol.Range{
+func (r TextRange) LspRange() lsp.Range {
+	return lsp.Range{
 		Start: r.Start.LspPosition(),
 		End:   r.End.LspPosition(),
 	}

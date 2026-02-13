@@ -8,8 +8,8 @@ import (
 	"iter"
 	"sync"
 
-	"github.com/TypeFox/go-lsp/protocol"
 	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/lsp"
 )
 
 // Document represents a document in the workspace.
@@ -28,7 +28,7 @@ type Document struct {
 	LexerErrors  []*LexerError
 	References   []UntypedReference
 	TextDoc      textdoc.Handle
-	Diagnostics  []*protocol.Diagnostic
+	Diagnostics  []*lsp.Diagnostic
 	Data         map[any]any
 }
 
@@ -45,12 +45,12 @@ func NewDocument(textDoc textdoc.Handle) *Document {
 		ParserErrors: []*ParserError{},
 		LexerErrors:  []*LexerError{},
 		References:   []UntypedReference{},
-		Diagnostics:  []*protocol.Diagnostic{},
+		Diagnostics:  []*lsp.Diagnostic{},
 	}
 }
 
 func NewDocumentFromString(uri, languageId, content string) (*Document, error) {
-	textDoc, err := textdoc.NewFile(protocol.DocumentURI(uri), languageId, 1, content)
+	textDoc, err := textdoc.NewFile(lsp.DocumentURI(uri), languageId, 1, content)
 	if err != nil {
 		return nil, err
 	}

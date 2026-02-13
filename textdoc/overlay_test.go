@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/TypeFox/go-lsp/protocol"
+	"typefox.dev/lsp"
 )
 
 func TestUpdate(t *testing.T) {
@@ -18,11 +18,11 @@ func TestUpdate(t *testing.T) {
 	}
 
 	// Test incremental change
-	changes := []protocol.TextDocumentContentChangeEvent{
+	changes := []lsp.TextDocumentContentChangeEvent{
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 6},
-				End:   protocol.Position{Line: 0, Character: 11},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 6},
+				End:   lsp.Position{Line: 0, Character: 11},
 			},
 			Text: "Go",
 		},
@@ -49,7 +49,7 @@ func TestUpdateFullDocument(t *testing.T) {
 	}
 
 	// Test full document change
-	changes := []protocol.TextDocumentContentChangeEvent{
+	changes := []lsp.TextDocumentContentChangeEvent{
 		{
 			Text: "new content",
 		},
@@ -71,18 +71,18 @@ func TestApplyEdits(t *testing.T) {
 		t.Fatalf("New failed: %v", err)
 	}
 
-	edits := []protocol.TextEdit{
+	edits := []lsp.TextEdit{
 		{
-			Range: protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 6},
-				End:   protocol.Position{Line: 0, Character: 11},
+			Range: lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 6},
+				End:   lsp.Position{Line: 0, Character: 11},
 			},
 			NewText: "Go",
 		},
 		{
-			Range: protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 0},
-				End:   protocol.Position{Line: 0, Character: 5},
+			Range: lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 0},
+				End:   lsp.Position{Line: 0, Character: 5},
 			},
 			NewText: "hi",
 		},
@@ -106,7 +106,7 @@ func TestErrorHandling(t *testing.T) {
 		t.Fatalf("New failed: %v", err)
 	}
 
-	err = doc.Update([]protocol.TextDocumentContentChangeEvent{{Text: "new"}}, 3)
+	err = doc.Update([]lsp.TextDocumentContentChangeEvent{{Text: "new"}}, 3)
 	if err == nil {
 		t.Error("Expected error for version going backwards")
 	}
@@ -123,11 +123,11 @@ func TestUpdateErrorMessageFormat(t *testing.T) {
 	}
 
 	// Test with invalid range to trigger an error
-	changes := []protocol.TextDocumentContentChangeEvent{
+	changes := []lsp.TextDocumentContentChangeEvent{
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 100},
-				End:   protocol.Position{Line: 0, Character: 200},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 100},
+				End:   lsp.Position{Line: 0, Character: 200},
 			},
 			Text: "test",
 		},
@@ -156,18 +156,18 @@ func TestUpdateMultipleChanges(t *testing.T) {
 	// Document starts as: "hello world" (11 chars)
 	// After first change: "goodbye world" (13 chars)
 	// After second change: "goodbye Go" (10 chars)
-	changes := []protocol.TextDocumentContentChangeEvent{
+	changes := []lsp.TextDocumentContentChangeEvent{
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 0},
-				End:   protocol.Position{Line: 0, Character: 5},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 0},
+				End:   lsp.Position{Line: 0, Character: 5},
 			},
 			Text: "goodbye",
 		},
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 8}, // Position in "goodbye world"
-				End:   protocol.Position{Line: 0, Character: 13},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 8}, // Position in "goodbye world"
+				End:   lsp.Position{Line: 0, Character: 13},
 			},
 			Text: "Go",
 		},
@@ -191,11 +191,11 @@ func TestUpdateInvalidLine(t *testing.T) {
 	}
 
 	// Try to change a line that doesn't exist
-	changes := []protocol.TextDocumentContentChangeEvent{
+	changes := []lsp.TextDocumentContentChangeEvent{
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 5, Character: 0},
-				End:   protocol.Position{Line: 5, Character: 1},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 5, Character: 0},
+				End:   lsp.Position{Line: 5, Character: 1},
 			},
 			Text: "test",
 		},
@@ -217,11 +217,11 @@ func TestUpdateEmptyRangeInsertion(t *testing.T) {
 	}
 
 	// Insert text without replacing anything (empty range)
-	changes := []protocol.TextDocumentContentChangeEvent{
+	changes := []lsp.TextDocumentContentChangeEvent{
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 5},
-				End:   protocol.Position{Line: 0, Character: 5},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 5},
+				End:   lsp.Position{Line: 0, Character: 5},
 			},
 			Text: " world",
 		},
@@ -245,11 +245,11 @@ func TestUpdateDeletion(t *testing.T) {
 	}
 
 	// Delete text (empty replacement)
-	changes := []protocol.TextDocumentContentChangeEvent{
+	changes := []lsp.TextDocumentContentChangeEvent{
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 5},
-				End:   protocol.Position{Line: 0, Character: 11},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 5},
+				End:   lsp.Position{Line: 0, Character: 11},
 			},
 			Text: "",
 		},
@@ -273,11 +273,11 @@ func TestUpdateMultiLine(t *testing.T) {
 	}
 
 	// Replace text spanning multiple lines
-	changes := []protocol.TextDocumentContentChangeEvent{
+	changes := []lsp.TextDocumentContentChangeEvent{
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 3},
-				End:   protocol.Position{Line: 2, Character: 3},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 3},
+				End:   lsp.Position{Line: 2, Character: 3},
 			},
 			Text: "A\nB",
 		},
@@ -301,11 +301,11 @@ func TestUpdateAtDocumentBoundaries(t *testing.T) {
 	}
 
 	// Insert at start
-	changes := []protocol.TextDocumentContentChangeEvent{
+	changes := []lsp.TextDocumentContentChangeEvent{
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 0},
-				End:   protocol.Position{Line: 0, Character: 0},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 0},
+				End:   lsp.Position{Line: 0, Character: 0},
 			},
 			Text: "start ",
 		},
@@ -321,11 +321,11 @@ func TestUpdateAtDocumentBoundaries(t *testing.T) {
 	}
 
 	// Insert at end
-	changes = []protocol.TextDocumentContentChangeEvent{
+	changes = []lsp.TextDocumentContentChangeEvent{
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 11},
-				End:   protocol.Position{Line: 0, Character: 11},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 11},
+				End:   lsp.Position{Line: 0, Character: 11},
 			},
 			Text: " end",
 		},
@@ -348,11 +348,11 @@ func TestUpdateWithWindowsLineEndings(t *testing.T) {
 	}
 
 	// Replace text on second line
-	changes := []protocol.TextDocumentContentChangeEvent{
+	changes := []lsp.TextDocumentContentChangeEvent{
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 1, Character: 0},
-				End:   protocol.Position{Line: 1, Character: 5},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 1, Character: 0},
+				End:   lsp.Position{Line: 1, Character: 5},
 			},
 			Text: "modified",
 		},
@@ -381,11 +381,11 @@ func TestUpdatePositionAtEndOfLine(t *testing.T) {
 	}
 
 	// Insert at end of first line (at the newline position)
-	changes := []protocol.TextDocumentContentChangeEvent{
+	changes := []lsp.TextDocumentContentChangeEvent{
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 5},
-				End:   protocol.Position{Line: 0, Character: 5},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 5},
+				End:   lsp.Position{Line: 0, Character: 5},
 			},
 			Text: "!",
 		},
@@ -409,11 +409,11 @@ func TestUpdateEmptyDocument(t *testing.T) {
 	}
 
 	// Insert into empty document
-	changes := []protocol.TextDocumentContentChangeEvent{
+	changes := []lsp.TextDocumentContentChangeEvent{
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 0},
-				End:   protocol.Position{Line: 0, Character: 0},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 0},
+				End:   lsp.Position{Line: 0, Character: 0},
 			},
 			Text: "hello",
 		},
@@ -436,11 +436,11 @@ func TestUpdateBackwardsRange(t *testing.T) {
 	}
 
 	// Provide a backwards range (end before start) - should be normalized by getWellFormedRange
-	changes := []protocol.TextDocumentContentChangeEvent{
+	changes := []lsp.TextDocumentContentChangeEvent{
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 11},
-				End:   protocol.Position{Line: 0, Character: 6},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 11},
+				End:   lsp.Position{Line: 0, Character: 6},
 			},
 			Text: "Go",
 		},
@@ -464,11 +464,11 @@ func TestUpdateConsecutiveUpdates(t *testing.T) {
 	}
 
 	// First update
-	changes := []protocol.TextDocumentContentChangeEvent{
+	changes := []lsp.TextDocumentContentChangeEvent{
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 1, Character: 0},
-				End:   protocol.Position{Line: 1, Character: 1},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 1, Character: 0},
+				End:   lsp.Position{Line: 1, Character: 1},
 			},
 			Text: "modified",
 		},
@@ -484,11 +484,11 @@ func TestUpdateConsecutiveUpdates(t *testing.T) {
 	}
 
 	// Second update on line 2 (which should still be line 2 after cache invalidation)
-	changes = []protocol.TextDocumentContentChangeEvent{
+	changes = []lsp.TextDocumentContentChangeEvent{
 		{
-			Range: &protocol.Range{
-				Start: protocol.Position{Line: 2, Character: 0},
-				End:   protocol.Position{Line: 2, Character: 1},
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 2, Character: 0},
+				End:   lsp.Position{Line: 2, Character: 1},
 			},
 			Text: "changed",
 		},
