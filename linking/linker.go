@@ -14,6 +14,7 @@ import (
 // Linker resolves cross-references in a document's AST.
 type Linker interface {
 	// Link resolves all references in the document.
+	// A list of all references is stored in the document's References field.
 	// The caller must hold the document's write lock.
 	Link(ctx context.Context, document *core.Document)
 }

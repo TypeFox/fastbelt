@@ -55,7 +55,8 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 		return nil
 	}
 	parser := b.srv.Workspace().DocumentParser
-	symbolTableProvider := b.srv.Linking().LocalSymbolTableProvider
+	exportedSymbols := b.srv.Linking().ExportedSymbolsProvider
+	localSymbols := b.srv.Linking().LocalSymbolTableProvider
 	linker := b.srv.Linking().Linker
 
 	results := make([]ValidationResult, 0, len(docs))
@@ -72,18 +73,25 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 			return err
 		}
 
-		// PHASE 2: Compute the local symbol table
-		symbolTableProvider.Compute(ctx, document)
+		// PHASE 2: Compute exported symbols
+		exportedSymbols.Compute(ctx, document)
 		if err := ctx.Err(); err != nil {
 			document.Unlock()
 			return err
 		}
 
-		// PHASE 3: Link the AST to resolve cross-references
+		// PHASE 3: Compute the local symbol table
+		localSymbols.Compute(ctx, document)
+		if err := ctx.Err(); err != nil {
+			document.Unlock()
+			return err
+		}
+
+		// PHASE 4: Link the AST to resolve cross-references
 		linker.Link(ctx, document)
 		document.Unlock()
 
-		// PHASE 4: Validate the document
+		// PHASE 5: Validate the document
 		// TODO: implement custom validation for specific languages (with read-only lock)
 		results = append(results, ValidationResult{
 			Document: document,
