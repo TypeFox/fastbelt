@@ -14,17 +14,6 @@ import (
 	"typefox.dev/lsp"
 )
 
-// LanguageServerHandlers contains the handlers for various LSP requests.
-// TODO extract these handlers into separate services instead of having them all here.
-type LanguageServerHandlers struct {
-	// Initialized handles the initialized notification
-	Initialized func(ctx context.Context, params *lsp.InitializedParams) error
-	// Completion handles textDocument/completion requests
-	Completion func(ctx context.Context, params *lsp.CompletionParams) (*lsp.CompletionList, error)
-	// Shutdown handles the shutdown request - server should shut down but not exit
-	Shutdown func(ctx context.Context) error
-}
-
 type LanguageServer interface {
 	lsp.Server
 }
@@ -40,7 +29,7 @@ func NewDefaultLanguageServer(srv ServerSrvCont) *DefaultLanguageServer {
 }
 
 func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.ParamInitialize) (*lsp.InitializeResult, error) {
-	// Default implementation with basic capabilities
+	s.srv.Server().WorkspaceFolders = params.WorkspaceFolders
 	definitionProvider := s.srv.Server().DefinitionProvider
 	return &lsp.InitializeResult{
 		Capabilities: lsp.ServerCapabilities{
@@ -56,18 +45,14 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 }
 
 func (s *DefaultLanguageServer) Initialized(ctx context.Context, params *lsp.InitializedParams) error {
-	handlers := s.srv.Server().LanguageServerHandlers
-	if handlers != nil && handlers.Initialized != nil {
-		return handlers.Initialized(ctx, params)
+	initializer := s.srv.Workspace().Initializer
+	if initializer != nil {
+		return initializer.Initialize(ctx, s.srv.Server().WorkspaceFolders)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) Shutdown(ctx context.Context) error {
-	handlers := s.srv.Server().LanguageServerHandlers
-	if handlers != nil && handlers.Shutdown != nil {
-		return handlers.Shutdown(ctx)
-	}
 	return nil
 }
 
@@ -102,11 +87,6 @@ func (s *DefaultLanguageServer) DidClose(ctx context.Context, params *lsp.DidClo
 }
 
 func (s *DefaultLanguageServer) Completion(ctx context.Context, params *lsp.CompletionParams) (*lsp.CompletionList, error) {
-	handlers := s.srv.Server().LanguageServerHandlers
-	if handlers != nil && handlers.Completion != nil {
-		return handlers.Completion(ctx, params)
-	}
-	// Default empty completion list
 	return &lsp.CompletionList{
 		IsIncomplete: false,
 		Items:        []lsp.CompletionItem{},

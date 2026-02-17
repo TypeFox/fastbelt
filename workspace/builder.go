@@ -36,9 +36,9 @@ type ValidationListener func(ctx context.Context, results []ValidationResult) er
 
 // DefaultBuilder is the default implementation of Builder.
 type DefaultBuilder struct {
-	srv       WorkspaceSrvCont
-	listeners []ValidationListener
-	mu        sync.RWMutex
+	srv         WorkspaceSrvCont
+	listeners   []ValidationListener
+	listenersMu sync.RWMutex
 }
 
 // NewDefaultBuilder creates a new default builder.
@@ -50,7 +50,7 @@ func NewDefaultBuilder(srv WorkspaceSrvCont) Builder {
 }
 
 // Update updates the workspace based on the provided documents.
-func (b *DefaultBuilder) Update(ctx context.Context, docs []textdoc.Handle) error {
+func (b *DefaultBuilder) Update(ctx context.Context, textDocs []textdoc.Handle) error {
 	if b.srv == nil {
 		return nil
 	}
@@ -61,9 +61,9 @@ func (b *DefaultBuilder) Update(ctx context.Context, docs []textdoc.Handle) erro
 	linker := b.srv.Linking().Linker
 
 	// Parse all documents and collect validation results
-	results := make([]ValidationResult, 0, len(docs))
-	for _, doc := range docs {
-		document := core.NewDocument(doc)
+	results := make([]ValidationResult, 0, len(textDocs))
+	for _, textDoc := range textDocs {
+		document := core.NewDocument(textDoc)
 		docManager.Set(document)
 		parser.Parse(document)
 		symbolTableProvider.Compute(ctx, document)
@@ -74,10 +74,10 @@ func (b *DefaultBuilder) Update(ctx context.Context, docs []textdoc.Handle) erro
 	}
 
 	// Notify all registered listeners
-	b.mu.RLock()
+	b.listenersMu.RLock()
 	listeners := make([]ValidationListener, len(b.listeners))
 	copy(listeners, b.listeners)
-	b.mu.RUnlock()
+	b.listenersMu.RUnlock()
 
 	for _, listener := range listeners {
 		if err := listener(ctx, results); err != nil {
@@ -93,8 +93,8 @@ func (b *DefaultBuilder) AddValidationListener(listener ValidationListener) {
 	if listener == nil {
 		return
 	}
-	b.mu.Lock()
-	defer b.mu.Unlock()
+	b.listenersMu.Lock()
+	defer b.listenersMu.Unlock()
 	b.listeners = append(b.listeners, listener)
 }
 
@@ -103,8 +103,8 @@ func (b *DefaultBuilder) RemoveValidationListener(listener ValidationListener) {
 	if listener == nil {
 		return
 	}
-	b.mu.Lock()
-	defer b.mu.Unlock()
+	b.listenersMu.Lock()
+	defer b.listenersMu.Unlock()
 	listenerPtr := reflect.ValueOf(listener).Pointer()
 	for i, l := range b.listeners {
 		if reflect.ValueOf(l).Pointer() == listenerPtr {

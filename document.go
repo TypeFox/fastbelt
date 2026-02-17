@@ -5,7 +5,7 @@
 package fastbelt
 
 import (
-	"iter"
+	"strings"
 	"sync"
 
 	"typefox.dev/fastbelt/textdoc"
@@ -21,6 +21,7 @@ import (
 type Document struct {
 	sync.RWMutex
 	URI          URI
+	State        DocumentState
 	Root         AstNode
 	Tokens       TokenSlice
 	LocalSymbols LocalSymbols
@@ -37,6 +38,7 @@ func NewDocument(textDoc textdoc.Handle) *Document {
 	return &Document{
 		RWMutex:      sync.RWMutex{},
 		URI:          uri,
+		State:        0,
 		TextDoc:      textDoc,
 		Root:         nil,
 		LocalSymbols: nil,
@@ -58,9 +60,45 @@ func NewDocumentFromString(uri, languageId, content string) (*Document, error) {
 	return doc, nil
 }
 
-type SymbolList = iter.Seq[*AstNodeDescription]
+// DocumentState is a bitmask capturing the already completed build phases of a document.
+type DocumentState uint32
 
-type LocalSymbols interface {
-	Has(node AstNode) bool
-	Iter(node AstNode) SymbolList
+const (
+	DocStateParsed              DocumentState = 1 << iota // 0x0001
+	DocStateIndexedContent                                // 0x0002
+	DocStateComputedSymbolTable                           // 0x0004
+	DocStateLinked                                        // 0x0008
+	DocStateValidated                                     // 0x0010
+)
+
+func (s DocumentState) String() string {
+	var flags []string
+	if s.Has(DocStateParsed) {
+		flags = append(flags, "Parsed")
+	}
+	if s.Has(DocStateIndexedContent) {
+		flags = append(flags, "IndexedContent")
+	}
+	if s.Has(DocStateComputedSymbolTable) {
+		flags = append(flags, "ComputedSymbolTable")
+	}
+	if s.Has(DocStateLinked) {
+		flags = append(flags, "Linked")
+	}
+	if s.Has(DocStateValidated) {
+		flags = append(flags, "Validated")
+	}
+	return strings.Join(flags, " | ")
+}
+
+func (s DocumentState) Has(flag DocumentState) bool {
+	return s&flag != 0
+}
+
+func (s DocumentState) With(flag DocumentState) DocumentState {
+	return s | flag
+}
+
+func (s DocumentState) Without(flag DocumentState) DocumentState {
+	return s &^ flag
 }

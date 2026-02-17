@@ -14,12 +14,10 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "go mod download",
+	"postCreateCommand": "go mod download"
 
 	// Configure environment variables
-	"containerEnv": {
-		"GONOPROXY": "github.com/TypeFox/go-lsp"
-	}
+	//"containerEnv": {}
 
 	// Configure tool-specific properties.
 	// "customizations": {},

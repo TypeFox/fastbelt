@@ -14,7 +14,6 @@ import (
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/workspace"
-	"typefox.dev/lsp"
 )
 
 func main() {
@@ -40,32 +39,7 @@ func createServices() *StatemachineSrv {
 	workspace.CreateDefaultServices(srv)
 	server.CreateDefaultServices(srv)
 
-	// Create a dummy completion handler for testing
-	srv.Server().LanguageServerHandlers.Completion = func(ctx context.Context, params *lsp.CompletionParams) (*lsp.CompletionList, error) {
-		return &lsp.CompletionList{
-			IsIncomplete: false,
-			Items: []lsp.CompletionItem{
-				{
-					Label:      "state",
-					Kind:       lsp.KeywordCompletion,
-					Detail:     "Define a state",
-					InsertText: "state ${1:name} {\n\t$0\n}",
-				},
-				{
-					Label:      "event",
-					Kind:       lsp.KeywordCompletion,
-					Detail:     "Define an event",
-					InsertText: "event ${1:name}",
-				},
-				{
-					Label:      "transition",
-					Kind:       lsp.KeywordCompletion,
-					Detail:     "Define a transition",
-					InsertText: "${1:from} -> ${2:to} on ${3:event}",
-				},
-			},
-		}, nil
-	}
+	srv.Workspace().Initializer.(*workspace.DefaultInitializer).FileExtensions = []string{".statemachine"}
 
 	return srv
 }
