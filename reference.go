@@ -6,6 +6,7 @@ package fastbelt
 
 import (
 	"context"
+	"iter"
 	"reflect"
 	"sync"
 
@@ -174,3 +175,10 @@ func NewAstNodeDescription(node AstNode, name string, nameSegment, fullSegment *
 }
 
 var EmptyAstNodeDescriptions = extiter.Empty[*AstNodeDescription]()
+
+type SymbolList = iter.Seq[*AstNodeDescription]
+
+type LocalSymbols interface {
+	Has(node AstNode) bool
+	Iter(node AstNode) SymbolList
+}

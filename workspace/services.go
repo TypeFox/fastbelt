@@ -33,6 +33,7 @@ type WorkspaceSrv struct {
 	DocumentManager DocumentManager
 	Builder         Builder
 	DocumentParser  DocumentParser
+	Initializer     Initializer
 }
 
 // CreateDefaultServices creates the default services for the workspace package.
@@ -48,6 +49,9 @@ func CreateDefaultServices(c WorkspaceSrvCont) {
 	}
 	if s.DocumentParser == nil {
 		s.DocumentParser = NewDefaultDocumentParser(c)
+	}
+	if s.Initializer == nil {
+		s.Initializer = NewDefaultInitializer(c)
 	}
 }
 

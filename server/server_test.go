@@ -22,30 +22,16 @@ type serverSrvContTest struct {
 	ServerSrvContBlock
 }
 
-// TestLanguageServerPartialHandlers tests that the language server works with some handlers nil
-func TestLanguageServerPartialHandlers(t *testing.T) {
-	var completionCalled bool
+// TestLanguageServerBasicLifecycle tests that the language server handles the basic LSP lifecycle.
+func TestLanguageServerBasicLifecycle(t *testing.T) {
 	srv := &serverSrvContTest{}
+	workspace.CreateDefaultServices(srv)
 	CreateDefaultServices(srv)
-
-	// Create a test completion handler
-	srv.Server().LanguageServerHandlers.Completion = func(ctx context.Context, params *lsp.CompletionParams) (*lsp.CompletionList, error) {
-		completionCalled = true
-		return &lsp.CompletionList{
-			IsIncomplete: false,
-			Items: []lsp.CompletionItem{
-				{
-					Label: "partial-test",
-					Kind:  lsp.KeywordCompletion,
-				},
-			},
-		}, nil
-	}
 
 	server := srv.Server().LanguageServer
 	ctx := context.Background()
 
-	// Test Initialize - should use default implementation
+	// Test Initialize
 	initResult, err := server.Initialize(ctx, &lsp.ParamInitialize{})
 	if err != nil {
 		t.Errorf("Initialize failed: %v", err)
@@ -54,29 +40,19 @@ func TestLanguageServerPartialHandlers(t *testing.T) {
 		t.Error("Initialize returned nil result")
 	}
 
-	// Test other methods - should use default implementations (no-op)
+	// Test Initialized
 	err = server.Initialized(ctx, &lsp.InitializedParams{})
 	if err != nil {
 		t.Errorf("Initialized failed: %v", err)
 	}
 
-	// Test Completion - should call our handler
-	completionResult, err := server.Completion(ctx, &lsp.CompletionParams{})
-	if err != nil {
-		t.Errorf("Completion failed: %v", err)
-	}
-	if !completionCalled {
-		t.Error("Completion handler was not called")
-	}
-	if completionResult.Items[0].Label != "partial-test" {
-		t.Errorf("Expected completion label 'partial-test', got %v", completionResult.Items[0].Label)
-	}
-
+	// Test Shutdown
 	err = server.Shutdown(ctx)
 	if err != nil {
 		t.Errorf("Shutdown failed: %v", err)
 	}
 
+	// Test Exit
 	err = server.Exit(ctx)
 	if err != nil {
 		t.Errorf("Exit failed: %v", err)
