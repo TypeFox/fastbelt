@@ -24,8 +24,9 @@ type Document struct {
 	State        DocumentState
 	Root         AstNode
 	Tokens       TokenSlice
-	LocalSymbols LocalSymbols
-	ParserErrors []*ParserError
+	LocalSymbols    LocalSymbols
+	ExportedSymbols []*AstNodeDescription
+	ParserErrors    []*ParserError
 	LexerErrors  []*LexerError
 	References   []UntypedReference
 	TextDoc      textdoc.Handle
@@ -41,8 +42,9 @@ func NewDocument(textDoc textdoc.Handle) *Document {
 		State:        0,
 		TextDoc:      textDoc,
 		Root:         nil,
-		LocalSymbols: nil,
-		Data:         map[any]any{},
+		LocalSymbols:    nil,
+		ExportedSymbols: nil,
+		Data:            map[any]any{},
 		Tokens:       TokenSlice{},
 		ParserErrors: []*ParserError{},
 		LexerErrors:  []*LexerError{},
@@ -64,11 +66,11 @@ func NewDocumentFromString(uri, languageId, content string) (*Document, error) {
 type DocumentState uint32
 
 const (
-	DocStateParsed              DocumentState = 1 << iota // 0x0001
-	DocStateIndexedContent                                // 0x0002
-	DocStateComputedSymbolTable                           // 0x0004
-	DocStateLinked                                        // 0x0008
-	DocStateValidated                                     // 0x0010
+	DocStateParsed          DocumentState = 1 << iota // 0x0001
+	DocStateExportedSymbols                           // 0x0002
+	DocStateLocalSymbols                              // 0x0004
+	DocStateLinked                                    // 0x0008
+	DocStateValidated                                 // 0x0010
 )
 
 func (s DocumentState) String() string {
@@ -76,11 +78,11 @@ func (s DocumentState) String() string {
 	if s.Has(DocStateParsed) {
 		flags = append(flags, "Parsed")
 	}
-	if s.Has(DocStateIndexedContent) {
-		flags = append(flags, "IndexedContent")
+	if s.Has(DocStateExportedSymbols) {
+		flags = append(flags, "ExportedSymbols")
 	}
-	if s.Has(DocStateComputedSymbolTable) {
-		flags = append(flags, "ComputedSymbolTable")
+	if s.Has(DocStateLocalSymbols) {
+		flags = append(flags, "LocalSymbols")
 	}
 	if s.Has(DocStateLinked) {
 		flags = append(flags, "Linked")

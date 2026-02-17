@@ -11,10 +11,6 @@ type AstNodeBase struct {
 	segment   TextSegment
 }
 
-func (node *AstNodeBase) ForEachNode(fn func(AstNode)) {}
-
-func (node *AstNodeBase) ForEachReference(fn func(UntypedReference)) {}
-
 func (node *AstNodeBase) Document() *Document {
 	if node != nil {
 		return node.document
@@ -119,6 +115,15 @@ func (node *AstNodeBase) Text() string {
 	}
 }
 
+func (node *AstNodeBase) ForEachNode(fn func(AstNode)) {
+	// This base implementation does not have any contained nodes.
+}
+
+func (node *AstNodeBase) ForEachReference(fn func(UntypedReference)) {
+	// This base implementation does not have any references.
+}
+
+// AstNode is the base interface for all AST nodes.
 type AstNode interface {
 	Document() *Document
 	SetDocument(document *Document)

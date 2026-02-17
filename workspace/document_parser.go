@@ -10,7 +10,8 @@ import (
 
 // DocumentParser defines the interface for parsing a document.
 type DocumentParser interface {
-	// Parses the document and stores the resulting data back into the document.
+	// Parses the document and stores the resulting Tokens and AST node Root (incl. potential errors) into the document.
+	// The caller must hold the document's write lock.
 	Parse(doc *core.Document)
 }
 
@@ -24,8 +25,6 @@ func NewDefaultDocumentParser(srv WorkspaceSrvCont) DocumentParser {
 	return &DefaultDocumentParser{srv: srv}
 }
 
-// Parse parses the document and stores the resulting data back into the document.
-// The caller must hold the document's write lock.
 func (p *DefaultDocumentParser) Parse(doc *core.Document) {
 	text := doc.TextDoc.Text(nil)
 	// Run the lexer
