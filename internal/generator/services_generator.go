@@ -15,7 +15,6 @@ func GenerateServices(grammar generated.Grammar) string {
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("\"typefox.dev/fastbelt/linking\"")
 		n.AppendLine("\"typefox.dev/fastbelt/workspace\"")
 	})
 	node.AppendLine(")").AppendLine()
@@ -28,7 +27,7 @@ func GenerateServices(grammar generated.Grammar) string {
 	})
 	node.AppendLine("}").AppendLine()
 	node.AppendLine("type ", grammar.Name(), "LinkingSrvCont interface {")
-	node.AppendLine("	linking.LinkingSrvCont")
+	node.AppendLine("	workspace.WorkspaceSrvCont")
 	node.AppendLine("	", grammar.Name(), "Linking() *", grammar.Name(), "LinkingSrv")
 	node.AppendLine("}").AppendLine()
 

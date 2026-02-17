@@ -2,6 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
+// TODO Move this stuff to the core package?
 package parser
 
 import (

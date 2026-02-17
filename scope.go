@@ -41,11 +41,11 @@ func (s *emptyScope) ElementByName(name string) *AstNodeDescription {
 }
 
 func (s *emptyScope) ElementsByName(name string) iter.Seq[*AstNodeDescription] {
-	return extiter.Empty[*AstNodeDescription]()
+	return EmptyAstNodeDescriptions
 }
 
 func (s *emptyScope) AllElements() iter.Seq[*AstNodeDescription] {
-	return extiter.Empty[*AstNodeDescription]()
+	return EmptyAstNodeDescriptions
 }
 
 var EmptyScope Scope = &emptyScope{}
@@ -91,7 +91,7 @@ func (s *MapScope) ElementsByName(name string) iter.Seq[*AstNodeDescription] {
 			return s.outer.ElementsByName(name)
 		} else {
 			// No elements found and no outer scope
-			return extiter.Empty[*AstNodeDescription]()
+			return EmptyAstNodeDescriptions
 		}
 	} else {
 		seq := slices.Values(elems)
@@ -110,7 +110,7 @@ func (s *MapScope) AllElements() iter.Seq[*AstNodeDescription] {
 			// Delegate directly to outer scope
 			return s.outer.AllElements()
 		} else {
-			return extiter.Empty[*AstNodeDescription]()
+			return EmptyAstNodeDescriptions
 		}
 	} else {
 		seq := s.elements.Values()

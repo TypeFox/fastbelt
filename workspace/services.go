@@ -60,6 +60,7 @@ func CreateDefaultServices(c WorkspaceSrvCont) {
 }
 
 // GeneratedSrvCont is an interface for service containers which include the generated services.
+// TODO Move this stuff to the core package?
 type GeneratedSrvCont interface {
 	Generated() *GeneratedSrv
 }

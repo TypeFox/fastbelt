@@ -1,7 +1,6 @@
 package generated
 
 import (
-	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/workspace"
 )
 
@@ -12,7 +11,7 @@ type FastbeltLinkingSrv struct {
 }
 
 type FastbeltLinkingSrvCont interface {
-	linking.LinkingSrvCont
+	workspace.WorkspaceSrvCont
 	FastbeltLinking() *FastbeltLinkingSrv
 }
 
