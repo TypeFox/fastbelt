@@ -9,37 +9,30 @@ import (
 	"sync"
 	"testing"
 
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
 
-// mockBuilder is a test implementation of Builder that tracks calls
-type mockBuilder struct {
+// mockDocumentUpdater is a test implementation of DocumentUpdater that tracks calls.
+type mockDocumentUpdater struct {
 	mu          sync.Mutex
 	updateCalls []updateCall
 }
 
 type updateCall struct {
-	docs []textdoc.Handle
+	changed []textdoc.Handle
+	deleted []core.URI
 }
 
-func (m *mockBuilder) Update(ctx context.Context, docs []textdoc.Handle) error {
+func (m *mockDocumentUpdater) Update(ctx context.Context, changed []textdoc.Handle, deleted []core.URI) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.updateCalls = append(m.updateCalls, updateCall{docs: docs})
-	return nil
+	m.updateCalls = append(m.updateCalls, updateCall{changed: changed, deleted: deleted})
 }
 
-func (m *mockBuilder) AddValidationListener(listener workspace.ValidationListener) {
-	// No-op for tests
-}
-
-func (m *mockBuilder) RemoveValidationListener(listener workspace.ValidationListener) {
-	// No-op for tests
-}
-
-func (m *mockBuilder) getUpdateCalls() []updateCall {
+func (m *mockDocumentUpdater) getUpdateCalls() []updateCall {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	result := make([]updateCall, len(m.updateCalls))
@@ -47,7 +40,7 @@ func (m *mockBuilder) getUpdateCalls() []updateCall {
 	return result
 }
 
-func (m *mockBuilder) reset() {
+func (m *mockDocumentUpdater) reset() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.updateCalls = nil
@@ -60,15 +53,15 @@ func createTestServices() ServerSrvCont {
 	return s
 }
 
-func createTestServicesWithBuilder() (ServerSrvCont, *mockBuilder) {
+func createTestServicesWithUpdater() (ServerSrvCont, *mockDocumentUpdater) {
 	s := createTestServices()
-	mockBuilder := &mockBuilder{}
-	s.Workspace().Builder = mockBuilder
-	return s, mockBuilder
+	updater := &mockDocumentUpdater{}
+	s.Workspace().DocumentUpdater = updater
+	return s, updater
 }
 
 func TestTextDocuments_Lifecycle(t *testing.T) {
-	s, mockBuilder := createTestServicesWithBuilder()
+	s, updater := createTestServicesWithUpdater()
 	ds := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
@@ -83,16 +76,16 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 		},
 	})
 
-	// Verify Builder.Update was called for DidOpen
-	updateCalls := mockBuilder.getUpdateCalls()
+	// Verify DocumentUpdater.Update was called for DidOpen
+	updateCalls := updater.getUpdateCalls()
 	if len(updateCalls) != 1 {
 		t.Fatalf("expected 1 update call, got %d", len(updateCalls))
 	}
-	if len(updateCalls[0].docs) != 1 {
-		t.Fatalf("expected 1 document in update call, got %d", len(updateCalls[0].docs))
+	if len(updateCalls[0].changed) != 1 {
+		t.Fatalf("expected 1 changed document in update call, got %d", len(updateCalls[0].changed))
 	}
-	if updateCalls[0].docs[0].URI() != uri {
-		t.Errorf("expected URI %s, got %s", uri, updateCalls[0].docs[0].URI())
+	if updateCalls[0].changed[0].URI() != uri {
+		t.Errorf("expected URI %s, got %s", uri, updateCalls[0].changed[0].URI())
 	}
 
 	// Verify document is in collection
@@ -105,7 +98,7 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	}
 
 	// Change the document
-	mockBuilder.reset()
+	updater.reset()
 	ds.DidChange(ctx, &lsp.DidChangeTextDocumentParams{
 		TextDocument: lsp.VersionedTextDocumentIdentifier{
 			TextDocumentIdentifier: lsp.TextDocumentIdentifier{URI: uri},
@@ -116,8 +109,8 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 		},
 	})
 
-	// Verify Builder.Update was called for DidChange
-	updateCalls = mockBuilder.getUpdateCalls()
+	// Verify DocumentUpdater.Update was called for DidChange
+	updateCalls = updater.getUpdateCalls()
 	if len(updateCalls) != 1 {
 		t.Fatalf("expected 1 update call after change, got %d", len(updateCalls))
 	}
@@ -129,18 +122,28 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	}
 
 	// Close the document
+	updater.reset()
 	ds.DidClose(ctx, &lsp.DidCloseTextDocumentParams{
 		TextDocument: lsp.TextDocumentIdentifier{URI: uri},
 	})
 
-	// Verify document was removed
+	// Verify overlay was removed from store
 	if s.Textdoc().Store.GetOverlay(uri) != nil {
 		t.Error("document should have been removed from collection")
+	}
+
+	// Verify DocumentUpdater.Update was called with deleted URI
+	updateCalls = updater.getUpdateCalls()
+	if len(updateCalls) != 1 {
+		t.Fatalf("expected 1 update call after close, got %d", len(updateCalls))
+	}
+	if len(updateCalls[0].deleted) != 1 {
+		t.Fatalf("expected 1 deleted URI in update call, got %d", len(updateCalls[0].deleted))
 	}
 }
 
 func TestTextDocuments_MultipleDocuments(t *testing.T) {
-	s, _ := createTestServicesWithBuilder()
+	s, _ := createTestServicesWithUpdater()
 	ds := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
@@ -183,7 +186,7 @@ func TestTextDocuments_MultipleDocuments(t *testing.T) {
 }
 
 func TestTextDocuments_IncrementalChanges(t *testing.T) {
-	s, _ := createTestServicesWithBuilder()
+	s, _ := createTestServicesWithUpdater()
 	ds := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
@@ -226,7 +229,7 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 }
 
 func TestTextDocuments_WillSave(t *testing.T) {
-	s, _ := createTestServicesWithBuilder()
+	s, _ := createTestServicesWithUpdater()
 	ds := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
@@ -254,7 +257,7 @@ func TestTextDocuments_WillSave(t *testing.T) {
 }
 
 func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
-	s, _ := createTestServicesWithBuilder()
+	s, _ := createTestServicesWithUpdater()
 	ds := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 
@@ -284,7 +287,7 @@ func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
 }
 
 func TestTextDocuments_DidSave(t *testing.T) {
-	s, _ := createTestServicesWithBuilder()
+	s, _ := createTestServicesWithUpdater()
 	ds := &DefaultDocumentSyncher{srv: s}
 	ctx := context.Background()
 

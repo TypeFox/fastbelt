@@ -24,16 +24,18 @@ func NewDefaultDocumentParser(srv WorkspaceSrvCont) DocumentParser {
 	return &DefaultDocumentParser{srv: srv}
 }
 
+// Parse parses the document and stores the resulting data back into the document.
+// The caller must hold the document's write lock.
 func (p *DefaultDocumentParser) Parse(doc *core.Document) {
 	text := doc.TextDoc.Text(nil)
+	// Run the lexer
 	lexerRes := p.srv.Generated().Lexer.Lex(text)
-	doc.Lock()
 	doc.LexerErrors = lexerRes.Errors
 	doc.Tokens = lexerRes.Tokens
-	doc.Unlock()
+	// Run the parser
 	parserRes := p.srv.Generated().Parser.Parse(doc)
-	doc.Lock()
 	doc.ParserErrors = parserRes.Errors
 	doc.Root = parserRes.Node
-	doc.Unlock()
+	// Update the document state
+	doc.State = doc.State.With(core.DocStateParsed)
 }

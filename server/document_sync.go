@@ -76,12 +76,7 @@ func (ds *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *lsp.DidOp
 	}
 
 	ds.srv.Textdoc().Store.AddOverlay(doc)
-
-	// Call Builder directly if available
-	docs := []textdoc.Handle{doc}
-	if err := ds.srv.Workspace().Builder.Update(ctx, docs); err != nil {
-		log.Printf("failed to update workspace for document open: %v", err)
-	}
+	ds.srv.Workspace().DocumentUpdater.Update(ctx, []textdoc.Handle{doc}, nil)
 }
 
 // DidChange processes a textDocument/didChange notification.
@@ -101,19 +96,12 @@ func (ds *DefaultDocumentSyncher) DidChange(ctx context.Context, params *lsp.Did
 		return
 	}
 
-	// Call Builder directly if available
-	docs := []textdoc.Handle{doc}
-	if err := ds.srv.Workspace().Builder.Update(ctx, docs); err != nil {
-		log.Printf("failed to update workspace for document change: %v", err)
-	}
+	ds.srv.Workspace().DocumentUpdater.Update(ctx, []textdoc.Handle{doc}, nil)
 }
 
 // DidClose processes a textDocument/didClose notification.
 func (ds *DefaultDocumentSyncher) DidClose(ctx context.Context, params *lsp.DidCloseTextDocumentParams) {
 	ds.srv.Textdoc().Store.RemoveOverlay(params.TextDocument.URI)
-	// TODO msujew: Once we start handling cross-file references, we shouldn't delete the document.
-	uri := core.ParseURI(string(params.TextDocument.URI))
-	ds.srv.Workspace().DocumentManager.Delete(uri)
 	connection := ds.srv.Server().Connection
 	if connection != nil {
 		// Ensure we clear diagnostics on close
@@ -127,6 +115,9 @@ func (ds *DefaultDocumentSyncher) DidClose(ctx context.Context, params *lsp.DidC
 			log.Printf("failed to publish diagnostics after document close: %v", err)
 		}
 	}
+	// TODO msujew: Once we start handling cross-file references, we shouldn't delete the document.
+	uri := core.ParseURI(string(params.TextDocument.URI))
+	ds.srv.Workspace().DocumentUpdater.Update(ctx, nil, []core.URI{uri})
 }
 
 // WillSave processes a textDocument/willSave notification.

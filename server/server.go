@@ -326,10 +326,12 @@ func StartLanguageServer(ctx context.Context, srv ServerSrvCont) error {
 	srv.Workspace().Builder.AddValidationListener(func(ctx context.Context, results []workspace.ValidationResult) error {
 		for _, result := range results {
 			// Collect diagnostics from lexer and parser errors
+			result.Document.RLock()
 			diagnostics := []lsp.Diagnostic{}
 			diagnostics = append(diagnostics, workspace.CreateLexerDiagnostics(result.Document)...)
 			diagnostics = append(diagnostics, workspace.CreateParserDiagnostics(result.Document)...)
 			diagnostics = append(diagnostics, workspace.CreateLinkerDiagnostics(result.Document)...)
+			result.Document.RUnlock()
 			// Publish diagnostics (empty array if no errors to clear previous diagnostics)
 			params := &lsp.PublishDiagnosticsParams{
 				URI:         result.Document.URI.DocumentURI(),

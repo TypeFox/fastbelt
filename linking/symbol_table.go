@@ -38,8 +38,12 @@ func LocalScopeOfType[T core.AstNode](node core.AstNode, fn func(core.AstNode) c
 	return core.NewMapScopeFromSeq(filtered, outer)
 }
 
+// LocalSymbolTableProvider computes and provides local symbol information for documents.
 type LocalSymbolTableProvider interface {
+	// Compute traverses the document's AST and builds the local symbol table.
+	// The caller must hold the document's write lock.
 	Compute(ctx context.Context, document *core.Document)
+	// LocalSymbols returns the symbols visible at the given node.
 	LocalSymbols(node core.AstNode) core.SymbolList
 }
 
@@ -64,6 +68,7 @@ func (s *DefaultLocalSymbolTableProvider) Compute(ctx context.Context, document 
 		}
 	})
 	document.LocalSymbols = NewDefaultLocalSymbolsFromMap(symbols)
+	document.State = document.State.With(core.DocStateComputedSymbolTable)
 }
 
 func (s *DefaultLocalSymbolTableProvider) LocalSymbols(node core.AstNode) core.SymbolList {

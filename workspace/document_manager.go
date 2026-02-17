@@ -12,6 +12,7 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
+// DocumentManager holds all known documents of a workspace in memory.
 // All methods of DocumentManager are thread-safe and can be called concurrently.
 type DocumentManager interface {
 	// Checks if a document with the given URI exists.

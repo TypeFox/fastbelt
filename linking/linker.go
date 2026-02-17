@@ -11,7 +11,10 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
+// Linker resolves cross-references in a document's AST.
 type Linker interface {
+	// Link resolves all references in the document.
+	// The caller must hold the document's write lock.
 	Link(ctx context.Context, document *core.Document)
 }
 
@@ -35,4 +38,5 @@ func (l *DefaultLinker) Link(ctx context.Context, document *core.Document) {
 	})
 	waitgroup.Wait()
 	document.References = references
+	document.State = document.State.With(core.DocStateLinked)
 }

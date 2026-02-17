@@ -11,13 +11,13 @@ import (
 	"sync"
 
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/textdoc"
 )
 
 // Builder is the interface for building workspace-related structures.
 type Builder interface {
-	// Update updates the workspace based on the provided documents.
-	Update(ctx context.Context, docs []textdoc.Handle) error
+	// Build processes the provided documents through all build phases (parse, compute
+	// symbol table, link). It should regularly check ctx for cancellation between phases.
+	Build(ctx context.Context, docs []*core.Document) error
 	// AddValidationListener registers a listener that will be called when validation completes.
 	AddValidationListener(listener ValidationListener)
 	// RemoveValidationListener unregisters a previously registered listener.
@@ -49,25 +49,42 @@ func NewDefaultBuilder(srv WorkspaceSrvCont) Builder {
 	}
 }
 
-// Update updates the workspace based on the provided documents.
-func (b *DefaultBuilder) Update(ctx context.Context, textDocs []textdoc.Handle) error {
+// Build processes the provided documents through all build phases.
+func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error {
 	if b.srv == nil {
 		return nil
 	}
-	// TODO: Do we need to check whether all services are set?
-	docManager := b.srv.Workspace().DocumentManager
 	parser := b.srv.Workspace().DocumentParser
 	symbolTableProvider := b.srv.Linking().LocalSymbolTableProvider
 	linker := b.srv.Linking().Linker
 
-	// Parse all documents and collect validation results
-	results := make([]ValidationResult, 0, len(textDocs))
-	for _, textDoc := range textDocs {
-		document := core.NewDocument(textDoc)
-		docManager.Set(document)
+	results := make([]ValidationResult, 0, len(docs))
+	for _, document := range docs {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		document.Lock()
+
+		// PHASE 1: Parse the text content into an AST
 		parser.Parse(document)
+		if err := ctx.Err(); err != nil {
+			document.Unlock()
+			return err
+		}
+
+		// PHASE 2: Compute the local symbol table
 		symbolTableProvider.Compute(ctx, document)
+		if err := ctx.Err(); err != nil {
+			document.Unlock()
+			return err
+		}
+
+		// PHASE 3: Link the AST to resolve cross-references
 		linker.Link(ctx, document)
+		document.Unlock()
+
+		// PHASE 4: Validate the document
+		// TODO: implement custom validation for specific languages (with read-only lock)
 		results = append(results, ValidationResult{
 			Document: document,
 		})
@@ -80,6 +97,9 @@ func (b *DefaultBuilder) Update(ctx context.Context, textDocs []textdoc.Handle) 
 	b.listenersMu.RUnlock()
 
 	for _, listener := range listeners {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if err := listener(ctx, results); err != nil {
 			log.Printf("validation listener error: %v", err)
 		}
