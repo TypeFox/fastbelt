@@ -35,6 +35,4 @@ func (p *DefaultDocumentParser) Parse(doc *core.Document) {
 	parserRes := p.srv.Generated().Parser.Parse(doc)
 	doc.ParserErrors = parserRes.Errors
 	doc.Root = parserRes.Node
-	// Update the document state
-	doc.State = doc.State.With(core.DocStateParsed)
 }

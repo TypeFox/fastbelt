@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"golang.org/x/exp/jsonrpc2"
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
@@ -321,28 +322,19 @@ func StartLanguageServer(ctx context.Context, srv ServerSrvCont) error {
 		_ = conn.Close() // Ignore error in defer
 	}()
 
-	// Register validation listener to publish diagnostics
+	// Register build step listener to publish diagnostics after linking
 	client := lsp.ClientDispatcher(conn)
-	srv.Workspace().Builder.AddValidationListener(func(ctx context.Context, results []workspace.ValidationResult) error {
-		for _, result := range results {
-			// Collect diagnostics from lexer and parser errors
-			result.Document.RLock()
-			diagnostics := []lsp.Diagnostic{}
-			diagnostics = append(diagnostics, workspace.CreateLexerDiagnostics(result.Document)...)
-			diagnostics = append(diagnostics, workspace.CreateParserDiagnostics(result.Document)...)
-			diagnostics = append(diagnostics, workspace.CreateLinkerDiagnostics(result.Document)...)
-			result.Document.RUnlock()
-			// Publish diagnostics (empty array if no errors to clear previous diagnostics)
-			params := &lsp.PublishDiagnosticsParams{
-				URI:         result.Document.URI.DocumentURI(),
-				Version:     result.Document.TextDoc.Version(),
-				Diagnostics: diagnostics,
-			}
-			if err := client.PublishDiagnostics(ctx, params); err != nil {
-				return err
-			}
+	srv.Workspace().Builder.AddBuildStepListener(core.DocStateLinked, func(ctx context.Context, doc *core.Document) error {
+		diagnostics := []lsp.Diagnostic{}
+		diagnostics = append(diagnostics, workspace.CreateLexerDiagnostics(doc)...)
+		diagnostics = append(diagnostics, workspace.CreateParserDiagnostics(doc)...)
+		diagnostics = append(diagnostics, workspace.CreateLinkerDiagnostics(doc)...)
+		params := &lsp.PublishDiagnosticsParams{
+			URI:         doc.URI.DocumentURI(),
+			Version:     doc.TextDoc.Version(),
+			Diagnostics: diagnostics,
 		}
-		return nil
+		return client.PublishDiagnostics(ctx, params)
 	})
 
 	// Wait for the connection to close

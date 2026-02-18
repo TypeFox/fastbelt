@@ -48,7 +48,6 @@ func (s *DefaultExportedSymbolsProvider) Compute(ctx context.Context, document *
 	})
 
 	document.ExportedSymbols = exports
-	document.State = document.State.With(core.DocStateExportedSymbols)
 }
 
 // ExportedSymbolDescriber describes how symbols are exported from a document.
