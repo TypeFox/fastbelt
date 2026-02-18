@@ -20,36 +20,36 @@ import (
 // The document struct should never be copied after creation.
 type Document struct {
 	sync.RWMutex
-	URI          URI
-	State        DocumentState
-	Root         AstNode
-	Tokens       TokenSlice
+	URI             URI
+	State           DocumentState
+	Root            AstNode
+	Tokens          TokenSlice
 	LocalSymbols    LocalSymbols
 	ExportedSymbols []*AstNodeDescription
 	ParserErrors    []*ParserError
-	LexerErrors  []*LexerError
-	References   []UntypedReference
-	TextDoc      textdoc.Handle
-	Diagnostics  []*lsp.Diagnostic
-	Data         map[any]any
+	LexerErrors     []*LexerError
+	References      []UntypedReference
+	TextDoc         textdoc.Handle
+	Diagnostics     []*lsp.Diagnostic
+	Data            map[any]any
 }
 
 func NewDocument(textDoc textdoc.Handle) *Document {
 	uri := ParseURI(string(textDoc.URI()))
 	return &Document{
-		RWMutex:      sync.RWMutex{},
-		URI:          uri,
-		State:        0,
-		TextDoc:      textDoc,
-		Root:         nil,
+		RWMutex:         sync.RWMutex{},
+		URI:             uri,
+		State:           0,
+		TextDoc:         textDoc,
+		Root:            nil,
 		LocalSymbols:    nil,
 		ExportedSymbols: nil,
 		Data:            map[any]any{},
-		Tokens:       TokenSlice{},
-		ParserErrors: []*ParserError{},
-		LexerErrors:  []*LexerError{},
-		References:   []UntypedReference{},
-		Diagnostics:  []*lsp.Diagnostic{},
+		Tokens:          TokenSlice{},
+		ParserErrors:    []*ParserError{},
+		LexerErrors:     []*LexerError{},
+		References:      []UntypedReference{},
+		Diagnostics:     []*lsp.Diagnostic{},
 	}
 }
 

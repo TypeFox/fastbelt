@@ -5,12 +5,12 @@
 package linking
 
 type LinkingSrv struct {
-	ExportedSymbolsProvider  ExportedSymbolsProvider
-	ExportedSymbolDescriber  ExportedSymbolDescriber
-	LocalSymbolTableProvider LocalSymbolTableProvider
-	LocalSymbolDescriber     LocalSymbolDescriber
-	Namer                    Namer
-	Linker                   Linker
+	ExportedSymbolsProvider ExportedSymbolsProvider
+	ExportedSymbolDescriber ExportedSymbolDescriber
+	LocalSymbolsProvider    LocalSymbolsProvider
+	LocalSymbolDescriber    LocalSymbolDescriber
+	Namer                   Namer
+	Linker                  Linker
 }
 
 type LinkingSrvCont interface {
@@ -33,8 +33,8 @@ func CreateDefaultServices(srv LinkingSrvCont) {
 	if linking.ExportedSymbolDescriber == nil {
 		linking.ExportedSymbolDescriber = NewDefaultExportedSymbolDescriber(srv)
 	}
-	if linking.LocalSymbolTableProvider == nil {
-		linking.LocalSymbolTableProvider = NewDefaultLocalSymbolTableProvider(srv)
+	if linking.LocalSymbolsProvider == nil {
+		linking.LocalSymbolsProvider = NewDefaultLocalSymbolsProvider(srv)
 	}
 	if linking.LocalSymbolDescriber == nil {
 		linking.LocalSymbolDescriber = NewDefaultLocalSymbolDescriber(srv)

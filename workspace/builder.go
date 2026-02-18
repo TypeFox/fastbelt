@@ -18,126 +18,168 @@ type Builder interface {
 	// Build processes the provided documents through all build phases (parse, compute
 	// symbol table, link). It should regularly check ctx for cancellation between phases.
 	Build(ctx context.Context, docs []*core.Document) error
-	// AddValidationListener registers a listener that will be called when validation completes.
-	AddValidationListener(listener ValidationListener)
-	// RemoveValidationListener unregisters a previously registered listener.
-	RemoveValidationListener(listener ValidationListener)
+	// AddBuildStepListener registers a listener to be called after documents complete the
+	// specified build steps. The states parameter is a bitmask, so multiple steps can be
+	// selected with e.g. DocStateParsed | DocStateLinked.
+	AddBuildStepListener(states core.DocumentState, listener BuildStepListener)
+	// RemoveBuildStepListener unregisters a previously registered listener from all steps.
+	RemoveBuildStepListener(listener BuildStepListener)
 }
 
-// ValidationResult contains the result of validating a document.
-type ValidationResult struct {
-	Document *core.Document
-}
-
-// ValidationListener is a function that is called when validation completes for a set of documents.
-// It receives the context and all validation results (one per document).
+// BuildStepListener is called right after a document has completed a build step.
 // If the listener returns an error, it will be logged but will not prevent other listeners from being called.
-type ValidationListener func(ctx context.Context, results []ValidationResult) error
+// The listener may be called while the document's write lock is held; it must not acquire any document locks.
+type BuildStepListener func(ctx context.Context, doc *core.Document) error
+
+type buildStepEntry struct {
+	states   core.DocumentState
+	listener BuildStepListener
+}
 
 // DefaultBuilder is the default implementation of Builder.
 type DefaultBuilder struct {
 	srv         WorkspaceSrvCont
-	listeners   []ValidationListener
+	buildMu     sync.Mutex
+	listeners   []buildStepEntry
 	listenersMu sync.RWMutex
 }
 
 // NewDefaultBuilder creates a new default builder.
 func NewDefaultBuilder(srv WorkspaceSrvCont) Builder {
 	return &DefaultBuilder{
-		srv:       srv,
-		listeners: make([]ValidationListener, 0),
+		srv: srv,
 	}
 }
 
 // Build processes the provided documents through all build phases.
 func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error {
-	if b.srv == nil {
-		return nil
-	}
+	b.buildMu.Lock()
+	defer b.buildMu.Unlock()
+
+	// PHASE 1: Lock each document, parse, and compute exports (parallel per document).
 	parser := b.srv.Workspace().DocumentParser
 	exportedSymbols := b.srv.Linking().ExportedSymbolsProvider
-	localSymbols := b.srv.Linking().LocalSymbolTableProvider
-	linker := b.srv.Linking().Linker
-
-	results := make([]ValidationResult, 0, len(docs))
-	for _, document := range docs {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-		document.Lock()
-
-		// PHASE 1: Parse the text content into an AST
-		parser.Parse(document)
-		if err := ctx.Err(); err != nil {
-			document.Unlock()
-			return err
-		}
-
-		// PHASE 2: Compute exported symbols
-		exportedSymbols.Compute(ctx, document)
-		if err := ctx.Err(); err != nil {
-			document.Unlock()
-			return err
-		}
-
-		// PHASE 3: Compute the local symbol table
-		localSymbols.Compute(ctx, document)
-		if err := ctx.Err(); err != nil {
-			document.Unlock()
-			return err
-		}
-
-		// PHASE 4: Link the AST to resolve cross-references
-		linker.Link(ctx, document)
-		document.Unlock()
-
-		// PHASE 5: Validate the document
-		// TODO: implement custom validation for specific languages (with read-only lock)
-		results = append(results, ValidationResult{
-			Document: document,
+	var phase1 sync.WaitGroup
+	for _, doc := range docs {
+		phase1.Go(func() {
+			doc.Lock()
+			if ctx.Err() != nil {
+				return
+			}
+			// STEP 1.1: Parse the document and create the AST.
+			if !doc.State.Has(core.DocStateParsed) {
+				parser.Parse(doc)
+				doc.State = doc.State.With(core.DocStateParsed)
+				b.notifyListeners(ctx, core.DocStateParsed, doc)
+			}
+			if ctx.Err() != nil {
+				return
+			}
+			// STEP 1.2: Compute the exported symbols for cross-document references.
+			if !doc.State.Has(core.DocStateExportedSymbols) {
+				exportedSymbols.Compute(ctx, doc)
+				doc.State = doc.State.With(core.DocStateExportedSymbols)
+				b.notifyListeners(ctx, core.DocStateExportedSymbols, doc)
+			}
 		})
 	}
+	phase1.Wait()
 
-	// Notify all registered listeners
-	b.listenersMu.RLock()
-	listeners := make([]ValidationListener, len(b.listeners))
-	copy(listeners, b.listeners)
-	b.listenersMu.RUnlock()
+	if err := ctx.Err(); err != nil {
+		for _, doc := range docs {
+			doc.Unlock()
+		}
+		return err
+	}
 
-	for _, listener := range listeners {
-		if err := ctx.Err(); err != nil {
-			return err
+	// PHASE 2: Compute local symbols and link (parallel per document).
+	// This requires the exported symbols of all documents to be available.
+	localSymbols := b.srv.Linking().LocalSymbolsProvider
+	linker := b.srv.Linking().Linker
+	var phase2 sync.WaitGroup
+	for _, doc := range docs {
+		phase2.Go(func() {
+			if ctx.Err() != nil {
+				return
+			}
+			// STEP 2.1: Compute the local symbols for intra-document references.
+			if !doc.State.Has(core.DocStateLocalSymbols) {
+				localSymbols.Compute(ctx, doc)
+				doc.State = doc.State.With(core.DocStateLocalSymbols)
+				b.notifyListeners(ctx, core.DocStateLocalSymbols, doc)
+			}
+			if ctx.Err() != nil {
+				return
+			}
+			// STEP 2.2: Link the document to resolve all references.
+			if !doc.State.Has(core.DocStateLinked) {
+				linker.Link(ctx, doc)
+				doc.State = doc.State.With(core.DocStateLinked)
+				b.notifyListeners(ctx, core.DocStateLinked, doc)
+			}
+		})
+	}
+	phase2.Wait()
+
+	for _, doc := range docs {
+		doc.Unlock()
+	}
+
+	// PHASE 3: Run custom validations (parallel per document).
+	// TODO: acquire read lock for each document and run custom validations
+	for _, doc := range docs {
+		if ctx.Err() != nil {
+			return ctx.Err()
 		}
-		if err := listener(ctx, results); err != nil {
-			log.Printf("validation listener error: %v", err)
-		}
+		doc.State = doc.State.With(core.DocStateValidated)
+		b.notifyListeners(ctx, core.DocStateValidated, doc)
 	}
 
 	return nil
 }
 
-// AddValidationListener registers a listener that will be called when validation completes.
-func (b *DefaultBuilder) AddValidationListener(listener ValidationListener) {
+// AddBuildStepListener registers a listener to be called after the specified build steps.
+func (b *DefaultBuilder) AddBuildStepListener(states core.DocumentState, listener BuildStepListener) {
 	if listener == nil {
 		return
 	}
 	b.listenersMu.Lock()
 	defer b.listenersMu.Unlock()
-	b.listeners = append(b.listeners, listener)
+	b.listeners = append(b.listeners, buildStepEntry{states: states, listener: listener})
 }
 
-// RemoveValidationListener unregisters a previously registered listener.
-func (b *DefaultBuilder) RemoveValidationListener(listener ValidationListener) {
+// RemoveBuildStepListener unregisters a previously registered listener from all steps.
+func (b *DefaultBuilder) RemoveBuildStepListener(listener BuildStepListener) {
 	if listener == nil {
 		return
 	}
 	b.listenersMu.Lock()
 	defer b.listenersMu.Unlock()
 	listenerPtr := reflect.ValueOf(listener).Pointer()
-	for i, l := range b.listeners {
-		if reflect.ValueOf(l).Pointer() == listenerPtr {
+	for i, entry := range b.listeners {
+		if reflect.ValueOf(entry.listener).Pointer() == listenerPtr {
 			b.listeners = append(b.listeners[:i], b.listeners[i+1:]...)
 			return
+		}
+	}
+}
+
+func (b *DefaultBuilder) notifyListeners(ctx context.Context, state core.DocumentState, doc *core.Document) {
+	b.listenersMu.RLock()
+	var matched []BuildStepListener
+	for _, entry := range b.listeners {
+		if entry.states.Has(state) {
+			matched = append(matched, entry.listener)
+		}
+	}
+	b.listenersMu.RUnlock()
+
+	for _, listener := range matched {
+		if ctx.Err() != nil {
+			return
+		}
+		if err := listener(ctx, doc); err != nil {
+			log.Printf("build step listener error (%s): %v", state, err)
 		}
 	}
 }

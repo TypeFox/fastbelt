@@ -39,5 +39,4 @@ func (l *DefaultLinker) Link(ctx context.Context, document *core.Document) {
 	})
 	waitgroup.Wait()
 	document.References = references
-	document.State = document.State.With(core.DocStateLinked)
 }

@@ -12,26 +12,26 @@ import (
 	"typefox.dev/fastbelt/util/collections"
 )
 
-// LocalSymbolTableProvider computes and provides local symbol information for documents.
-type LocalSymbolTableProvider interface {
+// LocalSymbolsProvider computes local symbol information for documents.
+type LocalSymbolsProvider interface {
 	// Compute traverses the document's AST and computes the local symbol table.
 	// The result is stored in the document's LocalSymbols field.
 	// The caller must hold the document's write lock.
 	Compute(ctx context.Context, document *core.Document)
 }
 
-// DefaultLocalSymbolTableProvider is the default implementation of LocalSymbolTableProvider.
-type DefaultLocalSymbolTableProvider struct {
+// DefaultLocalSymbolsProvider is the default implementation of LocalSymbolsProvider.
+type DefaultLocalSymbolsProvider struct {
 	srv LinkingSrvCont
 }
 
-func NewDefaultLocalSymbolTableProvider(srv LinkingSrvCont) LocalSymbolTableProvider {
-	return &DefaultLocalSymbolTableProvider{
+func NewDefaultLocalSymbolsProvider(srv LinkingSrvCont) LocalSymbolsProvider {
+	return &DefaultLocalSymbolsProvider{
 		srv: srv,
 	}
 }
 
-func (s *DefaultLocalSymbolTableProvider) Compute(ctx context.Context, document *core.Document) {
+func (s *DefaultLocalSymbolsProvider) Compute(ctx context.Context, document *core.Document) {
 	root := document.Root
 	symbols := collections.NewMultiMap[core.AstNode, *core.AstNodeDescription]()
 
@@ -42,7 +42,6 @@ func (s *DefaultLocalSymbolTableProvider) Compute(ctx context.Context, document 
 		}
 	})
 	document.LocalSymbols = NewDefaultLocalSymbolsFromMap(symbols)
-	document.State = document.State.With(core.DocStateLocalSymbols)
 }
 
 // DefaultLocalSymbols is the default implementation of core.LocalSymbols.

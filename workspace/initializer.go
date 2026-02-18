@@ -56,7 +56,7 @@ func (i *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 			}
 			name := d.Name()
 			if d.IsDir() {
-				if strings.HasPrefix(name, ".") || name == "node_modules" {
+				if strings.HasPrefix(name, ".") {
 					return filepath.SkipDir
 				}
 				return nil
@@ -90,6 +90,8 @@ func (i *DefaultInitializer) loadFile(path, ext string) {
 	}
 	doc := core.NewDocument(textDoc)
 	i.srv.Workspace().DocumentManager.Set(doc)
+	// TODO parse the document and collect exported symbols
+	// We don't need that right now because all documents are rebuilt on every change
 }
 
 func (i *DefaultInitializer) matchesExtension(ext string) bool {

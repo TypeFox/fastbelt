@@ -55,7 +55,7 @@ func main() {
 
 	document := core.NewDocument(file)
 	srv.Workspace().DocumentParser.Parse(document)
-	srv.Linking().LocalSymbolTableProvider.Compute(context.Background(), document)
+	srv.Linking().LocalSymbolsProvider.Compute(context.Background(), document)
 	srv.Linking().Linker.Link(context.Background(), document)
 
 	if grammar, ok := document.Root.(generated.Grammar); !ok {
