@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/internal/grammar/generated"
+	"typefox.dev/fastbelt/internal/grammar"
 )
 
 const CardinalityOne = ""
@@ -48,18 +48,18 @@ func WriteSB(sb *strings.Builder, texts ...string) {
 	}
 }
 
-func GetAllKeywords(grammar generated.Grammar) []generated.Keyword {
-	keywords := map[string]generated.Keyword{}
-	core.TraverseContent(grammar, func(node core.AstNode) {
-		if keyword, ok := node.(generated.Keyword); ok {
+func GetAllKeywords(grammr grammar.Grammar) []grammar.Keyword {
+	keywords := map[string]grammar.Keyword{}
+	core.TraverseContent(grammr, func(node core.AstNode) {
+		if keyword, ok := node.(grammar.Keyword); ok {
 			keywords[keyword.Value()] = keyword
 		}
 	})
 	return keysFromMap(keywords)
 }
 
-func keysFromMap(m map[string]generated.Keyword) []generated.Keyword {
-	keys := []generated.Keyword{}
+func keysFromMap(m map[string]grammar.Keyword) []grammar.Keyword {
+	keys := []grammar.Keyword{}
 	for _, v := range m {
 		keys = append(keys, v)
 	}
@@ -69,19 +69,19 @@ func keysFromMap(m map[string]generated.Keyword) []generated.Keyword {
 	return keys
 }
 
-func GeneratedTokenName(t generated.Token) string {
+func GeneratedTokenName(t grammar.Token) string {
 	return "Token_" + t.Name()
 }
 
-func GeneratedTokenIdxName(t generated.Token) string {
+func GeneratedTokenIdxName(t grammar.Token) string {
 	return GeneratedTokenName(t) + "_Idx"
 }
 
-func KeywordValue(k generated.Keyword) string {
+func KeywordValue(k grammar.Keyword) string {
 	return k.Value()[1 : len(k.Value())-1]
 }
 
-func KeywordName(k generated.Keyword) string {
+func KeywordName(k grammar.Keyword) string {
 	sb := &strings.Builder{}
 	for _, r := range KeywordValue(k) {
 		switch r {
@@ -160,10 +160,10 @@ func KeywordName(k generated.Keyword) string {
 	return sb.String()
 }
 
-func GeneratedKeywordName(k generated.Keyword) string {
+func GeneratedKeywordName(k grammar.Keyword) string {
 	return "Keyword_" + KeywordName(k)
 }
 
-func GeneratedKeywordIdxName(k generated.Keyword) string {
+func GeneratedKeywordIdxName(k grammar.Keyword) string {
 	return GeneratedKeywordName(k) + "_Idx"
 }

@@ -2,44 +2,41 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package main
+package grammar
 
-//go:generate go run ../../cmd/main.go -g ./statemachine.fb -o ./generated -v
+//go:generate go run ../../cmd/main.go -g ./grammar.fb -v
 
 import (
-	"context"
-	"log"
-
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/workspace"
 )
 
-func main() {
-	ctx := context.Background()
-	srv := createServices()
-
-	if err := server.StartLanguageServer(ctx, srv); err != nil {
-		log.Fatalf("Error: %v", err)
-	}
-}
-
-type StatemachineSrv struct {
+type GrammarSrv struct {
 	textdoc.TextdocSrvContBlock
 	workspace.GeneratedSrvContBlock
 	workspace.WorkspaceSrvContBlock
 	linking.LinkingSrvContBlock
 	server.ServerSrvContBlock
+	FastbeltLinkingSrvContBlock
 }
 
-func createServices() *StatemachineSrv {
-	srv := &StatemachineSrv{}
+func CreateServices() *GrammarSrv {
+	srv := &GrammarSrv{}
 	textdoc.CreateDefaultServices(srv)
 	workspace.CreateDefaultServices(srv)
 	server.CreateDefaultServices(srv)
+	linking.CreateDefaultServices(srv)
+	CreateDefaultServices(srv)
 
-	srv.Workspace().Initializer.(*workspace.DefaultInitializer).FileExtensions = []string{".statemachine"}
+	// Set the file extensions to scan on workspace initialization
+	workspaceIninitializer := srv.Workspace().Initializer.(*workspace.DefaultInitializer)
+	workspaceIninitializer.FileExtensions = []string{".fb"}
+
+	// Override the default scope provider
+	linkingSrv := srv.FastbeltLinking()
+	linkingSrv.ScopeProvider = newScopeProviderImpl(srv)
 
 	return srv
 }

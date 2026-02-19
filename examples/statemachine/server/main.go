@@ -8,13 +8,13 @@ import (
 	"context"
 	"log"
 
-	"typefox.dev/fastbelt/internal/grammar"
+	"typefox.dev/fastbelt/examples/statemachine"
 	"typefox.dev/fastbelt/server"
 )
 
 func main() {
 	ctx := context.Background()
-	srv := grammar.CreateServices()
+	srv := statemachine.CreateServices()
 
 	if err := server.StartLanguageServer(ctx, srv); err != nil {
 		log.Fatalf("Error: %v", err)

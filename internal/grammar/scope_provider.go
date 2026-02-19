@@ -2,61 +2,60 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package services
+package grammar
 
 import (
 	"context"
 
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/internal/grammar/generated"
 )
 
-type FastbeltScopeProvider struct {
-	*generated.DefaultFastbeltScopeProvider
+type scopeProviderImpl struct {
+	*DefaultFastbeltScopeProvider
 }
 
-func NewFastbeltScopeProvider(srv generated.FastbeltLinkingSrvCont) *FastbeltScopeProvider {
-	return &FastbeltScopeProvider{
-		DefaultFastbeltScopeProvider: generated.NewDefaultFastbeltScopeProvider(srv),
+func newScopeProviderImpl(srv FastbeltLinkingSrvCont) *scopeProviderImpl {
+	return &scopeProviderImpl{
+		DefaultFastbeltScopeProvider: NewDefaultFastbeltScopeProvider(srv),
 	}
 }
 
-func (s *FastbeltScopeProvider) ScopeActionProperty(ctx context.Context, reference *core.Reference[generated.Field]) core.Scope {
-	if action, ok := reference.Owner.(generated.Action); ok && action.Type() != nil {
+func (s *scopeProviderImpl) ScopeActionProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope {
+	if action, ok := reference.Owner.(Action); ok && action.Type() != nil {
 		targetType := action.Type().Ref(ctx)
 		if targetType != nil {
-			descriptions := generateInterfaceFieldsDescriptions(ctx, targetType, map[generated.Interface]bool{})
+			descriptions := generateInterfaceFieldsDescriptions(ctx, targetType, map[Interface]bool{})
 			return core.NewMapScopeFromSlice(descriptions, nil)
 		}
 	}
 	return core.EmptyScope
 }
 
-func (s *FastbeltScopeProvider) ScopeAssignmentProperty(ctx context.Context, reference *core.Reference[generated.Field]) core.Scope {
-	if assignment, ok := reference.Owner.(generated.Assignment); ok {
+func (s *scopeProviderImpl) ScopeAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope {
+	if assignment, ok := reference.Owner.(Assignment); ok {
 		iface := getCurrentType(ctx, assignment)
 		if iface == nil {
 			return nil
 		}
-		descriptions := generateInterfaceFieldsDescriptions(ctx, iface, map[generated.Interface]bool{})
+		descriptions := generateInterfaceFieldsDescriptions(ctx, iface, map[Interface]bool{})
 		return core.NewMapScopeFromSlice(descriptions, nil)
 	}
 	return nil
 }
 
-func getCurrentType(ctx context.Context, node core.AstNode) generated.Interface {
+func getCurrentType(ctx context.Context, node core.AstNode) Interface {
 	for node != nil {
-		if rule, ok := node.(generated.ParserRule); ok {
+		if rule, ok := node.(ParserRule); ok {
 			// Arrived at the parser rule, return its return type
 			return rule.ReturnType().Ref(ctx)
 		}
 		container := node.Container()
-		if group, ok := container.(generated.Group); ok {
+		if group, ok := container.(Group); ok {
 			// Attempt to find the last action that was executed in the parser rule
 			elem := group.Elements()
-			var lastAction generated.Action = nil
+			var lastAction Action = nil
 			for i := range group.Elements() {
-				if action, ok := elem[i].(generated.Action); ok {
+				if action, ok := elem[i].(Action); ok {
 					lastAction = action
 				}
 				if elem[i] == node {
@@ -72,7 +71,7 @@ func getCurrentType(ctx context.Context, node core.AstNode) generated.Interface 
 	return nil
 }
 
-func generateInterfaceFieldsDescriptions(ctx context.Context, iface generated.Interface, visited map[generated.Interface]bool) []*core.AstNodeDescription {
+func generateInterfaceFieldsDescriptions(ctx context.Context, iface Interface, visited map[Interface]bool) []*core.AstNodeDescription {
 	fieldDesc := []*core.AstNodeDescription{}
 	if visited[iface] {
 		return fieldDesc

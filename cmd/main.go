@@ -13,44 +13,50 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/internal/generator"
-	"typefox.dev/fastbelt/internal/grammar/generated"
-	"typefox.dev/fastbelt/internal/grammar/services"
+	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/lsp"
 )
 
 func main() {
-	cwd, err := os.Getwd()
-	if err != nil {
-		panic(err)
+	if err := runCmd(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
 	}
+}
 
-	grammarPathFlag := flag.String("g", filepath.Join(cwd, "..", "grammar.fb"), "Path to the grammar file")
-	outputPathFlag := flag.String("o", filepath.Join(cwd, "..", "internal", "generated"), "Path to the output directory")
+func runCmd() error {
+	grammarPathFlag := flag.String("g", "./grammar.fb", "Path to the grammar file")
+	outputPathFlag := flag.String("o", "./", "Path to the output directory")
+	packageNameFlag := flag.String("p", "", "Package name for generated code (defaults to the last segment of the output path)")
 	verboseFlag := flag.Bool("v", false, "Enable verbose output about written files")
 	flag.Parse()
 
 	grammarPath, err := filepath.Abs(*grammarPathFlag)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	outputPath, err := filepath.Abs(*outputPathFlag)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	verbose := *verboseFlag
 
-	err = os.MkdirAll(outputPath, 0755)
-	if err != nil {
-		panic(err)
+	packageName := *packageNameFlag
+	if packageName == "" {
+		packageName = filepath.Base(outputPath)
+	}
+
+	if err := os.MkdirAll(outputPath, 0755); err != nil {
+		return err
 	}
 
 	grammarText, err := os.ReadFile(grammarPath)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	srv := services.CreateServices()
+	srv := grammar.CreateServices()
 	file, _ := textdoc.NewFile(lsp.URIFromPath(grammarPath), "fb", 0, string(grammarText))
 
 	document := core.NewDocument(file)
@@ -58,53 +64,41 @@ func main() {
 	srv.Linking().LocalSymbolsProvider.Compute(context.Background(), document)
 	srv.Linking().Linker.Link(context.Background(), document)
 
-	if grammar, ok := document.Root.(generated.Grammar); !ok {
-		panic("Parser result is not a Grammar")
-	} else {
-		linker := generator.GenerateLinker(grammar)
-		linkerPath := filepath.Join(outputPath, "linker_gen.go")
-		err = os.WriteFile(linkerPath, []byte(linker), 0644)
-		if err != nil {
-			panic(err)
-		}
-		if verbose {
-			fmt.Printf("Written: %s\n", linkerPath)
-		}
-		types := generator.GenerateTypes(grammar)
-		typesPath := filepath.Join(outputPath, "types_gen.go")
-		err = os.WriteFile(typesPath, []byte(types), 0644)
-		if err != nil {
-			panic(err)
-		}
-		if verbose {
-			fmt.Printf("Written: %s\n", typesPath)
-		}
-		generatedParser := generator.GenerateParser(grammar)
-		parserPath := filepath.Join(outputPath, "parser_gen.go")
-		err = os.WriteFile(parserPath, []byte(generatedParser), 0644)
-		if err != nil {
-			panic(err)
-		}
-		if verbose {
-			fmt.Printf("Written: %s\n", parserPath)
-		}
-		lexer := generator.GenerateLexer(grammar)
-		lexerPath := filepath.Join(outputPath, "lexer_gen.go")
-		err = os.WriteFile(lexerPath, []byte(lexer), 0644)
-		if err != nil {
-			panic(err)
-		}
-		if verbose {
-			fmt.Printf("Written: %s\n", lexerPath)
-		}
-		services := generator.GenerateServices(grammar)
-		servicesPath := filepath.Join(outputPath, "services_gen.go")
-		err = os.WriteFile(servicesPath, []byte(services), 0644)
-		if err != nil {
-			panic(err)
-		}
-		if verbose {
-			fmt.Printf("Written: %s\n", servicesPath)
-		}
+	grammr, ok := document.Root.(grammar.Grammar)
+	if !ok {
+		return fmt.Errorf("parser result is not a Grammar")
 	}
+
+	writeFile := func(name, path, content string) error {
+		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+			return fmt.Errorf("failed to write %s: %w", name, err)
+		}
+		if verbose {
+			fmt.Printf("Written: %s\n", path)
+		}
+		return nil
+	}
+
+	if err := writeFile("linker", filepath.Join(outputPath, "linker_gen.go"),
+		generator.GenerateLinker(grammr, packageName)); err != nil {
+		return err
+	}
+	if err := writeFile("types", filepath.Join(outputPath, "types_gen.go"),
+		generator.GenerateTypes(grammr, packageName)); err != nil {
+		return err
+	}
+	if err := writeFile("parser", filepath.Join(outputPath, "parser_gen.go"),
+		generator.GenerateParser(grammr, packageName)); err != nil {
+		return err
+	}
+	if err := writeFile("lexer", filepath.Join(outputPath, "lexer_gen.go"),
+		generator.GenerateLexer(grammr, packageName)); err != nil {
+		return err
+	}
+	if err := writeFile("services", filepath.Join(outputPath, "services_gen.go"),
+		generator.GenerateServices(grammr, packageName)); err != nil {
+		return err
+	}
+
+	return nil
 }
