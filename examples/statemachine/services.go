@@ -27,7 +27,8 @@ func CreateServices() *StatemachineSrv {
 	workspace.CreateDefaultServices(srv)
 	server.CreateDefaultServices(srv)
 
-	srv.Workspace().Initializer.(*workspace.DefaultInitializer).FileExtensions = []string{".statemachine"}
+	srv.Workspace().LanguageID = "statemachine"
+	srv.Workspace().FileExtensions = []string{".statemachine"}
 
 	return srv
 }

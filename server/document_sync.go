@@ -5,8 +5,10 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"log"
+	"os"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/textdoc"
@@ -63,6 +65,8 @@ func NewDefaultDocumentSyncher(srv ServerSrvCont) DocumentSyncher {
 
 // DidOpen processes a textDocument/didOpen notification.
 func (ds *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *lsp.DidOpenTextDocumentParams) {
+	existing := ds.srv.Textdoc().Store.Get(params.TextDocument.URI)
+
 	doc, err := textdoc.NewOverlay(
 		params.TextDocument.URI,
 		string(params.TextDocument.LanguageID),
@@ -76,6 +80,10 @@ func (ds *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *lsp.DidOp
 	}
 
 	ds.srv.Textdoc().Store.AddOverlay(doc)
+	if existing != nil && existing.Text(nil) == params.TextDocument.Text {
+		// The text editor content is the same as the file content
+		return
+	}
 	ds.srv.Workspace().DocumentUpdater.Update(ctx, []textdoc.Handle{doc}, nil)
 }
 
@@ -90,18 +98,40 @@ func (ds *DefaultDocumentSyncher) DidChange(ctx context.Context, params *lsp.Did
 		return
 	}
 
+	oldContent := doc.Content()
+
 	if err := doc.Update(params.ContentChanges, params.TextDocument.Version); err != nil {
 		// Log error but continue - this is a notification, not a request
 		log.Printf("failed to update document: %v", err)
 		return
 	}
 
+	if bytes.Equal(oldContent, doc.Content()) {
+		return
+	}
 	ds.srv.Workspace().DocumentUpdater.Update(ctx, []textdoc.Handle{doc}, nil)
 }
 
 // DidClose processes a textDocument/didClose notification.
 func (ds *DefaultDocumentSyncher) DidClose(ctx context.Context, params *lsp.DidCloseTextDocumentParams) {
 	ds.srv.Textdoc().Store.RemoveOverlay(params.TextDocument.URI)
+	uri := core.ParseURI(string(params.TextDocument.URI))
+
+	var file *textdoc.File
+	if uri.Scheme() == core.FileScheme {
+		if content, err := os.ReadFile(uri.Path()); err == nil {
+			languageID := ds.srv.Workspace().LanguageID
+			file, _ = textdoc.NewFile(params.TextDocument.URI, languageID, 0, string(content))
+		}
+	}
+	if file != nil {
+		// Revert to the original file content
+		ds.srv.Workspace().DocumentUpdater.Update(ctx, []textdoc.Handle{file}, nil)
+	} else {
+		// We don't find the document in the file system, so delete it from our workspace
+		ds.srv.Workspace().DocumentUpdater.Update(ctx, nil, []core.URI{uri})
+	}
+
 	connection := ds.srv.Server().Connection
 	if connection != nil {
 		// Ensure we clear diagnostics on close
@@ -115,9 +145,6 @@ func (ds *DefaultDocumentSyncher) DidClose(ctx context.Context, params *lsp.DidC
 			log.Printf("failed to publish diagnostics after document close: %v", err)
 		}
 	}
-	// TODO msujew: Once we start handling cross-file references, we shouldn't delete the document.
-	uri := core.ParseURI(string(params.TextDocument.URI))
-	ds.srv.Workspace().DocumentUpdater.Update(ctx, nil, []core.URI{uri})
 }
 
 // WillSave processes a textDocument/willSave notification.

@@ -30,9 +30,8 @@ func CreateServices() *GrammarSrv {
 	linking.CreateDefaultServices(srv)
 	CreateDefaultServices(srv)
 
-	// Set the file extensions to scan on workspace initialization
-	workspaceIninitializer := srv.Workspace().Initializer.(*workspace.DefaultInitializer)
-	workspaceIninitializer.FileExtensions = []string{".fb"}
+	srv.Workspace().LanguageID = "fastbelt"
+	srv.Workspace().FileExtensions = []string{".fb"}
 
 	// Override the default scope provider
 	linkingSrv := srv.FastbeltLinking()

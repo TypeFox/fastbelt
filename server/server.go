@@ -322,9 +322,9 @@ func StartLanguageServer(ctx context.Context, srv ServerSrvCont) error {
 		_ = conn.Close() // Ignore error in defer
 	}()
 
-	// Register build step listener to publish diagnostics after linking
+	// Register build step listener to publish diagnostics after validation
 	client := lsp.ClientDispatcher(conn)
-	srv.Workspace().Builder.AddBuildStepListener(core.DocStateLinked, func(ctx context.Context, doc *core.Document) error {
+	srv.Workspace().Builder.AddBuildStepListener(core.DocStateValidated, func(ctx context.Context, doc *core.Document) error {
 		diagnostics := []lsp.Diagnostic{}
 		diagnostics = append(diagnostics, workspace.CreateLexerDiagnostics(doc)...)
 		diagnostics = append(diagnostics, workspace.CreateParserDiagnostics(doc)...)

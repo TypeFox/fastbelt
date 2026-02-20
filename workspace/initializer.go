@@ -27,10 +27,6 @@ type Initializer interface {
 
 // DefaultInitializer is the default implementation of Initializer.
 type DefaultInitializer struct {
-	// FileExtensions contains the file extensions to include, with leading dot
-	// (e.g. []string{".statemachine"}).
-	FileExtensions []string
-
 	srv WorkspaceSrvCont
 }
 
@@ -42,7 +38,12 @@ func NewDefaultInitializer(srv WorkspaceSrvCont) *DefaultInitializer {
 // Initialize walks each workspace folder, reads files whose extension matches
 // FileExtensions, and registers the resulting documents in the DocumentManager.
 func (i *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.WorkspaceFolder) error {
-	if len(i.FileExtensions) == 0 {
+	ws := i.srv.Workspace()
+	if ws.LanguageID == "" {
+		log.Print("workspace LanguageID is not set")
+	}
+	if len(ws.FileExtensions) == 0 {
+		log.Print("workspace FileExtensions is not set")
 		return nil
 	}
 	for _, folder := range folders {
@@ -65,7 +66,7 @@ func (i *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 			if !i.matchesExtension(ext) {
 				return nil
 			}
-			i.loadFile(path, ext)
+			i.loadFile(path)
 			return nil
 		})
 		if err != nil {
@@ -75,15 +76,14 @@ func (i *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 	return nil
 }
 
-func (i *DefaultInitializer) loadFile(path, ext string) {
+func (i *DefaultInitializer) loadFile(path string) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("failed to read file %s: %v", path, err)
 		return
 	}
 	uri := core.FileURI(path)
-	languageID := strings.TrimPrefix(ext, ".")
-	textDoc, err := textdoc.NewFile(uri.DocumentURI(), languageID, 0, string(content))
+	textDoc, err := textdoc.NewFile(uri.DocumentURI(), i.srv.Workspace().LanguageID, 0, string(content))
 	if err != nil {
 		log.Printf("failed to create text document for %s: %v", path, err)
 		return
@@ -95,7 +95,7 @@ func (i *DefaultInitializer) loadFile(path, ext string) {
 }
 
 func (i *DefaultInitializer) matchesExtension(ext string) bool {
-	for _, e := range i.FileExtensions {
+	for _, e := range i.srv.Workspace().FileExtensions {
 		if e == ext {
 			return true
 		}
