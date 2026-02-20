@@ -17,10 +17,10 @@ func (p *Parser) references() FastbeltReferencesConstructor {
 }
 
 func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
-	p.state = parser.NewParserState(document.Tokens)
-	result := p.ParseGrammar()
+	cp := &Parser{srv: p.srv, state: parser.NewParserState(document.Tokens)}
+	result := cp.ParseGrammar()
 	core.AssignContainers(document, result)
-	return &parser.ParseResult{Node: result, Errors: p.state.Errors()}
+	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
 }
 
 func NewParser(srv FastbeltGeneratedSrvCont) *Parser {

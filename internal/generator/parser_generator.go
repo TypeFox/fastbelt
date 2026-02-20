@@ -78,10 +78,12 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 	firstRule := rules[0]
 	node.AppendLine("func (p *Parser) Parse(document *core.Document) *parser.ParseResult {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("p.state = parser.NewParserState(document.Tokens)")
-		n.AppendLine("result := p.Parse", firstRule.Name(), "()")
+		// Workaround to enable parallel parsing of documents
+		// TODO: find a better structure to enable parallel parsing
+		n.AppendLine("cp := &Parser{srv: p.srv, state: parser.NewParserState(document.Tokens)}")
+		n.AppendLine("result := cp.Parse", firstRule.Name(), "()")
 		n.AppendLine("core.AssignContainers(document, result)")
-		n.AppendLine("return &parser.ParseResult{Node: result, Errors: p.state.Errors()}")
+		n.AppendLine("return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
