@@ -12,9 +12,16 @@ import (
 	"typefox.dev/fastbelt/server"
 )
 
+type GrammarLspSrv struct {
+	*grammar.GrammarSrv
+	server.ServerSrvContBlock
+}
+
 func main() {
 	ctx := context.Background()
-	srv := grammar.CreateServices()
+	grammarSrv := grammar.CreateServices()
+	srv := &GrammarLspSrv{GrammarSrv: grammarSrv}
+	server.CreateDefaultServices(srv)
 
 	if err := server.StartLanguageServer(ctx, srv); err != nil {
 		log.Fatalf("Error: %v", err)

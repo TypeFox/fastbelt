@@ -12,9 +12,16 @@ import (
 	"typefox.dev/fastbelt/server"
 )
 
+type StatemachineLspSrv struct {
+	*statemachine.StatemachineSrv
+	server.ServerSrvContBlock
+}
+
 func main() {
 	ctx := context.Background()
-	srv := statemachine.CreateServices()
+	statemachineSrv := statemachine.CreateServices()
+	srv := &StatemachineLspSrv{StatemachineSrv: statemachineSrv}
+	server.CreateDefaultServices(srv)
 
 	if err := server.StartLanguageServer(ctx, srv); err != nil {
 		log.Fatalf("Error: %v", err)

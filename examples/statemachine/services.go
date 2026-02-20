@@ -8,7 +8,6 @@ package statemachine
 
 import (
 	"typefox.dev/fastbelt/linking"
-	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/workspace"
 )
@@ -18,14 +17,12 @@ type StatemachineSrv struct {
 	workspace.GeneratedSrvContBlock
 	workspace.WorkspaceSrvContBlock
 	linking.LinkingSrvContBlock
-	server.ServerSrvContBlock
 }
 
 func CreateServices() *StatemachineSrv {
 	srv := &StatemachineSrv{}
 	textdoc.CreateDefaultServices(srv)
 	workspace.CreateDefaultServices(srv)
-	server.CreateDefaultServices(srv)
 
 	srv.Workspace().LanguageID = "statemachine"
 	srv.Workspace().FileExtensions = []string{".statemachine"}
