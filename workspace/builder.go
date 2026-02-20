@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/lsp"
 )
 
 // Builder is the interface for building workspace-related structures.
@@ -18,6 +19,10 @@ type Builder interface {
 	// Build processes the provided documents through all build phases (parse, compute
 	// symbol table, link). It should regularly check ctx for cancellation between phases.
 	Build(ctx context.Context, docs []*core.Document) error
+	// Reset selectively clears build results of a document. The state parameter is a
+	// bitmask of states to keep; for every bit that is not set, the corresponding document
+	// fields are reset to their initial values and the bit is cleared from doc.State.
+	Reset(doc *core.Document, state core.DocumentState)
 	// AddBuildStepListener registers a listener to be called after documents complete the
 	// specified build steps. The states parameter is a bitmask, so multiple steps can be
 	// selected with e.g. DocStateParsed | DocStateLinked.
@@ -136,6 +141,34 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	}
 
 	return nil
+}
+
+// Reset selectively clears build results of a document. See [Builder.Reset].
+func (b *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
+	doc.Lock()
+	defer doc.Unlock()
+	if !state.Has(core.DocStateParsed) {
+		doc.Root = nil
+		doc.Tokens = core.TokenSlice{}
+		doc.ParserErrors = []*core.ParserError{}
+		doc.LexerErrors = []*core.LexerError{}
+	}
+	if !state.Has(core.DocStateExportedSymbols) {
+		doc.ExportedSymbols = nil
+	}
+	if !state.Has(core.DocStateLocalSymbols) {
+		doc.LocalSymbols = nil
+	}
+	if !state.Has(core.DocStateLinked) {
+		for _, ref := range doc.References {
+			ref.Reset()
+		}
+		doc.References = []core.UntypedReference{}
+	}
+	if !state.Has(core.DocStateValidated) {
+		doc.Diagnostics = []*lsp.Diagnostic{}
+	}
+	doc.State = doc.State & state
 }
 
 // AddBuildStepListener registers a listener to be called after the specified build steps.

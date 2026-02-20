@@ -7,6 +7,7 @@ package workspace
 import (
 	"context"
 	"log"
+	"slices"
 	"sync"
 
 	core "typefox.dev/fastbelt"
@@ -62,18 +63,22 @@ func (u *DefaultDocumentUpdater) Update(ctx context.Context, changed []textdoc.H
 	u.cancelFn = cancel
 	u.mu.Unlock()
 
+	builder := u.srv.Workspace().Builder
 	go func() {
 		if buildCtx.Err() != nil {
 			return
 		}
 
 		// TODO: Select which documents to include in the build; for now, rebuild all.
-		var docs []*core.Document
-		for doc := range docManager.All() {
-			docs = append(docs, doc)
+		docs := slices.Collect(docManager.All())
+
+		// Reset documents so linking and validation are re-executed.
+		keepState := core.DocStateParsed | core.DocStateExportedSymbols | core.DocStateLocalSymbols
+		for _, doc := range docs {
+			builder.Reset(doc, keepState)
 		}
 
-		if err := u.srv.Workspace().Builder.Build(buildCtx, docs); err != nil {
+		if err := builder.Build(buildCtx, docs); err != nil {
 			if buildCtx.Err() == nil {
 				log.Printf("build failed: %v", err)
 			}

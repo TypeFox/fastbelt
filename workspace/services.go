@@ -30,6 +30,12 @@ func (b *WorkspaceSrvContBlock) Workspace() *WorkspaceSrv {
 
 // WorkspaceSrv contains the services for the workspace package.
 type WorkspaceSrv struct {
+	// LanguageID is the identifier of the language managed by this workspace.
+	// It must be set by adopters and corresponds to the language ID used in the LSP protocol.
+	LanguageID string
+	// FileExtensions contains the file extensions to include, with leading dot
+	// (e.g. []string{".statemachine"}). It must be set by adopters.
+	FileExtensions  []string
 	DocumentManager DocumentManager
 	DocumentUpdater DocumentUpdater
 	Builder         Builder
