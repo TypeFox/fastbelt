@@ -30,48 +30,39 @@ func NewDefaultFastbeltScopeProvider(srv FastbeltLinkingSrvCont) *DefaultFastbel
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
-	allDocuments := s.srv.Workspace().DocumentManager.All()
-	return linking.DefaultScopeOfType[Interface](reference.Owner, allDocuments)
+	return linking.DefaultScopeOfType[Interface](reference.Owner)
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
-	allDocuments := s.srv.Workspace().DocumentManager.All()
-	return linking.DefaultScopeOfType[Interface](reference.Owner, allDocuments)
+	return linking.DefaultScopeOfType[Interface](reference.Owner)
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
-	allDocuments := s.srv.Workspace().DocumentManager.All()
-	return linking.DefaultScopeOfType[Interface](reference.Owner, allDocuments)
+	return linking.DefaultScopeOfType[Interface](reference.Owner)
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
-	allDocuments := s.srv.Workspace().DocumentManager.All()
-	return linking.DefaultScopeOfType[Interface](reference.Owner, allDocuments)
+	return linking.DefaultScopeOfType[Interface](reference.Owner)
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope {
-	allDocuments := s.srv.Workspace().DocumentManager.All()
-	return linking.DefaultScopeOfType[Field](reference.Owner, allDocuments)
+	return linking.DefaultScopeOfType[Field](reference.Owner)
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeCrossRefType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
-	allDocuments := s.srv.Workspace().DocumentManager.All()
-	return linking.DefaultScopeOfType[Interface](reference.Owner, allDocuments)
+	return linking.DefaultScopeOfType[Interface](reference.Owner)
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) core.Scope {
-	allDocuments := s.srv.Workspace().DocumentManager.All()
-	return linking.DefaultScopeOfType[AbstractRule](reference.Owner, allDocuments)
+	return linking.DefaultScopeOfType[AbstractRule](reference.Owner)
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeActionType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
-	allDocuments := s.srv.Workspace().DocumentManager.All()
-	return linking.DefaultScopeOfType[Interface](reference.Owner, allDocuments)
+	return linking.DefaultScopeOfType[Interface](reference.Owner)
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeActionProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope {
-	allDocuments := s.srv.Workspace().DocumentManager.All()
-	return linking.DefaultScopeOfType[Field](reference.Owner, allDocuments)
+	return linking.DefaultScopeOfType[Field](reference.Owner)
 }
 
 type FastbeltReferenceLinker interface {

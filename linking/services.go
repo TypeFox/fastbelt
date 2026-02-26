@@ -7,6 +7,7 @@ package linking
 type LinkingSrv struct {
 	ExportedSymbolsProvider ExportedSymbolsProvider
 	ExportedSymbolDescriber ExportedSymbolDescriber
+	ImportedSymbolsProvider ImportedSymbolsProvider
 	LocalSymbolsProvider    LocalSymbolsProvider
 	LocalSymbolDescriber    LocalSymbolDescriber
 	Namer                   Namer
@@ -32,6 +33,9 @@ func CreateDefaultServices(srv LinkingSrvCont) {
 	}
 	if linking.ExportedSymbolDescriber == nil {
 		linking.ExportedSymbolDescriber = NewDefaultExportedSymbolDescriber(srv)
+	}
+	if linking.ImportedSymbolsProvider == nil {
+		linking.ImportedSymbolsProvider = NewDefaultImportedSymbolsProvider(srv)
 	}
 	if linking.LocalSymbolsProvider == nil {
 		linking.LocalSymbolsProvider = NewDefaultLocalSymbolsProvider(srv)

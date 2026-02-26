@@ -14,10 +14,10 @@ import (
 
 // LocalSymbolsProvider computes local symbol information for documents.
 type LocalSymbolsProvider interface {
-	// Compute traverses the document's AST and computes the local symbol table.
+	// Provide traverses the document's AST and computes the local symbol table.
 	// The result is stored in the document's LocalSymbols field.
 	// The caller must hold the document's write lock.
-	Compute(ctx context.Context, document *core.Document)
+	Provide(ctx context.Context, document *core.Document)
 }
 
 // DefaultLocalSymbolsProvider is the default implementation of LocalSymbolsProvider.
@@ -31,7 +31,7 @@ func NewDefaultLocalSymbolsProvider(srv LinkingSrvCont) LocalSymbolsProvider {
 	}
 }
 
-func (s *DefaultLocalSymbolsProvider) Compute(ctx context.Context, document *core.Document) {
+func (s *DefaultLocalSymbolsProvider) Provide(ctx context.Context, document *core.Document) {
 	root := document.Root
 	symbols := collections.NewMultiMap[core.AstNode, *core.AstNodeDescription]()
 

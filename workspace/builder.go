@@ -82,7 +82,7 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 			}
 			// STEP 1.2: Compute the exported symbols for cross-document references.
 			if !doc.State.Has(core.DocStateExportedSymbols) {
-				exportedSymbols.Compute(ctx, doc)
+				exportedSymbols.Provide(ctx, doc)
 				doc.State = doc.State.With(core.DocStateExportedSymbols)
 				b.notifyListeners(ctx, core.DocStateExportedSymbols, doc)
 			}
@@ -97,8 +97,9 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 		return err
 	}
 
-	// PHASE 2: Compute local symbols and link (parallel per document).
+	// PHASE 2: Compute imported/local symbols and link (parallel per document).
 	// This requires the exported symbols of all documents to be available.
+	importedSymbols := b.srv.Linking().ImportedSymbolsProvider
 	localSymbols := b.srv.Linking().LocalSymbolsProvider
 	linker := b.srv.Linking().Linker
 	var phase2 sync.WaitGroup
@@ -107,16 +108,26 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 			if ctx.Err() != nil {
 				return
 			}
-			// STEP 2.1: Compute the local symbols for intra-document references.
+			// STEP 2.1: Collect imported symbols from all other documents.
+			if !doc.State.Has(core.DocStateImportedSymbols) {
+				allDocs := b.srv.Workspace().DocumentManager.All()
+				importedSymbols.Provide(ctx, doc, allDocs)
+				doc.State = doc.State.With(core.DocStateImportedSymbols)
+				b.notifyListeners(ctx, core.DocStateImportedSymbols, doc)
+			}
+			if ctx.Err() != nil {
+				return
+			}
+			// STEP 2.2: Compute the local symbols for intra-document references.
 			if !doc.State.Has(core.DocStateLocalSymbols) {
-				localSymbols.Compute(ctx, doc)
+				localSymbols.Provide(ctx, doc)
 				doc.State = doc.State.With(core.DocStateLocalSymbols)
 				b.notifyListeners(ctx, core.DocStateLocalSymbols, doc)
 			}
 			if ctx.Err() != nil {
 				return
 			}
-			// STEP 2.2: Link the document to resolve all references.
+			// STEP 2.3: Link the document to resolve all references.
 			if !doc.State.Has(core.DocStateLinked) {
 				linker.Link(ctx, doc)
 				doc.State = doc.State.With(core.DocStateLinked)
@@ -155,6 +166,9 @@ func (b *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
 	}
 	if !state.Has(core.DocStateExportedSymbols) {
 		doc.ExportedSymbols = nil
+	}
+	if !state.Has(core.DocStateImportedSymbols) {
+		doc.ImportedSymbols = nil
 	}
 	if !state.Has(core.DocStateLocalSymbols) {
 		doc.LocalSymbols = nil

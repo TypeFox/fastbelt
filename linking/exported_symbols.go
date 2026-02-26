@@ -10,13 +10,13 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
-// ExportedSymbolsProvider computes the symbols to be exported from a document,
-// potentially making them visible from other documents.
+// ExportedSymbolsProvider computes the symbols to be exported from a document
+// so they can be imported into other documents.
 type ExportedSymbolsProvider interface {
-	// Compute traverses the document's AST and computes the exported symbols.
+	// Provide traverses the document's AST and computes the exported symbols.
 	// The result is stored in the document's ExportedSymbols field.
 	// The caller must hold the document's write lock.
-	Compute(ctx context.Context, document *core.Document)
+	Provide(ctx context.Context, document *core.Document)
 }
 
 // DefaultExportedSymbolsProvider is the default implementation of ExportedSymbolsProvider.
@@ -31,7 +31,7 @@ func NewDefaultExportedSymbolsProvider(srv LinkingSrvCont) ExportedSymbolsProvid
 	}
 }
 
-func (s *DefaultExportedSymbolsProvider) Compute(ctx context.Context, document *core.Document) {
+func (s *DefaultExportedSymbolsProvider) Provide(ctx context.Context, document *core.Document) {
 	root := document.Root
 	describer := s.srv.Linking().ExportedSymbolDescriber
 	var exports []*core.AstNodeDescription

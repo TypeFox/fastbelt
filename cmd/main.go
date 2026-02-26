@@ -60,9 +60,10 @@ func runCmd() error {
 	file, _ := textdoc.NewFile(lsp.URIFromPath(grammarPath), "fb", 0, string(grammarText))
 
 	document := core.NewDocument(file)
-	srv.Workspace().DocumentParser.Parse(document)
-	srv.Linking().LocalSymbolsProvider.Compute(context.Background(), document)
-	srv.Linking().Linker.Link(context.Background(), document)
+	srv.Workspace().DocumentManager.Set(document)
+	if err := srv.Workspace().Builder.Build(context.Background(), []*core.Document{document}); err != nil {
+		return err
+	}
 
 	grammr, ok := document.Root.(grammar.Grammar)
 	if !ok {

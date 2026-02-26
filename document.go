@@ -26,6 +26,7 @@ type Document struct {
 	Tokens          TokenSlice
 	LocalSymbols    LocalSymbols
 	ExportedSymbols []*AstNodeDescription
+	ImportedSymbols SymbolList
 	ParserErrors    []*ParserError
 	LexerErrors     []*LexerError
 	References      []UntypedReference
@@ -68,9 +69,10 @@ type DocumentState uint32
 const (
 	DocStateParsed          DocumentState = 1 << iota // 0x0001
 	DocStateExportedSymbols                           // 0x0002
-	DocStateLocalSymbols                              // 0x0004
-	DocStateLinked                                    // 0x0008
-	DocStateValidated                                 // 0x0010
+	DocStateImportedSymbols                           // 0x0004
+	DocStateLocalSymbols                              // 0x0008
+	DocStateLinked                                    // 0x0010
+	DocStateValidated                                 // 0x0020
 )
 
 func (s DocumentState) String() string {
@@ -80,6 +82,9 @@ func (s DocumentState) String() string {
 	}
 	if s.Has(DocStateExportedSymbols) {
 		flags = append(flags, "ExportedSymbols")
+	}
+	if s.Has(DocStateImportedSymbols) {
+		flags = append(flags, "ImportedSymbols")
 	}
 	if s.Has(DocStateLocalSymbols) {
 		flags = append(flags, "LocalSymbols")

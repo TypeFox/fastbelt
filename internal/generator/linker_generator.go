@@ -96,8 +96,7 @@ func generateScopeProvider(context *LinkerGeneratorContext) generator.Node {
 
 	for _, field := range context.fields {
 		node.AppendLine("func (s *Default", context.grammar.Name(), "ScopeProvider) Scope", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) core.Scope {")
-		node.AppendLine("	allDocuments := s.srv.Workspace().DocumentManager.All()")
-		node.AppendLine("	return linking.DefaultScopeOfType[", field.target, "](reference.Owner, allDocuments)")
+		node.AppendLine("	return linking.DefaultScopeOfType[", field.target, "](reference.Owner)")
 		node.AppendLine("}").AppendLine()
 	}
 	return node
