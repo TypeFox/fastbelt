@@ -5,26 +5,21 @@
 package linking
 
 import (
-	"iter"
-	"slices"
-
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/extiter"
 )
 
-func DefaultScopeOfType[T core.AstNode](node core.AstNode, allDocuments iter.Seq[*core.Document]) core.Scope {
-	globalScope := GlobalScopeOfType[T](node, allDocuments)
+func DefaultScopeOfType[T core.AstNode](node core.AstNode) core.Scope {
+	globalScope := GlobalScopeOfType[T](node)
 	return LocalScopeOfType[T](node, globalScope)
 }
 
-func GlobalScopeOfType[T core.AstNode](node core.AstNode, allDocuments iter.Seq[*core.Document]) core.Scope {
-	symbols := extiter.FlatMap(allDocuments, func(doc *core.Document) iter.Seq[*core.AstNodeDescription] {
-		if len(doc.ExportedSymbols) == 0 {
-			return core.EmptyAstNodeDescriptions
-		}
-		exported := slices.Values(doc.ExportedSymbols)
-		return SymbolsOfType[T](exported)
-	})
+func GlobalScopeOfType[T core.AstNode](node core.AstNode) core.Scope {
+	imported := node.Document().ImportedSymbols
+	if imported == nil {
+		return core.EmptyScope
+	}
+	symbols := SymbolsOfType[T](imported)
 	return core.NewMapScopeFromSeq(symbols, nil)
 }
 
