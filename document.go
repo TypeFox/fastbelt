@@ -31,7 +31,7 @@ type Document struct {
 	LexerErrors     []*LexerError
 	References      []UntypedReference
 	TextDoc         textdoc.Handle
-	Diagnostics     []*lsp.Diagnostic
+	Diagnostics     []*Diagnostic
 	Data            map[any]any
 }
 
@@ -50,7 +50,7 @@ func NewDocument(textDoc textdoc.Handle) *Document {
 		ParserErrors:    []*ParserError{},
 		LexerErrors:     []*LexerError{},
 		References:      []UntypedReference{},
-		Diagnostics:     []*lsp.Diagnostic{},
+		Diagnostics:     []*Diagnostic{},
 	}
 }
 

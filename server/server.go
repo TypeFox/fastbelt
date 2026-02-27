@@ -6,6 +6,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"os"
 
@@ -325,20 +326,56 @@ func StartLanguageServer(ctx context.Context, srv ServerSrvCont) error {
 	// Register build step listener to publish diagnostics after validation
 	client := lsp.ClientDispatcher(conn)
 	srv.Workspace().Builder.AddBuildStepListener(core.DocStateValidated, func(ctx context.Context, doc *core.Document) error {
-		diagnostics := []lsp.Diagnostic{}
-		diagnostics = append(diagnostics, workspace.CreateLexerDiagnostics(doc)...)
-		diagnostics = append(diagnostics, workspace.CreateParserDiagnostics(doc)...)
-		diagnostics = append(diagnostics, workspace.CreateLinkerDiagnostics(doc)...)
+		coreDiags := []core.Diagnostic{}
+		coreDiags = append(coreDiags, workspace.CreateLexerDiagnostics(doc)...)
+		coreDiags = append(coreDiags, workspace.CreateParserDiagnostics(doc)...)
+		coreDiags = append(coreDiags, workspace.CreateLinkerDiagnostics(doc)...)
+		lspDiags := make([]lsp.Diagnostic, 0, len(coreDiags)+len(doc.Diagnostics))
+		for _, d := range coreDiags {
+			lspDiags = append(lspDiags, toLspDiagnostic(d))
+		}
+		for _, d := range doc.Diagnostics {
+			lspDiags = append(lspDiags, toLspDiagnostic(*d))
+		}
 		params := &lsp.PublishDiagnosticsParams{
 			URI:         doc.URI.DocumentURI(),
 			Version:     doc.TextDoc.Version(),
-			Diagnostics: diagnostics,
+			Diagnostics: lspDiags,
 		}
 		return client.PublishDiagnostics(ctx, params)
 	})
 
 	// Wait for the connection to close
 	return conn.Wait()
+}
+
+func toLspDiagnostic(d core.Diagnostic) lsp.Diagnostic {
+	result := lsp.Diagnostic{
+		Range:    d.Range.LspRange(),
+		Severity: lsp.DiagnosticSeverity(d.Severity),
+		Message:  d.Message,
+	}
+	if d.Source != "" {
+		result.Source = d.Source
+	}
+	if d.Code != "" {
+		result.Code = d.Code
+	}
+	if len(d.Tags) > 0 {
+		tags := make([]lsp.DiagnosticTag, len(d.Tags))
+		for i, t := range d.Tags {
+			tags[i] = lsp.DiagnosticTag(t)
+		}
+		result.Tags = tags
+	}
+	if d.Data != nil {
+		raw, err := json.Marshal(d.Data)
+		if err == nil {
+			rawMsg := json.RawMessage(raw)
+			result.Data = &rawMsg
+		}
+	}
+	return result
 }
 
 // DefaultBinder implements the jsonrpc2.Binder interface

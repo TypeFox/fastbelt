@@ -11,7 +11,6 @@ import (
 	"sync"
 
 	core "typefox.dev/fastbelt"
-	"typefox.dev/lsp"
 )
 
 // Builder is the interface for building workspace-related structures.
@@ -142,14 +141,28 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	}
 
 	// PHASE 3: Run custom validations (parallel per document).
-	// TODO: acquire read lock for each document and run custom validations
+	validator := b.srv.Workspace().DocumentValidator
+	var phase3 sync.WaitGroup
 	for _, doc := range docs {
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-		doc.State = doc.State.With(core.DocStateValidated)
-		b.notifyListeners(ctx, core.DocStateValidated, doc)
+		phase3.Go(func() {
+			if ctx.Err() != nil {
+				return
+			}
+			doc.RLock()
+			if !doc.State.Has(core.DocStateValidated) {
+				diagnostics := validator.Validate(ctx, doc, "on-save")
+				doc.RUnlock()
+				doc.Lock()
+				doc.Diagnostics = diagnostics
+				doc.State = doc.State.With(core.DocStateValidated)
+				doc.Unlock()
+				b.notifyListeners(ctx, core.DocStateValidated, doc)
+			} else {
+				doc.RUnlock()
+			}
+		})
 	}
+	phase3.Wait()
 
 	return nil
 }
@@ -180,7 +193,7 @@ func (b *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
 		doc.References = []core.UntypedReference{}
 	}
 	if !state.Has(core.DocStateValidated) {
-		doc.Diagnostics = []*lsp.Diagnostic{}
+		doc.Diagnostics = []*core.Diagnostic{}
 	}
 	doc.State = doc.State & state
 }

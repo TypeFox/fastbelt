@@ -1,0 +1,104 @@
+// Copyright 2026 TypeFox GmbH
+// This program and the accompanying materials are made available under the
+// terms of the MIT License, which is available in the project root.
+
+package fastbelt
+
+import "context"
+
+// DiagnosticSeverity mirrors LSP DiagnosticSeverity values.
+type DiagnosticSeverity int
+
+const (
+	SeverityError   DiagnosticSeverity = 1
+	SeverityWarning DiagnosticSeverity = 2
+	SeverityInfo    DiagnosticSeverity = 3
+	SeverityHint    DiagnosticSeverity = 4
+)
+
+// DiagnosticTag mirrors LSP DiagnosticTag values.
+type DiagnosticTag int
+
+const (
+	TagUnnecessary DiagnosticTag = 1
+	TagDeprecated  DiagnosticTag = 2
+)
+
+// Diagnostic represents a diagnostic message such as an error or warning.
+// The struct mirrors lsp.Diagnostic so the core package stays free of that dependency.
+type Diagnostic struct {
+	Range    TextRange
+	Severity DiagnosticSeverity
+	Message  string
+	Source   string
+	Code     string
+	Tags     []DiagnosticTag
+	Data     any
+}
+
+// ValidationAcceptor is a callback that collects diagnostics reported during validation.
+type ValidationAcceptor func(diagnostic *Diagnostic)
+
+// Validator can be implemented by AST node Impl structs to provide custom validation checks.
+// The level parameter identifies when validation runs (e.g. "on-type", "on-save").
+type Validator interface {
+	Validate(ctx context.Context, level string, accept ValidationAcceptor)
+}
+
+// DiagnosticOption configures optional fields of a [Diagnostic] created by [NewDiagnostic].
+type DiagnosticOption func(d *Diagnostic)
+
+// NewDiagnostic creates a [Diagnostic] anchored to the given node's text range.
+// The range is resolved with priority: WithRange > WithToken > node segment.
+func NewDiagnostic(severity DiagnosticSeverity, message string, node AstNode, opts ...DiagnosticOption) *Diagnostic {
+	d := &Diagnostic{
+		Severity: severity,
+		Message:  message,
+	}
+	if seg := node.Segment(); seg != nil {
+		d.Range = seg.Range
+	}
+	for _, opt := range opts {
+		opt(d)
+	}
+	return d
+}
+
+// WithToken narrows the diagnostic range to the given token's text segment.
+// NOTE: These options might clash with other options in this package. If that happens,
+// we can either rename them to DiagnosticToken etc. or move them to a separate package.
+func WithToken(token *Token) DiagnosticOption {
+	return func(d *Diagnostic) {
+		if token != nil {
+			d.Range = token.Segment.Range
+		}
+	}
+}
+
+// WithRange sets an explicit range on the diagnostic, overriding any node or token range.
+func WithRange(r TextRange) DiagnosticOption {
+	return func(d *Diagnostic) {
+		d.Range = r
+	}
+}
+
+// WithCode sets the diagnostic code.
+func WithCode(code string) DiagnosticOption {
+	return func(d *Diagnostic) {
+		d.Code = code
+	}
+}
+
+// WithTags sets diagnostic tags (e.g. [TagUnnecessary], [TagDeprecated]).
+func WithTags(tags ...DiagnosticTag) DiagnosticOption {
+	return func(d *Diagnostic) {
+		d.Tags = tags
+	}
+}
+
+// WithData attaches arbitrary data to the diagnostic.
+func WithData(data any) DiagnosticOption {
+	return func(d *Diagnostic) {
+		d.Data = data
+	}
+}
