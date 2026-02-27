@@ -140,6 +140,10 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 		doc.Unlock()
 	}
 
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	// PHASE 3: Run custom validations (parallel per document).
 	validator := b.srv.Workspace().DocumentValidator
 	var phase3 sync.WaitGroup
@@ -164,7 +168,7 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	}
 	phase3.Wait()
 
-	return nil
+	return ctx.Err()
 }
 
 // Reset selectively clears build results of a document. See [Builder.Reset].
