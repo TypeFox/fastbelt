@@ -36,11 +36,12 @@ type WorkspaceSrv struct {
 	// FileExtensions contains the file extensions to include, with leading dot
 	// (e.g. []string{".statemachine"}). It must be set by adopters.
 	FileExtensions  []string
-	DocumentManager DocumentManager
-	DocumentUpdater DocumentUpdater
-	Builder         Builder
-	DocumentParser  DocumentParser
-	Initializer     Initializer
+	DocumentManager   DocumentManager
+	DocumentUpdater   DocumentUpdater
+	Builder           Builder
+	DocumentParser    DocumentParser
+	DocumentValidator DocumentValidator
+	Initializer       Initializer
 }
 
 // CreateDefaultServices creates the default services for the workspace package.
@@ -59,6 +60,9 @@ func CreateDefaultServices(c WorkspaceSrvCont) {
 	}
 	if s.DocumentParser == nil {
 		s.DocumentParser = NewDefaultDocumentParser(c)
+	}
+	if s.DocumentValidator == nil {
+		s.DocumentValidator = NewDefaultDocumentValidator()
 	}
 	if s.Initializer == nil {
 		s.Initializer = NewDefaultInitializer(c)

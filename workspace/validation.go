@@ -6,29 +6,28 @@ package workspace
 
 import (
 	core "typefox.dev/fastbelt"
-	"typefox.dev/lsp"
 )
 
 // CreateLexerDiagnostics creates diagnostics from lexer errors.
-func CreateLexerDiagnostics(doc *core.Document) []lsp.Diagnostic {
+func CreateLexerDiagnostics(doc *core.Document) []core.Diagnostic {
 	if len(doc.LexerErrors) == 0 {
-		return []lsp.Diagnostic{}
+		return []core.Diagnostic{}
 	}
 
-	diagnostics := make([]lsp.Diagnostic, 0, len(doc.LexerErrors))
+	diagnostics := make([]core.Diagnostic, 0, len(doc.LexerErrors))
 	for _, lexErr := range doc.LexerErrors {
-		diagnostics = append(diagnostics, lsp.Diagnostic{
-			Range: lsp.Range{
-				Start: lsp.Position{
-					Line:      uint32(lexErr.StartLine),
-					Character: uint32(lexErr.StartColumn),
+		diagnostics = append(diagnostics, core.Diagnostic{
+			Range: core.TextRange{
+				Start: core.TextLocation{
+					Line:   core.TextLine(lexErr.StartLine),
+					Column: core.TextColumn(lexErr.StartColumn),
 				},
-				End: lsp.Position{
-					Line:      uint32(lexErr.EndLine),
-					Character: uint32(lexErr.EndColumn),
+				End: core.TextLocation{
+					Line:   core.TextLine(lexErr.EndLine),
+					Column: core.TextColumn(lexErr.EndColumn),
 				},
 			},
-			Severity: lsp.SeverityError,
+			Severity: core.SeverityError,
 			Message:  lexErr.Msg,
 		})
 	}
@@ -36,46 +35,45 @@ func CreateLexerDiagnostics(doc *core.Document) []lsp.Diagnostic {
 }
 
 // CreateParserDiagnostics creates diagnostics from parser errors.
-func CreateParserDiagnostics(doc *core.Document) []lsp.Diagnostic {
+func CreateParserDiagnostics(doc *core.Document) []core.Diagnostic {
 	if len(doc.ParserErrors) == 0 {
-		return []lsp.Diagnostic{}
+		return []core.Diagnostic{}
 	}
-	end := doc.TextDoc.PositionAt(len(doc.TextDoc.Content()))
-	diagnostics := make([]lsp.Diagnostic, 0, len(doc.ParserErrors))
+	lspEnd := doc.TextDoc.PositionAt(len(doc.TextDoc.Content()))
+	end := core.TextLocation{
+		Line:   core.TextLine(lspEnd.Line),
+		Column: core.TextColumn(lspEnd.Character),
+	}
+	diagnostics := make([]core.Diagnostic, 0, len(doc.ParserErrors))
 	for _, err := range doc.ParserErrors {
 		token := err.Token
 		if token == nil {
-			eofDiagnostic := lsp.Diagnostic{
-				Range: lsp.Range{
-					Start: end,
-					End:   end,
-				},
-				Severity: lsp.SeverityError,
+			diagnostics = append(diagnostics, core.Diagnostic{
+				Range:    core.TextRange{Start: end, End: end},
+				Severity: core.SeverityError,
 				Message:  err.Msg,
-			}
-			diagnostics = append(diagnostics, eofDiagnostic)
+			})
 		} else {
-			tokenRange := token.Segment.Range.LspRange()
-			diagnostic := lsp.Diagnostic{
-				Range:    tokenRange,
-				Severity: lsp.SeverityError,
+			diagnostics = append(diagnostics, core.Diagnostic{
+				Range:    token.Segment.Range,
+				Severity: core.SeverityError,
 				Message:  err.Msg,
-			}
-			diagnostics = append(diagnostics, diagnostic)
+			})
 		}
 	}
 	return diagnostics
 }
 
-func CreateLinkerDiagnostics(doc *core.Document) []lsp.Diagnostic {
-	diagnostics := []lsp.Diagnostic{}
+// CreateLinkerDiagnostics creates diagnostics from linker errors (unresolved references).
+func CreateLinkerDiagnostics(doc *core.Document) []core.Diagnostic {
+	diagnostics := []core.Diagnostic{}
 	for _, ref := range doc.References {
 		err := ref.Error()
 		segment := ref.Segment()
 		if err != nil && segment != nil {
-			diagnostics = append(diagnostics, lsp.Diagnostic{
-				Range:    segment.Range.LspRange(),
-				Severity: lsp.DiagnosticSeverity(err.Severity),
+			diagnostics = append(diagnostics, core.Diagnostic{
+				Range:    segment.Range,
+				Severity: core.DiagnosticSeverity(err.Severity),
 				Message:  err.Msg,
 			})
 		}
