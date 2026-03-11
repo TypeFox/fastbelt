@@ -156,6 +156,9 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 			if !doc.State.Has(core.DocStateValidated) {
 				diagnostics := validator.Validate(ctx, doc, "on-save")
 				doc.RUnlock()
+				if ctx.Err() != nil {
+					return
+				}
 				doc.Lock()
 				doc.Diagnostics = diagnostics
 				doc.State = doc.State.With(core.DocStateValidated)

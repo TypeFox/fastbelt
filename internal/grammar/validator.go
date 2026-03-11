@@ -21,7 +21,7 @@ func (g *GrammarImpl) Validate(_ context.Context, _ string, accept core.Validati
 	checkUniqueInterfaceNames(g, accept)
 }
 
-func checkUniqueRuleNames(g *GrammarImpl, accept core.ValidationAcceptor) {
+func checkUniqueRuleNames(g Grammar, accept core.ValidationAcceptor) {
 	seen := map[string][]core.NamedNode{}
 	for _, rule := range g.Rules() {
 		if rule.Name() != "" {
@@ -47,7 +47,7 @@ func checkUniqueRuleNames(g *GrammarImpl, accept core.ValidationAcceptor) {
 	}
 }
 
-func checkUniqueInterfaceNames(g *GrammarImpl, accept core.ValidationAcceptor) {
+func checkUniqueInterfaceNames(g Grammar, accept core.ValidationAcceptor) {
 	seen := map[string][]Interface{}
 	for _, iface := range g.Interfaces() {
 		if iface.Name() != "" {
@@ -74,7 +74,7 @@ func (t *TokenImpl) Validate(_ context.Context, _ string, accept core.Validation
 	checkEmptyTerminalRule(t, accept)
 }
 
-func checkEmptyTerminalRule(t *TokenImpl, accept core.ValidationAcceptor) {
+func checkEmptyTerminalRule(t Token, accept core.ValidationAcceptor) {
 	raw := t.Regexp()
 	if raw == "" {
 		return
@@ -106,17 +106,12 @@ func (k *KeywordImpl) Validate(_ context.Context, _ string, accept core.Validati
 	checkKeyword(k, accept)
 }
 
-func checkKeyword(k *KeywordImpl, accept core.ValidationAcceptor) {
-	raw := k.Value()
-	if raw == "" {
+func checkKeyword(k Keyword, accept core.ValidationAcceptor) {
+	value, err := convertString(k)
+	if err != nil {
 		return
 	}
-	// Strip surrounding double quotes from the string literal
-	value := raw
-	if len(value) >= 2 && value[0] == '"' && value[len(value)-1] == '"' {
-		value = value[1 : len(value)-1]
-	}
-	if len(value) == 0 {
+	if value == "" {
 		accept(core.NewDiagnostic(
 			core.SeverityError,
 			"Keywords cannot be empty.",
