@@ -143,21 +143,25 @@ type RepetitionMandatory struct {
 Each struct implements `Production`. `Terminal` and `NonTerminal` return `nil` from `Children()`.
 `Alternative` and `Alternation` implement `Children()` by flattening their definitions.
 
-The ATN key string used for decision-state lookup:
+The ATN key string used for decision-state lookup. Returns `("", false)` for production kinds
+that have no ATN key (Terminal, NonTerminal, Alternative) rather than panicking, following
+Effective Go's preference for explicit error returns over panics in library code:
 
 ```go
-func ProductionTypeName(p Production) string {
+// ProductionTypeName returns the ATN decision-map key segment for p, and
+// whether p is a decision-producing kind at all.
+func ProductionTypeName(p Production) (string, bool) {
     switch p.Kind() {
     case ProdAlternation:
-        return "Alternation"
+        return "Alternation", true
     case ProdOption:
-        return "Option"
+        return "Option", true
     case ProdRepetition:
-        return "Repetition"
+        return "Repetition", true
     case ProdRepetitionMandatory:
-        return "RepetitionMandatory"
+        return "RepetitionMandatory", true
     default:
-        panic("invalid production type for ATN key")
+        return "", false
     }
 }
 ```
@@ -337,9 +341,10 @@ Public methods on `ATNConfigSet`:
 | `get key()` | `func (s *ATNConfigSet) Key() string` |
 
 ```go
-// GetATNConfigKey produces the deduplication key for a config.
+// atnConfigKey produces the deduplication key for a config.
 // When includeAlt is false the alt index is omitted (used for conflict detection).
-func GetATNConfigKey(c *ATNConfig, includeAlt bool) string
+// Unexported: only used within the package.
+func atnConfigKey(c *ATNConfig, includeAlt bool) string
 ```
 
 ---
@@ -365,9 +370,10 @@ func (p *PredicateSet) String() string
 // EmptyPredicates is the zero-value PredicateSet used when there are no gates.
 var EmptyPredicates = &PredicateSet{}
 
-// DFACache returns a DFA for the given predicate configuration.
+// dfaCache returns a DFA for the given predicate configuration.
 // Different predicate sets may produce different prediction decisions.
-type DFACache func(predicates *PredicateSet) *DFA
+// Unexported: used only within the package as an element of LLStarLookahead.dfas.
+type dfaCache func(predicates *PredicateSet) *DFA
 
 // LLStarLookaheadOptions configures the strategy.
 type LLStarLookaheadOptions struct {
@@ -380,7 +386,7 @@ type LLStarLookaheadOptions struct {
 // produced during the Initialize step.
 type LLStarLookahead struct {
     atn     *ATN
-    dfas    []DFACache
+    dfas    []dfaCache
     logging AmbiguityReport
 }
 
@@ -427,10 +433,10 @@ Internal functions in `predict.go` (unexported):
 
 | TypeScript | Go |
 | --- | --- |
-| `createDFACache` | `newDFACache(start *ATNState, decision int) DFACache` |
-| `initATNSimulator` | `initDFACaches(atn *ATN) []DFACache` |
-| `adaptivePredict` | `adaptivePredict(src TokenSource, dfas []DFACache, decision int, preds *PredicateSet, log AmbiguityReport) (int, *predictError)` |
-| `performLookahead` | `performLookahead(src TokenSource, dfa *DFA, s0 *DFAState, preds *PredicateSet, log AmbiguityReport) (int, *predictError)` |
+| `createDFACache` | `newDFACache(start *ATNState, decision int) dfaCache` |
+| `initATNSimulator` | `initDFACaches(atn *ATN) []dfaCache` |
+| `adaptivePredict` | `adaptivePredict(src TokenSource, dfas []dfaCache, decision int, preds *PredicateSet, log AmbiguityReport) (int, error)` |
+| `performLookahead` | `performLookahead(src TokenSource, dfa *DFA, s0 *DFAState, preds *PredicateSet, log AmbiguityReport) (int, error)` |
 | `computeLookaheadTarget` | `computeLookaheadTarget(src TokenSource, dfa *DFA, prev *DFAState, tokenTypeID int, lookahead int, preds *PredicateSet, log AmbiguityReport) *DFAState` |
 | `getExistingTargetState` | `getExistingTargetState(state *DFAState, tokenTypeID int) *DFAState` |
 | `computeReachSet` | `computeReachSet(configs *ATNConfigSet, tokenTypeID int, preds *PredicateSet) *ATNConfigSet` |
@@ -450,19 +456,25 @@ Internal functions in `predict.go` (unexported):
 | `addDFAState` | `addDFAState(dfa *DFA, state *DFAState) *DFAState` |
 | `reportLookaheadAmbiguity` | `reportLookaheadAmbiguity(src TokenSource, dfa *DFA, lookahead int, alts []int, log AmbiguityReport)` |
 | `buildAmbiguityError` | `buildAmbiguityError(rule *Rule, prod Production, prefixPath []string, alts []int) string` |
-| `buildAdaptivePredictError` | `buildPredictError(path []int, prev *DFAState, tokenTypeID int) *predictError` |
+| `buildAdaptivePredictError` | `newPredictError(path []int, prev *DFAState, tokenTypeID int) error` |
 | `isLL1Sequence` | `isLL1Sequence(seqs [][]tokenInfo, allowEmpty bool) bool` |
 | `getProductionDslName` | `productionDSLName(prod Production) string` |
 
-The `predictError` type replaces `AdaptivePredictError`:
+The `predictError` type replaces `AdaptivePredictError`. It is unexported but implements the
+standard `error` interface, making it compatible with all Go error-handling idioms:
 
 ```go
 type predictError struct {
-    TokenPath         []int // token type IDs of consumed lookahead
-    PossibleTypeIDs   []int
-    ActualTokenTypeID int
+    tokenPath         []int // token type IDs of consumed lookahead
+    possibleTypeIDs   []int
+    actualTokenTypeID int
 }
+
+// Error implements the error interface.
+func (e *predictError) Error() string
 ```
+
+Callers that need to inspect the fields (e.g. for detailed diagnostics) use `errors.As`.
 
 ---
 
@@ -525,6 +537,70 @@ created, to handle forward references between rules.
 ---
 
 ## 4. Algorithm Notes and Go-specific Adaptations
+
+### Effective Go conventions
+
+All implementation files must follow <https://go.dev/doc/effective_go>.
+
+#### Naming
+
+- All identifiers use MixedCaps / mixedCaps — no underscores anywhere, including constants
+  (`ATNBasic`, `ProdAlternation`, not `ATN_BASIC` or `PROD_ALTERNATION`).
+- Constructor functions use the `New` prefix (`NewLLStarLookahead`, `newPredictError`).
+- The `Get` prefix on accessor functions is non-idiomatic and is omitted throughout
+  (e.g. `atnConfigKey`, not `GetATNConfigKey`).
+
+#### Export surface
+
+Only identifiers needed by callers outside the package are exported. The table below summarises
+the decision for every type and function in the package:
+
+| Symbol | Exported? | Reason |
+| --- | --- | --- |
+| `Rule`, `Terminal`, `NonTerminal`, `Alternative`, `Alternation`, `Option`, `Repetition`, `RepetitionMandatory` | ✅ | Grammar model used by callers to build rules |
+| `Production`, `ProductionKind`, `ProductionTypeName` | ✅ | Part of public grammar model |
+| `TokenInfo`, `FromParserRules` | ✅ | Public API of `convert.go` |
+| `LLStarLookahead`, `LLStarLookaheadOptions`, `AmbiguityReport` | ✅ | Public strategy API |
+| `TokenSource`, `PredicateSet`, `EmptyPredicates` | ✅ | Required by callers invoking `AdaptivePredict` |
+| `DFAError` | ✅ | Exported sentinel (compared by pointer in tests) |
+| `ATN`, `ATNState`, `ATNStateType` constants | ✅ | Needed by white-box unit tests in `atn_test.go` |
+| `DFA`, `DFAState`, `ATNConfig`, `ATNConfigSet` | ✅ | Needed by white-box unit tests |
+| `Transition`, `AtomTransition`, `EpsilonTransition`, `RuleTransition` | ✅ | Needed by white-box unit tests |
+| `dfaCache` | ❌ | Implementation detail; callers never reference it |
+| `atnConfigKey` | ❌ | Package-internal helper |
+| `predictError` | ❌ | Unexported error type; exposed only via the `error` interface |
+| All ATN/DFA construction helpers | ❌ | Package-internal |
+| All prediction algorithm helpers | ❌ | Package-internal |
+
+Test files are placed in `package allstar` (not `package allstar_test`) so that they can access
+unexported helpers directly without the round-trip of exporting them just for tests.
+
+#### Error handling
+
+- All functions that can fail return `error` as their last result.
+- `predictError` is an unexported concrete type that implements `error`. Callers that need field
+  access use `errors.As`.
+- Internal helpers may use `panic` only for true programming errors (e.g. an impossible branch
+  reached due to a bug), never for input errors. `ProductionTypeName` returns `(string, bool)`
+  rather than panicking for unrecognised production kinds.
+
+#### Interfaces
+
+All interfaces are small (1–3 methods): `TokenSource` (1), `Transition` (2), `Production` (3).
+The "accept interfaces, return concrete types" rule is followed throughout: factory functions
+return `*LLStarLookahead`, `*ATN`, `*DFAState`, etc.
+
+#### `ATNState.Decision` zero value
+
+The zero value of `int` is `0`, which is a valid decision index. New `ATNState` values must be
+initialised with `Decision: -1` to indicate "not a decision state". `newATNState` sets this.
+
+#### Formatting
+
+All files must be formatted with `gofmt` before commit. The project's existing files use standard
+Go tab-indented style; no deviations are permitted.
+
+---
 
 ### Token matching
 
@@ -703,8 +779,8 @@ production tree and occurrence indices.
 | `TestATNConfigSet_Key_Consistency` | Key is the same after adding the same elements in the same order |
 | `TestATNConfigSet_Finalize` | Finalize doesn't panic and Len() is unchanged |
 | `TestATNConfigSet_Alts` | Returns correct slice of alternative indices |
-| `TestGetATNConfigKey_WithAlt` | Key contains `a<alt>` prefix |
-| `TestGetATNConfigKey_WithoutAlt` | Key omits alt prefix |
+| `TestATNConfigKey_WithAlt` | Key contains `a<alt>` prefix |
+| `TestATNConfigKey_WithoutAlt` | Key omits alt prefix |
 
 ### 6.4 Prediction algorithm (`predict_test.go`)
 
@@ -726,7 +802,7 @@ production tree and occurrence indices.
 | `TestAllConfigsInRuleStopStates` | True only when every config is at RuleStop |
 | `TestHasConflictTerminatingPrediction_AllAtStop` | True when all configs at rule stop |
 | `TestHasConflictTerminatingPrediction_Conflicting` | True when multiple alts share a state |
-| `TestGetConflictingAltSets` | Correct grouping by `GetATNConfigKey(c, false)` |
+| `TestGetConflictingAltSets` | Correct grouping by `atnConfigKey(c, false)` |
 | `TestAddDFAState_Dedup` | Same config-set key returns same DFAState pointer |
 | `TestAddDFAEdge` | Edge is stored in `from.Edges` |
 
