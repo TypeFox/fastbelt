@@ -200,17 +200,17 @@ func convertAlternatives(
 	tokenTypes map[string]TokenInfo,
 	rulesByName map[string]*Rule,
 ) ([]Production, error) {
-	alternatives := make([]*Alternative, 0, len(alts.Alts()))
+	// Assign Idx before recursing so the occurrence index matches the
+	// code generator's pre-order traversal.
+	alternation := &Alternation{
+		Idx: nextCounter(counters, ProdAlternation),
+	}
 	for _, alt := range alts.Alts() {
 		prods, err := convertElement(alt, counters, tokenTypes, rulesByName)
 		if err != nil {
 			return nil, err
 		}
-		alternatives = append(alternatives, &Alternative{Definition: prods})
-	}
-	alternation := &Alternation{
-		Alternatives: alternatives,
-		Idx:          nextCounter(counters, ProdAlternation),
+		alternation.Alternatives = append(alternation.Alternatives, &Alternative{Definition: prods})
 	}
 	return []Production{alternation}, nil
 }
@@ -221,37 +221,48 @@ func convertGroup(
 	tokenTypes map[string]TokenInfo,
 	rulesByName map[string]*Rule,
 ) ([]Production, error) {
-	// Convert children.
-	var prods []Production
-	for _, child := range g.Elements() {
-		childProds, err := convertElement(child, counters, tokenTypes, rulesByName)
-		if err != nil {
-			return nil, err
-		}
-		prods = append(prods, childProds...)
-	}
-
 	switch g.Cardinality() {
 	case "?":
-		opt := &Option{
-			Definition: prods,
-			Idx:        nextCounter(counters, ProdOption),
+		// Assign Idx before recursing (pre-order) to match the code generator.
+		opt := &Option{Idx: nextCounter(counters, ProdOption)}
+		for _, child := range g.Elements() {
+			childProds, err := convertElement(child, counters, tokenTypes, rulesByName)
+			if err != nil {
+				return nil, err
+			}
+			opt.Definition = append(opt.Definition, childProds...)
 		}
 		return []Production{opt}, nil
 	case "*":
-		rep := &Repetition{
-			Definition: prods,
-			Idx:        nextCounter(counters, ProdRepetition),
+		rep := &Repetition{Idx: nextCounter(counters, ProdRepetition)}
+		for _, child := range g.Elements() {
+			childProds, err := convertElement(child, counters, tokenTypes, rulesByName)
+			if err != nil {
+				return nil, err
+			}
+			rep.Definition = append(rep.Definition, childProds...)
 		}
 		return []Production{rep}, nil
 	case "+":
-		rep := &RepetitionMandatory{
-			Definition: prods,
-			Idx:        nextCounter(counters, ProdRepetitionMandatory),
+		rep := &RepetitionMandatory{Idx: nextCounter(counters, ProdRepetitionMandatory)}
+		for _, child := range g.Elements() {
+			childProds, err := convertElement(child, counters, tokenTypes, rulesByName)
+			if err != nil {
+				return nil, err
+			}
+			rep.Definition = append(rep.Definition, childProds...)
 		}
 		return []Production{rep}, nil
 	default:
 		// No cardinality → inline sequence.
+		var prods []Production
+		for _, child := range g.Elements() {
+			childProds, err := convertElement(child, counters, tokenTypes, rulesByName)
+			if err != nil {
+				return nil, err
+			}
+			prods = append(prods, childProds...)
+		}
 		return prods, nil
 	}
 }

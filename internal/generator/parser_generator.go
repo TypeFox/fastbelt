@@ -20,11 +20,47 @@ type ParserGeneratorContext struct {
 	accessNames        map[core.AstNode]string
 	lookaheads         map[core.AstNode]LookaheadValue
 	orLookaheads       map[core.AstNode]LookaheadValue
+	// Per-rule state for ATN key generation — reset per rule in populateContext.
+	currentRule         string
+	alternationCounter  int
+	optionCounter       int
+	repetitionCounter   int
+	repMandatoryCounter int
 }
 
 type LookaheadValue struct {
-	name string
-	llk  LLkLookahead
+	name   string
+	llk    LLkLookahead
+	atnKey string
+}
+
+func cardinalityToProdType(cardinality string) string {
+	switch cardinality {
+	case "?":
+		return "Option"
+	case "*":
+		return "Repetition"
+	case "+":
+		return "RepetitionMandatory"
+	default:
+		return ""
+	}
+}
+
+func (ctx *ParserGeneratorContext) nextOptKey(prodType string) string {
+	switch prodType {
+	case "Option":
+		ctx.optionCounter++
+		return ctx.currentRule + "_Option_" + strconv.Itoa(ctx.optionCounter)
+	case "Repetition":
+		ctx.repetitionCounter++
+		return ctx.currentRule + "_Repetition_" + strconv.Itoa(ctx.repetitionCounter)
+	case "RepetitionMandatory":
+		ctx.repMandatoryCounter++
+		return ctx.currentRule + "_RepetitionMandatory_" + strconv.Itoa(ctx.repMandatoryCounter)
+	default:
+		return ""
+	}
 }
 
 func (context *ParserGeneratorContext) SetAccessName(node core.AstNode, name string) {
@@ -58,8 +94,9 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 
 	node.AppendLine("type Parser struct {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("state *parser.ParserState")
-		n.AppendLine("srv ", grammr.Name(), "GeneratedSrvCont")
+		n.AppendLine("state    *parser.ParserState")
+		n.AppendLine("srv      ", grammr.Name(), "GeneratedSrvCont")
+		n.AppendLine("strategy parser.LookaheadStrategy")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
@@ -69,6 +106,29 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 		n.AppendLine("return p.srv.", grammr.Name(), "Linking().ReferencesConstructor")
 	})
 	node.AppendLine("}").AppendLine()
+
+	node.AppendLine("// WithLookaheadStrategy replaces the default LL(k) strategy. Call before Parse.")
+	node.AppendLine("func (p *Parser) WithLookaheadStrategy(s parser.LookaheadStrategy) *Parser {")
+	node.Indent(func(n generator.Node) {
+		n.AppendLine("p.strategy = s")
+		n.AppendLine("return p")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
+	node.AppendLine("func (p *Parser) predict(key string) int {")
+	node.Indent(func(n generator.Node) {
+		n.AppendLine("return p.strategy.Predict(p.state, key)")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
+	node.AppendLine("func (p *Parser) predictOpt(key string) bool {")
+	node.Indent(func(n generator.Node) {
+		n.AppendLine("return p.strategy.PredictOpt(p.state, key)")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
 
 	rules := grammr.Rules()
 	if len(rules) == 0 {
@@ -80,16 +140,10 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 	node.Indent(func(n generator.Node) {
 		// Workaround to enable parallel parsing of documents
 		// TODO: find a better structure to enable parallel parsing
-		n.AppendLine("cp := &Parser{srv: p.srv, state: parser.NewParserState(document.Tokens)}")
+		n.AppendLine("cp := &Parser{srv: p.srv, strategy: p.strategy, state: parser.NewParserState(document.Tokens)}")
 		n.AppendLine("result := cp.Parse", firstRule.Name(), "()")
 		n.AppendLine("core.AssignContainers(document, result)")
 		n.AppendLine("return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}")
-	})
-	node.AppendLine("}")
-	node.AppendLine()
-	node.AppendLine("func NewParser(srv ", grammr.Name(), "GeneratedSrvCont) *Parser {")
-	node.Indent(func(n generator.Node) {
-		n.AppendLine("return &Parser{srv: srv}")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
@@ -114,7 +168,7 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 	node.AppendLine(")")
 	node.AppendLine()
 
-	lookaheads := make([]LookaheadValue, 0, len(context.lookaheads))
+	lookaheads := make([]LookaheadValue, 0, len(context.lookaheads)+len(context.orLookaheads))
 
 	for _, lookahead := range context.lookaheads {
 		lookaheads = append(lookaheads, lookahead)
@@ -130,6 +184,26 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 		node.AppendLine()
 	}
 
+	node.AppendLine("func NewParser(srv ", grammr.Name(), "GeneratedSrvCont) *Parser {")
+	node.Indent(func(n generator.Node) {
+		n.AppendLine("return &Parser{")
+		n.Indent(func(in generator.Node) {
+			in.AppendLine("srv: srv,")
+			in.AppendLine("strategy: parser.NewLLkStrategy(map[string]parser.LLkLookahead{")
+			in.Indent(func(m generator.Node) {
+				for _, lv := range lookaheads {
+					if lv.atnKey != "" {
+						m.AppendLine("\"", lv.atnKey, "\": ", lv.name, ",")
+					}
+				}
+			})
+			in.AppendLine("}),")
+		})
+		n.AppendLine("}")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
 	for _, rule := range grammr.Rules() {
 		generateParseFunction(node, context, rule)
 	}
@@ -140,6 +214,11 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 func populateContext(context *ParserGeneratorContext) {
 	for _, rule := range context.grammar.Rules() {
 		ruleName := rule.Name()
+		context.currentRule = ruleName
+		context.alternationCounter = 0
+		context.optionCounter = 0
+		context.repetitionCounter = 0
+		context.repMandatoryCounter = 0
 		populateContextWithNode(context, ruleName, rule.Body())
 	}
 }
@@ -152,35 +231,47 @@ func populateContextWithNode(context *ParserGeneratorContext, prefix string, nod
 	switch n := node.(type) {
 	case grammar.Alternatives:
 		if len(n.Alts()) > 1 {
+			// Pre-order: assign alternation counter before recursing into alts.
+			context.alternationCounter++
+			atnKey := context.currentRule + "_Alternation_" + strconv.Itoa(context.alternationCounter)
 			name := prefix + "LookaheadOr" + strconv.Itoa(len(context.orLookaheads))
-			context.orLookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOr(context.grammar, n)}
+			context.orLookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOr(context.grammar, n), atnKey: atnKey}
 		}
 		if n.Cardinality() != CardinalityOne {
+			prodType := cardinalityToProdType(n.Cardinality())
+			atnKey := context.nextOptKey(prodType)
 			name := prefix + "Lookahead" + strconv.Itoa(len(context.lookaheads))
-			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n)}
+			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n), atnKey: atnKey}
 		}
 		for _, alt := range n.Alts() {
 			populateContextWithNode(context, prefix, alt)
 		}
 	case grammar.Group:
 		if n.Cardinality() != CardinalityOne {
+			// Pre-order: assign counter before recursing into children.
+			prodType := cardinalityToProdType(n.Cardinality())
+			atnKey := context.nextOptKey(prodType)
 			name := prefix + "Lookahead" + strconv.Itoa(len(context.lookaheads))
-			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n)}
+			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n), atnKey: atnKey}
 		}
 		for _, element := range n.Elements() {
 			populateContextWithNode(context, prefix, element)
 		}
 	case grammar.Keyword:
 		if n.Cardinality() != CardinalityOne {
+			prodType := cardinalityToProdType(n.Cardinality())
+			atnKey := context.nextOptKey(prodType)
 			name := prefix + "Lookahead" + strconv.Itoa(len(context.lookaheads))
-			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n)}
+			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n), atnKey: atnKey}
 		}
 		name := prefix + KeywordName(n)
 		context.SetAccessName(node, name)
 	case grammar.Assignment:
 		if n.Cardinality() != CardinalityOne {
+			prodType := cardinalityToProdType(n.Cardinality())
+			atnKey := context.nextOptKey(prodType)
 			name := prefix + "Lookahead" + strconv.Itoa(len(context.lookaheads))
-			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n)}
+			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n), atnKey: atnKey}
 		}
 		name := prefix + n.Property().Text
 		populateContextWithNode(context, name, n.Value())
@@ -188,8 +279,10 @@ func populateContextWithNode(context *ParserGeneratorContext, prefix string, nod
 		populateContextWithNode(context, prefix, n.Rule())
 	case grammar.RuleCall:
 		if n.Cardinality() != CardinalityOne {
+			prodType := cardinalityToProdType(n.Cardinality())
+			atnKey := context.nextOptKey(prodType)
 			name := prefix + "Lookahead" + strconv.Itoa(len(context.lookaheads))
-			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n)}
+			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n), atnKey: atnKey}
 		}
 		token := getTokenWithName(context.grammar, n.Rule().Text)
 		if token != nil {
@@ -275,10 +368,7 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 						n2.AppendLine("}")
 					})
 				}, func(n generator.Node) {
-					lookaheadName := context.lookaheads[element].name
-					lookahead := generateLookaheadString(lookaheadName)
-					n.Append(lookahead)
-				}, element.Cardinality())
+					n.Append(generatePredictOptExpr(context.lookaheads[element].atnKey))				}, element.Cardinality())
 			}
 		})
 		node.AppendLine("}")
@@ -303,8 +393,7 @@ func generateAssignable(node generator.Node, context *ParserGeneratorContext, as
 }
 
 func generateAssignableAlternatives(node generator.Node, context *ParserGeneratorContext, alts grammar.Alternatives, cb func(node generator.Node, resultName string)) {
-	lookaheadName := context.orLookaheads[alts].name
-	node.AppendLine("switch p.state.Lookahead(", lookaheadName, ") {")
+	node.AppendLine("switch p.predict(\"", context.orLookaheads[alts].atnKey, "\") {")
 	for i, alt := range alts.Alts() {
 		node.AppendLine("case ", strconv.Itoa(i), ":")
 		node.Indent(func(in generator.Node) {
@@ -321,14 +410,12 @@ func generateCrossReferenceParser(node generator.Node, context *ParserGeneratorC
 }
 
 func generateGroupParser(node generator.Node, context *ParserGeneratorContext, group grammar.Group) {
-	lookaheadName := context.lookaheads[group].name
-	lookahead := generateLookaheadString(lookaheadName)
 	generateCardinality(node, func(n generator.Node) {
 		for _, element := range group.Elements() {
 			generateAbstractElementParser(n, context, element)
 		}
 	}, func(n generator.Node) {
-		n.Append(lookahead)
+		n.Append(generatePredictOptExpr(context.lookaheads[group].atnKey))
 	}, group.Cardinality())
 }
 
@@ -344,8 +431,7 @@ func generateKeywordParser(node generator.Node, context *ParserGeneratorContext,
 func generateRuleCallParser(node generator.Node, context *ParserGeneratorContext, ruleCall grammar.RuleCall) string {
 	token := getTokenWithName(context.grammar, ruleCall.Rule().Text)
 	rule := getRuleWithName(context.grammar, ruleCall.Rule().Text)
-	lookaheadName := context.lookaheads[ruleCall].name
-	lookahead := generateLookaheadString(lookaheadName)
+	lookahead := generatePredictOptExpr(context.lookaheads[ruleCall].atnKey)
 	var result string
 	if token != nil {
 		result = "token"
@@ -371,16 +457,14 @@ func generateRuleCallParser(node generator.Node, context *ParserGeneratorContext
 	return result
 }
 
-func generateLookaheadString(name string) string {
-	return "p.state.Lookahead(" + name + ") == 0"
+func generatePredictOptExpr(atnKey string) string {
+	return "p.predictOpt(\"" + atnKey + "\")"
 }
 
 func generateAlternativesParser(node generator.Node, context *ParserGeneratorContext, alts grammar.Alternatives) {
-	allLookaheadName := context.lookaheads[alts].name
-	allLookahead := generateLookaheadString(allLookaheadName)
-	lookaheadName := context.orLookaheads[alts].name
+	orAtnKey := context.orLookaheads[alts].atnKey
 	generateCardinality(node, func(n generator.Node) {
-		n.AppendLine("switch p.state.Lookahead(", lookaheadName, ") {")
+		n.AppendLine("switch p.predict(\"", orAtnKey, "\") {")
 		for i, alt := range alts.Alts() {
 			n.AppendLine("case ", strconv.Itoa(i), ":")
 			n.Indent(func(in generator.Node) {
@@ -389,7 +473,7 @@ func generateAlternativesParser(node generator.Node, context *ParserGeneratorCon
 		}
 		n.AppendLine("}")
 	}, func(n generator.Node) {
-		n.Append(allLookahead)
+		n.Append(generatePredictOptExpr(context.lookaheads[alts].atnKey))
 	}, alts.Cardinality())
 }
 
