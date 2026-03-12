@@ -2,7 +2,7 @@ package atn
 
 type AtomTransition interface {
 	Transition
-	GetAtom() int
+	Atom() int
 }
 
 type AtomTransitionData struct {
@@ -17,6 +17,6 @@ func NewAtomTransitionData(target ATNState, atom int) *AtomTransitionData {
 	}
 }
 
-func (a *AtomTransitionData) GetAtom() int {
+func (a *AtomTransitionData) Atom() int {
 	return a.atom
 }

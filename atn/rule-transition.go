@@ -5,6 +5,7 @@ import "typefox.dev/fastbelt/internal/grammar/generated"
 type RuleTransition interface {
 	Rule() generated.ParserRule
 	FollowState() ATNState
+	SetFollowState(ATNState)
 }
 
 type RuleTransitionData struct {
@@ -27,4 +28,8 @@ func (r *RuleTransitionData) Rule() generated.ParserRule {
 
 func (r *RuleTransitionData) FollowState() ATNState {
 	return r.followState
+}
+
+func (r *RuleTransitionData) SetFollowState(followState ATNState) {
+	r.followState = followState
 }

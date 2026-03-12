@@ -19,6 +19,6 @@ func NewDecisionStateData(atn ATN, production generated.Element, rule generated.
 	}
 }
 
-func (d *DecisionStateData) Decision() int {
-	return d.decision
+func (st *DecisionStateData) Decision() int {
+	return st.decision
 }

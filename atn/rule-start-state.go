@@ -20,6 +20,6 @@ func NewRuleStartStateData(atn ATN, production generated.Element, rule generated
 	}
 }
 
-func (r *RuleStartStateData) Stop() RuleStopState {
-	return r.stop
+func (st *RuleStartStateData) Stop() RuleStopState {
+	return st.stop
 }

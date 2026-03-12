@@ -56,7 +56,7 @@ func NewATNFromGrammar(grammar generated.Grammar) ATN {
 	atnBuilder.InititializeStartAndStopStates(grammar.Rules())
 
 	for _, rule := range grammar.Rules() {
-		ruleBlock := atnBuilder.MakeBlock(rule, splitAlternatives(rule))
+		ruleBlock := atnBuilder.Block(rule, splitAlternatives(rule))
 		if ruleBlock == nil {
 			continue
 		}
