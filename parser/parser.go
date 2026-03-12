@@ -48,6 +48,50 @@ type LookaheadPath []int
 type LookaheadOption []LookaheadPath
 type LLkLookahead []LookaheadOption
 
+// LookaheadStrategy abstracts OR-decision prediction for generated parsers.
+// key is the ATN decision key ("RuleName_ProdType_N", 1-based).
+// Predict returns the chosen alternative index (0-based), or -1.
+// PredictOpt returns true when the optional / loop body should be entered.
+type LookaheadStrategy interface {
+	Predict(src *ParserState, key string) int
+	PredictOpt(src *ParserState, key string) bool
+}
+
+// LLkStrategy implements LookaheadStrategy using pre-built LL(k) tables.
+// tables maps ATN decision key → LLkLookahead table.
+// It is the default strategy installed by generated NewParser constructors.
+type LLkStrategy struct {
+	tables map[string]LLkLookahead
+}
+
+// NewLLkStrategy creates an LLkStrategy from a key→table map.
+func NewLLkStrategy(tables map[string]LLkLookahead) *LLkStrategy {
+	return &LLkStrategy{tables: tables}
+}
+
+func (s *LLkStrategy) Predict(src *ParserState, key string) int {
+	t, ok := s.tables[key]
+	if !ok {
+		return -1
+	}
+	for i, option := range t {
+	outer:
+		for _, path := range option {
+			for j, tokenType := range path {
+				if src.LAId(j+1) != tokenType {
+					continue outer
+				}
+			}
+			return i
+		}
+	}
+	return -1
+}
+
+func (s *LLkStrategy) PredictOpt(src *ParserState, key string) bool {
+	return s.Predict(src, key) == 0
+}
+
 func NewParserState(tokens []*core.Token) *ParserState {
 	var next *core.Token
 	if len(tokens) > 0 {
@@ -104,17 +148,4 @@ func (p *ParserState) Consume(tokenType int) *core.Token {
 	return current
 }
 
-func (p *ParserState) Lookahead(value LLkLookahead) int {
-	for i, option := range value {
-	outer:
-		for _, path := range option {
-			for j, tokenType := range path {
-				if p.LAId(j+1) != tokenType {
-					continue outer
-				}
-			}
-			return i
-		}
-	}
-	return -1
-}
+

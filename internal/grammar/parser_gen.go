@@ -8,23 +8,34 @@ import (
 )
 
 type Parser struct {
-	state *parser.ParserState
-	srv   FastbeltGeneratedSrvCont
+	state    *parser.ParserState
+	srv      FastbeltGeneratedSrvCont
+	strategy parser.LookaheadStrategy
 }
 
 func (p *Parser) references() FastbeltReferencesConstructor {
 	return p.srv.FastbeltLinking().ReferencesConstructor
 }
 
+// WithLookaheadStrategy replaces the default LL(k) strategy. Call before Parse.
+func (p *Parser) WithLookaheadStrategy(s parser.LookaheadStrategy) *Parser {
+	p.strategy = s
+	return p
+}
+
+func (p *Parser) predict(key string) int {
+	return p.strategy.Predict(p.state, key)
+}
+
+func (p *Parser) predictOpt(key string) bool {
+	return p.strategy.PredictOpt(p.state, key)
+}
+
 func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
-	cp := &Parser{srv: p.srv, state: parser.NewParserState(document.Tokens)}
+	cp := &Parser{srv: p.srv, strategy: p.strategy, state: parser.NewParserState(document.Tokens)}
 	result := cp.ParseGrammar()
 	core.AssignContainers(document, result)
 	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
-}
-
-func NewParser(srv FastbeltGeneratedSrvCont) *Parser {
-	return &Parser{srv: srv}
 }
 
 const (
@@ -306,6 +317,37 @@ var TokenLookahead4 = parser.LLkLookahead{
 	},
 }
 
+func NewParser(srv FastbeltGeneratedSrvCont) *Parser {
+	return &Parser{
+		srv: srv,
+		strategy: parser.NewLLkStrategy(map[string]parser.LLkLookahead{
+			"Action_Option_1":                              ActionLookahead13,
+			"Action_Alternation_1":                         ActionOperatorLookaheadOr8,
+			"Alternatives_Option_1":                        AlternativesLookahead5,
+			"Alternatives_RepetitionMandatory_1":           AlternativesLookahead6,
+			"AssignableAlternatives_Option_1":              AssignableAlternativesLookahead10,
+			"AssignableAlternatives_RepetitionMandatory_1": AssignableAlternativesLookahead11,
+			"Assignable_Alternation_1":                     AssignableLookaheadOr6,
+			"AssignableWithoutAlts_Alternation_1":          AssignableWithoutAltsLookaheadOr7,
+			"Assignment_Alternation_1":                     AssignmentOperatorLookaheadOr5,
+			"CrossRef_Option_1":                            CrossRefLookahead12,
+			"Element_Alternation_2":                        ElementCardinalityLookaheadOr4,
+			"Element_Option_1":                             ElementLookahead9,
+			"Element_Alternation_1":                        ElementLookaheadOr3,
+			"FieldType_Alternation_1":                      FieldTypeLookaheadOr1,
+			"Grammar_Repetition_1":                         GrammarLookahead0,
+			"Grammar_Alternation_1":                        GrammarLookaheadOr0,
+			"Group_Option_1":                               GroupLookahead7,
+			"Group_RepetitionMandatory_1":                  GroupLookahead8,
+			"Interface_Option_1":                           InterfaceLookahead1,
+			"Interface_Repetition_1":                       InterfaceLookahead2,
+			"Interface_Repetition_2":                       InterfaceLookahead3,
+			"PrimitiveType_Alternation_1":                  PrimitiveTypeTypeLookaheadOr2,
+			"Token_Option_1":                               TokenLookahead4,
+		}),
+	}
+}
+
 func (p *Parser) ParseGrammar() Grammar {
 	current := NewGrammar()
 	current.SetSegmentStartToken(p.state.LA(1))
@@ -324,8 +366,8 @@ func (p *Parser) ParseGrammar() Grammar {
 		token := p.state.Consume(Keyword_Semicolon_Idx)
 		core.AssignToken(current, token, GrammarSemicolon_0)
 	}
-	for p.state.Lookahead(GrammarLookahead0) == 0 {
-		switch p.state.Lookahead(GrammarLookaheadOr0) {
+	for p.predictOpt("Grammar_Repetition_1") {
+		switch p.predict("Grammar_Alternation_1") {
 		case 0:
 			{
 				result := p.ParseParserRule()
@@ -367,7 +409,7 @@ func (p *Parser) ParseInterface() Interface {
 			current.SetName(token)
 		}
 	}
-	if p.state.Lookahead(InterfaceLookahead1) == 0 {
+	if p.predictOpt("Interface_Option_1") {
 		{
 			token := p.state.Consume(Keyword_extends_Idx)
 			core.AssignToken(current, token, Interfaceextends_0)
@@ -379,7 +421,7 @@ func (p *Parser) ParseInterface() Interface {
 				current.SetExtendsItem(p.references().InterfaceExtends(current, token))
 			}
 		}
-		for p.state.Lookahead(InterfaceLookahead2) == 0 {
+		for p.predictOpt("Interface_Repetition_1") {
 			{
 				token := p.state.Consume(Keyword_Comma_Idx)
 				core.AssignToken(current, token, InterfaceComma_0)
@@ -398,7 +440,7 @@ func (p *Parser) ParseInterface() Interface {
 		core.AssignToken(current, token, InterfaceLeftBrace_0)
 	}
 	{
-		for p.state.Lookahead(InterfaceLookahead3) == 0 {
+		for p.predictOpt("Interface_Repetition_2") {
 			result := p.ParseField()
 			if result != nil {
 				current.SetFieldsItem(result)
@@ -436,7 +478,7 @@ func (p *Parser) ParseField() Field {
 func (p *Parser) ParseFieldType() FieldType {
 	current := NewFieldType()
 	current.SetSegmentStartToken(p.state.LA(1))
-	switch p.state.Lookahead(FieldTypeLookaheadOr1) {
+	switch p.predict("FieldType_Alternation_1") {
 	case 0:
 		{
 			result := p.ParseSimpleType()
@@ -523,7 +565,7 @@ func (p *Parser) ParsePrimitiveType() PrimitiveType {
 	current := NewPrimitiveType()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		switch p.state.Lookahead(PrimitiveTypeTypeLookaheadOr2) {
+		switch p.predict("PrimitiveType_Alternation_1") {
 		case 0:
 			token := p.state.Consume(Keyword_string_Idx)
 			core.AssignToken(current, token, PrimitiveTypeTypestring_0)
@@ -585,7 +627,7 @@ func (p *Parser) ParseToken() Token {
 	current := NewToken()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		if p.state.Lookahead(TokenLookahead4) == 0 {
+		if p.predictOpt("Token_Option_1") {
 			token := p.state.Consume(Keyword_hidden_Idx)
 			core.AssignToken(current, token, TokenTypehidden_0)
 			if token != nil {
@@ -631,7 +673,7 @@ func (p *Parser) ParseAlternatives() Element {
 		core.MergeTokens(result, current.Tokens())
 		current = result
 	}
-	if p.state.Lookahead(AlternativesLookahead5) == 0 {
+	if p.predictOpt("Alternatives_Option_1") {
 		{
 			result := NewAlternatives()
 			result.SetSegment(current.Segment())
@@ -640,7 +682,7 @@ func (p *Parser) ParseAlternatives() Element {
 			current = result
 		}
 		current := current.(Alternatives)
-		for ok := true; ok; ok = p.state.Lookahead(AlternativesLookahead6) == 0 {
+		for ok := true; ok; ok = p.predictOpt("Alternatives_RepetitionMandatory_1") {
 			{
 				token := p.state.Consume(Keyword_Pipe_Idx)
 				core.AssignToken(current, token, AlternativesPipe_0)
@@ -665,7 +707,7 @@ func (p *Parser) ParseGroup() Element {
 		core.MergeTokens(result, current.Tokens())
 		current = result
 	}
-	if p.state.Lookahead(GroupLookahead7) == 0 {
+	if p.predictOpt("Group_Option_1") {
 		{
 			result := NewGroup()
 			result.SetSegment(current.Segment())
@@ -675,7 +717,7 @@ func (p *Parser) ParseGroup() Element {
 		}
 		current := current.(Group)
 		{
-			for ok := true; ok; ok = p.state.Lookahead(GroupLookahead8) == 0 {
+			for ok := true; ok; ok = p.predictOpt("Group_RepetitionMandatory_1") {
 				result := p.ParseElement()
 				if result != nil {
 					current.SetElementsItem(result)
@@ -690,7 +732,7 @@ func (p *Parser) ParseGroup() Element {
 func (p *Parser) ParseElement() Element {
 	current := NewElement()
 	current.SetSegmentStartToken(p.state.LA(1))
-	switch p.state.Lookahead(ElementLookaheadOr3) {
+	switch p.predict("Element_Alternation_1") {
 	case 0:
 		{
 			result := p.ParseKeyword()
@@ -731,8 +773,8 @@ func (p *Parser) ParseElement() Element {
 		}
 	}
 	{
-		if p.state.Lookahead(ElementLookahead9) == 0 {
-			switch p.state.Lookahead(ElementCardinalityLookaheadOr4) {
+		if p.predictOpt("Element_Option_1") {
+			switch p.predict("Element_Alternation_2") {
 			case 0:
 				token := p.state.Consume(Keyword_Asterisk_Idx)
 				core.AssignToken(current, token, ElementCardinalityAsterisk_0)
@@ -783,7 +825,7 @@ func (p *Parser) ParseAssignment() Assignment {
 		}
 	}
 	{
-		switch p.state.Lookahead(AssignmentOperatorLookaheadOr5) {
+		switch p.predict("Assignment_Alternation_1") {
 		case 0:
 			token := p.state.Consume(Keyword_PlusEquals_Idx)
 			core.AssignToken(current, token, AssignmentOperatorPlusEquals_0)
@@ -817,7 +859,7 @@ func (p *Parser) ParseAssignment() Assignment {
 func (p *Parser) ParseAssignable() Assignable {
 	current := NewAssignable()
 	current.SetSegmentStartToken(p.state.LA(1))
-	switch p.state.Lookahead(AssignableLookaheadOr6) {
+	switch p.predict("Assignable_Alternation_1") {
 	case 0:
 		{
 			result := p.ParseKeyword()
@@ -858,7 +900,7 @@ func (p *Parser) ParseAssignable() Assignable {
 func (p *Parser) ParseAssignableWithoutAlts() Assignable {
 	current := NewAssignable()
 	current.SetSegmentStartToken(p.state.LA(1))
-	switch p.state.Lookahead(AssignableWithoutAltsLookaheadOr7) {
+	switch p.predict("AssignableWithoutAlts_Alternation_1") {
 	case 0:
 		{
 			result := p.ParseKeyword()
@@ -890,7 +932,7 @@ func (p *Parser) ParseAssignableAlternatives() Assignable {
 		core.MergeTokens(result, current.Tokens())
 		current = result
 	}
-	if p.state.Lookahead(AssignableAlternativesLookahead10) == 0 {
+	if p.predictOpt("AssignableAlternatives_Option_1") {
 		{
 			result := NewAlternatives()
 			result.SetSegment(current.Segment())
@@ -899,7 +941,7 @@ func (p *Parser) ParseAssignableAlternatives() Assignable {
 			current = result
 		}
 		current := current.(Alternatives)
-		for ok := true; ok; ok = p.state.Lookahead(AssignableAlternativesLookahead11) == 0 {
+		for ok := true; ok; ok = p.predictOpt("AssignableAlternatives_RepetitionMandatory_1") {
 			{
 				token := p.state.Consume(Keyword_Pipe_Idx)
 				core.AssignToken(current, token, AssignableAlternativesPipe_0)
@@ -930,7 +972,7 @@ func (p *Parser) ParseCrossRef() CrossRef {
 			current.SetType(p.references().CrossRefType(current, token))
 		}
 	}
-	if p.state.Lookahead(CrossRefLookahead12) == 0 {
+	if p.predictOpt("CrossRef_Option_1") {
 		{
 			token := p.state.Consume(Keyword_Colon_Idx)
 			core.AssignToken(current, token, CrossRefColon_0)
@@ -978,7 +1020,7 @@ func (p *Parser) ParseAction() Action {
 			current.SetType(p.references().ActionType(current, token))
 		}
 	}
-	if p.state.Lookahead(ActionLookahead13) == 0 {
+	if p.predictOpt("Action_Option_1") {
 		{
 			token := p.state.Consume(Keyword_Dot_Idx)
 			core.AssignToken(current, token, ActionDot_0)
@@ -991,7 +1033,7 @@ func (p *Parser) ParseAction() Action {
 			}
 		}
 		{
-			switch p.state.Lookahead(ActionOperatorLookaheadOr8) {
+			switch p.predict("Action_Alternation_1") {
 			case 0:
 				token := p.state.Consume(Keyword_PlusEquals_Idx)
 				core.AssignToken(current, token, ActionOperatorPlusEquals_0)
