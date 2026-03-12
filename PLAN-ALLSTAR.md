@@ -1,7 +1,7 @@
 # PLAN-ALLSTAR.md — Migration of `chevrotain-allstar` to Go
 
 > **Source:** `chevrotain-allstar-main/` (TypeScript, ~1 500 lines)
-> **Target:** `allstar/` package inside `typefox.dev/fastbelt` (Go)
+> **Target:** `parser/allstar/` package inside `typefox.dev/fastbelt` (Go)
 > **Algorithm:** ALL(*) adaptive lookahead — the LL(∞) prediction algorithm from ANTLR4
 > (paper: https://www.antlr.org/papers/allstar-techreport.pdf)
 
@@ -32,20 +32,22 @@ new `allstar` sub-package that can serve as the backing engine for a more powerf
 
 ```
 fastbelt/
-└── allstar/
-    ├── grammar.go          # Production/Rule type model (Go equivalent of Chevrotain's AST model)
-    ├── atn.go              # ATN data structures + construction algorithm
-    ├── dfa.go              # DFA data structures + config set management
-    ├── predict.go          # Adaptive prediction algorithm (closures, DFA cache, ambiguity)
-    ├── strategy.go         # LLStarLookahead: top-level entry point + LL1 fast-path
-    ├── grammar_test.go     # Unit tests: grammar types
-    ├── atn_test.go         # Unit tests: ATN construction
-    ├── dfa_test.go         # Unit tests: DFA / ATNConfigSet
-    ├── predict_test.go     # Unit tests: prediction algorithm internals
-    └── integration_test.go # Integration tests: input string → parsed result
+└── parser/
+    └── allstar/
+        ├── grammar.go          # Production/Rule type model (Go equivalent of Chevrotain's AST model)
+        ├── atn.go              # ATN data structures + construction algorithm
+        ├── dfa.go              # DFA data structures + config set management
+        ├── predict.go          # Adaptive prediction algorithm (closures, DFA cache, ambiguity)
+        ├── strategy.go         # LLStarLookahead: top-level entry point + LL1 fast-path
+        ├── grammar_test.go     # Unit tests: grammar types
+        ├── atn_test.go         # Unit tests: ATN construction
+        ├── dfa_test.go         # Unit tests: DFA / ATNConfigSet
+        ├── predict_test.go     # Unit tests: prediction algorithm internals
+        └── integration_test.go # Integration tests: input string → parsed result
 ```
 
 The package declaration is `package allstar`.
+The import path is `typefox.dev/fastbelt/parser/allstar`.
 
 ---
 
@@ -228,9 +230,12 @@ type Transition interface {
 }
 
 // AtomTransition fires on a specific token type.
+// CategoryMatches holds the IDs of all token types that match via category
+// inheritance; populated from the Terminal's CategoryMatches at ATN-build time.
 type AtomTransition struct {
-    target      *ATNState
-    TokenTypeID int
+    target          *ATNState
+    TokenTypeID     int
+    CategoryMatches []int
 }
 
 // EpsilonTransition fires without consuming a token.
@@ -479,7 +484,8 @@ func tokenMatches(tokenTypeID int, transitionTypeID int, categoryMatches []int) 
 }
 ```
 
-The `AtomTransition` must store `CategoryMatches []int` in addition to `TokenTypeID`.
+The `CategoryMatches []int` field is carried on `AtomTransition` and populated from the source
+`Terminal.CategoryMatches` at ATN-build time. `core.TokenType` is not modified.
 
 ### DFA_ERROR sentinel
 
@@ -495,11 +501,16 @@ and returns a simple function that performs a single `src.LA(1)` lookup.
 
 ### Memoization and DFA caches
 
-`DFACache` in TypeScript is a closure over a `Record<string, DFA>`. In Go it is a `func(*PredicateSet) *DFA` backed by a `map[string]*DFA` protected by a `sync.Mutex` for thread-safety.
+`DFACache` in TypeScript is a closure over a `Record<string, DFA>`. In Go it is a
+`func(*PredicateSet) *DFA` backed by a `map[string]*DFA` protected by a `sync.RWMutex`.
+Reads (cache hit) acquire only a read lock; writes (cache miss) upgrade to a write lock.
+This allows multiple goroutines to parse concurrently once the DFA is warm.
 
 ### EOF token
 
-The existing Go project uses `core.EOF.Id` as the EOF sentinel. The prediction algorithm must treat EOF as a valid token type for lookahead (used in the `AltRuleWithEOF` test).
+`TokenSource.LA` must return a non-nil EOF sentinel token (a `*core.Token` with
+`TypeId == core.EOF.Id`) when the stream is exhausted. `parser.ParserState` already does this.
+The prediction algorithm never needs to handle a `nil` return from `LA`.
 
 ---
 
@@ -693,7 +704,7 @@ as-is (it already has `LA(offset int) *core.Token`).
 
 Generated parsers that opt-in to ALL(*) lookahead will:
 
-1. Call `allstar.NewLLStarLookahead(rules, opts)` once at parser init time.
+1. Call `allstar.NewLLStarLookahead(rules, opts)` (import `typefox.dev/fastbelt/parser/allstar`) once at parser init time.
 2. Store the returned `*LLStarLookahead` on the parser struct.
 3. Replace calls like `p.Lookahead(table)` with `p.allstar.AdaptivePredict(p, decisionIndex, preds)`.
 
@@ -707,36 +718,21 @@ parsers that do not need unbounded lookahead.
 No new external dependencies are required. The `allstar` package uses only:
 - `fmt` (string formatting for keys and error messages)
 - `strings` (string building for `ATNConfigSet.Key`)
-- `sync` (mutex for the DFA cache)
+- `sync` (`sync.RWMutex` for the DFA cache)
 - `typefox.dev/fastbelt` (core token/document types, imported as `core`)
 
 Test files additionally use `github.com/stretchr/testify` (already in `go.mod`).
 
 ---
 
-## 9. Open Questions / Decisions Before Coding
+## 9. Resolved Design Decisions
 
-1. **Token category matching**: The existing `core.TokenType` does not have a `CategoryMatches`
-   field. Should it be added, or should `AtomTransition` carry a `CategoryMatches []int` that is
-   populated from the grammar definition?
-   *→ Recommendation: add `CategoryMatches []int` to `AtomTransition`; keep `core.TokenType`
-   unchanged.*
-
-2. **EOF token ID**: The existing `core.EOF.Id` must be propagated into the prediction loop so
-   that EOF-terminated rules work correctly. Should `TokenSource.LA` return a synthetic EOF token
-   (as `*core.Token` with `TypeId == core.EOF.Id`) when the stream is exhausted, or should the
-   algorithm handle `nil` returns from `LA`?
-   *→ Recommendation: `TokenSource.LA` returns a non-nil EOF sentinel token; `parser.ParserState`
-   already does this via `core.EOF`.*
-
-3. **Package placement**: Should the new package live at `allstar/` (peer of `lexer/`, `parser/`,
-   etc.) or inside `parser/allstar/` (subordinate)?
-   *→ Recommendation: peer placement at `allstar/` — it is a standalone algorithm, not a detail
-   of the parser package.*
-
-4. **Concurrency**: Should the `DFACache` map be protected by a `sync.RWMutex`? The TypeScript
-   version is single-threaded; Go parsers might be used concurrently.
-   *→ Recommendation: protect with `sync.RWMutex` to be safe.*
+| # | Question | Decision |
+| --- | --- | --- |
+| 1 | Token category matching | `CategoryMatches []int` lives on `AtomTransition`; `core.TokenType` is unchanged. |
+| 2 | EOF handling | `TokenSource.LA` always returns a non-nil token; uses `core.EOF.Id` sentinel. The algorithm never handles `nil`. |
+| 3 | Package placement | `parser/allstar/` — subordinate to `parser/`, import path `typefox.dev/fastbelt/parser/allstar`. |
+| 4 | Concurrency | `DFACache` map protected by `sync.RWMutex`; reads share the lock, writes are exclusive. |
 
 ---
 
