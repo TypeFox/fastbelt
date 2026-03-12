@@ -189,7 +189,7 @@ func firstTokens(state *ATNState, depth int) []int {
 		switch at := t.(type) {
 		case *AtomTransition:
 			result = append(result, at.TokenTypeID)
-			for _, cat := range at.CategoryMatches {
+			for cat := range at.CategoryMatches {
 				result = append(result, cat)
 			}
 		case *EpsilonTransition:
