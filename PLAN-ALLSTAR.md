@@ -3,7 +3,7 @@
 > **Source:** `chevrotain-allstar-main/` (TypeScript, ~1 500 lines)
 > **Target:** `parser/allstar/` package inside `typefox.dev/fastbelt` (Go)
 > **Algorithm:** ALL(*) adaptive lookahead — the LL(∞) prediction algorithm from ANTLR4
-> (paper: https://www.antlr.org/papers/allstar-techreport.pdf)
+> (paper: <https://www.antlr.org/papers/allstar-techreport.pdf>)
 
 ---
 
@@ -17,7 +17,7 @@ any fixed k.
 The algorithm has three components that map directly to source files:
 
 | TypeScript file | Responsibility |
-|---|---|
+| --- | --- |
 | `atn.ts` | Build an Augmented Transition Network (ATN) from parser rules |
 | `dfa.ts` | DFA state machine used to memoize prediction results |
 | `all-star-lookahead.ts` | Adaptive prediction algorithm + lookahead strategy |
@@ -30,16 +30,17 @@ new `allstar` sub-package that can serve as the backing engine for a more powerf
 
 ## 2. New Package Layout
 
-```
+```text
 fastbelt/
 └── parser/
     └── allstar/
-        ├── grammar.go          # Production/Rule type model (Go equivalent of Chevrotain's AST model)
+        ├── grammar.go          # Minimal production/rule types consumed by the ATN builder
+        ├── convert.go          # Conversion from internal/grammar AST → allstar production types
         ├── atn.go              # ATN data structures + construction algorithm
         ├── dfa.go              # DFA data structures + config set management
         ├── predict.go          # Adaptive prediction algorithm (closures, DFA cache, ambiguity)
         ├── strategy.go         # LLStarLookahead: top-level entry point + LL1 fast-path
-        ├── grammar_test.go     # Unit tests: grammar types
+        ├── convert_test.go     # Unit tests: conversion from internal/grammar
         ├── atn_test.go         # Unit tests: ATN construction
         ├── dfa_test.go         # Unit tests: DFA / ATNConfigSet
         ├── predict_test.go     # Unit tests: prediction algorithm internals
@@ -55,106 +56,106 @@ The import path is `typefox.dev/fastbelt/parser/allstar`.
 
 ### 3.1 Grammar types — `grammar.go`
 
-Chevrotain exposes its grammar as a tree of typed production objects. The Go equivalent defines a
-`Production` interface with a set of concrete structs. No third-party dependency is required.
+The project already has a grammar AST in `internal/grammar/types_gen.go`, but that package serves
+a different purpose: it is the **meta-grammar AST** for `.fb` grammar files, used by the code
+generator. The `allstar` package needs a simpler, **ATN-oriented production model** whose types
+map 1-to-1 to ATN construction operations and carry the occurrence indices that ATN keys require.
+
+The conversion from `internal/grammar` types to these types happens in `convert.go` (§3.5).
+The `.fb` grammar language has no separator-based repetition, so `RepetitionWithSeparator` and
+`RepetitionMandatoryWithSeparator` are omitted.
 
 ```go
 // ProductionKind is a discriminator for the Production union.
 type ProductionKind int
 
 const (
-    ProdTerminal                         ProductionKind = iota
+    ProdTerminal             ProductionKind = iota
     ProdNonTerminal
-    ProdAlternative
-    ProdAlternation
-    ProdOption
-    ProdRepetition
-    ProdRepetitionMandatory
-    ProdRepetitionWithSeparator
-    ProdRepetitionMandatoryWithSeparator
+    ProdAlternative          // one branch inside an Alternation; no occurrence index
+    ProdAlternation          // OR(...)
+    ProdOption               // OPTION(...)
+    ProdRepetition           // MANY(...)
+    ProdRepetitionMandatory  // AT_LEAST_ONE(...)
 )
 
-// Production is the sealed interface for all grammar elements.
+// Production is the interface for all grammar elements.
 type Production interface {
     Kind() ProductionKind
-    // Returns the sub-productions, or nil for leaves (Terminal, NonTerminal).
+    // Children returns the sub-productions, or nil for leaves.
     Children() []Production
-    // Occurrence index (1-based; 0 for un-indexed productions like Alternative).
+    // Occurrence returns the 1-based index distinguishing multiple uses of the
+    // same production kind within one rule (0 for Alternative which is not indexed).
     Occurrence() int
 }
 
-// Rule is the top-level grammar element: a named parser rule.
+// Rule is a named parser rule.
 type Rule struct {
     Name       string
     Definition []Production
 }
 
-// Concrete production types:
+// Terminal consumes a single token.
 type Terminal struct {
-    TokenTypeID int   // maps to *core.TokenType.Id
-    TokenName   string
-    Idx         int
-    // CategoryMatches contains the IDs of all token types that this terminal
-    // also matches (via Chevrotain-style token categories).
+    TokenTypeID     int
+    TokenName       string
+    Idx             int
+    // CategoryMatches holds token type IDs matched via category inheritance.
     CategoryMatches []int
 }
 
+// NonTerminal calls another rule.
 type NonTerminal struct {
     ReferencedRule *Rule
     Idx            int
 }
 
+// Alternative is one branch inside an Alternation (no own occurrence index).
 type Alternative struct {
     Definition []Production
 }
 
+// Alternation is an OR decision point.
 type Alternation struct {
-    Definition []Production
-    Idx        int
+    Alternatives []*Alternative
+    Idx          int
 }
 
+// Option wraps an optional sequence.
 type Option struct {
     Definition []Production
     Idx        int
 }
 
+// Repetition is a zero-or-more loop.
 type Repetition struct {
     Definition []Production
     Idx        int
 }
 
+// RepetitionMandatory is a one-or-more loop.
 type RepetitionMandatory struct {
     Definition []Production
     Idx        int
 }
-
-type RepetitionWithSeparator struct {
-    Definition  []Production
-    SeparatorID int
-    Idx         int
-}
-
-type RepetitionMandatoryWithSeparator struct {
-    Definition  []Production
-    SeparatorID int
-    Idx         int
-}
 ```
 
-Each struct implements `Production` with its respective `Kind()`, `Children()`, `Occurrence()`
-methods. `Terminal` and `NonTerminal` return `nil` from `Children()`.
+Each struct implements `Production`. `Terminal` and `NonTerminal` return `nil` from `Children()`.
+`Alternative` and `Alternation` implement `Children()` by flattening their definitions.
 
-The `LookaheadProductionType` string used as part of the ATN decision key maps to:
+The ATN key string used for decision-state lookup:
 
 ```go
 func ProductionTypeName(p Production) string {
     switch p.Kind() {
-    case ProdAlternation:                         return "Alternation"
-    case ProdOption:                              return "Option"
-    case ProdRepetition:                          return "Repetition"
-    case ProdRepetitionWithSeparator:             return "RepetitionWithSeparator"
-    case ProdRepetitionMandatory:                 return "RepetitionMandatory"
-    case ProdRepetitionMandatoryWithSeparator:    return "RepetitionMandatoryWithSeparator"
+    case ProdAlternation:
+        return "Alternation"
+    case ProdOption:
+        return "Option"
+    case ProdRepetition:
+        return "Repetition"
+    case ProdRepetitionMandatory:
+        return "RepetitionMandatory"
     default:
         panic("invalid production type for ATN key")
     }
@@ -256,20 +257,18 @@ type RuleTransition struct {
 **ATN construction functions** (all unexported except `CreateATN` and `BuildATNKey`):
 
 | TypeScript function | Go function signature |
-|---|---|
+| --- | --- |
 | `buildATNKey` | `BuildATNKey(rule *Rule, prodType string, occurrence int) string` |
 | `createATN` | `CreateATN(rules []*Rule) *ATN` |
 | `createRuleStartAndStopATNStates` | `createRuleStartAndStopATNStates(atn *ATN, rules []*Rule)` |
 | `atom` | `atom(atn *ATN, rule *Rule, prod Production) *atnHandle` |
 | `repetition` | `repetition(atn *ATN, rule *Rule, prod *Repetition) *atnHandle` |
-| `repetitionSep` | `repetitionSep(atn *ATN, rule *Rule, prod *RepetitionWithSeparator) *atnHandle` |
 | `repetitionMandatory` | `repetitionMandatory(atn *ATN, rule *Rule, prod *RepetitionMandatory) *atnHandle` |
-| `repetitionMandatorySep` | `repetitionMandatorySep(atn *ATN, rule *Rule, prod *RepetitionMandatoryWithSeparator) *atnHandle` |
 | `alternation` | `alternation(atn *ATN, rule *Rule, prod *Alternation) *atnHandle` |
 | `option` | `option(atn *ATN, rule *Rule, prod *Option) *atnHandle` |
 | `block` | `block(atn *ATN, rule *Rule, children []Production) *atnHandle` |
-| `plus` | `plus(atn *ATN, rule *Rule, prod Production, handle *atnHandle, sep *atnHandle) *atnHandle` |
-| `star` | `star(atn *ATN, rule *Rule, prod Production, handle *atnHandle, sep *atnHandle) *atnHandle` |
+| `plus` | `plus(atn *ATN, rule *Rule, prod Production, handle *atnHandle) *atnHandle` |
+| `star` | `star(atn *ATN, rule *Rule, prod Production, handle *atnHandle) *atnHandle` |
 | `optional` | `optional(atn *ATN, rule *Rule, prod *Option, handle *atnHandle) *atnHandle` |
 | `makeAlts` | `makeAlts(atn *ATN, rule *Rule, start *ATNState, prod Production, alts ...*atnHandle) *atnHandle` |
 | `makeBlock` | `makeBlock(atn *ATN, alts []*atnHandle) *atnHandle` |
@@ -284,6 +283,9 @@ type RuleTransition struct {
 
 `atnHandle` is a private struct `{ left, right *ATNState }`.
 
+The `sep` parameter is dropped from `plus` and `star` compared to the TypeScript originals because
+separator-based repetition is not needed.
+
 ---
 
 ### 3.3 DFA types — `dfa.go`
@@ -291,9 +293,9 @@ type RuleTransition struct {
 ```go
 // DFA is the memoization automaton for a single decision.
 type DFA struct {
-    Start        *DFAState
-    States       map[string]*DFAState
-    Decision     int
+    Start         *DFAState
+    States        map[string]*DFAState
+    Decision      int
     ATNStartState *ATNState
 }
 
@@ -326,7 +328,7 @@ type ATNConfigSet struct {
 Public methods on `ATNConfigSet`:
 
 | TypeScript | Go |
-|---|---|
+| --- | --- |
 | `add(config)` | `func (s *ATNConfigSet) Add(c *ATNConfig)` |
 | `finalize()` | `func (s *ATNConfigSet) Finalize()` |
 | `get size()` | `func (s *ATNConfigSet) Len() int` |
@@ -353,6 +355,7 @@ type AmbiguityReport func(message string)
 type PredicateSet struct {
     predicates []bool
 }
+
 // Is(index) returns true when the index is out of range (unconstrained)
 // or when predicates[index] == true.
 func (p *PredicateSet) Is(index int) bool
@@ -423,7 +426,7 @@ func (s *LLStarLookahead) BuildLookaheadForOptional(
 Internal functions in `predict.go` (unexported):
 
 | TypeScript | Go |
-|---|---|
+| --- | --- |
 | `createDFACache` | `newDFACache(start *ATNState, decision int) DFACache` |
 | `initATNSimulator` | `initDFACaches(atn *ATN) []DFACache` |
 | `adaptivePredict` | `adaptivePredict(src TokenSource, dfas []DFACache, decision int, preds *PredicateSet, log AmbiguityReport) (int, *predictError)` |
@@ -460,6 +463,64 @@ type predictError struct {
     ActualTokenTypeID int
 }
 ```
+
+---
+
+### 3.5 Conversion layer — `convert.go`
+
+This file bridges `internal/grammar` (the code-generator's meta-grammar AST) and the ATN-oriented
+types above. It is the only place in `allstar` that imports `internal/grammar`.
+
+**Main entry point:**
+
+```go
+// FromParserRules converts a slice of grammar.ParserRule into the allstar Rule
+// slice that CreateATN expects. tokenTypes maps terminal name → TokenTypeID.
+func FromParserRules(
+    rules []grammar.ParserRule,
+    tokenTypes map[string]TokenInfo,
+) ([]*Rule, error)
+```
+
+Where `TokenInfo` carries the ID and category-match IDs for a token type:
+
+```go
+type TokenInfo struct {
+    ID              int
+    CategoryMatches []int
+}
+```
+
+**Conversion algorithm:**
+
+Walking a `grammar.ParserRule`:
+
+1. Create `counters` — a `map[ProductionKind]int` scoped to the current rule, reset per rule.
+2. Walk `rule.Body()` recursively via `convertElement(el grammar.Element, counters map[ProductionKind]int)`.
+
+Mapping rules for `convertElement`:
+
+| `internal/grammar` type | Condition | `allstar` production | Counter bumped |
+| --- | --- | --- | --- |
+| `grammar.Alternatives` | — | `Alternation{Idx: next(ProdAlternation)}` | `ProdAlternation` |
+| `grammar.Group` | `Cardinality() == "?"` | `Option{Idx: next(ProdOption)}` | `ProdOption` |
+| `grammar.Group` | `Cardinality() == "*"` | `Repetition{Idx: next(ProdRepetition)}` | `ProdRepetition` |
+| `grammar.Group` | `Cardinality() == "+"` | `RepetitionMandatory{Idx: next(ProdRepetitionMandatory)}` | `ProdRepetitionMandatory` |
+| `grammar.Group` | no cardinality | inline sequence (returns `[]Production`) | — |
+| `grammar.RuleCall` | no cardinality | `NonTerminal{Idx: next(ProdNonTerminal)}` | `ProdNonTerminal` |
+| `grammar.RuleCall` | with cardinality | wrap in `Option`/`Repetition`/`RepetitionMandatory` first | both |
+| `grammar.Keyword` | — | `Terminal{TokenName: value, Idx: next(ProdTerminal)}` | `ProdTerminal` |
+| `grammar.Assignment` | — | transparent — recurse into `Value()` | — |
+| `grammar.CrossRef` | — | `Terminal` for the cross-reference token | `ProdTerminal` |
+| `grammar.Action` | — | skip (semantic action, no ATN impact) | — |
+
+`next(kind)` returns the current counter value for `kind` and then increments it (1-based).
+
+The token type IDs for `Terminal` nodes are resolved from the `tokenTypes` map keyed on the
+terminal name. An error is returned for any unresolved terminal.
+
+Rule references in `NonTerminal` are resolved in a second pass once all `Rule` objects are
+created, to handle forward references between rules.
 
 ---
 
@@ -518,12 +579,22 @@ The prediction algorithm never needs to handle a `nil` return from `LA`.
 
 Each step should be followed by its tests before moving on.
 
-### Step 1 — Grammar model (`grammar.go` + `grammar_test.go`)
+### Step 1 — Grammar model (`grammar.go`)
 
 Implement the production types and their `Kind()`, `Children()`, `Occurrence()` methods.
 Implement `ProductionTypeName(Production) string`.
 
-**Tests** verify that each concrete type returns the correct `Kind()` and `Children()`.
+No tests for this step alone — correctness is covered by the conversion tests in Step 1b.
+
+---
+
+### Step 1b — Conversion layer (`convert.go` + `convert_test.go`)
+
+Implement `FromParserRules` and `convertElement` following the mapping table in §3.5.
+Implement the two-pass forward-reference resolution for `NonTerminal.ReferencedRule`.
+
+**Tests** (see §6.1) verify that a representative set of `internal/grammar` rule trees
+are converted to the expected `allstar` production trees with correct occurrence indices.
 
 ---
 
@@ -542,12 +613,11 @@ Implement `BuildATNKey`.
 Implement `CreateATN` and all private helper functions in the order they are called:
 `createRuleStartAndStopATNStates` → `block` → `atom` → leaf helpers
 (`tokenRef`, `ruleRef`) → composite helpers (`alternation`, `option`, `repetition`,
-`repetitionMandatory`, `repetitionSep`, `repetitionMandatorySep`) → loop helpers
-(`star`, `plus`, `optional`) → structural helpers (`makeAlts`, `makeBlock`,
-`buildRuleHandle`) → utility helpers (`addEpsilon`, `newATNState`, `addTransition`,
-`removeState`, `defineDecisionState`).
+`repetitionMandatory`) → loop helpers (`star`, `plus`, `optional`) → structural helpers
+(`makeAlts`, `makeBlock`, `buildRuleHandle`) → utility helpers (`addEpsilon`, `newATNState`,
+`addTransition`, `removeState`, `defineDecisionState`).
 
-**Tests** (see §6.1) verify the produced ATN state/transition counts and key assignments for a
+**Tests** (see §6.2) verify the produced ATN state/transition counts and key assignments for a
 representative grammar.
 
 ---
@@ -557,7 +627,7 @@ representative grammar.
 Implement `ATNConfigSet` with deduplication, `GetATNConfigKey`, and the `DFAState` / `DFA` types.
 Implement `DFAError` sentinel.
 
-**Tests** (see §6.2) verify deduplication, key generation, and `Alts()`.
+**Tests** (see §6.3) verify deduplication, key generation, and `Alts()`.
 
 ---
 
@@ -569,7 +639,7 @@ Implement in dependency order:
 (`newDFAState`, `addDFAState`, `addDFAEdge`) → `computeLookaheadTarget` →
 `performLookahead` → `adaptivePredict` → ambiguity helpers.
 
-**Tests** (see §6.3) verify each function in isolation using hand-constructed ATN states.
+**Tests** (see §6.4) verify each function in isolation using hand-constructed ATN states.
 
 ---
 
@@ -582,32 +652,52 @@ Implement `LLStarLookahead`, `NewLLStarLookahead`, `PredicateSet`, and the two
 
 ### Step 7 — Integration tests (`integration_test.go`)
 
-See §6.4. These are the most important validation that the whole pipeline works end-to-end.
+See §6.5. These are the most important validation that the whole pipeline works end-to-end.
 
 ---
 
 ## 6. Test Plan
 
-### 6.1 ATN construction (`atn_test.go`)
+### 6.1 Conversion layer (`convert_test.go`)
+
+These tests build small `internal/grammar` trees by hand and assert the resulting `allstar`
+production tree and occurrence indices.
 
 | Test | What it checks |
-|---|---|
+| --- | --- |
+| `TestConvert_SingleKeyword` | `Keyword("a")` → `Terminal{Idx:1}` |
+| `TestConvert_RuleCall` | `RuleCall(RuleB)` → `NonTerminal{Idx:1}` pointing at RuleB |
+| `TestConvert_ForwardRef` | `RuleA` calls `RuleB` defined later → reference resolved in second pass |
+| `TestConvert_Alternatives` | `Alternatives([A, B])` → `Alternation{Idx:1}` with 2 `Alternative` children |
+| `TestConvert_MultipleAlternations` | Two `Alternatives` in one rule → `Idx` 1 and 2 |
+| `TestConvert_Group_Option` | `Group(cardinality="?", [A])` → `Option{Idx:1}` |
+| `TestConvert_Group_Repetition` | `Group(cardinality="*", [A])` → `Repetition{Idx:1}` |
+| `TestConvert_Group_RepetitionMandatory` | `Group(cardinality="+", [A])` → `RepetitionMandatory{Idx:1}` |
+| `TestConvert_Group_Sequence` | `Group(no cardinality, [A, B])` → flat `[]Production` (no wrapper) |
+| `TestConvert_Assignment_Transparent` | `Assignment(property, "=", RuleCall)` → `NonTerminal` (assignment stripped) |
+| `TestConvert_RuleCall_WithCardinality` | `RuleCall(cardinality="*")` → `Repetition` wrapping `NonTerminal` |
+| `TestConvert_MixedCounters` | Rule with `OR`, `OPTION`, `MANY` each twice → `Idx` 1 and 2 per kind |
+| `TestConvert_UnknownToken` | Terminal name not in `tokenTypes` map → returns error |
+
+### 6.2 ATN construction (`atn_test.go`)
+
+| Test | What it checks |
+| --- | --- |
 | `TestBuildATNKey` | Correct string format for each production type |
 | `TestCreateATN_SingleTerminal` | `CONSUME(A)` → 2 states, 1 atom transition, no decision states |
 | `TestCreateATN_Alternation` | `OR([A, B])` → decision state, 2 epsilon exits, 1 BlockEndState |
 | `TestCreateATN_Option` | `OPTION(A)` → decision state, bypass epsilon to block end |
 | `TestCreateATN_Repetition` | `MANY(A)` → StarLoopEntry, StarLoopBack, LoopEnd |
 | `TestCreateATN_RepetitionMandatory` | `AT_LEAST_ONE(A)` → PlusBlockStart, PlusLoopBack, LoopEnd |
-| `TestCreateATN_RepetitionWithSep` | `MANY_SEP(sep, A)` → separator transition in loop back path |
 | `TestCreateATN_NonTerminal` | `SUBRULE(Rule2)` → RuleTransition pointing at Rule2's start state |
 | `TestCreateATN_NestedRule` | Two rules: outer calls inner, follow state is correctly wired |
 | `TestCreateATN_DecisionMapKeys` | All expected keys present in `atn.DecisionMap` |
 | `TestMakeBlock_Optimisation` | Consecutive basic states are merged (no extra epsilon) |
 
-### 6.2 DFA / ATNConfigSet (`dfa_test.go`)
+### 6.3 DFA / ATNConfigSet (`dfa_test.go`)
 
 | Test | What it checks |
-|---|---|
+| --- | --- |
 | `TestATNConfigSet_Add_Dedup` | Adding identical config twice keeps size == 1 |
 | `TestATNConfigSet_Add_DifferentAlt` | Two configs with same state/stack but different alt → size == 2 |
 | `TestATNConfigSet_Key_Consistency` | Key is the same after adding the same elements in the same order |
@@ -616,10 +706,10 @@ See §6.4. These are the most important validation that the whole pipeline works
 | `TestGetATNConfigKey_WithAlt` | Key contains `a<alt>` prefix |
 | `TestGetATNConfigKey_WithoutAlt` | Key omits alt prefix |
 
-### 6.3 Prediction algorithm (`predict_test.go`)
+### 6.4 Prediction algorithm (`predict_test.go`)
 
 | Test | What it checks |
-|---|---|
+| --- | --- |
 | `TestPredicateSet_IsOutOfBounds` | `Is(100)` returns `true` (unconstrained) |
 | `TestPredicateSet_IsInBounds` | `Is(0)` after `Set(0, false)` returns `false` |
 | `TestPredicateSet_String` | Serialised form matches expected binary string |
@@ -640,19 +730,21 @@ See §6.4. These are the most important validation that the whole pipeline works
 | `TestAddDFAState_Dedup` | Same config-set key returns same DFAState pointer |
 | `TestAddDFAEdge` | Edge is stored in `from.Edges` |
 
-### 6.4 Integration tests (`integration_test.go`)
+### 6.5 Integration tests (`integration_test.go`)
 
 These tests mirror `atn.test.ts` exactly and constitute the acceptance criteria for the migration.
-They build grammars using the `grammar.go` types, create an `LLStarLookahead`, and drive it with a
-mock `TokenSource` backed by a `[]int` (token type ID sequence).
+They build grammars directly using the `grammar.go` types (bypassing the conversion layer),
+create an `LLStarLookahead`, and drive it with a mock `TokenSource` backed by a `[]int` (token
+type ID sequence).
 
-A helper `mockTokenSource(ids ...int)` wraps a slice into a `TokenSource` that
-returns the token at `LA(offset)` and an EOF token when the slice is exhausted.
+A helper `mockTokenSource(ids ...int)` wraps a slice into a `TokenSource` that returns the token
+at `LA(offset)` and an EOF token when the slice is exhausted.
 
-#### 6.4.1 LL(*) lookahead (unbounded)
+#### 6.5.1 LL(*) lookahead (unbounded)
 
 Grammar:
-```
+
+```text
 LongRule := OR(
   alt0: ε                          // empty
   alt1: AT_LEAST_ONE(A)            // one or more A
@@ -661,29 +753,29 @@ LongRule := OR(
 ```
 
 | Test | Input token IDs | Expected result |
-|---|---|---|
+| --- | --- | --- |
 | `TestLL_Star_LongestAlt1` | `[A, A, A]` | `1` (greedy, no terminating B) |
 | `TestLL_Star_LongestAlt2` | `[A, A, B]` | `2` (has terminating B) |
 | `TestLL_Star_ShortestAlt` | `[]` | `0` (empty alternative) |
 
-#### 6.4.2 Ambiguity detection
+#### 6.5.2 Ambiguity detection
 
 Grammar is more complex (see TypeScript test for `AmbigiousParser`). Use a callback to collect
 ambiguity report strings. A mock rule set equivalent to:
 
-```
-OptionRule  := OPTION(AT_LEAST_ONE(A)) AT_LEAST_ONE(A)
-AltRule     := OR(SUBRULE(RuleB), SUBRULE(RuleC))
-RuleB       := MANY(A)
-RuleC       := MANY(A) OPTION(B)
-AltRuleWithEOF     := OR(SUBRULE(RuleEOF), SUBRULE(RuleEOF))
-RuleEOF     := MANY(A) CONSUME(EOF)
-AltRuleWithPred    := OR(GATE(pred,CONSUME(A)), GATE(!pred,CONSUME(A)), CONSUME(B))
-AltWithOption      := OR(CONSUME(A), CONSUME(B)) OPTION(CONSUME(A))
+```text
+OptionRule       := OPTION(AT_LEAST_ONE(A)) AT_LEAST_ONE(A)
+AltRule          := OR(SUBRULE(RuleB), SUBRULE(RuleC))
+RuleB            := MANY(A)
+RuleC            := MANY(A) OPTION(B)
+AltRuleWithEOF   := OR(SUBRULE(RuleEOF), SUBRULE(RuleEOF))
+RuleEOF          := MANY(A) CONSUME(EOF)
+AltRuleWithPred  := OR(GATE(pred,CONSUME(A)), GATE(!pred,CONSUME(A)), CONSUME(B))
+AltWithOption    := OR(CONSUME(A), CONSUME(B)) OPTION(CONSUME(A))
 ```
 
 | Test | Input | Expected alt | Expected ambiguity reports |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `TestAmbig_Option` | `[A, A, A]` | truthy (option taken) | `"<0, 1> in <OPTION>"`, `"<0, 1> in <AT_LEAST_ONE1>"` |
 | `TestAmbig_FirstAltOnAmbiguity` | `[A, A, A]` | `0` | `"<0, 1> in <OR>"` |
 | `TestAmbig_EOFAmbiguity` | `[]` | `0` | `"<0, 1> in <OR>"` |
@@ -716,10 +808,12 @@ parsers that do not need unbounded lookahead.
 ## 8. Dependencies
 
 No new external dependencies are required. The `allstar` package uses only:
+
 - `fmt` (string formatting for keys and error messages)
 - `strings` (string building for `ATNConfigSet.Key`)
 - `sync` (`sync.RWMutex` for the DFA cache)
 - `typefox.dev/fastbelt` (core token/document types, imported as `core`)
+- `typefox.dev/fastbelt/internal/grammar` (imported only by `convert.go`)
 
 Test files additionally use `github.com/stretchr/testify` (already in `go.mod`).
 
@@ -733,21 +827,24 @@ Test files additionally use `github.com/stretchr/testify` (already in `go.mod`).
 | 2 | EOF handling | `TokenSource.LA` always returns a non-nil token; uses `core.EOF.Id` sentinel. The algorithm never handles `nil`. |
 | 3 | Package placement | `parser/allstar/` — subordinate to `parser/`, import path `typefox.dev/fastbelt/parser/allstar`. |
 | 4 | Concurrency | `DFACache` map protected by `sync.RWMutex`; reads share the lock, writes are exclusive. |
+| 5 | Separator repetition | Not needed; `RepetitionWithSeparator` and `RepetitionMandatoryWithSeparator` are omitted. |
+| 6 | Grammar type reuse | A conversion layer (`convert.go`) translates `internal/grammar` AST → `allstar` types; no direct reuse. |
 
 ---
 
 ## 10. File Summary
 
 | File | Lines (est.) | Mirrors |
-|---|---|---|
-| `allstar/grammar.go` | ~120 | n/a (new abstraction layer) |
-| `allstar/atn.go` | ~350 | `atn.ts` (643 lines) |
-| `allstar/dfa.go` | ~80 | `dfa.ts` (79 lines) |
-| `allstar/predict.go` | ~350 | `all-star-lookahead.ts` (764 lines) |
-| `allstar/strategy.go` | ~80 | part of `all-star-lookahead.ts` |
-| `allstar/grammar_test.go` | ~60 | — |
-| `allstar/atn_test.go` | ~180 | — |
-| `allstar/dfa_test.go` | ~80 | — |
-| `allstar/predict_test.go` | ~200 | — |
-| `allstar/integration_test.go` | ~250 | `atn.test.ts` (303 lines) |
-| **Total** | **~1 750** | |
+| --- | --- | --- |
+| `parser/allstar/grammar.go` | ~100 | n/a (ATN-oriented production model) |
+| `parser/allstar/convert.go` | ~120 | n/a (conversion from `internal/grammar`) |
+| `parser/allstar/atn.go` | ~320 | `atn.ts` (643 lines, separator variants removed) |
+| `parser/allstar/dfa.go` | ~80 | `dfa.ts` (79 lines) |
+| `parser/allstar/predict.go` | ~350 | `all-star-lookahead.ts` (764 lines) |
+| `parser/allstar/strategy.go` | ~80 | part of `all-star-lookahead.ts` |
+| `parser/allstar/convert_test.go` | ~130 | — |
+| `parser/allstar/atn_test.go` | ~160 | — |
+| `parser/allstar/dfa_test.go` | ~80 | — |
+| `parser/allstar/predict_test.go` | ~200 | — |
+| `parser/allstar/integration_test.go` | ~250 | `atn.test.ts` (303 lines) |
+| **Total** | **~1 870** | |
