@@ -6,6 +6,20 @@ package allstar
 
 import "fmt"
 
+// Strategy is the prediction interface shared by LL(k) and ALL(*) algorithms.
+// Implementations are chosen at parser-construction time to swap prediction
+// behaviour without changing parsing logic.
+//
+// PredictAlternation returns the chosen alternative index (0-based) for the
+// OR decision identified by key, or -1 when no prediction is possible.
+//
+// PredictOptional returns true when the optional block identified by key
+// should be entered (alt 0 in the underlying decision state).
+type Strategy interface {
+	PredictAlternation(src TokenSource, key string) int
+	PredictOptional(src TokenSource, key string) bool
+}
+
 // LLStarLookaheadOptions configures the strategy.
 type LLStarLookaheadOptions struct {
 	// Logging is called whenever an ambiguity is detected.
@@ -44,6 +58,27 @@ func (s *LLStarLookahead) AdaptivePredict(src TokenSource, decision int, predica
 	}
 	alt, _ := adaptivePredict(src, s.dfas, decision, predicates, s.logging)
 	return alt
+}
+
+// PredictAlternation implements Strategy.
+// It resolves the decision state by key and delegates to AdaptivePredict.
+func (s *LLStarLookahead) PredictAlternation(src TokenSource, key string) int {
+	ds := s.atn.DecisionMap[key]
+	if ds == nil {
+		return -1
+	}
+	return s.AdaptivePredict(src, ds.Decision, EmptyPredicates)
+}
+
+// PredictOptional implements Strategy.
+// Returns true when the adaptive prediction chooses alt 0 (enter the block).
+func (s *LLStarLookahead) PredictOptional(src TokenSource, key string) bool {
+	ds := s.atn.DecisionMap[key]
+	if ds == nil {
+		return false
+	}
+	alt, err := adaptivePredict(src, s.dfas, ds.Decision, EmptyPredicates, s.logging)
+	return err == nil && alt == 0
 }
 
 // BuildLookaheadForAlternation returns a function that wraps AdaptivePredict
