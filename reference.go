@@ -8,35 +8,42 @@ import (
 	"context"
 	"iter"
 	"reflect"
+	"slices"
 	"sync"
+	"sync/atomic"
 
+	"typefox.dev/fastbelt/util/collections"
 	"typefox.dev/fastbelt/util/extiter"
 )
 
+// An untyped representation of a [Reference] that can be used when the target type is not known at compile time.
+// Used throughout the fastbelt codebase to generically deal with different references.
 type UntypedReference interface {
+	Owner() AstNode
 	Description() *AstNodeDescription
 	RefNode(ctx context.Context) AstNode
 	Resolve(ctx context.Context)
 	Reset()
 	Error() *ReferenceError
 	Segment() *TextSegment
+	Token() *Token
+	Text() string
 }
 
 type ReferenceGetter[T AstNode] func(context.Context, *Reference[T]) (*AstNodeDescription, *ReferenceError)
 
 // Reference represents a reference to another AST node of type T.
 // Resolving is thread safe and is done concurrently by default.
-// The resolution is triggered when Ref(), RefNode() or Resolve() is called for the first time.
+// The resolution is triggered when [Ref], [RefNode] or [Resolve] are called for the first time.
 type Reference[T AstNode] struct {
-	Token       *Token
-	Text        string
-	Owner       AstNode
+	token       *Token
+	owner       AstNode
 	description *AstNodeDescription
 	err         *ReferenceError
 	ref         T
 	mu          sync.Mutex
 	getter      ReferenceGetter[T]
-	resolved    bool
+	resolved    atomic.Bool
 }
 
 func (r *Reference[T]) Reset() {
@@ -45,11 +52,32 @@ func (r *Reference[T]) Reset() {
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.resolved = false
+	r.resolved.Store(false)
 	r.description = nil
 	r.err = nil
 	var zero T
 	r.ref = zero
+}
+
+func (r *Reference[T]) Token() *Token {
+	if r == nil {
+		return nil
+	}
+	return r.token
+}
+
+func (r *Reference[T]) Text() string {
+	if r == nil || r.token == nil {
+		return ""
+	}
+	return r.token.Image
+}
+
+func (r *Reference[T]) Owner() AstNode {
+	if r == nil {
+		return nil
+	}
+	return r.owner
 }
 
 func (r *Reference[T]) Description() *AstNodeDescription {
@@ -67,8 +95,9 @@ func (r *Reference[T]) Ref(ctx context.Context) T {
 	var zero T
 	if r == nil {
 		return zero
+	} else if !r.resolved.Load() {
+		r.Resolve(ctx)
 	}
-	r.Resolve(ctx)
 	return r.ref
 }
 
@@ -80,8 +109,8 @@ func (r *Reference[T]) Error() *ReferenceError {
 }
 
 func (r *Reference[T]) Segment() *TextSegment {
-	if r != nil && r.Token != nil {
-		return &r.Token.Segment
+	if r != nil && r.token != nil {
+		return &r.token.Segment
 	}
 	return nil
 }
@@ -97,10 +126,13 @@ func (r *Reference[T]) Resolve(ctx context.Context) {
 		// Return directly, do not set the resolved flag
 		return
 	}
+	if r == nil || r.resolved.Load() {
+		return
+	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if r.resolved {
-		// Already resolved
+	if r.resolved.Load() {
+		// Another goroutine might have resolved it while we were waiting for the lock
 		return
 	}
 	newCtx := context.WithValue(ctx, r, true)
@@ -122,14 +154,13 @@ func (r *Reference[T]) Resolve(ctx context.Context) {
 			r.err = NewReferenceError("Reference resolution type mismatch: expected " + expectedType + ", got " + actualType)
 		}
 	}
-	r.resolved = true
+	r.resolved.Store(true)
 }
 
 func NewReference[T AstNode](owner AstNode, token *Token, getter ReferenceGetter[T]) *Reference[T] {
 	return &Reference[T]{
-		Owner:  owner,
-		Token:  token,
-		Text:   token.Image,
+		owner:  owner,
+		token:  token,
 		getter: getter,
 	}
 }
@@ -153,6 +184,72 @@ func ReferenceOfToken(token *Token) UntypedReference {
 		}
 	})
 	return ref
+}
+
+type ReferenceDescription struct {
+	// SourceNode is the node that contains the reference.
+	SourceNode AstNode
+	// TargetNode is the node that is being referenced.
+	TargetNode AstNode
+	// Segment is the text segment of the reference in the source document.
+	Segment *TextSegment
+}
+
+func NewReferenceDescription(source, target AstNode, segment *TextSegment) *ReferenceDescription {
+	return &ReferenceDescription{
+		SourceNode: source,
+		TargetNode: target,
+		Segment:    segment,
+	}
+}
+
+// SourceURI returns the URI of the document containing the source node, or nil if not available.
+func (d *ReferenceDescription) SourceURI() URI {
+	if d.SourceNode != nil {
+		doc := d.SourceNode.Document()
+		if doc != nil {
+			return doc.URI
+		}
+	}
+	return nil
+}
+
+// TargetURI returns the URI of the document containing the target node, or nil if not available.
+func (d *ReferenceDescription) TargetURI() URI {
+	if d.TargetNode != nil {
+		doc := d.TargetNode.Document()
+		if doc != nil {
+			return doc.URI
+		}
+	}
+	return nil
+}
+
+// ReferenceDescriptions is a collection of reference descriptions for a document, indexed by target node.
+// It allows efficient retrieval of all references to a given target node.
+type ReferenceDescriptions interface {
+	// All returns an iterator over all reference descriptions in the document.
+	All() iter.Seq[*ReferenceDescription]
+	// Returns an iterator over all reference descriptions that point to the given target node.
+	ForTarget(target AstNode) iter.Seq[*ReferenceDescription]
+}
+
+type referenceDescriptions struct {
+	descriptions collections.MultiMap[AstNode, *ReferenceDescription]
+}
+
+func (d *referenceDescriptions) All() iter.Seq[*ReferenceDescription] {
+	return d.descriptions.Values()
+}
+
+func (d *referenceDescriptions) ForTarget(target AstNode) iter.Seq[*ReferenceDescription] {
+	return slices.Values(d.descriptions.Get(target))
+}
+
+func NewReferenceDescriptionsFromMap(descriptions collections.MultiMap[AstNode, *ReferenceDescription]) ReferenceDescriptions {
+	return &referenceDescriptions{
+		descriptions: descriptions,
+	}
 }
 
 type AstNodeDescription struct {

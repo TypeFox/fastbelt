@@ -32,6 +32,7 @@ type ServerSrv struct {
 	LanguageServer     LanguageServer
 	DocumentSyncher    DocumentSyncher
 	DefinitionProvider DefinitionProvider
+	ReferencesProvider ReferencesProvider
 	// WorkspaceFolders is populated during the LSP initialize request.
 	WorkspaceFolders []lsp.WorkspaceFolder
 	// Connection is assigned by ConnectionBinder when the language server is started.
@@ -52,6 +53,9 @@ func CreateDefaultServices(c ServerSrvCont) {
 	}
 	if s.DefinitionProvider == nil {
 		s.DefinitionProvider = NewDefaultDefinitionProvider(c)
+	}
+	if s.ReferencesProvider == nil {
+		s.ReferencesProvider = NewDefaultReferencesProvider(c)
 	}
 	if s.ConnectionBinder == nil {
 		s.ConnectionBinder = NewDefaultBinder(c)

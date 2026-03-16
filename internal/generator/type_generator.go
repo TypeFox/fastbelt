@@ -112,9 +112,9 @@ func getTypeName(fieldType grammar.FieldType) string {
 	if arrayType, ok := fieldType.(grammar.ArrayType); ok {
 		return getTypeName(arrayType.InternalType())
 	} else if refType, ok := fieldType.(grammar.ReferenceType); ok {
-		return "*core.Reference[" + refType.Type().Text + "]"
+		return "*core.Reference[" + refType.Type().Text() + "]"
 	} else if simpleType, ok := fieldType.(grammar.SimpleType); ok {
-		return simpleType.Type().Text
+		return simpleType.Type().Text()
 	} else if primitiveType, ok := fieldType.(grammar.PrimitiveType); ok {
 		return primitiveType.Type()
 	} else {
@@ -139,12 +139,12 @@ func getAllExtends(grammr grammar.Grammar, iface grammar.Interface) []string {
 
 func llExtends(grammr grammar.Grammar, iface grammar.Interface, result []string) []string {
 	for _, ext := range iface.Extends() {
-		if slices.Contains(result, ext.Text) {
+		if slices.Contains(result, ext.Text()) {
 			continue
 		}
-		result = append(result, ext.Text)
+		result = append(result, ext.Text())
 		for _, parentExt := range grammr.Interfaces() {
-			if parentExt.Name() == ext.Text {
+			if parentExt.Name() == ext.Text() {
 				result = llExtends(grammr, parentExt, result)
 			}
 		}
@@ -161,7 +161,7 @@ func generateInterface(node generator.Node, grammr grammar.Grammar, iface gramma
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("core.AstNode")
 		for _, extends := range iface.Extends() {
-			n.AppendLine(extends.Text)
+			n.AppendLine(extends.Text())
 		}
 		n.AppendLine()
 		n.AppendLine("Is", iface.Name(), "()")

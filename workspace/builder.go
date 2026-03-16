@@ -101,6 +101,7 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	importedSymbols := b.srv.Linking().ImportedSymbolsProvider
 	localSymbols := b.srv.Linking().LocalSymbolsProvider
 	linker := b.srv.Linking().Linker
+	referenceDescriptions := b.srv.Linking().ReferenceDescriptionsProvider
 	var phase2 sync.WaitGroup
 	for _, doc := range docs {
 		phase2.Go(func() {
@@ -131,6 +132,15 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 				linker.Link(ctx, doc)
 				doc.State = doc.State.With(core.DocStateLinked)
 				b.notifyListeners(ctx, core.DocStateLinked, doc)
+			}
+			if ctx.Err() != nil {
+				return
+			}
+			// STEP 2.4: Provide reference descriptions for the document.
+			if !doc.State.Has(core.DocStateReferences) {
+				referenceDescriptions.Provide(ctx, doc)
+				doc.State = doc.State.With(core.DocStateReferences)
+				b.notifyListeners(ctx, core.DocStateReferences, doc)
 			}
 		})
 	}

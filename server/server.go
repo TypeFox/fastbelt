@@ -33,6 +33,7 @@ func NewDefaultLanguageServer(srv ServerSrvCont) *DefaultLanguageServer {
 func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.ParamInitialize) (*lsp.InitializeResult, error) {
 	s.srv.Server().WorkspaceFolders = params.WorkspaceFolders
 	definitionProvider := s.srv.Server().DefinitionProvider
+	referencesProvider := s.srv.Server().ReferencesProvider
 	return &lsp.InitializeResult{
 		Capabilities: lsp.ServerCapabilities{
 			TextDocumentSync: lsp.Incremental,
@@ -41,6 +42,9 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			},
 			DefinitionProvider: &lsp.Or_ServerCapabilities_definitionProvider{
 				Value: definitionProvider != nil,
+			},
+			ReferencesProvider: &lsp.Or_ServerCapabilities_referencesProvider{
+				Value: referencesProvider != nil,
 			},
 		},
 	}, nil
@@ -263,6 +267,10 @@ func (s *DefaultLanguageServer) RangesFormatting(ctx context.Context, params *ls
 	return nil, nil
 }
 func (s *DefaultLanguageServer) References(ctx context.Context, params *lsp.ReferenceParams) ([]lsp.Location, error) {
+	referencesProvider := s.srv.Server().ReferencesProvider
+	if referencesProvider != nil {
+		return referencesProvider.HandleReferencesRequest(ctx, params)
+	}
 	return nil, nil
 }
 func (s *DefaultLanguageServer) Rename(ctx context.Context, params *lsp.RenameParams) (*lsp.WorkspaceEdit, error) {

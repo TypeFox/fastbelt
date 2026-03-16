@@ -20,19 +20,20 @@ import (
 // The document struct should never be copied after creation.
 type Document struct {
 	sync.RWMutex
-	URI             URI
-	State           DocumentState
-	Root            AstNode
-	Tokens          TokenSlice
-	LocalSymbols    LocalSymbols
-	ExportedSymbols []*AstNodeDescription
-	ImportedSymbols SymbolList
-	ParserErrors    []*ParserError
-	LexerErrors     []*LexerError
-	References      []UntypedReference
-	TextDoc         textdoc.Handle
-	Diagnostics     []*Diagnostic
-	Data            map[any]any
+	URI                   URI
+	State                 DocumentState
+	Root                  AstNode
+	Tokens                TokenSlice
+	LocalSymbols          LocalSymbols
+	ExportedSymbols       []*AstNodeDescription
+	ImportedSymbols       SymbolList
+	ParserErrors          []*ParserError
+	LexerErrors           []*LexerError
+	References            []UntypedReference
+	ReferenceDescriptions ReferenceDescriptions
+	TextDoc               textdoc.Handle
+	Diagnostics           []*Diagnostic
+	Data                  map[any]any
 }
 
 func NewDocument(textDoc textdoc.Handle) *Document {
@@ -72,7 +73,8 @@ const (
 	DocStateImportedSymbols                           // 0x0004
 	DocStateLocalSymbols                              // 0x0008
 	DocStateLinked                                    // 0x0010
-	DocStateValidated                                 // 0x0020
+	DocStateReferences                                // 0x0020
+	DocStateValidated                                 // 0x0040
 )
 
 func (s DocumentState) String() string {

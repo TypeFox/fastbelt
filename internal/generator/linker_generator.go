@@ -96,7 +96,7 @@ func generateScopeProvider(context *LinkerGeneratorContext) generator.Node {
 
 	for _, field := range context.fields {
 		node.AppendLine("func (s *Default", context.grammar.Name(), "ScopeProvider) Scope", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) core.Scope {")
-		node.AppendLine("	return linking.DefaultScopeOfType[", field.target, "](reference.Owner)")
+		node.AppendLine("	return linking.DefaultScopeOfType[", field.target, "](reference.Owner())")
 		node.AppendLine("}").AppendLine()
 	}
 	return node
@@ -126,7 +126,7 @@ func generateLinker(context *LinkerGeneratorContext) generator.Node {
 	for _, field := range context.fields {
 		node.AppendLine("func (l *Default", context.grammar.Name(), "ReferenceLinker) Link", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) (*core.AstNodeDescription, *core.ReferenceError) {")
 		node.AppendLine("    scope := l.srv.", context.grammar.Name(), "Linking().ScopeProvider.Scope", field.typeName, field.name, "(ctx, reference)")
-		node.AppendLine("    return core.DefaultLink(scope, reference.Text)")
+		node.AppendLine("    return core.DefaultLink(scope, reference.Text())")
 		node.AppendLine("}").AppendLine()
 	}
 	return node
