@@ -21,14 +21,14 @@ func NewDefaultReferencesProvider(srv ServerSrvCont) ReferencesProvider {
 
 func (rp *DefaultReferencesProvider) HandleReferencesRequest(ctx context.Context, params *lsp.ReferenceParams) ([]lsp.Location, error) {
 	uri := core.ParseURI(string(params.TextDocument.URI))
-	doc := rp.srv.Workspace().DocumentManager.Get(uri)
-	if doc == nil {
+	targetDoc := rp.srv.Workspace().DocumentManager.Get(uri)
+	if targetDoc == nil {
 		return nil, nil // Document not found
 	}
-	doc.RLock()
-	defer doc.RUnlock()
-	offset := doc.TextDoc.OffsetAt(params.Position)
-	tokens := doc.Tokens
+	targetDoc.RLock()
+	defer targetDoc.RUnlock()
+	offset := targetDoc.TextDoc.OffsetAt(params.Position)
+	tokens := targetDoc.Tokens
 	// This token represents the name of the symbol at the given position
 	sourceToken := tokens.SearchOffset(offset)
 	if sourceToken == nil {

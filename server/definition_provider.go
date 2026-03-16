@@ -68,17 +68,17 @@ func (dp *DefaultDefinitionProvider) fromReference(ref core.UntypedReference) []
 }
 
 func (dp *DefaultDefinitionProvider) fromName(token *core.Token) []lsp.Location {
-	owner := token.Element
-	if owner == nil {
+	target := token.Element
+	if target == nil {
 		return nil
 	}
 	namer := dp.srv.Linking().Namer
-	_, nameToken := namer.Name(owner)
+	_, nameToken := namer.Name(target)
 	if nameToken == nil || nameToken != token {
 		return nil // The token at the position is not the name token
 	}
 	link := lsp.Location{
-		URI:   owner.Document().URI.DocumentURI(),
+		URI:   target.Document().URI.DocumentURI(),
 		Range: nameToken.Segment.Range.LspRange(),
 	}
 	return []lsp.Location{link}
