@@ -209,6 +209,9 @@ func (b *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
 		}
 		doc.References = []core.UntypedReference{}
 	}
+	if !state.Has(core.DocStateReferences) {
+		doc.ReferenceDescriptions = nil
+	}
 	if !state.Has(core.DocStateValidated) {
 		doc.Diagnostics = []*core.Diagnostic{}
 	}
