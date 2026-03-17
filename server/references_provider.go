@@ -29,33 +29,30 @@ func (rp *DefaultReferencesProvider) HandleReferencesRequest(ctx context.Context
 	defer targetDoc.RUnlock()
 	offset := targetDoc.TextDoc.OffsetAt(params.Position)
 	tokens := targetDoc.Tokens
-	// This token represents the name of the symbol at the given position
 	sourceToken := tokens.SearchOffset(offset)
 	if sourceToken == nil {
 		return nil, nil // No token at the given position
 	}
-	// We now need to figure out whether this token is really the name token
-	// It could also be just a random keyword or something else
-	owner := sourceToken.Element
-	if owner == nil {
+	namer := rp.srv.Linking().Namer
+	target := rp.findSourceAstNode(ctx, sourceToken)
+	if target == nil {
 		return nil, nil // No AST node associated with the token
 	}
-	namer := rp.srv.Linking().Namer
-	_, nameToken := namer.Name(owner)
-	if nameToken == nil || nameToken != sourceToken {
-		return nil, nil // The token at the position is not the name token
+	_, nameToken := namer.Name(target)
+	if nameToken == nil {
+		return nil, nil // No name token for the target node
 	}
 	locations := []lsp.Location{
 		// Include the definition location itself
 		{
-			URI:   owner.Document().URI.DocumentURI(),
+			URI:   target.Document().URI.DocumentURI(),
 			Range: nameToken.Segment.Range.LspRange(),
 		},
 	}
 	documentManager := rp.srv.Workspace().DocumentManager
 	// Iterate through all documents and collect references to the symbol
 	for doc := range documentManager.All() {
-		refDescriptions := doc.ReferenceDescriptions.ForTarget(owner)
+		refDescriptions := doc.ReferenceDescriptions.ForTarget(target)
 		for refDesc := range refDescriptions {
 			location := lsp.Location{
 				URI:   refDesc.SourceURI().DocumentURI(),
@@ -65,4 +62,22 @@ func (rp *DefaultReferencesProvider) HandleReferencesRequest(ctx context.Context
 		}
 	}
 	return locations, nil
+}
+
+func (rp *DefaultReferencesProvider) findSourceAstNode(ctx context.Context, token *core.Token) core.AstNode {
+	ref := core.ReferenceOfToken(token)
+	if ref != nil {
+		return ref.RefNode(ctx)
+	} else {
+		node := token.Element
+		if node == nil {
+			return nil
+		}
+		namer := rp.srv.Linking().Namer
+		_, nameToken := namer.Name(node)
+		if nameToken == nil || nameToken != token {
+			return nil // The token at the position is not the name token
+		}
+		return node
+	}
 }

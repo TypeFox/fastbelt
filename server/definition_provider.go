@@ -38,7 +38,6 @@ func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context
 
 	offset := doc.TextDoc.OffsetAt(params.Position)
 	tokens := doc.Tokens
-	// This token represents a reference to a symbol
 	sourceToken := tokens.SearchOffset(offset)
 	if sourceToken == nil {
 		return nil, nil // No token at the given position
