@@ -95,9 +95,8 @@ func (r *Reference[T]) Ref(ctx context.Context) T {
 	var zero T
 	if r == nil {
 		return zero
-	} else if !r.resolved.Load() {
-		r.Resolve(ctx)
 	}
+	r.Resolve(ctx)
 	return r.ref
 }
 
@@ -116,6 +115,15 @@ func (r *Reference[T]) Segment() *TextSegment {
 }
 
 func (r *Reference[T]) Resolve(ctx context.Context) {
+	// Fast path: check if already resolved without locking
+	if r == nil || r.resolved.Load() {
+		return
+	}
+	// Slow path (outlined so that the fast path can be inlined)
+	r.resolveSlow(ctx)
+}
+
+func (r *Reference[T]) resolveSlow(ctx context.Context) {
 	// We can use the context to detect cyclic reference resolution attempts
 	// We are allowed to do this outside of the mutex lock because context is immutable
 	if ctx.Value(r) != nil {
@@ -124,9 +132,6 @@ func (r *Reference[T]) Resolve(ctx context.Context) {
 		// Attempting to lock it again would cause a deadlock anyway
 		r.err = NewReferenceError("Cyclic reference resolution detected")
 		// Return directly, do not set the resolved flag
-		return
-	}
-	if r == nil || r.resolved.Load() {
 		return
 	}
 	r.mu.Lock()
@@ -239,10 +244,16 @@ type referenceDescriptions struct {
 }
 
 func (d *referenceDescriptions) All() iter.Seq[*ReferenceDescription] {
+	if d == nil {
+		return extiter.Empty[*ReferenceDescription]()
+	}
 	return d.descriptions.Values()
 }
 
 func (d *referenceDescriptions) ForTarget(target AstNode) iter.Seq[*ReferenceDescription] {
+	if d == nil {
+		return extiter.Empty[*ReferenceDescription]()
+	}
 	return slices.Values(d.descriptions.Get(target))
 }
 
