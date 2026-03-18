@@ -29,8 +29,6 @@ func (rp *DefaultReferencesProvider) HandleReferencesRequest(ctx context.Context
 	if targetDoc == nil {
 		return nil, nil // Document not found
 	}
-	targetDoc.RLock()
-	defer targetDoc.RUnlock()
 	offset := targetDoc.TextDoc.OffsetAt(params.Position)
 	tokens := targetDoc.Tokens
 	sourceToken := tokens.SearchOffset(offset)

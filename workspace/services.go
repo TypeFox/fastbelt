@@ -35,9 +35,10 @@ type WorkspaceSrv struct {
 	LanguageID string
 	// FileExtensions contains the file extensions to include, with leading dot
 	// (e.g. []string{".statemachine"}). It must be set by adopters.
-	FileExtensions  []string
+	FileExtensions    []string
 	DocumentManager   DocumentManager
 	DocumentUpdater   DocumentUpdater
+	Lock              WorkspaceLock
 	Builder           Builder
 	DocumentParser    DocumentParser
 	DocumentValidator DocumentValidator
@@ -54,6 +55,9 @@ func CreateDefaultServices(c WorkspaceSrvCont) {
 	}
 	if s.DocumentUpdater == nil {
 		s.DocumentUpdater = NewDefaultDocumentUpdater(c)
+	}
+	if s.Lock == nil {
+		s.Lock = NewDefaultWorkspaceLock()
 	}
 	if s.Builder == nil {
 		s.Builder = NewDefaultBuilder(c)

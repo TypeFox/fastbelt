@@ -8,7 +8,6 @@ import (
 	"context"
 	"log"
 	"slices"
-	"sync"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/textdoc"
@@ -30,9 +29,7 @@ type DocumentUpdater interface {
 
 // DefaultDocumentUpdater is the default implementation of DocumentUpdater.
 type DefaultDocumentUpdater struct {
-	srv      WorkspaceSrvCont
-	mu       sync.Mutex
-	cancelFn context.CancelFunc
+	srv WorkspaceSrvCont
 }
 
 // NewDefaultDocumentUpdater creates a new default document updater.
@@ -43,45 +40,34 @@ func NewDefaultDocumentUpdater(srv WorkspaceSrvCont) DocumentUpdater {
 // Update processes document changes and triggers a new build.
 func (u *DefaultDocumentUpdater) Update(ctx context.Context, changed []textdoc.Handle, deleted []core.URI) {
 	docManager := u.srv.Workspace().DocumentManager
+	lock := u.srv.Workspace().Lock
 
-	for _, handle := range changed {
-		doc := core.NewDocument(handle)
-		docManager.Set(doc)
-	}
-	for _, uri := range deleted {
-		docManager.Delete(uri)
-	}
-
-	// Cancel any in-progress build and create a new cancellable context.
-	u.mu.Lock()
-	if u.cancelFn != nil {
-		u.cancelFn()
-	}
-	// Use a detached context: the incoming ctx is request-scoped and will be
-	// cancelled by jsonrpc2 as soon as the notification handler returns.
-	buildCtx, cancel := context.WithCancel(context.Background())
-	u.cancelFn = cancel
-	u.mu.Unlock()
-
-	builder := u.srv.Workspace().Builder
+	// Write cancels any previous pending or in-progress build and issues a
+	// fresh context. The outer ctx is from jsonrpc2 and has a different lifetime than the build.
 	go func() {
-		if buildCtx.Err() != nil {
-			return
-		}
-
-		// TODO: Select which documents to include in the build; for now, rebuild all.
-		docs := slices.Collect(docManager.All())
-
-		// Reset documents so linking and validation are re-executed.
-		keepState := core.DocStateParsed | core.DocStateExportedSymbols | core.DocStateLocalSymbols
-		for _, doc := range docs {
-			builder.Reset(doc, keepState)
-		}
-
-		if err := builder.Build(buildCtx, docs); err != nil {
-			if buildCtx.Err() == nil {
-				log.Printf("build failed: %v", err)
+		lock.Write(context.Background(), func(ctx context.Context, downgrade func()) {
+			for _, handle := range changed {
+				doc := core.NewDocument(handle)
+				docManager.Set(doc)
 			}
-		}
+			for _, uri := range deleted {
+				docManager.Delete(uri)
+			}
+
+			builder := u.srv.Workspace().Builder
+			docs := slices.Collect(docManager.All())
+
+			// Reset documents so linking and validation are re-executed.
+			keepState := core.DocStateParsed | core.DocStateExportedSymbols | core.DocStateLocalSymbols
+			for _, doc := range docs {
+				builder.Reset(doc, keepState)
+			}
+
+			if err := builder.Build(ctx, docs, downgrade); err != nil {
+				if ctx.Err() == nil {
+					log.Printf("build failed: %v", err)
+				}
+			}
+		})
 	}()
 }

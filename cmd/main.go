@@ -61,7 +61,7 @@ func runCmd() error {
 
 	document := core.NewDocument(file)
 	srv.Workspace().DocumentManager.Set(document)
-	if err := srv.Workspace().Builder.Build(context.Background(), []*core.Document{document}); err != nil {
+	if err := srv.Workspace().Builder.Build(context.Background(), []*core.Document{document}, func() {}); err != nil {
 		return err
 	}
 

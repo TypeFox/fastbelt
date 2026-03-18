@@ -5,6 +5,8 @@
 package server
 
 import (
+	"log/slog"
+
 	"golang.org/x/exp/jsonrpc2"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/workspace"
@@ -29,6 +31,7 @@ func (b *ServerSrvContBlock) Server() *ServerSrv {
 
 // ServerSrv contains the LSP-related services for the server package.
 type ServerSrv struct {
+	SlogHandler        slog.Handler
 	LanguageServer     LanguageServer
 	DocumentSyncher    DocumentSyncher
 	DefinitionProvider DefinitionProvider
@@ -45,6 +48,9 @@ type ServerSrv struct {
 // If the services are already set, they are not overwritten.
 func CreateDefaultServices(c ServerSrvCont) {
 	s := c.Server()
+	if s.SlogHandler == nil {
+		s.SlogHandler = NewSlogHandler(c)
+	}
 	if s.LanguageServer == nil {
 		s.LanguageServer = NewDefaultLanguageServer(c)
 	}

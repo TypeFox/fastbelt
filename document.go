@@ -19,7 +19,6 @@ import (
 // Access to the fields of Document should be synchronized using the embedded [sync.RWMutex].
 // The document struct should never be copied after creation.
 type Document struct {
-	sync.RWMutex
 	URI                   URI
 	State                 DocumentState
 	Root                  AstNode
@@ -33,20 +32,23 @@ type Document struct {
 	ReferenceDescriptions ReferenceDescriptions
 	TextDoc               textdoc.Handle
 	Diagnostics           []*Diagnostic
-	Data                  map[any]any
+	// Data can be used to store arbitrary additional information related to the document.
+	// This is not used by the framework itself, but adopters may find it useful.
+	//
+	// The map is concurrent to allow storing data from different goroutines without additional synchronization.
+	Data sync.Map
 }
 
 func NewDocument(textDoc textdoc.Handle) *Document {
 	uri := ParseURI(string(textDoc.URI()))
 	return &Document{
-		RWMutex:         sync.RWMutex{},
 		URI:             uri,
 		State:           0,
 		TextDoc:         textDoc,
 		Root:            nil,
 		LocalSymbols:    nil,
 		ExportedSymbols: nil,
-		Data:            map[any]any{},
+		Data:            sync.Map{},
 		Tokens:          TokenSlice{},
 		ParserErrors:    []*ParserError{},
 		LexerErrors:     []*LexerError{},

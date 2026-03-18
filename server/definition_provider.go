@@ -33,9 +33,6 @@ func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context
 	if doc == nil {
 		return nil, nil // Document not found
 	}
-	doc.RLock()
-	defer doc.RUnlock()
-
 	offset := doc.TextDoc.OffsetAt(params.Position)
 	tokens := doc.Tokens
 	sourceToken := tokens.SearchOffset(offset)

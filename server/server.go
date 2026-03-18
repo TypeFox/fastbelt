@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"log/slog"
 	"os"
 
 	"golang.org/x/exp/jsonrpc2"
@@ -31,6 +32,12 @@ func NewDefaultLanguageServer(srv ServerSrvCont) *DefaultLanguageServer {
 }
 
 func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.ParamInitialize) (*lsp.InitializeResult, error) {
+	slogHandler := s.srv.Server().SlogHandler
+	if slogHandler != nil {
+		// Set the default logger to use the configured slog handler
+		// It will send logs to the client via the LSP connection
+		slog.SetDefault(slog.New(slogHandler))
+	}
 	s.srv.Server().WorkspaceFolders = params.WorkspaceFolders
 	definitionProvider := s.srv.Server().DefinitionProvider
 	referencesProvider := s.srv.Server().ReferencesProvider
@@ -153,10 +160,17 @@ func (s *DefaultLanguageServer) Declaration(ctx context.Context, params *lsp.Dec
 }
 func (s *DefaultLanguageServer) Definition(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.Location, error) {
 	definitionProvider := s.srv.Server().DefinitionProvider
-	if definitionProvider != nil {
-		return definitionProvider.HandleDefinitionRequest(ctx, params)
+	if definitionProvider == nil {
+		return nil, nil
 	}
-	return nil, nil
+	var result []lsp.Location
+	var providerErr error
+	if err := s.srv.Workspace().Lock.Read(ctx, func() {
+		result, providerErr = definitionProvider.HandleDefinitionRequest(ctx, params)
+	}); err != nil {
+		return nil, err
+	}
+	return result, providerErr
 }
 func (s *DefaultLanguageServer) Diagnostic(ctx context.Context, params *lsp.DocumentDiagnosticParams) (*lsp.DocumentDiagnosticReport, error) {
 	return nil, nil
@@ -268,10 +282,17 @@ func (s *DefaultLanguageServer) RangesFormatting(ctx context.Context, params *ls
 }
 func (s *DefaultLanguageServer) References(ctx context.Context, params *lsp.ReferenceParams) ([]lsp.Location, error) {
 	referencesProvider := s.srv.Server().ReferencesProvider
-	if referencesProvider != nil {
-		return referencesProvider.HandleReferencesRequest(ctx, params)
+	if referencesProvider == nil {
+		return nil, nil
 	}
-	return nil, nil
+	var result []lsp.Location
+	var providerErr error
+	if err := s.srv.Workspace().Lock.Read(ctx, func() {
+		result, providerErr = referencesProvider.HandleReferencesRequest(ctx, params)
+	}); err != nil {
+		return nil, err
+	}
+	return result, providerErr
 }
 func (s *DefaultLanguageServer) Rename(ctx context.Context, params *lsp.RenameParams) (*lsp.WorkspaceEdit, error) {
 	return nil, nil

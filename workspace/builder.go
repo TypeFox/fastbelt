@@ -16,8 +16,11 @@ import (
 // Builder is the interface for building workspace-related structures.
 type Builder interface {
 	// Build processes the provided documents through all build phases (parse, compute
-	// symbol table, link). It should regularly check ctx for cancellation between phases.
-	Build(ctx context.Context, docs []*core.Document) error
+	// symbol table, link, validate). It should regularly check ctx for cancellation
+	// between phases. downgrade must be called by the implementation once phases 1 and 2
+	// (the write phase) are complete; this transitions the workspace lock to readable so
+	// that read requests can proceed while phase 3 (validation) runs.
+	Build(ctx context.Context, docs []*core.Document, downgrade func()) error
 	// Reset selectively clears build results of a document. The state parameter is a
 	// bitmask of states to keep; for every bit that is not set, the corresponding document
 	// fields are reset to their initial values and the bit is cleared from doc.State.
@@ -43,7 +46,6 @@ type buildStepEntry struct {
 // DefaultBuilder is the default implementation of Builder.
 type DefaultBuilder struct {
 	srv         WorkspaceSrvCont
-	buildMu     sync.Mutex
 	listeners   []buildStepEntry
 	listenersMu sync.RWMutex
 }
@@ -56,17 +58,13 @@ func NewDefaultBuilder(srv WorkspaceSrvCont) Builder {
 }
 
 // Build processes the provided documents through all build phases.
-func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error {
-	b.buildMu.Lock()
-	defer b.buildMu.Unlock()
-
+func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downgrade func()) error {
 	// PHASE 1: Lock each document, parse, and compute exports (parallel per document).
 	parser := b.srv.Workspace().DocumentParser
 	exportedSymbols := b.srv.Linking().ExportedSymbolsProvider
 	var phase1 sync.WaitGroup
 	for _, doc := range docs {
 		phase1.Go(func() {
-			doc.Lock()
 			if ctx.Err() != nil {
 				return
 			}
@@ -90,9 +88,6 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	phase1.Wait()
 
 	if err := ctx.Err(); err != nil {
-		for _, doc := range docs {
-			doc.Unlock()
-		}
 		return err
 	}
 
@@ -146,13 +141,13 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	}
 	phase2.Wait()
 
-	for _, doc := range docs {
-		doc.Unlock()
-	}
-
 	if err := ctx.Err(); err != nil {
 		return err
 	}
+
+	// Transition from write phase to readable: releases the exclusive lock so
+	// read requests can proceed while validation (phase 3) runs concurrently.
+	downgrade()
 
 	// PHASE 3: Run custom validations (parallel per document).
 	validator := b.srv.Workspace().DocumentValidator
@@ -162,20 +157,14 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 			if ctx.Err() != nil {
 				return
 			}
-			doc.RLock()
 			if !doc.State.Has(core.DocStateValidated) {
 				diagnostics := validator.Validate(ctx, doc, "on-save")
-				doc.RUnlock()
 				if ctx.Err() != nil {
 					return
 				}
-				doc.Lock()
 				doc.Diagnostics = diagnostics
 				doc.State = doc.State.With(core.DocStateValidated)
-				doc.Unlock()
 				b.notifyListeners(ctx, core.DocStateValidated, doc)
-			} else {
-				doc.RUnlock()
 			}
 		})
 	}
@@ -186,8 +175,6 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 
 // Reset selectively clears build results of a document. See [Builder.Reset].
 func (b *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
-	doc.Lock()
-	defer doc.Unlock()
 	if !state.Has(core.DocStateParsed) {
 		doc.Root = nil
 		doc.Tokens = core.TokenSlice{}
@@ -215,6 +202,7 @@ func (b *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
 	if !state.Has(core.DocStateValidated) {
 		doc.Diagnostics = []*core.Diagnostic{}
 	}
+	doc.Data.Clear()
 	doc.State = doc.State & state
 }
 

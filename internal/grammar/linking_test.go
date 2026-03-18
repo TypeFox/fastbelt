@@ -38,7 +38,7 @@ hidden token WS: /[ \n\r\t]+/;
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	err = builder.Build(ctx, []*core.Document{doc})
+	err = builder.Build(ctx, []*core.Document{doc}, func() {})
 	require.NoError(t, err)
 
 	assert.True(t, doc.State.Has(core.DocStateLinked), "document should be in Linked state")
@@ -99,7 +99,7 @@ hidden token WS: /[ \n\r\t]+/;
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	err = builder.Build(ctx, []*core.Document{doc})
+	err = builder.Build(ctx, []*core.Document{doc}, func() {})
 	require.NoError(t, err)
 
 	grammar, ok := doc.Root.(Grammar)
@@ -176,7 +176,7 @@ hidden token WS: /[ \n\r\t]+/;
 
 	ctx := context.Background()
 	docs := []*core.Document{typesDoc, rulesDoc}
-	err = builder.Build(ctx, docs)
+	err = builder.Build(ctx, docs, func() {})
 	require.NoError(t, err)
 
 	assert.True(t, typesDoc.State.Has(core.DocStateLinked))
