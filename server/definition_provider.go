@@ -33,25 +33,52 @@ func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context
 	if doc == nil {
 		return nil, nil // Document not found
 	}
-	offset := doc.TextDoc.OffsetAt(params.Position)
 	doc.RLock()
 	defer doc.RUnlock()
+
+	offset := doc.TextDoc.OffsetAt(params.Position)
 	tokens := doc.Tokens
 	sourceToken := tokens.SearchOffset(offset)
 	if sourceToken == nil {
 		return nil, nil // No token at the given position
 	}
 	ref := core.ReferenceOfToken(sourceToken)
-	if ref == nil {
-		return nil, nil // No reference for the token
+	if ref != nil {
+		// The token at the position is a reference
+		// Try to resolve it and return the location of the target symbol
+		return dp.fromReference(ref), nil
+	} else {
+		// The token might still be the name of a symbol
+		// In this case, we want to return the location of the symbol itself
+		return dp.fromName(sourceToken), nil
 	}
+}
+
+func (dp *DefaultDefinitionProvider) fromReference(ref core.UntypedReference) []lsp.Location {
 	target := ref.Description()
 	if target == nil || target.NameSegment == nil {
-		return nil, nil // No target description
+		return nil // No target description
 	}
 	link := lsp.Location{
 		URI:   target.URI.DocumentURI(),
 		Range: target.NameSegment.Range.LspRange(),
 	}
-	return []lsp.Location{link}, nil
+	return []lsp.Location{link}
+}
+
+func (dp *DefaultDefinitionProvider) fromName(token *core.Token) []lsp.Location {
+	target := token.Element
+	if target == nil {
+		return nil
+	}
+	namer := dp.srv.Linking().Namer
+	_, nameToken := namer.Name(target)
+	if nameToken == nil || nameToken != token {
+		return nil // The token at the position is not the name token
+	}
+	link := lsp.Location{
+		URI:   target.Document().URI.DocumentURI(),
+		Range: nameToken.Segment.Range.LspRange(),
+	}
+	return []lsp.Location{link}
 }

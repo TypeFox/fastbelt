@@ -21,7 +21,7 @@ func newScopeProviderImpl(srv FastbeltLinkingSrvCont) *scopeProviderImpl {
 }
 
 func (s *scopeProviderImpl) ScopeActionProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope {
-	if action, ok := reference.Owner.(Action); ok && action.Type() != nil {
+	if action, ok := reference.Owner().(Action); ok && action.Type() != nil {
 		targetType := action.Type().Ref(ctx)
 		if targetType != nil {
 			descriptions := generateInterfaceFieldsDescriptions(ctx, targetType, map[Interface]bool{})
@@ -32,7 +32,7 @@ func (s *scopeProviderImpl) ScopeActionProperty(ctx context.Context, reference *
 }
 
 func (s *scopeProviderImpl) ScopeAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope {
-	if assignment, ok := reference.Owner.(Assignment); ok {
+	if assignment, ok := reference.Owner().(Assignment); ok {
 		iface := getCurrentType(ctx, assignment)
 		if iface == nil {
 			return nil
