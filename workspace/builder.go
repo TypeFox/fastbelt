@@ -35,7 +35,6 @@ type Builder interface {
 
 // BuildStepListener is called right after a document has completed a build step.
 // If the listener returns an error, it will be logged but will not prevent other listeners from being called.
-// The listener may be called while the document's write lock is held; it must not acquire any document locks.
 type BuildStepListener func(ctx context.Context, doc *core.Document) error
 
 type buildStepEntry struct {
@@ -59,7 +58,7 @@ func NewDefaultBuilder(srv WorkspaceSrvCont) Builder {
 
 // Build processes the provided documents through all build phases.
 func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downgrade func()) error {
-	// PHASE 1: Lock each document, parse, and compute exports (parallel per document).
+	// PHASE 1: Parse, and compute exports (parallel per document).
 	parser := b.srv.Workspace().DocumentParser
 	exportedSymbols := b.srv.Linking().ExportedSymbolsProvider
 	var phase1 sync.WaitGroup
@@ -202,7 +201,6 @@ func (b *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
 	if !state.Has(core.DocStateValidated) {
 		doc.Diagnostics = []*core.Diagnostic{}
 	}
-	doc.Data.Clear()
 	doc.State = doc.State & state
 }
 

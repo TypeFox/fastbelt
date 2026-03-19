@@ -20,7 +20,7 @@ const longWait = 2 * time.Second
 func TestReadRunsDoAndReturnsNil(t *testing.T) {
 	lock := NewDefaultWorkspaceLock()
 	called := false
-	err := lock.Read(context.Background(), func() { called = true })
+	err := lock.Read(context.Background(), func(ctx context.Context) { called = true })
 	assert.NoError(t, err)
 	assert.True(t, called)
 }
@@ -36,7 +36,7 @@ func TestConcurrentReads(t *testing.T) {
 	var wg sync.WaitGroup
 	for range n {
 		wg.Go(func() {
-			err := lock.Read(context.Background(), func() {
+			err := lock.Read(context.Background(), func(ctx context.Context) {
 				inside <- struct{}{}
 				// Wait for the test to signal release before exiting
 				// so all readers are inside simultaneously.
@@ -78,7 +78,7 @@ func TestReadContextCancelledBeforeAcquire(t *testing.T) {
 	cancel() // already cancelled
 
 	called := false
-	err := lock.Read(ctx, func() { called = true })
+	err := lock.Read(ctx, func(ctx context.Context) { called = true })
 
 	assert.ErrorIs(t, err, context.Canceled)
 	assert.False(t, called)
@@ -105,7 +105,7 @@ func TestReadContextCancelledWhileWaiting(t *testing.T) {
 	readErr := make(chan error, 1)
 	called := false
 	go func() {
-		readErr <- lock.Read(ctx, func() { called = true })
+		readErr <- lock.Read(ctx, func(ctx context.Context) { called = true })
 	}()
 
 	time.Sleep(shortWait)
@@ -145,7 +145,7 @@ func TestWriteBlocksReadsUntilDowngrade(t *testing.T) {
 	// A read started during the write phase must block.
 	readReached := make(chan struct{})
 	go func() {
-		err := lock.Read(context.Background(), func() { close(readReached) })
+		err := lock.Read(context.Background(), func(ctx context.Context) { close(readReached) })
 		assert.NoError(t, err)
 	}()
 
@@ -187,7 +187,7 @@ func TestDowngradeAllowsReadsWhileDoStillRuns(t *testing.T) {
 	}()
 
 	// The read should proceed immediately (downgrade was called synchronously above).
-	err := lock.Read(context.Background(), func() {
+	err := lock.Read(context.Background(), func(ctx context.Context) {
 		close(readProceedDone)
 	})
 	assert.NoError(t, err)
@@ -260,7 +260,7 @@ func TestWriteWaitsForActiveReaders(t *testing.T) {
 	readerInside := make(chan struct{})
 	releaseReader := make(chan struct{})
 	go func() {
-		err := lock.Read(context.Background(), func() {
+		err := lock.Read(context.Background(), func(ctx context.Context) {
 			close(readerInside)
 			<-releaseReader
 		})
@@ -311,7 +311,7 @@ func TestNewWriteCancelsPendingWrite(t *testing.T) {
 	readerAcquired := make(chan struct{})
 	releaseReader := make(chan struct{})
 	go func() {
-		err := lock.Read(context.Background(), func() {
+		err := lock.Read(context.Background(), func(ctx context.Context) {
 			close(readerAcquired)
 			<-releaseReader
 		})
@@ -395,7 +395,7 @@ func TestDowngradeIsIdempotent(t *testing.T) {
 	// Lock should be fully released; a subsequent read must succeed.
 	done := make(chan struct{})
 	go func() {
-		err := lock.Read(context.Background(), func() { close(done) })
+		err := lock.Read(context.Background(), func(ctx context.Context) { close(done) })
 		assert.NoError(t, err)
 	}()
 	select {
@@ -428,7 +428,7 @@ func TestWriteHasPriorityOverQueuedRead(t *testing.T) {
 	// Read: queues up while Write 1 holds the lock.
 	readDone := make(chan struct{})
 	go func() {
-		err := lock.Read(context.Background(), func() { close(readDone) })
+		err := lock.Read(context.Background(), func(ctx context.Context) { close(readDone) })
 		assert.NoError(t, err)
 	}()
 	time.Sleep(shortWait) // let the Read block on readyCh.
@@ -486,7 +486,7 @@ func TestSafetyNetEnsuresDowngradeIsCalled(t *testing.T) {
 	// The lock must be fully released; a subsequent read must succeed.
 	done := make(chan struct{})
 	go func() {
-		err := lock.Read(context.Background(), func() { close(done) })
+		err := lock.Read(context.Background(), func(ctx context.Context) { close(done) })
 		assert.NoError(t, err)
 	}()
 	select {

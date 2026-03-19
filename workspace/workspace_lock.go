@@ -20,7 +20,7 @@ type WorkspaceLock interface {
 	// Read acquires a shared lock, calls do, then releases the lock.
 	// It blocks while a write is in progress or pending.
 	// Returns ctx.Err() if the context is cancelled while waiting.
-	Read(ctx context.Context, do func()) error
+	Read(ctx context.Context, do func(ctx context.Context)) error
 }
 
 // DefaultWorkspaceLock is the default implementation of WorkspaceLock.
@@ -111,7 +111,7 @@ func (l *DefaultWorkspaceLock) Write(ctx context.Context, do func(ctx context.Co
 	do(ctx, downgrade)
 }
 
-func (l *DefaultWorkspaceLock) Read(ctx context.Context, do func()) error {
+func (l *DefaultWorkspaceLock) Read(ctx context.Context, do func(ctx context.Context)) error {
 	for {
 		l.mu.Lock()
 		if !l.writeHeld && l.writeWaiters == 0 {
@@ -138,6 +138,6 @@ func (l *DefaultWorkspaceLock) Read(ctx context.Context, do func()) error {
 		l.mu.Unlock()
 	}()
 
-	do()
+	do(ctx)
 	return nil
 }

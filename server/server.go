@@ -165,7 +165,7 @@ func (s *DefaultLanguageServer) Definition(ctx context.Context, params *lsp.Defi
 	}
 	var result []lsp.Location
 	var providerErr error
-	if err := s.srv.Workspace().Lock.Read(ctx, func() {
+	if err := s.srv.Workspace().Lock.Read(ctx, func(ctx context.Context) {
 		result, providerErr = definitionProvider.HandleDefinitionRequest(ctx, params)
 	}); err != nil {
 		return nil, err
@@ -287,7 +287,7 @@ func (s *DefaultLanguageServer) References(ctx context.Context, params *lsp.Refe
 	}
 	var result []lsp.Location
 	var providerErr error
-	if err := s.srv.Workspace().Lock.Read(ctx, func() {
+	if err := s.srv.Workspace().Lock.Read(ctx, func(ctx context.Context) {
 		result, providerErr = referencesProvider.HandleReferencesRequest(ctx, params)
 	}); err != nil {
 		return nil, err

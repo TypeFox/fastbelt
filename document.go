@@ -34,6 +34,8 @@ type Document struct {
 	Diagnostics           []*Diagnostic
 	// Data can be used to store arbitrary additional information related to the document.
 	// This is not used by the framework itself, but adopters may find it useful.
+	// The document builder does not clear this data during the build process.
+	// It is the responsibility of the caller to manage it appropriately (e.g. clearing or updating it when the document changes).
 	//
 	// The map is concurrent to allow storing data from different goroutines without additional synchronization.
 	Data sync.Map
