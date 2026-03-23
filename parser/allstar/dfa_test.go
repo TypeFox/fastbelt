@@ -10,14 +10,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func makeDummyState(num int) *ATNState {
-	return &ATNState{StateNumber: num}
+func makeDummyState(num int) *RuntimeATNState {
+	return &RuntimeATNState{StateNumber: num}
 }
 
 func TestATNConfigSet_Add_Dedup(t *testing.T) {
 	s := NewATNConfigSet()
 	state := makeDummyState(5)
-	c := &ATNConfig{State: state, Alt: 0, Stack: []*ATNState{}}
+	c := &ATNConfig{State: state, Alt: 0, Stack: []*RuntimeATNState{}}
 	s.Add(c)
 	s.Add(c) // duplicate
 	assert.Equal(t, 1, s.Len())
@@ -26,15 +26,15 @@ func TestATNConfigSet_Add_Dedup(t *testing.T) {
 func TestATNConfigSet_Add_DifferentAlt(t *testing.T) {
 	s := NewATNConfigSet()
 	state := makeDummyState(5)
-	s.Add(&ATNConfig{State: state, Alt: 0, Stack: []*ATNState{}})
-	s.Add(&ATNConfig{State: state, Alt: 1, Stack: []*ATNState{}})
+	s.Add(&ATNConfig{State: state, Alt: 0, Stack: []*RuntimeATNState{}})
+	s.Add(&ATNConfig{State: state, Alt: 1, Stack: []*RuntimeATNState{}})
 	assert.Equal(t, 2, s.Len())
 }
 
 func TestATNConfigSet_Key_Consistency(t *testing.T) {
 	s := NewATNConfigSet()
 	state := makeDummyState(3)
-	s.Add(&ATNConfig{State: state, Alt: 0, Stack: []*ATNState{}})
+	s.Add(&ATNConfig{State: state, Alt: 0, Stack: []*RuntimeATNState{}})
 	key1 := s.Key()
 	key2 := s.Key()
 	assert.Equal(t, key1, key2)
@@ -42,22 +42,22 @@ func TestATNConfigSet_Key_Consistency(t *testing.T) {
 
 func TestATNConfigSet_Finalize(t *testing.T) {
 	s := NewATNConfigSet()
-	s.Add(&ATNConfig{State: makeDummyState(1), Alt: 0, Stack: []*ATNState{}})
+	s.Add(&ATNConfig{State: makeDummyState(1), Alt: 0, Stack: []*RuntimeATNState{}})
 	s.Finalize()
 	assert.Equal(t, 1, s.Len(), "Finalize should not change length")
 }
 
 func TestATNConfigSet_Alts(t *testing.T) {
 	s := NewATNConfigSet()
-	s.Add(&ATNConfig{State: makeDummyState(1), Alt: 2, Stack: []*ATNState{}})
-	s.Add(&ATNConfig{State: makeDummyState(2), Alt: 3, Stack: []*ATNState{}})
+	s.Add(&ATNConfig{State: makeDummyState(1), Alt: 2, Stack: []*RuntimeATNState{}})
+	s.Add(&ATNConfig{State: makeDummyState(2), Alt: 3, Stack: []*RuntimeATNState{}})
 	alts := s.Alts()
 	assert.Equal(t, []int{2, 3}, alts)
 }
 
 func TestATNConfigKey_WithAlt(t *testing.T) {
 	state := makeDummyState(7)
-	c := &ATNConfig{State: state, Alt: 2, Stack: []*ATNState{}}
+	c := &ATNConfig{State: state, Alt: 2, Stack: []*RuntimeATNState{}}
 	key := atnConfigKey(c, true)
 	assert.Contains(t, key, "a2")
 	assert.Contains(t, key, "s7")
@@ -65,7 +65,7 @@ func TestATNConfigKey_WithAlt(t *testing.T) {
 
 func TestATNConfigKey_WithoutAlt(t *testing.T) {
 	state := makeDummyState(7)
-	c := &ATNConfig{State: state, Alt: 2, Stack: []*ATNState{}}
+	c := &ATNConfig{State: state, Alt: 2, Stack: []*RuntimeATNState{}}
 	key := atnConfigKey(c, false)
 	assert.NotContains(t, key, "a2")
 	assert.Contains(t, key, "s7")
@@ -74,7 +74,7 @@ func TestATNConfigKey_WithoutAlt(t *testing.T) {
 func TestATNConfigKey_WithStack(t *testing.T) {
 	state := makeDummyState(3)
 	stackState := makeDummyState(9)
-	c := &ATNConfig{State: state, Alt: 0, Stack: []*ATNState{stackState}}
+	c := &ATNConfig{State: state, Alt: 0, Stack: []*RuntimeATNState{stackState}}
 	key := atnConfigKey(c, true)
 	assert.Contains(t, key, "s3")
 	assert.Contains(t, key, "9")

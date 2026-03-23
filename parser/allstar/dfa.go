@@ -14,7 +14,7 @@ type DFA struct {
 	Start         *DFAState
 	States        map[string]*DFAState
 	Decision      int
-	ATNStartState *ATNState
+	ATNStartState *RuntimeATNState
 }
 
 // DFAState represents a set of ATN configurations.
@@ -30,9 +30,9 @@ var DFAError = &DFAState{}
 
 // ATNConfig is one thread of the ATN simulation.
 type ATNConfig struct {
-	State *ATNState
+	State *RuntimeATNState
 	Alt   int
-	Stack []*ATNState
+	Stack []*RuntimeATNState
 }
 
 // ATNConfigSet holds a deduplicated set of ATN configurations.

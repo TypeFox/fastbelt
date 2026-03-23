@@ -27,25 +27,37 @@ type LLStarLookaheadOptions struct {
 	Logging AmbiguityReport
 }
 
-// LLStarLookahead is the main entry point. It holds the ATN and the DFA caches
-// produced during initialisation.
+// LLStarLookahead is the main entry point. It holds the RuntimeATN and the
+// DFA caches produced during initialisation.
 type LLStarLookahead struct {
-	atn     *ATN
+	atn     *RuntimeATN
 	dfas    []dfaCache
 	logging AmbiguityReport
 }
 
-// NewLLStarLookahead creates a new strategy, builds the ATN from rules, and
-// initialises the DFA cache array.
+// NewLLStarLookahead creates a new strategy, builds the ATN from rules, converts
+// it to the minimal RuntimeATN, and initialises the DFA cache array.
+// The build-time ATN is discarded after conversion.
 func NewLLStarLookahead(rules []*Rule, opts *LLStarLookaheadOptions) *LLStarLookahead {
+	rtn := BuildRuntimeATN(CreateATN(rules))
+	return newFromRuntime(rtn, opts)
+}
+
+// NewLLStarLookaheadFromRuntime creates a strategy from a pre-built RuntimeATN.
+// Use this with ATNs constructed directly from generated Go code to skip the
+// build-time grammar processing entirely.
+func NewLLStarLookaheadFromRuntime(rtn *RuntimeATN, opts *LLStarLookaheadOptions) *LLStarLookahead {
+	return newFromRuntime(rtn, opts)
+}
+
+func newFromRuntime(rtn *RuntimeATN, opts *LLStarLookaheadOptions) *LLStarLookahead {
 	logging := AmbiguityReport(func(msg string) { fmt.Println(msg) })
 	if opts != nil && opts.Logging != nil {
 		logging = opts.Logging
 	}
-	atn := CreateATN(rules)
 	return &LLStarLookahead{
-		atn:     atn,
-		dfas:    initDFACaches(atn),
+		atn:     rtn,
+		dfas:    initDFACaches(rtn),
 		logging: logging,
 	}
 }
@@ -161,13 +173,13 @@ func (s *LLStarLookahead) BuildLookaheadForOptional(
 // state. Returns (table, true) when the grammar is LL(1) at this point.
 // The algorithm inspects the immediate atom transitions reachable via epsilon
 // from each alternative.
-func buildLL1Table(decision *ATNState) (map[int]int, bool) {
+func buildLL1Table(decision *RuntimeATNState) (map[int]int, bool) {
 	table := map[int]int{}
 	for i, t := range decision.Transitions {
 		if !t.IsEpsilon() {
 			continue
 		}
-		tokens := firstTokens(t.Target(), 0)
+		tokens := firstTokens(t.GetTarget(), 0)
 		for _, tID := range tokens {
 			if _, conflict := table[tID]; conflict {
 				return nil, false
@@ -180,22 +192,22 @@ func buildLL1Table(decision *ATNState) (map[int]int, bool) {
 
 // firstTokens returns the set of token type IDs immediately reachable (via
 // epsilon) from state, limited to a small depth to avoid infinite loops.
-func firstTokens(state *ATNState, depth int) []int {
+func firstTokens(state *RuntimeATNState, depth int) []int {
 	if depth > 8 {
 		return nil
 	}
 	var result []int
 	for _, t := range state.Transitions {
 		switch at := t.(type) {
-		case *AtomTransition:
+		case *RuntimeAtomTransition:
 			result = append(result, at.TokenTypeID)
 			for cat := range at.CategoryMatches {
 				result = append(result, cat)
 			}
-		case *EpsilonTransition:
-			result = append(result, firstTokens(at.target, depth+1)...)
-		case *RuleTransition:
-			result = append(result, firstTokens(at.target, depth+1)...)
+		case *RuntimeEpsilonTransition:
+			result = append(result, firstTokens(at.Target, depth+1)...)
+		case *RuntimeRuleTransition:
+			result = append(result, firstTokens(at.Target, depth+1)...)
 		}
 	}
 	return result

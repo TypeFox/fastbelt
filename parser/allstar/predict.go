@@ -97,7 +97,7 @@ func newPredictError(path []int, prev *DFAState, actualTypeID int) error {
 	seen := map[int]bool{}
 	for _, c := range prev.Configs.Elements() {
 		for _, t := range c.State.Transitions {
-			at, ok := t.(*AtomTransition)
+			at, ok := t.(*RuntimeAtomTransition)
 			if !ok {
 				continue
 			}
@@ -115,7 +115,7 @@ func newPredictError(path []int, prev *DFAState, actualTypeID int) error {
 }
 
 // newDFACache creates a dfaCache backed by a mutex-protected map.
-func newDFACache(start *ATNState, decision int) dfaCache {
+func newDFACache(start *RuntimeATNState, decision int) dfaCache {
 	var mu sync.RWMutex
 	m := map[string]*DFA{}
 	return func(predicates *PredicateSet) *DFA {
@@ -143,9 +143,9 @@ func newDFACache(start *ATNState, decision int) dfaCache {
 }
 
 // initDFACaches creates one dfaCache per decision state.
-func initDFACaches(atn *ATN) []dfaCache {
-	caches := make([]dfaCache, len(atn.DecisionStates))
-	for i, ds := range atn.DecisionStates {
+func initDFACaches(rtn *RuntimeATN) []dfaCache {
+	caches := make([]dfaCache, len(rtn.DecisionStates))
+	for i, ds := range rtn.DecisionStates {
 		caches[i] = newDFACache(ds, i)
 	}
 	return caches
@@ -274,13 +274,13 @@ func computeReachSet(configs *ATNConfigSet, tID int, preds *PredicateSet) *ATNCo
 }
 
 // getReachableTarget returns the target state if t matches tID, nil otherwise.
-func getReachableTarget(t Transition, tID int) *ATNState {
-	at, ok := t.(*AtomTransition)
+func getReachableTarget(t RuntimeTransition, tID int) *RuntimeATNState {
+	at, ok := t.(*RuntimeAtomTransition)
 	if !ok {
 		return nil
 	}
 	if tokenMatches(tID, at.TokenTypeID, at.CategoryMatches) {
-		return at.target
+		return at.Target
 	}
 	return nil
 }
@@ -300,13 +300,13 @@ func tokenMatches(tokenTypeID, transitionTypeID int, categoryMatches []int) bool
 }
 
 // closure follows all epsilon transitions from config, adding reachable
-// configs to configs set.
+// configs to the config set.
 func closure(config *ATNConfig, configs *ATNConfigSet) {
 	p := config.State
 
 	if p.Type == ATNRuleStop {
 		if len(config.Stack) > 0 {
-			stack := make([]*ATNState, len(config.Stack))
+			stack := make([]*RuntimeATNState, len(config.Stack))
 			copy(stack, config.Stack)
 			followState := stack[len(stack)-1]
 			stack = stack[:len(stack)-1]
@@ -335,20 +335,20 @@ func closure(config *ATNConfig, configs *ATNConfigSet) {
 }
 
 // getEpsilonTarget returns the config reached via an epsilon transition, or nil.
-func getEpsilonTarget(config *ATNConfig, t Transition) *ATNConfig {
+func getEpsilonTarget(config *ATNConfig, t RuntimeTransition) *ATNConfig {
 	switch et := t.(type) {
-	case *EpsilonTransition:
+	case *RuntimeEpsilonTransition:
 		return &ATNConfig{
-			State: et.target,
+			State: et.Target,
 			Alt:   config.Alt,
 			Stack: config.Stack,
 		}
-	case *RuleTransition:
-		stack := make([]*ATNState, len(config.Stack)+1)
+	case *RuntimeRuleTransition:
+		stack := make([]*RuntimeATNState, len(config.Stack)+1)
 		copy(stack, config.Stack)
 		stack[len(config.Stack)] = et.FollowState
 		return &ATNConfig{
-			State: et.target,
+			State: et.Target,
 			Alt:   config.Alt,
 			Stack: stack,
 		}
@@ -357,13 +357,13 @@ func getEpsilonTarget(config *ATNConfig, t Transition) *ATNConfig {
 }
 
 // computeStartState builds the initial DFAState for a decision.
-func computeStartState(atnState *ATNState) *ATNConfigSet {
+func computeStartState(atnState *RuntimeATNState) *ATNConfigSet {
 	configs := NewATNConfigSet()
 	for i, t := range atnState.Transitions {
 		config := &ATNConfig{
-			State: t.Target(),
+			State: t.GetTarget(),
 			Alt:   i,
-			Stack: []*ATNState{},
+			Stack: []*RuntimeATNState{},
 		}
 		closure(config, configs)
 	}
@@ -483,14 +483,12 @@ func addDFAState(dfa *DFA, state *DFAState) *DFAState {
 }
 
 func reportLookaheadAmbiguity(src TokenSource, dfa *DFA, lookahead int, alts []int, log AmbiguityReport) {
-	atnState := dfa.ATNStartState
-	rule := atnState.Rule
-	production := atnState.Production
-	msg := buildAmbiguityError(rule, production, lookahead, alts)
+	s := dfa.ATNStartState
+	msg := buildAmbiguityError(s.RuleName, s.ProdKind, s.ProdIdx, lookahead, alts)
 	log(msg)
 }
 
-func buildAmbiguityError(rule *Rule, prod Production, lookahead int, alts []int) string {
+func buildAmbiguityError(ruleName string, prodKind ProductionKind, prodIdx int, lookahead int, alts []int) string {
 	altStrs := make([]string, len(alts))
 	for i, a := range alts {
 		altStrs[i] = fmt.Sprintf("%d", a)
@@ -499,13 +497,18 @@ func buildAmbiguityError(rule *Rule, prod Production, lookahead int, alts []int)
 	// ones as 1, 2, … Our grammar model uses 1-based Idx, so we subtract 1
 	// to get the Chevrotain-compatible index used in message formatting.
 	var occurrence string
-	if prod != nil {
-		tsIdx := prod.Occurrence() - 1
+	if prodIdx > 0 {
+		tsIdx := prodIdx - 1
 		if tsIdx > 0 {
 			occurrence = fmt.Sprintf("%d", tsIdx)
 		}
 	}
-	dslName := productionDSLName(prod)
+	var dslName string
+	if prodIdx > 0 {
+		dslName = productionDSLName(prodKind)
+	} else {
+		dslName = "unknown"
+	}
 	return fmt.Sprintf(
 		"Ambiguous Alternatives Detected: <%s> in <%s%s> inside <%s> Rule,\n"+
 			"lookahead depth %d may appear as a prefix path in all these alternatives.\n"+
@@ -514,16 +517,13 @@ func buildAmbiguityError(rule *Rule, prod Production, lookahead int, alts []int)
 		strings.Join(altStrs, ", "),
 		dslName,
 		occurrence,
-		rule.Name,
+		ruleName,
 		lookahead,
 	)
 }
 
-func productionDSLName(prod Production) string {
-	if prod == nil {
-		return "unknown"
-	}
-	switch prod.Kind() {
+func productionDSLName(prodKind ProductionKind) string {
+	switch prodKind {
 	case ProdNonTerminal:
 		return "SUBRULE"
 	case ProdOption:
