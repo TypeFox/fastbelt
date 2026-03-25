@@ -1,0 +1,105 @@
+// Copyright 2026 TypeFox GmbH
+// This program and the accompanying materials are made available under the
+// terms of the MIT License, which is available in the project root.
+
+package statemachine
+
+import (
+	"context"
+	"fmt"
+	"strings"
+	"testing"
+	"time"
+
+	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/workspace"
+)
+
+const resourceCount = 200
+
+// BenchmarkWorkspaceCycle benchmarks a full workspace build cycle over
+// resourceCount in-memory statemachine documents: parse, index, link, and validate.
+func BenchmarkWorkspaceCycle(b *testing.B) {
+	contents := make([]string, resourceCount)
+	for i := range contents {
+		contents[i] = generateStatemachineContent(i)
+	}
+	srv := CreateServices()
+
+	var totalNs int64
+	b.ResetTimer()
+	for range b.N {
+		// Fresh document manager per cycle so each build starts from a clean state.
+		srv.Workspace().DocumentManager = workspace.NewDefaultDocumentManager()
+		docManager := srv.Workspace().DocumentManager
+
+		docs := make([]*core.Document, resourceCount)
+		for i, content := range contents {
+			uri := fmt.Sprintf("file:///workspace/statemachine_%d.statemachine", i)
+			doc, err := core.NewDocumentFromString(uri, "statemachine", content)
+			if err != nil {
+				b.Fatal(err)
+			}
+			docs[i] = doc
+			docManager.Set(doc)
+		}
+
+		start := time.Now()
+		srv.Workspace().Lock.Write(context.Background(), func(ctx context.Context, downgrade func()) {
+			if err := srv.Workspace().Builder.Build(ctx, docs, downgrade); err != nil {
+				b.Errorf("build failed: %v", err)
+			}
+		})
+		totalNs += time.Since(start).Nanoseconds()
+	}
+
+	msPerOp := float64(totalNs) / float64(b.N) / 1e6
+	msPerResource := msPerOp / resourceCount
+	b.ReportMetric(msPerOp, "ms/op")
+	b.ReportMetric(msPerResource, "ms/resource")
+}
+
+// generateStatemachineContent generates a syntactically valid statemachine
+// document for the given index. Each document contains:
+//   - 4 events
+//   - 3 commands
+//   - 50 states, each with transitions that cycle through events/states
+func generateStatemachineContent(index int) string {
+	const numEvents = 4
+	const numCommands = 3
+	const numStates = 50
+
+	var sb strings.Builder
+
+	fmt.Fprintf(&sb, "statemachine sm%d\n\n", index)
+
+	// Events block
+	sb.WriteString("events\n")
+	for e := range numEvents {
+		fmt.Fprintf(&sb, "  evt%d_%d\n", index, e)
+	}
+
+	// Commands block
+	sb.WriteString("commands\n")
+	for c := range numCommands {
+		fmt.Fprintf(&sb, "  cmd%d_%d\n", index, c)
+	}
+
+	// Initial state
+	fmt.Fprintf(&sb, "initialState s%d_0\n\n", index)
+
+	// States
+	for s := range numStates {
+		fmt.Fprintf(&sb, "state s%d_%d\n", index, s)
+		if s == 0 {
+			fmt.Fprintf(&sb, "  actions { cmd%d_0 cmd%d_1 }\n", index, index)
+		}
+		for e := range numEvents {
+			target := (s + e + 1) % numStates
+			fmt.Fprintf(&sb, "  evt%d_%d => s%d_%d\n", index, e, index, target)
+		}
+		sb.WriteString("end\n\n")
+	}
+
+	return sb.String()
+}

@@ -17,12 +17,15 @@ type StatemachineSrv struct {
 	workspace.GeneratedSrvContBlock
 	workspace.WorkspaceSrvContBlock
 	linking.LinkingSrvContBlock
+	StatemachineModelLinkingSrvContBlock
 }
 
 func CreateServices() *StatemachineSrv {
 	srv := &StatemachineSrv{}
 	textdoc.CreateDefaultServices(srv)
 	workspace.CreateDefaultServices(srv)
+	linking.CreateDefaultServices(srv)
+	CreateDefaultServices(srv)
 
 	srv.Workspace().LanguageID = "statemachine"
 	srv.Workspace().FileExtensions = []string{".statemachine"}

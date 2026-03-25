@@ -1,29 +1,24 @@
-grammar StatemachineModel
+grammar StatemachineModel;
 
 interface Statemachine {
     Name string
     Events []Event
     Commands []Command
-    Init string // Reference to State
+    Init *State
     States []State
 }
 
-/** A textual representation of a state machine */
-entry Statemachine returns Statemachine:
-    'statemachine'
-    /** The name of the machine */
+Statemachine returns Statemachine:
+    "statemachine"
     Name=ID
-    ('events'
-        /** The list of recognized event names */
+    ("events"
         Events+=Event+)?
-    ('commands'    Commands+=Command+)?
-    'initialState'
-    /** The starting state for the machine */
-    Init=ID
-    /** Definitions of available states */
+    ("commands"
+      Commands+=Command+)?
+    "initialState"
+    Init=[State:ID]
     States+=State*;
 
-/** An event is the trigger for a transition */
 interface Event {
     Name string
 }
@@ -38,34 +33,29 @@ interface Command {
 Command returns Command:
     Name=ID;
 
-/** A description of the status of a system */
 interface State {
     Name string
-    Actions []string // Reference to Command
+    Actions []*Command
     Transitions []Transition
 }
 
 State returns State:
-    'state' Name=ID
-        ('actions' '{' Actions+=ID+ '}')?
-        /** The transitions to other states that can take place from the current one */
+    "state" Name=ID
+        ("actions" "{" Actions+=[Command:ID]+ "}")?
         Transitions+=Transition*
-    'end';
+    "end";
 
-/** A change from one state to another */
 interface Transition {
-    Event string // Reference to Event
-    State string // Reference to State
+    Event *Event
+    State *State
 }
 
 Transition returns Transition:
-    /** The event triggering the transition */
-    Event=ID '=>'
-    /** The target state */
-    State=ID;
+    Event=[Event:ID] "=>"
+    State=[State:ID];
 
-terminal ID: /[_a-zA-Z][\w_]*/;
+token ID: /[_a-zA-Z][\w_]*/;
 
-hidden terminal WS: /\s+/;
-hidden terminal ML_COMMENT: /\/\*[\s\S]*?\*\//;
-hidden terminal SL_COMMENT: /\/\/[^\n\r]*/;
+hidden token WS: /\s+/;
+hidden token ML_COMMENT: /\/\*[\s\S]*?\*\//;
+hidden token SL_COMMENT: /\/\/[^\n\r]*/;
