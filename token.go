@@ -5,6 +5,7 @@
 package fastbelt
 
 const SkippedGroup = -1
+const CommentGroup = -2
 
 type Matcher func(input string, offset int) int
 
@@ -34,6 +35,10 @@ func NewTokenType(id int, name, label string, group int, pushMode int, popMode b
 
 func (t *TokenType) IsSkipped() bool {
 	return t.Group == SkippedGroup
+}
+
+func (t *TokenType) IsComment() bool {
+	return t.Group == CommentGroup
 }
 
 var EOF = NewTokenType(

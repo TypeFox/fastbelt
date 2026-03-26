@@ -74,7 +74,7 @@ interface Token extends AbstractRule {
     Regexp string
 }
 
-Token returns Token: Type="hidden"? "token" Name=ID ":" Regexp=RegexLiteral ";";
+Token returns Token: (Type?="hidden" | Type?="comment")? "token" Name=ID ":" Regexp=RegexLiteral ";";
 
 interface Element {
     Cardinality string
@@ -136,6 +136,10 @@ interface Action extends Element {
 }
 
 Action returns Action: "{" Type=[Interface:ID] ("." Property=[Field:ID] Operator=("+=" | "=") "current")? "}";
+
+// Move comments in front of RegexLiteral
+comment token SL_COMMENT: /\/\/[^\r\n]*/;
+comment token ML_COMMENT: /\/\*[^*]*\*\//;
 
 token String: /"[^"]+"/;
 token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;

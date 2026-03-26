@@ -12,9 +12,10 @@ import (
 )
 
 type LexerResult struct {
-	Tokens []*core.Token
-	Errors []*core.LexerError
-	Groups map[int][]*core.Token
+	Tokens   []*core.Token
+	Comments []*core.Token
+	Errors   []*core.LexerError
+	Groups   map[int][]*core.Token
 }
 
 type Lexer interface {
@@ -29,6 +30,7 @@ type DefaultLexer struct {
 func (l *DefaultLexer) Lex(input string) *LexerResult {
 	length := len(input)
 	tokens := make([]*core.Token, 0, length/5) // rough estimate
+	comments := make([]*core.Token, 0)
 	errors := make([]*core.LexerError, 0)
 	groups := make(map[int][]*core.Token)
 
@@ -70,7 +72,20 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 		}
 
 		if longestType != nil {
-			if !longestType.IsSkipped() {
+			switch longestType.Group {
+			case core.SkippedGroup:
+				// do nothing
+			case core.CommentGroup:
+				comments = append(comments, core.NewToken(
+					longestType,
+					input[offset:end],
+					offset, end,
+					startLine,
+					line,
+					startColumn,
+					column,
+				))
+			case 0:
 				tokens = append(tokens, core.NewToken(
 					longestType,
 					input[offset:end],
@@ -96,9 +111,10 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 	}
 
 	return &LexerResult{
-		Tokens: tokens,
-		Errors: errors,
-		Groups: groups,
+		Tokens:   tokens,
+		Comments: comments,
+		Errors:   errors,
+		Groups:   groups,
 	}
 }
 
