@@ -50,6 +50,49 @@ func (s *emptyScope) AllElements() iter.Seq[*AstNodeDescription] {
 
 var EmptyScope Scope = &emptyScope{}
 
+type SeqScope struct {
+	elements iter.Seq[*AstNodeDescription]
+	outer    Scope
+}
+
+func NewSeqScope(elements iter.Seq[*AstNodeDescription], outer Scope) *SeqScope {
+	return &SeqScope{
+		elements: elements,
+		outer:    outer,
+	}
+}
+
+func (s *SeqScope) ElementByName(name string) *AstNodeDescription {
+	for desc := range s.elements {
+		if desc.Name == name {
+			return desc
+		}
+	}
+	if s.outer != nil {
+		return s.outer.ElementByName(name)
+	}
+	return nil
+}
+
+func (s *SeqScope) ElementsByName(name string) iter.Seq[*AstNodeDescription] {
+	matching := extiter.Filter(s.elements, func(desc *AstNodeDescription) bool {
+		return desc.Name == name
+	})
+	if s.outer != nil {
+		return extiter.Concat(matching, s.outer.ElementsByName(name))
+	} else {
+		return matching
+	}
+}
+
+func (s *SeqScope) AllElements() iter.Seq[*AstNodeDescription] {
+	if s.outer != nil {
+		return extiter.Concat(s.elements, s.outer.AllElements())
+	} else {
+		return s.elements
+	}
+}
+
 type MapScope struct {
 	elements collections.MultiMap[string, *AstNodeDescription]
 	outer    Scope
