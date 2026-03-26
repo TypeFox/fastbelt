@@ -20,7 +20,7 @@ func GlobalScopeOfType[T core.AstNode](node core.AstNode) core.Scope {
 		return core.EmptyScope
 	}
 	symbols := SymbolsOfType[T](imported)
-	return core.NewIterScope(symbols, nil)
+	return core.NewSeqScope(symbols, nil)
 }
 
 func LocalScopeOfType[T core.AstNode](node core.AstNode, globalScope core.Scope) core.Scope {
@@ -42,7 +42,7 @@ func LocalScopeOfType[T core.AstNode](node core.AstNode, globalScope core.Scope)
 			return core.EmptyScope
 		}
 	}
-	return core.NewIterScope(filtered, outer)
+	return core.NewSeqScope(filtered, outer)
 }
 
 func GetSymbolList(node core.AstNode) core.SymbolList {

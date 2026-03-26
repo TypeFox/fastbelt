@@ -50,19 +50,19 @@ func (s *emptyScope) AllElements() iter.Seq[*AstNodeDescription] {
 
 var EmptyScope Scope = &emptyScope{}
 
-type IterScope struct {
+type SeqScope struct {
 	elements iter.Seq[*AstNodeDescription]
 	outer    Scope
 }
 
-func NewIterScope(elements iter.Seq[*AstNodeDescription], outer Scope) *IterScope {
-	return &IterScope{
+func NewSeqScope(elements iter.Seq[*AstNodeDescription], outer Scope) *SeqScope {
+	return &SeqScope{
 		elements: elements,
 		outer:    outer,
 	}
 }
 
-func (s *IterScope) ElementByName(name string) *AstNodeDescription {
+func (s *SeqScope) ElementByName(name string) *AstNodeDescription {
 	for desc := range s.elements {
 		if desc.Name == name {
 			return desc
@@ -74,21 +74,18 @@ func (s *IterScope) ElementByName(name string) *AstNodeDescription {
 	return nil
 }
 
-func (s *IterScope) ElementsByName(name string) iter.Seq[*AstNodeDescription] {
-	var matching []*AstNodeDescription
-	for desc := range s.elements {
-		if desc.Name == name {
-			matching = append(matching, desc)
-		}
-	}
+func (s *SeqScope) ElementsByName(name string) iter.Seq[*AstNodeDescription] {
+	matching := extiter.Filter(s.elements, func(desc *AstNodeDescription) bool {
+		return desc.Name == name
+	})
 	if s.outer != nil {
-		return extiter.Concat(slices.Values(matching), s.outer.ElementsByName(name))
+		return extiter.Concat(matching, s.outer.ElementsByName(name))
 	} else {
-		return slices.Values(matching)
+		return matching
 	}
 }
 
-func (s *IterScope) AllElements() iter.Seq[*AstNodeDescription] {
+func (s *SeqScope) AllElements() iter.Seq[*AstNodeDescription] {
 	if s.outer != nil {
 		return extiter.Concat(s.elements, s.outer.AllElements())
 	} else {
