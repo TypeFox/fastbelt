@@ -33,11 +33,13 @@ var URL_Next = [][]int{
 	{9, 9, 11, 9, 9, 10, 11, 9, 9, 9, 11, 9, 11, 9},
 	{11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11},
 }
+var URL_Accepting = [12]bool{
+	11: true,
+}
 
 func URL(s string, offset int) int {
 	input := s[offset:]
 	length := len(input)
-	accepted := map[int]bool{11: true}
 	state := 0
 	acceptedIndex := 0
 	index := 0
@@ -253,7 +255,7 @@ loop:
 			break loop
 		}
 		index += runeSize
-		if accepted[state] {
+		if URL_Accepting[state] {
 			acceptedIndex = index
 		}
 	}

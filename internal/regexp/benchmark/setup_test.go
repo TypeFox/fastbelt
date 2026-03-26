@@ -23,8 +23,7 @@ func writeRegexpFile(name string, pattern string) {
 	}
 	root.AppendLine(")")
 	root.AppendLine()
-	root.AppendNode(result.Lookup)
-	root.AppendNode(result.Next)
+	root.AppendNode(result.Vars)
 	root.AppendNode(result.Code)
 	err := os.WriteFile("generated/"+strings.ToLower(name)+".go", []byte(format.FormatIfPossible(root.String())), 0644)
 	if err != nil {

@@ -21,11 +21,13 @@ var Email_Next = [][]int{
 	{5, 5, 5, 5, 5, 5},
 	{5, 5, 5, 5, 5, 5},
 }
+var Email_Accepting = [6]bool{
+	5: true,
+}
 
 func Email(s string, offset int) int {
 	input := s[offset:]
 	length := len(input)
-	accepted := map[int]bool{5: true}
 	state := 0
 	acceptedIndex := 0
 	index := 0
@@ -139,7 +141,7 @@ loop:
 			break loop
 		}
 		index += runeSize
-		if accepted[state] {
+		if Email_Accepting[state] {
 			acceptedIndex = index
 		}
 	}

@@ -491,7 +491,6 @@ var Token_String = core.NewTokenType(
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
-		accepted := map[int]bool{3: true}
 		state := 0
 		acceptedIndex := 0
 		index := 0
@@ -571,7 +570,7 @@ var Token_String = core.NewTokenType(
 				break loop
 			}
 			index += runeSize
-			if accepted[state] {
+			if Token_String_Accepting[state] {
 				acceptedIndex = index
 			}
 		}
@@ -591,6 +590,9 @@ var Token_String_Next = [][]int{
 	{2, 3, 2},
 	{},
 }
+var Token_String_Accepting = [4]bool{
+	3: true,
+}
 
 const Token_ID_Idx = 28
 
@@ -604,7 +606,6 @@ var Token_ID = core.NewTokenType(
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
-		accepted := map[int]bool{1: true}
 		state := 0
 		acceptedIndex := 0
 		index := 0
@@ -650,7 +651,7 @@ var Token_ID = core.NewTokenType(
 				break loop
 			}
 			index += runeSize
-			if accepted[state] {
+			if Token_ID_Accepting[state] {
 				acceptedIndex = index
 			}
 		}
@@ -666,6 +667,9 @@ var Token_ID_Next = [][]int{
 	{1, 1, 1},
 	{1, 1, 1, 1},
 }
+var Token_ID_Accepting = [2]bool{
+	1: true,
+}
 
 const Token_RegexLiteral_Idx = 29
 
@@ -679,7 +683,6 @@ var Token_RegexLiteral = core.NewTokenType(
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
-		accepted := map[int]bool{5: true}
 		state := 0
 		acceptedIndex := 0
 		index := 0
@@ -810,7 +813,7 @@ var Token_RegexLiteral = core.NewTokenType(
 				break loop
 			}
 			index += runeSize
-			if accepted[state] {
+			if Token_RegexLiteral_Accepting[state] {
 				acceptedIndex = index
 			}
 		}
@@ -836,6 +839,9 @@ var Token_RegexLiteral_Next = [][]int{
 	{},
 	{3, 3},
 }
+var Token_RegexLiteral_Accepting = [7]bool{
+	5: true,
+}
 
 const Token_WS_Idx = 30
 
@@ -849,7 +855,6 @@ var Token_WS = core.NewTokenType(
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
-		accepted := map[int]bool{1: true}
 		state := 0
 		acceptedIndex := 0
 		index := 0
@@ -895,7 +900,7 @@ var Token_WS = core.NewTokenType(
 				break loop
 			}
 			index += runeSize
-			if accepted[state] {
+			if Token_WS_Accepting[state] {
 				acceptedIndex = index
 			}
 		}
@@ -910,6 +915,9 @@ var Token_WS_Lookup = [][]int64{
 var Token_WS_Next = [][]int{
 	{1, 1, 1},
 	{1, 1, 1},
+}
+var Token_WS_Accepting = [2]bool{
+	1: true,
 }
 
 func NewLexer() lexer.Lexer {

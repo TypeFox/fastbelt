@@ -153,8 +153,7 @@ func generateTokenType(token grammar.Token, id int) GenerateLexerResult {
 		n.AppendLine("},")
 	})
 	code.AppendLine(")")
-	code.AppendNode(result.Lookup)
-	code.AppendNode(result.Next)
+	code.AppendNode(result.Vars)
 	return GenerateLexerResult{
 		Imports: imports,
 		Code:    code,

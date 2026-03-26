@@ -86,23 +86,20 @@ func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsM
 
 type GenerateRegExpResult struct {
 	Imports map[string]bool
-	Lookup  generator.Node
-	Next    generator.Node
+	Vars    generator.Node
 	Code    generator.Node
 }
 
 func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateRegExpResult {
+	vars := generator.NewNode()
 	lookup := generator.NewNode()
 	lookup.AppendLine(fmt.Sprintf("var %s_Lookup = [][]int64{", tokenName))
 	next := generator.NewNode()
 	next.AppendLine(fmt.Sprintf("var %s_Next = [][]int{", tokenName))
-	imports := map[string]bool{"unicode/utf8": true}
-	root := generator.NewNode()
-	root.AppendLine(fmt.Sprintf("func %s(s string, offset int) int {", funcName))
-	root.Indent(func(n generator.Node) {
-		n.AppendLine("input := s[offset:]")
-		n.AppendLine("length := len(input)")
-		n.Append("accepted := map[int]bool{")
+	accepting := generator.NewNode()
+	acceptingName := fmt.Sprintf("%s_Accepting", tokenName)
+	accepting.AppendLine(fmt.Sprintf("var %s = [%d]bool{", acceptingName, r.dfa.StateCount))
+	accepting.Indent(func(n generator.Node) {
 		acceptingStates := r.dfa.AcceptingStates
 		stateIDs := make([]int, 0, len(acceptingStates))
 		for state, isAccepting := range acceptingStates {
@@ -112,9 +109,17 @@ func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateR
 		}
 		slices.Sort(stateIDs)
 		for _, state := range stateIDs {
-			n.Append(fmt.Sprintf("%d: true, ", state))
+			n.AppendLine(fmt.Sprintf("%d: true,", state))
 		}
-		n.AppendLine("}")
+	})
+	accepting.AppendLine("}")
+
+	imports := map[string]bool{"unicode/utf8": true}
+	root := generator.NewNode()
+	root.AppendLine(fmt.Sprintf("func %s(s string, offset int) int {", funcName))
+	root.Indent(func(n generator.Node) {
+		n.AppendLine("input := s[offset:]")
+		n.AppendLine("length := len(input)")
 		n.AppendLine(fmt.Sprintf("state := %d", r.dfa.StartState))
 		n.AppendLine("acceptedIndex := 0")
 		n.AppendLine("index := 0")
@@ -140,7 +145,7 @@ func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateR
 			})
 			n.AppendLine("}")
 			n.AppendLine("index += runeSize")
-			n.AppendLine("if accepted[state] {")
+			n.AppendLine(fmt.Sprintf("if %s[state] {", acceptingName))
 			n.Indent(func(n generator.Node) {
 				n.AppendLine("acceptedIndex = index")
 			})
@@ -152,10 +157,12 @@ func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateR
 	root.Append("}")
 	lookup.AppendLine("}")
 	next.AppendLine("}")
+	vars.AppendNode(lookup)
+	vars.AppendNode(next)
+	vars.AppendNode(accepting)
 	return GenerateRegExpResult{
 		Imports: imports,
 		Code:    root,
-		Lookup:  lookup,
-		Next:    next,
+		Vars:    vars,
 	}
 }

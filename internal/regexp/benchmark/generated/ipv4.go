@@ -57,11 +57,17 @@ var IPv4_Next = [][]int{
 	{23},
 	{},
 }
+var IPv4_Accepting = [24]bool{
+	19: true,
+	20: true,
+	21: true,
+	22: true,
+	23: true,
+}
 
 func IPv4(s string, offset int) int {
 	input := s[offset:]
 	length := len(input)
-	accepted := map[int]bool{19: true, 20: true, 21: true, 22: true, 23: true}
 	state := 0
 	acceptedIndex := 0
 	index := 0
@@ -481,7 +487,7 @@ loop:
 			break loop
 		}
 		index += runeSize
-		if accepted[state] {
+		if IPv4_Accepting[state] {
 			acceptedIndex = index
 		}
 	}
