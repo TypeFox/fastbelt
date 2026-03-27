@@ -31,6 +31,7 @@ func (p *DefaultDocumentParser) Parse(doc *core.Document) {
 	lexerRes := p.srv.Generated().Lexer.Lex(text)
 	doc.LexerErrors = lexerRes.Errors
 	doc.Tokens = lexerRes.Tokens
+	doc.Comments = lexerRes.Comments
 	// Run the parser
 	parserRes := p.srv.Generated().Parser.Parse(doc)
 	doc.ParserErrors = parserRes.Errors

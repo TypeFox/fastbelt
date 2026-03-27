@@ -134,7 +134,9 @@ func generateTokenType(token grammar.Token, id int) GenerateLexerResult {
 		n.AppendLine("\"", token.Name(), "\",")
 		n.AppendLine("\"", token.Name(), "\",")
 		if token.Type() == "hidden" {
-			n.AppendLine("-1,")
+			n.AppendLine("core.SkippedGroup,")
+		} else if token.Type() == "comment" {
+			n.AppendLine("core.CommentGroup,")
 		} else {
 			n.AppendLine("0,")
 		}

@@ -281,7 +281,25 @@ var Keyword_bool = core.NewTokenType(
 	[]rune{'b'},
 )
 
-const Keyword_current_Idx = 16
+const Keyword_comment_Idx = 16
+
+var Keyword_comment = core.NewTokenType(
+	Keyword_comment_Idx,
+	"comment",
+	"comment",
+	0,
+	0,
+	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "comment") {
+			return 7
+		}
+		return 0
+	},
+	[]rune{'c'},
+)
+
+const Keyword_current_Idx = 17
 
 var Keyword_current = core.NewTokenType(
 	Keyword_current_Idx,
@@ -299,7 +317,7 @@ var Keyword_current = core.NewTokenType(
 	[]rune{'c'},
 )
 
-const Keyword_extends_Idx = 17
+const Keyword_extends_Idx = 18
 
 var Keyword_extends = core.NewTokenType(
 	Keyword_extends_Idx,
@@ -317,7 +335,7 @@ var Keyword_extends = core.NewTokenType(
 	[]rune{'e'},
 )
 
-const Keyword_grammar_Idx = 18
+const Keyword_grammar_Idx = 19
 
 var Keyword_grammar = core.NewTokenType(
 	Keyword_grammar_Idx,
@@ -335,7 +353,7 @@ var Keyword_grammar = core.NewTokenType(
 	[]rune{'g'},
 )
 
-const Keyword_hidden_Idx = 19
+const Keyword_hidden_Idx = 20
 
 var Keyword_hidden = core.NewTokenType(
 	Keyword_hidden_Idx,
@@ -353,7 +371,7 @@ var Keyword_hidden = core.NewTokenType(
 	[]rune{'h'},
 )
 
-const Keyword_interface_Idx = 20
+const Keyword_interface_Idx = 21
 
 var Keyword_interface = core.NewTokenType(
 	Keyword_interface_Idx,
@@ -371,7 +389,7 @@ var Keyword_interface = core.NewTokenType(
 	[]rune{'i'},
 )
 
-const Keyword_returns_Idx = 21
+const Keyword_returns_Idx = 22
 
 var Keyword_returns = core.NewTokenType(
 	Keyword_returns_Idx,
@@ -389,7 +407,7 @@ var Keyword_returns = core.NewTokenType(
 	[]rune{'r'},
 )
 
-const Keyword_string_Idx = 22
+const Keyword_string_Idx = 23
 
 var Keyword_string = core.NewTokenType(
 	Keyword_string_Idx,
@@ -407,7 +425,7 @@ var Keyword_string = core.NewTokenType(
 	[]rune{'s'},
 )
 
-const Keyword_token_Idx = 23
+const Keyword_token_Idx = 24
 
 var Keyword_token = core.NewTokenType(
 	Keyword_token_Idx,
@@ -425,7 +443,7 @@ var Keyword_token = core.NewTokenType(
 	[]rune{'t'},
 )
 
-const Keyword_LeftBrace_Idx = 24
+const Keyword_LeftBrace_Idx = 25
 
 var Keyword_LeftBrace = core.NewTokenType(
 	Keyword_LeftBrace_Idx,
@@ -443,7 +461,7 @@ var Keyword_LeftBrace = core.NewTokenType(
 	[]rune{'{'},
 )
 
-const Keyword_Pipe_Idx = 25
+const Keyword_Pipe_Idx = 26
 
 var Keyword_Pipe = core.NewTokenType(
 	Keyword_Pipe_Idx,
@@ -461,7 +479,7 @@ var Keyword_Pipe = core.NewTokenType(
 	[]rune{'|'},
 )
 
-const Keyword_RightBrace_Idx = 26
+const Keyword_RightBrace_Idx = 27
 
 var Keyword_RightBrace = core.NewTokenType(
 	Keyword_RightBrace_Idx,
@@ -479,7 +497,233 @@ var Keyword_RightBrace = core.NewTokenType(
 	[]rune{'}'},
 )
 
-const Token_String_Idx = 27
+const Token_SL_COMMENT_Idx = 28
+
+var Token_SL_COMMENT = core.NewTokenType(
+	Token_SL_COMMENT_Idx,
+	"SL_COMMENT",
+	"SL_COMMENT",
+	core.CommentGroup,
+	0,
+	false,
+	func(s string, offset int) int {
+		input := s[offset:]
+		length := len(input)
+		accepted := map[int]bool{2: true}
+		state := 0
+		acceptedIndex := 0
+		index := 0
+	loop:
+		for index < length {
+			r, runeSize := utf8.DecodeRuneInString(input[index:])
+			switch state {
+			case 0:
+				nextState := -1
+				next := Token_SL_COMMENT_Next[0]
+				lookup := Token_SL_COMMENT_Lookup[0]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 1:
+				nextState := -1
+				next := Token_SL_COMMENT_Next[1]
+				lookup := Token_SL_COMMENT_Lookup[1]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 2:
+				nextState := -1
+				next := Token_SL_COMMENT_Next[2]
+				lookup := Token_SL_COMMENT_Lookup[2]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			default:
+				break loop
+			}
+			index += runeSize
+			if accepted[state] {
+				acceptedIndex = index
+			}
+		}
+		return acceptedIndex
+	},
+	[]rune{'/'},
+)
+var Token_SL_COMMENT_Lookup = [][]int64{
+	{0x0000002F0000002F},
+	{0x0000002F0000002F},
+	{0x0000000900000000, 0x0000000C0000000B, 0x0010FFFF0000000E},
+}
+var Token_SL_COMMENT_Next = [][]int{
+	{1},
+	{2},
+	{2, 2, 2},
+}
+
+const Token_ML_COMMENT_Idx = 29
+
+var Token_ML_COMMENT = core.NewTokenType(
+	Token_ML_COMMENT_Idx,
+	"ML_COMMENT",
+	"ML_COMMENT",
+	core.CommentGroup,
+	0,
+	false,
+	func(s string, offset int) int {
+		input := s[offset:]
+		length := len(input)
+		accepted := map[int]bool{4: true}
+		state := 0
+		acceptedIndex := 0
+		index := 0
+	loop:
+		for index < length {
+			r, runeSize := utf8.DecodeRuneInString(input[index:])
+			switch state {
+			case 0:
+				nextState := -1
+				next := Token_ML_COMMENT_Next[0]
+				lookup := Token_ML_COMMENT_Lookup[0]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 1:
+				nextState := -1
+				next := Token_ML_COMMENT_Next[1]
+				lookup := Token_ML_COMMENT_Lookup[1]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 2:
+				nextState := -1
+				next := Token_ML_COMMENT_Next[2]
+				lookup := Token_ML_COMMENT_Lookup[2]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 3:
+				nextState := -1
+				next := Token_ML_COMMENT_Next[3]
+				lookup := Token_ML_COMMENT_Lookup[3]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 4:
+				nextState := -1
+				next := Token_ML_COMMENT_Next[4]
+				lookup := Token_ML_COMMENT_Lookup[4]
+				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
+					lo := rune(lowHigh & 0xFFFFFFFF)
+					hi := rune(lowHigh >> 32)
+					return lo <= r && r <= hi
+				})
+				if searchIndex > -1 {
+					nextState = next[searchIndex]
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			default:
+				break loop
+			}
+			index += runeSize
+			if accepted[state] {
+				acceptedIndex = index
+			}
+		}
+		return acceptedIndex
+	},
+	[]rune{'/'},
+)
+var Token_ML_COMMENT_Lookup = [][]int64{
+	{0x0000002F0000002F},
+	{0x0000002A0000002A},
+	{0x0000002900000000, 0x0000002A0000002A, 0x0010FFFF0000002B},
+	{0x0000002F0000002F},
+	{},
+}
+var Token_ML_COMMENT_Next = [][]int{
+	{1},
+	{2},
+	{2, 3, 2},
+	{4},
+	{},
+}
+
+const Token_String_Idx = 30
 
 var Token_String = core.NewTokenType(
 	Token_String_Idx,
@@ -594,7 +838,7 @@ var Token_String_Accepting = [4]bool{
 	3: true,
 }
 
-const Token_ID_Idx = 28
+const Token_ID_Idx = 31
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
@@ -671,7 +915,7 @@ var Token_ID_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_RegexLiteral_Idx = 29
+const Token_RegexLiteral_Idx = 32
 
 var Token_RegexLiteral = core.NewTokenType(
 	Token_RegexLiteral_Idx,
@@ -843,13 +1087,13 @@ var Token_RegexLiteral_Accepting = [7]bool{
 	5: true,
 }
 
-const Token_WS_Idx = 30
+const Token_WS_Idx = 33
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
 	"WS",
 	"WS",
-	-1,
+	core.SkippedGroup,
 	0,
 	false,
 	func(s string, offset int) int {
@@ -937,6 +1181,7 @@ func NewLexer() lexer.Lexer {
 		Keyword_LeftBracket,
 		Keyword_RightBracket,
 		Keyword_bool,
+		Keyword_comment,
 		Keyword_current,
 		Keyword_extends,
 		Keyword_grammar,
@@ -948,6 +1193,8 @@ func NewLexer() lexer.Lexer {
 		Keyword_LeftBrace,
 		Keyword_Pipe,
 		Keyword_RightBrace,
+		Token_SL_COMMENT,
+		Token_ML_COMMENT,
 		Token_String,
 		Token_ID,
 		Token_RegexLiteral,

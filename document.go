@@ -23,6 +23,7 @@ type Document struct {
 	State                 DocumentState
 	Root                  AstNode
 	Tokens                TokenSlice
+	Comments              TokenSlice
 	LocalSymbols          LocalSymbols
 	ExportedSymbols       []*AstNodeDescription
 	ImportedSymbols       SymbolList
