@@ -31,6 +31,9 @@ func (v *DefaultDocumentValidator) Validate(ctx context.Context, doc *core.Docum
 		return nil
 	}
 	var diagnostics []*core.Diagnostic
+	diagnostics = append(diagnostics, CreateLexerDiagnostics(doc)...)
+	diagnostics = append(diagnostics, CreateParserDiagnostics(doc)...)
+	diagnostics = append(diagnostics, CreateLinkerDiagnostics(doc)...)
 	accept := func(d *core.Diagnostic) {
 		diagnostics = append(diagnostics, d)
 	}

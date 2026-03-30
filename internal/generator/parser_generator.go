@@ -5,6 +5,7 @@
 package generator
 
 import (
+	ctx "context"
 	"slices"
 	"strconv"
 	"strings"
@@ -200,9 +201,13 @@ func populateContextWithNode(context *ParserGeneratorContext, prefix string, nod
 }
 
 func generateParseFunction(node generator.Node, context *ParserGeneratorContext, rule grammar.ParserRule) {
-	node.AppendLine("func (p *Parser) Parse", rule.Name(), "() ", rule.ReturnType().Text(), " {")
+	returnType := grammar.FindReturnType(rule, ctx.Background())
+	if returnType == nil {
+		panic("Unable to find return type for rule: " + rule.Name())
+	}
+	node.AppendLine("func (p *Parser) Parse", rule.Name(), "() ", returnType.Name(), " {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("current := New", rule.ReturnType().Text(), "()")
+		n.AppendLine("current := New", returnType.Name(), "()")
 		n.AppendLine("current.SetSegmentStartToken(p.state.LA(1))")
 		generateAbstractElementParser(n, context, rule.Body())
 		n.AppendLine("current.SetSegmentEndToken(p.state.LA(0))")

@@ -13,7 +13,6 @@ import (
 
 	"golang.org/x/exp/jsonrpc2"
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
 
@@ -355,14 +354,7 @@ func StartLanguageServer(ctx context.Context, srv ServerSrvCont) error {
 	// Register build step listener to publish diagnostics after validation
 	client := lsp.ClientDispatcher(conn)
 	srv.Workspace().Builder.AddBuildStepListener(core.DocStateValidated, func(ctx context.Context, doc *core.Document) error {
-		coreDiags := []core.Diagnostic{}
-		coreDiags = append(coreDiags, workspace.CreateLexerDiagnostics(doc)...)
-		coreDiags = append(coreDiags, workspace.CreateParserDiagnostics(doc)...)
-		coreDiags = append(coreDiags, workspace.CreateLinkerDiagnostics(doc)...)
-		lspDiags := make([]lsp.Diagnostic, 0, len(coreDiags)+len(doc.Diagnostics))
-		for _, d := range coreDiags {
-			lspDiags = append(lspDiags, toLspDiagnostic(d))
-		}
+		lspDiags := make([]lsp.Diagnostic, 0, len(doc.Diagnostics))
 		for _, d := range doc.Diagnostics {
 			lspDiags = append(lspDiags, toLspDiagnostic(*d))
 		}

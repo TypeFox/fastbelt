@@ -16,6 +16,21 @@ const (
 	SeverityHint    DiagnosticSeverity = 4
 )
 
+func (s DiagnosticSeverity) String() string {
+	switch s {
+	case SeverityError:
+		return "Error"
+	case SeverityWarning:
+		return "Warning"
+	case SeverityInfo:
+		return "Info"
+	case SeverityHint:
+		return "Hint"
+	default:
+		return "Unknown"
+	}
+}
+
 // DiagnosticTag mirrors LSP DiagnosticTag values.
 type DiagnosticTag int
 

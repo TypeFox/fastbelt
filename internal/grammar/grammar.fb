@@ -7,7 +7,7 @@ interface Grammar {
     Interfaces []Interface
 }
 
-Grammar returns Grammar: "grammar" Name=ID ";"
+Grammar: "grammar" Name=ID ";"
     (Rules+=ParserRule | Terminals+=Token | Interfaces+=Interface)*
 ;
 
@@ -17,7 +17,7 @@ interface Interface {
     Fields []Field
 }
 
-Interface returns Interface: 
+Interface:
     "interface" Name=ID ("extends" Extends+=[Interface:ID] ("," Extends+=[Interface:ID])*)? "{"
         Fields+=Field*
     "}"
@@ -46,17 +46,17 @@ interface PrimitiveType extends FieldType {
     Type string
 }
 
-Field returns Field: Name=ID Type=FieldType;
+Field: Name=ID Type=FieldType;
 
-FieldType returns FieldType: SimpleType | ReferenceType | ArrayType | PrimitiveType;
+FieldType: SimpleType | ReferenceType | ArrayType | PrimitiveType;
 
-ArrayType returns ArrayType: "[" "]" InternalType=FieldType;
+ArrayType: "[" "]" InternalType=FieldType;
 
-ReferenceType returns ReferenceType: "*" Type=[Interface:ID];
+ReferenceType: "*" Type=[Interface:ID];
 
-SimpleType returns SimpleType: Type=[Interface:ID];
+SimpleType: Type=[Interface:ID];
 
-PrimitiveType returns PrimitiveType: Type=("string" | "bool");
+PrimitiveType: Type=("string" | "bool");
 
 interface AbstractRule {
     Name string
@@ -67,14 +67,14 @@ interface ParserRule extends AbstractRule {
     Body Element
 }
 
-ParserRule returns ParserRule: Name=ID "returns" ReturnType=[Interface:ID] ":" Body=Alternatives ";";
+ParserRule: Name=ID ("returns" ReturnType=[Interface:ID])? ":" Body=Alternatives ";";
 
 interface Token extends AbstractRule {
     Type string
     Regexp string
 }
 
-Token returns Token: (Type?="hidden" | Type?="comment")? "token" Name=ID ":" Regexp=RegexLiteral ";";
+Token: (Type?="hidden" | Type?="comment")? "token" Name=ID ":" Regexp=RegexLiteral ";";
 
 interface Element {
     Cardinality string
@@ -92,13 +92,13 @@ interface Group extends Element {
 
 Group returns Element: Element ({Group.Elements+=current} Elements+=Element+)?;
 
-Element returns Element: (Keyword | Assignment | RuleCall | Action | "(" Alternatives ")") Cardinality=("*" | "+" | "?")?;
+Element: (Keyword | Assignment | RuleCall | Action | "(" Alternatives ")") Cardinality=("*" | "+" | "?")?;
 
 interface Keyword extends Assignable {
     Value string
 }
 
-Keyword returns Keyword: Value=String;
+Keyword: Value=String;
 
 interface Assignment extends Element {
     Property *Field
@@ -106,11 +106,11 @@ interface Assignment extends Element {
     Value Assignable
 }
 
-Assignment returns Assignment: Property=[Field:ID] Operator=("+=" | "=" | "?=") Value=Assignable;
+Assignment: Property=[Field:ID] Operator=("+=" | "=" | "?=") Value=Assignable;
 
 interface Assignable extends Element {}
 
-Assignable returns Assignable: Keyword | RuleCall | CrossRef | "(" AssignableAlternatives ")";
+Assignable: Keyword | RuleCall | CrossRef | "(" AssignableAlternatives ")";
 
 AssignableWithoutAlts returns Assignable: Keyword | RuleCall | CrossRef;
 
@@ -121,13 +121,13 @@ interface CrossRef extends Assignable {
     Rule RuleCall
 }
 
-CrossRef returns CrossRef: "[" Type=[Interface:ID] (":" Rule=RuleCall)? "]";
+CrossRef: "[" Type=[Interface:ID] (":" Rule=RuleCall)? "]";
 
 interface RuleCall extends Assignable {
     Rule *AbstractRule
 }
 
-RuleCall returns RuleCall: Rule=[AbstractRule:ID];
+RuleCall: Rule=[AbstractRule:ID];
 
 interface Action extends Element {
     Type *Interface
@@ -135,7 +135,7 @@ interface Action extends Element {
     Property *Field
 }
 
-Action returns Action: "{" Type=[Interface:ID] ("." Property=[Field:ID] Operator=("+=" | "=") "current")? "}";
+Action: "{" Type=[Interface:ID] ("." Property=[Field:ID] Operator=("+=" | "=") "current")? "}";
 
 // Move comments in front of RegexLiteral
 comment token SL_COMMENT: /\/\/[^\r\n]*/;

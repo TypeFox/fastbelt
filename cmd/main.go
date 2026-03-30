@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/internal/generator"
@@ -65,7 +66,38 @@ func runCmd() error {
 		return err
 	}
 
-	grammr, ok := document.Root.(grammar.Grammar)
+	diagnostics := document.Diagnostics
+	errCount := 0
+
+	sort.SliceStable(diagnostics, func(i, j int) bool {
+		iStartLine := diagnostics[i].Range.Start.Line
+		jStartLine := diagnostics[j].Range.Start.Line
+		if iStartLine == jStartLine {
+			return diagnostics[i].Range.Start.Column < diagnostics[j].Range.Start.Column
+		} else {
+			return iStartLine < jStartLine
+		}
+	})
+
+	for _, diag := range diagnostics {
+		if diag.Severity == core.SeverityError {
+			errCount++
+		}
+		fmt.Printf(
+			"%s - %d:%d %s\n",
+			diag.Severity.String(),
+			// For printing, convert to 1-based line and column numbers.
+			diag.Range.Start.Line+1,
+			diag.Range.Start.Column+1,
+			diag.Message,
+		)
+	}
+
+	if errCount > 0 {
+		return fmt.Errorf("aborting code generation due to %d errors", errCount)
+	}
+
+	grammar, ok := document.Root.(grammar.Grammar)
 	if !ok {
 		return fmt.Errorf("parser result is not a Grammar")
 	}
@@ -81,23 +113,23 @@ func runCmd() error {
 	}
 
 	if err := writeFile("linker", filepath.Join(outputPath, "linker_gen.go"),
-		generator.GenerateLinker(grammr, packageName)); err != nil {
+		generator.GenerateLinker(grammar, packageName)); err != nil {
 		return err
 	}
 	if err := writeFile("types", filepath.Join(outputPath, "types_gen.go"),
-		generator.GenerateTypes(grammr, packageName)); err != nil {
+		generator.GenerateTypes(grammar, packageName)); err != nil {
 		return err
 	}
 	if err := writeFile("parser", filepath.Join(outputPath, "parser_gen.go"),
-		generator.GenerateParser(grammr, packageName)); err != nil {
+		generator.GenerateParser(grammar, packageName)); err != nil {
 		return err
 	}
 	if err := writeFile("lexer", filepath.Join(outputPath, "lexer_gen.go"),
-		generator.GenerateLexer(grammr, packageName)); err != nil {
+		generator.GenerateLexer(grammar, packageName)); err != nil {
 		return err
 	}
 	if err := writeFile("services", filepath.Join(outputPath, "services_gen.go"),
-		generator.GenerateServices(grammr, packageName)); err != nil {
+		generator.GenerateServices(grammar, packageName)); err != nil {
 		return err
 	}
 

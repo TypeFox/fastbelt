@@ -47,7 +47,7 @@ func getCurrentType(ctx context.Context, node core.AstNode) Interface {
 	for node != nil {
 		if rule, ok := node.(ParserRule); ok {
 			// Arrived at the parser rule, return its return type
-			return rule.ReturnType().Ref(ctx)
+			return FindReturnType(rule, ctx)
 		}
 		container := node.Container()
 		if group, ok := container.(Group); ok {
