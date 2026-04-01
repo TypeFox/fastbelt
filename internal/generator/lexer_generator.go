@@ -26,6 +26,8 @@ func GenerateLexer(grammr grammar.Grammar, packageName string) string {
 	for _, keyword := range keywords {
 		nodes = append(nodes, generateKeywordTokenType(keyword, id))
 		id++
+		// Ensure that we import "strings" for the keyword token match function
+		imports["strings"] = true
 	}
 	for _, token := range tokens {
 		result := generateTokenType(token, id)
@@ -43,11 +45,9 @@ func GenerateLexer(grammr grammar.Grammar, packageName string) string {
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n gen.Node) {
-		n.AppendLine("\"strings\"")
 		for imp := range imports {
 			n.AppendLine(fmt.Sprintf(`"%s"`, imp))
 		}
-		n.AppendLine()
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
 		n.AppendLine("\"typefox.dev/fastbelt/lexer\"")
 	})
