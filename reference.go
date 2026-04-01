@@ -182,12 +182,13 @@ func ReferenceOfToken(token *Token) UntypedReference {
 	// We have to iterate over all references of the owner node
 	// This might seem inefficient, but in practice the number of references per node is usually very small
 	// Also, we only do this in select LSP requests, so the performance impact is negligible
-	owner.ForEachReference(func(ur UntypedReference) {
+	for ur := range References(owner) {
 		// Simply compare the text indices to find the matching reference
 		if ur.Segment().Indices == token.Segment.Indices {
 			ref = ur
+			break
 		}
-	})
+	}
 	return ref
 }
 

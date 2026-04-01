@@ -34,13 +34,13 @@ func (v *DefaultDocumentValidator) Validate(ctx context.Context, doc *core.Docum
 	accept := func(d *core.Diagnostic) {
 		diagnostics = append(diagnostics, d)
 	}
-	core.TraverseNode(doc.Root, func(node core.AstNode) {
+	for node := range core.AllNodes(doc.Root) {
 		if ctx.Err() != nil {
-			return
+			break
 		}
 		if validator, ok := node.(core.Validator); ok {
 			validator.Validate(ctx, level, accept)
 		}
-	})
+	}
 	return diagnostics
 }

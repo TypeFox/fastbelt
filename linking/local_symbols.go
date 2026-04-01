@@ -35,12 +35,12 @@ func (s *DefaultLocalSymbolsProvider) Provide(ctx context.Context, document *cor
 	root := document.Root
 	symbols := collections.NewMultiMap[core.AstNode, *core.AstNodeDescription]()
 
-	core.TraverseContent(root, func(node core.AstNode) {
+	for node := range core.AllChildren(root) {
 		desc, container := s.srv.Linking().LocalSymbolDescriber.Describe(node)
 		if desc != nil {
 			symbols.Put(container, desc)
 		}
-	})
+	}
 	document.LocalSymbols = NewDefaultLocalSymbolsFromMap(symbols)
 }
 

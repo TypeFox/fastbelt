@@ -4,6 +4,8 @@
 
 package fastbelt
 
+import "iter"
+
 type AstNodeBase struct {
 	document  *Document
 	container AstNode
@@ -141,23 +143,106 @@ type AstNode interface {
 	// Should only be called by the parser. Use SetSegment to set both start and end manually.
 	SetSegmentEndToken(token *Token)
 	Text() string
-	ForEachNode(func(AstNode))
+	// ForEachNode calls the given function for each direct child node of this node.
+	// Note that this does not traverse the entire subtree. Use [AllNodes] or [TraverseNode] for that.
+	//
+	// Calling this method directly is not recommended. Use [ChildNodes] instead for better readability.
+	ForEachNode(fn func(AstNode))
+	// ForEachReference calls the given function for each reference contained in this node.
+	//
+	// Calling this method directly is not recommended. Use [References] instead for better readability.
 	ForEachReference(fn func(UntypedReference))
 }
 
+// Performance note about traversal function:
+// Theoretically, we could have ChildNodes and References directly as methods on the AstNode interface.
+// However, implementing the deep traversal on top of an iter.Seq is very inefficient.
+// In benchmarks, it is roughly 5x slower than the current implementation.
+// By using a callback-based approach, we can traverse the entire subtree with minimal overhead.
+// But we lose the ability to short-circuit the traversal when we find what we're looking for.
+// In practice, this is not a big issue, because most traversals will need to visit most of the nodes anyway.
+// AllNodes and AllChildren are slightly less efficient than TraverseNode and TraverseContent,
+// but only by roughly 10%, and they provide a much nicer API for most use cases, so the trade-off is worth it.
+
 // Traverses the given node and all its children, calling the given function for each node.
+//
+// Calling this function directly is not recommended. Use [AllNodes] instead for better readability.
+// Note that both [TraverseNode] and [AllNodes] will traverse the entire subtree, without short-circuiting.
 func TraverseNode(node AstNode, fn func(AstNode)) {
 	fn(node)
 	TraverseContent(node, fn)
 }
 
 // Traverses all children of the given node, calling the specified function for each child.
-// Does not call the function for the given node itself. Use TraverseNode for that.
+// Does not call the function for the given node itself. Use [TraverseNode] for that.
+//
+// Calling this function directly is not recommended. Use [AllChildren] instead for better readability.
+// Note that both [TraverseContent] and [AllChildren] will traverse the entire subtree, without short-circuiting.
 func TraverseContent(node AstNode, fn func(AstNode)) {
 	node.ForEachNode(func(child AstNode) {
 		fn(child)
 		TraverseContent(child, fn)
 	})
+}
+
+// [AllNodes] creates an iterator over the given node and all its descendant nodes.
+//
+// This function wraps [TraverseNode] in an [iter.Seq].
+// Early loop exit is honoured correctly, but does not short-circuit the traversal.
+func AllNodes(node AstNode) iter.Seq[AstNode] {
+	return func(yield func(AstNode) bool) {
+		stopped := false
+		TraverseNode(node, func(n AstNode) {
+			if !stopped && !yield(n) {
+				stopped = true
+			}
+		})
+	}
+}
+
+// [AllChildren] creates an iterator over all descendant nodes of the given node, excluding the node itself.
+//
+// This function wraps [TraverseContent] in an [iter.Seq].
+// Early loop exit is honoured correctly, but does not short-circuit the traversal.
+func AllChildren(node AstNode) iter.Seq[AstNode] {
+	return func(yield func(AstNode) bool) {
+		stopped := false
+		TraverseContent(node, func(n AstNode) {
+			if !stopped && !yield(n) {
+				stopped = true
+			}
+		})
+	}
+}
+
+// [ChildNodes] creates an iterator over the direct child nodes of the given node.
+//
+// This function wraps [AstNode.ForEachNode] in an [iter.Seq].
+// Early loop exit is honoured correctly, but does not short-circuit the traversal.
+func ChildNodes(node AstNode) iter.Seq[AstNode] {
+	return func(yield func(AstNode) bool) {
+		stopped := false
+		node.ForEachNode(func(child AstNode) {
+			if !stopped && !yield(child) {
+				stopped = true
+			}
+		})
+	}
+}
+
+// [References] creates an iterator over all references of the given node.
+//
+// This function wraps [AstNode.ForEachReference] in an [iter.Seq].
+// Early loop exit is honoured correctly, but does not short-circuit the traversal.
+func References(node AstNode) iter.Seq[UntypedReference] {
+	return func(yield func(UntypedReference) bool) {
+		stopped := false
+		node.ForEachReference(func(ref UntypedReference) {
+			if !stopped && !yield(ref) {
+				stopped = true
+			}
+		})
+	}
 }
 
 func NewAstNode() AstNodeBase {

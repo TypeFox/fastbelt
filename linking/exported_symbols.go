@@ -41,11 +41,11 @@ func (s *DefaultExportedSymbolsProvider) Provide(ctx context.Context, document *
 		exports = append(exports, desc)
 	}
 	// Describe direct children of the root (not nested deeper)
-	root.ForEachNode(func(node core.AstNode) {
-		if desc := describer.Describe(node); desc != nil {
+	for child := range core.ChildNodes(root) {
+		if desc := describer.Describe(child); desc != nil {
 			exports = append(exports, desc)
 		}
-	})
+	}
 
 	document.ExportedSymbols = exports
 }

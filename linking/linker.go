@@ -29,14 +29,14 @@ func (l *DefaultLinker) Link(ctx context.Context, document *core.Document) {
 	waitgroup := sync.WaitGroup{}
 	references := []core.UntypedReference{}
 	root := document.Root
-	core.TraverseNode(root, func(node core.AstNode) {
-		node.ForEachReference(func(ref core.UntypedReference) {
+	for node := range core.AllNodes(root) {
+		for ref := range core.References(node) {
 			references = append(references, ref)
 			waitgroup.Go(func() {
 				ref.Resolve(ctx)
 			})
-		})
-	})
+		}
+	}
 	waitgroup.Wait()
 	document.References = references
 }
