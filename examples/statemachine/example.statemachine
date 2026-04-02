@@ -4,23 +4,23 @@ events
     switchCapacity
     next
 
-initialState PowerOff
+initialState PowerOff.Now
 
-state PowerOff
+state PowerOff.Now
     switchCapacity => RedLight
 end
 
 state RedLight
-    switchCapacity => PowerOff
+    switchCapacity => PowerOff.Now
     next => GreenLight
 end
 
 state YellowLight
-    switchCapacity => PowerOff
+    switchCapacity => PowerOff.Now
     next => RedLight
 end
 
 state GreenLight
-    switchCapacity => PowerOff
+    switchCapacity => PowerOff.Now
     next => YellowLight
 end

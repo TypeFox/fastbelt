@@ -30,13 +30,14 @@ func NewParser(srv StatemachineModelGeneratedSrvCont) *Parser {
 const (
 	CommandNameID_0 = iota + 1
 	EventNameID_0
+	FQNDot_0
+	FQNID_0
+	FQNID_1
 	StateActionsID_0
 	StateLeftBrace_0
-	StateNameID_0
 	StateRightBrace_0
 	Stateactions_0
 	Stateend_0
-	StatemachineInitID_0
 	StatemachineNameID_0
 	Statemachinecommands_0
 	Statemachineevents_0
@@ -45,8 +46,13 @@ const (
 	Statestate_0
 	TransitionEqualsGreaterThan_0
 	TransitionEventID_0
-	TransitionStateID_0
 )
+
+var FQNLookahead8 = parser.LLkLookahead{
+	parser.LookaheadOption{
+		parser.LookaheadPath{Keyword_Dot_Idx},
+	},
+}
 
 var StateLookahead5 = parser.LLkLookahead{
 	parser.LookaheadOption{
@@ -143,10 +149,12 @@ func (p *Parser) ParseStatemachine() Statemachine {
 		core.AssignToken(current, token, StatemachineinitialState_0)
 	}
 	{
-		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(current, token, StatemachineInitID_0)
-		if token != nil {
-			current.SetInit(p.references().StatemachineInit(current, token))
+		result := core.NewStringNode()
+		result.SetSegmentStartToken(p.state.LA(1))
+		p.ParseFQN(result)
+		result.SetSegmentEndToken(p.state.LA(0))
+		if result != nil {
+			current.SetInit(p.references().StatemachineInit(current, result))
 		}
 	}
 	{
@@ -197,10 +205,12 @@ func (p *Parser) ParseState() State {
 		core.AssignToken(current, token, Statestate_0)
 	}
 	{
-		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(current, token, StateNameID_0)
-		if token != nil {
-			current.SetName(token)
+		result := core.NewStringNode()
+		result.SetSegmentStartToken(p.state.LA(1))
+		p.ParseFQN(result)
+		result.SetSegmentEndToken(p.state.LA(0))
+		if result != nil {
+			current.SetName(result)
 		}
 	}
 	if p.state.Lookahead(StateLookahead5) == 0 {
@@ -257,12 +267,31 @@ func (p *Parser) ParseTransition() Transition {
 		core.AssignToken(current, token, TransitionEqualsGreaterThan_0)
 	}
 	{
-		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(current, token, TransitionStateID_0)
-		if token != nil {
-			current.SetState(p.references().TransitionState(current, token))
+		result := core.NewStringNode()
+		result.SetSegmentStartToken(p.state.LA(1))
+		p.ParseFQN(result)
+		result.SetSegmentEndToken(p.state.LA(0))
+		if result != nil {
+			current.SetState(p.references().TransitionState(current, result))
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
+}
+
+func (p *Parser) ParseFQN(current core.StringNode) {
+	{
+		token := p.state.Consume(Token_ID_Idx)
+		core.AssignToken(current, token, FQNID_0)
+	}
+	for p.state.Lookahead(FQNLookahead8) == 0 {
+		{
+			token := p.state.Consume(Keyword_Dot_Idx)
+			core.AssignToken(current, token, FQNDot_0)
+		}
+		{
+			token := p.state.Consume(Token_ID_Idx)
+			core.AssignToken(current, token, FQNID_1)
+		}
+	}
 }
