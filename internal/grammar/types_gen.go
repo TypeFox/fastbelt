@@ -15,6 +15,8 @@ type Grammar interface {
 	SetName(value *core.Token)
 	Rules() []ParserRule
 	SetRulesItem(item ParserRule)
+	Strings() []StringRule
+	SetStringsItem(item StringRule)
 	Terminals() []Token
 	SetTerminalsItem(item Token)
 	Interfaces() []Interface
@@ -31,6 +33,7 @@ func NewGrammar() Grammar {
 type GrammarData struct {
 	name       *core.Token
 	rules      []ParserRule
+	strings    []StringRule
 	terminals  []Token
 	interfaces []Interface
 }
@@ -38,6 +41,7 @@ type GrammarData struct {
 func NewGrammarData() GrammarData {
 	return GrammarData{
 		rules:      []ParserRule{},
+		strings:    []StringRule{},
 		terminals:  []Token{},
 		interfaces: []Interface{},
 	}
@@ -47,6 +51,9 @@ func (i *GrammarData) IsGrammar() {}
 
 func (i *GrammarData) ForEachNode(fn func(core.AstNode)) {
 	for _, item := range i.rules {
+		fn(item)
+	}
+	for _, item := range i.strings {
 		fn(item)
 	}
 	for _, item := range i.terminals {
@@ -82,6 +89,14 @@ func (i *GrammarData) Rules() []ParserRule {
 
 func (i *GrammarData) SetRulesItem(item ParserRule) {
 	i.rules = append(i.rules, item)
+}
+
+func (i *GrammarData) Strings() []StringRule {
+	return i.strings
+}
+
+func (i *GrammarData) SetStringsItem(item StringRule) {
+	i.strings = append(i.strings, item)
 }
 
 func (i *GrammarData) Terminals() []Token {
@@ -1473,4 +1488,68 @@ func (i *ActionImpl) ForEachNode(fn func(core.AstNode)) {
 func (i *ActionImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.ElementData.ForEachReference(fn)
 	i.ActionData.ForEachReference(fn)
+}
+
+type StringRule interface {
+	core.AstNode
+	AbstractRule
+
+	IsStringRule()
+	Body() Element
+	SetBody(value Element)
+}
+
+func NewStringRule() StringRule {
+	return &StringRuleImpl{
+		AstNodeBase:      core.NewAstNode(),
+		AbstractRuleData: NewAbstractRuleData(),
+		StringRuleData:   NewStringRuleData(),
+	}
+}
+
+type StringRuleData struct {
+	body Element
+}
+
+func NewStringRuleData() StringRuleData {
+	return StringRuleData{}
+}
+
+func (i *StringRuleData) IsStringRule() {}
+
+func (i *StringRuleData) ForEachNode(fn func(core.AstNode)) {
+	if i.body != nil {
+		fn(i.body)
+	}
+}
+
+func (i *StringRuleData) ForEachReference(fn func(core.UntypedReference)) {
+}
+
+func (i *StringRuleData) Body() Element {
+	if i != nil && i.body != nil {
+		return i.body
+	} else {
+		return nil
+	}
+}
+
+func (i *StringRuleData) SetBody(value Element) {
+	i.body = value
+}
+
+type StringRuleImpl struct {
+	core.AstNodeBase
+	AbstractRuleData
+	StringRuleData
+}
+
+func (i *StringRuleImpl) ForEachNode(fn func(core.AstNode)) {
+	i.AbstractRuleData.ForEachNode(fn)
+	i.StringRuleData.ForEachNode(fn)
+}
+
+func (i *StringRuleImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.AbstractRuleData.ForEachReference(fn)
+	i.StringRuleData.ForEachReference(fn)
 }

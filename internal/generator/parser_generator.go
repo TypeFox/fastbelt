@@ -21,6 +21,7 @@ type ParserGeneratorContext struct {
 	accessNames        map[core.AstNode]string
 	lookaheads         map[core.AstNode]LookaheadValue
 	orLookaheads       map[core.AstNode]LookaheadValue
+	stringRule         bool
 }
 
 type LookaheadValue struct {
@@ -134,6 +135,9 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 	for _, rule := range grammr.Rules() {
 		generateParseFunction(node, context, rule)
 	}
+	for _, stringRule := range grammr.Strings() {
+		generateStringParseFunction(node, context, stringRule)
+	}
 
 	return FormatIfPossible(node.String())
 }
@@ -142,6 +146,10 @@ func populateContext(context *ParserGeneratorContext) {
 	for _, rule := range context.grammar.Rules() {
 		ruleName := rule.Name()
 		populateContextWithNode(context, ruleName, rule.Body())
+	}
+	for _, stringRule := range context.grammar.Strings() {
+		ruleName := stringRule.Name()
+		populateContextWithNode(context, ruleName, stringRule.Body())
 	}
 }
 
@@ -205,6 +213,7 @@ func generateParseFunction(node generator.Node, context *ParserGeneratorContext,
 	if returnType == nil {
 		panic("Unable to find return type for rule: " + rule.Name())
 	}
+	context.stringRule = false
 	node.AppendLine("func (p *Parser) Parse", rule.Name(), "() ", returnType.Name(), " {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("current := New", returnType.Name(), "()")
@@ -212,6 +221,16 @@ func generateParseFunction(node generator.Node, context *ParserGeneratorContext,
 		generateAbstractElementParser(n, context, rule.Body())
 		n.AppendLine("current.SetSegmentEndToken(p.state.LA(0))")
 		n.AppendLine("return current")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+}
+
+func generateStringParseFunction(node generator.Node, context *ParserGeneratorContext, rule grammar.StringRule) {
+	context.stringRule = true
+	node.AppendLine("func (p *Parser) Parse", rule.Name(), "(current core.StringNode) {")
+	node.Indent(func(n generator.Node) {
+		generateAbstractElementParser(n, context, rule.Body())
 	})
 	node.AppendLine("}")
 	node.AppendLine()
@@ -252,7 +271,7 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 				generateKeywordParser(indent, context, keyword)
 			} else if ruleCall, ok := element.(grammar.RuleCall); ok {
 				resultName := generateRuleCallParser(indent, context, ruleCall)
-				if resultName == "result" {
+				if resultName == "result" && !context.stringRule {
 					// Unassigned rule call result
 					// Needs to be merged into current node
 					indent.AppendLine("core.MergeTokens(result, current.Tokens())")
@@ -347,17 +366,14 @@ func generateKeywordParser(node generator.Node, context *ParserGeneratorContext,
 }
 
 func generateRuleCallParser(node generator.Node, context *ParserGeneratorContext, ruleCall grammar.RuleCall) string {
-	token := getTokenWithName(context.grammar, ruleCall.Rule().Text())
-	rule := getRuleWithName(context.grammar, ruleCall.Rule().Text())
+	target := ruleCall.Rule().Ref(ctx.Background())
 	lookaheadName := context.lookaheads[ruleCall].name
 	lookahead := generateLookaheadString(lookaheadName)
 	var result string
-	if token != nil {
+	if _, ok := target.(grammar.Token); ok {
 		result = "token"
-	} else if rule != nil {
-		result = "result"
 	} else {
-		panic("Unresolved rule call: " + ruleCall.Rule().Text())
+		result = "result"
 	}
 	first := true
 	generateCardinality(node, func(n generator.Node) {
@@ -366,11 +382,20 @@ func generateRuleCallParser(node generator.Node, context *ParserGeneratorContext
 			eq = ":="
 			first = false
 		}
-		if token != nil {
+		if token, ok := target.(grammar.Token); ok {
 			n.AppendLine("token ", eq, " p.state.Consume(", GeneratedTokenIdxName(token), ")")
 			n.AppendLine("core.AssignToken(current, token, ", context.accessNames[ruleCall], ")")
-		} else if rule != nil {
+		} else if rule, ok := target.(grammar.ParserRule); ok {
 			n.AppendLine("result ", eq, " p.Parse", rule.Name(), "()")
+		} else if stringRule, ok := target.(grammar.StringRule); ok {
+			if context.stringRule {
+				n.AppendLine("p.Parse", stringRule.Name(), "(current)")
+			} else {
+				n.AppendLine("result ", eq, " core.NewStringNode()")
+				n.AppendLine("result.SetSegmentStartToken(p.state.LA(1))")
+				n.AppendLine("p.Parse", stringRule.Name(), "(result)")
+				n.AppendLine("result.SetSegmentEndToken(p.state.LA(0))")
+			}
 		}
 	}, func(n generator.Node) { n.Append(lookahead) }, ruleCall.Cardinality())
 	return result

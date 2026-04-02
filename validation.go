@@ -85,7 +85,17 @@ func NewDiagnostic(severity DiagnosticSeverity, message string, node AstNode, op
 func WithToken(token *Token) DiagnosticOption {
 	return func(d *Diagnostic) {
 		if token != nil {
-			d.Range = token.Segment.Range
+			d.Range = token.TextSegment.Range
+		}
+	}
+}
+
+func WithReference(ref UntypedReference) DiagnosticOption {
+	return func(d *Diagnostic) {
+		if ref != nil {
+			if seg := ref.Segment(); seg != nil {
+				d.Range = seg.Range
+			}
 		}
 	}
 }
