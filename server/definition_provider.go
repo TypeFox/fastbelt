@@ -64,18 +64,22 @@ func (dp *DefaultDefinitionProvider) fromReference(ref core.UntypedReference) []
 }
 
 func (dp *DefaultDefinitionProvider) fromName(token *core.Token) []lsp.Location {
-	target := token.Element
+	target := token.Owner()
 	if target == nil {
 		return nil
 	}
 	namer := dp.srv.Linking().Namer
-	_, nameToken := namer.Name(target)
-	if nameToken == nil || nameToken != token {
-		return nil // The token at the position is not the name token
+	nameUnit := namer.Name(target)
+	if nameUnit == nil {
+		return nil
+	}
+	segment := nameUnit.Segment()
+	if token.TextSegment.Indices.Start < segment.Indices.Start || token.TextSegment.Indices.End > segment.Indices.End {
+		return nil // The token is not within the name segment
 	}
 	link := lsp.Location{
 		URI:   target.Document().URI.DocumentURI(),
-		Range: nameToken.Segment.Range.LspRange(),
+		Range: segment.Range.LspRange(),
 	}
 	return []lsp.Location{link}
 }

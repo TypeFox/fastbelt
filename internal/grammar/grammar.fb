@@ -3,12 +3,13 @@ grammar Fastbelt;
 interface Grammar {
     Name string
     Rules []ParserRule
+    Strings []StringRule
     Terminals []Token
     Interfaces []Interface
 }
 
 Grammar: "grammar" Name=ID ";"
-    (Rules+=ParserRule | Terminals+=Token | Interfaces+=Interface)*
+    (Rules+=ParserRule | Terminals+=Token | Interfaces+=Interface | Strings+=StringRule)*
 ;
 
 interface Interface {
@@ -56,7 +57,7 @@ ReferenceType: "*" Type=[Interface:ID];
 
 SimpleType: Type=[Interface:ID];
 
-PrimitiveType: Type=("string" | "bool");
+PrimitiveType: Type=("string" | "bool" | "String");
 
 interface AbstractRule {
     Name string
@@ -98,7 +99,7 @@ interface Keyword extends Assignable {
     Value string
 }
 
-Keyword: Value=String;
+Keyword: Value=StringToken;
 
 interface Assignment extends Element {
     Property *Field
@@ -137,11 +138,23 @@ interface Action extends Element {
 
 Action: "{" Type=[Interface:ID] ("." Property=[Field:ID] Operator=("+=" | "=") "current")? "}";
 
+interface StringRule extends AbstractRule {
+    Body Element
+}
+
+StringRule: "string" Name=ID ":" Body=StringAlternatives ";";
+
+StringAlternatives returns Element: StringGroup ({Alternatives.Alts+=current} ("|" Alts+=StringGroup)+)?;
+
+StringGroup returns Element: StringElement ({Group.Elements+=current} Elements+=StringElement+)?;
+
+StringElement returns Element: (Keyword | RuleCall | "(" StringAlternatives ")") Cardinality=("*" | "+" | "?")?;
+
 // Move comments in front of RegexLiteral
 comment token SL_COMMENT: /\/\/[^\r\n]*/;
 comment token ML_COMMENT: /\/\*[^*]*\*\//;
 
-token String: /"[^"]+"/;
+token StringToken: /"[^"]+"/;
 token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
 token RegexLiteral: /\/([^\r\n\[\/\\]|\\.|\[([^\r\n\]\\]|\\.)*\])+\//;
 hidden token WS: /[ \n\r\t]+/;

@@ -9,7 +9,7 @@ import (
 )
 
 type Namer interface {
-	Name(node core.AstNode) (string, *core.Token)
+	Name(node core.AstNode) core.StringUnit
 }
 
 type DefaultNamer struct{}
@@ -18,10 +18,12 @@ func NewDefaultNamer() Namer {
 	return &DefaultNamer{}
 }
 
-func (n *DefaultNamer) Name(node core.AstNode) (string, *core.Token) {
-	if namedNode, ok := node.(core.NamedNode); ok {
-		return namedNode.Name(), namedNode.NameToken()
+func (n *DefaultNamer) Name(node core.AstNode) core.StringUnit {
+	if namedNode, ok := node.(core.NamedTokenNode); ok {
+		return namedNode.NameToken()
+	} else if namedStringNode, ok := node.(core.NamedStringNode); ok {
+		return namedStringNode.NameNode()
 	} else {
-		return "", nil
+		return nil
 	}
 }

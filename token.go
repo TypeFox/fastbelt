@@ -55,10 +55,10 @@ var EOF = NewTokenType(
 var EOFToken = NewToken(EOF, "", 0, 0, 0, 0, 0, 0)
 
 type Token struct {
-	Type    *TokenType
-	Image   string
-	TypeId  int
-	Segment TextSegment
+	Type        *TokenType
+	Image       string
+	TypeId      int
+	TextSegment TextSegment
 	// Semantic information
 	Element AstNode
 	Kind    int
@@ -68,7 +68,7 @@ func NewToken(tokenType *TokenType, image string, startOffset, endOffset, startL
 	return &Token{
 		Type:  tokenType,
 		Image: image,
-		Segment: TextSegment{
+		TextSegment: TextSegment{
 			Indices: TextIndexRange{
 				Start: TextIndex(startOffset),
 				End:   TextIndex(endOffset),
@@ -102,6 +102,22 @@ func (t *Token) Assign(element AstNode, kind int) {
 	t.Kind = kind
 }
 
+func (t *Token) String() string {
+	return t.Image
+}
+
+func (t *Token) Segment() *TextSegment {
+	return &t.TextSegment
+}
+
+func (t *Token) Owner() AstNode {
+	if stringNode, ok := t.Element.(StringNode); ok {
+		// If the token is part of a StringNode, its owner is the container of the StringNode
+		return stringNode.Container()
+	}
+	return t.Element
+}
+
 type TokenSlice []*Token
 
 // Searches for the token that contains the given offset.
@@ -111,9 +127,9 @@ func (ts TokenSlice) SearchOffset(offset int) *Token {
 	for low <= high {
 		mid := (low + high) / 2
 		token := ts[mid]
-		if offset < int(token.Segment.Indices.Start) {
+		if offset < int(token.TextSegment.Indices.Start) {
 			high = mid - 1
-		} else if offset >= int(token.Segment.Indices.End) {
+		} else if offset >= int(token.TextSegment.Indices.End) {
 			low = mid + 1
 		} else {
 			return token
