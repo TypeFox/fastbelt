@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -27,11 +28,39 @@ func main() {
 }
 
 func runCmd() error {
-	grammarPathFlag := flag.String("g", "./grammar.fb", "Path to the grammar file")
-	outputPathFlag := flag.String("o", "./", "Path to the output directory")
-	packageNameFlag := flag.String("p", "", "Package name for generated code (defaults to the last segment of the output path)")
-	verboseFlag := flag.Bool("v", false, "Enable verbose output about written files")
-	flag.Parse()
+	args := os.Args[1:]
+	if len(args) > 0 {
+		switch args[0] {
+		case "help", "-h", "-help", "--help":
+			printGlobalHelp()
+			return nil
+		case "scaffold":
+			return runScaffoldCLI(args[1:])
+		}
+	}
+	return runLegacyGenerate(args)
+}
+
+func runLegacyGenerate(args []string) error {
+	fs := flag.NewFlagSet("generate", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	grammarPathFlag := fs.String("g", "./grammar.fb", "Path to the grammar file")
+	outputPathFlag := fs.String("o", "./", "Path to the output directory")
+	packageNameFlag := fs.String("p", "", "Package name for generated code (defaults to the last segment of the output path)")
+	verboseFlag := fs.Bool("v", false, "Enable verbose output about written files")
+
+	fs.Usage = func() {
+		printGlobalHelp()
+		fmt.Fprintf(os.Stderr, "\nGenerate flags:\n")
+		fs.PrintDefaults()
+	}
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
+		return err
+	}
 
 	grammarPath, err := filepath.Abs(*grammarPathFlag)
 	if err != nil {

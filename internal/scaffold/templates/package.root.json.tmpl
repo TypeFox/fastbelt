@@ -1,0 +1,25 @@
+{
+  "name": "{{.RootNPMName}}",
+  "private": true,
+  "engineStrict": true,
+  "engines": {
+    "node": ">=20.10.0",
+    "npm": ">=10.2.3"
+  },
+  "scripts": {
+    "clean": "shx rm -rf ./vscode-extension/dist ./vscode-extension/*.tsbuildinfo",
+    "build": "npm run build --workspace=vscode-extension",
+    "package": "npm run build --workspace=vscode-extension && npm run package --workspace=vscode-extension"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.6.0",
+    "@types/vscode": "^1.104.0",
+    "@types/node": "22.x",
+    "esbuild": "^0.27.0",
+    "shx": "^0.4.0",
+    "typescript": "^5.9.3"
+  },
+  "workspaces": [
+    "vscode-extension"
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "name": "{{.LanguageID}}",
+  "scopeName": "{{.ScopeName}}",
+  "fileTypes": [
+    ".{{.VSCodeFileExt}}"
+  ],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "name": "keyword.control.{{.VSCodeFileExt}}",
+      "match": "\\bhello\\b"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.{{.VSCodeFileExt}}",
+          "begin": "/\\*",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.{{.VSCodeFileExt}}"
+            }
+          },
+          "end": "\\*/",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.{{.VSCodeFileExt}}"
+            }
+          }
+        },
+        {
+          "begin": "//",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.whitespace.comment.leading.{{.VSCodeFileExt}}"
+            }
+          },
+          "end": "(?=$)",
+          "name": "comment.line.{{.VSCodeFileExt}}"
+        }
+      ]
+    }
+  }
+}
