@@ -16,7 +16,7 @@ Statemachine returns Statemachine:
     ("commands"
       Commands+=Command+)?
     "initialState"
-    Init=[State:ID]
+    Init=[State:FQN]
     States+=State*;
 
 interface Event {
@@ -34,13 +34,13 @@ Command returns Command:
     Name=ID;
 
 interface State {
-    Name string
+    Name String
     Actions []*Command
     Transitions []Transition
 }
 
 State returns State:
-    "state" Name=ID
+    "state" Name=FQN
         ("actions" "{" Actions+=[Command:ID]+ "}")?
         Transitions+=Transition*
     "end";
@@ -52,9 +52,11 @@ interface Transition {
 
 Transition returns Transition:
     Event=[Event:ID] "=>"
-    State=[State:ID];
+    State=[State:FQN];
 
 token ID: /[_a-zA-Z][\w_]*/;
+
+string FQN: ID ("." ID)*;
 
 hidden token WS: /\s+/;
 hidden token ML_COMMENT: /\/\*[\s\S]*?\*\//;

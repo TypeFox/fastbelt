@@ -258,8 +258,7 @@ type State interface {
 
 	IsState()
 	Name() string
-	NameToken() *core.Token
-	SetName(value *core.Token)
+	SetName(value core.StringNode)
 	Actions() []*core.Reference[Command]
 	SetActionsItem(item *core.Reference[Command])
 	Transitions() []Transition
@@ -274,7 +273,7 @@ func NewState() State {
 }
 
 type StateData struct {
-	name        *core.Token
+	name        core.StringNode
 	actions     []*core.Reference[Command]
 	transitions []Transition
 }
@@ -289,6 +288,9 @@ func NewStateData() StateData {
 func (i *StateData) IsState() {}
 
 func (i *StateData) ForEachNode(fn func(core.AstNode)) {
+	if i.name != nil {
+		fn(i.name)
+	}
 	for _, item := range i.transitions {
 		fn(item)
 	}
@@ -302,17 +304,17 @@ func (i *StateData) ForEachReference(fn func(core.UntypedReference)) {
 
 func (i *StateData) Name() string {
 	if i != nil && i.name != nil {
-		return i.name.Image
+		return i.name.String()
 	} else {
 		return ""
 	}
 }
 
-func (i *StateData) NameToken() *core.Token {
+func (i *StateData) NameNode() core.StringNode {
 	return i.name
 }
 
-func (i *StateData) SetName(value *core.Token) {
+func (i *StateData) SetName(value core.StringNode) {
 	i.name = value
 }
 
