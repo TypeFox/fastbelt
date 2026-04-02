@@ -509,7 +509,6 @@ var Token_SL_COMMENT = core.NewTokenType(
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
-		accepted := map[int]bool{2: true}
 		state := 0
 		acceptedIndex := 0
 		index := 0
@@ -572,7 +571,7 @@ var Token_SL_COMMENT = core.NewTokenType(
 				break loop
 			}
 			index += runeSize
-			if accepted[state] {
+			if Token_SL_COMMENT_Accepting[state] {
 				acceptedIndex = index
 			}
 		}
@@ -590,6 +589,9 @@ var Token_SL_COMMENT_Next = [][]int{
 	{2},
 	{2, 2, 2},
 }
+var Token_SL_COMMENT_Accepting = [3]bool{
+	2: true,
+}
 
 const Token_ML_COMMENT_Idx = 29
 
@@ -603,7 +605,6 @@ var Token_ML_COMMENT = core.NewTokenType(
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
-		accepted := map[int]bool{4: true}
 		state := 0
 		acceptedIndex := 0
 		index := 0
@@ -700,7 +701,7 @@ var Token_ML_COMMENT = core.NewTokenType(
 				break loop
 			}
 			index += runeSize
-			if accepted[state] {
+			if Token_ML_COMMENT_Accepting[state] {
 				acceptedIndex = index
 			}
 		}
@@ -721,6 +722,9 @@ var Token_ML_COMMENT_Next = [][]int{
 	{2, 3, 2},
 	{4},
 	{},
+}
+var Token_ML_COMMENT_Accepting = [5]bool{
+	4: true,
 }
 
 const Token_String_Idx = 30

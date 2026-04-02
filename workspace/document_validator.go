@@ -30,10 +30,14 @@ func (v *DefaultDocumentValidator) Validate(ctx context.Context, doc *core.Docum
 	if doc.Root == nil {
 		return nil
 	}
-	var diagnostics []*core.Diagnostic
-	diagnostics = append(diagnostics, CreateLexerDiagnostics(doc)...)
-	diagnostics = append(diagnostics, CreateParserDiagnostics(doc)...)
-	diagnostics = append(diagnostics, CreateLinkerDiagnostics(doc)...)
+	lexerErrors := CreateLexerDiagnostics(doc)
+	parserErrors := CreateParserDiagnostics(doc)
+	linkerErrors := CreateLinkerDiagnostics(doc)
+	capacity := len(lexerErrors) + len(parserErrors) + len(linkerErrors) + 8
+	diagnostics := make([]*core.Diagnostic, 0, capacity)
+	diagnostics = append(diagnostics, lexerErrors...)
+	diagnostics = append(diagnostics, parserErrors...)
+	diagnostics = append(diagnostics, linkerErrors...)
 	accept := func(d *core.Diagnostic) {
 		diagnostics = append(diagnostics, d)
 	}

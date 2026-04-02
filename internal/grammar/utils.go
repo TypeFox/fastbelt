@@ -36,8 +36,8 @@ func FindReturnType(rule ParserRule, ctx context.Context) Interface {
 	if typeRef != nil {
 		return typeRef.Ref(ctx)
 	}
-	grammar := rule.Container().(Grammar)
-	if grammar == nil {
+	grammar, ok := rule.Container().(Grammar)
+	if !ok || grammar == nil {
 		return nil
 	}
 	return FindInterfaceByName(grammar, rule.Name())

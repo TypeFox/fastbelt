@@ -142,8 +142,8 @@ func (rule *ParserRuleImpl) Validate(ctx context.Context, _ string, accept core.
 func checkRuleReturnType(rule ParserRule, _ context.Context, accept core.ValidationAcceptor) {
 	// Only search if not explicitly provided
 	if rule.ReturnType() == nil && rule.Name() != "" {
-		grammar := rule.Container().(Grammar)
-		if grammar == nil {
+		grammar, ok := rule.Container().(Grammar)
+		if !ok || grammar == nil {
 			return
 		}
 		returnType := FindInterfaceByName(grammar, rule.Name())

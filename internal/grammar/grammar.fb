@@ -74,7 +74,7 @@ interface Token extends AbstractRule {
     Regexp string
 }
 
-Token: (Type?="hidden" | Type?="comment")? "token" Name=ID ":" Regexp=RegexLiteral ";";
+Token: (Type="hidden" | Type="comment")? "token" Name=ID ":" Regexp=RegexLiteral ";";
 
 interface Element {
     Cardinality string
