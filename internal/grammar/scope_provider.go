@@ -79,7 +79,7 @@ func generateInterfaceFieldsDescriptions(ctx context.Context, iface Interface, v
 	visited[iface] = true
 	for _, field := range iface.Fields() {
 		if field.Name() != "" {
-			fieldDesc = append(fieldDesc, core.NewSymbolDescription(field, field.Name(), &field.NameToken().Segment, field.Segment()))
+			fieldDesc = append(fieldDesc, core.NewSymbolDescription(field, field.Name(), field.NameToken().Segment(), field.Segment()))
 		}
 	}
 	for _, super := range iface.Extends() {

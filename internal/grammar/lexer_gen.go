@@ -298,7 +298,25 @@ var Keyword_comment = core.NewTokenType(
 	[]rune{'c'},
 )
 
-const Keyword_current_Idx = 17
+const Keyword_composite_Idx = 17
+
+var Keyword_composite = core.NewTokenType(
+	Keyword_composite_Idx,
+	"composite",
+	"composite",
+	0,
+	0,
+	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "composite") {
+			return 9
+		}
+		return 0
+	},
+	[]rune{'c'},
+)
+
+const Keyword_current_Idx = 18
 
 var Keyword_current = core.NewTokenType(
 	Keyword_current_Idx,
@@ -316,7 +334,7 @@ var Keyword_current = core.NewTokenType(
 	[]rune{'c'},
 )
 
-const Keyword_extends_Idx = 18
+const Keyword_extends_Idx = 19
 
 var Keyword_extends = core.NewTokenType(
 	Keyword_extends_Idx,
@@ -334,7 +352,7 @@ var Keyword_extends = core.NewTokenType(
 	[]rune{'e'},
 )
 
-const Keyword_grammar_Idx = 19
+const Keyword_grammar_Idx = 20
 
 var Keyword_grammar = core.NewTokenType(
 	Keyword_grammar_Idx,
@@ -352,7 +370,7 @@ var Keyword_grammar = core.NewTokenType(
 	[]rune{'g'},
 )
 
-const Keyword_hidden_Idx = 20
+const Keyword_hidden_Idx = 21
 
 var Keyword_hidden = core.NewTokenType(
 	Keyword_hidden_Idx,
@@ -370,7 +388,7 @@ var Keyword_hidden = core.NewTokenType(
 	[]rune{'h'},
 )
 
-const Keyword_interface_Idx = 21
+const Keyword_interface_Idx = 22
 
 var Keyword_interface = core.NewTokenType(
 	Keyword_interface_Idx,
@@ -388,7 +406,7 @@ var Keyword_interface = core.NewTokenType(
 	[]rune{'i'},
 )
 
-const Keyword_returns_Idx = 22
+const Keyword_returns_Idx = 23
 
 var Keyword_returns = core.NewTokenType(
 	Keyword_returns_Idx,
@@ -406,7 +424,7 @@ var Keyword_returns = core.NewTokenType(
 	[]rune{'r'},
 )
 
-const Keyword_string_Idx = 23
+const Keyword_string_Idx = 24
 
 var Keyword_string = core.NewTokenType(
 	Keyword_string_Idx,
@@ -424,7 +442,7 @@ var Keyword_string = core.NewTokenType(
 	[]rune{'s'},
 )
 
-const Keyword_token_Idx = 24
+const Keyword_token_Idx = 25
 
 var Keyword_token = core.NewTokenType(
 	Keyword_token_Idx,
@@ -442,7 +460,7 @@ var Keyword_token = core.NewTokenType(
 	[]rune{'t'},
 )
 
-const Keyword_LeftBrace_Idx = 25
+const Keyword_LeftBrace_Idx = 26
 
 var Keyword_LeftBrace = core.NewTokenType(
 	Keyword_LeftBrace_Idx,
@@ -460,7 +478,7 @@ var Keyword_LeftBrace = core.NewTokenType(
 	[]rune{'{'},
 )
 
-const Keyword_Pipe_Idx = 26
+const Keyword_Pipe_Idx = 27
 
 var Keyword_Pipe = core.NewTokenType(
 	Keyword_Pipe_Idx,
@@ -478,7 +496,7 @@ var Keyword_Pipe = core.NewTokenType(
 	[]rune{'|'},
 )
 
-const Keyword_RightBrace_Idx = 27
+const Keyword_RightBrace_Idx = 28
 
 var Keyword_RightBrace = core.NewTokenType(
 	Keyword_RightBrace_Idx,
@@ -496,7 +514,7 @@ var Keyword_RightBrace = core.NewTokenType(
 	[]rune{'}'},
 )
 
-const Token_SL_COMMENT_Idx = 28
+const Token_SL_COMMENT_Idx = 29
 
 var Token_SL_COMMENT = core.NewTokenType(
 	Token_SL_COMMENT_Idx,
@@ -592,7 +610,7 @@ var Token_SL_COMMENT_Accepting = [3]bool{
 	2: true,
 }
 
-const Token_ML_COMMENT_Idx = 29
+const Token_ML_COMMENT_Idx = 30
 
 var Token_ML_COMMENT = core.NewTokenType(
 	Token_ML_COMMENT_Idx,
@@ -726,12 +744,12 @@ var Token_ML_COMMENT_Accepting = [5]bool{
 	4: true,
 }
 
-const Token_String_Idx = 30
+const Token_StringLiteral_Idx = 31
 
-var Token_String = core.NewTokenType(
-	Token_String_Idx,
-	"String",
-	"String",
+var Token_StringLiteral = core.NewTokenType(
+	Token_StringLiteral_Idx,
+	"StringLiteral",
+	"StringLiteral",
 	0,
 	0,
 	false,
@@ -747,8 +765,8 @@ var Token_String = core.NewTokenType(
 			switch state {
 			case 0:
 				nextState := -1
-				next := Token_String_Next[0]
-				lookup := Token_String_Lookup[0]
+				next := Token_StringLiteral_Next[0]
+				lookup := Token_StringLiteral_Lookup[0]
 				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
 					lo := rune(lowHigh & 0xFFFFFFFF)
 					hi := rune(lowHigh >> 32)
@@ -764,8 +782,8 @@ var Token_String = core.NewTokenType(
 				}
 			case 1:
 				nextState := -1
-				next := Token_String_Next[1]
-				lookup := Token_String_Lookup[1]
+				next := Token_StringLiteral_Next[1]
+				lookup := Token_StringLiteral_Lookup[1]
 				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
 					lo := rune(lowHigh & 0xFFFFFFFF)
 					hi := rune(lowHigh >> 32)
@@ -781,8 +799,8 @@ var Token_String = core.NewTokenType(
 				}
 			case 2:
 				nextState := -1
-				next := Token_String_Next[2]
-				lookup := Token_String_Lookup[2]
+				next := Token_StringLiteral_Next[2]
+				lookup := Token_StringLiteral_Lookup[2]
 				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
 					lo := rune(lowHigh & 0xFFFFFFFF)
 					hi := rune(lowHigh >> 32)
@@ -798,8 +816,8 @@ var Token_String = core.NewTokenType(
 				}
 			case 3:
 				nextState := -1
-				next := Token_String_Next[3]
-				lookup := Token_String_Lookup[3]
+				next := Token_StringLiteral_Next[3]
+				lookup := Token_StringLiteral_Lookup[3]
 				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
 					lo := rune(lowHigh & 0xFFFFFFFF)
 					hi := rune(lowHigh >> 32)
@@ -817,7 +835,7 @@ var Token_String = core.NewTokenType(
 				break loop
 			}
 			index += runeSize
-			if Token_String_Accepting[state] {
+			if Token_StringLiteral_Accepting[state] {
 				acceptedIndex = index
 			}
 		}
@@ -825,23 +843,23 @@ var Token_String = core.NewTokenType(
 	},
 	[]rune{'"'},
 )
-var Token_String_Lookup = [][]int64{
+var Token_StringLiteral_Lookup = [][]int64{
 	{0x0000002200000022},
 	{0x0000002100000000, 0x0010FFFF00000023},
 	{0x0000002100000000, 0x0000002200000022, 0x0010FFFF00000023},
 	{},
 }
-var Token_String_Next = [][]int{
+var Token_StringLiteral_Next = [][]int{
 	{1},
 	{2, 2},
 	{2, 3, 2},
 	{},
 }
-var Token_String_Accepting = [4]bool{
+var Token_StringLiteral_Accepting = [4]bool{
 	3: true,
 }
 
-const Token_ID_Idx = 31
+const Token_ID_Idx = 32
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
@@ -918,7 +936,7 @@ var Token_ID_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_RegexLiteral_Idx = 32
+const Token_RegexLiteral_Idx = 33
 
 var Token_RegexLiteral = core.NewTokenType(
 	Token_RegexLiteral_Idx,
@@ -1090,7 +1108,7 @@ var Token_RegexLiteral_Accepting = [7]bool{
 	5: true,
 }
 
-const Token_WS_Idx = 33
+const Token_WS_Idx = 34
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
@@ -1185,6 +1203,7 @@ func NewLexer() lexer.Lexer {
 		Keyword_RightBracket,
 		Keyword_bool,
 		Keyword_comment,
+		Keyword_composite,
 		Keyword_current,
 		Keyword_extends,
 		Keyword_grammar,
@@ -1198,7 +1217,7 @@ func NewLexer() lexer.Lexer {
 		Keyword_RightBrace,
 		Token_SL_COMMENT,
 		Token_ML_COMMENT,
-		Token_String,
+		Token_StringLiteral,
 		Token_ID,
 		Token_RegexLiteral,
 		Token_WS,

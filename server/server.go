@@ -154,15 +154,15 @@ func (s *DefaultLanguageServer) CodeLens(ctx context.Context, params *lsp.CodeLe
 func (s *DefaultLanguageServer) ColorPresentation(ctx context.Context, params *lsp.ColorPresentationParams) ([]lsp.ColorPresentation, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) Declaration(ctx context.Context, params *lsp.DeclarationParams) (*lsp.Or_textDocument_declaration, error) {
+func (s *DefaultLanguageServer) Declaration(ctx context.Context, params *lsp.DeclarationParams) ([]lsp.DefinitionLink, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) Definition(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.Location, error) {
+func (s *DefaultLanguageServer) Definition(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.DefinitionLink, error) {
 	definitionProvider := s.srv.Server().DefinitionProvider
 	if definitionProvider == nil {
 		return nil, nil
 	}
-	var result []lsp.Location
+	var result []lsp.DefinitionLink
 	var providerErr error
 	if err := s.srv.Workspace().Lock.Read(ctx, func(ctx context.Context) {
 		result, providerErr = definitionProvider.HandleDefinitionRequest(ctx, params)
@@ -201,7 +201,7 @@ func (s *DefaultLanguageServer) Formatting(ctx context.Context, params *lsp.Docu
 func (s *DefaultLanguageServer) Hover(ctx context.Context, params *lsp.HoverParams) (*lsp.Hover, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) Implementation(ctx context.Context, params *lsp.ImplementationParams) ([]lsp.Location, error) {
+func (s *DefaultLanguageServer) Implementation(ctx context.Context, params *lsp.ImplementationParams) ([]lsp.DefinitionLink, error) {
 	return nil, nil
 }
 func (s *DefaultLanguageServer) InlayHint(ctx context.Context, params *lsp.InlayHintParams) ([]lsp.InlayHint, error) {
@@ -311,7 +311,7 @@ func (s *DefaultLanguageServer) SemanticTokensRange(ctx context.Context, params 
 func (s *DefaultLanguageServer) SignatureHelp(ctx context.Context, params *lsp.SignatureHelpParams) (*lsp.SignatureHelp, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) TypeDefinition(ctx context.Context, params *lsp.TypeDefinitionParams) ([]lsp.Location, error) {
+func (s *DefaultLanguageServer) TypeDefinition(ctx context.Context, params *lsp.TypeDefinitionParams) ([]lsp.DefinitionLink, error) {
 	return nil, nil
 }
 func (s *DefaultLanguageServer) WillSave(ctx context.Context, params *lsp.WillSaveTextDocumentParams) error {

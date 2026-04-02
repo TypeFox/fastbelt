@@ -79,10 +79,10 @@ func (l *DefaultStatemachineModelReferenceLinker) LinkTransitionState(ctx contex
 }
 
 type StatemachineModelReferencesConstructor interface {
-	StatemachineInit(owner core.AstNode, token *core.Token) *core.Reference[State]
-	StateActions(owner core.AstNode, token *core.Token) *core.Reference[Command]
-	TransitionEvent(owner core.AstNode, token *core.Token) *core.Reference[Event]
-	TransitionState(owner core.AstNode, token *core.Token) *core.Reference[State]
+	StatemachineInit(owner core.AstNode, unit core.StringUnit) *core.Reference[State]
+	StateActions(owner core.AstNode, unit core.StringUnit) *core.Reference[Command]
+	TransitionEvent(owner core.AstNode, unit core.StringUnit) *core.Reference[Event]
+	TransitionState(owner core.AstNode, unit core.StringUnit) *core.Reference[State]
 }
 
 type DefaultStatemachineModelReferencesConstructor struct {
@@ -93,24 +93,24 @@ func NewDefaultStatemachineModelReferencesConstructor(srv StatemachineModelLinki
 	return &DefaultStatemachineModelReferencesConstructor{srv: srv}
 }
 
-func (g *DefaultStatemachineModelReferencesConstructor) StatemachineInit(owner core.AstNode, token *core.Token) *core.Reference[State] {
+func (g *DefaultStatemachineModelReferencesConstructor) StatemachineInit(owner core.AstNode, unit core.StringUnit) *core.Reference[State] {
 	fn := g.srv.StatemachineModelLinking().ReferenceLinker.LinkStatemachineInit
-	return core.NewReference(owner, token, fn)
+	return core.NewReference(owner, unit, fn)
 }
 
-func (g *DefaultStatemachineModelReferencesConstructor) StateActions(owner core.AstNode, token *core.Token) *core.Reference[Command] {
+func (g *DefaultStatemachineModelReferencesConstructor) StateActions(owner core.AstNode, unit core.StringUnit) *core.Reference[Command] {
 	fn := g.srv.StatemachineModelLinking().ReferenceLinker.LinkStateActions
-	return core.NewReference(owner, token, fn)
+	return core.NewReference(owner, unit, fn)
 }
 
-func (g *DefaultStatemachineModelReferencesConstructor) TransitionEvent(owner core.AstNode, token *core.Token) *core.Reference[Event] {
+func (g *DefaultStatemachineModelReferencesConstructor) TransitionEvent(owner core.AstNode, unit core.StringUnit) *core.Reference[Event] {
 	fn := g.srv.StatemachineModelLinking().ReferenceLinker.LinkTransitionEvent
-	return core.NewReference(owner, token, fn)
+	return core.NewReference(owner, unit, fn)
 }
 
-func (g *DefaultStatemachineModelReferencesConstructor) TransitionState(owner core.AstNode, token *core.Token) *core.Reference[State] {
+func (g *DefaultStatemachineModelReferencesConstructor) TransitionState(owner core.AstNode, unit core.StringUnit) *core.Reference[State] {
 	fn := g.srv.StatemachineModelLinking().ReferenceLinker.LinkTransitionState
-	return core.NewReference(owner, token, fn)
+	return core.NewReference(owner, unit, fn)
 }
 
 type StatemachineModelSymbolContainers struct{}

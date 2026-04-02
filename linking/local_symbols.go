@@ -98,14 +98,13 @@ func NewDefaultLocalSymbolDescriber(srv LinkingSrvCont) LocalSymbolDescriber {
 }
 
 func (p *DefaultLocalSymbolDescriber) Describe(node core.AstNode) (*core.SymbolDescription, core.AstNode) {
-	name, nameToken := p.srv.Linking().Namer.Name(node)
-	if name != "" {
-		var segment *core.TextSegment
-		if nameToken != nil {
-			segment = &nameToken.Segment
-		}
-		desc := core.NewSymbolDescription(node, name, segment, node.Segment())
-		container := node.Container()
+	container := node.Container()
+	nameUnit := p.srv.Linking().Namer.Name(node)
+	if nameUnit != nil {
+		name := nameUnit.String()
+		segment := nameUnit.Segment()
+		fullSegment := node.Segment()
+		desc := core.NewSymbolDescription(node, name, segment, fullSegment)
 		return desc, container
 	}
 	return nil, nil

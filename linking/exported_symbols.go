@@ -69,13 +69,12 @@ func NewDefaultExportedSymbolDescriber(srv LinkingSrvCont) ExportedSymbolDescrib
 }
 
 func (p *DefaultExportedSymbolDescriber) Describe(node core.AstNode) *core.SymbolDescription {
-	name, nameToken := p.srv.Linking().Namer.Name(node)
-	if name != "" {
-		var segment *core.TextSegment
-		if nameToken != nil {
-			segment = &nameToken.Segment
-		}
-		return core.NewSymbolDescription(node, name, segment, node.Segment())
+	nameUnit := p.srv.Linking().Namer.Name(node)
+	if nameUnit != nil {
+		name := nameUnit.String()
+		segment := nameUnit.Segment()
+		fullSegment := node.Segment()
+		return core.NewSymbolDescription(node, name, segment, fullSegment)
 	}
 	return nil
 }

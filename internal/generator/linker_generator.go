@@ -321,7 +321,7 @@ func generateReferenceConstructor(context *LinkerGeneratorContext) generator.Nod
 	node.AppendLine("type ", context.grammar.Name(), "ReferencesConstructor interface {")
 	node.Indent(func(n generator.Node) {
 		for _, field := range context.fields {
-			n.AppendLine(field.typeName, field.name, "(owner core.AstNode, token *core.Token) *core.Reference[", field.target, "]")
+			n.AppendLine(field.typeName, field.name, "(owner core.AstNode, unit core.StringUnit) *core.Reference[", field.target, "]")
 		}
 	})
 	node.AppendLine("}")
@@ -338,9 +338,9 @@ func generateReferenceConstructor(context *LinkerGeneratorContext) generator.Nod
 	node.AppendLine()
 
 	for _, field := range context.fields {
-		node.AppendLine("func (g *Default", context.grammar.Name(), "ReferencesConstructor) ", field.typeName, field.name, "(owner core.AstNode, token *core.Token) *core.Reference[", field.target, "] {")
+		node.AppendLine("func (g *Default", context.grammar.Name(), "ReferencesConstructor) ", field.typeName, field.name, "(owner core.AstNode, unit core.StringUnit) *core.Reference[", field.target, "] {")
 		node.AppendLine("    fn := g.srv.", context.grammar.Name(), "Linking().ReferenceLinker.Link", field.typeName, field.name)
-		node.AppendLine("    return core.NewReference(owner, token, fn)")
+		node.AppendLine("    return core.NewReference(owner, unit, fn)")
 		node.AppendLine("}").AppendLine()
 	}
 	return node
