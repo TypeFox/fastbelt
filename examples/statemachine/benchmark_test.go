@@ -78,39 +78,6 @@ func BenchmarkTraverseContentSeq(b *testing.B) {
 	}
 }
 
-func BenchmarkTraverseContent(b *testing.B) {
-	content, _ := generateStatemachineContent(0)
-	srv := CreateServices()
-	doc, err := core.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
-	if err != nil {
-		b.Fatal(err)
-	}
-	srv.Workspace().DocumentParser.Parse(doc)
-
-	for b.Loop() {
-		count := 0
-		core.TraverseContent(doc.Root, func(an core.AstNode) {
-			count++
-		})
-		_ = count
-	}
-}
-
-func TestTraverseNodeEquivalence(t *testing.T) {
-	content, elementCount := generateStatemachineContent(0)
-	srv := CreateServices()
-	doc, err := core.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
-	if err != nil {
-		t.Fatal(err)
-	}
-	srv.Workspace().DocumentParser.Parse(doc)
-	count := 0
-	core.TraverseNode(doc.Root, func(an core.AstNode) {
-		count++
-	})
-	assert.Equal(t, elementCount, count, "TraverseNode should visit all nodes in the document")
-}
-
 func TestAllNodesEquivalence(t *testing.T) {
 	content, elementCount := generateStatemachineContent(0)
 	srv := CreateServices()
@@ -119,11 +86,27 @@ func TestAllNodesEquivalence(t *testing.T) {
 		t.Fatal(err)
 	}
 	srv.Workspace().DocumentParser.Parse(doc)
-	count := 0
+	nodeCount := 0
 	for range core.AllNodes(doc.Root) {
-		count++
+		nodeCount++
 	}
-	assert.Equal(t, elementCount, count, "AllNodes should iterate all nodes in the document")
+	assert.Equal(t, elementCount, nodeCount, "AllNodes should iterate all nodes in the document")
+}
+
+func TestAllChildrenEquivalence(t *testing.T) {
+	content, elementCount := generateStatemachineContent(0)
+	totalCount := elementCount - 1 // AllChildren does not include the root node, so we subtract 1 from the total count
+	srv := CreateServices()
+	doc, err := core.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv.Workspace().DocumentParser.Parse(doc)
+	childCount := 0
+	for range core.AllChildren(doc.Root) {
+		childCount++
+	}
+	assert.Equal(t, totalCount, childCount, "AllChildren should iterate all child nodes in the document")
 }
 
 // generateStatemachineContent generates a syntactically valid statemachine

@@ -144,7 +144,7 @@ type AstNode interface {
 	SetSegmentEndToken(token *Token)
 	Text() string
 	// ForEachNode calls the given function for each direct child node of this node.
-	// Note that this does not traverse the entire subtree. Use [AllNodes] or [TraverseNode] for that.
+	// Note that this does not traverse the entire subtree. Use [AllNodes] or [AllChildren] for that.
 	//
 	// Calling this method directly is not recommended. Use [ChildNodes] instead for better readability.
 	ForEachNode(fn func(AstNode))
@@ -161,38 +161,30 @@ type AstNode interface {
 // By using a callback-based approach, we can traverse the entire subtree with minimal overhead.
 // But we lose the ability to short-circuit the traversal when we find what we're looking for.
 // In practice, this is not a big issue, because most traversals will need to visit most of the nodes anyway.
-// AllNodes and AllChildren are slightly less efficient than TraverseNode and TraverseContent,
+// AllNodes and AllChildren are slightly less efficient than traverseContent,
 // but only by roughly 10%, and they provide a much nicer API for most use cases, so the trade-off is worth it.
 
-// Traverses the given node and all its children, calling the given function for each node.
-//
-// Calling this function directly is not recommended. Use [AllNodes] instead for better readability.
-// Note that both [TraverseNode] and [AllNodes] will traverse the entire subtree, without short-circuiting.
-func TraverseNode(node AstNode, fn func(AstNode)) {
-	fn(node)
-	TraverseContent(node, fn)
-}
-
 // Traverses all children of the given node, calling the specified function for each child.
-// Does not call the function for the given node itself. Use [TraverseNode] for that.
+// Does not call the function for the given node itself.
 //
-// Calling this function directly is not recommended. Use [AllChildren] instead for better readability.
-// Note that both [TraverseContent] and [AllChildren] will traverse the entire subtree, without short-circuiting.
-func TraverseContent(node AstNode, fn func(AstNode)) {
+// Note that this function will traverse the entire subtree, without short-circuiting.
+func traverseContent(node AstNode, fn func(AstNode)) {
 	node.ForEachNode(func(child AstNode) {
 		fn(child)
-		TraverseContent(child, fn)
+		traverseContent(child, fn)
 	})
 }
 
 // [AllNodes] creates an iterator over the given node and all its descendant nodes.
 //
-// This function wraps [TraverseNode] in an [iter.Seq].
 // Early loop exit is honoured correctly, but does not short-circuit the traversal.
 func AllNodes(node AstNode) iter.Seq[AstNode] {
 	return func(yield func(AstNode) bool) {
+		if !yield(node) {
+			return
+		}
 		stopped := false
-		TraverseNode(node, func(n AstNode) {
+		traverseContent(node, func(n AstNode) {
 			if !stopped && !yield(n) {
 				stopped = true
 			}
@@ -202,12 +194,11 @@ func AllNodes(node AstNode) iter.Seq[AstNode] {
 
 // [AllChildren] creates an iterator over all descendant nodes of the given node, excluding the node itself.
 //
-// This function wraps [TraverseContent] in an [iter.Seq].
 // Early loop exit is honoured correctly, but does not short-circuit the traversal.
 func AllChildren(node AstNode) iter.Seq[AstNode] {
 	return func(yield func(AstNode) bool) {
 		stopped := false
-		TraverseContent(node, func(n AstNode) {
+		traverseContent(node, func(n AstNode) {
 			if !stopped && !yield(n) {
 				stopped = true
 			}
