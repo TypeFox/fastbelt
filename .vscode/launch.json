@@ -18,6 +18,18 @@
 			]
 		},
 		{
+			"name": "Statemachine Generator",
+			"type": "go",
+			"request": "launch",
+			"mode": "debug",
+			"program": "${workspaceFolder}/cmd/main.go",
+			"cwd": "${workspaceFolder}/examples/statemachine",
+			"args": [
+				"--g=statemachine.fb",
+				"--v"
+			]
+		},
+		{
 			"name": "Fastbelt Extension",
 			"type": "extensionHost",
 			"request": "launch",
@@ -42,17 +54,6 @@
             "outFiles": [
                 "${workspaceFolder}/internal/vscode-extensions/statemachine/dist/**/*.js"
             ]
-		}, {
-			"name": "Fastbelt Generate",
-			"type": "go",
-			"request": "launch",
-			"mode": "debug",
-			"program": "${workspaceFolder}/cmd/main.go",
-			"cwd": "${workspaceFolder}/",
-			"args": [
-				"--g=./internal/grammar/grammar.fb",
-				"--o=./internal/grammar/generated"
-			]
 		}
 	]
 }
