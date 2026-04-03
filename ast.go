@@ -5,8 +5,8 @@
 package fastbelt
 
 import (
-    "strings"
-    "iter"
+	"iter"
+	"strings"
 )
 
 type AstNodeBase struct {
