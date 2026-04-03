@@ -63,9 +63,12 @@ interface AbstractRule {
     Name string
 }
 
-interface ParserRule extends AbstractRule {
-    ReturnType *Interface
+interface AbstractRuleWithBody extends AbstractRule {
     Body Element
+}
+
+interface ParserRule extends AbstractRuleWithBody {
+    ReturnType *Interface
 }
 
 ParserRule: Name=ID ("returns" ReturnType=[Interface:ID])? ":" Body=Alternatives ";";
@@ -138,8 +141,7 @@ interface Action extends Element {
 
 Action: "{" Type=[Interface:ID] ("." Property=[Field:ID] Operator=("+=" | "=") "current")? "}";
 
-interface StringRule extends AbstractRule {
-    Body Element
+interface StringRule extends AbstractRuleWithBody {
 }
 
 StringRule: "string" Name=ID ":" Body=StringAlternatives ";";

@@ -200,8 +200,8 @@ func populateContextWithNode(context *ParserGeneratorContext, prefix string, nod
 			name := prefix + "Lookahead" + strconv.Itoa(len(context.lookaheads))
 			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n)}
 		}
-		token := getTokenWithName(context.grammar, n.Rule().Text())
-		if token != nil {
+		ruleRef := n.Rule().Ref(ctx.Background())
+		if token, ok := ruleRef.(grammar.Token); ok {
 			name := prefix + token.Name()
 			context.SetAccessName(node, name)
 		}
@@ -237,21 +237,22 @@ func generateStringParseFunction(node generator.Node, context *ParserGeneratorCo
 }
 
 func generateAbstractElementParser(node generator.Node, context *ParserGeneratorContext, element grammar.Element) {
-	if alts, ok := element.(grammar.Alternatives); ok {
-		generateAlternativesParser(node, context, alts)
-	} else if group, ok := element.(grammar.Group); ok {
-		generateGroupParser(node, context, group)
-	} else if action, ok := element.(grammar.Action); ok {
+	switch e := element.(type) {
+	case grammar.Alternatives:
+		generateAlternativesParser(node, context, e)
+	case grammar.Group:
+		generateGroupParser(node, context, e)
+	case grammar.Action:
 		node.AppendLine("{")
 		node.Indent(func(n generator.Node) {
-			n.AppendLine("result := New", action.Type().Text(), "()")
+			n.AppendLine("result := New", e.Type().Text(), "()")
 			// Inherit segment from previous node
 			n.AppendLine("result.SetSegment(current.Segment())")
-			if action.Property() != nil {
-				if action.Operator() == "+=" {
-					n.AppendLine("result.Set", action.Property().Text(), "Item(current)")
+			if e.Property() != nil {
+				if e.Operator() == "+=" {
+					n.AppendLine("result.Set", e.Property().Text(), "Item(current)")
 				} else {
-					n.AppendLine("result.Set", action.Property().Text(), "(current)")
+					n.AppendLine("result.Set", e.Property().Text(), "(current)")
 				}
 				// Ensure that the previous node has a valid segment ending
 				n.AppendLine("current.SetSegmentEndToken(p.state.LA(0))")
@@ -263,65 +264,69 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 			}
 		})
 		node.AppendLine("}")
-		node.AppendLine("current := current.(", action.Type().Text(), ")")
-	} else {
+		node.AppendLine("current := current.(", e.Type().Text(), ")")
+	case grammar.Keyword:
 		node.AppendLine("{")
 		node.Indent(func(indent generator.Node) {
-			if keyword, ok := element.(grammar.Keyword); ok {
-				generateKeywordParser(indent, context, keyword)
-			} else if ruleCall, ok := element.(grammar.RuleCall); ok {
-				resultName := generateRuleCallParser(indent, context, ruleCall)
-				if resultName == "result" && !context.stringRule {
-					// Unassigned rule call result
-					// Needs to be merged into current node
-					indent.AppendLine("core.MergeTokens(result, current.Tokens())")
-					indent.AppendLine("current = result")
-				}
-			} else if assignment, ok := element.(grammar.Assignment); ok {
-				generateCardinality(indent, func(n generator.Node) {
-					generateAssignable(n, context, assignment.Value(), func(n2 generator.Node, resultName string) {
-						n2.AppendLine("if ", resultName, " != nil {")
-						if _, ok := assignment.Value().(grammar.CrossRef); ok {
-							parserRuleName := getParserRuleName(assignment)
-							// For cross-references, we need to create a Reference object
-							resultName = "p.references()." + parserRuleName + assignment.Property().Text() + "(current, " + resultName + ")"
-						}
-						n2.Indent(func(in generator.Node) {
-							switch assignment.Operator() {
-							case "+=":
-								// Append to slice
-								in.AppendLine("current.Set", assignment.Property().Text(), "Item(", resultName, ")")
-							default:
-								// Single assignment
-								in.AppendLine("current.Set", assignment.Property().Text(), "(", resultName, ")")
-							}
-						})
-						n2.AppendLine("}")
-					})
-				}, func(n generator.Node) {
-					lookaheadName := context.lookaheads[element].name
-					lookahead := generateLookaheadString(lookaheadName)
-					n.Append(lookahead)
-				}, element.Cardinality())
+			generateKeywordParser(indent, context, e)
+		})
+		node.AppendLine("}")
+	case grammar.RuleCall:
+		node.AppendLine("{")
+		node.Indent(func(indent generator.Node) {
+			resultName := generateRuleCallParser(indent, context, e)
+			if resultName == "result" && !context.stringRule {
+				// Unassigned rule call result
+				// Needs to be merged into current node
+				indent.AppendLine("core.MergeTokens(result, current.Tokens())")
+				indent.AppendLine("current = result")
 			}
+		})
+		node.AppendLine("}")
+	case grammar.Assignment:
+		node.AppendLine("{")
+		node.Indent(func(indent generator.Node) {
+			generateCardinality(indent, func(n generator.Node) {
+				generateAssignable(n, context, e.Value(), func(n2 generator.Node, resultName string) {
+					n2.AppendLine("if ", resultName, " != nil {")
+					if _, ok := e.Value().(grammar.CrossRef); ok {
+						parserRuleName := getParserRuleName(e)
+						// For cross-references, we need to create a Reference object
+						resultName = "p.references()." + parserRuleName + e.Property().Text() + "(current, " + resultName + ")"
+					}
+					n2.Indent(func(in generator.Node) {
+						switch e.Operator() {
+						case "+=":
+							// Append to slice
+							in.AppendLine("current.Set", e.Property().Text(), "Item(", resultName, ")")
+						default:
+							// Single assignment
+							in.AppendLine("current.Set", e.Property().Text(), "(", resultName, ")")
+						}
+					})
+					n2.AppendLine("}")
+				})
+			}, func(n generator.Node) {
+				lookaheadName := context.lookaheads[element].name
+				lookahead := generateLookaheadString(lookaheadName)
+				n.Append(lookahead)
+			}, element.Cardinality())
 		})
 		node.AppendLine("}")
 	}
 }
 
 func generateAssignable(node generator.Node, context *ParserGeneratorContext, assignable grammar.Assignable, cb func(node generator.Node, resultName string)) {
-	if crossRef, ok := assignable.(grammar.CrossRef); ok {
-		resultName := generateCrossReferenceParser(node, context, crossRef)
-		cb(node, resultName)
-	} else if keyword, ok := assignable.(grammar.Keyword); ok {
-		resultName := generateKeywordParser(node, context, keyword)
-		cb(node, resultName)
-	} else if ruleCall, ok := assignable.(grammar.RuleCall); ok {
-		resultName := generateRuleCallParser(node, context, ruleCall)
-		cb(node, resultName)
-	} else if alts, ok := assignable.(grammar.Alternatives); ok {
-		generateAssignableAlternatives(node, context, alts, cb)
-	} else {
+	switch a := assignable.(type) {
+	case grammar.CrossRef:
+		cb(node, generateCrossReferenceParser(node, context, a))
+	case grammar.Keyword:
+		cb(node, generateKeywordParser(node, context, a))
+	case grammar.RuleCall:
+		cb(node, generateRuleCallParser(node, context, a))
+	case grammar.Alternatives:
+		generateAssignableAlternatives(node, context, a, cb)
+	default:
 		panic("Unresolved assignment assignable")
 	}
 }
@@ -370,9 +375,10 @@ func generateRuleCallParser(node generator.Node, context *ParserGeneratorContext
 	lookaheadName := context.lookaheads[ruleCall].name
 	lookahead := generateLookaheadString(lookaheadName)
 	var result string
-	if _, ok := target.(grammar.Token); ok {
+	switch target.(type) {
+	case grammar.Token:
 		result = "token"
-	} else {
+	default:
 		result = "result"
 	}
 	first := true
@@ -382,18 +388,19 @@ func generateRuleCallParser(node generator.Node, context *ParserGeneratorContext
 			eq = ":="
 			first = false
 		}
-		if token, ok := target.(grammar.Token); ok {
-			n.AppendLine("token ", eq, " p.state.Consume(", GeneratedTokenIdxName(token), ")")
+		switch t := target.(type) {
+		case grammar.Token:
+			n.AppendLine("token ", eq, " p.state.Consume(", GeneratedTokenIdxName(t), ")")
 			n.AppendLine("core.AssignToken(current, token, ", context.accessNames[ruleCall], ")")
-		} else if rule, ok := target.(grammar.ParserRule); ok {
-			n.AppendLine("result ", eq, " p.Parse", rule.Name(), "()")
-		} else if stringRule, ok := target.(grammar.StringRule); ok {
+		case grammar.ParserRule:
+			n.AppendLine("result ", eq, " p.Parse", t.Name(), "()")
+		case grammar.StringRule:
 			if context.stringRule {
-				n.AppendLine("p.Parse", stringRule.Name(), "(current)")
+				n.AppendLine("p.Parse", t.Name(), "(current)")
 			} else {
 				n.AppendLine("result ", eq, " core.NewStringNode()")
 				n.AppendLine("result.SetSegmentStartToken(p.state.LA(1))")
-				n.AppendLine("p.Parse", stringRule.Name(), "(result)")
+				n.AppendLine("p.Parse", t.Name(), "(result)")
 				n.AppendLine("result.SetSegmentEndToken(p.state.LA(0))")
 			}
 		}
@@ -481,53 +488,55 @@ func possiblePathsFrom(grammr grammar.Grammar, maxLength int, elements []grammar
 			// Add path without this element
 			result = getAlternativesFor(grammr, result, elements[i+1:], maxLength, currPath)
 		}
-		if group, ok := element.(grammar.Group); ok {
-			remain := remainingPathWith(group.Elements(), elements, i)
+		switch e := element.(type) {
+		case grammar.Group:
+			remain := remainingPathWith(e.Elements(), elements, i)
 			return getAlternativesFor(grammr, result, remain, maxLength, currPath)
-		} else if keyword, ok := element.(grammar.Keyword); ok {
-			currPath = append(currPath, GeneratedKeywordIdxName(keyword))
-		} else if alts, ok := element.(grammar.Alternatives); ok {
-			for _, alt := range alts.Alts() {
+		case grammar.Keyword:
+			currPath = append(currPath, GeneratedKeywordIdxName(e))
+		case grammar.Alternatives:
+			for _, alt := range e.Alts() {
 				remain := remainingPathWith([]grammar.Element{alt}, elements, i)
 				result = getAlternativesFor(grammr, result, remain, maxLength, currPath)
 			}
 			return result
-		} else if assignment, ok := element.(grammar.Assignment); ok {
-			if keyword, ok := assignment.Value().(grammar.Keyword); ok {
-				currPath = append(currPath, GeneratedKeywordIdxName(keyword))
-			} else if ruleCall, ok := assignment.Value().(grammar.RuleCall); ok {
-				token := getTokenWithName(grammr, ruleCall.Rule().Text())
-				rule := getRuleWithName(grammr, ruleCall.Rule().Text())
-				if token != nil {
-					currPath = append(currPath, GeneratedTokenIdxName(token))
-				} else if rule != nil {
+		case grammar.Assignment:
+			switch v := e.Value().(type) {
+			case grammar.Keyword:
+				currPath = append(currPath, GeneratedKeywordIdxName(v))
+			case grammar.RuleCall:
+				ruleRef := v.Rule().Ref(ctx.Background())
+				switch rule := ruleRef.(type) {
+				case grammar.Token:
+					currPath = append(currPath, GeneratedTokenIdxName(rule))
+				case grammar.AbstractRuleWithBody:
 					remain := remainingPathWith([]grammar.Element{rule.Body()}, elements, i)
 					result = getAlternativesFor(grammr, result, remain, maxLength, currPath)
 					return result
 				}
-			} else if crossRef, ok := assignment.Value().(grammar.CrossRef); ok {
-				token := getTokenWithName(grammr, crossRef.Rule().Rule().Text())
-				rule := getRuleWithName(grammr, crossRef.Rule().Rule().Text())
-				if token != nil {
-					currPath = append(currPath, GeneratedTokenIdxName(token))
-				} else if rule != nil {
+			case grammar.CrossRef:
+				ruleRef := v.Rule().Rule().Ref(ctx.Background())
+				switch rule := ruleRef.(type) {
+				case grammar.Token:
+					currPath = append(currPath, GeneratedTokenIdxName(rule))
+				case grammar.AbstractRuleWithBody:
 					remain := remainingPathWith([]grammar.Element{rule.Body()}, elements, i)
 					result = getAlternativesFor(grammr, result, remain, maxLength, currPath)
 					return result
 				}
-			} else if alts, ok := assignment.Value().(grammar.Alternatives); ok {
-				for _, alt := range alts.Alts() {
+			case grammar.Alternatives:
+				for _, alt := range v.Alts() {
 					remain := remainingPathWith([]grammar.Element{alt}, elements, i)
 					result = getAlternativesFor(grammr, result, remain, maxLength, currPath)
 				}
 				return result
 			}
-		} else if ruleCall, ok := element.(grammar.RuleCall); ok {
-			token := getTokenWithName(grammr, ruleCall.Rule().Text())
-			rule := getRuleWithName(grammr, ruleCall.Rule().Text())
-			if token != nil {
-				currPath = append(currPath, GeneratedTokenIdxName(token))
-			} else if rule != nil {
+		case grammar.RuleCall:
+			ruleRef := e.Rule().Ref(ctx.Background())
+			switch rule := ruleRef.(type) {
+			case grammar.Token:
+				currPath = append(currPath, GeneratedTokenIdxName(rule))
+			case grammar.AbstractRuleWithBody:
 				remain := remainingPathWith([]grammar.Element{rule.Body()}, elements, i)
 				result = getAlternativesFor(grammr, result, remain, maxLength, currPath)
 				return result
@@ -629,31 +638,13 @@ func isUniqueLookahead(lookahead LLkLookahead) bool {
 	return true
 }
 
-func getTokenWithName(grammr grammar.Grammar, name string) grammar.Token {
-	for _, t := range grammr.Terminals() {
-		if t.Name() == name {
-			return t
-		}
-	}
-	return nil
-}
-
-func getRuleWithName(grammr grammar.Grammar, name string) grammar.ParserRule {
-	for _, r := range grammr.Rules() {
-		if r.Name() == name {
-			return r
-		}
-	}
-	return nil
-}
-
 func getParserRuleName(element grammar.Element) string {
-	cont := element.Container()
-	if rule, ok := cont.(grammar.ParserRule); ok {
-		return rule.Name()
-	} else if parent, ok := cont.(grammar.Element); ok {
-		return getParserRuleName(parent)
-	} else {
+	switch c := element.Container().(type) {
+	case grammar.ParserRule:
+		return c.Name()
+	case grammar.Element:
+		return getParserRuleName(c)
+	default:
 		panic("Unable to find parser rule for element")
 	}
 }
