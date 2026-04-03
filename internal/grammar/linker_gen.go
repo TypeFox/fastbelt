@@ -131,15 +131,15 @@ func (l *DefaultFastbeltReferenceLinker) LinkActionProperty(ctx context.Context,
 }
 
 type FastbeltReferencesConstructor interface {
-	InterfaceExtends(owner core.AstNode, token *core.Token) *core.Reference[Interface]
-	ReferenceTypeType(owner core.AstNode, token *core.Token) *core.Reference[Interface]
-	SimpleTypeType(owner core.AstNode, token *core.Token) *core.Reference[Interface]
-	ParserRuleReturnType(owner core.AstNode, token *core.Token) *core.Reference[Interface]
-	AssignmentProperty(owner core.AstNode, token *core.Token) *core.Reference[Field]
-	CrossRefType(owner core.AstNode, token *core.Token) *core.Reference[Interface]
-	RuleCallRule(owner core.AstNode, token *core.Token) *core.Reference[AbstractRule]
-	ActionType(owner core.AstNode, token *core.Token) *core.Reference[Interface]
-	ActionProperty(owner core.AstNode, token *core.Token) *core.Reference[Field]
+	InterfaceExtends(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
+	ReferenceTypeType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
+	SimpleTypeType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
+	ParserRuleReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
+	AssignmentProperty(owner core.AstNode, unit core.StringUnit) *core.Reference[Field]
+	CrossRefType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
+	RuleCallRule(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractRule]
+	ActionType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
+	ActionProperty(owner core.AstNode, unit core.StringUnit) *core.Reference[Field]
 }
 
 type DefaultFastbeltReferencesConstructor struct {
@@ -150,47 +150,47 @@ func NewDefaultFastbeltReferencesConstructor(srv FastbeltLinkingSrvCont) *Defaul
 	return &DefaultFastbeltReferencesConstructor{srv: srv}
 }
 
-func (g *DefaultFastbeltReferencesConstructor) InterfaceExtends(owner core.AstNode, token *core.Token) *core.Reference[Interface] {
+func (g *DefaultFastbeltReferencesConstructor) InterfaceExtends(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
 	fn := g.srv.FastbeltLinking().ReferenceLinker.LinkInterfaceExtends
-	return core.NewReference(owner, token, fn)
+	return core.NewReference(owner, unit, fn)
 }
 
-func (g *DefaultFastbeltReferencesConstructor) ReferenceTypeType(owner core.AstNode, token *core.Token) *core.Reference[Interface] {
+func (g *DefaultFastbeltReferencesConstructor) ReferenceTypeType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
 	fn := g.srv.FastbeltLinking().ReferenceLinker.LinkReferenceTypeType
-	return core.NewReference(owner, token, fn)
+	return core.NewReference(owner, unit, fn)
 }
 
-func (g *DefaultFastbeltReferencesConstructor) SimpleTypeType(owner core.AstNode, token *core.Token) *core.Reference[Interface] {
+func (g *DefaultFastbeltReferencesConstructor) SimpleTypeType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
 	fn := g.srv.FastbeltLinking().ReferenceLinker.LinkSimpleTypeType
-	return core.NewReference(owner, token, fn)
+	return core.NewReference(owner, unit, fn)
 }
 
-func (g *DefaultFastbeltReferencesConstructor) ParserRuleReturnType(owner core.AstNode, token *core.Token) *core.Reference[Interface] {
+func (g *DefaultFastbeltReferencesConstructor) ParserRuleReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
 	fn := g.srv.FastbeltLinking().ReferenceLinker.LinkParserRuleReturnType
-	return core.NewReference(owner, token, fn)
+	return core.NewReference(owner, unit, fn)
 }
 
-func (g *DefaultFastbeltReferencesConstructor) AssignmentProperty(owner core.AstNode, token *core.Token) *core.Reference[Field] {
+func (g *DefaultFastbeltReferencesConstructor) AssignmentProperty(owner core.AstNode, unit core.StringUnit) *core.Reference[Field] {
 	fn := g.srv.FastbeltLinking().ReferenceLinker.LinkAssignmentProperty
-	return core.NewReference(owner, token, fn)
+	return core.NewReference(owner, unit, fn)
 }
 
-func (g *DefaultFastbeltReferencesConstructor) CrossRefType(owner core.AstNode, token *core.Token) *core.Reference[Interface] {
+func (g *DefaultFastbeltReferencesConstructor) CrossRefType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
 	fn := g.srv.FastbeltLinking().ReferenceLinker.LinkCrossRefType
-	return core.NewReference(owner, token, fn)
+	return core.NewReference(owner, unit, fn)
 }
 
-func (g *DefaultFastbeltReferencesConstructor) RuleCallRule(owner core.AstNode, token *core.Token) *core.Reference[AbstractRule] {
+func (g *DefaultFastbeltReferencesConstructor) RuleCallRule(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractRule] {
 	fn := g.srv.FastbeltLinking().ReferenceLinker.LinkRuleCallRule
-	return core.NewReference(owner, token, fn)
+	return core.NewReference(owner, unit, fn)
 }
 
-func (g *DefaultFastbeltReferencesConstructor) ActionType(owner core.AstNode, token *core.Token) *core.Reference[Interface] {
+func (g *DefaultFastbeltReferencesConstructor) ActionType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
 	fn := g.srv.FastbeltLinking().ReferenceLinker.LinkActionType
-	return core.NewReference(owner, token, fn)
+	return core.NewReference(owner, unit, fn)
 }
 
-func (g *DefaultFastbeltReferencesConstructor) ActionProperty(owner core.AstNode, token *core.Token) *core.Reference[Field] {
+func (g *DefaultFastbeltReferencesConstructor) ActionProperty(owner core.AstNode, unit core.StringUnit) *core.Reference[Field] {
 	fn := g.srv.FastbeltLinking().ReferenceLinker.LinkActionProperty
-	return core.NewReference(owner, token, fn)
+	return core.NewReference(owner, unit, fn)
 }

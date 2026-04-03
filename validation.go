@@ -64,7 +64,6 @@ type Validator interface {
 type DiagnosticOption func(d *Diagnostic)
 
 // NewDiagnostic creates a [Diagnostic] anchored to the given node's text range.
-// The range is resolved with priority: WithRange > WithToken > node segment.
 func NewDiagnostic(severity DiagnosticSeverity, message string, node AstNode, opts ...DiagnosticOption) *Diagnostic {
 	d := &Diagnostic{
 		Severity: severity,
@@ -86,6 +85,16 @@ func WithToken(token *Token) DiagnosticOption {
 	return func(d *Diagnostic) {
 		if token != nil {
 			d.Range = token.TextSegment.Range
+		}
+	}
+}
+
+func WithStringUnit(unit StringUnit) DiagnosticOption {
+	return func(d *Diagnostic) {
+		if unit != nil {
+			if seg := unit.Segment(); seg != nil {
+				d.Range = seg.Range
+			}
 		}
 	}
 }
