@@ -150,15 +150,40 @@ func TestGoGeneratePattern(t *testing.T) {
 	require.Equal(t, "./...", patRoot)
 }
 
-func TestResolvePackageScaffoldDir(t *testing.T) {
+func TestResolvePackageScaffoldDir_fullImportPath(t *testing.T) {
 	root := t.TempDir()
 	sub := filepath.Join(root, "inner")
 	require.NoError(t, os.MkdirAll(sub, 0755))
 	require.NoError(t, os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.com/demo\n"), 0644))
-	modRoot, pkgRoot, err := ResolvePackageScaffoldDir(sub, "example.com/demo/lang")
+	modRoot, pkgRoot, pkgImport, err := ResolvePackageScaffoldDir(sub, "example.com/demo/lang")
 	require.NoError(t, err)
 	require.Equal(t, root, modRoot)
 	require.Equal(t, filepath.Join(root, "lang"), pkgRoot)
+	require.Equal(t, "example.com/demo/lang", pkgImport)
+}
+
+func TestResolvePackageScaffoldDir_relativeToModuleRoot(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(root, "go.mod"), []byte("module typefox.dev/fastbelt\n"), 0644))
+	modRoot, pkgRoot, pkgImport, err := ResolvePackageScaffoldDir(root, "examples/statemachine")
+	require.NoError(t, err)
+	require.Equal(t, root, modRoot)
+	require.Equal(t, filepath.Join(root, "examples", "statemachine"), pkgRoot)
+	require.Equal(t, "typefox.dev/fastbelt/examples/statemachine", pkgImport)
+}
+
+func TestResolvePackageScaffoldDir_rejectsAbsolutePackagePath(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(root, "go.mod"), []byte("module m\n"), 0644))
+	_, _, _, err := ResolvePackageScaffoldDir(root, "/tmp/nope")
+	require.Error(t, err)
+}
+
+func TestResolvePackageScaffoldDir_rejectsParentEscape(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(root, "go.mod"), []byte("module m\n"), 0644))
+	_, _, _, err := ResolvePackageScaffoldDir(root, "../outside")
+	require.Error(t, err)
 }
 
 func mustNames(t *testing.T, modulePath, lang string) ModuleNames {

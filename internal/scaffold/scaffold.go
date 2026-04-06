@@ -20,7 +20,7 @@ import (
 var templateFS embed.FS
 
 // RunModule creates moduleRoot as a new empty directory, runs go mod init for modulePath,
-// writes scaffold files from embedded templates, runs go get (library + tool), go generate, and go mod tidy.
+// writes scaffold files from embedded templates, attempts go get (library + tool), go generate, and go mod tidy.
 func RunModule(moduleRoot, modulePath, language string) error {
 	names, err := prepareNames(modulePath, language)
 	if err != nil {
@@ -35,12 +35,7 @@ func RunModule(moduleRoot, modulePath, language string) error {
 	if err := writeScaffoldFiles(moduleRoot, names); err != nil {
 		return err
 	}
-	if err := runGo(moduleRoot, "get", "typefox.dev/fastbelt@latest"); err != nil {
-		return fmt.Errorf("go get typefox.dev/fastbelt: %w", err)
-	}
-	if err := runGo(moduleRoot, "get", "-tool", "typefox.dev/fastbelt/cmd@latest"); err != nil {
-		return fmt.Errorf("go get -tool typefox.dev/fastbelt/cmd: %w", err)
-	}
+	tryGoGetFastbeltDependencies(moduleRoot)
 	if err := runGo(moduleRoot, "generate", "./..."); err != nil {
 		return fmt.Errorf("go generate: %w", err)
 	}
@@ -51,7 +46,7 @@ func RunModule(moduleRoot, modulePath, language string) error {
 }
 
 // RunPackage creates packageRoot as a new empty directory inside an existing Go module, writes the
-// same scaffold files as RunModule, runs go get (library + tool), go generate for that package, and
+// same scaffold files as RunModule, attempts go get (library + tool), go generate for that package, and
 // go mod tidy. It does not run go mod init; moduleRoot must contain go.mod.
 func RunPackage(moduleRoot, packageRoot, packageImport, language string) error {
 	names, err := prepareNames(packageImport, language)
@@ -64,12 +59,7 @@ func RunPackage(moduleRoot, packageRoot, packageImport, language string) error {
 	if err := writeScaffoldFiles(packageRoot, names); err != nil {
 		return err
 	}
-	if err := runGo(moduleRoot, "get", "typefox.dev/fastbelt@latest"); err != nil {
-		return fmt.Errorf("go get typefox.dev/fastbelt: %w", err)
-	}
-	if err := runGo(moduleRoot, "get", "-tool", "typefox.dev/fastbelt/cmd@latest"); err != nil {
-		return fmt.Errorf("go get -tool typefox.dev/fastbelt/cmd: %w", err)
-	}
+	tryGoGetFastbeltDependencies(moduleRoot)
 	genArg, relErr := goGeneratePattern(moduleRoot, packageRoot)
 	if relErr != nil {
 		return relErr
@@ -84,22 +74,71 @@ func RunPackage(moduleRoot, packageRoot, packageImport, language string) error {
 }
 
 // ResolvePackageScaffoldDir finds the module root starting from workDir, reads its module path from
-// go.mod, and returns the absolute directory where a package with import path packageImport should
-// live. packageImport must equal the module path or begin with modulePath + "/".
-func ResolvePackageScaffoldDir(workDir, packageImport string) (moduleRoot, packageRoot string, err error) {
+// go.mod, and returns the module root, the package directory, and the full package import path.
+//
+// packageSpec is normally a path relative to the module root (for example "examples/statemachine");
+// the import path is modulePath + "/" + that path (using slash-separated segments). If packageSpec
+// equals modulePath or starts with modulePath+"/", it is treated as a full import path instead.
+func ResolvePackageScaffoldDir(workDir, packageSpec string) (moduleRoot, packageRoot, packageImport string, err error) {
 	moduleRoot, err = findModuleRoot(workDir)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	modPath, readErr := readGoModulePath(filepath.Join(moduleRoot, "go.mod"))
 	if readErr != nil {
-		return "", "", fmt.Errorf("read go.mod: %w", readErr)
+		return "", "", "", fmt.Errorf("read go.mod: %w", readErr)
 	}
-	packageRoot, err = packageDirForImport(moduleRoot, modPath, packageImport)
+	packageRoot, packageImport, err = resolvePackageFromSpec(moduleRoot, modPath, packageSpec)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
-	return moduleRoot, packageRoot, nil
+	return moduleRoot, packageRoot, packageImport, nil
+}
+
+func resolvePackageFromSpec(moduleRoot, modulePath, spec string) (packageRoot, packageImport string, err error) {
+	spec = strings.TrimSpace(spec)
+	if spec == "" {
+		return "", "", fmt.Errorf("package path is empty")
+	}
+	if spec == modulePath {
+		return moduleRoot, modulePath, nil
+	}
+	if strings.HasPrefix(spec, modulePath+"/") {
+		dir, impErr := packageDirForImport(moduleRoot, modulePath, spec)
+		if impErr != nil {
+			return "", "", impErr
+		}
+		return dir, spec, nil
+	}
+	if filepath.IsAbs(spec) {
+		return "", "", fmt.Errorf("package path %q must be relative to the module root, not an absolute path", spec)
+	}
+	relSlash := filepath.ToSlash(spec)
+	relSlash = strings.TrimPrefix(relSlash, "./")
+	clean := path.Clean(relSlash)
+	if clean == "." {
+		return moduleRoot, modulePath, nil
+	}
+	if strings.HasPrefix(clean, "../") || clean == ".." {
+		return "", "", fmt.Errorf("package path %q must not escape the module root", spec)
+	}
+	packageRoot = filepath.Join(moduleRoot, filepath.FromSlash(clean))
+	absModRoot, absErr := filepath.Abs(moduleRoot)
+	if absErr != nil {
+		return "", "", absErr
+	}
+	absPkgRoot, absErr := filepath.Abs(packageRoot)
+	if absErr != nil {
+		return "", "", absErr
+	}
+	rel, relErr := filepath.Rel(absModRoot, absPkgRoot)
+	if relErr != nil {
+		return "", "", relErr
+	}
+	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", "", fmt.Errorf("package path %q resolves outside the module root", spec)
+	}
+	return packageRoot, modulePath + "/" + clean, nil
 }
 
 func goGeneratePattern(moduleRoot, packageRoot string) (string, error) {
@@ -215,6 +254,18 @@ func runGo(dir string, args ...string) error {
 		return err
 	}
 	return nil
+}
+
+// tryGoGetFastbeltDependencies runs go get for the fastbelt library and tool. Errors are printed
+// to stderr and ignored so scaffolding can proceed when the module already provides those packages
+// (for example developing fastbelt itself).
+func tryGoGetFastbeltDependencies(moduleRoot string) {
+	if err := runGo(moduleRoot, "get", "typefox.dev/fastbelt@latest"); err != nil {
+		fmt.Fprintf(os.Stderr, "fastbelt scaffold: warning: go get typefox.dev/fastbelt@latest: %v\n", err)
+	}
+	if err := runGo(moduleRoot, "get", "-tool", "typefox.dev/fastbelt/cmd@latest"); err != nil {
+		fmt.Fprintf(os.Stderr, "fastbelt scaffold: warning: go get -tool typefox.dev/fastbelt/cmd@latest: %v\n", err)
+	}
 }
 
 func writeScaffoldFiles(moduleRoot string, names ModuleNames) error {

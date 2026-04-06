@@ -19,7 +19,7 @@ func printGlobalHelp() {
 	fmt.Fprintf(w, "Usage:\n")
 	fmt.Fprintf(w, "  %s [flags]\t\tRun code generation (legacy CLI)\n", os.Args[0])
 	fmt.Fprintf(w, "  %s scaffold -module <path> -language <name>\tCreate a new Go module for a language\n", os.Args[0])
-	fmt.Fprintf(w, "  %s scaffold -package <import> -language <name>\tCreate a package (requires existing go.mod)\n", os.Args[0])
+	fmt.Fprintf(w, "  %s scaffold -package <dir> -language <name>\tCreate a package under the module (needs go.mod)\n", os.Args[0])
 	fmt.Fprintf(w, "  %s help\t\tShow this help\n\n", os.Args[0])
 	fmt.Fprintf(w, "The canonical module path for installs is typefox.dev/fastbelt (see %s).\n\n", fastbeltRepoURL)
 	fmt.Fprintf(w, "Legacy generate flags:\n")
@@ -30,7 +30,7 @@ func printGlobalHelp() {
 	fmt.Fprintf(w, "Scaffolding:\n")
 	fmt.Fprintf(w, "  Module mode: directory named after the last segment of -module, go mod init, then the\n")
 	fmt.Fprintf(w, "  same file layout, go get (library + tool), go generate, go mod tidy.\n")
-	fmt.Fprintf(w, "  Package mode (-package): finds go.mod from cwd, writes under the import path relative\n")
-	fmt.Fprintf(w, "  to the module, skips go mod init, then go get / go generate / tidy. Use \"scaffold -h\".\n")
+	fmt.Fprintf(w, "  Package mode (-package): finds go.mod from cwd, writes under a directory relative to\n")
+	fmt.Fprintf(w, "  that module (import path inferred from go.mod), skips go mod init, then go get / generate / tidy.\n")
 	_ = w.Flush()
 }
