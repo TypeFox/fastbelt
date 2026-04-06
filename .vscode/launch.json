@@ -10,7 +10,7 @@
 			"type": "go",
 			"request": "launch",
 			"mode": "debug",
-			"program": "${workspaceFolder}/cmd/main.go",
+			"program": "${workspaceFolder}/cmd/fastbelt",
 			"cwd": "${workspaceFolder}/internal/grammar",
 			"args": [
 				"--g=grammar.fb",
@@ -22,7 +22,7 @@
 			"type": "go",
 			"request": "launch",
 			"mode": "debug",
-			"program": "${workspaceFolder}/cmd/main.go",
+			"program": "${workspaceFolder}/cmd/fastbelt",
 			"cwd": "${workspaceFolder}/examples/statemachine",
 			"args": [
 				"--g=statemachine.fb",
@@ -37,10 +37,10 @@
 				"${workspaceFolder}/internal/grammar",
 				"--extensionDevelopmentPath=${workspaceFolder}/internal/vscode-extensions/fastbelt"
 			],
-            "sourceMaps": true,
-            "outFiles": [
-                "${workspaceFolder}/internal/vscode-extensions/fastbelt/dist/**/*.js"
-            ]
+			"sourceMaps": true,
+			"outFiles": [
+				"${workspaceFolder}/internal/vscode-extensions/fastbelt/dist/**/*.js"
+			]
 		},
 		{
 			"name": "Statemachine Extension",
@@ -50,10 +50,10 @@
 				"${workspaceFolder}/examples/statemachine",
 				"--extensionDevelopmentPath=${workspaceFolder}/internal/vscode-extensions/statemachine"
 			],
-            "sourceMaps": true,
-            "outFiles": [
-                "${workspaceFolder}/internal/vscode-extensions/statemachine/dist/**/*.js"
-            ]
+			"sourceMaps": true,
+			"outFiles": [
+				"${workspaceFolder}/internal/vscode-extensions/statemachine/dist/**/*.js"
+			]
 		}
 	]
 }

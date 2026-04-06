@@ -8,10 +8,20 @@ For background and benchmarks, see the [Fastbelt introduction](https://www.typef
 
 ## Installation
 
+### Adding to a Module
 Fastbelt ships as a Go module:
 
 ```sh
 go get typefox.dev/fastbelt@latest
+go get -tool typefox.dev/fastbelt/cmd/fastbelt@latest
+```
+
+### Global Install
+
+You can also globally install the fastbelt CLI:
+
+```sh
+go install typefox.dev/fastbelt/cmd/fastbelt@latest
 ```
 
 ## Quick start
@@ -21,10 +31,23 @@ The first step is to write a grammar definition file, e.g. `grammar.fb`, which h
 To run the code generator for your grammar definition:
 
 ```sh
-go run typefox.dev/fastbelt/cmd@latest -g ./grammar.fb -o ./
+# globally installed
+fastbelt -g ./grammar.fb -o ./
+```
+
+```sh
+# on demand install
+go run typefox.dev/fastbelt/cmd/fastbelt@latest -g ./grammar.fb -o ./
 ```
 
 This writes generated Go files for services such as lexer, parser, linker, and type definitions.
+
+Typically you will want to run generation using `go generate`.
+Add a directive to some file in your module (assumes install with `go tool`):
+
+```go
+//go:generate go tool fastbelt -g ./grammar.fb -o ./
+```
 
 ## Examples
 
