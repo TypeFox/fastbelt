@@ -18,7 +18,7 @@ func fastbeltModuleVersion() string {
 	if !ok {
 		return "latest"
 	}
-	if info.Main.Path == fastbeltModulePath+"/cmd" || info.Main.Path == fastbeltModulePath {
+	if info.Main.Path == fastbeltModulePath+"/cmd/fastbelt" || info.Main.Path == fastbeltModulePath+"/cmd" || info.Main.Path == fastbeltModulePath {
 		if info.Main.Version != "" && info.Main.Version != "(devel)" && !isUnsetModulePseudoVersion(info.Main.Version) {
 			return info.Main.Version
 		}

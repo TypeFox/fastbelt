@@ -5,7 +5,7 @@ This repository was generated with [fastbelt](https://github.com/TypeFox/fastbel
 It includes:
 
 - **`{{.GrammarFile}}`** — minimal fastbelt grammar (`{{.GrammarName}}`).
-- **`gen.go`** — `//go:generate` running `go tool typefox.dev/fastbelt/cmd` to emit `*_gen.go`.
+- **`gen.go`** — `//go:generate` running `go tool typefox.dev/fastbelt/cmd/fastbelt` to emit `*_gen.go`.
 - **`services.go`** — LSP service wiring (document, workspace, linking, generated lexer/parser).
 - **`cmd/{{.LSPSlug}}`** — language server entrypoint (stdio JSON-RPC).
 - **`vscode-extension/`** — VS Code language client + TextMate grammar skeleton.

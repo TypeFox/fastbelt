@@ -4,4 +4,4 @@
 
 package {{.GoPackage}}
 
-//go:generate go tool typefox.dev/fastbelt/cmd -g ./{{.GrammarFile}} -o . -p {{.GoPackage}} -v
+//go:generate go tool typefox.dev/fastbelt/cmd/fastbelt -g ./{{.GrammarFile}} -o . -p {{.GoPackage}} -v

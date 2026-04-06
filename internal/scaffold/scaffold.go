@@ -293,8 +293,8 @@ func tryGoGetFastbeltDependencies(moduleRoot string) {
 	if err := runGo(moduleRoot, "get", "typefox.dev/fastbelt@latest"); err != nil {
 		fmt.Fprintf(os.Stderr, "fastbelt scaffold: warning: go get typefox.dev/fastbelt@latest: %v\n", err)
 	}
-	if err := runGo(moduleRoot, "get", "-tool", "typefox.dev/fastbelt/cmd@latest"); err != nil {
-		fmt.Fprintf(os.Stderr, "fastbelt scaffold: warning: go get -tool typefox.dev/fastbelt/cmd@latest: %v\n", err)
+	if err := runGo(moduleRoot, "get", "-tool", "typefox.dev/fastbelt/cmd/fastbelt@latest"); err != nil {
+		fmt.Fprintf(os.Stderr, "fastbelt scaffold: warning: go get -tool typefox.dev/fastbelt/cmd/fastbelt@latest: %v\n", err)
 	}
 }
 

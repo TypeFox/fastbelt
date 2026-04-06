@@ -48,7 +48,7 @@ Typically you will want to run generation using `go generate`.
 Add a directive to some file in your module (assumes install with `go tool`):
 
 ```go
-//go:generate go tool fastbelt -g ./grammar.fb -o ./
+//go:generate go tool typefox.dev/fastbelt/cmd/fastbelt -g ./grammar.fb -o ./
 ```
 ## Scaffolding
 
