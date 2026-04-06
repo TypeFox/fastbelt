@@ -47,8 +47,10 @@ type ModuleNames struct {
 	VSIXFilename string
 	// RootNPMName is the npm package name for the root workspace package.json.
 	RootNPMName string
-	// FastbeltGoGet is the module path and version fragment used when resolving the fastbelt library (M@V).
+	// FastbeltGoGet is the library module path with version for go get (M@V).
 	FastbeltGoGet string
+	// FastbeltToolGoGet is the fastbelt CLI package path with version for go get -tool (M@V).
+	FastbeltToolGoGet string
 }
 
 func prepareNames(modulePath, languageLabel string) (ModuleNames, error) {
@@ -84,29 +86,28 @@ func prepareNames(modulePath, languageLabel string) (ModuleNames, error) {
 	vsix := npmExt + ".vsix"
 
 	ver := fastbeltModuleVersion()
-	fastbeltGoGet := "typefox.dev/fastbelt@" + ver
-	if ver == "latest" {
-		fastbeltGoGet = "typefox.dev/fastbelt@latest"
-	}
+	fastbeltGoGet := fastbeltModulePath + "@" + ver
+	fastbeltToolGoGet := fastbeltModulePath + "/cmd/fastbelt@" + ver
 
 	return ModuleNames{
-		ModulePath:    modulePath,
-		ModuleDirBase: base,
-		LanguageLabel: languageLabel,
-		LanguageID:    languageID,
-		GoPackage:     goPkg,
-		ExportedBase:  exported,
-		GrammarName:   grammarName,
-		GrammarFile:   grammarFile,
-		FileDotExt:    dotExt,
-		VSCodeFileExt: alnumExt,
-		ScopeName:     "source." + alnumExt,
-		LSPSlug:       lspSlug,
-		SyntaxFile:    syntaxFile,
-		NPMExtension:  npmExt,
-		VSIXFilename:  vsix,
-		RootNPMName:   alnumExt + "-workspace",
-		FastbeltGoGet: fastbeltGoGet,
+		ModulePath:        modulePath,
+		ModuleDirBase:     base,
+		LanguageLabel:     languageLabel,
+		LanguageID:        languageID,
+		GoPackage:         goPkg,
+		ExportedBase:      exported,
+		GrammarName:       grammarName,
+		GrammarFile:       grammarFile,
+		FileDotExt:        dotExt,
+		VSCodeFileExt:     alnumExt,
+		ScopeName:         "source." + alnumExt,
+		LSPSlug:           lspSlug,
+		SyntaxFile:        syntaxFile,
+		NPMExtension:      npmExt,
+		VSIXFilename:      vsix,
+		RootNPMName:       alnumExt + "-workspace",
+		FastbeltGoGet:     fastbeltGoGet,
+		FastbeltToolGoGet: fastbeltToolGoGet,
 	}, nil
 }
 

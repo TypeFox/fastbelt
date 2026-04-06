@@ -38,6 +38,6 @@ Scaffolding:
 
 func printGlobalHelp() {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	_, _ = fmt.Fprintf(w, globalHelpText, os.Args[0], fastbeltRepoURL)
+	_, _ = fmt.Fprintf(w, globalHelpText, fastbeltRepoURL)
 	_ = w.Flush()
 }

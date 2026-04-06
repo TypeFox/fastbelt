@@ -29,6 +29,7 @@ func TestPrepareNames(t *testing.T) {
 	require.Equal(t, ".mylang", n.FileDotExt)
 	require.Equal(t, "my-lang-lsp", n.LSPSlug)
 	require.Contains(t, n.FastbeltGoGet, "typefox.dev/fastbelt@")
+	require.Contains(t, n.FastbeltToolGoGet, "typefox.dev/fastbelt/cmd/fastbelt@")
 }
 
 func TestPrepareNames_goKeywordPackage(t *testing.T) {

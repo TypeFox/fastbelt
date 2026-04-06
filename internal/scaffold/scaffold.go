@@ -67,7 +67,7 @@ func (s *Scaffolder) Run() error {
 	if err := writeScaffoldFiles(s.WriteRoot, names); err != nil {
 		return err
 	}
-	tryGoGetFastbeltDependencies(s.ModuleRoot)
+	tryGoGetFastbeltDependencies(s.ModuleRoot, names.FastbeltGoGet, names.FastbeltToolGoGet)
 
 	genArg := "./..."
 	if !s.CreateModule {
@@ -286,15 +286,16 @@ func runGo(dir string, args ...string) error {
 	return nil
 }
 
-// tryGoGetFastbeltDependencies runs go get for the fastbelt library and tool. Errors are printed
-// to stderr and ignored so scaffolding can proceed when the module already provides those packages
-// (for example developing fastbelt itself).
-func tryGoGetFastbeltDependencies(moduleRoot string) {
-	if err := runGo(moduleRoot, "get", "typefox.dev/fastbelt@latest"); err != nil {
-		fmt.Fprintf(os.Stderr, "fastbelt scaffold: warning: go get typefox.dev/fastbelt@latest: %v\n", err)
+// tryGoGetFastbeltDependencies runs go get for the fastbelt library and tool at librarySpec and toolSpec
+// (for example from ModuleNames.FastbeltGoGet / FastbeltToolGoGet). Errors are printed to stderr and
+// ignored so scaffolding can proceed when the module already provides those packages (for example
+// developing fastbelt itself).
+func tryGoGetFastbeltDependencies(moduleRoot, librarySpec, toolSpec string) {
+	if err := runGo(moduleRoot, "get", librarySpec); err != nil {
+		fmt.Fprintf(os.Stderr, "fastbelt scaffold: warning: go get %s: %v\n", librarySpec, err)
 	}
-	if err := runGo(moduleRoot, "get", "-tool", "typefox.dev/fastbelt/cmd/fastbelt@latest"); err != nil {
-		fmt.Fprintf(os.Stderr, "fastbelt scaffold: warning: go get -tool typefox.dev/fastbelt/cmd/fastbelt@latest: %v\n", err)
+	if err := runGo(moduleRoot, "get", "-tool", toolSpec); err != nil {
+		fmt.Fprintf(os.Stderr, "fastbelt scaffold: warning: go get -tool %s: %v\n", toolSpec, err)
 	}
 }
 
