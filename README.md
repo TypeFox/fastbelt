@@ -26,6 +26,8 @@ go install typefox.dev/fastbelt/cmd/fastbelt@latest
 
 ## Quick start
 
+The Fastbelt CLI is implemented as the `main` package in [`cmd/fastbelt`](./cmd/fastbelt).
+
 The first step is to write a grammar definition file, e.g. `grammar.fb`, which has a similar format as the grammar language of Langium.
 
 To run the code generator for your grammar definition:
