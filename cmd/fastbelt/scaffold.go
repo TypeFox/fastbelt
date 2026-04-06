@@ -37,7 +37,7 @@ func runScaffoldCLI(args []string) error {
 	language := fs.String("language", "", "human-readable language name (required)")
 
 	fs.Usage = func() {
-		_, _ = fmt.Fprintf(os.Stderr, scaffoldUsageText)
+		_, _ = fmt.Fprint(os.Stderr, scaffoldUsageText)
 		fs.PrintDefaults()
 	}
 
