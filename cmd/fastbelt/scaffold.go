@@ -40,7 +40,7 @@ func runScaffoldCLI(args []string) error {
 	language := fs.String("language", "", "human-readable language name (required)")
 	// Generate a VS Code extension by default; if the user doesn't want it, they can delete the generated code,
 	// but if they decide they want it later, there's no simply way to re-create it.
-	createVSCodeExtension := fs.Bool("code-extension", true, "generate a VS Code extension")
+	createVSCodeExtension := fs.Bool("vscode", true, "generate a VS Code extension")
 
 	fs.Usage = func() {
 		_, _ = fmt.Fprint(os.Stderr, scaffoldUsageText)
