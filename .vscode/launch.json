@@ -54,18 +54,6 @@
 			"outFiles": [
 				"${workspaceFolder}/internal/vscode-extensions/statemachine/dist/**/*.js"
 			]
-		},
-		{
-			"name": "Fastbelt Generate",
-			"type": "go",
-			"request": "launch",
-			"mode": "debug",
-			"program": "${workspaceFolder}/cmd/fastbelt",
-			"cwd": "${workspaceFolder}/",
-			"args": [
-				"--g=./internal/grammar/grammar.fb",
-				"--o=./internal/grammar/generated"
-			]
 		}
 	]
 }

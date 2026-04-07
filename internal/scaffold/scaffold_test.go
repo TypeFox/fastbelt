@@ -114,11 +114,15 @@ func TestGoGeneratePattern(t *testing.T) {
 	mod := t.TempDir()
 	pkg := filepath.Join(mod, "pkg", "lang")
 	require.NoError(t, os.MkdirAll(pkg, 0755))
-	pat, err := goGeneratePattern(mod, pkg)
+	modAbs, err := filepath.Abs(mod)
+	require.NoError(t, err)
+	pkgAbs, err := filepath.Abs(pkg)
+	require.NoError(t, err)
+	pat, err := goGeneratePattern(modAbs, pkgAbs)
 	require.NoError(t, err)
 	require.Equal(t, "./pkg/lang/...", pat)
 
-	patRoot, err := goGeneratePattern(mod, mod)
+	patRoot, err := goGeneratePattern(modAbs, modAbs)
 	require.NoError(t, err)
 	require.Equal(t, "./...", patRoot)
 }
@@ -158,8 +162,11 @@ func TestResolveScaffoldFromWorkDir_relativeToWorkingDir(t *testing.T) {
 func TestResolveScaffoldFromWorkDir_rejectsAbsolutePackagePath(t *testing.T) {
 	root := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(root, "go.mod"), []byte("module m\n"), 0644))
+	absPkg, absErr := filepath.Abs(filepath.Join(t.TempDir(), "nope"))
+	require.NoError(t, absErr)
+	require.True(t, filepath.IsAbs(absPkg), "test requires an absolute path on this OS")
 	scaffolder := &Scaffolder{}
-	err := scaffolder.PopulateDirectorysFromWorkDir(root, "/tmp/nope")
+	err := scaffolder.PopulateDirectorysFromWorkDir(root, absPkg)
 	require.Error(t, err)
 }
 

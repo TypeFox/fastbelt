@@ -7,7 +7,7 @@ package scaffold
 import (
 	"fmt"
 	"go/token"
-	"path/filepath"
+	"path"
 	"strings"
 	"unicode"
 )
@@ -61,8 +61,9 @@ func newTemplateParams(s *Scaffolder) (templateParams, error) {
 	if modulePath == "" {
 		return templateParams{}, fmt.Errorf("module path is empty")
 	}
-	base := filepath.Base(modulePath)
-	if base == "." || base == string(filepath.Separator) {
+	// Module paths use slash-separated import syntax; use path, not filepath (Windows).
+	base := path.Base(modulePath)
+	if base == "." || base == "/" {
 		return templateParams{}, fmt.Errorf("invalid module path %q", modulePath)
 	}
 	languageLabel = strings.TrimSpace(languageLabel)
@@ -94,24 +95,24 @@ func newTemplateParams(s *Scaffolder) (templateParams, error) {
 
 	return templateParams{
 		CreateVSCodeExtension: s.CreateVSCodeExtension,
-		ModulePath:        modulePath,
-		ModuleDirBase:     base,
-		LanguageLabel:     languageLabel,
-		LanguageID:        languageID,
-		GoPackage:         goPkg,
-		ExportedBase:      exported,
-		GrammarName:       grammarName,
-		GrammarFile:       grammarFile,
-		FileDotExt:        dotExt,
-		VSCodeFileExt:     alnumExt,
-		ScopeName:         "source." + alnumExt,
-		LSPSlug:           lspSlug,
-		SyntaxFile:        syntaxFile,
-		NPMExtension:      npmExt,
-		VSIXFilename:      vsix,
-		RootNPMName:       alnumExt + "-workspace",
-		FastbeltGoGet:     fastbeltGoGet,
-		FastbeltToolGoGet: fastbeltToolGoGet,
+		ModulePath:            modulePath,
+		ModuleDirBase:         base,
+		LanguageLabel:         languageLabel,
+		LanguageID:            languageID,
+		GoPackage:             goPkg,
+		ExportedBase:          exported,
+		GrammarName:           grammarName,
+		GrammarFile:           grammarFile,
+		FileDotExt:            dotExt,
+		VSCodeFileExt:         alnumExt,
+		ScopeName:             "source." + alnumExt,
+		LSPSlug:               lspSlug,
+		SyntaxFile:            syntaxFile,
+		NPMExtension:          npmExt,
+		VSIXFilename:          vsix,
+		RootNPMName:           alnumExt + "-workspace",
+		FastbeltGoGet:         fastbeltGoGet,
+		FastbeltToolGoGet:     fastbeltToolGoGet,
 	}, nil
 }
 

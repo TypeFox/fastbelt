@@ -44,13 +44,25 @@ func (s *Scaffolder) Run() error {
 	if s.ModuleRoot == "" {
 		return fmt.Errorf("scaffold: ModuleRoot is empty")
 	}
+	modRoot, absErr := filepath.Abs(filepath.Clean(s.ModuleRoot))
+	if absErr != nil {
+		return fmt.Errorf("scaffold: ModuleRoot: %w", absErr)
+	}
+	s.ModuleRoot = modRoot
+	if s.WriteRoot != "" {
+		writeRoot, writeAbsErr := filepath.Abs(filepath.Clean(s.WriteRoot))
+		if writeAbsErr != nil {
+			return fmt.Errorf("scaffold: WriteRoot: %w", writeAbsErr)
+		}
+		s.WriteRoot = writeRoot
+	}
 	names, err := newTemplateParams(s)
 	if err != nil {
 		return err
 	}
 	if s.CreateModule {
-		relToMod, relErr := filepath.Rel(filepath.Clean(s.ModuleRoot), filepath.Clean(s.WriteRoot))
-		if relErr != nil || relToMod == ".." || strings.HasPrefix(relToMod, ".."+string(filepath.Separator)) {
+		relToMod, relErr := filepath.Rel(s.ModuleRoot, s.WriteRoot)
+		if relErr != nil || (relToMod != "." && !filepath.IsLocal(relToMod)) {
 			return fmt.Errorf("scaffold: WriteRoot must be inside ModuleRoot")
 		}
 		if err := ensureScaffoldDir(s.ModuleRoot); err != nil {
@@ -59,7 +71,7 @@ func (s *Scaffolder) Run() error {
 		if err := runGo(s.ModuleRoot, "mod", "init", names.ModulePath); err != nil {
 			return fmt.Errorf("go mod init: %w", err)
 		}
-		if filepath.Clean(s.WriteRoot) != filepath.Clean(s.ModuleRoot) {
+		if s.WriteRoot != s.ModuleRoot {
 			if err := ensureScaffoldDir(s.WriteRoot); err != nil {
 				return err
 			}
@@ -78,7 +90,7 @@ func (s *Scaffolder) Run() error {
 	tryGoGetFastbeltDependencies(s.ModuleRoot, names.FastbeltGoGet, names.FastbeltToolGoGet)
 
 	genArg := "./..."
-	if filepath.Clean(s.WriteRoot) != filepath.Clean(s.ModuleRoot) {
+	if s.WriteRoot != s.ModuleRoot {
 		var patternErr error
 		genArg, patternErr = goGeneratePattern(s.ModuleRoot, s.WriteRoot)
 		if patternErr != nil {
@@ -126,7 +138,7 @@ func (s *Scaffolder) PopulateDirectorysFromWorkDir(workDir, packageRel string) e
 	if relErr != nil {
 		return relErr
 	}
-	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+	if rel != "." && !filepath.IsLocal(rel) {
 		return fmt.Errorf("package directory %q is outside the module root %q", s.WriteRoot, s.ModuleRoot)
 	}
 	if rel == "." {
@@ -181,7 +193,7 @@ func (s *Scaffolder) PopulateDirectoriesFromModuleDir(moduleRootDir, moduleImpor
 	if relErr != nil {
 		return relErr
 	}
-	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+	if rel != "." && !filepath.IsLocal(rel) {
 		return fmt.Errorf("package path %q resolves outside the module root", packageSpec)
 	}
 	s.WriteRoot = packageRoot
@@ -197,7 +209,7 @@ func goGeneratePattern(moduleRoot, packageRoot string) (string, error) {
 	if rel == "." {
 		return "./...", nil
 	}
-	if strings.HasPrefix(rel, "..") {
+	if !filepath.IsLocal(rel) {
 		return "", fmt.Errorf("package directory %q is not inside module root %q", packageRoot, moduleRoot)
 	}
 	return "./" + filepath.ToSlash(rel) + "/...", nil
@@ -315,6 +327,7 @@ func (s *Scaffolder) scaffoldTemplatedFiles(params templateParams) error {
 		jobs = append(jobs, []job{
 			{"package.root.json.tmpl", "package.json"},
 			{"vscode-extension/package.json.tmpl", filepath.Join("vscode-extension", "package.json")},
+			{"vscode-extension/tsconfig.json.tmpl", filepath.Join("vscode-extension", "tsconfig.json")},
 			{"vscode-extension/src/extension.ts.tmpl", filepath.Join("vscode-extension", "src", "extension.ts")},
 			{"vscode-extension/syntaxes/language.tmLanguage.json.tmpl", filepath.Join("vscode-extension", "syntaxes", params.SyntaxFile)},
 			{"vscode-extension/vscodeignore.tmpl", filepath.Join("vscode-extension", ".vscodeignore")},
@@ -342,7 +355,6 @@ func (s *Scaffolder) copyStaticScaffoldFiles() error {
 	}
 	static := []string{
 		"vscode-extension/esbuild.js",
-		"vscode-extension/tsconfig.json",
 		"vscode-extension/language-configuration.json",
 	}
 	for _, rel := range static {
@@ -358,7 +370,8 @@ func (s *Scaffolder) copyStaticScaffoldFiles() error {
 }
 
 func (s *Scaffolder) readTemplateFile(relativePath string) ([]byte, error) {
-	body, err := templateFS.ReadFile(path.Join("templates", relativePath))
+	// embed.FS paths always use forward slashes
+	body, err := templateFS.ReadFile(path.Join("templates", filepath.ToSlash(relativePath)))
 	if err != nil {
 		return nil, fmt.Errorf("read template %s: %w", relativePath, err)
 	}

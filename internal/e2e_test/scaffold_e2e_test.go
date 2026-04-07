@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -36,7 +37,8 @@ func TestScaffoldModule_endToEnd(t *testing.T) {
 	require.NoError(t, os.MkdirAll(workDir, 0755))
 
 	modulePath := "example.com/fastbelte2e/e2e" + strconv.FormatInt(time.Now().UnixNano(), 10)
-	moduleRoot := filepath.Join(workDir, filepath.Base(modulePath))
+	// Go module paths use slash syntax; path.Base, not filepath.Base (Windows).
+	moduleRoot := filepath.Join(workDir, path.Base(modulePath))
 	repoRoot := repoRoot(t)
 
 	execCmd := func(t *testing.T, cmd *exec.Cmd) {

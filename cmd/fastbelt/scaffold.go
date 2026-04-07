@@ -71,7 +71,7 @@ func runScaffoldCLI(args []string) error {
 	scaffolder := &scaffold.Scaffolder{
 		CreateVSCodeExtension: !(*noVSCodeExtension),
 		Language:              *language,
-		CreateModule: *modulePath != "",
+		CreateModule:          *modulePath != "",
 	}
 
 	moduleArg := strings.TrimSpace(*modulePath)
@@ -81,7 +81,7 @@ func runScaffoldCLI(args []string) error {
 		if dirBase == "." || dirBase == "/" {
 			return fmt.Errorf("invalid -module path %q (cannot determine output directory)", *modulePath)
 		}
-		moduleDir := filepath.Join(wd, dirBase)	
+		moduleDir := filepath.Join(wd, dirBase)
 		err = scaffolder.PopulateDirectoriesFromModuleDir(moduleDir, importPath, packageRel)
 		if err != nil {
 			return err
