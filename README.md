@@ -46,8 +46,17 @@ Typically you will want to run generation using `go generate`.
 Add a directive to some file in your module (assumes install with `go tool`):
 
 ```go
-//go:generate go tool fastbelt -g ./grammar.fb -o ./
+//go:generate go tool typefox.dev/fastbelt/cmd/fastbelt -g ./grammar.fb -o ./
 ```
+## Scaffolding
+
+To bootstrap a **new Go module** for a language (minimal `.fb` grammar, `go:generate` using `go tool` on this CLI, LSP command, and VS Code extension layout), run:
+
+```sh
+fastbelt scaffold -module example.com/you/mylang -language "MyLanguage"
+```
+
+That creates a directory named after the last segment of `-module` (here `./mylang`) in the current working directory, runs `go mod init`, pulls in fastbelt as a library and tool dependency, lays down the files, and runs `go generate`. Use `fastbelt scaffold -h` for full usage.
 
 ## Examples
 

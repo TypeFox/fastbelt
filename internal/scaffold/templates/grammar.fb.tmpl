@@ -1,0 +1,12 @@
+grammar {{.GrammarName}};
+
+// Minimal starter grammar for {{.LanguageLabel}}.
+interface Document {
+	Message string
+}
+
+Document returns Document:
+	"hello" Message=ID;
+
+token ID: /[_a-zA-Z][\w_]*/;
+hidden token WS: /\s+/;

@@ -1,0 +1,50 @@
+{
+  "name": "{{.NPMExtension}}",
+  "publisher": "local",
+  "displayName": "{{.LanguageLabel}}",
+  "description": "VS Code support for {{.LanguageLabel}}",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.104.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "{{.LanguageID}}",
+        "aliases": [
+          "{{.LanguageLabel}}",
+          "{{.ExportedBase}}"
+        ],
+        "extensions": [
+          ".{{.VSCodeFileExt}}"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "{{.LanguageID}}",
+        "scopeName": "{{.ScopeName}}",
+        "path": "./syntaxes/{{.SyntaxFile}}"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "npm run check-types && node esbuild.js && npm run build-server",
+    "bundle": "node esbuild.js --production",
+    "package": "vsce package --no-dependencies --allow-missing-repository --skip-license -o {{.VSIXFilename}}",
+    "watch": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch",
+    "vscode:prepublish": "npm run check-types && node esbuild.js --production",
+    "check-types": "tsc --noEmit",
+    "build-server": "go build -o dist/server ../cmd/{{.LSPSlug}}"
+  },
+  "dependencies": {
+    "vscode-languageclient": "~9.0.1"
+  }
+}
