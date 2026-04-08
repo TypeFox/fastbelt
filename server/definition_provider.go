@@ -14,9 +14,7 @@ import (
 type DefinitionProvider interface {
 	// TODO: Maybe add the document directly to the params to avoid looking it up again in the workspace?
 	// Also, maybe add a separate params struct that doesn't directly depend on the lsp lib
-	// TODO: Use `LocationLink` instead of `Location` to support more advanced scenarios
-	// Requires a change in the LSP library
-	HandleDefinitionRequest(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.Location, error)
+	HandleDefinitionRequest(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.DefinitionLink, error)
 }
 
 type DefaultDefinitionProvider struct {
@@ -27,7 +25,7 @@ func NewDefaultDefinitionProvider(srv ServerSrvCont) DefinitionProvider {
 	return &DefaultDefinitionProvider{srv: srv}
 }
 
-func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.Location, error) {
+func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.DefinitionLink, error) {
 	uri := core.ParseURI(string(params.TextDocument.URI))
 	doc := dp.srv.Workspace().DocumentManager.Get(uri)
 	if doc == nil {
@@ -51,21 +49,40 @@ func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context
 	}
 }
 
-func (dp *DefaultDefinitionProvider) fromReference(ref core.UntypedReference) []lsp.Location {
+func (dp *DefaultDefinitionProvider) fromReference(ref core.UntypedReference) []lsp.DefinitionLink {
 	target := ref.Description()
 	if target == nil || target.NameSegment == nil {
 		return nil // No target description
 	}
-	link := lsp.Location{
-		URI:   target.URI.DocumentURI(),
-		Range: target.NameSegment.Range.LspRange(),
+	var originRange *lsp.Range
+	if originSegment := ref.Segment(); originSegment != nil {
+		lspRange := originSegment.Range.LspRange()
+		originRange = &lspRange
 	}
-	return []lsp.Location{link}
+	fullRange := target.FullSegment.Range.LspRange()
+	nameRange := target.NameSegment.Range.LspRange()
+	link := lsp.DefinitionLink{
+		OriginSelectionRange: originRange,
+		TargetURI:            target.URI.DocumentURI(),
+		TargetRange:          fullRange,
+		TargetSelectionRange: nameRange,
+	}
+	return []lsp.DefinitionLink{link}
 }
 
-func (dp *DefaultDefinitionProvider) fromName(token *core.Token) []lsp.Location {
-	target := token.Owner()
+func (dp *DefaultDefinitionProvider) fromName(token *core.Token) []lsp.DefinitionLink {
+	target := token.Element
 	if target == nil {
+		return nil
+	}
+	sourceSegment := &token.TextSegment
+	if stringNode, ok := token.Element.(core.StringNode); ok {
+		// If the token is part of a string node, the actual name segment is the parent node
+		target = stringNode.Container()
+		sourceSegment = stringNode.Segment()
+	}
+	targetSegment := target.Segment()
+	if targetSegment == nil {
 		return nil
 	}
 	namer := dp.srv.Linking().Namer
@@ -74,12 +91,21 @@ func (dp *DefaultDefinitionProvider) fromName(token *core.Token) []lsp.Location 
 		return nil
 	}
 	segment := nameUnit.Segment()
-	if token.TextSegment.Indices.Start < segment.Indices.Start || token.TextSegment.Indices.End > segment.Indices.End {
+	if segment == nil || token.TextSegment.Indices.Start < segment.Indices.Start || token.TextSegment.Indices.End > segment.Indices.End {
 		return nil // The token is not within the name segment
 	}
-	link := lsp.Location{
-		URI:   target.Document().URI.DocumentURI(),
-		Range: segment.Range.LspRange(),
+	fullRange := targetSegment.Range.LspRange()
+	targetRange := segment.Range.LspRange()
+	var sourceRange *lsp.Range
+	if sourceSegment != nil {
+		lspRange := sourceSegment.Range.LspRange()
+		sourceRange = &lspRange
 	}
-	return []lsp.Location{link}
+	link := lsp.DefinitionLink{
+		OriginSelectionRange: sourceRange,
+		TargetURI:            target.Document().URI.DocumentURI(),
+		TargetRange:          fullRange,
+		TargetSelectionRange: targetRange,
+	}
+	return []lsp.DefinitionLink{link}
 }
