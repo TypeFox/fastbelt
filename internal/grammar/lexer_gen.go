@@ -814,23 +814,6 @@ var Token_StringLiteral = core.NewTokenType(
 				} else {
 					break loop
 				}
-			case 3:
-				nextState := -1
-				next := Token_StringLiteral_Next[3]
-				lookup := Token_StringLiteral_Lookup[3]
-				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-					lo := rune(lowHigh & 0xFFFFFFFF)
-					hi := rune(lowHigh >> 32)
-					return lo <= r && r <= hi
-				})
-				if searchIndex > -1 {
-					nextState = next[searchIndex]
-				}
-				if nextState > -1 {
-					state = nextState
-				} else {
-					break loop
-				}
 			default:
 				break loop
 			}
@@ -845,18 +828,16 @@ var Token_StringLiteral = core.NewTokenType(
 )
 var Token_StringLiteral_Lookup = [][]int64{
 	{0x0000002200000022},
-	{0x0000002100000000, 0x0010FFFF00000023},
 	{0x0000002100000000, 0x0000002200000022, 0x0010FFFF00000023},
 	{},
 }
 var Token_StringLiteral_Next = [][]int{
 	{1},
-	{2, 2},
-	{2, 3, 2},
+	{1, 2, 1},
 	{},
 }
-var Token_StringLiteral_Accepting = [4]bool{
-	3: true,
+var Token_StringLiteral_Accepting = [3]bool{
+	2: true,
 }
 
 const Token_ID_Idx = 32
