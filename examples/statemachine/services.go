@@ -22,6 +22,11 @@ type StatemachineSrv struct {
 
 func CreateServices() *StatemachineSrv {
 	srv := &StatemachineSrv{}
+
+	// Default document validator: walks the AST and invokes fastbelt.Validator on each node that implements it.
+	// Statemachine checks are implemented in validation.go on StatemachineImpl.
+	srv.Workspace().DocumentValidator = workspace.NewDefaultDocumentValidator()
+
 	textdoc.CreateDefaultServices(srv)
 	workspace.CreateDefaultServices(srv)
 	linking.CreateDefaultServices(srv)
