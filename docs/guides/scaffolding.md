@@ -1,126 +1,161 @@
-# Scaffolding: grammar-driven code generation
+# Scaffolding and code generation
 
-This guide describes how to run the `fastbelt` command-line tool and what it produces.
-
-**Scope (what this is).** The program in `cmd/main.go` reads a FastBelt grammar file (`.fb`), parses and validates it using the same pipeline as the library,
-then emits a fixed set of Go source files into an output directory.
-It does **not** create a `go.mod`, directory layout, sample application, or CI configuration.
-You bring your own Go package; the tool only generates lexer, parser, AST types, linking hooks, and a small services wiring layer from the grammar.
-
-**Scope (what this is not).** This is not a generic “project scaffolder” or language-server template in the sense of bootstrapping a whole repo.
-It is **code generation from a grammar**: edit `.fb`, re-run the generator, and keep your hand-written code alongside the `*_gen.go` files.
+This guide covers both **bootstrapping** a language project (`fastbelt scaffold`) and **regenerating** Go sources from a `.fb` grammar
+(the default `fastbelt` invocation). The implementation lives under [`cmd/fastbelt`](../../cmd/fastbelt) and
+[`internal/scaffold`](../../internal/scaffold).
 
 ---
 
-## Installing and running the generator
+## `fastbelt scaffold` — new module or new package
 
-The module path is `typefox.dev/fastbelt` (see `go.mod`). The `main` package lives under `cmd/`.
+Use this when you want a **starting layout**: minimal grammar, `gen.go` with `//go:generate`, `services.go`, an LSP entry command, and
+(by default) a VS Code extension skeleton plus root `package.json` for npm workspaces.
 
-**From a released or remote module** (no local clone required):
+### Usage
 
-```bash
-go run typefox.dev/fastbelt/cmd@latest -g ./grammar.fb
+```text
+fastbelt scaffold -module <path> [-package <dir>] -language <name>
+fastbelt scaffold [-package <dir>] -language <name>
 ```
 
-**From a local checkout** of this repository (paths relative to your working tree):
+- **`-language`** (required) — human-readable name; drives derived identifiers in templates (file names, types, slugs).
+- **`-package`** (default `.`) — directory **relative** to the module root where templates are written.
+  With `-module`, it is relative to the **new** module directory; without `-module`, relative to the **current working directory**.
+- **`-module`** (optional) — Go **module path** for `go mod init`. When set, the tool creates a **new directory** named after the last
+  segment of that path (for example `-module=example.com/acme/foo` → `./foo/` under the cwd), and that directory must be **missing or
+  empty**. Then it runs `go mod init`, writes templates, attempts `go get` / `go get -tool` for fastbelt, runs `go generate`, and
+  `go mod tidy`.
+- **Without `-module`** — requires an existing `go.mod` in the cwd or a parent. Writes templates under `-package` relative to cwd, then
+  `go get`, `go generate` (scoped to the package when it is not the module root), and `go mod tidy`.
+- **`-no-vscode`** — skip the VS Code extension tree, root `package.json`, and related npm layout.
 
-```bash
-go run ./path/to/fastbelt/cmd -g ./grammar.fb
-# or, when you are in the fastbelt repo:
-go run ./cmd -g ./grammar.fb
+Run `fastbelt help` or `fastbelt scaffold -h` for the built-in usage text.
+
+### What scaffold emits
+
+Files are rendered from [`internal/scaffold/templates`](../../internal/scaffold/templates) into `WriteRoot` (the resolved package
+directory). Always included:
+
+- **`README.md`** — how to regenerate, run the LSP command, and (if applicable) build the extension.
+- **`.gitignore`**
+- **`gen.go`** — `//go:generate go tool typefox.dev/fastbelt/cmd/fastbelt -g ./<grammar>.fb -o . -p <package> -v`
+- **`services.go`** — service container with `LanguageID` and `FileExtensions` filled from the template.
+- **`<grammar>.fb`** — minimal starter grammar (name derived from the language label).
+- **`cmd/<lsp-slug>/main.go`** — stdio LSP server wiring `CreateServices` and `server.CreateDefaultServices`.
+
+With VS Code (default):
+
+- Root **`package.json`** (npm workspace).
+- **`vscode-extension/`** — extension manifest, `extension.ts`, TextMate grammar stub, esbuild and static assets.
+
+Scaffolding tries `go get typefox.dev/fastbelt@latest` and `go get -tool typefox.dev/fastbelt/cmd/fastbelt@latest`; failures are warnings
+so working inside the fastbelt repo itself still works when the module already satisfies those paths.
+
+---
+
+## Default `fastbelt` — grammar → `*_gen.go`
+
+When you do **not** pass `scaffold` (or `help`), the binary runs **code generation** only: read one `.fb` file, validate it with the same
+builder pipeline as the library, then write five generated Go files.
+
+### Installing the tool
+
+From the root `README.md`:
+
+```sh
+go get -tool typefox.dev/fastbelt/cmd/fastbelt@latest
+# or
+go install typefox.dev/fastbelt/cmd/fastbelt@latest
 ```
 
-The example package uses a file path to `main.go` so `go generate` does not depend on module replace directives:
+On demand without install:
 
-```bash
-go run ../../cmd/main.go -g ./mygrammar.fb -v
+```sh
+go run typefox.dev/fastbelt/cmd/fastbelt@latest -g ./grammar.fb -o ./
 ```
 
----
+### Generate flags
 
-## Command-line flags
+Behavior matches [`cmd/fastbelt/main.go`](../../cmd/fastbelt/main.go): a `flag.FlagSet` parses:
 
-Behavior matches `cmd/main.go`: flags are defined with the standard `flag` package, and paths are resolved to absolute paths before use.
+| Flag | Default        | Meaning                                                        |
+| ---- | -------------- | -------------------------------------------------------------- |
+| `-g` | `./grammar.fb` | Grammar file path (absolute path used internally).             |
+| `-o` | `./`           | Output directory for generated files (`MkdirAll` with `0755`). |
+| `-p` | *(derived)*    | Go `package` clause; if empty, `filepath.Base(outputPath)`.    |
+| `-v` | `false`        | Print `Written: <path>` for each emitted file.                 |
 
-| Flag | Default | Meaning |
-|------|---------|---------|
-| `-g` | `./grammar.fb` | Path to the grammar file to compile. |
-| `-o` | `./` | Output **directory** for generated files. Created if missing (`0755`). |
-| `-p` | *(derived)* | Go **package clause** for every emitted file. If empty, it defaults to the last path segment of `-o` (`filepath.Base(outputPath)`). |
-| `-v` | `false` | When set, prints one line per written file (`Written: <path>`). |
+**Grammar validation.** After the build, diagnostics are printed as `Severity - line:col message` (1-based line/column for display). If
+any diagnostic has **error** severity, the process exits with an error and **does not** write `*_gen.go` files. Fix the grammar (or
+workspace issues) until the build is clean.
 
-**Package name vs grammar name.** `-p` controls only the `package` line in generated Go files.
-Types and service identifiers are prefixed with the **grammar’s declared name** from the `grammar Name;` header in the `.fb` file
-(for example `grammar StatemachineModel;` yields names like `StatemachineModelLinkingSrv` and `CreateDefaultServices(srv StatemachineModelGeneratedSrvCont)`).
-Your directory or package name can differ (e.g. package `statemachine` with grammar `StatemachineModel`), as in `examples/statemachine/`.
+**Package name vs grammar name.** `-p` only sets the Go package line. The `grammar Name;` header in the `.fb` file still prefixes
+generated types and service identifiers (for example `StatemachineModelLinkingSrv`). Your folder or `-p` can differ, as in
+`examples/statemachine/`.
 
-**Typical `-o` / `-p` combinations.**
+### Generated files (fixed basenames)
 
-- Emit next to your hand-written files: `-o .` (or `-o ./`) and omit `-p` so the package matches the folder name.
-- Emit into a subdirectory: `-o ./gen` defaults `package` to `gen`; pass `-p mylang` if you want the generated files to use a different package name than the folder.
+For a successful run, exactly five files appear under `-o`, in this order:
 
----
+1. `linker_gen.go`
+2. `types_gen.go`
+3. `parser_gen.go`
+4. `lexer_gen.go`
+5. `services_gen.go`
 
-## Generated files (names and roles)
-
-For each successful run, exactly five files are written into the output directory, always with these basenames (see `runCmd` in `cmd/main.go`):
-
-1. **`linker_gen.go`** — Scope providers, reference linkers, reference constructors, and default implementations driven by cross-references in the grammar
-   (`internal/generator/linker_generator.go`).
-2. **`types_gen.go`** — AST-facing interfaces and structs for the grammar’s interfaces and rules (`internal/generator/type_generator.go`).
-3. **`parser_gen.go`** — Parser implementation (`internal/generator/parser_generator.go`).
-4. **`lexer_gen.go`** — Lexer and token constants (`internal/generator/lexer_generator.go`).
-5. **`services_gen.go`** — Embedding-friendly service blocks and `CreateDefaultServices` wiring for lexer, parser, and linking
-   (`internal/generator/services_generator.go`).
-
-Each file starts with a standard generated header, for example:
-
-`// Code generated by typefox.dev/fastbelt/cmd. DO NOT EDIT.`
-
-Do not edit these files by hand; regenerate them after grammar changes. Hand-written code belongs in separate `.go` files in the same package (or another
-package that imports the generated types), following the patterns below.
+Each begins with a generated header (`// Code generated by typefox.dev/fastbelt/cmd/fastbelt. DO NOT EDIT.`). Regenerate after grammar
+changes; keep
+hand-written `.go` files separate.
 
 ---
 
-## Recommended `//go:generate` line
+## `//go:generate` patterns
 
-Mirror the state machine example: put the directive in your hand-written `services.go` (or another file in the target package) so `go generate ./...` runs
-with that package’s directory as the working directory.
-
-From `examples/statemachine/services.go`:
+**Inside the fastbelt repo** (examples and `internal/grammar`), directives typically use a relative `go run` to the command sources:
 
 ```go
-//go:generate go run ../../cmd/main.go -g ./statemachine.fb -v
+//go:generate go run ../../cmd/fastbelt -g ./statemachine.fb -v
 ```
 
-With `-o` omitted, output goes to **the current directory** during generation (the package folder), which matches keeping `*_gen.go` next to `services.go`.
-Add `-o` and `-p` when you want generated sources elsewhere or need an explicit package name.
+Omitting `-o` writes to the **current directory** during `go generate` (the package directory).
+
+**Consumer modules** usually depend on the tool path and use `go tool` (after `go get -tool …`), as in scaffold’s `gen.go.tmpl`:
+
+```go
+//go:generate go tool typefox.dev/fastbelt/cmd/fastbelt -g ./grammar.fb -o . -p mypkg -v
+```
 
 ---
 
-## End-to-end workflow
+## End-to-end workflows
 
-1. **Author the grammar** — Create or edit a `.fb` file (`grammar YourGrammarName;`, interfaces, parser rules, terminals, etc.).
-2. **Run the generator** — `go run …` or `go generate` with the right `-g` / `-o` / `-p` / `-v` flags.
-3. **Implement hand-written `services.go`** — Define a concrete service struct that embeds the generated container blocks and any fastbelt mixins you need
-   (`textdoc`, `workspace`, `linking`, …), then call the generated `CreateDefaultServices` so default lexer, parser, and linking implementations are
-   installed. Set workspace metadata such as `LanguageID` and `FileExtensions`. Optionally assign `DocumentValidator` (the example uses
-   `workspace.NewDefaultDocumentValidator()`).
-4. **Add semantic validation (optional)** — Rules that are not expressible in the grammar alone can be implemented on the generated `*Impl` root type using
-   `fastbelt.Validator` (see `examples/statemachine/validation.go` and `docs/guides/validation.md`).
+**Greenfield language (scaffold):**
 
-After changing the grammar, regenerate; if you rename the grammar header or rules, update hand-written code that references generated type names.
+1. `fastbelt scaffold -module example.com/you/mylang -language "MyLanguage"` (or add `-package pkg/lang` to nest the package).
+2. Edit the generated `.fb` grammar and hand-written code as needed.
+3. `go generate ./...` from the module root when the grammar changes.
+
+**Existing module (scaffold a package):**
+
+1. From the module root, `fastbelt scaffold -language "MyLanguage" -package path/to/pkg` (requires `go.mod` discoverable from that tree).
+2. Same edit/regenerate loop.
+
+**Existing package (no scaffold):**
+
+1. Add a `.fb` grammar and a `//go:generate` line.
+2. Run `go generate` or invoke `fastbelt` / `go run …/cmd/fastbelt` with `-g`, `-o`, `-p`, `-v` as needed.
+3. Implement `services.go`, optional `validation.go`, and any commands (see [Validation](validation.md) and [Consumption](consumption.md)).
 
 ---
 
 ## Summary
 
-| Topic | Detail |
-|-------|--------|
-| Tool | `go run typefox.dev/fastbelt/cmd@latest` or local `go run ./cmd` / `go run cmd/main.go` |
-| Inputs | One `.fb` grammar file (`-g`) |
-| Outputs | `linker_gen.go`, `types_gen.go`, `parser_gen.go`, `lexer_gen.go`, `services_gen.go` in `-o` |
-| Package | `-p` or basename of `-o` |
-| Your code | Hand-written `services.go`, optional `validation.go`, tests, and application entrypoints |
+| Goal                           | Command                                                      |
+| ------------------------------ | ------------------------------------------------------------ |
+| New module + starter files     | `fastbelt scaffold -module <import/path> -language "<Name>"` |
+| New package in existing module | `fastbelt scaffold -language "<Name>" [-package <rel dir>]`  |
+| Regenerate `*_gen.go` only     | `fastbelt -g grammar.fb [-o dir] [-p pkg] [-v]`              |
+| Help                           | `fastbelt help`                                              |
 
-The fastbelt “scaffold” is this repeatable **grammar → Go sources** step; everything else remains your normal Go module layout and conventions.
+The older mental model (“scaffold is only `go run` on a single main”) is outdated: **scaffold** is a real subcommand with templates, and
+**generate** is the default mode with grammar diagnostics enforced before writes.

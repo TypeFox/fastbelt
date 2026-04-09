@@ -135,5 +135,5 @@ user’s line and follows `State().Ref(ctx)`.
 
 - LSP server entrypoint: [`examples/statemachine/server/main.go`](../../examples/statemachine/server/main.go)
   embeds the same `StatemachineSrv` and adds `server` services. The [Language server](language-server.md) guide explains that wiring.
-- Code generator driver (grammar → Go): [`cmd/main.go`](../../cmd/main.go) shows another minimal document +
-  `Builder.Build` loop for `.fb` files.
+- Code generator driver (grammar → Go): [`cmd/fastbelt/main.go`](../../cmd/fastbelt/main.go) runs the same `Builder.Build` loop for
+  `.fb` grammar files before emitting `*_gen.go`.

@@ -5,7 +5,7 @@ documents, ASTs, the service-container wiring, codegen, the build pipeline, and 
 It assumes you already know what lexing and parsing mean in general; it focuses on fastbelt-specific structure.
 
 For grammar syntax, see the [grammar reference](../references/grammar.md).
-For bootstrapping a language package, see [Scaffolding](../guides/scaffolding.md).
+For bootstrapping a new module or package and for day-to-day codegen, see [Scaffolding](../guides/scaffolding.md).
 For validation details and patterns, see [Validation](../guides/validation.md).
 For integrating generated code into tools or servers, see [Consumption](../guides/consumption.md).
 For a minimal LSP process (stdio, diagnostics, defaults), see [Language server](../guides/language-server.md).
@@ -80,28 +80,40 @@ The [statemachine example](../../examples/statemachine/) shows the same pattern 
 
 ## Code generation CLI and `go:generate`
 
-The `cmd/main.go` program **only** performs codegen from a `.fb` grammar file.
-It does not start a language server, parse user documents, or run validation for your language.
+The `fastbelt` command lives in [`cmd/fastbelt`](../../cmd/fastbelt). It has two main roles:
 
-Flags:
+1. **Default mode (no subcommand)** — compile a **grammar** `.fb` file into the five `*_gen.go` outputs.
+2. **`fastbelt scaffold`** — lay down a new Go package or module with a starter grammar, `go:generate`, LSP `main`, and optional VS Code
+   extension layout, then run `go generate` and `go mod tidy` (see [Scaffolding](../guides/scaffolding.md)).
+
+Generate mode **only** targets the fastbelt grammar language: it does not start a language server and does not parse documents in *your*
+DSL. Subcommands recognized before flag parsing are `help` and `scaffold`; anything else is treated as **generate** flags.
+
+**Generate** flags (see `runLegacyGenerate` in [`cmd/fastbelt/main.go`](../../cmd/fastbelt/main.go)):
 
 - `-g` — path to the grammar file (default `./grammar.fb`)
 - `-o` — output directory for generated Go files (default `./`)
 - `-p` — Go package name (default: last segment of the output path)
 - `-v` — print each file path as it is written
 
-The tool loads the grammar text, constructs the **grammar** service container (`internal/grammar.CreateServices`),
-registers a `fastbelt.Document`, runs the workspace **Builder** (parse/link/validate pipeline for the grammar language),
-asserts `document.Root` is a `grammar.Grammar`, then writes the five generated files via `internal/generator`.
+Before writing files, the tool loads the grammar text, uses `internal/grammar.CreateServices`, registers a `fastbelt.Document`, and runs
+the workspace **Builder** on that document. Grammar **diagnostics** (lexer, parser, linker, and AST validators for `.fb`) are printed to
+stdout; if any **error**-severity diagnostic is present, generation **stops** and no `*_gen.go` files are written. When the build is clean,
+`document.Root` must be a `grammar.Grammar`, and the five files are emitted via `internal/generator`.
 
-Typical regeneration from your language package:
+Typical regeneration from a package inside this repository:
 
 ```go
-//go:generate go run ../../cmd/main.go -g ./statemachine.fb -v
+//go:generate go run ../../cmd/fastbelt -g ./statemachine.fb -v
 ```
 
-Paths are relative to the file containing the directive; adjust `-g` and the `go run` path to match your repo layout.
-The same entrypoint is used in-tree (for example `internal/grammar/services.go` and `examples/statemachine/services.go`).
+In a consumer module, prefer `go tool` after `go get -tool typefox.dev/fastbelt/cmd/fastbelt@latest` (see the root `README.md`):
+
+```go
+//go:generate go tool typefox.dev/fastbelt/cmd/fastbelt -g ./grammar.fb -o . -p mypkg -v
+```
+
+Paths in `//go:generate` are relative to the file that contains the directive; adjust `-g` and the tool invocation to match your layout.
 
 ## Builder pipeline: parse, symbols, link, validate
 
@@ -185,7 +197,7 @@ See the [Language server guide](../guides/language-server.md) for a step-by-step
 
 ## Mental model for the statemachine example
 
-- `statemachine.fb` is the language definition; `//go:generate go run ../../cmd/main.go` keeps `*_gen.go` in sync.
+- `statemachine.fb` is the language definition; `//go:generate go run ../../cmd/fastbelt …` keeps `*_gen.go` in sync.
 - `CreateServices` builds the embedded container, sets `LanguageID` and `FileExtensions`, and may assign `DocumentValidator`.
 - `validation.go` implements `Validator` on the root AST implementation to enforce domain rules (unique names, valid transition targets).
 - `server/main.go` adds LSP services and starts the server.
