@@ -4,11 +4,30 @@ This guide explains how to drive the generated lexer, parser, linker, and valida
 workspace APIs a language server uses. It focuses on ideas, not a full compiler architecture.
 
 The walkthrough follows the small CLI in
-[`examples/statemachine/cmd/statemachine`](../../examples/statemachine/cmd/statemachine): load a
-`.statemachine` document, run a full build cycle, print diagnostics, read the root AST, and (when input
-comes from a file) step the machine by reading **event names** from stdin. The grammar only attaches names to
-commands in an `actions` block; it does not define runtime command behavior, so the example lists commands but
-does not “execute” them.
+[`examples/statemachine/cmd/statemachine`](../../examples/statemachine/cmd/statemachine). Sample models live next
+to the language, for example
+[`examples/statemachine/traffic_light.statemachine`](../../examples/statemachine/traffic_light.statemachine) and
+[`examples/statemachine/elevator.statemachine`](../../examples/statemachine/elevator.statemachine).
+
+The command package is split to mirror how a real tool might separate concerns. All of these are methods on
+[`Runner`](../../examples/statemachine/cmd/statemachine/runner.go) (same `main` package, different files for
+readability):
+
+- **`parser.go`** — `ParseArgs`, `LoadSource`, and `ParseStatemachine` (workspace pipeline: lex, parse, link,
+  validate) plus unexported diagnostic helpers. This is the “compiler front end” slice: text in, document and
+  typed root stored on the runner, or errors.
+- **`interpreter.go`** — `PrintModelSummary` and `Interpret`: walk the linked AST, match event lines from
+  `EventInput` to transitions, and print demo `emit command "…"` lines for `actions` that reference commands.
+  No separate runtime exists in fastbelt; this is illustrative execution logic only.
+- **`runner.go`** — `Runner` fields (`Stdout`, `Stderr`, `EventInput`, …) plus `ParseAndValidate` (wraps
+  `ParseStatemachine`) and `Run` (diagnostics, summary, then `Interpret`).
+- **`main.go`** — constructs a `Runner`, calls `ParseArgs`, `LoadSource`, `ParseAndValidate`, and `Run`, and exits on failure.
+
+End to end: load a `.statemachine` file from disk, run a full build cycle, print diagnostics, read the root
+AST, then step the machine by reading **event names** from stdin. The grammar only attaches names to commands
+in an `actions` block; the grammar does not define real side effects. The example CLI lists declared commands in
+the summary; for the elevator model it also prints `emit command "…"` lines after each transition into a state
+whose `actions` block references commands (for example `bell` when returning to `Waiting`).
 
 ## The statemachine language (AST sketch)
 
@@ -19,8 +38,7 @@ and `Transitions` (`Event` ref `=>` `State` ref). After linking, use `Reference.
 target node interface.
 
 Custom validation is implemented on `StatemachineImpl` in
-[`examples/statemachine/validation.go`](../../examples/statemachine/validation.go) (unique event/state names,
-transition targets).
+[`examples/statemachine/validation.go`](../../examples/statemachine/validation.go) (unique event/state names)
 
 ## Build and run the example CLI
 
@@ -28,15 +46,13 @@ From the repository root:
 
 ```bash
 go build -o statemachine ./examples/statemachine/cmd/statemachine/
-./statemachine path/to/model.statemachine
+./statemachine examples/statemachine/traffic_light.statemachine
 ```
 
-With no arguments, or with `-`, the program reads the **document body** from stdin. In that mode it prints a
-summary only; it does not read events from stdin (stdin was already consumed).
-
-When the path is a file, after the summary it prompts on stderr and reads **one event name per line** from
-stdin. It walks transitions by matching the text of the event reference on each outgoing transition from the
-current state. That is the only behavior the AST guarantees; there is no guard/action language to interpret.
+The program requires exactly one argument, the path to the model file. After printing the summary it prompts on
+stderr and reads **one event name per line** from stdin. It walks transitions by matching the text of the event
+reference on each outgoing transition from the current state. That is the only behavior the AST guarantees;
+there is no guard/action language to interpret.
 
 ## Service container setup
 
@@ -55,8 +71,7 @@ generated container blocks, with language metadata filled in.
 
 Documents are backed by a `textdoc.Handle`. For a file-like snapshot, `textdoc.NewFile(uri, languageId,
 version, content)` builds an immutable buffer. The URI should be stable and unique within the workspace; for a
-real path, `core.FileURI(absPath)` then `.DocumentURI()` matches what the LSP stack uses. For stdin-only runs,
-use a synthetic path (the example uses `file:///stdin.statemachine`) so the URI is still non-empty.
+file on disk, `core.FileURI(absPath)` then `.DocumentURI()` matches what the LSP stack and the example CLI use.
 
 Wrap the handle in `core.NewDocument(handle)`. That value is what the builder mutates (`Root`, `Tokens`,
 errors, `Diagnostics`, etc.).
@@ -106,9 +121,8 @@ your root interface, e.g. `document.Root.(statemachine.Statemachine)`. Generated
 
 References are not usable as linked targets until after the link step. In application logic, call
 `Ref(ctx)` (or `RefNode`) on `*core.Reference[T]` with a `context.Context` when you need the target node.
-The example
-simulator resolves `Init` to the first `State`, then for each transition matches `Event().Text()` against the
-user’s line and follows `State().Ref(ctx)`.
+The example interpreter (`(*Runner).Interpret` in `interpreter.go`) resolves `Init` to the first `State`, then
+for each line matches `Event().Text()` against the user’s input and follows `State().Ref(ctx)`.
 
 ## Where to hook evaluation or codegen
 
@@ -128,8 +142,6 @@ user’s line and follows `State().Ref(ctx)`.
   diagnostic list rather than a returned `error` from `Build`.
 - When reporting to users, prefer diagnostic messages and ranges from the helpers above so lexer, parser,
   linker, and validator output share one shape.
-- Avoid shadowing `err` in tight scopes; use a distinct name (`rerr`, `ferr`) when another error is still in
-  scope, matching common style in this repository.
 
 ## Related pieces
 

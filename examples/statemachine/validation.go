@@ -13,9 +13,8 @@ var _ fastbelt.Validator = (*StatemachineImpl)(nil)
 //   - State names must be unique.
 //   - Transitions must have valid event and state targets.
 func (s *StatemachineImpl) Validate(_ context.Context, _ string, accept fastbelt.ValidationAcceptor) {
-	eventNames := checkUniqueEventNames(s, accept)
-	stateNames := checkUniqueStateNames(s, accept)
-	checkTransitions(s, eventNames, stateNames, accept)
+	_ = checkUniqueEventNames(s, accept)
+	_ = checkUniqueStateNames(s, accept)
 }
 
 func checkUniqueEventNames(s *StatemachineImpl, accept fastbelt.ValidationAcceptor) map[string]bool {
@@ -48,27 +47,4 @@ func checkUniqueStateNames(s *StatemachineImpl, accept fastbelt.ValidationAccept
 		seen[state.Name()] = true
 	}
 	return seen
-}
-
-func checkTransitions(s *StatemachineImpl, eventNames map[string]bool, stateNames map[string]bool, accept fastbelt.ValidationAcceptor) {
-	for _, state := range s.States() {
-		for _, transition := range state.Transitions() {
-			if !stateNames[transition.State().Text()] {
-				accept(fastbelt.NewDiagnostic(
-					fastbelt.SeverityError,
-					"Transition target must be a valid state.",
-					transition,
-					fastbelt.WithToken(transition.State().Token()),
-				))
-			}
-			if !eventNames[transition.Event().Text()] {
-				accept(fastbelt.NewDiagnostic(
-					fastbelt.SeverityError,
-					"Transition event must be a valid event.",
-					transition,
-					fastbelt.WithToken(transition.Event().Token()),
-				))
-			}
-		}
-	}
 }

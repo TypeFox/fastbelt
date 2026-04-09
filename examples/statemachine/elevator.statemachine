@@ -1,0 +1,21 @@
+statemachine Elevator
+
+events
+    requestCar
+    atFloor
+    doorsShut
+
+commands
+    bell
+
+initialState Waiting
+
+state Waiting
+    actions { bell }
+    requestCar => Moving
+end
+
+state Moving
+    atFloor => Waiting
+    doorsShut => Moving
+end

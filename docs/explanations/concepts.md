@@ -89,7 +89,7 @@ The `fastbelt` command lives in [`cmd/fastbelt`](../../cmd/fastbelt). It has two
 Generate mode **only** targets the fastbelt grammar language: it does not start a language server and does not parse documents in *your*
 DSL. Subcommands recognized before flag parsing are `help` and `scaffold`; anything else is treated as **generate** flags.
 
-**Generate** flags (see `runLegacyGenerate` in [`cmd/fastbelt/main.go`](../../cmd/fastbelt/main.go)):
+**Generate** flags:
 
 - `-g` — path to the grammar file (default `./grammar.fb`)
 - `-o` — output directory for generated Go files (default `./`)

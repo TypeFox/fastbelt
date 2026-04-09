@@ -156,6 +156,3 @@ Omitting `-o` writes to the **current directory** during `go generate` (the pack
 | New package in existing module | `fastbelt scaffold -language "<Name>" [-package <rel dir>]`  |
 | Regenerate `*_gen.go` only     | `fastbelt -g grammar.fb [-o dir] [-p pkg] [-v]`              |
 | Help                           | `fastbelt help`                                              |
-
-The older mental model (“scaffold is only `go run` on a single main”) is outdated: **scaffold** is a real subcommand with templates, and
-**generate** is the default mode with grammar diagnostics enforced before writes.
