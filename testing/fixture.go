@@ -32,19 +32,21 @@ import (
 )
 
 // DefaultMarking is the marker configuration used by [New].
+// Also used if a nil *[TestMarking] is passed to [Fixture.WithMarking].
 var DefaultMarking = &TestMarking{
 	StartRange: "<|",
 	EndRange:   "|>",
-	StartIndex: "<|",
+	StartIndex: "",
 	EndIndex:   ">",
 }
 
 // TestMarking configures the delimiter syntax for position markers in test content.
+// See [DefaultMarking] for the default configuration.
 type TestMarking struct {
-	StartRange string // opening delimiter for range markers, default "<|"
-	EndRange   string // closing delimiter for range markers, default "|>"
-	StartIndex string // opening delimiter for index markers, default "<|"
-	EndIndex   string // closing delimiter for index markers, default ">"
+	StartRange string // Opening delimiter for range markers.
+	EndRange   string // Closing delimiter for range markers.
+	StartIndex string // Opening delimiter for index markers, defaults to the current [TestMarking.StartRange] if empty.
+	EndIndex   string // Closing delimiter for index markers.
 }
 
 // RangeMarker records a labeled span extracted from test content.
@@ -86,6 +88,19 @@ func NewWithContext(t testing.TB, srv workspace.WorkspaceSrvCont, ctx context.Co
 // WithMarking returns a shallow copy of the Fixture using m as the marker configuration.
 func (f *Fixture) WithMarking(m *TestMarking) *Fixture {
 	f.t.Helper()
+	if m == nil {
+		// Fallback to default
+		m = DefaultMarking
+	} else if m.StartRange == "" {
+		f.t.Fatal("Received empty TestMarking.StartRange")
+	} else if m.EndRange == "" {
+		f.t.Fatal("Received empty TestMarking.EndRange")
+	} else if m.EndIndex == "" {
+		f.t.Fatal("Received empty TestMarking.EndIndex")
+	} else if (m.StartIndex == "" || m.StartIndex == m.StartRange) && m.EndIndex == m.EndRange {
+		// Index and range markers are the same, which is an invalid configuration
+		f.t.Fatal("Received TestMarking with identical index and range delimiters.")
+	}
 	c := *f
 	c.marking = m
 	return &c
@@ -160,69 +175,95 @@ func (f *Fixture) newDoc(doc *core.Document, ranges []RangeMarker, indices []Ind
 // If no closing delimiter is found after an opening, the opening is treated as
 // literal text.
 func extractMarkers(content string, m *TestMarking) (cleanText string, ranges []RangeMarker, indices []IndexMarker) {
+	if m == nil {
+		m = DefaultMarking
+	}
 	var sb strings.Builder
 	sb.Grow(len(content))
 	offset := 0
 	i := 0
+	startIndexMarker := m.StartRange
+	if m.StartIndex != "" {
+		startIndexMarker = m.StartIndex
+	}
+	separateIndexPrefix := startIndexMarker != m.StartRange
 	for i < len(content) {
-		next := strings.Index(content[i:], m.StartRange)
+		nextRange := strings.Index(content[i:], m.StartRange)
+		nextIndex := -1
+		if separateIndexPrefix {
+			nextIndex = strings.Index(content[i:], startIndexMarker)
+		}
+
+		// Determine which delimiter comes first. On a tie (same position),
+		// prefer the index delimiter when it is longer than the range delimiter
+		// (e.g. index "[[" beats range "[").
+		useIndex := false
+		next := nextRange
+		if nextIndex != -1 && (next == -1 || nextIndex < next ||
+			(nextIndex == next && len(startIndexMarker) > len(m.StartRange))) {
+			useIndex = true
+			next = nextIndex
+		}
 		if next == -1 {
 			sb.WriteString(content[i:])
 			break
 		}
 		next += i
+
 		// Write everything up to the marker opening.
 		sb.WriteString(content[i:next])
 		offset += next - i
-		rest := content[next+len(m.StartRange):]
 
-		// Try range marker first: look for EndRange in the remainder.
-		if rangeEnd := strings.Index(rest, m.EndRange); rangeEnd != -1 {
-			inner := rest[:rangeEnd]
-			var label, text string
-			if before, after, ok := strings.Cut(inner, ":"); ok {
-				label, text = before, after
-			} else {
-				// Shorthand: <|label|> — label and text are the same string.
-				label, text = inner, inner
+		if useIndex {
+			// Distinct index prefix: only match index markers.
+			rest := content[next+len(startIndexMarker):]
+			if idxEnd := strings.Index(rest, m.EndIndex); idxEnd != -1 {
+				indices = append(indices, IndexMarker{Label: rest[:idxEnd], Offset: offset})
+				i = next + len(startIndexMarker) + idxEnd + len(m.EndIndex)
+				continue
 			}
-			ranges = append(ranges, RangeMarker{Label: label, Start: offset, End: offset + len(text)})
-			sb.WriteString(text)
-			offset += len(text)
-			i = next + len(m.StartRange) + rangeEnd + len(m.EndRange)
-			continue
-		}
+			// No closing delimiter; treat as literal.
+			sb.WriteString(startIndexMarker)
+			offset += len(startIndexMarker)
+			i = next + len(startIndexMarker)
+		} else {
+			rest := content[next+len(m.StartRange):]
 
-		// Fall back to index marker: look for EndIndex.
-		if idxEnd := strings.Index(rest, m.EndIndex); idxEnd != -1 {
-			indices = append(indices, IndexMarker{Label: rest[:idxEnd], Offset: offset})
-			i = next + len(m.StartIndex) + idxEnd + len(m.EndIndex)
-			continue
-		}
+			// Try range marker first: look for EndRange in the remainder.
+			if rangeEnd := strings.Index(rest, m.EndRange); rangeEnd != -1 {
+				inner := rest[:rangeEnd]
+				var label, text string
+				if before, after, ok := strings.Cut(inner, ":"); ok {
+					label, text = before, after
+				} else {
+					// Shorthand: <|label|> — label and text are the same string.
+					label, text = inner, inner
+				}
+				ranges = append(ranges, RangeMarker{Label: label, Start: offset, End: offset + len(text)})
+				sb.WriteString(text)
+				offset += len(text)
+				i = next + len(m.StartRange) + rangeEnd + len(m.EndRange)
+				continue
+			}
 
-		// No closing delimiter found; treat the opening as literal text.
-		sb.WriteString(m.StartRange)
-		offset += len(m.StartRange)
-		i = next + len(m.StartRange)
+			// Fall back to index marker: only when StartIndex == StartRange (both marker
+			// types share the same opening delimiter, distinguished only by EndIndex).
+			if !separateIndexPrefix {
+				if idxEnd := strings.Index(rest, m.EndIndex); idxEnd != -1 {
+					indices = append(indices, IndexMarker{Label: rest[:idxEnd], Offset: offset})
+					i = next + len(m.StartRange) + idxEnd + len(m.EndIndex)
+					continue
+				}
+			}
+
+			// No closing delimiter found; treat the opening as literal text.
+			sb.WriteString(m.StartRange)
+			offset += len(m.StartRange)
+			i = next + len(m.StartRange)
+		}
 	}
 	cleanText = sb.String()
 	return
-}
-
-// offsetToLocation converts a byte offset into text to a zero-based line/column
-// [core.TextLocation]. Multi-byte characters are counted by byte.
-func offsetToLocation(text string, offset int) core.TextLocation {
-	line := core.TextLine(0)
-	col := core.TextColumn(0)
-	for i := 0; i < offset && i < len(text); i++ {
-		if text[i] == '\n' {
-			line++
-			col = 0
-		} else {
-			col++
-		}
-	}
-	return core.TextLocation{Line: line, Column: col}
 }
 
 // locationInRange reports whether loc falls within r.
