@@ -21,7 +21,7 @@ func NewDefaultNamer() Namer {
 func (n *DefaultNamer) Name(node core.AstNode) core.StringUnit {
 	if namedNode, ok := node.(core.NamedTokenNode); ok {
 		return namedNode.NameToken()
-	} else if namedStringNode, ok := node.(core.NamedStringNode); ok {
+	} else if namedStringNode, ok := node.(core.NamedCompositeNode); ok {
 		return namedStringNode.NameNode()
 	} else {
 		return nil

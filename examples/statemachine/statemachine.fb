@@ -34,7 +34,7 @@ Command returns Command:
     Name=ID;
 
 interface State {
-    Name String
+    Name composite
     Actions []*Command
     Transitions []Transition
 }
@@ -56,7 +56,7 @@ Transition returns Transition:
 
 token ID: /[_a-zA-Z][\w_]*/;
 
-string FQN: ID ("." ID)*;
+composite FQN: ID ("." ID)*;
 
 hidden token WS: /\s+/;
 hidden token ML_COMMENT: /\/\*[\s\S]*?\*\//;

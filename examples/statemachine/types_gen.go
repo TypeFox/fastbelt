@@ -258,7 +258,7 @@ type State interface {
 
 	IsState()
 	Name() string
-	SetName(value core.StringNode)
+	SetName(value core.CompositeNode)
 	Actions() []*core.Reference[Command]
 	SetActionsItem(item *core.Reference[Command])
 	Transitions() []Transition
@@ -273,7 +273,7 @@ func NewState() State {
 }
 
 type StateData struct {
-	name        core.StringNode
+	name        core.CompositeNode
 	actions     []*core.Reference[Command]
 	transitions []Transition
 }
@@ -310,11 +310,11 @@ func (i *StateData) Name() string {
 	}
 }
 
-func (i *StateData) NameNode() core.StringNode {
+func (i *StateData) NameNode() core.CompositeNode {
 	return i.name
 }
 
-func (i *StateData) SetName(value core.StringNode) {
+func (i *StateData) SetName(value core.CompositeNode) {
 	i.name = value
 }
 

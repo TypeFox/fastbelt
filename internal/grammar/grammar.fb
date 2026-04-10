@@ -3,13 +3,13 @@ grammar Fastbelt;
 interface Grammar {
     Name string
     Rules []ParserRule
-    Strings []StringRule
+    Composites []CompositeRule
     Terminals []Token
     Interfaces []Interface
 }
 
 Grammar: "grammar" Name=ID ";"
-    (Rules+=ParserRule | Terminals+=Token | Interfaces+=Interface | Strings+=StringRule)*
+    (Rules+=ParserRule | Terminals+=Token | Interfaces+=Interface | Composites+=CompositeRule)*
 ;
 
 interface Interface {
@@ -57,7 +57,7 @@ ReferenceType: "*" Type=[Interface:ID];
 
 SimpleType: Type=[Interface:ID];
 
-PrimitiveType: Type=("string" | "bool" | "String");
+PrimitiveType: Type=("string" | "bool" | "composite");
 
 interface AbstractRule {
     Name string
@@ -141,16 +141,16 @@ interface Action extends Element {
 
 Action: "{" Type=[Interface:ID] ("." Property=[Field:ID] Operator=("+=" | "=") "current")? "}";
 
-interface StringRule extends AbstractRuleWithBody {
+interface CompositeRule extends AbstractRuleWithBody {
 }
 
-StringRule: "string" Name=ID ":" Body=StringAlternatives ";";
+CompositeRule: "string" Name=ID ":" Body=CompositeAlternatives ";";
 
-StringAlternatives returns Element: StringGroup ({Alternatives.Alts+=current} ("|" Alts+=StringGroup)+)?;
+CompositeAlternatives returns Element: CompositeGroup ({Alternatives.Alts+=current} ("|" Alts+=CompositeGroup)+)?;
 
-StringGroup returns Element: StringElement ({Group.Elements+=current} Elements+=StringElement+)?;
+CompositeGroup returns Element: CompositeElement ({Group.Elements+=current} Elements+=CompositeElement+)?;
 
-StringElement returns Element: (Keyword | RuleCall | "(" StringAlternatives ")") Cardinality=("*" | "+" | "?")?;
+CompositeElement returns Element: (Keyword | RuleCall | "(" CompositeAlternatives ")") Cardinality=("*" | "+" | "?")?;
 
 // Move comments in front of RegexLiteral
 comment token SL_COMMENT: /\/\/[^\r\n]*/;

@@ -97,7 +97,7 @@ func getFieldInfo(field grammar.Field) FieldInfo {
 		if typ == "bool" {
 			boolean = true
 		}
-	case "String":
+	case "composite":
 		typ = "string"
 		gtype = STRING_NODE_TYPE
 		hasNodeGetter = !array

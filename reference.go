@@ -175,11 +175,11 @@ func NewReference[T AstNode](owner AstNode, unit StringUnit, getter ReferenceGet
 func ReferenceOfToken(token *Token) UntypedReference {
 	owner := token.Element
 	indices := token.TextSegment.Indices
-	if stringNode, ok := owner.(StringNode); ok {
-		// If the token is part of a StringNode,
+	if composite, ok := owner.(CompositeNode); ok {
+		// If the token is part of a composite node,
 		// we first have to retrieve its parent node, which is the actual owner of the reference.
-		owner = stringNode.Container()
-		indices = stringNode.Segment().Indices
+		owner = composite.Container()
+		indices = composite.Segment().Indices
 	}
 	if owner == nil {
 		return nil

@@ -278,59 +278,65 @@ func AssignContainers(doc *Document, root AstNode) {
 	})
 	root.ForEachReference(func(ur UntypedReference) {
 		unit := ur.Unit()
-		if stringNode, ok := unit.(StringNode); ok {
+		if stringNode, ok := unit.(CompositeNode); ok {
 			stringNode.SetDocument(doc)
 			stringNode.SetContainer(root)
 		}
 	})
 }
 
-// Represents a node whose name is represented by a token, stored in the "Name" field of the node.
+// Represents a node whose name is represented by a [Token], stored in the "Name" field of the node.
 type NamedTokenNode interface {
 	AstNode
 	Name() string
 	NameToken() *Token
 }
 
-// Represents a node whose name is represented by a [StringUnit], stored in the "Name" field of the node.
-type NamedStringNode interface {
+// Represents a node whose name is represented by a [CompositeNode], stored in the "Name" field of the node.
+type NamedCompositeNode interface {
 	AstNode
 	Name() string
-	NameNode() StringNode
+	NameNode() CompositeNode
 }
 
-// [StringUnit] is a common interface for both [Token] and [StringNode], as both can serve as the "name" of a reference.
+// [StringUnit] is a common interface for both [Token] and [CompositeNode], as both can serve as the "name" of a reference.
 type StringUnit interface {
 	Segment() *TextSegment
 	String() string
 }
 
-// [StringNode] represents a composed string value that is made up of multiple tokens.
+// [CompositeNode] represents a composed string value that is made up of multiple tokens.
 // A common example for this is a fully qualified name that consists of multiple identifiers and dots, e.g. "a.b.c".
-// Every "string" rule of a grammar will be represented as a StringNode in the AST, even if it only consists of a single token.
-type StringNode interface {
+// Every "composite" rule of a grammar will be represented as a [CompositeNode] in the AST, even if it only consists of a single token.
+type CompositeNode interface {
 	AstNode
 	StringUnit
-	IsStringNode()
+	IsCompositeNode()
 }
 
-func NewStringNode() StringNode {
-	return &StringNodeBase{
+func NewCompositeNode() CompositeNode {
+	return &CompositeNodeBase{
 		AstNodeBase: NewAstNode(),
 	}
 }
 
-type StringNodeBase struct {
+type CompositeNodeBase struct {
 	AstNodeBase
 	cache string
 }
 
-func (node *StringNodeBase) IsStringNode() {}
+func (node *CompositeNodeBase) IsCompositeNode() {}
 
-func (node *StringNodeBase) String() string {
+func (node *CompositeNodeBase) String() string {
+	// Fast path for inlining
 	if node.cache != "" {
 		return node.cache
 	}
+	// Slow path outlines the logic
+	return node.stringSlow()
+}
+
+func (node *CompositeNodeBase) stringSlow() string {
 	// Construct the string value by concatenating the text of all tokens of the node
 	// Only need to do this once, as the tokens are usually not modified after parsing
 	var sb strings.Builder

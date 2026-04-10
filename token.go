@@ -111,9 +111,9 @@ func (t *Token) Segment() *TextSegment {
 }
 
 func (t *Token) Owner() AstNode {
-	if stringNode, ok := t.Element.(StringNode); ok {
-		// If the token is part of a StringNode, its owner is the container of the StringNode
-		return stringNode.Container()
+	if composite, ok := t.Element.(CompositeNode); ok {
+		// If the token is part of a composite node, its owner is the container of that
+		return composite.Container()
 	}
 	return t.Element
 }

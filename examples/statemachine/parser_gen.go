@@ -149,7 +149,7 @@ func (p *Parser) ParseStatemachine() Statemachine {
 		core.AssignToken(current, token, StatemachineinitialState_0)
 	}
 	{
-		result := core.NewStringNode()
+		result := core.NewCompositeNode()
 		result.SetSegmentStartToken(p.state.LA(1))
 		p.ParseFQN(result)
 		result.SetSegmentEndToken(p.state.LA(0))
@@ -205,7 +205,7 @@ func (p *Parser) ParseState() State {
 		core.AssignToken(current, token, Statestate_0)
 	}
 	{
-		result := core.NewStringNode()
+		result := core.NewCompositeNode()
 		result.SetSegmentStartToken(p.state.LA(1))
 		p.ParseFQN(result)
 		result.SetSegmentEndToken(p.state.LA(0))
@@ -267,7 +267,7 @@ func (p *Parser) ParseTransition() Transition {
 		core.AssignToken(current, token, TransitionEqualsGreaterThan_0)
 	}
 	{
-		result := core.NewStringNode()
+		result := core.NewCompositeNode()
 		result.SetSegmentStartToken(p.state.LA(1))
 		p.ParseFQN(result)
 		result.SetSegmentEndToken(p.state.LA(0))
@@ -279,7 +279,7 @@ func (p *Parser) ParseTransition() Transition {
 	return current
 }
 
-func (p *Parser) ParseFQN(current core.StringNode) {
+func (p *Parser) ParseFQN(current core.CompositeNode) {
 	{
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, FQNID_0)

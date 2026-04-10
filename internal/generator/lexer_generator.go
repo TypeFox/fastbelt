@@ -45,7 +45,12 @@ func GenerateLexer(grammr grammar.Grammar, packageName string) string {
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n gen.Node) {
+		importList := make([]string, 0, len(imports))
 		for imp := range imports {
+			importList = append(importList, imp)
+		}
+		sort.Strings(importList)
+		for _, imp := range importList {
 			n.AppendLine(fmt.Sprintf(`"%s"`, imp))
 		}
 		n.AppendLine("core \"typefox.dev/fastbelt\"")

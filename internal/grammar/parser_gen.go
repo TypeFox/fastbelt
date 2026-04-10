@@ -46,6 +46,16 @@ const (
 	AssignmentOperatorPlusEquals_0
 	AssignmentOperatorQuestionEquals_0
 	AssignmentPropertyID_0
+	CompositeAlternativesPipe_0
+	CompositeElementCardinalityAsterisk_0
+	CompositeElementCardinalityPlus_0
+	CompositeElementCardinalityQuestion_0
+	CompositeElementLeftParen_0
+	CompositeElementRightParen_0
+	CompositeRuleColon_0
+	CompositeRuleNameID_0
+	CompositeRuleSemicolon_0
+	CompositeRulestring_0
 	CrossRefColon_0
 	CrossRefLeftBracket_0
 	CrossRefRightBracket_0
@@ -73,23 +83,13 @@ const (
 	ParserRuleReturnTypeID_0
 	ParserRuleSemicolon_0
 	ParserRulereturns_0
-	PrimitiveTypeTypeString_0
 	PrimitiveTypeTypebool_0
+	PrimitiveTypeTypecomposite_0
 	PrimitiveTypeTypestring_0
 	ReferenceTypeAsterisk_0
 	ReferenceTypeTypeID_0
 	RuleCallRuleID_0
 	SimpleTypeTypeID_0
-	StringAlternativesPipe_0
-	StringElementCardinalityAsterisk_0
-	StringElementCardinalityPlus_0
-	StringElementCardinalityQuestion_0
-	StringElementLeftParen_0
-	StringElementRightParen_0
-	StringRuleColon_0
-	StringRuleNameID_0
-	StringRuleSemicolon_0
-	StringRulestring_0
 	TokenColon_0
 	TokenNameID_0
 	TokenRegexpRegexLiteral_0
@@ -177,6 +177,66 @@ var AssignmentOperatorLookaheadOr6 = parser.LLkLookahead{
 	},
 }
 
+var CompositeAlternativesLookahead15 = parser.LLkLookahead{
+	parser.LookaheadOption{
+		parser.LookaheadPath{Keyword_Pipe_Idx},
+	},
+}
+
+var CompositeAlternativesLookahead16 = parser.LLkLookahead{
+	parser.LookaheadOption{
+		parser.LookaheadPath{Keyword_Pipe_Idx},
+	},
+}
+
+var CompositeElementCardinalityLookaheadOr11 = parser.LLkLookahead{
+	parser.LookaheadOption{
+		parser.LookaheadPath{Keyword_Asterisk_Idx},
+	},
+	parser.LookaheadOption{
+		parser.LookaheadPath{Keyword_Plus_Idx},
+	},
+	parser.LookaheadOption{
+		parser.LookaheadPath{Keyword_Question_Idx},
+	},
+}
+
+var CompositeElementLookahead19 = parser.LLkLookahead{
+	parser.LookaheadOption{
+		parser.LookaheadPath{Keyword_Asterisk_Idx},
+		parser.LookaheadPath{Keyword_Plus_Idx},
+		parser.LookaheadPath{Keyword_Question_Idx},
+	},
+}
+
+var CompositeElementLookaheadOr10 = parser.LLkLookahead{
+	parser.LookaheadOption{
+		parser.LookaheadPath{Token_StringToken_Idx},
+	},
+	parser.LookaheadOption{
+		parser.LookaheadPath{Token_ID_Idx},
+	},
+	parser.LookaheadOption{
+		parser.LookaheadPath{Keyword_LeftParen_Idx},
+	},
+}
+
+var CompositeGroupLookahead17 = parser.LLkLookahead{
+	parser.LookaheadOption{
+		parser.LookaheadPath{Token_StringToken_Idx},
+		parser.LookaheadPath{Token_ID_Idx},
+		parser.LookaheadPath{Keyword_LeftParen_Idx},
+	},
+}
+
+var CompositeGroupLookahead18 = parser.LLkLookahead{
+	parser.LookaheadOption{
+		parser.LookaheadPath{Token_StringToken_Idx},
+		parser.LookaheadPath{Token_ID_Idx},
+		parser.LookaheadPath{Keyword_LeftParen_Idx},
+	},
+}
+
 var CrossRefLookahead13 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_Colon_Idx},
@@ -240,7 +300,7 @@ var FieldTypeLookaheadOr1 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_string_Idx},
 		parser.LookaheadPath{Keyword_bool_Idx},
-		parser.LookaheadPath{Keyword_String_Idx},
+		parser.LookaheadPath{Keyword_composite_Idx},
 	},
 }
 
@@ -324,67 +384,7 @@ var PrimitiveTypeTypeLookaheadOr2 = parser.LLkLookahead{
 		parser.LookaheadPath{Keyword_bool_Idx},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_String_Idx},
-	},
-}
-
-var StringAlternativesLookahead15 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Pipe_Idx},
-	},
-}
-
-var StringAlternativesLookahead16 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Pipe_Idx},
-	},
-}
-
-var StringElementCardinalityLookaheadOr11 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Asterisk_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Plus_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Question_Idx},
-	},
-}
-
-var StringElementLookahead19 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Asterisk_Idx},
-		parser.LookaheadPath{Keyword_Plus_Idx},
-		parser.LookaheadPath{Keyword_Question_Idx},
-	},
-}
-
-var StringElementLookaheadOr10 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_StringToken_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftParen_Idx},
-	},
-}
-
-var StringGroupLookahead17 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_StringToken_Idx},
-		parser.LookaheadPath{Token_ID_Idx},
-		parser.LookaheadPath{Keyword_LeftParen_Idx},
-	},
-}
-
-var StringGroupLookahead18 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_StringToken_Idx},
-		parser.LookaheadPath{Token_ID_Idx},
-		parser.LookaheadPath{Keyword_LeftParen_Idx},
+		parser.LookaheadPath{Keyword_composite_Idx},
 	},
 }
 
@@ -447,9 +447,9 @@ func (p *Parser) ParseGrammar() Grammar {
 			}
 		case 3:
 			{
-				result := p.ParseStringRule()
+				result := p.ParseCompositeRule()
 				if result != nil {
-					current.SetStringsItem(result)
+					current.SetCompositesItem(result)
 				}
 			}
 		}
@@ -642,8 +642,8 @@ func (p *Parser) ParsePrimitiveType() PrimitiveType {
 				current.SetType(token)
 			}
 		case 2:
-			token := p.state.Consume(Keyword_String_Idx)
-			core.AssignToken(current, token, PrimitiveTypeTypeString_0)
+			token := p.state.Consume(Keyword_composite_Idx)
+			core.AssignToken(current, token, PrimitiveTypeTypecomposite_0)
 			if token != nil {
 				current.SetType(token)
 			}
@@ -1143,47 +1143,47 @@ func (p *Parser) ParseAction() Action {
 	return current
 }
 
-func (p *Parser) ParseStringRule() StringRule {
-	current := NewStringRule()
+func (p *Parser) ParseCompositeRule() CompositeRule {
+	current := NewCompositeRule()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_string_Idx)
-		core.AssignToken(current, token, StringRulestring_0)
+		core.AssignToken(current, token, CompositeRulestring_0)
 	}
 	{
 		token := p.state.Consume(Token_ID_Idx)
-		core.AssignToken(current, token, StringRuleNameID_0)
+		core.AssignToken(current, token, CompositeRuleNameID_0)
 		if token != nil {
 			current.SetName(token)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_Colon_Idx)
-		core.AssignToken(current, token, StringRuleColon_0)
+		core.AssignToken(current, token, CompositeRuleColon_0)
 	}
 	{
-		result := p.ParseStringAlternatives()
+		result := p.ParseCompositeAlternatives()
 		if result != nil {
 			current.SetBody(result)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_Semicolon_Idx)
-		core.AssignToken(current, token, StringRuleSemicolon_0)
+		core.AssignToken(current, token, CompositeRuleSemicolon_0)
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
-func (p *Parser) ParseStringAlternatives() Element {
+func (p *Parser) ParseCompositeAlternatives() Element {
 	current := NewElement()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		result := p.ParseStringGroup()
+		result := p.ParseCompositeGroup()
 		core.MergeTokens(result, current.Tokens())
 		current = result
 	}
-	if p.state.Lookahead(StringAlternativesLookahead15) == 0 {
+	if p.state.Lookahead(CompositeAlternativesLookahead15) == 0 {
 		{
 			result := NewAlternatives()
 			result.SetSegment(current.Segment())
@@ -1192,13 +1192,13 @@ func (p *Parser) ParseStringAlternatives() Element {
 			current = result
 		}
 		current := current.(Alternatives)
-		for ok := true; ok; ok = p.state.Lookahead(StringAlternativesLookahead16) == 0 {
+		for ok := true; ok; ok = p.state.Lookahead(CompositeAlternativesLookahead16) == 0 {
 			{
 				token := p.state.Consume(Keyword_Pipe_Idx)
-				core.AssignToken(current, token, StringAlternativesPipe_0)
+				core.AssignToken(current, token, CompositeAlternativesPipe_0)
 			}
 			{
-				result := p.ParseStringGroup()
+				result := p.ParseCompositeGroup()
 				if result != nil {
 					current.SetAltsItem(result)
 				}
@@ -1209,15 +1209,15 @@ func (p *Parser) ParseStringAlternatives() Element {
 	return current
 }
 
-func (p *Parser) ParseStringGroup() Element {
+func (p *Parser) ParseCompositeGroup() Element {
 	current := NewElement()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		result := p.ParseStringElement()
+		result := p.ParseCompositeElement()
 		core.MergeTokens(result, current.Tokens())
 		current = result
 	}
-	if p.state.Lookahead(StringGroupLookahead17) == 0 {
+	if p.state.Lookahead(CompositeGroupLookahead17) == 0 {
 		{
 			result := NewGroup()
 			result.SetSegment(current.Segment())
@@ -1227,8 +1227,8 @@ func (p *Parser) ParseStringGroup() Element {
 		}
 		current := current.(Group)
 		{
-			for ok := true; ok; ok = p.state.Lookahead(StringGroupLookahead18) == 0 {
-				result := p.ParseStringElement()
+			for ok := true; ok; ok = p.state.Lookahead(CompositeGroupLookahead18) == 0 {
+				result := p.ParseCompositeElement()
 				if result != nil {
 					current.SetElementsItem(result)
 				}
@@ -1239,10 +1239,10 @@ func (p *Parser) ParseStringGroup() Element {
 	return current
 }
 
-func (p *Parser) ParseStringElement() Element {
+func (p *Parser) ParseCompositeElement() Element {
 	current := NewElement()
 	current.SetSegmentStartToken(p.state.LA(1))
-	switch p.state.Lookahead(StringElementLookaheadOr10) {
+	switch p.state.Lookahead(CompositeElementLookaheadOr10) {
 	case 0:
 		{
 			result := p.ParseKeyword()
@@ -1258,36 +1258,36 @@ func (p *Parser) ParseStringElement() Element {
 	case 2:
 		{
 			token := p.state.Consume(Keyword_LeftParen_Idx)
-			core.AssignToken(current, token, StringElementLeftParen_0)
+			core.AssignToken(current, token, CompositeElementLeftParen_0)
 		}
 		{
-			result := p.ParseStringAlternatives()
+			result := p.ParseCompositeAlternatives()
 			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
 		{
 			token := p.state.Consume(Keyword_RightParen_Idx)
-			core.AssignToken(current, token, StringElementRightParen_0)
+			core.AssignToken(current, token, CompositeElementRightParen_0)
 		}
 	}
 	{
-		if p.state.Lookahead(StringElementLookahead19) == 0 {
-			switch p.state.Lookahead(StringElementCardinalityLookaheadOr11) {
+		if p.state.Lookahead(CompositeElementLookahead19) == 0 {
+			switch p.state.Lookahead(CompositeElementCardinalityLookaheadOr11) {
 			case 0:
 				token := p.state.Consume(Keyword_Asterisk_Idx)
-				core.AssignToken(current, token, StringElementCardinalityAsterisk_0)
+				core.AssignToken(current, token, CompositeElementCardinalityAsterisk_0)
 				if token != nil {
 					current.SetCardinality(token)
 				}
 			case 1:
 				token := p.state.Consume(Keyword_Plus_Idx)
-				core.AssignToken(current, token, StringElementCardinalityPlus_0)
+				core.AssignToken(current, token, CompositeElementCardinalityPlus_0)
 				if token != nil {
 					current.SetCardinality(token)
 				}
 			case 2:
 				token := p.state.Consume(Keyword_Question_Idx)
-				core.AssignToken(current, token, StringElementCardinalityQuestion_0)
+				core.AssignToken(current, token, CompositeElementCardinalityQuestion_0)
 				if token != nil {
 					current.SetCardinality(token)
 				}

@@ -21,7 +21,7 @@ type ParserGeneratorContext struct {
 	accessNames        map[core.AstNode]string
 	lookaheads         map[core.AstNode]LookaheadValue
 	orLookaheads       map[core.AstNode]LookaheadValue
-	stringRule         bool
+	inCompositeRule    bool
 }
 
 type LookaheadValue struct {
@@ -135,8 +135,8 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 	for _, rule := range grammr.Rules() {
 		generateParseFunction(node, context, rule)
 	}
-	for _, stringRule := range grammr.Strings() {
-		generateStringParseFunction(node, context, stringRule)
+	for _, composite := range grammr.Composites() {
+		generateCompositeParseFunction(node, context, composite)
 	}
 
 	return FormatIfPossible(node.String())
@@ -147,9 +147,9 @@ func populateContext(context *ParserGeneratorContext) {
 		ruleName := rule.Name()
 		populateContextWithNode(context, ruleName, rule.Body())
 	}
-	for _, stringRule := range context.grammar.Strings() {
-		ruleName := stringRule.Name()
-		populateContextWithNode(context, ruleName, stringRule.Body())
+	for _, composite := range context.grammar.Composites() {
+		ruleName := composite.Name()
+		populateContextWithNode(context, ruleName, composite.Body())
 	}
 }
 
@@ -213,7 +213,7 @@ func generateParseFunction(node generator.Node, context *ParserGeneratorContext,
 	if returnType == nil {
 		panic("Unable to find return type for rule: " + rule.Name())
 	}
-	context.stringRule = false
+	context.inCompositeRule = false
 	node.AppendLine("func (p *Parser) Parse", rule.Name(), "() ", returnType.Name(), " {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("current := New", returnType.Name(), "()")
@@ -226,9 +226,9 @@ func generateParseFunction(node generator.Node, context *ParserGeneratorContext,
 	node.AppendLine()
 }
 
-func generateStringParseFunction(node generator.Node, context *ParserGeneratorContext, rule grammar.StringRule) {
-	context.stringRule = true
-	node.AppendLine("func (p *Parser) Parse", rule.Name(), "(current core.StringNode) {")
+func generateCompositeParseFunction(node generator.Node, context *ParserGeneratorContext, rule grammar.CompositeRule) {
+	context.inCompositeRule = true
+	node.AppendLine("func (p *Parser) Parse", rule.Name(), "(current core.CompositeNode) {")
 	node.Indent(func(n generator.Node) {
 		generateAbstractElementParser(n, context, rule.Body())
 	})
@@ -275,7 +275,7 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 		node.AppendLine("{")
 		node.Indent(func(indent generator.Node) {
 			resultName := generateRuleCallParser(indent, context, e)
-			if resultName == "result" && !context.stringRule {
+			if resultName == "result" && !context.inCompositeRule {
 				// Unassigned rule call result
 				// Needs to be merged into current node
 				indent.AppendLine("core.MergeTokens(result, current.Tokens())")
@@ -394,11 +394,11 @@ func generateRuleCallParser(node generator.Node, context *ParserGeneratorContext
 			n.AppendLine("core.AssignToken(current, token, ", context.accessNames[ruleCall], ")")
 		case grammar.ParserRule:
 			n.AppendLine("result ", eq, " p.Parse", t.Name(), "()")
-		case grammar.StringRule:
-			if context.stringRule {
+		case grammar.CompositeRule:
+			if context.inCompositeRule {
 				n.AppendLine("p.Parse", t.Name(), "(current)")
 			} else {
-				n.AppendLine("result ", eq, " core.NewStringNode()")
+				n.AppendLine("result ", eq, " core.NewCompositeNode()")
 				n.AppendLine("result.SetSegmentStartToken(p.state.LA(1))")
 				n.AppendLine("p.Parse", t.Name(), "(result)")
 				n.AppendLine("result.SetSegmentEndToken(p.state.LA(0))")

@@ -15,8 +15,8 @@ type Grammar interface {
 	SetName(value *core.Token)
 	Rules() []ParserRule
 	SetRulesItem(item ParserRule)
-	Strings() []StringRule
-	SetStringsItem(item StringRule)
+	Composites() []CompositeRule
+	SetCompositesItem(item CompositeRule)
 	Terminals() []Token
 	SetTerminalsItem(item Token)
 	Interfaces() []Interface
@@ -33,7 +33,7 @@ func NewGrammar() Grammar {
 type GrammarData struct {
 	name       *core.Token
 	rules      []ParserRule
-	strings    []StringRule
+	composites []CompositeRule
 	terminals  []Token
 	interfaces []Interface
 }
@@ -41,7 +41,7 @@ type GrammarData struct {
 func NewGrammarData() GrammarData {
 	return GrammarData{
 		rules:      []ParserRule{},
-		strings:    []StringRule{},
+		composites: []CompositeRule{},
 		terminals:  []Token{},
 		interfaces: []Interface{},
 	}
@@ -53,7 +53,7 @@ func (i *GrammarData) ForEachNode(fn func(core.AstNode)) {
 	for _, item := range i.rules {
 		fn(item)
 	}
-	for _, item := range i.strings {
+	for _, item := range i.composites {
 		fn(item)
 	}
 	for _, item := range i.terminals {
@@ -91,12 +91,12 @@ func (i *GrammarData) SetRulesItem(item ParserRule) {
 	i.rules = append(i.rules, item)
 }
 
-func (i *GrammarData) Strings() []StringRule {
-	return i.strings
+func (i *GrammarData) Composites() []CompositeRule {
+	return i.composites
 }
 
-func (i *GrammarData) SetStringsItem(item StringRule) {
-	i.strings = append(i.strings, item)
+func (i *GrammarData) SetCompositesItem(item CompositeRule) {
+	i.composites = append(i.composites, item)
 }
 
 func (i *GrammarData) Terminals() []Token {
@@ -1540,52 +1540,52 @@ func (i *ActionImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.ActionData.ForEachReference(fn)
 }
 
-type StringRule interface {
+type CompositeRule interface {
 	core.AstNode
 	AbstractRuleWithBody
 
-	IsStringRule()
+	IsCompositeRule()
 }
 
-func NewStringRule() StringRule {
-	return &StringRuleImpl{
+func NewCompositeRule() CompositeRule {
+	return &CompositeRuleImpl{
 		AstNodeBase:              core.NewAstNode(),
 		AbstractRuleWithBodyData: NewAbstractRuleWithBodyData(),
 		AbstractRuleData:         NewAbstractRuleData(),
-		StringRuleData:           NewStringRuleData(),
+		CompositeRuleData:        NewCompositeRuleData(),
 	}
 }
 
-type StringRuleData struct {
+type CompositeRuleData struct {
 }
 
-func NewStringRuleData() StringRuleData {
-	return StringRuleData{}
+func NewCompositeRuleData() CompositeRuleData {
+	return CompositeRuleData{}
 }
 
-func (i *StringRuleData) IsStringRule() {}
+func (i *CompositeRuleData) IsCompositeRule() {}
 
-func (i *StringRuleData) ForEachNode(fn func(core.AstNode)) {
+func (i *CompositeRuleData) ForEachNode(fn func(core.AstNode)) {
 }
 
-func (i *StringRuleData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *CompositeRuleData) ForEachReference(fn func(core.UntypedReference)) {
 }
 
-type StringRuleImpl struct {
+type CompositeRuleImpl struct {
 	core.AstNodeBase
 	AbstractRuleWithBodyData
 	AbstractRuleData
-	StringRuleData
+	CompositeRuleData
 }
 
-func (i *StringRuleImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *CompositeRuleImpl) ForEachNode(fn func(core.AstNode)) {
 	i.AbstractRuleWithBodyData.ForEachNode(fn)
 	i.AbstractRuleData.ForEachNode(fn)
-	i.StringRuleData.ForEachNode(fn)
+	i.CompositeRuleData.ForEachNode(fn)
 }
 
-func (i *StringRuleImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *CompositeRuleImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.AbstractRuleWithBodyData.ForEachReference(fn)
 	i.AbstractRuleData.ForEachReference(fn)
-	i.StringRuleData.ForEachReference(fn)
+	i.CompositeRuleData.ForEachReference(fn)
 }

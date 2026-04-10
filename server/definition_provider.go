@@ -76,7 +76,7 @@ func (dp *DefaultDefinitionProvider) fromName(token *core.Token) []lsp.Definitio
 		return nil
 	}
 	sourceSegment := &token.TextSegment
-	if stringNode, ok := token.Element.(core.StringNode); ok {
+	if stringNode, ok := token.Element.(core.CompositeNode); ok {
 		// If the token is part of a string node, the actual name segment is the parent node
 		target = stringNode.Container()
 		sourceSegment = stringNode.Segment()

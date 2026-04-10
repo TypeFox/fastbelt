@@ -5,10 +5,9 @@ package grammar
 import (
 	"slices"
 	"strings"
-	"unicode/utf8"
-
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
+	"unicode/utf8"
 )
 
 const Keyword_LeftParen_Idx = 1
@@ -227,25 +226,7 @@ var Keyword_QuestionEquals = core.NewTokenType(
 	[]rune{'?'},
 )
 
-const Keyword_String_Idx = 13
-
-var Keyword_String = core.NewTokenType(
-	Keyword_String_Idx,
-	"String",
-	"String",
-	0,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "String") {
-			return 6
-		}
-		return 0
-	},
-	[]rune{'S'},
-)
-
-const Keyword_LeftBracket_Idx = 14
+const Keyword_LeftBracket_Idx = 13
 
 var Keyword_LeftBracket = core.NewTokenType(
 	Keyword_LeftBracket_Idx,
@@ -263,7 +244,7 @@ var Keyword_LeftBracket = core.NewTokenType(
 	[]rune{'['},
 )
 
-const Keyword_RightBracket_Idx = 15
+const Keyword_RightBracket_Idx = 14
 
 var Keyword_RightBracket = core.NewTokenType(
 	Keyword_RightBracket_Idx,
@@ -281,7 +262,7 @@ var Keyword_RightBracket = core.NewTokenType(
 	[]rune{']'},
 )
 
-const Keyword_bool_Idx = 16
+const Keyword_bool_Idx = 15
 
 var Keyword_bool = core.NewTokenType(
 	Keyword_bool_Idx,
@@ -299,7 +280,7 @@ var Keyword_bool = core.NewTokenType(
 	[]rune{'b'},
 )
 
-const Keyword_comment_Idx = 17
+const Keyword_comment_Idx = 16
 
 var Keyword_comment = core.NewTokenType(
 	Keyword_comment_Idx,
@@ -311,6 +292,24 @@ var Keyword_comment = core.NewTokenType(
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "comment") {
 			return 7
+		}
+		return 0
+	},
+	[]rune{'c'},
+)
+
+const Keyword_composite_Idx = 17
+
+var Keyword_composite = core.NewTokenType(
+	Keyword_composite_Idx,
+	"composite",
+	"composite",
+	0,
+	0,
+	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "composite") {
+			return 9
 		}
 		return 0
 	},
@@ -1200,11 +1199,11 @@ func NewLexer() lexer.Lexer {
 		Keyword_Equals,
 		Keyword_Question,
 		Keyword_QuestionEquals,
-		Keyword_String,
 		Keyword_LeftBracket,
 		Keyword_RightBracket,
 		Keyword_bool,
 		Keyword_comment,
+		Keyword_composite,
 		Keyword_current,
 		Keyword_extends,
 		Keyword_grammar,
