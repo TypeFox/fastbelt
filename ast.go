@@ -4,7 +4,10 @@
 
 package fastbelt
 
-import "iter"
+import (
+	"iter"
+	"strings"
+)
 
 type AstNodeBase struct {
 	document  *Document
@@ -68,15 +71,15 @@ func (node *AstNodeBase) Tokens() []*Token {
 
 func (node *AstNodeBase) SetSegmentStartToken(token *Token) {
 	if node != nil && token != nil {
-		node.segment.Indices.Start = token.Segment.Indices.Start
-		node.segment.Range.Start = token.Segment.Range.Start
+		node.segment.Indices.Start = token.TextSegment.Indices.Start
+		node.segment.Range.Start = token.TextSegment.Range.Start
 	}
 }
 
 func (node *AstNodeBase) SetSegmentEndToken(token *Token) {
 	if node != nil && token != nil {
-		node.segment.Indices.End = token.Segment.Indices.End
-		node.segment.Range.End = token.Segment.Range.End
+		node.segment.Indices.End = token.TextSegment.Indices.End
+		node.segment.Range.End = token.TextSegment.Range.End
 	}
 }
 
@@ -273,10 +276,73 @@ func AssignContainers(doc *Document, root AstNode) {
 		child.SetContainer(root)
 		AssignContainers(doc, child)
 	})
+	root.ForEachReference(func(ur UntypedReference) {
+		unit := ur.Unit()
+		if stringNode, ok := unit.(CompositeNode); ok {
+			stringNode.SetDocument(doc)
+			stringNode.SetContainer(root)
+		}
+	})
 }
 
-type NamedNode interface {
+// Represents a node whose name is represented by a [Token], stored in the "Name" field of the node.
+type NamedTokenNode interface {
 	AstNode
 	Name() string
 	NameToken() *Token
+}
+
+// Represents a node whose name is represented by a [CompositeNode], stored in the "Name" field of the node.
+type NamedCompositeNode interface {
+	AstNode
+	Name() string
+	NameNode() CompositeNode
+}
+
+// [StringUnit] is a common interface for both [Token] and [CompositeNode], as both can serve as the "name" of a reference.
+type StringUnit interface {
+	Segment() *TextSegment
+	String() string
+}
+
+// [CompositeNode] represents a composed string value that is made up of multiple tokens.
+// A common example for this is a fully qualified name that consists of multiple identifiers and dots, e.g. "a.b.c".
+// Every "composite" rule of a grammar will be represented as a [CompositeNode] in the AST, even if it only consists of a single token.
+type CompositeNode interface {
+	AstNode
+	StringUnit
+	IsCompositeNode()
+}
+
+func NewCompositeNode() CompositeNode {
+	return &CompositeNodeBase{
+		AstNodeBase: NewAstNode(),
+	}
+}
+
+type CompositeNodeBase struct {
+	AstNodeBase
+	cache string
+}
+
+func (node *CompositeNodeBase) IsCompositeNode() {}
+
+func (node *CompositeNodeBase) String() string {
+	// Fast path for inlining
+	if node.cache != "" {
+		return node.cache
+	}
+	// Slow path outlines the logic
+	return node.stringSlow()
+}
+
+func (node *CompositeNodeBase) stringSlow() string {
+	// Construct the string value by concatenating the text of all tokens of the node
+	// Only need to do this once, as the tokens are usually not modified after parsing
+	var sb strings.Builder
+	for _, token := range node.Tokens() {
+		sb.WriteString(token.Image)
+	}
+	node.cache = sb.String()
+	return node.cache
 }

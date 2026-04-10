@@ -156,5 +156,7 @@ func generateStatemachineContent(index int) (string, int) {
 		elementCount++
 	}
 
+	// TODO: remove this
+	elementCount += numStates
 	return sb.String(), elementCount
 }

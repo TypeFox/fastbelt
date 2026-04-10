@@ -25,8 +25,8 @@ type UntypedReference interface {
 	Resolve(ctx context.Context)
 	Reset()
 	Error() *ReferenceError
+	Unit() StringUnit
 	Segment() *TextSegment
-	Token() *Token
 	Text() string
 }
 
@@ -36,7 +36,7 @@ type ReferenceGetter[T AstNode] func(context.Context, *Reference[T]) (*AstNodeDe
 // Resolving is thread safe and is done concurrently by default.
 // The resolution is triggered when [Ref], [RefNode] or [Resolve] are called for the first time.
 type Reference[T AstNode] struct {
-	token       *Token
+	unit        StringUnit
 	owner       AstNode
 	description *AstNodeDescription
 	err         *ReferenceError
@@ -59,18 +59,18 @@ func (r *Reference[T]) Reset() {
 	r.ref = zero
 }
 
-func (r *Reference[T]) Token() *Token {
+func (r *Reference[T]) Unit() StringUnit {
 	if r == nil {
 		return nil
 	}
-	return r.token
+	return r.unit
 }
 
 func (r *Reference[T]) Text() string {
-	if r == nil || r.token == nil {
+	if r == nil || r.unit == nil {
 		return ""
 	}
-	return r.token.Image
+	return r.unit.String()
 }
 
 func (r *Reference[T]) Owner() AstNode {
@@ -108,10 +108,10 @@ func (r *Reference[T]) Error() *ReferenceError {
 }
 
 func (r *Reference[T]) Segment() *TextSegment {
-	if r != nil && r.token != nil {
-		return &r.token.Segment
+	if r == nil || r.unit == nil {
+		return nil
 	}
-	return nil
+	return r.unit.Segment()
 }
 
 func (r *Reference[T]) Resolve(ctx context.Context) {
@@ -162,10 +162,10 @@ func (r *Reference[T]) resolveSlow(ctx context.Context) {
 	r.resolved.Store(true)
 }
 
-func NewReference[T AstNode](owner AstNode, token *Token, getter ReferenceGetter[T]) *Reference[T] {
+func NewReference[T AstNode](owner AstNode, unit StringUnit, getter ReferenceGetter[T]) *Reference[T] {
 	return &Reference[T]{
 		owner:  owner,
-		token:  token,
+		unit:   unit,
 		getter: getter,
 	}
 }
@@ -174,6 +174,13 @@ func NewReference[T AstNode](owner AstNode, token *Token, getter ReferenceGetter
 // Returns nil if the token does not represent a reference.
 func ReferenceOfToken(token *Token) UntypedReference {
 	owner := token.Element
+	indices := token.TextSegment.Indices
+	if composite, ok := owner.(CompositeNode); ok {
+		// If the token is part of a composite node,
+		// we first have to retrieve its parent node, which is the actual owner of the reference.
+		owner = composite.Container()
+		indices = composite.Segment().Indices
+	}
 	if owner == nil {
 		return nil
 	}
@@ -184,7 +191,7 @@ func ReferenceOfToken(token *Token) UntypedReference {
 	// Also, we only do this in select LSP requests, so the performance impact is negligible
 	for ur := range References(owner) {
 		// Simply compare the text indices to find the matching reference
-		if ur.Segment().Indices == token.Segment.Indices {
+		if ur.Segment().Indices == indices {
 			ref = ur
 			break
 		}
