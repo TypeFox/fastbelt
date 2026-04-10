@@ -140,22 +140,23 @@ func (d *Doc) markerRange(label string) (core.TextRange, bool) {
 	return core.TextRange{}, false
 }
 
-// markerLocation returns the TextLocation of the named marker.
-// For range markers it returns the start; for index markers the offset position.
-func (d *Doc) markerLocation(label string) (core.TextLocation, bool) {
-	text := d.Document.TextDoc.Text(nil)
-	for _, r := range d.Ranges {
-		if r.Label == label {
-			return offsetToLocation(text, r.Start), true
-		}
-	}
-	for _, idx := range d.Indices {
-		if idx.Label == label {
-			return offsetToLocation(text, idx.Offset), true
-		}
-	}
-	return core.TextLocation{}, false
-}
+// Unused, uncomment once required
+// // markerLocation returns the TextLocation of the named marker.
+// // For range markers it returns the start; for index markers the offset position.
+// func (d *Doc) markerLocation(label string) (core.TextLocation, bool) {
+// 	text := d.Document.TextDoc.Text(nil)
+// 	for _, r := range d.Ranges {
+// 		if r.Label == label {
+// 			return offsetToLocation(text, r.Start), true
+// 		}
+// 	}
+// 	for _, idx := range d.Indices {
+// 		if idx.Label == label {
+// 			return offsetToLocation(text, idx.Offset), true
+// 		}
+// 	}
+// 	return core.TextLocation{}, false
+// }
 
 // FindNode returns the first node of type T in the document tree, or (zero, false).
 func FindNode[T core.AstNode](d *Doc) (T, bool) {
