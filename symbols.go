@@ -11,7 +11,7 @@ import (
 	"typefox.dev/fastbelt/util/extiter"
 )
 
-type AstNodeDescription struct {
+type SymbolDescription struct {
 	URI         URI
 	Node        AstNode
 	Name        string
@@ -19,9 +19,9 @@ type AstNodeDescription struct {
 	FullSegment *TextSegment
 }
 
-func NewAstNodeDescription(node AstNode, name string, nameSegment, fullSegment *TextSegment) *AstNodeDescription {
+func NewSymbolDescription(node AstNode, name string, nameSegment, fullSegment *TextSegment) *SymbolDescription {
 	doc := node.Document()
-	return &AstNodeDescription{
+	return &SymbolDescription{
 		URI:         doc.URI,
 		Node:        node,
 		Name:        name,
@@ -30,7 +30,7 @@ func NewAstNodeDescription(node AstNode, name string, nameSegment, fullSegment *
 	}
 }
 
-var EmptyAstNodeDescriptions = extiter.Empty[*AstNodeDescription]()
+var EmptySymbolDescriptions = extiter.Empty[*SymbolDescription]()
 
 // [SymbolContainers] is a service that is able to generate new [SymbolContainer] items for the current language.
 // It is used for the [Document.LocalSymbols], [Document.ExportedSymbols], and [Document.ImportedSymbols] fields.
@@ -39,7 +39,7 @@ type SymbolContainers interface {
 }
 
 // Shorthand for a sequence of symbol descriptions.
-type SymbolSeq = iter.Seq[*AstNodeDescription]
+type SymbolSeq = iter.Seq[*SymbolDescription]
 
 // A [SymbolContainer] is an efficient data structure for storing and querying symbol descriptions.
 // References usually need to query symbols for specific AST types.
@@ -48,7 +48,7 @@ type SymbolContainer interface {
 	// Attempts to put the given description into the container.
 	// Returns true if the description was added.
 	// The container is allowed to reject descriptions that it does not want to hold, for example because they are of the wrong type.
-	Put(desc *AstNodeDescription) bool
+	Put(desc *SymbolDescription) bool
 	// Returns an iterator over all descriptions in the container.
 	All() SymbolSeq
 	// Returns an iterator over all descriptions in the container that have a node of the given type.
@@ -59,26 +59,26 @@ var EmptySymbolContainer SymbolContainer = &emptySymbolContainer{}
 
 type emptySymbolContainer struct{}
 
-func (c *emptySymbolContainer) Put(desc *AstNodeDescription) bool {
-	// This container is immutable
-	panic("Cannot put description into empty symbol container")
+func (c *emptySymbolContainer) Put(desc *SymbolDescription) bool {
+	// This container is immutable, don't accept any descriptions.
+	return false
 }
 
 func (c *emptySymbolContainer) All() SymbolSeq {
-	return EmptyAstNodeDescriptions
+	return EmptySymbolDescriptions
 }
 
 func (c *emptySymbolContainer) Type(targetType reflect.Type) SymbolSeq {
-	return EmptyAstNodeDescriptions
+	return EmptySymbolDescriptions
 }
 
 type mergedSymbolContainer struct {
 	containers iter.Seq[SymbolContainer]
 }
 
-func (c *mergedSymbolContainer) Put(desc *AstNodeDescription) bool {
-	// This container is immutable
-	panic("Cannot put description into merged symbol container")
+func (c *mergedSymbolContainer) Put(desc *SymbolDescription) bool {
+	// This container is immutable, don't accept any descriptions.
+	return false
 }
 
 func (c *mergedSymbolContainer) All() SymbolSeq {

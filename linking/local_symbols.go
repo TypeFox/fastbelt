@@ -83,7 +83,7 @@ func (ls *DefaultLocalSymbols) For(node core.AstNode) core.SymbolContainer {
 type LocalSymbolDescriber interface {
 	// Describe determines the name and other metadata of a locally visible symbol.
 	// It returns the description and the container in which the symbol is visible, or nil if the symbol is not locally visible.
-	Describe(node core.AstNode) (*core.AstNodeDescription, core.AstNode)
+	Describe(node core.AstNode) (*core.SymbolDescription, core.AstNode)
 }
 
 // DefaultLocalSymbolDescriber is the default implementation of LocalSymbolTableItemProvider.
@@ -97,14 +97,14 @@ func NewDefaultLocalSymbolDescriber(srv LinkingSrvCont) LocalSymbolDescriber {
 	}
 }
 
-func (p *DefaultLocalSymbolDescriber) Describe(node core.AstNode) (*core.AstNodeDescription, core.AstNode) {
+func (p *DefaultLocalSymbolDescriber) Describe(node core.AstNode) (*core.SymbolDescription, core.AstNode) {
 	name, nameToken := p.srv.Linking().Namer.Name(node)
 	if name != "" {
 		var segment *core.TextSegment
 		if nameToken != nil {
 			segment = &nameToken.Segment
 		}
-		desc := core.NewAstNodeDescription(node, name, segment, node.Segment())
+		desc := core.NewSymbolDescription(node, name, segment, node.Segment())
 		container := node.Container()
 		return desc, container
 	}

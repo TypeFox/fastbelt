@@ -71,15 +71,15 @@ func getCurrentType(ctx context.Context, node core.AstNode) Interface {
 	return nil
 }
 
-func generateInterfaceFieldsDescriptions(ctx context.Context, iface Interface, visited map[Interface]bool) []*core.AstNodeDescription {
-	fieldDesc := []*core.AstNodeDescription{}
+func generateInterfaceFieldsDescriptions(ctx context.Context, iface Interface, visited map[Interface]bool) []*core.SymbolDescription {
+	fieldDesc := []*core.SymbolDescription{}
 	if visited[iface] {
 		return fieldDesc
 	}
 	visited[iface] = true
 	for _, field := range iface.Fields() {
 		if field.Name() != "" {
-			fieldDesc = append(fieldDesc, core.NewAstNodeDescription(field, field.Name(), &field.NameToken().Segment, field.Segment()))
+			fieldDesc = append(fieldDesc, core.NewSymbolDescription(field, field.Name(), &field.NameToken().Segment, field.Segment()))
 		}
 	}
 	for _, super := range iface.Extends() {

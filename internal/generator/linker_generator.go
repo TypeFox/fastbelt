@@ -127,7 +127,7 @@ func generateLinker(context *LinkerGeneratorContext) generator.Node {
 	node.AppendLine("type ", context.grammar.Name(), "ReferenceLinker interface {")
 	node.Indent(func(n generator.Node) {
 		for _, field := range context.fields {
-			n.AppendLine("Link", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) (*core.AstNodeDescription, *core.ReferenceError)")
+			n.AppendLine("Link", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) (*core.SymbolDescription, *core.ReferenceError)")
 		}
 	})
 	node.AppendLine("}")
@@ -144,7 +144,7 @@ func generateLinker(context *LinkerGeneratorContext) generator.Node {
 	node.AppendLine()
 
 	for _, field := range context.fields {
-		node.AppendLine("func (l *Default", context.grammar.Name(), "ReferenceLinker) Link", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) (*core.AstNodeDescription, *core.ReferenceError) {")
+		node.AppendLine("func (l *Default", context.grammar.Name(), "ReferenceLinker) Link", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) (*core.SymbolDescription, *core.ReferenceError) {")
 		node.AppendLine("    scope := l.srv.", context.grammar.Name(), "Linking().ScopeProvider.Scope", field.typeName, field.name, "(ctx, reference)")
 		node.AppendLine("    return core.DefaultLink(scope, reference.Text())")
 		node.AppendLine("}").AppendLine()
@@ -233,7 +233,6 @@ func generateSymbolContainers(context *LinkerGeneratorContext) generator.Node {
 	name := context.grammar.Name()
 	node := generator.NewNode()
 
-	// Factory struct
 	node.AppendLine("type ", name, "SymbolContainers struct{}")
 	node.AppendLine()
 	node.AppendLine("func (c *", name, "SymbolContainers) New() core.SymbolContainer {")
@@ -245,18 +244,18 @@ func generateSymbolContainers(context *LinkerGeneratorContext) generator.Node {
 	node.AppendLine("}")
 	node.AppendLine()
 
-	// Container struct — one slice per unique target type.
+	// One slice per unique target type.
 	node.AppendLine("type ", name, "SymbolContainer struct {")
 	node.Indent(func(n generator.Node) {
 		for _, target := range sortedTargets {
-			n.AppendLine(target, "s []*core.AstNodeDescription")
+			n.AppendLine(target, "s []*core.SymbolDescription")
 		}
 	})
 	node.AppendLine("}")
 	node.AppendLine()
 
-	// Put — children-first switch so each node lands in exactly one list.
-	node.AppendLine("func (sc *", name, "SymbolContainer) Put(desc *core.AstNodeDescription) bool {")
+	// Put children-first switch so each node lands in exactly one list.
+	node.AppendLine("func (sc *", name, "SymbolContainer) Put(desc *core.SymbolDescription) bool {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("switch desc.Node.(type) {")
 		for _, target := range sortedTargets {
@@ -270,7 +269,6 @@ func generateSymbolContainers(context *LinkerGeneratorContext) generator.Node {
 	node.AppendLine("}")
 	node.AppendLine()
 
-	// All — iterate every list; each node is stored in exactly one.
 	node.AppendLine("func (sc *", name, "SymbolContainer) All() core.SymbolSeq {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("return extiter.Concat(")
@@ -285,8 +283,7 @@ func generateSymbolContainers(context *LinkerGeneratorContext) generator.Node {
 	node.AppendLine()
 
 	// Type vars and Type method.
-	// For a parent type, Type returns its own list PLUS all descendant lists so
-	// callers querying e.g. NamedItem also receive Command and Event entries.
+	// For a parent type, Type returns its own list PLUS all descendant lists
 	for _, target := range sortedTargets {
 		node.AppendLine("var TypeFor_", target, " = reflect.TypeFor[", target, "]()")
 	}
@@ -298,7 +295,7 @@ func generateSymbolContainers(context *LinkerGeneratorContext) generator.Node {
 			subtypes := subtypesInTargets(target, sortedTargets, context.ifaceParents)
 			n.AppendLine("case TypeFor_", target, ":")
 			if len(subtypes) == 1 {
-				// No descendants in target set — simple path.
+				// No descendants in target set, simple path.
 				n.AppendLine("    return slices.Values(sc.", target, "s)")
 			} else {
 				// Include this type's list and all descendant lists.
@@ -312,7 +309,7 @@ func generateSymbolContainers(context *LinkerGeneratorContext) generator.Node {
 			}
 		}
 		n.AppendLine("}")
-		n.AppendLine("return core.EmptyAstNodeDescriptions")
+		n.AppendLine("return core.EmptySymbolDescriptions")
 	})
 	node.AppendLine("}")
 	node.AppendLine()

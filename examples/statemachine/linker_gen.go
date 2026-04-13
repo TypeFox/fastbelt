@@ -44,10 +44,10 @@ func (s *DefaultStatemachineModelScopeProvider) ScopeTransitionState(ctx context
 }
 
 type StatemachineModelReferenceLinker interface {
-	LinkStatemachineInit(ctx context.Context, reference *core.Reference[State]) (*core.AstNodeDescription, *core.ReferenceError)
-	LinkStateActions(ctx context.Context, reference *core.Reference[Command]) (*core.AstNodeDescription, *core.ReferenceError)
-	LinkTransitionEvent(ctx context.Context, reference *core.Reference[Event]) (*core.AstNodeDescription, *core.ReferenceError)
-	LinkTransitionState(ctx context.Context, reference *core.Reference[State]) (*core.AstNodeDescription, *core.ReferenceError)
+	LinkStatemachineInit(ctx context.Context, reference *core.Reference[State]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkStateActions(ctx context.Context, reference *core.Reference[Command]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkTransitionEvent(ctx context.Context, reference *core.Reference[Event]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkTransitionState(ctx context.Context, reference *core.Reference[State]) (*core.SymbolDescription, *core.ReferenceError)
 }
 
 type DefaultStatemachineModelReferenceLinker struct {
@@ -58,22 +58,22 @@ func NewDefaultStatemachineModelReferenceLinker(srv StatemachineModelLinkingSrvC
 	return &DefaultStatemachineModelReferenceLinker{srv: srv}
 }
 
-func (l *DefaultStatemachineModelReferenceLinker) LinkStatemachineInit(ctx context.Context, reference *core.Reference[State]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultStatemachineModelReferenceLinker) LinkStatemachineInit(ctx context.Context, reference *core.Reference[State]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.StatemachineModelLinking().ScopeProvider.ScopeStatemachineInit(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (l *DefaultStatemachineModelReferenceLinker) LinkStateActions(ctx context.Context, reference *core.Reference[Command]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultStatemachineModelReferenceLinker) LinkStateActions(ctx context.Context, reference *core.Reference[Command]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.StatemachineModelLinking().ScopeProvider.ScopeStateActions(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (l *DefaultStatemachineModelReferenceLinker) LinkTransitionEvent(ctx context.Context, reference *core.Reference[Event]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultStatemachineModelReferenceLinker) LinkTransitionEvent(ctx context.Context, reference *core.Reference[Event]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.StatemachineModelLinking().ScopeProvider.ScopeTransitionEvent(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (l *DefaultStatemachineModelReferenceLinker) LinkTransitionState(ctx context.Context, reference *core.Reference[State]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultStatemachineModelReferenceLinker) LinkTransitionState(ctx context.Context, reference *core.Reference[State]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.StatemachineModelLinking().ScopeProvider.ScopeTransitionState(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
@@ -124,12 +124,12 @@ func NewSymbolContainers() *StatemachineModelSymbolContainers {
 }
 
 type StatemachineModelSymbolContainer struct {
-	States   []*core.AstNodeDescription
-	Events   []*core.AstNodeDescription
-	Commands []*core.AstNodeDescription
+	States   []*core.SymbolDescription
+	Events   []*core.SymbolDescription
+	Commands []*core.SymbolDescription
 }
 
-func (sc *StatemachineModelSymbolContainer) Put(desc *core.AstNodeDescription) bool {
+func (sc *StatemachineModelSymbolContainer) Put(desc *core.SymbolDescription) bool {
 	switch desc.Node.(type) {
 	case State:
 		sc.States = append(sc.States, desc)
@@ -165,5 +165,5 @@ func (sc *StatemachineModelSymbolContainer) Type(t reflect.Type) core.SymbolSeq 
 	case TypeFor_Command:
 		return slices.Values(sc.Commands)
 	}
-	return core.EmptyAstNodeDescriptions
+	return core.EmptySymbolDescriptions
 }
