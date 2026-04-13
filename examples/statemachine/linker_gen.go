@@ -4,7 +4,6 @@ package statemachine
 
 import (
 	"context"
-
 	"reflect"
 	"slices"
 
@@ -126,8 +125,8 @@ func NewSymbolContainers() *StatemachineModelSymbolContainers {
 
 type StatemachineModelSymbolContainer struct {
 	States   []*core.AstNodeDescription
-	Commands []*core.AstNodeDescription
 	Events   []*core.AstNodeDescription
+	Commands []*core.AstNodeDescription
 }
 
 func (sc *StatemachineModelSymbolContainer) Put(desc *core.AstNodeDescription) bool {
@@ -135,11 +134,11 @@ func (sc *StatemachineModelSymbolContainer) Put(desc *core.AstNodeDescription) b
 	case State:
 		sc.States = append(sc.States, desc)
 		return true
-	case Command:
-		sc.Commands = append(sc.Commands, desc)
-		return true
 	case Event:
 		sc.Events = append(sc.Events, desc)
+		return true
+	case Command:
+		sc.Commands = append(sc.Commands, desc)
 		return true
 	}
 	return false
@@ -148,23 +147,23 @@ func (sc *StatemachineModelSymbolContainer) Put(desc *core.AstNodeDescription) b
 func (sc *StatemachineModelSymbolContainer) All() core.SymbolSeq {
 	return extiter.Concat(
 		slices.Values(sc.States),
-		slices.Values(sc.Commands),
 		slices.Values(sc.Events),
+		slices.Values(sc.Commands),
 	)
 }
 
 var TypeFor_State = reflect.TypeFor[State]()
-var TypeFor_Command = reflect.TypeFor[Command]()
 var TypeFor_Event = reflect.TypeFor[Event]()
+var TypeFor_Command = reflect.TypeFor[Command]()
 
 func (sc *StatemachineModelSymbolContainer) Type(t reflect.Type) core.SymbolSeq {
 	switch t {
 	case TypeFor_State:
 		return slices.Values(sc.States)
-	case TypeFor_Command:
-		return slices.Values(sc.Commands)
 	case TypeFor_Event:
 		return slices.Values(sc.Events)
+	case TypeFor_Command:
+		return slices.Values(sc.Commands)
 	}
 	return core.EmptyAstNodeDescriptions
 }

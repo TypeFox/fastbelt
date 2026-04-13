@@ -1,3 +1,7 @@
+// Copyright 2026 TypeFox GmbH
+// This program and the accompanying materials are made available under the
+// terms of the MIT License, which is available in the project root.
+
 package generated
 
 import (
@@ -7,7 +11,6 @@ import (
 )
 
 // GeneratedSrvCont is an interface for service containers which include the generated services.
-// TODO Move this stuff to the core package?
 type GeneratedSrvCont interface {
 	Generated() *GeneratedSrv
 }

@@ -4,7 +4,6 @@ package grammar
 
 import (
 	"context"
-
 	"reflect"
 	"slices"
 
