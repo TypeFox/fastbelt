@@ -72,7 +72,11 @@ func NewDefaultLocalSymbolsFromMap(m map[core.AstNode]core.SymbolContainer) *Def
 }
 
 func (ls *DefaultLocalSymbols) For(node core.AstNode) core.SymbolContainer {
-	return ls.Symbols[node]
+	if container, exists := ls.Symbols[node]; exists {
+		return container
+	} else {
+		return core.EmptySymbolContainer
+	}
 }
 
 // LocalSymbolDescriber describes how symbols can be referenced in the same document.

@@ -238,17 +238,17 @@ func (sc *FastbeltSymbolContainer) All() core.SymbolSeq {
 	)
 }
 
-var InterfaceType = reflect.TypeFor[Interface]()
+var TypeFor_Interface = reflect.TypeFor[Interface]()
 var TypeFor_Field = reflect.TypeFor[Field]()
-var AbstractRuleType = reflect.TypeFor[AbstractRule]()
+var TypeFor_AbstractRule = reflect.TypeFor[AbstractRule]()
 
 func (sc *FastbeltSymbolContainer) Type(t reflect.Type) core.SymbolSeq {
 	switch t {
-	case InterfaceType:
+	case TypeFor_Interface:
 		return slices.Values(sc.Interfaces)
 	case TypeFor_Field:
 		return slices.Values(sc.Fields)
-	case AbstractRuleType:
+	case TypeFor_AbstractRule:
 		return slices.Values(sc.AbstractRules)
 	}
 	return core.EmptyAstNodeDescriptions

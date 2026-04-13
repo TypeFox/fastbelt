@@ -26,8 +26,7 @@ func GlobalScopeOfType[T core.AstNode](node core.AstNode) core.Scope {
 }
 
 func LocalScopeOfType[T core.AstNode](node core.AstNode, globalScope core.Scope) core.Scope {
-	t := reflect.TypeFor[T]()
-	symbols := GetLocalSymbols(node, t)
+	symbols := GetLocalSymbols[T](node)
 	var outer core.Scope
 	if container := node.Container(); container != nil {
 		// The container node (or one of its ancestors) defines the outer scope
@@ -47,8 +46,10 @@ func LocalScopeOfType[T core.AstNode](node core.AstNode, globalScope core.Scope)
 	return core.NewSeqScope(symbols, outer)
 }
 
-func GetLocalSymbols(node core.AstNode, t reflect.Type) core.SymbolSeq {
+func GetLocalSymbols[T core.AstNode](node core.AstNode) core.SymbolSeq {
 	doc := node.Document()
 	localSymbols := doc.LocalSymbols
-	return localSymbols.For(node).Type(t)
+	container := localSymbols.For(node)
+	symbols := container.Type(reflect.TypeFor[T]())
+	return symbols
 }

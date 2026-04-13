@@ -208,14 +208,14 @@ func generateSymbolContainers(context *LinkerGeneratorContext) generator.Node {
 
 	// Type vars and Type method
 	for _, target := range uniqueTargets {
-		node.AppendLine("var ", target, "Type = reflect.TypeFor[", target, "]()")
+		node.AppendLine("var TypeFor_", target, " = reflect.TypeFor[", target, "]()")
 	}
 	node.AppendLine()
 	node.AppendLine("func (sc *", name, "SymbolContainer) Type(t reflect.Type) core.SymbolSeq {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("switch t {")
 		for _, target := range uniqueTargets {
-			n.AppendLine("case ", target, "Type:")
+			n.AppendLine("case TypeFor_", target, ":")
 			n.AppendLine("    return slices.Values(sc.", target, "s)")
 		}
 		n.AppendLine("}")

@@ -153,17 +153,17 @@ func (sc *StatemachineModelSymbolContainer) All() core.SymbolSeq {
 	)
 }
 
-var StateType = reflect.TypeFor[State]()
-var CommandType = reflect.TypeFor[Command]()
-var EventType = reflect.TypeFor[Event]()
+var TypeFor_State = reflect.TypeFor[State]()
+var TypeFor_Command = reflect.TypeFor[Command]()
+var TypeFor_Event = reflect.TypeFor[Event]()
 
 func (sc *StatemachineModelSymbolContainer) Type(t reflect.Type) core.SymbolSeq {
 	switch t {
-	case StateType:
+	case TypeFor_State:
 		return slices.Values(sc.States)
-	case CommandType:
+	case TypeFor_Command:
 		return slices.Values(sc.Commands)
-	case EventType:
+	case TypeFor_Event:
 		return slices.Values(sc.Events)
 	}
 	return core.EmptyAstNodeDescriptions
