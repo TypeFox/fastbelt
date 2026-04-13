@@ -7,6 +7,7 @@ package grammar
 //go:generate go run ../../cmd/fastbelt -g ./grammar.fb -v
 
 import (
+	"typefox.dev/fastbelt/generated"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/workspace"
@@ -14,7 +15,7 @@ import (
 
 type GrammarSrv struct {
 	textdoc.TextdocSrvContBlock
-	workspace.GeneratedSrvContBlock
+	generated.GeneratedSrvContBlock
 	workspace.WorkspaceSrvContBlock
 	linking.LinkingSrvContBlock
 	FastbeltLinkingSrvContBlock

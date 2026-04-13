@@ -7,7 +7,6 @@ package linking
 import (
 	"context"
 	"iter"
-	"slices"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/extiter"
@@ -35,10 +34,7 @@ func NewDefaultImportedSymbolsProvider(srv LinkingSrvCont) ImportedSymbolsProvid
 }
 
 func (p *DefaultImportedSymbolsProvider) Provide(ctx context.Context, doc *core.Document, allDocs iter.Seq[*core.Document]) {
-	doc.ImportedSymbols = extiter.FlatMap(allDocs, func(d *core.Document) iter.Seq[*core.AstNodeDescription] {
-		if len(d.ExportedSymbols) == 0 {
-			return core.EmptyAstNodeDescriptions
-		}
-		return slices.Values(d.ExportedSymbols)
-	})
+	doc.ImportedSymbols = core.MergeSymbolContainers(extiter.Map(allDocs, func(d *core.Document) core.SymbolContainer {
+		return d.ExportedSymbols
+	}))
 }

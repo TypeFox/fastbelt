@@ -5,9 +5,8 @@
 package workspace
 
 import (
-	"typefox.dev/fastbelt/lexer"
+	"typefox.dev/fastbelt/generated"
 	"typefox.dev/fastbelt/linking"
-	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/textdoc"
 )
 
@@ -15,7 +14,7 @@ import (
 type WorkspaceSrvCont interface {
 	textdoc.TextdocSrvCont
 	linking.LinkingSrvCont
-	GeneratedSrvCont
+	generated.GeneratedSrvCont
 	Workspace() *WorkspaceSrv
 }
 
@@ -71,25 +70,4 @@ func CreateDefaultServices(c WorkspaceSrvCont) {
 	if s.Initializer == nil {
 		s.Initializer = NewDefaultInitializer(c)
 	}
-}
-
-// GeneratedSrvCont is an interface for service containers which include the generated services.
-// TODO Move this stuff to the core package?
-type GeneratedSrvCont interface {
-	Generated() *GeneratedSrv
-}
-
-// GeneratedSrvContBlock is used to define a service container satisfying GeneratedSrvCont.
-type GeneratedSrvContBlock struct {
-	generated GeneratedSrv
-}
-
-func (b *GeneratedSrvContBlock) Generated() *GeneratedSrv {
-	return &b.generated
-}
-
-// GeneratedSrv contains the generated services for a specific language.
-type GeneratedSrv struct {
-	Lexer  lexer.Lexer
-	Parser parser.Parser
 }

@@ -8,6 +8,7 @@ import (
 	"context"
 	"testing"
 
+	"typefox.dev/fastbelt/generated"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/workspace"
@@ -17,7 +18,7 @@ import (
 type serverSrvContTest struct {
 	textdoc.TextdocSrvContBlock
 	workspace.WorkspaceSrvContBlock
-	workspace.GeneratedSrvContBlock
+	generated.GeneratedSrvContBlock
 	linking.LinkingSrvContBlock
 	ServerSrvContBlock
 }

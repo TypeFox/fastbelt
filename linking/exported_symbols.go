@@ -34,16 +34,16 @@ func NewDefaultExportedSymbolsProvider(srv LinkingSrvCont) ExportedSymbolsProvid
 func (s *DefaultExportedSymbolsProvider) Provide(ctx context.Context, document *core.Document) {
 	root := document.Root
 	describer := s.srv.Linking().ExportedSymbolDescriber
-	var exports []*core.AstNodeDescription
+	exports := s.srv.Generated().SymbolContainers.New()
 
 	// Describe the root node itself
 	if desc := describer.Describe(root); desc != nil {
-		exports = append(exports, desc)
+		exports.Put(desc)
 	}
 	// Describe direct children of the root (not nested deeper)
 	for child := range core.ChildNodes(root) {
 		if desc := describer.Describe(child); desc != nil {
-			exports = append(exports, desc)
+			exports.Put(desc)
 		}
 	}
 

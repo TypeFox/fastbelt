@@ -5,6 +5,8 @@
 package linking
 
 import (
+	"reflect"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/extiter"
 )
@@ -19,13 +21,13 @@ func GlobalScopeOfType[T core.AstNode](node core.AstNode) core.Scope {
 	if imported == nil {
 		return core.EmptyScope
 	}
-	symbols := SymbolsOfType[T](imported)
+	symbols := imported.Type(reflect.TypeFor[T]())
 	return core.NewSeqScope(symbols, nil)
 }
 
 func LocalScopeOfType[T core.AstNode](node core.AstNode, globalScope core.Scope) core.Scope {
-	symbols := GetSymbolList(node)
-	filtered := SymbolsOfType[T](symbols)
+	t := reflect.TypeFor[T]()
+	symbols := GetLocalSymbols(node, t)
 	var outer core.Scope
 	if container := node.Container(); container != nil {
 		// The container node (or one of its ancestors) defines the outer scope
@@ -34,7 +36,7 @@ func LocalScopeOfType[T core.AstNode](node core.AstNode, globalScope core.Scope)
 		// We're at the root node, use the given global scope
 		outer = globalScope
 	}
-	if extiter.IsEmpty(filtered) {
+	if extiter.IsEmpty(symbols) {
 		// Shortcut to generate fewer scopes
 		if outer != nil {
 			return outer
@@ -42,23 +44,11 @@ func LocalScopeOfType[T core.AstNode](node core.AstNode, globalScope core.Scope)
 			return core.EmptyScope
 		}
 	}
-	return core.NewSeqScope(filtered, outer)
+	return core.NewSeqScope(symbols, outer)
 }
 
-func GetSymbolList(node core.AstNode) core.SymbolList {
+func GetLocalSymbols(node core.AstNode, t reflect.Type) core.SymbolSeq {
 	doc := node.Document()
 	localSymbols := doc.LocalSymbols
-	return localSymbols.Iter(node)
-}
-
-func SymbolsOfType[T core.AstNode](s core.SymbolList) core.SymbolList {
-	return func(yield func(*core.AstNodeDescription) bool) {
-		for desc := range s {
-			if _, ok := desc.Node.(T); ok {
-				if !yield(desc) {
-					return
-				}
-			}
-		}
-	}
+	return localSymbols.For(node).Type(t)
 }

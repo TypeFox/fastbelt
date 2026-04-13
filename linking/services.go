@@ -4,6 +4,8 @@
 
 package linking
 
+import "typefox.dev/fastbelt/generated"
+
 type LinkingSrv struct {
 	ExportedSymbolsProvider       ExportedSymbolsProvider
 	ExportedSymbolDescriber       ExportedSymbolDescriber
@@ -17,6 +19,7 @@ type LinkingSrv struct {
 }
 
 type LinkingSrvCont interface {
+	generated.GeneratedSrvCont
 	Linking() *LinkingSrv
 }
 
