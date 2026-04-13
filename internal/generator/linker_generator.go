@@ -6,14 +6,17 @@ package generator
 
 import (
 	"context"
+	"slices"
+	"sort"
 
 	"typefox.dev/fastbelt/generator"
 	"typefox.dev/fastbelt/internal/grammar"
 )
 
 type LinkerGeneratorContext struct {
-	grammar grammar.Grammar
-	fields  []LinkerField
+	grammar      grammar.Grammar
+	fields       []LinkerField
+	ifaceParents map[string][]string // interface name → direct parent interface names
 }
 
 type LinkerField struct {
@@ -29,22 +32,27 @@ func GenerateLinker(grammr grammar.Grammar, packageName string) string {
 	node.AppendLine()
 	node.AppendLine("package ", packageName)
 	node.AppendLine()
-	// Imports are not required if there are no references
-	if len(context.fields) > 0 {
-		node.AppendLine("import (")
-		node.Indent(func(n generator.Node) {
+	node.AppendLine("import (")
+	node.Indent(func(n generator.Node) {
+		if len(context.fields) > 0 {
 			n.AppendLine("\"context\"")
-			n.AppendLine()
-			n.AppendLine("core \"typefox.dev/fastbelt\"")
+			n.AppendLine("\"slices\"")
+		}
+		n.AppendLine("\"reflect\"")
+		n.AppendLine()
+		n.AppendLine("core \"typefox.dev/fastbelt\"")
+		if len(context.fields) > 0 {
 			n.AppendLine("\"typefox.dev/fastbelt/linking\"")
-		})
-		node.AppendLine(")")
-		node.AppendLine()
-	}
+		}
+		n.AppendLine("\"typefox.dev/fastbelt/util/extiter\"")
+	})
+	node.AppendLine(")")
+	node.AppendLine()
 
 	node.AppendNode(generateScopeProvider(context))
 	node.AppendNode(generateLinker(context))
 	node.AppendNode(generateReferenceConstructor(context))
+	node.AppendNode(generateSymbolContainers(context))
 
 	return FormatIfPossible(node.String())
 }
@@ -70,9 +78,18 @@ func generateContext(grammr grammar.Grammar) *LinkerGeneratorContext {
 			}
 		}
 	}
+	ifaceParents := map[string][]string{}
+	for _, iface := range grammr.Interfaces() {
+		parents := []string{}
+		for _, ext := range iface.Extends() {
+			parents = append(parents, ext.Ref(context.TODO()).Name())
+		}
+		ifaceParents[iface.Name()] = parents
+	}
 	return &LinkerGeneratorContext{
-		grammar: grammr,
-		fields:  fields,
+		grammar:      grammr,
+		ifaceParents: ifaceParents,
+		fields:       fields,
 	}
 }
 
@@ -110,7 +127,7 @@ func generateLinker(context *LinkerGeneratorContext) generator.Node {
 	node.AppendLine("type ", context.grammar.Name(), "ReferenceLinker interface {")
 	node.Indent(func(n generator.Node) {
 		for _, field := range context.fields {
-			n.AppendLine("Link", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) (*core.AstNodeDescription, *core.ReferenceError)")
+			n.AppendLine("Link", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) (*core.SymbolDescription, *core.ReferenceError)")
 		}
 	})
 	node.AppendLine("}")
@@ -127,11 +144,176 @@ func generateLinker(context *LinkerGeneratorContext) generator.Node {
 	node.AppendLine()
 
 	for _, field := range context.fields {
-		node.AppendLine("func (l *Default", context.grammar.Name(), "ReferenceLinker) Link", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) (*core.AstNodeDescription, *core.ReferenceError) {")
+		node.AppendLine("func (l *Default", context.grammar.Name(), "ReferenceLinker) Link", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) (*core.SymbolDescription, *core.ReferenceError) {")
 		node.AppendLine("    scope := l.srv.", context.grammar.Name(), "Linking().ScopeProvider.Scope", field.typeName, field.name, "(ctx, reference)")
 		node.AppendLine("    return core.DefaultLink(scope, reference.Text())")
 		node.AppendLine("}").AppendLine()
 	}
+	return node
+}
+
+// topoSortTargets returns uniqueTargets sorted so that child types appear before
+// their parent types. This ensures a Go type switch in Put matches the most
+// specific case first, so each node lands in exactly one (most-derived) list.
+func topoSortTargets(uniqueTargets []string, ifaceParents map[string][]string) []string {
+	targetSet := map[string]bool{}
+	for _, t := range uniqueTargets {
+		targetSet[t] = true
+	}
+	visited := map[string]bool{}
+	result := []string{}
+	var visit func(name string)
+	visit = func(name string) {
+		if visited[name] {
+			return
+		}
+		visited[name] = true
+		for _, parent := range ifaceParents[name] {
+			visit(parent)
+		}
+		// Prepend so children end up before parents in the final slice.
+		result = append([]string{name}, result...)
+	}
+	for _, t := range uniqueTargets {
+		visit(t)
+	}
+	// Keep only types that were in uniqueTargets (visit may have walked ancestors
+	// not in the set; filter them out while preserving order).
+	filtered := result[:0]
+	for _, t := range result {
+		if targetSet[t] {
+			filtered = append(filtered, t)
+		}
+	}
+	return filtered
+}
+
+// subtypesInTargets returns all members of uniqueTargets (including t itself)
+// that are t or a transitive descendant of t.
+func subtypesInTargets(t string, uniqueTargets []string, ifaceParents map[string][]string) []string {
+	isDescendantOf := func(candidate, ancestor string) bool {
+		visited := map[string]bool{}
+		var check func(name string) bool
+		check = func(name string) bool {
+			if name == ancestor {
+				return true
+			}
+			if visited[name] {
+				return false
+			}
+			visited[name] = true
+			return slices.ContainsFunc(ifaceParents[name], check)
+		}
+		return check(candidate)
+	}
+	result := []string{}
+	for _, u := range uniqueTargets {
+		if isDescendantOf(u, t) {
+			result = append(result, u)
+		}
+	}
+	return result
+}
+
+func generateSymbolContainers(context *LinkerGeneratorContext) generator.Node {
+	// Collect unique target type names, preserving first-seen order.
+	seen := map[string]bool{}
+	uniqueTargets := []string{}
+	for _, field := range context.fields {
+		if !seen[field.target] {
+			seen[field.target] = true
+			uniqueTargets = append(uniqueTargets, field.target)
+		}
+	}
+	// Sort alphabetically to make output deterministic; topoSortTargets will reorder as needed.
+	sort.Strings(uniqueTargets)
+	// Sort so children appear before parents in the Put type switch.
+	sortedTargets := topoSortTargets(uniqueTargets, context.ifaceParents)
+
+	name := context.grammar.Name()
+	node := generator.NewNode()
+
+	node.AppendLine("type ", name, "SymbolContainers struct{}")
+	node.AppendLine()
+	node.AppendLine("func (c *", name, "SymbolContainers) New() core.SymbolContainer {")
+	node.AppendLine("    return &", name, "SymbolContainer{}")
+	node.AppendLine("}")
+	node.AppendLine()
+	node.AppendLine("func NewSymbolContainers() *", name, "SymbolContainers {")
+	node.AppendLine("    return &", name, "SymbolContainers{}")
+	node.AppendLine("}")
+	node.AppendLine()
+
+	// One slice per unique target type.
+	node.AppendLine("type ", name, "SymbolContainer struct {")
+	node.Indent(func(n generator.Node) {
+		for _, target := range sortedTargets {
+			n.AppendLine(target, "s []*core.SymbolDescription")
+		}
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
+	// Put children-first switch so each node lands in exactly one list.
+	node.AppendLine("func (sc *", name, "SymbolContainer) Put(desc *core.SymbolDescription) bool {")
+	node.Indent(func(n generator.Node) {
+		n.AppendLine("switch desc.Node.(type) {")
+		for _, target := range sortedTargets {
+			n.AppendLine("case ", target, ":")
+			n.AppendLine("    sc.", target, "s = append(sc.", target, "s, desc)")
+			n.AppendLine("    return true")
+		}
+		n.AppendLine("}")
+		n.AppendLine("return false")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
+	node.AppendLine("func (sc *", name, "SymbolContainer) All() core.SymbolSeq {")
+	node.Indent(func(n generator.Node) {
+		n.AppendLine("return extiter.Concat(")
+		n.Indent(func(n2 generator.Node) {
+			for _, target := range sortedTargets {
+				n2.AppendLine("slices.Values(sc.", target, "s),")
+			}
+		})
+		n.AppendLine(")")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
+	// Type vars and Type method.
+	// For a parent type, Type returns its own list PLUS all descendant lists
+	for _, target := range sortedTargets {
+		node.AppendLine("var TypeFor_", target, " = reflect.TypeFor[", target, "]()")
+	}
+	node.AppendLine()
+	node.AppendLine("func (sc *", name, "SymbolContainer) Type(t reflect.Type) core.SymbolSeq {")
+	node.Indent(func(n generator.Node) {
+		n.AppendLine("switch t {")
+		for _, target := range sortedTargets {
+			subtypes := subtypesInTargets(target, sortedTargets, context.ifaceParents)
+			n.AppendLine("case TypeFor_", target, ":")
+			if len(subtypes) == 1 {
+				// No descendants in target set, simple path.
+				n.AppendLine("    return slices.Values(sc.", target, "s)")
+			} else {
+				// Include this type's list and all descendant lists.
+				n.AppendLine("    return extiter.Concat(")
+				n.Indent(func(n2 generator.Node) {
+					for _, sub := range subtypes {
+						n2.AppendLine("slices.Values(sc.", sub, "s),")
+					}
+				})
+				n.AppendLine("    )")
+			}
+		}
+		n.AppendLine("}")
+		n.AppendLine("return core.EmptySymbolDescriptions")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
 	return node
 }
 

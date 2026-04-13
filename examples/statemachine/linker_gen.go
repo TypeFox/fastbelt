@@ -4,9 +4,12 @@ package statemachine
 
 import (
 	"context"
+	"reflect"
+	"slices"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
+	"typefox.dev/fastbelt/util/extiter"
 )
 
 type StatemachineModelScopeProvider interface {
@@ -41,10 +44,10 @@ func (s *DefaultStatemachineModelScopeProvider) ScopeTransitionState(ctx context
 }
 
 type StatemachineModelReferenceLinker interface {
-	LinkStatemachineInit(ctx context.Context, reference *core.Reference[State]) (*core.AstNodeDescription, *core.ReferenceError)
-	LinkStateActions(ctx context.Context, reference *core.Reference[Command]) (*core.AstNodeDescription, *core.ReferenceError)
-	LinkTransitionEvent(ctx context.Context, reference *core.Reference[Event]) (*core.AstNodeDescription, *core.ReferenceError)
-	LinkTransitionState(ctx context.Context, reference *core.Reference[State]) (*core.AstNodeDescription, *core.ReferenceError)
+	LinkStatemachineInit(ctx context.Context, reference *core.Reference[State]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkStateActions(ctx context.Context, reference *core.Reference[Command]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkTransitionEvent(ctx context.Context, reference *core.Reference[Event]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkTransitionState(ctx context.Context, reference *core.Reference[State]) (*core.SymbolDescription, *core.ReferenceError)
 }
 
 type DefaultStatemachineModelReferenceLinker struct {
@@ -55,22 +58,22 @@ func NewDefaultStatemachineModelReferenceLinker(srv StatemachineModelLinkingSrvC
 	return &DefaultStatemachineModelReferenceLinker{srv: srv}
 }
 
-func (l *DefaultStatemachineModelReferenceLinker) LinkStatemachineInit(ctx context.Context, reference *core.Reference[State]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultStatemachineModelReferenceLinker) LinkStatemachineInit(ctx context.Context, reference *core.Reference[State]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.StatemachineModelLinking().ScopeProvider.ScopeStatemachineInit(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (l *DefaultStatemachineModelReferenceLinker) LinkStateActions(ctx context.Context, reference *core.Reference[Command]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultStatemachineModelReferenceLinker) LinkStateActions(ctx context.Context, reference *core.Reference[Command]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.StatemachineModelLinking().ScopeProvider.ScopeStateActions(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (l *DefaultStatemachineModelReferenceLinker) LinkTransitionEvent(ctx context.Context, reference *core.Reference[Event]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultStatemachineModelReferenceLinker) LinkTransitionEvent(ctx context.Context, reference *core.Reference[Event]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.StatemachineModelLinking().ScopeProvider.ScopeTransitionEvent(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (l *DefaultStatemachineModelReferenceLinker) LinkTransitionState(ctx context.Context, reference *core.Reference[State]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultStatemachineModelReferenceLinker) LinkTransitionState(ctx context.Context, reference *core.Reference[State]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.StatemachineModelLinking().ScopeProvider.ScopeTransitionState(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
@@ -108,4 +111,59 @@ func (g *DefaultStatemachineModelReferencesConstructor) TransitionEvent(owner co
 func (g *DefaultStatemachineModelReferencesConstructor) TransitionState(owner core.AstNode, token *core.Token) *core.Reference[State] {
 	fn := g.srv.StatemachineModelLinking().ReferenceLinker.LinkTransitionState
 	return core.NewReference(owner, token, fn)
+}
+
+type StatemachineModelSymbolContainers struct{}
+
+func (c *StatemachineModelSymbolContainers) New() core.SymbolContainer {
+	return &StatemachineModelSymbolContainer{}
+}
+
+func NewSymbolContainers() *StatemachineModelSymbolContainers {
+	return &StatemachineModelSymbolContainers{}
+}
+
+type StatemachineModelSymbolContainer struct {
+	States   []*core.SymbolDescription
+	Events   []*core.SymbolDescription
+	Commands []*core.SymbolDescription
+}
+
+func (sc *StatemachineModelSymbolContainer) Put(desc *core.SymbolDescription) bool {
+	switch desc.Node.(type) {
+	case State:
+		sc.States = append(sc.States, desc)
+		return true
+	case Event:
+		sc.Events = append(sc.Events, desc)
+		return true
+	case Command:
+		sc.Commands = append(sc.Commands, desc)
+		return true
+	}
+	return false
+}
+
+func (sc *StatemachineModelSymbolContainer) All() core.SymbolSeq {
+	return extiter.Concat(
+		slices.Values(sc.States),
+		slices.Values(sc.Events),
+		slices.Values(sc.Commands),
+	)
+}
+
+var TypeFor_State = reflect.TypeFor[State]()
+var TypeFor_Event = reflect.TypeFor[Event]()
+var TypeFor_Command = reflect.TypeFor[Command]()
+
+func (sc *StatemachineModelSymbolContainer) Type(t reflect.Type) core.SymbolSeq {
+	switch t {
+	case TypeFor_State:
+		return slices.Values(sc.States)
+	case TypeFor_Event:
+		return slices.Values(sc.Events)
+	case TypeFor_Command:
+		return slices.Values(sc.Commands)
+	}
+	return core.EmptySymbolDescriptions
 }

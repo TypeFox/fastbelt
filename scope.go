@@ -12,7 +12,7 @@ import (
 	"typefox.dev/fastbelt/util/extiter"
 )
 
-func DefaultLink(scope Scope, text string) (*AstNodeDescription, *ReferenceError) {
+func DefaultLink(scope Scope, text string) (*SymbolDescription, *ReferenceError) {
 	if scope == nil {
 		return nil, defaultRefError(text)
 	}
@@ -29,40 +29,40 @@ func defaultRefError(text string) *ReferenceError {
 }
 
 type Scope interface {
-	ElementByName(name string) *AstNodeDescription
-	ElementsByName(name string) iter.Seq[*AstNodeDescription]
-	AllElements() iter.Seq[*AstNodeDescription]
+	ElementByName(name string) *SymbolDescription
+	ElementsByName(name string) iter.Seq[*SymbolDescription]
+	AllElements() iter.Seq[*SymbolDescription]
 }
 
 type emptyScope struct{}
 
-func (s *emptyScope) ElementByName(name string) *AstNodeDescription {
+func (s *emptyScope) ElementByName(name string) *SymbolDescription {
 	return nil
 }
 
-func (s *emptyScope) ElementsByName(name string) iter.Seq[*AstNodeDescription] {
-	return EmptyAstNodeDescriptions
+func (s *emptyScope) ElementsByName(name string) iter.Seq[*SymbolDescription] {
+	return EmptySymbolDescriptions
 }
 
-func (s *emptyScope) AllElements() iter.Seq[*AstNodeDescription] {
-	return EmptyAstNodeDescriptions
+func (s *emptyScope) AllElements() iter.Seq[*SymbolDescription] {
+	return EmptySymbolDescriptions
 }
 
 var EmptyScope Scope = &emptyScope{}
 
 type SeqScope struct {
-	elements iter.Seq[*AstNodeDescription]
+	elements iter.Seq[*SymbolDescription]
 	outer    Scope
 }
 
-func NewSeqScope(elements iter.Seq[*AstNodeDescription], outer Scope) *SeqScope {
+func NewSeqScope(elements iter.Seq[*SymbolDescription], outer Scope) *SeqScope {
 	return &SeqScope{
 		elements: elements,
 		outer:    outer,
 	}
 }
 
-func (s *SeqScope) ElementByName(name string) *AstNodeDescription {
+func (s *SeqScope) ElementByName(name string) *SymbolDescription {
 	for desc := range s.elements {
 		if desc.Name == name {
 			return desc
@@ -74,8 +74,8 @@ func (s *SeqScope) ElementByName(name string) *AstNodeDescription {
 	return nil
 }
 
-func (s *SeqScope) ElementsByName(name string) iter.Seq[*AstNodeDescription] {
-	matching := extiter.Filter(s.elements, func(desc *AstNodeDescription) bool {
+func (s *SeqScope) ElementsByName(name string) iter.Seq[*SymbolDescription] {
+	matching := extiter.Filter(s.elements, func(desc *SymbolDescription) bool {
 		return desc.Name == name
 	})
 	if s.outer != nil {
@@ -85,7 +85,7 @@ func (s *SeqScope) ElementsByName(name string) iter.Seq[*AstNodeDescription] {
 	}
 }
 
-func (s *SeqScope) AllElements() iter.Seq[*AstNodeDescription] {
+func (s *SeqScope) AllElements() iter.Seq[*SymbolDescription] {
 	if s.outer != nil {
 		return extiter.Concat(s.elements, s.outer.AllElements())
 	} else {
@@ -94,30 +94,30 @@ func (s *SeqScope) AllElements() iter.Seq[*AstNodeDescription] {
 }
 
 type MapScope struct {
-	elements collections.MultiMap[string, *AstNodeDescription]
+	elements collections.MultiMap[string, *SymbolDescription]
 	outer    Scope
 }
 
-func NewMapScope(elements collections.MultiMap[string, *AstNodeDescription], outer Scope) *MapScope {
+func NewMapScope(elements collections.MultiMap[string, *SymbolDescription], outer Scope) *MapScope {
 	return &MapScope{
 		elements: elements,
 		outer:    outer,
 	}
 }
 
-func NewMapScopeFromSlice(elements []*AstNodeDescription, outer Scope) *MapScope {
+func NewMapScopeFromSlice(elements []*SymbolDescription, outer Scope) *MapScope {
 	return NewMapScopeFromSeq(slices.Values(elements), outer)
 }
 
-func NewMapScopeFromSeq(elements iter.Seq[*AstNodeDescription], outer Scope) *MapScope {
-	elemMap := collections.NewMultiMap[string, *AstNodeDescription]()
+func NewMapScopeFromSeq(elements iter.Seq[*SymbolDescription], outer Scope) *MapScope {
+	elemMap := collections.NewMultiMap[string, *SymbolDescription]()
 	for desc := range elements {
 		elemMap.Put(desc.Name, desc)
 	}
 	return NewMapScope(elemMap, outer)
 }
 
-func (s *MapScope) ElementByName(name string) *AstNodeDescription {
+func (s *MapScope) ElementByName(name string) *SymbolDescription {
 	if elems, exists := s.elements.TryGet(name); exists && len(elems) > 0 {
 		return elems[0]
 	} else if s.outer != nil {
@@ -126,7 +126,7 @@ func (s *MapScope) ElementByName(name string) *AstNodeDescription {
 	return nil
 }
 
-func (s *MapScope) ElementsByName(name string) iter.Seq[*AstNodeDescription] {
+func (s *MapScope) ElementsByName(name string) iter.Seq[*SymbolDescription] {
 	elems := s.elements.Get(name)
 	if len(elems) == 0 {
 		if s.outer != nil {
@@ -134,7 +134,7 @@ func (s *MapScope) ElementsByName(name string) iter.Seq[*AstNodeDescription] {
 			return s.outer.ElementsByName(name)
 		} else {
 			// No elements found and no outer scope
-			return EmptyAstNodeDescriptions
+			return EmptySymbolDescriptions
 		}
 	} else {
 		seq := slices.Values(elems)
@@ -147,13 +147,13 @@ func (s *MapScope) ElementsByName(name string) iter.Seq[*AstNodeDescription] {
 	}
 }
 
-func (s *MapScope) AllElements() iter.Seq[*AstNodeDescription] {
+func (s *MapScope) AllElements() iter.Seq[*SymbolDescription] {
 	if s.elements.Size() == 0 {
 		if s.outer != nil {
 			// Delegate directly to outer scope
 			return s.outer.AllElements()
 		} else {
-			return EmptyAstNodeDescriptions
+			return EmptySymbolDescriptions
 		}
 	} else {
 		seq := s.elements.Values()
