@@ -5,8 +5,12 @@ package statemachine
 import (
 	"context"
 
+	"reflect"
+	"slices"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
+	"typefox.dev/fastbelt/util/extiter"
 )
 
 type StatemachineModelScopeProvider interface {
@@ -108,4 +112,59 @@ func (g *DefaultStatemachineModelReferencesConstructor) TransitionEvent(owner co
 func (g *DefaultStatemachineModelReferencesConstructor) TransitionState(owner core.AstNode, token *core.Token) *core.Reference[State] {
 	fn := g.srv.StatemachineModelLinking().ReferenceLinker.LinkTransitionState
 	return core.NewReference(owner, token, fn)
+}
+
+type StatemachineModelSymbolContainers struct{}
+
+func (c *StatemachineModelSymbolContainers) New() core.SymbolContainer {
+	return &StatemachineModelSymbolContainer{}
+}
+
+func NewSymbolContainers() *StatemachineModelSymbolContainers {
+	return &StatemachineModelSymbolContainers{}
+}
+
+type StatemachineModelSymbolContainer struct {
+	States   []*core.AstNodeDescription
+	Commands []*core.AstNodeDescription
+	Events   []*core.AstNodeDescription
+}
+
+func (sc *StatemachineModelSymbolContainer) Put(desc *core.AstNodeDescription) bool {
+	switch desc.Node.(type) {
+	case State:
+		sc.States = append(sc.States, desc)
+		return true
+	case Command:
+		sc.Commands = append(sc.Commands, desc)
+		return true
+	case Event:
+		sc.Events = append(sc.Events, desc)
+		return true
+	}
+	return false
+}
+
+func (sc *StatemachineModelSymbolContainer) All() core.SymbolSeq {
+	return extiter.Concat(
+		slices.Values(sc.States),
+		slices.Values(sc.Commands),
+		slices.Values(sc.Events),
+	)
+}
+
+var StateType = reflect.TypeFor[State]()
+var CommandType = reflect.TypeFor[Command]()
+var EventType = reflect.TypeFor[Event]()
+
+func (sc *StatemachineModelSymbolContainer) Type(t reflect.Type) core.SymbolSeq {
+	switch t {
+	case StateType:
+		return slices.Values(sc.States)
+	case CommandType:
+		return slices.Values(sc.Commands)
+	case EventType:
+		return slices.Values(sc.Events)
+	}
+	return core.EmptyAstNodeDescriptions
 }

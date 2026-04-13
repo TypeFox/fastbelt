@@ -3,6 +3,7 @@
 package grammar
 
 import (
+	"typefox.dev/fastbelt/generated"
 	"typefox.dev/fastbelt/workspace"
 )
 
@@ -26,7 +27,7 @@ func (b *FastbeltLinkingSrvContBlock) FastbeltLinking() *FastbeltLinkingSrv {
 }
 
 type FastbeltGeneratedSrvCont interface {
-	workspace.GeneratedSrvCont
+	generated.GeneratedSrvCont
 	FastbeltLinkingSrvCont
 }
 
@@ -47,5 +48,8 @@ func CreateDefaultServices(srv FastbeltGeneratedSrvCont) {
 	}
 	if generated.Parser == nil {
 		generated.Parser = NewParser(srv)
+	}
+	if generated.SymbolContainers == nil {
+		generated.SymbolContainers = NewSymbolContainers()
 	}
 }

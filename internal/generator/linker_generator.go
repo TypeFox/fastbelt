@@ -29,22 +29,28 @@ func GenerateLinker(grammr grammar.Grammar, packageName string) string {
 	node.AppendLine()
 	node.AppendLine("package ", packageName)
 	node.AppendLine()
-	// Imports are not required if there are no references
-	if len(context.fields) > 0 {
-		node.AppendLine("import (")
-		node.Indent(func(n generator.Node) {
+	node.AppendLine("import (")
+	node.Indent(func(n generator.Node) {
+		if len(context.fields) > 0 {
 			n.AppendLine("\"context\"")
 			n.AppendLine()
-			n.AppendLine("core \"typefox.dev/fastbelt\"")
+		}
+		n.AppendLine("\"reflect\"")
+		n.AppendLine("\"slices\"")
+		n.AppendLine()
+		n.AppendLine("core \"typefox.dev/fastbelt\"")
+		if len(context.fields) > 0 {
 			n.AppendLine("\"typefox.dev/fastbelt/linking\"")
-		})
-		node.AppendLine(")")
-		node.AppendLine()
-	}
+		}
+		n.AppendLine("\"typefox.dev/fastbelt/util/extiter\"")
+	})
+	node.AppendLine(")")
+	node.AppendLine()
 
 	node.AppendNode(generateScopeProvider(context))
 	node.AppendNode(generateLinker(context))
 	node.AppendNode(generateReferenceConstructor(context))
+	node.AppendNode(generateSymbolContainers(context))
 
 	return FormatIfPossible(node.String())
 }
@@ -132,6 +138,92 @@ func generateLinker(context *LinkerGeneratorContext) generator.Node {
 		node.AppendLine("    return core.DefaultLink(scope, reference.Text())")
 		node.AppendLine("}").AppendLine()
 	}
+	return node
+}
+
+func generateSymbolContainers(context *LinkerGeneratorContext) generator.Node {
+	// Collect unique target type names, preserving first-seen order
+	seen := map[string]bool{}
+	uniqueTargets := []string{}
+	for _, field := range context.fields {
+		if !seen[field.target] {
+			seen[field.target] = true
+			uniqueTargets = append(uniqueTargets, field.target)
+		}
+	}
+
+	name := context.grammar.Name()
+	node := generator.NewNode()
+
+	// Factory struct
+	node.AppendLine("type ", name, "SymbolContainers struct{}")
+	node.AppendLine()
+	node.AppendLine("func (c *", name, "SymbolContainers) New() core.SymbolContainer {")
+	node.AppendLine("    return &", name, "SymbolContainer{}")
+	node.AppendLine("}")
+	node.AppendLine()
+	node.AppendLine("func NewSymbolContainers() *", name, "SymbolContainers {")
+	node.AppendLine("    return &", name, "SymbolContainers{}")
+	node.AppendLine("}")
+	node.AppendLine()
+
+	// Container struct
+	node.AppendLine("type ", name, "SymbolContainer struct {")
+	node.Indent(func(n generator.Node) {
+		for _, target := range uniqueTargets {
+			n.AppendLine(target, "s []*core.AstNodeDescription")
+		}
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
+	// Put method
+	node.AppendLine("func (sc *", name, "SymbolContainer) Put(desc *core.AstNodeDescription) bool {")
+	node.Indent(func(n generator.Node) {
+		n.AppendLine("switch desc.Node.(type) {")
+		for _, target := range uniqueTargets {
+			n.AppendLine("case ", target, ":")
+			n.AppendLine("    sc.", target, "s = append(sc.", target, "s, desc)")
+			n.AppendLine("    return true")
+		}
+		n.AppendLine("}")
+		n.AppendLine("return false")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
+	// All method
+	node.AppendLine("func (sc *", name, "SymbolContainer) All() core.SymbolSeq {")
+	node.Indent(func(n generator.Node) {
+		n.AppendLine("return extiter.Concat(")
+		n.Indent(func(n2 generator.Node) {
+			for _, target := range uniqueTargets {
+				n2.AppendLine("slices.Values(sc.", target, "s),")
+			}
+		})
+		n.AppendLine(")")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
+	// Type vars and Type method
+	for _, target := range uniqueTargets {
+		node.AppendLine("var ", target, "Type = reflect.TypeFor[", target, "]()")
+	}
+	node.AppendLine()
+	node.AppendLine("func (sc *", name, "SymbolContainer) Type(t reflect.Type) core.SymbolSeq {")
+	node.Indent(func(n generator.Node) {
+		n.AppendLine("switch t {")
+		for _, target := range uniqueTargets {
+			n.AppendLine("case ", target, "Type:")
+			n.AppendLine("    return slices.Values(sc.", target, "s)")
+		}
+		n.AppendLine("}")
+		n.AppendLine("return core.EmptyAstNodeDescriptions")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
 	return node
 }
 

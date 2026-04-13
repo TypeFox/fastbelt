@@ -5,8 +5,12 @@ package grammar
 import (
 	"context"
 
+	"reflect"
+	"slices"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
+	"typefox.dev/fastbelt/util/extiter"
 )
 
 type FastbeltScopeProvider interface {
@@ -193,4 +197,59 @@ func (g *DefaultFastbeltReferencesConstructor) ActionType(owner core.AstNode, to
 func (g *DefaultFastbeltReferencesConstructor) ActionProperty(owner core.AstNode, token *core.Token) *core.Reference[Field] {
 	fn := g.srv.FastbeltLinking().ReferenceLinker.LinkActionProperty
 	return core.NewReference(owner, token, fn)
+}
+
+type FastbeltSymbolContainers struct{}
+
+func (c *FastbeltSymbolContainers) New() core.SymbolContainer {
+	return &FastbeltSymbolContainer{}
+}
+
+func NewSymbolContainers() *FastbeltSymbolContainers {
+	return &FastbeltSymbolContainers{}
+}
+
+type FastbeltSymbolContainer struct {
+	Interfaces    []*core.AstNodeDescription
+	Fields        []*core.AstNodeDescription
+	AbstractRules []*core.AstNodeDescription
+}
+
+func (sc *FastbeltSymbolContainer) Put(desc *core.AstNodeDescription) bool {
+	switch desc.Node.(type) {
+	case Interface:
+		sc.Interfaces = append(sc.Interfaces, desc)
+		return true
+	case Field:
+		sc.Fields = append(sc.Fields, desc)
+		return true
+	case AbstractRule:
+		sc.AbstractRules = append(sc.AbstractRules, desc)
+		return true
+	}
+	return false
+}
+
+func (sc *FastbeltSymbolContainer) All() core.SymbolSeq {
+	return extiter.Concat(
+		slices.Values(sc.Interfaces),
+		slices.Values(sc.Fields),
+		slices.Values(sc.AbstractRules),
+	)
+}
+
+var InterfaceType = reflect.TypeFor[Interface]()
+var FieldType = reflect.TypeFor[Field]()
+var AbstractRuleType = reflect.TypeFor[AbstractRule]()
+
+func (sc *FastbeltSymbolContainer) Type(t reflect.Type) core.SymbolSeq {
+	switch t {
+	case InterfaceType:
+		return slices.Values(sc.Interfaces)
+	case FieldType:
+		return slices.Values(sc.Fields)
+	case AbstractRuleType:
+		return slices.Values(sc.AbstractRules)
+	}
+	return core.EmptyAstNodeDescriptions
 }
