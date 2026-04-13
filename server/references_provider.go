@@ -40,15 +40,15 @@ func (rp *DefaultReferencesProvider) HandleReferencesRequest(ctx context.Context
 	if target == nil {
 		return nil, nil // No AST node associated with the token
 	}
-	_, nameToken := namer.Name(target)
-	if nameToken == nil {
+	nameUnit := namer.Name(target)
+	if nameUnit == nil {
 		return nil, nil // No name token for the target node
 	}
 	locations := []lsp.Location{
 		// Include the definition location itself
 		{
 			URI:   target.Document().URI.DocumentURI(),
-			Range: nameToken.Segment.Range.LspRange(),
+			Range: nameUnit.Segment().Range.LspRange(),
 		},
 	}
 	documentManager := rp.srv.Workspace().DocumentManager
@@ -71,14 +71,18 @@ func (rp *DefaultReferencesProvider) findSourceAstNode(ctx context.Context, toke
 	if ref != nil {
 		return ref.RefNode(ctx)
 	} else {
-		node := token.Element
+		node := token.Owner()
 		if node == nil {
 			return nil
 		}
 		namer := rp.srv.Linking().Namer
-		_, nameToken := namer.Name(node)
-		if nameToken == nil || nameToken != token {
-			return nil // The token at the position is not the name token
+		nameUnit := namer.Name(node)
+		if nameUnit == nil {
+			return nil
+		}
+		segment := nameUnit.Segment()
+		if token.TextSegment.Indices.Start < segment.Indices.Start || token.TextSegment.Indices.End > segment.Indices.End {
+			return nil // The token is not within the name segment
 		}
 		return node
 	}

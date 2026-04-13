@@ -31,7 +31,7 @@
     "watch:tsc": "tsc --noEmit --watch",
     "vscode:prepublish": "npm run check-types && node esbuild.js --production",
     "check-types": "tsc --noEmit",
-    "build-server": "go build -o dist/ ../../../examples/statemachine/server"
+    "build-server": "go build -gcflags=\"all=-N -l\" -o dist/ ../../../examples/statemachine/server"
   },
   "dependencies": {
     "vscode-languageclient": "~9.0.1"

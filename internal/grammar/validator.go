@@ -22,7 +22,7 @@ func (g *GrammarImpl) Validate(_ context.Context, _ string, accept core.Validati
 }
 
 func checkUniqueRuleNames(g Grammar, accept core.ValidationAcceptor) {
-	seen := map[string][]core.NamedNode{}
+	seen := map[string][]core.NamedTokenNode{}
 	for _, rule := range g.Rules() {
 		if rule.Name() != "" {
 			seen[rule.Name()] = append(seen[rule.Name()], rule)
@@ -175,7 +175,7 @@ func checkInterfaceExtends(iface Interface, ctx context.Context, accept core.Val
 				core.SeverityError,
 				"An interface cannot extend itself, neither directly nor indirectly.",
 				iface,
-				core.WithToken(ext.Token()),
+				core.WithReference(ext),
 			))
 		}
 	}
@@ -295,7 +295,7 @@ func checkActionAssignmentType(a Action, ctx context.Context, accept core.Valida
 			core.SeverityError,
 			fmt.Sprintf("The type '%s' of the action is not assignable to the rule's return type '%s'.", targetType.Name(), returnType.Name()),
 			a,
-			core.WithToken(a.Type().Token()),
+			core.WithReference(a.Type()),
 		))
 	}
 }
@@ -335,7 +335,7 @@ func checkActionPropertyType(a Action, ctx context.Context, accept core.Validati
 				core.SeverityError,
 				fmt.Sprintf("The local type '%s' is not assignable to the target field type '%s'.", currentType.Name(), targetInterface.Name()),
 				a,
-				core.WithToken(a.Property().Token()),
+				core.WithReference(a.Property()),
 			))
 		}
 	} else {
@@ -343,7 +343,7 @@ func checkActionPropertyType(a Action, ctx context.Context, accept core.Validati
 			core.SeverityError,
 			"Cannot assign a parser rule to a non-interface field.",
 			a,
-			core.WithToken(a.Property().Token()),
+			core.WithReference(a.Property()),
 		))
 	}
 }
@@ -419,7 +419,7 @@ func isAssignableTo(ctx context.Context, source Assignable, fieldType FieldType,
 					core.SeverityError,
 					fmt.Sprintf("The type '%s' of the cross-reference value is not assignable to the target field type '%s'.", fromType.Name(), toType.Name()),
 					v,
-					core.WithToken(v.Type().Token()),
+					core.WithReference(v.Type()),
 				))
 			}
 		} else {

@@ -3,12 +3,13 @@ grammar Fastbelt;
 interface Grammar {
     Name string
     Rules []ParserRule
+    Composites []CompositeRule
     Terminals []Token
     Interfaces []Interface
 }
 
 Grammar: "grammar" Name=ID ";"
-    (Rules+=ParserRule | Terminals+=Token | Interfaces+=Interface)*
+    (Rules+=ParserRule | Terminals+=Token | Interfaces+=Interface | Composites+=CompositeRule)*
 ;
 
 interface Interface {
@@ -56,15 +57,18 @@ ReferenceType: "*" Type=[Interface:ID];
 
 SimpleType: Type=[Interface:ID];
 
-PrimitiveType: Type=("string" | "bool");
+PrimitiveType: Type=("string" | "bool" | "composite");
 
 interface AbstractRule {
     Name string
 }
 
-interface ParserRule extends AbstractRule {
-    ReturnType *Interface
+interface AbstractRuleWithBody extends AbstractRule {
     Body Element
+}
+
+interface ParserRule extends AbstractRuleWithBody {
+    ReturnType *Interface
 }
 
 ParserRule: Name=ID ("returns" ReturnType=[Interface:ID])? ":" Body=Alternatives ";";
@@ -98,7 +102,7 @@ interface Keyword extends Assignable {
     Value string
 }
 
-Keyword: Value=String;
+Keyword: Value=StringLiteral;
 
 interface Assignment extends Element {
     Property *Field
@@ -137,11 +141,22 @@ interface Action extends Element {
 
 Action: "{" Type=[Interface:ID] ("." Property=[Field:ID] Operator=("+=" | "=") "current")? "}";
 
+interface CompositeRule extends AbstractRuleWithBody {
+}
+
+CompositeRule: "string" Name=ID ":" Body=CompositeAlternatives ";";
+
+CompositeAlternatives returns Element: CompositeGroup ({Alternatives.Alts+=current} ("|" Alts+=CompositeGroup)+)?;
+
+CompositeGroup returns Element: CompositeElement ({Group.Elements+=current} Elements+=CompositeElement+)?;
+
+CompositeElement returns Element: (Keyword | RuleCall | "(" CompositeAlternatives ")") Cardinality=("*" | "+" | "?")?;
+
 // Move comments in front of RegexLiteral
 comment token SL_COMMENT: /\/\/[^\r\n]*/;
 comment token ML_COMMENT: /\/\*[^*]*\*\//;
 
-token String: /"[^"]+"/;
+token StringLiteral: /"[^"]+"/;
 token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
 token RegexLiteral: /\/([^\r\n\[\/\\]|\\.|\[([^\r\n\]\\]|\\.)*\])+\//;
 hidden token WS: /[ \n\r\t]+/;
