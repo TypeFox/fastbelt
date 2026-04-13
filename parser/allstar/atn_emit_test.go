@@ -23,6 +23,8 @@ func minimalATN() *RuntimeATN {
 	}
 }
 
+// ─── EmitGoSource tests ───────────────────────────────────────────────────────
+
 func TestEmitGoSource_Header(t *testing.T) {
 	src := EmitGoSource("mypkg", "BuildATN", "typefox.dev/fastbelt/parser/allstar", minimalATN())
 
@@ -180,4 +182,55 @@ func TestEmitGoSource_ReturnStatement(t *testing.T) {
 	assert.Contains(t, src, "States:         states,")
 	assert.Contains(t, src, "DecisionStates: decisionStates,")
 	assert.Contains(t, src, "DecisionMap:    decisionMap,")
+}
+
+// ─── EmitATNFunc tests ────────────────────────────────────────────────────────
+
+// TestEmitATNFunc_NoFileHeader verifies that EmitATNFunc does NOT emit a
+// package declaration or import statement.
+func TestEmitATNFunc_NoFileHeader(t *testing.T) {
+	src := EmitATNFunc("buildATN", "allstar", minimalATN()).String()
+
+	assert.NotContains(t, src, "package ")
+	assert.NotContains(t, src, "import ")
+}
+
+func TestEmitATNFunc_FunctionSignature(t *testing.T) {
+	src := EmitATNFunc("buildATN", "allstar", minimalATN()).String()
+	assert.Contains(t, src, "func buildATN() *allstar.RuntimeATN {")
+}
+
+// TestEmitATNFunc_CustomAlias verifies that a custom import alias is used
+// throughout the emitted function.
+func TestEmitATNFunc_CustomAlias(t *testing.T) {
+	src := EmitATNFunc("buildATN", "atn", minimalATN()).String()
+
+	assert.Contains(t, src, "func buildATN() *atn.RuntimeATN {")
+	assert.Contains(t, src, "[]*atn.RuntimeATNState,")
+	assert.Contains(t, src, "atn.ATNRuleStart,")
+	assert.NotContains(t, src, "allstar.")
+}
+
+func TestEmitATNFunc_StateContent(t *testing.T) {
+	src := EmitATNFunc("buildATN", "allstar", minimalATN()).String()
+
+	assert.Contains(t, src, "states := make([]*allstar.RuntimeATNState, 2)")
+	assert.Contains(t, src, "Type: allstar.ATNRuleStart,")
+	assert.Contains(t, src, "Type: allstar.ATNRuleStop,")
+}
+
+// TestEmitATNFunc_NodeEmbeddable verifies that the returned Node can be
+// composed into a larger generator tree without producing duplicate headers.
+func TestEmitATNFunc_NodeEmbeddable(t *testing.T) {
+	parent := minimalATN()
+	src := EmitATNFunc("buildATN", "allstar", parent).String()
+
+	// Should start directly with the func keyword (possibly preceded by nothing).
+	assert.True(t, strings.HasPrefix(strings.TrimSpace(src), "func buildATN()"),
+		"expected output to start with the function declaration")
+}
+
+func TestEmitATNFunc_NoTabs(t *testing.T) {
+	src := EmitATNFunc("buildATN", "allstar", minimalATN()).String()
+	assert.False(t, strings.ContainsRune(src, '\t'), "output must not contain tab characters")
 }

@@ -5,6 +5,7 @@ package grammar
 import (
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
+	allstar "typefox.dev/fastbelt/parser/allstar"
 )
 
 type Parser struct {
@@ -17,7 +18,7 @@ func (p *Parser) references() FastbeltReferencesConstructor {
 	return p.srv.FastbeltLinking().ReferencesConstructor
 }
 
-// WithLookaheadStrategy replaces the default LL(k) strategy. Call before Parse.
+// WithLookaheadStrategy replaces the default ALL(*) strategy. Call before Parse.
 func (p *Parser) WithLookaheadStrategy(s parser.LookaheadStrategy) *Parser {
 	p.strategy = s
 	return p
@@ -98,253 +99,2736 @@ const (
 	Tokentoken_0
 )
 
-var ActionLookahead13 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Dot_Idx},
-	},
-}
-
-var ActionOperatorLookaheadOr8 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_PlusEquals_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Equals_Idx},
-	},
-}
-
-var AlternativesLookahead5 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Pipe_Idx},
-	},
-}
-
-var AlternativesLookahead6 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Pipe_Idx},
-	},
-}
-
-var AssignableAlternativesLookahead10 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Pipe_Idx},
-	},
-}
-
-var AssignableAlternativesLookahead11 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Pipe_Idx},
-	},
-}
-
-var AssignableLookaheadOr6 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_String_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftBracket_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftParen_Idx},
-	},
-}
-
-var AssignableWithoutAltsLookaheadOr7 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_String_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftBracket_Idx},
-	},
-}
-
-var AssignmentOperatorLookaheadOr5 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_PlusEquals_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Equals_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_QuestionEquals_Idx},
-	},
-}
-
-var CrossRefLookahead12 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Colon_Idx},
-	},
-}
-
-var ElementCardinalityLookaheadOr4 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Asterisk_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Plus_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Question_Idx},
-	},
-}
-
-var ElementLookahead9 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Asterisk_Idx},
-		parser.LookaheadPath{Keyword_Plus_Idx},
-		parser.LookaheadPath{Keyword_Question_Idx},
-	},
-}
-
-var ElementLookaheadOr3 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_String_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx, Keyword_PlusEquals_Idx},
-		parser.LookaheadPath{Token_ID_Idx, Keyword_Equals_Idx},
-		parser.LookaheadPath{Token_ID_Idx, Keyword_QuestionEquals_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftBrace_Idx, Token_ID_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftParen_Idx, Token_String_Idx},
-		parser.LookaheadPath{Keyword_LeftParen_Idx, Token_ID_Idx},
-		parser.LookaheadPath{Keyword_LeftParen_Idx, Token_ID_Idx},
-		parser.LookaheadPath{Keyword_LeftParen_Idx, Keyword_LeftBrace_Idx},
-		parser.LookaheadPath{Keyword_LeftParen_Idx, Keyword_LeftParen_Idx},
-	},
-}
-
-var FieldTypeLookaheadOr1 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Asterisk_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftBracket_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_string_Idx},
-		parser.LookaheadPath{Keyword_bool_Idx},
-	},
-}
-
-var GrammarLookahead0 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
-		parser.LookaheadPath{Keyword_token_Idx},
-		parser.LookaheadPath{Keyword_hidden_Idx},
-		parser.LookaheadPath{Keyword_interface_Idx},
-	},
-}
-
-var GrammarLookaheadOr0 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_token_Idx},
-		parser.LookaheadPath{Keyword_hidden_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_interface_Idx},
-	},
-}
-
-var GroupLookahead7 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_String_Idx},
-		parser.LookaheadPath{Token_ID_Idx},
-		parser.LookaheadPath{Token_ID_Idx},
-		parser.LookaheadPath{Keyword_LeftBrace_Idx},
-		parser.LookaheadPath{Keyword_LeftParen_Idx},
-	},
-}
-
-var GroupLookahead8 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_String_Idx},
-		parser.LookaheadPath{Token_ID_Idx},
-		parser.LookaheadPath{Token_ID_Idx},
-		parser.LookaheadPath{Keyword_LeftBrace_Idx},
-		parser.LookaheadPath{Keyword_LeftParen_Idx},
-	},
-}
-
-var InterfaceLookahead1 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_extends_Idx},
-	},
-}
-
-var InterfaceLookahead2 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Comma_Idx},
-	},
-}
-
-var InterfaceLookahead3 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
-	},
-}
-
-var PrimitiveTypeTypeLookaheadOr2 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_string_Idx},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_bool_Idx},
-	},
-}
-
-var TokenLookahead4 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_hidden_Idx},
-	},
-}
-
 func NewParser(srv FastbeltGeneratedSrvCont) *Parser {
 	return &Parser{
-		srv: srv,
-		strategy: parser.NewLLkStrategy(map[string]parser.LLkLookahead{
-			"Action_Option_1":                              ActionLookahead13,
-			"Action_Alternation_1":                         ActionOperatorLookaheadOr8,
-			"Alternatives_Option_1":                        AlternativesLookahead5,
-			"Alternatives_RepetitionMandatory_1":           AlternativesLookahead6,
-			"AssignableAlternatives_Option_1":              AssignableAlternativesLookahead10,
-			"AssignableAlternatives_RepetitionMandatory_1": AssignableAlternativesLookahead11,
-			"Assignable_Alternation_1":                     AssignableLookaheadOr6,
-			"AssignableWithoutAlts_Alternation_1":          AssignableWithoutAltsLookaheadOr7,
-			"Assignment_Alternation_1":                     AssignmentOperatorLookaheadOr5,
-			"CrossRef_Option_1":                            CrossRefLookahead12,
-			"Element_Alternation_2":                        ElementCardinalityLookaheadOr4,
-			"Element_Option_1":                             ElementLookahead9,
-			"Element_Alternation_1":                        ElementLookaheadOr3,
-			"FieldType_Alternation_1":                      FieldTypeLookaheadOr1,
-			"Grammar_Repetition_1":                         GrammarLookahead0,
-			"Grammar_Alternation_1":                        GrammarLookaheadOr0,
-			"Group_Option_1":                               GroupLookahead7,
-			"Group_RepetitionMandatory_1":                  GroupLookahead8,
-			"Interface_Option_1":                           InterfaceLookahead1,
-			"Interface_Repetition_1":                       InterfaceLookahead2,
-			"Interface_Repetition_2":                       InterfaceLookahead3,
-			"PrimitiveType_Alternation_1":                  PrimitiveTypeTypeLookaheadOr2,
-			"Token_Option_1":                               TokenLookahead4,
-		}),
+		srv:      srv,
+		strategy: allstar.NewLLStarLookaheadFromRuntime(buildATN(), nil).AsParserStrategy(),
+	}
+}
+
+func buildATN() *allstar.RuntimeATN {
+	states := make([]*allstar.RuntimeATNState, 238)
+	states[0] = &allstar.RuntimeATNState{
+		StateNumber:            0,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Grammar",
+	}
+	states[1] = &allstar.RuntimeATNState{
+		StateNumber: 1,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "Grammar",
+	}
+	states[2] = &allstar.RuntimeATNState{
+		StateNumber:            2,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+	}
+	states[3] = &allstar.RuntimeATNState{
+		StateNumber: 3,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "Interface",
+	}
+	states[4] = &allstar.RuntimeATNState{
+		StateNumber:            4,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Field",
+	}
+	states[5] = &allstar.RuntimeATNState{
+		StateNumber: 5,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "Field",
+	}
+	states[6] = &allstar.RuntimeATNState{
+		StateNumber:            6,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "FieldType",
+	}
+	states[7] = &allstar.RuntimeATNState{
+		StateNumber: 7,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "FieldType",
+	}
+	states[8] = &allstar.RuntimeATNState{
+		StateNumber:            8,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "ArrayType",
+	}
+	states[9] = &allstar.RuntimeATNState{
+		StateNumber: 9,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "ArrayType",
+	}
+	states[10] = &allstar.RuntimeATNState{
+		StateNumber:            10,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "ReferenceType",
+	}
+	states[11] = &allstar.RuntimeATNState{
+		StateNumber: 11,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "ReferenceType",
+	}
+	states[12] = &allstar.RuntimeATNState{
+		StateNumber:            12,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "SimpleType",
+	}
+	states[13] = &allstar.RuntimeATNState{
+		StateNumber: 13,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "SimpleType",
+	}
+	states[14] = &allstar.RuntimeATNState{
+		StateNumber:            14,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "PrimitiveType",
+	}
+	states[15] = &allstar.RuntimeATNState{
+		StateNumber: 15,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "PrimitiveType",
+	}
+	states[16] = &allstar.RuntimeATNState{
+		StateNumber:            16,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "ParserRule",
+	}
+	states[17] = &allstar.RuntimeATNState{
+		StateNumber: 17,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "ParserRule",
+	}
+	states[18] = &allstar.RuntimeATNState{
+		StateNumber:            18,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Token",
+	}
+	states[19] = &allstar.RuntimeATNState{
+		StateNumber: 19,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "Token",
+	}
+	states[20] = &allstar.RuntimeATNState{
+		StateNumber:            20,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Alternatives",
+	}
+	states[21] = &allstar.RuntimeATNState{
+		StateNumber: 21,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "Alternatives",
+	}
+	states[22] = &allstar.RuntimeATNState{
+		StateNumber:            22,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Group",
+	}
+	states[23] = &allstar.RuntimeATNState{
+		StateNumber: 23,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "Group",
+	}
+	states[24] = &allstar.RuntimeATNState{
+		StateNumber:            24,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+	}
+	states[25] = &allstar.RuntimeATNState{
+		StateNumber: 25,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "Element",
+	}
+	states[26] = &allstar.RuntimeATNState{
+		StateNumber:            26,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Keyword",
+	}
+	states[27] = &allstar.RuntimeATNState{
+		StateNumber: 27,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "Keyword",
+	}
+	states[28] = &allstar.RuntimeATNState{
+		StateNumber:            28,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignment",
+	}
+	states[29] = &allstar.RuntimeATNState{
+		StateNumber: 29,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "Assignment",
+	}
+	states[30] = &allstar.RuntimeATNState{
+		StateNumber:            30,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignable",
+	}
+	states[31] = &allstar.RuntimeATNState{
+		StateNumber: 31,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "Assignable",
+	}
+	states[32] = &allstar.RuntimeATNState{
+		StateNumber:            32,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableWithoutAlts",
+	}
+	states[33] = &allstar.RuntimeATNState{
+		StateNumber: 33,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "AssignableWithoutAlts",
+	}
+	states[34] = &allstar.RuntimeATNState{
+		StateNumber:            34,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableAlternatives",
+	}
+	states[35] = &allstar.RuntimeATNState{
+		StateNumber: 35,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "AssignableAlternatives",
+	}
+	states[36] = &allstar.RuntimeATNState{
+		StateNumber:            36,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "CrossRef",
+	}
+	states[37] = &allstar.RuntimeATNState{
+		StateNumber: 37,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "CrossRef",
+	}
+	states[38] = &allstar.RuntimeATNState{
+		StateNumber:            38,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "RuleCall",
+	}
+	states[39] = &allstar.RuntimeATNState{
+		StateNumber: 39,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "RuleCall",
+	}
+	states[40] = &allstar.RuntimeATNState{
+		StateNumber:            40,
+		Type:                   allstar.ATNRuleStart,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Action",
+	}
+	states[41] = &allstar.RuntimeATNState{
+		StateNumber: 41,
+		Type:        allstar.ATNRuleStop,
+		Decision:    -1,
+		RuleName:    "Action",
+	}
+	states[42] = &allstar.RuntimeATNState{
+		StateNumber: 42,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Grammar",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[43] = &allstar.RuntimeATNState{
+		StateNumber: 44,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Grammar",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     2,
+	}
+	states[44] = &allstar.RuntimeATNState{
+		StateNumber: 46,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Grammar",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     3,
+	}
+	states[45] = &allstar.RuntimeATNState{
+		StateNumber:            48,
+		Type:                   allstar.ATNStarBlockStart,
+		Decision:               0,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Grammar",
+		ProdKind:               allstar.ProdRepetition,
+		ProdIdx:                1,
+	}
+	states[46] = &allstar.RuntimeATNState{
+		StateNumber:            49,
+		Type:                   allstar.ATNBasic,
+		Decision:               1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Grammar",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[47] = &allstar.RuntimeATNState{
+		StateNumber:            50,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Grammar",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[48] = &allstar.RuntimeATNState{
+		StateNumber:            51,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Grammar",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[49] = &allstar.RuntimeATNState{
+		StateNumber:            52,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Grammar",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[50] = &allstar.RuntimeATNState{
+		StateNumber:            53,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Grammar",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[51] = &allstar.RuntimeATNState{
+		StateNumber:            54,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Grammar",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                3,
+	}
+	states[52] = &allstar.RuntimeATNState{
+		StateNumber:            55,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Grammar",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                3,
+	}
+	states[53] = &allstar.RuntimeATNState{
+		StateNumber:            56,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Grammar",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[54] = &allstar.RuntimeATNState{
+		StateNumber:            57,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Grammar",
+		ProdKind:               allstar.ProdRepetition,
+		ProdIdx:                1,
+	}
+	states[55] = &allstar.RuntimeATNState{
+		StateNumber:            58,
+		Type:                   allstar.ATNStarLoopEntry,
+		Decision:               2,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Grammar",
+		ProdKind:               allstar.ProdRepetition,
+		ProdIdx:                1,
+	}
+	states[56] = &allstar.RuntimeATNState{
+		StateNumber:            59,
+		Type:                   allstar.ATNLoopEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Grammar",
+		ProdKind:               allstar.ProdRepetition,
+		ProdIdx:                1,
+	}
+	states[57] = &allstar.RuntimeATNState{
+		StateNumber:            60,
+		Type:                   allstar.ATNStarLoopBack,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Grammar",
+		ProdKind:               allstar.ProdRepetition,
+		ProdIdx:                1,
+	}
+	states[58] = &allstar.RuntimeATNState{
+		StateNumber: 58,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Interface",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[59] = &allstar.RuntimeATNState{
+		StateNumber: 60,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Interface",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     2,
+	}
+	states[60] = &allstar.RuntimeATNState{
+		StateNumber:            62,
+		Type:                   allstar.ATNBasic,
+		Decision:               3,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdOption,
+		ProdIdx:                1,
+	}
+	states[61] = &allstar.RuntimeATNState{
+		StateNumber: 63,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Interface",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     3,
+	}
+	states[62] = &allstar.RuntimeATNState{
+		StateNumber: 65,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Interface",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     4,
+	}
+	states[63] = &allstar.RuntimeATNState{
+		StateNumber:            67,
+		Type:                   allstar.ATNStarBlockStart,
+		Decision:               4,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdRepetition,
+		ProdIdx:                1,
+	}
+	states[64] = &allstar.RuntimeATNState{
+		StateNumber: 68,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Interface",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     5,
+	}
+	states[65] = &allstar.RuntimeATNState{
+		StateNumber: 70,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Interface",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     6,
+	}
+	states[66] = &allstar.RuntimeATNState{
+		StateNumber:            71,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                6,
+	}
+	states[67] = &allstar.RuntimeATNState{
+		StateNumber:            71,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdRepetition,
+		ProdIdx:                1,
+	}
+	states[68] = &allstar.RuntimeATNState{
+		StateNumber:            72,
+		Type:                   allstar.ATNStarLoopEntry,
+		Decision:               5,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdRepetition,
+		ProdIdx:                1,
+	}
+	states[69] = &allstar.RuntimeATNState{
+		StateNumber:            73,
+		Type:                   allstar.ATNLoopEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdRepetition,
+		ProdIdx:                1,
+	}
+	states[70] = &allstar.RuntimeATNState{
+		StateNumber:            74,
+		Type:                   allstar.ATNStarLoopBack,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdRepetition,
+		ProdIdx:                1,
+	}
+	states[71] = &allstar.RuntimeATNState{
+		StateNumber:            73,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdOption,
+		ProdIdx:                1,
+	}
+	states[72] = &allstar.RuntimeATNState{
+		StateNumber: 74,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Interface",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     7,
+	}
+	states[73] = &allstar.RuntimeATNState{
+		StateNumber:            76,
+		Type:                   allstar.ATNStarBlockStart,
+		Decision:               6,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdRepetition,
+		ProdIdx:                2,
+	}
+	states[74] = &allstar.RuntimeATNState{
+		StateNumber:            77,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[75] = &allstar.RuntimeATNState{
+		StateNumber:            78,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[76] = &allstar.RuntimeATNState{
+		StateNumber:            79,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdRepetition,
+		ProdIdx:                2,
+	}
+	states[77] = &allstar.RuntimeATNState{
+		StateNumber:            80,
+		Type:                   allstar.ATNStarLoopEntry,
+		Decision:               7,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdRepetition,
+		ProdIdx:                2,
+	}
+	states[78] = &allstar.RuntimeATNState{
+		StateNumber:            81,
+		Type:                   allstar.ATNLoopEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdRepetition,
+		ProdIdx:                2,
+	}
+	states[79] = &allstar.RuntimeATNState{
+		StateNumber:            82,
+		Type:                   allstar.ATNStarLoopBack,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdRepetition,
+		ProdIdx:                2,
+	}
+	states[80] = &allstar.RuntimeATNState{
+		StateNumber: 83,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Interface",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     8,
+	}
+	states[81] = &allstar.RuntimeATNState{
+		StateNumber:            84,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Interface",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                8,
+	}
+	states[82] = &allstar.RuntimeATNState{
+		StateNumber: 82,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Field",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[83] = &allstar.RuntimeATNState{
+		StateNumber:            84,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Field",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[84] = &allstar.RuntimeATNState{
+		StateNumber:            85,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Field",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[85] = &allstar.RuntimeATNState{
+		StateNumber:            85,
+		Type:                   allstar.ATNBasic,
+		Decision:               8,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "FieldType",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[86] = &allstar.RuntimeATNState{
+		StateNumber:            86,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "FieldType",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[87] = &allstar.RuntimeATNState{
+		StateNumber:            87,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "FieldType",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[88] = &allstar.RuntimeATNState{
+		StateNumber:            88,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "FieldType",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[89] = &allstar.RuntimeATNState{
+		StateNumber:            89,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "FieldType",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[90] = &allstar.RuntimeATNState{
+		StateNumber:            90,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "FieldType",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                3,
+	}
+	states[91] = &allstar.RuntimeATNState{
+		StateNumber:            91,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "FieldType",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                3,
+	}
+	states[92] = &allstar.RuntimeATNState{
+		StateNumber:            92,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "FieldType",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                4,
+	}
+	states[93] = &allstar.RuntimeATNState{
+		StateNumber:            93,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "FieldType",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                4,
+	}
+	states[94] = &allstar.RuntimeATNState{
+		StateNumber:            94,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "FieldType",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[95] = &allstar.RuntimeATNState{
+		StateNumber: 95,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "ArrayType",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[96] = &allstar.RuntimeATNState{
+		StateNumber: 97,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "ArrayType",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     2,
+	}
+	states[97] = &allstar.RuntimeATNState{
+		StateNumber:            99,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "ArrayType",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[98] = &allstar.RuntimeATNState{
+		StateNumber:            100,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "ArrayType",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[99] = &allstar.RuntimeATNState{
+		StateNumber: 99,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "ReferenceType",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[100] = &allstar.RuntimeATNState{
+		StateNumber: 101,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "ReferenceType",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     2,
+	}
+	states[101] = &allstar.RuntimeATNState{
+		StateNumber:            102,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "ReferenceType",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                2,
+	}
+	states[102] = &allstar.RuntimeATNState{
+		StateNumber: 102,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "SimpleType",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[103] = &allstar.RuntimeATNState{
+		StateNumber:            103,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "SimpleType",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                1,
+	}
+	states[104] = &allstar.RuntimeATNState{
+		StateNumber:            104,
+		Type:                   allstar.ATNBasic,
+		Decision:               9,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "PrimitiveType",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[105] = &allstar.RuntimeATNState{
+		StateNumber: 105,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "PrimitiveType",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[106] = &allstar.RuntimeATNState{
+		StateNumber:            106,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "PrimitiveType",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                1,
+	}
+	states[107] = &allstar.RuntimeATNState{
+		StateNumber: 107,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "PrimitiveType",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     2,
+	}
+	states[108] = &allstar.RuntimeATNState{
+		StateNumber:            108,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "PrimitiveType",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                2,
+	}
+	states[109] = &allstar.RuntimeATNState{
+		StateNumber:            109,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "PrimitiveType",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[110] = &allstar.RuntimeATNState{
+		StateNumber: 110,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "ParserRule",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[111] = &allstar.RuntimeATNState{
+		StateNumber: 112,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "ParserRule",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     2,
+	}
+	states[112] = &allstar.RuntimeATNState{
+		StateNumber: 114,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "ParserRule",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     3,
+	}
+	states[113] = &allstar.RuntimeATNState{
+		StateNumber: 116,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "ParserRule",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     4,
+	}
+	states[114] = &allstar.RuntimeATNState{
+		StateNumber:            118,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "ParserRule",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[115] = &allstar.RuntimeATNState{
+		StateNumber: 120,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "ParserRule",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     5,
+	}
+	states[116] = &allstar.RuntimeATNState{
+		StateNumber:            121,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "ParserRule",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                5,
+	}
+	states[117] = &allstar.RuntimeATNState{
+		StateNumber:            117,
+		Type:                   allstar.ATNBasic,
+		Decision:               10,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Token",
+		ProdKind:               allstar.ProdOption,
+		ProdIdx:                1,
+	}
+	states[118] = &allstar.RuntimeATNState{
+		StateNumber: 118,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Token",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[119] = &allstar.RuntimeATNState{
+		StateNumber:            119,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Token",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                1,
+	}
+	states[120] = &allstar.RuntimeATNState{
+		StateNumber:            120,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Token",
+		ProdKind:               allstar.ProdOption,
+		ProdIdx:                1,
+	}
+	states[121] = &allstar.RuntimeATNState{
+		StateNumber: 121,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Token",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     2,
+	}
+	states[122] = &allstar.RuntimeATNState{
+		StateNumber: 123,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Token",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     3,
+	}
+	states[123] = &allstar.RuntimeATNState{
+		StateNumber: 125,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Token",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     4,
+	}
+	states[124] = &allstar.RuntimeATNState{
+		StateNumber: 127,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Token",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     5,
+	}
+	states[125] = &allstar.RuntimeATNState{
+		StateNumber: 129,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Token",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     6,
+	}
+	states[126] = &allstar.RuntimeATNState{
+		StateNumber:            130,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Token",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                6,
+	}
+	states[127] = &allstar.RuntimeATNState{
+		StateNumber:            127,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Alternatives",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[128] = &allstar.RuntimeATNState{
+		StateNumber:            129,
+		Type:                   allstar.ATNBasic,
+		Decision:               11,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Alternatives",
+		ProdKind:               allstar.ProdOption,
+		ProdIdx:                1,
+	}
+	states[129] = &allstar.RuntimeATNState{
+		StateNumber:            130,
+		Type:                   allstar.ATNPlusBlockStart,
+		Decision:               12,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Alternatives",
+		ProdKind:               allstar.ProdRepetitionMandatory,
+		ProdIdx:                1,
+	}
+	states[130] = &allstar.RuntimeATNState{
+		StateNumber: 131,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Alternatives",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[131] = &allstar.RuntimeATNState{
+		StateNumber:            133,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Alternatives",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[132] = &allstar.RuntimeATNState{
+		StateNumber:            134,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Alternatives",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[133] = &allstar.RuntimeATNState{
+		StateNumber:            134,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Alternatives",
+		ProdKind:               allstar.ProdRepetitionMandatory,
+		ProdIdx:                1,
+	}
+	states[134] = &allstar.RuntimeATNState{
+		StateNumber:            135,
+		Type:                   allstar.ATNPlusLoopBack,
+		Decision:               13,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Alternatives",
+		ProdKind:               allstar.ProdRepetitionMandatory,
+		ProdIdx:                1,
+	}
+	states[135] = &allstar.RuntimeATNState{
+		StateNumber:            136,
+		Type:                   allstar.ATNLoopEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Alternatives",
+		ProdKind:               allstar.ProdRepetitionMandatory,
+		ProdIdx:                1,
+	}
+	states[136] = &allstar.RuntimeATNState{
+		StateNumber:            137,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Alternatives",
+		ProdKind:               allstar.ProdOption,
+		ProdIdx:                1,
+	}
+	states[137] = &allstar.RuntimeATNState{
+		StateNumber:            137,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Group",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[138] = &allstar.RuntimeATNState{
+		StateNumber:            139,
+		Type:                   allstar.ATNBasic,
+		Decision:               14,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Group",
+		ProdKind:               allstar.ProdOption,
+		ProdIdx:                1,
+	}
+	states[139] = &allstar.RuntimeATNState{
+		StateNumber:            140,
+		Type:                   allstar.ATNPlusBlockStart,
+		Decision:               15,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Group",
+		ProdKind:               allstar.ProdRepetitionMandatory,
+		ProdIdx:                1,
+	}
+	states[140] = &allstar.RuntimeATNState{
+		StateNumber:            141,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Group",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[141] = &allstar.RuntimeATNState{
+		StateNumber:            142,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Group",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[142] = &allstar.RuntimeATNState{
+		StateNumber:            143,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Group",
+		ProdKind:               allstar.ProdRepetitionMandatory,
+		ProdIdx:                1,
+	}
+	states[143] = &allstar.RuntimeATNState{
+		StateNumber:            144,
+		Type:                   allstar.ATNPlusLoopBack,
+		Decision:               16,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Group",
+		ProdKind:               allstar.ProdRepetitionMandatory,
+		ProdIdx:                1,
+	}
+	states[144] = &allstar.RuntimeATNState{
+		StateNumber:            145,
+		Type:                   allstar.ATNLoopEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Group",
+		ProdKind:               allstar.ProdRepetitionMandatory,
+		ProdIdx:                1,
+	}
+	states[145] = &allstar.RuntimeATNState{
+		StateNumber:            146,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Group",
+		ProdKind:               allstar.ProdOption,
+		ProdIdx:                1,
+	}
+	states[146] = &allstar.RuntimeATNState{
+		StateNumber:            146,
+		Type:                   allstar.ATNBasic,
+		Decision:               17,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[147] = &allstar.RuntimeATNState{
+		StateNumber:            147,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[148] = &allstar.RuntimeATNState{
+		StateNumber:            148,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[149] = &allstar.RuntimeATNState{
+		StateNumber:            149,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[150] = &allstar.RuntimeATNState{
+		StateNumber:            150,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[151] = &allstar.RuntimeATNState{
+		StateNumber:            151,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                3,
+	}
+	states[152] = &allstar.RuntimeATNState{
+		StateNumber:            152,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                3,
+	}
+	states[153] = &allstar.RuntimeATNState{
+		StateNumber:            153,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                4,
+	}
+	states[154] = &allstar.RuntimeATNState{
+		StateNumber:            154,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                4,
+	}
+	states[155] = &allstar.RuntimeATNState{
+		StateNumber: 155,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Element",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[156] = &allstar.RuntimeATNState{
+		StateNumber:            157,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                5,
+	}
+	states[157] = &allstar.RuntimeATNState{
+		StateNumber: 159,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Element",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     2,
+	}
+	states[158] = &allstar.RuntimeATNState{
+		StateNumber:            160,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                2,
+	}
+	states[159] = &allstar.RuntimeATNState{
+		StateNumber:            159,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[160] = &allstar.RuntimeATNState{
+		StateNumber:            160,
+		Type:                   allstar.ATNBasic,
+		Decision:               18,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                2,
+	}
+	states[161] = &allstar.RuntimeATNState{
+		StateNumber: 161,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Element",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     3,
+	}
+	states[162] = &allstar.RuntimeATNState{
+		StateNumber:            162,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                3,
+	}
+	states[163] = &allstar.RuntimeATNState{
+		StateNumber: 163,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Element",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     4,
+	}
+	states[164] = &allstar.RuntimeATNState{
+		StateNumber:            164,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                4,
+	}
+	states[165] = &allstar.RuntimeATNState{
+		StateNumber: 165,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Element",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     5,
+	}
+	states[166] = &allstar.RuntimeATNState{
+		StateNumber:            166,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                5,
+	}
+	states[167] = &allstar.RuntimeATNState{
+		StateNumber:            167,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Element",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                2,
+	}
+	states[168] = &allstar.RuntimeATNState{
+		StateNumber: 168,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Keyword",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[169] = &allstar.RuntimeATNState{
+		StateNumber:            169,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Keyword",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                1,
+	}
+	states[170] = &allstar.RuntimeATNState{
+		StateNumber: 170,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Assignment",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[171] = &allstar.RuntimeATNState{
+		StateNumber:            172,
+		Type:                   allstar.ATNBasic,
+		Decision:               19,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignment",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[172] = &allstar.RuntimeATNState{
+		StateNumber: 173,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Assignment",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     2,
+	}
+	states[173] = &allstar.RuntimeATNState{
+		StateNumber:            174,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignment",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                2,
+	}
+	states[174] = &allstar.RuntimeATNState{
+		StateNumber: 175,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Assignment",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     3,
+	}
+	states[175] = &allstar.RuntimeATNState{
+		StateNumber:            176,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignment",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                3,
+	}
+	states[176] = &allstar.RuntimeATNState{
+		StateNumber: 177,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Assignment",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     4,
+	}
+	states[177] = &allstar.RuntimeATNState{
+		StateNumber:            178,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignment",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                4,
+	}
+	states[178] = &allstar.RuntimeATNState{
+		StateNumber:            179,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignment",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[179] = &allstar.RuntimeATNState{
+		StateNumber:            180,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignment",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[180] = &allstar.RuntimeATNState{
+		StateNumber:            181,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignment",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[181] = &allstar.RuntimeATNState{
+		StateNumber:            181,
+		Type:                   allstar.ATNBasic,
+		Decision:               20,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignable",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[182] = &allstar.RuntimeATNState{
+		StateNumber:            182,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignable",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[183] = &allstar.RuntimeATNState{
+		StateNumber:            183,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignable",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[184] = &allstar.RuntimeATNState{
+		StateNumber:            184,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignable",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[185] = &allstar.RuntimeATNState{
+		StateNumber:            185,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignable",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[186] = &allstar.RuntimeATNState{
+		StateNumber:            186,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignable",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                3,
+	}
+	states[187] = &allstar.RuntimeATNState{
+		StateNumber:            187,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignable",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                3,
+	}
+	states[188] = &allstar.RuntimeATNState{
+		StateNumber: 188,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Assignable",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[189] = &allstar.RuntimeATNState{
+		StateNumber:            190,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignable",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                4,
+	}
+	states[190] = &allstar.RuntimeATNState{
+		StateNumber: 192,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Assignable",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     2,
+	}
+	states[191] = &allstar.RuntimeATNState{
+		StateNumber:            193,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignable",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                2,
+	}
+	states[192] = &allstar.RuntimeATNState{
+		StateNumber:            192,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Assignable",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[193] = &allstar.RuntimeATNState{
+		StateNumber:            193,
+		Type:                   allstar.ATNBasic,
+		Decision:               21,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableWithoutAlts",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[194] = &allstar.RuntimeATNState{
+		StateNumber:            194,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableWithoutAlts",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[195] = &allstar.RuntimeATNState{
+		StateNumber:            195,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableWithoutAlts",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[196] = &allstar.RuntimeATNState{
+		StateNumber:            196,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableWithoutAlts",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[197] = &allstar.RuntimeATNState{
+		StateNumber:            197,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableWithoutAlts",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[198] = &allstar.RuntimeATNState{
+		StateNumber:            198,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableWithoutAlts",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                3,
+	}
+	states[199] = &allstar.RuntimeATNState{
+		StateNumber:            199,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableWithoutAlts",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                3,
+	}
+	states[200] = &allstar.RuntimeATNState{
+		StateNumber:            200,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableWithoutAlts",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[201] = &allstar.RuntimeATNState{
+		StateNumber:            201,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableAlternatives",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[202] = &allstar.RuntimeATNState{
+		StateNumber:            203,
+		Type:                   allstar.ATNBasic,
+		Decision:               22,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableAlternatives",
+		ProdKind:               allstar.ProdOption,
+		ProdIdx:                1,
+	}
+	states[203] = &allstar.RuntimeATNState{
+		StateNumber:            204,
+		Type:                   allstar.ATNPlusBlockStart,
+		Decision:               23,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableAlternatives",
+		ProdKind:               allstar.ProdRepetitionMandatory,
+		ProdIdx:                1,
+	}
+	states[204] = &allstar.RuntimeATNState{
+		StateNumber: 205,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "AssignableAlternatives",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[205] = &allstar.RuntimeATNState{
+		StateNumber:            207,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableAlternatives",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[206] = &allstar.RuntimeATNState{
+		StateNumber:            208,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableAlternatives",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                2,
+	}
+	states[207] = &allstar.RuntimeATNState{
+		StateNumber:            208,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableAlternatives",
+		ProdKind:               allstar.ProdRepetitionMandatory,
+		ProdIdx:                1,
+	}
+	states[208] = &allstar.RuntimeATNState{
+		StateNumber:            209,
+		Type:                   allstar.ATNPlusLoopBack,
+		Decision:               24,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableAlternatives",
+		ProdKind:               allstar.ProdRepetitionMandatory,
+		ProdIdx:                1,
+	}
+	states[209] = &allstar.RuntimeATNState{
+		StateNumber:            210,
+		Type:                   allstar.ATNLoopEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableAlternatives",
+		ProdKind:               allstar.ProdRepetitionMandatory,
+		ProdIdx:                1,
+	}
+	states[210] = &allstar.RuntimeATNState{
+		StateNumber:            211,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "AssignableAlternatives",
+		ProdKind:               allstar.ProdOption,
+		ProdIdx:                1,
+	}
+	states[211] = &allstar.RuntimeATNState{
+		StateNumber: 211,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "CrossRef",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[212] = &allstar.RuntimeATNState{
+		StateNumber: 213,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "CrossRef",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     2,
+	}
+	states[213] = &allstar.RuntimeATNState{
+		StateNumber:            215,
+		Type:                   allstar.ATNBasic,
+		Decision:               25,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "CrossRef",
+		ProdKind:               allstar.ProdOption,
+		ProdIdx:                1,
+	}
+	states[214] = &allstar.RuntimeATNState{
+		StateNumber: 216,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "CrossRef",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     3,
+	}
+	states[215] = &allstar.RuntimeATNState{
+		StateNumber:            218,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "CrossRef",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[216] = &allstar.RuntimeATNState{
+		StateNumber:            219,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "CrossRef",
+		ProdKind:               allstar.ProdNonTerminal,
+		ProdIdx:                1,
+	}
+	states[217] = &allstar.RuntimeATNState{
+		StateNumber:            219,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "CrossRef",
+		ProdKind:               allstar.ProdOption,
+		ProdIdx:                1,
+	}
+	states[218] = &allstar.RuntimeATNState{
+		StateNumber: 220,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "CrossRef",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     4,
+	}
+	states[219] = &allstar.RuntimeATNState{
+		StateNumber:            221,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "CrossRef",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                4,
+	}
+	states[220] = &allstar.RuntimeATNState{
+		StateNumber: 220,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "RuleCall",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[221] = &allstar.RuntimeATNState{
+		StateNumber:            221,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "RuleCall",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                1,
+	}
+	states[222] = &allstar.RuntimeATNState{
+		StateNumber: 222,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Action",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     1,
+	}
+	states[223] = &allstar.RuntimeATNState{
+		StateNumber: 224,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Action",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     2,
+	}
+	states[224] = &allstar.RuntimeATNState{
+		StateNumber:            226,
+		Type:                   allstar.ATNBasic,
+		Decision:               26,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Action",
+		ProdKind:               allstar.ProdOption,
+		ProdIdx:                1,
+	}
+	states[225] = &allstar.RuntimeATNState{
+		StateNumber: 227,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Action",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     3,
+	}
+	states[226] = &allstar.RuntimeATNState{
+		StateNumber: 229,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Action",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     4,
+	}
+	states[227] = &allstar.RuntimeATNState{
+		StateNumber:            231,
+		Type:                   allstar.ATNBasic,
+		Decision:               27,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Action",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[228] = &allstar.RuntimeATNState{
+		StateNumber: 232,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Action",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     5,
+	}
+	states[229] = &allstar.RuntimeATNState{
+		StateNumber:            233,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Action",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                5,
+	}
+	states[230] = &allstar.RuntimeATNState{
+		StateNumber: 234,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Action",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     6,
+	}
+	states[231] = &allstar.RuntimeATNState{
+		StateNumber:            235,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Action",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                6,
+	}
+	states[232] = &allstar.RuntimeATNState{
+		StateNumber:            236,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Action",
+		ProdKind:               allstar.ProdAlternation,
+		ProdIdx:                1,
+	}
+	states[233] = &allstar.RuntimeATNState{
+		StateNumber: 237,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Action",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     7,
+	}
+	states[234] = &allstar.RuntimeATNState{
+		StateNumber:            238,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Action",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                7,
+	}
+	states[235] = &allstar.RuntimeATNState{
+		StateNumber:            237,
+		Type:                   allstar.ATNBlockEnd,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Action",
+		ProdKind:               allstar.ProdOption,
+		ProdIdx:                1,
+	}
+	states[236] = &allstar.RuntimeATNState{
+		StateNumber: 238,
+		Type:        allstar.ATNBasic,
+		Decision:    -1,
+		RuleName:    "Action",
+		ProdKind:    allstar.ProdTerminal,
+		ProdIdx:     8,
+	}
+	states[237] = &allstar.RuntimeATNState{
+		StateNumber:            239,
+		Type:                   allstar.ATNBasic,
+		Decision:               -1,
+		EpsilonOnlyTransitions: true,
+		RuleName:               "Action",
+		ProdKind:               allstar.ProdTerminal,
+		ProdIdx:                8,
+	}
+	states[0].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[42]},
+	}
+	states[2].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[58]},
+	}
+	states[4].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[82]},
+	}
+	states[6].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[85]},
+	}
+	states[8].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[95]},
+	}
+	states[10].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[99]},
+	}
+	states[12].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[102]},
+	}
+	states[14].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[104]},
+	}
+	states[16].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[110]},
+	}
+	states[18].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[117]},
+	}
+	states[20].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[127]},
+	}
+	states[22].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[137]},
+	}
+	states[24].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[146]},
+	}
+	states[26].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[168]},
+	}
+	states[28].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[170]},
+	}
+	states[30].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[181]},
+	}
+	states[32].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[193]},
+	}
+	states[34].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[201]},
+	}
+	states[36].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[211]},
+	}
+	states[38].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[220]},
+	}
+	states[40].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[222]},
+	}
+	states[42].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[43], TokenTypeID: 18, CategoryMatches: nil},
+	}
+	states[43].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[44], TokenTypeID: 28, CategoryMatches: nil},
+	}
+	states[44].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[55], TokenTypeID: 9, CategoryMatches: nil},
+	}
+	states[45].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[46]},
+	}
+	states[46].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[47]},
+		&allstar.RuntimeEpsilonTransition{Target: states[49]},
+		&allstar.RuntimeEpsilonTransition{Target: states[51]},
+	}
+	states[47].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[16], FollowState: states[48]},
+	}
+	states[48].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[53]},
+	}
+	states[49].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[18], FollowState: states[50]},
+	}
+	states[50].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[53]},
+	}
+	states[51].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[2], FollowState: states[52]},
+	}
+	states[52].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[53]},
+	}
+	states[53].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[54]},
+	}
+	states[54].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[57]},
+	}
+	states[55].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[45]},
+		&allstar.RuntimeEpsilonTransition{Target: states[56]},
+	}
+	states[56].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[1]},
+	}
+	states[57].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[55]},
+	}
+	states[58].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[59], TokenTypeID: 20, CategoryMatches: nil},
+	}
+	states[59].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[60], TokenTypeID: 28, CategoryMatches: nil},
+	}
+	states[60].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[61]},
+		&allstar.RuntimeEpsilonTransition{Target: states[71]},
+	}
+	states[61].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[62], TokenTypeID: 17, CategoryMatches: nil},
+	}
+	states[62].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[68], TokenTypeID: 28, CategoryMatches: nil},
+	}
+	states[63].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[64]},
+	}
+	states[64].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[65], TokenTypeID: 6, CategoryMatches: nil},
+	}
+	states[65].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[66], TokenTypeID: 28, CategoryMatches: nil},
+	}
+	states[66].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[67]},
+	}
+	states[67].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[70]},
+	}
+	states[68].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[63]},
+		&allstar.RuntimeEpsilonTransition{Target: states[69]},
+	}
+	states[69].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[71]},
+	}
+	states[70].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[68]},
+	}
+	states[71].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[72]},
+	}
+	states[72].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[77], TokenTypeID: 24, CategoryMatches: nil},
+	}
+	states[73].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[74]},
+	}
+	states[74].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[4], FollowState: states[75]},
+	}
+	states[75].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[76]},
+	}
+	states[76].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[79]},
+	}
+	states[77].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[73]},
+		&allstar.RuntimeEpsilonTransition{Target: states[78]},
+	}
+	states[78].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[80]},
+	}
+	states[79].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[77]},
+	}
+	states[80].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[81], TokenTypeID: 26, CategoryMatches: nil},
+	}
+	states[81].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[3]},
+	}
+	states[82].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[83], TokenTypeID: 28, CategoryMatches: nil},
+	}
+	states[83].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[6], FollowState: states[84]},
+	}
+	states[84].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[5]},
+	}
+	states[85].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[86]},
+		&allstar.RuntimeEpsilonTransition{Target: states[88]},
+		&allstar.RuntimeEpsilonTransition{Target: states[90]},
+		&allstar.RuntimeEpsilonTransition{Target: states[92]},
+	}
+	states[86].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[12], FollowState: states[87]},
+	}
+	states[87].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[94]},
+	}
+	states[88].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[10], FollowState: states[89]},
+	}
+	states[89].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[94]},
+	}
+	states[90].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[8], FollowState: states[91]},
+	}
+	states[91].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[94]},
+	}
+	states[92].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[14], FollowState: states[93]},
+	}
+	states[93].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[94]},
+	}
+	states[94].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[7]},
+	}
+	states[95].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[96], TokenTypeID: 13, CategoryMatches: nil},
+	}
+	states[96].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[97], TokenTypeID: 14, CategoryMatches: nil},
+	}
+	states[97].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[6], FollowState: states[98]},
+	}
+	states[98].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[9]},
+	}
+	states[99].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[100], TokenTypeID: 3, CategoryMatches: nil},
+	}
+	states[100].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[101], TokenTypeID: 28, CategoryMatches: nil},
+	}
+	states[101].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[11]},
+	}
+	states[102].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[103], TokenTypeID: 28, CategoryMatches: nil},
+	}
+	states[103].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[13]},
+	}
+	states[104].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[105]},
+		&allstar.RuntimeEpsilonTransition{Target: states[107]},
+	}
+	states[105].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[106], TokenTypeID: 22, CategoryMatches: nil},
+	}
+	states[106].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[109]},
+	}
+	states[107].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[108], TokenTypeID: 15, CategoryMatches: nil},
+	}
+	states[108].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[109]},
+	}
+	states[109].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[15]},
+	}
+	states[110].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[111], TokenTypeID: 28, CategoryMatches: nil},
+	}
+	states[111].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[112], TokenTypeID: 21, CategoryMatches: nil},
+	}
+	states[112].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[113], TokenTypeID: 28, CategoryMatches: nil},
+	}
+	states[113].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[114], TokenTypeID: 8, CategoryMatches: nil},
+	}
+	states[114].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[20], FollowState: states[115]},
+	}
+	states[115].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[116], TokenTypeID: 9, CategoryMatches: nil},
+	}
+	states[116].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[17]},
+	}
+	states[117].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[118]},
+		&allstar.RuntimeEpsilonTransition{Target: states[120]},
+	}
+	states[118].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[119], TokenTypeID: 19, CategoryMatches: nil},
+	}
+	states[119].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[120]},
+	}
+	states[120].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[121]},
+	}
+	states[121].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[122], TokenTypeID: 23, CategoryMatches: nil},
+	}
+	states[122].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[123], TokenTypeID: 28, CategoryMatches: nil},
+	}
+	states[123].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[124], TokenTypeID: 8, CategoryMatches: nil},
+	}
+	states[124].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[125], TokenTypeID: 29, CategoryMatches: nil},
+	}
+	states[125].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[126], TokenTypeID: 9, CategoryMatches: nil},
+	}
+	states[126].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[19]},
+	}
+	states[127].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[22], FollowState: states[128]},
+	}
+	states[128].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[129]},
+		&allstar.RuntimeEpsilonTransition{Target: states[136]},
+	}
+	states[129].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[130]},
+	}
+	states[130].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[131], TokenTypeID: 25, CategoryMatches: nil},
+	}
+	states[131].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[22], FollowState: states[132]},
+	}
+	states[132].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[133]},
+	}
+	states[133].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[134]},
+	}
+	states[134].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[129]},
+		&allstar.RuntimeEpsilonTransition{Target: states[135]},
+	}
+	states[135].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[136]},
+	}
+	states[136].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[21]},
+	}
+	states[137].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[24], FollowState: states[138]},
+	}
+	states[138].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[139]},
+		&allstar.RuntimeEpsilonTransition{Target: states[145]},
+	}
+	states[139].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[140]},
+	}
+	states[140].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[24], FollowState: states[141]},
+	}
+	states[141].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[142]},
+	}
+	states[142].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[143]},
+	}
+	states[143].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[139]},
+		&allstar.RuntimeEpsilonTransition{Target: states[144]},
+	}
+	states[144].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[145]},
+	}
+	states[145].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[23]},
+	}
+	states[146].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[147]},
+		&allstar.RuntimeEpsilonTransition{Target: states[149]},
+		&allstar.RuntimeEpsilonTransition{Target: states[151]},
+		&allstar.RuntimeEpsilonTransition{Target: states[153]},
+		&allstar.RuntimeEpsilonTransition{Target: states[155]},
+	}
+	states[147].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[26], FollowState: states[148]},
+	}
+	states[148].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[159]},
+	}
+	states[149].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[28], FollowState: states[150]},
+	}
+	states[150].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[159]},
+	}
+	states[151].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[38], FollowState: states[152]},
+	}
+	states[152].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[159]},
+	}
+	states[153].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[40], FollowState: states[154]},
+	}
+	states[154].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[159]},
+	}
+	states[155].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[156], TokenTypeID: 1, CategoryMatches: nil},
+	}
+	states[156].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[20], FollowState: states[157]},
+	}
+	states[157].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[158], TokenTypeID: 2, CategoryMatches: nil},
+	}
+	states[158].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[159]},
+	}
+	states[159].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[160]},
+	}
+	states[160].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[161]},
+		&allstar.RuntimeEpsilonTransition{Target: states[163]},
+		&allstar.RuntimeEpsilonTransition{Target: states[165]},
+	}
+	states[161].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[162], TokenTypeID: 3, CategoryMatches: nil},
+	}
+	states[162].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[167]},
+	}
+	states[163].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[164], TokenTypeID: 4, CategoryMatches: nil},
+	}
+	states[164].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[167]},
+	}
+	states[165].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[166], TokenTypeID: 11, CategoryMatches: nil},
+	}
+	states[166].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[167]},
+	}
+	states[167].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[25]},
+	}
+	states[168].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[169], TokenTypeID: 27, CategoryMatches: nil},
+	}
+	states[169].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[27]},
+	}
+	states[170].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[171], TokenTypeID: 28, CategoryMatches: nil},
+	}
+	states[171].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[172]},
+		&allstar.RuntimeEpsilonTransition{Target: states[174]},
+		&allstar.RuntimeEpsilonTransition{Target: states[176]},
+	}
+	states[172].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[173], TokenTypeID: 5, CategoryMatches: nil},
+	}
+	states[173].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[178]},
+	}
+	states[174].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[175], TokenTypeID: 10, CategoryMatches: nil},
+	}
+	states[175].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[178]},
+	}
+	states[176].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[177], TokenTypeID: 12, CategoryMatches: nil},
+	}
+	states[177].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[178]},
+	}
+	states[178].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[179]},
+	}
+	states[179].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[30], FollowState: states[180]},
+	}
+	states[180].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[29]},
+	}
+	states[181].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[182]},
+		&allstar.RuntimeEpsilonTransition{Target: states[184]},
+		&allstar.RuntimeEpsilonTransition{Target: states[186]},
+		&allstar.RuntimeEpsilonTransition{Target: states[188]},
+	}
+	states[182].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[26], FollowState: states[183]},
+	}
+	states[183].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[192]},
+	}
+	states[184].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[38], FollowState: states[185]},
+	}
+	states[185].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[192]},
+	}
+	states[186].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[36], FollowState: states[187]},
+	}
+	states[187].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[192]},
+	}
+	states[188].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[189], TokenTypeID: 1, CategoryMatches: nil},
+	}
+	states[189].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[34], FollowState: states[190]},
+	}
+	states[190].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[191], TokenTypeID: 2, CategoryMatches: nil},
+	}
+	states[191].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[192]},
+	}
+	states[192].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[31]},
+	}
+	states[193].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[194]},
+		&allstar.RuntimeEpsilonTransition{Target: states[196]},
+		&allstar.RuntimeEpsilonTransition{Target: states[198]},
+	}
+	states[194].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[26], FollowState: states[195]},
+	}
+	states[195].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[200]},
+	}
+	states[196].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[38], FollowState: states[197]},
+	}
+	states[197].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[200]},
+	}
+	states[198].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[36], FollowState: states[199]},
+	}
+	states[199].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[200]},
+	}
+	states[200].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[33]},
+	}
+	states[201].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[32], FollowState: states[202]},
+	}
+	states[202].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[203]},
+		&allstar.RuntimeEpsilonTransition{Target: states[210]},
+	}
+	states[203].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[204]},
+	}
+	states[204].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[205], TokenTypeID: 25, CategoryMatches: nil},
+	}
+	states[205].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[32], FollowState: states[206]},
+	}
+	states[206].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[207]},
+	}
+	states[207].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[208]},
+	}
+	states[208].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[203]},
+		&allstar.RuntimeEpsilonTransition{Target: states[209]},
+	}
+	states[209].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[210]},
+	}
+	states[210].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[35]},
+	}
+	states[211].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[212], TokenTypeID: 13, CategoryMatches: nil},
+	}
+	states[212].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[213], TokenTypeID: 28, CategoryMatches: nil},
+	}
+	states[213].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[214]},
+		&allstar.RuntimeEpsilonTransition{Target: states[217]},
+	}
+	states[214].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[215], TokenTypeID: 8, CategoryMatches: nil},
+	}
+	states[215].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeRuleTransition{Target: states[38], FollowState: states[216]},
+	}
+	states[216].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[217]},
+	}
+	states[217].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[218]},
+	}
+	states[218].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[219], TokenTypeID: 14, CategoryMatches: nil},
+	}
+	states[219].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[37]},
+	}
+	states[220].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[221], TokenTypeID: 28, CategoryMatches: nil},
+	}
+	states[221].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[39]},
+	}
+	states[222].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[223], TokenTypeID: 24, CategoryMatches: nil},
+	}
+	states[223].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[224], TokenTypeID: 28, CategoryMatches: nil},
+	}
+	states[224].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[225]},
+		&allstar.RuntimeEpsilonTransition{Target: states[235]},
+	}
+	states[225].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[226], TokenTypeID: 7, CategoryMatches: nil},
+	}
+	states[226].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[227], TokenTypeID: 28, CategoryMatches: nil},
+	}
+	states[227].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[228]},
+		&allstar.RuntimeEpsilonTransition{Target: states[230]},
+	}
+	states[228].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[229], TokenTypeID: 5, CategoryMatches: nil},
+	}
+	states[229].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[232]},
+	}
+	states[230].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[231], TokenTypeID: 10, CategoryMatches: nil},
+	}
+	states[231].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[232]},
+	}
+	states[232].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[233]},
+	}
+	states[233].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[234], TokenTypeID: 16, CategoryMatches: nil},
+	}
+	states[234].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[235]},
+	}
+	states[235].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[236]},
+	}
+	states[236].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeAtomTransition{Target: states[237], TokenTypeID: 26, CategoryMatches: nil},
+	}
+	states[237].Transitions = []allstar.RuntimeTransition{
+		&allstar.RuntimeEpsilonTransition{Target: states[41]},
+	}
+	decisionStates := make([]*allstar.RuntimeATNState, 28)
+	decisionStates[0] = states[45]
+	decisionStates[1] = states[46]
+	decisionStates[2] = states[55]
+	decisionStates[3] = states[60]
+	decisionStates[4] = states[63]
+	decisionStates[5] = states[68]
+	decisionStates[6] = states[73]
+	decisionStates[7] = states[77]
+	decisionStates[8] = states[85]
+	decisionStates[9] = states[104]
+	decisionStates[10] = states[117]
+	decisionStates[11] = states[128]
+	decisionStates[12] = states[129]
+	decisionStates[13] = states[134]
+	decisionStates[14] = states[138]
+	decisionStates[15] = states[139]
+	decisionStates[16] = states[143]
+	decisionStates[17] = states[146]
+	decisionStates[18] = states[160]
+	decisionStates[19] = states[171]
+	decisionStates[20] = states[181]
+	decisionStates[21] = states[193]
+	decisionStates[22] = states[202]
+	decisionStates[23] = states[203]
+	decisionStates[24] = states[208]
+	decisionStates[25] = states[213]
+	decisionStates[26] = states[224]
+	decisionStates[27] = states[227]
+	decisionMap := map[string]*allstar.RuntimeATNState{
+		"Assignable_Alternation_1":                     states[181],
+		"PrimitiveType_Alternation_1":                  states[104],
+		"CrossRef_Option_1":                            states[213],
+		"AssignableWithoutAlts_Alternation_1":          states[193],
+		"Alternatives_Option_1":                        states[128],
+		"Group_Option_1":                               states[138],
+		"Action_Alternation_1":                         states[227],
+		"Action_Option_1":                              states[224],
+		"FieldType_Alternation_1":                      states[85],
+		"Token_Option_1":                               states[117],
+		"Grammar_Alternation_1":                        states[46],
+		"Interface_Repetition_1":                       states[68],
+		"Interface_Option_1":                           states[60],
+		"Element_Alternation_1":                        states[146],
+		"AssignableAlternatives_RepetitionMandatory_1": states[208],
+		"Grammar_Repetition_1":                         states[55],
+		"Alternatives_RepetitionMandatory_1":           states[134],
+		"Group_RepetitionMandatory_1":                  states[143],
+		"AssignableAlternatives_Option_1":              states[202],
+		"Interface_Repetition_2":                       states[77],
+		"Element_Alternation_2":                        states[160],
+		"Assignment_Alternation_1":                     states[171],
+	}
+	return &allstar.RuntimeATN{
+		States:         states,
+		DecisionStates: decisionStates,
+		DecisionMap:    decisionMap,
 	}
 }
 

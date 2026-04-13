@@ -84,10 +84,25 @@ func (s *LLStarLookahead) PredictAlternation(src TokenSource, key string) int {
 
 // PredictOptional implements Strategy.
 // Returns true when the adaptive prediction chooses alt 0 (enter the block).
+//
+// Fast path: when the grammar is LL(1)-decidable at this decision point (no
+// token overlap between the enter and skip/exit alternatives), the LL(1) table
+// gives the answer in O(1).  This is critical for StarLoopEntry decisions where
+// the exit alternative has no first tokens (it only fires at EOF), because
+// adaptivePredict would otherwise scan the entire remaining input before
+// returning the exit alternative.
 func (s *LLStarLookahead) PredictOptional(src TokenSource, key string) bool {
 	ds := s.atn.DecisionMap[key]
 	if ds == nil {
 		return false
+	}
+	if table, ok := buildLL1Table(ds); ok {
+		tID := tokenTypeID(src.LA(1))
+		alt, found := table[tID]
+		if !found {
+			return false
+		}
+		return alt == 0
 	}
 	alt, err := adaptivePredict(src, s.dfas, ds.Decision, EmptyPredicates, s.logging)
 	return err == nil && alt == 0
@@ -159,6 +174,15 @@ func (s *LLStarLookahead) BuildLookaheadForOptional(
 	decision := decisionState.Decision
 	dfas := s.dfas
 	logging := s.logging
+
+	// Fast path: same LL(1) optimisation as PredictOptional.
+	if table, ok := buildLL1Table(decisionState); ok {
+		return func(src TokenSource) bool {
+			tID := tokenTypeID(src.LA(1))
+			alt, found := table[tID]
+			return found && alt == 0
+		}
+	}
 
 	return func(src TokenSource) bool {
 		alt, err := adaptivePredict(src, dfas, decision, EmptyPredicates, logging)
