@@ -744,12 +744,12 @@ var Token_ML_COMMENT_Accepting = [5]bool{
 	4: true,
 }
 
-const Token_StringToken_Idx = 31
+const Token_StringLiteral_Idx = 31
 
-var Token_StringToken = core.NewTokenType(
-	Token_StringToken_Idx,
-	"StringToken",
-	"StringToken",
+var Token_StringLiteral = core.NewTokenType(
+	Token_StringLiteral_Idx,
+	"StringLiteral",
+	"StringLiteral",
 	0,
 	0,
 	false,
@@ -765,8 +765,8 @@ var Token_StringToken = core.NewTokenType(
 			switch state {
 			case 0:
 				nextState := -1
-				next := Token_StringToken_Next[0]
-				lookup := Token_StringToken_Lookup[0]
+				next := Token_StringLiteral_Next[0]
+				lookup := Token_StringLiteral_Lookup[0]
 				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
 					lo := rune(lowHigh & 0xFFFFFFFF)
 					hi := rune(lowHigh >> 32)
@@ -782,8 +782,8 @@ var Token_StringToken = core.NewTokenType(
 				}
 			case 1:
 				nextState := -1
-				next := Token_StringToken_Next[1]
-				lookup := Token_StringToken_Lookup[1]
+				next := Token_StringLiteral_Next[1]
+				lookup := Token_StringLiteral_Lookup[1]
 				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
 					lo := rune(lowHigh & 0xFFFFFFFF)
 					hi := rune(lowHigh >> 32)
@@ -799,8 +799,8 @@ var Token_StringToken = core.NewTokenType(
 				}
 			case 2:
 				nextState := -1
-				next := Token_StringToken_Next[2]
-				lookup := Token_StringToken_Lookup[2]
+				next := Token_StringLiteral_Next[2]
+				lookup := Token_StringLiteral_Lookup[2]
 				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
 					lo := rune(lowHigh & 0xFFFFFFFF)
 					hi := rune(lowHigh >> 32)
@@ -816,8 +816,8 @@ var Token_StringToken = core.NewTokenType(
 				}
 			case 3:
 				nextState := -1
-				next := Token_StringToken_Next[3]
-				lookup := Token_StringToken_Lookup[3]
+				next := Token_StringLiteral_Next[3]
+				lookup := Token_StringLiteral_Lookup[3]
 				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
 					lo := rune(lowHigh & 0xFFFFFFFF)
 					hi := rune(lowHigh >> 32)
@@ -835,7 +835,7 @@ var Token_StringToken = core.NewTokenType(
 				break loop
 			}
 			index += runeSize
-			if Token_StringToken_Accepting[state] {
+			if Token_StringLiteral_Accepting[state] {
 				acceptedIndex = index
 			}
 		}
@@ -843,19 +843,19 @@ var Token_StringToken = core.NewTokenType(
 	},
 	[]rune{'"'},
 )
-var Token_StringToken_Lookup = [][]int64{
+var Token_StringLiteral_Lookup = [][]int64{
 	{0x0000002200000022},
 	{0x0000002100000000, 0x0010FFFF00000023},
 	{0x0000002100000000, 0x0000002200000022, 0x0010FFFF00000023},
 	{},
 }
-var Token_StringToken_Next = [][]int{
+var Token_StringLiteral_Next = [][]int{
 	{1},
 	{2, 2},
 	{2, 3, 2},
 	{},
 }
-var Token_StringToken_Accepting = [4]bool{
+var Token_StringLiteral_Accepting = [4]bool{
 	3: true,
 }
 
@@ -1217,7 +1217,7 @@ func NewLexer() lexer.Lexer {
 		Keyword_RightBrace,
 		Token_SL_COMMENT,
 		Token_ML_COMMENT,
-		Token_StringToken,
+		Token_StringLiteral,
 		Token_ID,
 		Token_RegexLiteral,
 		Token_WS,

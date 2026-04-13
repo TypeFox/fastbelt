@@ -77,7 +77,7 @@ const (
 	InterfaceRightBrace_0
 	Interfaceextends_0
 	Interfaceinterface_0
-	KeywordValueStringToken_0
+	KeywordValueStringLiteral_0
 	ParserRuleColon_0
 	ParserRuleNameID_0
 	ParserRuleReturnTypeID_0
@@ -140,7 +140,7 @@ var AssignableAlternativesLookahead12 = parser.LLkLookahead{
 
 var AssignableLookaheadOr7 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_StringToken_Idx},
+		parser.LookaheadPath{Token_StringLiteral_Idx},
 	},
 	parser.LookaheadOption{
 		parser.LookaheadPath{Token_ID_Idx},
@@ -155,7 +155,7 @@ var AssignableLookaheadOr7 = parser.LLkLookahead{
 
 var AssignableWithoutAltsLookaheadOr8 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_StringToken_Idx},
+		parser.LookaheadPath{Token_StringLiteral_Idx},
 	},
 	parser.LookaheadOption{
 		parser.LookaheadPath{Token_ID_Idx},
@@ -211,7 +211,7 @@ var CompositeElementLookahead19 = parser.LLkLookahead{
 
 var CompositeElementLookaheadOr10 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_StringToken_Idx},
+		parser.LookaheadPath{Token_StringLiteral_Idx},
 	},
 	parser.LookaheadOption{
 		parser.LookaheadPath{Token_ID_Idx},
@@ -223,7 +223,7 @@ var CompositeElementLookaheadOr10 = parser.LLkLookahead{
 
 var CompositeGroupLookahead17 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_StringToken_Idx},
+		parser.LookaheadPath{Token_StringLiteral_Idx},
 		parser.LookaheadPath{Token_ID_Idx},
 		parser.LookaheadPath{Keyword_LeftParen_Idx},
 	},
@@ -231,7 +231,7 @@ var CompositeGroupLookahead17 = parser.LLkLookahead{
 
 var CompositeGroupLookahead18 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_StringToken_Idx},
+		parser.LookaheadPath{Token_StringLiteral_Idx},
 		parser.LookaheadPath{Token_ID_Idx},
 		parser.LookaheadPath{Keyword_LeftParen_Idx},
 	},
@@ -265,7 +265,7 @@ var ElementLookahead10 = parser.LLkLookahead{
 
 var ElementLookaheadOr4 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_StringToken_Idx},
+		parser.LookaheadPath{Token_StringLiteral_Idx},
 	},
 	parser.LookaheadOption{
 		parser.LookaheadPath{Token_ID_Idx, Keyword_PlusEquals_Idx},
@@ -279,7 +279,7 @@ var ElementLookaheadOr4 = parser.LLkLookahead{
 		parser.LookaheadPath{Keyword_LeftBrace_Idx, Token_ID_Idx},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftParen_Idx, Token_StringToken_Idx},
+		parser.LookaheadPath{Keyword_LeftParen_Idx, Token_StringLiteral_Idx},
 		parser.LookaheadPath{Keyword_LeftParen_Idx, Token_ID_Idx},
 		parser.LookaheadPath{Keyword_LeftParen_Idx, Token_ID_Idx},
 		parser.LookaheadPath{Keyword_LeftParen_Idx, Keyword_LeftBrace_Idx},
@@ -334,7 +334,7 @@ var GrammarLookaheadOr0 = parser.LLkLookahead{
 
 var GroupLookahead8 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_StringToken_Idx},
+		parser.LookaheadPath{Token_StringLiteral_Idx},
 		parser.LookaheadPath{Token_ID_Idx},
 		parser.LookaheadPath{Token_ID_Idx},
 		parser.LookaheadPath{Keyword_LeftBrace_Idx},
@@ -344,7 +344,7 @@ var GroupLookahead8 = parser.LLkLookahead{
 
 var GroupLookahead9 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_StringToken_Idx},
+		parser.LookaheadPath{Token_StringLiteral_Idx},
 		parser.LookaheadPath{Token_ID_Idx},
 		parser.LookaheadPath{Token_ID_Idx},
 		parser.LookaheadPath{Keyword_LeftBrace_Idx},
@@ -886,8 +886,8 @@ func (p *Parser) ParseKeyword() Keyword {
 	current := NewKeyword()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Token_StringToken_Idx)
-		core.AssignToken(current, token, KeywordValueStringToken_0)
+		token := p.state.Consume(Token_StringLiteral_Idx)
+		core.AssignToken(current, token, KeywordValueStringLiteral_0)
 		if token != nil {
 			current.SetValue(token)
 		}
