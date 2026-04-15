@@ -2,6 +2,7 @@ package fbtest
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
@@ -31,12 +32,7 @@ func (d *Doc) Diagnostics() []*core.Diagnostic { return d.Document.Diagnostics }
 // Diagnostics exist.
 func (d *Doc) AssertNoErrors() *Doc {
 	d.t.Helper()
-	for _, e := range d.Document.LexerErrors {
-		d.t.Errorf("fbtest: unexpected lexer error: %v", e)
-	}
-	for _, e := range d.Document.ParserErrors {
-		d.t.Errorf("fbtest: unexpected parser error: %v", e)
-	}
+	// The diagnostics contain all kinds of errors
 	for _, diag := range d.Document.Diagnostics {
 		if diag.Severity == core.SeverityError {
 			d.t.Errorf("fbtest: unexpected error diagnostic: %s", diag.Message)
@@ -58,51 +54,77 @@ func (d *Doc) AssertNoParseErrors() *Doc {
 	return d
 }
 
+type DiagnosticExpectation struct {
+	t          testing.TB
+	Diagnostic *core.Diagnostic
+}
+
+func (d *DiagnosticExpectation) WithMessage(msg string) *DiagnosticExpectation {
+	d.t.Helper()
+	if d.Diagnostic.Message != msg {
+		d.t.Errorf("fbtest: expected diagnostic message %q, got %q", msg, d.Diagnostic.Message)
+	}
+	return d
+}
+
+func (d *DiagnosticExpectation) WithMessageContaining(substring string) *DiagnosticExpectation {
+	if !strings.Contains(d.Diagnostic.Message, substring) {
+		d.t.Errorf("fbtest: expected diagnostic message containing %q, got %q", substring, d.Diagnostic.Message)
+	}
+	return d
+}
+
+func (d *DiagnosticExpectation) WithCode(code string) *DiagnosticExpectation {
+	if d.Diagnostic.Code != code {
+		d.t.Errorf("fbtest: expected diagnostic code %q, got %q", code, d.Diagnostic.Code)
+	}
+	return d
+}
+
+func (d *DiagnosticExpectation) WithSource(source string) *DiagnosticExpectation {
+	if d.Diagnostic.Source != source {
+		d.t.Errorf("fbtest: expected diagnostic source %q, got %q", source, d.Diagnostic.Source)
+	}
+	return d
+}
+
+func (d *DiagnosticExpectation) WithSeverity(severity core.DiagnosticSeverity) *DiagnosticExpectation {
+	if d.Diagnostic.Severity != severity {
+		d.t.Errorf("fbtest: expected diagnostic severity %q, got %q", severity, d.Diagnostic.Severity)
+	}
+	return d
+}
+
+func (d *DiagnosticExpectation) WithTags(tags ...core.DiagnosticTag) *DiagnosticExpectation {
+	if len(d.Diagnostic.Tags) != len(tags) {
+		d.t.Errorf("fbtest: expected diagnostic tags %v, got %v", tags, d.Diagnostic.Tags)
+		return d
+	}
+	for _, tag := range tags {
+		found := slices.Contains(d.Diagnostic.Tags, tag)
+		if !found {
+			d.t.Errorf("fbtest: expected diagnostic tag %v not found in actual tags %v", tag, d.Diagnostic.Tags)
+		}
+	}
+	return d
+}
+
 // AssertDiagnostic fails the test unless at least one diagnostic has the given
 // severity and a message containing msgSubstring.
-func (d *Doc) AssertDiagnostic(severity core.DiagnosticSeverity, msgSubstring string) *Doc {
-	d.t.Helper()
-	for _, diag := range d.Document.Diagnostics {
-		if diag.Severity == severity && strings.Contains(diag.Message, msgSubstring) {
-			return d
-		}
-	}
-	d.t.Errorf("fbtest: no %s diagnostic containing %q (got %d total)",
-		severity, msgSubstring, len(d.Document.Diagnostics))
-	return d
-}
-
-// AssertDiagnostic fails the test unless at least one diagnostic has the given
-// severity and code.
-func (d *Doc) AssertDiagnosticCode(severity core.DiagnosticSeverity, code string) *Doc {
-	d.t.Helper()
-	for _, diag := range d.Document.Diagnostics {
-		if diag.Severity == severity && diag.Code == code {
-			return d
-		}
-	}
-	d.t.Errorf("fbtest: no %s diagnostic with code %q (got %d total)",
-		severity, code, len(d.Document.Diagnostics))
-	return d
-}
-
-// AssertDiagnosticAtLabel fails the test unless at least one diagnostic has the given
-// severity, a message containing msgSubstring, and a range that contains the position
-// of the named marker.
-func (d *Doc) AssertDiagnosticAtLabel(label string, severity core.DiagnosticSeverity, msgSubstring string) *Doc {
+func (d *Doc) ExpectDiagnostic(label string) *DiagnosticExpectation {
 	d.t.Helper()
 	loc, ok := d.markerRange(label)
 	if !ok {
-		d.t.Errorf("fbtest: no marker with label %q", label)
-		return d
+		d.t.Fatalf("fbtest: no marker with label %q", label)
+		return nil
 	}
 	for _, diag := range d.Document.Diagnostics {
-		if diag.Severity == severity && strings.Contains(diag.Message, msgSubstring) && loc == diag.Range {
-			return d
+		if diag.Range == loc {
+			return &DiagnosticExpectation{t: d.t, Diagnostic: diag}
 		}
 	}
-	d.t.Errorf("fbtest: no %s diagnostic containing %q at label %q", severity, msgSubstring, label)
-	return d
+	d.t.Fatalf("fbtest: no diagnostic at label %q", label)
+	return nil
 }
 
 // AssertNoDiagnostics fails the test if any diagnostics exist at any severity.

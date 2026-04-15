@@ -42,13 +42,18 @@ const (
 // Diagnostic represents a diagnostic message such as an error or warning.
 // The struct mirrors lsp.Diagnostic so the core package stays free of that dependency.
 type Diagnostic struct {
-	Range    TextRange
-	Severity DiagnosticSeverity
-	Message  string
-	Source   string
-	Code     string
-	Tags     []DiagnosticTag
-	Data     any
+	Range           TextRange
+	Severity        DiagnosticSeverity
+	Message         string
+	Source          string
+	Code            string
+	CodeDescription *DiagnosticCodeDescription
+	Tags            []DiagnosticTag
+	Data            any
+}
+
+type DiagnosticCodeDescription struct {
+	Href string
 }
 
 // ValidationAcceptor is a callback that collects diagnostics reported during validation.
@@ -115,5 +120,20 @@ func WithTags(tags ...DiagnosticTag) DiagnosticOption {
 func WithData(data any) DiagnosticOption {
 	return func(d *Diagnostic) {
 		d.Data = data
+	}
+}
+
+// Attaches additional information to describe the error code.
+// Currently only supports a hyperlink to documentation.
+func WithCodeDescription(codeDescription *DiagnosticCodeDescription) DiagnosticOption {
+	return func(d *Diagnostic) {
+		d.CodeDescription = codeDescription
+	}
+}
+
+// WithCodeDescriptionHref sets a hyperlink for the error code description.
+func WithCodeDescriptionHref(href string) DiagnosticOption {
+	return func(d *Diagnostic) {
+		d.CodeDescription = &DiagnosticCodeDescription{Href: href}
 	}
 }

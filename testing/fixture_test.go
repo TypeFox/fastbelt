@@ -96,6 +96,7 @@ func TestExtractMarkers_CustomMarkingDistinctIndexPrefix(t *testing.T) {
 		EndRange:   "}}",
 		StartIndex: "[[",
 		EndIndex:   "]]",
+		Delimiter:  ":",
 	}
 
 	t.Run("range only", func(t *testing.T) {
@@ -147,6 +148,7 @@ func TestExtractMarkers_CustomMarkingSubstringIndex(t *testing.T) {
 		EndRange:   "]]",
 		StartIndex: "[",
 		EndIndex:   "]",
+		Delimiter:  ":",
 	}
 
 	t.Run("range only", func(t *testing.T) {
@@ -198,6 +200,7 @@ func TestExtractMarkers_CustomMarkingSubstringRange(t *testing.T) {
 		EndRange:   "]",
 		StartIndex: "[[",
 		EndIndex:   "]]",
+		Delimiter:  ":",
 	}
 
 	t.Run("range only", func(t *testing.T) {
@@ -250,6 +253,7 @@ func TestExtractMarkers_CustomMarkingDefaultIndexFallback(t *testing.T) {
 		EndRange:   "]!",
 		StartIndex: "", // same as StartRange
 		EndIndex:   "]",
+		Delimiter:  ":",
 	}
 
 	clean, ranges, indices := extractMarkers("![r:foo]! ![idx]", m)
@@ -258,4 +262,21 @@ func TestExtractMarkers_CustomMarkingDefaultIndexFallback(t *testing.T) {
 	assert.Equal(t, RangeMarker{Label: "r", Start: 0, End: 3}, ranges[0])
 	require.Len(t, indices, 1)
 	assert.Equal(t, IndexMarker{Label: "idx", Offset: 4}, indices[0])
+}
+
+func TestExtractMarkers_CustomDelimiter(t *testing.T) {
+	m := &TestMarking{
+		StartRange: "<|",
+		EndRange:   "|>",
+		StartIndex: "<|",
+		EndIndex:   ">",
+		Delimiter:  ";",
+	}
+
+	clean, ranges, indices := extractMarkers("a <|r;foo|> <|i;idx>", m)
+	assert.Equal(t, "a foo ", clean)
+	require.Len(t, ranges, 1)
+	assert.Equal(t, RangeMarker{Label: "r", Start: 2, End: 5}, ranges[0])
+	require.Len(t, indices, 1)
+	assert.Equal(t, IndexMarker{Label: "i;idx", Offset: 6}, indices[0])
 }

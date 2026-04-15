@@ -15,129 +15,140 @@ import (
 
 func TestDuplicateRuleNames(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
-		Foo: Name=ID;
-		Foo: Name=ID;
-	`+commonTokens).AssertDiagnostic(core.SeverityError, "A rule's name has to be unique. 'Foo' is used multiple times.")
+		<|1:Foo|>: Name=ID;
+		<|2:Foo|>: Name=ID;
+	` + commonTokens)
+	doc.ExpectDiagnostic("1").WithSeverity(core.SeverityError).WithCode(ValidateUniqueRuleName)
 }
 
 func TestDuplicateInterfaceNames(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
-		interface Foo { Name string }
-		interface Foo { Other string }
-	`+commonTokens).AssertDiagnostic(core.SeverityError, "An interface name has to be unique. 'Foo' is used multiple times.")
+		interface <|1:Foo|> { Name string }
+		interface <|2:Foo|> { Other string }
+	` + commonTokens)
+	doc.ExpectDiagnostic("1").WithSeverity(core.SeverityError).WithCode(ValidateUniqueInterfaceName)
+	doc.ExpectDiagnostic("2").WithSeverity(core.SeverityError).WithCode(ValidateUniqueInterfaceName)
 }
 
 // --- Terminal ---
 
 func TestTerminalMatchesEmptyString(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
-		token EMPTY: /a*/;
+		token <|EMPTY|>: /a*/;
 		hidden token WS: /[ \n\r\t]+/;
-	`).AssertDiagnostic(core.SeverityError, "This terminal could match an empty string.")
+	`)
+	doc.ExpectDiagnostic("EMPTY").WithSeverity(core.SeverityError).WithCode(ValidateEmptyToken)
 }
 
 // --- Keywords ---
 
 func TestKeywordEmpty(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
-		Foo: "" Name=ID;
-	`+commonTokens).AssertDiagnostic(core.SeverityError, "Keywords cannot be empty.")
+		Foo: <|empty:""|> Name=ID;
+	` + commonTokens)
+	doc.ExpectDiagnostic("empty").WithSeverity(core.SeverityError).WithCode(ValidateEmptyKeyword)
 }
 
 func TestKeywordWhitespaceOnly(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
-		Foo: " " Name=ID;
-	`+commonTokens).AssertDiagnostic(core.SeverityError, "Keywords cannot only consist of whitespace characters.")
+		Foo: <|ws:" "|> Name=ID;
+	` + commonTokens)
+	doc.ExpectDiagnostic("ws").WithSeverity(core.SeverityError).WithCode(ValidateWhitespaceOnlyKeyword)
 }
 
 func TestKeywordContainsWhitespace(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
-		Foo: "hello world" Name=ID;
-	`+commonTokens).AssertDiagnostic(core.SeverityWarning, "Keywords should not contain whitespace characters.")
+		Foo: <|keyword:"hello world"|> Name=ID;
+	` + commonTokens)
+	doc.ExpectDiagnostic("keyword").WithSeverity(core.SeverityWarning).WithCode(ValidateKeywordWithWhitespace)
 }
 
 // --- Parser rule return type ---
 
 func TestRuleWithoutReturnType(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
-		OrphanRule: Name=ID;
-	`+commonTokens).AssertDiagnostic(core.SeverityError, "Unable to find return type for rule 'OrphanRule'.")
+		<|OrphanRule|>: Name=ID;
+	` + commonTokens)
+	doc.ExpectDiagnostic("OrphanRule").WithSeverity(core.SeverityError).WithCode(ValidateRuleReturnType)
 }
 
 // --- Interface circular inheritance ---
 
 func TestCircularInterfaceExtensionDirect(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
-		interface Foo extends Foo {}
-	`+commonTokens).AssertDiagnostic(core.SeverityError, "An interface cannot extend itself, neither directly nor indirectly.")
+		interface Foo extends <|Foo|> {}
+	` + commonTokens)
+	doc.ExpectDiagnostic("Foo").WithSeverity(core.SeverityError).WithCode(ValidateInterfaceExtends)
 }
 
 func TestCircularInterfaceExtensionIndirect(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
-		interface A extends B {}
-		interface B extends A {}
-	`+commonTokens).AssertDiagnostic(core.SeverityError, "An interface cannot extend itself, neither directly nor indirectly.")
+		interface A extends <|B|> {}
+		interface B extends <|A|> {}
+	` + commonTokens)
+	doc.ExpectDiagnostic("B").WithSeverity(core.SeverityError).WithCode(ValidateInterfaceExtends)
+	doc.ExpectDiagnostic("A").WithSeverity(core.SeverityError).WithCode(ValidateInterfaceExtends)
 }
 
 // --- Unassigned rule call ---
 
 func TestUnassignedRuleCallReturnTypeMismatch(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Foo {}
 		interface Bar {}
-		Foo: SubRule;
+		Foo: <|SubRule|>;
 		SubRule returns Bar: ID;
-	`+commonTokens).AssertDiagnostic(core.SeverityError,
-		"The return type 'Bar' of the called rule is not assignable to the return type 'Foo' of the current rule.")
+	` + commonTokens)
+	doc.ExpectDiagnostic("SubRule").WithSeverity(core.SeverityError).WithCode(ValidateRuleCallReturnType)
 }
 
 func TestUnassignedRuleCallAfterAction(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
 	// Bar extends Foo, so {Bar.Items+=current} is type-valid; the only error is the position check.
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Items []Foo }
 		interface Bar extends Foo {}
-		Bar: ({Bar.Items+=current} Bar);
-	`+commonTokens).AssertDiagnostic(core.SeverityError,
-		"An unassigned rule call cannot be preceded by an assigned action.")
+		Bar: ({Bar.Items+=current} <|Bar|>);
+	` + commonTokens)
+	doc.ExpectDiagnostic("Bar").WithSeverity(core.SeverityError).WithCode(ValidateRuleCallPosition)
 }
 
 func TestUnassignedRuleCallAfterAssignment(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
-		Foo: Name=ID SubRule;
+		Foo: Name=ID <|SubRule|>;
 		SubRule returns Foo: Name=ID;
-	`+commonTokens).AssertDiagnostic(core.SeverityError,
-		"An unassigned rule call cannot be preceded by an assignment.")
+	` + commonTokens)
+	doc.ExpectDiagnostic("SubRule").WithSeverity(core.SeverityError).WithCode(ValidateRuleCallPosition)
 }
 
 // --- Action type assignability ---
@@ -145,94 +156,94 @@ func TestUnassignedRuleCallAfterAssignment(t *testing.T) {
 func TestActionTypeNotAssignableToRuleReturn(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
 	// Action type is Bar; rule Foo returns Foo. Bar does not extend Foo → type error.
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Items []Foo }
 		interface Bar { Items []Foo }
-		Foo: ({Bar.Items+=current} ID);
-	`+commonTokens).AssertDiagnostic(
-		core.SeverityError,
-		"The type 'Bar' of the action is not assignable to the rule's return type 'Foo'.",
-	)
+		Foo: ({<|Bar|>.Items+=current} ID);
+	` + commonTokens)
+	doc.ExpectDiagnostic("Bar").WithSeverity(core.SeverityError).WithCode(ValidateActionAssignmentType)
 }
 
 // --- Assignment operator mismatches ---
 
 func TestBooleanOperatorOnNonBoolField(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
-		Foo: Name?=ID;
-	`+commonTokens).AssertDiagnostic(
-		core.SeverityError,
-		"The '?=' operator can only be used on boolean fields.",
-	)
+		Foo: Name<|?=|>ID;
+	` + commonTokens)
+	doc.ExpectDiagnostic("?=").WithSeverity(core.SeverityError).WithCode(ValidateAssignmentType)
 }
 
 func TestArrayOperatorOnNonArrayField(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
-		Foo: Name+=ID;
-	`+commonTokens).AssertDiagnostic(core.SeverityError, "The '+=' operator can only be used on array fields.")
+		Foo: Name<|+=|>ID;
+	` + commonTokens)
+	doc.ExpectDiagnostic("+=").WithSeverity(core.SeverityError).WithCode(ValidateAssignmentType)
 }
 
 // --- Assignment value type compatibility ---
 
 func TestCrossRefToNonReferenceField(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Target { Name string }
 		interface Foo { Name string }
-		Foo: Name=[Target:ID];
-	`+commonTokens).AssertDiagnostic(core.SeverityError, "Cannot assign a cross-reference value to a non-reference field.")
+		Foo: Name=<|tar:[Target:ID]|>;
+	` + commonTokens)
+	doc.ExpectDiagnostic("tar").WithSeverity(core.SeverityError).WithCode(ValidateAssignmentType)
 }
 
 func TestCrossRefTypeMismatch(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Bar { Name string }
 		interface Baz { Name string }
 		interface Foo { Ref *Bar }
-		Foo: Ref=[Baz:ID];
-	`+commonTokens).AssertDiagnostic(core.SeverityError,
-		"The type 'Baz' of the cross-reference value is not assignable to the target field type 'Bar'.")
+		Foo: Ref=[<|Baz|>:ID];
+	` + commonTokens)
+	doc.ExpectDiagnostic("Baz").WithSeverity(core.SeverityError).WithCode(ValidateAssignmentType)
 }
 
 func TestTokenAssignedToNonStringField(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Child { Name string }
 		interface Foo { Child Child }
-		Foo: Child=ID;
-	`+commonTokens).AssertDiagnostic(core.SeverityError, "Cannot assign a token to a non-string field.")
+		Foo: Child=<|ID|>;
+	` + commonTokens)
+	doc.ExpectDiagnostic("ID").WithSeverity(core.SeverityError).WithCode(ValidateAssignmentType)
 }
 
 func TestParserRuleReturnTypeMismatch(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Bar { Name string }
 		interface Baz { Name string }
 		interface Foo { Child Bar }
-		Foo: Child=BazRule;
+		Foo: Child=<|BazRule|>;
 		Bar returns Bar: Name=ID;
 		BazRule returns Baz: Name=ID;
-	`+commonTokens).AssertDiagnostic(core.SeverityError,
-		"The return type 'Baz' of the called rule is not assignable to the target field type 'Bar'.")
+	` + commonTokens)
+	doc.ExpectDiagnostic("BazRule").WithSeverity(core.SeverityError).WithCode(ValidateAssignmentType)
 }
 
 func TestKeywordAssignedToNonStringField(t *testing.T) {
 	f := fbtest.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Child { Name string }
 		interface Foo { Child Child }
-		Foo: Child="keyword";
-	`+commonTokens).AssertDiagnostic(core.SeverityError, "Cannot assign a keyword value to a non-string field.")
+		Foo: Child=<|1:"keyword"|>;
+	` + commonTokens)
+	doc.ExpectDiagnostic("1").WithSeverity(core.SeverityError).WithCode(ValidateAssignmentType)
 }
