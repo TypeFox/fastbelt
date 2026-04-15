@@ -382,6 +382,11 @@ func toLspDiagnostic(d core.Diagnostic) lsp.Diagnostic {
 	if d.Code != "" {
 		result.Code = d.Code
 	}
+	if d.CodeDescription != nil {
+		result.CodeDescription = &lsp.CodeDescription{
+			Href: d.CodeDescription.Href,
+		}
+	}
 	if len(d.Tags) > 0 {
 		tags := make([]lsp.DiagnosticTag, len(d.Tags))
 		for i, t := range d.Tags {

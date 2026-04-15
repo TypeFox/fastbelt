@@ -38,6 +38,7 @@ var DefaultMarking = &TestMarking{
 	EndRange:   "|>",
 	StartIndex: "",
 	EndIndex:   ">",
+	Delimiter:  ":",
 }
 
 // TestMarking configures the delimiter syntax for position markers in test content.
@@ -47,6 +48,7 @@ type TestMarking struct {
 	EndRange   string // Closing delimiter for range markers.
 	StartIndex string // Opening delimiter for index markers, defaults to the current [TestMarking.StartRange] if empty.
 	EndIndex   string // Closing delimiter for index markers.
+	Delimiter  string // Separator between label and text in range markers.
 }
 
 // RangeMarker records a labeled span extracted from test content.
@@ -100,6 +102,8 @@ func (f *Fixture) WithMarking(m *TestMarking) *Fixture {
 	} else if (m.StartIndex == "" || m.StartIndex == m.StartRange) && m.EndIndex == m.EndRange {
 		// Index and range markers are the same, which is an invalid configuration
 		f.t.Fatal("Received TestMarking with identical index and range delimiters.")
+	} else if m.Delimiter == "" {
+		f.t.Fatal("Received empty TestMarking.Delimiter")
 	}
 	c := *f
 	c.marking = m
@@ -233,7 +237,7 @@ func extractMarkers(content string, m *TestMarking) (cleanText string, ranges []
 			if rangeEnd := strings.Index(rest, m.EndRange); rangeEnd != -1 {
 				inner := rest[:rangeEnd]
 				var label, text string
-				if before, after, ok := strings.Cut(inner, ":"); ok {
+				if before, after, ok := strings.Cut(inner, m.Delimiter); ok {
 					label, text = before, after
 				} else {
 					// Shorthand: <|label|> — label and text are the same string.
