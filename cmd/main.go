@@ -100,6 +100,10 @@ func runCmd() error {
 		generator.GenerateServices(grammr, packageName)); err != nil {
 		return err
 	}
+	// if err := writeFile("atn", filepath.Join(outputPath, "atn_gen.go"),
+	// 	generator.GenerateATN(grammr, packageName)); err != nil {
+	// 	return err
+	// }
 
 	return nil
 }

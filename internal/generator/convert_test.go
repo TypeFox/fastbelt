@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package allstar
+package generator
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/internal/grammar"
+	"typefox.dev/fastbelt/parser/allstar"
 )
 
 // tokenTypes used in all convert tests.
@@ -57,7 +58,7 @@ func TestConvert_SingleKeyword(t *testing.T) {
 	require.Len(t, result, 1)
 	require.Len(t, result[0].Definition, 1)
 
-	term, ok := result[0].Definition[0].(*Terminal)
+	term, ok := result[0].Definition[0].(*allstar.Terminal)
 	require.True(t, ok)
 	assert.Equal(t, 1, term.TokenTypeID)
 	assert.Equal(t, 1, term.Idx)
@@ -73,7 +74,7 @@ func TestConvert_Group_Option(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, result[0].Definition, 1)
 
-	opt, ok := result[0].Definition[0].(*Option)
+	opt, ok := result[0].Definition[0].(*allstar.Option)
 	require.True(t, ok)
 	assert.Equal(t, 1, opt.Idx)
 	require.Len(t, opt.Definition, 1)
@@ -87,7 +88,7 @@ func TestConvert_Group_Repetition(t *testing.T) {
 	rules := []grammar.ParserRule{makeParserRule("R", g)}
 	result, err := FromParserRules(rules, testTokenTypes)
 	require.NoError(t, err)
-	rep, ok := result[0].Definition[0].(*Repetition)
+	rep, ok := result[0].Definition[0].(*allstar.Repetition)
 	require.True(t, ok)
 	assert.Equal(t, 1, rep.Idx)
 }
@@ -100,7 +101,7 @@ func TestConvert_Group_RepetitionMandatory(t *testing.T) {
 	rules := []grammar.ParserRule{makeParserRule("R", g)}
 	result, err := FromParserRules(rules, testTokenTypes)
 	require.NoError(t, err)
-	rep, ok := result[0].Definition[0].(*RepetitionMandatory)
+	rep, ok := result[0].Definition[0].(*allstar.RepetitionMandatory)
 	require.True(t, ok)
 	assert.Equal(t, 1, rep.Idx)
 }
@@ -116,8 +117,8 @@ func TestConvert_Group_Sequence(t *testing.T) {
 	require.NoError(t, err)
 	// Two terminals, no wrapper.
 	require.Len(t, result[0].Definition, 2)
-	_, ok1 := result[0].Definition[0].(*Terminal)
-	_, ok2 := result[0].Definition[1].(*Terminal)
+	_, ok1 := result[0].Definition[0].(*allstar.Terminal)
+	_, ok2 := result[0].Definition[1].(*allstar.Terminal)
 	assert.True(t, ok1)
 	assert.True(t, ok2)
 }
@@ -132,7 +133,7 @@ func TestConvert_Alternatives(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, result[0].Definition, 1)
 
-	alt, ok := result[0].Definition[0].(*Alternation)
+	alt, ok := result[0].Definition[0].(*allstar.Alternation)
 	require.True(t, ok)
 	assert.Equal(t, 1, alt.Idx)
 	assert.Len(t, alt.Alternatives, 2)
@@ -157,8 +158,8 @@ func TestConvert_MultipleAlternations(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, result[0].Definition, 2)
 
-	alt1 := result[0].Definition[0].(*Alternation)
-	alt2 := result[0].Definition[1].(*Alternation)
+	alt1 := result[0].Definition[0].(*allstar.Alternation)
+	alt2 := result[0].Definition[1].(*allstar.Alternation)
 	assert.Equal(t, 1, alt1.Idx)
 	assert.Equal(t, 2, alt2.Idx)
 }
@@ -172,7 +173,7 @@ func TestConvert_Assignment_Transparent(t *testing.T) {
 	result, err := FromParserRules(rules, testTokenTypes)
 	require.NoError(t, err)
 	require.Len(t, result[0].Definition, 1)
-	_, ok := result[0].Definition[0].(*Terminal)
+	_, ok := result[0].Definition[0].(*allstar.Terminal)
 	assert.True(t, ok, "assignment should be transparent, yielding a Terminal")
 }
 
@@ -207,10 +208,10 @@ func TestConvert_MixedCounters(t *testing.T) {
 	prods := result[0].Definition
 	require.Len(t, prods, 4)
 
-	assert.Equal(t, 1, prods[0].(*Alternation).Idx)
-	assert.Equal(t, 1, prods[1].(*Option).Idx)
-	assert.Equal(t, 2, prods[2].(*Alternation).Idx)
-	assert.Equal(t, 2, prods[3].(*Option).Idx)
+	assert.Equal(t, 1, prods[0].(*allstar.Alternation).Idx)
+	assert.Equal(t, 1, prods[1].(*allstar.Option).Idx)
+	assert.Equal(t, 2, prods[2].(*allstar.Alternation).Idx)
+	assert.Equal(t, 2, prods[3].(*allstar.Option).Idx)
 }
 
 func TestConvert_UnknownToken(t *testing.T) {
@@ -240,7 +241,7 @@ func TestConvert_RuleCall(t *testing.T) {
 	require.Len(t, result, 2)
 	require.Len(t, result[0].Definition, 1)
 
-	nt, ok := result[0].Definition[0].(*NonTerminal)
+	nt, ok := result[0].Definition[0].(*allstar.NonTerminal)
 	require.True(t, ok)
 	assert.Equal(t, "B", nt.ReferencedRule.Name)
 	assert.Equal(t, 1, nt.Idx)
@@ -264,7 +265,7 @@ func TestConvert_ForwardRef(t *testing.T) {
 	result, err := FromParserRules([]grammar.ParserRule{ruleA, ruleB}, testTokenTypes)
 	require.NoError(t, err)
 
-	nt, ok := result[0].Definition[0].(*NonTerminal)
+	nt, ok := result[0].Definition[0].(*allstar.NonTerminal)
 	require.True(t, ok)
 	assert.Equal(t, "B", nt.ReferencedRule.Name)
 }

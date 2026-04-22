@@ -2,12 +2,13 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package allstar
+package generator
 
 import (
 	"fmt"
 
 	"typefox.dev/fastbelt/internal/grammar"
+	"typefox.dev/fastbelt/parser/allstar"
 )
 
 // TokenInfo carries the type ID and category-match IDs for a token type.
@@ -21,12 +22,12 @@ type TokenInfo struct {
 func FromParserRules(
 	rules []grammar.ParserRule,
 	tokenTypes map[string]TokenInfo,
-) ([]*Rule, error) {
+) ([]*allstar.Rule, error) {
 	// First pass: create all Rule objects so forward references can be resolved.
-	rulesByName := map[string]*Rule{}
-	allstarRules := make([]*Rule, 0, len(rules))
+	rulesByName := map[string]*allstar.Rule{}
+	allstarRules := make([]*allstar.Rule, 0, len(rules))
 	for _, gr := range rules {
-		r := &Rule{Name: gr.Name()}
+		r := &allstar.Rule{Name: gr.Name()}
 		rulesByName[gr.Name()] = r
 		allstarRules = append(allstarRules, r)
 	}
@@ -37,7 +38,7 @@ func FromParserRules(
 		if gr.Body() == nil {
 			continue
 		}
-		counters := map[ProductionKind]int{}
+		counters := map[allstar.ProductionKind]int{}
 		prods, err := convertElement(gr.Body(), counters, tokenTypes, rulesByName)
 		if err != nil {
 			return nil, fmt.Errorf("rule %q: %w", gr.Name(), err)
@@ -53,10 +54,10 @@ func FromParserRules(
 // their children into the parent sequence.
 func convertElement(
 	el grammar.Element,
-	counters map[ProductionKind]int,
+	counters map[allstar.ProductionKind]int,
 	tokenTypes map[string]TokenInfo,
-	rulesByName map[string]*Rule,
-) ([]Production, error) {
+	rulesByName map[string]*allstar.Rule,
+) ([]allstar.Production, error) {
 	switch e := el.(type) {
 	case grammar.Alternatives:
 		return convertAlternatives(e, counters, tokenTypes, rulesByName)
@@ -92,10 +93,10 @@ func convertElement(
 func convertAssignable(
 	a grammar.Assignable,
 	cardinality string,
-	counters map[ProductionKind]int,
+	counters map[allstar.ProductionKind]int,
 	tokenTypes map[string]TokenInfo,
-	rulesByName map[string]*Rule,
-) ([]Production, error) {
+	rulesByName map[string]*allstar.Rule,
+) ([]allstar.Production, error) {
 	switch v := a.(type) {
 	case grammar.Keyword:
 		return convertKeyword(v, cardinality, counters, tokenTypes)
@@ -116,19 +117,19 @@ func convertAssignable(
 func convertKeyword(
 	kw grammar.Keyword,
 	cardinality string,
-	counters map[ProductionKind]int,
+	counters map[allstar.ProductionKind]int,
 	tokenTypes map[string]TokenInfo,
-) ([]Production, error) {
+) ([]allstar.Production, error) {
 	name := kw.Value()
 	info, ok := tokenTypes[name]
 	if !ok {
 		return nil, fmt.Errorf("unknown token %q", name)
 	}
-	term := &Terminal{
+	term := &allstar.Terminal{
 		TokenName:       name,
 		TokenTypeID:     info.ID,
 		CategoryMatches: info.CategoryMatches,
-		Idx:             nextCounter(counters, ProdTerminal),
+		Idx:             nextCounter(counters, allstar.ProdTerminal),
 	}
 	return wrapWithCardinality(term, cardinality, counters)
 }
@@ -136,10 +137,10 @@ func convertKeyword(
 func convertRuleCall(
 	rc grammar.RuleCall,
 	cardinality string,
-	counters map[ProductionKind]int,
+	counters map[allstar.ProductionKind]int,
 	tokenTypes map[string]TokenInfo,
-	rulesByName map[string]*Rule,
-) ([]Production, error) {
+	rulesByName map[string]*allstar.Rule,
+) ([]allstar.Production, error) {
 	if rc.Rule() == nil {
 		return nil, fmt.Errorf("RuleCall has no rule reference")
 	}
@@ -150,9 +151,9 @@ func convertRuleCall(
 
 	// Check if the referenced rule is a parser rule.
 	if rule, ok := rulesByName[name]; ok {
-		nt := &NonTerminal{
+		nt := &allstar.NonTerminal{
 			ReferencedRule: rule,
-			Idx:            nextCounter(counters, ProdNonTerminal),
+			Idx:            nextCounter(counters, allstar.ProdNonTerminal),
 		}
 		return wrapWithCardinality(nt, cardinality, counters)
 	}
@@ -162,20 +163,20 @@ func convertRuleCall(
 	if !ok {
 		return nil, fmt.Errorf("unknown rule or token %q", name)
 	}
-	term := &Terminal{
+	term := &allstar.Terminal{
 		TokenName:       name,
 		TokenTypeID:     info.ID,
 		CategoryMatches: info.CategoryMatches,
-		Idx:             nextCounter(counters, ProdTerminal),
+		Idx:             nextCounter(counters, allstar.ProdTerminal),
 	}
 	return wrapWithCardinality(term, cardinality, counters)
 }
 
 func convertCrossRef(
 	cr grammar.CrossRef,
-	counters map[ProductionKind]int,
+	counters map[allstar.ProductionKind]int,
 	tokenTypes map[string]TokenInfo,
-) ([]Production, error) {
+) ([]allstar.Production, error) {
 	// Use the explicitly named rule if present, otherwise fall back to "ID".
 	name := "ID"
 	if cr.Rule() != nil && cr.Rule().Rule() != nil && cr.Rule().Rule().Text != "" {
@@ -185,46 +186,46 @@ func convertCrossRef(
 	if !ok {
 		return nil, fmt.Errorf("cross-reference token %q not found in tokenTypes", name)
 	}
-	term := &Terminal{
+	term := &allstar.Terminal{
 		TokenName:       name,
 		TokenTypeID:     info.ID,
 		CategoryMatches: info.CategoryMatches,
-		Idx:             nextCounter(counters, ProdTerminal),
+		Idx:             nextCounter(counters, allstar.ProdTerminal),
 	}
-	return []Production{term}, nil
+	return []allstar.Production{term}, nil
 }
 
 func convertAlternatives(
 	alts grammar.Alternatives,
-	counters map[ProductionKind]int,
+	counters map[allstar.ProductionKind]int,
 	tokenTypes map[string]TokenInfo,
-	rulesByName map[string]*Rule,
-) ([]Production, error) {
+	rulesByName map[string]*allstar.Rule,
+) ([]allstar.Production, error) {
 	// Assign Idx before recursing so the occurrence index matches the
 	// code generator's pre-order traversal.
-	alternation := &Alternation{
-		Idx: nextCounter(counters, ProdAlternation),
+	alternation := &allstar.Alternation{
+		Idx: nextCounter(counters, allstar.ProdAlternation),
 	}
 	for _, alt := range alts.Alts() {
 		prods, err := convertElement(alt, counters, tokenTypes, rulesByName)
 		if err != nil {
 			return nil, err
 		}
-		alternation.Alternatives = append(alternation.Alternatives, &Alternative{Definition: prods})
+		alternation.Alternatives = append(alternation.Alternatives, &allstar.Alternative{Definition: prods})
 	}
-	return []Production{alternation}, nil
+	return []allstar.Production{alternation}, nil
 }
 
 func convertGroup(
 	g grammar.Group,
-	counters map[ProductionKind]int,
+	counters map[allstar.ProductionKind]int,
 	tokenTypes map[string]TokenInfo,
-	rulesByName map[string]*Rule,
-) ([]Production, error) {
+	rulesByName map[string]*allstar.Rule,
+) ([]allstar.Production, error) {
 	switch g.Cardinality() {
 	case "?":
 		// Assign Idx before recursing (pre-order) to match the code generator.
-		opt := &Option{Idx: nextCounter(counters, ProdOption)}
+		opt := &allstar.Option{Idx: nextCounter(counters, allstar.ProdOption)}
 		for _, child := range g.Elements() {
 			childProds, err := convertElement(child, counters, tokenTypes, rulesByName)
 			if err != nil {
@@ -232,9 +233,9 @@ func convertGroup(
 			}
 			opt.Definition = append(opt.Definition, childProds...)
 		}
-		return []Production{opt}, nil
+		return []allstar.Production{opt}, nil
 	case "*":
-		rep := &Repetition{Idx: nextCounter(counters, ProdRepetition)}
+		rep := &allstar.Repetition{Idx: nextCounter(counters, allstar.ProdRepetition)}
 		for _, child := range g.Elements() {
 			childProds, err := convertElement(child, counters, tokenTypes, rulesByName)
 			if err != nil {
@@ -242,9 +243,9 @@ func convertGroup(
 			}
 			rep.Definition = append(rep.Definition, childProds...)
 		}
-		return []Production{rep}, nil
+		return []allstar.Production{rep}, nil
 	case "+":
-		rep := &RepetitionMandatory{Idx: nextCounter(counters, ProdRepetitionMandatory)}
+		rep := &allstar.RepetitionMandatory{Idx: nextCounter(counters, allstar.ProdRepetitionMandatory)}
 		for _, child := range g.Elements() {
 			childProds, err := convertElement(child, counters, tokenTypes, rulesByName)
 			if err != nil {
@@ -252,10 +253,10 @@ func convertGroup(
 			}
 			rep.Definition = append(rep.Definition, childProds...)
 		}
-		return []Production{rep}, nil
+		return []allstar.Production{rep}, nil
 	default:
 		// No cardinality → inline sequence.
-		var prods []Production
+		var prods []allstar.Production
 		for _, child := range g.Elements() {
 			childProds, err := convertElement(child, counters, tokenTypes, rulesByName)
 			if err != nil {
@@ -269,30 +270,30 @@ func convertGroup(
 
 // wrapWithCardinality wraps a leaf production with an optional/repetition based
 // on the cardinality string. An empty cardinality returns [prod] as-is.
-func wrapWithCardinality(prod Production, cardinality string, counters map[ProductionKind]int) ([]Production, error) {
+func wrapWithCardinality(prod allstar.Production, cardinality string, counters map[allstar.ProductionKind]int) ([]allstar.Production, error) {
 	switch cardinality {
 	case "?":
-		return []Production{&Option{
-			Definition: []Production{prod},
-			Idx:        nextCounter(counters, ProdOption),
+		return []allstar.Production{&allstar.Option{
+			Definition: []allstar.Production{prod},
+			Idx:        nextCounter(counters, allstar.ProdOption),
 		}}, nil
 	case "*":
-		return []Production{&Repetition{
-			Definition: []Production{prod},
-			Idx:        nextCounter(counters, ProdRepetition),
+		return []allstar.Production{&allstar.Repetition{
+			Definition: []allstar.Production{prod},
+			Idx:        nextCounter(counters, allstar.ProdRepetition),
 		}}, nil
 	case "+":
-		return []Production{&RepetitionMandatory{
-			Definition: []Production{prod},
-			Idx:        nextCounter(counters, ProdRepetitionMandatory),
+		return []allstar.Production{&allstar.RepetitionMandatory{
+			Definition: []allstar.Production{prod},
+			Idx:        nextCounter(counters, allstar.ProdRepetitionMandatory),
 		}}, nil
 	default:
-		return []Production{prod}, nil
+		return []allstar.Production{prod}, nil
 	}
 }
 
 // nextCounter returns the next 1-based counter value for kind and increments it.
-func nextCounter(counters map[ProductionKind]int, kind ProductionKind) int {
+func nextCounter(counters map[allstar.ProductionKind]int, kind allstar.ProductionKind) int {
 	counters[kind]++
 	return counters[kind]
 }
