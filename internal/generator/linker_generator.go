@@ -216,7 +216,6 @@ func subtypesInTargets(t string, uniqueTargets []string, ifaceParents map[string
 }
 
 func generateSymbolContainers(context *LinkerGeneratorContext) generator.Node {
-	// Collect unique target type names, preserving first-seen order.
 	seen := map[string]bool{}
 	uniqueTargets := []string{}
 	for _, field := range context.fields {
@@ -288,7 +287,7 @@ func generateSymbolContainers(context *LinkerGeneratorContext) generator.Node {
 		node.AppendLine("var TypeFor_", target, " = reflect.TypeFor[", target, "]()")
 	}
 	node.AppendLine()
-	node.AppendLine("func (sc *", name, "SymbolContainer) Type(t reflect.Type) core.SymbolSeq {")
+	node.AppendLine("func (sc *", name, "SymbolContainer) ForType(t reflect.Type) core.SymbolSeq {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("switch t {")
 		for _, target := range sortedTargets {

@@ -21,7 +21,7 @@ func GlobalScopeOfType[T core.AstNode](node core.AstNode) core.Scope {
 	if imported == nil {
 		return core.EmptyScope
 	}
-	symbols := imported.Type(reflect.TypeFor[T]())
+	symbols := imported.ForType(reflect.TypeFor[T]())
 	return core.NewSeqScope(symbols, nil)
 }
 
@@ -50,6 +50,6 @@ func GetLocalSymbols[T core.AstNode](node core.AstNode) core.SymbolSeq {
 	doc := node.Document()
 	localSymbols := doc.LocalSymbols
 	container := localSymbols.For(node)
-	symbols := container.Type(reflect.TypeFor[T]())
+	symbols := container.ForType(reflect.TypeFor[T]())
 	return symbols
 }

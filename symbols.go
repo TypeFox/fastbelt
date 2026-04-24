@@ -51,8 +51,8 @@ type SymbolContainer interface {
 	Put(desc *SymbolDescription) bool
 	// Returns an iterator over all descriptions in the container.
 	All() SymbolSeq
-	// Returns an iterator over all descriptions in the container that have a node of the given type.
-	Type(targetType reflect.Type) SymbolSeq
+	// Returns an iterator over all descriptions in the container whose node is of the given type.
+	ForType(targetType reflect.Type) SymbolSeq
 }
 
 var EmptySymbolContainer SymbolContainer = &emptySymbolContainer{}
@@ -68,7 +68,7 @@ func (c *emptySymbolContainer) All() SymbolSeq {
 	return EmptySymbolDescriptions
 }
 
-func (c *emptySymbolContainer) Type(targetType reflect.Type) SymbolSeq {
+func (c *emptySymbolContainer) ForType(targetType reflect.Type) SymbolSeq {
 	return EmptySymbolDescriptions
 }
 
@@ -87,9 +87,9 @@ func (c *mergedSymbolContainer) All() SymbolSeq {
 	})
 }
 
-func (c *mergedSymbolContainer) Type(targetType reflect.Type) SymbolSeq {
+func (c *mergedSymbolContainer) ForType(targetType reflect.Type) SymbolSeq {
 	return extiter.FlatMap(c.containers, func(container SymbolContainer) SymbolSeq {
-		return container.Type(targetType)
+		return container.ForType(targetType)
 	})
 }
 

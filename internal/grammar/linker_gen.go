@@ -241,7 +241,7 @@ var TypeFor_Interface = reflect.TypeFor[Interface]()
 var TypeFor_Field = reflect.TypeFor[Field]()
 var TypeFor_AbstractRule = reflect.TypeFor[AbstractRule]()
 
-func (sc *FastbeltSymbolContainer) Type(t reflect.Type) core.SymbolSeq {
+func (sc *FastbeltSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 	switch t {
 	case TypeFor_Interface:
 		return slices.Values(sc.Interfaces)

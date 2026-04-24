@@ -156,7 +156,7 @@ var TypeFor_State = reflect.TypeFor[State]()
 var TypeFor_Event = reflect.TypeFor[Event]()
 var TypeFor_Command = reflect.TypeFor[Command]()
 
-func (sc *StatemachineModelSymbolContainer) Type(t reflect.Type) core.SymbolSeq {
+func (sc *StatemachineModelSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 	switch t {
 	case TypeFor_State:
 		return slices.Values(sc.States)
