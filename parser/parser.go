@@ -20,12 +20,10 @@ type ParseResult struct {
 }
 
 type ParserState struct {
-	Tokens []*core.Token
+	Tokens []core.Token
 	Length int
 	Index  int
 	State  int
-
-	next *core.Token
 	// Indicates whether a parsing error has occurred
 	// and the parser is in error recovery mode.
 	// The parser will not consume any more tokens while in error mode.
@@ -48,17 +46,12 @@ type LookaheadPath []int
 type LookaheadOption []LookaheadPath
 type LLkLookahead []LookaheadOption
 
-func NewParserState(tokens []*core.Token) *ParserState {
-	var next *core.Token
-	if len(tokens) > 0 {
-		next = tokens[0]
-	}
+func NewParserState(tokens []core.Token) *ParserState {
 	return &ParserState{
 		Tokens:  tokens,
 		Length:  len(tokens),
 		Index:   0,
 		State:   0,
-		next:    next,
 		inError: false,
 		errors:  []*core.ParserError{},
 	}
@@ -69,7 +62,7 @@ func (p *ParserState) LA(offset int) *core.Token {
 	if pos < 0 || pos >= p.Length || p.inError {
 		return nil
 	}
-	return p.Tokens[pos]
+	return &p.Tokens[pos]
 }
 
 func (p *ParserState) LAId(offset int) int {
@@ -84,7 +77,7 @@ func (p *ParserState) Consume(tokenType int) *core.Token {
 	if p.inError {
 		return nil
 	}
-	current := p.next
+	current := p.LA(1)
 	if current == nil {
 		// EOF reached
 		p.appendError("Unexpected end of input.", nil)
@@ -96,11 +89,6 @@ func (p *ParserState) Consume(tokenType int) *core.Token {
 		return nil
 	}
 	p.Index++
-	if p.Index < p.Length {
-		p.next = p.Tokens[p.Index]
-	} else {
-		p.next = nil
-	}
 	return current
 }
 

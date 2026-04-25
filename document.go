@@ -53,6 +53,7 @@ func NewDocument(textDoc textdoc.Handle) *Document {
 		ExportedSymbols: nil,
 		Data:            sync.Map{},
 		Tokens:          TokenSlice{},
+		Comments:        TokenSlice{},
 		ParserErrors:    []*ParserError{},
 		LexerErrors:     []*LexerError{},
 		References:      []UntypedReference{},

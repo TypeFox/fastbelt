@@ -3,7 +3,6 @@
 package statemachine
 
 import (
-	"slices"
 	"strings"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
@@ -213,13 +212,11 @@ var Token_ID = core.NewTokenType(
 				nextState := -1
 				next := Token_ID_Next[0]
 				lookup := Token_ID_Lookup[0]
-				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-					lo := rune(lowHigh & 0xFFFFFFFF)
-					hi := rune(lowHigh >> 32)
-					return lo <= r && r <= hi
-				})
-				if searchIndex > -1 {
-					nextState = next[searchIndex]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
 				}
 				if nextState > -1 {
 					state = nextState
@@ -230,13 +227,11 @@ var Token_ID = core.NewTokenType(
 				nextState := -1
 				next := Token_ID_Next[1]
 				lookup := Token_ID_Lookup[1]
-				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-					lo := rune(lowHigh & 0xFFFFFFFF)
-					hi := rune(lowHigh >> 32)
-					return lo <= r && r <= hi
-				})
-				if searchIndex > -1 {
-					nextState = next[searchIndex]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
 				}
 				if nextState > -1 {
 					state = nextState
@@ -290,13 +285,11 @@ var Token_WS = core.NewTokenType(
 				nextState := -1
 				next := Token_WS_Next[0]
 				lookup := Token_WS_Lookup[0]
-				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-					lo := rune(lowHigh & 0xFFFFFFFF)
-					hi := rune(lowHigh >> 32)
-					return lo <= r && r <= hi
-				})
-				if searchIndex > -1 {
-					nextState = next[searchIndex]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
 				}
 				if nextState > -1 {
 					state = nextState
@@ -307,13 +300,11 @@ var Token_WS = core.NewTokenType(
 				nextState := -1
 				next := Token_WS_Next[1]
 				lookup := Token_WS_Lookup[1]
-				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-					lo := rune(lowHigh & 0xFFFFFFFF)
-					hi := rune(lowHigh >> 32)
-					return lo <= r && r <= hi
-				})
-				if searchIndex > -1 {
-					nextState = next[searchIndex]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
 				}
 				if nextState > -1 {
 					state = nextState
@@ -367,13 +358,11 @@ var Token_ML_COMMENT = core.NewTokenType(
 				nextState := -1
 				next := Token_ML_COMMENT_Next[0]
 				lookup := Token_ML_COMMENT_Lookup[0]
-				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-					lo := rune(lowHigh & 0xFFFFFFFF)
-					hi := rune(lowHigh >> 32)
-					return lo <= r && r <= hi
-				})
-				if searchIndex > -1 {
-					nextState = next[searchIndex]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
 				}
 				if nextState > -1 {
 					state = nextState
@@ -384,13 +373,11 @@ var Token_ML_COMMENT = core.NewTokenType(
 				nextState := -1
 				next := Token_ML_COMMENT_Next[1]
 				lookup := Token_ML_COMMENT_Lookup[1]
-				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-					lo := rune(lowHigh & 0xFFFFFFFF)
-					hi := rune(lowHigh >> 32)
-					return lo <= r && r <= hi
-				})
-				if searchIndex > -1 {
-					nextState = next[searchIndex]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
 				}
 				if nextState > -1 {
 					state = nextState
@@ -401,13 +388,11 @@ var Token_ML_COMMENT = core.NewTokenType(
 				nextState := -1
 				next := Token_ML_COMMENT_Next[2]
 				lookup := Token_ML_COMMENT_Lookup[2]
-				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-					lo := rune(lowHigh & 0xFFFFFFFF)
-					hi := rune(lowHigh >> 32)
-					return lo <= r && r <= hi
-				})
-				if searchIndex > -1 {
-					nextState = next[searchIndex]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
 				}
 				if nextState > -1 {
 					state = nextState
@@ -418,13 +403,11 @@ var Token_ML_COMMENT = core.NewTokenType(
 				nextState := -1
 				next := Token_ML_COMMENT_Next[3]
 				lookup := Token_ML_COMMENT_Lookup[3]
-				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-					lo := rune(lowHigh & 0xFFFFFFFF)
-					hi := rune(lowHigh >> 32)
-					return lo <= r && r <= hi
-				})
-				if searchIndex > -1 {
-					nextState = next[searchIndex]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
 				}
 				if nextState > -1 {
 					state = nextState
@@ -435,13 +418,11 @@ var Token_ML_COMMENT = core.NewTokenType(
 				nextState := -1
 				next := Token_ML_COMMENT_Next[4]
 				lookup := Token_ML_COMMENT_Lookup[4]
-				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-					lo := rune(lowHigh & 0xFFFFFFFF)
-					hi := rune(lowHigh >> 32)
-					return lo <= r && r <= hi
-				})
-				if searchIndex > -1 {
-					nextState = next[searchIndex]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
 				}
 				if nextState > -1 {
 					state = nextState
@@ -501,13 +482,11 @@ var Token_SL_COMMENT = core.NewTokenType(
 				nextState := -1
 				next := Token_SL_COMMENT_Next[0]
 				lookup := Token_SL_COMMENT_Lookup[0]
-				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-					lo := rune(lowHigh & 0xFFFFFFFF)
-					hi := rune(lowHigh >> 32)
-					return lo <= r && r <= hi
-				})
-				if searchIndex > -1 {
-					nextState = next[searchIndex]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
 				}
 				if nextState > -1 {
 					state = nextState
@@ -518,13 +497,11 @@ var Token_SL_COMMENT = core.NewTokenType(
 				nextState := -1
 				next := Token_SL_COMMENT_Next[1]
 				lookup := Token_SL_COMMENT_Lookup[1]
-				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-					lo := rune(lowHigh & 0xFFFFFFFF)
-					hi := rune(lowHigh >> 32)
-					return lo <= r && r <= hi
-				})
-				if searchIndex > -1 {
-					nextState = next[searchIndex]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
 				}
 				if nextState > -1 {
 					state = nextState
@@ -535,13 +512,11 @@ var Token_SL_COMMENT = core.NewTokenType(
 				nextState := -1
 				next := Token_SL_COMMENT_Next[2]
 				lookup := Token_SL_COMMENT_Lookup[2]
-				searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-					lo := rune(lowHigh & 0xFFFFFFFF)
-					hi := rune(lowHigh >> 32)
-					return lo <= r && r <= hi
-				})
-				if searchIndex > -1 {
-					nextState = next[searchIndex]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
 				}
 				if nextState > -1 {
 					state = nextState

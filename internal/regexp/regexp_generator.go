@@ -42,17 +42,14 @@ func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsM
 	n.AppendLine(fmt.Sprintf("lookup := %s_Lookup[%d]", tokenName, source))
 
 	if len(transitions) < 16 {
-		imports["slices"] = true
-		n.AppendLine("searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {")
+		n.AppendLine("for i, lowHigh := range lookup {")
 		n.Indent(func(n generator.Node) {
-			n.AppendLine("lo := rune(lowHigh & 0xFFFFFFFF)")
-			n.AppendLine("hi := rune(lowHigh >> 32)")
-			n.AppendLine("return lo <= r && r <= hi")
-		})
-		n.AppendLine("})")
-		n.AppendLine("if searchIndex > -1 {")
-		n.Indent(func(n generator.Node) {
-			n.AppendLine("nextState = next[searchIndex]")
+			n.AppendLine("if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {")
+			n.Indent(func(n generator.Node) {
+				n.AppendLine("nextState = next[i]")
+				n.AppendLine("break")
+			})
+			n.AppendLine("}")
 		})
 		n.AppendLine("}")
 	} else {

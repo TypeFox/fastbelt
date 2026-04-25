@@ -1,7 +1,6 @@
 package benchmarkGenerated
 
 import (
-	"slices"
 	"unicode/utf8"
 )
 
@@ -79,13 +78,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[0]
 			lookup := IPv4_Lookup[0]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -96,13 +93,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[1]
 			lookup := IPv4_Lookup[1]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -113,13 +108,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[2]
 			lookup := IPv4_Lookup[2]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -130,13 +123,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[3]
 			lookup := IPv4_Lookup[3]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -147,13 +138,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[4]
 			lookup := IPv4_Lookup[4]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -164,13 +153,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[5]
 			lookup := IPv4_Lookup[5]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -181,13 +168,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[6]
 			lookup := IPv4_Lookup[6]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -198,13 +183,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[7]
 			lookup := IPv4_Lookup[7]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -215,13 +198,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[8]
 			lookup := IPv4_Lookup[8]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -232,13 +213,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[9]
 			lookup := IPv4_Lookup[9]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -249,13 +228,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[10]
 			lookup := IPv4_Lookup[10]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -266,13 +243,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[11]
 			lookup := IPv4_Lookup[11]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -283,13 +258,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[12]
 			lookup := IPv4_Lookup[12]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -300,13 +273,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[13]
 			lookup := IPv4_Lookup[13]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -317,13 +288,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[14]
 			lookup := IPv4_Lookup[14]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -334,13 +303,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[15]
 			lookup := IPv4_Lookup[15]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -351,13 +318,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[16]
 			lookup := IPv4_Lookup[16]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -368,13 +333,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[17]
 			lookup := IPv4_Lookup[17]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -385,13 +348,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[18]
 			lookup := IPv4_Lookup[18]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -402,13 +363,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[19]
 			lookup := IPv4_Lookup[19]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -419,13 +378,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[20]
 			lookup := IPv4_Lookup[20]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -436,13 +393,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[21]
 			lookup := IPv4_Lookup[21]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -453,13 +408,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[22]
 			lookup := IPv4_Lookup[22]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -470,13 +423,11 @@ loop:
 			nextState := -1
 			next := IPv4_Next[23]
 			lookup := IPv4_Lookup[23]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState

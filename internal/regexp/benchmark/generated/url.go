@@ -1,7 +1,6 @@
 package benchmarkGenerated
 
 import (
-	"slices"
 	"unicode/utf8"
 )
 
@@ -51,13 +50,11 @@ loop:
 			nextState := -1
 			next := URL_Next[0]
 			lookup := URL_Lookup[0]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -68,13 +65,11 @@ loop:
 			nextState := -1
 			next := URL_Next[1]
 			lookup := URL_Lookup[1]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -85,13 +80,11 @@ loop:
 			nextState := -1
 			next := URL_Next[2]
 			lookup := URL_Lookup[2]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -102,13 +95,11 @@ loop:
 			nextState := -1
 			next := URL_Next[3]
 			lookup := URL_Lookup[3]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -119,13 +110,11 @@ loop:
 			nextState := -1
 			next := URL_Next[4]
 			lookup := URL_Lookup[4]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -136,13 +125,11 @@ loop:
 			nextState := -1
 			next := URL_Next[5]
 			lookup := URL_Lookup[5]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -153,13 +140,11 @@ loop:
 			nextState := -1
 			next := URL_Next[6]
 			lookup := URL_Lookup[6]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -170,13 +155,11 @@ loop:
 			nextState := -1
 			next := URL_Next[7]
 			lookup := URL_Lookup[7]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -187,13 +170,11 @@ loop:
 			nextState := -1
 			next := URL_Next[8]
 			lookup := URL_Lookup[8]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -204,13 +185,11 @@ loop:
 			nextState := -1
 			next := URL_Next[9]
 			lookup := URL_Lookup[9]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -221,13 +200,11 @@ loop:
 			nextState := -1
 			next := URL_Next[10]
 			lookup := URL_Lookup[10]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
@@ -238,13 +215,11 @@ loop:
 			nextState := -1
 			next := URL_Next[11]
 			lookup := URL_Lookup[11]
-			searchIndex := slices.IndexFunc(lookup, func(lowHigh int64) bool {
-				lo := rune(lowHigh & 0xFFFFFFFF)
-				hi := rune(lowHigh >> 32)
-				return lo <= r && r <= hi
-			})
-			if searchIndex > -1 {
-				nextState = next[searchIndex]
+			for i, lowHigh := range lookup {
+				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+					nextState = next[i]
+					break
+				}
 			}
 			if nextState > -1 {
 				state = nextState
