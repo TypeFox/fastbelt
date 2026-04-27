@@ -25,8 +25,8 @@ type Document struct {
 	Tokens                TokenSlice
 	Comments              TokenSlice
 	LocalSymbols          LocalSymbols
-	ExportedSymbols       []*AstNodeDescription
-	ImportedSymbols       SymbolList
+	ExportedSymbols       SymbolContainer
+	ImportedSymbols       SymbolContainer
 	ParserErrors          []*ParserError
 	LexerErrors           []*LexerError
 	References            []UntypedReference

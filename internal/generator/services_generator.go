@@ -17,6 +17,7 @@ func GenerateServices(grammr grammar.Grammar, packageName string) string {
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n generator.Node) {
+		n.AppendLine("\"typefox.dev/fastbelt/generated\"")
 		n.AppendLine("\"typefox.dev/fastbelt/workspace\"")
 	})
 	node.AppendLine(")").AppendLine()
@@ -42,7 +43,7 @@ func GenerateServices(grammr grammar.Grammar, packageName string) string {
 
 	node.AppendLine("type ", grammr.Name(), "GeneratedSrvCont interface {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("workspace.GeneratedSrvCont")
+		n.AppendLine("generated.GeneratedSrvCont")
 		n.AppendLine(grammr.Name(), "LinkingSrvCont")
 	})
 	node.AppendLine("}").AppendLine()
@@ -69,6 +70,9 @@ func GenerateServices(grammr grammar.Grammar, packageName string) string {
 		n.Indent(func(n2 generator.Node) {
 			n2.AppendLine("generated.Parser = NewParser(srv)")
 		})
+		n.AppendLine("}")
+		n.AppendLine("if generated.SymbolContainers == nil {")
+		n.AppendLine("    generated.SymbolContainers = NewSymbolContainers()")
 		n.AppendLine("}")
 	})
 	node.AppendLine("}")

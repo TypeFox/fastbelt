@@ -4,9 +4,12 @@ package grammar
 
 import (
 	"context"
+	"reflect"
+	"slices"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
+	"typefox.dev/fastbelt/util/extiter"
 )
 
 type FastbeltScopeProvider interface {
@@ -66,15 +69,15 @@ func (s *DefaultFastbeltScopeProvider) ScopeActionProperty(ctx context.Context, 
 }
 
 type FastbeltReferenceLinker interface {
-	LinkInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError)
-	LinkReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError)
-	LinkSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError)
-	LinkParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError)
-	LinkAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) (*core.AstNodeDescription, *core.ReferenceError)
-	LinkCrossRefType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError)
-	LinkRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) (*core.AstNodeDescription, *core.ReferenceError)
-	LinkActionType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError)
-	LinkActionProperty(ctx context.Context, reference *core.Reference[Field]) (*core.AstNodeDescription, *core.ReferenceError)
+	LinkInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkCrossRefType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkActionType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkActionProperty(ctx context.Context, reference *core.Reference[Field]) (*core.SymbolDescription, *core.ReferenceError)
 }
 
 type DefaultFastbeltReferenceLinker struct {
@@ -85,47 +88,47 @@ func NewDefaultFastbeltReferenceLinker(srv FastbeltLinkingSrvCont) *DefaultFastb
 	return &DefaultFastbeltReferenceLinker{srv: srv}
 }
 
-func (l *DefaultFastbeltReferenceLinker) LinkInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultFastbeltReferenceLinker) LinkInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.FastbeltLinking().ScopeProvider.ScopeInterfaceExtends(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (l *DefaultFastbeltReferenceLinker) LinkReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultFastbeltReferenceLinker) LinkReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.FastbeltLinking().ScopeProvider.ScopeReferenceTypeType(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (l *DefaultFastbeltReferenceLinker) LinkSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultFastbeltReferenceLinker) LinkSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.FastbeltLinking().ScopeProvider.ScopeSimpleTypeType(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (l *DefaultFastbeltReferenceLinker) LinkParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultFastbeltReferenceLinker) LinkParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.FastbeltLinking().ScopeProvider.ScopeParserRuleReturnType(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (l *DefaultFastbeltReferenceLinker) LinkAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultFastbeltReferenceLinker) LinkAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.FastbeltLinking().ScopeProvider.ScopeAssignmentProperty(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (l *DefaultFastbeltReferenceLinker) LinkCrossRefType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultFastbeltReferenceLinker) LinkCrossRefType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.FastbeltLinking().ScopeProvider.ScopeCrossRefType(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (l *DefaultFastbeltReferenceLinker) LinkRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultFastbeltReferenceLinker) LinkRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.FastbeltLinking().ScopeProvider.ScopeRuleCallRule(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (l *DefaultFastbeltReferenceLinker) LinkActionType(ctx context.Context, reference *core.Reference[Interface]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultFastbeltReferenceLinker) LinkActionType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.FastbeltLinking().ScopeProvider.ScopeActionType(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (l *DefaultFastbeltReferenceLinker) LinkActionProperty(ctx context.Context, reference *core.Reference[Field]) (*core.AstNodeDescription, *core.ReferenceError) {
+func (l *DefaultFastbeltReferenceLinker) LinkActionProperty(ctx context.Context, reference *core.Reference[Field]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := l.srv.FastbeltLinking().ScopeProvider.ScopeActionProperty(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
@@ -193,4 +196,59 @@ func (g *DefaultFastbeltReferencesConstructor) ActionType(owner core.AstNode, to
 func (g *DefaultFastbeltReferencesConstructor) ActionProperty(owner core.AstNode, token *core.Token) *core.Reference[Field] {
 	fn := g.srv.FastbeltLinking().ReferenceLinker.LinkActionProperty
 	return core.NewReference(owner, token, fn)
+}
+
+type FastbeltSymbolContainers struct{}
+
+func (c *FastbeltSymbolContainers) New() core.SymbolContainer {
+	return &FastbeltSymbolContainer{}
+}
+
+func NewSymbolContainers() *FastbeltSymbolContainers {
+	return &FastbeltSymbolContainers{}
+}
+
+type FastbeltSymbolContainer struct {
+	Interfaces    []*core.SymbolDescription
+	Fields        []*core.SymbolDescription
+	AbstractRules []*core.SymbolDescription
+}
+
+func (sc *FastbeltSymbolContainer) Put(desc *core.SymbolDescription) bool {
+	switch desc.Node.(type) {
+	case Interface:
+		sc.Interfaces = append(sc.Interfaces, desc)
+		return true
+	case Field:
+		sc.Fields = append(sc.Fields, desc)
+		return true
+	case AbstractRule:
+		sc.AbstractRules = append(sc.AbstractRules, desc)
+		return true
+	}
+	return false
+}
+
+func (sc *FastbeltSymbolContainer) All() core.SymbolSeq {
+	return extiter.Concat(
+		slices.Values(sc.Interfaces),
+		slices.Values(sc.Fields),
+		slices.Values(sc.AbstractRules),
+	)
+}
+
+var TypeFor_Interface = reflect.TypeFor[Interface]()
+var TypeFor_Field = reflect.TypeFor[Field]()
+var TypeFor_AbstractRule = reflect.TypeFor[AbstractRule]()
+
+func (sc *FastbeltSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
+	switch t {
+	case TypeFor_Interface:
+		return slices.Values(sc.Interfaces)
+	case TypeFor_Field:
+		return slices.Values(sc.Fields)
+	case TypeFor_AbstractRule:
+		return slices.Values(sc.AbstractRules)
+	}
+	return core.EmptySymbolDescriptions
 }

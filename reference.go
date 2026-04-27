@@ -20,7 +20,7 @@ import (
 // Used throughout the fastbelt codebase to generically deal with different references.
 type UntypedReference interface {
 	Owner() AstNode
-	Description() *AstNodeDescription
+	Description() *SymbolDescription
 	RefNode(ctx context.Context) AstNode
 	Resolve(ctx context.Context)
 	Reset()
@@ -30,7 +30,7 @@ type UntypedReference interface {
 	Text() string
 }
 
-type ReferenceGetter[T AstNode] func(context.Context, *Reference[T]) (*AstNodeDescription, *ReferenceError)
+type ReferenceGetter[T AstNode] func(context.Context, *Reference[T]) (*SymbolDescription, *ReferenceError)
 
 // Reference represents a reference to another AST node of type T.
 // Resolving is thread safe and is done concurrently by default.
@@ -38,7 +38,7 @@ type ReferenceGetter[T AstNode] func(context.Context, *Reference[T]) (*AstNodeDe
 type Reference[T AstNode] struct {
 	token       *Token
 	owner       AstNode
-	description *AstNodeDescription
+	description *SymbolDescription
 	err         *ReferenceError
 	ref         T
 	mu          sync.Mutex
@@ -80,7 +80,7 @@ func (r *Reference[T]) Owner() AstNode {
 	return r.owner
 }
 
-func (r *Reference[T]) Description() *AstNodeDescription {
+func (r *Reference[T]) Description() *SymbolDescription {
 	if r == nil {
 		return nil
 	}
@@ -262,32 +262,4 @@ func NewReferenceDescriptionsFromMap(descriptions collections.MultiMap[AstNode, 
 	return &referenceDescriptions{
 		descriptions: descriptions,
 	}
-}
-
-type AstNodeDescription struct {
-	URI         URI
-	Node        AstNode
-	Name        string
-	NameSegment *TextSegment
-	FullSegment *TextSegment
-}
-
-func NewAstNodeDescription(node AstNode, name string, nameSegment, fullSegment *TextSegment) *AstNodeDescription {
-	doc := node.Document()
-	return &AstNodeDescription{
-		URI:         doc.URI,
-		Node:        node,
-		Name:        name,
-		NameSegment: nameSegment,
-		FullSegment: fullSegment,
-	}
-}
-
-var EmptyAstNodeDescriptions = extiter.Empty[*AstNodeDescription]()
-
-type SymbolList = iter.Seq[*AstNodeDescription]
-
-type LocalSymbols interface {
-	Has(node AstNode) bool
-	Iter(node AstNode) SymbolList
 }

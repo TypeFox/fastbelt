@@ -6,10 +6,8 @@ package linking
 
 import (
 	"context"
-	"slices"
 
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/util/collections"
 )
 
 // LocalSymbolsProvider computes local symbol information for documents.
@@ -33,48 +31,59 @@ func NewDefaultLocalSymbolsProvider(srv LinkingSrvCont) LocalSymbolsProvider {
 
 func (s *DefaultLocalSymbolsProvider) Provide(ctx context.Context, document *core.Document) {
 	root := document.Root
-	symbols := collections.NewMultiMap[core.AstNode, *core.AstNodeDescription]()
+	symbolContainers := s.srv.Generated().SymbolContainers
+	localSymbols := NewDefaultLocalSymbols()
+	containers := localSymbols.Symbols
 
 	for node := range core.AllChildren(root) {
-		desc, container := s.srv.Linking().LocalSymbolDescriber.Describe(node)
+		desc, containerNode := s.srv.Linking().LocalSymbolDescriber.Describe(node)
 		if desc != nil {
-			symbols.Put(container, desc)
+			if symbols, exists := containers[containerNode]; exists {
+				// Fast path for existing container: just put the new description into it
+				symbols.Put(desc)
+			} else {
+				// No container yet for this node, create a new one
+				newContainer := symbolContainers.New()
+				if newContainer.Put(desc) {
+					// Only add the new container if the description was successfully added
+					containers[containerNode] = newContainer
+				}
+			}
 		}
 	}
-	document.LocalSymbols = NewDefaultLocalSymbolsFromMap(symbols)
+	document.LocalSymbols = localSymbols
 }
 
 // DefaultLocalSymbols is the default implementation of core.LocalSymbols.
 type DefaultLocalSymbols struct {
-	Symbols collections.MultiMap[core.AstNode, *core.AstNodeDescription]
+	Symbols map[core.AstNode]core.SymbolContainer
 }
 
 func NewDefaultLocalSymbols() *DefaultLocalSymbols {
 	return &DefaultLocalSymbols{
-		Symbols: collections.NewMultiMap[core.AstNode, *core.AstNodeDescription](),
+		Symbols: make(map[core.AstNode]core.SymbolContainer),
 	}
 }
 
-func NewDefaultLocalSymbolsFromMap(m collections.MultiMap[core.AstNode, *core.AstNodeDescription]) *DefaultLocalSymbols {
+func NewDefaultLocalSymbolsFromMap(m map[core.AstNode]core.SymbolContainer) *DefaultLocalSymbols {
 	return &DefaultLocalSymbols{
 		Symbols: m,
 	}
 }
 
-func (ls *DefaultLocalSymbols) Has(node core.AstNode) bool {
-	return ls.Symbols.Has(node)
-}
-
-func (ls *DefaultLocalSymbols) Iter(node core.AstNode) core.SymbolList {
-	symbols := ls.Symbols.Get(node)
-	return slices.Values(symbols)
+func (ls *DefaultLocalSymbols) For(node core.AstNode) core.SymbolContainer {
+	if container, exists := ls.Symbols[node]; exists {
+		return container
+	} else {
+		return core.EmptySymbolContainer
+	}
 }
 
 // LocalSymbolDescriber describes how symbols can be referenced in the same document.
 type LocalSymbolDescriber interface {
 	// Describe determines the name and other metadata of a locally visible symbol.
 	// It returns the description and the container in which the symbol is visible, or nil if the symbol is not locally visible.
-	Describe(node core.AstNode) (*core.AstNodeDescription, core.AstNode)
+	Describe(node core.AstNode) (*core.SymbolDescription, core.AstNode)
 }
 
 // DefaultLocalSymbolDescriber is the default implementation of LocalSymbolTableItemProvider.
@@ -88,15 +97,15 @@ func NewDefaultLocalSymbolDescriber(srv LinkingSrvCont) LocalSymbolDescriber {
 	}
 }
 
-func (p *DefaultLocalSymbolDescriber) Describe(node core.AstNode) (*core.AstNodeDescription, core.AstNode) {
-	container := node.Container()
+func (p *DefaultLocalSymbolDescriber) Describe(node core.AstNode) (*core.SymbolDescription, core.AstNode) {
 	name, nameToken := p.srv.Linking().Namer.Name(node)
 	if name != "" {
 		var segment *core.TextSegment
 		if nameToken != nil {
 			segment = &nameToken.Segment
 		}
-		desc := core.NewAstNodeDescription(node, name, segment, node.Segment())
+		desc := core.NewSymbolDescription(node, name, segment, node.Segment())
+		container := node.Container()
 		return desc, container
 	}
 	return nil, nil

@@ -3,6 +3,7 @@
 package statemachine
 
 import (
+	"typefox.dev/fastbelt/generated"
 	"typefox.dev/fastbelt/workspace"
 )
 
@@ -26,7 +27,7 @@ func (b *StatemachineModelLinkingSrvContBlock) StatemachineModelLinking() *State
 }
 
 type StatemachineModelGeneratedSrvCont interface {
-	workspace.GeneratedSrvCont
+	generated.GeneratedSrvCont
 	StatemachineModelLinkingSrvCont
 }
 
@@ -47,5 +48,8 @@ func CreateDefaultServices(srv StatemachineModelGeneratedSrvCont) {
 	}
 	if generated.Parser == nil {
 		generated.Parser = NewParser(srv)
+	}
+	if generated.SymbolContainers == nil {
+		generated.SymbolContainers = NewSymbolContainers()
 	}
 }

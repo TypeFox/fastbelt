@@ -34,16 +34,16 @@ func NewDefaultExportedSymbolsProvider(srv LinkingSrvCont) ExportedSymbolsProvid
 func (s *DefaultExportedSymbolsProvider) Provide(ctx context.Context, document *core.Document) {
 	root := document.Root
 	describer := s.srv.Linking().ExportedSymbolDescriber
-	var exports []*core.AstNodeDescription
+	exports := s.srv.Generated().SymbolContainers.New()
 
 	// Describe the root node itself
 	if desc := describer.Describe(root); desc != nil {
-		exports = append(exports, desc)
+		exports.Put(desc)
 	}
 	// Describe direct children of the root (not nested deeper)
 	for child := range core.ChildNodes(root) {
 		if desc := describer.Describe(child); desc != nil {
-			exports = append(exports, desc)
+			exports.Put(desc)
 		}
 	}
 
@@ -54,7 +54,7 @@ func (s *DefaultExportedSymbolsProvider) Provide(ctx context.Context, document *
 type ExportedSymbolDescriber interface {
 	// Describe determines the name and other metadata of an exported symbol.
 	// It returns the description, or nil if the node should not be exported.
-	Describe(node core.AstNode) *core.AstNodeDescription
+	Describe(node core.AstNode) *core.SymbolDescription
 }
 
 // DefaultExportedSymbolDescriber is the default implementation of ExportedSymbolDescriber.
@@ -68,14 +68,14 @@ func NewDefaultExportedSymbolDescriber(srv LinkingSrvCont) ExportedSymbolDescrib
 	}
 }
 
-func (p *DefaultExportedSymbolDescriber) Describe(node core.AstNode) *core.AstNodeDescription {
+func (p *DefaultExportedSymbolDescriber) Describe(node core.AstNode) *core.SymbolDescription {
 	name, nameToken := p.srv.Linking().Namer.Name(node)
 	if name != "" {
 		var segment *core.TextSegment
 		if nameToken != nil {
 			segment = &nameToken.Segment
 		}
-		return core.NewAstNodeDescription(node, name, segment, node.Segment())
+		return core.NewSymbolDescription(node, name, segment, node.Segment())
 	}
 	return nil
 }
