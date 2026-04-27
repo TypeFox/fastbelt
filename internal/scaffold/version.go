@@ -6,6 +6,7 @@ package scaffold
 
 import (
 	"os"
+	"path/filepath"
 	"runtime/debug"
 	"strings"
 )
@@ -14,13 +15,7 @@ const fastbeltModulePath = "typefox.dev/fastbelt"
 
 // fastbeltModuleVersion returns a version string suitable for "go get M@V"
 // (for example v1.2.3 or pseudo-versions), or "latest" when unknown.
-//
-// If FASTBELT_SCAFFOLD_FASTBELT_GO_VERSION is set (for example "latest"), it is returned as-is
-// so tooling and tests can pin a resolvable module version when the embedded build info is local-only.
 func fastbeltModuleVersion() string {
-	if v := strings.TrimSpace(os.Getenv("FASTBELT_SCAFFOLD_FASTBELT_GO_VERSION")); v != "" {
-		return v
-	}
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
 		return "latest"
@@ -43,4 +38,14 @@ func fastbeltModuleVersion() string {
 
 func isUnsetModulePseudoVersion(v string) bool {
 	return strings.Contains(v, "000000000000") || strings.HasPrefix(v, "v0.0.0-00010101000000")
+}
+
+// fastbeltModuleLocalPath returns the value of FASTBELT_SCAFFOLD_REPO if it is an
+// absolute filesystem path (signalling a local replace directive), otherwise returns "".
+func fastbeltModuleLocalPath() string {
+	v := strings.TrimSpace(os.Getenv("FASTBELT_SCAFFOLD_REPO"))
+	if filepath.IsAbs(v) {
+		return v
+	}
+	return ""
 }
