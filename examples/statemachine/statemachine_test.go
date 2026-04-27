@@ -39,9 +39,9 @@ end
 
 func TestParsing(t *testing.T) {
 	f := test.New(t, CreateServices())
-	f.Parse(lightSwitch).
-		AssertNoErrors().
-		AssertState(fastbelt.DocStateLinked)
+	doc := f.Parse(lightSwitch)
+	doc.AssertNoErrors()
+	doc.AssertState(fastbelt.DocStateLinked)
 }
 
 func TestAST(t *testing.T) {

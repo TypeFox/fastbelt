@@ -21,7 +21,9 @@ func TestDuplicateRuleNames(t *testing.T) {
 		<|1:Foo|>: Name=ID;
 		<|2:Foo|>: Name=ID;
 	` + commonTokens)
-	doc.ExpectDiagnostic("1").WithSeverity(core.SeverityError).WithCode(ValidateUniqueRuleName)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateUniqueRuleName)
 }
 
 func TestDuplicateInterfaceNames(t *testing.T) {
@@ -31,8 +33,12 @@ func TestDuplicateInterfaceNames(t *testing.T) {
 		interface <|1:Foo|> { Name string }
 		interface <|2:Foo|> { Other string }
 	` + commonTokens)
-	doc.ExpectDiagnostic("1").WithSeverity(core.SeverityError).WithCode(ValidateUniqueInterfaceName)
-	doc.ExpectDiagnostic("2").WithSeverity(core.SeverityError).WithCode(ValidateUniqueInterfaceName)
+	diag1 := doc.ExpectDiagnostic("1")
+	diag1.WithSeverity(core.SeverityError)
+	diag1.WithCode(ValidateUniqueInterfaceName)
+	diag2 := doc.ExpectDiagnostic("2")
+	diag2.WithSeverity(core.SeverityError)
+	diag2.WithCode(ValidateUniqueInterfaceName)
 }
 
 // --- Terminal ---
@@ -45,7 +51,9 @@ func TestTerminalMatchesEmptyString(t *testing.T) {
 		token <|EMPTY|>: /a*/;
 		hidden token WS: /[ \n\r\t]+/;
 	`)
-	doc.ExpectDiagnostic("EMPTY").WithSeverity(core.SeverityError).WithCode(ValidateEmptyToken)
+	diag := doc.ExpectDiagnostic("EMPTY")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateEmptyToken)
 }
 
 // --- Keywords ---
@@ -57,7 +65,9 @@ func TestKeywordEmpty(t *testing.T) {
 		interface Foo { Name string }
 		Foo: <|empty:""|> Name=ID;
 	` + commonTokens)
-	doc.ExpectDiagnostic("empty").WithSeverity(core.SeverityError).WithCode(ValidateEmptyKeyword)
+	diag := doc.ExpectDiagnostic("empty")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateEmptyKeyword)
 }
 
 func TestKeywordWhitespaceOnly(t *testing.T) {
@@ -67,7 +77,9 @@ func TestKeywordWhitespaceOnly(t *testing.T) {
 		interface Foo { Name string }
 		Foo: <|ws:" "|> Name=ID;
 	` + commonTokens)
-	doc.ExpectDiagnostic("ws").WithSeverity(core.SeverityError).WithCode(ValidateWhitespaceOnlyKeyword)
+	diag := doc.ExpectDiagnostic("ws")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateWhitespaceOnlyKeyword)
 }
 
 func TestKeywordContainsWhitespace(t *testing.T) {
@@ -77,7 +89,9 @@ func TestKeywordContainsWhitespace(t *testing.T) {
 		interface Foo { Name string }
 		Foo: <|keyword:"hello world"|> Name=ID;
 	` + commonTokens)
-	doc.ExpectDiagnostic("keyword").WithSeverity(core.SeverityWarning).WithCode(ValidateKeywordWithWhitespace)
+	diag := doc.ExpectDiagnostic("keyword")
+	diag.WithSeverity(core.SeverityWarning)
+	diag.WithCode(ValidateKeywordWithWhitespace)
 }
 
 // --- Parser rule return type ---
@@ -89,7 +103,9 @@ func TestRuleWithoutReturnType(t *testing.T) {
 		interface Foo { Name string }
 		<|OrphanRule|>: Name=ID;
 	` + commonTokens)
-	doc.ExpectDiagnostic("OrphanRule").WithSeverity(core.SeverityError).WithCode(ValidateRuleReturnType)
+	diag := doc.ExpectDiagnostic("OrphanRule")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateRuleReturnType)
 }
 
 // --- Interface circular inheritance ---
@@ -100,7 +116,9 @@ func TestCircularInterfaceExtensionDirect(t *testing.T) {
 		grammar Test;
 		interface Foo extends <|Foo|> {}
 	` + commonTokens)
-	doc.ExpectDiagnostic("Foo").WithSeverity(core.SeverityError).WithCode(ValidateInterfaceExtends)
+	diag := doc.ExpectDiagnostic("Foo")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateInterfaceExtends)
 }
 
 func TestCircularInterfaceExtensionIndirect(t *testing.T) {
@@ -110,8 +128,12 @@ func TestCircularInterfaceExtensionIndirect(t *testing.T) {
 		interface A extends <|B|> {}
 		interface B extends <|A|> {}
 	` + commonTokens)
-	doc.ExpectDiagnostic("B").WithSeverity(core.SeverityError).WithCode(ValidateInterfaceExtends)
-	doc.ExpectDiagnostic("A").WithSeverity(core.SeverityError).WithCode(ValidateInterfaceExtends)
+	diagB := doc.ExpectDiagnostic("B")
+	diagB.WithSeverity(core.SeverityError)
+	diagB.WithCode(ValidateInterfaceExtends)
+	diagA := doc.ExpectDiagnostic("A")
+	diagA.WithSeverity(core.SeverityError)
+	diagA.WithCode(ValidateInterfaceExtends)
 }
 
 // --- Unassigned rule call ---
@@ -125,7 +147,9 @@ func TestUnassignedRuleCallReturnTypeMismatch(t *testing.T) {
 		Foo: <|SubRule|>;
 		SubRule returns Bar: ID;
 	` + commonTokens)
-	doc.ExpectDiagnostic("SubRule").WithSeverity(core.SeverityError).WithCode(ValidateRuleCallReturnType)
+	diag := doc.ExpectDiagnostic("SubRule")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateRuleCallReturnType)
 }
 
 func TestUnassignedRuleCallAfterAction(t *testing.T) {
@@ -137,7 +161,9 @@ func TestUnassignedRuleCallAfterAction(t *testing.T) {
 		interface Bar extends Foo {}
 		Bar: ({Bar.Items+=current} <|Bar|>);
 	` + commonTokens)
-	doc.ExpectDiagnostic("Bar").WithSeverity(core.SeverityError).WithCode(ValidateRuleCallPosition)
+	diag := doc.ExpectDiagnostic("Bar")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateRuleCallPosition)
 }
 
 func TestUnassignedRuleCallAfterAssignment(t *testing.T) {
@@ -148,7 +174,9 @@ func TestUnassignedRuleCallAfterAssignment(t *testing.T) {
 		Foo: Name=ID <|SubRule|>;
 		SubRule returns Foo: Name=ID;
 	` + commonTokens)
-	doc.ExpectDiagnostic("SubRule").WithSeverity(core.SeverityError).WithCode(ValidateRuleCallPosition)
+	diag := doc.ExpectDiagnostic("SubRule")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateRuleCallPosition)
 }
 
 // --- Action type assignability ---
@@ -162,7 +190,9 @@ func TestActionTypeNotAssignableToRuleReturn(t *testing.T) {
 		interface Bar { Items []Foo }
 		Foo: ({<|Bar|>.Items+=current} ID);
 	` + commonTokens)
-	doc.ExpectDiagnostic("Bar").WithSeverity(core.SeverityError).WithCode(ValidateActionAssignmentType)
+	diag := doc.ExpectDiagnostic("Bar")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateActionAssignmentType)
 }
 
 // --- Assignment operator mismatches ---
@@ -174,7 +204,9 @@ func TestBooleanOperatorOnNonBoolField(t *testing.T) {
 		interface Foo { Name string }
 		Foo: Name<|?=|>ID;
 	` + commonTokens)
-	doc.ExpectDiagnostic("?=").WithSeverity(core.SeverityError).WithCode(ValidateAssignmentType)
+	diag := doc.ExpectDiagnostic("?=")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateAssignmentType)
 }
 
 func TestArrayOperatorOnNonArrayField(t *testing.T) {
@@ -184,7 +216,9 @@ func TestArrayOperatorOnNonArrayField(t *testing.T) {
 		interface Foo { Name string }
 		Foo: Name<|+=|>ID;
 	` + commonTokens)
-	doc.ExpectDiagnostic("+=").WithSeverity(core.SeverityError).WithCode(ValidateAssignmentType)
+	diag := doc.ExpectDiagnostic("+=")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateAssignmentType)
 }
 
 // --- Assignment value type compatibility ---
@@ -197,7 +231,9 @@ func TestCrossRefToNonReferenceField(t *testing.T) {
 		interface Foo { Name string }
 		Foo: Name=<|tar:[Target:ID]|>;
 	` + commonTokens)
-	doc.ExpectDiagnostic("tar").WithSeverity(core.SeverityError).WithCode(ValidateAssignmentType)
+	diag := doc.ExpectDiagnostic("tar")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateAssignmentType)
 }
 
 func TestCrossRefTypeMismatch(t *testing.T) {
@@ -209,7 +245,9 @@ func TestCrossRefTypeMismatch(t *testing.T) {
 		interface Foo { Ref *Bar }
 		Foo: Ref=[<|Baz|>:ID];
 	` + commonTokens)
-	doc.ExpectDiagnostic("Baz").WithSeverity(core.SeverityError).WithCode(ValidateAssignmentType)
+	diag := doc.ExpectDiagnostic("Baz")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateAssignmentType)
 }
 
 func TestTokenAssignedToNonStringField(t *testing.T) {
@@ -220,7 +258,9 @@ func TestTokenAssignedToNonStringField(t *testing.T) {
 		interface Foo { Child Child }
 		Foo: Child=<|ID|>;
 	` + commonTokens)
-	doc.ExpectDiagnostic("ID").WithSeverity(core.SeverityError).WithCode(ValidateAssignmentType)
+	diag := doc.ExpectDiagnostic("ID")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateAssignmentType)
 }
 
 func TestParserRuleReturnTypeMismatch(t *testing.T) {
@@ -234,7 +274,9 @@ func TestParserRuleReturnTypeMismatch(t *testing.T) {
 		Bar returns Bar: Name=ID;
 		BazRule returns Baz: Name=ID;
 	` + commonTokens)
-	doc.ExpectDiagnostic("BazRule").WithSeverity(core.SeverityError).WithCode(ValidateAssignmentType)
+	diag := doc.ExpectDiagnostic("BazRule")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateAssignmentType)
 }
 
 func TestKeywordAssignedToNonStringField(t *testing.T) {
@@ -245,5 +287,7 @@ func TestKeywordAssignedToNonStringField(t *testing.T) {
 		interface Foo { Child Child }
 		Foo: Child=<|1:"keyword"|>;
 	` + commonTokens)
-	doc.ExpectDiagnostic("1").WithSeverity(core.SeverityError).WithCode(ValidateAssignmentType)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateAssignmentType)
 }
