@@ -20,10 +20,15 @@ func NewDefaultNamer() Namer {
 
 func (n *DefaultNamer) Name(node core.AstNode) core.StringUnit {
 	if namedNode, ok := node.(core.NamedTokenNode); ok {
-		return namedNode.NameToken()
+		// Unwrap the pointer to prevent nil issues
+		if t := namedNode.NameToken(); t != nil {
+			return t
+		}
 	} else if namedStringNode, ok := node.(core.NamedCompositeNode); ok {
-		return namedStringNode.NameNode()
-	} else {
-		return nil
+		// Unwrap the pointer to prevent nil issues
+		if cn := namedStringNode.NameNode(); cn != nil {
+			return cn
+		}
 	}
+	return nil
 }
