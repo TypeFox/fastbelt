@@ -6,42 +6,52 @@
 package lexer
 
 import (
+	"math"
+	"sync/atomic"
 	"unicode/utf8"
 
 	core "typefox.dev/fastbelt"
 )
 
 type LexerResult struct {
-	Tokens   []*core.Token
-	Comments []*core.Token
+	Tokens   []core.Token
+	Comments []core.Token
 	Errors   []*core.LexerError
-	Groups   map[int][]*core.Token
+	Groups   map[int][]core.Token
 }
 
 type Lexer interface {
 	Lex(input string) *LexerResult
 }
 
+// Allocate a new token every ~5 characters on average
+// This average is updated after lexing to adapt to the actual language
+const defaultTokenRatio = 1.0 / 5.0
+
 type DefaultLexer struct {
 	tokenTypes []*core.TokenType
 	tokenMap   [][]*core.TokenType
+	// running exponential moving average of tokens-per-byte
+	// stores a float64 as uint64 bits for atomic access
+	avgRatio atomic.Uint64
 }
 
 func (l *DefaultLexer) Lex(input string) *LexerResult {
 	length := len(input)
-	tokens := make([]*core.Token, 0, length/5) // rough estimate
-	comments := make([]*core.Token, 0)
+	ratio := math.Float64frombits(l.avgRatio.Load())
+	if ratio == 0 {
+		ratio = defaultTokenRatio
+	}
+	tokens := make([]core.Token, 0, int(float64(length)*ratio*1.1))
+	comments := make([]core.Token, 0)
 	errors := make([]*core.LexerError, 0)
-	groups := make(map[int][]*core.Token)
+	var groups map[int][]core.Token
 
 	var offset, line, column int
 	line = 0
 	column = 0
 	for offset < length {
-		r, size := rune(input[offset]), 1
-		if r >= utf8.RuneSelf {
-			r, size = utf8.DecodeRuneInString(input[offset:])
-		}
+		r, size := utf8.DecodeRuneInString(input[offset:])
 		mapIndex := int(r) % maxChar
 		candidates := l.tokenMap[mapIndex]
 		longestMatch := 0
@@ -95,6 +105,19 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 					startColumn,
 					column,
 				))
+			default:
+				if groups == nil {
+					groups = make(map[int][]core.Token)
+				}
+				groups[longestType.Group] = append(groups[longestType.Group], core.NewToken(
+					longestType,
+					input[offset:end],
+					offset, end,
+					startLine,
+					line,
+					startColumn,
+					column,
+				))
 			}
 		} else {
 			errors = append(errors, core.NewLexerError(
@@ -108,6 +131,16 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 			))
 		}
 		offset = end
+	}
+
+	if length > 0 {
+		// Update the average tokens-per-byte
+		actual := float64(len(tokens)) / float64(length)
+		prev := math.Float64frombits(l.avgRatio.Load())
+		if prev == 0 {
+			prev = defaultTokenRatio
+		}
+		l.avgRatio.Store(math.Float64bits(prev*0.9 + actual*0.1))
 	}
 
 	return &LexerResult{

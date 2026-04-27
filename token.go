@@ -64,8 +64,8 @@ type Token struct {
 	Kind    int
 }
 
-func NewToken(tokenType *TokenType, image string, startOffset, endOffset, startLine, endLine, startColumn, endColumn int) *Token {
-	return &Token{
+func NewToken(tokenType *TokenType, image string, startOffset, endOffset, startLine, endLine, startColumn, endColumn int) Token {
+	return Token{
 		Type:  tokenType,
 		Image: image,
 		TextSegment: TextSegment{
@@ -118,7 +118,7 @@ func (t *Token) Owner() AstNode {
 	return t.Element
 }
 
-type TokenSlice []*Token
+type TokenSlice []Token
 
 // Searches for the token that contains the given offset.
 // Expects that the tokens are sorted by their offsets to perform a binary search.
@@ -132,7 +132,7 @@ func (ts TokenSlice) SearchOffset(offset int) *Token {
 		} else if offset >= int(token.TextSegment.Indices.End) {
 			low = mid + 1
 		} else {
-			return token
+			return &token
 		}
 	}
 	return nil

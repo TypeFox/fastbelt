@@ -21,13 +21,16 @@ const resourceCount = 200
 // BenchmarkWorkspaceCycle benchmarks a full workspace build cycle over
 // resourceCount in-memory statemachine documents: parse, index, link, and validate.
 func BenchmarkWorkspaceCycle(b *testing.B) {
+	length := 0
 	contents := make([]string, resourceCount)
 	for i := range contents {
 		contents[i], _ = generateStatemachineContent(i)
+		length += len(contents[i])
 	}
 	srv := CreateServices()
 
 	var totalNs int64
+	b.SetBytes(int64(length))
 	b.ResetTimer()
 	for range b.N {
 		// Fresh document manager per cycle so each build starts from a clean state.
@@ -107,6 +110,36 @@ func TestAllChildrenEquivalence(t *testing.T) {
 		childCount++
 	}
 	assert.Equal(t, totalCount, childCount, "AllChildren should iterate all child nodes in the document")
+}
+
+// BenchmarkParser benchmarks parsing a single generated statemachine document,
+// reusing the pre-lexed token slice every iteration.
+func BenchmarkParser(b *testing.B) {
+	content, _ := generateStatemachineContent(0)
+	srv := CreateServices()
+	tokens := srv.Generated().Lexer.Lex(content).Tokens
+	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
+	if err != nil {
+		b.Fatal(err)
+	}
+	doc.Tokens = tokens
+	b.SetBytes(int64(len(content)))
+	b.ResetTimer()
+	for b.Loop() {
+		result := srv.Generated().Parser.Parse(doc)
+		doc.Root = result.Node
+	}
+}
+
+// BenchmarkLexer benchmarks tokenizing a single generated statemachine document.
+func BenchmarkLexer(b *testing.B) {
+	content, _ := generateStatemachineContent(0)
+	l := NewLexer()
+	b.SetBytes(int64(len(content)))
+	b.ResetTimer()
+	for b.Loop() {
+		_ = l.Lex(content)
+	}
 }
 
 // generateStatemachineContent generates a syntactically valid statemachine
