@@ -43,8 +43,8 @@ func GenerateLinker(grammr grammar.Grammar, packageName string) string {
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
 		if len(context.fields) > 0 {
 			n.AppendLine("\"typefox.dev/fastbelt/linking\"")
+			n.AppendLine("\"typefox.dev/fastbelt/util/extiter\"")
 		}
-		n.AppendLine("\"typefox.dev/fastbelt/util/extiter\"")
 	})
 	node.AppendLine(")")
 	node.AppendLine()
@@ -256,28 +256,34 @@ func generateSymbolContainers(context *LinkerGeneratorContext) generator.Node {
 	// Put children-first switch so each node lands in exactly one list.
 	node.AppendLine("func (sc *", name, "SymbolContainer) Put(desc *core.SymbolDescription) bool {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("switch desc.Node.(type) {")
-		for _, target := range sortedTargets {
-			n.AppendLine("case ", target, ":")
-			n.AppendLine("    sc.", target, "s = append(sc.", target, "s, desc)")
-			n.AppendLine("    return true")
+		if len(sortedTargets) > 0 {
+			n.AppendLine("switch desc.Node.(type) {")
+			for _, target := range sortedTargets {
+				n.AppendLine("case ", target, ":")
+				n.AppendLine("    sc.", target, "s = append(sc.", target, "s, desc)")
+				n.AppendLine("    return true")
+			}
+			n.AppendLine("}")
 		}
-		n.AppendLine("}")
 		n.AppendLine("return false")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
 
 	node.AppendLine("func (sc *", name, "SymbolContainer) All() core.SymbolSeq {")
-	node.Indent(func(n generator.Node) {
-		n.AppendLine("return extiter.Concat(")
-		n.Indent(func(n2 generator.Node) {
-			for _, target := range sortedTargets {
-				n2.AppendLine("slices.Values(sc.", target, "s),")
-			}
+	if len(sortedTargets) == 0 {
+		node.AppendLine("return core.EmptySymbolDescriptions")
+	} else {
+		node.Indent(func(n generator.Node) {
+			n.AppendLine("return extiter.Concat(")
+			n.Indent(func(n2 generator.Node) {
+				for _, target := range sortedTargets {
+					n2.AppendLine("slices.Values(sc.", target, "s),")
+				}
+			})
+			n.AppendLine(")")
 		})
-		n.AppendLine(")")
-	})
+	}
 	node.AppendLine("}")
 	node.AppendLine()
 
@@ -289,25 +295,28 @@ func generateSymbolContainers(context *LinkerGeneratorContext) generator.Node {
 	node.AppendLine()
 	node.AppendLine("func (sc *", name, "SymbolContainer) ForType(t reflect.Type) core.SymbolSeq {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("switch t {")
-		for _, target := range sortedTargets {
-			subtypes := subtypesInTargets(target, sortedTargets, context.ifaceParents)
-			n.AppendLine("case TypeFor_", target, ":")
-			if len(subtypes) == 1 {
-				// No descendants in target set, simple path.
-				n.AppendLine("    return slices.Values(sc.", target, "s)")
-			} else {
-				// Include this type's list and all descendant lists.
-				n.AppendLine("    return extiter.Concat(")
-				n.Indent(func(n2 generator.Node) {
-					for _, sub := range subtypes {
-						n2.AppendLine("slices.Values(sc.", sub, "s),")
-					}
-				})
-				n.AppendLine("    )")
+		if len(sortedTargets) > 0 {
+			n.AppendLine("switch t {")
+			for _, target := range sortedTargets {
+				subtypes := subtypesInTargets(target, sortedTargets, context.ifaceParents)
+				n.AppendLine("case TypeFor_", target, ":")
+				if len(subtypes) == 1 {
+					// No descendants in target set, simple path.
+					n.AppendLine("    return slices.Values(sc.", target, "s)")
+				} else {
+					// Include this type's list and all descendant lists.
+					n.AppendLine("    return extiter.Concat(")
+					n.Indent(func(n2 generator.Node) {
+						for _, sub := range subtypes {
+							n2.AppendLine("slices.Values(sc.", sub, "s),")
+						}
+					})
+					n.AppendLine("    )")
+				}
 			}
+			n.AppendLine("}")
 		}
-		n.AppendLine("}")
+
 		n.AppendLine("return core.EmptySymbolDescriptions")
 	})
 	node.AppendLine("}")
