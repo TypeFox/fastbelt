@@ -87,6 +87,13 @@ func (s *Scaffolder) Run() error {
 	if err := s.scaffoldTemplatedFiles(names); err != nil {
 		return err
 	}
+	if localPath := fastbeltModuleLocalPath(); localPath != "" {
+		// When running the scaffold in the dev environment, the module version should point to the local copy
+		// This requires to edit the go mod file to point to the local path
+		if err := runGo(s.ModuleRoot, "mod", "edit", "-replace", fastbeltModulePath+"="+localPath); err != nil {
+			fmt.Fprintf(os.Stderr, "fastbelt scaffold: warning: go mod edit -replace: %v\n", err)
+		}
+	}
 	tryGoGetFastbeltDependencies(s.ModuleRoot, names.FastbeltGoGet, names.FastbeltToolGoGet)
 
 	genArg := "./..."

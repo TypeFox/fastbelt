@@ -13,6 +13,7 @@ import (
 )
 
 const TOKEN_TYPE = "*core.Token"
+const COMPOSITE_TYPE = "core.CompositeNode"
 
 func GenerateTypes(grammr grammar.Grammar, packageName string) string {
 	node := generator.NewNode()
@@ -70,6 +71,7 @@ type FieldInfo struct {
 	Boolean        bool
 	Type           string
 	HasTokenGetter bool
+	HasNodeGetter  bool
 	// Generated type, e.g. *core.Token or an interface type.
 	// Also used for setter methods.
 	GType string
@@ -86,15 +88,19 @@ func getFieldInfo(field grammar.Field) FieldInfo {
 	ref := isReferenceType(field.Type())
 	gtype := typ
 	hasTokenGetter := false
+	hasNodeGetter := false
 	boolean := false
-	if typ == "string" || typ == "bool" {
+	switch typ {
+	case "string", "bool":
 		gtype = TOKEN_TYPE
-		if !array {
-			hasTokenGetter = true
-		}
+		hasTokenGetter = !array
 		if typ == "bool" {
 			boolean = true
 		}
+	case "composite":
+		typ = "string"
+		gtype = COMPOSITE_TYPE
+		hasNodeGetter = !array
 	}
 	return FieldInfo{
 		Name:           name,
@@ -103,6 +109,7 @@ func getFieldInfo(field grammar.Field) FieldInfo {
 		Reference:      ref,
 		Type:           typ,
 		HasTokenGetter: hasTokenGetter,
+		HasNodeGetter:  hasNodeGetter,
 		Boolean:        boolean,
 		GType:          gtype,
 	}
@@ -343,8 +350,11 @@ func generateDataStruct(node generator.Node, iface grammar.Interface, fields []F
 				n.AppendLine("if i != nil && i.", field.PName, " != nil {")
 				n.Indent(func(n2 generator.Node) {
 					n2.Append("return i.", field.PName)
-					if field.GType == TOKEN_TYPE {
+					switch field.GType {
+					case TOKEN_TYPE:
 						n2.Append(".Image")
+					case COMPOSITE_TYPE:
+						n2.Append(".String()")
 					}
 					n2.AppendLine()
 				})
@@ -368,6 +378,13 @@ func generateDataStruct(node generator.Node, iface grammar.Interface, fields []F
 		// Token getter
 		if field.HasTokenGetter {
 			node.AppendLine("func (i *", iface.Name(), "Data) ", field.Name, "Token() ", TOKEN_TYPE, " {")
+			node.Indent(func(n generator.Node) {
+				n.AppendLine("return i.", field.PName)
+			})
+			node.AppendLine("}")
+			node.AppendLine()
+		} else if field.HasNodeGetter {
+			node.AppendLine("func (i *", iface.Name(), "Data) ", field.Name, "Node() ", COMPOSITE_TYPE, " {")
 			node.Indent(func(n generator.Node) {
 				n.AppendLine("return i.", field.PName)
 			})

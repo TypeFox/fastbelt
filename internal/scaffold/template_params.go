@@ -89,9 +89,14 @@ func newTemplateParams(s *Scaffolder) (templateParams, error) {
 	npmExt := alnumExt + "-vscode"
 	vsix := npmExt + ".vsix"
 
-	ver := fastbeltModuleVersion()
-	fastbeltGoGet := fastbeltModulePath + "@" + ver
-	fastbeltToolGoGet := fastbeltModulePath + "/cmd/fastbelt@" + ver
+	fastbeltGoGet := fastbeltModulePath
+	fastbeltToolGoGet := fastbeltModulePath + "/cmd/fastbelt"
+	if localPath := fastbeltModuleLocalPath(); localPath == "" {
+		// If no local path override is set, use the resolved module version for go get.
+		ver := fastbeltModuleVersion()
+		fastbeltGoGet += "@" + ver
+		fastbeltToolGoGet += "@" + ver
+	}
 
 	return templateParams{
 		CreateVSCodeExtension: s.CreateVSCodeExtension,

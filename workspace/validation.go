@@ -55,7 +55,7 @@ func CreateParserDiagnostics(doc *core.Document) []*core.Diagnostic {
 			})
 		} else {
 			diagnostics = append(diagnostics, &core.Diagnostic{
-				Range:    token.Segment.Range,
+				Range:    token.TextSegment.Range,
 				Severity: core.SeverityError,
 				Message:  err.Msg,
 			})

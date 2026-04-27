@@ -5,6 +5,7 @@
 package {{.GoPackage}}
 
 import (
+	"typefox.dev/fastbelt/generated"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/workspace"
@@ -13,7 +14,7 @@ import (
 // {{.ExportedBase}}Srv is the service container for the {{.LanguageLabel}} language.
 type {{.ExportedBase}}Srv struct {
 	textdoc.TextdocSrvContBlock
-	workspace.GeneratedSrvContBlock
+	generated.GeneratedSrvContBlock
 	workspace.WorkspaceSrvContBlock
 	linking.LinkingSrvContBlock
 	{{.GrammarName}}LinkingSrvContBlock
