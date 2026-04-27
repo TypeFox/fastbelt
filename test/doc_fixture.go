@@ -333,7 +333,7 @@ func MustFindNodeAtLabel[T core.AstNode](d *Doc, label string) T {
 	return n
 }
 
-// FindNamedNode returns the first node of type T whose Name() method returns name.
+// FindNamedNode returns the first node of type T whose Name() method returns the given name.
 // T must implement [core.NamedNode] (or have a Name() string method) to find results.
 func FindNamedNode[T core.AstNode](d *Doc, name string) (T, bool) {
 	d.t.Helper()

@@ -286,17 +286,21 @@ func AssignContainers(doc *Document, root AstNode) {
 	})
 }
 
-// Represents a node whose name is represented by a [Token], stored in the "Name" field of the node.
-type NamedTokenNode interface {
+// Represents a node whose name is accessible as a string in the Name field.
+type NamedNode interface {
 	AstNode
 	Name() string
+}
+
+// Represents a node whose name is represented by a [Token], stored in the "Name" field of the node.
+type NamedTokenNode interface {
+	NamedNode
 	NameToken() *Token
 }
 
 // Represents a node whose name is represented by a [CompositeNode], stored in the "Name" field of the node.
 type NamedCompositeNode interface {
-	AstNode
-	Name() string
+	NamedNode
 	NameNode() CompositeNode
 }
 
