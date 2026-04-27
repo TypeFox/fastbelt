@@ -13,6 +13,22 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
+const (
+	ValidateUniqueRuleName        = "uniqueRuleName"
+	ValidateUniqueInterfaceName   = "uniqueInterfaceName"
+	ValidateEmptyToken            = "emptyTerminalRule"
+	ValidateEmptyKeyword          = "emptyKeyword"
+	ValidateWhitespaceOnlyKeyword = "whitespaceOnlyKeyword"
+	ValidateKeywordWithWhitespace = "keywordWithWhitespace"
+	ValidateRuleReturnType        = "ruleReturnType"
+	ValidateInterfaceExtends      = "interfaceExtends"
+	ValidateRuleCallReturnType    = "ruleCallReturnType"
+	ValidateRuleCallPosition      = "ruleCallPosition"
+	ValidateActionAssignmentType  = "actionAssignmentType"
+	ValidateActionPropertyType    = "actionPropertyType"
+	ValidateAssignmentType        = "assignmentType"
+)
+
 // GrammarImpl.Validate checks grammar-level constraints:
 //   - Rule names must be unique within the grammar.
 //   - Interface names must be unique within the grammar.
@@ -41,6 +57,7 @@ func checkUniqueRuleNames(g Grammar, accept core.ValidationAcceptor) {
 					fmt.Sprintf("A rule's name has to be unique. '%s' is used multiple times.", name),
 					node,
 					core.WithToken(node.NameToken()),
+					core.WithCode(ValidateUniqueRuleName),
 				))
 			}
 		}
@@ -62,6 +79,7 @@ func checkUniqueInterfaceNames(g Grammar, accept core.ValidationAcceptor) {
 					fmt.Sprintf("An interface name has to be unique. '%s' is used multiple times.", name),
 					iface,
 					core.WithToken(iface.NameToken()),
+					core.WithCode(ValidateUniqueInterfaceName),
 				))
 			}
 		}
@@ -94,6 +112,7 @@ func checkEmptyTerminalRule(t Token, accept core.ValidationAcceptor) {
 			"This terminal could match an empty string.",
 			t,
 			core.WithToken(t.NameToken()),
+			core.WithCode(ValidateEmptyToken),
 		))
 	}
 }
@@ -117,6 +136,7 @@ func checkKeyword(k Keyword, accept core.ValidationAcceptor) {
 			"Keywords cannot be empty.",
 			k,
 			core.WithToken(k.ValueToken()),
+			core.WithCode(ValidateEmptyKeyword),
 		))
 	} else if strings.TrimSpace(value) == "" {
 		accept(core.NewDiagnostic(
@@ -124,6 +144,7 @@ func checkKeyword(k Keyword, accept core.ValidationAcceptor) {
 			"Keywords cannot only consist of whitespace characters.",
 			k,
 			core.WithToken(k.ValueToken()),
+			core.WithCode(ValidateWhitespaceOnlyKeyword),
 		))
 	} else if strings.ContainsAny(value, " \t\n\r") {
 		accept(core.NewDiagnostic(
@@ -131,6 +152,7 @@ func checkKeyword(k Keyword, accept core.ValidationAcceptor) {
 			"Keywords should not contain whitespace characters.",
 			k,
 			core.WithToken(k.ValueToken()),
+			core.WithCode(ValidateKeywordWithWhitespace),
 		))
 	}
 }
@@ -154,6 +176,7 @@ func checkRuleReturnType(rule ParserRule, _ context.Context, accept core.Validat
 					fmt.Sprintf("Unable to find return type for rule '%s'. Either define an interface with the same name as the rule or explicitly specify the return type.", rule.Name()),
 					rule,
 					core.WithToken(rule.NameToken()),
+					core.WithCode(ValidateRuleReturnType),
 				),
 			)
 		}
@@ -176,6 +199,7 @@ func checkInterfaceExtends(iface Interface, ctx context.Context, accept core.Val
 				"An interface cannot extend itself, neither directly nor indirectly.",
 				iface,
 				core.WithReference(ext),
+				core.WithCode(ValidateInterfaceExtends),
 			))
 		}
 	}
@@ -231,6 +255,7 @@ func checkRuleCallReturnType(call RuleCall, ctx context.Context, accept core.Val
 				core.SeverityError,
 				fmt.Sprintf("The return type '%s' of the called rule is not assignable to the return type '%s' of the current rule.", targetType.Name(), ownType.Name()),
 				call,
+				core.WithCode(ValidateRuleCallReturnType),
 			))
 		}
 	}
@@ -255,6 +280,7 @@ func checkRuleCallPosition(call RuleCall, _ context.Context, accept core.Validat
 						core.SeverityError,
 						"An unassigned rule call cannot be preceded by an assigned action.",
 						call,
+						core.WithCode(ValidateRuleCallPosition),
 					))
 					return
 				}
@@ -263,6 +289,7 @@ func checkRuleCallPosition(call RuleCall, _ context.Context, accept core.Validat
 						core.SeverityError,
 						"An unassigned rule call cannot be preceded by an assignment.",
 						call,
+						core.WithCode(ValidateRuleCallPosition),
 					))
 					return
 				}
@@ -296,6 +323,7 @@ func checkActionAssignmentType(a Action, ctx context.Context, accept core.Valida
 			fmt.Sprintf("The type '%s' of the action is not assignable to the rule's return type '%s'.", targetType.Name(), returnType.Name()),
 			a,
 			core.WithReference(a.Type()),
+			core.WithCode(ValidateActionAssignmentType),
 		))
 	}
 }
@@ -320,6 +348,7 @@ func checkActionPropertyType(a Action, ctx context.Context, accept core.Validati
 				"The '+=' operator can only be used on array fields.",
 				a,
 				core.WithToken(a.OperatorToken()),
+				core.WithCode(ValidateActionPropertyType),
 			))
 			return
 		}
@@ -336,6 +365,7 @@ func checkActionPropertyType(a Action, ctx context.Context, accept core.Validati
 				fmt.Sprintf("The local type '%s' is not assignable to the target field type '%s'.", currentType.Name(), targetInterface.Name()),
 				a,
 				core.WithReference(a.Property()),
+				core.WithCode(ValidateActionPropertyType),
 			))
 		}
 	} else {
@@ -344,6 +374,7 @@ func checkActionPropertyType(a Action, ctx context.Context, accept core.Validati
 			"Cannot assign a parser rule to a non-interface field.",
 			a,
 			core.WithReference(a.Property()),
+			core.WithCode(ValidateActionPropertyType),
 		))
 	}
 }
@@ -377,6 +408,7 @@ func checkAssignmentType(a Assignment, ctx context.Context, accept core.Validati
 				"The '?=' operator can only be used on boolean fields.",
 				a,
 				core.WithToken(a.OperatorToken()),
+				core.WithCode(ValidateAssignmentType),
 			))
 		}
 		return
@@ -388,6 +420,7 @@ func checkAssignmentType(a Assignment, ctx context.Context, accept core.Validati
 				"The '+=' operator can only be used on array fields.",
 				a,
 				core.WithToken(a.OperatorToken()),
+				core.WithCode(ValidateAssignmentType),
 			))
 			return
 		}
@@ -420,6 +453,7 @@ func isAssignableTo(ctx context.Context, source Assignable, fieldType FieldType,
 					fmt.Sprintf("The type '%s' of the cross-reference value is not assignable to the target field type '%s'.", fromType.Name(), toType.Name()),
 					v,
 					core.WithReference(v.Type()),
+					core.WithCode(ValidateAssignmentType),
 				))
 			}
 		} else {
@@ -427,6 +461,7 @@ func isAssignableTo(ctx context.Context, source Assignable, fieldType FieldType,
 				core.SeverityError,
 				"Cannot assign a cross-reference value to a non-reference field.",
 				v,
+				core.WithCode(ValidateAssignmentType),
 			))
 		}
 	case RuleCall:
@@ -441,6 +476,7 @@ func isAssignableTo(ctx context.Context, source Assignable, fieldType FieldType,
 					core.SeverityError,
 					"Cannot assign a token to a non-string field.",
 					v,
+					core.WithCode(ValidateAssignmentType),
 				))
 			}
 		case ParserRule:
@@ -458,6 +494,7 @@ func isAssignableTo(ctx context.Context, source Assignable, fieldType FieldType,
 						core.SeverityError,
 						fmt.Sprintf("The return type '%s' of the called rule is not assignable to the target field type '%s'.", ruleType.Name(), targetType.Name()),
 						v,
+						core.WithCode(ValidateAssignmentType),
 					))
 				}
 			} else {
@@ -465,6 +502,7 @@ func isAssignableTo(ctx context.Context, source Assignable, fieldType FieldType,
 					core.SeverityError,
 					"Cannot assign a parser rule to a non-interface field.",
 					v,
+					core.WithCode(ValidateAssignmentType),
 				))
 			}
 		}
@@ -474,6 +512,7 @@ func isAssignableTo(ctx context.Context, source Assignable, fieldType FieldType,
 				core.SeverityError,
 				"Cannot assign a keyword value to a non-string field.",
 				v,
+				core.WithCode(ValidateAssignmentType),
 			))
 		}
 	case Alternatives:

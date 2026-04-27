@@ -5,204 +5,353 @@
 package grammar
 
 import (
-	"context"
 	"testing"
-
-	core "typefox.dev/fastbelt"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/test"
 )
 
-func TestLocalReferenceLinking(t *testing.T) {
-	srv := CreateServices()
-	builder := srv.Workspace().Builder
-
-	doc, err := core.NewDocumentFromString("inmemory://test.fb", "fastbelt", `
-grammar Test;
-
-interface Foo {
-    Bar *Bar
-}
-
-interface Bar {
-    Name string
-}
-
-Entry returns Foo: bar=SubRule;
-SubRule returns Bar: Name=ID;
-
+// commonTokens is appended to every test grammar to avoid repeating token definitions.
+const commonTokens = `
 token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
 hidden token WS: /[ \n\r\t]+/;
-`)
-	require.NoError(t, err)
+`
 
-	ctx := context.Background()
-	err = builder.Build(ctx, []*core.Document{doc}, func() {})
-	require.NoError(t, err)
+// --- Assignment.Property linking ---
 
-	assert.True(t, doc.State.Has(core.DocStateLinked), "document should be in Linked state")
+// TestAssignmentPropertyImplicitReturnType verifies that Assignment.Property resolves
+// when the rule name implicitly matches the interface name (no explicit "returns").
+func TestAssignmentPropertyImplicitReturnType(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Name string }
+		Foo: <|nameRef:Name|>=ID;
+	` + commonTokens).AssertNoErrors()
 
-	grammar, ok := doc.Root.(Grammar)
-	require.True(t, ok, "root should be a Grammar node")
+	nameRef := test.MustFindReference[Field](doc, "nameRef")
+	require.Nil(t, nameRef.Error(), "Assignment.Property should resolve without error")
 
-	rules := grammar.Rules()
-	require.Len(t, rules, 2, "grammar should have 2 parser rules")
-	interfaces := grammar.Interfaces()
-	require.Len(t, interfaces, 2, "grammar should have 2 interfaces")
+	field := nameRef.Ref(doc.Ctx())
+	require.NotNil(t, field)
+	assert.Equal(t, "Name", field.Name())
 
-	entryRule := rules[0]
-	assert.Equal(t, "Entry", entryRule.Name())
+	fooIface := test.MustFindNamedNode[Interface](doc, "Foo")
+	require.Len(t, fooIface.Fields(), 1)
+	assert.Same(t, fooIface.Fields()[0], field, "Property should resolve to the exact Field node on Foo")
+}
 
-	// ParserRule.ReturnType -> Interface: Entry returns *Foo*
-	returnTypeRef := entryRule.ReturnType()
-	require.NotNil(t, returnTypeRef, "Entry rule should have a ReturnType reference")
-	resolvedInterface := returnTypeRef.Ref(ctx)
-	require.NotNil(t, resolvedInterface, "ReturnType reference should resolve")
-	assert.Nil(t, returnTypeRef.Error(), "ReturnType reference should have no error")
-	assert.Equal(t, "Foo", resolvedInterface.Name())
+// TestAssignmentPropertyExplicitReturnType verifies that an explicit "returns" clause
+// correctly scopes Assignment.Property resolution to the declared interface.
+func TestAssignmentPropertyExplicitReturnType(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Name string Owner string }
+		Bar returns Foo: <|nameRef:Name|>=ID <|ownerRef:Owner|>=ID;
+	` + commonTokens).AssertNoErrors()
 
-	// RuleCall.Rule -> AbstractRule: bar=*SubRule*
-	body := entryRule.Body()
-	require.NotNil(t, body, "Entry rule should have a body")
-	assignment, ok := body.(Assignment)
-	require.True(t, ok, "body should be an Assignment")
-	assignable := assignment.Value()
-	require.NotNil(t, assignable, "assignment should have a value")
-	ruleCall, ok := assignable.(RuleCall)
-	require.True(t, ok, "assignment value should be a RuleCall")
-	ruleRef := ruleCall.Rule()
-	require.NotNil(t, ruleRef, "RuleCall should have a Rule reference")
-	resolvedRule := ruleRef.Ref(ctx)
-	require.NotNil(t, resolvedRule, "Rule reference should resolve")
-	assert.Nil(t, ruleRef.Error(), "Rule reference should have no error")
-	assert.Equal(t, "SubRule", resolvedRule.Name())
+	nameRef := test.MustFindReference[Field](doc, "nameRef")
+	require.Nil(t, nameRef.Error())
+	assert.Equal(t, "Name", nameRef.Ref(doc.Ctx()).Name())
+
+	ownerRef := test.MustFindReference[Field](doc, "ownerRef")
+	require.Nil(t, ownerRef.Error())
+	assert.Equal(t, "Owner", ownerRef.Ref(doc.Ctx()).Name())
+
+	// Both should resolve to fields on Foo (the return type), not on Bar.
+	fooIface := test.MustFindNamedNode[Interface](doc, "Foo")
+	assert.Same(t, fooIface.Fields()[0], nameRef.Ref(doc.Ctx()))
+	assert.Same(t, fooIface.Fields()[1], ownerRef.Ref(doc.Ctx()))
+}
+
+// TestAssignmentPropertySingleLevelInheritance verifies that Assignment.Property can
+// resolve a field declared on a direct parent interface.
+func TestAssignmentPropertySingleLevelInheritance(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Base { BaseName string }
+		interface Child extends Base { OwnName string }
+		Child: <|baseRef:BaseName|>=ID <|ownRef:OwnName|>=ID;
+	` + commonTokens).AssertNoErrors()
+
+	// BaseName is declared on Base — requires single-level inheritance traversal.
+	baseRef := test.MustFindReference[Field](doc, "baseRef")
+	require.Nil(t, baseRef.Error(), "inherited field BaseName should resolve without error")
+	baseField := baseRef.Ref(doc.Ctx())
+	require.NotNil(t, baseField)
+	assert.Equal(t, "BaseName", baseField.Name())
+	baseIface := test.MustFindNamedNode[Interface](doc, "Base")
+	assert.Same(t, baseIface.Fields()[0], baseField, "BaseName should resolve to the Base interface field")
+
+	// OwnName is declared directly on Child.
+	ownRef := test.MustFindReference[Field](doc, "ownRef")
+	require.Nil(t, ownRef.Error())
+	ownField := ownRef.Ref(doc.Ctx())
+	require.NotNil(t, ownField)
+	assert.Equal(t, "OwnName", ownField.Name())
+	childIface := test.MustFindNamedNode[Interface](doc, "Child")
+	assert.Same(t, childIface.Fields()[0], ownField)
+}
+
+// TestAssignmentPropertyMultiLevelInheritance verifies that Assignment.Property can
+// resolve a field from a grandparent interface through a chain of extensions.
+func TestAssignmentPropertyMultiLevelInheritance(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface A { FieldA string }
+		interface B extends A { FieldB string }
+		interface C extends B { FieldC string }
+		Rule returns C: <|refA:FieldA|>=ID <|refB:FieldB|>=ID <|refC:FieldC|>=ID;
+	` + commonTokens).AssertNoErrors()
+
+	refA := test.MustFindReference[Field](doc, "refA")
+	require.Nil(t, refA.Error(), "grandparent field FieldA should resolve")
+	assert.Equal(t, "FieldA", refA.Ref(doc.Ctx()).Name())
+	ifaceA := test.MustFindNamedNode[Interface](doc, "A")
+	assert.Same(t, ifaceA.Fields()[0], refA.Ref(doc.Ctx()), "FieldA should resolve to the A interface field")
+
+	refB := test.MustFindReference[Field](doc, "refB")
+	require.Nil(t, refB.Error(), "parent field FieldB should resolve")
+	assert.Equal(t, "FieldB", refB.Ref(doc.Ctx()).Name())
+	ifaceB := test.MustFindNamedNode[Interface](doc, "B")
+	assert.Same(t, ifaceB.Fields()[0], refB.Ref(doc.Ctx()), "FieldB should resolve to the B interface field")
+
+	refC := test.MustFindReference[Field](doc, "refC")
+	require.Nil(t, refC.Error(), "own field FieldC should resolve")
+	assert.Equal(t, "FieldC", refC.Ref(doc.Ctx()).Name())
+	ifaceC := test.MustFindNamedNode[Interface](doc, "C")
+	assert.Same(t, ifaceC.Fields()[0], refC.Ref(doc.Ctx()), "FieldC should resolve to the C interface field")
+}
+
+// --- Interface.Extends linking ---
+
+// TestInterfaceExtendsReference verifies that Interface.Extends cross-references
+// resolve to the correct parent interface nodes, including multiple extends.
+func TestInterfaceExtendsReference(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Base {}
+		interface Mixin {}
+		interface Child extends <|baseRef:Base|>, <|mixinRef:Mixin|> {}
+	` + commonTokens).AssertNoErrors()
+
+	baseRef := test.MustFindReference[Interface](doc, "baseRef")
+	require.Nil(t, baseRef.Error())
+	baseIface := baseRef.Ref(doc.Ctx())
+	require.NotNil(t, baseIface)
+	assert.Equal(t, "Base", baseIface.Name())
+
+	mixinRef := test.MustFindReference[Interface](doc, "mixinRef")
+	require.Nil(t, mixinRef.Error())
+	mixinIface := mixinRef.Ref(doc.Ctx())
+	require.NotNil(t, mixinIface)
+	assert.Equal(t, "Mixin", mixinIface.Name())
+
+	// Verify the Child interface reports both resolved parents.
+	childIface := test.MustFindNamedNode[Interface](doc, "Child")
+	require.Len(t, childIface.Extends(), 2)
+	assert.Same(t, baseIface, childIface.Extends()[0].Ref(doc.Ctx()))
+	assert.Same(t, mixinIface, childIface.Extends()[1].Ref(doc.Ctx()))
+}
+
+// --- Action linking ---
+
+// TestActionTypeAndPropertyReferences verifies that Action.Type resolves to the
+// declared interface and Action.Property resolves to the field on that interface.
+func TestActionTypeAndPropertyReferences(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Node { Name string }
+		interface List { Head Node Rest []Node }
+		List: Head=Node ({List.Rest+=current} Rest+=Node)*;
+		Node returns Node: Name=ID;
+	` + commonTokens).AssertNoParseErrors()
+
+	action := test.MustFindNode[Action](doc)
+
+	// Action.Type → List interface.
+	typeRef := action.Type()
+	require.NotNil(t, typeRef)
+	require.Nil(t, typeRef.Error(), "Action.Type should resolve without error")
+	resolvedType := typeRef.Ref(doc.Ctx())
+	require.NotNil(t, resolvedType)
+	assert.Equal(t, "List", resolvedType.Name())
+	listIface := test.MustFindNamedNode[Interface](doc, "List")
+	assert.Same(t, listIface, resolvedType)
+
+	// Action.Property → List.Rest field.
+	propRef := action.Property()
+	require.NotNil(t, propRef)
+	require.Nil(t, propRef.Error(), "Action.Property should resolve without error")
+	resolvedField := propRef.Ref(doc.Ctx())
+	require.NotNil(t, resolvedField)
+	assert.Equal(t, "Rest", resolvedField.Name())
+	assert.Equal(t, "+=", action.Operator())
+	assert.Same(t, listIface.Fields()[1], resolvedField)
+}
+
+// TestActionPropertyInheritedField verifies that Action.Property can resolve a field
+// declared on a parent interface of the action's declared Type.
+func TestActionPropertyInheritedField(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Base { Items []Node }
+		interface Child extends Base {}
+		interface Node { Name string }
+		Child: ({Child.Items+=current} Items+=Node)+;
+		Node returns Node: Name=ID;
+	` + commonTokens).AssertNoParseErrors()
+
+	action := test.MustFindNode[Action](doc)
+
+	// Action.Type = Child, but Action.Property "Items" is declared on Base.
+	typeRef := action.Type()
+	require.Nil(t, typeRef.Error())
+	assert.Equal(t, "Child", typeRef.Ref(doc.Ctx()).Name())
+
+	propRef := action.Property()
+	require.NotNil(t, propRef)
+	require.Nil(t, propRef.Error(), "Action.Property should resolve inherited field from Base")
+	field := propRef.Ref(doc.Ctx())
+	require.NotNil(t, field)
+	assert.Equal(t, "Items", field.Name())
+
+	baseIface := test.MustFindNamedNode[Interface](doc, "Base")
+	assert.Same(t, baseIface.Fields()[0], field, "Items should resolve to the Base interface field")
+}
+
+// --- Post-action scope ---
+
+// TestAssignmentPropertyAfterAction verifies that an assignment appearing after an
+// action in the same parser rule group uses the action's Type for scope resolution,
+// not the rule's original return type.
+func TestAssignmentPropertyAfterAction(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Node { Name string }
+		interface Container { Head Node Rest []Node }
+		Container: Head=Node ({Container.Rest+=current} <|restRef:Rest|>+=Node)*;
+		Node returns Node: Name=ID;
+	` + commonTokens).AssertNoParseErrors()
+
+	// "Rest" appears after the action {Container.Rest+=current}.
+	// Its scope should come from the action's type (Container), not the outer rule return type.
+	restRef := test.MustFindReference[Field](doc, "restRef")
+	require.Nil(t, restRef.Error(), "post-action assignment should resolve using action's type as scope")
+	field := restRef.Ref(doc.Ctx())
+	require.NotNil(t, field)
+	assert.Equal(t, "Rest", field.Name())
+
+	containerIface := test.MustFindNamedNode[Interface](doc, "Container")
+	assert.Same(t, containerIface.Fields()[1], field)
+}
+
+// --- CrossRef.Type linking ---
+
+// TestCrossRefTypeReference verifies that the interface type reference inside a
+// cross-reference expression ([Interface:Rule]) resolves to the correct interface.
+func TestCrossRefTypeReference(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface State {
+			Name string
+		}
+		interface Machine {
+			States []*State
+			Active *State
+		}
+		Machine: "machine" States+=[<|stateTypeRef:State|>:ID] "active" Active=[State:ID];
+		State returns State: Name=ID;
+	` + commonTokens).AssertNoErrors()
+
+	// The marker pins to the Type reference inside the first [State:ID] cross-ref.
+	stateTypeRef := test.MustFindReference[Interface](doc, "stateTypeRef")
+	require.Nil(t, stateTypeRef.Error(), "CrossRef.Type should resolve to the State interface")
+	resolvedIface := stateTypeRef.Ref(doc.Ctx())
+	require.NotNil(t, resolvedIface)
+	assert.Equal(t, "State", resolvedIface.Name())
+
+	stateIface := test.MustFindNamedNode[Interface](doc, "State")
+	assert.Same(t, stateIface, resolvedIface)
+}
+
+func TestLocalReferenceLinking(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Bar *Bar }
+		interface Bar { Name string }
+		Entry returns <|returnRef:Foo|>: bar=<|ruleRef:SubRule|>;
+		SubRule returns Bar: Name=ID;
+	` + commonTokens).AssertState(core.DocStateLinked)
+
+	grammar := test.MustFindNode[Grammar](doc)
+	assert.Len(t, grammar.Rules(), 2, "grammar should have 2 parser rules")
+	assert.Len(t, grammar.Interfaces(), 2, "grammar should have 2 interfaces")
+
+	// ParserRule.ReturnType → Foo interface
+	returnRef := test.MustFindReference[Interface](doc, "returnRef")
+	require.Nil(t, returnRef.Error())
+	assert.Equal(t, "Foo", returnRef.Ref(doc.Ctx()).Name())
+
+	// RuleCall.Rule → SubRule
+	ruleRef := test.MustFindReference[AbstractRule](doc, "ruleRef")
+	require.Nil(t, ruleRef.Error())
+	assert.Equal(t, "SubRule", ruleRef.Ref(doc.Ctx()).Name())
 }
 
 func TestAssignmentPropertyScope(t *testing.T) {
-	srv := CreateServices()
-	builder := srv.Workspace().Builder
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Person { Name string Age string }
+		Person returns Person: "person" <|nameRef:Name|>=ID <|ageRef:Age|>=ID;
+	` + commonTokens).AssertNoErrors()
 
-	doc, err := core.NewDocumentFromString("inmemory://test.fb", "fastbelt", `
-grammar Test;
+	iface := test.MustFindNamedNode[Interface](doc, "Person")
+	require.Len(t, iface.Fields(), 2)
 
-interface Person {
-    Name string
-    Age string
-}
+	nameRef := test.MustFindReference[Field](doc, "nameRef")
+	require.Nil(t, nameRef.Error())
+	assert.Equal(t, "Name", nameRef.Ref(doc.Ctx()).Name())
+	assert.Same(t, iface.Fields()[0], nameRef.Ref(doc.Ctx()))
 
-Person returns Person: "person" Name=ID Age=ID;
-
-token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
-hidden token WS: /[ \n\r\t]+/;
-`)
-	require.NoError(t, err)
-
-	ctx := context.Background()
-	err = builder.Build(ctx, []*core.Document{doc}, func() {})
-	require.NoError(t, err)
-
-	grammar, ok := doc.Root.(Grammar)
-	require.True(t, ok, "root should be a Grammar node")
-
-	rules := grammar.Rules()
-	require.Len(t, rules, 1)
-	personRule := rules[0]
-	assert.Equal(t, "Person", personRule.Name())
-
-	iface := grammar.Interfaces()[0]
-	require.Equal(t, "Person", iface.Name())
-	fields := iface.Fields()
-	require.Len(t, fields, 2)
-
-	// The rule body is: "person" Name=ID Age=ID
-	// With multiple elements this becomes a Group node.
-	body := personRule.Body()
-	require.NotNil(t, body)
-	group, ok := body.(Group)
-	require.True(t, ok, "body with multiple elements should be a Group")
-	elements := group.Elements()
-	require.Len(t, elements, 3, "group should have keyword + 2 assignments")
-
-	// Assignment.Property -> Field: *Name*=ID
-	nameAssignment, ok := elements[1].(Assignment)
-	require.True(t, ok, "second element should be an Assignment")
-	namePropertyRef := nameAssignment.Property()
-	require.NotNil(t, namePropertyRef, "assignment should have a Property reference")
-	resolvedNameField := namePropertyRef.Ref(ctx)
-	require.NotNil(t, resolvedNameField, "Name property reference should resolve")
-	assert.Nil(t, namePropertyRef.Error(), "Name property reference should have no error")
-	assert.Equal(t, "Name", resolvedNameField.Name())
-	assert.Same(t, fields[0], resolvedNameField, "should resolve to the Name field of Person interface")
-
-	// Assignment.Property -> Field: *Age*=ID
-	ageAssignment, ok := elements[2].(Assignment)
-	require.True(t, ok, "third element should be an Assignment")
-	agePropertyRef := ageAssignment.Property()
-	require.NotNil(t, agePropertyRef, "assignment should have a Property reference")
-	resolvedAgeField := agePropertyRef.Ref(ctx)
-	require.NotNil(t, resolvedAgeField, "Age property reference should resolve")
-	assert.Nil(t, agePropertyRef.Error(), "Age property reference should have no error")
-	assert.Equal(t, "Age", resolvedAgeField.Name())
-	assert.Same(t, fields[1], resolvedAgeField, "should resolve to the Age field of Person interface")
+	ageRef := test.MustFindReference[Field](doc, "ageRef")
+	require.Nil(t, ageRef.Error())
+	assert.Equal(t, "Age", ageRef.Ref(doc.Ctx()).Name())
+	assert.Same(t, iface.Fields()[1], ageRef.Ref(doc.Ctx()))
 }
 
 func TestCrossDocumentReferenceLinking(t *testing.T) {
-	srv := CreateServices()
-	builder := srv.Workspace().Builder
-	docManager := srv.Workspace().DocumentManager
-
-	typesDoc, err := core.NewDocumentFromString("inmemory://types.fb", "fastbelt", `
-grammar Types;
-
-interface Animal {
-    Name string
-}
-`)
-	require.NoError(t, err)
-
-	rulesDoc, err := core.NewDocumentFromString("inmemory://rules.fb", "fastbelt", `
-grammar Rules;
-
-Animal returns Animal: Name=ID;
-
-token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
-hidden token WS: /[ \n\r\t]+/;
-`)
-	require.NoError(t, err)
-
-	docManager.Set(typesDoc)
-	docManager.Set(rulesDoc)
-
-	ctx := context.Background()
-	docs := []*core.Document{typesDoc, rulesDoc}
-	err = builder.Build(ctx, docs, func() {})
-	require.NoError(t, err)
-
-	assert.True(t, typesDoc.State.Has(core.DocStateLinked))
-	assert.True(t, rulesDoc.State.Has(core.DocStateLinked))
-
-	// Grab the Animal interface from the types document.
-	typesGrammar, ok := typesDoc.Root.(Grammar)
-	require.True(t, ok)
-	require.Len(t, typesGrammar.Interfaces(), 1)
-	animalIface := typesGrammar.Interfaces()[0]
-	assert.Equal(t, "Animal", animalIface.Name())
-
-	// Grab the Animal rule from the rules document.
-	rulesGrammar, ok := rulesDoc.Root.(Grammar)
-	require.True(t, ok)
-	require.Len(t, rulesGrammar.Rules(), 1)
-	animalRule := rulesGrammar.Rules()[0]
-	assert.Equal(t, "Animal", animalRule.Name())
+	f := test.New(t, CreateServices())
+	docs := f.ParseAll(
+		"inmemory://types.fb", `
+			grammar Types;
+			interface Animal { Name string }
+		`,
+		"inmemory://rules.fb", `
+			grammar Rules;
+			Animal returns <|Animal|>: Name=ID;
+		`+commonTokens,
+	)
+	typesDoc, rulesDoc := docs[0], docs[1]
+	rulesDoc.AssertState(core.DocStateLinked)
+	typesDoc.AssertState(core.DocStateLinked)
 
 	// ParserRule.ReturnType should resolve across documents to the Animal interface.
-	returnTypeRef := animalRule.ReturnType()
-	require.NotNil(t, returnTypeRef)
-	resolvedIface := returnTypeRef.Ref(ctx)
-	require.NotNil(t, resolvedIface, "ReturnType should resolve to interface from other document")
-	assert.Nil(t, returnTypeRef.Error(), "ReturnType reference should have no error")
+	animalRef := test.MustFindReference[Interface](rulesDoc, "Animal")
+	require.Nil(t, animalRef.Error())
+	resolvedIface := animalRef.Ref(rulesDoc.Ctx())
 	assert.Equal(t, "Animal", resolvedIface.Name())
-	assert.Same(t, animalIface, resolvedIface,
-		"should resolve to the exact Interface node from the types document")
+	assert.Same(t, test.MustFindNamedNode[Interface](typesDoc, "Animal"), resolvedIface)
 }
