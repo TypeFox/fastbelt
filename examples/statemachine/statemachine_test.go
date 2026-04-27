@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	core "typefox.dev/fastbelt"
-	fbtest "typefox.dev/fastbelt/testing"
+	"typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/test"
 )
 
 // lightSwitch is a minimal two-state machine used across several tests.
@@ -38,17 +38,17 @@ end
 `
 
 func TestParsing(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	f.Parse(lightSwitch).
 		AssertNoErrors().
-		AssertState(core.DocStateLinked)
+		AssertState(fastbelt.DocStateLinked)
 }
 
 func TestAST(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(lightSwitch).AssertNoErrors()
 
-	sm := fbtest.MustFindNode[Statemachine](doc)
+	sm := test.MustFindNode[Statemachine](doc)
 	assert.Equal(t, "LightSwitch", sm.Name())
 	assert.Len(t, sm.Events(), 1)
 	assert.Len(t, sm.Commands(), 2)
@@ -56,35 +56,35 @@ func TestAST(t *testing.T) {
 }
 
 func TestFindAll(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(lightSwitch).AssertNoErrors()
 
-	events := fbtest.FindAll[Event](doc)
+	events := test.FindAll[Event](doc)
 	require.Len(t, events, 1)
 	assert.Equal(t, "flick", events[0].Name())
 
-	states := fbtest.FindAll[State](doc)
+	states := test.FindAll[State](doc)
 	require.Len(t, states, 2)
 }
 
 func TestFindNamedNode(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(lightSwitch).AssertNoErrors()
 
-	off := fbtest.MustFindNamedNode[State](doc, "off")
+	off := test.MustFindNamedNode[State](doc, "off")
 	assert.Len(t, off.Actions(), 1)
 	assert.Len(t, off.Transitions(), 1)
 
-	on := fbtest.MustFindNamedNode[State](doc, "on")
+	on := test.MustFindNamedNode[State](doc, "on")
 	assert.Len(t, on.Actions(), 1)
 	assert.Len(t, on.Transitions(), 1)
 }
 
 func TestInitialStateReference(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(lightSwitch).AssertNoErrors()
 
-	sm := fbtest.MustFindNode[Statemachine](doc)
+	sm := test.MustFindNode[Statemachine](doc)
 	initRef := sm.Init()
 	require.NotNil(t, initRef)
 	require.Nil(t, initRef.Error(), "Init reference should resolve without error")
@@ -95,10 +95,10 @@ func TestInitialStateReference(t *testing.T) {
 }
 
 func TestTransitionReferences(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(lightSwitch).AssertNoErrors()
 
-	offState := fbtest.MustFindNamedNode[State](doc, "off")
+	offState := test.MustFindNamedNode[State](doc, "off")
 	transitions := offState.Transitions()
 	require.Len(t, transitions, 1)
 
@@ -116,11 +116,11 @@ func TestTransitionReferences(t *testing.T) {
 }
 
 func TestFindReferenceWithText(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(lightSwitch).AssertNoErrors()
 
 	// Locate the "off" cross-reference (the one in the "on" state's transition).
-	ref := fbtest.MustFindReferenceWithText[State](doc, "off")
+	ref := test.MustFindReferenceWithText[State](doc, "off")
 	assert.Nil(t, ref.Error())
 	resolved := ref.Ref(doc.Ctx())
 	require.NotNil(t, resolved)
@@ -131,7 +131,7 @@ func TestFindReferenceWithText(t *testing.T) {
 // a reference lookup to a specific token when multiple references share the
 // same text (both transitions reference the event "flick" here).
 func TestFindReferenceAtMarker(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		statemachine Toggle
 
@@ -151,17 +151,17 @@ func TestFindReferenceAtMarker(t *testing.T) {
 
 	// Both references use the text "flick", so FindReferenceWithText would
 	// return whichever comes first. Markers let us pick the one we want.
-	aRef := fbtest.MustFindReference[Event](doc, "aFlick")
+	aRef := test.MustFindReference[Event](doc, "aFlick")
 	assert.Nil(t, aRef.Error())
 	assert.Equal(t, "flick", aRef.Ref(doc.Ctx()).Name())
 
-	bRef := fbtest.MustFindReference[Event](doc, "bFlick")
+	bRef := test.MustFindReference[Event](doc, "bFlick")
 	assert.Nil(t, bRef.Error())
 	assert.Equal(t, "flick", bRef.Ref(doc.Ctx()).Name())
 }
 
 func TestFindNodeAtLabel(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		statemachine S
 		events e
@@ -175,19 +175,19 @@ func TestFindNodeAtLabel(t *testing.T) {
 	// FindNodeAtLabel resolves to the smallest AST node containing that offset.
 	// Since "idle" is a reference token owned by the Statemachine node, we
 	// expect the Statemachine to be the containing node.
-	sm, ok := fbtest.FindNodeAtLabel[Statemachine](doc, "cursor")
+	sm, ok := test.FindNodeAtLabel[Statemachine](doc, "cursor")
 	assert.True(t, ok)
 	assert.Equal(t, "S", sm.Name())
 }
 
 func TestParseError(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`this is not a valid statemachine`)
 	assert.NotEmpty(t, doc.Document.ParserErrors, "invalid input should produce parser errors")
 }
 
 func TestUnresolvedReference(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		statemachine Broken
 		events click
@@ -197,7 +197,7 @@ func TestUnresolvedReference(t *testing.T) {
 		end
 		`).AssertNoParseErrors()
 
-	sm := fbtest.MustFindNode[Statemachine](doc)
+	sm := test.MustFindNode[Statemachine](doc)
 	initRef := sm.Init()
 	require.NotNil(t, initRef)
 	// "missing" does not name any state — resolution should fail.

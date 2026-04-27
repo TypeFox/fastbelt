@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/workspace"
 )
 
@@ -34,10 +34,10 @@ func BenchmarkWorkspaceCycle(b *testing.B) {
 		srv.Workspace().DocumentManager = workspace.NewDefaultDocumentManager()
 		docManager := srv.Workspace().DocumentManager
 
-		docs := make([]*core.Document, resourceCount)
+		docs := make([]*fastbelt.Document, resourceCount)
 		for i, content := range contents {
 			uri := fmt.Sprintf("file:///workspace/statemachine_%d.statemachine", i)
-			doc, err := core.NewDocumentFromString(uri, "statemachine", content)
+			doc, err := fastbelt.NewDocumentFromString(uri, "statemachine", content)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -63,7 +63,7 @@ func BenchmarkWorkspaceCycle(b *testing.B) {
 func BenchmarkTraverseContentSeq(b *testing.B) {
 	content, _ := generateStatemachineContent(0)
 	srv := CreateServices()
-	doc, err := core.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
+	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -71,7 +71,7 @@ func BenchmarkTraverseContentSeq(b *testing.B) {
 
 	for b.Loop() {
 		count := 0
-		for range core.AllChildren(doc.Root) {
+		for range fastbelt.AllChildren(doc.Root) {
 			count++
 		}
 		_ = count
@@ -81,13 +81,13 @@ func BenchmarkTraverseContentSeq(b *testing.B) {
 func TestAllNodesEquivalence(t *testing.T) {
 	content, elementCount := generateStatemachineContent(0)
 	srv := CreateServices()
-	doc, err := core.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
+	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	if err != nil {
 		t.Fatal(err)
 	}
 	srv.Workspace().DocumentParser.Parse(doc)
 	nodeCount := 0
-	for range core.AllNodes(doc.Root) {
+	for range fastbelt.AllNodes(doc.Root) {
 		nodeCount++
 	}
 	assert.Equal(t, elementCount, nodeCount, "AllNodes should iterate all nodes in the document")
@@ -97,13 +97,13 @@ func TestAllChildrenEquivalence(t *testing.T) {
 	content, elementCount := generateStatemachineContent(0)
 	totalCount := elementCount - 1 // AllChildren does not include the root node, so we subtract 1 from the total count
 	srv := CreateServices()
-	doc, err := core.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
+	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	if err != nil {
 		t.Fatal(err)
 	}
 	srv.Workspace().DocumentParser.Parse(doc)
 	childCount := 0
-	for range core.AllChildren(doc.Root) {
+	for range fastbelt.AllChildren(doc.Root) {
 		childCount++
 	}
 	assert.Equal(t, totalCount, childCount, "AllChildren should iterate all child nodes in the document")

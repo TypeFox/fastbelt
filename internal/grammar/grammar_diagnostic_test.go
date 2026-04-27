@@ -8,13 +8,13 @@ import (
 	"testing"
 
 	core "typefox.dev/fastbelt"
-	fbtest "typefox.dev/fastbelt/testing"
+	"typefox.dev/fastbelt/test"
 )
 
 // --- Rule and interface uniqueness ---
 
 func TestDuplicateRuleNames(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
@@ -25,7 +25,7 @@ func TestDuplicateRuleNames(t *testing.T) {
 }
 
 func TestDuplicateInterfaceNames(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface <|1:Foo|> { Name string }
@@ -38,7 +38,7 @@ func TestDuplicateInterfaceNames(t *testing.T) {
 // --- Terminal ---
 
 func TestTerminalMatchesEmptyString(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
@@ -51,7 +51,7 @@ func TestTerminalMatchesEmptyString(t *testing.T) {
 // --- Keywords ---
 
 func TestKeywordEmpty(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
@@ -61,7 +61,7 @@ func TestKeywordEmpty(t *testing.T) {
 }
 
 func TestKeywordWhitespaceOnly(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
@@ -71,7 +71,7 @@ func TestKeywordWhitespaceOnly(t *testing.T) {
 }
 
 func TestKeywordContainsWhitespace(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
@@ -83,7 +83,7 @@ func TestKeywordContainsWhitespace(t *testing.T) {
 // --- Parser rule return type ---
 
 func TestRuleWithoutReturnType(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
@@ -95,7 +95,7 @@ func TestRuleWithoutReturnType(t *testing.T) {
 // --- Interface circular inheritance ---
 
 func TestCircularInterfaceExtensionDirect(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface Foo extends <|Foo|> {}
@@ -104,7 +104,7 @@ func TestCircularInterfaceExtensionDirect(t *testing.T) {
 }
 
 func TestCircularInterfaceExtensionIndirect(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface A extends <|B|> {}
@@ -117,7 +117,7 @@ func TestCircularInterfaceExtensionIndirect(t *testing.T) {
 // --- Unassigned rule call ---
 
 func TestUnassignedRuleCallReturnTypeMismatch(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface Foo {}
@@ -129,7 +129,7 @@ func TestUnassignedRuleCallReturnTypeMismatch(t *testing.T) {
 }
 
 func TestUnassignedRuleCallAfterAction(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	// Bar extends Foo, so {Bar.Items+=current} is type-valid; the only error is the position check.
 	doc := f.Parse(`
 		grammar Test;
@@ -141,7 +141,7 @@ func TestUnassignedRuleCallAfterAction(t *testing.T) {
 }
 
 func TestUnassignedRuleCallAfterAssignment(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
@@ -154,7 +154,7 @@ func TestUnassignedRuleCallAfterAssignment(t *testing.T) {
 // --- Action type assignability ---
 
 func TestActionTypeNotAssignableToRuleReturn(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	// Action type is Bar; rule Foo returns Foo. Bar does not extend Foo → type error.
 	doc := f.Parse(`
 		grammar Test;
@@ -168,7 +168,7 @@ func TestActionTypeNotAssignableToRuleReturn(t *testing.T) {
 // --- Assignment operator mismatches ---
 
 func TestBooleanOperatorOnNonBoolField(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
@@ -178,7 +178,7 @@ func TestBooleanOperatorOnNonBoolField(t *testing.T) {
 }
 
 func TestArrayOperatorOnNonArrayField(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Name string }
@@ -190,7 +190,7 @@ func TestArrayOperatorOnNonArrayField(t *testing.T) {
 // --- Assignment value type compatibility ---
 
 func TestCrossRefToNonReferenceField(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface Target { Name string }
@@ -201,7 +201,7 @@ func TestCrossRefToNonReferenceField(t *testing.T) {
 }
 
 func TestCrossRefTypeMismatch(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface Bar { Name string }
@@ -213,7 +213,7 @@ func TestCrossRefTypeMismatch(t *testing.T) {
 }
 
 func TestTokenAssignedToNonStringField(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface Child { Name string }
@@ -224,7 +224,7 @@ func TestTokenAssignedToNonStringField(t *testing.T) {
 }
 
 func TestParserRuleReturnTypeMismatch(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface Bar { Name string }
@@ -238,7 +238,7 @@ func TestParserRuleReturnTypeMismatch(t *testing.T) {
 }
 
 func TestKeywordAssignedToNonStringField(t *testing.T) {
-	f := fbtest.New(t, CreateServices())
+	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
 		interface Child { Name string }

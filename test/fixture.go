@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-// Package fbtest provides utilities for testing Fastbelt language implementations.
+// Package test provides utilities for testing Fastbelt language implementations.
 //
 // Create a [Fixture] from your language's service container, then call [Fixture.Parse]
 // or [Fixture.ParseAll] to build documents. Use [Doc] assertion methods and the
@@ -20,7 +20,7 @@
 //
 // Range markers are tried before index markers when both share the same opening
 // delimiter (the default). Marker delimiters are configurable via [TestMarking].
-package fbtest
+package test
 
 import (
 	"context"
@@ -74,20 +74,20 @@ type Fixture struct {
 	marking *TestMarking
 }
 
-// New creates a Fixture backed by the given service container.
+// New creates a [Fixture] backed by the given service container.
 // It uses [DefaultMarking] and [context.Background].
 func New(t testing.TB, srv workspace.WorkspaceSrvCont) *Fixture {
 	t.Helper()
 	return &Fixture{t: t, srv: srv, ctx: context.Background(), marking: DefaultMarking}
 }
 
-// NewWithContext creates a Fixture with an explicit context.
+// NewWithContext creates a [Fixture] with an explicit context.
 func NewWithContext(t testing.TB, srv workspace.WorkspaceSrvCont, ctx context.Context) *Fixture {
 	t.Helper()
 	return &Fixture{t: t, srv: srv, ctx: ctx, marking: DefaultMarking}
 }
 
-// WithMarking returns a shallow copy of the Fixture using m as the marker configuration.
+// WithMarking returns a shallow copy of the [Fixture] using m as the marker configuration.
 func (f *Fixture) WithMarking(m *TestMarking) *Fixture {
 	f.t.Helper()
 	if m == nil {

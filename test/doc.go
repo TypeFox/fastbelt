@@ -1,4 +1,4 @@
-package fbtest
+package test
 
 import (
 	"context"
@@ -28,8 +28,7 @@ func (d *Doc) Root() core.AstNode { return d.Document.Root }
 // Diagnostics returns all diagnostics collected during validation.
 func (d *Doc) Diagnostics() []*core.Diagnostic { return d.Document.Diagnostics }
 
-// AssertNoErrors fails the test if any LexerErrors, ParserErrors, or error-severity
-// Diagnostics exist.
+// AssertNoErrors fails the test if any error-severity Diagnostics exist.
 func (d *Doc) AssertNoErrors() *Doc {
 	d.t.Helper()
 	// The diagnostics contain all kinds of errors
@@ -68,6 +67,7 @@ func (d *DiagnosticExpectation) WithMessage(msg string) *DiagnosticExpectation {
 }
 
 func (d *DiagnosticExpectation) WithMessageContaining(substring string) *DiagnosticExpectation {
+	d.t.Helper()
 	if !strings.Contains(d.Diagnostic.Message, substring) {
 		d.t.Errorf("fbtest: expected diagnostic message containing %q, got %q", substring, d.Diagnostic.Message)
 	}
@@ -75,6 +75,7 @@ func (d *DiagnosticExpectation) WithMessageContaining(substring string) *Diagnos
 }
 
 func (d *DiagnosticExpectation) WithCode(code string) *DiagnosticExpectation {
+	d.t.Helper()
 	if d.Diagnostic.Code != code {
 		d.t.Errorf("fbtest: expected diagnostic code %q, got %q", code, d.Diagnostic.Code)
 	}
@@ -82,6 +83,7 @@ func (d *DiagnosticExpectation) WithCode(code string) *DiagnosticExpectation {
 }
 
 func (d *DiagnosticExpectation) WithSource(source string) *DiagnosticExpectation {
+	d.t.Helper()
 	if d.Diagnostic.Source != source {
 		d.t.Errorf("fbtest: expected diagnostic source %q, got %q", source, d.Diagnostic.Source)
 	}
@@ -89,6 +91,7 @@ func (d *DiagnosticExpectation) WithSource(source string) *DiagnosticExpectation
 }
 
 func (d *DiagnosticExpectation) WithSeverity(severity core.DiagnosticSeverity) *DiagnosticExpectation {
+	d.t.Helper()
 	if d.Diagnostic.Severity != severity {
 		d.t.Errorf("fbtest: expected diagnostic severity %q, got %q", severity, d.Diagnostic.Severity)
 	}
@@ -96,6 +99,7 @@ func (d *DiagnosticExpectation) WithSeverity(severity core.DiagnosticSeverity) *
 }
 
 func (d *DiagnosticExpectation) WithTags(tags ...core.DiagnosticTag) *DiagnosticExpectation {
+	d.t.Helper()
 	if len(d.Diagnostic.Tags) != len(tags) {
 		d.t.Errorf("fbtest: expected diagnostic tags %v, got %v", tags, d.Diagnostic.Tags)
 		return d
