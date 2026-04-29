@@ -9,7 +9,7 @@ import (
 )
 
 func GenerateATN(grammr grammar.Grammar, packageName string) string {
-	rules, err := FromParserRules(grammr.Rules(), getTokenTypes(grammr))
+	rules, err := FromParserRules(grammr.Rules(), GetTokenTypes(grammr))
 	if err != nil {
 		panic(err)
 	}
@@ -19,7 +19,7 @@ func GenerateATN(grammr grammar.Grammar, packageName string) string {
 	return FormatIfPossible(source)
 }
 
-func getTokenTypes(grammr grammar.Grammar) map[string]TokenInfo {
+func GetTokenTypes(grammr grammar.Grammar) map[string]TokenInfo {
 	tokens := grammr.Terminals()
 	keywords := GetAllKeywords(grammr)
 	nodes := make(map[string]TokenInfo, len(tokens)+len(keywords))

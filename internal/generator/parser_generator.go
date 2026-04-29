@@ -185,6 +185,16 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 	}
 
 	node.AppendLine("func NewParser(srv ", grammr.Name(), "GeneratedSrvCont) *Parser {")
+	//TODO switch to ATN-based strategy once implemented
+	/*node.Indent(func(n generator.Node) {
+		n.AppendLine("atn := BuildATN()")
+		n.AppendLine("return &Parser{")
+		n.Indent(func(n generator.Node) {
+			n.AppendLine("srv:      srv,")
+			n.AppendLine("strategy: allstar.NewLLStarLookaheadFromRuntime(atn, nil).AsParserStrategy(),")
+		})
+		n.AppendLine("}")
+	})*/
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("return &Parser{")
 		n.Indent(func(in generator.Node) {
@@ -368,7 +378,8 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 						n2.AppendLine("}")
 					})
 				}, func(n generator.Node) {
-					n.Append(generatePredictOptExpr(context.lookaheads[element].atnKey))				}, element.Cardinality())
+					n.Append(generatePredictOptExpr(context.lookaheads[element].atnKey))
+				}, element.Cardinality())
 			}
 		})
 		node.AppendLine("}")
