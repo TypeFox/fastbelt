@@ -18,7 +18,7 @@ func GenerateATN(grammr grammar.Grammar, packageName string) string {
 	atn := allstar.CreateATN(rules)
 	rtn := allstar.BuildRuntimeATN(atn)
 	source := allstar.EmitGoSource(packageName, "BuildATN", "typefox.dev/fastbelt/parser/allstar", rtn)
-	return FormatIfPossible(source)
+	return FormatIfPossible(source.String())
 }
 
 func GetTokenTypes(grammr grammar.Grammar) map[string]TokenInfo {
