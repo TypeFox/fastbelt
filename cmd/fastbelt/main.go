@@ -165,6 +165,10 @@ func runLegacyGenerate(args []string) error {
 		generator.GenerateATN(grammar, packageName)); err != nil {
 		return err
 	}
+	if err := writeFile("atn-md", filepath.Join(outputPath, "atn.md"),
+		generator.GenerateATNMarkdown(grammar, packageName)); err != nil {
+		return err
+	}
 
 	return nil
 }
