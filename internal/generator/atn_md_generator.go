@@ -23,5 +23,5 @@ func GenerateATNMarkdown(grammr grammar.Grammar, packageName string) string {
 	atn := allstar.CreateATN(rules)
 	rtn := allstar.BuildRuntimeATN(atn)
 	source := allstar.EmitMarkdownSource(packageName, rtn, tokenTypeNames)
-	return FormatIfPossible(source.String())
+	return source.String()
 }
