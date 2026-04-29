@@ -76,7 +76,6 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *RuntimeATN) generat
 						n.AppendLine("&allstar.RuntimeEpsilonTransition{Target: states[", strconv.Itoa(idx[at.Target]), "]},")
 					case *RuntimeRuleTransition:
 						n.AppendLine("&allstar.RuntimeRuleTransition{Target: states[", strconv.Itoa(idx[at.Target]), "], FollowState: states[", strconv.Itoa(idx[at.FollowState]), "]},")
-
 					}
 				}
 			})
