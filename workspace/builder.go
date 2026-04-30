@@ -56,7 +56,6 @@ func NewDefaultBuilder(sc *service.Container) Builder {
 }
 
 func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downgrade func()) error {
-
 	// PHASE 1: Parse, and compute exports (parallel per document).
 	parser := service.MustGet[DocumentParser](s.sc)
 	exportedSymbols := service.MustGet[linking.ExportedSymbolsProvider](s.sc)
