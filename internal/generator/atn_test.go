@@ -34,10 +34,57 @@ func TestTokenRef(t *testing.T) {
 
 	builder := NewATNBuilder()
 	ruleStart := builder.DeclareRule(rules["Start"])
-	rHandle := ruleStart.RuleHandle()
 	tokHandle := ruleStart.TokenRef(tokenTypes["ID"])
-	ruleStart.NewEpsilon(rHandle.Left, tokHandle.Left)
-	ruleStart.NewEpsilon(tokHandle.Right, rHandle.Right)
+	ruleStart.Assign(tokHandle)
+	expected := builder.Build()
+
+	requireATNRulesEqual(t, expected, actual, "Start")
+}
+
+func TestRuleRef(t *testing.T) {
+	actual, rules, tokenTypes := fixtureATN(t, grammarTemplate(`
+		interface Start { Property Rule }
+		interface Rule { Name string }
+		Start: Property=Rule;
+		Rule: Name=ID;
+	`))
+
+	builder := NewATNBuilder()
+	{
+		rule := builder.DeclareRule(rules["Rule"])
+		tokHandle := rule.TokenRef(tokenTypes["ID"])
+		rule.Assign(tokHandle)
+	}
+	{
+		rule := builder.DeclareRule(rules["Start"])
+		ruleRefHandle := rule.RuleRef(rules["Rule"])
+		rule.Assign(ruleRefHandle)
+	}
+	expected := builder.Build()
+
+	requireATNRulesEqual(t, expected, actual, "Start")
+}
+
+func TestPlusRule(t *testing.T) {
+	actual, rules, tokenTypes := fixtureATN(t, grammarTemplate(`
+		interface Start { Property []Rule }
+		interface Rule { Name string }
+		Start: Property+=Rule+;
+		Rule: Name=ID;
+	`))
+
+	builder := NewATNBuilder()
+	{
+		rule := builder.DeclareRule(rules["Rule"])
+		tokHandle := rule.TokenRef(tokenTypes["ID"])
+		rule.Assign(tokHandle)
+	}
+	{
+		rule := builder.DeclareRule(rules["Start"])
+		ruleRefHandle := rule.RuleRef(rules["Rule"])
+		plusHandle := rule.Plus("", ruleRefHandle)
+		rule.Assign(plusHandle)
+	}
 	expected := builder.Build()
 
 	requireATNRulesEqual(t, expected, actual, "Start")

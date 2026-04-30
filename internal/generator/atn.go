@@ -26,7 +26,7 @@ func CreateATN(grammr grammar.Grammar) (*ATN, map[string]*grammar.ParserRule, ma
 			// Handle the error appropriately, e.g., log it or return it
 			fmt.Printf("Error converting element for rule %s: %v\n", gr.Name(), err)
 		}
-		buildRuleHandle(builder.atn, &gr, handle)
+		ruleBuilder.Assign(handle)
 	}
 	atn := builder.Build()
 	return atn, byName, tokenTypes
@@ -270,11 +270,4 @@ func nextCounter(counters map[reflect.Type]int, obj any) int {
 	kind := reflect.TypeOf(obj)
 	counters[kind]++
 	return counters[kind]
-}
-
-func buildRuleHandle(atn *ATN, rule *grammar.ParserRule, b *ATNHandle) {
-	start := atn.RuleToStartState[rule]
-	addEpsilon(start, b.Left)
-	stop := atn.RuleToStopState[rule]
-	addEpsilon(b.Right, stop)
 }

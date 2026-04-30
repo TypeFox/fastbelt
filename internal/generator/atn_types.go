@@ -50,8 +50,8 @@ type ATN struct {
 	DecisionMap      map[string]*ATNState
 	States           []*ATNState
 	DecisionStates   []*ATNState
-	RuleToStartState map[*grammar.ParserRule]*ATNState
-	RuleToStopState  map[*grammar.ParserRule]*ATNState
+	RuleToStartState map[grammar.ParserRule]*ATNState
+	RuleToStopState  map[grammar.ParserRule]*ATNState
 }
 
 // Transition is the interface implemented by all ATN transitions.

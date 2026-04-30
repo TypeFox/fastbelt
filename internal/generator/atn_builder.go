@@ -9,7 +9,7 @@ import (
 )
 
 type ATNRuleBuilder interface {
-	RuleHandle() *ATNHandle
+	Assign(handle *ATNHandle)
 
 	Plus(lookaheadName string, handle *ATNHandle) *ATNHandle
 	Star(lookaheadName string, handle *ATNHandle) *ATNHandle
@@ -38,7 +38,13 @@ type ATNBuilderImpl struct {
 func NewATNBuilder() *ATNBuilderImpl {
 	return &ATNBuilderImpl{
 		rules: map[*grammar.ParserRule]*ATNRuleBuilderImpl{},
-		atn:   &ATN{},
+		atn: &ATN{
+			DecisionMap:      map[string]*ATNState{},
+			States:           []*ATNState{},
+			DecisionStates:   []*ATNState{},
+			RuleToStartState: map[grammar.ParserRule]*ATNState{},
+			RuleToStopState:  map[grammar.ParserRule]*ATNState{},
+		},
 	}
 }
 
@@ -47,6 +53,8 @@ func (b *ATNBuilderImpl) DeclareRule(rule *grammar.ParserRule) ATNRuleBuilder {
 	right := newATNState(b.atn, rule, ATNRuleStop)
 	ruleBuilder := NewATNRuleBuilder(b, rule, &ATNHandle{Left: left, Right: right})
 	b.rules[rule] = ruleBuilder
+	b.atn.RuleToStartState[*rule] = left
+	b.atn.RuleToStopState[*rule] = right
 	return ruleBuilder
 }
 
@@ -68,8 +76,9 @@ func NewATNRuleBuilder(parent *ATNBuilderImpl, rule *grammar.ParserRule, handle 
 	}
 }
 
-func (rb *ATNRuleBuilderImpl) RuleHandle() *ATNHandle {
-	return rb.handle
+func (rb *ATNRuleBuilderImpl) Assign(handle *ATNHandle) {
+	rb.NewEpsilon(rb.handle.Left, handle.Left)
+	rb.NewEpsilon(handle.Right, rb.handle.Right)
 }
 
 func (rb *ATNRuleBuilderImpl) Plus(lookaheadName string, handle *ATNHandle) *ATNHandle {
@@ -194,7 +203,7 @@ func (rb *ATNRuleBuilderImpl) TokenRef(tokenType TokenInfo) *ATNHandle {
 }
 
 func (rb *ATNRuleBuilderImpl) RuleRef(otherRule *grammar.ParserRule) *ATNHandle {
-	ruleStart := rb.parent.atn.RuleToStartState[otherRule]
+	ruleStart := rb.parent.atn.RuleToStartState[*otherRule]
 	left := rb.NewState(ATNBasic)
 	right := rb.NewState(ATNBasic)
 	addTransition(left, &RuleTransition{
