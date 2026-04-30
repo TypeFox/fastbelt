@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package allstar
+package generator
 
 // BuildRuntimeATN converts the full build-time ATN to the minimal RuntimeATN.
 // The build-time ATN (with grammar back-pointers and scaffolding fields) can be
@@ -20,11 +20,11 @@ func BuildRuntimeATN(atn *ATN) *RuntimeATN {
 			EpsilonOnlyTransitions: s.EpsilonOnlyTransitions,
 		}
 		if s.Rule != nil {
-			rs.RuleName = s.Rule.Name
+			rs.RuleName = (*s.Rule).Name()
 		}
 		if s.Production != nil {
-			rs.ProdKind = s.Production.Kind()
-			rs.ProdIdx = s.Production.Occurrence()
+			rs.ProdKind = "TODO s.Production.Kind()"
+			rs.ProdIdx = 1 //TODO s.Production.Occurrence()
 		}
 		rStates[i] = rs
 		stateMap[s] = rs
@@ -38,15 +38,15 @@ func BuildRuntimeATN(atn *ATN) *RuntimeATN {
 			switch at := t.(type) {
 			case *AtomTransition:
 				ts[i] = &RuntimeAtomTransition{
-					Target:          stateMap[at.target],
+					Target:          stateMap[at.TargetState],
 					TokenTypeID:     at.TokenTypeID,
 					CategoryMatches: at.CategoryMatches,
 				}
 			case *EpsilonTransition:
-				ts[i] = &RuntimeEpsilonTransition{Target: stateMap[at.target]}
+				ts[i] = &RuntimeEpsilonTransition{Target: stateMap[at.TargetState]}
 			case *RuleTransition:
 				ts[i] = &RuntimeRuleTransition{
-					Target:      stateMap[at.target],
+					Target:      stateMap[at.TargetState],
 					FollowState: stateMap[at.FollowState],
 				}
 			}

@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package allstar
+package generator
 
 import (
 	"fmt"
@@ -75,7 +75,7 @@ func mdNode(s *RuntimeATNState, i int) string {
 	if s.Type == ATNRuleStart || s.Type == ATNRuleStop {
 		label = fmt.Sprintf("SN:%d<br/>%s", s.StateNumber, typShort)
 	} else {
-		prodShort := strings.TrimPrefix(productionKindName(s.ProdKind), "Prod")
+		prodShort := strings.TrimPrefix(s.ProdKind, "Prod")
 		decStr := ""
 		if s.Decision >= 0 {
 			decStr = fmt.Sprintf("<br/>dec=%d", s.Decision)

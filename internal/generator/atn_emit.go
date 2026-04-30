@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package allstar
+package generator
 
 import (
 	"fmt"
@@ -54,7 +54,7 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *RuntimeATN) generat
 					n.AppendLine("RuleName: ", strconv.Quote(s.RuleName), ",")
 				}
 				if s.ProdIdx != 0 {
-					n.AppendLine("ProdKind: allstar.", productionKindName(s.ProdKind), ",")
+					n.AppendLine("ProdKind: allstar.", s.ProdKind, ",")
 					n.AppendLine("ProdIdx: ", strconv.Itoa(s.ProdIdx), ",")
 				}
 			})
@@ -155,26 +155,5 @@ func atnStateTypeName(t ATNStateType) string {
 		return "ATNLoopEnd"
 	default:
 		return fmt.Sprintf("ATNStateType(%d)", int(t))
-	}
-}
-
-func productionKindName(k ProductionKind) string {
-	switch k {
-	case ProdTerminal:
-		return "ProdTerminal"
-	case ProdNonTerminal:
-		return "ProdNonTerminal"
-	case ProdAlternative:
-		return "ProdAlternative"
-	case ProdAlternation:
-		return "ProdAlternation"
-	case ProdOption:
-		return "ProdOption"
-	case ProdRepetition:
-		return "ProdRepetition"
-	case ProdRepetitionMandatory:
-		return "ProdRepetitionMandatory"
-	default:
-		return fmt.Sprintf("ProductionKind(%d)", int(k))
 	}
 }

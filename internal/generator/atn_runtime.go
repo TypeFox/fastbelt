@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package allstar
+package generator
 
 // RuntimeATNState holds only the fields required for prediction at runtime.
 // Back-pointers to the build-time grammar objects (Rule, Production) and
@@ -18,7 +18,7 @@ type RuntimeATNState struct {
 	Transitions            []RuntimeTransition
 	// Ambiguity reporting — only set on decision states.
 	RuleName string
-	ProdKind ProductionKind
+	ProdKind string
 	ProdIdx  int
 }
 

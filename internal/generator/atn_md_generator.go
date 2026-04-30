@@ -4,24 +4,16 @@
 package generator
 
 import (
-	"strings"
-
 	"typefox.dev/fastbelt/internal/grammar"
-	"typefox.dev/fastbelt/parser/allstar"
 )
 
 func GenerateATNMarkdown(grammr grammar.Grammar, packageName string) string {
-	tokenTypes := GetTokenTypes(grammr)
+	atn, _, tokenTypes := CreateATN(grammr)
 	tokenTypeNames := make(map[int]string, len(tokenTypes))
-	for name, id := range tokenTypes {
-		tokenTypeNames[id.ID] = strings.ReplaceAll(name, "\"", "'")
+	for name, info := range tokenTypes {
+		tokenTypeNames[info.ID] = name
 	}
-	rules, err := FromParserRules(grammr.Rules(), tokenTypes)
-	if err != nil {
-		panic(err)
-	}
-	atn := allstar.CreateATN(rules)
-	rtn := allstar.BuildRuntimeATN(atn)
-	source := allstar.EmitMarkdownSource(packageName, rtn, tokenTypeNames)
+	rtn := BuildRuntimeATN(atn)
+	source := EmitMarkdownSource(packageName, rtn, tokenTypeNames)
 	return source.String()
 }
