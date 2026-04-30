@@ -3,6 +3,7 @@
 package statemachine
 
 import (
+	"sync"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -11,25 +12,23 @@ import (
 type Parser struct {
 	state                 *parser.ParserState
 	sc                    *service.Container
-	referencesConstructor StatemachineModelReferencesConstructor
-}
-
-func (p *Parser) references() StatemachineModelReferencesConstructor {
-	if p.referencesConstructor == nil {
-		p.referencesConstructor = service.MustGet[StatemachineModelReferencesConstructor](p.sc)
-	}
-	return p.referencesConstructor
+	referencesConstructor func() StatemachineModelReferencesConstructor
 }
 
 func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
-	cp := &Parser{sc: p.sc, referencesConstructor: p.references(), state: parser.NewParserState(document.Tokens)}
+	cp := &Parser{sc: p.sc, referencesConstructor: p.referencesConstructor, state: parser.NewParserState(document.Tokens)}
 	result := cp.ParseStatemachine()
 	core.AssignContainers(document, result)
 	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
 }
 
 func NewParser(sc *service.Container) *Parser {
-	return &Parser{sc: sc}
+	return &Parser{
+		sc: sc,
+		referencesConstructor: sync.OnceValue(func() StatemachineModelReferencesConstructor {
+			return service.MustGet[StatemachineModelReferencesConstructor](sc)
+		}),
+	}
 }
 
 const (
@@ -151,7 +150,7 @@ func (p *Parser) ParseStatemachine() Statemachine {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, StatemachineInitID_0)
 		if token != nil {
-			current.SetInit(p.references().StatemachineInit(current, token))
+			current.SetInit(p.referencesConstructor().StatemachineInit(current, token))
 		}
 	}
 	{
@@ -222,7 +221,7 @@ func (p *Parser) ParseState() State {
 				token := p.state.Consume(Token_ID_Idx)
 				core.AssignToken(current, token, StateActionsID_0)
 				if token != nil {
-					current.SetActionsItem(p.references().StateActions(current, token))
+					current.SetActionsItem(p.referencesConstructor().StateActions(current, token))
 				}
 			}
 		}
@@ -254,7 +253,7 @@ func (p *Parser) ParseTransition() Transition {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, TransitionEventID_0)
 		if token != nil {
-			current.SetEvent(p.references().TransitionEvent(current, token))
+			current.SetEvent(p.referencesConstructor().TransitionEvent(current, token))
 		}
 	}
 	{
@@ -265,7 +264,7 @@ func (p *Parser) ParseTransition() Transition {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, TransitionStateID_0)
 		if token != nil {
-			current.SetState(p.references().TransitionState(current, token))
+			current.SetState(p.referencesConstructor().TransitionState(current, token))
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))

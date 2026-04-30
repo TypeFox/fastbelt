@@ -52,6 +52,7 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n generator.Node) {
+		n.AppendLine("\"sync\"")
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
 		n.AppendLine("\"typefox.dev/fastbelt/parser\"")
 		n.AppendLine("\"typefox.dev/fastbelt/util/service\"")
@@ -63,21 +64,10 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("state *parser.ParserState")
 		n.AppendLine("sc *service.Container")
-		n.AppendLine("referencesConstructor ", grammr.Name(), "ReferencesConstructor")
+		n.AppendLine("referencesConstructor func() ", grammr.Name(), "ReferencesConstructor")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
-
-	node.AppendLine("func (p *Parser) references() ", grammr.Name(), "ReferencesConstructor {")
-	node.Indent(func(n generator.Node) {
-		n.AppendLine("if p.referencesConstructor == nil {")
-		n.Indent(func(in generator.Node) {
-			in.AppendLine("p.referencesConstructor = service.MustGet[", grammr.Name(), "ReferencesConstructor](p.sc)")
-		})
-		n.AppendLine("}")
-		n.AppendLine("return p.referencesConstructor")
-	})
-	node.AppendLine("}").AppendLine()
 
 	rules := grammr.Rules()
 	if len(rules) == 0 {
@@ -89,7 +79,7 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 	node.Indent(func(n generator.Node) {
 		// Workaround to enable parallel parsing of documents
 		// TODO: find a better structure to enable parallel parsing
-		n.AppendLine("cp := &Parser{sc: p.sc, referencesConstructor: p.references(), state: parser.NewParserState(document.Tokens)}")
+		n.AppendLine("cp := &Parser{sc: p.sc, referencesConstructor: p.referencesConstructor, state: parser.NewParserState(document.Tokens)}")
 		n.AppendLine("result := cp.Parse", firstRule.Name(), "()")
 		n.AppendLine("core.AssignContainers(document, result)")
 		n.AppendLine("return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}")
@@ -98,7 +88,12 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 	node.AppendLine()
 	node.AppendLine("func NewParser(sc *service.Container) *Parser {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("return &Parser{sc: sc}")
+		n.AppendLine("return &Parser{")
+		n.AppendLine("	sc: sc,")
+		n.AppendLine("	referencesConstructor: sync.OnceValue(func() ", grammr.Name(), "ReferencesConstructor {")
+		n.AppendLine("		return service.MustGet[", grammr.Name(), "ReferencesConstructor](sc)")
+		n.AppendLine("	}),")
+		n.AppendLine("}")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
@@ -299,7 +294,7 @@ func generateAbstractElementParser(node generator.Node, context *ParserGenerator
 					if _, ok := e.Value().(grammar.CrossRef); ok {
 						parserRuleName := getParserRuleName(e)
 						// For cross-references, we need to create a Reference object
-						resultName = "p.references()." + parserRuleName + e.Property().Text() + "(current, " + resultName + ")"
+						resultName = "p.referencesConstructor()." + parserRuleName + e.Property().Text() + "(current, " + resultName + ")"
 					}
 					n2.Indent(func(in generator.Node) {
 						switch e.Operator() {

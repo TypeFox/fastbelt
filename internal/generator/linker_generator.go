@@ -37,6 +37,7 @@ func GenerateLinker(grammr grammar.Grammar, packageName string) string {
 		if len(context.fields) > 0 {
 			n.AppendLine("\"context\"")
 			n.AppendLine("\"slices\"")
+			n.AppendLine("\"sync\"")
 		}
 		n.AppendLine("\"reflect\"")
 		n.AppendLine()
@@ -136,25 +137,22 @@ func generateLinker(context *LinkerGeneratorContext) generator.Node {
 
 	node.AppendLine("type Default", context.grammar.Name(), "ReferenceLinker struct {")
 	node.AppendLine("	sc            *service.Container")
-	node.AppendLine("	scopeProvider ", context.grammar.Name(), "ScopeProvider")
+	node.AppendLine("	scopeProvider func() ", context.grammar.Name(), "ScopeProvider")
 	node.AppendLine("}")
 	node.AppendLine()
 
 	node.AppendLine("func NewDefault", context.grammar.Name(), "ReferenceLinker(sc *service.Container) ", context.grammar.Name(), "ReferenceLinker {")
-	node.AppendLine("	return &Default", context.grammar.Name(), "ReferenceLinker{sc: sc}")
-	node.AppendLine("}")
-	node.AppendLine()
-	node.AppendLine("func (s *Default", context.grammar.Name(), "ReferenceLinker) scope() ", context.grammar.Name(), "ScopeProvider {")
-	node.AppendLine("	if s.scopeProvider == nil {")
-	node.AppendLine("		s.scopeProvider = service.MustGet[", context.grammar.Name(), "ScopeProvider](s.sc)")
+	node.AppendLine("	return &Default", context.grammar.Name(), "ReferenceLinker{")
+	node.AppendLine("		sc: sc,")
+	node.AppendLine("		scopeProvider: sync.OnceValue(func() ", context.grammar.Name(), "ScopeProvider {")
+	node.AppendLine("			return service.MustGet[", context.grammar.Name(), "ScopeProvider](sc)")
+	node.AppendLine("		}),")
 	node.AppendLine("	}")
-	node.AppendLine("	return s.scopeProvider")
 	node.AppendLine("}")
 	node.AppendLine()
-
 	for _, field := range context.fields {
 		node.AppendLine("func (s *Default", context.grammar.Name(), "ReferenceLinker) Link", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) (*core.SymbolDescription, *core.ReferenceError) {")
-		node.AppendLine("    scope := s.scope().Scope", field.typeName, field.name, "(ctx, reference)")
+		node.AppendLine("    scope := s.scopeProvider().Scope", field.typeName, field.name, "(ctx, reference)")
 		node.AppendLine("    return core.DefaultLink(scope, reference.Text())")
 		node.AppendLine("}").AppendLine()
 	}
@@ -347,25 +345,22 @@ func generateReferenceConstructor(context *LinkerGeneratorContext) generator.Nod
 
 	node.AppendLine("type Default", context.grammar.Name(), "ReferencesConstructor struct {")
 	node.AppendLine("	sc              *service.Container")
-	node.AppendLine("	referenceLinker ", context.grammar.Name(), "ReferenceLinker")
+	node.AppendLine("	referenceLinker func() ", context.grammar.Name(), "ReferenceLinker")
 	node.AppendLine("}")
 	node.AppendLine()
 
 	node.AppendLine("func NewDefault", context.grammar.Name(), "ReferencesConstructor(sc *service.Container) ", context.grammar.Name(), "ReferencesConstructor {")
-	node.AppendLine("	return &Default", context.grammar.Name(), "ReferencesConstructor{sc: sc}")
-	node.AppendLine("}")
-	node.AppendLine()
-	node.AppendLine("func (s *Default", context.grammar.Name(), "ReferencesConstructor) linker() ", context.grammar.Name(), "ReferenceLinker {")
-	node.AppendLine("	if s.referenceLinker == nil {")
-	node.AppendLine("		s.referenceLinker = service.MustGet[", context.grammar.Name(), "ReferenceLinker](s.sc)")
+	node.AppendLine("	return &Default", context.grammar.Name(), "ReferencesConstructor{")
+	node.AppendLine("		sc: sc,")
+	node.AppendLine("		referenceLinker: sync.OnceValue(func() ", context.grammar.Name(), "ReferenceLinker {")
+	node.AppendLine("			return service.MustGet[", context.grammar.Name(), "ReferenceLinker](sc)")
+	node.AppendLine("		}),")
 	node.AppendLine("	}")
-	node.AppendLine("	return s.referenceLinker")
 	node.AppendLine("}")
 	node.AppendLine()
-
 	for _, field := range context.fields {
 		node.AppendLine("func (s *Default", context.grammar.Name(), "ReferencesConstructor) ", field.typeName, field.name, "(owner core.AstNode, unit core.StringUnit) *core.Reference[", field.target, "] {")
-		node.AppendLine("    fn := s.linker().Link", field.typeName, field.name)
+		node.AppendLine("    fn := s.referenceLinker().Link", field.typeName, field.name)
 		node.AppendLine("    return core.NewReference(owner, unit, fn)")
 		node.AppendLine("}").AppendLine()
 	}

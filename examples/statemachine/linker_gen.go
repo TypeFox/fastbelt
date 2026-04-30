@@ -6,6 +6,7 @@ import (
 	"context"
 	"reflect"
 	"slices"
+	"sync"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
@@ -53,37 +54,35 @@ type StatemachineModelReferenceLinker interface {
 
 type DefaultStatemachineModelReferenceLinker struct {
 	sc            *service.Container
-	scopeProvider StatemachineModelScopeProvider
+	scopeProvider func() StatemachineModelScopeProvider
 }
 
 func NewDefaultStatemachineModelReferenceLinker(sc *service.Container) StatemachineModelReferenceLinker {
-	return &DefaultStatemachineModelReferenceLinker{sc: sc}
-}
-
-func (s *DefaultStatemachineModelReferenceLinker) scope() StatemachineModelScopeProvider {
-	if s.scopeProvider == nil {
-		s.scopeProvider = service.MustGet[StatemachineModelScopeProvider](s.sc)
+	return &DefaultStatemachineModelReferenceLinker{
+		sc: sc,
+		scopeProvider: sync.OnceValue(func() StatemachineModelScopeProvider {
+			return service.MustGet[StatemachineModelScopeProvider](sc)
+		}),
 	}
-	return s.scopeProvider
 }
 
 func (s *DefaultStatemachineModelReferenceLinker) LinkStatemachineInit(ctx context.Context, reference *core.Reference[State]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scope().ScopeStatemachineInit(ctx, reference)
+	scope := s.scopeProvider().ScopeStatemachineInit(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
 func (s *DefaultStatemachineModelReferenceLinker) LinkStateActions(ctx context.Context, reference *core.Reference[Command]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scope().ScopeStateActions(ctx, reference)
+	scope := s.scopeProvider().ScopeStateActions(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
 func (s *DefaultStatemachineModelReferenceLinker) LinkTransitionEvent(ctx context.Context, reference *core.Reference[Event]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scope().ScopeTransitionEvent(ctx, reference)
+	scope := s.scopeProvider().ScopeTransitionEvent(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
 func (s *DefaultStatemachineModelReferenceLinker) LinkTransitionState(ctx context.Context, reference *core.Reference[State]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scope().ScopeTransitionState(ctx, reference)
+	scope := s.scopeProvider().ScopeTransitionState(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
@@ -96,37 +95,35 @@ type StatemachineModelReferencesConstructor interface {
 
 type DefaultStatemachineModelReferencesConstructor struct {
 	sc              *service.Container
-	referenceLinker StatemachineModelReferenceLinker
+	referenceLinker func() StatemachineModelReferenceLinker
 }
 
 func NewDefaultStatemachineModelReferencesConstructor(sc *service.Container) StatemachineModelReferencesConstructor {
-	return &DefaultStatemachineModelReferencesConstructor{sc: sc}
-}
-
-func (s *DefaultStatemachineModelReferencesConstructor) linker() StatemachineModelReferenceLinker {
-	if s.referenceLinker == nil {
-		s.referenceLinker = service.MustGet[StatemachineModelReferenceLinker](s.sc)
+	return &DefaultStatemachineModelReferencesConstructor{
+		sc: sc,
+		referenceLinker: sync.OnceValue(func() StatemachineModelReferenceLinker {
+			return service.MustGet[StatemachineModelReferenceLinker](sc)
+		}),
 	}
-	return s.referenceLinker
 }
 
 func (s *DefaultStatemachineModelReferencesConstructor) StatemachineInit(owner core.AstNode, unit core.StringUnit) *core.Reference[State] {
-	fn := s.linker().LinkStatemachineInit
+	fn := s.referenceLinker().LinkStatemachineInit
 	return core.NewReference(owner, unit, fn)
 }
 
 func (s *DefaultStatemachineModelReferencesConstructor) StateActions(owner core.AstNode, unit core.StringUnit) *core.Reference[Command] {
-	fn := s.linker().LinkStateActions
+	fn := s.referenceLinker().LinkStateActions
 	return core.NewReference(owner, unit, fn)
 }
 
 func (s *DefaultStatemachineModelReferencesConstructor) TransitionEvent(owner core.AstNode, unit core.StringUnit) *core.Reference[Event] {
-	fn := s.linker().LinkTransitionEvent
+	fn := s.referenceLinker().LinkTransitionEvent
 	return core.NewReference(owner, unit, fn)
 }
 
 func (s *DefaultStatemachineModelReferencesConstructor) TransitionState(owner core.AstNode, unit core.StringUnit) *core.Reference[State] {
-	fn := s.linker().LinkTransitionState
+	fn := s.referenceLinker().LinkTransitionState
 	return core.NewReference(owner, unit, fn)
 }
 
