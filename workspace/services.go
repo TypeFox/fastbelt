@@ -5,69 +5,39 @@
 package workspace
 
 import (
-	"typefox.dev/fastbelt/generated"
-	"typefox.dev/fastbelt/linking"
-	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/fastbelt/util/service"
 )
 
-// WorkspaceSrvCont is an interface for service containers which include the workspace services.
-type WorkspaceSrvCont interface {
-	textdoc.TextdocSrvCont
-	linking.LinkingSrvCont
-	generated.GeneratedSrvCont
-	Workspace() *WorkspaceSrv
-}
+// LanguageID is the identifier of the language managed by this workspace.
+// It must be set by adopters and corresponds to the language ID used in the LSP protocol.
+type LanguageID string
 
-// WorkspaceSrvContBlock is used to define a service container satisfying WorkspaceSrvCont.
-type WorkspaceSrvContBlock struct {
-	workspace WorkspaceSrv
-}
+// FileExtensions contains the file extensions to include, with leading dot
+// (e.g. []string{".statemachine"}). It must be set by adopters.
+type FileExtensions []string
 
-func (b *WorkspaceSrvContBlock) Workspace() *WorkspaceSrv {
-	return &b.workspace
-}
-
-// WorkspaceSrv contains the services for the workspace package.
-type WorkspaceSrv struct {
-	// LanguageID is the identifier of the language managed by this workspace.
-	// It must be set by adopters and corresponds to the language ID used in the LSP protocol.
-	LanguageID string
-	// FileExtensions contains the file extensions to include, with leading dot
-	// (e.g. []string{".statemachine"}). It must be set by adopters.
-	FileExtensions    []string
-	DocumentManager   DocumentManager
-	DocumentUpdater   DocumentUpdater
-	Lock              WorkspaceLock
-	Builder           Builder
-	DocumentParser    DocumentParser
-	DocumentValidator DocumentValidator
-	Initializer       Initializer
-}
-
-// CreateDefaultServices creates the default services for the workspace package.
-// If the services are already set, they are not overwritten.
-// Package dependencies: textdoc, linking, generated
-func CreateDefaultServices(c WorkspaceSrvCont) {
-	s := c.Workspace()
-	if s.DocumentManager == nil {
-		s.DocumentManager = NewDefaultDocumentManager()
+// SetupDefaultServices sets up the default services for the workspace package.
+// If any service is already set, it's not overwritten.
+func SetupDefaultServices(sc *service.Container) {
+	if !service.Has[DocumentManager](sc) {
+		service.MustPut(sc, NewDefaultDocumentManager(sc))
 	}
-	if s.DocumentUpdater == nil {
-		s.DocumentUpdater = NewDefaultDocumentUpdater(c)
+	if !service.Has[Initializer](sc) {
+		service.MustPut(sc, NewDefaultInitializer(sc))
 	}
-	if s.Lock == nil {
-		s.Lock = NewDefaultWorkspaceLock()
+	if !service.Has[Lock](sc) {
+		service.MustPut(sc, NewDefaultLock())
 	}
-	if s.Builder == nil {
-		s.Builder = NewDefaultBuilder(c)
+	if !service.Has[DocumentUpdater](sc) {
+		service.MustPut(sc, NewDefaultDocumentUpdater(sc))
 	}
-	if s.DocumentParser == nil {
-		s.DocumentParser = NewDefaultDocumentParser(c)
+	if !service.Has[Builder](sc) {
+		service.MustPut(sc, NewDefaultBuilder(sc))
 	}
-	if s.DocumentValidator == nil {
-		s.DocumentValidator = NewDefaultDocumentValidator()
+	if !service.Has[DocumentParser](sc) {
+		service.MustPut(sc, NewDefaultDocumentParser(sc))
 	}
-	if s.Initializer == nil {
-		s.Initializer = NewDefaultInitializer(c)
+	if !service.Has[DocumentValidator](sc) {
+		service.MustPut(sc, NewDefaultDocumentValidator(sc))
 	}
 }

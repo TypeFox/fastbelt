@@ -3,53 +3,31 @@
 package grammar
 
 import (
-	"typefox.dev/fastbelt/generated"
-	"typefox.dev/fastbelt/workspace"
+	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/lexer"
+	"typefox.dev/fastbelt/parser"
+	"typefox.dev/fastbelt/util/service"
 )
 
-type FastbeltLinkingSrv struct {
-	ScopeProvider         FastbeltScopeProvider
-	ReferenceLinker       FastbeltReferenceLinker
-	ReferencesConstructor FastbeltReferencesConstructor
-}
-
-type FastbeltLinkingSrvCont interface {
-	workspace.WorkspaceSrvCont
-	FastbeltLinking() *FastbeltLinkingSrv
-}
-
-type FastbeltLinkingSrvContBlock struct {
-	fastbeltLinking FastbeltLinkingSrv
-}
-
-func (b *FastbeltLinkingSrvContBlock) FastbeltLinking() *FastbeltLinkingSrv {
-	return &b.fastbeltLinking
-}
-
-type FastbeltGeneratedSrvCont interface {
-	generated.GeneratedSrvCont
-	FastbeltLinkingSrvCont
-}
-
-func CreateDefaultServices(srv FastbeltGeneratedSrvCont) {
-	linking := srv.FastbeltLinking()
-	if linking.ScopeProvider == nil {
-		linking.ScopeProvider = NewDefaultFastbeltScopeProvider(srv)
+// SetupGeneratedServices sets up the generated services for this grammar.
+// If any service is already set, it's not overwritten.
+func SetupGeneratedServices(sc *service.Container) {
+	if !service.Has[FastbeltScopeProvider](sc) {
+		service.MustPut(sc, NewDefaultFastbeltScopeProvider(sc))
 	}
-	if linking.ReferenceLinker == nil {
-		linking.ReferenceLinker = NewDefaultFastbeltReferenceLinker(srv)
+	if !service.Has[FastbeltReferenceLinker](sc) {
+		service.MustPut(sc, NewDefaultFastbeltReferenceLinker(sc))
 	}
-	if linking.ReferencesConstructor == nil {
-		linking.ReferencesConstructor = NewDefaultFastbeltReferencesConstructor(srv)
+	if !service.Has[FastbeltReferencesConstructor](sc) {
+		service.MustPut(sc, NewDefaultFastbeltReferencesConstructor(sc))
 	}
-	generated := srv.Generated()
-	if generated.Lexer == nil {
-		generated.Lexer = NewLexer()
+	if !service.Has[lexer.Lexer](sc) {
+		service.MustPut[lexer.Lexer](sc, NewLexer())
 	}
-	if generated.Parser == nil {
-		generated.Parser = NewParser(srv)
+	if !service.Has[parser.Parser](sc) {
+		service.MustPut[parser.Parser](sc, NewParser(sc))
 	}
-	if generated.SymbolContainers == nil {
-		generated.SymbolContainers = NewSymbolContainers()
+	if !service.Has[core.SymbolContainers](sc) {
+		service.MustPut[core.SymbolContainers](sc, NewSymbolContainers())
 	}
 }

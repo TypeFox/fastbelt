@@ -3,53 +3,31 @@
 package statemachine
 
 import (
-	"typefox.dev/fastbelt/generated"
-	"typefox.dev/fastbelt/workspace"
+	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/lexer"
+	"typefox.dev/fastbelt/parser"
+	"typefox.dev/fastbelt/util/service"
 )
 
-type StatemachineModelLinkingSrv struct {
-	ScopeProvider         StatemachineModelScopeProvider
-	ReferenceLinker       StatemachineModelReferenceLinker
-	ReferencesConstructor StatemachineModelReferencesConstructor
-}
-
-type StatemachineModelLinkingSrvCont interface {
-	workspace.WorkspaceSrvCont
-	StatemachineModelLinking() *StatemachineModelLinkingSrv
-}
-
-type StatemachineModelLinkingSrvContBlock struct {
-	fastbeltLinking StatemachineModelLinkingSrv
-}
-
-func (b *StatemachineModelLinkingSrvContBlock) StatemachineModelLinking() *StatemachineModelLinkingSrv {
-	return &b.fastbeltLinking
-}
-
-type StatemachineModelGeneratedSrvCont interface {
-	generated.GeneratedSrvCont
-	StatemachineModelLinkingSrvCont
-}
-
-func CreateDefaultServices(srv StatemachineModelGeneratedSrvCont) {
-	linking := srv.StatemachineModelLinking()
-	if linking.ScopeProvider == nil {
-		linking.ScopeProvider = NewDefaultStatemachineModelScopeProvider(srv)
+// SetupGeneratedServices sets up the generated services for this grammar.
+// If any service is already set, it's not overwritten.
+func SetupGeneratedServices(sc *service.Container) {
+	if !service.Has[StatemachineModelScopeProvider](sc) {
+		service.MustPut(sc, NewDefaultStatemachineModelScopeProvider(sc))
 	}
-	if linking.ReferenceLinker == nil {
-		linking.ReferenceLinker = NewDefaultStatemachineModelReferenceLinker(srv)
+	if !service.Has[StatemachineModelReferenceLinker](sc) {
+		service.MustPut(sc, NewDefaultStatemachineModelReferenceLinker(sc))
 	}
-	if linking.ReferencesConstructor == nil {
-		linking.ReferencesConstructor = NewDefaultStatemachineModelReferencesConstructor(srv)
+	if !service.Has[StatemachineModelReferencesConstructor](sc) {
+		service.MustPut(sc, NewDefaultStatemachineModelReferencesConstructor(sc))
 	}
-	generated := srv.Generated()
-	if generated.Lexer == nil {
-		generated.Lexer = NewLexer()
+	if !service.Has[lexer.Lexer](sc) {
+		service.MustPut[lexer.Lexer](sc, NewLexer())
 	}
-	if generated.Parser == nil {
-		generated.Parser = NewParser(srv)
+	if !service.Has[parser.Parser](sc) {
+		service.MustPut[parser.Parser](sc, NewParser(sc))
 	}
-	if generated.SymbolContainers == nil {
-		generated.SymbolContainers = NewSymbolContainers()
+	if !service.Has[core.SymbolContainers](sc) {
+		service.MustPut[core.SymbolContainers](sc, NewSymbolContainers())
 	}
 }

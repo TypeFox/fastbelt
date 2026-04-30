@@ -7,33 +7,30 @@ package grammar
 //go:generate go run ../../cmd/fastbelt -g ./grammar.fb -v
 
 import (
-	"typefox.dev/fastbelt/generated"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 )
 
-type GrammarSrv struct {
-	textdoc.TextdocSrvContBlock
-	generated.GeneratedSrvContBlock
-	workspace.WorkspaceSrvContBlock
-	linking.LinkingSrvContBlock
-	FastbeltLinkingSrvContBlock
-}
+// SetupServices sets up the base services for the grammar language.
+func SetupServices(sc *service.Container) {
+	service.MustPut[workspace.LanguageID](sc, "fastbelt")
+	service.MustPut[workspace.FileExtensions](sc, []string{".fb"})
 
-func CreateServices() *GrammarSrv {
-	srv := &GrammarSrv{}
-	textdoc.CreateDefaultServices(srv)
-	workspace.CreateDefaultServices(srv)
-	linking.CreateDefaultServices(srv)
-	CreateDefaultServices(srv)
-
-	srv.Workspace().LanguageID = "fastbelt"
-	srv.Workspace().FileExtensions = []string{".fb"}
+	textdoc.SetupDefaultServices(sc)
+	linking.SetupDefaultServices(sc)
+	workspace.SetupDefaultServices(sc)
+	SetupGeneratedServices(sc)
 
 	// Override the default scope provider
-	linkingSrv := srv.FastbeltLinking()
-	linkingSrv.ScopeProvider = newScopeProviderImpl(srv)
+	service.MustOverride[FastbeltScopeProvider](sc, newScopeProviderImpl(sc))
+}
 
-	return srv
+// CreateServices creates a service container for the grammar language to be used in the CLI and tests.
+func CreateServices() *service.Container {
+	sc := service.NewContainer()
+	SetupServices(sc)
+	sc.Seal()
+	return sc
 }

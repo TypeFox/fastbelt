@@ -18,7 +18,7 @@ const longWait = 2 * time.Second
 
 // TestReadRunsDoAndReturnsNil verifies the basic happy path: Read calls do and returns nil.
 func TestReadRunsDoAndReturnsNil(t *testing.T) {
-	lock := NewDefaultWorkspaceLock()
+	lock := NewDefaultLock()
 	called := false
 	err := lock.Read(context.Background(), func(ctx context.Context) { called = true })
 	assert.NoError(t, err)
@@ -27,7 +27,7 @@ func TestReadRunsDoAndReturnsNil(t *testing.T) {
 
 // TestConcurrentReads verifies that multiple Read calls can hold the lock simultaneously.
 func TestConcurrentReads(t *testing.T) {
-	lock := NewDefaultWorkspaceLock()
+	lock := NewDefaultLock()
 
 	const n = 10
 	inside := make(chan struct{}, n)
@@ -61,7 +61,7 @@ func TestConcurrentReads(t *testing.T) {
 // TestReadContextCancelledBeforeWrite verifies that Read returns ctx.Err() when
 // the context is already cancelled before the read lock is acquired.
 func TestReadContextCancelledBeforeAcquire(t *testing.T) {
-	lock := NewDefaultWorkspaceLock()
+	lock := NewDefaultLock()
 
 	// Hold write phase so the reader must wait.
 	inWrite := make(chan struct{})
@@ -89,7 +89,7 @@ func TestReadContextCancelledBeforeAcquire(t *testing.T) {
 // TestReadContextCancelledWhileWaiting verifies that a blocked Read returns
 // ctx.Err() when its context is cancelled while waiting for a write to finish.
 func TestReadContextCancelledWhileWaiting(t *testing.T) {
-	lock := NewDefaultWorkspaceLock()
+	lock := NewDefaultLock()
 
 	inWrite := make(chan struct{})
 	releaseWrite := make(chan struct{})
@@ -125,7 +125,7 @@ func TestReadContextCancelledWhileWaiting(t *testing.T) {
 // TestWriteBlocksReadsUntilDowngrade verifies that reads are blocked during
 // the write phase and unblocked once downgrade is called.
 func TestWriteBlocksReadsUntilDowngrade(t *testing.T) {
-	lock := NewDefaultWorkspaceLock()
+	lock := NewDefaultLock()
 
 	inWritePhase := make(chan struct{})
 	doDowngrade := make(chan struct{})
@@ -172,7 +172,7 @@ func TestWriteBlocksReadsUntilDowngrade(t *testing.T) {
 // TestDowngradeAllowsReadsWhileDoStillRuns verifies that do continues running
 // (e.g. validation / phase 3) after downgrade while readers proceed concurrently.
 func TestDowngradeAllowsReadsWhileDoStillRuns(t *testing.T) {
-	lock := NewDefaultWorkspaceLock()
+	lock := NewDefaultLock()
 
 	readProceedDone := make(chan struct{})
 	doFinish := make(chan struct{})
@@ -203,7 +203,7 @@ func TestDowngradeAllowsReadsWhileDoStillRuns(t *testing.T) {
 // write can acquire the lock between the call to downgrade and the end of do.
 // Without atomic downgrade this test would be racy.
 func TestDowngradeAtomicity(t *testing.T) {
-	lock := NewDefaultWorkspaceLock()
+	lock := NewDefaultLock()
 
 	inReadPhase := make(chan struct{})
 	releaseReadPhase := make(chan struct{})
@@ -255,7 +255,7 @@ func TestDowngradeAtomicity(t *testing.T) {
 // TestWriteWaitsForActiveReaders verifies that Write only acquires the lock
 // after all in-progress Read calls have completed.
 func TestWriteWaitsForActiveReaders(t *testing.T) {
-	lock := NewDefaultWorkspaceLock()
+	lock := NewDefaultLock()
 
 	readerInside := make(chan struct{})
 	releaseReader := make(chan struct{})
@@ -305,7 +305,7 @@ func TestWriteWaitsForActiveReaders(t *testing.T) {
 // (so document mutations are never lost) but receives a cancelled context so it
 // can skip expensive work such as building.
 func TestNewWriteCancelsPendingWrite(t *testing.T) {
-	lock := NewDefaultWorkspaceLock()
+	lock := NewDefaultLock()
 
 	// Hold read lock so both writers must wait.
 	readerAcquired := make(chan struct{})
@@ -360,7 +360,7 @@ func TestNewWriteCancelsPendingWrite(t *testing.T) {
 // TestNewWriteCancelsActiveWrite verifies that a second Write call cancels the
 // first while its do callback is actively running, and then runs itself.
 func TestNewWriteCancelsActiveWrite(t *testing.T) {
-	lock := NewDefaultWorkspaceLock()
+	lock := NewDefaultLock()
 
 	firstRunning := make(chan struct{})
 
@@ -384,7 +384,7 @@ func TestNewWriteCancelsActiveWrite(t *testing.T) {
 // TestDowngradeIsIdempotent verifies that calling downgrade multiple times
 // does not panic, deadlock, or corrupt the lock state.
 func TestDowngradeIsIdempotent(t *testing.T) {
-	lock := NewDefaultWorkspaceLock()
+	lock := NewDefaultLock()
 
 	lock.Write(context.Background(), func(ctx context.Context, downgrade func()) {
 		downgrade()
@@ -408,7 +408,7 @@ func TestDowngradeIsIdempotent(t *testing.T) {
 // TestWriteHasPriorityOverQueuedRead verifies the ordering:
 // Write 1 enters -> Read queues up -> Write 2 arrives -> Write 2 runs before the Read.
 func TestWriteHasPriorityOverQueuedRead(t *testing.T) {
-	lock := NewDefaultWorkspaceLock()
+	lock := NewDefaultLock()
 
 	write1InDo := make(chan struct{})
 	doDowngrade := make(chan struct{})
@@ -477,7 +477,7 @@ func TestWriteHasPriorityOverQueuedRead(t *testing.T) {
 // TestSafetyNetEnsuresDowngradeIsCalled verifies that the lock is fully released
 // even when do never calls downgrade (e.g. it returns early on error).
 func TestSafetyNetEnsuresDowngradeIsCalled(t *testing.T) {
-	lock := NewDefaultWorkspaceLock()
+	lock := NewDefaultLock()
 
 	lock.Write(context.Background(), func(ctx context.Context, downgrade func()) {
 		// Intentionally never call downgrade.

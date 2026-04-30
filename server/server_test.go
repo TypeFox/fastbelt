@@ -8,28 +8,21 @@ import (
 	"context"
 	"testing"
 
-	"typefox.dev/fastbelt/generated"
-	"typefox.dev/fastbelt/linking"
-	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
 
-type serverSrvContTest struct {
-	textdoc.TextdocSrvContBlock
-	workspace.WorkspaceSrvContBlock
-	generated.GeneratedSrvContBlock
-	linking.LinkingSrvContBlock
-	ServerSrvContBlock
-}
-
 // TestLanguageServerBasicLifecycle tests that the language server handles the basic LSP lifecycle.
 func TestLanguageServerBasicLifecycle(t *testing.T) {
-	srv := &serverSrvContTest{}
-	workspace.CreateDefaultServices(srv)
-	CreateDefaultServices(srv)
+	sc := service.NewContainer()
+	workspace.SetupDefaultServices(sc)
+	SetupDefaultServices(sc)
+	service.MustPut[workspace.LanguageID](sc, "plaintext")
+	service.MustPut[workspace.FileExtensions](sc, []string{".txt"})
+	sc.Seal()
 
-	server := srv.Server().LanguageServer
+	server := service.MustGet[lsp.Server](sc)
 	ctx := context.Background()
 
 	// Test Initialize

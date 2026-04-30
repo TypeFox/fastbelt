@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/service"
 )
 
 // Linker resolves cross-references in a document's AST.
@@ -19,13 +20,17 @@ type Linker interface {
 	Link(ctx context.Context, document *core.Document)
 }
 
-type DefaultLinker struct{}
-
-func NewDefaultLinker() Linker {
-	return &DefaultLinker{}
+// DefaultLinker is the default implementation of [Linker].
+// It resolves all references in the document.
+type DefaultLinker struct {
+	sc *service.Container
 }
 
-func (l *DefaultLinker) Link(ctx context.Context, document *core.Document) {
+func NewDefaultLinker(sc *service.Container) Linker {
+	return &DefaultLinker{sc: sc}
+}
+
+func (s *DefaultLinker) Link(ctx context.Context, document *core.Document) {
 	waitgroup := sync.WaitGroup{}
 	references := []core.UntypedReference{}
 	root := document.Root

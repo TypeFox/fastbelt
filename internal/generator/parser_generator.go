@@ -54,6 +54,7 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
 		n.AppendLine("\"typefox.dev/fastbelt/parser\"")
+		n.AppendLine("\"typefox.dev/fastbelt/util/service\"")
 	})
 	node.AppendLine(")")
 	node.AppendLine()
@@ -61,14 +62,14 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 	node.AppendLine("type Parser struct {")
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("state *parser.ParserState")
-		n.AppendLine("srv ", grammr.Name(), "GeneratedSrvCont")
+		n.AppendLine("sc *service.Container")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
 
 	node.AppendLine("func (p *Parser) references() ", grammr.Name(), "ReferencesConstructor {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("return p.srv.", grammr.Name(), "Linking().ReferencesConstructor")
+		n.AppendLine("return service.MustGet[", grammr.Name(), "ReferencesConstructor](p.sc)")
 	})
 	node.AppendLine("}").AppendLine()
 
@@ -82,16 +83,16 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 	node.Indent(func(n generator.Node) {
 		// Workaround to enable parallel parsing of documents
 		// TODO: find a better structure to enable parallel parsing
-		n.AppendLine("cp := &Parser{srv: p.srv, state: parser.NewParserState(document.Tokens)}")
+		n.AppendLine("cp := &Parser{sc: p.sc, state: parser.NewParserState(document.Tokens)}")
 		n.AppendLine("result := cp.Parse", firstRule.Name(), "()")
 		n.AppendLine("core.AssignContainers(document, result)")
 		n.AppendLine("return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
-	node.AppendLine("func NewParser(srv ", grammr.Name(), "GeneratedSrvCont) *Parser {")
+	node.AppendLine("func NewParser(sc *service.Container) *Parser {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("return &Parser{srv: srv}")
+		n.AppendLine("return &Parser{sc: sc}")
 	})
 	node.AppendLine("}")
 	node.AppendLine()

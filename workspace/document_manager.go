@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/service"
 )
 
 // DocumentManager holds all known documents of a workspace in memory.
@@ -25,14 +26,19 @@ type DocumentManager interface {
 	All() iter.Seq[*core.Document]
 	// Deletes the document with the given URI and returns it, or nil if it did not exist.
 	Delete(uri core.URI) *core.Document
+	// Clears all documents from the manager.
+	Clear()
 }
 
+// DefaultDocumentManager is the default implementation of [DocumentManager].
 type DefaultDocumentManager struct {
+	sc        *service.Container
 	documents sync.Map
 }
 
-func NewDefaultDocumentManager() DocumentManager {
+func NewDefaultDocumentManager(sc *service.Container) DocumentManager {
 	return &DefaultDocumentManager{
+		sc:        sc,
 		documents: sync.Map{},
 	}
 }
@@ -78,4 +84,8 @@ func (d *DefaultDocumentManager) Delete(uri core.URI) *core.Document {
 		return doc
 	}
 	return nil
+}
+
+func (d *DefaultDocumentManager) Clear() {
+	d.documents.Clear()
 }

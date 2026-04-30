@@ -5,31 +5,26 @@
 package {{.GoPackage}}
 
 import (
-	"typefox.dev/fastbelt/generated"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 )
 
-// {{.ExportedBase}}Srv is the service container for the {{.LanguageLabel}} language.
-type {{.ExportedBase}}Srv struct {
-	textdoc.TextdocSrvContBlock
-	generated.GeneratedSrvContBlock
-	workspace.WorkspaceSrvContBlock
-	linking.LinkingSrvContBlock
-	{{.GrammarName}}LinkingSrvContBlock
+// SetupServices sets up the base services for the {{.LanguageLabel}} language.
+func SetupServices(sc *service.Container) {
+	service.MustPut[workspace.LanguageID](sc, "{{.LanguageID}}")
+	service.MustPut[workspace.FileExtensions](sc, []string{"{{.FileDotExt}}"})
+	textdoc.SetupDefaultServices(sc)
+	linking.SetupDefaultServices(sc)
+	workspace.SetupDefaultServices(sc)
+	SetupGeneratedServices(sc)
 }
 
-// CreateServices creates and initializes a {{.ExportedBase}}Srv with all default services.
-func CreateServices() *{{.ExportedBase}}Srv {
-	srv := &{{.ExportedBase}}Srv{}
-	textdoc.CreateDefaultServices(srv)
-	workspace.CreateDefaultServices(srv)
-	linking.CreateDefaultServices(srv)
-	CreateDefaultServices(srv)
-
-	srv.Workspace().LanguageID = "{{.LanguageID}}"
-	srv.Workspace().FileExtensions = []string{"{{.FileDotExt}}"}
-
-	return srv
+// CreateServices creates a service container for the {{.LanguageLabel}} language to be used in the CLI and tests.
+func CreateServices() *service.Container {
+	sc := service.NewContainer()
+	SetupServices(sc)
+	sc.Seal()
+	return sc
 }

@@ -5,26 +5,27 @@ package statemachine
 import (
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
+	"typefox.dev/fastbelt/util/service"
 )
 
 type Parser struct {
 	state *parser.ParserState
-	srv   StatemachineModelGeneratedSrvCont
+	sc    *service.Container
 }
 
 func (p *Parser) references() StatemachineModelReferencesConstructor {
-	return p.srv.StatemachineModelLinking().ReferencesConstructor
+	return service.MustGet[StatemachineModelReferencesConstructor](p.sc)
 }
 
 func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
-	cp := &Parser{srv: p.srv, state: parser.NewParserState(document.Tokens)}
+	cp := &Parser{sc: p.sc, state: parser.NewParserState(document.Tokens)}
 	result := cp.ParseStatemachine()
 	core.AssignContainers(document, result)
 	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
 }
 
-func NewParser(srv StatemachineModelGeneratedSrvCont) *Parser {
-	return &Parser{srv: srv}
+func NewParser(sc *service.Container) *Parser {
+	return &Parser{sc: sc}
 }
 
 const (

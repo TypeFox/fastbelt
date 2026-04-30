@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 )
 
@@ -51,22 +52,22 @@ type IndexMarker struct {
 // Fixture is the entry point for language tests. Create one per test with [New].
 type Fixture struct {
 	t       testing.TB
-	srv     workspace.WorkspaceSrvCont
+	sc      *service.Container
 	ctx     context.Context
 	marking *TestMarking
 }
 
 // New creates a [Fixture] backed by the given service container.
 // It uses [DefaultMarking] and [context.Background].
-func New(t testing.TB, srv workspace.WorkspaceSrvCont) *Fixture {
+func New(t testing.TB, sc *service.Container) *Fixture {
 	t.Helper()
-	return &Fixture{t: t, srv: srv, ctx: context.Background(), marking: DefaultMarking}
+	return &Fixture{t: t, sc: sc, ctx: context.Background(), marking: DefaultMarking}
 }
 
 // NewWithContext creates a [Fixture] with an explicit context.
-func NewWithContext(t testing.TB, srv workspace.WorkspaceSrvCont, ctx context.Context) *Fixture {
+func NewWithContext(t testing.TB, sc *service.Container, ctx context.Context) *Fixture {
 	t.Helper()
-	return &Fixture{t: t, srv: srv, ctx: ctx, marking: DefaultMarking}
+	return &Fixture{t: t, sc: sc, ctx: ctx, marking: DefaultMarking}
 }
 
 // WithMarking returns a shallow copy of the [Fixture] using m as the marker configuration.
@@ -99,7 +100,7 @@ func (f *Fixture) WithMarking(m *TestMarking) *Fixture {
 func (f *Fixture) Parse(content string) *Doc {
 	f.t.Helper()
 	uri := "inmemory://test"
-	if exts := f.srv.Workspace().FileExtensions; len(exts) > 0 {
+	if exts := service.MustGet[workspace.FileExtensions](f.sc); len(exts) > 0 {
 		uri = "inmemory://test" + exts[0]
 	}
 	return f.ParseURI(content, uri)
@@ -110,12 +111,15 @@ func (f *Fixture) Parse(content string) *Doc {
 func (f *Fixture) ParseURI(content, uri string) *Doc {
 	f.t.Helper()
 	cleanText, ranges, indices := extractMarkers(content, f.marking)
-	doc, err := core.NewDocumentFromString(uri, f.srv.Workspace().LanguageID, cleanText)
+	languageID := service.MustGet[workspace.LanguageID](f.sc)
+	doc, err := core.NewDocumentFromString(uri, string(languageID), cleanText)
 	if err != nil {
 		f.t.Fatalf("fbtest: failed to create document: %v", err)
 	}
-	f.srv.Workspace().DocumentManager.Set(doc)
-	if err := f.srv.Workspace().Builder.Build(f.ctx, []*core.Document{doc}, func() {}); err != nil {
+	documents := service.MustGet[workspace.DocumentManager](f.sc)
+	documents.Set(doc)
+	builder := service.MustGet[workspace.Builder](f.sc)
+	if err := builder.Build(f.ctx, []*core.Document{doc}, func() {}); err != nil {
 		f.t.Fatalf("fbtest: build failed: %v", err)
 	}
 	return f.newDoc(doc, ranges, indices)
@@ -136,15 +140,18 @@ func (f *Fixture) ParseAll(uriContentPairs ...string) []*Doc {
 	for i := 0; i < len(uriContentPairs); i += 2 {
 		uri, content := uriContentPairs[i], uriContentPairs[i+1]
 		cleanText, ranges, indices := extractMarkers(content, f.marking)
-		doc, err := core.NewDocumentFromString(uri, f.srv.Workspace().LanguageID, cleanText)
+		languageID := service.MustGet[workspace.LanguageID](f.sc)
+		doc, err := core.NewDocumentFromString(uri, string(languageID), cleanText)
 		if err != nil {
 			f.t.Fatalf("fbtest: failed to create document %q: %v", uri, err)
 		}
-		f.srv.Workspace().DocumentManager.Set(doc)
+		documents := service.MustGet[workspace.DocumentManager](f.sc)
+		documents.Set(doc)
 		coreDocs = append(coreDocs, doc)
 		results = append(results, f.newDoc(doc, ranges, indices))
 	}
-	if err := f.srv.Workspace().Builder.Build(f.ctx, coreDocs, func() {}); err != nil {
+	builder := service.MustGet[workspace.Builder](f.sc)
+	if err := builder.Build(f.ctx, coreDocs, func() {}); err != nil {
 		f.t.Fatalf("fbtest: build failed: %v", err)
 	}
 	return results

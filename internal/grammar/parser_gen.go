@@ -5,26 +5,27 @@ package grammar
 import (
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
+	"typefox.dev/fastbelt/util/service"
 )
 
 type Parser struct {
 	state *parser.ParserState
-	srv   FastbeltGeneratedSrvCont
+	sc    *service.Container
 }
 
 func (p *Parser) references() FastbeltReferencesConstructor {
-	return p.srv.FastbeltLinking().ReferencesConstructor
+	return service.MustGet[FastbeltReferencesConstructor](p.sc)
 }
 
 func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
-	cp := &Parser{srv: p.srv, state: parser.NewParserState(document.Tokens)}
+	cp := &Parser{sc: p.sc, state: parser.NewParserState(document.Tokens)}
 	result := cp.ParseGrammar()
 	core.AssignContainers(document, result)
 	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
 }
 
-func NewParser(srv FastbeltGeneratedSrvCont) *Parser {
-	return &Parser{srv: srv}
+func NewParser(sc *service.Container) *Parser {
+	return &Parser{sc: sc}
 }
 
 const (

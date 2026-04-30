@@ -9,15 +9,17 @@ import (
 	"log/slog"
 	"strings"
 
+	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/lsp"
 )
 
 type slogHandler struct {
-	srv ServerSrvCont
+	sc *service.Container
 }
 
-func NewSlogHandler(srv ServerSrvCont) slog.Handler {
-	return &slogHandler{srv: srv}
+// NewSlogHandler creates a new slog handler that writes to the LSP connection.
+func NewSlogHandler(sc *service.Container) slog.Handler {
+	return &slogHandler{sc: sc}
 }
 
 func (h *slogHandler) Enabled(ctx context.Context, level slog.Level) bool {
@@ -46,7 +48,7 @@ func (h *slogHandler) WithGroup(name string) slog.Handler {
 }
 
 func (h *slogHandler) write(ctx context.Context, level lsp.MessageType, msg string) error {
-	conn := h.srv.Server().Connection
+	conn := service.MustGet[*Connection](h.sc).Value
 	if conn == nil {
 		return nil // Connection not established; skip logging
 	}
