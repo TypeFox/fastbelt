@@ -13,8 +13,8 @@ import (
 
 // SetupServices sets up the base services for the {{.LanguageLabel}} language.
 func SetupServices(sc *service.Container) {
-	service.MustPut[workspace.LanguageID](sc, "{{.LanguageID}}")
-	service.MustPut[workspace.FileExtensions](sc, []string{"{{.FileDotExt}}"})
+	service.Put[workspace.LanguageID](sc, "{{.LanguageID}}")
+	service.Put[workspace.FileExtensions](sc, []string{"{{.FileDotExt}}"})
 	textdoc.SetupDefaultServices(sc)
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)
