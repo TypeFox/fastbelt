@@ -37,8 +37,8 @@ func GenerateLinker(grammr grammar.Grammar, packageName string) string {
 		if len(context.fields) > 0 {
 			n.AppendLine("\"context\"")
 			n.AppendLine("\"slices\"")
-			n.AppendLine("\"sync\"")
 		}
+		n.AppendLine("\"sync\"")
 		n.AppendLine("\"reflect\"")
 		n.AppendLine()
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
