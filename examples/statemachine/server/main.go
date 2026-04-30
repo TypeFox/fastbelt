@@ -10,20 +10,23 @@ import (
 
 	"typefox.dev/fastbelt/examples/statemachine"
 	"typefox.dev/fastbelt/server"
+	"typefox.dev/fastbelt/util/service"
 )
 
-type StatemachineLspSrv struct {
-	*statemachine.StatemachineSrv
-	server.ServerSrvContBlock
+// CreateServices creates a service container for the statemachine language to be used in the language server.
+func CreateServices() *service.Container {
+	sc := service.NewContainer()
+	statemachine.SetupServices(sc)
+	server.SetupDefaultServices(sc)
+	sc.Seal()
+	return sc
 }
 
 func main() {
 	ctx := context.Background()
-	statemachineSrv := statemachine.CreateServices()
-	srv := &StatemachineLspSrv{StatemachineSrv: statemachineSrv}
-	server.CreateDefaultServices(srv)
+	sc := CreateServices()
 
-	if err := server.StartLanguageServer(ctx, srv); err != nil {
+	if err := server.StartLanguageServer(ctx, sc); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
 }

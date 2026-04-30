@@ -6,34 +6,38 @@ package workspace
 
 import (
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/lexer"
+	"typefox.dev/fastbelt/parser"
+	"typefox.dev/fastbelt/util/service"
 )
 
-// DocumentParser defines the interface for parsing a document.
+// DocumentParser is a service for parsing documents.
 type DocumentParser interface {
 	// Parses the document and stores the resulting Tokens and AST node Root (incl. potential errors) into the document.
 	// The caller must hold the document's write lock.
 	Parse(doc *core.Document)
 }
 
-// DefaultDocumentParser is the default implementation of DocumentParser.
+// DefaultDocumentParser is the default implementation of [DocumentParser].
 type DefaultDocumentParser struct {
-	srv WorkspaceSrvCont
+	sc *service.Container
 }
 
-// NewDefaultDocumentParser creates a new default document parser.
-func NewDefaultDocumentParser(srv WorkspaceSrvCont) DocumentParser {
-	return &DefaultDocumentParser{srv: srv}
+func NewDefaultDocumentParser(sc *service.Container) DocumentParser {
+	return &DefaultDocumentParser{sc: sc}
 }
 
-func (p *DefaultDocumentParser) Parse(doc *core.Document) {
+func (s *DefaultDocumentParser) Parse(doc *core.Document) {
 	text := doc.TextDoc.Text(nil)
 	// Run the lexer
-	lexerRes := p.srv.Generated().Lexer.Lex(text)
+	lexer := service.MustGet[lexer.Lexer](s.sc)
+	lexerRes := lexer.Lex(text)
 	doc.LexerErrors = lexerRes.Errors
 	doc.Tokens = lexerRes.Tokens
 	doc.Comments = lexerRes.Comments
 	// Run the parser
-	parserRes := p.srv.Generated().Parser.Parse(doc)
+	parser := service.MustGet[parser.Parser](s.sc)
+	parserRes := parser.Parse(doc)
 	doc.ParserErrors = parserRes.Errors
 	doc.Root = parserRes.Node
 }

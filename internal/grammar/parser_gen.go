@@ -3,28 +3,32 @@
 package grammar
 
 import (
+	"sync"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
+	"typefox.dev/fastbelt/util/service"
 )
 
 type Parser struct {
-	state *parser.ParserState
-	srv   FastbeltGeneratedSrvCont
-}
-
-func (p *Parser) references() FastbeltReferencesConstructor {
-	return p.srv.FastbeltLinking().ReferencesConstructor
+	state                 *parser.ParserState
+	sc                    *service.Container
+	referencesConstructor func() FastbeltReferencesConstructor
 }
 
 func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
-	cp := &Parser{srv: p.srv, state: parser.NewParserState(document.Tokens)}
+	cp := &Parser{sc: p.sc, referencesConstructor: p.referencesConstructor, state: parser.NewParserState(document.Tokens)}
 	result := cp.ParseGrammar()
 	core.AssignContainers(document, result)
 	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
 }
 
-func NewParser(srv FastbeltGeneratedSrvCont) *Parser {
-	return &Parser{srv: srv}
+func NewParser(sc *service.Container) *Parser {
+	return &Parser{
+		sc: sc,
+		referencesConstructor: sync.OnceValue(func() FastbeltReferencesConstructor {
+			return service.MustGet[FastbeltReferencesConstructor](sc)
+		}),
+	}
 }
 
 const (
@@ -481,7 +485,7 @@ func (p *Parser) ParseInterface() Interface {
 			token := p.state.Consume(Token_ID_Idx)
 			core.AssignToken(current, token, InterfaceExtendsID_0)
 			if token != nil {
-				current.SetExtendsItem(p.references().InterfaceExtends(current, token))
+				current.SetExtendsItem(p.referencesConstructor().InterfaceExtends(current, token))
 			}
 		}
 		for p.state.Lookahead(InterfaceLookahead2) == 0 {
@@ -493,7 +497,7 @@ func (p *Parser) ParseInterface() Interface {
 				token := p.state.Consume(Token_ID_Idx)
 				core.AssignToken(current, token, InterfaceExtendsID_1)
 				if token != nil {
-					current.SetExtendsItem(p.references().InterfaceExtends(current, token))
+					current.SetExtendsItem(p.referencesConstructor().InterfaceExtends(current, token))
 				}
 			}
 		}
@@ -603,7 +607,7 @@ func (p *Parser) ParseReferenceType() ReferenceType {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, ReferenceTypeTypeID_0)
 		if token != nil {
-			current.SetType(p.references().ReferenceTypeType(current, token))
+			current.SetType(p.referencesConstructor().ReferenceTypeType(current, token))
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -617,7 +621,7 @@ func (p *Parser) ParseSimpleType() SimpleType {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, SimpleTypeTypeID_0)
 		if token != nil {
-			current.SetType(p.references().SimpleTypeType(current, token))
+			current.SetType(p.referencesConstructor().SimpleTypeType(current, token))
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -672,7 +676,7 @@ func (p *Parser) ParseParserRule() ParserRule {
 			token := p.state.Consume(Token_ID_Idx)
 			core.AssignToken(current, token, ParserRuleReturnTypeID_0)
 			if token != nil {
-				current.SetReturnType(p.references().ParserRuleReturnType(current, token))
+				current.SetReturnType(p.referencesConstructor().ParserRuleReturnType(current, token))
 			}
 		}
 	}
@@ -903,7 +907,7 @@ func (p *Parser) ParseAssignment() Assignment {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, AssignmentPropertyID_0)
 		if token != nil {
-			current.SetProperty(p.references().AssignmentProperty(current, token))
+			current.SetProperty(p.referencesConstructor().AssignmentProperty(current, token))
 		}
 	}
 	{
@@ -1051,7 +1055,7 @@ func (p *Parser) ParseCrossRef() CrossRef {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, CrossRefTypeID_0)
 		if token != nil {
-			current.SetType(p.references().CrossRefType(current, token))
+			current.SetType(p.referencesConstructor().CrossRefType(current, token))
 		}
 	}
 	if p.state.Lookahead(CrossRefLookahead13) == 0 {
@@ -1081,7 +1085,7 @@ func (p *Parser) ParseRuleCall() RuleCall {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, RuleCallRuleID_0)
 		if token != nil {
-			current.SetRule(p.references().RuleCallRule(current, token))
+			current.SetRule(p.referencesConstructor().RuleCallRule(current, token))
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -1099,7 +1103,7 @@ func (p *Parser) ParseAction() Action {
 		token := p.state.Consume(Token_ID_Idx)
 		core.AssignToken(current, token, ActionTypeID_0)
 		if token != nil {
-			current.SetType(p.references().ActionType(current, token))
+			current.SetType(p.referencesConstructor().ActionType(current, token))
 		}
 	}
 	if p.state.Lookahead(ActionLookahead14) == 0 {
@@ -1111,7 +1115,7 @@ func (p *Parser) ParseAction() Action {
 			token := p.state.Consume(Token_ID_Idx)
 			core.AssignToken(current, token, ActionPropertyID_0)
 			if token != nil {
-				current.SetProperty(p.references().ActionProperty(current, token))
+				current.SetProperty(p.referencesConstructor().ActionProperty(current, token))
 			}
 		}
 		{

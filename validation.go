@@ -60,8 +60,10 @@ type DiagnosticCodeDescription struct {
 type ValidationAcceptor func(diagnostic *Diagnostic)
 
 // Validator can be implemented by AST node Impl structs to provide custom validation checks.
-// The level parameter identifies when validation runs (e.g. "on-type", "on-save").
 type Validator interface {
+	// Validate performs validation on the receiver node.
+	// The level parameter identifies when validation runs (e.g. "on-type", "on-save").
+	// The accept callback is used to collect diagnostics.
 	Validate(ctx context.Context, level string, accept ValidationAcceptor)
 }
 

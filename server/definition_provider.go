@@ -8,26 +8,32 @@ import (
 	"context"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/linking"
+	"typefox.dev/fastbelt/util/service"
+	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
 
+// DefinitionProvider is a service for handling LSP definition requests.
 type DefinitionProvider interface {
 	// TODO: Maybe add the document directly to the params to avoid looking it up again in the workspace?
 	// Also, maybe add a separate params struct that doesn't directly depend on the lsp lib
 	HandleDefinitionRequest(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.DefinitionLink, error)
 }
 
+// DefaultDefinitionProvider is the default implementation of [DefinitionProvider].
 type DefaultDefinitionProvider struct {
-	srv ServerSrvCont
+	sc *service.Container
 }
 
-func NewDefaultDefinitionProvider(srv ServerSrvCont) DefinitionProvider {
-	return &DefaultDefinitionProvider{srv: srv}
+func NewDefaultDefinitionProvider(sc *service.Container) DefinitionProvider {
+	return &DefaultDefinitionProvider{sc: sc}
 }
 
-func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.DefinitionLink, error) {
+func (s *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.DefinitionLink, error) {
+	documentManager := service.MustGet[workspace.DocumentManager](s.sc)
 	uri := core.ParseURI(string(params.TextDocument.URI))
-	doc := dp.srv.Workspace().DocumentManager.Get(uri)
+	doc := documentManager.Get(uri)
 	if doc == nil {
 		return nil, nil // Document not found
 	}
@@ -41,15 +47,15 @@ func (dp *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context
 	if ref != nil {
 		// The token at the position is a reference
 		// Try to resolve it and return the location of the target symbol
-		return dp.fromReference(ref), nil
+		return s.fromReference(ref), nil
 	} else {
 		// The token might still be the name of a symbol
 		// In this case, we want to return the location of the symbol itself
-		return dp.fromName(sourceToken), nil
+		return s.fromName(sourceToken), nil
 	}
 }
 
-func (dp *DefaultDefinitionProvider) fromReference(ref core.UntypedReference) []lsp.DefinitionLink {
+func (s *DefaultDefinitionProvider) fromReference(ref core.UntypedReference) []lsp.DefinitionLink {
 	target := ref.Description()
 	if target == nil || target.NameSegment == nil {
 		return nil // No target description
@@ -70,7 +76,7 @@ func (dp *DefaultDefinitionProvider) fromReference(ref core.UntypedReference) []
 	return []lsp.DefinitionLink{link}
 }
 
-func (dp *DefaultDefinitionProvider) fromName(token *core.Token) []lsp.DefinitionLink {
+func (s *DefaultDefinitionProvider) fromName(token *core.Token) []lsp.DefinitionLink {
 	target := token.Element
 	if target == nil {
 		return nil
@@ -85,8 +91,7 @@ func (dp *DefaultDefinitionProvider) fromName(token *core.Token) []lsp.Definitio
 	if targetSegment == nil {
 		return nil
 	}
-	namer := dp.srv.Linking().Namer
-	nameUnit := namer.Name(target)
+	nameUnit := linking.Name(target)
 	if nameUnit == nil {
 		return nil
 	}

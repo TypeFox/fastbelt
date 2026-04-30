@@ -9,48 +9,60 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/collections"
+	"typefox.dev/fastbelt/util/service"
 )
 
+// ReferenceDescriptionsProvider is a service that computes the reference descriptions for a document.
 type ReferenceDescriptionsProvider interface {
-	Provide(ctx context.Context, document *core.Document)
+	// ReferenceDescriptions computes the reference descriptions for a document.
+	// The result is stored in the document's ReferenceDescriptions field.
+	ReferenceDescriptions(ctx context.Context, document *core.Document) core.ReferenceDescriptions
 }
 
+// DefaultReferenceDescriptionsProvider is the default implementation of [ReferenceDescriptionsProvider].
 type DefaultReferenceDescriptionsProvider struct {
-	srv LinkingSrvCont
+	sc *service.Container
 }
 
-func NewDefaultReferenceDescriptionsProvider(srv LinkingSrvCont) ReferenceDescriptionsProvider {
-	return &DefaultReferenceDescriptionsProvider{
-		srv: srv,
-	}
+func NewDefaultReferenceDescriptionsProvider(sc *service.Container) ReferenceDescriptionsProvider {
+	return &DefaultReferenceDescriptionsProvider{sc: sc}
 }
 
-func (p *DefaultReferenceDescriptionsProvider) Provide(ctx context.Context, document *core.Document) {
+func (s *DefaultReferenceDescriptionsProvider) ReferenceDescriptions(ctx context.Context, document *core.Document) core.ReferenceDescriptions {
+	// Unlike AST node descriptions, reference descriptions can't be associated with specific node types,
+	// so the [ReferenceDescriber] interface is used as a service.
+	describer := service.MustGet[ReferenceDescriber](s.sc)
 	descriptions := collections.NewMultiMap[core.AstNode, *core.ReferenceDescription]()
-	describer := p.srv.Linking().ReferenceDescriber
 	for _, ref := range document.References {
 		node := ref.RefNode(ctx)
 		if node != nil {
-			description := describer.Describe(ctx, ref)
+			description := describer.DescribeReference(ctx, ref)
 			if description != nil {
 				descriptions.Put(node, description)
 			}
 		}
 	}
-	document.ReferenceDescriptions = core.NewReferenceDescriptionsFromMap(descriptions)
+	refDescriptions := core.NewReferenceDescriptionsFromMap(descriptions)
+	document.ReferenceDescriptions = refDescriptions
+	return refDescriptions
 }
 
+// ReferenceDescriber is a service that describes references.
 type ReferenceDescriber interface {
-	Describe(ctx context.Context, ref core.UntypedReference) *core.ReferenceDescription
+	// DescribeReference describes metadata about a reference, like the source and target nodes.
+	DescribeReference(ctx context.Context, ref core.UntypedReference) *core.ReferenceDescription
 }
 
-type DefaultReferenceDescriber struct{}
-
-func NewDefaultReferenceDescriber() ReferenceDescriber {
-	return &DefaultReferenceDescriber{}
+// DefaultReferenceDescriber is the default implementation of [ReferenceDescriber].
+type DefaultReferenceDescriber struct {
+	sc *service.Container
 }
 
-func (d *DefaultReferenceDescriber) Describe(ctx context.Context, ref core.UntypedReference) *core.ReferenceDescription {
+func NewDefaultReferenceDescriber(sc *service.Container) ReferenceDescriber {
+	return &DefaultReferenceDescriber{sc: sc}
+}
+
+func (s *DefaultReferenceDescriber) DescribeReference(ctx context.Context, ref core.UntypedReference) *core.ReferenceDescription {
 	source := ref.Owner()
 	target := ref.RefNode(ctx)
 	segment := ref.Segment()

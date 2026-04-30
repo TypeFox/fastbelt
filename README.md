@@ -66,7 +66,7 @@ For editor integration, see the VS Code extension in `internal/vscode-extensions
 
 ## Contributing
 
-Issues and pull requests are welcome.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution guidelines.
 
 ## License
 

@@ -8,24 +8,30 @@ import (
 	"context"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/linking"
+	"typefox.dev/fastbelt/util/service"
+	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
 
+// ReferencesProvider is a service for handling LSP reference requests.
 type ReferencesProvider interface {
 	HandleReferencesRequest(ctx context.Context, params *lsp.ReferenceParams) ([]lsp.Location, error)
 }
 
+// DefaultReferencesProvider is the default implementation of [ReferencesProvider].
 type DefaultReferencesProvider struct {
-	srv ServerSrvCont
+	sc *service.Container
 }
 
-func NewDefaultReferencesProvider(srv ServerSrvCont) ReferencesProvider {
-	return &DefaultReferencesProvider{srv: srv}
+func NewDefaultReferencesProvider(sc *service.Container) ReferencesProvider {
+	return &DefaultReferencesProvider{sc: sc}
 }
 
-func (rp *DefaultReferencesProvider) HandleReferencesRequest(ctx context.Context, params *lsp.ReferenceParams) ([]lsp.Location, error) {
+func (s *DefaultReferencesProvider) HandleReferencesRequest(ctx context.Context, params *lsp.ReferenceParams) ([]lsp.Location, error) {
+	documentManager := service.MustGet[workspace.DocumentManager](s.sc)
 	uri := core.ParseURI(string(params.TextDocument.URI))
-	targetDoc := rp.srv.Workspace().DocumentManager.Get(uri)
+	targetDoc := documentManager.Get(uri)
 	if targetDoc == nil {
 		return nil, nil // Document not found
 	}
@@ -35,12 +41,11 @@ func (rp *DefaultReferencesProvider) HandleReferencesRequest(ctx context.Context
 	if sourceToken == nil {
 		return nil, nil // No token at the given position
 	}
-	namer := rp.srv.Linking().Namer
-	target := rp.findSourceAstNode(ctx, sourceToken)
+	target := s.findSourceAstNode(ctx, sourceToken)
 	if target == nil {
 		return nil, nil // No AST node associated with the token
 	}
-	nameUnit := namer.Name(target)
+	nameUnit := linking.Name(target)
 	if nameUnit == nil {
 		return nil, nil // No name token for the target node
 	}
@@ -51,7 +56,6 @@ func (rp *DefaultReferencesProvider) HandleReferencesRequest(ctx context.Context
 			Range: nameUnit.Segment().Range.LspRange(),
 		},
 	}
-	documentManager := rp.srv.Workspace().DocumentManager
 	// Iterate through all documents and collect references to the symbol
 	for doc := range documentManager.All() {
 		refDescriptions := doc.ReferenceDescriptions.ForTarget(target)
@@ -66,7 +70,7 @@ func (rp *DefaultReferencesProvider) HandleReferencesRequest(ctx context.Context
 	return locations, nil
 }
 
-func (rp *DefaultReferencesProvider) findSourceAstNode(ctx context.Context, token *core.Token) core.AstNode {
+func (s *DefaultReferencesProvider) findSourceAstNode(ctx context.Context, token *core.Token) core.AstNode {
 	ref := core.ReferenceOfToken(token)
 	if ref != nil {
 		return ref.RefNode(ctx)
@@ -75,8 +79,7 @@ func (rp *DefaultReferencesProvider) findSourceAstNode(ctx context.Context, toke
 		if node == nil {
 			return nil
 		}
-		namer := rp.srv.Linking().Namer
-		nameUnit := namer.Name(node)
+		nameUnit := linking.Name(node)
 		if nameUnit == nil {
 			return nil
 		}

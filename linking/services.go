@@ -4,60 +4,27 @@
 
 package linking
 
-import "typefox.dev/fastbelt/generated"
+import "typefox.dev/fastbelt/util/service"
 
-type LinkingSrv struct {
-	ExportedSymbolsProvider       ExportedSymbolsProvider
-	ExportedSymbolDescriber       ExportedSymbolDescriber
-	ImportedSymbolsProvider       ImportedSymbolsProvider
-	LocalSymbolsProvider          LocalSymbolsProvider
-	LocalSymbolDescriber          LocalSymbolDescriber
-	ReferenceDescriptionsProvider ReferenceDescriptionsProvider
-	ReferenceDescriber            ReferenceDescriber
-	Namer                         Namer
-	Linker                        Linker
-}
-
-type LinkingSrvCont interface {
-	generated.GeneratedSrvCont
-	Linking() *LinkingSrv
-}
-
-type LinkingSrvContBlock struct {
-	linking LinkingSrv
-}
-
-func (b *LinkingSrvContBlock) Linking() *LinkingSrv {
-	return &b.linking
-}
-
-func CreateDefaultServices(srv LinkingSrvCont) {
-	linking := srv.Linking()
-	if linking.ExportedSymbolsProvider == nil {
-		linking.ExportedSymbolsProvider = NewDefaultExportedSymbolsProvider(srv)
+// SetupDefaultServices sets up the default services for the linking package.
+// If any service is already set, it's not overwritten.
+func SetupDefaultServices(sc *service.Container) {
+	if !service.Has[ExportedSymbolsProvider](sc) {
+		service.Put(sc, NewDefaultExportedSymbolsProvider(sc))
 	}
-	if linking.ExportedSymbolDescriber == nil {
-		linking.ExportedSymbolDescriber = NewDefaultExportedSymbolDescriber(srv)
+	if !service.Has[ImportedSymbolsProvider](sc) {
+		service.Put(sc, NewDefaultImportedSymbolsProvider(sc))
 	}
-	if linking.ImportedSymbolsProvider == nil {
-		linking.ImportedSymbolsProvider = NewDefaultImportedSymbolsProvider(srv)
+	if !service.Has[Linker](sc) {
+		service.Put(sc, NewDefaultLinker(sc))
 	}
-	if linking.LocalSymbolsProvider == nil {
-		linking.LocalSymbolsProvider = NewDefaultLocalSymbolsProvider(srv)
+	if !service.Has[LocalSymbolsProvider](sc) {
+		service.Put(sc, NewDefaultLocalSymbolsProvider(sc))
 	}
-	if linking.LocalSymbolDescriber == nil {
-		linking.LocalSymbolDescriber = NewDefaultLocalSymbolDescriber(srv)
+	if !service.Has[ReferenceDescriptionsProvider](sc) {
+		service.Put(sc, NewDefaultReferenceDescriptionsProvider(sc))
 	}
-	if linking.ReferenceDescriptionsProvider == nil {
-		linking.ReferenceDescriptionsProvider = NewDefaultReferenceDescriptionsProvider(srv)
-	}
-	if linking.ReferenceDescriber == nil {
-		linking.ReferenceDescriber = NewDefaultReferenceDescriber()
-	}
-	if linking.Namer == nil {
-		linking.Namer = NewDefaultNamer()
-	}
-	if linking.Linker == nil {
-		linking.Linker = NewDefaultLinker()
+	if !service.Has[ReferenceDescriber](sc) {
+		service.Put(sc, NewDefaultReferenceDescriber(sc))
 	}
 }

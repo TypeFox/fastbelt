@@ -8,68 +8,63 @@ import (
 	"context"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/service"
 )
 
-// ExportedSymbolsProvider computes the symbols to be exported from a document
+// ExportedSymbolsProvider is a service that computes the symbols to be exported from a document,
 // so they can be imported into other documents.
 type ExportedSymbolsProvider interface {
-	// Provide traverses the document's AST and computes the exported symbols.
+	// ExportedSymbols traverses the document's AST and computes the exported symbols.
 	// The result is stored in the document's ExportedSymbols field.
-	// The caller must hold the document's write lock.
-	Provide(ctx context.Context, document *core.Document)
+	ExportedSymbols(ctx context.Context, document *core.Document) core.SymbolContainer
 }
 
-// DefaultExportedSymbolsProvider is the default implementation of ExportedSymbolsProvider.
+// DefaultExportedSymbolsProvider is the default implementation of [ExportedSymbolsProvider].
 // By default, it exports the root node and its direct children that have a name.
 type DefaultExportedSymbolsProvider struct {
-	srv LinkingSrvCont
+	sc *service.Container
 }
 
-func NewDefaultExportedSymbolsProvider(srv LinkingSrvCont) ExportedSymbolsProvider {
-	return &DefaultExportedSymbolsProvider{
-		srv: srv,
-	}
+func NewDefaultExportedSymbolsProvider(sc *service.Container) ExportedSymbolsProvider {
+	return &DefaultExportedSymbolsProvider{sc: sc}
 }
 
-func (s *DefaultExportedSymbolsProvider) Provide(ctx context.Context, document *core.Document) {
+func (s *DefaultExportedSymbolsProvider) ExportedSymbols(ctx context.Context, document *core.Document) core.SymbolContainer {
 	root := document.Root
-	describer := s.srv.Linking().ExportedSymbolDescriber
-	exports := s.srv.Generated().SymbolContainers.New()
+	exports := service.MustGet[core.SymbolContainers](s.sc).New()
 
 	// Describe the root node itself
-	if desc := describer.Describe(root); desc != nil {
+	if desc := DescribeExport(root); desc != nil {
 		exports.Put(desc)
 	}
 	// Describe direct children of the root (not nested deeper)
 	for child := range core.ChildNodes(root) {
-		if desc := describer.Describe(child); desc != nil {
+		if desc := DescribeExport(child); desc != nil {
 			exports.Put(desc)
 		}
 	}
 
 	document.ExportedSymbols = exports
+	return exports
 }
 
-// ExportedSymbolDescriber describes how symbols are exported from a document.
+// ExportedSymbolDescriber can be implemented by AST node Impl structs to provide custom exported symbol description logic.
 type ExportedSymbolDescriber interface {
-	// Describe determines the name and other metadata of an exported symbol.
+	// DescribeExport determines the name and other metadata of the receiver node as an exported symbol.
 	// It returns the description, or nil if the node should not be exported.
-	Describe(node core.AstNode) *core.SymbolDescription
+	DescribeExport() *core.SymbolDescription
 }
 
-// DefaultExportedSymbolDescriber is the default implementation of ExportedSymbolDescriber.
-type DefaultExportedSymbolDescriber struct {
-	srv LinkingSrvCont
-}
-
-func NewDefaultExportedSymbolDescriber(srv LinkingSrvCont) ExportedSymbolDescriber {
-	return &DefaultExportedSymbolDescriber{
-		srv: srv,
+// DescribeExport checks whether the given node is a symbol (i.e. has a name) and returns a description for it.
+//
+// Language-specific implementations can be provided by implementing the [ExportedSymbolDescriber] interface.
+func DescribeExport(node core.AstNode) *core.SymbolDescription {
+	// Use the language-specific implementation associated with the node type if available
+	if custom, ok := node.(ExportedSymbolDescriber); ok {
+		return custom.DescribeExport()
 	}
-}
 
-func (p *DefaultExportedSymbolDescriber) Describe(node core.AstNode) *core.SymbolDescription {
-	nameUnit := p.srv.Linking().Namer.Name(node)
+	nameUnit := Name(node)
 	if nameUnit != nil {
 		name := nameUnit.String()
 		segment := nameUnit.Segment()

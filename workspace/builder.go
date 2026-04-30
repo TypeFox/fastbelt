@@ -11,9 +11,11 @@ import (
 	"sync"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/linking"
+	"typefox.dev/fastbelt/util/service"
 )
 
-// Builder is the interface for building workspace-related structures.
+// Builder is a service for applying build steps to workspace documents.
 type Builder interface {
 	// Build processes the provided documents through all build phases (parse, compute
 	// symbol table, link, validate). It should regularly check ctx for cancellation
@@ -42,25 +44,21 @@ type buildStepEntry struct {
 	listener BuildStepListener
 }
 
-// DefaultBuilder is the default implementation of Builder.
+// DefaultBuilder is the default implementation of [Builder].
 type DefaultBuilder struct {
-	srv         WorkspaceSrvCont
+	sc          *service.Container
 	listeners   []buildStepEntry
 	listenersMu sync.RWMutex
 }
 
-// NewDefaultBuilder creates a new default builder.
-func NewDefaultBuilder(srv WorkspaceSrvCont) Builder {
-	return &DefaultBuilder{
-		srv: srv,
-	}
+func NewDefaultBuilder(sc *service.Container) Builder {
+	return &DefaultBuilder{sc: sc}
 }
 
-// Build processes the provided documents through all build phases.
-func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downgrade func()) error {
+func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downgrade func()) error {
 	// PHASE 1: Parse, and compute exports (parallel per document).
-	parser := b.srv.Workspace().DocumentParser
-	exportedSymbols := b.srv.Linking().ExportedSymbolsProvider
+	parser := service.MustGet[DocumentParser](s.sc)
+	exportedSymbols := service.MustGet[linking.ExportedSymbolsProvider](s.sc)
 	var phase1 sync.WaitGroup
 	for _, doc := range docs {
 		phase1.Go(func() {
@@ -71,16 +69,16 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 			if !doc.State.Has(core.DocStateParsed) {
 				parser.Parse(doc)
 				doc.State = doc.State.With(core.DocStateParsed)
-				b.notifyListeners(ctx, core.DocStateParsed, doc)
+				s.notifyListeners(ctx, core.DocStateParsed, doc)
 			}
 			if ctx.Err() != nil {
 				return
 			}
 			// STEP 1.2: Compute the exported symbols for cross-document references.
 			if !doc.State.Has(core.DocStateExportedSymbols) {
-				exportedSymbols.Provide(ctx, doc)
+				exportedSymbols.ExportedSymbols(ctx, doc)
 				doc.State = doc.State.With(core.DocStateExportedSymbols)
-				b.notifyListeners(ctx, core.DocStateExportedSymbols, doc)
+				s.notifyListeners(ctx, core.DocStateExportedSymbols, doc)
 			}
 		})
 	}
@@ -92,10 +90,11 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 
 	// PHASE 2: Compute imported/local symbols and link (parallel per document).
 	// This requires the exported symbols of all documents to be available.
-	importedSymbols := b.srv.Linking().ImportedSymbolsProvider
-	localSymbols := b.srv.Linking().LocalSymbolsProvider
-	linker := b.srv.Linking().Linker
-	referenceDescriptions := b.srv.Linking().ReferenceDescriptionsProvider
+	documentManager := service.MustGet[DocumentManager](s.sc)
+	importedSymbols := service.MustGet[linking.ImportedSymbolsProvider](s.sc)
+	localSymbols := service.MustGet[linking.LocalSymbolsProvider](s.sc)
+	linker := service.MustGet[linking.Linker](s.sc)
+	referenceDescriptions := service.MustGet[linking.ReferenceDescriptionsProvider](s.sc)
 	var phase2 sync.WaitGroup
 	for _, doc := range docs {
 		phase2.Go(func() {
@@ -104,19 +103,19 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 			}
 			// STEP 2.1: Collect imported symbols from all other documents.
 			if !doc.State.Has(core.DocStateImportedSymbols) {
-				allDocs := b.srv.Workspace().DocumentManager.All()
-				importedSymbols.Provide(ctx, doc, allDocs)
+				allDocs := documentManager.All()
+				importedSymbols.ImportedSymbols(ctx, doc, allDocs)
 				doc.State = doc.State.With(core.DocStateImportedSymbols)
-				b.notifyListeners(ctx, core.DocStateImportedSymbols, doc)
+				s.notifyListeners(ctx, core.DocStateImportedSymbols, doc)
 			}
 			if ctx.Err() != nil {
 				return
 			}
 			// STEP 2.2: Compute the local symbols for intra-document references.
 			if !doc.State.Has(core.DocStateLocalSymbols) {
-				localSymbols.Provide(ctx, doc)
+				localSymbols.LocalSymbols(ctx, doc)
 				doc.State = doc.State.With(core.DocStateLocalSymbols)
-				b.notifyListeners(ctx, core.DocStateLocalSymbols, doc)
+				s.notifyListeners(ctx, core.DocStateLocalSymbols, doc)
 			}
 			if ctx.Err() != nil {
 				return
@@ -125,16 +124,16 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 			if !doc.State.Has(core.DocStateLinked) {
 				linker.Link(ctx, doc)
 				doc.State = doc.State.With(core.DocStateLinked)
-				b.notifyListeners(ctx, core.DocStateLinked, doc)
+				s.notifyListeners(ctx, core.DocStateLinked, doc)
 			}
 			if ctx.Err() != nil {
 				return
 			}
 			// STEP 2.4: Provide reference descriptions for the document.
 			if !doc.State.Has(core.DocStateReferences) {
-				referenceDescriptions.Provide(ctx, doc)
+				referenceDescriptions.ReferenceDescriptions(ctx, doc)
 				doc.State = doc.State.With(core.DocStateReferences)
-				b.notifyListeners(ctx, core.DocStateReferences, doc)
+				s.notifyListeners(ctx, core.DocStateReferences, doc)
 			}
 		})
 	}
@@ -149,7 +148,7 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 	downgrade()
 
 	// PHASE 3: Run custom validations (parallel per document).
-	validator := b.srv.Workspace().DocumentValidator
+	validator := service.MustGet[DocumentValidator](s.sc)
 	var phase3 sync.WaitGroup
 	for _, doc := range docs {
 		phase3.Go(func() {
@@ -163,7 +162,7 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 				}
 				doc.Diagnostics = diagnostics
 				doc.State = doc.State.With(core.DocStateValidated)
-				b.notifyListeners(ctx, core.DocStateValidated, doc)
+				s.notifyListeners(ctx, core.DocStateValidated, doc)
 			}
 		})
 	}
@@ -172,8 +171,7 @@ func (b *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 	return ctx.Err()
 }
 
-// Reset selectively clears build results of a document. See [Builder.Reset].
-func (b *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
+func (s *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
 	if !state.Has(core.DocStateParsed) {
 		doc.Root = nil
 		doc.Tokens = core.TokenSlice{}
@@ -204,41 +202,39 @@ func (b *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
 	doc.State = doc.State & state
 }
 
-// AddBuildStepListener registers a listener to be called after the specified build steps.
-func (b *DefaultBuilder) AddBuildStepListener(states core.DocumentState, listener BuildStepListener) {
+func (s *DefaultBuilder) AddBuildStepListener(states core.DocumentState, listener BuildStepListener) {
 	if listener == nil {
 		return
 	}
-	b.listenersMu.Lock()
-	defer b.listenersMu.Unlock()
-	b.listeners = append(b.listeners, buildStepEntry{states: states, listener: listener})
+	s.listenersMu.Lock()
+	defer s.listenersMu.Unlock()
+	s.listeners = append(s.listeners, buildStepEntry{states: states, listener: listener})
 }
 
-// RemoveBuildStepListener unregisters a previously registered listener from all steps.
-func (b *DefaultBuilder) RemoveBuildStepListener(listener BuildStepListener) {
+func (s *DefaultBuilder) RemoveBuildStepListener(listener BuildStepListener) {
 	if listener == nil {
 		return
 	}
-	b.listenersMu.Lock()
-	defer b.listenersMu.Unlock()
+	s.listenersMu.Lock()
+	defer s.listenersMu.Unlock()
 	listenerPtr := reflect.ValueOf(listener).Pointer()
-	for i, entry := range b.listeners {
+	for i, entry := range s.listeners {
 		if reflect.ValueOf(entry.listener).Pointer() == listenerPtr {
-			b.listeners = append(b.listeners[:i], b.listeners[i+1:]...)
+			s.listeners = append(s.listeners[:i], s.listeners[i+1:]...)
 			return
 		}
 	}
 }
 
-func (b *DefaultBuilder) notifyListeners(ctx context.Context, state core.DocumentState, doc *core.Document) {
-	b.listenersMu.RLock()
+func (s *DefaultBuilder) notifyListeners(ctx context.Context, state core.DocumentState, doc *core.Document) {
+	s.listenersMu.RLock()
 	var matched []BuildStepListener
-	for _, entry := range b.listeners {
+	for _, entry := range s.listeners {
 		if entry.states.Has(state) {
 			matched = append(matched, entry.listener)
 		}
 	}
-	b.listenersMu.RUnlock()
+	s.listenersMu.RUnlock()
 
 	for _, listener := range matched {
 		if ctx.Err() != nil {

@@ -7,29 +7,26 @@ package statemachine
 //go:generate go run ../../cmd/fastbelt -g ./statemachine.fb -v
 
 import (
-	"typefox.dev/fastbelt/generated"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 )
 
-type StatemachineSrv struct {
-	textdoc.TextdocSrvContBlock
-	generated.GeneratedSrvContBlock
-	workspace.WorkspaceSrvContBlock
-	linking.LinkingSrvContBlock
-	StatemachineModelLinkingSrvContBlock
+// SetupServices sets up the base services for the statemachine language.
+func SetupServices(sc *service.Container) {
+	service.Put[workspace.LanguageID](sc, "statemachine")
+	service.Put[workspace.FileExtensions](sc, []string{".statemachine"})
+	textdoc.SetupDefaultServices(sc)
+	linking.SetupDefaultServices(sc)
+	workspace.SetupDefaultServices(sc)
+	SetupGeneratedServices(sc)
 }
 
-func CreateServices() *StatemachineSrv {
-	srv := &StatemachineSrv{}
-	textdoc.CreateDefaultServices(srv)
-	workspace.CreateDefaultServices(srv)
-	linking.CreateDefaultServices(srv)
-	CreateDefaultServices(srv)
-
-	srv.Workspace().LanguageID = "statemachine"
-	srv.Workspace().FileExtensions = []string{".statemachine"}
-
-	return srv
+// CreateServices creates a service container for the statemachine language to be used in the CLI and tests.
+func CreateServices() *service.Container {
+	sc := service.NewContainer()
+	SetupServices(sc)
+	sc.Seal()
+	return sc
 }
