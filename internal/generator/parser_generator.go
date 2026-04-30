@@ -63,13 +63,19 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 	node.Indent(func(n generator.Node) {
 		n.AppendLine("state *parser.ParserState")
 		n.AppendLine("sc *service.Container")
+		n.AppendLine("referencesConstructor ", grammr.Name(), "ReferencesConstructor")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
 
 	node.AppendLine("func (p *Parser) references() ", grammr.Name(), "ReferencesConstructor {")
 	node.Indent(func(n generator.Node) {
-		n.AppendLine("return service.MustGet[", grammr.Name(), "ReferencesConstructor](p.sc)")
+		n.AppendLine("if p.referencesConstructor == nil {")
+		n.Indent(func(in generator.Node) {
+			in.AppendLine("p.referencesConstructor = service.MustGet[", grammr.Name(), "ReferencesConstructor](p.sc)")
+		})
+		n.AppendLine("}")
+		n.AppendLine("return p.referencesConstructor")
 	})
 	node.AppendLine("}").AppendLine()
 
@@ -83,7 +89,7 @@ func GenerateParser(grammr grammar.Grammar, packageName string) string {
 	node.Indent(func(n generator.Node) {
 		// Workaround to enable parallel parsing of documents
 		// TODO: find a better structure to enable parallel parsing
-		n.AppendLine("cp := &Parser{sc: p.sc, state: parser.NewParserState(document.Tokens)}")
+		n.AppendLine("cp := &Parser{sc: p.sc, referencesConstructor: p.references(), state: parser.NewParserState(document.Tokens)}")
 		n.AppendLine("result := cp.Parse", firstRule.Name(), "()")
 		n.AppendLine("core.AssignContainers(document, result)")
 		n.AppendLine("return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}")

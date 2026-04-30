@@ -9,16 +9,20 @@ import (
 )
 
 type Parser struct {
-	state *parser.ParserState
-	sc    *service.Container
+	state                 *parser.ParserState
+	sc                    *service.Container
+	referencesConstructor StatemachineModelReferencesConstructor
 }
 
 func (p *Parser) references() StatemachineModelReferencesConstructor {
-	return service.MustGet[StatemachineModelReferencesConstructor](p.sc)
+	if p.referencesConstructor == nil {
+		p.referencesConstructor = service.MustGet[StatemachineModelReferencesConstructor](p.sc)
+	}
+	return p.referencesConstructor
 }
 
 func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
-	cp := &Parser{sc: p.sc, state: parser.NewParserState(document.Tokens)}
+	cp := &Parser{sc: p.sc, referencesConstructor: p.references(), state: parser.NewParserState(document.Tokens)}
 	result := cp.ParseStatemachine()
 	core.AssignContainers(document, result)
 	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}

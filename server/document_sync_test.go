@@ -54,10 +54,10 @@ func createTestServicesWithUpdater() (*service.Container, *mockDocumentUpdater) 
 	SetupDefaultServices(sc)
 
 	// Use a deterministic language ID for tests that may create file-backed documents.
-	service.MustPut[workspace.LanguageID](sc, "plaintext")
+	service.Put[workspace.LanguageID](sc, "plaintext")
 
 	updater := &mockDocumentUpdater{}
-	service.MustOverride[workspace.DocumentUpdater](sc, updater)
+	service.Override[workspace.DocumentUpdater](sc, updater)
 
 	sc.Seal()
 	return sc, updater

@@ -15,8 +15,8 @@ import (
 
 // SetupServices sets up the base services for the statemachine language.
 func SetupServices(sc *service.Container) {
-	service.MustPut[workspace.LanguageID](sc, "statemachine")
-	service.MustPut[workspace.FileExtensions](sc, []string{".statemachine"})
+	service.Put[workspace.LanguageID](sc, "statemachine")
+	service.Put[workspace.FileExtensions](sc, []string{".statemachine"})
 	textdoc.SetupDefaultServices(sc)
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)

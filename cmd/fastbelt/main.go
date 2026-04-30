@@ -92,9 +92,15 @@ func runLegacyGenerate(args []string) error {
 	file, _ := textdoc.NewFile(lsp.URIFromPath(grammarPath), "fb", 0, string(grammarText))
 
 	document := core.NewDocument(file)
-	documents := service.MustGet[workspace.DocumentManager](sc)
+	documents, err := service.Get[workspace.DocumentManager](sc)
+	if err != nil {
+		return err
+	}
 	documents.Set(document)
-	builder := service.MustGet[workspace.Builder](sc)
+	builder, err := service.Get[workspace.Builder](sc)
+	if err != nil {
+		return err
+	}
 	if err := builder.Build(context.Background(), []*core.Document{document}, func() {}); err != nil {
 		return err
 	}

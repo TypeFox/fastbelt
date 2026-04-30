@@ -6,6 +6,8 @@ package service
 
 import (
 	"fmt"
+	"iter"
+	"maps"
 	"reflect"
 )
 
@@ -67,11 +69,11 @@ func MustGet[T any](container *Container) T {
 	return service
 }
 
-// MustPut puts a service into the container.
+// Put puts a service into the container.
 // It panics if the container is sealed or the service already exists.
 //
 // TODO make this a method once generic methods are supported in Go.
-func MustPut[T any](container *Container, service T) {
+func Put[T any](container *Container, service T) {
 	if container.sealed {
 		panic("container is sealed")
 	}
@@ -82,11 +84,11 @@ func MustPut[T any](container *Container, service T) {
 	container.services[t] = service
 }
 
-// MustOverride overrides a service in the container.
+// Override overrides a service in the container.
 // It panics if the container is sealed or the service does not exist.
 //
 // TODO make this a method once generic methods are supported in Go.
-func MustOverride[T any](container *Container, service T) {
+func Override[T any](container *Container, service T) {
 	if container.sealed {
 		panic("container is sealed")
 	}
@@ -95,4 +97,9 @@ func MustOverride[T any](container *Container, service T) {
 		panic(fmt.Sprintf("service %s does not exist", t.Name()))
 	}
 	container.services[t] = service
+}
+
+// All returns all services in the container in arbitrary order.
+func (c *Container) All() iter.Seq[any] {
+	return maps.Values(c.services)
 }

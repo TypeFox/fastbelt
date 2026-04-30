@@ -29,13 +29,15 @@ func NewDefaultLanguageServer(sc *service.Container) lsp.Server {
 }
 
 func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.ParamInitialize) (*lsp.InitializeResult, error) {
-	slogHandler := service.MustGet[slog.Handler](s.sc)
-	if slogHandler != nil {
+	if slogHandler, _ := service.Get[slog.Handler](s.sc); slogHandler != nil {
 		// Set the default logger to use the configured slog handler
 		// It will send logs to the client via the LSP connection
 		slog.SetDefault(slog.New(slogHandler))
 	}
-	workspaceFolders := service.MustGet[*WorkspaceFolders](s.sc)
+	workspaceFolders, err := service.Get[*WorkspaceFolders](s.sc)
+	if err != nil {
+		return nil, err
+	}
 	workspaceFolders.Value = params.WorkspaceFolders
 	return &lsp.InitializeResult{
 		Capabilities: lsp.ServerCapabilities{
@@ -125,8 +127,14 @@ func (s *DefaultLanguageServer) Completion(ctx context.Context, params *lsp.Comp
 func (s *DefaultLanguageServer) Definition(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.DefinitionLink, error) {
 	var result []lsp.DefinitionLink
 	var providerErr error
-	lock := service.MustGet[workspace.Lock](s.sc)
-	definition := service.MustGet[DefinitionProvider](s.sc)
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	definition, err := service.Get[DefinitionProvider](s.sc)
+	if err != nil {
+		return nil, err
+	}
 	if err := lock.Read(ctx, func(ctx context.Context) {
 		result, providerErr = definition.HandleDefinitionRequest(ctx, params)
 	}); err != nil {
@@ -138,8 +146,14 @@ func (s *DefaultLanguageServer) Definition(ctx context.Context, params *lsp.Defi
 func (s *DefaultLanguageServer) References(ctx context.Context, params *lsp.ReferenceParams) ([]lsp.Location, error) {
 	var result []lsp.Location
 	var providerErr error
-	lock := service.MustGet[workspace.Lock](s.sc)
-	references := service.MustGet[ReferencesProvider](s.sc)
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	references, err := service.Get[ReferencesProvider](s.sc)
+	if err != nil {
+		return nil, err
+	}
 	if err := lock.Read(ctx, func(ctx context.Context) {
 		result, providerErr = references.HandleReferencesRequest(ctx, params)
 	}); err != nil {
@@ -357,7 +371,10 @@ func StartLanguageServer(ctx context.Context, sc *service.Container) error {
 
 	// Register build step listener to publish diagnostics after validation
 	client := lsp.ClientDispatcher(conn)
-	builder := service.MustGet[workspace.Builder](sc)
+	builder, err := service.Get[workspace.Builder](sc)
+	if err != nil {
+		return err
+	}
 	builder.AddBuildStepListener(core.DocStateValidated, func(ctx context.Context, doc *core.Document) error {
 		lspDiags := make([]lsp.Diagnostic, 0, len(doc.Diagnostics))
 		for _, d := range doc.Diagnostics {
@@ -420,10 +437,19 @@ func NewDefaultBinder(sc *service.Container) jsonrpc2.Binder {
 }
 
 func (b *DefaultBinder) Bind(ctx context.Context, conn *jsonrpc2.Connection) (jsonrpc2.ConnectionOptions, error) {
-	connection := service.MustGet[*Connection](b.sc)
+	// Store the JSON-RPC connection in the service container
+	connection, err := service.Get[*Connection](b.sc)
+	if err != nil {
+		return jsonrpc2.ConnectionOptions{}, err
+	}
 	connection.Value = conn
+	// Bind the LSP server implementation from the service container to the connection
+	server, err := service.Get[lsp.Server](b.sc)
+	if err != nil {
+		return jsonrpc2.ConnectionOptions{}, err
+	}
 	return jsonrpc2.ConnectionOptions{
-		Handler: lsp.ServerHandler(service.MustGet[lsp.Server](b.sc)),
+		Handler: lsp.ServerHandler(server),
 	}, nil
 }
 

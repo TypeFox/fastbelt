@@ -48,11 +48,14 @@ func (h *slogHandler) WithGroup(name string) slog.Handler {
 }
 
 func (h *slogHandler) write(ctx context.Context, level lsp.MessageType, msg string) error {
-	conn := service.MustGet[*Connection](h.sc).Value
-	if conn == nil {
+	conn, err := service.Get[*Connection](h.sc)
+	if err != nil {
+		return err
+	}
+	if conn.Value == nil {
 		return nil // Connection not established; skip logging
 	}
-	lspConn := lsp.ClientDispatcher(conn)
+	lspConn := lsp.ClientDispatcher(conn.Value)
 	return lspConn.LogMessage(ctx, &lsp.LogMessageParams{
 		Type:    level,
 		Message: msg,

@@ -82,64 +82,63 @@ type FastbeltReferenceLinker interface {
 }
 
 type DefaultFastbeltReferenceLinker struct {
-	sc *service.Container
+	sc            *service.Container
+	scopeProvider FastbeltScopeProvider
 }
 
 func NewDefaultFastbeltReferenceLinker(sc *service.Container) FastbeltReferenceLinker {
 	return &DefaultFastbeltReferenceLinker{sc: sc}
 }
 
+func (s *DefaultFastbeltReferenceLinker) scope() FastbeltScopeProvider {
+	if s.scopeProvider == nil {
+		s.scopeProvider = service.MustGet[FastbeltScopeProvider](s.sc)
+	}
+	return s.scopeProvider
+}
+
 func (s *DefaultFastbeltReferenceLinker) LinkInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
-	scopeProvider := service.MustGet[FastbeltScopeProvider](s.sc)
-	scope := scopeProvider.ScopeInterfaceExtends(ctx, reference)
+	scope := s.scope().ScopeInterfaceExtends(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
 func (s *DefaultFastbeltReferenceLinker) LinkReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
-	scopeProvider := service.MustGet[FastbeltScopeProvider](s.sc)
-	scope := scopeProvider.ScopeReferenceTypeType(ctx, reference)
+	scope := s.scope().ScopeReferenceTypeType(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
 func (s *DefaultFastbeltReferenceLinker) LinkSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
-	scopeProvider := service.MustGet[FastbeltScopeProvider](s.sc)
-	scope := scopeProvider.ScopeSimpleTypeType(ctx, reference)
+	scope := s.scope().ScopeSimpleTypeType(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
 func (s *DefaultFastbeltReferenceLinker) LinkParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
-	scopeProvider := service.MustGet[FastbeltScopeProvider](s.sc)
-	scope := scopeProvider.ScopeParserRuleReturnType(ctx, reference)
+	scope := s.scope().ScopeParserRuleReturnType(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
 func (s *DefaultFastbeltReferenceLinker) LinkAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) (*core.SymbolDescription, *core.ReferenceError) {
-	scopeProvider := service.MustGet[FastbeltScopeProvider](s.sc)
-	scope := scopeProvider.ScopeAssignmentProperty(ctx, reference)
+	scope := s.scope().ScopeAssignmentProperty(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
 func (s *DefaultFastbeltReferenceLinker) LinkCrossRefType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
-	scopeProvider := service.MustGet[FastbeltScopeProvider](s.sc)
-	scope := scopeProvider.ScopeCrossRefType(ctx, reference)
+	scope := s.scope().ScopeCrossRefType(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
 func (s *DefaultFastbeltReferenceLinker) LinkRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) (*core.SymbolDescription, *core.ReferenceError) {
-	scopeProvider := service.MustGet[FastbeltScopeProvider](s.sc)
-	scope := scopeProvider.ScopeRuleCallRule(ctx, reference)
+	scope := s.scope().ScopeRuleCallRule(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
 func (s *DefaultFastbeltReferenceLinker) LinkActionType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
-	scopeProvider := service.MustGet[FastbeltScopeProvider](s.sc)
-	scope := scopeProvider.ScopeActionType(ctx, reference)
+	scope := s.scope().ScopeActionType(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
 func (s *DefaultFastbeltReferenceLinker) LinkActionProperty(ctx context.Context, reference *core.Reference[Field]) (*core.SymbolDescription, *core.ReferenceError) {
-	scopeProvider := service.MustGet[FastbeltScopeProvider](s.sc)
-	scope := scopeProvider.ScopeActionProperty(ctx, reference)
+	scope := s.scope().ScopeActionProperty(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
@@ -156,64 +155,63 @@ type FastbeltReferencesConstructor interface {
 }
 
 type DefaultFastbeltReferencesConstructor struct {
-	sc *service.Container
+	sc              *service.Container
+	referenceLinker FastbeltReferenceLinker
 }
 
 func NewDefaultFastbeltReferencesConstructor(sc *service.Container) FastbeltReferencesConstructor {
 	return &DefaultFastbeltReferencesConstructor{sc: sc}
 }
 
+func (s *DefaultFastbeltReferencesConstructor) linker() FastbeltReferenceLinker {
+	if s.referenceLinker == nil {
+		s.referenceLinker = service.MustGet[FastbeltReferenceLinker](s.sc)
+	}
+	return s.referenceLinker
+}
+
 func (s *DefaultFastbeltReferencesConstructor) InterfaceExtends(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
-	referenceLinker := service.MustGet[FastbeltReferenceLinker](s.sc)
-	fn := referenceLinker.LinkInterfaceExtends
+	fn := s.linker().LinkInterfaceExtends
 	return core.NewReference(owner, unit, fn)
 }
 
 func (s *DefaultFastbeltReferencesConstructor) ReferenceTypeType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
-	referenceLinker := service.MustGet[FastbeltReferenceLinker](s.sc)
-	fn := referenceLinker.LinkReferenceTypeType
+	fn := s.linker().LinkReferenceTypeType
 	return core.NewReference(owner, unit, fn)
 }
 
 func (s *DefaultFastbeltReferencesConstructor) SimpleTypeType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
-	referenceLinker := service.MustGet[FastbeltReferenceLinker](s.sc)
-	fn := referenceLinker.LinkSimpleTypeType
+	fn := s.linker().LinkSimpleTypeType
 	return core.NewReference(owner, unit, fn)
 }
 
 func (s *DefaultFastbeltReferencesConstructor) ParserRuleReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
-	referenceLinker := service.MustGet[FastbeltReferenceLinker](s.sc)
-	fn := referenceLinker.LinkParserRuleReturnType
+	fn := s.linker().LinkParserRuleReturnType
 	return core.NewReference(owner, unit, fn)
 }
 
 func (s *DefaultFastbeltReferencesConstructor) AssignmentProperty(owner core.AstNode, unit core.StringUnit) *core.Reference[Field] {
-	referenceLinker := service.MustGet[FastbeltReferenceLinker](s.sc)
-	fn := referenceLinker.LinkAssignmentProperty
+	fn := s.linker().LinkAssignmentProperty
 	return core.NewReference(owner, unit, fn)
 }
 
 func (s *DefaultFastbeltReferencesConstructor) CrossRefType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
-	referenceLinker := service.MustGet[FastbeltReferenceLinker](s.sc)
-	fn := referenceLinker.LinkCrossRefType
+	fn := s.linker().LinkCrossRefType
 	return core.NewReference(owner, unit, fn)
 }
 
 func (s *DefaultFastbeltReferencesConstructor) RuleCallRule(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractRule] {
-	referenceLinker := service.MustGet[FastbeltReferenceLinker](s.sc)
-	fn := referenceLinker.LinkRuleCallRule
+	fn := s.linker().LinkRuleCallRule
 	return core.NewReference(owner, unit, fn)
 }
 
 func (s *DefaultFastbeltReferencesConstructor) ActionType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
-	referenceLinker := service.MustGet[FastbeltReferenceLinker](s.sc)
-	fn := referenceLinker.LinkActionType
+	fn := s.linker().LinkActionType
 	return core.NewReference(owner, unit, fn)
 }
 
 func (s *DefaultFastbeltReferencesConstructor) ActionProperty(owner core.AstNode, unit core.StringUnit) *core.Reference[Field] {
-	referenceLinker := service.MustGet[FastbeltReferenceLinker](s.sc)
-	fn := referenceLinker.LinkActionProperty
+	fn := s.linker().LinkActionProperty
 	return core.NewReference(owner, unit, fn)
 }
 

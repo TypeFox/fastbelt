@@ -13,21 +13,21 @@ import (
 // If any service is already set, it's not overwritten.
 func SetupGeneratedServices(sc *service.Container) {
 	if !service.Has[StatemachineModelScopeProvider](sc) {
-		service.MustPut(sc, NewDefaultStatemachineModelScopeProvider(sc))
+		service.Put(sc, NewDefaultStatemachineModelScopeProvider(sc))
 	}
 	if !service.Has[StatemachineModelReferenceLinker](sc) {
-		service.MustPut(sc, NewDefaultStatemachineModelReferenceLinker(sc))
+		service.Put(sc, NewDefaultStatemachineModelReferenceLinker(sc))
 	}
 	if !service.Has[StatemachineModelReferencesConstructor](sc) {
-		service.MustPut(sc, NewDefaultStatemachineModelReferencesConstructor(sc))
+		service.Put(sc, NewDefaultStatemachineModelReferencesConstructor(sc))
 	}
 	if !service.Has[lexer.Lexer](sc) {
-		service.MustPut[lexer.Lexer](sc, NewLexer())
+		service.Put[lexer.Lexer](sc, NewLexer())
 	}
 	if !service.Has[parser.Parser](sc) {
-		service.MustPut[parser.Parser](sc, NewParser(sc))
+		service.Put[parser.Parser](sc, NewParser(sc))
 	}
 	if !service.Has[core.SymbolContainers](sc) {
-		service.MustPut[core.SymbolContainers](sc, NewSymbolContainers())
+		service.Put[core.SymbolContainers](sc, NewSymbolContainers())
 	}
 }

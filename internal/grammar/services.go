@@ -15,8 +15,8 @@ import (
 
 // SetupServices sets up the base services for the grammar language.
 func SetupServices(sc *service.Container) {
-	service.MustPut[workspace.LanguageID](sc, "fastbelt")
-	service.MustPut[workspace.FileExtensions](sc, []string{".fb"})
+	service.Put[workspace.LanguageID](sc, "fastbelt")
+	service.Put[workspace.FileExtensions](sc, []string{".fb"})
 
 	textdoc.SetupDefaultServices(sc)
 	linking.SetupDefaultServices(sc)
@@ -24,7 +24,7 @@ func SetupServices(sc *service.Container) {
 	SetupGeneratedServices(sc)
 
 	// Override the default scope provider
-	service.MustOverride[FastbeltScopeProvider](sc, newScopeProviderImpl(sc))
+	service.Override[FastbeltScopeProvider](sc, newScopeProviderImpl(sc))
 }
 
 // CreateServices creates a service container for the grammar language to be used in the CLI and tests.

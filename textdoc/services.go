@@ -10,6 +10,6 @@ import "typefox.dev/fastbelt/util/service"
 // If any service is already set, it's not overwritten.
 func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[Store](sc) {
-		service.MustPut(sc, NewDefaultStore())
+		service.Put(sc, NewDefaultStore())
 	}
 }

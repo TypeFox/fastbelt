@@ -5,6 +5,7 @@
 package service
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -32,6 +33,17 @@ func (c *StaticCounter) Count() int {
 	return c.value
 }
 
+func panicMessage(recovered any) string {
+	switch v := recovered.(type) {
+	case error:
+		return v.Error()
+	case string:
+		return v
+	default:
+		return fmt.Sprint(v)
+	}
+}
+
 func TestNewContainer_IsInitiallyEmptyAndNotSealed(t *testing.T) {
 	container := NewContainer()
 
@@ -55,20 +67,54 @@ func TestSeal_PreventsFurtherServicesFromBeingAdded(t *testing.T) {
 	defer func() {
 		recovered := recover()
 		if recovered == nil {
-			t.Fatal("expected MustPut to panic for a sealed container")
+			t.Fatal("expected Put to panic for a sealed container")
 		}
-		if recovered != "container is sealed" {
+		if panicMessage(recovered) != "container is sealed" {
 			t.Fatalf("unexpected panic: %v", recovered)
 		}
 	}()
 
-	MustPut[Greeter](container, &EnglishGreeter{value: "hello"})
+	Put[Greeter](container, &EnglishGreeter{value: "hello"})
+}
+
+func TestPut_PanicsWhenContainerSealed(t *testing.T) {
+	container := NewContainer()
+	container.Seal()
+
+	defer func() {
+		recovered := recover()
+		if recovered == nil {
+			t.Fatal("expected Put to panic for a sealed container")
+		}
+		if panicMessage(recovered) != "container is sealed" {
+			t.Fatalf("unexpected panic: %v", recovered)
+		}
+	}()
+
+	Put[Greeter](container, &EnglishGreeter{value: "hello"})
+}
+
+func TestPut_PanicsWhenServiceAlreadyExists(t *testing.T) {
+	container := NewContainer()
+	Put[Greeter](container, &EnglishGreeter{value: "hello"})
+
+	defer func() {
+		recovered := recover()
+		if recovered == nil {
+			t.Fatal("expected Put to panic for duplicate service")
+		}
+		if panicMessage(recovered) != "service Greeter already exists" {
+			t.Fatalf("unexpected panic: %v", recovered)
+		}
+	}()
+
+	Put[Greeter](container, &EnglishGreeter{value: "hi"})
 }
 
 func TestHas_ReportsPresenceOfService(t *testing.T) {
 	container := NewContainer()
 	service := &EnglishGreeter{value: "hello"}
-	MustPut[Greeter](container, service)
+	Put[Greeter](container, service)
 
 	if !Has[Greeter](container) {
 		t.Fatal("expected Has to report true for inserted service")
@@ -81,7 +127,7 @@ func TestHas_ReportsPresenceOfService(t *testing.T) {
 func TestGet_ReturnsServiceWhenSealedAndPresent(t *testing.T) {
 	container := NewContainer()
 	service := &EnglishGreeter{value: "hello"}
-	MustPut[Greeter](container, service)
+	Put[Greeter](container, service)
 	container.Seal()
 
 	got, err := Get[Greeter](container)
@@ -90,6 +136,54 @@ func TestGet_ReturnsServiceWhenSealedAndPresent(t *testing.T) {
 	}
 	if got != service {
 		t.Fatal("expected retrieved service to match inserted service")
+	}
+}
+
+func TestOverride_PanicsWhenContainerSealed(t *testing.T) {
+	container := NewContainer()
+	Put[Greeter](container, &EnglishGreeter{value: "hello"})
+	container.Seal()
+
+	defer func() {
+		recovered := recover()
+		if recovered == nil {
+			t.Fatal("expected Override to panic for a sealed container")
+		}
+		if panicMessage(recovered) != "container is sealed" {
+			t.Fatalf("unexpected panic: %v", recovered)
+		}
+	}()
+
+	Override[Greeter](container, &EnglishGreeter{value: "hi"})
+}
+
+func TestOverride_PanicsWhenServiceDoesNotExist(t *testing.T) {
+	container := NewContainer()
+
+	defer func() {
+		recovered := recover()
+		if recovered == nil {
+			t.Fatal("expected Override to panic for missing service")
+		}
+		if panicMessage(recovered) != "service Greeter does not exist" {
+			t.Fatalf("unexpected panic: %v", recovered)
+		}
+	}()
+
+	Override[Greeter](container, &EnglishGreeter{value: "hello"})
+}
+
+func TestOverride_ReplacesExistingService(t *testing.T) {
+	container := NewContainer()
+	first := &EnglishGreeter{value: "hello"}
+	second := &EnglishGreeter{value: "hi"}
+	Put[Greeter](container, first)
+
+	Override[Greeter](container, second)
+	container.Seal()
+	got := MustGet[Greeter](container)
+	if got != second {
+		t.Fatal("expected Override to replace the existing service")
 	}
 }
 
@@ -136,11 +230,45 @@ func TestMustGet_PanicsWhenServiceNotFound(t *testing.T) {
 func TestMustGet_ReturnsServiceWhenPresent(t *testing.T) {
 	container := NewContainer()
 	service := &StaticCounter{value: 42}
-	MustPut[Counter](container, service)
+	Put[Counter](container, service)
 	container.Seal()
 
 	got := MustGet[Counter](container)
 	if got != service {
 		t.Fatal("expected MustGet to return inserted service")
 	}
+}
+
+func TestOverride_PanicsWhenContainerSealed_MustBehavior(t *testing.T) {
+	container := NewContainer()
+	Put[Greeter](container, &EnglishGreeter{value: "hello"})
+	container.Seal()
+
+	defer func() {
+		recovered := recover()
+		if recovered == nil {
+			t.Fatal("expected Override to panic for sealed container")
+		}
+		if panicMessage(recovered) != "container is sealed" {
+			t.Fatalf("unexpected panic: %v", recovered)
+		}
+	}()
+
+	Override[Greeter](container, &EnglishGreeter{value: "hi"})
+}
+
+func TestOverride_PanicsWhenServiceDoesNotExist_MustBehavior(t *testing.T) {
+	container := NewContainer()
+
+	defer func() {
+		recovered := recover()
+		if recovered == nil {
+			t.Fatal("expected Override to panic for missing service")
+		}
+		if panicMessage(recovered) != "service Greeter does not exist" {
+			t.Fatalf("unexpected panic: %v", recovered)
+		}
+	}()
+
+	Override[Greeter](container, &EnglishGreeter{value: "hello"})
 }

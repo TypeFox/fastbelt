@@ -18,8 +18,8 @@ func TestLanguageServerBasicLifecycle(t *testing.T) {
 	sc := service.NewContainer()
 	workspace.SetupDefaultServices(sc)
 	SetupDefaultServices(sc)
-	service.MustPut[workspace.LanguageID](sc, "plaintext")
-	service.MustPut[workspace.FileExtensions](sc, []string{".txt"})
+	service.Put[workspace.LanguageID](sc, "plaintext")
+	service.Put[workspace.FileExtensions](sc, []string{".txt"})
 	sc.Seal()
 
 	server := service.MustGet[lsp.Server](sc)

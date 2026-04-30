@@ -10,21 +10,21 @@ import "typefox.dev/fastbelt/util/service"
 // If any service is already set, it's not overwritten.
 func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[ExportedSymbolsProvider](sc) {
-		service.MustPut(sc, NewDefaultExportedSymbolsProvider(sc))
+		service.Put(sc, NewDefaultExportedSymbolsProvider(sc))
 	}
 	if !service.Has[ImportedSymbolsProvider](sc) {
-		service.MustPut(sc, NewDefaultImportedSymbolsProvider(sc))
+		service.Put(sc, NewDefaultImportedSymbolsProvider(sc))
 	}
 	if !service.Has[Linker](sc) {
-		service.MustPut(sc, NewDefaultLinker(sc))
+		service.Put(sc, NewDefaultLinker(sc))
 	}
 	if !service.Has[LocalSymbolsProvider](sc) {
-		service.MustPut(sc, NewDefaultLocalSymbolsProvider(sc))
+		service.Put(sc, NewDefaultLocalSymbolsProvider(sc))
 	}
 	if !service.Has[ReferenceDescriptionsProvider](sc) {
-		service.MustPut(sc, NewDefaultReferenceDescriptionsProvider(sc))
+		service.Put(sc, NewDefaultReferenceDescriptionsProvider(sc))
 	}
 	if !service.Has[ReferenceDescriber](sc) {
-		service.MustPut(sc, NewDefaultReferenceDescriber(sc))
+		service.Put(sc, NewDefaultReferenceDescriber(sc))
 	}
 }

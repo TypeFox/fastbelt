@@ -20,24 +20,24 @@ type FileExtensions []string
 // If any service is already set, it's not overwritten.
 func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[DocumentManager](sc) {
-		service.MustPut(sc, NewDefaultDocumentManager(sc))
+		service.Put(sc, NewDefaultDocumentManager(sc))
 	}
 	if !service.Has[Initializer](sc) {
-		service.MustPut(sc, NewDefaultInitializer(sc))
+		service.Put(sc, NewDefaultInitializer(sc))
 	}
 	if !service.Has[Lock](sc) {
-		service.MustPut(sc, NewDefaultLock())
+		service.Put(sc, NewDefaultLock())
 	}
 	if !service.Has[DocumentUpdater](sc) {
-		service.MustPut(sc, NewDefaultDocumentUpdater(sc))
+		service.Put(sc, NewDefaultDocumentUpdater(sc))
 	}
 	if !service.Has[Builder](sc) {
-		service.MustPut(sc, NewDefaultBuilder(sc))
+		service.Put(sc, NewDefaultBuilder(sc))
 	}
 	if !service.Has[DocumentParser](sc) {
-		service.MustPut(sc, NewDefaultDocumentParser(sc))
+		service.Put(sc, NewDefaultDocumentParser(sc))
 	}
 	if !service.Has[DocumentValidator](sc) {
-		service.MustPut(sc, NewDefaultDocumentValidator(sc))
+		service.Put(sc, NewDefaultDocumentValidator(sc))
 	}
 }

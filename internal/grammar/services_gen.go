@@ -13,21 +13,21 @@ import (
 // If any service is already set, it's not overwritten.
 func SetupGeneratedServices(sc *service.Container) {
 	if !service.Has[FastbeltScopeProvider](sc) {
-		service.MustPut(sc, NewDefaultFastbeltScopeProvider(sc))
+		service.Put(sc, NewDefaultFastbeltScopeProvider(sc))
 	}
 	if !service.Has[FastbeltReferenceLinker](sc) {
-		service.MustPut(sc, NewDefaultFastbeltReferenceLinker(sc))
+		service.Put(sc, NewDefaultFastbeltReferenceLinker(sc))
 	}
 	if !service.Has[FastbeltReferencesConstructor](sc) {
-		service.MustPut(sc, NewDefaultFastbeltReferencesConstructor(sc))
+		service.Put(sc, NewDefaultFastbeltReferencesConstructor(sc))
 	}
 	if !service.Has[lexer.Lexer](sc) {
-		service.MustPut[lexer.Lexer](sc, NewLexer())
+		service.Put[lexer.Lexer](sc, NewLexer())
 	}
 	if !service.Has[parser.Parser](sc) {
-		service.MustPut[parser.Parser](sc, NewParser(sc))
+		service.Put[parser.Parser](sc, NewParser(sc))
 	}
 	if !service.Has[core.SymbolContainers](sc) {
-		service.MustPut[core.SymbolContainers](sc, NewSymbolContainers())
+		service.Put[core.SymbolContainers](sc, NewSymbolContainers())
 	}
 }

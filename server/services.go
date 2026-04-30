@@ -25,27 +25,27 @@ type Connection struct {
 // SetupDefaultServices sets up the default services for the language server.
 // If any service is already set, it's not overwritten.
 func SetupDefaultServices(sc *service.Container) {
-	service.MustPut(sc, &WorkspaceFolders{})
-	service.MustPut(sc, &Connection{})
+	service.Put(sc, &WorkspaceFolders{})
+	service.Put(sc, &Connection{})
 	if !service.Has[slog.Handler](sc) {
-		service.MustPut(sc, NewSlogHandler(sc))
+		service.Put(sc, NewSlogHandler(sc))
 	}
 	if !service.Has[jsonrpc2.Binder](sc) {
-		service.MustPut(sc, NewDefaultBinder(sc))
+		service.Put(sc, NewDefaultBinder(sc))
 	}
 	if !service.Has[jsonrpc2.Dialer](sc) {
-		service.MustPut[jsonrpc2.Dialer](sc, &StdioDialer{})
+		service.Put[jsonrpc2.Dialer](sc, &StdioDialer{})
 	}
 	if !service.Has[lsp.Server](sc) {
-		service.MustPut(sc, NewDefaultLanguageServer(sc))
+		service.Put(sc, NewDefaultLanguageServer(sc))
 	}
 	if !service.Has[DocumentSyncher](sc) {
-		service.MustPut(sc, NewDefaultDocumentSyncher(sc))
+		service.Put(sc, NewDefaultDocumentSyncher(sc))
 	}
 	if !service.Has[DefinitionProvider](sc) {
-		service.MustPut(sc, NewDefaultDefinitionProvider(sc))
+		service.Put(sc, NewDefaultDefinitionProvider(sc))
 	}
 	if !service.Has[ReferencesProvider](sc) {
-		service.MustPut(sc, NewDefaultReferencesProvider(sc))
+		service.Put(sc, NewDefaultReferencesProvider(sc))
 	}
 }

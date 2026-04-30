@@ -135,7 +135,8 @@ func generateLinker(context *LinkerGeneratorContext) generator.Node {
 	node.AppendLine()
 
 	node.AppendLine("type Default", context.grammar.Name(), "ReferenceLinker struct {")
-	node.AppendLine("	sc *service.Container")
+	node.AppendLine("	sc            *service.Container")
+	node.AppendLine("	scopeProvider ", context.grammar.Name(), "ScopeProvider")
 	node.AppendLine("}")
 	node.AppendLine()
 
@@ -143,11 +144,17 @@ func generateLinker(context *LinkerGeneratorContext) generator.Node {
 	node.AppendLine("	return &Default", context.grammar.Name(), "ReferenceLinker{sc: sc}")
 	node.AppendLine("}")
 	node.AppendLine()
+	node.AppendLine("func (s *Default", context.grammar.Name(), "ReferenceLinker) scope() ", context.grammar.Name(), "ScopeProvider {")
+	node.AppendLine("	if s.scopeProvider == nil {")
+	node.AppendLine("		s.scopeProvider = service.MustGet[", context.grammar.Name(), "ScopeProvider](s.sc)")
+	node.AppendLine("	}")
+	node.AppendLine("	return s.scopeProvider")
+	node.AppendLine("}")
+	node.AppendLine()
 
 	for _, field := range context.fields {
 		node.AppendLine("func (s *Default", context.grammar.Name(), "ReferenceLinker) Link", field.typeName, field.name, "(ctx context.Context, reference *core.Reference[", field.target, "]) (*core.SymbolDescription, *core.ReferenceError) {")
-		node.AppendLine("    scopeProvider := service.MustGet[", context.grammar.Name(), "ScopeProvider](s.sc)")
-		node.AppendLine("    scope := scopeProvider.Scope", field.typeName, field.name, "(ctx, reference)")
+		node.AppendLine("    scope := s.scope().Scope", field.typeName, field.name, "(ctx, reference)")
 		node.AppendLine("    return core.DefaultLink(scope, reference.Text())")
 		node.AppendLine("}").AppendLine()
 	}
@@ -339,7 +346,8 @@ func generateReferenceConstructor(context *LinkerGeneratorContext) generator.Nod
 	node.AppendLine()
 
 	node.AppendLine("type Default", context.grammar.Name(), "ReferencesConstructor struct {")
-	node.AppendLine("	sc *service.Container")
+	node.AppendLine("	sc              *service.Container")
+	node.AppendLine("	referenceLinker ", context.grammar.Name(), "ReferenceLinker")
 	node.AppendLine("}")
 	node.AppendLine()
 
@@ -347,11 +355,17 @@ func generateReferenceConstructor(context *LinkerGeneratorContext) generator.Nod
 	node.AppendLine("	return &Default", context.grammar.Name(), "ReferencesConstructor{sc: sc}")
 	node.AppendLine("}")
 	node.AppendLine()
+	node.AppendLine("func (s *Default", context.grammar.Name(), "ReferencesConstructor) linker() ", context.grammar.Name(), "ReferenceLinker {")
+	node.AppendLine("	if s.referenceLinker == nil {")
+	node.AppendLine("		s.referenceLinker = service.MustGet[", context.grammar.Name(), "ReferenceLinker](s.sc)")
+	node.AppendLine("	}")
+	node.AppendLine("	return s.referenceLinker")
+	node.AppendLine("}")
+	node.AppendLine()
 
 	for _, field := range context.fields {
 		node.AppendLine("func (s *Default", context.grammar.Name(), "ReferencesConstructor) ", field.typeName, field.name, "(owner core.AstNode, unit core.StringUnit) *core.Reference[", field.target, "] {")
-		node.AppendLine("    referenceLinker := service.MustGet[", context.grammar.Name(), "ReferenceLinker](s.sc)")
-		node.AppendLine("    fn := referenceLinker.Link", field.typeName, field.name)
+		node.AppendLine("    fn := s.linker().Link", field.typeName, field.name)
 		node.AppendLine("    return core.NewReference(owner, unit, fn)")
 		node.AppendLine("}").AppendLine()
 	}
