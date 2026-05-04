@@ -20,7 +20,7 @@ type ATNRuleBuilder interface {
 	TokenRef(tokenType TokenInfo) *ATNHandle
 	RuleRef(otherRule *grammar.ParserRule) *ATNHandle
 
-	NewEpsilon(source *ATNState, target *ATNState)
+	NewEpsilonTransition(source *ATNState, target *ATNState)
 
 	NewState(stateType ATNStateType) *ATNState
 }
@@ -77,8 +77,8 @@ func NewATNRuleBuilder(parent *ATNBuilderImpl, rule *grammar.ParserRule, handle 
 }
 
 func (rb *ATNRuleBuilderImpl) Assign(handle *ATNHandle) {
-	rb.NewEpsilon(rb.handle.Left, handle.Left)
-	rb.NewEpsilon(handle.Right, rb.handle.Right)
+	rb.NewEpsilonTransition(rb.handle.Left, handle.Left)
+	rb.NewEpsilonTransition(handle.Right, rb.handle.Right)
 }
 
 func (rb *ATNRuleBuilderImpl) Plus(lookaheadName string, handle *ATNHandle) *ATNHandle {
@@ -95,9 +95,9 @@ func (rb *ATNRuleBuilderImpl) Plus(lookaheadName string, handle *ATNHandle) *ATN
 
 	atn.DecisionMap[lookaheadName] = loop
 
-	addEpsilon(blkEnd, loop)   // block can see loop back
-	addEpsilon(loop, blkStart) // loop back to start
-	addEpsilon(loop, end)      // exit
+	rb.NewEpsilonTransition(blkEnd, loop)   // block can see loop back
+	rb.NewEpsilonTransition(loop, blkStart) // loop back to start
+	rb.NewEpsilonTransition(loop, end)      // exit
 
 	return &ATNHandle{Left: blkStart, Right: end}
 }
@@ -115,10 +115,10 @@ func (rb *ATNRuleBuilderImpl) Star(lookaheadName string, handle *ATNHandle) *ATN
 	entry.Loopback = loop
 	loopEnd.Loopback = loop
 
-	addEpsilon(entry, start)   // loop enter edge (alt 0)
-	addEpsilon(entry, loopEnd) // bypass loop edge (alt 1)
-	addEpsilon(end, loop)      // block end hits loop back
-	addEpsilon(loop, entry)    // loop back to entry/exit decision
+	rb.NewEpsilonTransition(entry, start)   // loop enter edge (alt 0)
+	rb.NewEpsilonTransition(entry, loopEnd) // bypass loop edge (alt 1)
+	rb.NewEpsilonTransition(end, loop)      // block end hits loop back
+	rb.NewEpsilonTransition(loop, entry)    // loop back to entry/exit decision
 
 	atn.DecisionMap[lookaheadName] = entry
 
@@ -129,7 +129,7 @@ func (rb *ATNRuleBuilderImpl) Optional(lookaheadName string, handle *ATNHandle) 
 	start := handle.Left
 	end := handle.Right
 
-	addEpsilon(start, end)
+	rb.NewEpsilonTransition(start, end)
 
 	rb.parent.atn.DecisionMap[lookaheadName] = start
 	return handle
@@ -143,10 +143,10 @@ func (rb *ATNRuleBuilderImpl) MakeAlts(lookaheadName string, start *ATNState, al
 
 	for _, alt := range alts {
 		if alt != nil {
-			addEpsilon(start, alt.Left)
-			addEpsilon(alt.Right, end)
+			rb.NewEpsilonTransition(start, alt.Left)
+			rb.NewEpsilonTransition(alt.Right, end)
 		} else {
-			addEpsilon(start, end)
+			rb.NewEpsilonTransition(start, end)
 		}
 	}
 
@@ -182,7 +182,7 @@ func (rb *ATNRuleBuilderImpl) MakeBlock(alts []*ATNHandle) *ATNHandle {
 			}
 			removeState(rb.parent.atn, handle.Right) // we skipped over this state
 		} else {
-			addEpsilon(handle.Right, next)
+			rb.NewEpsilonTransition(handle.Right, next)
 		}
 	}
 
@@ -214,8 +214,8 @@ func (rb *ATNRuleBuilderImpl) RuleRef(otherRule *grammar.ParserRule) *ATNHandle 
 	return &ATNHandle{Left: left, Right: right}
 }
 
-func (rb *ATNRuleBuilderImpl) NewEpsilon(source *ATNState, target *ATNState) {
-	addEpsilon(source, target)
+func (rb *ATNRuleBuilderImpl) NewEpsilonTransition(source *ATNState, target *ATNState) {
+	addTransition(source, &EpsilonTransition{TargetState: target})
 }
 
 func (rb *ATNRuleBuilderImpl) NewState(stateType ATNStateType) *ATNState {
@@ -239,10 +239,6 @@ func defineDecisionState(atn *ATN, state *ATNState) int {
 	atn.DecisionStates = append(atn.DecisionStates, state)
 	state.Decision = len(atn.DecisionStates) - 1
 	return state.Decision
-}
-
-func addEpsilon(from, to *ATNState) {
-	addTransition(from, &EpsilonTransition{TargetState: to})
 }
 
 func addTransition(state *ATNState, t Transition) {
