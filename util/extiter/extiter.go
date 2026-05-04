@@ -17,6 +17,10 @@ func Empty[T any]() iter.Seq[T] {
 	return func(yield func(T) bool) {}
 }
 
+func Of[T any](elements ...T) iter.Seq[T] {
+	return slices.Values(elements)
+}
+
 // Count returns the number of elements in the sequence
 func Count[T any](seq iter.Seq[T]) int {
 	count := 0

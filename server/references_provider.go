@@ -1,4 +1,4 @@
-// Copyright 2025 TypeFox GmbH
+// Copyright 2026 TypeFox GmbH
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
@@ -41,52 +41,22 @@ func (s *DefaultReferencesProvider) HandleReferencesRequest(ctx context.Context,
 	if sourceToken == nil {
 		return nil, nil // No token at the given position
 	}
-	target := s.findSourceAstNode(ctx, sourceToken)
-	if target == nil {
-		return nil, nil // No AST node associated with the token
+	nameFinder := rp.srv.Server().NameFinder
+	foundName := nameFinder.Find(ctx, sourceToken)
+	if foundName.Target == nil || foundName.Source == nil {
+		return nil, nil // Could not find a name
 	}
-	nameUnit := linking.Name(target)
-	if nameUnit == nil {
-		return nil, nil // No name token for the target node
-	}
-	locations := []lsp.Location{
-		// Include the definition location itself
-		{
-			URI:   target.Document().URI.DocumentURI(),
-			Range: nameUnit.Segment().Range.LspRange(),
-		},
-	}
-	// Iterate through all documents and collect references to the symbol
-	for doc := range documentManager.All() {
-		refDescriptions := doc.ReferenceDescriptions.ForTarget(target)
-		for refDesc := range refDescriptions {
-			location := lsp.Location{
-				URI:   refDesc.SourceURI().DocumentURI(),
-				Range: refDesc.Segment.Range.LspRange(),
-			}
-			locations = append(locations, location)
+	target := foundName.Target.Owner()
+	referencesFinder := rp.srv.Server().ReferencesFinder
+	locations := []lsp.Location{}
+	for refDesc := range referencesFinder.Find(ctx, target, FindReferencesOptions{
+		IncludeDeclaration: true,
+	}) {
+		location := lsp.Location{
+			URI:   refDesc.SourceURI().DocumentURI(),
+			Range: refDesc.Segment.Range.LspRange(),
 		}
+		locations = append(locations, location)
 	}
 	return locations, nil
-}
-
-func (s *DefaultReferencesProvider) findSourceAstNode(ctx context.Context, token *core.Token) core.AstNode {
-	ref := core.ReferenceOfToken(token)
-	if ref != nil {
-		return ref.RefNode(ctx)
-	} else {
-		node := token.Owner()
-		if node == nil {
-			return nil
-		}
-		nameUnit := linking.Name(node)
-		if nameUnit == nil {
-			return nil
-		}
-		segment := nameUnit.Segment()
-		if token.TextSegment.Indices.Start < segment.Indices.Start || token.TextSegment.Indices.End > segment.Indices.End {
-			return nil // The token is not within the name segment
-		}
-		return node
-	}
 }

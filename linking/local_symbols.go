@@ -103,11 +103,8 @@ func DescribeLocal(node core.AstNode) (*core.SymbolDescription, core.AstNode) {
 
 	nameUnit := Name(node)
 	if nameUnit != nil {
-		container := node.Container()
-		name := nameUnit.String()
-		segment := nameUnit.Segment()
 		fullSegment := node.Segment()
-		desc := core.NewSymbolDescription(node, name, segment, fullSegment)
+		desc := core.NewSymbolDescription(node, nameUnit, fullSegment)
 		return desc, container
 	}
 	return nil, nil

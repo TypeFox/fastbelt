@@ -7,7 +7,7 @@ package fastbelt
 import (
 	"iter"
 	"strings"
-	"sync/atomic"
+	"sync"
 )
 
 type AstNodeBase struct {
@@ -306,6 +306,7 @@ type NamedCompositeNode interface {
 
 // [StringUnit] is a common interface for both [Token] and [CompositeNode], as both can serve as the "name" of a reference.
 type StringUnit interface {
+	Owner() AstNode
 	Segment() *TextSegment
 	String() string
 }
@@ -320,31 +321,31 @@ type CompositeNode interface {
 }
 
 func NewCompositeNode() CompositeNode {
-	return &CompositeNodeBase{
+	node := &CompositeNodeBase{
 		AstNodeBase: NewAstNode(),
 	}
+	node.value = sync.OnceValue(func() string {
+		return stringSlow(node)
+	})
+	return node
 }
 
 type CompositeNodeBase struct {
 	AstNodeBase
-	cache atomic.Pointer[string]
+	value func() string
 }
 
 func (node *CompositeNodeBase) IsCompositeNode() {}
 
-func (node *CompositeNodeBase) String() string {
-	// Cache the string value, as it is accessed frequently
-	// Since this operation can be done in parallel, we need an atomic pointer here
-	if p := node.cache.Load(); p != nil {
-		return *p
-	} else {
-		s := node.stringSlow()
-		node.cache.Store(&s)
-		return s
-	}
+func (node *CompositeNodeBase) Owner() AstNode {
+	return node.container
 }
 
-func (node *CompositeNodeBase) stringSlow() string {
+func (node *CompositeNodeBase) String() string {
+	return node.value()
+}
+
+func stringSlow(node *CompositeNodeBase) string {
 	// Construct the string value by concatenating the text of all tokens of the node
 	// Only need to do this once, as the tokens are usually not modified after parsing
 	var sb strings.Builder

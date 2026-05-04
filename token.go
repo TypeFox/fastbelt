@@ -111,11 +111,12 @@ func (t *Token) Segment() *TextSegment {
 }
 
 func (t *Token) Owner() AstNode {
-	if composite, ok := t.Element.(CompositeNode); ok {
+	element := t.Element
+	if composite, ok := element.(CompositeNode); ok {
 		// If the token is part of a composite node, its owner is the container of that
 		return composite.Container()
 	}
-	return t.Element
+	return element
 }
 
 type TokenSlice []Token

@@ -14,18 +14,16 @@ import (
 type SymbolDescription struct {
 	URI         URI
 	Node        AstNode
-	Name        string
-	NameSegment *TextSegment
+	Name        StringUnit
 	FullSegment *TextSegment
 }
 
-func NewSymbolDescription(node AstNode, name string, nameSegment, fullSegment *TextSegment) *SymbolDescription {
+func NewSymbolDescription(node AstNode, name StringUnit, fullSegment *TextSegment) *SymbolDescription {
 	doc := node.Document()
 	return &SymbolDescription{
 		URI:         doc.URI,
 		Node:        node,
 		Name:        name,
-		NameSegment: nameSegment,
 		FullSegment: fullSegment,
 	}
 }
