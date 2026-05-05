@@ -18,7 +18,7 @@ type ATNRuleBuilder interface {
 	MakeAlts(lookaheadName string, start *ATNState, alts []*ATNHandle) *ATNHandle
 
 	MakeBlock(alts []*ATNHandle) *ATNHandle
-	TokenRef(tokenType TokenInfo) *ATNHandle
+	TokenRef(tokenType TokenType) *ATNHandle
 	RuleRef(otherRule *grammar.ParserRule) *ATNHandle
 
 	NewEpsilonTransition(source *ATNState, target *ATNState)
@@ -167,13 +167,12 @@ func (rb *ATNRuleBuilderImpl) MakeBlock(alts []*ATNHandle) *ATNHandle {
 	return &ATNHandle{Left: first.Left, Right: last.Right}
 }
 
-func (rb *ATNRuleBuilderImpl) TokenRef(tokenType TokenInfo) *ATNHandle {
+func (rb *ATNRuleBuilderImpl) TokenRef(tokenType TokenType) *ATNHandle {
 	left := rb.NewState(parser.ATNBasic)
 	right := rb.NewState(parser.ATNBasic)
 	addTransition(left, &AtomTransition{
-		TargetState:     right,
-		TokenTypeID:     tokenType.ID,
-		CategoryMatches: tokenType.CategoryMatches,
+		TargetState: right,
+		TokenType:   tokenType,
 	})
 	return &ATNHandle{Left: left, Right: right}
 }

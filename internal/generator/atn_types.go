@@ -49,9 +49,8 @@ type Transition interface {
 // CategoryMatches holds the IDs of all token types that match via category
 // inheritance; populated from the Terminal's CategoryMatches at ATN-build time.
 type AtomTransition struct {
-	TargetState     *ATNState
-	TokenTypeID     int
-	CategoryMatches []int
+	TargetState *ATNState
+	TokenType   TokenType
 }
 
 func (t *AtomTransition) Target() *ATNState { return t.TargetState }
@@ -81,8 +80,8 @@ type ATNHandle struct {
 	Right *ATNState
 }
 
-// TokenInfo carries the type ID and category-match IDs for a token type.
-type TokenInfo struct {
+// TokenType carries the type ID and category-match IDs for a token type.
+type TokenType struct {
 	ID              int
 	CategoryMatches []int
 }

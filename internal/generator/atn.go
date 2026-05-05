@@ -9,7 +9,7 @@ import (
 	"typefox.dev/fastbelt/parser"
 )
 
-func CreateATN(grammr grammar.Grammar) (*ATN, map[string]*grammar.ParserRule, map[string]TokenInfo) {
+func CreateATN(grammr grammar.Grammar) (*ATN, map[string]*grammar.ParserRule, map[string]TokenType) {
 	tokenTypes := GetTokenTypes(grammr)
 	lookaheadNames := GetLookaheadNames(grammr)
 
@@ -75,17 +75,17 @@ func GetLookaheadName(el grammar.Element, names map[grammar.Element]string) stri
 	panic("no lookahead name found for element")
 }
 
-func GetTokenTypes(grammr grammar.Grammar) map[string]TokenInfo {
+func GetTokenTypes(grammr grammar.Grammar) map[string]TokenType {
 	tokens := grammr.Terminals()
 	keywords := GetAllKeywords(grammr)
-	nodes := make(map[string]TokenInfo, len(tokens)+len(keywords))
+	nodes := make(map[string]TokenType, len(tokens)+len(keywords))
 	id := 1
 	for _, keyword := range keywords {
-		nodes[keyword.Text()] = TokenInfo{ID: id}
+		nodes[keyword.Text()] = TokenType{ID: id}
 		id++
 	}
 	for _, token := range tokens {
-		nodes[token.Name()] = TokenInfo{ID: id}
+		nodes[token.Name()] = TokenType{ID: id}
 		id++
 	}
 	return nodes
@@ -95,7 +95,7 @@ func convertElement(
 	rb ATNRuleBuilder,
 	el grammar.Element,
 	names map[grammar.Element]string,
-	tokenTypes map[string]TokenInfo,
+	tokenTypes map[string]TokenType,
 	rulesByName map[string]*grammar.ParserRule,
 ) (*ATNHandle, error) {
 	switch e := el.(type) {
@@ -135,7 +135,7 @@ func convertAssignable(
 	a grammar.Assignable,
 	cardinality string,
 	names map[grammar.Element]string,
-	tokenTypes map[string]TokenInfo,
+	tokenTypes map[string]TokenType,
 	rulesByName map[string]*grammar.ParserRule,
 ) (*ATNHandle, error) {
 	switch v := a.(type) {
@@ -161,7 +161,7 @@ func convertKeyword(
 	kw grammar.Keyword,
 	cardinality string,
 	lookaheadNames map[grammar.Element]string,
-	tokenTypes map[string]TokenInfo,
+	tokenTypes map[string]TokenType,
 ) (*ATNHandle, error) {
 	name := kw.Value()
 	info, ok := tokenTypes[name]
@@ -178,7 +178,7 @@ func convertRuleCall(
 	rc grammar.RuleCall,
 	cardinality string,
 	names map[grammar.Element]string,
-	tokenTypes map[string]TokenInfo,
+	tokenTypes map[string]TokenType,
 	rulesByName map[string]*grammar.ParserRule,
 ) (*ATNHandle, error) {
 	if rc.Rule() == nil {
@@ -209,7 +209,7 @@ func convertCrossRef(
 	rb ATNRuleBuilder,
 	cr grammar.CrossRef,
 	names map[grammar.Element]string,
-	tokenTypes map[string]TokenInfo,
+	tokenTypes map[string]TokenType,
 ) (*ATNHandle, error) {
 	// Use the explicitly named rule if present, otherwise fall back to "ID".
 	name := "ID"
@@ -231,7 +231,7 @@ func convertAlternatives(
 	alts grammar.Alternatives,
 	cardinality string,
 	names map[grammar.Element]string,
-	tokenTypes map[string]TokenInfo,
+	tokenTypes map[string]TokenType,
 	rulesByName map[string]*grammar.ParserRule,
 ) (*ATNHandle, error) {
 	handles := make([]*ATNHandle, 0, len(alts.Alts()))
@@ -255,7 +255,7 @@ func convertGroup(
 	rb ATNRuleBuilder,
 	g grammar.Group,
 	names map[grammar.Element]string,
-	tokenTypes map[string]TokenInfo,
+	tokenTypes map[string]TokenType,
 	rulesByName map[string]*grammar.ParserRule,
 ) (*ATNHandle, error) {
 	elementHandles := make([]*ATNHandle, 0, len(g.Elements()))

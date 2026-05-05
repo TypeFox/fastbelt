@@ -54,7 +54,7 @@ func EmitMarkdownSource(pkgName string, atn *ATN, tokenTypeNames map[int]string)
 				case *EpsilonTransition:
 					n.AppendLine("    q", src, " --> q", fmt.Sprintf("%d", idx[tr.Target()]))
 				case *AtomTransition:
-					tokenName := strings.ReplaceAll(tokenTypeNames[tr.TokenTypeID], "\"", "&quot;")
+					tokenName := strings.ReplaceAll(tokenTypeNames[tr.TokenType.ID], "\"", "&quot;")
 					n.AppendLine("    q", src, " -->|\"tok(", tokenName, ")\"| q", fmt.Sprintf("%d", idx[tr.Target()]))
 				case *RuleTransition:
 					n.AppendLine("    q", src, " -.->|\"[", (*tr.Target().Rule).Name(), "]\"| q", fmt.Sprintf("%d", idx[tr.FollowState]))

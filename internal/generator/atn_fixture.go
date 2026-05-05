@@ -17,7 +17,7 @@ hidden token WS: /[ \n\r\t]+/;
 `
 }
 
-func FixtureATN(t *testing.T, grammarStr string) (*ATN, map[string]*grammar.ParserRule, map[string]TokenInfo) {
+func FixtureATN(t *testing.T, grammarStr string) (*ATN, map[string]*grammar.ParserRule, map[string]TokenType) {
 	f := test.New(t, grammar.CreateServices())
 	doc := f.Parse(grammarStr).AssertNoErrors()
 	grammr := doc.Root().(grammar.Grammar)
@@ -34,7 +34,7 @@ func FixtureATN(t *testing.T, grammarStr string) (*ATN, map[string]*grammar.Pars
 	return atn, rules, tokenTypes
 }
 
-func RequireATNRecognizes(t *testing.T, atn *ATN, rules map[string]*grammar.ParserRule, tokenTypes map[string]TokenInfo, start string, inputTokenTypes []string, expected int) {
+func RequireATNRecognizes(t *testing.T, atn *ATN, rules map[string]*grammar.ParserRule, tokenTypes map[string]TokenType, start string, inputTokenTypes []string, expected int) {
 	startRule := *rules[start]
 	inputTokenTypeIds := make([]int, len(inputTokenTypes))
 	for i, tokenType := range inputTokenTypes {
@@ -110,7 +110,7 @@ func recognizeParserRule(atn *ATN, rule grammar.ParserRule, context recognitionC
 					continue //reject
 				}
 				lookahead := context.inputTokenTypeIds[context.position]
-				if atomTransition.TokenTypeID == lookahead {
+				if atomTransition.TokenType.ID == lookahead {
 					contextQueue = append(contextQueue, context.ReadInput().Next(atomTransition.Target()))
 				}
 			} else if ruleTransition, ok := transition.(*RuleTransition); ok {
