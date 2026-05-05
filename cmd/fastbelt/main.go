@@ -49,6 +49,7 @@ func runLegacyGenerate(args []string) error {
 	grammarPathFlag := fs.String("g", "./grammar.fb", "Path to the grammar file")
 	outputPathFlag := fs.String("o", "./", "Path to the output directory")
 	packageNameFlag := fs.String("p", "", "Package name for generated code (defaults to the last segment of the output path)")
+	atnFlag := fs.Bool("atn", false, "Enable markdown output about ATN construction")
 	verboseFlag := fs.Bool("v", false, "Enable verbose output about written files")
 
 	fs.Usage = func() {
@@ -175,9 +176,11 @@ func runLegacyGenerate(args []string) error {
 		generator.GenerateATN(grammar, packageName)); err != nil {
 		return err
 	}
-	if err := writeFile("atn-md", filepath.Join(outputPath, "atn.md"),
-		generator.GenerateATNMarkdown(grammar, packageName)); err != nil {
-		return err
+	if *atnFlag {
+		if err := writeFile("atn-md", filepath.Join(outputPath, "atn.md"),
+			generator.GenerateATNMarkdown(grammar, packageName)); err != nil {
+			return err
+		}
 	}
 
 	return nil

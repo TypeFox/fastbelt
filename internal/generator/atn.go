@@ -41,12 +41,10 @@ func GetLookaheadNames(grammr grammar.Grammar) map[grammar.Element]string {
 		case grammar.ParserRule:
 			counters = make(map[reflect.Type]int)
 			ruleName = e.Name()
-			break
 		case grammar.Keyword, grammar.RuleCall, grammar.CrossRef, grammar.Alternatives:
 			el := e.(grammar.Element)
 			index := nextCounter(counters, el)
 			names[el] = fmt.Sprintf("%s_%s_%d", ruleName, reflect.TypeOf(el).Name(), index)
-			break
 		}
 	}
 	return names
