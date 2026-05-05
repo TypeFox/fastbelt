@@ -65,7 +65,7 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN) generator.Node
 				for _, t := range s.Transitions {
 					switch at := t.(type) {
 					case *AtomTransition:
-						n.AppendLine("&parser.RuntimeAtomTransition{Target: states[", strconv.Itoa(idx[at.Target()]), "], TokenTypeID: ", strconv.Itoa(at.TokenType.ID), ", CategoryMatches: ", emitIntSlice(at.TokenType.CategoryMatches), "},")
+						n.AppendLine("&parser.RuntimeAtomTransition{Target: states[", strconv.Itoa(idx[at.Target()]), "], TokenTypeID: ", strconv.Itoa(at.TokenType.ID), "},")
 					case *EpsilonTransition:
 						n.AppendLine("&parser.RuntimeEpsilonTransition{Target: states[", strconv.Itoa(idx[at.Target()]), "]},")
 					case *RuleTransition:

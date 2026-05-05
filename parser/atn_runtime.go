@@ -47,12 +47,11 @@ type RuntimeTransition interface {
 }
 
 // RuntimeAtomTransition fires on a specific token type.
-// Target, TokenTypeID, and CategoryMatches are exported so that generated
-// Go code in external packages can construct them as struct literals.
+// Target and TokenTypeID are exported so that generated Go code in external
+// packages can construct them as struct literals.
 type RuntimeAtomTransition struct {
-	Target          *RuntimeATNState
-	TokenTypeID     int
-	CategoryMatches []int
+	Target      *RuntimeATNState
+	TokenTypeID int
 }
 
 func (t *RuntimeAtomTransition) GetTarget() *RuntimeATNState { return t.Target }
