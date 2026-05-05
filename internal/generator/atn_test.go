@@ -13,9 +13,8 @@ func TestTokenRef(t *testing.T) {
 		interface Start { Name string }
 		Start: Name=ID;
 	`))
-	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, [][]int{
-		[]int{-1},
-	})
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID"}, 0)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
 }
 
 func TestRuleRef(t *testing.T) {
@@ -25,9 +24,7 @@ func TestRuleRef(t *testing.T) {
 		Start: Property=Rule;
 		Rule: Name=ID;
 	`))
-	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, [][]int{
-		[]int{-1},
-	})
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
 }
 
 func TestPlusRule(t *testing.T) {
@@ -37,9 +34,102 @@ func TestPlusRule(t *testing.T) {
 		Start: Property+=Rule+;
 		Rule: Name=ID;
 	`))
-	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID", "ID"}, [][]int{
-		[]int{0, 0, 0},
-		[]int{0, 0},
-		[]int{0},
-	})
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{}, 0)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID", "ID"}, 1)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID", "ID", "ID", "ID", "ID"}, 1)
+}
+
+func TestStarRule(t *testing.T) {
+	atn, rules, tokenTypes := FixtureATN(t, GrammarTemplate(`
+		interface Start { Property []Rule }
+		interface Rule { Name string }
+		Start: Property+=Rule*;
+		Rule: Name=ID;
+	`))
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{}, 1)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID", "ID", "ID", "ID", "ID"}, 1)
+}
+
+func TestAlternativesRule(t *testing.T) {
+	atn, rules, tokenTypes := FixtureATN(t, GrammarTemplate(`
+		interface Start { Property string }
+		Start: Property=(ID|NUMBER);
+	`))
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{}, 0)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"NUMBER"}, 1)
+}
+
+func TestNestedAlternativesRule(t *testing.T) {
+	atn, rules, tokenTypes := FixtureATN(t, GrammarTemplate(`
+		interface Start { Property AbstractRule }
+		interface AbstractRule {}
+		interface RuleId extends AbstractRule {
+    		Id string
+		}
+		interface RuleNumber extends AbstractRule {
+			Num string
+		}
+
+		Start: Property=(RuleId|RuleNumber);
+		RuleId: Id=ID;
+		RuleNumber: Num=NUMBER;
+	`))
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{}, 0)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"NUMBER"}, 1)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"NUMBER", "ID"}, 0)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "NUMBER"}, 0)
+}
+
+func TestNestedStarAlternativesRule(t *testing.T) {
+	atn, rules, tokenTypes := FixtureATN(t, GrammarTemplate(`
+		interface Start { Properties []AbstractRule }
+		interface AbstractRule {}
+		interface RuleId extends AbstractRule {
+    		Id string
+		}
+		interface RuleNumber extends AbstractRule {
+			Num string
+		}
+
+		Start: Properties+=(RuleId|RuleNumber)*;
+		RuleId: Id=ID;
+		RuleNumber: Num=NUMBER;
+	`))
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{}, 1)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"NUMBER"}, 1)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"NUMBER", "ID"}, 1)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "NUMBER"}, 1)
+}
+
+func TestCrossRefsRule(t *testing.T) {
+	atn, rules, tokenTypes := FixtureATN(t, GrammarTemplate(`
+		interface Start { 
+			Decl RuleDeclaration
+			Defs []RuleDefinition
+		}
+		interface AbstractRule {}
+		interface RuleDeclaration extends AbstractRule {
+    		Name string
+		}
+		interface RuleDefinition extends AbstractRule {
+			IdRef *RuleDeclaration
+			Value string
+		}
+
+		Start: Decl=RuleDeclaration Defs+=RuleDefinition*;
+		RuleDeclaration: Name=ID;
+		RuleDefinition: IdRef=[RuleDeclaration:ID] Value=NUMBER;
+	`))
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{}, 0)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID", "NUMBER"}, 1)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID", "NUMBER", "ID"}, 0)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID", "NUMBER", "NUMBER"}, 0)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID", "NUMBER", "ID", "NUMBER"}, 1)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID", "NUMBER", "ID", "NUMBER", "ID", "NUMBER"}, 1)
 }

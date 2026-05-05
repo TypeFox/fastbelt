@@ -100,7 +100,7 @@ func convertElement(
 ) (*ATNHandle, error) {
 	switch e := el.(type) {
 	case grammar.Alternatives:
-		return convertAlternatives(rb, e, names, tokenTypes, rulesByName)
+		return convertAlternatives(rb, e, e.Cardinality(), names, tokenTypes, rulesByName)
 
 	case grammar.Group:
 		return convertGroup(rb, e, names, tokenTypes, rulesByName)
@@ -150,7 +150,7 @@ func convertAssignable(
 		// takes precedence when present.
 		return convertCrossRef(rb, v, names, tokenTypes)
 	case grammar.Alternatives:
-		return convertAlternatives(rb, v, names, tokenTypes, rulesByName)
+		return convertAlternatives(rb, v, cardinality, names, tokenTypes, rulesByName)
 	default:
 		return nil, nil
 	}
@@ -229,6 +229,7 @@ func convertCrossRef(
 func convertAlternatives(
 	rb ATNRuleBuilder,
 	alts grammar.Alternatives,
+	cardinality string,
 	names map[grammar.Element]string,
 	tokenTypes map[string]TokenInfo,
 	rulesByName map[string]*grammar.ParserRule,
@@ -247,8 +248,7 @@ func convertAlternatives(
 	start := rb.NewState(parser.ATNBasic)
 	lookaheadName := GetLookaheadName(alts, names)
 	handle := rb.MakeAlts(lookaheadName, start, handles)
-	//TODO no wrap cardinality for alts?
-	return handle, nil
+	return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
 }
 
 func convertGroup(
