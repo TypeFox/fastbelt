@@ -6,6 +6,7 @@ import (
 
 	"typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/internal/grammar"
+	"typefox.dev/fastbelt/parser"
 )
 
 func CreateATN(grammr grammar.Grammar) (*ATN, map[string]*grammar.ParserRule, map[string]TokenInfo) {
@@ -26,6 +27,9 @@ func CreateATN(grammr grammar.Grammar) (*ATN, map[string]*grammar.ParserRule, ma
 			// Handle the error appropriately, e.g., log it or return it
 			fmt.Printf("Error converting element for rule %s: %v\n", gr.Name(), err)
 		}
+		if handle == nil {
+			continue
+		}
 		ruleBuilder.Assign(handle)
 	}
 	atn := builder.Build()
@@ -41,10 +45,24 @@ func GetLookaheadNames(grammr grammar.Grammar) map[grammar.Element]string {
 		case grammar.ParserRule:
 			counters = make(map[reflect.Type]int)
 			ruleName = e.Name()
-		case grammar.Keyword, grammar.RuleCall, grammar.CrossRef, grammar.Alternatives:
+		case grammar.Keyword, grammar.RuleCall, grammar.CrossRef, grammar.Alternatives, grammar.Group:
 			el := e.(grammar.Element)
 			index := nextCounter(counters, el)
-			names[el] = fmt.Sprintf("%s_%s_%d", ruleName, reflect.TypeOf(el).Name(), index)
+			var typeName string
+			switch el.(type) {
+			case grammar.Keyword:
+				typeName = "Keyword"
+			case grammar.RuleCall:
+				typeName = "RuleCall"
+			case grammar.CrossRef:
+				typeName = "CrossRef"
+			case grammar.Alternatives:
+				typeName = "Alternatives"
+			case grammar.Group:
+				typeName = "Group"
+			}
+			name := fmt.Sprintf("%s_%s_%d", ruleName, typeName, index)
+			names[el] = name
 		}
 	}
 	return names
@@ -215,15 +233,18 @@ func convertAlternatives(
 	tokenTypes map[string]TokenInfo,
 	rulesByName map[string]*grammar.ParserRule,
 ) (*ATNHandle, error) {
-	handles := make([]*ATNHandle, len(alts.Alts()))
-	for index, alt := range alts.Alts() {
+	handles := make([]*ATNHandle, 0, len(alts.Alts()))
+	for _, alt := range alts.Alts() {
 		handle, err := convertElement(rb, alt, names, tokenTypes, rulesByName)
 		if err != nil {
 			return nil, err
 		}
-		handles[index] = handle
+		if handle == nil {
+			continue
+		}
+		handles = append(handles, handle)
 	}
-	start := rb.NewState(ATNBasic)
+	start := rb.NewState(parser.ATNBasic)
 	lookaheadName := GetLookaheadName(alts, names)
 	handle := rb.MakeAlts(lookaheadName, start, handles)
 	//TODO no wrap cardinality for alts?
@@ -237,13 +258,16 @@ func convertGroup(
 	tokenTypes map[string]TokenInfo,
 	rulesByName map[string]*grammar.ParserRule,
 ) (*ATNHandle, error) {
-	elementHandles := make([]*ATNHandle, len(g.Elements()))
-	for index, element := range g.Elements() {
+	elementHandles := make([]*ATNHandle, 0, len(g.Elements()))
+	for _, element := range g.Elements() {
 		elementHandle, err := convertElement(rb, element, names, tokenTypes, rulesByName)
 		if err != nil {
 			return nil, err
 		}
-		elementHandles[index] = elementHandle
+		if elementHandle == nil {
+			continue
+		}
+		elementHandles = append(elementHandles, elementHandle)
 	}
 	handle := rb.MakeBlock(elementHandles)
 	lookaheadName := GetLookaheadName(g, names)

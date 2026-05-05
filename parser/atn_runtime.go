@@ -2,7 +2,25 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package generator
+package parser
+
+// ATNStateType is the discriminator for ATN state kinds.
+type ATNStateType int
+
+const (
+	ATNInvalidType    ATNStateType = 0
+	ATNBasic          ATNStateType = 1
+	ATNRuleStart      ATNStateType = 2
+	ATNPlusBlockStart ATNStateType = 4
+	ATNStarBlockStart ATNStateType = 5
+	ATNTokenStart     ATNStateType = 6
+	ATNRuleStop       ATNStateType = 7
+	ATNBlockEnd       ATNStateType = 8
+	ATNStarLoopBack   ATNStateType = 9
+	ATNStarLoopEntry  ATNStateType = 10
+	ATNPlusLoopBack   ATNStateType = 11
+	ATNLoopEnd        ATNStateType = 12
+)
 
 // RuntimeATNState holds only the fields required for prediction at runtime.
 // Back-pointers to the build-time grammar objects (Rule, Production) and

@@ -4,16 +4,18 @@
 
 package generator
 
+import "typefox.dev/fastbelt/parser"
+
 // BuildRuntimeATN converts the full build-time ATN to the minimal RuntimeATN.
 // The build-time ATN (with grammar back-pointers and scaffolding fields) can be
 // discarded after this call.
-func BuildRuntimeATN(atn *ATN) *RuntimeATN {
+func BuildRuntimeATN(atn *ATN) *parser.RuntimeATN {
 	// 1. Allocate RuntimeATNState objects (no transitions yet so we can wire
 	//    them by pointer in a second pass).
-	rStates := make([]*RuntimeATNState, len(atn.States))
-	stateMap := make(map[*ATNState]*RuntimeATNState, len(atn.States))
+	rStates := make([]*parser.RuntimeATNState, len(atn.States))
+	stateMap := make(map[*ATNState]*parser.RuntimeATNState, len(atn.States))
 	for i, s := range atn.States {
-		rs := &RuntimeATNState{
+		rs := &parser.RuntimeATNState{
 			StateNumber:            s.StateNumber,
 			Type:                   s.Type,
 			Decision:               s.Decision,
@@ -33,19 +35,19 @@ func BuildRuntimeATN(atn *ATN) *RuntimeATN {
 	// 2. Wire transitions now that all states are in stateMap.
 	for _, s := range atn.States {
 		rs := stateMap[s]
-		ts := make([]RuntimeTransition, len(s.Transitions))
+		ts := make([]parser.RuntimeTransition, len(s.Transitions))
 		for i, t := range s.Transitions {
 			switch at := t.(type) {
 			case *AtomTransition:
-				ts[i] = &RuntimeAtomTransition{
+				ts[i] = &parser.RuntimeAtomTransition{
 					Target:          stateMap[at.TargetState],
 					TokenTypeID:     at.TokenTypeID,
 					CategoryMatches: at.CategoryMatches,
 				}
 			case *EpsilonTransition:
-				ts[i] = &RuntimeEpsilonTransition{Target: stateMap[at.TargetState]}
+				ts[i] = &parser.RuntimeEpsilonTransition{Target: stateMap[at.TargetState]}
 			case *RuleTransition:
-				ts[i] = &RuntimeRuleTransition{
+				ts[i] = &parser.RuntimeRuleTransition{
 					Target:      stateMap[at.TargetState],
 					FollowState: stateMap[at.FollowState],
 				}
@@ -55,7 +57,7 @@ func BuildRuntimeATN(atn *ATN) *RuntimeATN {
 	}
 
 	// 3. Build ordered DecisionStates slice (indexed by Decision value).
-	var decisionStates []*RuntimeATNState
+	var decisionStates []*parser.RuntimeATNState
 	for _, rs := range rStates {
 		if rs.Decision >= 0 {
 			for len(decisionStates) <= rs.Decision {
@@ -66,12 +68,12 @@ func BuildRuntimeATN(atn *ATN) *RuntimeATN {
 	}
 
 	// 4. Mirror the DecisionMap.
-	dm := make(map[string]*RuntimeATNState, len(atn.DecisionMap))
+	dm := make(map[string]*parser.RuntimeATNState, len(atn.DecisionMap))
 	for key, s := range atn.DecisionMap {
 		dm[key] = stateMap[s]
 	}
 
-	return &RuntimeATN{
+	return &parser.RuntimeATN{
 		States:         rStates,
 		DecisionStates: decisionStates,
 		DecisionMap:    dm,

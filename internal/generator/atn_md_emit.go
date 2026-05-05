@@ -9,10 +9,11 @@ import (
 	"strings"
 
 	"typefox.dev/fastbelt/generator"
+	"typefox.dev/fastbelt/parser"
 )
 
-func EmitMarkdownSource(pkgName string, rtn *RuntimeATN, tokenTypeNames map[int]string) generator.Node {
-	idx := make(map[*RuntimeATNState]int, len(rtn.States))
+func EmitMarkdownSource(pkgName string, rtn *parser.RuntimeATN, tokenTypeNames map[int]string) generator.Node {
+	idx := make(map[*parser.RuntimeATNState]int, len(rtn.States))
 	for i, s := range rtn.States {
 		idx[s] = i
 	}
@@ -24,7 +25,7 @@ func EmitMarkdownSource(pkgName string, rtn *RuntimeATN, tokenTypeNames map[int]
 
 	// Group states by rule, preserving first-seen order.
 	ruleOrder := []string{}
-	ruleStates := map[string][]*RuntimeATNState{}
+	ruleStates := map[string][]*parser.RuntimeATNState{}
 	for _, s := range rtn.States {
 		if _, seen := ruleStates[s.RuleName]; !seen {
 			ruleOrder = append(ruleOrder, s.RuleName)
@@ -49,11 +50,11 @@ func EmitMarkdownSource(pkgName string, rtn *RuntimeATN, tokenTypeNames map[int]
 			src := fmt.Sprintf("%d", idx[s])
 			for _, t := range s.Transitions {
 				switch tr := t.(type) {
-				case *RuntimeEpsilonTransition:
+				case *parser.RuntimeEpsilonTransition:
 					n.AppendLine("    q", src, " --> q", fmt.Sprintf("%d", idx[tr.Target]))
-				case *RuntimeAtomTransition:
+				case *parser.RuntimeAtomTransition:
 					n.AppendLine("    q", src, " -->|\"tok(", tokenTypeNames[tr.TokenTypeID], ")\"| q", fmt.Sprintf("%d", idx[tr.Target]))
-				case *RuntimeRuleTransition:
+				case *parser.RuntimeRuleTransition:
 					n.AppendLine("    q", src, " -.->|\"[", tr.Target.RuleName, "]\"| q", fmt.Sprintf("%d", idx[tr.FollowState]))
 				}
 			}
@@ -67,12 +68,12 @@ func EmitMarkdownSource(pkgName string, rtn *RuntimeATN, tokenTypeNames map[int]
 }
 
 // mdNode returns the Mermaid node definition string for a state.
-func mdNode(s *RuntimeATNState, i int) string {
+func mdNode(s *parser.RuntimeATNState, i int) string {
 	typShort := strings.TrimPrefix(atnStateTypeName(s.Type), "ATN")
 	id := fmt.Sprintf("q%d", i)
 
 	var label string
-	if s.Type == ATNRuleStart || s.Type == ATNRuleStop {
+	if s.Type == parser.ATNRuleStart || s.Type == parser.ATNRuleStop {
 		label = fmt.Sprintf("SN:%d<br/>%s", s.StateNumber, typShort)
 	} else {
 		prodShort := strings.TrimPrefix(s.ProdKind, "Prod")
@@ -84,9 +85,9 @@ func mdNode(s *RuntimeATNState, i int) string {
 	}
 
 	switch s.Type {
-	case ATNRuleStart:
+	case parser.ATNRuleStart:
 		return id + `(["` + label + `"])`
-	case ATNRuleStop:
+	case parser.ATNRuleStop:
 		return id + `(["` + label + `"])`
 	default:
 		if s.Decision >= 0 {

@@ -1,23 +1,8 @@
 package generator
 
-import "typefox.dev/fastbelt/internal/grammar"
-
-// ATNStateType is the discriminator for ATN state kinds.
-type ATNStateType int
-
-const (
-	ATNInvalidType    ATNStateType = 0
-	ATNBasic          ATNStateType = 1
-	ATNRuleStart      ATNStateType = 2
-	ATNPlusBlockStart ATNStateType = 4
-	ATNStarBlockStart ATNStateType = 5
-	ATNTokenStart     ATNStateType = 6
-	ATNRuleStop       ATNStateType = 7
-	ATNBlockEnd       ATNStateType = 8
-	ATNStarLoopBack   ATNStateType = 9
-	ATNStarLoopEntry  ATNStateType = 10
-	ATNPlusLoopBack   ATNStateType = 11
-	ATNLoopEnd        ATNStateType = 12
+import (
+	"typefox.dev/fastbelt/internal/grammar"
+	"typefox.dev/fastbelt/parser"
 )
 
 // ATNState is the single concrete ATN state type.
@@ -29,7 +14,7 @@ type ATNState struct {
 	Rule                   *grammar.ParserRule
 	EpsilonOnlyTransitions bool
 	Transitions            []Transition
-	Type                   ATNStateType
+	Type                   parser.ATNStateType
 
 	// Decision index; -1 if this state is not a decision state.
 	Decision int

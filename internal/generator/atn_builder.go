@@ -6,6 +6,7 @@ package generator
 
 import (
 	"typefox.dev/fastbelt/internal/grammar"
+	"typefox.dev/fastbelt/parser"
 )
 
 type ATNRuleBuilder interface {
@@ -22,7 +23,7 @@ type ATNRuleBuilder interface {
 
 	NewEpsilonTransition(source *ATNState, target *ATNState)
 
-	NewState(stateType ATNStateType) *ATNState
+	NewState(stateType parser.ATNStateType) *ATNState
 }
 
 type ATNBuilder interface {
@@ -49,8 +50,8 @@ func NewATNBuilder() *ATNBuilderImpl {
 }
 
 func (b *ATNBuilderImpl) DeclareRule(rule *grammar.ParserRule) ATNRuleBuilder {
-	left := newATNState(b.atn, rule, ATNRuleStart)
-	right := newATNState(b.atn, rule, ATNRuleStop)
+	left := newATNState(b.atn, rule, parser.ATNRuleStart)
+	right := newATNState(b.atn, rule, parser.ATNRuleStop)
 	ruleBuilder := NewATNRuleBuilder(b, rule, &ATNHandle{Left: left, Right: right})
 	b.rules[rule] = ruleBuilder
 	b.atn.RuleToStartState[*rule] = left
@@ -87,9 +88,9 @@ func (rb *ATNRuleBuilderImpl) Plus(lookaheadName string, handle *ATNHandle) *ATN
 	blkStart := handle.Left
 	blkEnd := handle.Right
 
-	loop := rb.NewState(ATNPlusLoopBack)
+	loop := rb.NewState(parser.ATNPlusLoopBack)
 	defineDecisionState(atn, loop)
-	end := rb.NewState(ATNLoopEnd)
+	end := rb.NewState(parser.ATNLoopEnd)
 	blkStart.Loopback = loop
 	end.Loopback = loop
 
@@ -108,10 +109,10 @@ func (rb *ATNRuleBuilderImpl) Star(lookaheadName string, handle *ATNHandle) *ATN
 	start := handle.Left
 	end := handle.Right
 
-	entry := rb.NewState(ATNStarLoopEntry)
+	entry := rb.NewState(parser.ATNStarLoopEntry)
 	defineDecisionState(atn, entry)
-	loopEnd := rb.NewState(ATNLoopEnd)
-	loop := rb.NewState(ATNStarLoopBack)
+	loopEnd := rb.NewState(parser.ATNLoopEnd)
+	loop := rb.NewState(parser.ATNStarLoopBack)
 	entry.Loopback = loop
 	loopEnd.Loopback = loop
 
@@ -137,7 +138,7 @@ func (rb *ATNRuleBuilderImpl) Optional(lookaheadName string, handle *ATNHandle) 
 
 func (rb *ATNRuleBuilderImpl) MakeAlts(lookaheadName string, start *ATNState, alts []*ATNHandle) *ATNHandle {
 	atn := rb.parent.atn
-	end := rb.NewState(ATNBlockEnd)
+	end := rb.NewState(parser.ATNBlockEnd)
 	end.Start = start
 	start.End = end
 
@@ -159,31 +160,31 @@ func (rb *ATNRuleBuilderImpl) MakeBlock(alts []*ATNHandle) *ATNHandle {
 	for i := 0; i < len(alts)-1; i++ {
 		handle := alts[i]
 		next := alts[i+1].Left
-		var t Transition
-		if len(handle.Left.Transitions) == 1 {
-			t = handle.Left.Transitions[0]
-		}
-		rt, isRule := t.(*RuleTransition)
-		if handle.Left.Type == ATNBasic &&
-			handle.Right.Type == ATNBasic &&
-			t != nil &&
-			((isRule && rt.FollowState == handle.Right) ||
-				(!isRule && t.Target() == handle.Right)) {
-			// avoid epsilon edge to next element
-			if isRule {
-				rt.FollowState = next
-			} else {
-				switch at := t.(type) {
-				case *AtomTransition:
-					at.TargetState = next
-				case *EpsilonTransition:
-					at.TargetState = next
-				}
-			}
-			removeState(rb.parent.atn, handle.Right) // we skipped over this state
-		} else {
-			rb.NewEpsilonTransition(handle.Right, next)
-		}
+		// var t Transition
+		// if len(handle.Left.Transitions) == 1 {
+		// 	t = handle.Left.Transitions[0]
+		// }
+		// rt, isRule := t.(*RuleTransition)
+		// if handle.Left.Type == ATNBasic &&
+		// 	handle.Right.Type == ATNBasic &&
+		// 	t != nil &&
+		// 	((isRule && rt.FollowState == handle.Right) ||
+		// 		(!isRule && t.Target() == handle.Right)) {
+		// 	// avoid epsilon edge to next element
+		// 	if isRule {
+		// 		rt.FollowState = next
+		// 	} else {
+		// 		switch at := t.(type) {
+		// 		case *AtomTransition:
+		// 			at.TargetState = next
+		// 		case *EpsilonTransition:
+		// 			at.TargetState = next
+		// 		}
+		// 	}
+		// 	removeState(rb.parent.atn, handle.Right) // we skipped over this state
+		// } else {
+		rb.NewEpsilonTransition(handle.Right, next)
+		// }
 	}
 
 	first := alts[0]
@@ -192,8 +193,8 @@ func (rb *ATNRuleBuilderImpl) MakeBlock(alts []*ATNHandle) *ATNHandle {
 }
 
 func (rb *ATNRuleBuilderImpl) TokenRef(tokenType TokenInfo) *ATNHandle {
-	left := rb.NewState(ATNBasic)
-	right := rb.NewState(ATNBasic)
+	left := rb.NewState(parser.ATNBasic)
+	right := rb.NewState(parser.ATNBasic)
 	addTransition(left, &AtomTransition{
 		TargetState:     right,
 		TokenTypeID:     tokenType.ID,
@@ -204,8 +205,8 @@ func (rb *ATNRuleBuilderImpl) TokenRef(tokenType TokenInfo) *ATNHandle {
 
 func (rb *ATNRuleBuilderImpl) RuleRef(otherRule *grammar.ParserRule) *ATNHandle {
 	ruleStart := rb.parent.atn.RuleToStartState[*otherRule]
-	left := rb.NewState(ATNBasic)
-	right := rb.NewState(ATNBasic)
+	left := rb.NewState(parser.ATNBasic)
+	right := rb.NewState(parser.ATNBasic)
 	addTransition(left, &RuleTransition{
 		TargetState: ruleStart,
 		Rule:        otherRule,
@@ -218,11 +219,11 @@ func (rb *ATNRuleBuilderImpl) NewEpsilonTransition(source *ATNState, target *ATN
 	addTransition(source, &EpsilonTransition{TargetState: target})
 }
 
-func (rb *ATNRuleBuilderImpl) NewState(stateType ATNStateType) *ATNState {
+func (rb *ATNRuleBuilderImpl) NewState(stateType parser.ATNStateType) *ATNState {
 	return newATNState(rb.parent.atn, rb.rule, stateType)
 }
 
-func newATNState(atn *ATN, rule *grammar.ParserRule, typ ATNStateType) *ATNState {
+func newATNState(atn *ATN, rule *grammar.ParserRule, typ parser.ATNStateType) *ATNState {
 	s := &ATNState{
 		ATN:         atn,
 		Production:  nil,

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"typefox.dev/fastbelt/generator"
+	"typefox.dev/fastbelt/parser"
 )
 
 // EmitGoSource returns Go source code for a function that constructs an
@@ -20,9 +21,9 @@ import (
 //	pkgName  – Go package name for the generated file (e.g. "myparser")
 //	funcName – name of the generated constructor function
 //	importPath – import path of the allstar package (e.g. "typefox.dev/fastbelt/parser/allstar")
-func EmitGoSource(pkgName, funcName, importPath string, rtn *RuntimeATN) generator.Node {
+func EmitGoSource(pkgName, funcName, importPath string, rtn *parser.RuntimeATN) generator.Node {
 	// Index each state pointer to its position in rtn.States.
-	idx := make(map[*RuntimeATNState]int, len(rtn.States))
+	idx := make(map[*parser.RuntimeATNState]int, len(rtn.States))
 	for i, s := range rtn.States {
 		idx[s] = i
 	}
@@ -35,16 +36,16 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *RuntimeATN) generat
 
 	n.AppendLine("import \"", importPath, "\"")
 	n.AppendLine()
-	n.AppendLine("func ", funcName, "() *allstar.RuntimeATN {")
+	n.AppendLine("func ", funcName, "() *parser.RuntimeATN {")
 	n.Indent(func(n generator.Node) {
-		n.AppendLine("states := make([]*allstar.RuntimeATNState, ", strconv.Itoa(len(rtn.States)), ")")
+		n.AppendLine("states := make([]*parser.RuntimeATNState, ", strconv.Itoa(len(rtn.States)), ")")
 
 		// Emit state declarations (without transitions so forward refs are fine).
 		for i, s := range rtn.States {
-			n.AppendLine("states[", strconv.Itoa(i), "] = &allstar.RuntimeATNState{")
+			n.AppendLine("states[", strconv.Itoa(i), "] = &parser.RuntimeATNState{")
 			n.Indent(func(n generator.Node) {
 				n.AppendLine("StateNumber: ", strconv.Itoa(s.StateNumber), ",")
-				n.AppendLine("Type: allstar.", atnStateTypeName(s.Type), ",")
+				n.AppendLine("Type: parser.", atnStateTypeName(s.Type), ",")
 				n.AppendLine("Decision: ", strconv.Itoa(s.Decision), ",")
 
 				if s.EpsilonOnlyTransitions {
@@ -54,7 +55,7 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *RuntimeATN) generat
 					n.AppendLine("RuleName: ", strconv.Quote(s.RuleName), ",")
 				}
 				if s.ProdIdx != 0 {
-					n.AppendLine("ProdKind: allstar.", s.ProdKind, ",")
+					n.AppendLine("ProdKind: parser.", s.ProdKind, ",")
 					n.AppendLine("ProdIdx: ", strconv.Itoa(s.ProdIdx), ",")
 				}
 			})
@@ -66,16 +67,16 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *RuntimeATN) generat
 			if len(s.Transitions) == 0 {
 				continue
 			}
-			n.AppendLine("states[", strconv.Itoa(i), "].Transitions = []allstar.RuntimeTransition{")
+			n.AppendLine("states[", strconv.Itoa(i), "].Transitions = []parser.RuntimeTransition{")
 			n.Indent(func(n generator.Node) {
 				for _, t := range s.Transitions {
 					switch at := t.(type) {
-					case *RuntimeAtomTransition:
-						n.AppendLine("&allstar.RuntimeAtomTransition{Target: states[", strconv.Itoa(idx[at.Target]), "], TokenTypeID: ", strconv.Itoa(at.TokenTypeID), ", CategoryMatches: ", emitIntSlice(at.CategoryMatches), "},")
-					case *RuntimeEpsilonTransition:
-						n.AppendLine("&allstar.RuntimeEpsilonTransition{Target: states[", strconv.Itoa(idx[at.Target]), "]},")
-					case *RuntimeRuleTransition:
-						n.AppendLine("&allstar.RuntimeRuleTransition{Target: states[", strconv.Itoa(idx[at.Target]), "], FollowState: states[", strconv.Itoa(idx[at.FollowState]), "]},")
+					case *parser.RuntimeAtomTransition:
+						n.AppendLine("&parser.RuntimeAtomTransition{Target: states[", strconv.Itoa(idx[at.Target]), "], TokenTypeID: ", strconv.Itoa(at.TokenTypeID), ", CategoryMatches: ", emitIntSlice(at.CategoryMatches), "},")
+					case *parser.RuntimeEpsilonTransition:
+						n.AppendLine("&parser.RuntimeEpsilonTransition{Target: states[", strconv.Itoa(idx[at.Target]), "]},")
+					case *parser.RuntimeRuleTransition:
+						n.AppendLine("&parser.RuntimeRuleTransition{Target: states[", strconv.Itoa(idx[at.Target]), "], FollowState: states[", strconv.Itoa(idx[at.FollowState]), "]},")
 					}
 				}
 			})
@@ -83,7 +84,7 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *RuntimeATN) generat
 		}
 
 		// DecisionStates slice.
-		n.AppendLine("decisionStates := make([]*allstar.RuntimeATNState, ", strconv.Itoa(len(rtn.DecisionStates)), ")")
+		n.AppendLine("decisionStates := make([]*parser.RuntimeATNState, ", strconv.Itoa(len(rtn.DecisionStates)), ")")
 		for i, ds := range rtn.DecisionStates {
 			if ds != nil {
 				n.AppendLine("decisionStates[", strconv.Itoa(i), "] = states[", strconv.Itoa(idx[ds]), "]")
@@ -96,14 +97,14 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *RuntimeATN) generat
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
-		n.AppendLine("decisionMap := map[string]*allstar.RuntimeATNState{")
+		n.AppendLine("decisionMap := map[string]*parser.RuntimeATNState{")
 		for _, key := range keys {
 			s := rtn.DecisionMap[key]
 			n.AppendLine(strconv.Quote(key), ": states[", strconv.Itoa(idx[s]), "],")
 		}
 		n.AppendLine("}")
 
-		n.AppendLine("return &allstar.RuntimeATN{")
+		n.AppendLine("return &parser.RuntimeATN{")
 		n.Indent(func(n generator.Node) {
 			n.AppendLine("States:         states,")
 			n.AppendLine("DecisionStates: decisionStates,")
@@ -127,31 +128,31 @@ func emitIntSlice(s []int) string {
 	return "[]int{" + strings.Join(parts, ", ") + "}"
 }
 
-func atnStateTypeName(t ATNStateType) string {
+func atnStateTypeName(t parser.ATNStateType) string {
 	switch t {
-	case ATNInvalidType:
+	case parser.ATNInvalidType:
 		return "ATNInvalidType"
-	case ATNBasic:
+	case parser.ATNBasic:
 		return "ATNBasic"
-	case ATNRuleStart:
+	case parser.ATNRuleStart:
 		return "ATNRuleStart"
-	case ATNPlusBlockStart:
+	case parser.ATNPlusBlockStart:
 		return "ATNPlusBlockStart"
-	case ATNStarBlockStart:
+	case parser.ATNStarBlockStart:
 		return "ATNStarBlockStart"
-	case ATNTokenStart:
+	case parser.ATNTokenStart:
 		return "ATNTokenStart"
-	case ATNRuleStop:
+	case parser.ATNRuleStop:
 		return "ATNRuleStop"
-	case ATNBlockEnd:
+	case parser.ATNBlockEnd:
 		return "ATNBlockEnd"
-	case ATNStarLoopBack:
+	case parser.ATNStarLoopBack:
 		return "ATNStarLoopBack"
-	case ATNStarLoopEntry:
+	case parser.ATNStarLoopEntry:
 		return "ATNStarLoopEntry"
-	case ATNPlusLoopBack:
+	case parser.ATNPlusLoopBack:
 		return "ATNPlusLoopBack"
-	case ATNLoopEnd:
+	case parser.ATNLoopEnd:
 		return "ATNLoopEnd"
 	default:
 		return fmt.Sprintf("ATNStateType(%d)", int(t))
