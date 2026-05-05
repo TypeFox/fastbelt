@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 
 	"typefox.dev/fastbelt/generator"
 	"typefox.dev/fastbelt/parser"
@@ -120,17 +119,6 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN) generator.Node
 
 	n.AppendLine("}")
 	return n
-}
-
-func emitIntSlice(s []int) string {
-	if len(s) == 0 {
-		return "nil"
-	}
-	parts := make([]string, len(s))
-	for i, v := range s {
-		parts[i] = fmt.Sprintf("%d", v)
-	}
-	return "[]int{" + strings.Join(parts, ", ") + "}"
 }
 
 func atnStateTypeName(t parser.ATNStateType) string {
