@@ -15,7 +15,7 @@ import (
 
 func CreateATN(grammr grammar.Grammar) (*ATN, map[string]*grammar.ParserRule, map[string]TokenType) {
 	tokenTypes := GetTokenTypes(grammr)
-	lookaheadNames := GetLookaheadNames(grammr)
+	lookaheadNames := ComputeLookaheadNames(grammr)
 
 	builder := NewATNBuilder()
 
@@ -41,7 +41,7 @@ func CreateATN(grammr grammar.Grammar) (*ATN, map[string]*grammar.ParserRule, ma
 	return atn, byName, tokenTypes
 }
 
-func GetLookaheadNames(grammr grammar.Grammar) map[grammar.Element]string {
+func ComputeLookaheadNames(grammr grammar.Grammar) map[grammar.Element]string {
 	counters := make(map[reflect.Type]int)
 	names := map[grammar.Element]string{}
 	ruleName := ""
