@@ -4,6 +4,39 @@ package grammar
 
 import "typefox.dev/fastbelt/parser"
 
+type ATNDecisionId int
+
+const (
+	Action_Alternatives_1                ATNDecisionId = 0
+	Action_Group_2                       ATNDecisionId = 1
+	Alternatives_Group_2                 ATNDecisionId = 2
+	Alternatives_Group_3                 ATNDecisionId = 3
+	AssignableAlternatives_Group_2       ATNDecisionId = 4
+	AssignableAlternatives_Group_3       ATNDecisionId = 5
+	AssignableWithoutAlts_Alternatives_1 ATNDecisionId = 6
+	Assignable_Alternatives_1            ATNDecisionId = 7
+	Assignment_Alternatives_1            ATNDecisionId = 8
+	CompositeAlternatives_Group_2        ATNDecisionId = 9
+	CompositeAlternatives_Group_3        ATNDecisionId = 10
+	CompositeElement_Alternatives_1      ATNDecisionId = 11
+	CompositeElement_Alternatives_2      ATNDecisionId = 12
+	CompositeGroup_Group_2               ATNDecisionId = 13
+	CompositeGroup_RuleCall_2            ATNDecisionId = 14
+	CrossRef_Group_2                     ATNDecisionId = 15
+	Element_Alternatives_1               ATNDecisionId = 16
+	Element_Alternatives_2               ATNDecisionId = 17
+	FieldType_Alternatives_1             ATNDecisionId = 18
+	Grammar_Alternatives_1               ATNDecisionId = 19
+	Group_Group_2                        ATNDecisionId = 20
+	Group_RuleCall_2                     ATNDecisionId = 21
+	Interface_Group_2                    ATNDecisionId = 22
+	Interface_Group_3                    ATNDecisionId = 23
+	Interface_RuleCall_4                 ATNDecisionId = 24
+	ParserRule_Group_2                   ATNDecisionId = 25
+	PrimitiveType_Alternatives_1         ATNDecisionId = 26
+	Token_Alternatives_1                 ATNDecisionId = 27
+)
+
 func BuildATN() *parser.RuntimeATN {
 	states := make([]*parser.RuntimeATNState, 311)
 	states[0] = &parser.RuntimeATNState{
@@ -2692,36 +2725,35 @@ func BuildATN() *parser.RuntimeATN {
 	decisionStates[5] = states[235]
 	decisionStates[6] = states[283]
 	decisionStates[7] = states[289]
-	decisionMap := map[string]*parser.RuntimeATNState{
-		"Action_Alternatives_1":                states[261],
-		"Action_Group_2":                       states[253],
-		"Alternatives_Group_2":                 states[157],
-		"Alternatives_Group_3":                 states[161],
-		"AssignableAlternatives_Group_2":       states[231],
-		"AssignableAlternatives_Group_3":       states[235],
-		"AssignableWithoutAlts_Alternatives_1": states[227],
-		"Assignable_Alternatives_1":            states[219],
-		"Assignment_Alternatives_1":            states[203],
-		"CompositeAlternatives_Group_2":        states[279],
-		"CompositeAlternatives_Group_3":        states[283],
-		"CompositeElement_Alternatives_1":      states[301],
-		"CompositeElement_Alternatives_2":      states[309],
-		"CompositeGroup_Group_2":               states[287],
-		"CompositeGroup_RuleCall_2":            states[289],
-		"CrossRef_Group_2":                     states[241],
-		"Element_Alternatives_1":               states[183],
-		"Element_Alternatives_2":               states[191],
-		"FieldType_Alternatives_1":             states[105],
-		"Grammar_Alternatives_1":               states[66],
-		"Group_Group_2":                        states[165],
-		"Group_RuleCall_2":                     states[167],
-		"Interface_Group_2":                    states[73],
-		"Interface_Group_3":                    states[81],
-		"Interface_RuleCall_4":                 states[88],
-		"ParserRule_Group_2":                   states[129],
-		"PrimitiveType_Alternatives_1":         states[125],
-		"Token_Alternatives_1":                 states[143],
-	}
+	decisionMap := make([]*parser.RuntimeATNState, 28)
+	decisionMap[Action_Alternatives_1] = states[261]
+	decisionMap[Action_Group_2] = states[253]
+	decisionMap[Alternatives_Group_2] = states[157]
+	decisionMap[Alternatives_Group_3] = states[161]
+	decisionMap[AssignableAlternatives_Group_2] = states[231]
+	decisionMap[AssignableAlternatives_Group_3] = states[235]
+	decisionMap[AssignableWithoutAlts_Alternatives_1] = states[227]
+	decisionMap[Assignable_Alternatives_1] = states[219]
+	decisionMap[Assignment_Alternatives_1] = states[203]
+	decisionMap[CompositeAlternatives_Group_2] = states[279]
+	decisionMap[CompositeAlternatives_Group_3] = states[283]
+	decisionMap[CompositeElement_Alternatives_1] = states[301]
+	decisionMap[CompositeElement_Alternatives_2] = states[309]
+	decisionMap[CompositeGroup_Group_2] = states[287]
+	decisionMap[CompositeGroup_RuleCall_2] = states[289]
+	decisionMap[CrossRef_Group_2] = states[241]
+	decisionMap[Element_Alternatives_1] = states[183]
+	decisionMap[Element_Alternatives_2] = states[191]
+	decisionMap[FieldType_Alternatives_1] = states[105]
+	decisionMap[Grammar_Alternatives_1] = states[66]
+	decisionMap[Group_Group_2] = states[165]
+	decisionMap[Group_RuleCall_2] = states[167]
+	decisionMap[Interface_Group_2] = states[73]
+	decisionMap[Interface_Group_3] = states[81]
+	decisionMap[Interface_RuleCall_4] = states[88]
+	decisionMap[ParserRule_Group_2] = states[129]
+	decisionMap[PrimitiveType_Alternatives_1] = states[125]
+	decisionMap[Token_Alternatives_1] = states[143]
 	return &parser.RuntimeATN{
 		States:         states,
 		DecisionStates: decisionStates,

@@ -78,6 +78,6 @@ func (t *RuntimeRuleTransition) IsEpsilon() bool             { return true }
 // It can be built directly from generated Go code without running CreateATN.
 type RuntimeATN struct {
 	States         []*RuntimeATNState
-	DecisionStates []*RuntimeATNState          // indexed by Decision
-	DecisionMap    map[string]*RuntimeATNState // key → decision state
+	DecisionStates []*RuntimeATNState // indexed by Decision
+	DecisionMap    []*RuntimeATNState // key → decision state
 }
