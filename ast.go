@@ -7,7 +7,7 @@ package fastbelt
 import (
 	"iter"
 	"strings"
-	"sync"
+	"sync/atomic"
 )
 
 type AstNodeBase struct {
@@ -321,18 +321,16 @@ type CompositeNode interface {
 }
 
 func NewCompositeNode() CompositeNode {
-	node := &CompositeNodeBase{
+	return &CompositeNodeBase{
 		AstNodeBase: NewAstNode(),
 	}
-	node.value = sync.OnceValue(func() string {
-		return stringSlow(node)
-	})
-	return node
 }
 
 type CompositeNodeBase struct {
 	AstNodeBase
-	value func() string
+	// We could use a sync.Once here, but that would add some overhead
+	// In benchmarks, using an atomic pointer here is much faster (roughly 2x)
+	cache atomic.Pointer[string]
 }
 
 func (node *CompositeNodeBase) IsCompositeNode() {}
@@ -342,10 +340,18 @@ func (node *CompositeNodeBase) Owner() AstNode {
 }
 
 func (node *CompositeNodeBase) String() string {
-	return node.value()
+	// Cache the string value, as it is accessed frequently
+	// Since this operation can be done in parallel, we need an atomic pointer here
+	if p := node.cache.Load(); p != nil {
+		return *p
+	} else {
+		s := node.stringSlow()
+		node.cache.Store(&s)
+		return s
+	}
 }
 
-func stringSlow(node *CompositeNodeBase) string {
+func (node *CompositeNodeBase) stringSlow() string {
 	// Construct the string value by concatenating the text of all tokens of the node
 	// Only need to do this once, as the tokens are usually not modified after parsing
 	var sb strings.Builder
