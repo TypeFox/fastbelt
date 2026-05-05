@@ -160,33 +160,8 @@ func (rb *ATNRuleBuilderImpl) MakeBlock(alts []*ATNHandle) *ATNHandle {
 	for i := 0; i < len(alts)-1; i++ {
 		handle := alts[i]
 		next := alts[i+1].Left
-		// var t Transition
-		// if len(handle.Left.Transitions) == 1 {
-		// 	t = handle.Left.Transitions[0]
-		// }
-		// rt, isRule := t.(*RuleTransition)
-		// if handle.Left.Type == ATNBasic &&
-		// 	handle.Right.Type == ATNBasic &&
-		// 	t != nil &&
-		// 	((isRule && rt.FollowState == handle.Right) ||
-		// 		(!isRule && t.Target() == handle.Right)) {
-		// 	// avoid epsilon edge to next element
-		// 	if isRule {
-		// 		rt.FollowState = next
-		// 	} else {
-		// 		switch at := t.(type) {
-		// 		case *AtomTransition:
-		// 			at.TargetState = next
-		// 		case *EpsilonTransition:
-		// 			at.TargetState = next
-		// 		}
-		// 	}
-		// 	removeState(rb.parent.atn, handle.Right) // we skipped over this state
-		// } else {
 		rb.NewEpsilonTransition(handle.Right, next)
-		// }
 	}
-
 	first := alts[0]
 	last := alts[len(alts)-1]
 	return &ATNHandle{Left: first.Left, Right: last.Right}
@@ -247,13 +222,4 @@ func addTransition(state *ATNState, t Transition) {
 		state.EpsilonOnlyTransitions = t.IsEpsilon()
 	}
 	state.Transitions = append(state.Transitions, t)
-}
-
-func removeState(atn *ATN, state *ATNState) {
-	for i, s := range atn.States {
-		if s == state {
-			atn.States = append(atn.States[:i], atn.States[i+1:]...)
-			return
-		}
-	}
 }

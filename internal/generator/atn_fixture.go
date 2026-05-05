@@ -28,7 +28,9 @@ func FixtureATN(t *testing.T, grammarStr string) (*ATN, map[string]*grammar.Pars
 	}
 	node := EmitMarkdownSource("test", atn, tokenTypeNames)
 	content := node.String()
-	os.WriteFile("atn.test.md", []byte(content), 0644)
+	if err := os.WriteFile("atn.test.md", []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write ATN markdown file: %v", err)
+	}
 	return atn, rules, tokenTypes
 }
 
