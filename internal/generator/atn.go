@@ -25,7 +25,8 @@ func CreateATN(grammr grammar.Grammar) (*ATN, map[string]*grammar.ParserRule, ma
 		entries[gr] = builder.DeclareRule(&gr)
 		byName[gr.Name()] = &gr
 	}
-	for gr, ruleBuilder := range entries {
+	for _, gr := range grammr.Rules() {
+		ruleBuilder := entries[gr]
 		handle, err := convertElement(ruleBuilder, gr.Body(), lookaheadNames, tokenTypes, byName)
 		if err != nil {
 			// Handle the error appropriately, e.g., log it or return it
