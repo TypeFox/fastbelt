@@ -9,7 +9,6 @@ import (
 
 func GenerateATN(grammr grammar.Grammar, packageName string) string {
 	atn, _, _ := CreateATN(grammr)
-	rtn := BuildRuntimeATN(atn)
-	source := EmitGoSource(packageName, "BuildATN", "typefox.dev/fastbelt/parser", rtn)
+	source := EmitGoSource(packageName, "BuildATN", "typefox.dev/fastbelt/parser", atn)
 	return FormatIfPossible(source.String())
 }

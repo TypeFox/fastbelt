@@ -22,12 +22,11 @@ func FixtureATN(t *testing.T, grammarStr string) (*ATN, map[string]*grammar.Pars
 	doc := f.Parse(grammarStr).AssertNoErrors()
 	grammr := doc.Root().(grammar.Grammar)
 	atn, rules, tokenTypes := CreateATN(grammr)
-	rtn := BuildRuntimeATN(atn)
 	tokenTypeNames := make(map[int]string, len(tokenTypes))
 	for name, info := range tokenTypes {
 		tokenTypeNames[info.ID] = name
 	}
-	node := EmitMarkdownSource("test", rtn, tokenTypeNames)
+	node := EmitMarkdownSource("test", atn, tokenTypeNames)
 	content := node.String()
 	os.WriteFile("atn.test.md", []byte(content), 0644)
 	return atn, rules, tokenTypes

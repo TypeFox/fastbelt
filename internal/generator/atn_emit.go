@@ -21,9 +21,9 @@ import (
 //	pkgName  – Go package name for the generated file (e.g. "myparser")
 //	funcName – name of the generated constructor function
 //	importPath – import path of the allstar package (e.g. "typefox.dev/fastbelt/parser/allstar")
-func EmitGoSource(pkgName, funcName, importPath string, rtn *parser.RuntimeATN) generator.Node {
+func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN) generator.Node {
 	// Index each state pointer to its position in rtn.States.
-	idx := make(map[*parser.RuntimeATNState]int, len(rtn.States))
+	idx := make(map[*ATNState]int, len(rtn.States))
 	for i, s := range rtn.States {
 		idx[s] = i
 	}
@@ -51,13 +51,6 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *parser.RuntimeATN) 
 				if s.EpsilonOnlyTransitions {
 					n.AppendLine("EpsilonOnlyTransitions: true,")
 				}
-				if s.RuleName != "" {
-					n.AppendLine("RuleName: ", strconv.Quote(s.RuleName), ",")
-				}
-				if s.ProdIdx != 0 {
-					n.AppendLine("ProdKind: parser.", s.ProdKind, ",")
-					n.AppendLine("ProdIdx: ", strconv.Itoa(s.ProdIdx), ",")
-				}
 			})
 			n.AppendLine("}")
 		}
@@ -71,12 +64,12 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *parser.RuntimeATN) 
 			n.Indent(func(n generator.Node) {
 				for _, t := range s.Transitions {
 					switch at := t.(type) {
-					case *parser.RuntimeAtomTransition:
-						n.AppendLine("&parser.RuntimeAtomTransition{Target: states[", strconv.Itoa(idx[at.Target]), "], TokenTypeID: ", strconv.Itoa(at.TokenTypeID), ", CategoryMatches: ", emitIntSlice(at.CategoryMatches), "},")
-					case *parser.RuntimeEpsilonTransition:
-						n.AppendLine("&parser.RuntimeEpsilonTransition{Target: states[", strconv.Itoa(idx[at.Target]), "]},")
-					case *parser.RuntimeRuleTransition:
-						n.AppendLine("&parser.RuntimeRuleTransition{Target: states[", strconv.Itoa(idx[at.Target]), "], FollowState: states[", strconv.Itoa(idx[at.FollowState]), "]},")
+					case *AtomTransition:
+						n.AppendLine("&parser.RuntimeAtomTransition{Target: states[", strconv.Itoa(idx[at.Target()]), "], TokenTypeID: ", strconv.Itoa(at.TokenTypeID), ", CategoryMatches: ", emitIntSlice(at.CategoryMatches), "},")
+					case *EpsilonTransition:
+						n.AppendLine("&parser.RuntimeEpsilonTransition{Target: states[", strconv.Itoa(idx[at.Target()]), "]},")
+					case *RuleTransition:
+						n.AppendLine("&parser.RuntimeRuleTransition{Target: states[", strconv.Itoa(idx[at.Target()]), "], FollowState: states[", strconv.Itoa(idx[at.FollowState]), "]},")
 					}
 				}
 			})

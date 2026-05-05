@@ -13,7 +13,6 @@ func GenerateATNMarkdown(grammr grammar.Grammar, packageName string) string {
 	for name, info := range tokenTypes {
 		tokenTypeNames[info.ID] = name
 	}
-	rtn := BuildRuntimeATN(atn)
-	source := EmitMarkdownSource(packageName, rtn, tokenTypeNames)
+	source := EmitMarkdownSource(packageName, atn, tokenTypeNames)
 	return source.String()
 }
