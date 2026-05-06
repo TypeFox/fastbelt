@@ -17,6 +17,8 @@ import (
 	"typefox.dev/fastbelt/internal/generator"
 	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/fastbelt/util/service"
+	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
 
@@ -86,12 +88,20 @@ func runLegacyGenerate(args []string) error {
 		return err
 	}
 
-	srv := grammar.CreateServices()
+	sc := grammar.CreateServices()
 	file, _ := textdoc.NewFile(lsp.URIFromPath(grammarPath), "fb", 0, string(grammarText))
 
 	document := core.NewDocument(file)
-	srv.Workspace().DocumentManager.Set(document)
-	if err := srv.Workspace().Builder.Build(context.Background(), []*core.Document{document}, func() {}); err != nil {
+	documents, err := service.Get[workspace.DocumentManager](sc)
+	if err != nil {
+		return err
+	}
+	documents.Set(document)
+	builder, err := service.Get[workspace.Builder](sc)
+	if err != nil {
+		return err
+	}
+	if err := builder.Build(context.Background(), []*core.Document{document}, func() {}); err != nil {
 		return err
 	}
 

@@ -8,65 +8,44 @@ import (
 	"log/slog"
 
 	"golang.org/x/exp/jsonrpc2"
-	"typefox.dev/fastbelt/textdoc"
-	"typefox.dev/fastbelt/workspace"
+	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/lsp"
 )
 
-// ServerSrvCont is an interface for service containers which include the server services.
-type ServerSrvCont interface {
-	textdoc.TextdocSrvCont
-	workspace.WorkspaceSrvCont
-	Server() *ServerSrv
+// WorkspaceFolders is populated during the LSP initialize request.
+type WorkspaceFolders struct {
+	Value []lsp.WorkspaceFolder
 }
 
-// ServerSrvContBlock is used to define a service container satisfying ServerSrvCont.
-type ServerSrvContBlock struct {
-	server ServerSrv
+// Connection is assigned by ConnectionBinder when the language server is started.
+type Connection struct {
+	Value *jsonrpc2.Connection
 }
 
-func (b *ServerSrvContBlock) Server() *ServerSrv {
-	return &b.server
-}
-
-// ServerSrv contains the LSP-related services for the server package.
-type ServerSrv struct {
-	SlogHandler        slog.Handler
-	LanguageServer     LanguageServer
-	DocumentSyncher    DocumentSyncher
-	DefinitionProvider DefinitionProvider
-	ReferencesProvider ReferencesProvider
-	// WorkspaceFolders is populated during the LSP initialize request.
-	WorkspaceFolders []lsp.WorkspaceFolder
-	// Connection is assigned by ConnectionBinder when the language server is started.
-	Connection       *jsonrpc2.Connection
-	ConnectionBinder jsonrpc2.Binder
-	ConnectionDialer jsonrpc2.Dialer
-}
-
-// CreateDefaultServices creates the default services for the language server.
-// If the services are already set, they are not overwritten.
-func CreateDefaultServices(c ServerSrvCont) {
-	s := c.Server()
-	if s.SlogHandler == nil {
-		s.SlogHandler = NewSlogHandler(c)
+// SetupDefaultServices sets up the default services for the language server.
+// If any service is already set, it's not overwritten.
+func SetupDefaultServices(sc *service.Container) {
+	service.Put(sc, &WorkspaceFolders{})
+	service.Put(sc, &Connection{})
+	if !service.Has[slog.Handler](sc) {
+		service.Put(sc, NewSlogHandler(sc))
 	}
-	if s.LanguageServer == nil {
-		s.LanguageServer = NewDefaultLanguageServer(c)
+	if !service.Has[jsonrpc2.Binder](sc) {
+		service.Put(sc, NewDefaultBinder(sc))
 	}
-	if s.DocumentSyncher == nil {
-		s.DocumentSyncher = NewDefaultDocumentSyncher(c)
+	if !service.Has[jsonrpc2.Dialer](sc) {
+		service.Put[jsonrpc2.Dialer](sc, &StdioDialer{})
 	}
-	if s.DefinitionProvider == nil {
-		s.DefinitionProvider = NewDefaultDefinitionProvider(c)
+	if !service.Has[lsp.Server](sc) {
+		service.Put(sc, NewDefaultLanguageServer(sc))
 	}
-	if s.ReferencesProvider == nil {
-		s.ReferencesProvider = NewDefaultReferencesProvider(c)
+	if !service.Has[DocumentSyncher](sc) {
+		service.Put(sc, NewDefaultDocumentSyncher(sc))
 	}
-	if s.ConnectionBinder == nil {
-		s.ConnectionBinder = NewDefaultBinder(c)
+	if !service.Has[DefinitionProvider](sc) {
+		service.Put(sc, NewDefaultDefinitionProvider(sc))
 	}
-	if s.ConnectionDialer == nil {
-		s.ConnectionDialer = &StdioDialer{}
+	if !service.Has[ReferencesProvider](sc) {
+		service.Put(sc, NewDefaultReferencesProvider(sc))
 	}
 }

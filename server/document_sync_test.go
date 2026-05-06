@@ -11,6 +11,7 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
@@ -46,23 +47,25 @@ func (m *mockDocumentUpdater) reset() {
 	m.updateCalls = nil
 }
 
-func createTestServices() ServerSrvCont {
-	s := &serverSrvContTest{}
-	textdoc.CreateDefaultServices(s)
-	workspace.CreateDefaultServices(s)
-	return s
-}
+func createTestServicesWithUpdater() (*service.Container, *mockDocumentUpdater) {
+	sc := service.NewContainer()
+	textdoc.SetupDefaultServices(sc)
+	workspace.SetupDefaultServices(sc)
+	SetupDefaultServices(sc)
 
-func createTestServicesWithUpdater() (ServerSrvCont, *mockDocumentUpdater) {
-	s := createTestServices()
+	// Use a deterministic language ID for tests that may create file-backed documents.
+	service.Put[workspace.LanguageID](sc, "plaintext")
+
 	updater := &mockDocumentUpdater{}
-	s.Workspace().DocumentUpdater = updater
-	return s, updater
+	service.Override[workspace.DocumentUpdater](sc, updater)
+
+	sc.Seal()
+	return sc, updater
 }
 
 func TestTextDocuments_Lifecycle(t *testing.T) {
-	s, updater := createTestServicesWithUpdater()
-	ds := &DefaultDocumentSyncher{srv: s}
+	sc, updater := createTestServicesWithUpdater()
+	ds := NewDefaultDocumentSyncher(sc)
 	ctx := context.Background()
 
 	// Open a document
@@ -89,7 +92,8 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	}
 
 	// Verify document is in collection
-	doc := s.Textdoc().Store.GetOverlay(uri)
+	textdocStore := service.MustGet[textdoc.Store](sc)
+	doc := textdocStore.GetOverlay(uri)
 	if doc == nil {
 		t.Fatal("document not found in collection")
 	}
@@ -128,7 +132,7 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	})
 
 	// Verify overlay was removed from store
-	if s.Textdoc().Store.GetOverlay(uri) != nil {
+	if textdocStore.GetOverlay(uri) != nil {
 		t.Error("document should have been removed from collection")
 	}
 
@@ -143,8 +147,8 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 }
 
 func TestTextDocuments_MultipleDocuments(t *testing.T) {
-	s, _ := createTestServicesWithUpdater()
-	ds := &DefaultDocumentSyncher{srv: s}
+	sc, _ := createTestServicesWithUpdater()
+	ds := NewDefaultDocumentSyncher(sc)
 	ctx := context.Background()
 
 	// Open multiple documents
@@ -166,19 +170,20 @@ func TestTextDocuments_MultipleDocuments(t *testing.T) {
 	}
 
 	// Verify all documents are present
-	all := s.Textdoc().Store.AllOverlays()
+	textdocStore := service.MustGet[textdoc.Store](sc)
+	all := textdocStore.AllOverlays()
 	if len(all) != len(uris) {
 		t.Errorf("expected %d documents, got %d", len(uris), len(all))
 	}
 
-	keys := s.Textdoc().Store.KeysOverlays()
+	keys := textdocStore.KeysOverlays()
 	if len(keys) != len(uris) {
 		t.Errorf("expected %d keys, got %d", len(uris), len(keys))
 	}
 
 	// Verify each document
 	for _, uri := range uris {
-		doc := s.Textdoc().Store.GetOverlay(uri)
+		doc := textdocStore.GetOverlay(uri)
 		if doc == nil {
 			t.Errorf("document %s not found", uri)
 		}
@@ -186,8 +191,8 @@ func TestTextDocuments_MultipleDocuments(t *testing.T) {
 }
 
 func TestTextDocuments_IncrementalChanges(t *testing.T) {
-	s, _ := createTestServicesWithUpdater()
-	ds := &DefaultDocumentSyncher{srv: s}
+	sc, _ := createTestServicesWithUpdater()
+	ds := NewDefaultDocumentSyncher(sc)
 	ctx := context.Background()
 
 	uri := lsp.DocumentURI("file:///test.txt")
@@ -217,7 +222,8 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 		},
 	})
 
-	doc := s.Textdoc().Store.GetOverlay(uri)
+	textdocStore := service.MustGet[textdoc.Store](sc)
+	doc := textdocStore.GetOverlay(uri)
 	if doc == nil {
 		t.Fatal("document not found")
 	}
@@ -229,8 +235,8 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 }
 
 func TestTextDocuments_WillSave(t *testing.T) {
-	s, _ := createTestServicesWithUpdater()
-	ds := &DefaultDocumentSyncher{srv: s}
+	sc, _ := createTestServicesWithUpdater()
+	ds := NewDefaultDocumentSyncher(sc)
 	ctx := context.Background()
 
 	uri := lsp.DocumentURI("file:///test.txt")
@@ -250,15 +256,16 @@ func TestTextDocuments_WillSave(t *testing.T) {
 	})
 
 	// Verify document still exists
-	doc := s.Textdoc().Store.GetOverlay(uri)
+	textdocStore := service.MustGet[textdoc.Store](sc)
+	doc := textdocStore.GetOverlay(uri)
 	if doc == nil {
 		t.Fatal("document should still exist after WillSave")
 	}
 }
 
 func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
-	s, _ := createTestServicesWithUpdater()
-	ds := &DefaultDocumentSyncher{srv: s}
+	sc, _ := createTestServicesWithUpdater()
+	ds := NewDefaultDocumentSyncher(sc)
 	ctx := context.Background()
 
 	uri := lsp.DocumentURI("file:///test.txt")
@@ -287,8 +294,8 @@ func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
 }
 
 func TestTextDocuments_DidSave(t *testing.T) {
-	s, _ := createTestServicesWithUpdater()
-	ds := &DefaultDocumentSyncher{srv: s}
+	sc, _ := createTestServicesWithUpdater()
+	ds := NewDefaultDocumentSyncher(sc)
 	ctx := context.Background()
 
 	uri := lsp.DocumentURI("file:///test.txt")
@@ -307,7 +314,8 @@ func TestTextDocuments_DidSave(t *testing.T) {
 	})
 
 	// Verify document still exists
-	doc := s.Textdoc().Store.GetOverlay(uri)
+	textdocStore := service.MustGet[textdoc.Store](sc)
+	doc := textdocStore.GetOverlay(uri)
 	if doc == nil {
 		t.Fatal("document should still exist after DidSave")
 	}

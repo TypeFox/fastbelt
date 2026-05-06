@@ -4,30 +4,12 @@
 
 package textdoc
 
-// TextdocSrvCont is an interface for service containers which include the textdoc services.
-type TextdocSrvCont interface {
-	Textdoc() *TextdocSrv
-}
+import "typefox.dev/fastbelt/util/service"
 
-// TextdocSrvContBlock is used to define a service container satisfying TextdocSrvCont.
-type TextdocSrvContBlock struct {
-	textdoc TextdocSrv
-}
-
-func (b *TextdocSrvContBlock) Textdoc() *TextdocSrv {
-	return &b.textdoc
-}
-
-// TextdocSrv contains the services for the textdoc package.
-type TextdocSrv struct {
-	Store Store
-}
-
-// CreateDefaultServices creates the default services for the textdoc package.
-// If the services are already set, they are not overwritten.
-func CreateDefaultServices(c TextdocSrvCont) {
-	s := c.Textdoc()
-	if s.Store == nil {
-		s.Store = NewDefaultStore()
+// SetupDefaultServices sets up the default services for the textdoc package.
+// If any service is already set, it's not overwritten.
+func SetupDefaultServices(sc *service.Container) {
+	if !service.Has[Store](sc) {
+		service.Put(sc, NewDefaultStore())
 	}
 }

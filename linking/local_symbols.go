@@ -8,36 +8,34 @@ import (
 	"context"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/service"
 )
 
-// LocalSymbolsProvider computes local symbol information for documents.
+// LocalSymbolsProvider is a service that computes local symbol information for documents.
 type LocalSymbolsProvider interface {
-	// Provide traverses the document's AST and computes the local symbol table.
+	// LocalSymbols traverses the document's AST and computes the local symbol table.
 	// The result is stored in the document's LocalSymbols field.
-	// The caller must hold the document's write lock.
-	Provide(ctx context.Context, document *core.Document)
+	LocalSymbols(ctx context.Context, document *core.Document) core.LocalSymbols
 }
 
 // DefaultLocalSymbolsProvider is the default implementation of LocalSymbolsProvider.
 type DefaultLocalSymbolsProvider struct {
-	srv LinkingSrvCont
+	sc *service.Container
 }
 
-func NewDefaultLocalSymbolsProvider(srv LinkingSrvCont) LocalSymbolsProvider {
-	return &DefaultLocalSymbolsProvider{
-		srv: srv,
-	}
+func NewDefaultLocalSymbolsProvider(sc *service.Container) LocalSymbolsProvider {
+	return &DefaultLocalSymbolsProvider{sc: sc}
 }
 
-func (s *DefaultLocalSymbolsProvider) Provide(ctx context.Context, document *core.Document) {
+func (s *DefaultLocalSymbolsProvider) LocalSymbols(ctx context.Context, document *core.Document) core.LocalSymbols {
 	root := document.Root
-	symbolContainers := s.srv.Generated().SymbolContainers
+	symbolContainers := service.MustGet[core.SymbolContainers](s.sc)
 	localSymbols := NewDefaultLocalSymbols()
 	containers := localSymbols.Symbols
 
 	for node := range core.AllChildren(root) {
-		desc, containerNode := s.srv.Linking().LocalSymbolDescriber.Describe(node)
-		if desc != nil {
+		desc, containerNode := DescribeLocal(node)
+		if desc != nil && containerNode != nil {
 			if symbols, exists := containers[containerNode]; exists {
 				// Fast path for existing container: just put the new description into it
 				symbols.Put(desc)
@@ -52,25 +50,29 @@ func (s *DefaultLocalSymbolsProvider) Provide(ctx context.Context, document *cor
 		}
 	}
 	document.LocalSymbols = localSymbols
+	return localSymbols
 }
 
-// DefaultLocalSymbols is the default implementation of core.LocalSymbols.
+// DefaultLocalSymbols is the default implementation of [core.LocalSymbols].
 type DefaultLocalSymbols struct {
 	Symbols map[core.AstNode]core.SymbolContainer
 }
 
+// NewDefaultLocalSymbols creates a new [DefaultLocalSymbols] instance.
 func NewDefaultLocalSymbols() *DefaultLocalSymbols {
 	return &DefaultLocalSymbols{
 		Symbols: make(map[core.AstNode]core.SymbolContainer),
 	}
 }
 
+// NewDefaultLocalSymbolsFromMap creates a new [DefaultLocalSymbols] instance from a map of AST nodes to symbol containers.
 func NewDefaultLocalSymbolsFromMap(m map[core.AstNode]core.SymbolContainer) *DefaultLocalSymbols {
 	return &DefaultLocalSymbols{
 		Symbols: m,
 	}
 }
 
+// For returns the [SymbolContainer] for the given AST node, which contains all symbols that are locally visible in that node.
 func (ls *DefaultLocalSymbols) For(node core.AstNode) core.SymbolContainer {
 	if container, exists := ls.Symbols[node]; exists {
 		return container
@@ -79,28 +81,29 @@ func (ls *DefaultLocalSymbols) For(node core.AstNode) core.SymbolContainer {
 	}
 }
 
-// LocalSymbolDescriber describes how symbols can be referenced in the same document.
+// LocalSymbolDescriber can be implemented by AST node Impl structs to provide custom local symbol description logic.
 type LocalSymbolDescriber interface {
-	// Describe determines the name and other metadata of a locally visible symbol.
-	// It returns the description and the container in which the symbol is visible, or nil if the symbol is not locally visible.
-	Describe(node core.AstNode) (*core.SymbolDescription, core.AstNode)
+	// DescribeLocal determines the name and other metadata of the receiver node as a locally visible symbol.
+	// It also returns a container in which the symbol shall be visible. All direct or indirect children of the container
+	// will include the symbol in their local scopes.
+	//
+	// If the node should not be visible locally, it returns nil.
+	DescribeLocal() (*core.SymbolDescription, core.AstNode)
 }
 
-// DefaultLocalSymbolDescriber is the default implementation of LocalSymbolTableItemProvider.
-type DefaultLocalSymbolDescriber struct {
-	srv LinkingSrvCont
-}
-
-func NewDefaultLocalSymbolDescriber(srv LinkingSrvCont) LocalSymbolDescriber {
-	return &DefaultLocalSymbolDescriber{
-		srv: srv,
+// DescribeLocal checks whether the given node is a symbol (i.e. has a name) and returns a description for it.
+// A symbol is mapped to its direct container, making it visible in all its siblings.
+//
+// Language-specific implementations can be provided by implementing the [LocalSymbolDescriber] interface.
+func DescribeLocal(node core.AstNode) (*core.SymbolDescription, core.AstNode) {
+	// Use the language-specific implementation associated with the node type if available
+	if custom, ok := node.(LocalSymbolDescriber); ok {
+		return custom.DescribeLocal()
 	}
-}
 
-func (p *DefaultLocalSymbolDescriber) Describe(node core.AstNode) (*core.SymbolDescription, core.AstNode) {
-	container := node.Container()
-	nameUnit := p.srv.Linking().Namer.Name(node)
+	nameUnit := Name(node)
 	if nameUnit != nil {
+		container := node.Container()
 		name := nameUnit.String()
 		segment := nameUnit.Segment()
 		fullSegment := node.Segment()

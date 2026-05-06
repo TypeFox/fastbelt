@@ -8,17 +8,22 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
-type Namer interface {
-	Name(node core.AstNode) core.StringUnit
+// Denominator can be implemented by AST node Impl structs to provide custom naming logic.
+type Denominator interface {
+	// Denominate determines the name of the receiver node.
+	Denominate() core.StringUnit
 }
 
-type DefaultNamer struct{}
+// Name checks the 'Name' attribute of the given node and returns its value as a StringUnit,
+// i.e. a Token or a CompositeNode, both of which can produce a string.
+//
+// Language-specific implementations can be provided by implementing the [Denominator] interface.
+func Name(node core.AstNode) core.StringUnit {
+	// Use the language-specific implementation associated with the node type if available
+	if custom, ok := node.(Denominator); ok {
+		return custom.Denominate()
+	}
 
-func NewDefaultNamer() Namer {
-	return &DefaultNamer{}
-}
-
-func (n *DefaultNamer) Name(node core.AstNode) core.StringUnit {
 	if namedNode, ok := node.(core.NamedTokenNode); ok {
 		// Unwrap the pointer to prevent nil issues
 		if t := namedNode.NameToken(); t != nil {

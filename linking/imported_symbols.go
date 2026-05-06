@@ -10,31 +10,33 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/extiter"
+	"typefox.dev/fastbelt/util/service"
 )
 
-// ImportedSymbolsProvider computes the symbols imported into a document from
+// ImportedSymbolsProvider is a service that computes the symbols imported into a document from
 // other documents, making them available for cross-document reference resolution.
 type ImportedSymbolsProvider interface {
-	// Provide creates a sequence of all symbols that are visible from other documents.
+	// ImportedSymbols creates a sequence of all symbols that are visible from other documents.
 	// The result is stored in the document's ImportedSymbols field.
 	// The caller must hold the document's write lock.
-	Provide(ctx context.Context, document *core.Document, allDocuments iter.Seq[*core.Document])
+	ImportedSymbols(ctx context.Context, document *core.Document, allDocuments iter.Seq[*core.Document]) core.SymbolContainer
 }
 
-// DefaultImportedSymbolsProvider is the default implementation of ImportedSymbolsProvider.
+// DefaultImportedSymbolsProvider is the default implementation of [ImportedSymbolsProvider].
 // It flat-maps the exported symbols of all documents into a single lazy sequence.
 type DefaultImportedSymbolsProvider struct {
-	srv LinkingSrvCont
+	sc *service.Container
 }
 
-func NewDefaultImportedSymbolsProvider(srv LinkingSrvCont) ImportedSymbolsProvider {
-	return &DefaultImportedSymbolsProvider{
-		srv: srv,
-	}
+func NewDefaultImportedSymbolsProvider(sc *service.Container) ImportedSymbolsProvider {
+	return &DefaultImportedSymbolsProvider{sc: sc}
 }
 
-func (p *DefaultImportedSymbolsProvider) Provide(ctx context.Context, doc *core.Document, allDocs iter.Seq[*core.Document]) {
-	doc.ImportedSymbols = core.MergeSymbolContainers(extiter.Map(allDocs, func(d *core.Document) core.SymbolContainer {
+func (s *DefaultImportedSymbolsProvider) ImportedSymbols(ctx context.Context, doc *core.Document, allDocs iter.Seq[*core.Document]) core.SymbolContainer {
+	allExportedSymbols := extiter.Map(allDocs, func(d *core.Document) core.SymbolContainer {
 		return d.ExportedSymbols
-	}))
+	})
+	imported := core.MergeSymbolContainers(allExportedSymbols)
+	doc.ImportedSymbols = imported
+	return imported
 }

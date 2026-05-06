@@ -9,8 +9,8 @@ import (
 	"sync"
 )
 
-// WorkspaceLock controls read/write access to the workspace.
-type WorkspaceLock interface {
+// Lock controls read/write access to the workspace.
+type Lock interface {
 	// Write cancels any pending or in-progress write, then acquires an exclusive
 	// lock and calls do with a fresh context and a downgrade function. Calling
 	// downgrade atomically transitions from the exclusive write lock to a shared
@@ -23,7 +23,7 @@ type WorkspaceLock interface {
 	Read(ctx context.Context, do func(ctx context.Context)) error
 }
 
-// DefaultWorkspaceLock is the default implementation of WorkspaceLock.
+// DefaultLock is the default implementation of WorkspaceLock.
 //
 // The key property is atomic write-to-read downgrade: when downgrade is called,
 // the caller atomically transitions from holding the exclusive write lock to holding
@@ -36,7 +36,7 @@ type WorkspaceLock interface {
 // This ensures that document mutations inside do (e.g. applying text changes)
 // are never silently dropped; the cancelled do simply skips expensive work by
 // checking ctx.Err() before each phase.
-type DefaultWorkspaceLock struct {
+type DefaultLock struct {
 	mu           sync.Mutex
 	cond         *sync.Cond
 	writeHeld    bool               // exclusive write phase is active
@@ -46,16 +46,16 @@ type DefaultWorkspaceLock struct {
 	cancelWrite  context.CancelFunc // cancels the current pending or in-progress write
 }
 
-// NewDefaultWorkspaceLock creates a new default workspace lock.
-func NewDefaultWorkspaceLock() WorkspaceLock {
-	l := &DefaultWorkspaceLock{}
+// NewDefaultLock creates a new default workspace lock.
+func NewDefaultLock() Lock {
+	l := &DefaultLock{}
 	l.cond = sync.NewCond(&l.mu)
 	l.readyCh = make(chan struct{})
 	close(l.readyCh) // initially readable
 	return l
 }
 
-func (l *DefaultWorkspaceLock) Write(ctx context.Context, do func(ctx context.Context, downgrade func())) {
+func (l *DefaultLock) Write(ctx context.Context, do func(ctx context.Context, downgrade func())) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	l.mu.Lock()
@@ -111,7 +111,7 @@ func (l *DefaultWorkspaceLock) Write(ctx context.Context, do func(ctx context.Co
 	do(ctx, downgrade)
 }
 
-func (l *DefaultWorkspaceLock) Read(ctx context.Context, do func(ctx context.Context)) error {
+func (l *DefaultLock) Read(ctx context.Context, do func(ctx context.Context)) error {
 	for {
 		l.mu.Lock()
 		if !l.writeHeld && l.writeWaiters == 0 {

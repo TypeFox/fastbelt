@@ -13,6 +13,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/lexer"
+	"typefox.dev/fastbelt/parser"
+	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 )
 
@@ -28,14 +31,16 @@ func BenchmarkWorkspaceCycle(b *testing.B) {
 		length += len(contents[i])
 	}
 	srv := CreateServices()
+	docManager := service.MustGet[workspace.DocumentManager](srv)
+	lock := service.MustGet[workspace.Lock](srv)
+	builder := service.MustGet[workspace.Builder](srv)
 
 	var totalNs int64
 	b.SetBytes(int64(length))
 	b.ResetTimer()
 	for range b.N {
 		// Fresh document manager per cycle so each build starts from a clean state.
-		srv.Workspace().DocumentManager = workspace.NewDefaultDocumentManager()
-		docManager := srv.Workspace().DocumentManager
+		docManager.Clear()
 
 		docs := make([]*fastbelt.Document, resourceCount)
 		for i, content := range contents {
@@ -49,8 +54,8 @@ func BenchmarkWorkspaceCycle(b *testing.B) {
 		}
 
 		start := time.Now()
-		srv.Workspace().Lock.Write(context.Background(), func(ctx context.Context, downgrade func()) {
-			if err := srv.Workspace().Builder.Build(ctx, docs, downgrade); err != nil {
+		lock.Write(context.Background(), func(ctx context.Context, downgrade func()) {
+			if err := builder.Build(ctx, docs, downgrade); err != nil {
 				b.Errorf("build failed: %v", err)
 			}
 		})
@@ -66,11 +71,12 @@ func BenchmarkWorkspaceCycle(b *testing.B) {
 func BenchmarkTraverseContentSeq(b *testing.B) {
 	content, _ := generateStatemachineContent(0)
 	srv := CreateServices()
+	documentParser := service.MustGet[workspace.DocumentParser](srv)
 	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	if err != nil {
 		b.Fatal(err)
 	}
-	srv.Workspace().DocumentParser.Parse(doc)
+	documentParser.Parse(doc)
 
 	for b.Loop() {
 		count := 0
@@ -84,11 +90,12 @@ func BenchmarkTraverseContentSeq(b *testing.B) {
 func TestAllNodesEquivalence(t *testing.T) {
 	content, elementCount := generateStatemachineContent(0)
 	srv := CreateServices()
+	documentParser := service.MustGet[workspace.DocumentParser](srv)
 	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	if err != nil {
 		t.Fatal(err)
 	}
-	srv.Workspace().DocumentParser.Parse(doc)
+	documentParser.Parse(doc)
 	nodeCount := 0
 	for range fastbelt.AllNodes(doc.Root) {
 		nodeCount++
@@ -100,11 +107,12 @@ func TestAllChildrenEquivalence(t *testing.T) {
 	content, elementCount := generateStatemachineContent(0)
 	totalCount := elementCount - 1 // AllChildren does not include the root node, so we subtract 1 from the total count
 	srv := CreateServices()
+	documentParser := service.MustGet[workspace.DocumentParser](srv)
 	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	if err != nil {
 		t.Fatal(err)
 	}
-	srv.Workspace().DocumentParser.Parse(doc)
+	documentParser.Parse(doc)
 	childCount := 0
 	for range fastbelt.AllChildren(doc.Root) {
 		childCount++
@@ -117,7 +125,9 @@ func TestAllChildrenEquivalence(t *testing.T) {
 func BenchmarkParser(b *testing.B) {
 	content, _ := generateStatemachineContent(0)
 	srv := CreateServices()
-	tokens := srv.Generated().Lexer.Lex(content).Tokens
+	lexerService := service.MustGet[lexer.Lexer](srv)
+	parserService := service.MustGet[parser.Parser](srv)
+	tokens := lexerService.Lex(content).Tokens
 	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	if err != nil {
 		b.Fatal(err)
@@ -126,7 +136,7 @@ func BenchmarkParser(b *testing.B) {
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		result := srv.Generated().Parser.Parse(doc)
+		result := parserService.Parse(doc)
 		doc.Root = result.Node
 	}
 }

@@ -8,16 +8,15 @@ import (
 	"context"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/service"
 )
 
 type scopeProviderImpl struct {
-	*DefaultFastbeltScopeProvider
+	DefaultFastbeltScopeProvider
 }
 
-func newScopeProviderImpl(srv FastbeltLinkingSrvCont) *scopeProviderImpl {
-	return &scopeProviderImpl{
-		DefaultFastbeltScopeProvider: NewDefaultFastbeltScopeProvider(srv),
-	}
+func newScopeProviderImpl(sc *service.Container) *scopeProviderImpl {
+	return &scopeProviderImpl{}
 }
 
 func (s *scopeProviderImpl) ScopeActionProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope {

@@ -14,35 +14,31 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/lsp"
 )
 
-// Initializer traverses workspace folders, finds language files, and registers
-// them in the DocumentManager.
+// Initializer initializes the documents of a workspace.
 type Initializer interface {
 	// Initialize walks the given workspace folders, reads files matching the
 	// configured extensions, and creates documents for them.
 	Initialize(ctx context.Context, folders []lsp.WorkspaceFolder) error
 }
 
-// DefaultInitializer is the default implementation of Initializer.
+// DefaultInitializer is the default implementation of [Initializer].
 type DefaultInitializer struct {
-	srv WorkspaceSrvCont
+	sc *service.Container
 }
 
-// NewDefaultInitializer creates a new default initializer.
-func NewDefaultInitializer(srv WorkspaceSrvCont) *DefaultInitializer {
-	return &DefaultInitializer{srv: srv}
+func NewDefaultInitializer(sc *service.Container) Initializer {
+	return &DefaultInitializer{sc: sc}
 }
 
-// Initialize walks each workspace folder, reads files whose extension matches
-// FileExtensions, and registers the resulting documents in the DocumentManager.
-func (i *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.WorkspaceFolder) error {
-	ws := i.srv.Workspace()
-	if ws.LanguageID == "" {
+func (s *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.WorkspaceFolder) error {
+	if !service.Has[LanguageID](s.sc) {
 		log.Print("workspace LanguageID is not set")
 	}
-	if len(ws.FileExtensions) == 0 {
+	if !service.Has[FileExtensions](s.sc) {
 		log.Print("workspace FileExtensions is not set")
 		return nil
 	}
@@ -63,10 +59,10 @@ func (i *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 				return nil
 			}
 			ext := filepath.Ext(name)
-			if !i.matchesExtension(ext) {
+			if !s.matchesExtension(ext) {
 				return nil
 			}
-			i.loadFile(path)
+			s.loadFile(path)
 			return nil
 		})
 		if err != nil {
@@ -76,26 +72,28 @@ func (i *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 	return nil
 }
 
-func (i *DefaultInitializer) loadFile(path string) {
+func (s *DefaultInitializer) loadFile(path string) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("failed to read file %s: %v", path, err)
 		return
 	}
 	uri := core.FileURI(path)
-	textDoc, err := textdoc.NewFile(uri.DocumentURI(), i.srv.Workspace().LanguageID, 0, string(content))
+	languageID := service.MustGet[LanguageID](s.sc)
+	textDoc, err := textdoc.NewFile(uri.DocumentURI(), string(languageID), 0, string(content))
 	if err != nil {
 		log.Printf("failed to create text document for %s: %v", path, err)
 		return
 	}
 	doc := core.NewDocument(textDoc)
-	i.srv.Workspace().DocumentManager.Set(doc)
+	service.MustGet[DocumentManager](s.sc).Set(doc)
 	// TODO parse the document and collect exported symbols
 	// We don't need that right now because all documents are rebuilt on every change
 }
 
-func (i *DefaultInitializer) matchesExtension(ext string) bool {
-	for _, e := range i.srv.Workspace().FileExtensions {
+func (s *DefaultInitializer) matchesExtension(ext string) bool {
+	extensions := service.MustGet[FileExtensions](s.sc)
+	for _, e := range extensions {
 		if e == ext {
 			return true
 		}
