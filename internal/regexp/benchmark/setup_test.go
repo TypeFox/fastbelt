@@ -6,14 +6,14 @@ import (
 	"strings"
 	"testing"
 
-	"typefox.dev/fastbelt/generator"
 	format "typefox.dev/fastbelt/internal/generator"
 	custom "typefox.dev/fastbelt/internal/regexp"
+	"typefox.dev/fastbelt/util/codegen"
 )
 
 func writeRegexpFile(name string, pattern string) {
 	regexp := custom.MustCompile(pattern)
-	root := generator.NewNode()
+	root := codegen.NewNode()
 	result := regexp.(*custom.RegexpImpl).GenerateRegExp(name, name)
 	root.AppendLine("package benchmarkGenerated")
 	root.AppendLine()
