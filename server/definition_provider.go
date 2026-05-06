@@ -8,7 +8,6 @@ import (
 	"context"
 
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
@@ -43,7 +42,7 @@ func (s *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context,
 	if sourceToken == nil {
 		return nil, nil // No token at the given position
 	}
-	nameFinder := dp.srv.Server().NameFinder
+	nameFinder := service.MustGet[NameFinder](s.sc)
 	foundName := nameFinder.Find(ctx, sourceToken)
 	if foundName.Target == nil || foundName.Source == nil {
 		return nil, nil // Could not find a name

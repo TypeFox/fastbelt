@@ -100,10 +100,10 @@ func DescribeLocal(node core.AstNode) (*core.SymbolDescription, core.AstNode) {
 	if custom, ok := node.(LocalSymbolDescriber); ok {
 		return custom.DescribeLocal()
 	}
-
 	nameUnit := Name(node)
 	if nameUnit != nil {
 		desc := core.NewSymbolDescription(node, nameUnit)
+		container := node.Container()
 		return desc, container
 	}
 	return nil, nil

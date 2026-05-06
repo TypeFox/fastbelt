@@ -8,7 +8,6 @@ import (
 	"context"
 
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
@@ -41,13 +40,13 @@ func (s *DefaultReferencesProvider) HandleReferencesRequest(ctx context.Context,
 	if sourceToken == nil {
 		return nil, nil // No token at the given position
 	}
-	nameFinder := rp.srv.Server().NameFinder
+	nameFinder := service.MustGet[NameFinder](s.sc)
 	foundName := nameFinder.Find(ctx, sourceToken)
 	if foundName.Target == nil || foundName.Source == nil {
 		return nil, nil // Could not find a name
 	}
 	target := foundName.Target.Owner()
-	referencesFinder := rp.srv.Server().ReferencesFinder
+	referencesFinder := service.MustGet[ReferencesFinder](s.sc)
 	locations := []lsp.Location{}
 	for refDesc := range referencesFinder.Find(ctx, target, FindReferencesOptions{
 		IncludeDeclaration: true,

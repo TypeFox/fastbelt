@@ -8,6 +8,8 @@ import (
 	"context"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/linking"
+	"typefox.dev/fastbelt/util/service"
 )
 
 type FoundName struct {
@@ -26,11 +28,11 @@ type NameFinder interface {
 }
 
 type DefaultNameFinder struct {
-	srv ServerSrvCont
+	sc *service.Container
 }
 
-func NewDefaultNameFinder(srv ServerSrvCont) NameFinder {
-	return &DefaultNameFinder{srv: srv}
+func NewDefaultNameFinder(sc *service.Container) NameFinder {
+	return &DefaultNameFinder{sc: sc}
 }
 
 func (nf *DefaultNameFinder) Find(ctx context.Context, token *core.Token) FoundName {
@@ -51,8 +53,7 @@ func (nf *DefaultNameFinder) Find(ctx context.Context, token *core.Token) FoundN
 		if node == nil {
 			return FoundName{}
 		}
-		namer := nf.srv.Linking().Namer
-		nameUnit := namer.Name(node)
+		nameUnit := linking.Name(node)
 		if nameUnit == nil {
 			return FoundName{}
 		}

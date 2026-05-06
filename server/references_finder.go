@@ -9,7 +9,10 @@ import (
 	"iter"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/util/extiter"
+	"typefox.dev/fastbelt/util/service"
+	"typefox.dev/fastbelt/workspace"
 )
 
 type FindReferencesOptions struct {
@@ -23,24 +26,23 @@ type ReferencesFinder interface {
 }
 
 type DefaultReferencesFinder struct {
-	srv ServerSrvCont
+	sc *service.Container
 }
 
-func NewDefaultReferencesFinder(srv ServerSrvCont) ReferencesFinder {
-	return &DefaultReferencesFinder{srv: srv}
+func NewDefaultReferencesFinder(sc *service.Container) ReferencesFinder {
+	return &DefaultReferencesFinder{sc: sc}
 }
 
 func (rp *DefaultReferencesFinder) Find(ctx context.Context, target core.AstNode, options FindReferencesOptions) iter.Seq[*core.ReferenceDescription] {
 	sequences := []iter.Seq[*core.ReferenceDescription]{}
 	if options.IncludeDeclaration {
-		namer := rp.srv.Linking().Namer
-		nameUnit := namer.Name(target)
+		nameUnit := linking.Name(target)
 		if nameUnit != nil {
 			selfDescription := core.NewReferenceDescription(target, target, nameUnit.Segment())
 			sequences = append(sequences, extiter.Of(selfDescription))
 		}
 	}
-	documentManager := rp.srv.Workspace().DocumentManager
+	documentManager := service.MustGet[workspace.DocumentManager](rp.sc)
 	// Iterate through all documents and collect references to the symbol
 	for doc := range documentManager.All() {
 		refDescriptions := doc.ReferenceDescriptions.ForTarget(target)

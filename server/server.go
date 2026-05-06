@@ -325,13 +325,17 @@ func (s *DefaultLanguageServer) PrepareCallHierarchy(ctx context.Context, params
 	return nil, nil
 }
 func (s *DefaultLanguageServer) PrepareRename(ctx context.Context, params *lsp.PrepareRenameParams) (*lsp.PrepareRenameResult, error) {
-	renameProvider := s.srv.Server().RenameProvider
-	if renameProvider == nil {
-		return nil, nil
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	renameProvider, err := service.Get[RenameProvider](s.sc)
+	if err != nil {
+		return nil, err
 	}
 	var result *lsp.PrepareRenameResult
 	var providerErr error
-	if err := s.srv.Workspace().Lock.Read(ctx, func(ctx context.Context) {
+	if err := lock.Read(ctx, func(ctx context.Context) {
 		result, providerErr = renameProvider.PrepareRenameRequest(ctx, params)
 	}); err != nil {
 		return nil, err
@@ -348,13 +352,17 @@ func (s *DefaultLanguageServer) RangesFormatting(ctx context.Context, params *ls
 	return nil, nil
 }
 func (s *DefaultLanguageServer) Rename(ctx context.Context, params *lsp.RenameParams) (*lsp.WorkspaceEdit, error) {
-	renameProvider := s.srv.Server().RenameProvider
-	if renameProvider == nil {
-		return nil, nil
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	renameProvider, err := service.Get[RenameProvider](s.sc)
+	if err != nil {
+		return nil, err
 	}
 	var result *lsp.WorkspaceEdit
 	var providerErr error
-	if err := s.srv.Workspace().Lock.Read(ctx, func(ctx context.Context) {
+	if err := lock.Read(ctx, func(ctx context.Context) {
 		result, providerErr = renameProvider.HandleRenameRequest(ctx, params)
 	}); err != nil {
 		return nil, err

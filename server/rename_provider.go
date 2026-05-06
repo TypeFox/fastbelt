@@ -8,6 +8,8 @@ import (
 	"context"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/service"
+	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
 
@@ -17,11 +19,11 @@ type RenameProvider interface {
 }
 
 type DefaultRenameProvider struct {
-	srv ServerSrvCont
+	sc *service.Container
 }
 
-func NewDefaultRenameProvider(srv ServerSrvCont) RenameProvider {
-	return &DefaultRenameProvider{srv: srv}
+func NewDefaultRenameProvider(sc *service.Container) RenameProvider {
+	return &DefaultRenameProvider{sc: sc}
 }
 
 func (rp *DefaultRenameProvider) HandleRenameRequest(ctx context.Context, params *lsp.RenameParams) (*lsp.WorkspaceEdit, error) {
@@ -30,7 +32,7 @@ func (rp *DefaultRenameProvider) HandleRenameRequest(ctx context.Context, params
 		return nil, nil // Could not find a name
 	}
 	target := foundName.Target.Owner()
-	referencesFinder := rp.srv.Server().ReferencesFinder
+	referencesFinder := service.MustGet[ReferencesFinder](rp.sc)
 	workspaceEdit := &lsp.WorkspaceEdit{
 		Changes: map[lsp.DocumentURI][]lsp.TextEdit{},
 	}
@@ -61,7 +63,8 @@ func (rp *DefaultRenameProvider) PrepareRenameRequest(ctx context.Context, param
 
 func (rp *DefaultRenameProvider) findTargetNode(ctx context.Context, params *lsp.TextDocumentPositionParams) FoundName {
 	uri := core.ParseURI(string(params.TextDocument.URI))
-	targetDoc := rp.srv.Workspace().DocumentManager.Get(uri)
+	documentManager := service.MustGet[workspace.DocumentManager](rp.sc)
+	targetDoc := documentManager.Get(uri)
 	if targetDoc == nil {
 		return FoundName{} // Document not found
 	}
@@ -71,7 +74,7 @@ func (rp *DefaultRenameProvider) findTargetNode(ctx context.Context, params *lsp
 	if sourceToken == nil {
 		return FoundName{} // No token at the given position
 	}
-	nameFinder := rp.srv.Server().NameFinder
+	nameFinder := service.MustGet[NameFinder](rp.sc)
 	foundName := nameFinder.Find(ctx, sourceToken)
 	return foundName
 }
