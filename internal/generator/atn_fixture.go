@@ -22,6 +22,7 @@ hidden token WS: /[ \n\r\t]+/;
 }
 
 func FixtureATN(t *testing.T, grammarStr string) (*ATN, map[string]*grammar.ParserRule, map[string]TokenType) {
+	t.Helper()
 	f := test.New(t, grammar.CreateServices())
 	doc := f.Parse(grammarStr).AssertNoErrors()
 	grammr := doc.Root().(grammar.Grammar)
@@ -39,6 +40,7 @@ func FixtureATN(t *testing.T, grammarStr string) (*ATN, map[string]*grammar.Pars
 }
 
 func RequireATNRecognizes(t *testing.T, atn *ATN, rules map[string]*grammar.ParserRule, tokenTypes map[string]TokenType, start string, inputTokenTypes []string, expected int) {
+	t.Helper()
 	startRule := *rules[start]
 	inputTokenTypeIds := make([]int, len(inputTokenTypes))
 	for i, tokenType := range inputTokenTypes {
@@ -91,6 +93,7 @@ func recognizeATN(atn *ATN, startRule grammar.ParserRule, inputTokenTypeIds []in
 			finished = append(finished, ctx)
 		}
 	}
+	//the number of possible pathes throughh the ATN in ordder to recognize the input tokens
 	return len(finished)
 }
 

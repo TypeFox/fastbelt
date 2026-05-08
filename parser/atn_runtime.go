@@ -25,19 +25,12 @@ const (
 // RuntimeATNState holds only the fields required for prediction at runtime.
 // Back-pointers to the build-time grammar objects (Rule, Production) and
 // structural scaffolding (End, Loopback, Start, Stop) are absent.
-//
-// RuleName and Prod* are populated only on decision states and are used
-// exclusively for ambiguity-report messages.
 type RuntimeATNState struct {
 	StateNumber            int
 	Type                   ATNStateType
 	Decision               int
 	EpsilonOnlyTransitions bool
 	Transitions            []RuntimeTransition
-	// Ambiguity reporting — only set on decision states.
-	RuleName string
-	ProdKind string
-	ProdIdx  int
 }
 
 // RuntimeTransition is the interface implemented by all runtime ATN transitions.
@@ -47,8 +40,6 @@ type RuntimeTransition interface {
 }
 
 // RuntimeAtomTransition fires on a specific token type.
-// Target and TokenTypeID are exported so that generated Go code in external
-// packages can construct them as struct literals.
 type RuntimeAtomTransition struct {
 	Target      *RuntimeATNState
 	TokenTypeID int

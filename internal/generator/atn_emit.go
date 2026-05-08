@@ -45,10 +45,12 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN) generator.Node
 	n.AppendLine()
 	n.AppendLine("const (")
 	n.Indent(func(n generator.Node) {
-		index := 0
-		for _, key := range keys {
-			n.AppendLine(key, " ATNDecisionId = ", strconv.Itoa(index))
-			index++
+		for index, key := range keys {
+			if index == 0 {
+				n.AppendLine(key, " ATNDecisionId = iota")
+			} else {
+				n.AppendLine(key)
+			}
 		}
 	})
 	n.AppendLine(")")
