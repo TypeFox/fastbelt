@@ -8,8 +8,8 @@ import (
 	"typefox.dev/fastbelt/internal/grammar"
 )
 
-func GenerateATN(grammr grammar.Grammar, packageName string) string {
+func GenerateATN(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult) string {
 	atn, _, _ := CreateATN(grammr)
-	source := EmitGoSource(packageName, "BuildATN", "typefox.dev/fastbelt/parser", atn)
+	source := EmitGoSource(packageName, "BuildATN", "typefox.dev/fastbelt/parser", atn, tokenTypes)
 	return FormatIfPossible(source.String())
 }

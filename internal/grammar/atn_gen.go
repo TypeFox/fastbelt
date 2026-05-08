@@ -7,34 +7,34 @@ import "typefox.dev/fastbelt/parser"
 type ATNDecisionId int
 
 const (
-	Action_Alternatives_1                ATNDecisionId = 0
-	Action_Group_2                       ATNDecisionId = 1
-	Alternatives_Group_2                 ATNDecisionId = 2
-	Alternatives_Group_3                 ATNDecisionId = 3
-	AssignableAlternatives_Group_2       ATNDecisionId = 4
-	AssignableAlternatives_Group_3       ATNDecisionId = 5
-	AssignableWithoutAlts_Alternatives_1 ATNDecisionId = 6
-	Assignable_Alternatives_1            ATNDecisionId = 7
-	Assignment_Alternatives_1            ATNDecisionId = 8
-	CompositeAlternatives_Group_2        ATNDecisionId = 9
-	CompositeAlternatives_Group_3        ATNDecisionId = 10
-	CompositeElement_Alternatives_1      ATNDecisionId = 11
-	CompositeElement_Alternatives_2      ATNDecisionId = 12
-	CompositeGroup_Group_2               ATNDecisionId = 13
-	CompositeGroup_RuleCall_2            ATNDecisionId = 14
-	CrossRef_Group_2                     ATNDecisionId = 15
-	Element_Alternatives_1               ATNDecisionId = 16
-	Element_Alternatives_2               ATNDecisionId = 17
-	FieldType_Alternatives_1             ATNDecisionId = 18
-	Grammar_Alternatives_1               ATNDecisionId = 19
-	Group_Group_2                        ATNDecisionId = 20
-	Group_RuleCall_2                     ATNDecisionId = 21
-	Interface_Group_2                    ATNDecisionId = 22
-	Interface_Group_3                    ATNDecisionId = 23
-	Interface_RuleCall_4                 ATNDecisionId = 24
-	ParserRule_Group_2                   ATNDecisionId = 25
-	PrimitiveType_Alternatives_1         ATNDecisionId = 26
-	Token_Alternatives_1                 ATNDecisionId = 27
+	Action_Alternatives_1 ATNDecisionId = iota
+	Action_Group_2
+	Alternatives_Group_2
+	Alternatives_Group_3
+	AssignableAlternatives_Group_2
+	AssignableAlternatives_Group_3
+	AssignableWithoutAlts_Alternatives_1
+	Assignable_Alternatives_1
+	Assignment_Alternatives_1
+	CompositeAlternatives_Group_2
+	CompositeAlternatives_Group_3
+	CompositeElement_Alternatives_1
+	CompositeElement_Alternatives_2
+	CompositeGroup_Group_2
+	CompositeGroup_RuleCall_2
+	CrossRef_Group_2
+	Element_Alternatives_1
+	Element_Alternatives_2
+	FieldType_Alternatives_1
+	Grammar_Alternatives_1
+	Group_Group_2
+	Group_RuleCall_2
+	Interface_Group_2
+	Interface_Group_3
+	Interface_RuleCall_4
+	ParserRule_Group_2
+	PrimitiveType_Alternatives_1
+	Token_Alternatives_1
 )
 
 func BuildATN() *parser.RuntimeATN {

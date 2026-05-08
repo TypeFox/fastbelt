@@ -20,7 +20,7 @@ import (
 //	pkgName  – Go package name for the generated file (e.g. "myparser")
 //	funcName – name of the generated constructor function
 //	importPath – import path of the allstar package (e.g. "typefox.dev/fastbelt/parser/allstar")
-func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN) generator.Node {
+func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypes GenerateTokenTypesResult) generator.Node {
 	// Index each state pointer to its position in rtn.States.
 	idx := make(map[*ATNState]int, len(rtn.States))
 	for i, s := range rtn.States {

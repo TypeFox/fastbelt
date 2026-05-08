@@ -164,8 +164,9 @@ func runLegacyGenerate(args []string) error {
 		generator.GenerateParser(grammar, packageName)); err != nil {
 		return err
 	}
+	tokenTypes := generator.GenerateTokenTypes(grammar)
 	if err := writeFile("lexer", filepath.Join(outputPath, "lexer_gen.go"),
-		generator.GenerateLexer(grammar, packageName)); err != nil {
+		generator.GenerateLexer(grammar, packageName, tokenTypes)); err != nil {
 		return err
 	}
 	if err := writeFile("services", filepath.Join(outputPath, "services_gen.go"),
@@ -173,7 +174,7 @@ func runLegacyGenerate(args []string) error {
 		return err
 	}
 	if err := writeFile("atn", filepath.Join(outputPath, "atn_gen.go"),
-		generator.GenerateATN(grammar, packageName)); err != nil {
+		generator.GenerateATN(grammar, packageName, tokenTypes)); err != nil {
 		return err
 	}
 	if *atnFlag {
