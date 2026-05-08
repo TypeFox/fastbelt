@@ -24,7 +24,6 @@ func CreateATN(grammr grammar.Grammar, tokenTypeIds map[string]int) (*ATN, map[s
 	entries := map[grammar.ParserRule]ATNRuleBuilder{}
 	for _, gr := range grammr.Rules() {
 		entries[gr] = builder.DeclareRule(&gr)
-		byName[gr.Name()] = &gr
 	}
 	for _, gr := range grammr.Rules() {
 		ruleBuilder := entries[gr]
@@ -139,12 +138,12 @@ func convertKeyword(
 	cardinality string,
 ) (*ATNHandle, error) {
 	name := kw.Value()
-	id := rb.Parent().GetTokenTypeByName(name)
+	id := rb.GetTokenTypeByName(name)
 	if id == -1 {
 		return nil, fmt.Errorf("unknown token %q", name)
 	}
 	handle := rb.TokenRef(id)
-	lookaheadName := rb.Parent().GetLookaheadNameByElement(kw)
+	lookaheadName := rb.GetLookaheadNameByElement(kw)
 	return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
 }
 
@@ -153,26 +152,16 @@ func convertRuleCall(
 	rc grammar.RuleCall,
 	cardinality string,
 ) (*ATNHandle, error) {
-	if rc.Rule() == nil {
-		return nil, fmt.Errorf("RuleCall has no rule reference")
-	}
 	name := rc.Rule().Text()
-	if name == "" {
-		return nil, fmt.Errorf("RuleCall rule reference has empty text")
-	}
+	lookaheadName := rb.GetLookaheadNameByElement(rc)
 
-	lookaheadName := rb.Parent().GetLookaheadNameByElement(rc)
-
-	if rule := rb.Parent().GetRuleByName(name); rule != nil {
+	if rule := rb.GetRuleByName(name); rule != nil {
 		handle := rb.RuleRef(rule)
 		return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
 	}
 
 	// Otherwise treat it as a terminal (lexer rule reference).
-	id := rb.Parent().GetTokenTypeByName(name)
-	if id == -1 {
-		return nil, fmt.Errorf("unknown rule or token %q", name)
-	}
+	id := rb.GetTokenTypeByName(name)
 	termHandle := rb.TokenRef(id)
 	return wrapWithCardinality(rb, termHandle, cardinality, lookaheadName), nil
 }
@@ -181,14 +170,13 @@ func convertCrossRef(
 	rb ATNRuleBuilder,
 	cr grammar.CrossRef,
 ) (*ATNHandle, error) {
-	// Use the explicitly named rule if present, otherwise fall back to "ID".
-	name := "ID"
-	if cr.Rule() != nil && cr.Rule().Rule() != nil && cr.Rule().Rule().Text() != "" {
-		name = cr.Rule().Rule().Text()
+	if cr.Rule() == nil || cr.Rule().Rule() == nil || cr.Rule().Rule().Text() == "" {
+		panic("CrossRef has no valid rule reference")
 	}
-	id := rb.Parent().GetTokenTypeByName(name)
+	name := cr.Rule().Rule().Text()
+	id := rb.GetTokenTypeByName(name)
 	termHandle := rb.TokenRef(id)
-	lookaheadName := rb.Parent().GetLookaheadNameByElement(cr)
+	lookaheadName := rb.GetLookaheadNameByElement(cr)
 	//TODO true? CrossRef cardinality comes from the outer element, not from the CrossRef itself.
 	return wrapWithCardinality(rb, termHandle, cr.Cardinality(), lookaheadName), nil
 }
@@ -210,7 +198,7 @@ func convertAlternatives(
 		handles = append(handles, handle)
 	}
 	start := rb.NewState(parser.ATNBasic)
-	lookaheadName := rb.Parent().GetLookaheadNameByElement(alts)
+	lookaheadName := rb.GetLookaheadNameByElement(alts)
 	handle := rb.MakeAlts(lookaheadName, start, handles)
 	return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
 }
@@ -231,7 +219,7 @@ func convertGroup(
 		elementHandles = append(elementHandles, elementHandle)
 	}
 	handle := rb.MakeBlock(elementHandles)
-	lookaheadName := rb.Parent().GetLookaheadNameByElement(g)
+	lookaheadName := rb.GetLookaheadNameByElement(g)
 	return wrapWithCardinality(rb, handle, g.Cardinality(), lookaheadName), nil
 }
 

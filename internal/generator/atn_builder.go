@@ -25,13 +25,12 @@ type ATNRuleBuilder interface {
 
 	NewState(stateType parser.ATNStateType) *ATNState
 
-	Parent() ATNBuilder
-}
-
-type ATNBuilder interface {
 	GetTokenTypeByName(name string) int
 	GetRuleByName(name string) *grammar.ParserRule
 	GetLookaheadNameByElement(el grammar.Element) string
+}
+
+type ATNBuilder interface {
 	DeclareRule(rule *grammar.ParserRule) ATNRuleBuilder
 	Build() *ATN
 }
@@ -60,22 +59,22 @@ func NewATNBuilder(names map[grammar.Element]string, tokenTypeIds map[string]int
 	}
 }
 
-func (b *ATNBuilderImpl) GetTokenTypeByName(name string) int {
-	if id, ok := b.tokenTypeIds[name]; ok {
+func (rb *ATNRuleBuilderImpl) GetTokenTypeByName(name string) int {
+	if id, ok := rb.parent.tokenTypeIds[name]; ok {
 		return id
 	}
 	return -1
 }
 
-func (b *ATNBuilderImpl) GetRuleByName(name string) *grammar.ParserRule {
-	if rule, ok := b.rulesByName[name]; ok {
+func (rb *ATNRuleBuilderImpl) GetRuleByName(name string) *grammar.ParserRule {
+	if rule, ok := rb.parent.rulesByName[name]; ok {
 		return rule
 	}
 	return nil
 }
 
-func (b *ATNBuilderImpl) GetLookaheadNameByElement(el grammar.Element) string {
-	if name, ok := b.names[el]; ok {
+func (rb *ATNRuleBuilderImpl) GetLookaheadNameByElement(el grammar.Element) string {
+	if name, ok := rb.parent.names[el]; ok {
 		return name
 	}
 	panic("no lookahead name found for element")
@@ -112,10 +111,6 @@ func NewATNRuleBuilder(parent *ATNBuilderImpl, rule *grammar.ParserRule, handle 
 func (rb *ATNRuleBuilderImpl) Assign(handle *ATNHandle) {
 	rb.NewEpsilonTransition(rb.handle.Left, handle.Left)
 	rb.NewEpsilonTransition(handle.Right, rb.handle.Right)
-}
-
-func (rb *ATNRuleBuilderImpl) Parent() ATNBuilder {
-	return rb.parent
 }
 
 func (rb *ATNRuleBuilderImpl) Plus(lookaheadName string, handle *ATNHandle) *ATNHandle {
