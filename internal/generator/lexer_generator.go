@@ -18,12 +18,14 @@ import (
 )
 
 type GenerateTokenTypesResult struct {
-	Tokens               []grammar.Token
-	Keywords             []grammar.Keyword
-	Imports              map[string]bool
-	KeywordsCode         []gen.Node
-	TokensCode           []gen.Node
-	TokenTypeIdentifiers []string
+	Tokens            []grammar.Token
+	Keywords          []grammar.Keyword
+	Imports           map[string]bool
+	KeywordsCode      []gen.Node
+	TokensCode        []gen.Node
+	TokenTypeVarNames []string
+	TokenTypeNames    []string
+	TokenTypeIds      map[string]int
 }
 
 	imports := map[string]bool{}
@@ -38,12 +40,14 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		imports["strings"] = true
 	keywordsCount := len(keywords)
 	result := GenerateTokenTypesResult{
-		Tokens:               tokens,
-		Keywords:             keywords,
-		KeywordsCode:         make([]gen.Node, keywordsCount),
-		TokensCode:           make([]gen.Node, len(tokens)),
-		TokenTypeIdentifiers: make([]string, keywordsCount+len(tokens)),
-		Imports:              map[string]bool{},
+		Tokens:            tokens,
+		Keywords:          keywords,
+		KeywordsCode:      make([]gen.Node, keywordsCount),
+		TokensCode:        make([]gen.Node, len(tokens)),
+		TokenTypeNames:    make([]string, keywordsCount+len(tokens)),
+		TokenTypeVarNames: make([]string, keywordsCount+len(tokens)),
+		TokenTypeIds:      make(map[string]int),
+		Imports:           map[string]bool{},
 	}
 	for _, token := range tokens {
 		result := generateTokenType(token, id)
@@ -52,7 +56,11 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 			imports[imp] = true
 	for index, keyword := range keywords {
 		result.KeywordsCode[index] = generateKeywordTokenType(keyword, index)
-		result.TokenTypeIdentifiers[index] = GeneratedKeywordName(keyword)
+		varName := GeneratedKeywordName(keyword)
+		kwName := keyword.Value()
+		result.TokenTypeVarNames[index] = varName
+		result.TokenTypeNames[index] = kwName
+		result.TokenTypeIds[kwName] = index
 		result.Imports["strings"] = true
 	}
 	for index, token := range tokens {
@@ -61,8 +69,11 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		for imp := range tokenType.Imports {
 			result.Imports[imp] = true
 		}
-		id++
-		result.TokenTypeIdentifiers[keywordsCount+index] = GeneratedTokenName(token)
+		varName := GeneratedTokenName(token)
+		tokName := token.Name()
+		result.TokenTypeVarNames[keywordsCount+index] = varName
+		result.TokenTypeNames[keywordsCount+index] = tokName
+		result.TokenTypeIds[tokName] = keywordsCount + index
 	}
 	return result
 }

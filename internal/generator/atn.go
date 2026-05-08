@@ -13,21 +13,22 @@ import (
 	"typefox.dev/fastbelt/parser"
 )
 
-func CreateATN(grammr grammar.Grammar) (*ATN, map[string]*grammar.ParserRule, map[string]TokenType) {
-	tokenTypes := GetTokenTypes(grammr)
+func CreateATN(grammr grammar.Grammar, tokenTypeIds map[string]int) (*ATN, map[string]*grammar.ParserRule) {
 	lookaheadNames := ComputeLookaheadNames(grammr)
-
-	builder := NewATNBuilder()
+	byName := map[string]*grammar.ParserRule{}
+	for _, gr := range grammr.Rules() {
+		byName[gr.Name()] = &gr
+	}
+	builder := NewATNBuilder(lookaheadNames, tokenTypeIds, byName)
 
 	entries := map[grammar.ParserRule]ATNRuleBuilder{}
-	byName := map[string]*grammar.ParserRule{}
 	for _, gr := range grammr.Rules() {
 		entries[gr] = builder.DeclareRule(&gr)
 		byName[gr.Name()] = &gr
 	}
 	for _, gr := range grammr.Rules() {
 		ruleBuilder := entries[gr]
-		handle, err := convertElement(ruleBuilder, gr.Body(), lookaheadNames, tokenTypes, byName)
+		handle, err := convertElement(ruleBuilder, gr.Body())
 		if err != nil {
 			// Handle the error appropriately, e.g., log it or return it
 			fmt.Printf("Error converting element for rule %s: %v\n", gr.Name(), err)
@@ -38,7 +39,7 @@ func CreateATN(grammr grammar.Grammar) (*ATN, map[string]*grammar.ParserRule, ma
 		ruleBuilder.Assign(handle)
 	}
 	atn := builder.Build()
-	return atn, byName, tokenTypes
+	return atn, byName
 }
 
 func ComputeLookaheadNames(grammr grammar.Grammar) map[grammar.Element]string {
@@ -73,58 +74,32 @@ func ComputeLookaheadNames(grammr grammar.Grammar) map[grammar.Element]string {
 	return names
 }
 
-func GetLookaheadName(el grammar.Element, names map[grammar.Element]string) string {
-	if name, ok := names[el]; ok {
-		return name
-	}
-	panic("no lookahead name found for element")
-}
-
-func GetTokenTypes(grammr grammar.Grammar) map[string]TokenType {
-	tokens := grammr.Terminals()
-	keywords := GetAllKeywords(grammr)
-	nodes := make(map[string]TokenType, len(tokens)+len(keywords))
-	id := 1
-	for _, keyword := range keywords {
-		nodes[keyword.Text()] = TokenType{ID: id}
-		id++
-	}
-	for _, token := range tokens {
-		nodes[token.Name()] = TokenType{ID: id}
-		id++
-	}
-	return nodes
-}
-
 func convertElement(
 	rb ATNRuleBuilder,
 	el grammar.Element,
-	names map[grammar.Element]string,
-	tokenTypes map[string]TokenType,
-	rulesByName map[string]*grammar.ParserRule,
 ) (*ATNHandle, error) {
 	switch e := el.(type) {
 	case grammar.Alternatives:
-		return convertAlternatives(rb, e, e.Cardinality(), names, tokenTypes, rulesByName)
+		return convertAlternatives(rb, e, e.Cardinality())
 
 	case grammar.Group:
-		return convertGroup(rb, e, names, tokenTypes, rulesByName)
+		return convertGroup(rb, e)
 
 	case grammar.Assignment:
 		// Assignment is transparent: recurse into Value().
 		if e.Value() == nil {
 			return nil, nil
 		}
-		return convertAssignable(rb, e.Value(), e.Cardinality(), names, tokenTypes, rulesByName)
+		return convertAssignable(rb, e.Value(), e.Cardinality())
 
 	case grammar.CrossRef:
-		return convertCrossRef(rb, e, names, tokenTypes)
+		return convertCrossRef(rb, e)
 
 	case grammar.RuleCall:
-		return convertRuleCall(rb, e, e.Cardinality(), names, tokenTypes, rulesByName)
+		return convertRuleCall(rb, e, e.Cardinality())
 
 	case grammar.Keyword:
-		return convertKeyword(rb, e, e.Cardinality(), names, tokenTypes)
+		return convertKeyword(rb, e, e.Cardinality())
 
 	case grammar.Action:
 		// Semantic actions have no ATN impact.
@@ -139,23 +114,20 @@ func convertAssignable(
 	rb ATNRuleBuilder,
 	a grammar.Assignable,
 	cardinality string,
-	names map[grammar.Element]string,
-	tokenTypes map[string]TokenType,
-	rulesByName map[string]*grammar.ParserRule,
 ) (*ATNHandle, error) {
 	switch v := a.(type) {
 	case grammar.Keyword:
-		return convertKeyword(rb, v, cardinality, names, tokenTypes)
+		return convertKeyword(rb, v, cardinality)
 	case grammar.RuleCall:
-		return convertRuleCall(rb, v, cardinality, names, tokenTypes, rulesByName)
+		return convertRuleCall(rb, v, cardinality)
 	case grammar.CrossRef:
 		//TODO true?
 		// CrossRef cardinality comes from the outer element, not from the Assignable itself.
 		// The CrossRef has its own Cardinality() but the assignment wrapper's cardinality
 		// takes precedence when present.
-		return convertCrossRef(rb, v, names, tokenTypes)
+		return convertCrossRef(rb, v)
 	case grammar.Alternatives:
-		return convertAlternatives(rb, v, cardinality, names, tokenTypes, rulesByName)
+		return convertAlternatives(rb, v, cardinality)
 	default:
 		return nil, nil
 	}
@@ -165,16 +137,14 @@ func convertKeyword(
 	rb ATNRuleBuilder,
 	kw grammar.Keyword,
 	cardinality string,
-	lookaheadNames map[grammar.Element]string,
-	tokenTypes map[string]TokenType,
 ) (*ATNHandle, error) {
 	name := kw.Value()
-	info, ok := tokenTypes[name]
-	if !ok {
+	id := rb.Parent().GetTokenTypeByName(name)
+	if id == -1 {
 		return nil, fmt.Errorf("unknown token %q", name)
 	}
-	handle := rb.TokenRef(info)
-	lookaheadName := GetLookaheadName(kw, lookaheadNames)
+	handle := rb.TokenRef(id)
+	lookaheadName := rb.Parent().GetLookaheadNameByElement(kw)
 	return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
 }
 
@@ -182,9 +152,6 @@ func convertRuleCall(
 	rb ATNRuleBuilder,
 	rc grammar.RuleCall,
 	cardinality string,
-	names map[grammar.Element]string,
-	tokenTypes map[string]TokenType,
-	rulesByName map[string]*grammar.ParserRule,
 ) (*ATNHandle, error) {
 	if rc.Rule() == nil {
 		return nil, fmt.Errorf("RuleCall has no rule reference")
@@ -194,39 +161,34 @@ func convertRuleCall(
 		return nil, fmt.Errorf("RuleCall rule reference has empty text")
 	}
 
-	lookaheadName := GetLookaheadName(rc, names)
+	lookaheadName := rb.Parent().GetLookaheadNameByElement(rc)
 
-	if rule, ok := rulesByName[name]; ok {
+	if rule := rb.Parent().GetRuleByName(name); rule != nil {
 		handle := rb.RuleRef(rule)
 		return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
 	}
 
 	// Otherwise treat it as a terminal (lexer rule reference).
-	info, ok := tokenTypes[name]
-	if !ok {
+	id := rb.Parent().GetTokenTypeByName(name)
+	if id == -1 {
 		return nil, fmt.Errorf("unknown rule or token %q", name)
 	}
-	termHandle := rb.TokenRef(info)
+	termHandle := rb.TokenRef(id)
 	return wrapWithCardinality(rb, termHandle, cardinality, lookaheadName), nil
 }
 
 func convertCrossRef(
 	rb ATNRuleBuilder,
 	cr grammar.CrossRef,
-	names map[grammar.Element]string,
-	tokenTypes map[string]TokenType,
 ) (*ATNHandle, error) {
 	// Use the explicitly named rule if present, otherwise fall back to "ID".
 	name := "ID"
 	if cr.Rule() != nil && cr.Rule().Rule() != nil && cr.Rule().Rule().Text() != "" {
 		name = cr.Rule().Rule().Text()
 	}
-	info, ok := tokenTypes[name]
-	if !ok {
-		return nil, fmt.Errorf("cross-reference token %q not found in tokenTypes", name)
-	}
-	termHandle := rb.TokenRef(info)
-	lookaheadName := GetLookaheadName(cr, names)
+	id := rb.Parent().GetTokenTypeByName(name)
+	termHandle := rb.TokenRef(id)
+	lookaheadName := rb.Parent().GetLookaheadNameByElement(cr)
 	//TODO true? CrossRef cardinality comes from the outer element, not from the CrossRef itself.
 	return wrapWithCardinality(rb, termHandle, cr.Cardinality(), lookaheadName), nil
 }
@@ -235,13 +197,10 @@ func convertAlternatives(
 	rb ATNRuleBuilder,
 	alts grammar.Alternatives,
 	cardinality string,
-	names map[grammar.Element]string,
-	tokenTypes map[string]TokenType,
-	rulesByName map[string]*grammar.ParserRule,
 ) (*ATNHandle, error) {
 	handles := make([]*ATNHandle, 0, len(alts.Alts()))
 	for _, alt := range alts.Alts() {
-		handle, err := convertElement(rb, alt, names, tokenTypes, rulesByName)
+		handle, err := convertElement(rb, alt)
 		if err != nil {
 			return nil, err
 		}
@@ -251,7 +210,7 @@ func convertAlternatives(
 		handles = append(handles, handle)
 	}
 	start := rb.NewState(parser.ATNBasic)
-	lookaheadName := GetLookaheadName(alts, names)
+	lookaheadName := rb.Parent().GetLookaheadNameByElement(alts)
 	handle := rb.MakeAlts(lookaheadName, start, handles)
 	return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
 }
@@ -259,13 +218,10 @@ func convertAlternatives(
 func convertGroup(
 	rb ATNRuleBuilder,
 	g grammar.Group,
-	names map[grammar.Element]string,
-	tokenTypes map[string]TokenType,
-	rulesByName map[string]*grammar.ParserRule,
 ) (*ATNHandle, error) {
 	elementHandles := make([]*ATNHandle, 0, len(g.Elements()))
 	for _, element := range g.Elements() {
-		elementHandle, err := convertElement(rb, element, names, tokenTypes, rulesByName)
+		elementHandle, err := convertElement(rb, element)
 		if err != nil {
 			return nil, err
 		}
@@ -275,7 +231,7 @@ func convertGroup(
 		elementHandles = append(elementHandles, elementHandle)
 	}
 	handle := rb.MakeBlock(elementHandles)
-	lookaheadName := GetLookaheadName(g, names)
+	lookaheadName := rb.Parent().GetLookaheadNameByElement(g)
 	return wrapWithCardinality(rb, handle, g.Cardinality(), lookaheadName), nil
 }
 

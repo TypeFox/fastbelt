@@ -8,12 +8,8 @@ import (
 	"typefox.dev/fastbelt/internal/grammar"
 )
 
-func GenerateATNMarkdown(grammr grammar.Grammar, packageName string) string {
-	atn, _, tokenTypes := CreateATN(grammr)
-	tokenTypeNames := make(map[int]string, len(tokenTypes))
-	for name, info := range tokenTypes {
-		tokenTypeNames[info.ID] = name
-	}
-	source := EmitMarkdownSource(packageName, atn, tokenTypeNames)
+func GenerateATNMarkdown(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult) string {
+	atn, _ := CreateATN(grammr, tokenTypes.TokenTypeIds)
+	source := EmitMarkdownSource(packageName, atn, tokenTypes.TokenTypeNames)
 	return source.String()
 }

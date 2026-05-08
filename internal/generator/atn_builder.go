@@ -18,25 +18,33 @@ type ATNRuleBuilder interface {
 	MakeAlts(lookaheadName string, start *ATNState, alts []*ATNHandle) *ATNHandle
 
 	MakeBlock(alts []*ATNHandle) *ATNHandle
-	TokenRef(tokenType TokenType) *ATNHandle
+	TokenRef(tokenTypeId int) *ATNHandle
 	RuleRef(otherRule *grammar.ParserRule) *ATNHandle
 
 	NewEpsilonTransition(source *ATNState, target *ATNState)
 
 	NewState(stateType parser.ATNStateType) *ATNState
+
+	Parent() ATNBuilder
 }
 
 type ATNBuilder interface {
+	GetTokenTypeByName(name string) int
+	GetRuleByName(name string) *grammar.ParserRule
+	GetLookaheadNameByElement(el grammar.Element) string
 	DeclareRule(rule *grammar.ParserRule) ATNRuleBuilder
 	Build() *ATN
 }
 
 type ATNBuilderImpl struct {
-	rules map[*grammar.ParserRule]*ATNRuleBuilderImpl
-	atn   *ATN
+	rules        map[*grammar.ParserRule]*ATNRuleBuilderImpl
+	atn          *ATN
+	names        map[grammar.Element]string
+	tokenTypeIds map[string]int
+	rulesByName  map[string]*grammar.ParserRule
 }
 
-func NewATNBuilder() *ATNBuilderImpl {
+func NewATNBuilder(names map[grammar.Element]string, tokenTypeIds map[string]int, rulesByName map[string]*grammar.ParserRule) *ATNBuilderImpl {
 	return &ATNBuilderImpl{
 		rules: map[*grammar.ParserRule]*ATNRuleBuilderImpl{},
 		atn: &ATN{
@@ -46,7 +54,31 @@ func NewATNBuilder() *ATNBuilderImpl {
 			RuleToStartState: map[grammar.ParserRule]*ATNState{},
 			RuleToStopState:  map[grammar.ParserRule]*ATNState{},
 		},
+		names:        names,
+		tokenTypeIds: tokenTypeIds,
+		rulesByName:  rulesByName,
 	}
+}
+
+func (b *ATNBuilderImpl) GetTokenTypeByName(name string) int {
+	if id, ok := b.tokenTypeIds[name]; ok {
+		return id
+	}
+	return -1
+}
+
+func (b *ATNBuilderImpl) GetRuleByName(name string) *grammar.ParserRule {
+	if rule, ok := b.rulesByName[name]; ok {
+		return rule
+	}
+	return nil
+}
+
+func (b *ATNBuilderImpl) GetLookaheadNameByElement(el grammar.Element) string {
+	if name, ok := b.names[el]; ok {
+		return name
+	}
+	panic("no lookahead name found for element")
 }
 
 func (b *ATNBuilderImpl) DeclareRule(rule *grammar.ParserRule) ATNRuleBuilder {
@@ -80,6 +112,10 @@ func NewATNRuleBuilder(parent *ATNBuilderImpl, rule *grammar.ParserRule, handle 
 func (rb *ATNRuleBuilderImpl) Assign(handle *ATNHandle) {
 	rb.NewEpsilonTransition(rb.handle.Left, handle.Left)
 	rb.NewEpsilonTransition(handle.Right, rb.handle.Right)
+}
+
+func (rb *ATNRuleBuilderImpl) Parent() ATNBuilder {
+	return rb.parent
 }
 
 func (rb *ATNRuleBuilderImpl) Plus(lookaheadName string, handle *ATNHandle) *ATNHandle {
@@ -167,12 +203,12 @@ func (rb *ATNRuleBuilderImpl) MakeBlock(alts []*ATNHandle) *ATNHandle {
 	return &ATNHandle{Left: first.Left, Right: last.Right}
 }
 
-func (rb *ATNRuleBuilderImpl) TokenRef(tokenType TokenType) *ATNHandle {
+func (rb *ATNRuleBuilderImpl) TokenRef(tokenTypeId int) *ATNHandle {
 	left := rb.NewState(parser.ATNBasic)
 	right := rb.NewState(parser.ATNBasic)
 	addTransition(left, &AtomTransition{
 		TargetState: right,
-		TokenType:   tokenType,
+		TokenTypeId: tokenTypeId,
 	})
 	return &ATNHandle{Left: left, Right: right}
 }

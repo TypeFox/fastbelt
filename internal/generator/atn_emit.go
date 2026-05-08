@@ -13,13 +13,6 @@ import (
 	"typefox.dev/fastbelt/parser"
 )
 
-// EmitGoSource returns Go source code for a function that constructs an
-// equivalent RuntimeATN without calling CreateATN.  The generated function
-// can be compiled into any package that imports the allstar package.
-//
-//	pkgName  – Go package name for the generated file (e.g. "myparser")
-//	funcName – name of the generated constructor function
-//	importPath – import path of the allstar package (e.g. "typefox.dev/fastbelt/parser/allstar")
 func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypes GenerateTokenTypesResult) generator.Node {
 	// Index each state pointer to its position in rtn.States.
 	idx := make(map[*ATNState]int, len(rtn.States))
@@ -84,7 +77,13 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypes Gen
 				for _, t := range s.Transitions {
 					switch at := t.(type) {
 					case *AtomTransition:
-						n.AppendLine("&parser.RuntimeAtomTransition{Target: states[", strconv.Itoa(idx[at.Target()]), "], TokenTypeID: ", strconv.Itoa(at.TokenType.ID), "},")
+						n.AppendLine(
+							"&parser.RuntimeAtomTransition{Target: states[",
+							strconv.Itoa(idx[at.Target()]),
+							"], TokenType: ",
+							tokenTypes.TokenTypeVarNames[at.TokenTypeId],
+							"},",
+						)
 					case *EpsilonTransition:
 						n.AppendLine("&parser.RuntimeEpsilonTransition{Target: states[", strconv.Itoa(idx[at.Target()]), "]},")
 					case *RuleTransition:

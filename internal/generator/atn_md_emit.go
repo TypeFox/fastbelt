@@ -12,7 +12,7 @@ import (
 	"typefox.dev/fastbelt/parser"
 )
 
-func EmitMarkdownSource(pkgName string, atn *ATN, tokenTypeNames map[int]string) generator.Node {
+func EmitMarkdownSource(pkgName string, atn *ATN, tokenTypeNames []string) generator.Node {
 	idx := make(map[*ATNState]int, len(atn.States))
 	for i, s := range atn.States {
 		idx[s] = i
@@ -54,7 +54,7 @@ func EmitMarkdownSource(pkgName string, atn *ATN, tokenTypeNames map[int]string)
 				case *EpsilonTransition:
 					n.AppendLine("    q", src, " --> q", fmt.Sprintf("%d", idx[tr.Target()]))
 				case *AtomTransition:
-					tokenName := strings.ReplaceAll(tokenTypeNames[tr.TokenType.ID], "\"", "&quot;")
+					tokenName := strings.ReplaceAll(tokenTypeNames[tr.TokenTypeId], "\"", "&quot;")
 					n.AppendLine("    q", src, " -->|\"tok(", tokenName, ")\"| q", fmt.Sprintf("%d", idx[tr.Target()]))
 				case *RuleTransition:
 					n.AppendLine("    q", src, " -.->|\"[", (*tr.Target().Rule).Name(), "]\"| q", fmt.Sprintf("%d", idx[tr.FollowState]))

@@ -179,7 +179,7 @@ func runLegacyGenerate(args []string) error {
 	}
 	if *atnFlag {
 		if err := writeFile("atn-md", filepath.Join(outputPath, "atn.md"),
-			generator.GenerateATNMarkdown(grammar, packageName)); err != nil {
+			generator.GenerateATNMarkdown(grammar, packageName, tokenTypes)); err != nil {
 			return err
 		}
 	}

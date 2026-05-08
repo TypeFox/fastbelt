@@ -54,7 +54,7 @@ type Transition interface {
 // inheritance; populated from the Terminal's CategoryMatches at ATN-build time.
 type AtomTransition struct {
 	TargetState *ATNState
-	TokenType   TokenType
+	TokenTypeId int
 }
 
 func (t *AtomTransition) Target() *ATNState { return t.TargetState }
@@ -82,10 +82,4 @@ func (t *RuleTransition) IsEpsilon() bool   { return true }
 type ATNHandle struct {
 	Left  *ATNState
 	Right *ATNState
-}
-
-// TokenType carries the type ID and category-match IDs for a token type.
-type TokenType struct {
-	ID              int
-	CategoryMatches []int
 }

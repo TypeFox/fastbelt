@@ -4,6 +4,8 @@
 
 package parser
 
+import "typefox.dev/fastbelt"
+
 // ATNStateType is the discriminator for ATN state kinds.
 type ATNStateType int
 
@@ -41,8 +43,8 @@ type RuntimeTransition interface {
 
 // RuntimeAtomTransition fires on a specific token type.
 type RuntimeAtomTransition struct {
-	Target      *RuntimeATNState
-	TokenTypeID int
+	Target    *RuntimeATNState
+	TokenType *fastbelt.TokenType
 }
 
 func (t *RuntimeAtomTransition) GetTarget() *RuntimeATNState { return t.Target }

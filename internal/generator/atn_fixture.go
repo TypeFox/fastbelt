@@ -21,31 +21,28 @@ hidden token WS: /[ \n\r\t]+/;
 `
 }
 
-func FixtureATN(t *testing.T, grammarStr string) (*ATN, map[string]*grammar.ParserRule, map[string]TokenType) {
+func FixtureATN(t *testing.T, grammarStr string) (*ATN, map[string]*grammar.ParserRule, map[string]int) {
 	t.Helper()
 	f := test.New(t, grammar.CreateServices())
 	doc := f.Parse(grammarStr).AssertNoErrors()
 	grammr := doc.Root().(grammar.Grammar)
-	atn, rules, tokenTypes := CreateATN(grammr)
-	tokenTypeNames := make(map[int]string, len(tokenTypes))
-	for name, info := range tokenTypes {
-		tokenTypeNames[info.ID] = name
-	}
-	node := EmitMarkdownSource("test", atn, tokenTypeNames)
+	tokenTypes := GenerateTokenTypes(grammr)
+	atn, rules := CreateATN(grammr, tokenTypes.TokenTypeIds)
+	node := EmitMarkdownSource("test", atn, tokenTypes.TokenTypeNames)
 	content := node.String()
 	if err := os.WriteFile("atn.test.md", []byte(content), 0644); err != nil {
 		t.Fatalf("failed to write ATN markdown file: %v", err)
 	}
-	return atn, rules, tokenTypes
+	return atn, rules, tokenTypes.TokenTypeIds
 }
 
-func RequireATNRecognizes(t *testing.T, atn *ATN, rules map[string]*grammar.ParserRule, tokenTypes map[string]TokenType, start string, inputTokenTypes []string, expected int) {
+func RequireATNRecognizes(t *testing.T, atn *ATN, rules map[string]*grammar.ParserRule, tokenTypes map[string]int, start string, inputTokenTypes []string, expected int) {
 	t.Helper()
 	startRule := *rules[start]
 	inputTokenTypeIds := make([]int, len(inputTokenTypes))
 	for i, tokenType := range inputTokenTypes {
-		info := tokenTypes[tokenType]
-		inputTokenTypeIds[i] = info.ID
+		id := tokenTypes[tokenType]
+		inputTokenTypeIds[i] = id
 	}
 	actual := recognizeATN(atn, startRule, inputTokenTypeIds)
 	require.Equal(t, expected, actual)
@@ -117,7 +114,7 @@ func recognizeParserRule(atn *ATN, rule grammar.ParserRule, context recognitionC
 					continue //reject
 				}
 				lookahead := context.inputTokenTypeIds[context.position]
-				if atomTransition.TokenType.ID == lookahead {
+				if atomTransition.TokenTypeId == lookahead {
 					contextQueue = append(contextQueue, context.ReadInput().Next(atomTransition.Target()))
 				}
 			} else if ruleTransition, ok := transition.(*RuleTransition); ok {
