@@ -19,4 +19,4 @@ go.work
 .DS_Store
 
 # Test debugging outputs
-internal/generator/*.test.md
+*.test.md

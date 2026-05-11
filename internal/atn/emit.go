@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package generator
+package atn
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	"typefox.dev/fastbelt/parser"
 )
 
-func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypes GenerateTokenTypesResult) generator.Node {
+func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypeVarNames []string) generator.Node {
 	// Index each state pointer to its position in rtn.States.
 	idx := make(map[*ATNState]int, len(rtn.States))
 	for i, s := range rtn.States {
@@ -81,7 +81,7 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypes Gen
 							"&parser.RuntimeAtomTransition{Target: states[",
 							strconv.Itoa(idx[at.Target()]),
 							"], TokenType: ",
-							tokenTypes.TokenTypeVarNames[at.TokenTypeId],
+							tokenTypeVarNames[at.TokenTypeId],
 							"},",
 						)
 					case *EpsilonTransition:

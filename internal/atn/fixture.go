@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package generator
+package atn
 
 import (
 	"os"
@@ -21,19 +21,30 @@ hidden token WS: /[ \n\r\t]+/;
 `
 }
 
+var TokenTypeIds = map[string]int{
+	"ID":     0,
+	"NUMBER": 1,
+	"WS":     2,
+}
+
+var TokenTypeNames = []string{
+	0: "ID",
+	1: "NUMBER",
+	2: "WS",
+}
+
 func FixtureATN(t *testing.T, grammarStr string) (*ATN, map[string]*grammar.ParserRule, map[string]int) {
 	t.Helper()
 	f := test.New(t, grammar.CreateServices())
 	doc := f.Parse(grammarStr).AssertNoErrors()
 	grammr := doc.Root().(grammar.Grammar)
-	tokenTypes := GenerateTokenTypes(grammr)
-	atn, rules := CreateATN(grammr, tokenTypes.TokenTypeIds)
-	node := EmitMarkdownSource("test", atn, tokenTypes.TokenTypeNames)
+	atn, rules := CreateATN(grammr, TokenTypeIds)
+	node := EmitMarkdownSource("test", atn, TokenTypeNames)
 	content := node.String()
 	if err := os.WriteFile("atn.test.md", []byte(content), 0644); err != nil {
 		t.Fatalf("failed to write ATN markdown file: %v", err)
 	}
-	return atn, rules, tokenTypes.TokenTypeIds
+	return atn, rules, TokenTypeIds
 }
 
 func RequireATNRecognizes(t *testing.T, atn *ATN, rules map[string]*grammar.ParserRule, tokenTypes map[string]int, start string, inputTokenTypes []string, expected int) {

@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"unicode/utf8"
 
+	"typefox.dev/fastbelt/generator"
 	"typefox.dev/fastbelt/internal/automatons"
 	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/internal/regexp"
@@ -21,8 +22,8 @@ type GenerateTokenTypesResult struct {
 	Tokens            []grammar.Token
 	Keywords          []grammar.Keyword
 	Imports           map[string]bool
-	KeywordsCode      []gen.Node
-	TokensCode        []gen.Node
+	KeywordsCode      []generator.Node
+	TokensCode        []generator.Node
 	TokenTypeVarNames []string
 	TokenTypeNames    []string
 	TokenTypeIds      map[string]int
@@ -42,8 +43,8 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	result := GenerateTokenTypesResult{
 		Tokens:            tokens,
 		Keywords:          keywords,
-		KeywordsCode:      make([]gen.Node, keywordsCount),
-		TokensCode:        make([]gen.Node, len(tokens)),
+		KeywordsCode:      make([]generator.Node, keywordsCount),
+		TokensCode:        make([]generator.Node, len(tokens)),
 		TokenTypeNames:    make([]string, keywordsCount+len(tokens)),
 		TokenTypeVarNames: make([]string, keywordsCount+len(tokens)),
 		TokenTypeIds:      make(map[string]int),
@@ -79,7 +80,7 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 }
 
 func GenerateLexer(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult) string {
-	nodes := []gen.Node{}
+	nodes := []generator.Node{}
 
 	imports := map[string]bool{}
 	maps.Copy(imports, tokenTypes.Imports)

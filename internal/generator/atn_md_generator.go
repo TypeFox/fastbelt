@@ -5,11 +5,12 @@
 package generator
 
 import (
+	"typefox.dev/fastbelt/internal/atn"
 	"typefox.dev/fastbelt/internal/grammar"
 )
 
 func GenerateATNMarkdown(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult) string {
-	atn, _ := CreateATN(grammr, tokenTypes.TokenTypeIds)
-	source := EmitMarkdownSource(packageName, atn, tokenTypes.TokenTypeNames)
+	a, _ := atn.CreateATN(grammr, tokenTypes.TokenTypeIds)
+	source := atn.EmitMarkdownSource(packageName, a, tokenTypes.TokenTypeNames)
 	return source.String()
 }
