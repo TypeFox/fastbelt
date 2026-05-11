@@ -51,6 +51,9 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			ReferencesProvider: &lsp.Or_ServerCapabilities_referencesProvider{
 				Value: service.Has[ReferencesProvider](s.sc),
 			},
+			FoldingRangeProvider: &lsp.Or_ServerCapabilities_foldingRangeProvider{
+				Value: service.Has[FoldingRangeProvider](s.sc),
+			},
 		},
 	}, nil
 }
@@ -231,7 +234,22 @@ func (s *DefaultLanguageServer) DocumentSymbol(ctx context.Context, params *lsp.
 	return nil, nil
 }
 func (s *DefaultLanguageServer) FoldingRange(ctx context.Context, params *lsp.FoldingRangeParams) ([]lsp.FoldingRange, error) {
-	return nil, nil
+	var result []lsp.FoldingRange
+	var providerErr error
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	provider, err := service.Get[FoldingRangeProvider](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	if err := lock.Read(ctx, func(ctx context.Context) {
+		result, providerErr = provider.HandleFoldingRangeRequest(ctx, params)
+	}); err != nil {
+		return nil, err
+	}
+	return result, providerErr
 }
 func (s *DefaultLanguageServer) Formatting(ctx context.Context, params *lsp.DocumentFormattingParams) ([]lsp.TextEdit, error) {
 	return nil, nil

@@ -48,4 +48,7 @@ func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[ReferencesProvider](sc) {
 		service.Put(sc, NewDefaultReferencesProvider(sc))
 	}
+	if !service.Has[FoldingRangeProvider](sc) {
+		service.Put(sc, NewDefaultFoldingRangeProvider(sc))
+	}
 }
