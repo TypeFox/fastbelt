@@ -9,18 +9,18 @@ import (
 	"sort"
 	"strconv"
 
-	"typefox.dev/fastbelt/generator"
 	"typefox.dev/fastbelt/parser"
+	"typefox.dev/fastbelt/util/codegen"
 )
 
-func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypeVarNames []string) generator.Node {
+func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypeVarNames []string) codegen.Node {
 	// Index each state pointer to its position in rtn.States.
 	idx := make(map[*ATNState]int, len(rtn.States))
 	for i, s := range rtn.States {
 		idx[s] = i
 	}
 
-	n := generator.NewNode()
+	n := codegen.NewNode()
 
 	keys := make([]string, 0, len(rtn.DecisionMap))
 	for k := range rtn.DecisionMap {
@@ -37,7 +37,7 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypeVarNa
 	n.AppendLine("type ATNDecisionId int")
 	n.AppendLine()
 	n.AppendLine("const (")
-	n.Indent(func(n generator.Node) {
+	n.Indent(func(n codegen.Node) {
 		for index, key := range keys {
 			if index == 0 {
 				n.AppendLine(key, " ATNDecisionId = iota")
@@ -49,13 +49,13 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypeVarNa
 	n.AppendLine(")")
 	n.AppendLine()
 	n.AppendLine("func ", funcName, "() *parser.RuntimeATN {")
-	n.Indent(func(n generator.Node) {
+	n.Indent(func(n codegen.Node) {
 		n.AppendLine("states := make([]*parser.RuntimeATNState, ", strconv.Itoa(len(rtn.States)), ")")
 
 		// Emit state declarations (without transitions so forward refs are fine).
 		for i, s := range rtn.States {
 			n.AppendLine("states[", strconv.Itoa(i), "] = &parser.RuntimeATNState{")
-			n.Indent(func(n generator.Node) {
+			n.Indent(func(n codegen.Node) {
 				n.AppendLine("StateNumber: ", strconv.Itoa(s.StateNumber), ",")
 				n.AppendLine("Type: parser.", atnStateTypeName(s.Type), ",")
 				n.AppendLine("Decision: ", strconv.Itoa(s.Decision), ",")
@@ -73,7 +73,7 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypeVarNa
 				continue
 			}
 			n.AppendLine("states[", strconv.Itoa(i), "].Transitions = []parser.RuntimeTransition{")
-			n.Indent(func(n generator.Node) {
+			n.Indent(func(n codegen.Node) {
 				for _, t := range s.Transitions {
 					switch at := t.(type) {
 					case *AtomTransition:
@@ -110,7 +110,7 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypeVarNa
 		}
 
 		n.AppendLine("return &parser.RuntimeATN{")
-		n.Indent(func(n generator.Node) {
+		n.Indent(func(n codegen.Node) {
 			n.AppendLine("States:         states,")
 			n.AppendLine("DecisionStates: decisionStates,")
 			n.AppendLine("DecisionMap:    decisionMap,")

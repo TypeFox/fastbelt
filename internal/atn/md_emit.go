@@ -8,17 +8,17 @@ import (
 	"fmt"
 	"strings"
 
-	"typefox.dev/fastbelt/generator"
 	"typefox.dev/fastbelt/parser"
+	"typefox.dev/fastbelt/util/codegen"
 )
 
-func EmitMarkdownSource(pkgName string, atn *ATN, tokenTypeNames []string) generator.Node {
+func EmitMarkdownSource(pkgName string, atn *ATN, tokenTypeNames []string) codegen.Node {
 	idx := make(map[*ATNState]int, len(atn.States))
 	for i, s := range atn.States {
 		idx[s] = i
 	}
 
-	n := generator.NewNode()
+	n := codegen.NewNode()
 
 	n.AppendLine("# Runtime ATN for ", pkgName)
 	n.AppendLine()

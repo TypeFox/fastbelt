@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"unicode/utf8"
 
-	"typefox.dev/fastbelt/generator"
 	"typefox.dev/fastbelt/internal/automatons"
 	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/internal/regexp"
@@ -22,39 +21,27 @@ type GenerateTokenTypesResult struct {
 	Tokens            []grammar.Token
 	Keywords          []grammar.Keyword
 	Imports           map[string]bool
-	KeywordsCode      []generator.Node
-	TokensCode        []generator.Node
+	KeywordsCode      []codegen.Node
+	TokensCode        []codegen.Node
 	TokenTypeVarNames []string
 	TokenTypeNames    []string
 	TokenTypeIds      map[string]int
 }
 
-	imports := map[string]bool{}
 func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	tokens := grammr.Terminals()
 	keywords := GetAllKeywords(grammr)
-	id := 1
-	for _, keyword := range keywords {
-		nodes = append(nodes, generateKeywordTokenType(keyword, id))
-		id++
-		// Ensure that we import "strings" for the keyword token match function
-		imports["strings"] = true
 	keywordsCount := len(keywords)
 	result := GenerateTokenTypesResult{
 		Tokens:            tokens,
 		Keywords:          keywords,
-		KeywordsCode:      make([]generator.Node, keywordsCount),
-		TokensCode:        make([]generator.Node, len(tokens)),
+		KeywordsCode:      make([]codegen.Node, keywordsCount),
+		TokensCode:        make([]codegen.Node, len(tokens)),
 		TokenTypeNames:    make([]string, keywordsCount+len(tokens)),
 		TokenTypeVarNames: make([]string, keywordsCount+len(tokens)),
 		TokenTypeIds:      make(map[string]int),
 		Imports:           map[string]bool{},
 	}
-	for _, token := range tokens {
-		result := generateTokenType(token, id)
-		nodes = append(nodes, result.Code)
-		for imp := range result.Imports {
-			imports[imp] = true
 	for index, keyword := range keywords {
 		result.KeywordsCode[index] = generateKeywordTokenType(keyword, index)
 		varName := GeneratedKeywordName(keyword)
@@ -80,7 +67,7 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 }
 
 func GenerateLexer(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult) string {
-	nodes := []generator.Node{}
+	nodes := []codegen.Node{}
 
 	imports := map[string]bool{}
 	maps.Copy(imports, tokenTypes.Imports)
