@@ -133,3 +133,19 @@ func TestCrossRefsRule(t *testing.T) {
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID", "NUMBER", "ID", "NUMBER"}, 1)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID", "NUMBER", "ID", "NUMBER", "ID", "NUMBER"}, 1)
 }
+
+func TestThreePaths(t *testing.T) {
+	atn, rules, tokenTypes := FixtureATN(t, GrammarTemplate(`
+		interface Start { Property Rule }
+		interface Rule {}
+		interface Rule1 extends Rule { Id string }
+		interface Rule2 extends Rule { Name string }
+		interface Rule3 extends Rule { Ref *Rule2 }
+		Start: Property=Rule;
+		Rule: Rule1 | Rule2 | Rule3;
+		Rule1: Id=ID;
+		Rule2: Name=ID;
+		Rule3: Ref=[Rule2:ID];
+	`))
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 3)
+}
