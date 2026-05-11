@@ -5,6 +5,8 @@
 package generator
 
 import (
+	"slices"
+
 	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/parser"
 )
@@ -24,6 +26,7 @@ type ATNRuleBuilder interface {
 	NewEpsilonTransition(source *ATNState, target *ATNState)
 
 	NewState(stateType parser.ATNStateType) *ATNState
+	RemoveState(state *ATNState)
 
 	GetTokenTypeByName(name string) int
 	GetRuleByName(name string) *grammar.ParserRule
@@ -191,11 +194,39 @@ func (rb *ATNRuleBuilderImpl) MakeBlock(alts []*ATNHandle) *ATNHandle {
 	for i := 0; i < len(alts)-1; i++ {
 		handle := alts[i]
 		next := alts[i+1].Left
-		rb.NewEpsilonTransition(handle.Right, next)
+		if rb.isConcatenationOptimizable(handle) {
+			rb.optimizeConcatenation(handle, handle.Left.Transitions[0], next)
+		} else {
+			rb.NewEpsilonTransition(handle.Right, next)
+		}
 	}
 	first := alts[0]
 	last := alts[len(alts)-1]
 	return &ATNHandle{Left: first.Left, Right: last.Right}
+}
+
+func (rb *ATNRuleBuilderImpl) isConcatenationOptimizable(handle *ATNHandle) bool {
+	//Without this optimization: alts[i].Left:ATNBasic -- :RuleTransition --> alts[i].Right:ATNBasic -epsilon-> alts[i+1].Left
+	//With this optimization:    alts[i].Left:ATNBasic -- :RuleTransition --> alts[i+1].Left
+	//saves one ATN state and one epsilon transition per concatenation, which can add up in large grammars
+	if len((*handle).Left.Transitions) != 1 {
+		return false
+	}
+	transition := handle.Left.Transitions[0]
+	ruleTransition, isRuleTransition := transition.(*RuleTransition)
+	right := handle.Right
+	return handle.Left.Type == parser.ATNBasic && right.Type == parser.ATNBasic &&
+		((isRuleTransition && ruleTransition.FollowState == right) || transition.Target() == right)
+}
+
+func (rb *ATNRuleBuilderImpl) optimizeConcatenation(handle *ATNHandle, transition Transition, next *ATNState) {
+	ruleTransition, isRuleTransition := transition.(*RuleTransition)
+	if isRuleTransition {
+		ruleTransition.FollowState = next
+	} else {
+		transition.SetTarget(next)
+	}
+	rb.RemoveState(handle.Right)
 }
 
 func (rb *ATNRuleBuilderImpl) TokenRef(tokenTypeId int) *ATNHandle {
@@ -226,6 +257,13 @@ func (rb *ATNRuleBuilderImpl) NewEpsilonTransition(source *ATNState, target *ATN
 
 func (rb *ATNRuleBuilderImpl) NewState(stateType parser.ATNStateType) *ATNState {
 	return newATNState(rb.parent.atn, rb.rule, stateType)
+}
+
+func (rb *ATNRuleBuilderImpl) RemoveState(state *ATNState) {
+	index := slices.Index(rb.parent.atn.States, state)
+	if index > -1 {
+		rb.parent.atn.States = append(rb.parent.atn.States[:index], rb.parent.atn.States[index+1:]...)
+	}
 }
 
 func newATNState(atn *ATN, rule *grammar.ParserRule, typ parser.ATNStateType) *ATNState {

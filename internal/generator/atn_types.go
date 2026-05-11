@@ -45,8 +45,9 @@ type ATN struct {
 
 // Transition is the interface implemented by all ATN transitions.
 type Transition interface {
-	Target() *ATNState
 	IsEpsilon() bool
+	Target() *ATNState
+	SetTarget(*ATNState)
 }
 
 // AtomTransition fires on a specific token type.
@@ -57,16 +58,18 @@ type AtomTransition struct {
 	TokenTypeId int
 }
 
-func (t *AtomTransition) Target() *ATNState { return t.TargetState }
-func (t *AtomTransition) IsEpsilon() bool   { return false }
+func (t *AtomTransition) Target() *ATNState          { return t.TargetState }
+func (t *AtomTransition) IsEpsilon() bool            { return false }
+func (t *AtomTransition) SetTarget(target *ATNState) { t.TargetState = target }
 
 // EpsilonTransition fires without consuming a token.
 type EpsilonTransition struct {
 	TargetState *ATNState
 }
 
-func (t *EpsilonTransition) Target() *ATNState { return t.TargetState }
-func (t *EpsilonTransition) IsEpsilon() bool   { return true }
+func (t *EpsilonTransition) Target() *ATNState          { return t.TargetState }
+func (t *EpsilonTransition) IsEpsilon() bool            { return true }
+func (t *EpsilonTransition) SetTarget(target *ATNState) { t.TargetState = target }
 
 // RuleTransition enters a sub-rule and returns to FollowState.
 type RuleTransition struct {
@@ -75,8 +78,9 @@ type RuleTransition struct {
 	FollowState *ATNState
 }
 
-func (t *RuleTransition) Target() *ATNState { return t.TargetState }
-func (t *RuleTransition) IsEpsilon() bool   { return true }
+func (t *RuleTransition) Target() *ATNState          { return t.TargetState }
+func (t *RuleTransition) IsEpsilon() bool            { return true }
+func (t *RuleTransition) SetTarget(target *ATNState) { t.TargetState = target }
 
 // ATNHandle is an internal pair of (entry, exit) ATN states for a sub-network.
 type ATNHandle struct {

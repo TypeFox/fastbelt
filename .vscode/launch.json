@@ -14,7 +14,8 @@
 			"cwd": "${workspaceFolder}/internal/grammar",
 			"args": [
 				"--g=grammar.fb",
-				"--v"
+				"--v",
+				"--atn" //always generate ATN to ensure it is up to date with the grammar
 			]
 		},
 		{
@@ -61,19 +62,6 @@
 			"outFiles": [
 				"${workspaceFolder}/internal/vscode-extensions/statemachine/dist/**/*.js"
 			]
-		},
-		{
-			"name": "Bootstrap (+ATN)",
-			"type": "go",
-			"request": "launch",
-			"mode": "debug",
-			"program": "${workspaceFolder}/cmd/fastbelt",
-			"cwd": "${workspaceFolder}/internal/grammar",
-			"args": [
-				"--g=grammar.fb",
-				"--v",
-				"--atn"
-			]
-		},
+		}
 	]
 }
