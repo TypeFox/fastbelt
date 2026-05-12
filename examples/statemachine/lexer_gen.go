@@ -9,7 +9,7 @@ import (
 	"unicode/utf8"
 )
 
-const Keyword_EqualsGreaterThan_Idx = 1
+const Keyword_EqualsGreaterThan_Idx = 0
 
 var Keyword_EqualsGreaterThan = core.NewTokenType(
 	Keyword_EqualsGreaterThan_Idx,
@@ -27,7 +27,7 @@ var Keyword_EqualsGreaterThan = core.NewTokenType(
 	[]rune{'='},
 )
 
-const Keyword_actions_Idx = 2
+const Keyword_actions_Idx = 1
 
 var Keyword_actions = core.NewTokenType(
 	Keyword_actions_Idx,
@@ -45,7 +45,7 @@ var Keyword_actions = core.NewTokenType(
 	[]rune{'a'},
 )
 
-const Keyword_commands_Idx = 3
+const Keyword_commands_Idx = 2
 
 var Keyword_commands = core.NewTokenType(
 	Keyword_commands_Idx,
@@ -63,7 +63,7 @@ var Keyword_commands = core.NewTokenType(
 	[]rune{'c'},
 )
 
-const Keyword_end_Idx = 4
+const Keyword_end_Idx = 3
 
 var Keyword_end = core.NewTokenType(
 	Keyword_end_Idx,
@@ -81,7 +81,7 @@ var Keyword_end = core.NewTokenType(
 	[]rune{'e'},
 )
 
-const Keyword_events_Idx = 5
+const Keyword_events_Idx = 4
 
 var Keyword_events = core.NewTokenType(
 	Keyword_events_Idx,
@@ -99,7 +99,7 @@ var Keyword_events = core.NewTokenType(
 	[]rune{'e'},
 )
 
-const Keyword_initialState_Idx = 6
+const Keyword_initialState_Idx = 5
 
 var Keyword_initialState = core.NewTokenType(
 	Keyword_initialState_Idx,
@@ -117,7 +117,7 @@ var Keyword_initialState = core.NewTokenType(
 	[]rune{'i'},
 )
 
-const Keyword_state_Idx = 7
+const Keyword_state_Idx = 6
 
 var Keyword_state = core.NewTokenType(
 	Keyword_state_Idx,
@@ -135,7 +135,7 @@ var Keyword_state = core.NewTokenType(
 	[]rune{'s'},
 )
 
-const Keyword_statemachine_Idx = 8
+const Keyword_statemachine_Idx = 7
 
 var Keyword_statemachine = core.NewTokenType(
 	Keyword_statemachine_Idx,
@@ -153,7 +153,7 @@ var Keyword_statemachine = core.NewTokenType(
 	[]rune{'s'},
 )
 
-const Keyword_LeftBrace_Idx = 9
+const Keyword_LeftBrace_Idx = 8
 
 var Keyword_LeftBrace = core.NewTokenType(
 	Keyword_LeftBrace_Idx,
@@ -171,7 +171,7 @@ var Keyword_LeftBrace = core.NewTokenType(
 	[]rune{'{'},
 )
 
-const Keyword_RightBrace_Idx = 10
+const Keyword_RightBrace_Idx = 9
 
 var Keyword_RightBrace = core.NewTokenType(
 	Keyword_RightBrace_Idx,
@@ -189,7 +189,7 @@ var Keyword_RightBrace = core.NewTokenType(
 	[]rune{'}'},
 )
 
-const Token_ID_Idx = 11
+const Token_ID_Idx = 10
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
@@ -262,7 +262,7 @@ var Token_ID_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_WS_Idx = 12
+const Token_WS_Idx = 11
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
@@ -335,7 +335,7 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_ML_COMMENT_Idx = 13
+const Token_ML_COMMENT_Idx = 12
 
 var Token_ML_COMMENT = core.NewTokenType(
 	Token_ML_COMMENT_Idx,
@@ -459,7 +459,7 @@ var Token_ML_COMMENT_Accepting = [5]bool{
 	4: true,
 }
 
-const Token_SL_COMMENT_Idx = 14
+const Token_SL_COMMENT_Idx = 13
 
 var Token_SL_COMMENT = core.NewTokenType(
 	Token_SL_COMMENT_Idx,

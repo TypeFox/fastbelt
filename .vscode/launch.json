@@ -14,7 +14,8 @@
 			"cwd": "${workspaceFolder}/internal/grammar",
 			"args": [
 				"--g=grammar.fb",
-				"--v"
+				"--v",
+				"--atn" //always generate ATN to ensure it is up to date with the grammar
 			]
 		},
 		{
@@ -26,7 +27,8 @@
 			"cwd": "${workspaceFolder}/examples/statemachine",
 			"args": [
 				"--g=statemachine.fb",
-				"--v"
+				"--v",
+				"--atn"
 			]
 		},
 		{
