@@ -17,9 +17,8 @@ type ATNRuleBuilder interface {
 	Plus(lookaheadName string, handle *ATNHandle) *ATNHandle
 	Star(lookaheadName string, handle *ATNHandle) *ATNHandle
 	Optional(lookaheadName string, handle *ATNHandle) *ATNHandle
-	MakeAlts(lookaheadName string, start *ATNState, alts []*ATNHandle) *ATNHandle
-
-	MakeBlock(alts []*ATNHandle) *ATNHandle
+	MakeAlternatives(lookaheadName string, start *ATNState, alts []*ATNHandle) *ATNHandle
+	MakeConcatenation(alts []*ATNHandle) *ATNHandle
 	TokenRef(tokenTypeId int) *ATNHandle
 	RuleRef(otherRule *grammar.ParserRule) *ATNHandle
 
@@ -170,7 +169,7 @@ func (rb *ATNRuleBuilderImpl) Optional(lookaheadName string, handle *ATNHandle) 
 	return handle
 }
 
-func (rb *ATNRuleBuilderImpl) MakeAlts(lookaheadName string, start *ATNState, alts []*ATNHandle) *ATNHandle {
+func (rb *ATNRuleBuilderImpl) MakeAlternatives(lookaheadName string, start *ATNState, alts []*ATNHandle) *ATNHandle {
 	atn := rb.parent.atn
 	end := rb.NewState(parser.ATNBlockEnd)
 	end.Start = start
@@ -190,7 +189,7 @@ func (rb *ATNRuleBuilderImpl) MakeAlts(lookaheadName string, start *ATNState, al
 	return &ATNHandle{Left: start, Right: end}
 }
 
-func (rb *ATNRuleBuilderImpl) MakeBlock(alts []*ATNHandle) *ATNHandle {
+func (rb *ATNRuleBuilderImpl) MakeConcatenation(alts []*ATNHandle) *ATNHandle {
 	for i := 0; i < len(alts)-1; i++ {
 		handle := alts[i]
 		next := alts[i+1].Left

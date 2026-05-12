@@ -199,7 +199,7 @@ func convertAlternatives(
 	}
 	start := rb.NewState(parser.ATNBasic)
 	lookaheadName := rb.GetLookaheadNameByElement(alts)
-	handle := rb.MakeAlts(lookaheadName, start, handles)
+	handle := rb.MakeAlternatives(lookaheadName, start, handles)
 	return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
 }
 
@@ -218,7 +218,7 @@ func convertGroup(
 		}
 		elementHandles = append(elementHandles, elementHandle)
 	}
-	handle := rb.MakeBlock(elementHandles)
+	handle := rb.MakeConcatenation(elementHandles)
 	lookaheadName := rb.GetLookaheadNameByElement(g)
 	return wrapWithCardinality(rb, handle, g.Cardinality(), lookaheadName), nil
 }
