@@ -162,7 +162,7 @@ func BenchmarkLocalLinking(b *testing.B) {
 	docs := []*fastbelt.Document{doc}
 	builder := service.MustGet[workspace.Builder](srv)
 	// Prebuild the file - we will reset the references later
-	if err := builder.Build(b.Context(), docs, func() {}); err != nil {
+	if err := builder.Build(b.Context(), docs, nil); err != nil {
 		b.Errorf("build failed: %v", err)
 	}
 	b.SetBytes(int64(len(content)))

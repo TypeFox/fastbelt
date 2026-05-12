@@ -51,4 +51,13 @@ func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[FoldingRangeProvider](sc) {
 		service.Put(sc, NewDefaultFoldingRangeProvider(sc))
 	}
+	if !service.Has[RenameProvider](sc) {
+		service.Put(sc, NewDefaultRenameProvider(sc))
+	}
+	if !service.Has[NameFinder](sc) {
+		service.Put(sc, NewDefaultNameFinder(sc))
+	}
+	if !service.Has[ReferencesFinder](sc) {
+		service.Put(sc, NewDefaultReferencesFinder(sc))
+	}
 }

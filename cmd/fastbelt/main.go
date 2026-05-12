@@ -102,7 +102,7 @@ func runLegacyGenerate(args []string) error {
 	if err != nil {
 		return err
 	}
-	if err := builder.Build(context.Background(), []*core.Document{document}, func() {}); err != nil {
+	if err := builder.Build(context.Background(), []*core.Document{document}, nil); err != nil {
 		return err
 	}
 
