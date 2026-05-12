@@ -73,6 +73,7 @@ func (d *Doc) RunRename(label string, newName string) *Doc {
 		doc := documents.Get(core.ParseURI(string(uri)))
 		if doc == nil {
 			d.fixture.t.Fatalf("fbtest: rename edits include unknown document URI %q", uri)
+			return nil
 		}
 		changeEvents := make([]lsp.TextDocumentContentChangeEvent, len(fileEdits))
 		for i, edit := range fileEdits {
@@ -82,7 +83,10 @@ func (d *Doc) RunRename(label string, newName string) *Doc {
 			}
 		}
 		overlay := doc.TextDoc.(*textdoc.Overlay)
-		overlay.Update(changeEvents, overlay.Version()+1)
+		updateErr := overlay.Update(changeEvents, overlay.Version()+1)
+		if updateErr != nil {
+			d.fixture.t.Fatalf("fbtest: failed to apply rename edits: %v", updateErr)
+		}
 		toUpdate = append(toUpdate, doc)
 	}
 	// Rebuild the affected documents to ensure that the changes are reflected in the AST
