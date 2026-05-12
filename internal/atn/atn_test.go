@@ -9,31 +9,31 @@ import (
 )
 
 func TestTokenRef(t *testing.T) {
-	atn, rules, tokenTypes := FixtureATN(t, GrammarTemplate(`
+	atn, rules, tokenTypes := FixtureATN(t, `
 		interface Start { Name string }
 		Start: Name=ID;
-	`))
+	`, false)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID"}, 0)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
 }
 
 func TestRuleRef(t *testing.T) {
-	atn, rules, tokenTypes := FixtureATN(t, GrammarTemplate(`
+	atn, rules, tokenTypes := FixtureATN(t, `
 		interface Start { Property Rule }
 		interface Rule { Name string }
 		Start: Property=Rule;
 		Rule: Name=ID;
-	`))
+	`, false)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
 }
 
 func TestPlusRule(t *testing.T) {
-	atn, rules, tokenTypes := FixtureATN(t, GrammarTemplate(`
+	atn, rules, tokenTypes := FixtureATN(t, `
 		interface Start { Property []Rule }
 		interface Rule { Name string }
 		Start: Property+=Rule+;
 		Rule: Name=ID;
-	`))
+	`, false)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{}, 0)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID", "ID"}, 1)
@@ -41,29 +41,29 @@ func TestPlusRule(t *testing.T) {
 }
 
 func TestStarRule(t *testing.T) {
-	atn, rules, tokenTypes := FixtureATN(t, GrammarTemplate(`
+	atn, rules, tokenTypes := FixtureATN(t, `
 		interface Start { Property []Rule }
 		interface Rule { Name string }
 		Start: Property+=Rule*;
 		Rule: Name=ID;
-	`))
+	`, false)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{}, 1)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID", "ID", "ID", "ID", "ID"}, 1)
 }
 
 func TestAlternativesRule(t *testing.T) {
-	atn, rules, tokenTypes := FixtureATN(t, GrammarTemplate(`
+	atn, rules, tokenTypes := FixtureATN(t, `
 		interface Start { Property string }
 		Start: Property=(ID|NUMBER);
-	`))
+	`, false)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{}, 0)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"NUMBER"}, 1)
 }
 
 func TestNestedAlternativesRule(t *testing.T) {
-	atn, rules, tokenTypes := FixtureATN(t, GrammarTemplate(`
+	atn, rules, tokenTypes := FixtureATN(t, `
 		interface Start { Property AbstractRule }
 		interface AbstractRule {}
 		interface RuleId extends AbstractRule {
@@ -76,7 +76,7 @@ func TestNestedAlternativesRule(t *testing.T) {
 		Start: Property=(RuleId|RuleNumber);
 		RuleId: Id=ID;
 		RuleNumber: Num=NUMBER;
-	`))
+	`, false)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{}, 0)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"NUMBER"}, 1)
@@ -85,7 +85,7 @@ func TestNestedAlternativesRule(t *testing.T) {
 }
 
 func TestNestedStarAlternativesRule(t *testing.T) {
-	atn, rules, tokenTypes := FixtureATN(t, GrammarTemplate(`
+	atn, rules, tokenTypes := FixtureATN(t, `
 		interface Start { Properties []AbstractRule }
 		interface AbstractRule {}
 		interface RuleId extends AbstractRule {
@@ -98,7 +98,7 @@ func TestNestedStarAlternativesRule(t *testing.T) {
 		Start: Properties+=(RuleId|RuleNumber)*;
 		RuleId: Id=ID;
 		RuleNumber: Num=NUMBER;
-	`))
+	`, false)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{}, 1)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"NUMBER"}, 1)
@@ -107,7 +107,7 @@ func TestNestedStarAlternativesRule(t *testing.T) {
 }
 
 func TestCrossRefsRule(t *testing.T) {
-	atn, rules, tokenTypes := FixtureATN(t, GrammarTemplate(`
+	atn, rules, tokenTypes := FixtureATN(t, `
 		interface Start { 
 			Decl RuleDeclaration
 			Defs []RuleDefinition
@@ -124,7 +124,7 @@ func TestCrossRefsRule(t *testing.T) {
 		Start: Decl=RuleDeclaration Defs+=RuleDefinition*;
 		RuleDeclaration: Name=ID;
 		RuleDefinition: IdRef=[RuleDeclaration:ID] Value=NUMBER;
-	`))
+	`, false)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{}, 0)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID", "ID", "NUMBER"}, 1)
@@ -135,7 +135,7 @@ func TestCrossRefsRule(t *testing.T) {
 }
 
 func TestThreePaths(t *testing.T) {
-	atn, rules, tokenTypes := FixtureATN(t, GrammarTemplate(`
+	atn, rules, tokenTypes := FixtureATN(t, `
 		interface Start { Property Rule }
 		interface Rule {}
 		interface Rule1 extends Rule { Id string }
@@ -146,6 +146,6 @@ func TestThreePaths(t *testing.T) {
 		Rule1: Id=ID;
 		Rule2: Name=ID;
 		Rule3: Ref=[Rule2:ID];
-	`))
+	`, false)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 3)
 }

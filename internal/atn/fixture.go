@@ -33,16 +33,19 @@ var TokenTypeNames = []string{
 	2: "WS",
 }
 
-func FixtureATN(t *testing.T, grammarStr string) (*ATN, map[string]*grammar.ParserRule, map[string]int) {
+func FixtureATN(t *testing.T, ruleText string, emitATNMarkdown bool) (*ATN, map[string]*grammar.ParserRule, map[string]int) {
 	t.Helper()
 	f := test.New(t, grammar.CreateServices())
-	doc := f.Parse(grammarStr).AssertNoErrors()
+	text := GrammarTemplate(ruleText)
+	doc := f.Parse(text).AssertNoErrors()
 	grammr := doc.Root().(grammar.Grammar)
 	atn, rules := CreateATN(grammr, TokenTypeIds)
-	node := EmitMarkdownSource("test", atn, TokenTypeNames)
-	content := node.String()
-	if err := os.WriteFile("atn.test.md", []byte(content), 0644); err != nil {
-		t.Fatalf("failed to write ATN markdown file: %v", err)
+	if emitATNMarkdown {
+		node := EmitMarkdownSource("test", atn, TokenTypeNames)
+		content := node.String()
+		if err := os.WriteFile("atn.test.md", []byte(content), 0644); err != nil {
+			t.Fatalf("failed to write ATN markdown file: %v", err)
+		}
 	}
 	return atn, rules, TokenTypeIds
 }
