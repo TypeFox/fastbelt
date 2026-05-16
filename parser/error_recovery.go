@@ -41,7 +41,7 @@ type DefaultErrorRecovery struct{}
 type BailErrorRecovery struct{}
 
 func (DefaultErrorRecovery) RecoverInline(state *ParserState, expectedTokenType *core.TokenType) *core.Token {
-	la1 := state.laRaw(1)
+	la1 := state.LARaw(1)
 	if la1 == nil {
 		state.appendError(state.messages.UnexpectedEndOfInput(), nil)
 		return nil
@@ -71,7 +71,7 @@ func (DefaultErrorRecovery) Recover(state *ParserState) {
 	followSet := state.computeFollowSet()
 	if len(followSet) > 0 {
 		for {
-			la := state.laRaw(1)
+			la := state.LARaw(1)
 			if la == nil || tokenInSet(followSet, la.TypeId) {
 				break
 			}
@@ -89,7 +89,7 @@ func (DefaultErrorRecovery) Sync(state *ParserState, decisionStateIdx int) {
 			return
 		}
 	}
-	tok := state.laRaw(1)
+	tok := state.LARaw(1)
 	if tok == nil {
 		return
 	}
@@ -103,7 +103,7 @@ func (DefaultErrorRecovery) Sync(state *ParserState, decisionStateIdx int) {
 	}
 	// Single-token deletion: if the *next* token is in the valid set, treat
 	// the current token as extraneous and skip it.
-	la2 := state.laRaw(2)
+	la2 := state.LARaw(2)
 	if la2 != nil && tokenInSet(valid, la2.TypeId) {
 		state.reportError(state.messages.ExtraneousInput(tok), tok)
 		state.Index++
@@ -116,7 +116,7 @@ func (DefaultErrorRecovery) Sync(state *ParserState, decisionStateIdx int) {
 	state.reportError(state.messages.ExtraneousInput(tok), tok)
 	for {
 		state.Index++
-		la := state.laRaw(1)
+		la := state.LARaw(1)
 		if la == nil || tokenInSet(valid, la.TypeId) || tokenInSet(follow, la.TypeId) {
 			return
 		}

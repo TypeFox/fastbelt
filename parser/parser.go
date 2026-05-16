@@ -118,20 +118,24 @@ func NewParserState(tokens []core.Token, atn *RuntimeATN, recovery ErrorRecovery
 	}
 }
 
-// LA returns the token at the given lookahead offset, or nil when inError is
-// true. The nil return is intentional: it causes all guard conditions to fail
-// and unwinds the current rule without needing goto.
+// LA returns the token at the given lookahead offset.
+// Returns nil if the offset is out of bounds or if the parser is currently in error mode.
 func (p *ParserState) LA(offset int) *core.Token {
-	pos := p.Index + offset - 1
-	if pos < 0 || pos >= p.Length || p.inError {
+	// Test for inError first
+	// prevents LA from returning real tokens while unwinding after an error,
+	// which would cause infinite loops in guards.
+	// Also, enables an optimization for the common EOF case: once LA returns nil, the parser
+	// can short-circuit any remaining work in the current rule.
+	// This circumvents the need for goto cleanup patterns in the generated code.
+	if p.inError {
 		return nil
 	}
-	return &p.Tokens[pos]
+	return p.LARaw(offset)
 }
 
-// laRaw returns the token at offset without checking inError.
+// LARaw returns the token at offset without checking inError.
 // Only used inside recovery strategy methods that must see real tokens after an error.
-func (p *ParserState) laRaw(offset int) *core.Token {
+func (p *ParserState) LARaw(offset int) *core.Token {
 	pos := p.Index + offset - 1
 	if pos < 0 || pos >= p.Length {
 		return nil
