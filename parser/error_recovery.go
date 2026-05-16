@@ -43,12 +43,12 @@ type BailErrorRecovery struct{}
 func (DefaultErrorRecovery) RecoverInline(state *ParserState, expectedTokenType *core.TokenType) *core.Token {
 	la1 := state.laRaw(1)
 	if la1 == nil {
-		state.appendError("Unexpected end of input.", nil)
+		state.appendError(state.messages.UnexpectedEndOfInput(), nil)
 		return nil
 	}
 	// Single-token deletion: if the next-next token matches, skip the current one.
 	if state.LAId(2) == expectedTokenType.Id {
-		state.reportError("Extraneous input '"+la1.Image+"'.", la1)
+		state.reportError(state.messages.ExtraneousInput(la1), la1)
 		state.Index++
 		token := state.LA(1)
 		state.Index++
@@ -59,7 +59,7 @@ func (DefaultErrorRecovery) RecoverInline(state *ParserState, expectedTokenType 
 	// Single-token insertion: synthesise a zero-width token of the expected type.
 	// Note: Index is NOT advanced and errorRecoveryMode stays on, so subsequent
 	// reportError calls at the same position remain suppressed.
-	state.reportError("Missing '"+expectedTokenType.Name+"', got '"+la1.Image+"'.", la1)
+	state.reportError(state.messages.MissingToken(expectedTokenType, la1), la1)
 	synthetic := makeSyntheticToken(expectedTokenType, la1)
 	return &synthetic
 }
@@ -105,7 +105,7 @@ func (DefaultErrorRecovery) Sync(state *ParserState, decisionStateIdx int) {
 	// the current token as extraneous and skip it.
 	la2 := state.laRaw(2)
 	if la2 != nil && tokenInSet(valid, la2.TypeId) {
-		state.reportError("Extraneous input '"+tok.Image+"'.", tok)
+		state.reportError(state.messages.ExtraneousInput(tok), tok)
 		state.Index++
 		return
 	}
@@ -113,7 +113,7 @@ func (DefaultErrorRecovery) Sync(state *ParserState, decisionStateIdx int) {
 	// belongs to either the decision's valid set or any enclosing follow set.
 	// Skipping only one token can leave the parser stuck when several
 	// unexpected tokens cluster together (e.g. after a broken rule body).
-	state.reportError("Extraneous input '"+tok.Image+"'.", tok)
+	state.reportError(state.messages.ExtraneousInput(tok), tok)
 	for {
 		state.Index++
 		la := state.laRaw(1)

@@ -50,6 +50,22 @@ type ParserState struct {
 	atn               *RuntimeATN
 	followStates      []int // stack of atn.States array indices for follow-set computation
 	recovery          ErrorRecoveryStrategy
+	messages          ErrorMessageProvider
+}
+
+// Messages returns the ErrorMessageProvider currently used to format
+// diagnostic messages emitted by the parser.
+func (p *ParserState) Messages() ErrorMessageProvider {
+	return p.messages
+}
+
+// SetMessages replaces the ErrorMessageProvider used to format diagnostic
+// messages. A nil value reinstates DefaultErrorMessageProvider.
+func (p *ParserState) SetMessages(messages ErrorMessageProvider) {
+	if messages == nil {
+		messages = DefaultErrorMessageProvider{}
+	}
+	p.messages = messages
 }
 
 func (p *ParserState) Errors() []*core.ParserError {
@@ -88,10 +104,7 @@ type LookaheadPath []int
 type LookaheadOption []LookaheadPath
 type LLkLookahead []LookaheadOption
 
-func NewParserState(tokens []core.Token, atn *RuntimeATN, recovery ErrorRecoveryStrategy) *ParserState {
-	if recovery == nil {
-		recovery = DefaultErrorRecovery{}
-	}
+func NewParserState(tokens []core.Token, atn *RuntimeATN, recovery ErrorRecoveryStrategy, messages ErrorMessageProvider) *ParserState {
 	return &ParserState{
 		Tokens:       tokens,
 		Length:       len(tokens),
@@ -101,6 +114,7 @@ func NewParserState(tokens []core.Token, atn *RuntimeATN, recovery ErrorRecovery
 		atn:          atn,
 		followStates: nil,
 		recovery:     recovery,
+		messages:     messages,
 	}
 }
 
@@ -139,7 +153,7 @@ func (p *ParserState) Consume(tokenType *core.TokenType) *core.Token {
 	}
 	current := p.LA(1)
 	if current == nil {
-		p.appendError("Unexpected end of input.", nil)
+		p.appendError(p.messages.UnexpectedEndOfInput(), nil)
 		return nil
 	}
 	if current.TypeId != tokenType.Id {
@@ -147,7 +161,7 @@ func (p *ParserState) Consume(tokenType *core.TokenType) *core.Token {
 		if recovered != nil {
 			return recovered
 		}
-		p.appendError("Unexpected token '"+current.Image+"'.", current)
+		p.appendError(p.messages.UnexpectedToken(current), current)
 		return nil
 	}
 	p.reportMatch()

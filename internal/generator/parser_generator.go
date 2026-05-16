@@ -77,7 +77,7 @@ func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes Gener
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("state *parser.ParserState")
 		n.AppendLine("sc *service.Container")
-		n.AppendLine("referencesConstructor func() ", grammr.Name(), "ReferencesConstructor")
+		n.AppendLine("referencesConstructor ", grammr.Name(), "ReferencesConstructor")
 		n.AppendLine("atn func() *parser.RuntimeATN")
 	})
 	node.AppendLine("}")
@@ -91,7 +91,10 @@ func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes Gener
 	firstRule := rules[0]
 	node.AppendLine("func (p *Parser) Parse(document *core.Document) *parser.ParseResult {")
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("cp := &Parser{sc: p.sc, referencesConstructor: p.referencesConstructor, atn: p.atn, state: parser.NewParserState(document.Tokens, p.atn(), parser.DefaultErrorRecovery{})}")
+		n.AppendLine("recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)")
+		n.AppendLine("messages := service.MustGet[parser.ErrorMessageProvider](p.sc)")
+		n.AppendLine("referencesConstructor := service.MustGet[", grammr.Name(), "ReferencesConstructor](p.sc)")
+		n.AppendLine("cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, atn: p.atn, state: parser.NewParserState(document.Tokens, p.atn(), recovery, messages)}")
 		n.AppendLine("result := cp.Parse", firstRule.Name(), "()")
 		n.AppendLine("core.AssignContainers(document, result)")
 		n.AppendLine("return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}")
@@ -102,9 +105,6 @@ func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes Gener
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("return &Parser{")
 		n.AppendLine("	sc: sc,")
-		n.AppendLine("	referencesConstructor: sync.OnceValue(func() ", grammr.Name(), "ReferencesConstructor {")
-		n.AppendLine("		return service.MustGet[", grammr.Name(), "ReferencesConstructor](sc)")
-		n.AppendLine("	}),")
 		n.AppendLine("	atn: sync.OnceValue(BuildATN),")
 		n.AppendLine("}")
 	})
@@ -357,7 +357,7 @@ func generateAbstractElementParser(node codegen.Node, context *ParserGeneratorCo
 					if _, ok := e.Value().(grammar.CrossRef); ok {
 						parserRuleName := getParserRuleName(e)
 						// For cross-references, we need to create a Reference object
-						resultName = "p.referencesConstructor()." + parserRuleName + e.Property().Text() + "(current, " + resultName + ")"
+						resultName = "p.referencesConstructor." + parserRuleName + e.Property().Text() + "(current, " + resultName + ")"
 					}
 					n2.Indent(func(in codegen.Node) {
 						switch e.Operator() {

@@ -27,6 +27,12 @@ func SetupGeneratedServices(sc *service.Container) {
 	if !service.Has[parser.Parser](sc) {
 		service.Put[parser.Parser](sc, NewParser(sc))
 	}
+	if !service.Has[parser.ErrorRecoveryStrategy](sc) {
+		service.Put[parser.ErrorRecoveryStrategy](sc, parser.DefaultErrorRecovery{})
+	}
+	if !service.Has[parser.ErrorMessageProvider](sc) {
+		service.Put[parser.ErrorMessageProvider](sc, parser.DefaultErrorMessageProvider{})
+	}
 	if !service.Has[core.SymbolContainers](sc) {
 		service.Put[core.SymbolContainers](sc, NewSymbolContainers())
 	}

@@ -12,12 +12,15 @@ import (
 type Parser struct {
 	state                 *parser.ParserState
 	sc                    *service.Container
-	referencesConstructor func() FastbeltReferencesConstructor
+	referencesConstructor FastbeltReferencesConstructor
 	atn                   func() *parser.RuntimeATN
 }
 
 func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
-	cp := &Parser{sc: p.sc, referencesConstructor: p.referencesConstructor, atn: p.atn, state: parser.NewParserState(document.Tokens, p.atn(), parser.DefaultErrorRecovery{})}
+	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
+	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
+	referencesConstructor := service.MustGet[FastbeltReferencesConstructor](p.sc)
+	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, atn: p.atn, state: parser.NewParserState(document.Tokens, p.atn(), recovery, messages)}
 	result := cp.ParseGrammar()
 	core.AssignContainers(document, result)
 	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
@@ -25,10 +28,7 @@ func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
 
 func NewParser(sc *service.Container) *Parser {
 	return &Parser{
-		sc: sc,
-		referencesConstructor: sync.OnceValue(func() FastbeltReferencesConstructor {
-			return service.MustGet[FastbeltReferencesConstructor](sc)
-		}),
+		sc:  sc,
 		atn: sync.OnceValue(BuildATN),
 	}
 }
@@ -498,7 +498,7 @@ func (p *Parser) ParseInterface() Interface {
 			token := p.state.Consume(Token_ID)
 			core.AssignToken(current, token, InterfaceExtendsID_0)
 			if token != nil {
-				current.SetExtendsItem(p.referencesConstructor().InterfaceExtends(current, token))
+				current.SetExtendsItem(p.referencesConstructor.InterfaceExtends(current, token))
 			}
 		}
 		p.state.Sync(73)
@@ -511,7 +511,7 @@ func (p *Parser) ParseInterface() Interface {
 				token := p.state.Consume(Token_ID)
 				core.AssignToken(current, token, InterfaceExtendsID_1)
 				if token != nil {
-					current.SetExtendsItem(p.referencesConstructor().InterfaceExtends(current, token))
+					current.SetExtendsItem(p.referencesConstructor.InterfaceExtends(current, token))
 				}
 			}
 			p.state.Sync(73)
@@ -638,7 +638,7 @@ func (p *Parser) ParseReferenceType() ReferenceType {
 		token := p.state.Consume(Token_ID)
 		core.AssignToken(current, token, ReferenceTypeTypeID_0)
 		if token != nil {
-			current.SetType(p.referencesConstructor().ReferenceTypeType(current, token))
+			current.SetType(p.referencesConstructor.ReferenceTypeType(current, token))
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -652,7 +652,7 @@ func (p *Parser) ParseSimpleType() SimpleType {
 		token := p.state.Consume(Token_ID)
 		core.AssignToken(current, token, SimpleTypeTypeID_0)
 		if token != nil {
-			current.SetType(p.referencesConstructor().SimpleTypeType(current, token))
+			current.SetType(p.referencesConstructor.SimpleTypeType(current, token))
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -708,7 +708,7 @@ func (p *Parser) ParseParserRule() ParserRule {
 			token := p.state.Consume(Token_ID)
 			core.AssignToken(current, token, ParserRuleReturnTypeID_0)
 			if token != nil {
-				current.SetReturnType(p.referencesConstructor().ParserRuleReturnType(current, token))
+				current.SetReturnType(p.referencesConstructor.ParserRuleReturnType(current, token))
 			}
 		}
 	}
@@ -965,7 +965,7 @@ func (p *Parser) ParseAssignment() Assignment {
 		token := p.state.Consume(Token_ID)
 		core.AssignToken(current, token, AssignmentPropertyID_0)
 		if token != nil {
-			current.SetProperty(p.referencesConstructor().AssignmentProperty(current, token))
+			current.SetProperty(p.referencesConstructor.AssignmentProperty(current, token))
 		}
 	}
 	{
@@ -1135,7 +1135,7 @@ func (p *Parser) ParseCrossRef() CrossRef {
 		token := p.state.Consume(Token_ID)
 		core.AssignToken(current, token, CrossRefTypeID_0)
 		if token != nil {
-			current.SetType(p.referencesConstructor().CrossRefType(current, token))
+			current.SetType(p.referencesConstructor.CrossRefType(current, token))
 		}
 	}
 	p.state.Sync(208)
@@ -1168,7 +1168,7 @@ func (p *Parser) ParseRuleCall() RuleCall {
 		token := p.state.Consume(Token_ID)
 		core.AssignToken(current, token, RuleCallRuleID_0)
 		if token != nil {
-			current.SetRule(p.referencesConstructor().RuleCallRule(current, token))
+			current.SetRule(p.referencesConstructor.RuleCallRule(current, token))
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -1186,7 +1186,7 @@ func (p *Parser) ParseAction() Action {
 		token := p.state.Consume(Token_ID)
 		core.AssignToken(current, token, ActionTypeID_0)
 		if token != nil {
-			current.SetType(p.referencesConstructor().ActionType(current, token))
+			current.SetType(p.referencesConstructor.ActionType(current, token))
 		}
 	}
 	p.state.Sync(217)
@@ -1199,7 +1199,7 @@ func (p *Parser) ParseAction() Action {
 			token := p.state.Consume(Token_ID)
 			core.AssignToken(current, token, ActionPropertyID_0)
 			if token != nil {
-				current.SetProperty(p.referencesConstructor().ActionProperty(current, token))
+				current.SetProperty(p.referencesConstructor.ActionProperty(current, token))
 			}
 		}
 		{
