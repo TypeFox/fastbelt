@@ -13,12 +13,19 @@ import (
 	"typefox.dev/fastbelt/util/codegen"
 )
 
-func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypeVarNames []string) codegen.Node {
-	// Index each state pointer to its position in rtn.States.
-	idx := make(map[*ATNState]int, len(rtn.States))
-	for i, s := range rtn.States {
+// BuildStateIndexMap returns a map from each *ATNState to its array index in
+// a.States. This is the stable runtime index used in generated states[i]
+// references and by the parser generator for EnterRule/Sync calls.
+func BuildStateIndexMap(a *ATN) map[*ATNState]int {
+	idx := make(map[*ATNState]int, len(a.States))
+	for i, s := range a.States {
 		idx[s] = i
 	}
+	return idx
+}
+
+func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypeVarNames []string) codegen.Node {
+	idx := BuildStateIndexMap(rtn)
 
 	n := codegen.NewNode()
 

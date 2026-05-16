@@ -160,11 +160,11 @@ func runLegacyGenerate(args []string) error {
 		generator.GenerateTypes(grammar, packageName)); err != nil {
 		return err
 	}
+	tokenTypes := generator.GenerateTokenTypes(grammar)
 	if err := writeFile("parser", filepath.Join(outputPath, "parser_gen.go"),
-		generator.GenerateParser(grammar, packageName)); err != nil {
+		generator.GenerateParser(grammar, packageName, tokenTypes)); err != nil {
 		return err
 	}
-	tokenTypes := generator.GenerateTokenTypes(grammar)
 	if err := writeFile("lexer", filepath.Join(outputPath, "lexer_gen.go"),
 		generator.GenerateLexer(grammar, packageName, tokenTypes)); err != nil {
 		return err

@@ -13,7 +13,8 @@ import (
 // Fields specific to certain state kinds are non-nil only for those kinds.
 type ATNState struct {
 	ATN                    *ATN
-	Production             grammar.Element // nil for rule start/stop
+	Production             grammar.Element  // set by post-processing for decision states
+	RuleCallEntry          grammar.RuleCall // set in convertRuleCall; not overwritten by post-processing
 	StateNumber            int
 	Rule                   grammar.AbstractRuleWithBody
 	EpsilonOnlyTransitions bool
