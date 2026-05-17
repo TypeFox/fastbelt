@@ -22,35 +22,39 @@ type ParserState struct {
 	Tokens []core.Token
 	Length int
 	Index  int
-	// inError is the hard-halt signal: while true, LA() returns nil so every
+	// InError is the hard-halt signal: while true, LA() returns nil so every
 	// optional/loop guard evaluates false and the parser unwinds without
 	// emitting further work.
 	//
-	// It is set in only two situations, both via appendError:
+	// It is set in only two situations, both via AppendError:
 	//
 	//  1. BailErrorRecovery.RecoverInline returns nil. This is the bail
 	//     strategy's whole point — halt immediately on the first mismatch.
 	//     Without this flag, a loop like `for Lookahead(X) == 0 { Parse() }`
 	//     would re-enter forever, since LA still returns the real (wrong)
-	//     token and errorRecoveryMode only suppresses messages, not parsing.
+	//     token and ErrorRecoveryMode only suppresses messages, not parsing.
 	//
 	//  2. Consume hits EOF mid-rule. Strictly an optimisation here: LA's
 	//     bounds check already returns nil past Length, so the parser would
-	//     unwind correctly without inError; the flag just short-circuits any
+	//     unwind correctly without InError; the flag just short-circuits any
 	//     remaining straight-line work after the EOF is detected.
-	inError bool
-	// errorRecoveryMode is set by reportError and cleared by reportMatch
-	// (called from a successful Consume). While set, further reportError
+	InError bool
+	// ErrorRecoveryMode is set by ReportError and cleared by ReportMatch
+	// (called from a successful Consume). While set, further ReportError
 	// calls are dropped so that a single underlying mistake produces a
 	// single diagnostic instead of one per consume attempt during unwind.
 	// Parsing continues throughout — this flag is purely about message
 	// deduplication, never about halting.
-	errorRecoveryMode bool
+	ErrorRecoveryMode bool
 	errors            []*core.ParserError
 	atn               *RuntimeATN
 	followStates      []int // stack of atn.States array indices for follow-set computation
 	recovery          ErrorRecoveryStrategy
 	messages          ErrorMessageProvider
+}
+
+func (p *ParserState) ATN() *RuntimeATN {
+	return p.atn
 }
 
 // Messages returns the ErrorMessageProvider currently used to format
@@ -59,45 +63,40 @@ func (p *ParserState) Messages() ErrorMessageProvider {
 	return p.messages
 }
 
-// SetMessages replaces the ErrorMessageProvider used to format diagnostic
-// messages. A nil value reinstates DefaultErrorMessageProvider.
-func (p *ParserState) SetMessages(messages ErrorMessageProvider) {
-	if messages == nil {
-		messages = DefaultErrorMessageProvider{}
-	}
-	p.messages = messages
+func (p *ParserState) RecoveryStrategy() ErrorRecoveryStrategy {
+	return p.recovery
 }
 
 func (p *ParserState) Errors() []*core.ParserError {
 	return p.errors
 }
 
-func (p *ParserState) appendError(msg string, token *core.Token) {
+func (p *ParserState) AppendError(msg string, token *core.Token) {
 	p.errors = append(p.errors, core.NewParserError(msg, token))
-	p.inError = true
+	p.InError = true
 }
 
-// reportError records a non-fatal parse error and enters error-recovery mode.
-// While in error-recovery mode, subsequent reportError calls are suppressed
+// ReportError records a non-fatal parse error and enters error-recovery mode.
+// While in error-recovery mode, subsequent ReportError calls are suppressed
 // until reportMatch is called after a successful token match, so a single
 // underlying mistake produces a single diagnostic rather than a cascade of
 // messages as the parser tries (and fails) to consume the next several tokens.
 //
-// reportError does NOT set inError. Parsing continues; if recovery cannot
+// ReportError does NOT set inError. Parsing continues; if recovery cannot
 // make progress, callers that synthesize/skip tokens (Consume, Sync, Recover)
 // are responsible for advancing Index.
-func (p *ParserState) reportError(msg string, token *core.Token) {
-	if p.errorRecoveryMode {
+func (p *ParserState) ReportError(msg string, token *core.Token) {
+	if p.ErrorRecoveryMode {
 		return
 	}
-	p.errorRecoveryMode = true
+	p.ErrorRecoveryMode = true
 	p.errors = append(p.errors, core.NewParserError(msg, token))
 }
 
-// reportMatch exits error-recovery mode after a token has been successfully
+// ReportMatch exits error-recovery mode after a token has been successfully
 // matched (either directly or via inline recovery).
-func (p *ParserState) reportMatch() {
-	p.errorRecoveryMode = false
+func (p *ParserState) ReportMatch() {
+	p.ErrorRecoveryMode = false
 }
 
 type LookaheadPath []int
@@ -109,7 +108,7 @@ func NewParserState(tokens []core.Token, atn *RuntimeATN, recovery ErrorRecovery
 		Tokens:       tokens,
 		Length:       len(tokens),
 		Index:        0,
-		inError:      false,
+		InError:      false,
 		errors:       []*core.ParserError{},
 		atn:          atn,
 		followStates: nil,
@@ -127,7 +126,7 @@ func (p *ParserState) LA(offset int) *core.Token {
 	// Also, enables an optimization for the common EOF case: once LA returns nil, the parser
 	// can short-circuit any remaining work in the current rule.
 	// This circumvents the need for goto cleanup patterns in the generated code.
-	if p.inError {
+	if p.InError {
 		return nil
 	}
 	return p.LARaw(offset)
@@ -152,12 +151,12 @@ func (p *ParserState) LAId(offset int) int {
 }
 
 func (p *ParserState) Consume(tokenType *core.TokenType) *core.Token {
-	if p.inError {
+	if p.InError {
 		return nil
 	}
 	current := p.LA(1)
 	if current == nil {
-		p.appendError(p.messages.UnexpectedEndOfInput(), nil)
+		p.AppendError(p.messages.UnexpectedEndOfInput(tokenType), nil)
 		return nil
 	}
 	if current.TypeId != tokenType.Id {
@@ -165,10 +164,10 @@ func (p *ParserState) Consume(tokenType *core.TokenType) *core.Token {
 		if recovered != nil {
 			return recovered
 		}
-		p.appendError(p.messages.UnexpectedToken(current), current)
+		p.AppendError(p.messages.UnexpectedToken(current), current)
 		return nil
 	}
-	p.reportMatch()
+	p.ReportMatch()
 	p.Index++
 	return current
 }
@@ -192,7 +191,7 @@ func (p *ParserState) Lookahead(value LLkLookahead) int {
 // if the parser is currently in error mode.
 func (p *ParserState) EnterRule(followStateIdx int) {
 	p.followStates = append(p.followStates, followStateIdx)
-	if p.inError {
+	if p.InError {
 		p.recovery.Recover(p)
 	}
 }
@@ -210,10 +209,10 @@ func (p *ParserState) Sync(decisionStateIdx int) {
 	p.recovery.Sync(p, decisionStateIdx)
 }
 
-// computeFollowSet unions NextTokensAt for every frame on the follow-state stack.
+// FollowSet returns the union of NextTokensAt for every frame on the follow-state stack.
 // The returned slice is indexed by TokenType.Id; out-of-range indices indicate
 // "not in the follow set".
-func (p *ParserState) computeFollowSet() []bool {
+func (p *ParserState) FollowSet() []bool {
 	if p.atn == nil {
 		return nil
 	}

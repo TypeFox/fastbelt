@@ -12,7 +12,7 @@ import core "typefox.dev/fastbelt"
 type ErrorMessageProvider interface {
 	// UnexpectedEndOfInput is used when the parser needs another token but
 	// the token stream is already exhausted.
-	UnexpectedEndOfInput() string
+	UnexpectedEndOfInput(expected *core.TokenType) string
 	// UnexpectedToken is used when the current token does not match what the
 	// parser expected and recovery decided not to synthesise or skip a token.
 	UnexpectedToken(found *core.Token) string
@@ -28,8 +28,12 @@ type ErrorMessageProvider interface {
 // default ErrorMessageProvider used when none is supplied to NewParserState.
 type DefaultErrorMessageProvider struct{}
 
-func (DefaultErrorMessageProvider) UnexpectedEndOfInput() string {
-	return "Unexpected end of input."
+func NewDefaultErrorMessageProvider() DefaultErrorMessageProvider {
+	return DefaultErrorMessageProvider{}
+}
+
+func (DefaultErrorMessageProvider) UnexpectedEndOfInput(expected *core.TokenType) string {
+	return "Unexpected end of input, expected '" + expected.Name + "'."
 }
 
 func (DefaultErrorMessageProvider) UnexpectedToken(found *core.Token) string {

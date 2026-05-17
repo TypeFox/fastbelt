@@ -22,16 +22,16 @@ func SetupGeneratedServices(sc *service.Container) {
 		service.Put(sc, NewDefaultFastbeltReferencesConstructor(sc))
 	}
 	if !service.Has[lexer.Lexer](sc) {
-		service.Put[lexer.Lexer](sc, NewLexer())
+		service.Put(sc, NewLexer())
 	}
 	if !service.Has[parser.Parser](sc) {
 		service.Put[parser.Parser](sc, NewParser(sc))
 	}
 	if !service.Has[parser.ErrorRecoveryStrategy](sc) {
-		service.Put[parser.ErrorRecoveryStrategy](sc, parser.DefaultErrorRecovery{})
+		service.Put[parser.ErrorRecoveryStrategy](sc, parser.NewDefaultErrorRecovery())
 	}
 	if !service.Has[parser.ErrorMessageProvider](sc) {
-		service.Put[parser.ErrorMessageProvider](sc, parser.DefaultErrorMessageProvider{})
+		service.Put[parser.ErrorMessageProvider](sc, parser.NewDefaultErrorMessageProvider())
 	}
 	if !service.Has[core.SymbolContainers](sc) {
 		service.Put[core.SymbolContainers](sc, NewSymbolContainers())
