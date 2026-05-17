@@ -160,8 +160,8 @@ func (p *ParserState) Consume(tokenType *core.TokenType) *core.Token {
 		return nil
 	}
 	if current.TypeId != tokenType.Id {
-		recovered := p.recovery.RecoverInline(p, tokenType)
-		if recovered != nil {
+		recovered, ok := p.recovery.RecoverInline(p, tokenType)
+		if ok {
 			return recovered
 		}
 		p.AppendError(p.messages.UnexpectedToken(current), current)

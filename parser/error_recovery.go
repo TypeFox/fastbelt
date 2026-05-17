@@ -11,7 +11,9 @@ type ErrorRecoveryStrategy interface {
 	// RecoverInline is called by Consume when the next token does not match
 	// the expected type. Implementations can attempt to find a token in the token stream
 	// that would match the expectation and return it as if it were a successful match.
-	RecoverInline(state *ParserState, expectedTokenType *core.TokenType) *core.Token
+	// The boolean return value indicates whether the parser should treat the error as recovered (true) or not (false).
+	// If false, the parser will set InError and unwind.
+	RecoverInline(state *ParserState, expectedTokenType *core.TokenType) (*core.Token, bool)
 	// Recover resynchronises the input stream after a hard-halt error.
 	Recover(state *ParserState)
 	// Sync is called before optional/loop guards to discard unexpected tokens.
@@ -37,11 +39,11 @@ func NewBailErrorRecovery() BailErrorRecovery {
 	return BailErrorRecovery{}
 }
 
-func (DefaultErrorRecovery) RecoverInline(state *ParserState, expectedTokenType *core.TokenType) *core.Token {
+func (DefaultErrorRecovery) RecoverInline(state *ParserState, expectedTokenType *core.TokenType) (*core.Token, bool) {
 	la1 := state.LARaw(1)
 	if la1 == nil {
 		state.AppendError(state.messages.UnexpectedEndOfInput(expectedTokenType), nil)
-		return nil
+		return nil, false
 	}
 	la2 := state.LARaw(2)
 	// Single-token deletion: if the next-next token matches, skip the current one.
@@ -50,7 +52,7 @@ func (DefaultErrorRecovery) RecoverInline(state *ParserState, expectedTokenType 
 		// Skip the bad token and return the next one as if it were a match.
 		state.Index += 2
 		state.ReportMatch()
-		return la2
+		return la2, true
 	}
 	// Most other parser generators would attempt single-token insertion here
 	// (i.e. return a fabricated token of the expected type and leave the input stream alone),
@@ -58,7 +60,7 @@ func (DefaultErrorRecovery) RecoverInline(state *ParserState, expectedTokenType 
 	// Note: Index is NOT advanced and errorRecoveryMode stays on, so subsequent
 	// reportError calls at the same position remain suppressed.
 	state.ReportError(state.messages.MissingToken(expectedTokenType, la1), la1)
-	return nil
+	return nil, true
 }
 
 func (DefaultErrorRecovery) Recover(state *ParserState) {
@@ -132,8 +134,8 @@ func tokenInSet(set []bool, id int) bool {
 	return id >= 0 && id < len(set) && set[id]
 }
 
-func (BailErrorRecovery) RecoverInline(_ *ParserState, _ *core.TokenType) *core.Token {
-	return nil
+func (BailErrorRecovery) RecoverInline(_ *ParserState, _ *core.TokenType) (*core.Token, bool) {
+	return nil, false
 }
 
 func (BailErrorRecovery) Recover(_ *ParserState) {}
