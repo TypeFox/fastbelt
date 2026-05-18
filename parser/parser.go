@@ -187,19 +187,18 @@ func (p *ParserState) Lookahead(value LLkLookahead) int {
 	return -1
 }
 
-// EnterRule pushes a follow-state index onto the stack and triggers recovery
-// if the parser is currently in error mode.
+// EnterRule pushes a follow-state index onto the stack.
 func (p *ParserState) EnterRule(followStateIdx int) {
 	p.followStates = append(p.followStates, followStateIdx)
-	if p.InError {
-		p.recovery.Recover(p)
-	}
 }
 
-// ExitRule pops the top follow-state from the stack.
+// ExitRule pops the top follow-state from the stack and tries to recover from any errors.
 func (p *ParserState) ExitRule() {
 	if len(p.followStates) > 0 {
 		p.followStates = p.followStates[:len(p.followStates)-1]
+	}
+	if p.InError {
+		p.recovery.Recover(p)
 	}
 }
 

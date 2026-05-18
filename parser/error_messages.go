@@ -22,6 +22,9 @@ type ErrorMessageProvider interface {
 	// MissingToken is used when the parser synthesises a token of the
 	// expected type because it appears to be missing at the current position.
 	MissingToken(expected *core.TokenType, found *core.Token) string
+	// NoViableAlternative is used when the parser cannot decide between multiple alternatives.
+	// TODO: This needs a more complex signature, but this depends on the LL(*) implementation.
+	NoViableAlternative(found *core.Token) string
 }
 
 // DefaultErrorMessageProvider produces English diagnostic messages. It is the
@@ -46,4 +49,8 @@ func (DefaultErrorMessageProvider) ExtraneousInput(found *core.Token) string {
 
 func (DefaultErrorMessageProvider) MissingToken(expected *core.TokenType, found *core.Token) string {
 	return "Missing '" + expected.Name + "', got '" + found.Image + "'."
+}
+
+func (DefaultErrorMessageProvider) NoViableAlternative(found *core.Token) string {
+	return "No viable alternative at input '" + found.Image + "'."
 }

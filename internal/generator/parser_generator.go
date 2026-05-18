@@ -517,6 +517,11 @@ func generateAlternativesParser(node codegen.Node, context *ParserGeneratorConte
 				generateAbstractElementParser(in, context, alt)
 			})
 		}
+		n.AppendLine("default:")
+		n.Indent(func(in codegen.Node) {
+			in.AppendLine("token := p.state.LA(1)")
+			in.AppendLine("p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)")
+		})
 		n.AppendLine("}")
 	}, func(n codegen.Node) {
 		n.Append(allLookahead)

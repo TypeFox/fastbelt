@@ -152,6 +152,25 @@ func BenchmarkLexer(b *testing.B) {
 	}
 }
 
+// BenchmarkLexerAndParser benchmarks a full lex + parse pass per iteration
+func BenchmarkLexerAndParser(b *testing.B) {
+	content, _ := generateStatemachineContent(0)
+	srv := CreateServices()
+	lexerService := service.MustGet[lexer.Lexer](srv)
+	parserService := service.MustGet[parser.Parser](srv)
+	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.SetBytes(int64(len(content)))
+	b.ResetTimer()
+	for b.Loop() {
+		doc.Tokens = lexerService.Lex(content).Tokens
+		result := parserService.Parse(doc)
+		doc.Root = result.Node
+	}
+}
+
 func BenchmarkLocalLinking(b *testing.B) {
 	content, _ := generateStatemachineContent(0)
 	srv := CreateServices()

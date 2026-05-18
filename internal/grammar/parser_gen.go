@@ -467,6 +467,9 @@ func (p *Parser) ParseGrammar() Grammar {
 					current.SetCompositesItem(result)
 				}
 			}
+		default:
+			token := p.state.LA(1)
+			p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
 		}
 		p.state.Sync(63)
 	}
@@ -599,6 +602,9 @@ func (p *Parser) ParseFieldType() FieldType {
 			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
+	default:
+		token := p.state.LA(1)
+		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
@@ -754,6 +760,9 @@ func (p *Parser) ParseToken() Token {
 					current.SetType(token)
 				}
 			}
+		default:
+			token := p.state.LA(1)
+			p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
 		}
 	}
 	{
@@ -914,6 +923,9 @@ func (p *Parser) ParseElement() Element {
 			token := p.state.Consume(Keyword_RightParen)
 			core.AssignToken(current, token, ElementRightParen_0)
 		}
+	default:
+		token := p.state.LA(1)
+		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
 	}
 	{
 		p.state.Sync(165)
@@ -1046,6 +1058,9 @@ func (p *Parser) ParseAssignable() Assignable {
 			token := p.state.Consume(Keyword_RightParen)
 			core.AssignToken(current, token, AssignableRightParen_0)
 		}
+	default:
+		token := p.state.LA(1)
+		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
@@ -1079,6 +1094,9 @@ func (p *Parser) ParseAssignableWithoutAlts() Assignable {
 			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
+	default:
+		token := p.state.LA(1)
+		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
@@ -1377,6 +1395,9 @@ func (p *Parser) ParseCompositeElement() Element {
 			token := p.state.Consume(Keyword_RightParen)
 			core.AssignToken(current, token, CompositeElementRightParen_0)
 		}
+	default:
+		token := p.state.LA(1)
+		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
 	}
 	{
 		p.state.Sync(262)
