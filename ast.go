@@ -317,6 +317,11 @@ type CompositeNode interface {
 	AstNode
 	StringUnit
 	IsCompositeNode()
+	// SaveTokenLen returns the current token count for use as a rollback checkpoint.
+	SaveTokenLen() int
+	// RestoreTokenLen truncates the accumulated tokens back to savedLen, used when
+	// rolling back a failed composite alternative attempt.
+	RestoreTokenLen(savedLen int)
 }
 
 func NewCompositeNode() CompositeNode {
@@ -331,6 +336,15 @@ type CompositeNodeBase struct {
 }
 
 func (node *CompositeNodeBase) IsCompositeNode() {}
+
+func (node *CompositeNodeBase) SaveTokenLen() int {
+	return len(node.tokens)
+}
+
+func (node *CompositeNodeBase) RestoreTokenLen(savedLen int) {
+	node.tokens = node.tokens[:savedLen]
+	node.cache.Store(nil)
+}
 
 func (node *CompositeNodeBase) String() string {
 	// Cache the string value, as it is accessed frequently

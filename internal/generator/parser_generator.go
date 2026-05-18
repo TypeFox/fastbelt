@@ -417,19 +417,55 @@ func generateLookaheadString(name string) string {
 func generateAlternativesParser(node codegen.Node, context *ParserGeneratorContext, alts grammar.Alternatives) {
 	allLookaheadName := context.lookaheads[alts].name
 	allLookahead := generateLookaheadString(allLookaheadName)
-	lookaheadName := context.orLookaheads[alts].name
 	generateCardinality(node, func(n codegen.Node) {
-		n.AppendLine("switch p.state.Lookahead(", lookaheadName, ") {")
-		for i, alt := range alts.Alts() {
-			n.AppendLine("case ", strconv.Itoa(i), ":")
-			n.Indent(func(in codegen.Node) {
-				generateAbstractElementParser(in, context, alt)
-			})
+		if context.inCompositeRule {
+			// Composite rules return strings; backtracking is always safe.
+			// Use PEG-style ordered try-rollback so greedy sub-rules (e.g. QualifiedName)
+			// don't commit the parser before the distinguishing token (e.g. "::") is seen.
+			generateCompositeRollbackAlternatives(n, context, alts)
+		} else {
+			lookaheadName := context.orLookaheads[alts].name
+			n.AppendLine("switch p.state.Lookahead(", lookaheadName, ") {")
+			for i, alt := range alts.Alts() {
+				n.AppendLine("case ", strconv.Itoa(i), ":")
+				n.Indent(func(in codegen.Node) {
+					generateAbstractElementParser(in, context, alt)
+				})
+			}
+			n.AppendLine("}")
 		}
-		n.AppendLine("}")
 	}, func(n codegen.Node) {
 		n.Append(allLookahead)
 	}, alts.Cardinality())
+}
+
+// generateCompositeRollbackAlternatives emits PEG-style ordered-choice code for
+// alternatives inside a composite rule.  Each alternative except the last is wrapped
+// in a save/try/restore block; on success it jumps to the done label.
+func generateCompositeRollbackAlternatives(node codegen.Node, context *ParserGeneratorContext, alts grammar.Alternatives) {
+	doneLabel := context.orLookaheads[alts].name + "_Done"
+	altList := alts.Alts()
+	for i, alt := range altList {
+		isLast := i == len(altList)-1
+		node.AppendLine("{")
+		node.Indent(func(n codegen.Node) {
+			if !isLast {
+				idx := strconv.Itoa(i)
+				n.AppendLine("savedIdx", idx, " := p.state.Save()")
+				n.AppendLine("savedLen", idx, " := current.SaveTokenLen()")
+				n.AppendLine("savedErrLen", idx, " := p.state.ErrorLen()")
+				generateAbstractElementParser(n, context, alt)
+				n.AppendLine("if !p.state.InError() { goto ", doneLabel, " }")
+				n.AppendLine("p.state.Restore(savedIdx", idx, ")")
+				n.AppendLine("current.RestoreTokenLen(savedLen", idx, ")")
+				n.AppendLine("p.state.TruncateErrors(savedErrLen", idx, ")")
+			} else {
+				generateAbstractElementParser(n, context, alt)
+			}
+		})
+		node.AppendLine("}")
+	}
+	node.AppendLine(doneLabel, ":")
 }
 
 func generateCardinality(node codegen.Node, element, lookahead codegen.Callback, cardinality string) {

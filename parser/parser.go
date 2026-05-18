@@ -42,6 +42,25 @@ func (p *ParserState) appendError(msg string, token *core.Token) {
 	p.inError = true
 }
 
+// Save returns the current token index for rollback.
+func (p *ParserState) Save() int { return p.Index }
+
+// Restore resets the token index to a previously saved value.
+func (p *ParserState) Restore(idx int) { p.Index = idx }
+
+// InError reports whether the parser is in error recovery mode.
+func (p *ParserState) InError() bool { return p.inError }
+
+// ErrorLen returns the current number of accumulated errors (snapshot for rollback).
+func (p *ParserState) ErrorLen() int { return len(p.errors) }
+
+// TruncateErrors discards errors added since the last Save and clears error mode.
+// Used to undo error reports from a failed alternative attempt before trying the next.
+func (p *ParserState) TruncateErrors(n int) {
+	p.errors = p.errors[:n]
+	p.inError = false
+}
+
 type LookaheadPath []int
 type LookaheadOption []LookaheadPath
 type LLkLookahead []LookaheadOption

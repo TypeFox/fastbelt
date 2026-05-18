@@ -19,7 +19,11 @@ func CreateATN(grammr grammar.Grammar, tokenTypeIds map[string]int) (*ATN, map[s
 	for _, gr := range grammr.Rules() {
 		byName[gr.Name()] = &gr
 	}
-	builder := NewATNBuilder(lookaheadNames, tokenTypeIds, byName)
+	compositesByName := map[string]grammar.CompositeRule{}
+	for _, cr := range grammr.Composites() {
+		compositesByName[cr.Name()] = cr
+	}
+	builder := NewATNBuilder(lookaheadNames, tokenTypeIds, byName, compositesByName)
 
 	entries := map[grammar.ParserRule]ATNRuleBuilder{}
 	for _, gr := range grammr.Rules() {
@@ -48,6 +52,9 @@ func ComputeLookaheadNames(grammr grammar.Grammar) map[grammar.Element]string {
 	for node := range fastbelt.AllNodes(grammr) {
 		switch e := node.(type) {
 		case grammar.ParserRule:
+			counters = make(map[reflect.Type]int)
+			ruleName = e.Name()
+		case grammar.CompositeRule:
 			counters = make(map[reflect.Type]int)
 			ruleName = e.Name()
 		case grammar.Keyword, grammar.RuleCall, grammar.CrossRef, grammar.Alternatives, grammar.Group:
@@ -160,8 +167,23 @@ func convertRuleCall(
 		return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
 	}
 
+	// Inline composite rule bodies so their token structure is visible to the ATN.
+	if composite := rb.GetCompositeByName(name); composite != nil {
+		handle, err := convertElement(rb, composite.Body())
+		if err != nil {
+			return nil, err
+		}
+		if handle == nil {
+			return nil, fmt.Errorf("composite rule %q produced empty ATN body", name)
+		}
+		return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
+	}
+
 	// Otherwise treat it as a terminal (lexer rule reference).
 	id := rb.GetTokenTypeByName(name)
+	if id == -1 {
+		return nil, fmt.Errorf("unknown rule or token %q", name)
+	}
 	termHandle := rb.TokenRef(id)
 	return wrapWithCardinality(rb, termHandle, cardinality, lookaheadName), nil
 }

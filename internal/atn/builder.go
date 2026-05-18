@@ -29,6 +29,7 @@ type ATNRuleBuilder interface {
 
 	GetTokenTypeByName(name string) int
 	GetRuleByName(name string) *grammar.ParserRule
+	GetCompositeByName(name string) grammar.CompositeRule
 	GetLookaheadNameByElement(el grammar.Element) string
 }
 
@@ -38,14 +39,15 @@ type ATNBuilder interface {
 }
 
 type ATNBuilderImpl struct {
-	rules        map[*grammar.ParserRule]*ATNRuleBuilderImpl
-	atn          *ATN
-	names        map[grammar.Element]string
-	tokenTypeIds map[string]int
-	rulesByName  map[string]*grammar.ParserRule
+	rules            map[*grammar.ParserRule]*ATNRuleBuilderImpl
+	atn              *ATN
+	names            map[grammar.Element]string
+	tokenTypeIds     map[string]int
+	rulesByName      map[string]*grammar.ParserRule
+	compositesByName map[string]grammar.CompositeRule
 }
 
-func NewATNBuilder(names map[grammar.Element]string, tokenTypeIds map[string]int, rulesByName map[string]*grammar.ParserRule) *ATNBuilderImpl {
+func NewATNBuilder(names map[grammar.Element]string, tokenTypeIds map[string]int, rulesByName map[string]*grammar.ParserRule, compositesByName map[string]grammar.CompositeRule) *ATNBuilderImpl {
 	return &ATNBuilderImpl{
 		rules: map[*grammar.ParserRule]*ATNRuleBuilderImpl{},
 		atn: &ATN{
@@ -55,9 +57,10 @@ func NewATNBuilder(names map[grammar.Element]string, tokenTypeIds map[string]int
 			RuleToStartState: map[grammar.ParserRule]*ATNState{},
 			RuleToStopState:  map[grammar.ParserRule]*ATNState{},
 		},
-		names:        names,
-		tokenTypeIds: tokenTypeIds,
-		rulesByName:  rulesByName,
+		names:            names,
+		tokenTypeIds:     tokenTypeIds,
+		rulesByName:      rulesByName,
+		compositesByName: compositesByName,
 	}
 }
 
@@ -71,6 +74,13 @@ func (rb *ATNRuleBuilderImpl) GetTokenTypeByName(name string) int {
 func (rb *ATNRuleBuilderImpl) GetRuleByName(name string) *grammar.ParserRule {
 	if rule, ok := rb.parent.rulesByName[name]; ok {
 		return rule
+	}
+	return nil
+}
+
+func (rb *ATNRuleBuilderImpl) GetCompositeByName(name string) grammar.CompositeRule {
+	if composite, ok := rb.parent.compositesByName[name]; ok {
+		return composite
 	}
 	return nil
 }
