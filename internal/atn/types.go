@@ -15,7 +15,7 @@ type ATNState struct {
 	ATN                    *ATN
 	Production             grammar.Element // nil for rule start/stop
 	StateNumber            int
-	Rule                   *grammar.ParserRule
+	Rule                   grammar.AbstractRuleWithBody
 	EpsilonOnlyTransitions bool
 	Transitions            []Transition
 	Type                   parser.ATNStateType
@@ -39,8 +39,8 @@ type ATN struct {
 	DecisionMap      map[string]*ATNState
 	States           []*ATNState
 	DecisionStates   []*ATNState
-	RuleToStartState map[grammar.ParserRule]*ATNState
-	RuleToStopState  map[grammar.ParserRule]*ATNState
+	RuleToStartState map[grammar.AbstractRuleWithBody]*ATNState
+	RuleToStopState  map[grammar.AbstractRuleWithBody]*ATNState
 }
 
 // Transition is the interface implemented by all ATN transitions.
@@ -74,7 +74,7 @@ func (t *EpsilonTransition) SetTarget(target *ATNState) { t.TargetState = target
 // RuleTransition enters a sub-rule and returns to FollowState.
 type RuleTransition struct {
 	TargetState *ATNState // the rule's RuleStartState
-	Rule        *grammar.ParserRule
+	Rule        grammar.AbstractRuleWithBody
 	FollowState *ATNState
 }
 

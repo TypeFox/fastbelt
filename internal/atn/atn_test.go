@@ -149,3 +149,21 @@ func TestThreePaths(t *testing.T) {
 	`, false)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 3)
 }
+
+func TestCompositeRuleRef(t *testing.T) {
+	atn, rules, tokenTypes := FixtureATN(t, `
+		interface Start { Name string }
+		composite SimpleComposite: ID;
+		Start: Name=SimpleComposite;
+	`, false)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
+}
+
+func TestCompositeRuleWithAlternativesRef(t *testing.T) {
+	atn, rules, tokenTypes := FixtureATN(t, `
+		interface Start { Name string }
+		composite IDOrNumber: ID | NUMBER;
+		Start: Name=IDOrNumber;
+	`, false)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
+}
