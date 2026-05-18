@@ -174,5 +174,7 @@ func TestCompositeRuleWithMultipleTokens(t *testing.T) {
 		composite FQN: ID ("." ID)*;
 		Start: Name=FQN;
 	`, false)
-	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{
+		"ID", "\".\"", "ID", "\".\"", "ID",
+	}, 1)
 }
