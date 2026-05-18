@@ -25,15 +25,17 @@ var TokenTypeIds = map[string]int{
 	"ID":     0,
 	"NUMBER": 1,
 	"WS":     2,
+	"\".\"":  3,
 }
 
 var TokenTypeNames = []string{
 	0: "ID",
 	1: "NUMBER",
 	2: "WS",
+	3: "Dot",
 }
 
-func FixtureATN(t *testing.T, ruleText string, emitATNMarkdown bool) (*ATN, map[string]*grammar.ParserRule, map[string]int) {
+func FixtureATN(t *testing.T, ruleText string, emitATNMarkdown bool) (*ATN, map[string]grammar.AbstractRuleWithBody, map[string]int) {
 	t.Helper()
 	f := test.New(t, grammar.CreateServices())
 	text := GrammarTemplate(ruleText)
@@ -50,9 +52,9 @@ func FixtureATN(t *testing.T, ruleText string, emitATNMarkdown bool) (*ATN, map[
 	return atn, rules, TokenTypeIds
 }
 
-func RequireATNRecognizes(t *testing.T, atn *ATN, rules map[string]*grammar.ParserRule, tokenTypes map[string]int, start string, inputTokenTypes []string, expected int) {
+func RequireATNRecognizes(t *testing.T, atn *ATN, rules map[string]grammar.AbstractRuleWithBody, tokenTypes map[string]int, start string, inputTokenTypes []string, expected int) {
 	t.Helper()
-	startRule := *rules[start]
+	startRule := rules[start]
 	inputTokenTypeIds := make([]int, len(inputTokenTypes))
 	for i, tokenType := range inputTokenTypes {
 		id := tokenTypes[tokenType]
@@ -92,7 +94,7 @@ func (ctx parserContext) Next(atnState *ATNState) parserContext {
 	}
 }
 
-func recognizeATN(atn *ATN, startRule grammar.ParserRule, inputTokenTypeIds []int) int {
+func recognizeATN(atn *ATN, startRule grammar.AbstractRuleWithBody, inputTokenTypeIds []int) int {
 	recognitionContext := recognitionContext{
 		inputTokenTypeIds: inputTokenTypeIds,
 		position:          0,
@@ -108,11 +110,11 @@ func recognizeATN(atn *ATN, startRule grammar.ParserRule, inputTokenTypeIds []in
 	return len(finished)
 }
 
-func recognizeParserRule(atn *ATN, rule grammar.ParserRule, context recognitionContext) []parserContext {
+func recognizeParserRule(atn *ATN, rule grammar.AbstractRuleWithBody, context recognitionContext) []parserContext {
 	END := atn.RuleToStopState[rule]
 
 	contextQueue := []parserContext{
-		parserContext{
+		{
 			recognitionContext: context,
 			atnState:           atn.RuleToStartState[rule],
 		},
@@ -132,7 +134,7 @@ func recognizeParserRule(atn *ATN, rule grammar.ParserRule, context recognitionC
 					contextQueue = append(contextQueue, context.ReadInput().Next(atomTransition.Target()))
 				}
 			} else if ruleTransition, ok := transition.(*RuleTransition); ok {
-				nextContext := recognizeParserRule(atn, *ruleTransition.Rule, context.recognitionContext)
+				nextContext := recognizeParserRule(atn, ruleTransition.Rule, context.recognitionContext)
 				for _, nextCtx := range nextContext {
 					contextQueue = append(contextQueue, nextCtx.Next(ruleTransition.FollowState))
 				}

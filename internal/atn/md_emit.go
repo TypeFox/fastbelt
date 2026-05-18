@@ -27,7 +27,7 @@ func EmitMarkdownSource(pkgName string, atn *ATN, tokenTypeNames []string) codeg
 	ruleOrder := []string{}
 	ruleStates := map[string][]*ATNState{}
 	for _, s := range atn.States {
-		ruleName := (*s.Rule).Name()
+		ruleName := s.Rule.Name()
 		if _, seen := ruleStates[ruleName]; !seen {
 			ruleOrder = append(ruleOrder, ruleName)
 		}
@@ -57,7 +57,7 @@ func EmitMarkdownSource(pkgName string, atn *ATN, tokenTypeNames []string) codeg
 					tokenName := strings.ReplaceAll(tokenTypeNames[tr.TokenTypeId], "\"", "&quot;")
 					n.AppendLine("    q", src, " -->|\"tok(", tokenName, ")\"| q", fmt.Sprintf("%d", idx[tr.Target()]))
 				case *RuleTransition:
-					n.AppendLine("    q", src, " -.->|\"[", (*tr.Target().Rule).Name(), "]\"| q", fmt.Sprintf("%d", idx[tr.FollowState]))
+					n.AppendLine("    q", src, " -.->|\"[", tr.Target().Rule.Name(), "]\"| q", fmt.Sprintf("%d", idx[tr.FollowState]))
 				}
 			}
 		}

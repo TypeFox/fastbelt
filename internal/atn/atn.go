@@ -5,6 +5,7 @@
 package atn
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -13,19 +14,26 @@ import (
 	"typefox.dev/fastbelt/parser"
 )
 
-func CreateATN(grammr grammar.Grammar, tokenTypeIds map[string]int) (*ATN, map[string]*grammar.ParserRule) {
+func CreateATN(grammr grammar.Grammar, tokenTypeIds map[string]int) (*ATN, map[string]grammar.AbstractRuleWithBody) {
 	lookaheadNames := ComputeLookaheadNames(grammr)
-	byName := map[string]*grammar.ParserRule{}
+	byName := map[string]grammar.AbstractRuleWithBody{}
 	for _, gr := range grammr.Rules() {
-		byName[gr.Name()] = &gr
+		byName[gr.Name()] = gr
 	}
 	builder := NewATNBuilder(lookaheadNames, tokenTypeIds, byName)
 
-	entries := map[grammar.ParserRule]ATNRuleBuilder{}
+	entries := map[grammar.AbstractRuleWithBody]ATNRuleBuilder{}
+	allRules := []grammar.AbstractRuleWithBody{}
 	for _, gr := range grammr.Rules() {
-		entries[gr] = builder.DeclareRule(&gr)
+		allRules = append(allRules, gr)
 	}
-	for _, gr := range grammr.Rules() {
+	for _, gr := range grammr.Composites() {
+		allRules = append(allRules, gr)
+	}
+	for _, gr := range allRules {
+		entries[gr] = builder.DeclareRule(gr)
+	}
+	for _, gr := range allRules {
 		ruleBuilder := entries[gr]
 		handle, err := convertElement(ruleBuilder, gr.Body())
 		if err != nil {
@@ -152,27 +160,25 @@ func convertRuleCall(
 	rc grammar.RuleCall,
 	cardinality string,
 ) (*ATNHandle, error) {
-	name := rc.Rule().Text()
+	rule := rc.Rule().Ref(context.Background())
 	lookaheadName := rb.GetLookaheadNameByElement(rc)
 
-	if rule := rb.GetRuleByName(name); rule != nil {
-		handle := rb.RuleRef(rule)
+	switch typed := rule.(type) {
+	case grammar.AbstractRuleWithBody:
+		handle := rb.RuleRef(typed)
 		return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
+	case grammar.Token:
+		id := rb.GetTokenTypeByName(typed.Name())
+		termHandle := rb.TokenRef(id)
+		return wrapWithCardinality(rb, termHandle, cardinality, lookaheadName), nil
 	}
-
-	// Otherwise treat it as a terminal (lexer rule reference).
-	id := rb.GetTokenTypeByName(name)
-	termHandle := rb.TokenRef(id)
-	return wrapWithCardinality(rb, termHandle, cardinality, lookaheadName), nil
+	panic(fmt.Sprintf("unexpected rule type %T", rule))
 }
 
 func convertCrossRef(
 	rb ATNRuleBuilder,
 	cr grammar.CrossRef,
 ) (*ATNHandle, error) {
-	if cr.Rule() == nil || cr.Rule().Rule() == nil || cr.Rule().Rule().Text() == "" {
-		panic("CrossRef has no valid rule reference")
-	}
 	name := cr.Rule().Rule().Text()
 	id := rb.GetTokenTypeByName(name)
 	termHandle := rb.TokenRef(id)

@@ -20,7 +20,7 @@ type ATNRuleBuilder interface {
 	MakeAlternatives(lookaheadName string, start *ATNState, alts []*ATNHandle) *ATNHandle
 	MakeConcatenation(alts []*ATNHandle) *ATNHandle
 	TokenRef(tokenTypeId int) *ATNHandle
-	RuleRef(otherRule *grammar.ParserRule) *ATNHandle
+	RuleRef(otherRule grammar.AbstractRuleWithBody) *ATNHandle
 
 	NewEpsilonTransition(source *ATNState, target *ATNState)
 
@@ -28,32 +28,32 @@ type ATNRuleBuilder interface {
 	RemoveState(state *ATNState)
 
 	GetTokenTypeByName(name string) int
-	GetRuleByName(name string) *grammar.ParserRule
+	GetRuleByName(name string) grammar.AbstractRuleWithBody
 	GetLookaheadNameByElement(el grammar.Element) string
 }
 
 type ATNBuilder interface {
-	DeclareRule(rule *grammar.ParserRule) ATNRuleBuilder
+	DeclareRule(rule grammar.AbstractRuleWithBody) ATNRuleBuilder
 	Build() *ATN
 }
 
 type ATNBuilderImpl struct {
-	rules        map[*grammar.ParserRule]*ATNRuleBuilderImpl
+	rules        map[grammar.AbstractRuleWithBody]*ATNRuleBuilderImpl
 	atn          *ATN
 	names        map[grammar.Element]string
 	tokenTypeIds map[string]int
-	rulesByName  map[string]*grammar.ParserRule
+	rulesByName  map[string]grammar.AbstractRuleWithBody
 }
 
-func NewATNBuilder(names map[grammar.Element]string, tokenTypeIds map[string]int, rulesByName map[string]*grammar.ParserRule) *ATNBuilderImpl {
+func NewATNBuilder(names map[grammar.Element]string, tokenTypeIds map[string]int, rulesByName map[string]grammar.AbstractRuleWithBody) *ATNBuilderImpl {
 	return &ATNBuilderImpl{
-		rules: map[*grammar.ParserRule]*ATNRuleBuilderImpl{},
+		rules: map[grammar.AbstractRuleWithBody]*ATNRuleBuilderImpl{},
 		atn: &ATN{
 			DecisionMap:      map[string]*ATNState{},
 			States:           []*ATNState{},
 			DecisionStates:   []*ATNState{},
-			RuleToStartState: map[grammar.ParserRule]*ATNState{},
-			RuleToStopState:  map[grammar.ParserRule]*ATNState{},
+			RuleToStartState: map[grammar.AbstractRuleWithBody]*ATNState{},
+			RuleToStopState:  map[grammar.AbstractRuleWithBody]*ATNState{},
 		},
 		names:        names,
 		tokenTypeIds: tokenTypeIds,
@@ -68,7 +68,7 @@ func (rb *ATNRuleBuilderImpl) GetTokenTypeByName(name string) int {
 	return -1
 }
 
-func (rb *ATNRuleBuilderImpl) GetRuleByName(name string) *grammar.ParserRule {
+func (rb *ATNRuleBuilderImpl) GetRuleByName(name string) grammar.AbstractRuleWithBody {
 	if rule, ok := rb.parent.rulesByName[name]; ok {
 		return rule
 	}
@@ -82,13 +82,13 @@ func (rb *ATNRuleBuilderImpl) GetLookaheadNameByElement(el grammar.Element) stri
 	panic("no lookahead name found for element")
 }
 
-func (b *ATNBuilderImpl) DeclareRule(rule *grammar.ParserRule) ATNRuleBuilder {
+func (b *ATNBuilderImpl) DeclareRule(rule grammar.AbstractRuleWithBody) ATNRuleBuilder {
 	left := newATNState(b.atn, rule, parser.ATNRuleStart)
 	right := newATNState(b.atn, rule, parser.ATNRuleStop)
 	ruleBuilder := NewATNRuleBuilder(b, rule, &ATNHandle{Left: left, Right: right})
 	b.rules[rule] = ruleBuilder
-	b.atn.RuleToStartState[*rule] = left
-	b.atn.RuleToStopState[*rule] = right
+	b.atn.RuleToStartState[rule] = left
+	b.atn.RuleToStopState[rule] = right
 	return ruleBuilder
 }
 
@@ -98,11 +98,11 @@ func (b *ATNBuilderImpl) Build() *ATN {
 
 type ATNRuleBuilderImpl struct {
 	parent *ATNBuilderImpl
-	rule   *grammar.ParserRule
+	rule   grammar.AbstractRuleWithBody
 	handle *ATNHandle
 }
 
-func NewATNRuleBuilder(parent *ATNBuilderImpl, rule *grammar.ParserRule, handle *ATNHandle) *ATNRuleBuilderImpl {
+func NewATNRuleBuilder(parent *ATNBuilderImpl, rule grammar.AbstractRuleWithBody, handle *ATNHandle) *ATNRuleBuilderImpl {
 	return &ATNRuleBuilderImpl{
 		parent: parent,
 		rule:   rule,
@@ -238,8 +238,8 @@ func (rb *ATNRuleBuilderImpl) TokenRef(tokenTypeId int) *ATNHandle {
 	return &ATNHandle{Left: left, Right: right}
 }
 
-func (rb *ATNRuleBuilderImpl) RuleRef(otherRule *grammar.ParserRule) *ATNHandle {
-	ruleStart := rb.parent.atn.RuleToStartState[*otherRule]
+func (rb *ATNRuleBuilderImpl) RuleRef(otherRule grammar.AbstractRuleWithBody) *ATNHandle {
+	ruleStart := rb.parent.atn.RuleToStartState[otherRule]
 	left := rb.NewState(parser.ATNBasic)
 	right := rb.NewState(parser.ATNBasic)
 	addTransition(left, &RuleTransition{
@@ -265,7 +265,7 @@ func (rb *ATNRuleBuilderImpl) RemoveState(state *ATNState) {
 	}
 }
 
-func newATNState(atn *ATN, rule *grammar.ParserRule, typ parser.ATNStateType) *ATNState {
+func newATNState(atn *ATN, rule grammar.AbstractRuleWithBody, typ parser.ATNStateType) *ATNState {
 	s := &ATNState{
 		ATN:         atn,
 		Production:  nil,
