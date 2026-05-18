@@ -25,12 +25,14 @@ var TokenTypeIds = map[string]int{
 	"ID":     0,
 	"NUMBER": 1,
 	"WS":     2,
+	"\".\"":  3,
 }
 
 var TokenTypeNames = []string{
 	0: "ID",
 	1: "NUMBER",
 	2: "WS",
+	3: "Dot",
 }
 
 func FixtureATN(t *testing.T, ruleText string, emitATNMarkdown bool) (*ATN, map[string]grammar.AbstractRuleWithBody, map[string]int) {

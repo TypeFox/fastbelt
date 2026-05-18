@@ -164,10 +164,7 @@ func convertRuleCall(
 	lookaheadName := rb.GetLookaheadNameByElement(rc)
 
 	switch typed := rule.(type) {
-	case grammar.CompositeRule:
-		handle := rb.RuleRef(typed)
-		return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
-	case grammar.ParserRule:
+	case grammar.AbstractRuleWithBody:
 		handle := rb.RuleRef(typed)
 		return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
 	case grammar.Token:

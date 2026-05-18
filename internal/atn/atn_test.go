@@ -167,3 +167,12 @@ func TestCompositeRuleWithAlternativesRef(t *testing.T) {
 	`, false)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
 }
+
+func TestCompositeRuleWithMultipleTokens(t *testing.T) {
+	atn, rules, tokenTypes := FixtureATN(t, `
+		interface Start { Name composite }
+		composite FQN: ID ("." ID)*;
+		Start: Name=FQN;
+	`, false)
+	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 1)
+}
