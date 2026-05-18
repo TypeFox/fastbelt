@@ -7,6 +7,9 @@ import (
 	"testing"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/server"
+	"typefox.dev/fastbelt/util/service"
+	"typefox.dev/lsp"
 )
 
 // Doc wraps a built [core.Document] with assertion methods and marker positions.
@@ -17,6 +20,7 @@ type Doc struct {
 	Indices  []IndexMarker
 	ctx      context.Context
 	t        testing.TB
+	fixture  *Fixture
 }
 
 // Ctx returns the context for this document. Pass it to [core.Reference.Ref].
@@ -423,4 +427,55 @@ func MustFindReference[T core.AstNode](d *Doc, label string) *core.Reference[T] 
 		d.t.Fatalf("fbtest: MustFindReference: no reference of the requested type at label %q", label)
 	}
 	return r
+}
+
+// AssertFoldingRanges verifies that folding ranges exist for all specified marker labels.
+// Returns the Doc for chaining.
+func (d *Doc) AssertFoldingRanges(labels ...string) *Doc {
+	d.fixture.t.Helper()
+
+	frProvider, err := service.Get[server.FoldingRangeProvider](d.fixture.sc)
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: no folding range provider available: %v", err)
+	}
+
+	params := &lsp.FoldingRangeParams{
+		TextDocument: lsp.TextDocumentIdentifier{
+			URI: lsp.DocumentURI(d.Document.URI.DocumentURI()),
+		},
+	}
+
+	result, err := frProvider.HandleFoldingRangeRequest(d.fixture.ctx, params)
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: folding range request failed: %v", err)
+	}
+
+	for _, label := range labels {
+		expectedRange, ok := d.MarkerRange(label)
+		if !ok {
+			d.fixture.t.Fatalf("fbtest: no marker with label %q", label)
+		}
+
+		found := false
+		for _, fr := range result {
+			if fr.StartLine != nil && fr.EndLine != nil {
+				if *fr.StartLine == uint32(expectedRange.Start.Line) &&
+					*fr.EndLine == uint32(expectedRange.End.Line) {
+					// For comment ranges, also verify the kind
+					if label == "comment" && fr.Kind != "comment" {
+						continue
+					}
+					found = true
+					break
+				}
+			}
+		}
+
+		if !found {
+			d.fixture.t.Errorf("fbtest: expected folding range at label %q (lines %d-%d) not found",
+				label, expectedRange.Start.Line, expectedRange.End.Line)
+		}
+	}
+
+	return d
 }

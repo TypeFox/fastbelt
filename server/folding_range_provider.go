@@ -32,6 +32,8 @@ type FoldingRangeFilter interface {
 	IncludeLastFoldingLineForComment() bool
 }
 
+// DefaultFoldingRangeFilter provides the standard folding behavior:
+// Processes all nodes, excludes last line for nodes ending with closing brackets, and includes last line for comments.
 type DefaultFoldingRangeFilter struct{}
 
 func (f *DefaultFoldingRangeFilter) ShouldProcess(node core.AstNode) bool {
@@ -127,20 +129,24 @@ func (p *DefaultFoldingRangeProvider) toFoldingRange(segment *core.TextSegment, 
 		return nil
 	}
 
-	foldRange := segment.Range
-	if !includeLastLine {
-		foldRange = core.TextRange{
-			Start: segment.Range.Start,
-			End:   core.TextLocation{Line: segment.Range.End.Line - 1, Column: segment.Range.End.Column},
-		}
-	}
+	lspRange := segment.Range.LspRange()
+	endLine := lspRange.End.Line
+	endChar := lspRange.End.Character
 
-	lspRange := foldRange.LspRange()
-	return &lsp.FoldingRange{
+	folding := &lsp.FoldingRange{
 		StartLine:      &lspRange.Start.Line,
-		EndLine:        &lspRange.End.Line,
 		StartCharacter: &lspRange.Start.Character,
-		EndCharacter:   &lspRange.End.Character,
+		EndLine:        &endLine,
 		Kind:           kind,
 	}
+
+	if !includeLastLine {
+		endLine--
+	} else {
+		// Only set EndCharacter when including the last line.
+		// When not set, LSP defaults to end of line.
+		folding.EndCharacter = &endChar
+	}
+
+	return folding
 }
