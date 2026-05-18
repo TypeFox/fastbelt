@@ -149,3 +149,42 @@ func TestThreePaths(t *testing.T) {
 	`, false)
 	RequireATNRecognizes(t, atn, rules, tokenTypes, "Start", []string{"ID"}, 3)
 }
+
+// TestCompositeRuleRef reproduces a bug where referencing a composite rule
+// from a parser rule causes EmitGoSource to panic with "index out of range [-1]".
+//
+// Root cause: convertRuleCall falls through to GetTokenTypeByName when it
+// cannot find the name in the parser-rule map.  Composite rules are not in
+// that map, so GetTokenTypeByName returns -1, and TokenRef(-1) creates an
+// AtomTransition{TokenTypeId:-1}.  EmitGoSource then indexes tokenTypeVarNames
+// with -1 and panics.
+func TestCompositeRuleRef(t *testing.T) {
+	atn, _, _ := FixtureATN(t, `
+		interface Start { Name string }
+		composite SimpleComposite: ID;
+		Start: Name=SimpleComposite;
+	`, false)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("EmitGoSource panicked: %v", r)
+		}
+	}()
+	EmitGoSource("test", "BuildATN", "typefox.dev/fastbelt/parser", atn, TokenTypeNames)
+}
+
+// TestCompositeRuleWithAlternativesRef reproduces the same bug with a composite
+// rule that contains alternatives — the form needed for datatype rules like
+// composite ID: RawId | EscapedId.
+func TestCompositeRuleWithAlternativesRef(t *testing.T) {
+	atn, _, _ := FixtureATN(t, `
+		interface Start { Name string }
+		composite IDOrNumber: ID | NUMBER;
+		Start: Name=IDOrNumber;
+	`, false)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("EmitGoSource panicked: %v", r)
+		}
+	}()
+	EmitGoSource("test", "BuildATN", "typefox.dev/fastbelt/parser", atn, TokenTypeNames)
+}
