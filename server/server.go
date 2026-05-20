@@ -52,6 +52,9 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 				Value: service.Has[ReferencesProvider](s.sc),
 			},
 			RenameProvider: service.Has[RenameProvider](s.sc),
+			DocumentSymbolProvider: &lsp.Or_ServerCapabilities_documentSymbolProvider{
+				Value: service.Has[DocumentSymbolProvider](s.sc),
+			},
 			FoldingRangeProvider: &lsp.Or_ServerCapabilities_foldingRangeProvider{
 				Value: service.Has[FoldingRangeProvider](s.sc),
 			},
@@ -232,7 +235,22 @@ func (s *DefaultLanguageServer) DocumentLink(ctx context.Context, params *lsp.Do
 	return nil, nil
 }
 func (s *DefaultLanguageServer) DocumentSymbol(ctx context.Context, params *lsp.DocumentSymbolParams) ([]any, error) {
-	return nil, nil
+	var result []lsp.DocumentSymbol
+	var providerErr error
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	provider, err := service.Get[DocumentSymbolProvider](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	if err := lock.Read(ctx, func(ctx context.Context) {
+		result, providerErr = provider.HandleDocumentSymbolRequest(ctx, params)
+	}); err != nil {
+		return nil, err
+	}
+	return toAnySlice(result), providerErr
 }
 func (s *DefaultLanguageServer) FoldingRange(ctx context.Context, params *lsp.FoldingRangeParams) ([]lsp.FoldingRange, error) {
 	var result []lsp.FoldingRange
@@ -439,6 +457,15 @@ func StartLanguageServer(ctx context.Context, sc *service.Container) error {
 
 	// Wait for the connection to close
 	return conn.Wait()
+}
+
+// toAnySlice converts []lsp.DocumentSymbol to []any for the LSP response.
+func toAnySlice(symbols []lsp.DocumentSymbol) []any {
+	result := make([]any, len(symbols))
+	for i, sym := range symbols {
+		result[i] = sym
+	}
+	return result
 }
 
 func toLspDiagnostic(d core.Diagnostic) lsp.Diagnostic {

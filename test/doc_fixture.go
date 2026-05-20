@@ -8,6 +8,9 @@ import (
 	"testing"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/server"
+	"typefox.dev/fastbelt/util/service"
+	"typefox.dev/lsp"
 )
 
 // Doc wraps a built [core.Document] with assertion methods and marker positions.
@@ -117,7 +120,7 @@ func (d *DiagnosticExpectation) WithTags(tags ...core.DiagnosticTag) *Diagnostic
 // severity and a message containing msgSubstring.
 func (d *Doc) ExpectDiagnostic(label string) *DiagnosticExpectation {
 	d.fixture.t.Helper()
-	loc, err := d.markerRange(label)
+	loc, err := d.MarkerRange(label)
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: %v", err)
 		return nil
@@ -149,7 +152,7 @@ func (d *Doc) AssertState(flag core.DocumentState) *Doc {
 	return d
 }
 
-func (d *Doc) markerRange(label string) (core.TextRange, error) {
+func (d *Doc) MarkerRange(label string) (core.TextRange, error) {
 	ranges := d.markerRanges(label)
 	if len(ranges) == 0 {
 		return core.TextRange{}, fmt.Errorf("no marker with label %q", label)
@@ -426,7 +429,7 @@ func MustFindReferenceWithText[T core.AstNode](d *Doc, text string) *core.Refere
 // If the label can be found multiple times, the function returns (nil, false)
 func FindReference[T core.AstNode](d *Doc, label string) (*core.Reference[T], bool) {
 	d.fixture.t.Helper()
-	targetRange, err := d.markerRange(label)
+	targetRange, err := d.MarkerRange(label)
 	if err != nil || d.Document.Root == nil {
 		return nil, false
 	}
@@ -452,4 +455,93 @@ func MustFindReference[T core.AstNode](d *Doc, label string) *core.Reference[T] 
 		d.fixture.t.Fatalf("fbtest: MustFindReference: no reference of the requested type at label %q", label)
 	}
 	return r
+}
+
+// FindSymbolAtLabel finds a document symbol at the given marker label.
+// Returns the symbol and true if found, or nil and false if not found.
+func (d *Doc) FindSymbolAtLabel(label string) (*lsp.DocumentSymbol, bool) {
+	d.fixture.t.Helper()
+
+	provider, err := service.Get[server.DocumentSymbolProvider](d.fixture.sc)
+	if err != nil {
+		return nil, false
+	}
+
+	params := &lsp.DocumentSymbolParams{
+		TextDocument: lsp.TextDocumentIdentifier{
+			URI: lsp.DocumentURI(d.Document.URI.DocumentURI()),
+		},
+	}
+
+	result, err := provider.HandleDocumentSymbolRequest(d.fixture.ctx, params)
+	if err != nil {
+		return nil, false
+	}
+
+	expectedRange, err := d.MarkerRange(label)
+	if err != nil {
+		return nil, false
+	}
+
+	sym := findSymbolAtRange(result, expectedRange)
+	if sym == nil {
+		return nil, false
+	}
+	return sym, true
+}
+
+// MustFindSymbolAtLabel finds a document symbol at the given marker label.
+// Fails the test if the symbol is not found.
+func (d *Doc) MustFindSymbolAtLabel(label string) *lsp.DocumentSymbol {
+	d.fixture.t.Helper()
+	sym, ok := d.FindSymbolAtLabel(label)
+	if !ok {
+		d.fixture.t.Fatalf("fbtest: MustFindSymbolAtLabel: no symbol found at label %q", label)
+	}
+	return sym
+}
+
+// AssertDocumentSymbol verifies that a document symbol exists with the given name at the marker label.
+// Returns the Doc for chaining.
+func (d *Doc) AssertDocumentSymbol(label string, expectedName string, expectedKind lsp.SymbolKind) *Doc {
+	d.fixture.t.Helper()
+
+	found := d.MustFindSymbolAtLabel(label)
+
+	if found.Name != expectedName {
+		d.fixture.t.Errorf("fbtest: symbol at %q has name %q, expected %q",
+			label, found.Name, expectedName)
+	}
+	if found.Kind != expectedKind {
+		d.fixture.t.Errorf("fbtest: symbol at %q has kind %v, expected %v",
+			label, found.Kind, expectedKind)
+	}
+
+	return d
+}
+
+// findSymbolAtRange is a helper function for recursive symbol search.
+func findSymbolAtRange(symbols []lsp.DocumentSymbol, targetRange core.TextRange) *lsp.DocumentSymbol {
+	for i := range symbols {
+		sym := &symbols[i]
+		symRange := core.TextRange{
+			Start: core.TextLocation{
+				Line:   core.TextLine(sym.Range.Start.Line),
+				Column: core.TextColumn(sym.Range.Start.Character),
+			},
+			End: core.TextLocation{
+				Line:   core.TextLine(sym.Range.End.Line),
+				Column: core.TextColumn(sym.Range.End.Character),
+			},
+		}
+
+		if symRange == targetRange {
+			return sym
+		}
+
+		if found := findSymbolAtRange(sym.Children, targetRange); found != nil {
+			return found
+		}
+	}
+	return nil
 }
