@@ -108,11 +108,7 @@ func newNFAFromSyntax(op *syntax.Regexp) *automatons.NFA {
 		runeSet := automatons.NewRuneSetFull()
 		return kit.Consume(runeSet)
 	case syntax.OpConcat:
-		chain := make([]*automatons.NFA, len(op.Sub))
-		for i, sub := range op.Sub {
-			chain[i] = newNFAFromSyntax(sub)
-		}
-		return kit.Concat(chain...)
+		return buildConcat(kit, op.Sub)
 	case syntax.OpAlternate:
 		alternatives := make([]*automatons.NFA, len(op.Sub))
 		for i, sub := range op.Sub {
@@ -120,15 +116,27 @@ func newNFAFromSyntax(op *syntax.Regexp) *automatons.NFA {
 		}
 		return kit.Alternate(alternatives...)
 	case syntax.OpStar:
+		if isNonGreedy(op) {
+			panic(unsupportedLazyMsg(op))
+		}
 		nfa := newNFAFromSyntax(op.Sub[0])
 		return kit.Repeat(nfa, 0, -1)
 	case syntax.OpPlus:
+		if isNonGreedy(op) {
+			panic(unsupportedLazyMsg(op))
+		}
 		nfa := newNFAFromSyntax(op.Sub[0])
 		return kit.Repeat(nfa, 1, -1)
 	case syntax.OpQuest:
+		if isNonGreedy(op) {
+			panic(unsupportedLazyMsg(op))
+		}
 		nfa := newNFAFromSyntax(op.Sub[0])
 		return kit.Repeat(nfa, 0, 1)
 	case syntax.OpRepeat:
+		if isNonGreedy(op) {
+			panic(unsupportedLazyMsg(op))
+		}
 		nfa := newNFAFromSyntax(op.Sub[0])
 		return kit.Repeat(nfa, int(op.Min), int(op.Max))
 	case syntax.OpCapture:
@@ -156,4 +164,73 @@ func newNFAFromSyntax(op *syntax.Regexp) *automatons.NFA {
 	default:
 		panic(fmt.Sprintf("unsupported syntax operation: %v", op.Op))
 	}
+}
+
+// isNonGreedy reports whether op carries the syntax.NonGreedy flag.
+func isNonGreedy(op *syntax.Regexp) bool {
+	return op.Flags&syntax.NonGreedy != 0
+}
+
+// isLazyQuantifier reports whether op is a quantifier with the non-greedy flag set.
+func isLazyQuantifier(op *syntax.Regexp) bool {
+	switch op.Op {
+	case syntax.OpStar, syntax.OpPlus, syntax.OpQuest, syntax.OpRepeat:
+		return isNonGreedy(op)
+	}
+	return false
+}
+
+func unsupportedLazyMsg(op *syntax.Regexp) string {
+	return fmt.Sprintf("non-greedy quantifier %v is only supported when followed by a fixed tail in a concatenation", op)
+}
+
+// quantifierBounds extracts the (min, max) bounds of a quantifier op.
+// max == -1 means unbounded.
+func quantifierBounds(op *syntax.Regexp) (int, int) {
+	switch op.Op {
+	case syntax.OpStar:
+		return 0, -1
+	case syntax.OpPlus:
+		return 1, -1
+	case syntax.OpQuest:
+		return 0, 1
+	case syntax.OpRepeat:
+		return int(op.Min), int(op.Max)
+	}
+	panic(fmt.Sprintf("not a quantifier: %v", op.Op))
+}
+
+// buildConcat builds the NFA for an OpConcat's children. When a child is a
+// non-greedy (lazy) quantifier, it delegates to ConstructionKit.LazyMatch to
+// produce the shortest-match construction. Recurses on the tail so multiple
+// lazy quantifiers compose.
+func buildConcat(kit *automatons.ConstructionKit, subs []*syntax.Regexp) *automatons.NFA {
+	for i, sub := range subs {
+		if !isLazyQuantifier(sub) {
+			// Skip non-lazy expressions in the regexp
+			// If there are non, simply build the concatenation as usual
+			continue
+		}
+		// Recurse into buildConcat to handle multiple lazy quantifiers
+		prefixNFA := buildConcat(kit, subs[:i])
+		tailNFA := buildConcat(kit, subs[i+1:])
+		bodyNFA := newNFAFromSyntax(sub.Sub[0])
+		minRep, maxRep := quantifierBounds(sub)
+		return kit.Concat(prefixNFA, kit.LazyMatch(bodyNFA, minRep, maxRep, tailNFA))
+	}
+
+	// Simplifications for common cases
+	if len(subs) == 0 {
+		return kit.Empty()
+	}
+	if len(subs) == 1 {
+		return newNFAFromSyntax(subs[0])
+	}
+	// Simply concatenate all subexpressions
+	// This is the default case if there are no lazy quantifiers
+	chain := make([]*automatons.NFA, len(subs))
+	for i, sub := range subs {
+		chain[i] = newNFAFromSyntax(sub)
+	}
+	return kit.Concat(chain...)
 }

@@ -200,3 +200,23 @@ func (ck *ConstructionKit) Intersect(a, b *NFA) *NFA {
 	notAOrB := ck.Alternate(notA, notB)
 	return ck.Complement(notAOrB)
 }
+
+// LazyMatch returns the NFA matching the shortest string of the form
+// body{bodyMin,bodyMax} followed by tail. bodyMax == -1 means unbounded.
+//
+// This is the non-greedy equivalent of Concat(Repeat(body, bodyMin, bodyMax), tail).
+// The construction is:
+//
+//	greedy = repeat(body) tail
+//	result = greedy intersect complement(greedy ".+")
+//
+// A string is a minimal match exactly when it is in greedy and no proper
+// prefix of it is in greedy (otherwise the prefix-followed-by-more form would
+// place it in greedy ".+").
+func (ck *ConstructionKit) LazyMatch(body *NFA, bodyMin, bodyMax int, tail *NFA) *NFA {
+	greedy := ck.Concat(ck.Repeat(body, bodyMin, bodyMax), tail)
+	anyChar := ck.Consume(NewRuneSetFull())
+	anyPlus := ck.Repeat(anyChar, 1, -1)
+	extended := ck.Concat(greedy, anyPlus)
+	return ck.Intersect(greedy, ck.Complement(extended))
+}
