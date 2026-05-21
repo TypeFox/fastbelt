@@ -158,7 +158,7 @@ func (f *Fixture) ParseAll(uriContentPairs ...string) []*Doc {
 }
 
 func (f *Fixture) newDoc(doc *core.Document, ranges []RangeMarker, indices []IndexMarker) *Doc {
-	return &Doc{Document: doc, Ranges: ranges, Indices: indices, ctx: f.ctx, t: f.t}
+	return &Doc{Document: doc, Ranges: ranges, Indices: indices, ctx: f.ctx, t: f.t, fixture: f}
 }
 
 // extractMarkers scans content for embedded position markers, removes them, and
