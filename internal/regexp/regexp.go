@@ -207,8 +207,11 @@ func quantifierBounds(op *syntax.Regexp) (int, int) {
 func buildConcat(kit *automatons.ConstructionKit, subs []*syntax.Regexp) *automatons.NFA {
 	for i, sub := range subs {
 		if !isLazyQuantifier(sub) {
+			// Skip non-lazy expressions in the regexp
+			// If there are non, simply build the concatenation as usual
 			continue
 		}
+		// Recurse into buildConcat to handle multiple lazy quantifiers
 		prefixNFA := buildConcat(kit, subs[:i])
 		tailNFA := buildConcat(kit, subs[i+1:])
 		bodyNFA := newNFAFromSyntax(sub.Sub[0])
@@ -216,12 +219,15 @@ func buildConcat(kit *automatons.ConstructionKit, subs []*syntax.Regexp) *automa
 		return kit.Concat(prefixNFA, kit.LazyMatch(bodyNFA, minRep, maxRep, tailNFA))
 	}
 
+	// Simplifications for common cases
 	if len(subs) == 0 {
 		return kit.Empty()
 	}
 	if len(subs) == 1 {
 		return newNFAFromSyntax(subs[0])
 	}
+	// Simply concatenate all subexpressions
+	// This is the default case if there are no lazy quantifiers
 	chain := make([]*automatons.NFA, len(subs))
 	for i, sub := range subs {
 		chain[i] = newNFAFromSyntax(sub)
