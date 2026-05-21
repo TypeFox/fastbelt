@@ -19,7 +19,7 @@ type FoundName struct {
 	Target core.StringUnit
 }
 
-// The [NameFinder] is responsible for finding the source and target [core.StringUnit] for a given token.
+// NameFinder is responsible for finding the source and target [core.StringUnit] for a given token.
 // It is used by various LSP services to find the name of a referenced/given symbol.
 // Adopters should customize this service if they want to change how names are found in LSP services.
 // Downstream LSP services will automatically use the new implementation.

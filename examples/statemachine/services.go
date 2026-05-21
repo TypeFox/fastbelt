@@ -32,7 +32,7 @@ func CreateServices() *service.Container {
 	return sc
 }
 
-// CreateServices creates a service container for the statemachine language to be used in the language server.
+// CreateLspServices creates a service container for the statemachine language to be used in the language server.
 func CreateLspServices() *service.Container {
 	sc := service.NewContainer()
 	SetupServices(sc)

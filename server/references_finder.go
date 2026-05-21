@@ -33,7 +33,7 @@ func NewDefaultReferencesFinder(sc *service.Container) ReferencesFinder {
 	return &DefaultReferencesFinder{sc: sc}
 }
 
-func (rp *DefaultReferencesFinder) Find(ctx context.Context, target core.AstNode, options FindReferencesOptions) iter.Seq[*core.ReferenceDescription] {
+func (rf *DefaultReferencesFinder) Find(ctx context.Context, target core.AstNode, options FindReferencesOptions) iter.Seq[*core.ReferenceDescription] {
 	sequences := []iter.Seq[*core.ReferenceDescription]{}
 	if options.IncludeDeclaration {
 		nameUnit := linking.Name(target)
@@ -42,7 +42,7 @@ func (rp *DefaultReferencesFinder) Find(ctx context.Context, target core.AstNode
 			sequences = append(sequences, extiter.Of(selfDescription))
 		}
 	}
-	documentManager := service.MustGet[workspace.DocumentManager](rp.sc)
+	documentManager := service.MustGet[workspace.DocumentManager](rf.sc)
 	// Iterate through all documents and collect references to the symbol
 	for doc := range documentManager.All() {
 		refDescriptions := doc.ReferenceDescriptions.ForTarget(target)
