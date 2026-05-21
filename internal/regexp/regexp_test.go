@@ -60,6 +60,30 @@ func TestRegexpLiteral(t *testing.T) {
 	checkRegexp(t, regexp, "/github.com/", []int{0, 12})
 }
 
+func TestMultilineComment(t *testing.T) {
+	regexp := MustCompile(`\/\*[\s\S]*?\*\/`)
+	cases := []struct {
+		input    string
+		expected []int
+	}{
+		{"/**/", []int{0, 4}},
+		{"/* foo */", []int{0, 9}},
+		{"/* foo * bar */", []int{0, 15}},
+		{"/* * */", []int{0, 7}},
+		{"/***/", []int{0, 5}},
+		{"/****/", []int{0, 6}},
+		{"/* * * */", []int{0, 9}},
+		{"/* foo **/", []int{0, 10}},
+		{"/* a */ /* b */", []int{0, 7}},
+		{"/* a */ x * y /* b */", []int{0, 7}},
+	}
+	for _, c := range cases {
+		t.Run(c.input, func(t *testing.T) {
+			checkRegexp(t, regexp, c.input, c.expected)
+		})
+	}
+}
+
 func TestStartChars_SingleRune(t *testing.T) {
 	regexp := MustCompile("a[bc]d")
 	startChars := regexp.(*RegexpImpl).GetStartChars()
