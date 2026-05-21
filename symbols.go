@@ -12,22 +12,26 @@ import (
 )
 
 type SymbolDescription struct {
-	URI         URI
-	Node        AstNode
-	Name        string
-	NameSegment *TextSegment
-	FullSegment *TextSegment
+	URI  URI
+	Node AstNode
+	Name StringUnit
 }
 
-func NewSymbolDescription(node AstNode, name string, nameSegment, fullSegment *TextSegment) *SymbolDescription {
+func NewSymbolDescription(node AstNode, name StringUnit) *SymbolDescription {
 	doc := node.Document()
 	return &SymbolDescription{
-		URI:         doc.URI,
-		Node:        node,
-		Name:        name,
-		NameSegment: nameSegment,
-		FullSegment: fullSegment,
+		URI:  doc.URI,
+		Node: node,
+		Name: name,
 	}
+}
+
+func NewTokenSymbolDescription(node NamedTokenNode) *SymbolDescription {
+	return NewSymbolDescription(node, node.NameToken())
+}
+
+func NewCompositeNodeSymbolDescription(node NamedCompositeNode) *SymbolDescription {
+	return NewSymbolDescription(node, node.NameNode())
 }
 
 var EmptySymbolDescriptions = extiter.Empty[*SymbolDescription]()

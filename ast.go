@@ -306,6 +306,7 @@ type NamedCompositeNode interface {
 
 // [StringUnit] is a common interface for both [Token] and [CompositeNode], as both can serve as the "name" of a reference.
 type StringUnit interface {
+	Owner() AstNode
 	Segment() *TextSegment
 	String() string
 }
@@ -327,10 +328,16 @@ func NewCompositeNode() CompositeNode {
 
 type CompositeNodeBase struct {
 	AstNodeBase
+	// We could use a sync.Once here, but that would add some overhead
+	// In benchmarks, using an atomic pointer here is much faster (roughly 2x)
 	cache atomic.Pointer[string]
 }
 
 func (node *CompositeNodeBase) IsCompositeNode() {}
+
+func (node *CompositeNodeBase) Owner() AstNode {
+	return node.container
+}
 
 func (node *CompositeNodeBase) String() string {
 	// Cache the string value, as it is accessed frequently

@@ -8,6 +8,7 @@ package statemachine
 
 import (
 	"typefox.dev/fastbelt/linking"
+	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
@@ -27,6 +28,15 @@ func SetupServices(sc *service.Container) {
 func CreateServices() *service.Container {
 	sc := service.NewContainer()
 	SetupServices(sc)
+	sc.Seal()
+	return sc
+}
+
+// CreateLspServices creates a service container for the statemachine language to be used in the language server.
+func CreateLspServices() *service.Container {
+	sc := service.NewContainer()
+	SetupServices(sc)
+	server.SetupDefaultServices(sc)
 	sc.Seal()
 	return sc
 }

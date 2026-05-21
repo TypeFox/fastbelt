@@ -152,6 +152,29 @@ func BenchmarkLexer(b *testing.B) {
 	}
 }
 
+func BenchmarkLocalLinking(b *testing.B) {
+	content, _ := generateStatemachineContent(0)
+	srv := CreateServices()
+	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
+	if err != nil {
+		b.Fatal(err)
+	}
+	docs := []*fastbelt.Document{doc}
+	builder := service.MustGet[workspace.Builder](srv)
+	// Prebuild the file - we will reset the references later
+	if err := builder.Build(b.Context(), docs, nil); err != nil {
+		b.Errorf("build failed: %v", err)
+	}
+	b.SetBytes(int64(len(content)))
+	b.ResetTimer()
+	for b.Loop() {
+		for _, ref := range doc.References {
+			ref.Reset()
+			ref.Resolve(b.Context())
+		}
+	}
+}
+
 // generateStatemachineContent generates a syntactically valid statemachine
 // document for the given index. Each document contains:
 //   - 4 events

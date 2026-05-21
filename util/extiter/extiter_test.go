@@ -11,6 +11,31 @@ import (
 	"testing"
 )
 
+func TestOf(t *testing.T) {
+	t.Run("no elements", func(t *testing.T) {
+		result := slices.Collect(Of[int]())
+		if len(result) != 0 {
+			t.Errorf("expected empty slice, got %v", result)
+		}
+	})
+
+	t.Run("single element", func(t *testing.T) {
+		result := slices.Collect(Of(42))
+		expected := []int{42}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("expected %v, got %v", expected, result)
+		}
+	})
+
+	t.Run("multiple elements preserves order", func(t *testing.T) {
+		result := slices.Collect(Of(1, 2, 3))
+		expected := []int{1, 2, 3}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("expected %v, got %v", expected, result)
+		}
+	})
+}
+
 func TestCount(t *testing.T) {
 	tests := []struct {
 		name     string

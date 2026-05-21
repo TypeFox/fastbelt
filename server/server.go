@@ -51,6 +51,7 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			ReferencesProvider: &lsp.Or_ServerCapabilities_referencesProvider{
 				Value: service.Has[ReferencesProvider](s.sc),
 			},
+			RenameProvider: service.Has[RenameProvider](s.sc),
 			FoldingRangeProvider: &lsp.Or_ServerCapabilities_foldingRangeProvider{
 				Value: service.Has[FoldingRangeProvider](s.sc),
 			},
@@ -324,7 +325,22 @@ func (s *DefaultLanguageServer) PrepareCallHierarchy(ctx context.Context, params
 	return nil, nil
 }
 func (s *DefaultLanguageServer) PrepareRename(ctx context.Context, params *lsp.PrepareRenameParams) (*lsp.PrepareRenameResult, error) {
-	return nil, nil
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	renameProvider, err := service.Get[RenameProvider](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	var result *lsp.PrepareRenameResult
+	var providerErr error
+	if err := lock.Read(ctx, func(ctx context.Context) {
+		result, providerErr = renameProvider.PrepareRenameRequest(ctx, params)
+	}); err != nil {
+		return nil, err
+	}
+	return result, providerErr
 }
 func (s *DefaultLanguageServer) PrepareTypeHierarchy(ctx context.Context, params *lsp.TypeHierarchyPrepareParams) ([]lsp.TypeHierarchyItem, error) {
 	return nil, nil
@@ -336,7 +352,22 @@ func (s *DefaultLanguageServer) RangesFormatting(ctx context.Context, params *ls
 	return nil, nil
 }
 func (s *DefaultLanguageServer) Rename(ctx context.Context, params *lsp.RenameParams) (*lsp.WorkspaceEdit, error) {
-	return nil, nil
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	renameProvider, err := service.Get[RenameProvider](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	var result *lsp.WorkspaceEdit
+	var providerErr error
+	if err := lock.Read(ctx, func(ctx context.Context) {
+		result, providerErr = renameProvider.HandleRenameRequest(ctx, params)
+	}); err != nil {
+		return nil, err
+	}
+	return result, providerErr
 }
 func (s *DefaultLanguageServer) SelectionRange(ctx context.Context, params *lsp.SelectionRangeParams) ([]lsp.SelectionRange, error) {
 	return nil, nil

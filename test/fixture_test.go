@@ -63,6 +63,15 @@ func TestExtractMarkers_NoMarkers(t *testing.T) {
 	assert.Empty(t, indices)
 }
 
+func TestExtractMarkers_RangeAfterLocation(t *testing.T) {
+	clean, ranges, indices := extractMarkers("<|1><|1|>", nil)
+	assert.Equal(t, "1", clean)
+	require.Len(t, indices, 1)
+	assert.Equal(t, IndexMarker{Label: "1", Offset: 0}, indices[0])
+	require.Len(t, ranges, 1)
+	assert.Equal(t, RangeMarker{Label: "1", Start: 0, End: 1}, ranges[0])
+}
+
 func TestExtractMarkers_UnclosedOpening(t *testing.T) {
 	// No closing delimiter: treat the opening as literal text.
 	clean, ranges, indices := extractMarkers("a <| b", nil)

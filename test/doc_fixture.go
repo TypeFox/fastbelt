@@ -2,14 +2,12 @@ package test
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
 
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/server"
-	"typefox.dev/fastbelt/util/service"
-	"typefox.dev/lsp"
 )
 
 // Doc wraps a built [core.Document] with assertion methods and marker positions.
@@ -18,13 +16,11 @@ type Doc struct {
 	Document *core.Document
 	Ranges   []RangeMarker
 	Indices  []IndexMarker
-	ctx      context.Context
-	t        testing.TB
 	fixture  *Fixture
 }
 
 // Ctx returns the context for this document. Pass it to [core.Reference.Ref].
-func (d *Doc) Ctx() context.Context { return d.ctx }
+func (d *Doc) Ctx() context.Context { return d.fixture.ctx }
 
 // Root returns the root AST node of the document.
 func (d *Doc) Root() core.AstNode { return d.Document.Root }
@@ -34,11 +30,11 @@ func (d *Doc) Diagnostics() []*core.Diagnostic { return d.Document.Diagnostics }
 
 // AssertNoErrors fails the test if any error-severity Diagnostics exist.
 func (d *Doc) AssertNoErrors() *Doc {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	// The diagnostics contain all kinds of errors
 	for _, diag := range d.Document.Diagnostics {
 		if diag.Severity == core.SeverityError {
-			d.t.Errorf("fbtest: unexpected error diagnostic: %s", diag.Message)
+			d.fixture.t.Errorf("fbtest: unexpected error diagnostic: %s", diag.Message)
 		}
 	}
 	return d
@@ -47,12 +43,12 @@ func (d *Doc) AssertNoErrors() *Doc {
 // AssertNoParseErrors fails the test if any LexerErrors or ParserErrors exist.
 // Diagnostics are not checked.
 func (d *Doc) AssertNoParseErrors() *Doc {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	for _, e := range d.Document.LexerErrors {
-		d.t.Errorf("fbtest: unexpected lexer error: %v", e)
+		d.fixture.t.Errorf("fbtest: unexpected lexer error: %v", e)
 	}
 	for _, e := range d.Document.ParserErrors {
-		d.t.Errorf("fbtest: unexpected parser error: %v", e)
+		d.fixture.t.Errorf("fbtest: unexpected parser error: %v", e)
 	}
 	return d
 }
@@ -120,79 +116,107 @@ func (d *DiagnosticExpectation) WithTags(tags ...core.DiagnosticTag) *Diagnostic
 // AssertDiagnostic fails the test unless at least one diagnostic has the given
 // severity and a message containing msgSubstring.
 func (d *Doc) ExpectDiagnostic(label string) *DiagnosticExpectation {
-	d.t.Helper()
-	loc, ok := d.MarkerRange(label)
-	if !ok {
-		d.t.Fatalf("fbtest: no marker with label %q", label)
+	d.fixture.t.Helper()
+	loc, err := d.markerRange(label)
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: %v", err)
 		return nil
 	}
 	for _, diag := range d.Document.Diagnostics {
 		if diag.Range == loc {
-			return &DiagnosticExpectation{t: d.t, Diagnostic: diag}
+			return &DiagnosticExpectation{t: d.fixture.t, Diagnostic: diag}
 		}
 	}
-	d.t.Fatalf("fbtest: no diagnostic at label %q", label)
+	d.fixture.t.Fatalf("fbtest: no diagnostic at label %q", label)
 	return nil
 }
 
 // AssertNoDiagnostics fails the test if any diagnostics exist at any severity.
 func (d *Doc) AssertNoDiagnostics() *Doc {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	for _, diag := range d.Document.Diagnostics {
-		d.t.Errorf("fbtest: unexpected diagnostic [%s]: %s", diag.Severity, diag.Message)
+		d.fixture.t.Errorf("fbtest: unexpected diagnostic [%s]: %s", diag.Severity, diag.Message)
 	}
 	return d
 }
 
 // AssertState fails the test unless the document state includes the given flag.
 func (d *Doc) AssertState(flag core.DocumentState) *Doc {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	if !d.Document.State.Has(flag) {
-		d.t.Errorf("fbtest: document state does not include %v (actual: %v)", flag, d.Document.State)
+		d.fixture.t.Errorf("fbtest: document state does not include %v (actual: %v)", flag, d.Document.State)
 	}
 	return d
 }
 
-// MarkerRange returns the TextRange for a given marker label.
-// Returns false if the marker doesn't exist.
-func (d *Doc) MarkerRange(label string) (core.TextRange, bool) {
+func (d *Doc) markerRange(label string) (core.TextRange, error) {
+	ranges := d.markerRanges(label)
+	if len(ranges) == 0 {
+		return core.TextRange{}, fmt.Errorf("no marker with label %q", label)
+	} else if len(ranges) > 1 {
+		return core.TextRange{}, fmt.Errorf("multiple markers with label %q found; expected exactly one", label)
+	}
+	return ranges[0], nil
+}
+
+func (d *Doc) markerRanges(label string) []core.TextRange {
+	var result []core.TextRange
 	for _, r := range d.Ranges {
 		if r.Label == label {
 			start := d.Document.TextDoc.PositionAt(r.Start)
 			end := d.Document.TextDoc.PositionAt(r.End)
-			return core.TextRange{Start: core.TextLocation{
+			result = append(result, core.TextRange{Start: core.TextLocation{
 				Line:   core.TextLine(start.Line),
 				Column: core.TextColumn(start.Character),
 			}, End: core.TextLocation{
 				Line:   core.TextLine(end.Line),
 				Column: core.TextColumn(end.Character),
-			}}, true
+			}})
 		}
 	}
-	return core.TextRange{}, false
+	return result
 }
 
-// Unused, uncomment once required
-// // markerLocation returns the TextLocation of the named marker.
-// // For range markers it returns the start; for index markers the offset position.
-// func (d *Doc) markerLocation(label string) (core.TextLocation, bool) {
-// 	text := d.Document.TextDoc.Text(nil)
-// 	for _, r := range d.Ranges {
-// 		if r.Label == label {
-// 			return offsetToLocation(text, r.Start), true
-// 		}
-// 	}
-// 	for _, idx := range d.Indices {
-// 		if idx.Label == label {
-// 			return offsetToLocation(text, idx.Offset), true
-// 		}
-// 	}
-// 	return core.TextLocation{}, false
-// }
+// markerLocation returns the TextLocation of the named marker.
+// For range markers it returns the start; for index markers the offset position.
+func (d *Doc) markerLocations(label string, includeRanges bool) []core.TextLocation {
+	var result []core.TextLocation
+	for _, idx := range d.Indices {
+		if idx.Label == label {
+			position := d.Document.TextDoc.PositionAt(idx.Offset)
+			result = append(result, core.TextLocation{
+				Line:   core.TextLine(position.Line),
+				Column: core.TextColumn(position.Character),
+			})
+		}
+	}
+	if includeRanges {
+		for _, r := range d.Ranges {
+			if r.Label == label {
+				start := d.Document.TextDoc.PositionAt(r.Start)
+				result = append(result, core.TextLocation{
+					Line:   core.TextLine(start.Line),
+					Column: core.TextColumn(start.Character),
+				})
+			}
+		}
+	}
+	return result
+}
+
+func (d *Doc) markerLocation(label string, includeRanges bool) (core.TextLocation, error) {
+	locations := d.markerLocations(label, includeRanges)
+	if len(locations) == 0 {
+		return core.TextLocation{}, fmt.Errorf("no marker with label %q", label)
+	} else if len(locations) > 1 {
+		return core.TextLocation{}, fmt.Errorf("multiple markers with label %q found; expected exactly one", label)
+	}
+	return locations[0], nil
+}
 
 // FindNode returns the first node of type T in the document tree, or (zero, false).
 func FindNode[T core.AstNode](d *Doc) (T, bool) {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	var zero T
 	if d.Document.Root == nil {
 		return zero, false
@@ -207,17 +231,17 @@ func FindNode[T core.AstNode](d *Doc) (T, bool) {
 
 // MustFindNode fails the test if no node of type T is found in the document tree.
 func MustFindNode[T core.AstNode](d *Doc) T {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	n, ok := FindNode[T](d)
 	if !ok {
-		d.t.Fatal("fbtest: MustFindNode: no node of the requested type found")
+		d.fixture.t.Fatal("fbtest: MustFindNode: no node of the requested type found")
 	}
 	return n
 }
 
 // FindAll returns all nodes of type T in the document tree.
 func FindAll[T core.AstNode](d *Doc) []T {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	if d.Document.Root == nil {
 		return nil
 	}
@@ -233,7 +257,7 @@ func FindAll[T core.AstNode](d *Doc) []T {
 // FindNodeAtOffset returns the most specific (smallest span) node of type T whose
 // text span contains the given byte offset.
 func FindNodeAtOffset[T core.AstNode](d *Doc, offset int) (T, bool) {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	var zero T
 	if d.Document.Root == nil {
 		return zero, false
@@ -263,10 +287,10 @@ func FindNodeAtOffset[T core.AstNode](d *Doc, offset int) (T, bool) {
 
 // MustFindNodeAtOffset fails the test if no node of type T contains the given offset.
 func MustFindNodeAtOffset[T core.AstNode](d *Doc, offset int) T {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	n, ok := FindNodeAtOffset[T](d, offset)
 	if !ok {
-		d.t.Fatalf("fbtest: MustFindNodeAtOffset: no node of the requested type at offset %d", offset)
+		d.fixture.t.Fatalf("fbtest: MustFindNodeAtOffset: no node of the requested type at offset %d", offset)
 	}
 	return n
 }
@@ -274,7 +298,7 @@ func MustFindNodeAtOffset[T core.AstNode](d *Doc, offset int) T {
 // FindNodeAtLocation returns the most specific (smallest span) node of type T whose
 // text range contains the given line/column position.
 func FindNodeAtLocation[T core.AstNode](d *Doc, location core.TextLocation) (T, bool) {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	var zero T
 	if d.Document.Root == nil {
 		return zero, false
@@ -303,10 +327,10 @@ func FindNodeAtLocation[T core.AstNode](d *Doc, location core.TextLocation) (T, 
 
 // MustFindNodeAtLocation fails the test if no node of type T contains the given location.
 func MustFindNodeAtLocation[T core.AstNode](d *Doc, location core.TextLocation) T {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	n, ok := FindNodeAtLocation[T](d, location)
 	if !ok {
-		d.t.Fatalf("fbtest: MustFindNodeAtLocation: no node of the requested type at %v", location)
+		d.fixture.t.Fatalf("fbtest: MustFindNodeAtLocation: no node of the requested type at %v", location)
 	}
 	return n
 }
@@ -314,7 +338,7 @@ func MustFindNodeAtLocation[T core.AstNode](d *Doc, location core.TextLocation) 
 // FindNodeAtLabel returns the most specific node of type T at the position of the
 // named range marker (start offset) or index marker.
 func FindNodeAtLabel[T core.AstNode](d *Doc, label string) (T, bool) {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	var zero T
 	for _, r := range d.Ranges {
 		if r.Label == label {
@@ -331,10 +355,10 @@ func FindNodeAtLabel[T core.AstNode](d *Doc, label string) (T, bool) {
 
 // MustFindNodeAtLabel fails the test if no node of type T is found at the given label.
 func MustFindNodeAtLabel[T core.AstNode](d *Doc, label string) T {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	n, ok := FindNodeAtLabel[T](d, label)
 	if !ok {
-		d.t.Fatalf("fbtest: MustFindNodeAtLabel: no node of the requested type at label %q", label)
+		d.fixture.t.Fatalf("fbtest: MustFindNodeAtLabel: no node of the requested type at label %q", label)
 	}
 	return n
 }
@@ -342,7 +366,7 @@ func MustFindNodeAtLabel[T core.AstNode](d *Doc, label string) T {
 // FindNamedNode returns the first node of type T whose Name() method returns the given name.
 // T must implement [core.NamedNode] (or have a Name() string method) to find results.
 func FindNamedNode[T core.AstNode](d *Doc, name string) (T, bool) {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	var zero T
 	if d.Document.Root == nil {
 		return zero, false
@@ -361,10 +385,10 @@ func FindNamedNode[T core.AstNode](d *Doc, name string) (T, bool) {
 
 // MustFindNamedNode fails the test if no node of type T with the given name is found.
 func MustFindNamedNode[T core.AstNode](d *Doc, name string) T {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	n, ok := FindNamedNode[T](d, name)
 	if !ok {
-		d.t.Fatalf("fbtest: MustFindNamedNode: no node of the requested type with name %q", name)
+		d.fixture.t.Fatalf("fbtest: MustFindNamedNode: no node of the requested type with name %q", name)
 	}
 	return n
 }
@@ -372,7 +396,7 @@ func MustFindNamedNode[T core.AstNode](d *Doc, name string) T {
 // FindReferenceWithText returns the first reference of type T whose cross-reference
 // text matches the given string exactly.
 func FindReferenceWithText[T core.AstNode](d *Doc, text string) (*core.Reference[T], bool) {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	if d.Document.Root == nil {
 		return nil, false
 	}
@@ -390,19 +414,20 @@ func FindReferenceWithText[T core.AstNode](d *Doc, text string) (*core.Reference
 // MustFindReferenceWithText fails the test if no reference of type T with the given
 // text is found.
 func MustFindReferenceWithText[T core.AstNode](d *Doc, text string) *core.Reference[T] {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	r, ok := FindReferenceWithText[T](d, text)
 	if !ok {
-		d.t.Fatalf("fbtest: MustFindReferenceWithText: no reference of the requested type with text %q", text)
+		d.fixture.t.Fatalf("fbtest: MustFindReferenceWithText: no reference of the requested type with text %q", text)
 	}
 	return r
 }
 
 // FindReference returns the first reference of type T whose cross-reference text is located at the given label.
+// If the label can be found multiple times, the function returns (nil, false)
 func FindReference[T core.AstNode](d *Doc, label string) (*core.Reference[T], bool) {
-	d.t.Helper()
-	targetRange, found := d.MarkerRange(label)
-	if !found || d.Document.Root == nil {
+	d.fixture.t.Helper()
+	targetRange, err := d.markerRange(label)
+	if err != nil || d.Document.Root == nil {
 		return nil, false
 	}
 	for _, ref := range d.Document.References {
@@ -421,61 +446,10 @@ func FindReference[T core.AstNode](d *Doc, label string) (*core.Reference[T], bo
 
 // MustFindReference fails the test if no reference of type T is found at the given label.
 func MustFindReference[T core.AstNode](d *Doc, label string) *core.Reference[T] {
-	d.t.Helper()
+	d.fixture.t.Helper()
 	r, ok := FindReference[T](d, label)
 	if !ok {
-		d.t.Fatalf("fbtest: MustFindReference: no reference of the requested type at label %q", label)
+		d.fixture.t.Fatalf("fbtest: MustFindReference: no reference of the requested type at label %q", label)
 	}
 	return r
-}
-
-// AssertFoldingRanges verifies that folding ranges exist for all specified marker labels.
-// Returns the Doc for chaining.
-func (d *Doc) AssertFoldingRanges(labels ...string) *Doc {
-	d.fixture.t.Helper()
-
-	frProvider, err := service.Get[server.FoldingRangeProvider](d.fixture.sc)
-	if err != nil {
-		d.fixture.t.Fatalf("fbtest: no folding range provider available: %v", err)
-	}
-
-	params := &lsp.FoldingRangeParams{
-		TextDocument: lsp.TextDocumentIdentifier{
-			URI: lsp.DocumentURI(d.Document.URI.DocumentURI()),
-		},
-	}
-
-	result, err := frProvider.HandleFoldingRangeRequest(d.fixture.ctx, params)
-	if err != nil {
-		d.fixture.t.Fatalf("fbtest: folding range request failed: %v", err)
-	}
-
-	for _, label := range labels {
-		expectedRange, ok := d.MarkerRange(label)
-		if !ok {
-			d.fixture.t.Fatalf("fbtest: no marker with label %q", label)
-		}
-
-		found := false
-		for _, fr := range result {
-			if fr.StartLine != nil && fr.EndLine != nil {
-				if *fr.StartLine == uint32(expectedRange.Start.Line) &&
-					*fr.EndLine == uint32(expectedRange.End.Line) {
-					// For comment ranges, also verify the kind
-					if label == "comment" && fr.Kind != "comment" {
-						continue
-					}
-					found = true
-					break
-				}
-			}
-		}
-
-		if !found {
-			d.fixture.t.Errorf("fbtest: expected folding range at label %q (lines %d-%d) not found",
-				label, expectedRange.Start.Line, expectedRange.End.Line)
-		}
-	}
-
-	return d
 }

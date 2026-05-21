@@ -10,8 +10,10 @@ import (
 	"testing"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
+	"typefox.dev/lsp"
 )
 
 // DefaultMarking is the marker configuration used by [New].
@@ -54,6 +56,7 @@ type Fixture struct {
 	t       testing.TB
 	sc      *service.Container
 	ctx     context.Context
+	docs    []*Doc
 	marking *TestMarking
 }
 
@@ -68,6 +71,26 @@ func New(t testing.TB, sc *service.Container) *Fixture {
 func NewWithContext(t testing.TB, sc *service.Container, ctx context.Context) *Fixture {
 	t.Helper()
 	return &Fixture{t: t, sc: sc, ctx: ctx, marking: DefaultMarking}
+}
+
+func (f *Fixture) Documents() []*Doc {
+	return f.docs
+}
+
+func (f *Fixture) Ctx() context.Context {
+	return f.ctx
+}
+
+func (f *Fixture) Services() *service.Container {
+	return f.sc
+}
+
+func (f *Fixture) Marking() *TestMarking {
+	return f.marking
+}
+
+func (f *Fixture) T() testing.TB {
+	return f.t
 }
 
 // WithMarking returns a shallow copy of the [Fixture] using m as the marker configuration.
@@ -112,14 +135,15 @@ func (f *Fixture) ParseURI(content, uri string) *Doc {
 	f.t.Helper()
 	cleanText, ranges, indices := extractMarkers(content, f.marking)
 	languageID := service.MustGet[workspace.LanguageID](f.sc)
-	doc, err := core.NewDocumentFromString(uri, string(languageID), cleanText)
+	overlay, err := textdoc.NewOverlay(lsp.DocumentURI(uri), string(languageID), 0, cleanText)
 	if err != nil {
-		f.t.Fatalf("fbtest: failed to create document: %v", err)
+		f.t.Fatalf("fbtest: failed to create document %q: %v", uri, err)
 	}
+	doc := core.NewDocument(overlay)
 	documents := service.MustGet[workspace.DocumentManager](f.sc)
 	documents.Set(doc)
 	builder := service.MustGet[workspace.Builder](f.sc)
-	if err := builder.Build(f.ctx, []*core.Document{doc}, func() {}); err != nil {
+	if err := builder.Build(f.ctx, []*core.Document{doc}, nil); err != nil {
 		f.t.Fatalf("fbtest: build failed: %v", err)
 	}
 	return f.newDoc(doc, ranges, indices)
@@ -141,24 +165,27 @@ func (f *Fixture) ParseAll(uriContentPairs ...string) []*Doc {
 		uri, content := uriContentPairs[i], uriContentPairs[i+1]
 		cleanText, ranges, indices := extractMarkers(content, f.marking)
 		languageID := service.MustGet[workspace.LanguageID](f.sc)
-		doc, err := core.NewDocumentFromString(uri, string(languageID), cleanText)
+		overlay, err := textdoc.NewOverlay(lsp.DocumentURI(uri), string(languageID), 0, cleanText)
 		if err != nil {
 			f.t.Fatalf("fbtest: failed to create document %q: %v", uri, err)
 		}
+		doc := core.NewDocument(overlay)
 		documents := service.MustGet[workspace.DocumentManager](f.sc)
 		documents.Set(doc)
 		coreDocs = append(coreDocs, doc)
 		results = append(results, f.newDoc(doc, ranges, indices))
 	}
 	builder := service.MustGet[workspace.Builder](f.sc)
-	if err := builder.Build(f.ctx, coreDocs, func() {}); err != nil {
+	if err := builder.Build(f.ctx, coreDocs, nil); err != nil {
 		f.t.Fatalf("fbtest: build failed: %v", err)
 	}
 	return results
 }
 
 func (f *Fixture) newDoc(doc *core.Document, ranges []RangeMarker, indices []IndexMarker) *Doc {
-	return &Doc{Document: doc, Ranges: ranges, Indices: indices, ctx: f.ctx, t: f.t, fixture: f}
+	testDoc := &Doc{Document: doc, Ranges: ranges, Indices: indices, fixture: f}
+	f.docs = append(f.docs, testDoc)
+	return testDoc
 }
 
 // extractMarkers scans content for embedded position markers, removes them, and
@@ -222,14 +249,23 @@ func extractMarkers(content string, m *TestMarking) (cleanText string, ranges []
 		} else {
 			rest := content[next+len(m.StartRange):]
 
-			// Try range marker first: look for EndRange in the remainder.
-			if rangeEnd := strings.Index(rest, m.EndRange); rangeEnd != -1 {
+			rangeEnd := strings.Index(rest, m.EndRange)
+			idxEnd := -1
+			// If the index and range prefixes are the same,
+			// look for the end delimiter that is closest to the opening delimiter.
+			if !separateIndexPrefix {
+				idxEnd = strings.Index(rest, m.EndIndex)
+			}
+			if rangeEnd != -1 && (idxEnd == -1 ||
+				rangeEnd < idxEnd ||
+				// If they are the same, check for the longer end delimiter to disambiguate (e.g. "|>" beats ">").
+				(rangeEnd == idxEnd && len(m.EndRange) >= len(m.EndIndex))) {
 				inner := rest[:rangeEnd]
 				var label, text string
 				if before, after, ok := strings.Cut(inner, m.Delimiter); ok {
 					label, text = before, after
 				} else {
-					// Shorthand: <|label|> — label and text are the same string.
+					// Shorthand: <|label|> - label and text are the same string.
 					label, text = inner, inner
 				}
 				ranges = append(ranges, RangeMarker{Label: label, Start: offset, End: offset + len(text)})
@@ -237,16 +273,10 @@ func extractMarkers(content string, m *TestMarking) (cleanText string, ranges []
 				offset += len(text)
 				i = next + len(m.StartRange) + rangeEnd + len(m.EndRange)
 				continue
-			}
-
-			// Fall back to index marker: only when StartIndex == StartRange (both marker
-			// types share the same opening delimiter, distinguished only by EndIndex).
-			if !separateIndexPrefix {
-				if idxEnd := strings.Index(rest, m.EndIndex); idxEnd != -1 {
-					indices = append(indices, IndexMarker{Label: rest[:idxEnd], Offset: offset})
-					i = next + len(m.StartRange) + idxEnd + len(m.EndIndex)
-					continue
-				}
+			} else if idxEnd != -1 {
+				indices = append(indices, IndexMarker{Label: rest[:idxEnd], Offset: offset})
+				i = next + len(m.StartRange) + idxEnd + len(m.EndIndex)
+				continue
 			}
 
 			// No closing delimiter found; treat the opening as literal text.

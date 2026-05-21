@@ -66,10 +66,7 @@ func DescribeExport(node core.AstNode) *core.SymbolDescription {
 
 	nameUnit := Name(node)
 	if nameUnit != nil {
-		name := nameUnit.String()
-		segment := nameUnit.Segment()
-		fullSegment := node.Segment()
-		return core.NewSymbolDescription(node, name, segment, fullSegment)
+		return core.NewSymbolDescription(node, nameUnit)
 	}
 	return nil
 }

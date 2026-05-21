@@ -64,7 +64,7 @@ func NewSeqScope(elements iter.Seq[*SymbolDescription], outer Scope) *SeqScope {
 
 func (s *SeqScope) ElementByName(name string) *SymbolDescription {
 	for desc := range s.elements {
-		if desc.Name == name {
+		if desc.Name.String() == name {
 			return desc
 		}
 	}
@@ -76,7 +76,7 @@ func (s *SeqScope) ElementByName(name string) *SymbolDescription {
 
 func (s *SeqScope) ElementsByName(name string) iter.Seq[*SymbolDescription] {
 	matching := extiter.Filter(s.elements, func(desc *SymbolDescription) bool {
-		return desc.Name == name
+		return desc.Name.String() == name
 	})
 	if s.outer != nil {
 		return extiter.Concat(matching, s.outer.ElementsByName(name))
@@ -112,7 +112,7 @@ func NewMapScopeFromSlice(elements []*SymbolDescription, outer Scope) *MapScope 
 func NewMapScopeFromSeq(elements iter.Seq[*SymbolDescription], outer Scope) *MapScope {
 	elemMap := collections.NewMultiMap[string, *SymbolDescription]()
 	for desc := range elements {
-		elemMap.Put(desc.Name, desc)
+		elemMap.Put(desc.Name.String(), desc)
 	}
 	return NewMapScope(elemMap, outer)
 }

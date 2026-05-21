@@ -145,7 +145,9 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 
 	// Transition from write phase to readable: releases the exclusive lock so
 	// read requests can proceed while validation (phase 3) runs concurrently.
-	downgrade()
+	if downgrade != nil {
+		downgrade()
+	}
 
 	// PHASE 3: Run custom validations (parallel per document).
 	validator := service.MustGet[DocumentValidator](s.sc)
