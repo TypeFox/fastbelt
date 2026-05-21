@@ -459,9 +459,5 @@ func BuildATN() *parser.RuntimeATN {
 	decisionMap[Statemachine_RuleCall_2] = states[15]
 	decisionMap[Statemachine_RuleCall_3] = states[20]
 	decisionMap[Statemachine_RuleCall_5] = states[26]
-	return &parser.RuntimeATN{
-		States:         states,
-		DecisionStates: decisionStates,
-		DecisionMap:    decisionMap,
-	}
+	return parser.NewRuntimeATN(states, decisionStates, decisionMap)
 }

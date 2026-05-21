@@ -5,8 +5,6 @@
 package parser
 
 import (
-	"sync"
-
 	"typefox.dev/fastbelt"
 )
 
@@ -72,28 +70,43 @@ func (t *RuntimeRuleTransition) GetTarget() *RuntimeATNState { return t.Target }
 func (t *RuntimeRuleTransition) IsEpsilon() bool             { return true }
 
 // RuntimeATN is the minimal ATN structure used at prediction time.
-// It can be built directly from generated Go code without running CreateATN.
+// Call [NewRuntimeATN] to construct from the full build-time ATN to ensure proper initialization.
 type RuntimeATN struct {
 	States         []*RuntimeATNState
 	DecisionStates []*RuntimeATNState // indexed by Decision
-	DecisionMap    []*RuntimeATNState // key → decision state
+	DecisionMap    []*RuntimeATNState // key -> decision state
 
-	stateIdxOnce  sync.Once
-	stateIdxCache map[*RuntimeATNState]int // lazily built pointer → array index
+	stateIdxCache map[*RuntimeATNState]int // pointer -> array index
 
-	nextTokensOnce  sync.Once
-	nextTokensCache [][]bool // stateIdx → bitset indexed by TokenType.Id
+	nextTokensCache [][]bool // stateIdx -> bitset indexed by TokenType.Id
 	tokenSetSize    int      // common length of every entry in nextTokensCache
+}
+
+func NewRuntimeATN(states []*RuntimeATNState, decisionStates []*RuntimeATNState, decisionMap []*RuntimeATNState) *RuntimeATN {
+	atn := &RuntimeATN{
+		States:         states,
+		DecisionStates: decisionStates,
+		DecisionMap:    decisionMap,
+	}
+	atn.Init()
+	return atn
+}
+
+// Initializes the different caches of the ATN.
+func (atn *RuntimeATN) Init() {
+	atn.buildIdxCache()
+	atn.buildNextTokensCache()
+}
+
+func (atn *RuntimeATN) buildIdxCache() {
+	atn.stateIdxCache = make(map[*RuntimeATNState]int, len(atn.States))
+	for i, st := range atn.States {
+		atn.stateIdxCache[st] = i
+	}
 }
 
 // stateIndex returns the array index of s in States, building a cache on first call.
 func (atn *RuntimeATN) stateIndex(s *RuntimeATNState) int {
-	atn.stateIdxOnce.Do(func() {
-		atn.stateIdxCache = make(map[*RuntimeATNState]int, len(atn.States))
-		for i, st := range atn.States {
-			atn.stateIdxCache[st] = i
-		}
-	})
 	if i, ok := atn.stateIdxCache[s]; ok {
 		return i
 	}
@@ -103,7 +116,6 @@ func (atn *RuntimeATN) stateIndex(s *RuntimeATNState) int {
 // TokenSetSize returns the length of any slice returned by NextTokensAt.
 // Callers can use it to allocate compatible token bitsets.
 func (atn *RuntimeATN) TokenSetSize() int {
-	atn.nextTokensOnce.Do(atn.buildNextTokensCache)
 	return atn.tokenSetSize
 }
 
@@ -112,7 +124,6 @@ func (atn *RuntimeATN) TokenSetSize() int {
 // The returned slice is indexed by TokenType.Id; it is shared and must not be
 // mutated by callers. Returns nil if stateIdx is out of bounds.
 func (atn *RuntimeATN) NextTokensAt(stateIdx int) []bool {
-	atn.nextTokensOnce.Do(atn.buildNextTokensCache)
 	if stateIdx < 0 || stateIdx >= len(atn.nextTokensCache) {
 		return nil
 	}
@@ -122,9 +133,6 @@ func (atn *RuntimeATN) NextTokensAt(stateIdx int) []bool {
 func (atn *RuntimeATN) buildNextTokensCache() {
 	maxId := 0
 	for _, st := range atn.States {
-		if st == nil {
-			continue
-		}
 		for _, t := range st.Transitions {
 			if at, ok := t.(*RuntimeAtomTransition); ok && at.TokenType != nil {
 				if at.TokenType.Id > maxId {

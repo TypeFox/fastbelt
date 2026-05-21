@@ -116,13 +116,7 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypeVarNa
 			n.AppendLine("decisionMap[", key, "] = states[", strconv.Itoa(idx[s]), "]")
 		}
 
-		n.AppendLine("return &parser.RuntimeATN{")
-		n.Indent(func(n codegen.Node) {
-			n.AppendLine("States:         states,")
-			n.AppendLine("DecisionStates: decisionStates,")
-			n.AppendLine("DecisionMap:    decisionMap,")
-		})
-		n.AppendLine("}")
+		n.AppendLine("return parser.NewRuntimeATN(states, decisionStates, decisionMap)")
 	})
 
 	n.AppendLine("}")

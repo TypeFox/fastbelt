@@ -104,6 +104,9 @@ type LookaheadOption []LookaheadPath
 type LLkLookahead []LookaheadOption
 
 func NewParserState(tokens []core.Token, atn *RuntimeATN, recovery ErrorRecoveryStrategy, messages ErrorMessageProvider) *ParserState {
+	if atn == nil {
+		panic("atn must be provided")
+	}
 	return &ParserState{
 		Tokens:       tokens,
 		Length:       len(tokens),
@@ -212,9 +215,6 @@ func (p *ParserState) Sync(decisionStateIdx int) {
 // The returned slice is indexed by TokenType.Id; out-of-range indices indicate
 // "not in the follow set".
 func (p *ParserState) FollowSet() []bool {
-	if p.atn == nil {
-		return nil
-	}
 	result := make([]bool, p.atn.TokenSetSize())
 	for _, idx := range p.followStates {
 		next := p.atn.NextTokensAt(idx)

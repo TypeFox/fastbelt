@@ -2331,9 +2331,5 @@ func BuildATN() *parser.RuntimeATN {
 	decisionMap[ParserRule_Group_2] = states[115]
 	decisionMap[PrimitiveType_Alternatives_1] = states[112]
 	decisionMap[Token_Alternatives_1] = states[126]
-	return &parser.RuntimeATN{
-		States:         states,
-		DecisionStates: decisionStates,
-		DecisionMap:    decisionMap,
-	}
+	return parser.NewRuntimeATN(states, decisionStates, decisionMap)
 }
