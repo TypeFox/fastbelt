@@ -3,13 +3,13 @@
 set -euo pipefail
 
 # Require tokens for both marketplaces before doing any work.
-if [[ -z "${VSCE_TOKEN:-}" ]]; then
-  echo "VSCE_TOKEN is required."
+if [[ -z "${VSCE_PAT:-}" ]]; then
+  echo "VSCE_PAT is required."
   exit 1
 fi
 
-if [[ -z "${OVSX_TOKEN:-}" ]]; then
-  echo "OVSX_TOKEN is required."
+if [[ -z "${OVSX_PAT:-}" ]]; then
+  echo "OVSX_PAT is required."
   exit 1
 fi
 
@@ -41,10 +41,10 @@ for target_info in "${targets[@]}"; do
   GOOS="$goos" GOARCH="$goarch" npx vsce package --target "$target" --out "$vsix_file"
 
   echo "==> Publishing ${vsix_file} to VS Marketplace"
-  npx vsce publish --packagePath "$vsix_file" -p "$VSCE_TOKEN"
+  npx vsce publish --packagePath "$vsix_file"
 
   echo "==> Publishing ${vsix_file} to Open VSX"
-  npx ovsx publish "$vsix_file" -p "$OVSX_TOKEN"
+  npx ovsx publish "$vsix_file"
 done
 
 echo "Done publishing all platform-specific extensions."
