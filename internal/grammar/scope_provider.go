@@ -15,7 +15,7 @@ type scopeProviderImpl struct {
 	DefaultFastbeltScopeProvider
 }
 
-func newScopeProviderImpl(sc *service.Container) *scopeProviderImpl {
+func newScopeProviderImpl(_ *service.Container) *scopeProviderImpl {
 	return &scopeProviderImpl{}
 }
 
@@ -34,12 +34,12 @@ func (s *scopeProviderImpl) ScopeAssignmentProperty(ctx context.Context, referen
 	if assignment, ok := reference.Owner().(Assignment); ok {
 		iface := getCurrentType(ctx, assignment)
 		if iface == nil {
-			return nil
+			return core.EmptyScope
 		}
 		descriptions := generateInterfaceFieldsDescriptions(ctx, iface, map[Interface]bool{})
 		return core.NewMapScopeFromSlice(descriptions, nil)
 	}
-	return nil
+	return core.EmptyScope
 }
 
 func getCurrentType(ctx context.Context, node core.AstNode) Interface {

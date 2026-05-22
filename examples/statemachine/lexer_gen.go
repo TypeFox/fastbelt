@@ -16,6 +16,7 @@ var Keyword_EqualsGreaterThan = core.NewTokenType(
 	"=>",
 	"=>",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -34,6 +35,7 @@ var Keyword_actions = core.NewTokenType(
 	"actions",
 	"actions",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -52,6 +54,7 @@ var Keyword_commands = core.NewTokenType(
 	"commands",
 	"commands",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -70,6 +73,7 @@ var Keyword_end = core.NewTokenType(
 	"end",
 	"end",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -88,6 +92,7 @@ var Keyword_events = core.NewTokenType(
 	"events",
 	"events",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -106,6 +111,7 @@ var Keyword_initialState = core.NewTokenType(
 	"initialState",
 	"initialState",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -124,6 +130,7 @@ var Keyword_state = core.NewTokenType(
 	"state",
 	"state",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -142,6 +149,7 @@ var Keyword_statemachine = core.NewTokenType(
 	"statemachine",
 	"statemachine",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -160,6 +168,7 @@ var Keyword_LeftBrace = core.NewTokenType(
 	"{",
 	"{",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -178,6 +187,7 @@ var Keyword_RightBrace = core.NewTokenType(
 	"}",
 	"}",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -196,6 +206,7 @@ var Token_ID = core.NewTokenType(
 	"ID",
 	"ID",
 	0,
+	core.TokenKindToken,
 	0,
 	false,
 	func(s string, offset int) int {
@@ -269,6 +280,7 @@ var Token_WS = core.NewTokenType(
 	"WS",
 	"WS",
 	core.SkippedGroup,
+	core.TokenKindToken,
 	0,
 	false,
 	func(s string, offset int) int {
@@ -342,6 +354,7 @@ var Token_ML_COMMENT = core.NewTokenType(
 	"ML_COMMENT",
 	"ML_COMMENT",
 	core.SkippedGroup,
+	core.TokenKindToken,
 	0,
 	false,
 	func(s string, offset int) int {
@@ -466,6 +479,7 @@ var Token_SL_COMMENT = core.NewTokenType(
 	"SL_COMMENT",
 	"SL_COMMENT",
 	core.SkippedGroup,
+	core.TokenKindToken,
 	0,
 	false,
 	func(s string, offset int) int {

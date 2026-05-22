@@ -14,7 +14,7 @@ import (
 
 func DefaultLink(scope Scope, text string) (*SymbolDescription, *ReferenceError) {
 	if scope == nil {
-		return nil, defaultRefError(text)
+		panic("Scope cannot be nil. Return an empty scope (fastbelt.EmptyScope) instead.")
 	}
 	description := scope.ElementByName(text)
 	if description == nil {

@@ -165,6 +165,14 @@ func runLegacyGenerate(args []string) error {
 		generator.GenerateParser(grammar, packageName, tokenTypes)); err != nil {
 		return err
 	}
+	if err := writeFile("completion-parser", filepath.Join(outputPath, "completion_parser_gen.go"),
+		generator.GenerateCompletionParser(grammar, packageName, tokenTypes)); err != nil {
+		return err
+	}
+	if err := writeFile("completion", filepath.Join(outputPath, "completion_gen.go"),
+		generator.GenerateCompletion(grammar, packageName)); err != nil {
+		return err
+	}
 	if err := writeFile("lexer", filepath.Join(outputPath, "lexer_gen.go"),
 		generator.GenerateLexer(grammar, packageName, tokenTypes)); err != nil {
 		return err

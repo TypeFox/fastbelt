@@ -16,6 +16,7 @@ var Keyword_LeftParen = core.NewTokenType(
 	"(",
 	"(",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -34,6 +35,7 @@ var Keyword_RightParen = core.NewTokenType(
 	")",
 	")",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -52,6 +54,7 @@ var Keyword_Asterisk = core.NewTokenType(
 	"*",
 	"*",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -70,6 +73,7 @@ var Keyword_Plus = core.NewTokenType(
 	"+",
 	"+",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -88,6 +92,7 @@ var Keyword_PlusEquals = core.NewTokenType(
 	"+=",
 	"+=",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -106,6 +111,7 @@ var Keyword_Comma = core.NewTokenType(
 	",",
 	",",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -124,6 +130,7 @@ var Keyword_Dot = core.NewTokenType(
 	".",
 	".",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -142,6 +149,7 @@ var Keyword_Colon = core.NewTokenType(
 	":",
 	":",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -160,6 +168,7 @@ var Keyword_Semicolon = core.NewTokenType(
 	";",
 	";",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -178,6 +187,7 @@ var Keyword_Equals = core.NewTokenType(
 	"=",
 	"=",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -196,6 +206,7 @@ var Keyword_Question = core.NewTokenType(
 	"?",
 	"?",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -214,6 +225,7 @@ var Keyword_QuestionEquals = core.NewTokenType(
 	"?=",
 	"?=",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -232,6 +244,7 @@ var Keyword_LeftBracket = core.NewTokenType(
 	"[",
 	"[",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -250,6 +263,7 @@ var Keyword_RightBracket = core.NewTokenType(
 	"]",
 	"]",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -268,6 +282,7 @@ var Keyword_bool = core.NewTokenType(
 	"bool",
 	"bool",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -286,6 +301,7 @@ var Keyword_comment = core.NewTokenType(
 	"comment",
 	"comment",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -304,6 +320,7 @@ var Keyword_composite = core.NewTokenType(
 	"composite",
 	"composite",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -322,6 +339,7 @@ var Keyword_current = core.NewTokenType(
 	"current",
 	"current",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -340,6 +358,7 @@ var Keyword_extends = core.NewTokenType(
 	"extends",
 	"extends",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -358,6 +377,7 @@ var Keyword_grammar = core.NewTokenType(
 	"grammar",
 	"grammar",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -376,6 +396,7 @@ var Keyword_hidden = core.NewTokenType(
 	"hidden",
 	"hidden",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -394,6 +415,7 @@ var Keyword_interface = core.NewTokenType(
 	"interface",
 	"interface",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -412,6 +434,7 @@ var Keyword_returns = core.NewTokenType(
 	"returns",
 	"returns",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -430,6 +453,7 @@ var Keyword_string = core.NewTokenType(
 	"string",
 	"string",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -448,6 +472,7 @@ var Keyword_token = core.NewTokenType(
 	"token",
 	"token",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -466,6 +491,7 @@ var Keyword_LeftBrace = core.NewTokenType(
 	"{",
 	"{",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -484,6 +510,7 @@ var Keyword_Pipe = core.NewTokenType(
 	"|",
 	"|",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -502,6 +529,7 @@ var Keyword_RightBrace = core.NewTokenType(
 	"}",
 	"}",
 	0,
+	core.TokenKindKeyword,
 	0,
 	false,
 	func(text string, offset int) int {
@@ -520,6 +548,7 @@ var Token_SL_COMMENT = core.NewTokenType(
 	"SL_COMMENT",
 	"SL_COMMENT",
 	core.CommentGroup,
+	core.TokenKindToken,
 	0,
 	false,
 	func(s string, offset int) int {
@@ -610,6 +639,7 @@ var Token_ML_COMMENT = core.NewTokenType(
 	"ML_COMMENT",
 	"ML_COMMENT",
 	core.CommentGroup,
+	core.TokenKindToken,
 	0,
 	false,
 	func(s string, offset int) int {
@@ -734,6 +764,7 @@ var Token_StringLiteral = core.NewTokenType(
 	"StringLiteral",
 	"StringLiteral",
 	0,
+	core.TokenKindToken,
 	0,
 	false,
 	func(s string, offset int) int {
@@ -824,6 +855,7 @@ var Token_ID = core.NewTokenType(
 	"ID",
 	"ID",
 	0,
+	core.TokenKindToken,
 	0,
 	false,
 	func(s string, offset int) int {
@@ -897,6 +929,7 @@ var Token_RegexLiteral = core.NewTokenType(
 	"RegexLiteral",
 	"RegexLiteral",
 	0,
+	core.TokenKindToken,
 	0,
 	false,
 	func(s string, offset int) int {
@@ -1055,6 +1088,7 @@ var Token_WS = core.NewTokenType(
 	"WS",
 	"WS",
 	core.SkippedGroup,
+	core.TokenKindToken,
 	0,
 	false,
 	func(s string, offset int) int {

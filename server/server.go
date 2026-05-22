@@ -39,11 +39,16 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 		return nil, err
 	}
 	workspaceFolders.Value = params.WorkspaceFolders
+	var triggerChars []string
+	if triggers, err := service.Get[CompletionTriggers](s.sc); err == nil && triggers != nil {
+		triggerChars = triggers.TriggerCharacters()
+	}
 	return &lsp.InitializeResult{
 		Capabilities: lsp.ServerCapabilities{
 			TextDocumentSync: lsp.Incremental,
 			CompletionProvider: &lsp.CompletionOptions{
-				ResolveProvider: false,
+				ResolveProvider:   false,
+				TriggerCharacters: triggerChars,
 			},
 			DefinitionProvider: &lsp.Or_ServerCapabilities_definitionProvider{
 				Value: service.Has[DefinitionProvider](s.sc),
@@ -125,10 +130,22 @@ func (s *DefaultLanguageServer) DidSave(ctx context.Context, params *lsp.DidSave
 }
 
 func (s *DefaultLanguageServer) Completion(ctx context.Context, params *lsp.CompletionParams) (*lsp.CompletionList, error) {
-	return &lsp.CompletionList{
-		IsIncomplete: false,
-		Items:        []lsp.CompletionItem{},
-	}, nil
+	var result *lsp.CompletionList
+	var providerErr error
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	completion, err := service.Get[CompletionProvider](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	if err := lock.Read(ctx, func(ctx context.Context) {
+		result, providerErr = completion.HandleCompletionRequest(ctx, params)
+	}); err != nil {
+		return nil, err
+	}
+	return result, providerErr
 }
 
 func (s *DefaultLanguageServer) Definition(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.DefinitionLink, error) {

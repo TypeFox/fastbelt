@@ -1,0 +1,90 @@
+grammar Completion;
+
+// Empty obj, we don't care about the actual AST structure for completion testing
+interface Obj {}
+
+interface Root {
+    Objects []Obj
+}
+
+Root: Objects+=(Declare | A | B | C | D | E | F | G | H | I | J | K | L)*;
+
+interface Declare extends Obj {
+    Name composite
+    Children []Declare
+}
+
+Declare: "declare" Name=FQN ("{" Children+=Declare* "}")?;
+
+composite FQN: ID ("." ID)*;
+
+A returns Obj: "a" "first";
+
+B returns Obj: "b" ("first" | "second");
+
+C returns Obj: "c" ("common" "first" | "common" "second");
+
+D returns Obj: "d" (DLong | DShort);
+
+interface E extends Obj {
+    Ref *Declare
+}
+
+E: "e" Ref=[Declare:FQN];
+
+DLong returns Obj: "common" "then" "long";
+DShort returns Obj: "common";
+
+interface F extends Obj {
+    Items []FItem
+}
+
+F: "f" Items+=FItem+;
+
+interface FItem {
+    Ref *Declare
+}
+
+FItem: Ref=[Declare:FQN];
+
+interface G extends Obj {
+    Ref *Declare
+}
+
+G: "g" Ref=[Declare:ID];
+
+interface H extends Obj {
+    Member MemberCall
+}
+
+interface MemberCall {
+    Ref *Declare
+    Previous MemberCall
+}
+
+H: "h" Member=MemberCall;
+
+I returns H: "i" Member=MemberCallNoDot;
+
+MemberCall: Ref=[Declare:ID] ({MemberCall.Previous=current} "." Ref=[Declare:ID])*;
+
+MemberCallNoDot returns MemberCall: Ref=[Declare:ID] ({MemberCall.Previous=current} Ref=[Declare:ID])*;
+
+interface J extends Obj {
+    Ref *Declare
+}
+
+J: "j" (Ref=[Declare:ID] | "self");
+
+interface K extends Obj {
+    Ref1 *Declare
+    Ref2 *Declare
+}
+
+K: "k" (Ref1=[Declare:ID] "x" | Ref2=[Declare:ID] "y");
+
+
+L returns Obj: "l" ("optional" "and")? "then" "end";
+
+hidden token WS: /[ \t\r\n]+/;
+token ID: /\w[\w0-9]*/;

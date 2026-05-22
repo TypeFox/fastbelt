@@ -185,9 +185,10 @@ func generateInterface(node codegen.Node, grammr grammar.Grammar, iface grammar.
 			}
 			// Getter
 			n.AppendLine(prefix, field.Name, "() ", typeStr)
-			// Token getter
 			if field.HasTokenGetter {
 				n.AppendLine(field.Name, "Token() ", TOKEN_TYPE)
+			} else if field.HasNodeGetter {
+				n.AppendLine(field.Name, "Node() ", COMPOSITE_TYPE)
 			}
 			// Setter
 			if field.Array {

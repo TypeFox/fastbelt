@@ -202,3 +202,24 @@ func (d *Doc) AssertFoldingRanges(labels ...string) *Doc {
 	}
 	return d
 }
+
+func (d *Doc) CompletionItems(label string) []lsp.CompletionItem {
+	d.fixture.t.Helper()
+	location, err := d.markerLocation(label, true)
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: CompletionItems: no marker with label %q", label)
+	}
+	provider := service.MustGet[server.CompletionProvider](d.fixture.sc)
+	resp, err := provider.HandleCompletionRequest(d.Ctx(), &lsp.CompletionParams{
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{
+				URI: d.Document.TextDoc.URI(),
+			},
+			Position: lsp.Position{Line: uint32(location.Line), Character: uint32(location.Column)},
+		},
+	})
+	if err != nil {
+		d.fixture.t.Fatalf("HandleCompletionRequest returned error: %v", err)
+	}
+	return resp.Items
+}

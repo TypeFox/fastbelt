@@ -7,6 +7,24 @@ package fastbelt
 const SkippedGroup = -1
 const CommentGroup = -2
 
+// TokenKind names the grammar construct that produced a TokenType. It is
+// distinct from Group: Group controls lexer-stream behaviour (skipped /
+// comment), while Kind describes the grammar origin and is consumed by
+// downstream features such as the completion engine, which by default
+// only surfaces keyword-kind tokens as completion candidates.
+type TokenKind int
+
+const (
+	// TokenKindToken is the default - a TokenType produced by a named
+	// `token` rule in the .fb grammar (regex-matched). Hidden and comment
+	// tokens are also TokenKindToken; their stream behaviour is encoded
+	// separately in Group.
+	TokenKindToken TokenKind = 0
+	// TokenKindKeyword is a TokenType produced by a literal string in a
+	// parser rule (e.g. `"statemachine"`). Matched by a string prefix.
+	TokenKindKeyword TokenKind = 1
+)
+
 type Matcher func(input string, offset int) int
 
 type TokenType struct {
@@ -15,17 +33,19 @@ type TokenType struct {
 	Label      string
 	StartChars []rune
 	Group      int
+	Kind       TokenKind
 	PushMode   int
 	PopMode    bool
 	Match      Matcher
 }
 
-func NewTokenType(id int, name, label string, group int, pushMode int, popMode bool, match Matcher, startChars []rune) *TokenType {
+func NewTokenType(id int, name, label string, group int, kind TokenKind, pushMode int, popMode bool, match Matcher, startChars []rune) *TokenType {
 	return &TokenType{
 		Id:         id,
 		Name:       name,
 		Label:      label,
 		Group:      group,
+		Kind:       kind,
 		Match:      match,
 		PushMode:   pushMode,
 		PopMode:    popMode,
@@ -41,11 +61,16 @@ func (t *TokenType) IsComment() bool {
 	return t.Group == CommentGroup
 }
 
+func (t *TokenType) IsKeyword() bool {
+	return t.Kind == TokenKindKeyword
+}
+
 var EOF = NewTokenType(
 	-1,
 	"EOF",
 	"EOF",
 	0,
+	TokenKindToken,
 	0,
 	false,
 	nil,
