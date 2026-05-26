@@ -8,7 +8,6 @@ package grammar
 
 import (
 	"typefox.dev/fastbelt/linking"
-	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
@@ -23,8 +22,6 @@ func SetupServices(sc *service.Container) {
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)
 	SetupGeneratedServices(sc)
-
-	service.Put[server.NodeKindProvider](sc, &GrammarNodeKindProvider{})
 
 	// Override the default scope provider
 	service.Override[FastbeltScopeProvider](sc, newScopeProviderImpl(sc))

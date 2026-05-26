@@ -42,12 +42,6 @@ func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[DocumentSyncher](sc) {
 		service.Put(sc, NewDefaultDocumentSyncher(sc))
 	}
-	if !service.Has[NameProvider](sc) {
-		service.Put[NameProvider](sc, &DefaultNameProvider{})
-	}
-	if !service.Has[NodeKindProvider](sc) {
-		service.Put[NodeKindProvider](sc, &DefaultNodeKindProvider{})
-	}
 	if !service.Has[DefinitionProvider](sc) {
 		service.Put(sc, NewDefaultDefinitionProvider(sc))
 	}

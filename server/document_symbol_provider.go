@@ -8,6 +8,7 @@ import (
 	"context"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
@@ -19,7 +20,6 @@ type DocumentSymbolProvider interface {
 }
 
 // DocumentSymbolFilter defines document-symbol-specific customization points.
-// For name and kind information, use NameProvider and NodeKindProvider respectively.
 type DocumentSymbolFilter interface {
 	// ShouldInclude determines whether the specified AstNode should appear as a symbol.
 	// By default, nodes with names are included.
@@ -27,27 +27,23 @@ type DocumentSymbolFilter interface {
 }
 
 // DefaultDocumentSymbolFilter provides standard symbol filtering behavior.
-type DefaultDocumentSymbolFilter struct {
-	nameProvider NameProvider
-}
+type DefaultDocumentSymbolFilter struct{}
 
 func (f *DefaultDocumentSymbolFilter) ShouldInclude(node core.AstNode) bool {
-	return f.nameProvider.GetName(node) != ""
+	return true
 }
 
 // DefaultDocumentSymbolProvider implements the DocumentSymbolProvider interface.
 type DefaultDocumentSymbolProvider struct {
-	sc           *service.Container
-	nameProvider NameProvider
-	kindProvider NodeKindProvider
-	filter       DocumentSymbolFilter
+	sc     *service.Container
+	filter DocumentSymbolFilter
 }
 
 // NewDefaultDocumentSymbolProvider creates a provider using services from the container.
-// Services are loaded lazily on first use, allowing for service overrides after construction.
 func NewDefaultDocumentSymbolProvider(sc *service.Container) DocumentSymbolProvider {
 	return &DefaultDocumentSymbolProvider{
-		sc: sc,
+		sc:     sc,
+		filter: &DefaultDocumentSymbolFilter{},
 	}
 }
 
@@ -59,24 +55,7 @@ func NewDocumentSymbolProviderWithFilter(sc *service.Container, filter DocumentS
 	}
 }
 
-// ReloadServices forces reloading of NameProvider and NodeKindProvider from the service container.
-func (p *DefaultDocumentSymbolProvider) ReloadServices() {
-	p.nameProvider = service.MustGet[NameProvider](p.sc)
-	p.kindProvider = service.MustGet[NodeKindProvider](p.sc)
-	if p.filter == nil {
-		p.filter = &DefaultDocumentSymbolFilter{nameProvider: p.nameProvider}
-	}
-}
-
-func (p *DefaultDocumentSymbolProvider) ensureInitialized() {
-	if p.nameProvider == nil || p.kindProvider == nil {
-		p.ReloadServices()
-	}
-}
-
 func (p *DefaultDocumentSymbolProvider) HandleDocumentSymbolRequest(ctx context.Context, params *lsp.DocumentSymbolParams) ([]lsp.DocumentSymbol, error) {
-	p.ensureInitialized()
-
 	documentManager := service.MustGet[workspace.DocumentManager](p.sc)
 	uri := core.ParseURI(string(params.TextDocument.URI))
 	doc := documentManager.Get(uri)
@@ -95,29 +74,31 @@ func (p *DefaultDocumentSymbolProvider) collectSymbols(document *core.Document) 
 }
 
 func (p *DefaultDocumentSymbolProvider) getSymbolsForNode(node core.AstNode) []lsp.DocumentSymbol {
+	// Check if this node should be included as a symbol
 	if p.filter.ShouldInclude(node) {
-		name := p.nameProvider.GetName(node)
-		if name != "" && node.Segment() != nil {
-			symbol := p.createSymbol(node, name)
+		nameUnit := linking.Name(node)
+		if nameUnit != nil && node.Segment() != nil {
+			symbol := p.createSymbol(node, nameUnit)
 			return []lsp.DocumentSymbol{symbol}
 		}
 	}
 
+	// If node is not a symbol itself, collect symbols from children
 	return p.getChildSymbols(node)
 }
 
-func (p *DefaultDocumentSymbolProvider) createSymbol(node core.AstNode, name string) lsp.DocumentSymbol {
+func (p *DefaultDocumentSymbolProvider) createSymbol(node core.AstNode, nameUnit core.StringUnit) lsp.DocumentSymbol {
 	segment := node.Segment()
 
-	nameSegment := p.nameProvider.GetNameSegment(node)
+	name := nameUnit.String()
 	selectionRange := segment.Range.LspRange()
-	if nameSegment != nil {
+	if nameSegment := nameUnit.Segment(); nameSegment != nil {
 		selectionRange = nameSegment.Range.LspRange()
 	}
 
 	symbol := lsp.DocumentSymbol{
 		Name:           name,
-		Kind:           p.kindProvider.GetSymbolKind(node),
+		Kind:           SymbolKind(node),
 		Range:          segment.Range.LspRange(),
 		SelectionRange: selectionRange,
 	}
