@@ -60,4 +60,7 @@ func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[ReferencesFinder](sc) {
 		service.Put(sc, NewDefaultReferencesFinder(sc))
 	}
+	if !service.Has[DocumentSymbolProvider](sc) {
+		service.Put(sc, NewDefaultDocumentSymbolProvider(sc))
+	}
 }

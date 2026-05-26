@@ -175,7 +175,7 @@ func (d *Doc) AssertFoldingRanges(labels ...string) *Doc {
 		d.fixture.t.Fatalf("fbtest: folding range request failed: %v", err)
 	}
 	for _, label := range labels {
-		expectedRange, err := d.markerRange(label)
+		expectedRange, err := d.MarkerRange(label)
 		if err != nil {
 			d.fixture.t.Fatalf("fbtest: %v", err)
 		}
