@@ -230,7 +230,7 @@ var RootObjectsLookaheadOr0 = parser.LLkLookahead{
 
 func (p *Parser) ParseRoot() Root {
 	current := NewRoot()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		p.state.Sync(68)
 		for p.state.Lookahead(RootLookahead0) == 0 {
@@ -330,24 +330,24 @@ func (p *Parser) ParseRoot() Root {
 			p.state.Sync(68)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseDeclare() Declare {
 	current := NewDeclare()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_declare)
 		core.AssignToken(current, token, Declaredeclare_0)
 	}
 	{
 		result := core.NewCompositeNode()
-		result.SetSegmentStartToken(p.state.LA(1))
+		result.SetSegmentStartToken(p.state.LARaw(1))
 		p.state.EnterRule(73)
 		p.ParseFQN(result)
 		p.state.ExitRule()
-		result.SetSegmentEndToken(p.state.LA(0))
+		result.SetSegmentEndToken(p.state.LARaw(0))
 		if result != nil {
 			current.SetName(result)
 		}
@@ -375,13 +375,13 @@ func (p *Parser) ParseDeclare() Declare {
 			core.AssignToken(current, token, DeclareRightBrace_0)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseA() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_a)
 		core.AssignToken(current, token, Aa_0)
@@ -390,13 +390,13 @@ func (p *Parser) ParseA() Obj {
 		token := p.state.Consume(Keyword_first)
 		core.AssignToken(current, token, Afirst_0)
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseB() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_b)
 		core.AssignToken(current, token, Bb_0)
@@ -416,13 +416,13 @@ func (p *Parser) ParseB() Obj {
 		token := p.state.LA(1)
 		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseC() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_c)
 		core.AssignToken(current, token, Cc_0)
@@ -450,13 +450,13 @@ func (p *Parser) ParseC() Obj {
 		token := p.state.LA(1)
 		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseD() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_d)
 		core.AssignToken(current, token, Dd_0)
@@ -482,35 +482,35 @@ func (p *Parser) ParseD() Obj {
 		token := p.state.LA(1)
 		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseE() E {
 	current := NewE()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_e)
 		core.AssignToken(current, token, Ee_0)
 	}
 	{
 		result := core.NewCompositeNode()
-		result.SetSegmentStartToken(p.state.LA(1))
+		result.SetSegmentStartToken(p.state.LARaw(1))
 		p.state.EnterRule(0)
 		p.ParseFQN(result)
 		p.state.ExitRule()
-		result.SetSegmentEndToken(p.state.LA(0))
+		result.SetSegmentEndToken(p.state.LARaw(0))
 		if result != nil {
 			current.SetRef(p.referencesConstructor.ERef(current, result))
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseDLong() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_common)
 		core.AssignToken(current, token, DLongcommon_0)
@@ -523,24 +523,24 @@ func (p *Parser) ParseDLong() Obj {
 		token := p.state.Consume(Keyword_long)
 		core.AssignToken(current, token, DLonglong_0)
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseDShort() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_common)
 		core.AssignToken(current, token, DShortcommon_0)
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseF() F {
 	current := NewF()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_f)
 		core.AssignToken(current, token, Ff_0)
@@ -556,31 +556,31 @@ func (p *Parser) ParseF() F {
 			p.state.Sync(119)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseFItem() FItem {
 	current := NewFItem()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		result := core.NewCompositeNode()
-		result.SetSegmentStartToken(p.state.LA(1))
+		result.SetSegmentStartToken(p.state.LARaw(1))
 		p.state.EnterRule(0)
 		p.ParseFQN(result)
 		p.state.ExitRule()
-		result.SetSegmentEndToken(p.state.LA(0))
+		result.SetSegmentEndToken(p.state.LARaw(0))
 		if result != nil {
 			current.SetRef(p.referencesConstructor.FItemRef(current, result))
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseG() G {
 	current := NewG()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_g)
 		core.AssignToken(current, token, Gg_0)
@@ -592,13 +592,13 @@ func (p *Parser) ParseG() G {
 			current.SetRef(p.referencesConstructor.GRef(current, token))
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseH() H {
 	current := NewH()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_h)
 		core.AssignToken(current, token, Hh_0)
@@ -611,13 +611,13 @@ func (p *Parser) ParseH() H {
 			current.SetMember(result)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseI() H {
 	current := NewH()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_i)
 		core.AssignToken(current, token, Ii_0)
@@ -630,13 +630,13 @@ func (p *Parser) ParseI() H {
 			current.SetMember(result)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseMemberCall() MemberCall {
 	current := NewMemberCall()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Token_ID)
 		core.AssignToken(current, token, MemberCallRefID_0)
@@ -650,7 +650,7 @@ func (p *Parser) ParseMemberCall() MemberCall {
 			result := NewMemberCall()
 			result.SetSegment(current.Segment())
 			result.SetPrevious(current)
-			current.SetSegmentEndToken(p.state.LA(0))
+			current.SetSegmentEndToken(p.state.LARaw(0))
 			current = result
 		}
 		current := current.(MemberCall)
@@ -667,13 +667,13 @@ func (p *Parser) ParseMemberCall() MemberCall {
 		}
 		p.state.Sync(136)
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseMemberCallNoDot() MemberCall {
 	current := NewMemberCall()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Token_ID)
 		core.AssignToken(current, token, MemberCallNoDotRefID_0)
@@ -687,7 +687,7 @@ func (p *Parser) ParseMemberCallNoDot() MemberCall {
 			result := NewMemberCall()
 			result.SetSegment(current.Segment())
 			result.SetPrevious(current)
-			current.SetSegmentEndToken(p.state.LA(0))
+			current.SetSegmentEndToken(p.state.LARaw(0))
 			current = result
 		}
 		current := current.(MemberCall)
@@ -700,13 +700,13 @@ func (p *Parser) ParseMemberCallNoDot() MemberCall {
 		}
 		p.state.Sync(142)
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseJ() J {
 	current := NewJ()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_j)
 		core.AssignToken(current, token, Jj_0)
@@ -729,13 +729,13 @@ func (p *Parser) ParseJ() J {
 		token := p.state.LA(1)
 		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseK() K {
 	current := NewK()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_k)
 		core.AssignToken(current, token, Kk_0)
@@ -769,13 +769,13 @@ func (p *Parser) ParseK() K {
 		token := p.state.LA(1)
 		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseL() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_l)
 		core.AssignToken(current, token, Ll_0)
@@ -799,7 +799,7 @@ func (p *Parser) ParseL() Obj {
 		token := p.state.Consume(Keyword_end)
 		core.AssignToken(current, token, Lend_0)
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 

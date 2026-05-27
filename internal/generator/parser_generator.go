@@ -417,9 +417,9 @@ func generateParseFunction(node codegen.Node, context *ParserGeneratorContext, r
 	node.AppendLine("func (p *", receiverType, ") Parse", rule.Name(), "() ", returnType.Name(), " {")
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("current := New", returnType.Name(), "()")
-		n.AppendLine("current.SetSegmentStartToken(p.state.LA(1))")
+		n.AppendLine("current.SetSegmentStartToken(p.state.LARaw(1))")
 		generateAbstractElementParser(n, context, rule.Body())
-		n.AppendLine("current.SetSegmentEndToken(p.state.LA(0))")
+		n.AppendLine("current.SetSegmentEndToken(p.state.LARaw(0))")
 		n.AppendLine("return current")
 	})
 	node.AppendLine("}")
@@ -489,7 +489,7 @@ func generateAbstractElementParser(node codegen.Node, context *ParserGeneratorCo
 					n.AppendLine("result.Set", e.Property().Text(), "(current)")
 				}
 				// Ensure that the previous node has a valid segment ending
-				n.AppendLine("current.SetSegmentEndToken(p.state.LA(0))")
+				n.AppendLine("current.SetSegmentEndToken(p.state.LARaw(0))")
 				n.AppendLine("current = result")
 			} else {
 				// If there is no property to assign, just merge tokens
@@ -699,11 +699,11 @@ func generateRuleCallParser(node codegen.Node, context *ParserGeneratorContext, 
 				n.AppendLine("p.state.ExitRule()")
 			} else {
 				n.AppendLine("result ", eq, " core.NewCompositeNode()")
-				n.AppendLine("result.SetSegmentStartToken(p.state.LA(1))")
+				n.AppendLine("result.SetSegmentStartToken(p.state.LARaw(1))")
 				n.AppendLine("p.state.EnterRule(", strconv.Itoa(followIdx), ")")
 				n.AppendLine("p.Parse", t.Name(), "(result)")
 				n.AppendLine("p.state.ExitRule()")
-				n.AppendLine("result.SetSegmentEndToken(p.state.LA(0))")
+				n.AppendLine("result.SetSegmentEndToken(p.state.LARaw(0))")
 			}
 		}
 	}, func(n codegen.Node) { n.Append(lookahead) }, nil, ruleCall.Cardinality())
