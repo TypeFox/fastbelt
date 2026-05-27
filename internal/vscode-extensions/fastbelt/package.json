@@ -1,17 +1,22 @@
 {
   "name": "fastbelt-vscode",
-  "publisher": "typefox",
+  "publisher": "fastbelt",
+  "version": "0.0.1",
+  "preview": true,
   "displayName": "Fastbelt",
   "description": "Support for the Fastbelt grammar language",
-  "version": "0.0.0",
-  "engines": {
-    "vscode": "^1.104.0"
-  },
+  "homepage": "https://pkg.go.dev/typefox.dev/fastbelt",
   "categories": [
     "Programming Languages"
   ],
-  "activationEvents": [],
-  "main": "./dist/extension.js",
+  "license": "MIT",
+  "galleryBanner": {
+    "color": "#262626",
+    "theme": "dark"
+  },
+  "engines": {
+    "vscode": "^1.104.0"
+  },
   "contributes": {
     "languages": [{
       "id": "fastbelt",
@@ -25,15 +30,31 @@
       "path": "./data/fastbelt.tmLanguage.json"
     }]
   },
+  "activationEvents": [],
+  "vsce": {
+    "dependencies": false
+  },
+  "main": "./dist/extension.js",
   "scripts": {
     "build": "npm run check-types && node esbuild.js && npm run build-server",
     "watch": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch",
-    "vscode:prepublish": "npm run check-types && node esbuild.js --production",
+    "vscode:prepublish": "npm run check-types && node esbuild.js --production && npm run build-server",
+    "publish:platforms": "bash ./publish-platform-extensions.sh",
     "check-types": "tsc --noEmit",
     "build-server": "go build -o dist/ ../../grammar/server"
   },
   "dependencies": {
     "vscode-languageclient": "~9.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TypeFox/fastbelt",
+    "directory": "internal/vscode-extensions/fastbelt"
+  },
+  "bugs": "https://github.com/TypeFox/fastbelt/issues",
+  "author": {
+    "name": "TypeFox",
+    "url": "https://www.typefox.io"
   }
 }
