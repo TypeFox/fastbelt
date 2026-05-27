@@ -43,6 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GONOPROXY: github.com/TypeFox/go-lsp
+      GOTOOLCHAIN: go1.26.0
     steps:
     - name: Check out code
       uses: actions/checkout@v4
