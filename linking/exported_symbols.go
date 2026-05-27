@@ -11,25 +11,25 @@ import (
 	"typefox.dev/fastbelt/util/service"
 )
 
-// ExportedSymbolsProvider is a service that computes the symbols to be exported from a document,
+// SymbolExporter is a service that computes the symbols to be exported from a document,
 // so they can be imported into other documents.
-type ExportedSymbolsProvider interface {
-	// ExportedSymbols traverses the document's AST and computes the exported symbols.
+type SymbolExporter interface {
+	// ExportSymbols traverses the document's AST and computes the exported symbols.
 	// The result is stored in the document's ExportedSymbols field.
-	ExportedSymbols(ctx context.Context, document *core.Document) core.SymbolContainer
+	ExportSymbols(ctx context.Context, document *core.Document) core.SymbolContainer
 }
 
-// DefaultExportedSymbolsProvider is the default implementation of [ExportedSymbolsProvider].
+// DefaultSymbolExporter is the default implementation of [SymbolExporter].
 // By default, it exports the root node and its direct children that have a name.
-type DefaultExportedSymbolsProvider struct {
+type DefaultSymbolExporter struct {
 	sc *service.Container
 }
 
-func NewDefaultExportedSymbolsProvider(sc *service.Container) ExportedSymbolsProvider {
-	return &DefaultExportedSymbolsProvider{sc: sc}
+func NewDefaultSymbolExporter(sc *service.Container) SymbolExporter {
+	return &DefaultSymbolExporter{sc: sc}
 }
 
-func (s *DefaultExportedSymbolsProvider) ExportedSymbols(ctx context.Context, document *core.Document) core.SymbolContainer {
+func (s *DefaultSymbolExporter) ExportSymbols(ctx context.Context, document *core.Document) core.SymbolContainer {
 	root := document.Root
 	exports := service.MustGet[core.SymbolContainers](s.sc).New()
 

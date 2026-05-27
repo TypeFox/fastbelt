@@ -9,11 +9,11 @@ import "typefox.dev/fastbelt/util/service"
 // SetupDefaultServices sets up the default services for the linking package.
 // If any service is already set, it's not overwritten.
 func SetupDefaultServices(sc *service.Container) {
-	if !service.Has[ExportedSymbolsProvider](sc) {
-		service.Put(sc, NewDefaultExportedSymbolsProvider(sc))
+	if !service.Has[SymbolExporter](sc) {
+		service.Put(sc, NewDefaultSymbolExporter(sc))
 	}
-	if !service.Has[ImportedSymbolsProvider](sc) {
-		service.Put(sc, NewDefaultImportedSymbolsProvider(sc))
+	if !service.Has[SymbolImporter](sc) {
+		service.Put(sc, NewDefaultSymbolImporter(sc))
 	}
 	if !service.Has[Linker](sc) {
 		service.Put(sc, NewDefaultLinker(sc))
