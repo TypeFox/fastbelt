@@ -5,22 +5,48 @@
 package main
 
 import (
-	"context"
-	"errors"
-	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
-	"sort"
 
-	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/internal/generator"
-	"typefox.dev/fastbelt/internal/grammar"
-	"typefox.dev/fastbelt/textdoc"
-	"typefox.dev/fastbelt/util/service"
-	"typefox.dev/fastbelt/workspace"
-	"typefox.dev/lsp"
+	"github.com/spf13/cobra"
 )
+
+const rootLongHelp = `Fastbelt is a language engineering toolkit for Go.
+
+It covers lexing, parsing, AST creation, cross-reference linking, workspace
+processing, and Language Server Protocol (LSP) support. Fastbelt is inspired by
+Xtext and Langium and uses a .fb grammar definition as the entry point.
+
+Use the generate command to produce parser, lexer, types, linker, and service
+code from your grammar, or use scaffold to create a full language project
+template.`
+
+const generateLongHelp = `Generate code artifacts from a .fb grammar file.
+
+The generated files include parser, lexer, types, linker, and service wiring.
+By default, output is written to the current directory and the package name is
+derived from the output directory name.
+
+A typical workflow is to iterate on grammar changes and rerun generation after
+each step.`
+
+const generateExamples = `  fastbelt generate
+  fastbelt generate -g ./grammar.fb
+  fastbelt generate -g ./grammar.fb -o ./internal/lang -p lang
+  fastbelt generate -g ./grammar.fb --atn -v`
+
+const scaffoldLongHelp = `Scaffold a new language project from templates.
+
+With -module, Fastbelt creates a new module directory (derived from the last
+segment of the module path), initializes go.mod, writes templates, then runs
+go generate and go mod tidy.
+
+Without -module, Fastbelt scaffolds into an existing module discovered from the
+working directory.`
+
+const scaffoldExamples = `  fastbelt scaffold -module example.com/acme/mylang -language "MyLanguage"
+  fastbelt scaffold -package internal/lang -language "MyLanguage"
+  fastbelt scaffold -module example.com/acme/mylang -language "MyLanguage" -no-vscode`
 
 func main() {
 	if err := runCmd(); err != nil {
@@ -30,167 +56,56 @@ func main() {
 }
 
 func runCmd() error {
-	args := os.Args[1:]
-	if len(args) > 0 {
-		switch args[0] {
-		case "help", "-h", "-help", "--help":
-			printGlobalHelp()
-			return nil
-		case "scaffold":
-			return runScaffoldCLI(args[1:])
-		}
+	rootCmd := &cobra.Command{
+		Use:          "fastbelt",
+		Short:        "Generate code from a grammar definition",
+		Long:         rootLongHelp,
+		SilenceUsage: true,
 	}
-	return runLegacyGenerate(args)
+	rootCmd.SetOut(os.Stdout)
+	rootCmd.SetErr(os.Stderr)
+	rootCmd.AddCommand(newGenerateCmd(), newScaffoldCmd())
+	return rootCmd.Execute()
 }
 
-func runLegacyGenerate(args []string) error {
-	fs := flag.NewFlagSet("generate", flag.ContinueOnError)
-	fs.SetOutput(os.Stderr)
-	grammarPathFlag := fs.String("g", "./grammar.fb", "Path to the grammar file")
-	outputPathFlag := fs.String("o", "./", "Path to the output directory")
-	packageNameFlag := fs.String("p", "", "Package name for generated code (defaults to the last segment of the output path)")
-	atnFlag := fs.Bool("atn", false, "Enable markdown output about ATN construction")
-	verboseFlag := fs.Bool("v", false, "Enable verbose output about written files")
+func newGenerateCmd() *cobra.Command {
+	opts := generateOptions{}
+	cmd := &cobra.Command{
+		Use:     "generate",
+		Short:   "Generate code from a grammar definition",
+		Long:    generateLongHelp,
+		Example: generateExamples,
+		Args:    cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return runGenerateCLI(opts)
+		},
+	}
+	cmd.Flags().StringVarP(&opts.grammarPath, "grammar", "g", "./grammar.fb", "Path to the grammar file")
+	cmd.Flags().StringVarP(&opts.outputPath, "output", "o", "./", "Path to the output directory")
+	cmd.Flags().StringVarP(&opts.packageName, "package", "p", "", "Package name for generated code (defaults to the last segment of the output path)")
+	cmd.Flags().BoolVar(&opts.atn, "atn", false, "Enable markdown output about ATN construction")
+	cmd.Flags().BoolVarP(&opts.verbose, "verbose", "v", false, "Enable verbose output about written files")
+	return cmd
+}
 
-	fs.Usage = func() {
-		printGlobalHelp()
-		fmt.Fprintf(os.Stderr, "\nGenerate flags:\n")
-		fs.PrintDefaults()
+func newScaffoldCmd() *cobra.Command {
+	opts := scaffoldOptions{
+		packagePath: ".",
 	}
-
-	if err := fs.Parse(args); err != nil {
-		if errors.Is(err, flag.ErrHelp) {
-			return nil
-		}
-		return err
+	cmd := &cobra.Command{
+		Use:     "scaffold",
+		Short:   "Scaffold a new language project",
+		Long:    scaffoldLongHelp,
+		Example: scaffoldExamples,
+		Args:    cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return runScaffoldCLI(opts)
+		},
 	}
-
-	grammarPath, err := filepath.Abs(*grammarPathFlag)
-	if err != nil {
-		return err
-	}
-	outputPath, err := filepath.Abs(*outputPathFlag)
-	if err != nil {
-		return err
-	}
-	verbose := *verboseFlag
-
-	packageName := *packageNameFlag
-	if packageName == "" {
-		packageName = filepath.Base(outputPath)
-	}
-
-	if err := os.MkdirAll(outputPath, 0755); err != nil {
-		return err
-	}
-
-	grammarText, err := os.ReadFile(grammarPath)
-	if err != nil {
-		return err
-	}
-
-	sc := grammar.CreateServices()
-	file, _ := textdoc.NewFile(lsp.URIFromPath(grammarPath), "fb", 0, string(grammarText))
-
-	document := core.NewDocument(file)
-	documents, err := service.Get[workspace.DocumentManager](sc)
-	if err != nil {
-		return err
-	}
-	documents.Set(document)
-	builder, err := service.Get[workspace.Builder](sc)
-	if err != nil {
-		return err
-	}
-	if err := builder.Build(context.Background(), []*core.Document{document}, nil); err != nil {
-		return err
-	}
-
-	diagnostics := document.Diagnostics
-	errCount := 0
-
-	sort.SliceStable(diagnostics, func(i, j int) bool {
-		iStartLine := diagnostics[i].Range.Start.Line
-		jStartLine := diagnostics[j].Range.Start.Line
-		if iStartLine == jStartLine {
-			return diagnostics[i].Range.Start.Column < diagnostics[j].Range.Start.Column
-		} else {
-			return iStartLine < jStartLine
-		}
-	})
-
-	for _, diag := range diagnostics {
-		if diag.Severity == core.SeverityError {
-			errCount++
-		}
-		fmt.Printf(
-			"%s - %d:%d %s\n",
-			diag.Severity.String(),
-			// For printing, convert to 1-based line and column numbers.
-			diag.Range.Start.Line+1,
-			diag.Range.Start.Column+1,
-			diag.Message,
-		)
-	}
-
-	if errCount > 0 {
-		return fmt.Errorf("aborting code generation due to %d errors", errCount)
-	}
-
-	grammar, ok := document.Root.(grammar.Grammar)
-	if !ok {
-		return fmt.Errorf("parser result is not a Grammar")
-	}
-
-	writeFile := func(name, path, content string) error {
-		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
-			return fmt.Errorf("failed to write %s: %w", name, err)
-		}
-		if verbose {
-			fmt.Printf("Written: %s\n", path)
-		}
-		return nil
-	}
-
-	if err := writeFile("linker", filepath.Join(outputPath, "linker_gen.go"),
-		generator.GenerateLinker(grammar, packageName)); err != nil {
-		return err
-	}
-	if err := writeFile("types", filepath.Join(outputPath, "types_gen.go"),
-		generator.GenerateTypes(grammar, packageName)); err != nil {
-		return err
-	}
-	tokenTypes := generator.GenerateTokenTypes(grammar)
-	if err := writeFile("parser", filepath.Join(outputPath, "parser_gen.go"),
-		generator.GenerateParser(grammar, packageName, tokenTypes)); err != nil {
-		return err
-	}
-	if err := writeFile("completion-parser", filepath.Join(outputPath, "completion_parser_gen.go"),
-		generator.GenerateCompletionParser(grammar, packageName, tokenTypes)); err != nil {
-		return err
-	}
-	if err := writeFile("completion", filepath.Join(outputPath, "completion_gen.go"),
-		generator.GenerateCompletion(grammar, packageName)); err != nil {
-		return err
-	}
-	if err := writeFile("lexer", filepath.Join(outputPath, "lexer_gen.go"),
-		generator.GenerateLexer(grammar, packageName, tokenTypes)); err != nil {
-		return err
-	}
-	if err := writeFile("services", filepath.Join(outputPath, "services_gen.go"),
-		generator.GenerateServices(grammar, packageName)); err != nil {
-		return err
-	}
-	if err := writeFile("atn", filepath.Join(outputPath, "atn_gen.go"),
-		generator.GenerateATN(grammar, packageName, tokenTypes)); err != nil {
-		return err
-	}
-	if *atnFlag {
-		if err := writeFile("atn-md", filepath.Join(outputPath, "atn.md"),
-			generator.GenerateATNMarkdown(grammar, packageName, tokenTypes)); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	cmd.Flags().StringVar(&opts.modulePath, "module", "", "Module path for go mod init (optional; omit to scaffold into an existing module)")
+	cmd.Flags().StringVar(&opts.packagePath, "package", ".", "Template output directory: with --module, relative to the new module root; without --module, relative to the working directory")
+	cmd.Flags().StringVar(&opts.language, "language", "", "Human-readable language name")
+	cmd.Flags().BoolVar(&opts.noVSCodeExtension, "no-vscode", false, "Do not generate a VS Code extension")
+	_ = cmd.MarkFlagRequired("language")
+	return cmd
 }
