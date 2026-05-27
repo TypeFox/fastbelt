@@ -526,8 +526,6 @@ func (h *hidingCompletionFilter) FilterERef(ctx context.Context, ref *core.Refer
 func TestCompletion_FilterOverride(t *testing.T) {
 	sc := service.NewContainer()
 	completion.SetupServices(sc)
-	completion.SetupGeneratedServices(sc)
-	server.SetupDefaultServices(sc)
 	service.Override[completion.CompletionCompletionFilter](sc, &hidingCompletionFilter{hide: "bar"})
 	sc.Seal()
 

@@ -22,6 +22,9 @@ func SetupServices(sc *service.Container) {
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)
 	service.Put[CompletionScopeProvider](sc, NewCompletionScopeProviderImpl(sc))
+	SetupGeneratedServices(sc)
+	SetupGeneratedServerServices(sc)
+	server.SetupDefaultServices(sc)
 }
 
 // CreateServices builds a fully-wired service container for the completion
@@ -32,8 +35,6 @@ func SetupServices(sc *service.Container) {
 func CreateServices(contributor server.CompletionContributor) *service.Container {
 	sc := service.NewContainer()
 	SetupServices(sc)
-	SetupGeneratedServices(sc)
-	server.SetupDefaultServices(sc)
 	if contributor != nil {
 		service.Override(sc, contributor)
 	}

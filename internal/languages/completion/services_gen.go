@@ -21,12 +21,6 @@ func SetupGeneratedServices(sc *service.Container) {
 	if !service.Has[CompletionReferencesConstructor](sc) {
 		service.Put(sc, NewDefaultCompletionReferencesConstructor(sc))
 	}
-	if !service.Has[CompletionCompletionFilter](sc) {
-		service.Put(sc, NewDefaultCompletionCompletionFilter())
-	}
-	if !service.Has[parser.LanguageCompletionAdapter](sc) {
-		service.Put[parser.LanguageCompletionAdapter](sc, NewCompletionCompletionAdapter(sc))
-	}
 	if !service.Has[lexer.Lexer](sc) {
 		service.Put(sc, NewLexer())
 	}
@@ -41,5 +35,16 @@ func SetupGeneratedServices(sc *service.Container) {
 	}
 	if !service.Has[core.SymbolContainers](sc) {
 		service.Put[core.SymbolContainers](sc, NewSymbolContainers())
+	}
+}
+
+// SetupGeneratedServerServices sets up the generated language server services for this grammar.
+// If any service is already set, it's not overwritten.
+func SetupGeneratedServerServices(sc *service.Container) {
+	if !service.Has[CompletionCompletionFilter](sc) {
+		service.Put(sc, NewDefaultCompletionCompletionFilter())
+	}
+	if !service.Has[parser.LanguageCompletionAdapter](sc) {
+		service.Put[parser.LanguageCompletionAdapter](sc, NewCompletionCompletionAdapter(sc))
 	}
 }
