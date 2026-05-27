@@ -28,7 +28,7 @@ type ErrorMessageProvider interface {
 }
 
 // DefaultErrorMessageProvider produces English diagnostic messages. It is the
-// default ErrorMessageProvider used when none is supplied to NewParserState.
+// default ErrorMessageProvider used when none is supplied.
 type DefaultErrorMessageProvider struct{}
 
 func NewDefaultErrorMessageProvider() DefaultErrorMessageProvider {
@@ -40,17 +40,24 @@ func (DefaultErrorMessageProvider) UnexpectedEndOfInput(expected *core.TokenType
 }
 
 func (DefaultErrorMessageProvider) UnexpectedToken(found *core.Token) string {
-	return "Unexpected token '" + found.Image + "'."
+	return "Unexpected token '" + tokenImage(found) + "'."
 }
 
 func (DefaultErrorMessageProvider) ExtraneousInput(found *core.Token) string {
-	return "Extraneous input '" + found.Image + "'."
+	return "Extraneous input '" + tokenImage(found) + "'."
 }
 
 func (DefaultErrorMessageProvider) MissingToken(expected *core.TokenType, found *core.Token) string {
-	return "Missing '" + expected.Name + "', got '" + found.Image + "'."
+	return "Missing '" + expected.Name + "', got '" + tokenImage(found) + "'."
 }
 
 func (DefaultErrorMessageProvider) NoViableAlternative(found *core.Token) string {
-	return "No viable alternative at input '" + found.Image + "'."
+	return "No viable alternative at input '" + tokenImage(found) + "'."
+}
+
+func tokenImage(t *core.Token) string {
+	if t == nil {
+		return "<EOF>"
+	}
+	return t.Image
 }

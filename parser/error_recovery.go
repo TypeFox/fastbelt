@@ -47,7 +47,7 @@ func (DefaultErrorRecovery) RecoverInline(parserState *ParserState, expectedToke
 	}
 	la2 := parserState.LARaw(2)
 	// Single-token deletion: if the next-next token matches, skip the current one.
-	if la2.TypeId == expectedTokenType.Id {
+	if la2 != nil && la2.TypeId == expectedTokenType.Id {
 		parserState.ReportError(parserState.messages.ExtraneousInput(la1), la1)
 		// Skip the bad token and return the next one as if it were a match.
 		parserState.Index += 2
@@ -64,7 +64,7 @@ func (DefaultErrorRecovery) RecoverInline(parserState *ParserState, expectedToke
 }
 
 func (DefaultErrorRecovery) Recover(parserState *ParserState) {
-	if !parserState.InError {
+	if parserState.ErrorMode != ErrorModeRecover {
 		return
 	}
 	// Compute the set of tokens that could legally come next at this point in the parse.
@@ -73,13 +73,17 @@ func (DefaultErrorRecovery) Recover(parserState *ParserState) {
 	if len(followSet) > 0 {
 		for {
 			la := parserState.LARaw(1)
-			if la == nil || tokenInSet(followSet, la.TypeId) {
+			if la == nil {
+				// EOF reached, give up and let the parser unwind.
+				return
+			}
+			if tokenInSet(followSet, la.TypeId) {
 				break
 			}
 			parserState.Index++
 		}
 	}
-	parserState.InError = false
+	parserState.ErrorMode = ErrorModeNone
 	parserState.ErrorRecoveryMode = false
 }
 
@@ -88,9 +92,9 @@ func (DefaultErrorRecovery) Recover(parserState *ParserState) {
 // If not within in error, it tries to ensure that the upcoming token is valid for the current decision state.
 // This ensures that the parser can continue to make progress and doesn't get stuck on a bad token.
 func (DefaultErrorRecovery) Sync(parserState *ParserState, decisionStateIdx int) {
-	if parserState.InError {
+	if parserState.ErrorMode == ErrorModeRecover {
 		parserState.RecoveryStrategy().Recover(parserState)
-		if parserState.InError {
+		if parserState.ErrorMode != ErrorModeNone {
 			return
 		}
 	}

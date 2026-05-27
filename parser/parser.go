@@ -18,32 +18,25 @@ type ParseResult struct {
 	Errors []*core.ParserError
 }
 
+const (
+	// Indicates that the parser is not currently in error mode.
+	ErrorModeNone = iota
+	// Indicates that the parser has encountered an error and is currently in error mode.
+	ErrorModeFail
+	// Indicates that the parser has encountered an error and is ready to attempt recovery.
+	ErrorModeRecover
+)
+
 type ParserState struct {
-	Tokens []core.Token
-	Length int
-	Index  int
-	// InError is the hard-halt signal: while true, LA() returns nil so every
-	// optional/loop guard evaluates false and the parser unwinds without
-	// emitting further work.
-	//
-	// It is set in only two situations, both via AppendError:
-	//
-	//  1. BailErrorRecovery.RecoverInline returns nil. This is the bail
-	//     strategy's whole point — halt immediately on the first mismatch.
-	//     Without this flag, a loop like `for Lookahead(X) == 0 { Parse() }`
-	//     would re-enter forever, since LA still returns the real (wrong)
-	//     token and ErrorRecoveryMode only suppresses messages, not parsing.
-	//
-	//  2. Consume hits EOF mid-rule. Strictly an optimisation here: LA's
-	//     bounds check already returns nil past Length, so the parser would
-	//     unwind correctly without InError; the flag just short-circuits any
-	//     remaining straight-line work after the EOF is detected.
-	InError bool
+	Tokens    []core.Token
+	Length    int
+	Index     int
+	ErrorMode int
 	// ErrorRecoveryMode is set by ReportError and cleared by ReportMatch
 	// (called from a successful Consume). While set, further ReportError
 	// calls are dropped so that a single underlying mistake produces a
 	// single diagnostic instead of one per consume attempt during unwind.
-	// Parsing continues throughout — this flag is purely about message
+	// Parsing continues throughout - this flag is purely about message
 	// deduplication, never about halting.
 	ErrorRecoveryMode bool
 	errors            []*core.ParserError
@@ -73,7 +66,7 @@ func (p *ParserState) Errors() []*core.ParserError {
 
 func (p *ParserState) AppendError(msg string, token *core.Token) {
 	p.errors = append(p.errors, core.NewParserError(msg, token))
-	p.InError = true
+	p.ErrorMode = ErrorModeFail
 }
 
 // ReportError records a non-fatal parse error and enters error-recovery mode.
@@ -111,7 +104,7 @@ func NewParserState(tokens []core.Token, atn *RuntimeATN, recovery ErrorRecovery
 		Tokens:       tokens,
 		Length:       len(tokens),
 		Index:        0,
-		InError:      false,
+		ErrorMode:    ErrorModeNone,
 		errors:       []*core.ParserError{},
 		atn:          atn,
 		followStates: nil,
@@ -123,13 +116,13 @@ func NewParserState(tokens []core.Token, atn *RuntimeATN, recovery ErrorRecovery
 // LA returns the token at the given lookahead offset.
 // Returns nil if the offset is out of bounds or if the parser is currently in error mode.
 func (p *ParserState) LA(offset int) *core.Token {
-	// Test for inError first
+	// Test for ErrorMode first
 	// prevents LA from returning real tokens while unwinding after an error,
 	// which would cause infinite loops in guards.
 	// Also, enables an optimization for the common EOF case: once LA returns nil, the parser
 	// can short-circuit any remaining work in the current rule.
 	// This circumvents the need for goto cleanup patterns in the generated code.
-	if p.InError {
+	if p.ErrorMode != ErrorModeNone {
 		return nil
 	}
 	return p.LARaw(offset)
@@ -154,7 +147,7 @@ func (p *ParserState) LAId(offset int) int {
 }
 
 func (p *ParserState) Consume(tokenType *core.TokenType) *core.Token {
-	if p.InError {
+	if p.ErrorMode != ErrorModeNone {
 		return nil
 	}
 	current := p.LA(1)
@@ -200,7 +193,9 @@ func (p *ParserState) ExitRule() {
 	if len(p.followStates) > 0 {
 		p.followStates = p.followStates[:len(p.followStates)-1]
 	}
-	if p.InError {
+	if p.ErrorMode == ErrorModeFail {
+		// Once we exit the rule where the error was detected, we can attempt recovery.
+		p.ErrorMode = ErrorModeRecover
 		p.recovery.Recover(p)
 	}
 }
