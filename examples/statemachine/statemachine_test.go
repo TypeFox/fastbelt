@@ -44,6 +44,47 @@ func TestParsing(t *testing.T) {
 	doc.AssertState(fastbelt.DocStateLinked)
 }
 
+// TestMultilineCommentsBetweenContent guards against the regression where
+// the ML_COMMENT lexer regex `\/\*[\s\S]*?\*\/` was treated greedily.
+func TestMultilineCommentsBetweenContent(t *testing.T) {
+	const input = `
+/* header 
+ * comment1
+ * comment2
+ * comment3
+ */
+statemachine LightSwitch
+
+events
+  flick
+
+commands
+  turnOn
+  turnOff
+
+initialState off
+
+/* 
+ * between
+ * states
+ */
+state off
+  actions { turnOff }
+  flick => on
+end
+
+state on
+  actions { turnOn }
+  flick => off
+end
+`
+	f := test.New(t, CreateServices())
+	doc := f.Parse(input).AssertNoErrors()
+	sm := test.MustFindNode[Statemachine](doc)
+	assert.Equal(t, "LightSwitch", sm.Name())
+	assert.Len(t, sm.States(), 2)
+}
+
 func TestAST(t *testing.T) {
 	f := test.New(t, CreateServices())
 	doc := f.Parse(lightSwitch).AssertNoErrors()

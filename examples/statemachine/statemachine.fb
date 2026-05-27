@@ -57,5 +57,5 @@ Transition returns Transition:
 token ID: /[_a-zA-Z][\w_]*/;
 
 hidden token WS: /\s+/;
-hidden token ML_COMMENT: /\/\*[\s\S]*?\*\//;
+comment token ML_COMMENT: /\/\*[\s\S]*?\*\//;
 hidden token SL_COMMENT: /\/\/[^\n\r]*/;
