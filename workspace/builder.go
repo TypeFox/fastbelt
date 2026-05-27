@@ -58,7 +58,7 @@ func NewDefaultBuilder(sc *service.Container) Builder {
 func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downgrade func()) error {
 	// PHASE 1: Parse, and compute exports (parallel per document).
 	parser := service.MustGet[DocumentParser](s.sc)
-	exportedSymbols := service.MustGet[linking.ExportedSymbolsProvider](s.sc)
+	exporter := service.MustGet[linking.SymbolExporter](s.sc)
 	var phase1 sync.WaitGroup
 	for _, doc := range docs {
 		phase1.Go(func() {
@@ -76,7 +76,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 			}
 			// STEP 1.2: Compute the exported symbols for cross-document references.
 			if !doc.State.Has(core.DocStateExportedSymbols) {
-				exportedSymbols.ExportedSymbols(ctx, doc)
+				exporter.ExportSymbols(ctx, doc)
 				doc.State = doc.State.With(core.DocStateExportedSymbols)
 				s.notifyListeners(ctx, core.DocStateExportedSymbols, doc)
 			}
@@ -91,7 +91,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 	// PHASE 2: Compute imported/local symbols and link (parallel per document).
 	// This requires the exported symbols of all documents to be available.
 	documentManager := service.MustGet[DocumentManager](s.sc)
-	importedSymbols := service.MustGet[linking.ImportedSymbolsProvider](s.sc)
+	importer := service.MustGet[linking.SymbolImporter](s.sc)
 	localSymbols := service.MustGet[linking.LocalSymbolsProvider](s.sc)
 	linker := service.MustGet[linking.Linker](s.sc)
 	referenceDescriptions := service.MustGet[linking.ReferenceDescriptionsProvider](s.sc)
@@ -104,7 +104,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 			// STEP 2.1: Collect imported symbols from all other documents.
 			if !doc.State.Has(core.DocStateImportedSymbols) {
 				allDocs := documentManager.All()
-				importedSymbols.ImportedSymbols(ctx, doc, allDocs)
+				importer.ImportSymbols(ctx, doc, allDocs)
 				doc.State = doc.State.With(core.DocStateImportedSymbols)
 				s.notifyListeners(ctx, core.DocStateImportedSymbols, doc)
 			}

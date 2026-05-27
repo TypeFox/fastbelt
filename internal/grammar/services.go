@@ -25,6 +25,7 @@ func SetupServices(sc *service.Container) {
 
 	// Override the default scope provider
 	service.Override[FastbeltScopeProvider](sc, newScopeProviderImpl(sc))
+	service.Override[linking.SymbolImporter](sc, newImportedSymbolsProviderImpl(sc))
 }
 
 // CreateServices creates a service container for the grammar language to be used in the CLI and tests.
