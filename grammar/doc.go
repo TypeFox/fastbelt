@@ -6,8 +6,8 @@
 //
 // A grammar definition file (extension .fb) describes the concrete syntax
 // and type structure of a language. Fastbelt reads .fb files and generates
-// Go lexers, parsers, and AST types from them. The grammar language is
-// itself implemented as a Fastbelt grammar.
+// Go code from them. The grammar language is itself implemented as a
+// Fastbelt grammar.
 //
 // See [typefox.dev/fastbelt] for the toolchain overview and the
 // [typefox.dev/fastbelt/cmd/fastbelt] command for code generation.
@@ -110,9 +110,9 @@
 //	token ID:  /[_a-zA-Z][\w_]*/;
 //	token INT: /[0-9]+/;
 //
-// The order in which token rules are declared is significant: the lexer
-// returns the first match, so more specific patterns should appear before
-// more general ones.
+// The lexer returns the first, longest match. If multiple token rules
+// match the same text with equal length, the token rule declared first wins.
+// Keywords are always considered before explicitly declared token rules.
 //
 // # Hidden Tokens
 //
@@ -123,7 +123,8 @@
 //	hidden token ML_COMMENT: /\/\*[\s\S]*?\*\//;
 //	hidden token SL_COMMENT: /\/\/[^\r\n]*/;
 //
-// Hidden tokens are global and apply to the entire grammar.
+// Hidden tokens are global and apply to the entire grammar. They may
+// appear anywhere without interrupting assignment groups.
 //
 // # Comment Tokens
 //
@@ -132,9 +133,8 @@
 //
 //	comment token SL_COMMENT: /\/\/[^\r\n]*/;
 //
-// Comment tokens are moved in front of the element they precede during
-// parsing, making them available for tooling such as hover documentation in
-// a language server.
+// Parsed comment tokens are stored in the document's `Comments []Token`
+// slice, where tooling can access them.
 //
 // # Parser Rules
 //
@@ -185,8 +185,7 @@
 // # Keywords
 //
 // A keyword is a literal string in double quotes. Keywords guide the parser
-// and provide visible structure to the language. They must not be empty and
-// must not contain whitespace:
+// and provide visible structure to the language. They must not be empty:
 //
 //	Person returns Person:
 //	    "person" Name=ID "age" Age=INT;
@@ -233,19 +232,19 @@
 //
 // Assignments with cardinality + or * form a contiguous group: the sequence
 // of matched values must not be interrupted by elements belonging to a
-// different assignment before the group is complete. Hidden tokens such as
-// whitespace and comments may appear anywhere without interrupting a group.
+// different assignment before the group is complete.
 //
 // # Cross-References
 //
-// A cross-reference reads an identifying token from the input and resolves it
-// to an existing object rather than creating a new one. The syntax is:
+// A cross-reference reads an identifying token from the input and usually
+// resolves it to an existing object. The syntax is:
 //
 //	property=[Type:TOKEN]
 //
-// Type is the name of an interface and TOKEN is the name of a token rule that
-// identifies objects of that type. If TOKEN is omitted, Fastbelt uses the
-// token matched by the Name field assignment of the referenced type:
+// Type is the name of an interface and TOKEN is the name of a token rule or
+// composite rule that identifies objects of that type. If TOKEN is omitted,
+// Fastbelt uses the token matched by the Name field assignment of the
+// referenced type:
 //
 //	interface State {
 //	    Name string
@@ -275,6 +274,10 @@
 // Instead it calls either Definition or DeclaredParameter, and whichever
 // rule matches creates the object. This pattern is the standard way to write
 // rules that match one of several concrete types.
+//
+// After an unassigned subrule has been consumed, following assignments in the
+// same rule can set additional properties on the object returned by that subrule.
+// Such assignments cannot appear before the unassigned subrule.
 //
 // In contrast, an assigned rule call such as parameter=DeclaredParameter
 // creates an object in the current rule and assigns the result of the called
@@ -309,21 +312,24 @@
 //
 // A composite rule matches a structured token value such as a qualified name
 // or dotted path. Unlike parser rules, composite rules do not create AST
-// objects; they yield an opaque composite value that is stored in a field of
-// type composite.
+// objects; they yield a composite value that is stored in a field of type
+// composite and can be inspected through its Tokens() method.
 //
 // Composite rules support keywords, rule calls, parenthesized alternatives,
 // and cardinalities, but not assignments or cross-references:
 //
 //	composite QualifiedName: ID ("." ID)*;
 //
-// Declare the receiving field as composite in the interface, then use a
-// normal = or += assignment on the right side of a parser rule:
+// Composite values can also be used to define object names and resolve
+// cross-references:
 //
-//	interface TypeRef {
+//	interface Type {
 //	    Name composite
 //	}
+//	interface TypeRef {
+//	    Item *Type
+//	}
 //
-//	TypeRef returns TypeRef:
-//	    Name=QualifiedName;
+//	Type: Name=QualifiedName;
+//	TypeRef: Item=[Type:QualifiedName];
 package grammar

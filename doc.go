@@ -62,7 +62,7 @@
 //
 // Because Go interfaces are generated directly from grammar interfaces, these
 // interfaces should reflect how you plan to implement semantic checks,
-// interpreters, or code generators. At the same time, there's a 1:1
+// interpreters, or code generators. At the same time, there's a close
 // correspondence between interfaces and parser rules so the parse model and
 // runtime model stay easy to reason about.
 //
