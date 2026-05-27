@@ -46,6 +46,19 @@ func CreateATN(grammr grammar.Grammar, tokenTypeIds map[string]int) (*ATN, map[s
 		ruleBuilder.Assign(handle)
 	}
 	atn := builder.Build()
+
+	// Tag decision states with their grammar element so the generator can
+	// map grammar.Element to ATN state index.
+	reverseNames := make(map[string]grammar.Element, len(lookaheadNames))
+	for el, name := range lookaheadNames {
+		reverseNames[name] = el
+	}
+	for name, state := range atn.DecisionMap {
+		if el, ok := reverseNames[name]; ok {
+			state.Production = el
+		}
+	}
+
 	return atn, byName
 }
 
@@ -166,6 +179,7 @@ func convertRuleCall(
 	switch typed := rule.(type) {
 	case grammar.AbstractRuleWithBody:
 		handle := rb.RuleRef(typed)
+		handle.Left.RuleCallEntry = rc; // tag so generator can find follow state via RuleCallEntry
 		return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
 	case grammar.Token:
 		id := rb.GetTokenTypeByName(typed.Name())

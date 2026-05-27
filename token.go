@@ -42,7 +42,7 @@ func (t *TokenType) IsComment() bool {
 }
 
 var EOF = NewTokenType(
-	0,
+	-1,
 	"EOF",
 	"EOF",
 	0,
