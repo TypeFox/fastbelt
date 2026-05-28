@@ -4,7 +4,7 @@
 
 package statemachine
 
-//go:generate go run ../../cmd/fastbelt generate -g ./statemachine.fb -v
+//go:generate go run ../../cmd/fastbelt generate ./statemachine.fb -v
 
 import (
 	"typefox.dev/fastbelt/linking"

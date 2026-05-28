@@ -13,8 +13,9 @@
 			"program": "${workspaceFolder}/cmd/fastbelt",
 			"cwd": "${workspaceFolder}/internal/grammar",
 			"args": [
-				"--g=grammar.fb",
-				"--v",
+				"generate",
+				"grammar.fb",
+				"-v",
 				"--atn" //always generate ATN to ensure it is up to date with the grammar
 			]
 		},
@@ -26,8 +27,9 @@
 			"program": "${workspaceFolder}/cmd/fastbelt",
 			"cwd": "${workspaceFolder}/examples/statemachine",
 			"args": [
-				"--g=statemachine.fb",
-				"--v",
+				"generate",
+				"statemachine.fb",
+				"-v",
 				"--atn"
 			]
 		},

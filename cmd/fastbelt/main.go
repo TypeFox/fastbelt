@@ -30,10 +30,9 @@ derived from the output directory name.
 A typical workflow is to iterate on grammar changes and rerun generation after
 each step.`
 
-const generateExamples = `  fastbelt generate
-  fastbelt generate -g ./grammar.fb
-  fastbelt generate -g ./grammar.fb -o ./internal/lang -p lang
-  fastbelt generate -g ./grammar.fb --atn -v`
+const generateExamples = `  fastbelt generate ./grammar.fb
+  fastbelt generate ./lang.fb -o ./internal/lang -p lang
+  fastbelt generate ./mylanguage.fb --atn -v`
 
 const scaffoldLongHelp = `Scaffold a new language project from templates.
 
@@ -44,9 +43,9 @@ go generate and go mod tidy.
 Without -module, Fastbelt scaffolds into an existing module discovered from the
 working directory.`
 
-const scaffoldExamples = `  fastbelt scaffold -module example.com/acme/mylang -language "MyLanguage"
-  fastbelt scaffold -package internal/lang -language "MyLanguage"
-  fastbelt scaffold -module example.com/acme/mylang -language "MyLanguage" -no-vscode`
+const scaffoldExamples = `  fastbelt scaffold -m example.com/acme/mylang -l "MyLanguage"
+  fastbelt scaffold -p internal/lang -l "MyLanguage"
+  fastbelt scaffold -m example.com/acme/mylang -l "MyLanguage" --vscode`
 
 func main() {
 	if err := runCmd(); err != nil {
@@ -71,16 +70,16 @@ func runCmd() error {
 func newGenerateCmd() *cobra.Command {
 	opts := generateOptions{}
 	cmd := &cobra.Command{
-		Use:     "generate",
+		Use:     "generate <grammar>",
 		Short:   "Generate code from a grammar definition",
 		Long:    generateLongHelp,
 		Example: generateExamples,
-		Args:    cobra.NoArgs,
-		RunE: func(_ *cobra.Command, _ []string) error {
+		Args:    cobra.ExactArgs(1),
+		RunE: func(_ *cobra.Command, args []string) error {
+			opts.grammarPath = args[0]
 			return runGenerateCLI(opts)
 		},
 	}
-	cmd.Flags().StringVarP(&opts.grammarPath, "grammar", "g", "./grammar.fb", "Path to the grammar file")
 	cmd.Flags().StringVarP(&opts.outputPath, "output", "o", "./", "Path to the output directory")
 	cmd.Flags().StringVarP(&opts.packageName, "package", "p", "", "Package name for generated code (defaults to the last segment of the output path)")
 	cmd.Flags().BoolVar(&opts.atn, "atn", false, "Enable markdown output about ATN construction")
@@ -102,10 +101,10 @@ func newScaffoldCmd() *cobra.Command {
 			return runScaffoldCLI(opts)
 		},
 	}
-	cmd.Flags().StringVar(&opts.modulePath, "module", "", "Module path for go mod init (optional; omit to scaffold into an existing module)")
-	cmd.Flags().StringVar(&opts.packagePath, "package", ".", "Template output directory: with --module, relative to the new module root; without --module, relative to the working directory")
-	cmd.Flags().StringVar(&opts.language, "language", "", "Human-readable language name")
-	cmd.Flags().BoolVar(&opts.noVSCodeExtension, "no-vscode", false, "Do not generate a VS Code extension")
+	cmd.Flags().StringVarP(&opts.modulePath, "module", "m", "", "Module path for go mod init (optional; omit to scaffold into an existing module)")
+	cmd.Flags().StringVarP(&opts.packagePath, "package", "p", ".", "Template output directory: with --module, relative to the new module root; without --module, relative to the working directory")
+	cmd.Flags().StringVarP(&opts.language, "language", "l", "", "Human-readable language name")
+	cmd.Flags().BoolVar(&opts.createVSCodeExtension, "vscode", false, "Generate a VS Code extension")
 	_ = cmd.MarkFlagRequired("language")
 	return cmd
 }

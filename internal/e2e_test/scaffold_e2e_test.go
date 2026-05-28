@@ -57,7 +57,7 @@ func TestScaffoldModule_endToEnd(t *testing.T) {
 	})
 
 	t.Run("scaffold module", func(t *testing.T) {
-		scaffold := exec.Command(fastbeltBin, "scaffold", "--module", modulePath, "--language", "E2E Lang")
+		scaffold := exec.Command(fastbeltBin, "scaffold", "--module", modulePath, "--language", "E2E Lang", "--vscode")
 		scaffold.Dir = workDir
 		// Use the local repo as a go mod replace so the scaffolded module builds against in-tree code.
 		scaffold.Env = append(os.Environ(), "FASTBELT_SCAFFOLD_REPO="+repoRoot)

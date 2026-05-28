@@ -16,10 +16,10 @@ import (
 )
 
 type scaffoldOptions struct {
-	modulePath        string
-	packagePath       string
-	language          string
-	noVSCodeExtension bool
+	modulePath            string
+	packagePath           string
+	language              string
+	createVSCodeExtension bool
 }
 
 func runScaffoldCLI(opts scaffoldOptions) error {
@@ -34,7 +34,7 @@ func runScaffoldCLI(opts scaffoldOptions) error {
 	}
 
 	scaffolder := &scaffold.Scaffolder{
-		CreateVSCodeExtension: !opts.noVSCodeExtension,
+		CreateVSCodeExtension: opts.createVSCodeExtension,
 		Language:              opts.language,
 		CreateModule:          opts.modulePath != "",
 	}

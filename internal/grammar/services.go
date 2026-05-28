@@ -4,7 +4,7 @@
 
 package grammar
 
-//go:generate go run ../../cmd/fastbelt generate -g ./grammar.fb -v
+//go:generate go run ../../cmd/fastbelt generate ./grammar.fb -v
 
 import (
 	"typefox.dev/fastbelt/linking"
