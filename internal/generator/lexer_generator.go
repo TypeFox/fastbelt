@@ -132,6 +132,7 @@ func generateKeywordTokenType(keyword grammar.Keyword, id int) codegen.Node {
 		n.AppendLine("\"", keywordValue, "\",")
 		n.AppendLine("\"", keywordValue, "\",")
 		n.AppendLine("0,")
+		n.AppendLine("core.TokenKindKeyword,")
 		n.AppendLine("0,")
 		n.AppendLine("false,")
 		n.AppendLine("func (text string, offset int) int {")
@@ -181,6 +182,7 @@ func generateTokenType(token grammar.Token, id int) GenerateLexerResult {
 		} else {
 			n.AppendLine("0,")
 		}
+		n.AppendLine("core.TokenKindToken,")
 		n.AppendLine("0,")
 		n.AppendLine("false,")
 		impl := regex.(*regexp.RegexpImpl)

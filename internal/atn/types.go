@@ -54,9 +54,14 @@ type Transition interface {
 // AtomTransition fires on a specific token type.
 // CategoryMatches holds the IDs of all token types that match via category
 // inheritance; populated from the Terminal's CategoryMatches at ATN-build time.
+//
+// CompletionHint mirrors parser.CompletionHint: set on transitions that come
+// from a cross-reference assignment, propagated to the runtime ATN by the
+// generator so the completion provider can dispatch per-field.
 type AtomTransition struct {
-	TargetState *ATNState
-	TokenTypeId int
+	TargetState    *ATNState
+	TokenTypeId    int
+	CompletionHint *parser.CompletionHint
 }
 
 func (t *AtomTransition) Target() *ATNState          { return t.TargetState }
@@ -73,10 +78,18 @@ func (t *EpsilonTransition) IsEpsilon() bool            { return true }
 func (t *EpsilonTransition) SetTarget(target *ATNState) { t.TargetState = target }
 
 // RuleTransition enters a sub-rule and returns to FollowState.
+//
+// CompletionHint mirrors parser.CompletionHint: set when this rule call
+// comes from a cross-reference whose text-form is a parser rule (e.g.
+// `Ref=[Decl:FQN]`). The runtime simulator propagates the hint to every
+// atom transition reached inside the called rule, so the completion
+// provider can dispatch per-field even when the cross-reference text
+// spans multiple tokens.
 type RuleTransition struct {
-	TargetState *ATNState // the rule's RuleStartState
-	Rule        grammar.AbstractRuleWithBody
-	FollowState *ATNState
+	TargetState    *ATNState // the rule's RuleStartState
+	Rule           grammar.AbstractRuleWithBody
+	FollowState    *ATNState
+	CompletionHint *parser.CompletionHint
 }
 
 func (t *RuleTransition) Target() *ATNState          { return t.TargetState }

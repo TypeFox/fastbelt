@@ -14,6 +14,107 @@ import (
 	"typefox.dev/fastbelt/parser"
 )
 
+// completionHintFor returns the per-field CompletionHint for a CrossRef whose
+// container is an Assignment in the given rule. Returns nil if the CrossRef is
+// not nested inside an Assignment (bare cross-references contribute no hint).
+func completionHintFor(rule grammar.AbstractRuleWithBody, cr grammar.CrossRef) *parser.CompletionHint {
+	if rule == nil {
+		return nil
+	}
+	assignment, ok := cr.Container().(grammar.Assignment)
+	if !ok {
+		return nil
+	}
+	prop := assignment.Property()
+	if prop == nil {
+		return nil
+	}
+	propName := prop.Text()
+	if propName == "" {
+		return nil
+	}
+	hint := &parser.CompletionHint{Field: ruleTypeName(rule) + "." + propName}
+	if action := findPrecedingAction(assignment); action != nil {
+		typeName := ""
+		if t := action.Type(); t != nil {
+			typeName = t.Text()
+		}
+		actionProp := ""
+		if p := action.Property(); p != nil {
+			actionProp = p.Text()
+		}
+		hint.PrecedingAction = &parser.ActionInfo{
+			TargetType: typeName,
+			Property:   actionProp,
+		}
+	}
+	return hint
+}
+
+// ruleTypeName returns the name of the interface a rule produces. For a rule
+// like `Foo returns Bar: ...` it returns "Bar"; for `Foo: ...` it returns
+// "Foo" (the rule name doubles as the produced interface). The completion
+// dispatch tables are keyed by interface name, so the hint must use this
+// name and not the rule name.
+func ruleTypeName(rule grammar.AbstractRuleWithBody) string {
+	if pr, ok := rule.(grammar.ParserRule); ok {
+		if rt := pr.ReturnType(); rt != nil {
+			if name := rt.Text(); name != "" {
+				return name
+			}
+		}
+	}
+	return rule.Name()
+}
+
+// findPrecedingAction returns the grammar.Action that fires immediately
+// before el's first token is consumed, or nil if no such action exists.
+//
+// The walk handles indirection through Alternatives and outer Groups: a CR
+// inside `(a | b)` whose enclosing alternative has no token-consuming
+// predecessor is still "first", so an action in the surrounding group
+// applies to it. The walk stops at the rule body or as soon as it crosses
+// any token-consuming element.
+func findPrecedingAction(el grammar.Element) grammar.Action {
+	node := fastbelt.AstNode(el)
+	for node != nil {
+		parent := node.Container()
+		if parent == nil {
+			return nil
+		}
+		switch p := parent.(type) {
+		case grammar.Group:
+			elems := p.Elements()
+			idx := -1
+			for i, e := range elems {
+				if fastbelt.AstNode(e) == node {
+					idx = i
+					break
+				}
+			}
+			if idx < 0 {
+				return nil
+			}
+			for i := idx - 1; i >= 0; i-- {
+				element := elems[i]
+				if action, ok := element.(grammar.Action); ok {
+					return action
+				} else if element.Cardinality() == "" || element.Cardinality() == "+" {
+					return nil // unskippable prior sibling consumes tokens, so no preceding action applies
+				}
+			}
+			node = parent
+		case grammar.Alternatives:
+			node = parent
+		case grammar.AbstractRuleWithBody:
+			return nil
+		default:
+			node = parent
+		}
+	}
+	return nil
+}
+
 func CreateATN(grammr grammar.Grammar, tokenTypeIds map[string]int) (*ATN, map[string]grammar.AbstractRuleWithBody) {
 	lookaheadNames := ComputeLookaheadNames(grammr)
 	byName := map[string]grammar.AbstractRuleWithBody{}
@@ -179,7 +280,7 @@ func convertRuleCall(
 	switch typed := rule.(type) {
 	case grammar.AbstractRuleWithBody:
 		handle := rb.RuleRef(typed)
-		handle.Left.RuleCallEntry = rc; // tag so generator can find follow state via RuleCallEntry
+		handle.Left.RuleCallEntry = rc // tag so generator can find follow state via RuleCallEntry
 		return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
 	case grammar.Token:
 		id := rb.GetTokenTypeByName(typed.Name())
@@ -193,9 +294,28 @@ func convertCrossRef(
 	rb ATNRuleBuilder,
 	cr grammar.CrossRef,
 ) (*ATNHandle, error) {
-	name := cr.Rule().Rule().Text()
-	id := rb.GetTokenTypeByName(name)
+	rule := cr.Rule().Rule().Ref(context.Background())
+	hint := completionHintFor(rb.Rule(), cr)
+	if abstractRule, ok := rule.(grammar.AbstractRuleWithBody); ok {
+		handle := rb.RuleRef(abstractRule)
+		if hint != nil {
+			for _, t := range handle.Left.Transitions {
+				if rt, ok := t.(*RuleTransition); ok && rt.Rule == abstractRule {
+					rt.CompletionHint = hint
+				}
+			}
+		}
+		return handle, nil
+	}
+	id := rb.GetTokenTypeByName(rule.Name())
 	termHandle := rb.TokenRef(id)
+	if hint != nil {
+		for _, t := range termHandle.Left.Transitions {
+			if at, ok := t.(*AtomTransition); ok && at.TokenTypeId == id {
+				at.CompletionHint = hint
+			}
+		}
+	}
 	lookaheadName := rb.GetLookaheadNameByElement(cr)
 	//TODO true? CrossRef cardinality comes from the outer element, not from the CrossRef itself.
 	return wrapWithCardinality(rb, termHandle, cr.Cardinality(), lookaheadName), nil

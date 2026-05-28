@@ -55,5 +55,20 @@ func GenerateServices(grammr grammar.Grammar, packageName string) string {
 	})
 	node.AppendLine("}")
 	node.AppendLine()
+
+	node.AppendLine("// SetupGeneratedServerServices sets up the generated language server services for this grammar.")
+	node.AppendLine("// If any service is already set, it's not overwritten.")
+	node.AppendLine("func SetupGeneratedServerServices(sc *service.Container) {")
+	node.Indent(func(n codegen.Node) {
+		n.AppendLine("if !service.Has[", grammr.Name(), "CompletionFilter](sc) {")
+		n.AppendLine("    service.Put(sc, NewDefault", grammr.Name(), "CompletionFilter())")
+		n.AppendLine("}")
+		n.AppendLine("if !service.Has[parser.LanguageCompletionAdapter](sc) {")
+		n.AppendLine("    service.Put[parser.LanguageCompletionAdapter](sc, New", grammr.Name(), "CompletionAdapter(sc))")
+		n.AppendLine("}")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
 	return FormatIfPossible(node.String())
 }

@@ -36,6 +36,7 @@ func CreateServices() *service.Container {
 func CreateLspServices() *service.Container {
 	sc := service.NewContainer()
 	SetupServices(sc)
+	SetupGeneratedServerServices(sc)
 	server.SetupDefaultServices(sc)
 	sc.Seal()
 	return sc

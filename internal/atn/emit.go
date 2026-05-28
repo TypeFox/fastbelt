@@ -24,6 +24,20 @@ func BuildStateIndexMap(a *ATN) map[*ATNState]int {
 	return idx
 }
 
+func renderCompletionHint(h *parser.CompletionHint) string {
+	if h == nil {
+		return "nil"
+	}
+	out := "&parser.CompletionHint{Field: " + strconv.Quote(h.Field)
+	if h.PrecedingAction != nil {
+		out += ", PrecedingAction: &parser.ActionInfo{TargetType: " +
+			strconv.Quote(h.PrecedingAction.TargetType) +
+			", Property: " + strconv.Quote(h.PrecedingAction.Property) + "}"
+	}
+	out += "}"
+	return out
+}
+
 func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypeVarNames []string) codegen.Node {
 	idx := BuildStateIndexMap(rtn)
 
@@ -84,17 +98,41 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, tokenTypeVarNa
 				for _, t := range s.Transitions {
 					switch at := t.(type) {
 					case *AtomTransition:
-						n.AppendLine(
-							"&parser.RuntimeAtomTransition{Target: states[",
-							strconv.Itoa(idx[at.Target()]),
-							"], TokenType: ",
-							tokenTypeVarNames[at.TokenTypeId],
-							"},",
-						)
+						if at.CompletionHint != nil {
+							n.AppendLine(
+								"&parser.RuntimeAtomTransition{Target: states[",
+								strconv.Itoa(idx[at.Target()]),
+								"], TokenType: ",
+								tokenTypeVarNames[at.TokenTypeId],
+								", CompletionHint: ",
+								renderCompletionHint(at.CompletionHint),
+								"},",
+							)
+						} else {
+							n.AppendLine(
+								"&parser.RuntimeAtomTransition{Target: states[",
+								strconv.Itoa(idx[at.Target()]),
+								"], TokenType: ",
+								tokenTypeVarNames[at.TokenTypeId],
+								"},",
+							)
+						}
 					case *EpsilonTransition:
 						n.AppendLine("&parser.RuntimeEpsilonTransition{Target: states[", strconv.Itoa(idx[at.Target()]), "]},")
 					case *RuleTransition:
-						n.AppendLine("&parser.RuntimeRuleTransition{Target: states[", strconv.Itoa(idx[at.Target()]), "], FollowState: states[", strconv.Itoa(idx[at.FollowState]), "]},")
+						if at.CompletionHint != nil {
+							n.AppendLine(
+								"&parser.RuntimeRuleTransition{Target: states[",
+								strconv.Itoa(idx[at.Target()]),
+								"], FollowState: states[",
+								strconv.Itoa(idx[at.FollowState]),
+								"], CompletionHint: ",
+								renderCompletionHint(at.CompletionHint),
+								"},",
+							)
+						} else {
+							n.AppendLine("&parser.RuntimeRuleTransition{Target: states[", strconv.Itoa(idx[at.Target()]), "], FollowState: states[", strconv.Itoa(idx[at.FollowState]), "]},")
+						}
 					}
 				}
 			})

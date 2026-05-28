@@ -360,7 +360,7 @@ func BuildATN() *parser.RuntimeATN {
 		&parser.RuntimeAtomTransition{Target: states[23], TokenType: Keyword_initialState},
 	}
 	states[23].Transitions = []parser.RuntimeTransition{
-		&parser.RuntimeAtomTransition{Target: states[26], TokenType: Token_ID},
+		&parser.RuntimeAtomTransition{Target: states[26], TokenType: Token_ID, CompletionHint: &parser.CompletionHint{Field: "Statemachine.Init"}},
 	}
 	states[24].Transitions = []parser.RuntimeTransition{
 		&parser.RuntimeRuleTransition{Target: states[6], FollowState: states[25]},
@@ -404,7 +404,7 @@ func BuildATN() *parser.RuntimeATN {
 		&parser.RuntimeAtomTransition{Target: states[37], TokenType: Keyword_LeftBrace},
 	}
 	states[37].Transitions = []parser.RuntimeTransition{
-		&parser.RuntimeAtomTransition{Target: states[38], TokenType: Token_ID},
+		&parser.RuntimeAtomTransition{Target: states[38], TokenType: Token_ID, CompletionHint: &parser.CompletionHint{Field: "State.Actions"}},
 	}
 	states[38].Transitions = []parser.RuntimeTransition{
 		&parser.RuntimeAtomTransition{Target: states[39], TokenType: Keyword_RightBrace},
@@ -435,13 +435,13 @@ func BuildATN() *parser.RuntimeATN {
 		&parser.RuntimeEpsilonTransition{Target: states[7]},
 	}
 	states[47].Transitions = []parser.RuntimeTransition{
-		&parser.RuntimeAtomTransition{Target: states[48], TokenType: Token_ID},
+		&parser.RuntimeAtomTransition{Target: states[48], TokenType: Token_ID, CompletionHint: &parser.CompletionHint{Field: "Transition.Event"}},
 	}
 	states[48].Transitions = []parser.RuntimeTransition{
 		&parser.RuntimeAtomTransition{Target: states[49], TokenType: Keyword_EqualsGreaterThan},
 	}
 	states[49].Transitions = []parser.RuntimeTransition{
-		&parser.RuntimeAtomTransition{Target: states[50], TokenType: Token_ID},
+		&parser.RuntimeAtomTransition{Target: states[50], TokenType: Token_ID, CompletionHint: &parser.CompletionHint{Field: "Transition.State"}},
 	}
 	states[50].Transitions = []parser.RuntimeTransition{
 		&parser.RuntimeEpsilonTransition{Target: states[9]},

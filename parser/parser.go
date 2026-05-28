@@ -141,7 +141,14 @@ func (p *ParserState) LARaw(offset int) *core.Token {
 func (p *ParserState) LAId(offset int) int {
 	la := p.LA(offset)
 	if la == nil {
-		return core.EOF.Id
+		// Return a sentinel that can NEVER collide with a real token-type
+		// ID. core.EOF.Id is 0, which is also the first generated keyword's
+		// ID, so returning it here causes LL(k) lookahead paths whose
+		// first expected token has ID 0 to match at EOF - a silent bug
+		// that mis-commits to the wrong alternative when the input is
+		// exhausted mid-decision. Negative values can never be real
+		// TokenType IDs (they're assigned by the generator starting at 0).
+		return -1
 	}
 	return la.TypeId
 }

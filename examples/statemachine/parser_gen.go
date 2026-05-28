@@ -104,7 +104,7 @@ var StatemachineLookahead4 = parser.LLkLookahead{
 
 func (p *Parser) ParseStatemachine() Statemachine {
 	current := NewStatemachine()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_statemachine)
 		core.AssignToken(current, token, Statemachinestatemachine_0)
@@ -175,13 +175,13 @@ func (p *Parser) ParseStatemachine() Statemachine {
 			p.state.Sync(26)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseEvent() Event {
 	current := NewEvent()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Token_ID)
 		core.AssignToken(current, token, EventNameID_0)
@@ -189,13 +189,13 @@ func (p *Parser) ParseEvent() Event {
 			current.SetName(token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseCommand() Command {
 	current := NewCommand()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Token_ID)
 		core.AssignToken(current, token, CommandNameID_0)
@@ -203,13 +203,13 @@ func (p *Parser) ParseCommand() Command {
 			current.SetName(token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseState() State {
 	current := NewState()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_state)
 		core.AssignToken(current, token, Statestate_0)
@@ -261,13 +261,13 @@ func (p *Parser) ParseState() State {
 		token := p.state.Consume(Keyword_end)
 		core.AssignToken(current, token, Stateend_0)
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }
 
 func (p *Parser) ParseTransition() Transition {
 	current := NewTransition()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Token_ID)
 		core.AssignToken(current, token, TransitionEventID_0)
@@ -286,6 +286,6 @@ func (p *Parser) ParseTransition() Transition {
 			current.SetState(p.referencesConstructor.TransitionState(current, token))
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
 }

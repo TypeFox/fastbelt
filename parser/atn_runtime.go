@@ -43,10 +43,42 @@ type RuntimeTransition interface {
 	IsEpsilon() bool
 }
 
+// CompletionHint marks an atom transition that originated from a cross-reference
+// assignment in the grammar. The Field key (e.g. "Transition.Event") is used by
+// the completion provider to dispatch to the right per-field scope/filter on the
+// generated language CompletionProvider. The same key seeds the synthetic-owner
+// chain when the cursor's container does not yet exist.
+//
+// PrecedingAction is non-nil when this atom is the first token-consuming
+// element after a grammar Action (tree-rewrite) in its enclosing group. The
+// completion provider uses it to wrap the existing AST node in a freshly
+// allocated parent when the existing node's assignment slot is already filled
+// - mirroring Langium's `NextFeature.type`/`property` synthesis.
+type CompletionHint struct {
+	Field           string
+	PrecedingAction *ActionInfo
+}
+
+// ActionInfo describes a grammar Action that fires immediately before the
+// atom carrying its CompletionHint. The completion provider applies it by
+// allocating a new node of TargetType and assigning the existing AST node
+// to the named Property. The choice of single vs append assignment is
+// baked into the generated adapter from the field's grammar type, so the
+// operator does not need to travel through the ATN.
+type ActionInfo struct {
+	TargetType string // e.g. "MemberCall"
+	Property   string // e.g. "Previous"
+}
+
 // RuntimeAtomTransition fires on a specific token type.
+//
+// CompletionHint is non-nil when this transition's token was emitted by a
+// cross-reference assignment; it lets the completion engine know that "match
+// Token_ID here" means "complete a reference to the field named by Hint.Field".
 type RuntimeAtomTransition struct {
-	Target    *RuntimeATNState
-	TokenType *fastbelt.TokenType
+	Target         *RuntimeATNState
+	TokenType      *fastbelt.TokenType
+	CompletionHint *CompletionHint
 }
 
 func (t *RuntimeAtomTransition) GetTarget() *RuntimeATNState { return t.Target }
@@ -61,9 +93,17 @@ func (t *RuntimeEpsilonTransition) GetTarget() *RuntimeATNState { return t.Targe
 func (t *RuntimeEpsilonTransition) IsEpsilon() bool             { return true }
 
 // RuntimeRuleTransition enters a sub-rule and returns to FollowState.
+//
+// CompletionHint is non-nil when this rule call was emitted by a
+// cross-reference assignment whose text-form is a rule (e.g.
+// `Ref=[Decl:FQN]` where FQN is itself a parser rule). Every atom
+// transition reached inside the called rule then represents one token of
+// the cross-reference's text, so the simulator propagates this hint
+// onto its live-set paths until the matching RuleStop pops it off again.
 type RuntimeRuleTransition struct {
-	Target      *RuntimeATNState // the rule's RuleStartState
-	FollowState *RuntimeATNState
+	Target         *RuntimeATNState // the rule's RuleStartState
+	FollowState    *RuntimeATNState
+	CompletionHint *CompletionHint
 }
 
 func (t *RuntimeRuleTransition) GetTarget() *RuntimeATNState { return t.Target }

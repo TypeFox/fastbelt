@@ -30,6 +30,7 @@ type ATNRuleBuilder interface {
 	GetTokenTypeByName(name string) int
 	GetRuleByName(name string) grammar.AbstractRuleWithBody
 	GetLookaheadNameByElement(el grammar.Element) string
+	Rule() grammar.AbstractRuleWithBody
 }
 
 type ATNBuilder interface {
@@ -73,6 +74,10 @@ func (rb *ATNRuleBuilderImpl) GetRuleByName(name string) grammar.AbstractRuleWit
 		return rule
 	}
 	return nil
+}
+
+func (rb *ATNRuleBuilderImpl) Rule() grammar.AbstractRuleWithBody {
+	return rb.rule
 }
 
 func (rb *ATNRuleBuilderImpl) GetLookaheadNameByElement(el grammar.Element) string {

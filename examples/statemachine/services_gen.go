@@ -37,3 +37,14 @@ func SetupGeneratedServices(sc *service.Container) {
 		service.Put[core.SymbolContainers](sc, NewSymbolContainers())
 	}
 }
+
+// SetupGeneratedServerServices sets up the generated language server services for this grammar.
+// If any service is already set, it's not overwritten.
+func SetupGeneratedServerServices(sc *service.Container) {
+	if !service.Has[StatemachineModelCompletionFilter](sc) {
+		service.Put(sc, NewDefaultStatemachineModelCompletionFilter())
+	}
+	if !service.Has[parser.LanguageCompletionAdapter](sc) {
+		service.Put[parser.LanguageCompletionAdapter](sc, NewStatemachineModelCompletionAdapter(sc))
+	}
+}

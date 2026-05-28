@@ -63,4 +63,19 @@ func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[DocumentSymbolProvider](sc) {
 		service.Put(sc, NewDefaultDocumentSymbolProvider(sc))
 	}
+	if !service.Has[FuzzyMatcher](sc) {
+		service.Put(sc, NewDefaultFuzzyMatcher())
+	}
+	if !service.Has[CompletionProvider](sc) {
+		service.Put(sc, NewDefaultCompletionProvider(sc))
+	}
+	if !service.Has[SnippetRegistry](sc) {
+		service.Put(sc, NewDefaultSnippetRegistry())
+	}
+	if !service.Has[CompletionTriggers](sc) {
+		service.Put(sc, NewDefaultCompletionTriggers())
+	}
+	if !service.Has[CompletionContributor](sc) {
+		service.Put(sc, NewDefaultCompletionContributor())
+	}
 }

@@ -1667,13 +1667,13 @@ func BuildATN() *parser.RuntimeATN {
 		&parser.RuntimeEpsilonTransition{Target: states[74]},
 	}
 	states[69].Transitions = []parser.RuntimeTransition{
-		&parser.RuntimeAtomTransition{Target: states[73], TokenType: Token_ID},
+		&parser.RuntimeAtomTransition{Target: states[73], TokenType: Token_ID, CompletionHint: &parser.CompletionHint{Field: "Interface.Extends"}},
 	}
 	states[70].Transitions = []parser.RuntimeTransition{
 		&parser.RuntimeAtomTransition{Target: states[71], TokenType: Keyword_Comma},
 	}
 	states[71].Transitions = []parser.RuntimeTransition{
-		&parser.RuntimeAtomTransition{Target: states[72], TokenType: Token_ID},
+		&parser.RuntimeAtomTransition{Target: states[72], TokenType: Token_ID, CompletionHint: &parser.CompletionHint{Field: "Interface.Extends"}},
 	}
 	states[72].Transitions = []parser.RuntimeTransition{
 		&parser.RuntimeEpsilonTransition{Target: states[75]},
@@ -1771,13 +1771,13 @@ func BuildATN() *parser.RuntimeATN {
 		&parser.RuntimeAtomTransition{Target: states[102], TokenType: Keyword_Asterisk},
 	}
 	states[102].Transitions = []parser.RuntimeTransition{
-		&parser.RuntimeAtomTransition{Target: states[103], TokenType: Token_ID},
+		&parser.RuntimeAtomTransition{Target: states[103], TokenType: Token_ID, CompletionHint: &parser.CompletionHint{Field: "ReferenceType.Type"}},
 	}
 	states[103].Transitions = []parser.RuntimeTransition{
 		&parser.RuntimeEpsilonTransition{Target: states[11]},
 	}
 	states[104].Transitions = []parser.RuntimeTransition{
-		&parser.RuntimeAtomTransition{Target: states[105], TokenType: Token_ID},
+		&parser.RuntimeAtomTransition{Target: states[105], TokenType: Token_ID, CompletionHint: &parser.CompletionHint{Field: "SimpleType.Type"}},
 	}
 	states[105].Transitions = []parser.RuntimeTransition{
 		&parser.RuntimeEpsilonTransition{Target: states[13]},
@@ -1816,7 +1816,7 @@ func BuildATN() *parser.RuntimeATN {
 		&parser.RuntimeEpsilonTransition{Target: states[117]},
 	}
 	states[116].Transitions = []parser.RuntimeTransition{
-		&parser.RuntimeAtomTransition{Target: states[117], TokenType: Token_ID},
+		&parser.RuntimeAtomTransition{Target: states[117], TokenType: Token_ID, CompletionHint: &parser.CompletionHint{Field: "ParserRule.ReturnType"}},
 	}
 	states[117].Transitions = []parser.RuntimeTransition{
 		&parser.RuntimeEpsilonTransition{Target: states[118]},
@@ -1988,7 +1988,7 @@ func BuildATN() *parser.RuntimeATN {
 		&parser.RuntimeEpsilonTransition{Target: states[27]},
 	}
 	states[169].Transitions = []parser.RuntimeTransition{
-		&parser.RuntimeAtomTransition{Target: states[176], TokenType: Token_ID},
+		&parser.RuntimeAtomTransition{Target: states[176], TokenType: Token_ID, CompletionHint: &parser.CompletionHint{Field: "Assignment.Property"}},
 	}
 	states[170].Transitions = []parser.RuntimeTransition{
 		&parser.RuntimeAtomTransition{Target: states[171], TokenType: Keyword_PlusEquals},
@@ -2111,7 +2111,7 @@ func BuildATN() *parser.RuntimeATN {
 		&parser.RuntimeAtomTransition{Target: states[207], TokenType: Keyword_LeftBracket},
 	}
 	states[207].Transitions = []parser.RuntimeTransition{
-		&parser.RuntimeAtomTransition{Target: states[208], TokenType: Token_ID},
+		&parser.RuntimeAtomTransition{Target: states[208], TokenType: Token_ID, CompletionHint: &parser.CompletionHint{Field: "CrossRef.Type"}},
 	}
 	states[208].Transitions = []parser.RuntimeTransition{
 		&parser.RuntimeAtomTransition{Target: states[209], TokenType: Keyword_Colon},
@@ -2130,7 +2130,7 @@ func BuildATN() *parser.RuntimeATN {
 		&parser.RuntimeEpsilonTransition{Target: states[37]},
 	}
 	states[213].Transitions = []parser.RuntimeTransition{
-		&parser.RuntimeAtomTransition{Target: states[214], TokenType: Token_ID},
+		&parser.RuntimeAtomTransition{Target: states[214], TokenType: Token_ID, CompletionHint: &parser.CompletionHint{Field: "RuleCall.Rule"}},
 	}
 	states[214].Transitions = []parser.RuntimeTransition{
 		&parser.RuntimeEpsilonTransition{Target: states[39]},
@@ -2139,14 +2139,14 @@ func BuildATN() *parser.RuntimeATN {
 		&parser.RuntimeAtomTransition{Target: states[216], TokenType: Keyword_LeftBrace},
 	}
 	states[216].Transitions = []parser.RuntimeTransition{
-		&parser.RuntimeAtomTransition{Target: states[217], TokenType: Token_ID},
+		&parser.RuntimeAtomTransition{Target: states[217], TokenType: Token_ID, CompletionHint: &parser.CompletionHint{Field: "Action.Type"}},
 	}
 	states[217].Transitions = []parser.RuntimeTransition{
 		&parser.RuntimeAtomTransition{Target: states[218], TokenType: Keyword_Dot},
 		&parser.RuntimeEpsilonTransition{Target: states[226]},
 	}
 	states[218].Transitions = []parser.RuntimeTransition{
-		&parser.RuntimeAtomTransition{Target: states[223], TokenType: Token_ID},
+		&parser.RuntimeAtomTransition{Target: states[223], TokenType: Token_ID, CompletionHint: &parser.CompletionHint{Field: "Action.Property"}},
 	}
 	states[219].Transitions = []parser.RuntimeTransition{
 		&parser.RuntimeAtomTransition{Target: states[220], TokenType: Keyword_PlusEquals},
