@@ -16,25 +16,11 @@ import (
 	"typefox.dev/fastbelt/util/extiter"
 )
 
-// An untyped representation of a [Reference] that can be used when the target type is not known at compile time.
-// Used throughout the fastbelt codebase to generically deal with different references.
-type UntypedReference interface {
-	Owner() AstNode
-	Description() *SymbolDescription
-	RefNode(ctx context.Context) AstNode
-	Resolve(ctx context.Context)
-	Reset()
-	Error() *ReferenceError
-	Unit() StringUnit
-	Segment() *TextSegment
-	Text() string
-}
-
-type ReferenceGetter[T AstNode] func(context.Context, *Reference[T]) (*SymbolDescription, *ReferenceError)
-
 // Reference represents a reference to another AST node of type T.
-// Resolving is thread safe and is done concurrently by default.
-// The resolution is triggered when [Ref], [RefNode] or [Resolve] are called for the first time.
+//
+// Resolving a reference is thread safe and is done concurrently by default.
+// The resolution is triggered when [Reference.Ref], [Reference.RefNode] or [Reference.Resolve]
+// are called for the first time.
 type Reference[T AstNode] struct {
 	unit        StringUnit
 	owner       AstNode
@@ -46,6 +32,7 @@ type Reference[T AstNode] struct {
 	resolved    atomic.Bool
 }
 
+// Reset clears all cached resolution results so the reference can be resolved again.
 func (r *Reference[T]) Reset() {
 	if r == nil {
 		return
@@ -59,6 +46,7 @@ func (r *Reference[T]) Reset() {
 	r.ref = zero
 }
 
+// Unit returns the [StringUnit] that contains the textual reference.
 func (r *Reference[T]) Unit() StringUnit {
 	if r == nil {
 		return nil
@@ -66,6 +54,7 @@ func (r *Reference[T]) Unit() StringUnit {
 	return r.unit
 }
 
+// Text returns the textual value of the reference, or an empty string if unavailable.
 func (r *Reference[T]) Text() string {
 	if r == nil || r.unit == nil {
 		return ""
@@ -73,6 +62,7 @@ func (r *Reference[T]) Text() string {
 	return r.unit.String()
 }
 
+// Owner returns the AST node that owns this reference.
 func (r *Reference[T]) Owner() AstNode {
 	if r == nil {
 		return nil
@@ -80,6 +70,7 @@ func (r *Reference[T]) Owner() AstNode {
 	return r.owner
 }
 
+// Description returns the resolved symbol description, or nil when unresolved.
 func (r *Reference[T]) Description() *SymbolDescription {
 	if r == nil {
 		return nil
@@ -87,10 +78,13 @@ func (r *Reference[T]) Description() *SymbolDescription {
 	return r.description
 }
 
+// RefNode returns the resolved target node as [AstNode].
 func (r *Reference[T]) RefNode(ctx context.Context) AstNode {
 	return r.Ref(ctx)
 }
 
+// Ref resolves the reference and returns the typed target node.
+// It returns the zero value of T when resolution fails.
 func (r *Reference[T]) Ref(ctx context.Context) T {
 	var zero T
 	if r == nil {
@@ -100,6 +94,7 @@ func (r *Reference[T]) Ref(ctx context.Context) T {
 	return r.ref
 }
 
+// Error returns the resolution error for this reference, if any.
 func (r *Reference[T]) Error() *ReferenceError {
 	if r == nil {
 		return nil
@@ -107,6 +102,7 @@ func (r *Reference[T]) Error() *ReferenceError {
 	return r.err
 }
 
+// Segment returns the text segment of the reference in the source document.
 func (r *Reference[T]) Segment() *TextSegment {
 	if r == nil || r.unit == nil {
 		return nil
@@ -114,6 +110,8 @@ func (r *Reference[T]) Segment() *TextSegment {
 	return r.unit.Segment()
 }
 
+// Resolve resolves the reference exactly once for this instance.
+// It is safe for concurrent use.
 func (r *Reference[T]) Resolve(ctx context.Context) {
 	// Fast path: check if already resolved without locking
 	if r == nil || r.resolved.Load() {
@@ -162,6 +160,7 @@ func (r *Reference[T]) resolveSlow(ctx context.Context) {
 	r.resolved.Store(true)
 }
 
+// NewReference creates a lazy, typed reference owned by owner and backed by getter.
 func NewReference[T AstNode](owner AstNode, unit StringUnit, getter ReferenceGetter[T]) *Reference[T] {
 	return &Reference[T]{
 		owner:  owner,
@@ -169,6 +168,26 @@ func NewReference[T AstNode](owner AstNode, unit StringUnit, getter ReferenceGet
 		getter: getter,
 	}
 }
+
+// UntypedReference is an untyped representation of a [Reference] that can be used when the target
+// type is not known at compile time.
+//
+// Used throughout the fastbelt codebase to generically deal with different references.
+type UntypedReference interface {
+	Owner() AstNode
+	Description() *SymbolDescription
+	RefNode(ctx context.Context) AstNode
+	Resolve(ctx context.Context)
+	Reset()
+	Error() *ReferenceError
+	Unit() StringUnit
+	Segment() *TextSegment
+	Text() string
+}
+
+// ReferenceGetter resolves a [Reference] and returns its symbol description.
+// The returned [ReferenceError] is stored on the reference when not nil.
+type ReferenceGetter[T AstNode] func(context.Context, *Reference[T]) (*SymbolDescription, *ReferenceError)
 
 // Computes the reference that this token represents.
 // Returns nil if the token does not represent a reference.
@@ -199,15 +218,17 @@ func ReferenceOfToken(token *Token) UntypedReference {
 	return ref
 }
 
+// ReferenceDescription describes one concrete use of a symbol in source text.
 type ReferenceDescription struct {
 	// SourceNode is the node that contains the reference.
 	SourceNode AstNode
 	// TargetNode is the node that is being referenced.
 	TargetNode AstNode
-	// Segment is the text segment of the reference in the source document.
+	// Segment is the text segment of the reference in the source document (usually the symbol name).
 	Segment *TextSegment
 }
 
+// NewReferenceDescription creates a [ReferenceDescription] for a source-to-target link.
 func NewReferenceDescription(source, target AstNode, segment *TextSegment) *ReferenceDescription {
 	return &ReferenceDescription{
 		SourceNode: source,
@@ -243,7 +264,7 @@ func (d *ReferenceDescription) TargetURI() URI {
 type ReferenceDescriptions interface {
 	// All returns an iterator over all reference descriptions in the document.
 	All() iter.Seq[*ReferenceDescription]
-	// Returns an iterator over all reference descriptions that point to the given target node.
+	// ForTarget returns an iterator over all reference descriptions that point to the given target node.
 	ForTarget(target AstNode) iter.Seq[*ReferenceDescription]
 }
 
@@ -265,6 +286,7 @@ func (d *referenceDescriptions) ForTarget(target AstNode) iter.Seq[*ReferenceDes
 	return slices.Values(d.descriptions.Get(target))
 }
 
+// NewReferenceDescriptionsFromMap wraps precomputed descriptions keyed by target node.
 func NewReferenceDescriptionsFromMap(descriptions collections.MultiMap[AstNode, *ReferenceDescription]) ReferenceDescriptions {
 	return &referenceDescriptions{
 		descriptions: descriptions,

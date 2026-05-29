@@ -9,6 +9,7 @@ import "context"
 // DiagnosticSeverity mirrors LSP DiagnosticSeverity values.
 type DiagnosticSeverity int
 
+// Diagnostic severity values used by [Diagnostic].
 const (
 	SeverityError   DiagnosticSeverity = 1
 	SeverityWarning DiagnosticSeverity = 2
@@ -16,6 +17,7 @@ const (
 	SeverityHint    DiagnosticSeverity = 4
 )
 
+// String returns the human-readable label of s.
 func (s DiagnosticSeverity) String() string {
 	switch s {
 	case SeverityError:
@@ -34,6 +36,7 @@ func (s DiagnosticSeverity) String() string {
 // DiagnosticTag mirrors LSP DiagnosticTag values.
 type DiagnosticTag int
 
+// Diagnostic tag values used by [Diagnostic].
 const (
 	TagUnnecessary DiagnosticTag = 1
 	TagDeprecated  DiagnosticTag = 2
@@ -42,16 +45,27 @@ const (
 // Diagnostic represents a diagnostic message such as an error or warning.
 // The struct mirrors lsp.Diagnostic so the core package stays free of that dependency.
 type Diagnostic struct {
-	Range           TextRange
-	Severity        DiagnosticSeverity
-	Message         string
-	Source          string
-	Code            string
+	// Range is the source range where the diagnostic applies.
+	Range TextRange
+	// Severity is the diagnostic severity level; when unset, clients may use a default severity.
+	Severity DiagnosticSeverity
+	// Message is the primary human-readable diagnostic message.
+	Message string
+	// Source identifies the diagnostic source, such as a tool or check name.
+	Source string
+	// Code is an optional diagnostic identifier shown to users and used for filtering.
+	Code string
+	// CodeDescription provides additional metadata for Code, typically a documentation link.
 	CodeDescription *DiagnosticCodeDescription
-	Tags            []DiagnosticTag
-	Data            any
+	// Tags carry additional semantic classification, such as unnecessary or deprecated code.
+	Tags []DiagnosticTag
+	// Data is preserved between publishDiagnostics and codeAction requests.
+	Data any
 }
 
+// A DiagnosticCodeDescription provides additional metadata for a diagnostic code.
+//
+// It mirrors lsp.CodeDescription and currently only carries a documentation URL.
 type DiagnosticCodeDescription struct {
 	Href string
 }
@@ -96,6 +110,7 @@ func WithToken(token *Token) DiagnosticOption {
 	}
 }
 
+// WithStringUnit narrows the diagnostic range to the given [StringUnit], if available.
 func WithStringUnit(unit StringUnit) DiagnosticOption {
 	return func(d *Diagnostic) {
 		if unit != nil {
@@ -106,6 +121,7 @@ func WithStringUnit(unit StringUnit) DiagnosticOption {
 	}
 }
 
+// WithReference narrows the diagnostic range to the given reference text, if available.
 func WithReference(ref UntypedReference) DiagnosticOption {
 	return func(d *Diagnostic) {
 		if ref != nil {
@@ -144,8 +160,9 @@ func WithData(data any) DiagnosticOption {
 	}
 }
 
-// Attaches additional information to describe the error code.
-// Currently only supports a hyperlink to documentation.
+// WithCodeDescription sets additional metadata for the diagnostic code.
+//
+// The current metadata format mirrors LSP and supports a documentation URL.
 func WithCodeDescription(codeDescription *DiagnosticCodeDescription) DiagnosticOption {
 	return func(d *Diagnostic) {
 		d.CodeDescription = codeDescription
