@@ -11,12 +11,19 @@ import (
 	"typefox.dev/fastbelt/util/extiter"
 )
 
+// SymbolDescription describes a named AST declaration that references can resolve to.
 type SymbolDescription struct {
-	URI  URI
+	// URI is the document URI where the symbol is declared.
+	URI URI
+	// Node is the AST node that declares the symbol.
 	Node AstNode
+	// Name is the source unit that provides the symbol's textual name.
 	Name StringUnit
 }
 
+// NewSymbolDescription returns a [SymbolDescription] for node and name.
+//
+// The description URI is derived from node's document.
 func NewSymbolDescription(node AstNode, name StringUnit) *SymbolDescription {
 	doc := node.Document()
 	return &SymbolDescription{
@@ -26,39 +33,53 @@ func NewSymbolDescription(node AstNode, name StringUnit) *SymbolDescription {
 	}
 }
 
+// NewTokenSymbolDescription returns a [SymbolDescription] for a [NamedTokenNode].
+//
+// It uses [NamedTokenNode.NameToken] as the symbol name.
 func NewTokenSymbolDescription(node NamedTokenNode) *SymbolDescription {
 	return NewSymbolDescription(node, node.NameToken())
 }
 
+// NewCompositeNodeSymbolDescription returns a [SymbolDescription] for a [NamedCompositeNode].
+//
+// It uses [NamedCompositeNode.NameNode] as the symbol name.
 func NewCompositeNodeSymbolDescription(node NamedCompositeNode) *SymbolDescription {
 	return NewSymbolDescription(node, node.NameNode())
 }
 
+// EmptySymbolDescriptions is an empty [SymbolSeq] sentinel.
+//
+// It can be reused by implementations that have no symbols to return.
 var EmptySymbolDescriptions = extiter.Empty[*SymbolDescription]()
 
-// [SymbolContainers] is a service that is able to generate new [SymbolContainer] items for the current language.
-// It is used for the [Document.LocalSymbols], [Document.ExportedSymbols], and [Document.ImportedSymbols] fields.
+// SymbolContainers is a service that is able to generate new [SymbolContainer] items
+// for the current language.
+// It is used for the [Document.LocalSymbols], [Document.ExportedSymbols], and
+// [Document.ImportedSymbols] fields.
 type SymbolContainers interface {
+	// New returns a container instance for storing symbol descriptions.
 	New() SymbolContainer
 }
 
-// Shorthand for a sequence of symbol descriptions.
+// SymbolSeq is a sequence of symbol descriptions.
 type SymbolSeq = iter.Seq[*SymbolDescription]
 
-// A [SymbolContainer] is an efficient data structure for storing and querying symbol descriptions.
+// A SymbolContainer is an efficient data structure for storing and querying symbol descriptions.
 // References usually need to query symbols for specific AST types.
 // Language specific implementations optimize for this by indexing descriptions by the type of their AST node.
 type SymbolContainer interface {
-	// Attempts to put the given description into the container.
+	// Put attempts to put the given description into the container.
 	// Returns true if the description was added.
-	// The container is allowed to reject descriptions that it does not want to hold, for example because they are of the wrong type.
+	// The container is allowed to reject descriptions that it does not want to hold, for example
+	// because they are of the wrong type.
 	Put(desc *SymbolDescription) bool
-	// Returns an iterator over all descriptions in the container.
+	// All returns an iterator over all descriptions in the container.
 	All() SymbolSeq
-	// Returns an iterator over all descriptions in the container whose node is of the given type.
+	// ForType returns an iterator over all descriptions in the container whose node is of the given type.
 	ForType(targetType reflect.Type) SymbolSeq
 }
 
+// EmptySymbolContainer is an immutable [SymbolContainer] with no symbols.
 var EmptySymbolContainer SymbolContainer = &emptySymbolContainer{}
 
 type emptySymbolContainer struct{}
@@ -74,6 +95,17 @@ func (c *emptySymbolContainer) All() SymbolSeq {
 
 func (c *emptySymbolContainer) ForType(targetType reflect.Type) SymbolSeq {
 	return EmptySymbolDescriptions
+}
+
+// MergeSymbolContainers merges multiple symbol containers into one. The resulting container
+// is immutable and reflects the combined contents of all input containers.
+func MergeSymbolContainers(containers iter.Seq[SymbolContainer]) SymbolContainer {
+	if extiter.IsEmpty(containers) {
+		return EmptySymbolContainer
+	}
+	return &mergedSymbolContainer{
+		containers: containers,
+	}
 }
 
 type mergedSymbolContainer struct {
@@ -97,18 +129,9 @@ func (c *mergedSymbolContainer) ForType(targetType reflect.Type) SymbolSeq {
 	})
 }
 
-// Merges multiple symbol containers into one. The resulting container is immutable and reflects the combined contents of all input containers.
-func MergeSymbolContainers(containers iter.Seq[SymbolContainer]) SymbolContainer {
-	if extiter.IsEmpty(containers) {
-		return EmptySymbolContainer
-	}
-	return &mergedSymbolContainer{
-		containers: containers,
-	}
-}
-
-// [LocalSymbols] are used for lexical scoping within a document.
+// LocalSymbols are used for lexical scoping within a document.
 type LocalSymbols interface {
-	// Returns the [SymbolContainer] for the given AST node, which contains all symbols that are locally visible in that node.
+	// For returns the [SymbolContainer] for the given AST node, which contains all symbols
+	// that are locally visible in that node.
 	For(node AstNode) SymbolContainer
 }

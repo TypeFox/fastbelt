@@ -8,39 +8,50 @@ import (
 	"typefox.dev/lsp"
 )
 
+// FileScheme is the URI scheme used for local file system documents.
 const FileScheme = "file"
 
+// A URI represents a parsed URI split into scheme, authority, path, query, and
+// fragment components.
+//
+// URI values are treated as immutable: methods prefixed with With return a new
+// URI instead of mutating the receiver.
 type URI interface {
+	// Scheme returns the URI scheme.
 	Scheme() string
+	// Authority returns the URI authority.
 	Authority() string
+	// Path returns the URI path.
 	Path() string
+	// Query returns the URI query component without a leading '?'.
 	Query() string
+	// Fragment returns the URI fragment component without a leading '#'.
 	Fragment() string
-	// Returns the URI as a string with percent-encoding applied to the components as needed.
+	// String returns the URI as a string with percent-encoding applied to the components as needed.
 	// This is the standard way to serialize URIs and should be used when interoperability with other tools is required.
 	String() string
-	// Returns the URI as a string without percent-encoding.
+	// StringUnencoded returns the URI as a string without percent-encoding.
 	// This is useful for debugging and logging purposes.
 	StringUnencoded() string
-	// Converts the URI to a lsp.DocumentURI, which is the format used by the LSP library.
+	// DocumentURI converts the URI to a lsp.DocumentURI, which is the format used by the LSP library.
 	DocumentURI() lsp.DocumentURI
-	// Returns a new URI with the specified scheme, keeping other components unchanged.
+	// WithScheme returns a new URI with the specified scheme, keeping other components unchanged.
 	WithScheme(scheme string) URI
-	// Returns a new URI with the specified authority, keeping other components unchanged.
+	// WithAuthority returns a new URI with the specified authority, keeping other components unchanged.
 	WithAuthority(authority string) URI
-	// Returns a new URI with the specified path, keeping other components unchanged.
+	// WithPath returns a new URI with the specified path, keeping other components unchanged.
 	WithPath(path string) URI
-	// Returns a new URI with the specified query, keeping other components unchanged.
+	// WithQuery returns a new URI with the specified query, keeping other components unchanged.
 	WithQuery(query string) URI
-	// Returns a new URI with the specified fragment, keeping other components unchanged.
+	// WithFragment returns a new URI with the specified fragment, keeping other components unchanged.
 	WithFragment(fragment string) URI
-	// Returns a new URI with the specified components, keeping other components unchanged.
+	// With returns a new URI with the specified components, keeping other components unchanged.
 	// The components are pointers, so you can pass nil for components that should remain unchanged.
 	//
 	// Note that this method will not validate or normalize the components,
 	// so it's the caller's responsibility to ensure that the resulting URI is valid.
 	With(scheme, authority, path, query, fragment *string) URI
-	// Checks if this [URI] is equal to another [URI], based on their components.
+	// Equal checks if this [URI] is equal to another [URI], based on their components.
 	// Note that this comparison is case-sensitive for all components.
 	// Use [FileURI] and [ParseURI] to ensure consistent normalization for reliable comparisons.
 	Equal(other URI) bool
@@ -199,8 +210,9 @@ func (u *uri) DocumentURI() lsp.DocumentURI {
 	return lsp.DocumentURI(u.String())
 }
 
-// Constructs a new URI from the given components.
-// The components are not validated or normalized, so it's the caller's responsibility to ensure that they are valid.
+// NewURI returns a URI from the given components.
+// The components are not validated or normalized, so callers must ensure they
+// are valid for their use case.
 //
 // Instead of creating a new URI from scratch, it is recommended to parse URIs from a string using [ParseURI].
 func NewURI(scheme, authority, path, query, fragment string) URI {
@@ -245,7 +257,13 @@ func (u *uri) With(scheme, authority, path, query, fragment *string) URI {
 
 var parseRegexp = regexp.MustCompile(`^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?`)
 
-// Parses a URI from a string. The parsing is lenient and will not fail for invalid URIs, but it will try to extract the components as best as possible.
+// ParseURI parses value into URI components.
+//
+// ParseURI is lenient: it extracts components best-effort instead of failing on
+// malformed input.
+//
+// ParseURI normalizes scheme and authority to lowercase and normalizes Windows
+// drive letters in paths to uppercase for stable comparisons across platforms.
 func ParseURI(value string) URI {
 	result := uri{}
 	matches := parseRegexp.FindStringSubmatch(value)
@@ -293,6 +311,11 @@ func ParseURI(value string) URI {
 	return &result
 }
 
+// FileURI returns a file URI for path.
+//
+// FileURI replaces Windows backslashes with forward slashes, ensures the URI
+// path starts with a slash, and normalizes Windows drive letters to uppercase.
+// This is used when creating document URIs from workspace file paths.
 func FileURI(path string) URI {
 	// Normalize Windows paths by replacing backslashes with forward slashes
 	normalized := strings.ReplaceAll(path, "\\", "/")
