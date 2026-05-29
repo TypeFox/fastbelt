@@ -101,7 +101,7 @@ func (atn *RuntimeATN) SimulateWithConfig(startStateIdx int, tokens []core.Token
 	// Seed the live set with the closure of the start state.
 	live := atn.epsilonClosure([]simPath{{stateIdx: startStateIdx, stack: nil}}, cfg)
 	for _, tok := range tokens {
-		live = atn.advance(live, tok.TypeId, cfg)
+		live = atn.advance(live, tok.Type, cfg)
 		if len(live) == 0 {
 			return nil
 		}
@@ -351,7 +351,7 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 }
 
 // advance consumes one token, returning the new live set.
-func (atn *RuntimeATN) advance(live []simPath, tokenTypeId int, cfg SimConfig) []simPath {
+func (atn *RuntimeATN) advance(live []simPath, tokenType *core.TokenType, cfg SimConfig) []simPath {
 	closure := atn.epsilonClosure(live, cfg)
 	next := make([]simPath, 0, len(closure))
 	seen := make(map[string]struct{}, len(closure))
@@ -365,7 +365,7 @@ func (atn *RuntimeATN) advance(live []simPath, tokenTypeId int, cfg SimConfig) [
 		}
 		for _, t := range state.Transitions {
 			at, ok := t.(*RuntimeAtomTransition)
-			if !ok || at.TokenType == nil || at.TokenType.Id != tokenTypeId {
+			if !ok || at.TokenType == nil || !at.TokenType.Matches(tokenType) {
 				continue
 			}
 			targetIdx := atn.stateIndex(at.Target)

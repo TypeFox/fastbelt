@@ -283,7 +283,7 @@ func convertRuleCall(
 		handle := rb.RuleRef(typed)
 		handle.Left.RuleCallEntry = rc // tag so generator can find follow state via RuleCallEntry
 		return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
-	case grammar.Token:
+	case grammar.AbstractTokenRule:
 		id := rb.GetTokenTypeByName(typed.Name())
 		termHandle := rb.TokenRef(id)
 		termHandle.Left.ConsumedElement = rc

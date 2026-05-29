@@ -362,6 +362,11 @@ func populateContextWithNode(context *ParserGeneratorContext, prefix string, nod
 			name := prefix + "Lookahead" + strconv.Itoa(len(context.lookaheads))
 			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n)}
 		}
+		ruleRef := n.Rule().Ref(ctx.Background())
+		if token, ok := ruleRef.(grammar.AbstractTokenRule); ok {
+			name := prefix + token.Name()
+			context.SetAccessName(node, name)
+		}
 	}
 }
 
@@ -387,18 +392,18 @@ func generateParseFunction(node codegen.Node, context *ParserGeneratorContext, r
 		})
 		node.AppendLine("}")
 		node.AppendLine()
-		return
+	} else {
+		node.AppendLine("func (p *", receiverType, ") Parse", rule.Name(), "() ", returnType.Name(), " {")
+		node.Indent(func(n codegen.Node) {
+			n.AppendLine("current := New", returnType.Name(), "()")
+			n.AppendLine("current.SetSegmentStartToken(p.state.LARaw(1))")
+			generateAbstractElementParser(n, context, rule.Body())
+			n.AppendLine("current.SetSegmentEndToken(p.state.LARaw(0))")
+			n.AppendLine("return current")
+		})
+		node.AppendLine("}")
+		node.AppendLine()
 	}
-	node.AppendLine("func (p *", receiverType, ") Parse", rule.Name(), "() ", returnType.Name(), " {")
-	node.Indent(func(n codegen.Node) {
-		n.AppendLine("current := New", returnType.Name(), "()")
-		n.AppendLine("current.SetSegmentStartToken(p.state.LARaw(1))")
-		generateAbstractElementParser(n, context, rule.Body())
-		n.AppendLine("current.SetSegmentEndToken(p.state.LARaw(0))")
-		n.AppendLine("return current")
-	})
-	node.AppendLine("}")
-	node.AppendLine()
 }
 
 func generateCompositeParseFunction(node codegen.Node, context *ParserGeneratorContext, rule grammar.CompositeRule) {
@@ -419,14 +424,14 @@ func generateCompositeParseFunction(node codegen.Node, context *ParserGeneratorC
 		})
 		node.AppendLine("}")
 		node.AppendLine()
-		return
+	} else {
+		node.AppendLine("func (p *", receiverType, ") Parse", rule.Name(), "(current core.CompositeNode) {")
+		node.Indent(func(n codegen.Node) {
+			generateAbstractElementParser(n, context, rule.Body())
+		})
+		node.AppendLine("}")
+		node.AppendLine()
 	}
-	node.AppendLine("func (p *", receiverType, ") Parse", rule.Name(), "(current core.CompositeNode) {")
-	node.Indent(func(n codegen.Node) {
-		generateAbstractElementParser(n, context, rule.Body())
-	})
-	node.AppendLine("}")
-	node.AppendLine()
 }
 
 // receiverType is the Go struct name that owns the generated Parse methods.
@@ -598,16 +603,15 @@ func generateGroupParser(node codegen.Node, context *ParserGeneratorContext, gro
 }
 
 func generateKeywordParser(node codegen.Node, context *ParserGeneratorContext, keyword grammar.Keyword) string {
-	lookahead := "p.state.LAId(1) == " + GeneratedKeywordIdxName(keyword)
+	lookaheadName := context.lookaheads[keyword].name
+	lookahead := generateLookaheadString(lookaheadName)
 	generateCardinality(node, func(n codegen.Node) {
-		n.AppendLine("token := p.state.Consume(", GeneratedKeywordName(keyword), ")")
 		if context.completion {
-			// Suppress unused-variable error; the keyword's only purpose in
-			// completion is the Consume's side effect on parser state.
-			n.AppendLine("_ = token")
-			return
+			n.AppendLine("p.state.Consume(", GeneratedTokenName(keyword), ")")
+		} else {
+			n.AppendLine("token := p.state.Consume(", GeneratedTokenName(keyword), ")")
+			n.AppendLine("core.AssignToken(current, token, ", context.elementStateNames[keyword], ")")
 		}
-		n.AppendLine("core.AssignToken(current, token, ", context.elementStateNames[keyword], ")")
 	}, func(n codegen.Node) { n.Append(lookahead) }, nil, keyword.Cardinality())
 	return "token"
 }
@@ -618,7 +622,7 @@ func generateRuleCallParser(node codegen.Node, context *ParserGeneratorContext, 
 	lookahead := generateLookaheadString(lookaheadName)
 	var result string
 	switch target.(type) {
-	case grammar.Token:
+	case grammar.AbstractTokenRule:
 		result = "token"
 	default:
 		result = "result"
@@ -631,13 +635,13 @@ func generateRuleCallParser(node codegen.Node, context *ParserGeneratorContext, 
 			first = false
 		}
 		switch t := target.(type) {
-		case grammar.Token:
-			n.AppendLine("token ", eq, " p.state.Consume(", GeneratedTokenName(t), ")")
+		case grammar.AbstractTokenRule:
 			if context.completion {
-				n.AppendLine("_ = token")
-				return
+				n.AppendLine("p.state.Consume(", GeneratedTokenName(t), ")")
+			} else {
+				n.AppendLine("token ", eq, " p.state.Consume(", GeneratedTokenName(t), ")")
+				n.AppendLine("core.AssignToken(current, token, ", context.elementStateNames[ruleCall], ")")
 			}
-			n.AppendLine("core.AssignToken(current, token, ", context.elementStateNames[ruleCall], ")")
 		case grammar.ParserRule:
 			followName := "0"
 			if context.followStateName != nil {
@@ -796,7 +800,7 @@ func possiblePathsFrom(grammr grammar.Grammar, maxLength int, elements []grammar
 			remain := remainingPathWith(e.Elements(), elements, i)
 			return getAlternativesFor(grammr, result, remain, maxLength, currPath)
 		case grammar.Keyword:
-			currPath = append(currPath, GeneratedKeywordIdxName(e))
+			currPath = append(currPath, GeneratedTokenName(e))
 		case grammar.Alternatives:
 			for _, alt := range e.Alts() {
 				remain := remainingPathWith([]grammar.Element{alt}, elements, i)
@@ -806,12 +810,12 @@ func possiblePathsFrom(grammr grammar.Grammar, maxLength int, elements []grammar
 		case grammar.Assignment:
 			switch v := e.Value().(type) {
 			case grammar.Keyword:
-				currPath = append(currPath, GeneratedKeywordIdxName(v))
+				currPath = append(currPath, GeneratedTokenName(v))
 			case grammar.RuleCall:
 				ruleRef := v.Rule().Ref(ctx.Background())
 				switch rule := ruleRef.(type) {
-				case grammar.Token:
-					currPath = append(currPath, GeneratedTokenIdxName(rule))
+				case grammar.AbstractTokenRule:
+					currPath = append(currPath, GeneratedTokenName(rule))
 				case grammar.AbstractRuleWithBody:
 					remain := remainingPathWith([]grammar.Element{rule.Body()}, elements, i)
 					result = getAlternativesFor(grammr, result, remain, maxLength, currPath)
@@ -820,8 +824,8 @@ func possiblePathsFrom(grammr grammar.Grammar, maxLength int, elements []grammar
 			case grammar.CrossRef:
 				ruleRef := v.Rule().Rule().Ref(ctx.Background())
 				switch rule := ruleRef.(type) {
-				case grammar.Token:
-					currPath = append(currPath, GeneratedTokenIdxName(rule))
+				case grammar.AbstractTokenRule:
+					currPath = append(currPath, GeneratedTokenName(rule))
 				case grammar.AbstractRuleWithBody:
 					remain := remainingPathWith([]grammar.Element{rule.Body()}, elements, i)
 					result = getAlternativesFor(grammr, result, remain, maxLength, currPath)
@@ -837,8 +841,8 @@ func possiblePathsFrom(grammr grammar.Grammar, maxLength int, elements []grammar
 		case grammar.RuleCall:
 			ruleRef := e.Rule().Ref(ctx.Background())
 			switch rule := ruleRef.(type) {
-			case grammar.Token:
-				currPath = append(currPath, GeneratedTokenIdxName(rule))
+			case grammar.AbstractTokenRule:
+				currPath = append(currPath, GeneratedTokenName(rule))
 			case grammar.AbstractRuleWithBody:
 				remain := remainingPathWith([]grammar.Element{rule.Body()}, elements, i)
 				result = getAlternativesFor(grammr, result, remain, maxLength, currPath)

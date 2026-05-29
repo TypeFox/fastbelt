@@ -27,6 +27,8 @@ const (
 	ValidateActionAssignmentType  = "actionAssignmentType"
 	ValidateActionPropertyType    = "actionPropertyType"
 	ValidateAssignmentType        = "assignmentType"
+	ValidateRecursiveTokenGroup   = "recursiveTokenGroup"
+	ValidateInvalidTokenInGroup   = "invalidTokenInGroup"
 )
 
 // GrammarImpl.Validate checks grammar-level constraints:
@@ -47,6 +49,11 @@ func checkUniqueRuleNames(g Grammar, accept core.ValidationAcceptor) {
 	for _, terminal := range g.Terminals() {
 		if terminal.Name() != "" {
 			seen[terminal.Name()] = append(seen[terminal.Name()], terminal)
+		}
+	}
+	for _, tokenGroup := range g.TokenGroups() {
+		if tokenGroup.Name() != "" {
+			seen[tokenGroup.Name()] = append(seen[tokenGroup.Name()], tokenGroup)
 		}
 	}
 	for name, nodes := range seen {
@@ -546,4 +553,64 @@ func doInterfaceIsAssignableTo(source Interface, target Interface, visited map[s
 		}
 	}
 	return false
+}
+
+func (tg *TokenGroupImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
+	checkRecursiveTokenGroup(tg, accept)
+	checkInvalidTokensInGroup(tg, accept)
+}
+
+func checkRecursiveTokenGroup(tg TokenGroup, accept core.ValidationAcceptor) {
+	if appearsInTokenGroup(tg, tg, context.Background(), map[string]struct{}{}) {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			"A token group cannot contain itself, neither directly nor indirectly.",
+			tg,
+			core.WithToken(tg.NameToken()),
+			core.WithCode(ValidateRecursiveTokenGroup),
+		))
+	}
+}
+
+func appearsInTokenGroup(target TokenGroup, current TokenGroup, ctx context.Context, visited map[string]struct{}) bool {
+	if _, alreadyVisited := visited[current.Name()]; alreadyVisited {
+		return false
+	}
+	visited[current.Name()] = struct{}{}
+	for _, ext := range current.TokenRefs() {
+		token := ext.Ref(ctx)
+		if token == nil {
+			continue
+		}
+		if tokenGroup, ok := token.(TokenGroup); ok &&
+			(target.Name() == tokenGroup.Name() || appearsInTokenGroup(target, tokenGroup, ctx, visited)) {
+			return true
+		}
+	}
+	return false
+}
+
+func checkInvalidTokensInGroup(tg TokenGroup, accept core.ValidationAcceptor) {
+	for _, ext := range tg.TokenRefs() {
+		abstractToken := ext.Ref(context.Background())
+		if abstractToken == nil {
+			continue
+		}
+		if token, ok := abstractToken.(Token); ok {
+			tokenType := token.Type()
+			special := tokenType == "hidden" || tokenType == "comment"
+			if special {
+				if tokenType == "comment" {
+					tokenType = "a comment"
+				}
+				accept(core.NewDiagnostic(
+					core.SeverityError,
+					fmt.Sprintf("The token '%s' cannot be used in a token group, because it is %s.", token.Name(), tokenType),
+					tg,
+					core.WithReference(ext),
+					core.WithCode(ValidateInvalidTokenInGroup),
+				))
+			}
+		}
+	}
 }

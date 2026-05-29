@@ -19,6 +19,7 @@ type FastbeltScopeProvider interface {
 	ScopeReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
+	ScopeTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) core.Scope
 	ScopeAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope
 	ScopeCrossRefType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) core.Scope
@@ -50,6 +51,10 @@ func (s *DefaultFastbeltScopeProvider) ScopeParserRuleReturnType(ctx context.Con
 	return linking.DefaultScopeOfType[Interface](reference.Owner())
 }
 
+func (s *DefaultFastbeltScopeProvider) ScopeTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) core.Scope {
+	return linking.DefaultScopeOfType[AbstractTokenRule](reference.Owner())
+}
+
 func (s *DefaultFastbeltScopeProvider) ScopeAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope {
 	return linking.DefaultScopeOfType[Field](reference.Owner())
 }
@@ -75,6 +80,7 @@ type FastbeltReferenceLinker interface {
 	LinkReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkCrossRefType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) (*core.SymbolDescription, *core.ReferenceError)
@@ -116,6 +122,11 @@ func (s *DefaultFastbeltReferenceLinker) LinkParserRuleReturnType(ctx context.Co
 	return core.DefaultLink(scope, reference.Text())
 }
 
+func (s *DefaultFastbeltReferenceLinker) LinkTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeTokenGroupTokenRefs(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
+}
+
 func (s *DefaultFastbeltReferenceLinker) LinkAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := s.scopeProvider().ScopeAssignmentProperty(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
@@ -146,6 +157,7 @@ type FastbeltReferencesConstructor interface {
 	ReferenceTypeType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	SimpleTypeType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	ParserRuleReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
+	TokenGroupTokenRefs(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractTokenRule]
 	AssignmentProperty(owner core.AstNode, unit core.StringUnit) *core.Reference[Field]
 	CrossRefType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	RuleCallRule(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractRule]
@@ -187,6 +199,11 @@ func (s *DefaultFastbeltReferencesConstructor) ParserRuleReturnType(owner core.A
 	return core.NewReference(owner, unit, fn)
 }
 
+func (s *DefaultFastbeltReferencesConstructor) TokenGroupTokenRefs(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractTokenRule] {
+	fn := s.referenceLinker().LinkTokenGroupTokenRefs
+	return core.NewReference(owner, unit, fn)
+}
+
 func (s *DefaultFastbeltReferencesConstructor) AssignmentProperty(owner core.AstNode, unit core.StringUnit) *core.Reference[Field] {
 	fn := s.referenceLinker().LinkAssignmentProperty
 	return core.NewReference(owner, unit, fn)
@@ -223,9 +240,10 @@ func NewSymbolContainers() *FastbeltSymbolContainers {
 }
 
 type FastbeltSymbolContainer struct {
-	Interfaces    []*core.SymbolDescription
-	Fields        []*core.SymbolDescription
-	AbstractRules []*core.SymbolDescription
+	Interfaces         []*core.SymbolDescription
+	Fields             []*core.SymbolDescription
+	AbstractTokenRules []*core.SymbolDescription
+	AbstractRules      []*core.SymbolDescription
 }
 
 func (sc *FastbeltSymbolContainer) Put(desc *core.SymbolDescription) bool {
@@ -235,6 +253,9 @@ func (sc *FastbeltSymbolContainer) Put(desc *core.SymbolDescription) bool {
 		return true
 	case Field:
 		sc.Fields = append(sc.Fields, desc)
+		return true
+	case AbstractTokenRule:
+		sc.AbstractTokenRules = append(sc.AbstractTokenRules, desc)
 		return true
 	case AbstractRule:
 		sc.AbstractRules = append(sc.AbstractRules, desc)
@@ -247,12 +268,14 @@ func (sc *FastbeltSymbolContainer) All() core.SymbolSeq {
 	return extiter.Concat(
 		slices.Values(sc.Interfaces),
 		slices.Values(sc.Fields),
+		slices.Values(sc.AbstractTokenRules),
 		slices.Values(sc.AbstractRules),
 	)
 }
 
 var TypeFor_Interface = reflect.TypeFor[Interface]()
 var TypeFor_Field = reflect.TypeFor[Field]()
+var TypeFor_AbstractTokenRule = reflect.TypeFor[AbstractTokenRule]()
 var TypeFor_AbstractRule = reflect.TypeFor[AbstractRule]()
 
 func (sc *FastbeltSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
@@ -261,8 +284,13 @@ func (sc *FastbeltSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 		return slices.Values(sc.Interfaces)
 	case TypeFor_Field:
 		return slices.Values(sc.Fields)
+	case TypeFor_AbstractTokenRule:
+		return slices.Values(sc.AbstractTokenRules)
 	case TypeFor_AbstractRule:
-		return slices.Values(sc.AbstractRules)
+		return extiter.Concat(
+			slices.Values(sc.AbstractTokenRules),
+			slices.Values(sc.AbstractRules),
+		)
 	}
 	return core.EmptySymbolDescriptions
 }

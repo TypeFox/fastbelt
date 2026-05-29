@@ -21,9 +21,41 @@ func TestDuplicateRuleNames(t *testing.T) {
 		<|1:Foo|>: Name=ID;
 		<|2:Foo|>: Name=ID;
 	` + commonTokens)
-	diag := doc.ExpectDiagnostic("1")
-	diag.WithSeverity(core.SeverityError)
-	diag.WithCode(ValidateUniqueRuleName)
+	for _, label := range []string{"1", "2"} {
+		diag := doc.ExpectDiagnostic(label)
+		diag.WithSeverity(core.SeverityError)
+		diag.WithCode(ValidateUniqueRuleName)
+	}
+}
+
+func TestDuplicateRuleNamesDifferentTypes(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Name string }
+		<|1:Foo|>: Name=ID;
+		token <|2:Foo|>: ID;
+	` + commonTokens)
+	for _, label := range []string{"1", "2"} {
+		diag := doc.ExpectDiagnostic(label)
+		diag.WithSeverity(core.SeverityError)
+		diag.WithCode(ValidateUniqueRuleName)
+	}
+}
+
+func TestDuplicateRuleNamesTokenGroup(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Name string }
+		token group <|1:Foo|> { ID };
+		token <|2:Foo|>: ID;
+	` + commonTokens)
+	for _, label := range []string{"1", "2"} {
+		diag := doc.ExpectDiagnostic(label)
+		diag.WithSeverity(core.SeverityError)
+		diag.WithCode(ValidateUniqueRuleName)
+	}
 }
 
 func TestDuplicateInterfaceNames(t *testing.T) {
@@ -33,12 +65,11 @@ func TestDuplicateInterfaceNames(t *testing.T) {
 		interface <|1:Foo|> { Name string }
 		interface <|2:Foo|> { Other string }
 	` + commonTokens)
-	diag1 := doc.ExpectDiagnostic("1")
-	diag1.WithSeverity(core.SeverityError)
-	diag1.WithCode(ValidateUniqueInterfaceName)
-	diag2 := doc.ExpectDiagnostic("2")
-	diag2.WithSeverity(core.SeverityError)
-	diag2.WithCode(ValidateUniqueInterfaceName)
+	for _, label := range []string{"1", "2"} {
+		diag := doc.ExpectDiagnostic(label)
+		diag.WithSeverity(core.SeverityError)
+		diag.WithCode(ValidateUniqueInterfaceName)
+	}
 }
 
 // --- Terminal ---
@@ -128,12 +159,11 @@ func TestCircularInterfaceExtensionIndirect(t *testing.T) {
 		interface A extends <|B|> {}
 		interface B extends <|A|> {}
 	` + commonTokens)
-	diagB := doc.ExpectDiagnostic("B")
-	diagB.WithSeverity(core.SeverityError)
-	diagB.WithCode(ValidateInterfaceExtends)
-	diagA := doc.ExpectDiagnostic("A")
-	diagA.WithSeverity(core.SeverityError)
-	diagA.WithCode(ValidateInterfaceExtends)
+	for _, label := range []string{"A", "B"} {
+		diag := doc.ExpectDiagnostic(label)
+		diag.WithSeverity(core.SeverityError)
+		diag.WithCode(ValidateInterfaceExtends)
+	}
 }
 
 // --- Unassigned rule call ---
@@ -183,7 +213,7 @@ func TestUnassignedRuleCallAfterAssignment(t *testing.T) {
 
 func TestActionTypeNotAssignableToRuleReturn(t *testing.T) {
 	f := test.New(t, CreateServices())
-	// Action type is Bar; rule Foo returns Foo. Bar does not extend Foo → type error.
+	// Action type is Bar; rule Foo returns Foo. Bar does not extend Foo -> type error.
 	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Items []Foo }
@@ -290,4 +320,51 @@ func TestKeywordAssignedToNonStringField(t *testing.T) {
 	diag := doc.ExpectDiagnostic("1")
 	diag.WithSeverity(core.SeverityError)
 	diag.WithCode(ValidateAssignmentType)
+}
+
+// --- Token groups ---
+
+func TestTokenGroupRecursiveDirect(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		token group <|X|> { X }
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("X")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateRecursiveTokenGroup)
+}
+
+func TestTokenGroupRecursiveIndirect(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		token group <|X|> { Y }
+		token group <|Y|> { X }
+	` + commonTokens)
+	for _, label := range []string{"X", "Y"} {
+		diag := doc.ExpectDiagnostic(label)
+		diag.WithSeverity(core.SeverityError)
+		diag.WithCode(ValidateRecursiveTokenGroup)
+	}
+}
+
+func TestTokenGroupRecursiveNegative(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+	    grammar Test;
+		token group <|X|> { ID }
+	` + commonTokens)
+	doc.AssertNoErrors()
+}
+
+func TestTokenGroupWithInvalidToken(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		token group X { <|WS|> }
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("WS")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateInvalidTokenInGroup)
 }

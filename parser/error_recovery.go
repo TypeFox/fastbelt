@@ -47,7 +47,7 @@ func (DefaultErrorRecovery) RecoverInline(parserState *ParserState, expectedToke
 	}
 	la2 := parserState.LARaw(2)
 	// Single-token deletion: if the next-next token matches, skip the current one.
-	if la2 != nil && la2.TypeId == expectedTokenType.Id {
+	if la2 != nil && expectedTokenType.Matches(la2.Type) {
 		parserState.ReportError(parserState.messages.ExtraneousInput(la1), la1)
 		// Skip the bad token and return the next one as if it were a match.
 		parserState.Index += 2
@@ -70,14 +70,14 @@ func (DefaultErrorRecovery) Recover(parserState *ParserState) {
 	// Compute the set of tokens that could legally come next at this point in the parse.
 	// Discards tokens until we find one that matches, or until we hit EOF.
 	followSet := parserState.FollowSet()
-	if len(followSet) > 0 {
+	if !followSet.Empty() {
 		for {
 			la := parserState.LARaw(1)
 			if la == nil {
 				// EOF reached, give up and let the parser unwind.
 				return
 			}
-			if tokenInSet(followSet, la.TypeId) {
+			if followSet.At(la.TypeId) {
 				break
 			}
 			parserState.Index++
@@ -103,17 +103,17 @@ func (DefaultErrorRecovery) Sync(parserState *ParserState, decisionStateIdx int)
 	// This is the expected case: LA(1) is in the set of valid tokens.
 	// We can immediately return, the parser is valid and ready to continue.
 	// This is the hot path for error-free parsing, so it's important that this check is fast.
-	if tok == nil || tokenInSet(validTokens, tok.TypeId) {
+	if tok == nil || validTokens.At(tok.TypeId) {
 		return
 	}
 	followTokens := parserState.FollowSet()
-	if tokenInSet(followTokens, tok.TypeId) {
+	if followTokens.At(tok.TypeId) {
 		return
 	}
 	// Single-token deletion: if the *next* token is in the valid set, treat
 	// the current token as extraneous and skip it.
 	la2 := parserState.LARaw(2)
-	if la2 != nil && tokenInSet(validTokens, la2.TypeId) {
+	if la2 != nil && validTokens.At(la2.TypeId) {
 		parserState.ReportError(parserState.messages.ExtraneousInput(tok), tok)
 		parserState.Index++
 		return
@@ -126,16 +126,10 @@ func (DefaultErrorRecovery) Sync(parserState *ParserState, decisionStateIdx int)
 	for {
 		parserState.Index++
 		la := parserState.LARaw(1)
-		if la == nil || tokenInSet(validTokens, la.TypeId) || tokenInSet(followTokens, la.TypeId) {
+		if la == nil || validTokens.At(la.TypeId) || followTokens.At(la.TypeId) {
 			return
 		}
 	}
-}
-
-// tokenInSet reports whether id is set in a token bitset returned from
-// NextTokensAt or computeFollowSet. Out-of-range ids are treated as absent.
-func tokenInSet(set []bool, id int) bool {
-	return id >= 0 && id < len(set) && set[id]
 }
 
 func (BailErrorRecovery) RecoverInline(_ *ParserState, _ *core.TokenType) (*core.Token, bool) {

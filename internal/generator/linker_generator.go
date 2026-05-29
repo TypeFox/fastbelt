@@ -159,42 +159,6 @@ func generateLinker(context *LinkerGeneratorContext) codegen.Node {
 	return node
 }
 
-// topoSortTargets returns uniqueTargets sorted so that child types appear before
-// their parent types. This ensures a Go type switch in Put matches the most
-// specific case first, so each node lands in exactly one (most-derived) list.
-func topoSortTargets(uniqueTargets []string, ifaceParents map[string][]string) []string {
-	targetSet := map[string]bool{}
-	for _, t := range uniqueTargets {
-		targetSet[t] = true
-	}
-	visited := map[string]bool{}
-	result := []string{}
-	var visit func(name string)
-	visit = func(name string) {
-		if visited[name] {
-			return
-		}
-		visited[name] = true
-		for _, parent := range ifaceParents[name] {
-			visit(parent)
-		}
-		// Prepend so children end up before parents in the final slice.
-		result = append([]string{name}, result...)
-	}
-	for _, t := range uniqueTargets {
-		visit(t)
-	}
-	// Keep only types that were in uniqueTargets (visit may have walked ancestors
-	// not in the set; filter them out while preserving order).
-	filtered := result[:0]
-	for _, t := range result {
-		if targetSet[t] {
-			filtered = append(filtered, t)
-		}
-	}
-	return filtered
-}
-
 // subtypesInTargets returns all members of uniqueTargets (including t itself)
 // that are t or a transitive descendant of t.
 func subtypesInTargets(t string, uniqueTargets []string, ifaceParents map[string][]string) []string {
@@ -231,10 +195,10 @@ func generateSymbolContainers(context *LinkerGeneratorContext) codegen.Node {
 			uniqueTargets = append(uniqueTargets, field.target)
 		}
 	}
-	// Sort alphabetically to make output deterministic; topoSortTargets will reorder as needed.
+	// Sort alphabetically to make output deterministic; topoSort will reorder as needed.
 	sort.Strings(uniqueTargets)
 	// Sort so children appear before parents in the Put type switch.
-	sortedTargets := topoSortTargets(uniqueTargets, context.ifaceParents)
+	sortedTargets := topoSort(uniqueTargets, context.ifaceParents, true)
 
 	name := context.grammar.Name()
 	node := codegen.NewNode()

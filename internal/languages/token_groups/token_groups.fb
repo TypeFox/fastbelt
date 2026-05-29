@@ -1,0 +1,58 @@
+grammar token_groups;
+
+interface Model {
+    Item Item
+}
+
+Model: Item=(A | B | C | D | E | F | G);
+
+interface Item {
+    Value string
+}
+
+// Simply case, "a" followed by a token group
+A returns Item: "a" Value=Identifier;
+
+// Token group used as part of an alternative
+B returns Item: "b" Value=(Identifier|"b");
+
+// Asserts that nested token groups can be used
+C returns Item: "c" Value=NestedIdentifier;
+
+// Optional token group value
+D returns Item: "d" Value=Identifier?;
+
+interface Recovery extends Item {
+    First string
+    Second string
+}
+
+// Assert that the recovery can properly interact with token groups
+E returns Recovery: "e" First=Identifier Second=NestedIdentifier;
+
+// Keyword-only token group (no terminal tokens, only keyword literals)
+F returns Item: "f" Value=KeywordGroup;
+
+G returns Item: "g" Value=RegexGroup;
+
+token group Identifier {
+    ID INT "a"
+}
+
+token group NestedIdentifier {
+    Identifier "nested"
+}
+
+token group KeywordGroup {
+    "one" "two"
+}
+
+token group RegexGroup {
+    // All keywords with an "o" (one/two)
+    /o/
+}
+
+token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
+token INT: /[0-9]+/;
+
+hidden token WS: /\s+/;

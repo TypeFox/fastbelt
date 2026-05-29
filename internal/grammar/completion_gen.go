@@ -18,6 +18,7 @@ type FastbeltCompletionFilter interface {
 	FilterReferenceTypeType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterSimpleTypeType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterAssignmentProperty(ctx context.Context, reference *core.Reference[Field], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterCrossRefType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
@@ -44,6 +45,10 @@ func (*DefaultFastbeltCompletionFilter) FilterSimpleTypeType(_ context.Context, 
 }
 
 func (*DefaultFastbeltCompletionFilter) FilterParserRuleReturnType(_ context.Context, _ *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
+func (*DefaultFastbeltCompletionFilter) FilterTokenGroupTokenRefs(_ context.Context, _ *core.Reference[AbstractTokenRule], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	return in
 }
 
@@ -93,6 +98,7 @@ var FastbeltSyntheticFactories = map[string]func() core.AstNode{
 	"RuleCall":               func() core.AstNode { return NewRuleCall() },
 	"SimpleType":             func() core.AstNode { return NewSimpleType() },
 	"Token":                  func() core.AstNode { return NewToken() },
+	"TokenGroup":             func() core.AstNode { return NewTokenGroup() },
 }
 
 type FastbeltCompletionDispatchFunc func(
@@ -149,6 +155,18 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		ref := refs.ParserRuleReturnType(typedOwner, nil)
 		candidates := scopes.ScopeParserRuleReturnType(ctx, ref).AllElements()
 		return filter.FilterParserRuleReturnType(ctx, ref, candidates)
+	},
+	"TokenGroup.TokenRefs": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(TokenGroup)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[FastbeltReferencesConstructor](sc)
+		scopes := service.MustGet[FastbeltScopeProvider](sc)
+		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		ref := refs.TokenGroupTokenRefs(typedOwner, nil)
+		candidates := scopes.ScopeTokenGroupTokenRefs(ctx, ref).AllElements()
+		return filter.FilterTokenGroupTokenRefs(ctx, ref, candidates)
 	},
 	"Assignment.Property": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
 		typedOwner, ok := owner.(Assignment)
@@ -287,6 +305,11 @@ func (a *FastbeltCompletionAdapter) HasAssignment(node core.AstNode, property st
 		switch property {
 		case "Type":
 			return n.Type() != nil
+		}
+	case TokenGroup:
+		switch property {
+		case "TokenRefs":
+			return n.TokenRefs() != nil
 		}
 	}
 	return false

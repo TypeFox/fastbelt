@@ -32,49 +32,49 @@ func NewParser(sc *service.Container) *Parser {
 
 var StateLookahead5 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_actions_Idx},
+		parser.LookaheadPath{Keyword_actions},
 	},
 }
 
 var StateLookahead6 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
+		parser.LookaheadPath{Token_ID},
 	},
 }
 
 var StateLookahead7 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
+		parser.LookaheadPath{Token_ID},
 	},
 }
 
 var StatemachineLookahead0 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_events_Idx},
+		parser.LookaheadPath{Keyword_events},
 	},
 }
 
 var StatemachineLookahead1 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
+		parser.LookaheadPath{Token_ID},
 	},
 }
 
 var StatemachineLookahead2 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_commands_Idx},
+		parser.LookaheadPath{Keyword_commands},
 	},
 }
 
 var StatemachineLookahead3 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
+		parser.LookaheadPath{Token_ID},
 	},
 }
 
 var StatemachineLookahead4 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_state_Idx},
+		parser.LookaheadPath{Keyword_state},
 	},
 }
 

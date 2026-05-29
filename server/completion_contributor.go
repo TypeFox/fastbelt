@@ -37,8 +37,8 @@ type CompletionContributor interface {
 	// The acceptor may be called zero or more times. The default
 	// contributor calls accept(lsp.CompletionItem{}) when
 	// tt.IsKeyword() and does nothing otherwise. Override to surface
-	// terminal tokens (e.g. an in-progress ID) or to specialize per
-	// atnState.
+	// terminal tokens (e.g. an in-progress ID), token groups,
+	// or to specialize per atnState.
 	CompletionForToken(ctx context.Context, tt *core.TokenType, atnState int, cc ContributorContext, accept CompletionAcceptor)
 
 	// CompletionForReference is called once per cross-reference

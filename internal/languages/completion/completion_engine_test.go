@@ -504,6 +504,65 @@ func TestCompletion_AfterL_OptionalCompleted(t *testing.T) {
 	}
 }
 
+// Even though the token group following the "m" keyword contains
+// some keywords, none of them should be proposed by default.
+func TestCompletion_AfterM_NoTokenGroupProposal(t *testing.T) {
+	items := completionAt(t, "m <|cursor>")
+	if len(items) != 0 {
+		t.Errorf("expected no completion items for empty token group; got %v", itemLabels(items))
+	}
+}
+
+// We use a token group as a cross reference terminal
+// It should propose the names as usual
+func TestCompletion_AfterN_TokenGroupCrossRef(t *testing.T) {
+	items := completionAt(t, "declare some n <|cursor>")
+	assert.Len(t, items, 1)
+	if !hasLabel(items, "some") {
+		t.Errorf("expected 'some' as N.Ref candidate; got %v", itemLabels(items))
+	}
+}
+
+// The token group cross-reference must enumerate the full scope, not just the
+// first match, and each candidate must surface exactly once.
+func TestCompletion_AfterN_TokenGroupCrossRef_MultipleDeclares(t *testing.T) {
+	items := completionAt(t, "declare foo declare bar n <|cursor>")
+	for _, want := range []string{"foo", "bar"} {
+		if !hasLabel(items, want) {
+			t.Errorf("expected %q as N.Ref candidate; got %v", want, itemLabels(items))
+		}
+		if got := countLabel(items, want); got != 1 {
+			t.Errorf("expected %q exactly once; got %d in %v", want, got, itemLabels(items))
+		}
+	}
+}
+
+// A token group used as a cross-reference terminal must resolve like any other
+// cross-reference, not just drive completion.
+func TestTokenGroupReference_Resolves(t *testing.T) {
+	sc := completion.CreateServices(&SimpleCompletionContributor{})
+	doc := test.New(t, sc).Parse("declare foo n foo")
+	doc.AssertNoErrors()
+
+	ref := test.MustFindReferenceWithText[completion.Declare](doc, "foo")
+	target := ref.Ref(doc.Ctx())
+	assert.Nil(t, ref.Error())
+	if assert.NotNil(t, target) {
+		assert.Equal(t, "foo", target.Name())
+	}
+}
+
+// The reference parses through the token group but points at no symbol, so it
+// must report a resolution error.
+func TestTokenGroupReference_Unresolved(t *testing.T) {
+	sc := completion.CreateServices(&SimpleCompletionContributor{})
+	doc := test.New(t, sc).Parse("n missing")
+
+	ref := test.MustFindReferenceWithText[completion.Declare](doc, "missing")
+	assert.Nil(t, ref.Ref(doc.Ctx()))
+	assert.NotNil(t, ref.Error())
+}
+
 type hidingCompletionFilter struct {
 	completion.DefaultCompletionCompletionFilter
 	hide string
@@ -598,6 +657,24 @@ func TestCompletion_ContributorTokenDocs(t *testing.T) {
 	}
 	if declare.SortText == "" {
 		t.Errorf("expected SortText filled; got empty")
+	}
+}
+
+// When a contributor opts in and accepts an item for the token group, that
+// item must surface - the "no proposal by default" behaviour is purely a
+// default, not a hard suppression.
+func TestCompletion_ContributorAcceptsTokenGroup(t *testing.T) {
+	contrib := &recordingContributor{
+		onToken: func(tt *core.TokenType, _ int, _ server.ContributorContext, accept server.CompletionAcceptor) {
+			if tt.Name == "SomeTokenGroup" {
+				accept(lsp.CompletionItem{Label: "SomeTokenGroup"})
+			}
+		},
+	}
+	items := completionAtWith(t, "m <|cursor>", contrib)
+	assert.Len(t, items, 1)
+	if !hasLabel(items, "SomeTokenGroup") {
+		t.Errorf("expected accepted token group item to surface; got %v", itemLabels(items))
 	}
 }
 

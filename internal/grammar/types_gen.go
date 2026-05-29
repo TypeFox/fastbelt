@@ -19,6 +19,8 @@ type Grammar interface {
 	SetCompositesItem(item CompositeRule)
 	Terminals() []Token
 	SetTerminalsItem(item Token)
+	TokenGroups() []TokenGroup
+	SetTokenGroupsItem(item TokenGroup)
 	Interfaces() []Interface
 	SetInterfacesItem(item Interface)
 }
@@ -31,19 +33,21 @@ func NewGrammar() Grammar {
 }
 
 type GrammarData struct {
-	name       *core.Token
-	rules      []ParserRule
-	composites []CompositeRule
-	terminals  []Token
-	interfaces []Interface
+	name        *core.Token
+	rules       []ParserRule
+	composites  []CompositeRule
+	terminals   []Token
+	tokenGroups []TokenGroup
+	interfaces  []Interface
 }
 
 func NewGrammarData() GrammarData {
 	return GrammarData{
-		rules:      []ParserRule{},
-		composites: []CompositeRule{},
-		terminals:  []Token{},
-		interfaces: []Interface{},
+		rules:       []ParserRule{},
+		composites:  []CompositeRule{},
+		terminals:   []Token{},
+		tokenGroups: []TokenGroup{},
+		interfaces:  []Interface{},
 	}
 }
 
@@ -57,6 +61,9 @@ func (i *GrammarData) ForEachNode(fn func(core.AstNode)) {
 		fn(item)
 	}
 	for _, item := range i.terminals {
+		fn(item)
+	}
+	for _, item := range i.tokenGroups {
 		fn(item)
 	}
 	for _, item := range i.interfaces {
@@ -105,6 +112,14 @@ func (i *GrammarData) Terminals() []Token {
 
 func (i *GrammarData) SetTerminalsItem(item Token) {
 	i.terminals = append(i.terminals, item)
+}
+
+func (i *GrammarData) TokenGroups() []TokenGroup {
+	return i.tokenGroups
+}
+
+func (i *GrammarData) SetTokenGroupsItem(item TokenGroup) {
+	i.tokenGroups = append(i.tokenGroups, item)
 }
 
 func (i *GrammarData) Interfaces() []Interface {
@@ -723,6 +738,52 @@ func (i *AbstractRuleWithBodyImpl) ForEachReference(fn func(core.UntypedReferenc
 	i.AbstractRuleWithBodyData.ForEachReference(fn)
 }
 
+type AbstractTokenRule interface {
+	core.AstNode
+	AbstractRule
+
+	IsAbstractTokenRule()
+}
+
+func NewAbstractTokenRule() AbstractTokenRule {
+	return &AbstractTokenRuleImpl{
+		AstNodeBase:           core.NewAstNode(),
+		AbstractRuleData:      NewAbstractRuleData(),
+		AbstractTokenRuleData: NewAbstractTokenRuleData(),
+	}
+}
+
+type AbstractTokenRuleData struct {
+}
+
+func NewAbstractTokenRuleData() AbstractTokenRuleData {
+	return AbstractTokenRuleData{}
+}
+
+func (i *AbstractTokenRuleData) IsAbstractTokenRule() {}
+
+func (i *AbstractTokenRuleData) ForEachNode(fn func(core.AstNode)) {
+}
+
+func (i *AbstractTokenRuleData) ForEachReference(fn func(core.UntypedReference)) {
+}
+
+type AbstractTokenRuleImpl struct {
+	core.AstNodeBase
+	AbstractRuleData
+	AbstractTokenRuleData
+}
+
+func (i *AbstractTokenRuleImpl) ForEachNode(fn func(core.AstNode)) {
+	i.AbstractRuleData.ForEachNode(fn)
+	i.AbstractTokenRuleData.ForEachNode(fn)
+}
+
+func (i *AbstractTokenRuleImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.AbstractRuleData.ForEachReference(fn)
+	i.AbstractTokenRuleData.ForEachReference(fn)
+}
+
 type ParserRule interface {
 	core.AstNode
 	AbstractRuleWithBody
@@ -793,7 +854,7 @@ func (i *ParserRuleImpl) ForEachReference(fn func(core.UntypedReference)) {
 
 type Token interface {
 	core.AstNode
-	AbstractRule
+	AbstractTokenRule
 
 	IsToken()
 	Type() string
@@ -806,9 +867,10 @@ type Token interface {
 
 func NewToken() Token {
 	return &TokenImpl{
-		AstNodeBase:      core.NewAstNode(),
-		AbstractRuleData: NewAbstractRuleData(),
-		TokenData:        NewTokenData(),
+		AstNodeBase:           core.NewAstNode(),
+		AbstractTokenRuleData: NewAbstractTokenRuleData(),
+		AbstractRuleData:      NewAbstractRuleData(),
+		TokenData:             NewTokenData(),
 	}
 }
 
@@ -863,18 +925,114 @@ func (i *TokenData) SetRegexp(value *core.Token) {
 
 type TokenImpl struct {
 	core.AstNodeBase
+	AbstractTokenRuleData
 	AbstractRuleData
 	TokenData
 }
 
 func (i *TokenImpl) ForEachNode(fn func(core.AstNode)) {
+	i.AbstractTokenRuleData.ForEachNode(fn)
 	i.AbstractRuleData.ForEachNode(fn)
 	i.TokenData.ForEachNode(fn)
 }
 
 func (i *TokenImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.AbstractTokenRuleData.ForEachReference(fn)
 	i.AbstractRuleData.ForEachReference(fn)
 	i.TokenData.ForEachReference(fn)
+}
+
+type TokenGroup interface {
+	core.AstNode
+	AbstractTokenRule
+
+	IsTokenGroup()
+	TokenRefs() []*core.Reference[AbstractTokenRule]
+	SetTokenRefsItem(item *core.Reference[AbstractTokenRule])
+	Regexps() []*core.Token
+	SetRegexpsItem(item *core.Token)
+	Keywords() []Keyword
+	SetKeywordsItem(item Keyword)
+}
+
+func NewTokenGroup() TokenGroup {
+	return &TokenGroupImpl{
+		AstNodeBase:           core.NewAstNode(),
+		AbstractTokenRuleData: NewAbstractTokenRuleData(),
+		AbstractRuleData:      NewAbstractRuleData(),
+		TokenGroupData:        NewTokenGroupData(),
+	}
+}
+
+type TokenGroupData struct {
+	tokenRefs []*core.Reference[AbstractTokenRule]
+	regexps   []*core.Token
+	keywords  []Keyword
+}
+
+func NewTokenGroupData() TokenGroupData {
+	return TokenGroupData{
+		tokenRefs: []*core.Reference[AbstractTokenRule]{},
+		regexps:   []*core.Token{},
+		keywords:  []Keyword{},
+	}
+}
+
+func (i *TokenGroupData) IsTokenGroup() {}
+
+func (i *TokenGroupData) ForEachNode(fn func(core.AstNode)) {
+	for _, item := range i.keywords {
+		fn(item)
+	}
+}
+
+func (i *TokenGroupData) ForEachReference(fn func(core.UntypedReference)) {
+	for _, item := range i.tokenRefs {
+		fn(item)
+	}
+}
+
+func (i *TokenGroupData) TokenRefs() []*core.Reference[AbstractTokenRule] {
+	return i.tokenRefs
+}
+
+func (i *TokenGroupData) SetTokenRefsItem(item *core.Reference[AbstractTokenRule]) {
+	i.tokenRefs = append(i.tokenRefs, item)
+}
+
+func (i *TokenGroupData) Regexps() []*core.Token {
+	return i.regexps
+}
+
+func (i *TokenGroupData) SetRegexpsItem(item *core.Token) {
+	i.regexps = append(i.regexps, item)
+}
+
+func (i *TokenGroupData) Keywords() []Keyword {
+	return i.keywords
+}
+
+func (i *TokenGroupData) SetKeywordsItem(item Keyword) {
+	i.keywords = append(i.keywords, item)
+}
+
+type TokenGroupImpl struct {
+	core.AstNodeBase
+	AbstractTokenRuleData
+	AbstractRuleData
+	TokenGroupData
+}
+
+func (i *TokenGroupImpl) ForEachNode(fn func(core.AstNode)) {
+	i.AbstractTokenRuleData.ForEachNode(fn)
+	i.AbstractRuleData.ForEachNode(fn)
+	i.TokenGroupData.ForEachNode(fn)
+}
+
+func (i *TokenGroupImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.AbstractTokenRuleData.ForEachReference(fn)
+	i.AbstractRuleData.ForEachReference(fn)
+	i.TokenGroupData.ForEachReference(fn)
 }
 
 type Element interface {

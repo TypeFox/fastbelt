@@ -2,9 +2,40 @@
 
 package grammar
 
-import (
-	"sync"
-	"typefox.dev/fastbelt/parser"
+import "typefox.dev/fastbelt/parser"
+
+type ATNDecisionId int
+
+const (
+	Action_Alternatives_1 ATNDecisionId = iota
+	Action_Group_2
+	Alternatives_Group_2
+	Alternatives_Group_3
+	AssignableAlternatives_Group_2
+	AssignableAlternatives_Group_3
+	AssignableWithoutAlts_Alternatives_1
+	Assignable_Alternatives_1
+	Assignment_Alternatives_1
+	CompositeAlternatives_Group_2
+	CompositeAlternatives_Group_3
+	CompositeElement_Alternatives_1
+	CompositeElement_Alternatives_2
+	CompositeGroup_Group_2
+	CompositeGroup_RuleCall_2
+	CrossRef_Group_2
+	Element_Alternatives_1
+	Element_Alternatives_2
+	FieldType_Alternatives_1
+	Grammar_Alternatives_1
+	Group_Group_2
+	Group_RuleCall_2
+	Interface_Group_2
+	Interface_Group_3
+	Interface_RuleCall_4
+	ParserRule_Group_2
+	PrimitiveType_Alternatives_1
+	TokenGroup_Alternatives_1
+	Token_Alternatives_1
 )
 
 const (
