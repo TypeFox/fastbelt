@@ -64,6 +64,9 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			DocumentHighlightProvider: &lsp.Or_ServerCapabilities_documentHighlightProvider{
 				Value: service.Has[DocumentHighlightProvider](s.sc),
 			},
+			WorkspaceSymbolProvider: &lsp.Or_ServerCapabilities_workspaceSymbolProvider{
+				Value: service.Has[WorkspaceSymbolProvider](s.sc),
+			},
 		},
 	}, nil
 }
@@ -349,7 +352,22 @@ func (s *DefaultLanguageServer) ExecuteCommand(ctx context.Context, params *lsp.
 	return nil, nil
 }
 func (s *DefaultLanguageServer) Symbol(ctx context.Context, params *lsp.WorkspaceSymbolParams) ([]lsp.SymbolInformation, error) {
-	return nil, nil
+	var result []lsp.SymbolInformation
+	var providerErr error
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	provider, err := service.Get[WorkspaceSymbolProvider](s.sc)
+	if err != nil {
+		return nil, nil // No provider registered, return empty
+	}
+	if err := lock.Read(ctx, func(ctx context.Context) {
+		result, providerErr = provider.HandleWorkspaceSymbolRequest(ctx, params)
+	}); err != nil {
+		return nil, err
+	}
+	return result, providerErr
 }
 func (s *DefaultLanguageServer) TextDocumentContent(ctx context.Context, params *lsp.TextDocumentContentParams) (*lsp.TextDocumentContentResult, error) {
 	return nil, nil
