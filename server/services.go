@@ -78,4 +78,7 @@ func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[CompletionContributor](sc) {
 		service.Put(sc, NewDefaultCompletionContributor())
 	}
+	if !service.Has[WorkspaceSymbolProvider](sc) {
+		service.Put(sc, NewDefaultWorkspaceSymbolProvider(sc))
+	}
 }
