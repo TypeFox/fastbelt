@@ -25,7 +25,13 @@ const (
 	TokenKindKeyword TokenKind = 1
 )
 
-type Matcher func(input string, offset int) int
+// TokenMatcher is a function that attempts to match a token at the given offset in the input string.
+// Returns the length of the match if successful, or 0 if no match is found.
+type TokenMatcher func(input string, offset int) int
+
+// TokenTypeMatcher is a function that checks if the specified other TokenType can be matched by this TokenType.
+// Used for optimizations in the lookahead and other parts of the parser.
+type TokenTypeMatcher func(other *TokenType) bool
 
 type TokenType struct {
 	Id         int
@@ -36,21 +42,48 @@ type TokenType struct {
 	Kind       TokenKind
 	PushMode   int
 	PopMode    bool
-	Match      Matcher
+	Match      TokenMatcher
+	Matches    TokenTypeMatcher
+	bitset     *BitSet
 }
 
-func NewTokenType(id int, name, label string, group int, kind TokenKind, pushMode int, popMode bool, match Matcher, startChars []rune) *TokenType {
+func NewTokenType(id int, name, label string, group int, kind TokenKind, pushMode int, popMode bool, match TokenMatcher, startChars []rune) *TokenType {
+	matching := NewBitset()
+	matching.Insert(id)
 	return &TokenType{
-		Id:         id,
-		Name:       name,
-		Label:      label,
-		Group:      group,
-		Kind:       kind,
-		Match:      match,
+		Id:    id,
+		Name:  name,
+		Label: label,
+		Group: group,
+		Kind:  kind,
+		Match: match,
+		Matches: func(other *TokenType) bool {
+			return other.Id == id
+		},
+		bitset:     matching,
 		PushMode:   pushMode,
 		PopMode:    popMode,
 		StartChars: startChars,
 	}
+}
+
+func NewTokenGroup(id int, name, label string, matchingTypes []*TokenType) *TokenType {
+	bitsets := make([]*BitSet, len(matchingTypes))
+	for _, mt := range matchingTypes {
+		bitsets = append(bitsets, mt.bitset)
+	}
+	matching := MergeBitSets(bitsets)
+	matching.Insert(id)
+	tt := &TokenType{
+		Id:    id,
+		Name:  name,
+		Label: label,
+		Matches: func(other *TokenType) bool {
+			return matching.At(other.Id)
+		},
+		bitset: matching,
+	}
+	return tt
 }
 
 func (t *TokenType) IsSkipped() bool {
@@ -65,8 +98,12 @@ func (t *TokenType) IsKeyword() bool {
 	return t.Kind == TokenKindKeyword
 }
 
+func (t *TokenType) Bitset() *BitSet {
+	return t.bitset
+}
+
 var EOF = NewTokenType(
-	-1,
+	0,
 	"EOF",
 	"EOF",
 	0,
@@ -74,7 +111,7 @@ var EOF = NewTokenType(
 	0,
 	false,
 	nil,
-	[]rune{},
+	nil,
 )
 
 var EOFToken = NewToken(EOF, "", 0, 0, 0, 0, 0, 0)

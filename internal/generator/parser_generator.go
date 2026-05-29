@@ -821,7 +821,7 @@ func possiblePathsFrom(grammr grammar.Grammar, maxLength int, elements []grammar
 			remain := remainingPathWith(e.Elements(), elements, i)
 			return getAlternativesFor(grammr, result, remain, maxLength, currPath)
 		case grammar.Keyword:
-			currPath = append(currPath, GeneratedKeywordIdxName(e))
+			currPath = append(currPath, GeneratedKeywordName(e))
 		case grammar.Alternatives:
 			for _, alt := range e.Alts() {
 				remain := remainingPathWith([]grammar.Element{alt}, elements, i)
@@ -831,12 +831,12 @@ func possiblePathsFrom(grammr grammar.Grammar, maxLength int, elements []grammar
 		case grammar.Assignment:
 			switch v := e.Value().(type) {
 			case grammar.Keyword:
-				currPath = append(currPath, GeneratedKeywordIdxName(v))
+				currPath = append(currPath, GeneratedKeywordName(v))
 			case grammar.RuleCall:
 				ruleRef := v.Rule().Ref(ctx.Background())
 				switch rule := ruleRef.(type) {
 				case grammar.Token:
-					currPath = append(currPath, GeneratedTokenIdxName(rule))
+					currPath = append(currPath, GeneratedTokenName(rule))
 				case grammar.AbstractRuleWithBody:
 					remain := remainingPathWith([]grammar.Element{rule.Body()}, elements, i)
 					result = getAlternativesFor(grammr, result, remain, maxLength, currPath)
@@ -846,7 +846,7 @@ func possiblePathsFrom(grammr grammar.Grammar, maxLength int, elements []grammar
 				ruleRef := v.Rule().Rule().Ref(ctx.Background())
 				switch rule := ruleRef.(type) {
 				case grammar.Token:
-					currPath = append(currPath, GeneratedTokenIdxName(rule))
+					currPath = append(currPath, GeneratedTokenName(rule))
 				case grammar.AbstractRuleWithBody:
 					remain := remainingPathWith([]grammar.Element{rule.Body()}, elements, i)
 					result = getAlternativesFor(grammr, result, remain, maxLength, currPath)
@@ -863,7 +863,7 @@ func possiblePathsFrom(grammr grammar.Grammar, maxLength int, elements []grammar
 			ruleRef := e.Rule().Ref(ctx.Background())
 			switch rule := ruleRef.(type) {
 			case grammar.Token:
-				currPath = append(currPath, GeneratedTokenIdxName(rule))
+				currPath = append(currPath, GeneratedTokenName(rule))
 			case grammar.AbstractRuleWithBody:
 				remain := remainingPathWith([]grammar.Element{rule.Body()}, elements, i)
 				result = getAlternativesFor(grammr, result, remain, maxLength, currPath)

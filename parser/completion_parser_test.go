@@ -14,7 +14,7 @@ import (
 // methods: EnterRule/ExitRule push and pop, RecordSnapshot/EnterRule both
 // append to Snapshots, and MarkAssignment updates the top frame.
 func TestCompletionParserState_SnapshotsAndStack(t *testing.T) {
-	tA := &core.TokenType{Id: 1, Name: "a"}
+	tA := core.NewTokenType(1, "a", "a", 0, 0, 0, false, nil, nil)
 
 	// Build a small ATN so NewParserState has something to hold.
 	s0 := &RuntimeATNState{StateNumber: 0, Type: ATNBasic, Decision: -1}
@@ -98,7 +98,7 @@ func TestCompletionParseResult_FindSnapshotAt(t *testing.T) {
 		{1, 7},
 		{2, 12},
 		{4, 12},
-		{5, 33}, // earliest at cursor
+		{5, 33},  // earliest at cursor
 		{99, 44}, // past everything: latest snapshot
 	}
 	for _, c := range cases {

@@ -83,148 +83,148 @@ const (
 
 var BLookaheadOr1 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_first_Idx},
+		parser.LookaheadPath{Keyword_first},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_second_Idx},
+		parser.LookaheadPath{Keyword_second},
 	},
 }
 
 var CLookaheadOr2 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_common_Idx, Keyword_first_Idx},
+		parser.LookaheadPath{Keyword_common, Keyword_first},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_common_Idx, Keyword_second_Idx},
+		parser.LookaheadPath{Keyword_common, Keyword_second},
 	},
 }
 
 var DLookaheadOr3 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_common_Idx, Keyword_then_Idx},
+		parser.LookaheadPath{Keyword_common, Keyword_then},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_common_Idx},
+		parser.LookaheadPath{Keyword_common},
 	},
 }
 
 var DeclareLookahead1 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftBrace_Idx},
+		parser.LookaheadPath{Keyword_LeftBrace},
 	},
 }
 
 var DeclareLookahead2 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_declare_Idx},
+		parser.LookaheadPath{Keyword_declare},
 	},
 }
 
 var FLookahead3 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
+		parser.LookaheadPath{Token_ID},
 	},
 }
 
 var FQNLookahead7 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Dot_Idx},
+		parser.LookaheadPath{Keyword_Dot},
 	},
 }
 
 var JLookaheadOr4 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
+		parser.LookaheadPath{Token_ID},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_self_Idx},
+		parser.LookaheadPath{Keyword_self},
 	},
 }
 
 var KLookaheadOr5 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx, Keyword_x_Idx},
+		parser.LookaheadPath{Token_ID, Keyword_x},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx, Keyword_y_Idx},
+		parser.LookaheadPath{Token_ID, Keyword_y},
 	},
 }
 
 var LLookahead6 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_optional_Idx},
+		parser.LookaheadPath{Keyword_optional},
 	},
 }
 
 var MemberCallLookahead4 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Dot_Idx},
+		parser.LookaheadPath{Keyword_Dot},
 	},
 }
 
 var MemberCallNoDotLookahead5 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
+		parser.LookaheadPath{Token_ID},
 	},
 }
 
 var RootLookahead0 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_declare_Idx},
-		parser.LookaheadPath{Keyword_a_Idx},
-		parser.LookaheadPath{Keyword_b_Idx},
-		parser.LookaheadPath{Keyword_c_Idx},
-		parser.LookaheadPath{Keyword_d_Idx},
-		parser.LookaheadPath{Keyword_e_Idx},
-		parser.LookaheadPath{Keyword_f_Idx},
-		parser.LookaheadPath{Keyword_g_Idx},
-		parser.LookaheadPath{Keyword_h_Idx},
-		parser.LookaheadPath{Keyword_i_Idx},
-		parser.LookaheadPath{Keyword_j_Idx},
-		parser.LookaheadPath{Keyword_k_Idx},
-		parser.LookaheadPath{Keyword_l_Idx},
+		parser.LookaheadPath{Keyword_declare},
+		parser.LookaheadPath{Keyword_a},
+		parser.LookaheadPath{Keyword_b},
+		parser.LookaheadPath{Keyword_c},
+		parser.LookaheadPath{Keyword_d},
+		parser.LookaheadPath{Keyword_e},
+		parser.LookaheadPath{Keyword_f},
+		parser.LookaheadPath{Keyword_g},
+		parser.LookaheadPath{Keyword_h},
+		parser.LookaheadPath{Keyword_i},
+		parser.LookaheadPath{Keyword_j},
+		parser.LookaheadPath{Keyword_k},
+		parser.LookaheadPath{Keyword_l},
 	},
 }
 
 var RootObjectsLookaheadOr0 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_declare_Idx},
+		parser.LookaheadPath{Keyword_declare},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_a_Idx},
+		parser.LookaheadPath{Keyword_a},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_b_Idx},
+		parser.LookaheadPath{Keyword_b},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_c_Idx},
+		parser.LookaheadPath{Keyword_c},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_d_Idx},
+		parser.LookaheadPath{Keyword_d},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_e_Idx},
+		parser.LookaheadPath{Keyword_e},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_f_Idx},
+		parser.LookaheadPath{Keyword_f},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_g_Idx},
+		parser.LookaheadPath{Keyword_g},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_h_Idx},
+		parser.LookaheadPath{Keyword_h},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_i_Idx},
+		parser.LookaheadPath{Keyword_i},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_j_Idx},
+		parser.LookaheadPath{Keyword_j},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_k_Idx},
+		parser.LookaheadPath{Keyword_k},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_l_Idx},
+		parser.LookaheadPath{Keyword_l},
 	},
 }
 

@@ -42,8 +42,9 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		TokenTypeIds:      make(map[string]int),
 		Imports:           map[string]bool{},
 	}
+	// Increment keyword and token indices by one - prevent clash with EOF (index 0)
 	for index, keyword := range keywords {
-		result.KeywordsCode[index] = generateKeywordTokenType(keyword, index)
+		result.KeywordsCode[index] = generateKeywordTokenType(keyword, index+1)
 		varName := GeneratedKeywordName(keyword)
 		kwName := keyword.Value()
 		result.TokenTypeVarNames[index] = varName
@@ -52,7 +53,7 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		result.Imports["strings"] = true
 	}
 	for index, token := range tokens {
-		tokenType := generateTokenType(token, keywordsCount+index)
+		tokenType := generateTokenType(token, keywordsCount+index+1)
 		result.TokensCode[index] = tokenType.Code
 		for imp := range tokenType.Imports {
 			result.Imports[imp] = true
