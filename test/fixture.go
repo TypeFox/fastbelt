@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
@@ -306,4 +307,107 @@ func locationInRange(loc core.TextLocation, r core.TextRange) bool {
 		return false
 	}
 	return true
+}
+
+// FindWorkspaceSymbol searches workspace symbols by name.
+// Returns the symbol and true if found, or nil and false if not found.
+func (f *Fixture) FindWorkspaceSymbol(name string) (*lsp.SymbolInformation, bool) {
+	f.t.Helper()
+
+	provider, err := service.Get[server.WorkspaceSymbolProvider](f.sc)
+	if err != nil {
+		return nil, false
+	}
+
+	params := &lsp.WorkspaceSymbolParams{
+		Query: name,
+	}
+
+	result, err := provider.HandleWorkspaceSymbolRequest(f.ctx, params)
+	if err != nil {
+		return nil, false
+	}
+
+	// Find exact match
+	for i := range result {
+		if result[i].Name == name {
+			return &result[i], true
+		}
+	}
+
+	return nil, false
+}
+
+// MustFindWorkspaceSymbol searches workspace symbols by name.
+// Fails the test if the symbol is not found.
+func (f *Fixture) MustFindWorkspaceSymbol(name string) *lsp.SymbolInformation {
+	f.t.Helper()
+	sym, ok := f.FindWorkspaceSymbol(name)
+	if !ok {
+		f.t.Fatalf("fbtest: MustFindWorkspaceSymbol: no workspace symbol with name %q", name)
+	}
+	return sym
+}
+
+// AssertWorkspaceSymbol verifies that a workspace symbol exists with the given name and kind.
+// Returns the Fixture for chaining.
+func (f *Fixture) AssertWorkspaceSymbolKind(name string, expectedKind lsp.SymbolKind) *Fixture {
+	f.t.Helper()
+
+	found := f.MustFindWorkspaceSymbol(name)
+
+	if found.Kind != expectedKind {
+		f.t.Errorf("fbtest: workspace symbol %q has kind %v, expected %v",
+			name, found.Kind, expectedKind)
+	}
+
+	return f
+}
+
+// AssertWorkspaceSymbols verifies that a workspace symbol query returns exactly the expected symbols.
+// The order of expected symbols does not matter.
+func (f *Fixture) AssertWorkspaceSymbols(query string, expectedNames []string) *Fixture {
+	f.t.Helper()
+
+	provider, err := service.Get[server.WorkspaceSymbolProvider](f.sc)
+	if err != nil {
+		f.t.Fatalf("fbtest: no workspace symbol provider registered")
+		return f
+	}
+
+	params := &lsp.WorkspaceSymbolParams{
+		Query: query,
+	}
+
+	result, err := provider.HandleWorkspaceSymbolRequest(f.ctx, params)
+	if err != nil {
+		f.t.Fatalf("fbtest: workspace symbol request failed: %v", err)
+		return f
+	}
+
+	// Check count matches
+	if len(result) != len(expectedNames) {
+		actualNames := make([]string, len(result))
+		for i, sym := range result {
+			actualNames[i] = sym.Name
+		}
+		f.t.Errorf("fbtest: workspace symbol query %q returned %d symbols %v, expected %d symbols %v",
+			query, len(result), actualNames, len(expectedNames), expectedNames)
+		return f
+	}
+
+	// Build map of actual symbol names
+	actualNames := make(map[string]bool)
+	for _, sym := range result {
+		actualNames[sym.Name] = true
+	}
+
+	// Check each expected name is present
+	for _, expectedName := range expectedNames {
+		if !actualNames[expectedName] {
+			f.t.Errorf("fbtest: workspace symbol query %q missing expected symbol %q", query, expectedName)
+		}
+	}
+
+	return f
 }
