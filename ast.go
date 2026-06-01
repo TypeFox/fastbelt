@@ -372,8 +372,7 @@ type NamedCompositeNode interface {
 	NameNode() CompositeNode
 }
 
-// StringUnit is a common interface for both [Token] and [CompositeNode], as both can serve as
-// the "name" of a reference.
+// StringUnit is a common interface for both [Token] and [CompositeNode].
 type StringUnit interface {
 	// Owner returns the AST node that owns this string unit.
 	Owner() AstNode

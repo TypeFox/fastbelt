@@ -26,7 +26,7 @@ type Document struct {
 	// Root is the AST root produced by parsing.
 	// It is nil until parsing succeeds.
 	Root AstNode
-	// Tokens is the token stream produced by lexing.
+	// Tokens is the token slice produced by lexing.
 	// It is empty until lexing succeeds.
 	Tokens TokenSlice
 	// Comments contains comment tokens extracted by the lexer.

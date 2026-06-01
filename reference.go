@@ -18,7 +18,7 @@ import (
 
 // Reference represents a reference to another AST node of type T.
 //
-// Resolving a reference is thread safe and is done concurrently by default.
+// Resolving a reference is thread safe.
 // The resolution is triggered when [Reference.Ref], [Reference.RefNode] or [Reference.Resolve]
 // are called for the first time.
 type Reference[T AstNode] struct {
