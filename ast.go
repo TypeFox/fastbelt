@@ -10,6 +10,59 @@ import (
 	"sync/atomic"
 )
 
+// AstNode is the base interface for all AST nodes.
+//
+// Every language-specific AST node type which is generated from a grammar definition embeds
+// this interface.
+type AstNode interface {
+	// Document returns the owning document of the node.
+	Document() *Document
+	// SetDocument sets the owning document of the node.
+	//
+	// When constructing an AST programmatically, use [AssignContainers] to link the node in the AST.
+	SetDocument(document *Document)
+	// Container returns the direct parent node of the node in the AST.
+	// It returns nil if this is the root node.
+	Container() AstNode
+	// SetContainer sets the direct parent node of the node.
+	//
+	// When constructing an AST programmatically, use [AssignContainers] to link the node in the AST.
+	SetContainer(container AstNode)
+	// Tokens returns the tokens associated with the node.
+	Tokens() []*Token
+	// SetToken appends token to the node's token list.
+	SetToken(token *Token)
+	// SetTokens replaces the node's token list with tokens.
+	SetTokens(tokens []*Token)
+	// Segment returns the text segment metadata of the node.
+	Segment() *TextSegment
+	// SetSegment sets the full text segment metadata of the node.
+	//
+	// It is primarily used by generated parsers while constructing nodes incrementally.
+	SetSegment(segment *TextSegment)
+	// SetSegmentStartToken sets the start of the node's segment from token.
+	//
+	// It is primarily used by generated parsers while constructing nodes incrementally.
+	SetSegmentStartToken(token *Token)
+	// SetSegmentEndToken sets the end of the node's segment from token.
+	//
+	// It is primarily used by generated parsers while constructing nodes incrementally.
+	SetSegmentEndToken(token *Token)
+	// Text returns the source substring covered by the node's segment.
+	Text() string
+	// ForEachNode calls fn for each direct child node of node.
+	//
+	// Note that this does not traverse the entire subtree. Use [AllNodes] or [AllChildren] for that.
+	//
+	// Calling this method directly is not recommended. Use [ChildNodes] instead for better readability.
+	ForEachNode(fn func(AstNode))
+	// ForEachReference calls fn for each reference field of node.
+	//
+	// Calling this method directly is not recommended. Use [References] instead for better readability.
+	ForEachReference(fn func(UntypedReference))
+}
+
+// AstNodeBase provides the default [AstNode] implementation used by generated AST node types.
 type AstNodeBase struct {
 	document  *Document
 	container AstNode
@@ -17,6 +70,7 @@ type AstNodeBase struct {
 	segment   TextSegment
 }
 
+// Document returns the owning document of the node.
 func (node *AstNodeBase) Document() *Document {
 	if node != nil {
 		return node.document
@@ -25,12 +79,15 @@ func (node *AstNodeBase) Document() *Document {
 	}
 }
 
+// SetDocument sets the owning document of the node.
 func (node *AstNodeBase) SetDocument(document *Document) {
 	if node != nil {
 		node.document = document
 	}
 }
 
+// Container returns the direct parent node of the node in the AST.
+// It returns nil if this is the root node.
 func (node *AstNodeBase) Container() AstNode {
 	if node != nil {
 		return node.container
@@ -41,6 +98,8 @@ func (node *AstNodeBase) Container() AstNode {
 
 // TODO: If concrete methods gain access to generics, refactor this into a method
 // See https://github.com/golang/go/issues/77273
+
+// ContainerOfType walks up node's container chain and returns the first ancestor assignable to T.
 func ContainerOfType[T AstNode](node AstNode) T {
 	var zero T
 	if node == nil {
@@ -56,12 +115,14 @@ func ContainerOfType[T AstNode](node AstNode) T {
 	return zero
 }
 
+// SetContainer sets the direct parent node of the node.
 func (node *AstNodeBase) SetContainer(container AstNode) {
 	if node != nil {
 		node.container = container
 	}
 }
 
+// Tokens returns the tokens associated with the node.
 func (node *AstNodeBase) Tokens() []*Token {
 	if node != nil {
 		return node.tokens
@@ -70,6 +131,7 @@ func (node *AstNodeBase) Tokens() []*Token {
 	}
 }
 
+// SetSegmentStartToken sets the start of the node's segment from token.
 func (node *AstNodeBase) SetSegmentStartToken(token *Token) {
 	if node != nil && token != nil {
 		node.segment.Indices.Start = token.TextSegment.Indices.Start
@@ -77,6 +139,7 @@ func (node *AstNodeBase) SetSegmentStartToken(token *Token) {
 	}
 }
 
+// SetSegmentEndToken sets the end of the node's segment from token.
 func (node *AstNodeBase) SetSegmentEndToken(token *Token) {
 	if node != nil && token != nil {
 		node.segment.Indices.End = token.TextSegment.Indices.End
@@ -84,12 +147,14 @@ func (node *AstNodeBase) SetSegmentEndToken(token *Token) {
 	}
 }
 
+// SetSegment sets the full text segment metadata of the node.
 func (node *AstNodeBase) SetSegment(segment *TextSegment) {
 	if node != nil {
 		node.segment = *segment
 	}
 }
 
+// Segment returns the text segment metadata of the node.
 func (node *AstNodeBase) Segment() *TextSegment {
 	if node != nil {
 		return &node.segment
@@ -98,12 +163,14 @@ func (node *AstNodeBase) Segment() *TextSegment {
 	}
 }
 
+// SetToken appends token to the node's token list.
 func (node *AstNodeBase) SetToken(token *Token) {
 	if node != nil && token != nil {
 		node.tokens = append(node.tokens, token)
 	}
 }
 
+// SetTokens replaces the node's token list with tokens.
 func (node *AstNodeBase) SetTokens(tokens []*Token) {
 	if node != nil {
 		// The method is called to set all tokens of the node at once
@@ -113,49 +180,28 @@ func (node *AstNodeBase) SetTokens(tokens []*Token) {
 	}
 }
 
+// Text returns the source substring covered by the node's segment.
 func (node *AstNodeBase) Text() string {
 	if node == nil || node.document == nil || node.document.TextDoc == nil {
 		return ""
 	} else {
-		return node.document.TextDoc.Text(nil)[node.segment.Indices.Start:node.segment.Indices.End]
+		fullText := node.document.TextDoc.Text(nil)
+		return fullText[node.segment.Indices.Start:node.segment.Indices.End]
 	}
 }
 
+// ForEachNode calls fn for each direct child node of node.
+//
+// ForEachNode on AstNodeBase is a no-op because the base type has no child fields.
 func (node *AstNodeBase) ForEachNode(fn func(AstNode)) {
 	// This base implementation does not have any contained nodes.
 }
 
+// ForEachReference calls fn for each reference field of node.
+//
+// ForEachReference on AstNodeBase is a no-op because the base type has no reference fields.
 func (node *AstNodeBase) ForEachReference(fn func(UntypedReference)) {
 	// This base implementation does not have any references.
-}
-
-// AstNode is the base interface for all AST nodes.
-type AstNode interface {
-	Document() *Document
-	SetDocument(document *Document)
-	Container() AstNode
-	SetContainer(container AstNode)
-	Tokens() []*Token
-	SetToken(token *Token)
-	SetTokens(tokens []*Token)
-	Segment() *TextSegment
-	SetSegment(segment *TextSegment)
-	// Sets the start of the node's segment to the start of the given token's segment.
-	// Should only be called by the parser. Use SetSegment to set both start and end manually.
-	SetSegmentStartToken(token *Token)
-	// Sets the end of the node's segment to the end of the given token's segment.
-	// Should only be called by the parser. Use SetSegment to set both start and end manually.
-	SetSegmentEndToken(token *Token)
-	Text() string
-	// ForEachNode calls the given function for each direct child node of this node.
-	// Note that this does not traverse the entire subtree. Use [AllNodes] or [AllChildren] for that.
-	//
-	// Calling this method directly is not recommended. Use [ChildNodes] instead for better readability.
-	ForEachNode(fn func(AstNode))
-	// ForEachReference calls the given function for each reference contained in this node.
-	//
-	// Calling this method directly is not recommended. Use [References] instead for better readability.
-	ForEachReference(fn func(UntypedReference))
 }
 
 // Performance note about traversal function:
@@ -179,9 +225,9 @@ func traverseContent(node AstNode, fn func(AstNode)) {
 	})
 }
 
-// [AllNodes] creates an iterator over the given node and all its descendant nodes.
+// AllNodes creates an iterator over the given node and all its descendant nodes.
 //
-// Early loop exit is honoured correctly, but does not short-circuit the traversal.
+// Early loop exit is honored correctly, but does not short-circuit the traversal.
 func AllNodes(node AstNode) iter.Seq[AstNode] {
 	return func(yield func(AstNode) bool) {
 		if !yield(node) {
@@ -196,9 +242,9 @@ func AllNodes(node AstNode) iter.Seq[AstNode] {
 	}
 }
 
-// [AllChildren] creates an iterator over all descendant nodes of the given node, excluding the node itself.
+// AllChildren creates an iterator over all descendant nodes of the given node, excluding the node itself.
 //
-// Early loop exit is honoured correctly, but does not short-circuit the traversal.
+// Early loop exit is honored correctly, but does not short-circuit the traversal.
 func AllChildren(node AstNode) iter.Seq[AstNode] {
 	return func(yield func(AstNode) bool) {
 		stopped := false
@@ -210,10 +256,10 @@ func AllChildren(node AstNode) iter.Seq[AstNode] {
 	}
 }
 
-// [ChildNodes] creates an iterator over the direct child nodes of the given node.
+// ChildNodes creates an iterator over the direct child nodes of the given node.
 //
 // This function wraps [AstNode.ForEachNode] in an [iter.Seq].
-// Early loop exit is honoured correctly, but does not short-circuit the traversal.
+// Early loop exit is honored correctly, but does not short-circuit the traversal.
 func ChildNodes(node AstNode) iter.Seq[AstNode] {
 	return func(yield func(AstNode) bool) {
 		stopped := false
@@ -225,10 +271,10 @@ func ChildNodes(node AstNode) iter.Seq[AstNode] {
 	}
 }
 
-// [References] creates an iterator over all references of the given node.
+// References creates an iterator over all references of the given node.
 //
 // This function wraps [AstNode.ForEachReference] in an [iter.Seq].
-// Early loop exit is honoured correctly, but does not short-circuit the traversal.
+// Early loop exit is honored correctly, but does not short-circuit the traversal.
 func References(node AstNode) iter.Seq[UntypedReference] {
 	return func(yield func(UntypedReference) bool) {
 		stopped := false
@@ -240,12 +286,20 @@ func References(node AstNode) iter.Seq[UntypedReference] {
 	}
 }
 
+// NewAstNode creates an [AstNodeBase] with initialized token storage.
+//
+// It is intended for generated node implementations that embed AstNodeBase.
+// AstNodeBase carries framework metadata only and has no language-specific
+// semantic fields on its own.
 func NewAstNode() AstNodeBase {
 	return AstNodeBase{
 		tokens: []*Token{},
 	}
 }
 
+// AssignToken appends token to node and records node and kind on the token.
+//
+// It is primarily used by generated parsers while constructing nodes incrementally.
 func AssignToken(node AstNode, token *Token, kind int) {
 	if node != nil && token != nil {
 		node.SetToken(token)
@@ -254,6 +308,9 @@ func AssignToken(node AstNode, token *Token, kind int) {
 	}
 }
 
+// AssignTokens replaces node tokens and records node as owner for each token.
+//
+// It is primarily used by generated parsers while constructing nodes incrementally.
 func AssignTokens(node AstNode, tokens []*Token) {
 	if node != nil {
 		node.SetTokens(tokens)
@@ -263,6 +320,9 @@ func AssignTokens(node AstNode, tokens []*Token) {
 	}
 }
 
+// MergeTokens prepends oldTokens to newNode's existing token list.
+//
+// It is used when parser actions replace the current node while preserving already consumed text.
 func MergeTokens(newNode AstNode, oldTokens []*Token) {
 	if newNode != nil && len(oldTokens) > 0 {
 		// Prepend old tokens to the new node's tokens
@@ -270,6 +330,9 @@ func MergeTokens(newNode AstNode, oldTokens []*Token) {
 	}
 }
 
+// AssignContainers recursively assigns document and parent pointers for root and its subtree.
+//
+// It also assigns document and container on composite reference units reachable via references.
 func AssignContainers(doc *Document, root AstNode) {
 	root.SetDocument(doc)
 	root.ForEachNode(func(child AstNode) {
@@ -286,46 +349,59 @@ func AssignContainers(doc *Document, root AstNode) {
 	})
 }
 
-// Represents a node whose name is accessible as a string in the Name field.
+// NamedNode represents an [AstNode] whose name is accessible as a string in the Name field.
 type NamedNode interface {
 	AstNode
+	// Name returns the name of this node as a string.
 	Name() string
 }
 
-// Represents a node whose name is represented by a [Token], stored in the "Name" field of the node.
+// NamedTokenNode represents a [NamedNode] whose name is represented by a [Token], stored in
+// the "Name" field of the node.
 type NamedTokenNode interface {
 	NamedNode
+	// NameToken returns the token stored in the node's "Name" field.
 	NameToken() *Token
 }
 
-// Represents a node whose name is represented by a [CompositeNode], stored in the "Name" field of the node.
+// NamedCompositeNode represents a [NamedNode] whose name is represented by a [CompositeNode],
+// stored in the "Name" field of the node.
 type NamedCompositeNode interface {
 	NamedNode
+	// NameNode returns the composite node stored in the node's "Name" field.
 	NameNode() CompositeNode
 }
 
-// [StringUnit] is a common interface for both [Token] and [CompositeNode], as both can serve as the "name" of a reference.
+// StringUnit is a common interface for both [Token] and [CompositeNode].
 type StringUnit interface {
+	// Owner returns the AST node that owns this string unit.
 	Owner() AstNode
+	// Segment returns the text segment metadata of this string unit.
 	Segment() *TextSegment
+	// String returns the string representation of this string unit.
 	String() string
 }
 
-// [CompositeNode] represents a composed string value that is made up of multiple tokens.
-// A common example for this is a fully qualified name that consists of multiple identifiers and dots, e.g. "a.b.c".
-// Every "composite" rule of a grammar will be represented as a [CompositeNode] in the AST, even if it only consists of a single token.
+// CompositeNode represents a composed string value that is made up of multiple tokens.
+//
+// A common example for this is a fully qualified name that consists of multiple identifiers
+// and dots, e.g. "a.b.c". Every "composite" rule of a grammar will be represented as a
+// [CompositeNode] in the AST, even if it only consists of a single token.
 type CompositeNode interface {
 	AstNode
 	StringUnit
+	// IsCompositeNode marks a type as implementing [CompositeNode].
 	IsCompositeNode()
 }
 
+// NewCompositeNode creates a [CompositeNode] backed by [CompositeNodeBase].
 func NewCompositeNode() CompositeNode {
 	return &CompositeNodeBase{
 		AstNodeBase: NewAstNode(),
 	}
 }
 
+// CompositeNodeBase provides the default [CompositeNode] implementation for generated composite rules.
 type CompositeNodeBase struct {
 	AstNodeBase
 	// We could use a sync.Once here, but that would add some overhead
@@ -333,12 +409,15 @@ type CompositeNodeBase struct {
 	cache atomic.Pointer[string]
 }
 
+// IsCompositeNode marks CompositeNodeBase as implementing [CompositeNode].
 func (node *CompositeNodeBase) IsCompositeNode() {}
 
+// Owner returns the AST node that owns this string unit.
 func (node *CompositeNodeBase) Owner() AstNode {
 	return node.container
 }
 
+// String returns the concatenated token images of node, caching the computed value.
 func (node *CompositeNodeBase) String() string {
 	// Cache the string value, as it is accessed frequently
 	// Since this operation can be done in parallel, we need an atomic pointer here
