@@ -63,6 +63,9 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			FoldingRangeProvider: &lsp.Or_ServerCapabilities_foldingRangeProvider{
 				Value: service.Has[FoldingRangeProvider](s.sc),
 			},
+			DocumentHighlightProvider: &lsp.Or_ServerCapabilities_documentHighlightProvider{
+				Value: service.Has[DocumentHighlightProvider](s.sc),
+			},
 		},
 	}, nil
 }
@@ -246,7 +249,22 @@ func (s *DefaultLanguageServer) DocumentColor(ctx context.Context, params *lsp.D
 	return nil, nil
 }
 func (s *DefaultLanguageServer) DocumentHighlight(ctx context.Context, params *lsp.DocumentHighlightParams) ([]lsp.DocumentHighlight, error) {
-	return nil, nil
+	var result []lsp.DocumentHighlight
+	var providerErr error
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	provider, err := service.Get[DocumentHighlightProvider](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	if err := lock.Read(ctx, func(ctx context.Context) {
+		result, providerErr = provider.HandleDocumentHighlightRequest(ctx, params)
+	}); err != nil {
+		return nil, err
+	}
+	return result, providerErr
 }
 func (s *DefaultLanguageServer) DocumentLink(ctx context.Context, params *lsp.DocumentLinkParams) ([]lsp.DocumentLink, error) {
 	return nil, nil
