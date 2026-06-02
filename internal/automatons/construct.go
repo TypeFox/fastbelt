@@ -32,8 +32,7 @@ func (ck *ConstructionKit) Consume(characters *RuneSet) *NFA {
 	builder.SetStartState(start)
 	builder.AcceptState(end)
 	builder.AddTransitionForRuneSet(start, end, characters)
-
-	return builder.Build()
+	return ck.finalize(builder)
 }
 
 func (ck *ConstructionKit) Alternate(automata ...*NFA) *NFA {
