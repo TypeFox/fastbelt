@@ -157,6 +157,51 @@ func (d *Doc) AssertReferences(label string) {
 	}
 }
 
+func (d *Doc) AssertHighlights(label string) {
+	d.fixture.t.Helper()
+	location, err := d.markerLocation(label, false)
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: %v", err)
+	}
+	highlightProvider, err := service.Get[server.DocumentHighlightProvider](d.fixture.sc)
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: no document highlight provider available: %v", err)
+	}
+	highlights, err := highlightProvider.HandleDocumentHighlightRequest(d.fixture.ctx, &lsp.DocumentHighlightParams{
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{URI: d.Document.URI.DocumentURI()},
+			Position:     location.LspPosition(),
+		},
+	})
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: document highlight request failed: %v", err)
+	}
+	expectedLocations := []lsp.DocumentHighlight{}
+	for _, doc := range d.fixture.docs {
+		ranges := doc.markerRanges(label)
+		for _, r := range ranges {
+			expectedLocations = append(expectedLocations, lsp.DocumentHighlight{
+				Range: r.LspRange(),
+			})
+		}
+	}
+	if len(highlights) != len(expectedLocations) {
+		d.fixture.t.Fatalf("fbtest: expected %d document highlights, got %d", len(expectedLocations), len(highlights))
+	}
+	for _, expected := range expectedLocations {
+		found := false
+		for _, highlight := range highlights {
+			if highlight.Range == expected.Range {
+				found = true
+				break
+			}
+		}
+		if !found {
+			d.fixture.t.Errorf("fbtest: expected document highlight not found: range %v", expected.Range)
+		}
+	}
+}
+
 // AssertFoldingRanges verifies that folding ranges exist for all specified marker labels.
 // Returns the Doc for chaining.
 func (d *Doc) AssertFoldingRanges(labels ...string) *Doc {
