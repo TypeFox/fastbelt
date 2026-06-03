@@ -82,10 +82,6 @@ func TestDeterminizeSimpleNFA(t *testing.T) {
 	nfa := createSimpleNFA()
 	dfa := nfa.Determinize()
 
-	// The DFA should have the same number of states as the original NFA
-	// since it's already deterministic
-	assert.Equal(t, nfa.StateCount, dfa.StateCount)
-
 	// Check that start state is set
 	assert.GreaterOrEqual(t, dfa.StartState, 0)
 

@@ -67,3 +67,35 @@ func (nfa NFA) DotFile() string {
 	result += "}\n"
 	return result
 }
+
+func (nfa NFA) ComputeAcceptanceReachability() map[int]bool {
+	revertedTransitions := make(map[int][]int)
+	for source, targets := range nfa.TransitionsBySource {
+		for info := range targets.All() {
+			for _, target := range info.Values {
+				revertedTransitions[target] = append(revertedTransitions[target], source)
+			}
+		}
+	}
+
+	canReach := make(map[int]bool)
+	queue := []int{}
+
+	for node := range nfa.AcceptingStates {
+		canReach[node] = true
+		queue = append(queue, node)
+	}
+
+	for len(queue) > 0 {
+		curr := queue[0]
+		queue = queue[1:]
+		for _, prev := range revertedTransitions[curr] {
+			if !canReach[prev] {
+				canReach[prev] = true
+				queue = append(queue, prev)
+			}
+		}
+	}
+
+	return canReach
+}
