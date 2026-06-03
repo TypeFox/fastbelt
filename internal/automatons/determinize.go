@@ -77,7 +77,7 @@ func (nfa *NFA) Determinize() *NFA {
 	// Complete the DFA: add a dead/trap state (lazily) and route every state's
 	// uncovered input characters to it so the transition function is total.
 	// The dead state is non-accepting, which is what complement relies on.
-	var dead int = -1
+	dead := -1
 	coveredByState := make(map[int]*RuneSet)
 	for _, trans := range transitions {
 		sourceState := dfaStateMapping[trans.Source]

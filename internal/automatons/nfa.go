@@ -41,7 +41,7 @@ func (nfa NFA) DotFile() string {
 	result += "  node [shape=circle];\n"
 
 	// Start state
-	result += fmt.Sprintf("  start [shape=point];\n")
+	result += "  start [shape=point];\n"
 	result += fmt.Sprintf("  start -> %d;\n", nfa.StartState)
 
 	// Accepting states
