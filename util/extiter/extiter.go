@@ -12,16 +12,23 @@ import (
 	"strings"
 )
 
-// Empty returns an empty sequence of type T.
+// Empty returns an empty [iter.Seq] of type T.
+//
+// The returned sequence yields no elements. It can be reused as a stable
+// sentinel, for example when an API must return a sequence but has nothing
+// to enumerate.
 func Empty[T any]() iter.Seq[T] {
 	return func(yield func(T) bool) {}
 }
 
+// Of returns a sequence over the given elements in order.
 func Of[T any](elements ...T) iter.Seq[T] {
 	return slices.Values(elements)
 }
 
-// Count returns the number of elements in the sequence
+// Count returns the number of elements in seq.
+//
+// Count fully consumes seq.
 func Count[T any](seq iter.Seq[T]) int {
 	count := 0
 	for range seq {
@@ -30,7 +37,9 @@ func Count[T any](seq iter.Seq[T]) int {
 	return count
 }
 
-// IsEmpty returns true if the sequence contains no elements
+// IsEmpty reports whether seq yields no elements.
+//
+// A nil sequence is treated as empty.
 func IsEmpty[T any](seq iter.Seq[T]) bool {
 	if seq == nil {
 		return true
@@ -41,7 +50,11 @@ func IsEmpty[T any](seq iter.Seq[T]) bool {
 	return true
 }
 
-// Join concatenates all elements into a string, separated by the specified separator
+// Join concatenates the string form of each element in seq, separated by separator.
+//
+// Strings pass through unchanged. Values implementing [fmt.Stringer] use
+// String(). Numeric and boolean types use default formatting. Nil is rendered
+// as "nil"; other types use a default %v representation.
 func Join[T any](seq iter.Seq[T], separator string) string {
 	var parts []string
 	for value := range seq {
@@ -50,7 +63,8 @@ func Join[T any](seq iter.Seq[T], separator string) string {
 	return strings.Join(parts, separator)
 }
 
-// IndexOf returns the index of the first occurrence of a value, or -1 if not found
+// IndexOf returns the index of the first element equal to searchElement, or -1
+// if seq does not contain it.
 func IndexOf[T comparable](seq iter.Seq[T], searchElement T) int {
 	index := 0
 	for value := range seq {
@@ -62,7 +76,9 @@ func IndexOf[T comparable](seq iter.Seq[T], searchElement T) int {
 	return -1
 }
 
-// Every returns true if all elements satisfy the predicate
+// Every reports whether predicate holds for every element in seq.
+//
+// An empty sequence satisfies Every.
 func Every[T any](seq iter.Seq[T], predicate func(T) bool) bool {
 	for value := range seq {
 		if !predicate(value) {
@@ -72,7 +88,9 @@ func Every[T any](seq iter.Seq[T], predicate func(T) bool) bool {
 	return true
 }
 
-// Any returns true if any element satisfies the predicate
+// Any reports whether predicate holds for at least one element in seq.
+//
+// An empty sequence does not satisfy Any.
 func Any[T any](seq iter.Seq[T], predicate func(T) bool) bool {
 	for value := range seq {
 		if predicate(value) {
@@ -82,7 +100,9 @@ func Any[T any](seq iter.Seq[T], predicate func(T) bool) bool {
 	return false
 }
 
-// ForEach performs the specified action for each element
+// ForEach calls action once for each element in seq.
+//
+// The second argument to action is the zero-based index of the element.
 func ForEach[T any](seq iter.Seq[T], action func(T, int)) {
 	index := 0
 	for value := range seq {
@@ -91,7 +111,9 @@ func ForEach[T any](seq iter.Seq[T], action func(T, int)) {
 	}
 }
 
-// Map returns a sequence that yields the results of applying the function to each element
+// Map returns a lazy sequence that applies fn to each element of seq.
+//
+// Iteration stops early when the consumer stops the sequence.
 func Map[T, U any](seq iter.Seq[T], fn func(T) U) iter.Seq[U] {
 	return func(yield func(U) bool) {
 		for value := range seq {
@@ -102,7 +124,9 @@ func Map[T, U any](seq iter.Seq[T], fn func(T) U) iter.Seq[U] {
 	}
 }
 
-// Filter returns a sequence containing only elements that satisfy the predicate
+// Filter returns a lazy sequence of elements in seq for which predicate is true.
+//
+// Iteration stops early when the consumer stops the sequence.
 func Filter[T any](seq iter.Seq[T], predicate func(T) bool) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		for value := range seq {
@@ -115,6 +139,10 @@ func Filter[T any](seq iter.Seq[T], predicate func(T) bool) iter.Seq[T] {
 	}
 }
 
+// FilterType returns a lazy sequence of elements in seq that have dynamic type U.
+//
+// Each element is type-asserted to U; elements that do not assert are skipped.
+// Iteration stops early when the consumer stops the sequence.
 func FilterType[T, U any](seq iter.Seq[T]) iter.Seq[U] {
 	return func(yield func(U) bool) {
 		for value := range seq {
@@ -127,14 +155,23 @@ func FilterType[T, U any](seq iter.Seq[T]) iter.Seq[U] {
 	}
 }
 
-// NonZero returns a sequence containing only non-zero values
+// NonZero returns a lazy sequence of elements in seq that are not the zero
+// value of their type.
+//
+// Numeric zero, false booleans, empty strings, nil pointers and interfaces,
+// and other types' zero values as determined by [reflect.Value.IsZero] are
+// removed.
 func NonZero[T any](seq iter.Seq[T]) iter.Seq[T] {
 	return Filter(seq, func(value T) bool {
 		return !isZero(value)
 	})
 }
 
-// Reduce applies a function to each element, accumulating the result
+// Reduce folds seq with fn, using the first element as the initial accumulator.
+//
+// The returned bool is false when seq is empty; otherwise it is true and the
+// result is the folded value. For a single element, that element is returned
+// unchanged.
 func Reduce[T any](seq iter.Seq[T], fn func(T, T) T) (T, bool) {
 	var result T
 	found := false
@@ -150,7 +187,9 @@ func Reduce[T any](seq iter.Seq[T], fn func(T, T) T) (T, bool) {
 	return result, found
 }
 
-// ReduceWithInitial applies a function to each element with an initial value
+// ReduceWithInitial folds seq into initialValue using fn.
+//
+// An empty sequence returns initialValue unchanged.
 func ReduceWithInitial[T, U any](seq iter.Seq[T], fn func(U, T) U, initialValue U) U {
 	result := initialValue
 	for value := range seq {
@@ -159,7 +198,11 @@ func ReduceWithInitial[T, U any](seq iter.Seq[T], fn func(U, T) U, initialValue 
 	return result
 }
 
-// ReduceRight applies a function to each element in reverse order
+// ReduceRight folds seq from right to left with fn.
+//
+// The sequence is materialized before folding. The last element becomes the
+// initial accumulator; fn is then applied to the accumulator and each
+// preceding element in turn. The returned bool is false when seq is empty.
 func ReduceRight[T any](seq iter.Seq[T], fn func(T, T) T) (T, bool) {
 	// Collect all elements first since we need to iterate in reverse
 	elements := slices.Collect(seq)
@@ -175,7 +218,10 @@ func ReduceRight[T any](seq iter.Seq[T], fn func(T, T) T) (T, bool) {
 	return result, true
 }
 
-// ReduceRightWithInitial applies a function to each element in reverse order with an initial value
+// ReduceRightWithInitial folds seq from right to left into initialValue using fn.
+//
+// The sequence is materialized before folding. Elements are combined starting
+// with the last element in seq.
 func ReduceRightWithInitial[T, U any](seq iter.Seq[T], fn func(U, T) U, initialValue U) U {
 	elements := slices.Collect(seq)
 	result := initialValue
@@ -185,7 +231,10 @@ func ReduceRightWithInitial[T, U any](seq iter.Seq[T], fn func(U, T) U, initialV
 	return result
 }
 
-// Find returns the first element that satisfies the predicate, its index, and whether it was found
+// Find returns the first element in seq for which predicate is true, its
+// zero-based index, and a bool indicating whether such an element exists.
+//
+// When no element matches, Find returns the zero value of T, index -1, and false.
 func Find[T any](seq iter.Seq[T], predicate func(T) bool) (T, int, bool) {
 	index := 0
 	for value := range seq {
@@ -198,7 +247,7 @@ func Find[T any](seq iter.Seq[T], predicate func(T) bool) (T, int, bool) {
 	return zero, -1, false
 }
 
-// Contains returns true if the sequence contains the specified element
+// Contains reports whether seq includes an element equal to element.
 func Contains[T comparable](seq iter.Seq[T], element T) bool {
 	for value := range seq {
 		if value == element {
@@ -208,7 +257,10 @@ func Contains[T comparable](seq iter.Seq[T], element T) bool {
 	return false
 }
 
-// FlatMap applies a function to each element and flattens the results
+// FlatMap returns a lazy sequence formed by applying fn to each element of seq
+// and concatenating the resulting sequences in order.
+//
+// Iteration stops early when the consumer stops the sequence.
 func FlatMap[T, U any](seq iter.Seq[T], fn func(T) iter.Seq[U]) iter.Seq[U] {
 	return func(yield func(U) bool) {
 		for value := range seq {
@@ -221,7 +273,9 @@ func FlatMap[T, U any](seq iter.Seq[T], fn func(T) iter.Seq[U]) iter.Seq[U] {
 	}
 }
 
-// Head returns the first element, or the zero value and false if empty
+// Head returns the first element of seq and whether one exists.
+//
+// When seq is empty, Head returns the zero value of T and false.
 func Head[T any](seq iter.Seq[T]) (T, bool) {
 	for value := range seq {
 		return value, true
@@ -230,7 +284,9 @@ func Head[T any](seq iter.Seq[T]) (T, bool) {
 	return zero, false
 }
 
-// Tail returns a sequence that skips the first n elements
+// Tail returns a lazy sequence of the elements in seq after skipping the first n.
+//
+// If n is greater than or equal to the length of seq, the result is empty.
 func Tail[T any](seq iter.Seq[T], n int) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		count := 0
@@ -245,7 +301,9 @@ func Tail[T any](seq iter.Seq[T], n int) iter.Seq[T] {
 	}
 }
 
-// Limit returns a sequence limited to the specified number of elements
+// Limit returns a lazy sequence of at most maxSize elements from seq.
+//
+// If maxSize is zero or negative, the result is empty.
 func Limit[T any](seq iter.Seq[T], maxSize int) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		count := 0
@@ -261,8 +319,12 @@ func Limit[T any](seq iter.Seq[T], maxSize int) iter.Seq[T] {
 	}
 }
 
-// Distinct returns a sequence containing only unique elements
-// If keyFn is provided, it's used to determine uniqueness
+// Distinct returns a lazy sequence of the first occurrence of each distinct
+// element in seq.
+//
+// When keyFn is nil, elements are compared by value. Otherwise keyFn defines
+// the key used to decide whether two elements are the same; the first element
+// for each key is kept.
 func Distinct[T any](seq iter.Seq[T], keyFn func(T) any) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		seen := make(map[any]struct{})
@@ -284,8 +346,10 @@ func Distinct[T any](seq iter.Seq[T], keyFn func(T) any) iter.Seq[T] {
 	}
 }
 
-// Exclude returns a sequence containing elements that don't exist in the other sequence
-// If keyFn is provided, it's used to determine equality
+// Exclude returns a lazy sequence of elements in seq whose key is not present in other.
+//
+// The other sequence is fully consumed before filtering begins. When keyFn is
+// nil, elements are compared by value; otherwise keyFn defines the comparison key.
 func Exclude[T any](seq iter.Seq[T], other iter.Seq[T], keyFn func(T) any) iter.Seq[T] {
 	// Collect keys from the other sequence
 	otherKeySet := make(map[any]struct{})
@@ -311,7 +375,9 @@ func Exclude[T any](seq iter.Seq[T], other iter.Seq[T], keyFn func(T) any) iter.
 	})
 }
 
-// Concat combines multiple sequences into one
+// Concat returns a lazy sequence that yields every element of sequences in order.
+//
+// Iteration stops early when the consumer stops the sequence.
 func Concat[T any](sequences ...iter.Seq[T]) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		for _, seq := range sequences {
@@ -333,7 +399,7 @@ func toString(item any) string {
 	if str, ok := item.(string); ok {
 		return str
 	}
-	if stringer, ok := item.(interface{ String() string }); ok {
+	if stringer, ok := item.(fmt.Stringer); ok {
 		return stringer.String()
 	}
 	// Handle basic types

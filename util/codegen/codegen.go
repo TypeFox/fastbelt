@@ -16,15 +16,34 @@ func eol() string {
 	return "\n"
 }
 
+// EOL is the line separator used when joining logical lines in [Node.String].
+// It is "\r\n" on Windows hosts and "\n" elsewhere, fixed at package init time.
 var EOL = eol()
 
+// Callback receives a [Node] to populate, typically from [Node.Indent].
 type Callback func(node Node)
 
+// Node is a mutable buffer for building indented, multi-line text. Generators
+// assemble source by appending to the current line, starting new lines, nesting
+// blocks with [Node.Indent], and merging completed subtrees with [Node.AppendNode].
+// Methods return the receiver so calls can be chained.
 type Node interface {
+	// Append adds texts to the current line without starting a new line. When the
+	// current line is empty, leading indentation for the node's depth is inserted
+	// before the first text.
 	Append(texts ...string) Node
+	// AppendLine adds texts to the current line and then begins a new line.
 	AppendLine(texts ...string) Node
+	// AppendNode merges nodes into the receiver. Each child's first line is
+	// concatenated onto the receiver's current line; any further lines from the
+	// child become subsequent lines of the receiver.
 	AppendNode(nodes ...Node) Node
+	// Indent runs cb with a child node indented one level deeper (four spaces
+	// per level), then splices the child's content into the receiver. If the
+	// receiver's current line is non-empty, a line break is inserted before the
+	// merged content.
 	Indent(cb Callback) Node
+	// String returns the accumulated text with [EOL] between logical lines.
 	String() string
 }
 
@@ -126,6 +145,7 @@ func newNode() *node {
 	}
 }
 
+// NewNode returns an empty [Node] with one blank line ready for appending.
 func NewNode() Node {
 	return newNode()
 }

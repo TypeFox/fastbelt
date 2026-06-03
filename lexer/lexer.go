@@ -12,21 +12,32 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
-type LexerResult struct {
-	Tokens   []core.Token
-	Comments []core.Token
-	Errors   []*core.LexerError
-	Groups   map[int][]core.Token
-}
-
+// Lexer tokenizes a complete source string in one shot.
 type Lexer interface {
 	Lex(input string) *LexerResult
+}
+
+// LexerResult holds everything produced by a single [Lexer.Lex] pass over
+// source text.
+type LexerResult struct {
+	// Tokens is the main token stream passed to the parser.
+	Tokens []core.Token
+	// Comments holds tokens whose [core.TokenType] uses [core.CommentGroup].
+	Comments []core.Token
+	// Errors lists recoverable lexing problems (unrecognized input).
+	Errors []*core.LexerError
+	// Groups collects tokens routed to custom [core.TokenType.Group] values
+	// other than the default, skipped, or comment groups. Nil when empty.
+	Groups map[int][]core.Token
 }
 
 // Allocate a new token every ~5 characters on average
 // This average is updated after lexing to adapt to the actual language
 const defaultTokenRatio = 1.0 / 5.0
 
+// DefaultLexer is the standard [Lexer] implementation. Generated `NewLexer`
+// functions build one from the [core.TokenType] descriptors emitted for a
+// grammar.
 type DefaultLexer struct {
 	tokenTypes []*core.TokenType
 	tokenMap   [][]*core.TokenType
@@ -35,6 +46,8 @@ type DefaultLexer struct {
 	avgRatio atomic.Uint64
 }
 
+// Lex scans input from left to right using longest-match disambiguation among
+// token types registered at construction time.
 func (l *DefaultLexer) Lex(input string) *LexerResult {
 	length := len(input)
 	ratio := math.Float64frombits(l.avgRatio.Load())
@@ -152,6 +165,9 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 
 const maxChar = 256
 
+// NewDefaultLexer returns a lexer that recognizes the given token types.
+// The order of arguments is not significant; matching uses longest match at
+// each position.
 func NewDefaultLexer(tokenTypes ...*core.TokenType) *DefaultLexer {
 	tokenMap := make([][]*core.TokenType, maxChar)
 	for i := range maxChar {
