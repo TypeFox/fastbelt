@@ -333,3 +333,20 @@ func TestConstruct_ErrorHandling(t *testing.T) {
 		kit.Concat(validNFA)
 	})
 }
+
+func TestConstruct_IntersectOnDisjointNFAs(t *testing.T) {
+	nfa1 := kit.Consume(NewRuneSetRune('a'))
+	nfa2 := kit.Consume(NewRuneSetRune('b'))
+	intersection := kit.Intersect(nfa1, nfa2)
+
+	assert.Equal(t, 1, intersection.StateCount)
+	assert.False(t, intersection.AcceptingStates[0])
+}
+
+func TestConstruct_ComplementOnSimpleNFA(t *testing.T) {
+	nfa := kit.Consume(NewRuneSetRune('a'))
+	notNFA := kit.Complement(nfa)
+
+	//1 start, 1 dead, 1 accepting
+	assert.Equal(t, 3, notNFA.StateCount)
+}

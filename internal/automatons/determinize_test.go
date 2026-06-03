@@ -98,10 +98,6 @@ func TestDeterminizeNFAWithEpsilons(t *testing.T) {
 
 	// Check that there are accepting states
 	assert.GreaterOrEqual(t, len(dfa.AcceptingStates), 1)
-
-	// The DFA should have fewer or equal states than the original NFA
-	// since epsilon closures can combine states
-	//assert.Less(t, dfa.StateCount, nfa.StateCount)
 }
 
 func TestDeterminizeNonDeterministicNFA(t *testing.T) {
