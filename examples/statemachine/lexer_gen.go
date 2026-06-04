@@ -249,6 +249,21 @@ var Token_ID = core.NewTokenType(
 				} else {
 					break loop
 				}
+			case 2:
+				nextState := -1
+				next := Token_ID_Next[2]
+				lookup := Token_ID_Lookup[2]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
 			default:
 				break loop
 			}
@@ -263,14 +278,16 @@ var Token_ID = core.NewTokenType(
 )
 var Token_ID_Lookup = [][]int64{
 	{0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
+	{},
 	{0x0000003900000030, 0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
 }
 var Token_ID_Next = [][]int{
-	{1, 1, 1},
-	{1, 1, 1, 1},
+	{2, 2, 2},
+	{},
+	{2, 2, 2, 2},
 }
-var Token_ID_Accepting = [2]bool{
-	1: true,
+var Token_ID_Accepting = [3]bool{
+	2: true,
 }
 
 const Token_WS_Idx = 11
@@ -323,6 +340,21 @@ var Token_WS = core.NewTokenType(
 				} else {
 					break loop
 				}
+			case 2:
+				nextState := -1
+				next := Token_WS_Next[2]
+				lookup := Token_WS_Lookup[2]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
 			default:
 				break loop
 			}
@@ -337,14 +369,16 @@ var Token_WS = core.NewTokenType(
 )
 var Token_WS_Lookup = [][]int64{
 	{0x0000000A00000009, 0x0000000D0000000C, 0x0000002000000020},
+	{},
 	{0x0000000A00000009, 0x0000000D0000000C, 0x0000002000000020},
 }
 var Token_WS_Next = [][]int{
-	{1, 1, 1},
-	{1, 1, 1},
+	{2, 2, 2},
+	{},
+	{2, 2, 2},
 }
-var Token_WS_Accepting = [2]bool{
-	1: true,
+var Token_WS_Accepting = [3]bool{
+	2: true,
 }
 
 const Token_ML_COMMENT_Idx = 12
@@ -471,22 +505,22 @@ var Token_ML_COMMENT = core.NewTokenType(
 )
 var Token_ML_COMMENT_Lookup = [][]int64{
 	{0x0000002F0000002F},
+	{},
 	{0x0000002A0000002A},
 	{0x0000002900000000, 0x0000002A0000002A, 0x0010FFFF0000002B},
 	{0x0000002900000000, 0x0000002A0000002A, 0x0000002E0000002B, 0x0000002F0000002F, 0x0010FFFF00000030},
-	{0x0000002900000000, 0x0000002A0000002A, 0x0010FFFF0000002B},
-	{0x0000002900000000, 0x0000002A0000002A, 0x0010FFFF0000002B},
+	{},
 }
 var Token_ML_COMMENT_Next = [][]int{
-	{1},
 	{2},
-	{2, 3, 2},
-	{2, 3, 2, 4, 2},
-	{5, 5, 5},
-	{5, 5, 5},
+	{},
+	{3},
+	{3, 4, 3},
+	{3, 4, 3, 5, 3},
+	{},
 }
 var Token_ML_COMMENT_Accepting = [6]bool{
-	4: true,
+	5: true,
 }
 
 const Token_SL_COMMENT_Idx = 13
@@ -554,6 +588,21 @@ var Token_SL_COMMENT = core.NewTokenType(
 				} else {
 					break loop
 				}
+			case 3:
+				nextState := -1
+				next := Token_SL_COMMENT_Next[3]
+				lookup := Token_SL_COMMENT_Lookup[3]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
 			default:
 				break loop
 			}
@@ -568,16 +617,18 @@ var Token_SL_COMMENT = core.NewTokenType(
 )
 var Token_SL_COMMENT_Lookup = [][]int64{
 	{0x0000002F0000002F},
+	{},
 	{0x0000002F0000002F},
 	{0x0000000900000000, 0x0000000C0000000B, 0x0010FFFF0000000E},
 }
 var Token_SL_COMMENT_Next = [][]int{
-	{1},
 	{2},
-	{2, 2, 2},
+	{},
+	{3},
+	{3, 3, 3},
 }
-var Token_SL_COMMENT_Accepting = [3]bool{
-	2: true,
+var Token_SL_COMMENT_Accepting = [4]bool{
+	3: true,
 }
 
 func NewLexer() lexer.Lexer {
