@@ -116,7 +116,7 @@ func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateR
 	next.AppendLine(fmt.Sprintf("var %s_Next = [][]int{", tokenName))
 	accepting := codegen.NewNode()
 	acceptingName := fmt.Sprintf("%s_Accepting", tokenName)
-	accepting.AppendLine(fmt.Sprintf("var %s = [%d]bool{", acceptingName, r.dfa.StateCount))
+	accepting.AppendLine(fmt.Sprintf("var %s = [%d]bool{", acceptingName, r.dfa.StateCount-1))
 	accepting.Indent(func(n codegen.Node) {
 		acceptingStates := r.dfa.AcceptingStates
 		stateIDs := make([]int, 0, len(acceptingStates))
