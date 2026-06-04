@@ -20,7 +20,7 @@ var Email_Next = [][]int{
 	{5, 5, 5, 5, 5, 5},
 	{5, 5, 5, 5, 5, 5},
 }
-var Email_Accepting = [7]bool{
+var Email_Accepting = [6]bool{
 	5: true,
 }
 
@@ -113,21 +113,6 @@ loop:
 			nextState := -1
 			next := Email_Next[5]
 			lookup := Email_Lookup[5]
-			for i, lowHigh := range lookup {
-				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
-					nextState = next[i]
-					break
-				}
-			}
-			if nextState > -1 {
-				state = nextState
-			} else {
-				break loop
-			}
-		case 6:
-			nextState := -1
-			next := Email_Next[6]
-			lookup := Email_Lookup[6]
 			for i, lowHigh := range lookup {
 				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
 					nextState = next[i]

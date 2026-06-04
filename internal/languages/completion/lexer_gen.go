@@ -572,21 +572,6 @@ var Token_WS = core.NewTokenType(
 				} else {
 					break loop
 				}
-			case 2:
-				nextState := -1
-				next := Token_WS_Next[2]
-				lookup := Token_WS_Lookup[2]
-				for i, lowHigh := range lookup {
-					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
-						nextState = next[i]
-						break
-					}
-				}
-				if nextState > -1 {
-					state = nextState
-				} else {
-					break loop
-				}
 			default:
 				break loop
 			}
@@ -607,7 +592,7 @@ var Token_WS_Next = [][]int{
 	{1, 1, 1},
 	{1, 1, 1},
 }
-var Token_WS_Accepting = [3]bool{
+var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
@@ -661,21 +646,6 @@ var Token_ID = core.NewTokenType(
 				} else {
 					break loop
 				}
-			case 2:
-				nextState := -1
-				next := Token_ID_Next[2]
-				lookup := Token_ID_Lookup[2]
-				for i, lowHigh := range lookup {
-					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
-						nextState = next[i]
-						break
-					}
-				}
-				if nextState > -1 {
-					state = nextState
-				} else {
-					break loop
-				}
 			default:
 				break loop
 			}
@@ -696,7 +666,7 @@ var Token_ID_Next = [][]int{
 	{1, 1, 1, 1},
 	{1, 1, 1, 1},
 }
-var Token_ID_Accepting = [3]bool{
+var Token_ID_Accepting = [2]bool{
 	1: true,
 }
 

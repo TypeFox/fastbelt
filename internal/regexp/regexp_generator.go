@@ -57,8 +57,8 @@ func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsM
 
 	n := codegen.NewNode()
 	n.AppendLine("nextState := -1")
-	n.AppendLine(fmt.Sprintf("next := %s_Next[%d]", tokenName, source))
-	n.AppendLine(fmt.Sprintf("lookup := %s_Lookup[%d]", tokenName, source))
+	n.AppendLine(fmt.Sprintf("next := %s_Next[%d]", tokenName, shiftStatesByDeadState(source, deadState)))
+	n.AppendLine(fmt.Sprintf("lookup := %s_Lookup[%d]", tokenName, shiftStatesByDeadState(source, deadState)))
 
 	if len(transitions) < 16 {
 		n.AppendLine("for i, lowHigh := range lookup {")
@@ -147,8 +147,11 @@ func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateR
 			n.AppendLine("switch state {")
 			transitions := r.dfa.TransitionsBySource
 			for source := 0; source < r.dfa.StateCount; source++ {
+				if source == deadState {
+					continue
+				}
 				bySource := transitions[source]
-				n.AppendLine(fmt.Sprintf("case %d:", source))
+				n.AppendLine(fmt.Sprintf("case %d:", shiftStatesByDeadState(source, deadState)))
 				n.Indent(func(n codegen.Node) {
 					result := GenerateTransitionsUsingBinarySearch(bySource, source, tokenName, imports, deadState)
 					n.AppendNode(result.Code)

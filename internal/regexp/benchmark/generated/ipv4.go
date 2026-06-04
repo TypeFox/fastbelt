@@ -56,7 +56,7 @@ var IPv4_Next = [][]int{
 	{23},
 	{},
 }
-var IPv4_Accepting = [25]bool{
+var IPv4_Accepting = [24]bool{
 	19: true,
 	20: true,
 	21: true,
@@ -423,21 +423,6 @@ loop:
 			nextState := -1
 			next := IPv4_Next[23]
 			lookup := IPv4_Lookup[23]
-			for i, lowHigh := range lookup {
-				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
-					nextState = next[i]
-					break
-				}
-			}
-			if nextState > -1 {
-				state = nextState
-			} else {
-				break loop
-			}
-		case 24:
-			nextState := -1
-			next := IPv4_Next[24]
-			lookup := IPv4_Lookup[24]
 			for i, lowHigh := range lookup {
 				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
 					nextState = next[i]

@@ -32,7 +32,7 @@ var URL_Next = [][]int{
 	{9, 9, 11, 9, 9, 10, 11, 9, 9, 9, 11, 9, 11, 9},
 	{11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11},
 }
-var URL_Accepting = [13]bool{
+var URL_Accepting = [12]bool{
 	11: true,
 }
 
@@ -215,21 +215,6 @@ loop:
 			nextState := -1
 			next := URL_Next[11]
 			lookup := URL_Lookup[11]
-			for i, lowHigh := range lookup {
-				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
-					nextState = next[i]
-					break
-				}
-			}
-			if nextState > -1 {
-				state = nextState
-			} else {
-				break loop
-			}
-		case 12:
-			nextState := -1
-			next := URL_Next[12]
-			lookup := URL_Lookup[12]
 			for i, lowHigh := range lookup {
 				if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
 					nextState = next[i]
