@@ -125,6 +125,7 @@ func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateR
 			n.AppendLine("r, runeSize := utf8.DecodeRuneInString(input[index:])")
 			n.AppendLine("switch state {")
 			transitions := r.dfa.TransitionsBySource
+			isAcceptanceReachable := r.dfa.ComputeAcceptanceReachability()
 
 			for source := 0; source < r.dfa.StateCount; source++ {
 				bySource := transitions[source]
@@ -132,8 +133,13 @@ func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateR
 				n.Indent(func(n codegen.Node) {
 					result := GenerateTransitionsUsingBinarySearch(bySource, source, tokenName, imports)
 					n.AppendNode(result.Code)
-					lookup.AppendNode(result.Lookup)
-					next.AppendNode(result.Next)
+					if isAcceptanceReachable[source] {
+						lookup.AppendNode(result.Lookup)
+						next.AppendNode(result.Next)
+					} else {
+						lookup.AppendLine("{},")
+						next.AppendLine("{},")
+					}
 				})
 			}
 			n.AppendLine("default:")
