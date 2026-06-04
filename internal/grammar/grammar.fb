@@ -97,7 +97,7 @@ interface TokenGroup extends AbstractTokenRule {
 }
 
 TokenGroup: "token" "group" Name=ID "{"
-    (TokenRefs+=[AbstractTokenRule:ID] | Regexps+=RegexLiteral | Keywords+=Keyword)*
+    (TokenRefs+=[AbstractTokenRule:ID] | "keywords" Regexps+=RegexLiteral | Keywords+=Keyword)*
 "}";
 
 interface Element {

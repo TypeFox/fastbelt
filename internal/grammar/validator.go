@@ -598,6 +598,9 @@ func checkInvalidTokensInGroup(tg TokenGroup, accept core.ValidationAcceptor) {
 		}
 		if token, ok := abstractToken.(Token); ok {
 			tokenType := token.Type()
+			// Hidden/comment tokens are not allowed in token groups
+			// They are not meant to be consumed in parser rules,
+			// and do not appear in the token slice
 			special := tokenType == "hidden" || tokenType == "comment"
 			if special {
 				if tokenType == "comment" {

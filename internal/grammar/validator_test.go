@@ -349,6 +349,7 @@ func TestTokenGroupRecursiveIndirect(t *testing.T) {
 	}
 }
 
+// Negative test - validation does not trigger on standalone token group
 func TestTokenGroupRecursiveNegative(t *testing.T) {
 	f := test.New(t, CreateServices())
 	doc := f.Parse(`

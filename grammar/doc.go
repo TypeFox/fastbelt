@@ -136,6 +136,48 @@
 // Parsed comment tokens are stored in the document's `Comments []Token`
 // slice, where tooling can access them.
 //
+// # Token Groups
+//
+// A token group names a set of tokens that can be matched interchangeably.
+// Where a parser rule would otherwise list several alternatives, a token group
+// gathers them under one name:
+//
+//	token group Operator { "+" "-" "*" "/" }
+//
+//	Expr:
+//	    Left=INT Op=Operator Right=INT;
+//
+// A token group may contain token rule names, double-quoted keywords, and
+// other token group names. Keywords inside a group are matched the same way as
+// keywords anywhere else in the grammar:
+//
+//	token ID:  /[_a-zA-Z][\w]*/;
+//	token INT: /[0-9]+/;
+//
+//	token group Literal { ID INT "null" "true" "false" }
+//
+// Token groups may nest: a group member that names another token group expands
+// to every token that group contains:
+//
+//	token group NumberLiteral { INT }
+//	token group Literal       { NumberLiteral "null" "true" "false" }
+//
+// The keywords prefix selects every keyword in the grammar whose text matches
+// the following regex pattern:
+//
+//	token group BoolKeyword { keywords /true|false/ }
+//
+// Token groups not only act as a convenient shorthand for alternatives in the
+// grammar, but have a meaningful impact on parsing performance, as they don't
+// require additional lookahead. Thus can also be used to solve the common
+// problem of parsing keywords as identifiers:
+//
+//	token group Identifier { ID keywords /^\w+$/ }
+//	NamedElement: Name=Identifier;
+//
+// Two constraints apply: hidden and comment tokens may not appear inside a
+// group, and token groups must not be recursive (directly or transitively).
+//
 // # Parser Rules
 //
 // Parser rules define what sequences of tokens are valid and how to populate
