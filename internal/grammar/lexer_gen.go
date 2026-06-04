@@ -727,6 +727,21 @@ var Token_ML_COMMENT = core.NewTokenType(
 				} else {
 					break loop
 				}
+			case 5:
+				nextState := -1
+				next := Token_ML_COMMENT_Next[5]
+				lookup := Token_ML_COMMENT_Lookup[5]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
 			default:
 				break loop
 			}
@@ -743,17 +758,19 @@ var Token_ML_COMMENT_Lookup = [][]int64{
 	{0x0000002F0000002F},
 	{0x0000002A0000002A},
 	{0x0000002900000000, 0x0000002A0000002A, 0x0010FFFF0000002B},
-	{0x0000002F0000002F},
-	{},
+	{0x0000002900000000, 0x0000002A0000002A, 0x0000002E0000002B, 0x0000002F0000002F, 0x0010FFFF00000030},
+	{0x0000002900000000, 0x0000002A0000002A, 0x0010FFFF0000002B},
+	{0x0000002900000000, 0x0000002A0000002A, 0x0010FFFF0000002B},
 }
 var Token_ML_COMMENT_Next = [][]int{
 	{1},
 	{2},
 	{2, 3, 2},
-	{4},
-	{},
+	{2, 3, 2, 4, 2},
+	{5, 5, 5},
+	{5, 5, 5},
 }
-var Token_ML_COMMENT_Accepting = [5]bool{
+var Token_ML_COMMENT_Accepting = [6]bool{
 	4: true,
 }
 
