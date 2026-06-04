@@ -221,6 +221,41 @@ func TestFindNodeAtLabel(t *testing.T) {
 	assert.Equal(t, "S", sm.Name())
 }
 
+func TestTokenColumnUTF16(t *testing.T) {
+	// Minimal single-line statemachine used as input for column checks.
+	const suffix = ` statemachine S events e initialState idle state idle e => idle end`
+
+	testCases := []struct {
+		name           string
+		prefix         string
+		expectedColumn fastbelt.TextColumn
+	}{
+		{
+			// "/* é */" is 7 UTF-16 code units (8 UTF-8 bytes); + 1 space = column 8.
+			name:           "two-byte rune in comment",
+			prefix:         "/* é */",
+			expectedColumn: 8,
+		},
+		{
+			// "/* 😀 */" is 8 UTF-16 code units (10 UTF-8 bytes); + 1 space = column 9.
+			name:           "surrogate-pair rune in comment",
+			prefix:         "/* 😀 */",
+			expectedColumn: 9,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			f := test.New(t, CreateServices())
+			doc := f.Parse(tc.prefix + suffix).AssertNoErrors()
+			sm := test.MustFindNode[Statemachine](doc)
+			got := sm.Segment().Range.Start.Column
+			assert.Equal(t, tc.expectedColumn, got,
+				"statemachine keyword should start at UTF-16 column %d", tc.expectedColumn)
+		})
+	}
+}
+
 func TestParseError(t *testing.T) {
 	f := test.New(t, CreateServices())
 	doc := f.Parse(`this is not a valid statemachine`)

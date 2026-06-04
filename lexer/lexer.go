@@ -7,6 +7,7 @@ package lexer
 import (
 	"math"
 	"sync/atomic"
+	"unicode/utf16"
 	"unicode/utf8"
 
 	core "typefox.dev/fastbelt"
@@ -71,12 +72,21 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 		startLine := line
 		startColumn := column
 
-		for i := offset; i < end; i++ {
-			if input[i] == '\n' {
-				line++
-				column = 0
+		for i := offset; i < end; {
+			b := input[i]
+			if b < utf8.RuneSelf {
+				// ASCII fast path: single byte, utf16.RuneLen == 1
+				if b == '\n' {
+					line++
+					column = 0
+				} else {
+					column++
+				}
+				i++
 			} else {
-				column++
+				r, size := utf8.DecodeRuneInString(input[i:])
+				column += utf16.RuneLen(r)
+				i += size
 			}
 		}
 

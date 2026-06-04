@@ -12,7 +12,7 @@ type TextIndex int32
 // TextLine is a zero-based line number in source text.
 type TextLine int32
 
-// TextColumn is a zero-based byte column within a line.
+// TextColumn is a zero-based UTF16 column within a line.
 type TextColumn int32
 
 // A TextIndexRange describes a half-open byte range [Start, End).

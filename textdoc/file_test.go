@@ -211,6 +211,172 @@ func TestTextWithRange(t *testing.T) {
 	}
 }
 
+func TestPositionAtUTF16(t *testing.T) {
+	testCases := []struct {
+		name    string
+		content string
+		tests   []struct {
+			offset   int
+			expected lsp.Position
+		}
+	}{
+		{
+			// é = U+00E9: 2 UTF-8 bytes, 1 UTF-16 code unit
+			name:    "two-byte rune single line",
+			content: "aéb",
+			tests: []struct {
+				offset   int
+				expected lsp.Position
+			}{
+				{0, lsp.Position{Line: 0, Character: 0}},
+				{1, lsp.Position{Line: 0, Character: 1}}, // after 'a'
+				{3, lsp.Position{Line: 0, Character: 2}}, // after 'é' (2 UTF-8 bytes -> 1 UTF-16 unit)
+				{4, lsp.Position{Line: 0, Character: 3}}, // after 'b'
+			},
+		},
+		{
+			// 😀 = U+1F600: 4 UTF-8 bytes, 2 UTF-16 code units (surrogate pair)
+			name:    "surrogate-pair rune single line",
+			content: "a😀b",
+			tests: []struct {
+				offset   int
+				expected lsp.Position
+			}{
+				{0, lsp.Position{Line: 0, Character: 0}},
+				{1, lsp.Position{Line: 0, Character: 1}}, // after 'a'
+				{5, lsp.Position{Line: 0, Character: 3}}, // after '😀' (4 UTF-8 bytes -> 2 UTF-16 units)
+				{6, lsp.Position{Line: 0, Character: 4}}, // after 'b'
+			},
+		},
+		{
+			name:    "two-byte rune multi-line",
+			content: "aé\nbc",
+			tests: []struct {
+				offset   int
+				expected lsp.Position
+			}{
+				{0, lsp.Position{Line: 0, Character: 0}},
+				{3, lsp.Position{Line: 0, Character: 2}}, // after 'é'
+				{4, lsp.Position{Line: 1, Character: 0}}, // after '\n'
+				{5, lsp.Position{Line: 1, Character: 1}},
+			},
+		},
+		{
+			name:    "surrogate-pair rune multi-line",
+			content: "😀\naé",
+			tests: []struct {
+				offset   int
+				expected lsp.Position
+			}{
+				{0, lsp.Position{Line: 0, Character: 0}},
+				{4, lsp.Position{Line: 0, Character: 2}}, // after '😀' (2 UTF-16 units)
+				{5, lsp.Position{Line: 1, Character: 0}}, // after '\n'
+				{6, lsp.Position{Line: 1, Character: 1}}, // after 'a'
+				{8, lsp.Position{Line: 1, Character: 2}}, // after 'é'
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			doc, err := NewFile("file:///test.txt", "plaintext", 1, tc.content)
+			if err != nil {
+				t.Fatalf("NewFile failed: %v", err)
+			}
+			for _, test := range tc.tests {
+				pos := doc.PositionAt(test.offset)
+				if pos != test.expected {
+					t.Errorf("PositionAt(%d): expected {%d, %d}, got {%d, %d}",
+						test.offset, test.expected.Line, test.expected.Character, pos.Line, pos.Character)
+				}
+			}
+		})
+	}
+}
+
+func TestOffsetAtUTF16(t *testing.T) {
+	testCases := []struct {
+		name    string
+		content string
+		tests   []struct {
+			position lsp.Position
+			expected int
+		}
+	}{
+		{
+			// é = U+00E9: 2 UTF-8 bytes, 1 UTF-16 code unit
+			name:    "two-byte rune single line",
+			content: "aéb",
+			tests: []struct {
+				position lsp.Position
+				expected int
+			}{
+				{lsp.Position{Line: 0, Character: 0}, 0},
+				{lsp.Position{Line: 0, Character: 1}, 1}, // after 'a'
+				{lsp.Position{Line: 0, Character: 2}, 3}, // UTF-16 char 2 -> byte 3 (after 'é')
+				{lsp.Position{Line: 0, Character: 3}, 4}, // after 'b'
+			},
+		},
+		{
+			// 😀 = U+1F600: 4 UTF-8 bytes, 2 UTF-16 code units (surrogate pair)
+			name:    "surrogate-pair rune single line",
+			content: "a😀b",
+			tests: []struct {
+				position lsp.Position
+				expected int
+			}{
+				{lsp.Position{Line: 0, Character: 0}, 0},
+				{lsp.Position{Line: 0, Character: 1}, 1}, // after 'a'
+				{lsp.Position{Line: 0, Character: 3}, 5}, // UTF-16 char 3 -> byte 5 (after '😀', 2 UTF-16 units)
+				{lsp.Position{Line: 0, Character: 4}, 6}, // after 'b'
+			},
+		},
+		{
+			name:    "two-byte rune multi-line",
+			content: "aé\nbc",
+			tests: []struct {
+				position lsp.Position
+				expected int
+			}{
+				{lsp.Position{Line: 0, Character: 0}, 0},
+				{lsp.Position{Line: 0, Character: 2}, 3}, // UTF-16 char 2 -> byte 3
+				{lsp.Position{Line: 1, Character: 0}, 4},
+				{lsp.Position{Line: 1, Character: 1}, 5},
+			},
+		},
+		{
+			name:    "surrogate-pair rune multi-line",
+			content: "😀\naé",
+			tests: []struct {
+				position lsp.Position
+				expected int
+			}{
+				{lsp.Position{Line: 0, Character: 0}, 0},
+				{lsp.Position{Line: 0, Character: 2}, 4}, // UTF-16 char 2 -> byte 4 (after '😀')
+				{lsp.Position{Line: 1, Character: 0}, 5},
+				{lsp.Position{Line: 1, Character: 1}, 6}, // after 'a'
+				{lsp.Position{Line: 1, Character: 2}, 8}, // UTF-16 char 2 -> byte 8 (after 'é')
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			doc, err := NewFile("file:///test.txt", "plaintext", 1, tc.content)
+			if err != nil {
+				t.Fatalf("NewFile failed: %v", err)
+			}
+			for _, test := range tc.tests {
+				offset := doc.OffsetAt(test.position)
+				if offset != test.expected {
+					t.Errorf("OffsetAt({%d, %d}): expected %d, got %d",
+						test.position.Line, test.position.Character, test.expected, offset)
+				}
+			}
+		})
+	}
+}
+
 func TestLineOffsets(t *testing.T) {
 	tests := []struct {
 		content  string
