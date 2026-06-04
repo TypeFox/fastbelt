@@ -20,7 +20,7 @@ func shiftStatesByDeadState(state int, deadState int) int {
 	//1. get the DFA dead state (if any)
 	//If any:
 	//  2. remove the lines corresponding to the dead state in arrays LOOKUP and NEXT
-	//  3. correct all state usages as if teh dead state has never existed
+	//  3. correct all state usages as if the dead state has never existed
 	//     (start state, next states, accepting states)
 	if deadState > -1 && state > deadState {
 		return state - 1
