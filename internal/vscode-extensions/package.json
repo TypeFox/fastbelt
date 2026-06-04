@@ -12,10 +12,10 @@
   },
   "devDependencies": {
     "@types/vscode": "^1.104.0",
-    "@types/node": "22.x",
+    "@types/node": "24.x",
     "esbuild": "^0.27.0",
     "shx": "^0.4.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   },
   "workspaces": [
     "fastbelt",

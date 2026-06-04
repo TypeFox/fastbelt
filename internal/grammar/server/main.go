@@ -19,6 +19,7 @@ func CreateServices() *service.Container {
 	grammar.SetupServices(sc)
 	grammar.SetupGeneratedServerServices(sc)
 	server.SetupDefaultServices(sc)
+	server.SetupStdioServices(sc)
 	sc.Seal()
 	return sc
 }

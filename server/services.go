@@ -23,18 +23,13 @@ type Connection struct {
 }
 
 // SetupDefaultServices sets up the default services for the language server.
+// It should be called together with [SetupStdioServices] or [SetupWasmServices].
 // If any service is already set, it's not overwritten.
 func SetupDefaultServices(sc *service.Container) {
 	service.Put(sc, &WorkspaceFolders{})
 	service.Put(sc, &Connection{})
 	if !service.Has[slog.Handler](sc) {
 		service.Put(sc, NewSlogHandler(sc))
-	}
-	if !service.Has[jsonrpc2.Binder](sc) {
-		service.Put(sc, NewDefaultBinder(sc))
-	}
-	if !service.Has[jsonrpc2.Dialer](sc) {
-		service.Put[jsonrpc2.Dialer](sc, &StdioDialer{})
 	}
 	if !service.Has[lsp.Server](sc) {
 		service.Put(sc, NewDefaultLanguageServer(sc))

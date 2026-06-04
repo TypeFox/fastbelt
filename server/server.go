@@ -7,9 +7,7 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"log/slog"
-	"os"
 
 	"golang.org/x/exp/jsonrpc2"
 	core "typefox.dev/fastbelt"
@@ -543,7 +541,7 @@ type DefaultBinder struct {
 }
 
 // NewDefaultBinder creates a new default binder.
-func NewDefaultBinder(sc *service.Container) jsonrpc2.Binder {
+func NewDefaultBinder(sc *service.Container) *DefaultBinder {
 	return &DefaultBinder{sc: sc}
 }
 
@@ -562,25 +560,4 @@ func (b *DefaultBinder) Bind(ctx context.Context, conn *jsonrpc2.Connection) (js
 	return jsonrpc2.ConnectionOptions{
 		Handler: lsp.ServerHandler(server),
 	}, nil
-}
-
-// StdioDialer implements jsonrpc2.Dialer for stdio communication
-type StdioDialer struct{}
-
-func (d StdioDialer) Dial(ctx context.Context) (io.ReadWriteCloser, error) {
-	return &stdioReadWriteCloser{
-		Reader: os.Stdin,
-		Writer: os.Stdout,
-	}, nil
-}
-
-// stdioReadWriteCloser combines stdin/stdout into a ReadWriteCloser
-type stdioReadWriteCloser struct {
-	io.Reader
-	io.Writer
-}
-
-func (rw *stdioReadWriteCloser) Close() error {
-	// stdin/stdout don't need explicit closing
-	return nil
 }

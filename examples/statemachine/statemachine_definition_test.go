@@ -11,7 +11,7 @@ import (
 )
 
 func TestDefinitionOnName(t *testing.T) {
-	f := test.New(t, CreateLspServices())
+	f := test.New(t, CreateLspServices(nil))
 	doc := f.Parse(`
 		statemachine Toggle
 
@@ -32,7 +32,7 @@ func TestDefinitionOnName(t *testing.T) {
 }
 
 func TestDefinitionOnReference(t *testing.T) {
-	f := test.New(t, CreateLspServices())
+	f := test.New(t, CreateLspServices(nil))
 	doc := f.Parse(`
 		statemachine Toggle
 
