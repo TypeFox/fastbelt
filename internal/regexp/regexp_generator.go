@@ -14,10 +14,13 @@ type GenerateTransitionsUsingBinarySearchResult struct {
 	Code   codegen.Node
 }
 
-func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsMapping, source int, tokenName string, imports map[string]bool) GenerateTransitionsUsingBinarySearchResult {
+func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsMapping, source int, tokenName string, imports map[string]bool, isAcceptanceReachable map[int]bool) GenerateTransitionsUsingBinarySearchResult {
 	transitions := make([]automatons.RuneRangeMappingSection[automatons.Targets], 0)
-	if bySource != nil {
+	if bySource != nil && isAcceptanceReachable[source] {
 		for transition := range bySource.All() {
+			if !isAcceptanceReachable[transition.Values[0]] {
+				continue
+			}
 			transitions = append(transitions, transition)
 		}
 	}
@@ -131,15 +134,10 @@ func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateR
 				bySource := transitions[source]
 				n.AppendLine(fmt.Sprintf("case %d:", source))
 				n.Indent(func(n codegen.Node) {
-					result := GenerateTransitionsUsingBinarySearch(bySource, source, tokenName, imports)
+					result := GenerateTransitionsUsingBinarySearch(bySource, source, tokenName, imports, isAcceptanceReachable)
 					n.AppendNode(result.Code)
-					if isAcceptanceReachable[source] {
-						lookup.AppendNode(result.Lookup)
-						next.AppendNode(result.Next)
-					} else {
-						lookup.AppendLine("{},")
-						next.AppendLine("{},")
-					}
+					lookup.AppendNode(result.Lookup)
+					next.AppendNode(result.Next)
 				})
 			}
 			n.AppendLine("default:")
