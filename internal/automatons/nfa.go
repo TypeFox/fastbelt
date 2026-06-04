@@ -99,3 +99,16 @@ func (nfa NFA) ComputeAcceptanceReachability() map[int]bool {
 
 	return canReach
 }
+
+// DFAs have at most one dead state, so we can just return the first non-accepting state we find (if any, -1 otherwise)
+func (dfa NFA) DeadState() int {
+	isAcceptanceReachable := dfa.ComputeAcceptanceReachability()
+	deadState := -1
+	for state := 0; state < dfa.StateCount; state++ {
+		if !isAcceptanceReachable[state] {
+			deadState = state
+			break
+		}
+	}
+	return deadState
+}

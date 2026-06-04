@@ -601,16 +601,14 @@ var Token_WS = core.NewTokenType(
 )
 var Token_WS_Lookup = [][]int64{
 	{0x0000000A00000009, 0x0000000D0000000D, 0x0000002000000020},
-	{},
 	{0x0000000A00000009, 0x0000000D0000000D, 0x0000002000000020},
 }
 var Token_WS_Next = [][]int{
-	{2, 2, 2},
-	{},
-	{2, 2, 2},
+	{1, 1, 1},
+	{1, 1, 1},
 }
 var Token_WS_Accepting = [3]bool{
-	2: true,
+	1: true,
 }
 
 const Token_ID_Idx = 28
@@ -692,16 +690,14 @@ var Token_ID = core.NewTokenType(
 )
 var Token_ID_Lookup = [][]int64{
 	{0x0000003900000030, 0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
-	{},
 	{0x0000003900000030, 0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
 }
 var Token_ID_Next = [][]int{
-	{2, 2, 2, 2},
-	{},
-	{2, 2, 2, 2},
+	{1, 1, 1, 1},
+	{1, 1, 1, 1},
 }
 var Token_ID_Accepting = [3]bool{
-	2: true,
+	1: true,
 }
 
 func NewLexer() lexer.Lexer {

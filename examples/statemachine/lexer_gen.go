@@ -278,16 +278,14 @@ var Token_ID = core.NewTokenType(
 )
 var Token_ID_Lookup = [][]int64{
 	{0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
-	{},
 	{0x0000003900000030, 0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
 }
 var Token_ID_Next = [][]int{
-	{2, 2, 2},
-	{},
-	{2, 2, 2, 2},
+	{1, 1, 1},
+	{1, 1, 1, 1},
 }
 var Token_ID_Accepting = [3]bool{
-	2: true,
+	1: true,
 }
 
 const Token_WS_Idx = 11
@@ -369,16 +367,14 @@ var Token_WS = core.NewTokenType(
 )
 var Token_WS_Lookup = [][]int64{
 	{0x0000000A00000009, 0x0000000D0000000C, 0x0000002000000020},
-	{},
 	{0x0000000A00000009, 0x0000000D0000000C, 0x0000002000000020},
 }
 var Token_WS_Next = [][]int{
-	{2, 2, 2},
-	{},
-	{2, 2, 2},
+	{1, 1, 1},
+	{1, 1, 1},
 }
 var Token_WS_Accepting = [3]bool{
-	2: true,
+	1: true,
 }
 
 const Token_ML_COMMENT_Idx = 12
@@ -505,22 +501,20 @@ var Token_ML_COMMENT = core.NewTokenType(
 )
 var Token_ML_COMMENT_Lookup = [][]int64{
 	{0x0000002F0000002F},
-	{},
 	{0x0000002A0000002A},
 	{0x0000002900000000, 0x0000002A0000002A, 0x0010FFFF0000002B},
 	{0x0000002900000000, 0x0000002A0000002A, 0x0000002E0000002B, 0x0000002F0000002F, 0x0010FFFF00000030},
 	{},
 }
 var Token_ML_COMMENT_Next = [][]int{
+	{1},
 	{2},
-	{},
-	{3},
-	{3, 4, 3},
-	{3, 4, 3, 5, 3},
+	{2, 3, 2},
+	{2, 3, 2, 4, 2},
 	{},
 }
 var Token_ML_COMMENT_Accepting = [6]bool{
-	5: true,
+	4: true,
 }
 
 const Token_SL_COMMENT_Idx = 13
@@ -617,18 +611,16 @@ var Token_SL_COMMENT = core.NewTokenType(
 )
 var Token_SL_COMMENT_Lookup = [][]int64{
 	{0x0000002F0000002F},
-	{},
 	{0x0000002F0000002F},
 	{0x0000000900000000, 0x0000000C0000000B, 0x0010FFFF0000000E},
 }
 var Token_SL_COMMENT_Next = [][]int{
+	{1},
 	{2},
-	{},
-	{3},
-	{3, 3, 3},
+	{2, 2, 2},
 }
 var Token_SL_COMMENT_Accepting = [4]bool{
-	3: true,
+	2: true,
 }
 
 func NewLexer() lexer.Lexer {
