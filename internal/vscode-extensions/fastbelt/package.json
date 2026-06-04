@@ -10,8 +10,9 @@
     "Programming Languages"
   ],
   "license": "MIT",
+  "icon": "data/fastbelt-logo.png",
   "galleryBanner": {
-    "color": "#262626",
+    "color": "#151515",
     "theme": "dark"
   },
   "engines": {

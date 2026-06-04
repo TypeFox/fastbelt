@@ -1,4 +1,4 @@
-# Fastbelt
+![Fastbelt](https://raw.githubusercontent.com/TypeFox/fastbelt/refs/heads/main/fastbelt-full-logo.png)
 
 Fastbelt is a high-performance DSL toolkit for Go with a parser generator and Language Server Protocol (LSP) support.
 
