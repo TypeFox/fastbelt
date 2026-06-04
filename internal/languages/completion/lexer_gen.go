@@ -572,6 +572,21 @@ var Token_WS = core.NewTokenType(
 				} else {
 					break loop
 				}
+			case 2:
+				nextState := -1
+				next := Token_WS_Next[2]
+				lookup := Token_WS_Lookup[2]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
 			default:
 				break loop
 			}
@@ -585,15 +600,17 @@ var Token_WS = core.NewTokenType(
 	[]rune{'\u0009', '\u000A', '\u000D', ' '},
 )
 var Token_WS_Lookup = [][]int64{
-	{0x0000000A00000009, 0x0000000D0000000D, 0x0000002000000020},
-	{0x0000000A00000009, 0x0000000D0000000D, 0x0000002000000020},
+	{0x0000000800000000, 0x0000000A00000009, 0x0000000C0000000B, 0x0000000D0000000D, 0x0000001F0000000E, 0x0000002000000020, 0x0010FFFF00000021},
+	{0x0010FFFF00000000},
+	{0x0000000800000000, 0x0000000A00000009, 0x0000000C0000000B, 0x0000000D0000000D, 0x0000001F0000000E, 0x0000002000000020, 0x0010FFFF00000021},
 }
 var Token_WS_Next = [][]int{
-	{1, 1, 1},
-	{1, 1, 1},
+	{1, 2, 1, 2, 1, 2, 1},
+	{1},
+	{1, 2, 1, 2, 1, 2, 1},
 }
-var Token_WS_Accepting = [2]bool{
-	1: true,
+var Token_WS_Accepting = [3]bool{
+	2: true,
 }
 
 const Token_ID_Idx = 28
@@ -646,6 +663,21 @@ var Token_ID = core.NewTokenType(
 				} else {
 					break loop
 				}
+			case 2:
+				nextState := -1
+				next := Token_ID_Next[2]
+				lookup := Token_ID_Lookup[2]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
 			default:
 				break loop
 			}
@@ -659,15 +691,17 @@ var Token_ID = core.NewTokenType(
 	[]rune{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'},
 )
 var Token_ID_Lookup = [][]int64{
-	{0x0000003900000030, 0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
-	{0x0000003900000030, 0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
+	{0x0000002F00000000, 0x0000003900000030, 0x000000400000003A, 0x0000005A00000041, 0x0000005E0000005B, 0x0000005F0000005F, 0x0000006000000060, 0x0000007A00000061, 0x0010FFFF0000007B},
+	{0x0010FFFF00000000},
+	{0x0000002F00000000, 0x0000003900000030, 0x000000400000003A, 0x0000005A00000041, 0x0000005E0000005B, 0x0000005F0000005F, 0x0000006000000060, 0x0000007A00000061, 0x0010FFFF0000007B},
 }
 var Token_ID_Next = [][]int{
-	{1, 1, 1, 1},
-	{1, 1, 1, 1},
+	{1, 2, 1, 2, 1, 2, 1, 2, 1},
+	{1},
+	{1, 2, 1, 2, 1, 2, 1, 2, 1},
 }
-var Token_ID_Accepting = [2]bool{
-	1: true,
+var Token_ID_Accepting = [3]bool{
+	2: true,
 }
 
 func NewLexer() lexer.Lexer {
