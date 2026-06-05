@@ -6,6 +6,8 @@ package fastbelt
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"iter"
 	"reflect"
 	"slices"
@@ -291,4 +293,83 @@ func NewReferenceDescriptionsFromMap(descriptions collections.MultiMap[AstNode, 
 	return &referenceDescriptions{
 		descriptions: descriptions,
 	}
+}
+
+// MarshalJSON serializes the reference as a JSON object containing the URI of the resolved target's document.
+// With this function Reference[T] implements json.Marshaler.MarshalJSON() and the method is called by `json.Marshal()` and `json.MarshalIndent()`.
+func (r *Reference[T]) MarshalJSON() ([]byte, error) {
+	// A nil reference marshals as JSON null.
+	if r == nil {
+		return []byte("null"), nil
+	}
+	// We expect at this point that all references have been attempted to resolve.
+	if !r.resolved.Load() {
+		return nil, errors.New("reference not resolved")
+	}
+
+	var uri string
+	var errMsg string
+	if r.err != nil {
+		errMsg = r.err.Msg
+	} else if doc := r.ref.Document(); doc != nil {
+		uri = doc.URI.WithFragment("todo-fragment").StringUnencoded()
+	} else {
+		return nil, errors.New("unexpected state: resolved reference has no document")
+	}
+
+	return json.Marshal(struct {
+		RefText string `json:"$refText"`
+		Ref     string `json:"$ref,omitempty"`
+		Err     string `json:"$error,omitempty"`
+	}{
+		RefText: r.unit.String(),
+		Ref:     uri,
+		Err:     errMsg,
+	})
+}
+
+func (r *Reference[T]) UnmarshalJSON(data []byte) error {
+	aux := &struct {
+		RefText string `json:"$refText"`
+		Ref     string `json:"$ref,omitempty"`
+		Err     string `json:"$error,omitempty"`
+	}{}
+
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+
+	r.unit = &RefText{
+		refText: aux.RefText,
+	}
+	if aux.Err != "" {
+		r.err = NewReferenceError(aux.Err)
+	}
+	r.getter = func(ctx context.Context, ref *Reference[T]) (*SymbolDescription, *ReferenceError) {
+		if ref.err != nil {
+			return nil, ref.err
+		}
+		return &SymbolDescription{
+			URI: ParseURI(aux.Ref),
+		}, nil
+	}
+
+	return nil
+}
+
+type RefText struct {
+	owner   AstNode
+	refText string
+}
+
+func (r *RefText) String() string {
+	return r.refText
+}
+
+func (r *RefText) Owner() AstNode {
+	return r.owner
+}
+
+func (r *RefText) Segment() *TextSegment {
+	return nil
 }
