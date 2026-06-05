@@ -2,6 +2,7 @@ package automatons
 
 import (
 	"fmt"
+	"sort"
 )
 
 type NFA struct {
@@ -35,6 +36,12 @@ func (nfa NFA) String() string {
 	return result
 }
 
+type dotFileTransitionInfo struct {
+	Source int
+	Target int
+	Runes  *RuneSet
+}
+
 func (nfa NFA) DotFile() string {
 	result := "digraph NFA {\n"
 	result += "  rankdir=LR;\n"
@@ -50,6 +57,7 @@ func (nfa NFA) DotFile() string {
 	}
 
 	// Transitions
+	transitions := make([]dotFileTransitionInfo, 0)
 	for source, targets := range nfa.TransitionsBySource {
 		for info := range targets.All() {
 			var charset *RuneSet
@@ -59,9 +67,28 @@ func (nfa NFA) DotFile() string {
 				charset = NewRuneSetEmpty()
 			}
 			for _, target := range info.Values {
-				result += fmt.Sprintf("  %d -> %d [label=\"%v\"];\n", source, target, charset)
+				transitions = append(transitions, dotFileTransitionInfo{
+					Source: source,
+					Target: target,
+					Runes:  charset,
+				})
 			}
 		}
+	}
+	//sort transitions by source and then target for deterministic output
+	sort.Slice(transitions, func(i, j int) bool {
+		if transitions[i].Source != transitions[j].Source {
+			return transitions[i].Source < transitions[j].Source
+		} else if transitions[i].Target != transitions[j].Target {
+			return transitions[i].Target < transitions[j].Target
+		} else {
+			lhs := transitions[i].Runes.FirstRune()
+			rhs := transitions[j].Runes.FirstRune()
+			return lhs < rhs
+		}
+	})
+	for _, transition := range transitions {
+		result += fmt.Sprintf("  %d -> %d [label=\"%v\"];\n", transition.Source, transition.Target, transition.Runes)
 	}
 
 	result += "}\n"
@@ -100,14 +127,16 @@ func (nfa NFA) ComputeAcceptanceReachability() map[int]bool {
 	return canReach
 }
 
-// DFAs have at most one dead state, so we can just return the first non-accepting state we find (if any, -1 otherwise)
-func (dfa NFA) DeadState() int {
-	isAcceptanceReachable := dfa.ComputeAcceptanceReachability()
+func (nfa NFA) DeadState() int {
+	isAcceptanceReachable := nfa.ComputeAcceptanceReachability()
 	deadState := -1
-	for state := 0; state < dfa.StateCount; state++ {
+	for state := 0; state < nfa.StateCount; state++ {
 		if !isAcceptanceReachable[state] {
-			deadState = state
-			break
+			if deadState == -1 {
+				deadState = state
+			} else {
+				panic(fmt.Sprintf("Multiple dead states found: %d and %d", deadState, state))
+			}
 		}
 	}
 	return deadState
