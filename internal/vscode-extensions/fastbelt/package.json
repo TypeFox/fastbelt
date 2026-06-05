@@ -10,8 +10,9 @@
     "Programming Languages"
   ],
   "license": "MIT",
+  "icon": "data/fastbelt-logo.png",
   "galleryBanner": {
-    "color": "#262626",
+    "color": "#151515",
     "theme": "dark"
   },
   "engines": {
@@ -22,7 +23,11 @@
       "id": "fastbelt",
       "aliases": ["Fastbelt", "fastbelt"],
       "extensions": [".fb"],
-      "configuration": "./data/fastbelt.configuration.json"
+      "configuration": "./data/fastbelt.configuration.json",
+      "icon": {
+        "light": "./data/fastbelt-logo.png",
+        "dark": "./data/fastbelt-logo.png"
+      }
     }],
     "grammars": [{
       "language": "fastbelt",
