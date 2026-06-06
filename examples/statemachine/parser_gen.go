@@ -33,27 +33,6 @@ func NewParser(sc *service.Container) *Parser {
 	}
 }
 
-const (
-	CommandNameID_0 = iota + 1
-	EventNameID_0
-	StateActionsID_0
-	StateLeftBrace_0
-	StateNameID_0
-	StateRightBrace_0
-	Stateactions_0
-	Stateend_0
-	StatemachineInitID_0
-	StatemachineNameID_0
-	Statemachinecommands_0
-	Statemachineevents_0
-	StatemachineinitialState_0
-	Statemachinestatemachine_0
-	Statestate_0
-	TransitionEqualsGreaterThan_0
-	TransitionEventID_0
-	TransitionStateID_0
-)
-
 var StateLookahead5 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_actions_Idx},
@@ -107,72 +86,72 @@ func (p *Parser) ParseStatemachine() Statemachine {
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_statemachine)
-		core.AssignToken(current, token, Statemachinestatemachine_0)
+		core.AssignToken(current, token, Statemachine_statemachine)
 	}
 	{
 		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, StatemachineNameID_0)
+		core.AssignToken(current, token, Statemachine_Name_ID)
 		if token != nil {
 			current.SetName(token)
 		}
 	}
-	p.state.Sync(12)
+	p.state.Sync(Statemachine_events)
 	if p.state.Lookahead(StatemachineLookahead0) == 0 {
 		{
 			token := p.state.Consume(Keyword_events)
-			core.AssignToken(current, token, Statemachineevents_0)
+			core.AssignToken(current, token, Statemachine_events)
 		}
 		{
 			for ok := true; ok; ok = p.state.Lookahead(StatemachineLookahead1) == 0 {
-				p.state.EnterRule(14)
+				p.state.EnterRule(Statemachine__Basic_1)
 				result := p.ParseEvent()
 				p.state.ExitRule()
 				if result != nil {
 					current.SetEventsItem(result)
 				}
-				p.state.Sync(15)
+				p.state.Sync(Statemachine__LoopBack_0)
 			}
 		}
 	}
-	p.state.Sync(17)
+	p.state.Sync(Statemachine_commands)
 	if p.state.Lookahead(StatemachineLookahead2) == 0 {
 		{
 			token := p.state.Consume(Keyword_commands)
-			core.AssignToken(current, token, Statemachinecommands_0)
+			core.AssignToken(current, token, Statemachine_commands)
 		}
 		{
 			for ok := true; ok; ok = p.state.Lookahead(StatemachineLookahead3) == 0 {
-				p.state.EnterRule(19)
+				p.state.EnterRule(Statemachine__Basic_3)
 				result := p.ParseCommand()
 				p.state.ExitRule()
 				if result != nil {
 					current.SetCommandsItem(result)
 				}
-				p.state.Sync(20)
+				p.state.Sync(Statemachine__LoopBack_1)
 			}
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_initialState)
-		core.AssignToken(current, token, StatemachineinitialState_0)
+		core.AssignToken(current, token, Statemachine_initialState)
 	}
 	{
 		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, StatemachineInitID_0)
+		core.AssignToken(current, token, Statemachine_Init_ID)
 		if token != nil {
 			current.SetInit(p.referencesConstructor.StatemachineInit(current, token))
 		}
 	}
 	{
-		p.state.Sync(26)
+		p.state.Sync(Statemachine__LoopEntry)
 		for p.state.Lookahead(StatemachineLookahead4) == 0 {
-			p.state.EnterRule(25)
+			p.state.EnterRule(Statemachine__Basic_5)
 			result := p.ParseState()
 			p.state.ExitRule()
 			if result != nil {
 				current.SetStatesItem(result)
 			}
-			p.state.Sync(26)
+			p.state.Sync(Statemachine__LoopEntry)
 		}
 	}
 	current.SetSegmentEndToken(p.state.LARaw(0))
@@ -184,7 +163,7 @@ func (p *Parser) ParseEvent() Event {
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, EventNameID_0)
+		core.AssignToken(current, token, Event_Name_ID)
 		if token != nil {
 			current.SetName(token)
 		}
@@ -198,7 +177,7 @@ func (p *Parser) ParseCommand() Command {
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, CommandNameID_0)
+		core.AssignToken(current, token, Command_Name_ID)
 		if token != nil {
 			current.SetName(token)
 		}
@@ -212,29 +191,29 @@ func (p *Parser) ParseState() State {
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_state)
-		core.AssignToken(current, token, Statestate_0)
+		core.AssignToken(current, token, State_state)
 	}
 	{
 		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, StateNameID_0)
+		core.AssignToken(current, token, State_Name_ID)
 		if token != nil {
 			current.SetName(token)
 		}
 	}
-	p.state.Sync(35)
+	p.state.Sync(State_actions)
 	if p.state.Lookahead(StateLookahead5) == 0 {
 		{
 			token := p.state.Consume(Keyword_actions)
-			core.AssignToken(current, token, Stateactions_0)
+			core.AssignToken(current, token, State_actions)
 		}
 		{
 			token := p.state.Consume(Keyword_LeftBrace)
-			core.AssignToken(current, token, StateLeftBrace_0)
+			core.AssignToken(current, token, State_LeftBrace)
 		}
 		{
 			for ok := true; ok; ok = p.state.Lookahead(StateLookahead6) == 0 {
 				token := p.state.Consume(Token_ID)
-				core.AssignToken(current, token, StateActionsID_0)
+				core.AssignToken(current, token, State_Actions_ID)
 				if token != nil {
 					current.SetActionsItem(p.referencesConstructor.StateActions(current, token))
 				}
@@ -242,24 +221,24 @@ func (p *Parser) ParseState() State {
 		}
 		{
 			token := p.state.Consume(Keyword_RightBrace)
-			core.AssignToken(current, token, StateRightBrace_0)
+			core.AssignToken(current, token, State_RightBrace)
 		}
 	}
 	{
-		p.state.Sync(42)
+		p.state.Sync(State__LoopEntry)
 		for p.state.Lookahead(StateLookahead7) == 0 {
-			p.state.EnterRule(41)
+			p.state.EnterRule(State__Basic_2)
 			result := p.ParseTransition()
 			p.state.ExitRule()
 			if result != nil {
 				current.SetTransitionsItem(result)
 			}
-			p.state.Sync(42)
+			p.state.Sync(State__LoopEntry)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_end)
-		core.AssignToken(current, token, Stateend_0)
+		core.AssignToken(current, token, State_end)
 	}
 	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
@@ -270,18 +249,18 @@ func (p *Parser) ParseTransition() Transition {
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, TransitionEventID_0)
+		core.AssignToken(current, token, Transition_Event_ID)
 		if token != nil {
 			current.SetEvent(p.referencesConstructor.TransitionEvent(current, token))
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_EqualsGreaterThan)
-		core.AssignToken(current, token, TransitionEqualsGreaterThan_0)
+		core.AssignToken(current, token, Transition_EqualsGreaterThan)
 	}
 	{
 		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, TransitionStateID_0)
+		core.AssignToken(current, token, Transition_State_ID)
 		if token != nil {
 			current.SetState(p.referencesConstructor.TransitionState(current, token))
 		}

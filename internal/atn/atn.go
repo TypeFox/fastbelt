@@ -265,6 +265,7 @@ func convertKeyword(
 		return nil, fmt.Errorf("unknown token %q", name)
 	}
 	handle := rb.TokenRef(id)
+	handle.Left.ConsumedElement = kw
 	lookaheadName := rb.GetLookaheadNameByElement(kw)
 	return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
 }
@@ -285,6 +286,7 @@ func convertRuleCall(
 	case grammar.Token:
 		id := rb.GetTokenTypeByName(typed.Name())
 		termHandle := rb.TokenRef(id)
+		termHandle.Left.ConsumedElement = rc
 		return wrapWithCardinality(rb, termHandle, cardinality, lookaheadName), nil
 	}
 	panic(fmt.Sprintf("unexpected rule type %T", rule))
@@ -309,6 +311,7 @@ func convertCrossRef(
 	}
 	id := rb.GetTokenTypeByName(rule.Name())
 	termHandle := rb.TokenRef(id)
+	termHandle.Left.ConsumedElement = cr.Rule() // tag with inner RuleCall to match generator naming
 	if hint != nil {
 		for _, t := range termHandle.Left.Transitions {
 			if at, ok := t.(*AtomTransition); ok && at.TokenTypeId == id {

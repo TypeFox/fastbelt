@@ -123,7 +123,7 @@ func generateMainLexerFunction(node codegen.Node, tokens []grammar.Token, keywor
 
 func generateKeywordTokenType(keyword grammar.Keyword, id int) codegen.Node {
 	code := codegen.NewNode()
-	keywordValue := KeywordValue(keyword)
+	keywordValue := grammar.KeywordValue(keyword)
 	code.AppendLine("const ", GeneratedKeywordIdxName(keyword), " = ", strconv.Itoa(id))
 	code.AppendLine()
 	code.AppendLine("var ", GeneratedKeywordName(keyword), " = core.NewTokenType(")

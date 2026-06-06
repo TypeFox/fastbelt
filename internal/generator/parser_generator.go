@@ -17,24 +17,25 @@ import (
 )
 
 type ParserGeneratorContext struct {
-	grammar            grammar.Grammar
-	accessNamesCounter map[string]int
-	accessNames        map[core.AstNode]string
-	lookaheads         map[core.AstNode]LookaheadValue
-	orLookaheads       map[core.AstNode]LookaheadValue
-	inCompositeRule    bool
-	// ATN-derived maps for error recovery emit (nil when ATN not built).
-	followStateIdx   map[core.AstNode]int // grammar.RuleCall: follow-state array index
-	decisionStateIdx map[core.AstNode]int // grammar.Element: decision-state array index
+	grammar      grammar.Grammar
+	lookaheads   map[core.AstNode]LookaheadValue
+	orLookaheads map[core.AstNode]LookaheadValue
+	inCompositeRule bool
+	// ATN-derived maps for EnterRule/Sync emit (nil when ATN not built).
+	followStateName   map[core.AstNode]string // grammar.RuleCall: follow-state constant name
+	decisionStateName map[core.AstNode]string // grammar.Element: decision-state constant name
+	// elementStateNames maps token-consuming grammar elements to their ATN state constant name.
+	// Used in AssignToken calls to replace the former per-generator property-kind constants.
+	elementStateNames map[grammar.Element]string
 	// completion is true when this context is producing completion_parser_gen.go
 	// rather than parser_gen.go. In that mode, AST-construction emits are
 	// suppressed and CompletionParserState bookkeeping (EnterRule, RecordSnapshot,
 	// MarkAssignment) is inserted instead. See GenerateCompletionParser.
 	completion bool
-	// ruleStartIdx maps each rule (AbstractRuleWithBody as core.AstNode) to its
-	// ATN RuleStart state array index. Used in completion mode for
-	// p.cp.EnterRule(ruleKey, ruleStartStateIdx).
-	ruleStartIdx map[core.AstNode]int
+	// ruleStartName maps each rule (AbstractRuleWithBody as core.AstNode) to its
+	// ATN RuleStart state constant name. Used in completion mode for
+	// p.cp.EnterRule(ruleKey, ruleStartStateName).
+	ruleStartName map[core.AstNode]string
 }
 
 type LookaheadValue struct {
@@ -42,28 +43,22 @@ type LookaheadValue struct {
 	llk  LLkLookahead
 }
 
-func (context *ParserGeneratorContext) SetAccessName(node core.AstNode, name string) {
-	index := context.accessNamesCounter[name]
-	context.accessNames[node] = name + "_" + strconv.Itoa(index)
-	index++
-	context.accessNamesCounter[name] = index
-}
-
 func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult) string {
 	context := &ParserGeneratorContext{
-		grammar:            grammr,
-		accessNamesCounter: make(map[string]int),
-		accessNames:        make(map[core.AstNode]string),
-		lookaheads:         make(map[core.AstNode]LookaheadValue),
-		orLookaheads:       make(map[core.AstNode]LookaheadValue),
+		grammar:      grammr,
+		lookaheads:   make(map[core.AstNode]LookaheadValue),
+		orLookaheads: make(map[core.AstNode]LookaheadValue),
 	}
 
-	// Build the ATN and derive index maps for EnterRule/Sync emit.
+	// Build the ATN and derive name maps for EnterRule/Sync/AssignToken emit.
 	builtATN, _ := internalATN.CreateATN(grammr, tokenTypes.TokenTypeIds)
 	if builtATN != nil {
+		elementNames := internalATN.BuildElementNames(grammr)
+		stateNames := internalATN.BuildStateNameMap(builtATN, elementNames)
 		stateIdx := internalATN.BuildStateIndexMap(builtATN)
-		context.followStateIdx = buildFollowStateIdxMap(builtATN, stateIdx)
-		context.decisionStateIdx = buildDecisionStateIdxMap(builtATN, stateIdx)
+		context.followStateName = buildFollowStateNameMap(builtATN, stateIdx, stateNames)
+		context.decisionStateName = buildDecisionStateNameMap(builtATN, stateIdx, stateNames)
+		context.elementStateNames = buildElementStateNameMap(builtATN, stateNames)
 	}
 
 	populateContext(context)
@@ -120,25 +115,8 @@ func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes Gener
 	node.AppendLine("}")
 	node.AppendLine()
 
-	node.AppendLine("const (")
-	accessIota := true
-	accessNames := make([]string, 0, len(context.accessNames))
-	node.Indent(func(access codegen.Node) {
-		for _, name := range context.accessNames {
-			accessNames = append(accessNames, name)
-		}
-		slices.Sort(accessNames)
-		for _, name := range accessNames {
-			if accessIota {
-				access.AppendLine(name + " = iota + 1")
-				accessIota = false
-			} else {
-				access.AppendLine(name)
-			}
-		}
-	})
-	node.AppendLine(")")
-	node.AppendLine()
+	// The property-kind const block is gone — token-consuming state constants now
+	// live in atn_gen.go (emitted by EmitGoSource) and are used directly.
 
 	lookaheads := make([]LookaheadValue, 0, len(context.lookaheads))
 
@@ -177,20 +155,21 @@ func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes Gener
 // emitted into the same package.
 func GenerateCompletionParser(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult) string {
 	context := &ParserGeneratorContext{
-		grammar:            grammr,
-		accessNamesCounter: make(map[string]int),
-		accessNames:        make(map[core.AstNode]string),
-		lookaheads:         make(map[core.AstNode]LookaheadValue),
-		orLookaheads:       make(map[core.AstNode]LookaheadValue),
-		completion:         true,
+		grammar:      grammr,
+		lookaheads:   make(map[core.AstNode]LookaheadValue),
+		orLookaheads: make(map[core.AstNode]LookaheadValue),
+		completion:   true,
 	}
 
 	builtATN, _ := internalATN.CreateATN(grammr, tokenTypes.TokenTypeIds)
 	if builtATN != nil {
+		elementNames := internalATN.BuildElementNames(grammr)
+		stateNames := internalATN.BuildStateNameMap(builtATN, elementNames)
 		stateIdx := internalATN.BuildStateIndexMap(builtATN)
-		context.followStateIdx = buildFollowStateIdxMap(builtATN, stateIdx)
-		context.decisionStateIdx = buildDecisionStateIdxMap(builtATN, stateIdx)
-		context.ruleStartIdx = buildRuleStartIdxMap(builtATN, stateIdx)
+		context.followStateName = buildFollowStateNameMap(builtATN, stateIdx, stateNames)
+		context.decisionStateName = buildDecisionStateNameMap(builtATN, stateIdx, stateNames)
+		context.elementStateNames = buildElementStateNameMap(builtATN, stateNames)
+		context.ruleStartName = buildRuleStartNameMap(builtATN, stateIdx, stateNames)
 	}
 
 	populateContext(context)
@@ -262,17 +241,17 @@ func GenerateCompletionParser(grammr grammar.Grammar, packageName string, tokenT
 	return FormatIfPossible(node.String())
 }
 
-// buildFollowStateIdxMap returns a map from grammar.RuleCall (as core.AstNode) to
-// the array index of the ATN follow state for that rule call.
-func buildFollowStateIdxMap(builtATN *internalATN.ATN, stateIdx map[*internalATN.ATNState]int) map[core.AstNode]int {
-	result := make(map[core.AstNode]int)
+// buildFollowStateNameMap returns a map from grammar.RuleCall (as core.AstNode) to
+// the constant name of the ATN follow state for that rule call.
+func buildFollowStateNameMap(builtATN *internalATN.ATN, stateIdx map[*internalATN.ATNState]int, stateNames []string) map[core.AstNode]string {
+	result := make(map[core.AstNode]string)
 	for _, state := range builtATN.States {
 		if state.RuleCallEntry == nil {
 			continue
 		}
 		for _, t := range state.Transitions {
 			if rt, ok := t.(*internalATN.RuleTransition); ok {
-				result[state.RuleCallEntry] = stateIdx[rt.FollowState]
+				result[state.RuleCallEntry] = stateNames[stateIdx[rt.FollowState]]
 				break
 			}
 		}
@@ -280,25 +259,36 @@ func buildFollowStateIdxMap(builtATN *internalATN.ATN, stateIdx map[*internalATN
 	return result
 }
 
-// buildDecisionStateIdxMap returns a map from grammar.Element (as core.AstNode) to
-// the array index of the ATN decision state for that element.
-func buildDecisionStateIdxMap(builtATN *internalATN.ATN, stateIdx map[*internalATN.ATNState]int) map[core.AstNode]int {
-	result := make(map[core.AstNode]int, len(builtATN.DecisionMap))
+// buildDecisionStateNameMap returns a map from grammar.Element (as core.AstNode) to
+// the constant name of the ATN decision state for that element.
+func buildDecisionStateNameMap(builtATN *internalATN.ATN, stateIdx map[*internalATN.ATNState]int, stateNames []string) map[core.AstNode]string {
+	result := make(map[core.AstNode]string, len(builtATN.DecisionMap))
 	for _, state := range builtATN.DecisionMap {
 		if state.Production != nil {
-			result[state.Production] = stateIdx[state]
+			result[state.Production] = stateNames[stateIdx[state]]
 		}
 	}
 	return result
 }
 
-// buildRuleStartIdxMap returns a map from each parser/composite rule (as
-// core.AstNode) to the array index of its ATN RuleStart state. The completion
-// parser uses this to record the "we just entered rule X" snapshot.
-func buildRuleStartIdxMap(builtATN *internalATN.ATN, stateIdx map[*internalATN.ATNState]int) map[core.AstNode]int {
-	result := make(map[core.AstNode]int, len(builtATN.RuleToStartState))
+// buildRuleStartNameMap returns a map from each parser/composite rule (as
+// core.AstNode) to the constant name of its ATN RuleStart state.
+func buildRuleStartNameMap(builtATN *internalATN.ATN, stateIdx map[*internalATN.ATNState]int, stateNames []string) map[core.AstNode]string {
+	result := make(map[core.AstNode]string, len(builtATN.RuleToStartState))
 	for rule, state := range builtATN.RuleToStartState {
-		result[rule] = stateIdx[state]
+		result[rule] = stateNames[stateIdx[state]]
+	}
+	return result
+}
+
+// buildElementStateNameMap returns a map from token-consuming grammar elements
+// to their ATN state constant name, used for AssignToken calls.
+func buildElementStateNameMap(builtATN *internalATN.ATN, stateNames []string) map[grammar.Element]string {
+	result := make(map[grammar.Element]string)
+	for i, s := range builtATN.States {
+		if s.ConsumedElement != nil {
+			result[s.ConsumedElement] = stateNames[i]
+		}
 	}
 	return result
 }
@@ -310,18 +300,17 @@ func buildRuleStartIdxMap(builtATN *internalATN.ATN, stateIdx map[*internalATN.A
 // same state index, so the completion provider has a starting point for the
 // simulator at every branch boundary.
 func buildSyncCall(context *ParserGeneratorContext, el core.AstNode) string {
-	if context.decisionStateIdx == nil {
+	if context.decisionStateName == nil {
 		return ""
 	}
-	idx, ok := context.decisionStateIdx[el]
+	name, ok := context.decisionStateName[el]
 	if !ok {
 		return ""
 	}
-	idxStr := strconv.Itoa(idx)
 	if context.completion {
-		return "p.cp.RecordSnapshot(" + idxStr + "); p.state.Sync(" + idxStr + ")"
+		return "p.cp.RecordSnapshot(" + name + "); p.state.Sync(" + name + ")"
 	}
-	return "p.state.Sync(" + idxStr + ")"
+	return "p.state.Sync(" + name + ")"
 }
 
 func populateContext(context *ParserGeneratorContext) {
@@ -335,11 +324,7 @@ func populateContext(context *ParserGeneratorContext) {
 	}
 }
 
-// TODO: use the prefix with first letter lowercase for global constants and variables to keep them private
 func populateContextWithNode(context *ParserGeneratorContext, prefix string, node core.AstNode) {
-	if _, exists := context.accessNames[node]; exists {
-		return
-	}
 	switch n := node.(type) {
 	case grammar.Alternatives:
 		if len(n.Alts()) > 1 {
@@ -366,8 +351,6 @@ func populateContextWithNode(context *ParserGeneratorContext, prefix string, nod
 			name := prefix + "Lookahead" + strconv.Itoa(len(context.lookaheads))
 			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n)}
 		}
-		name := prefix + KeywordName(n)
-		context.SetAccessName(node, name)
 	case grammar.Assignment:
 		if n.Cardinality() != CardinalityOne {
 			name := prefix + "Lookahead" + strconv.Itoa(len(context.lookaheads))
@@ -382,11 +365,6 @@ func populateContextWithNode(context *ParserGeneratorContext, prefix string, nod
 			name := prefix + "Lookahead" + strconv.Itoa(len(context.lookaheads))
 			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n)}
 		}
-		ruleRef := n.Rule().Ref(ctx.Background())
-		if token, ok := ruleRef.(grammar.Token); ok {
-			name := prefix + token.Name()
-			context.SetAccessName(node, name)
-		}
 	}
 }
 
@@ -400,13 +378,13 @@ func generateParseFunction(node codegen.Node, context *ParserGeneratorContext, r
 	if context.completion {
 		node.AppendLine("func (p *", receiverType, ") Parse", rule.Name(), "() {")
 		node.Indent(func(n codegen.Node) {
-			ruleStartIdx := 0
-			if context.ruleStartIdx != nil {
-				if idx, ok := context.ruleStartIdx[rule]; ok {
-					ruleStartIdx = idx
+			ruleStartName := "0"
+			if context.ruleStartName != nil {
+				if name, ok := context.ruleStartName[rule]; ok {
+					ruleStartName = name
 				}
 			}
-			n.AppendLine("p.cp.EnterRule(", strconv.Quote(rule.Name()), ", ", strconv.Itoa(ruleStartIdx), ")")
+			n.AppendLine("p.cp.EnterRule(", strconv.Quote(rule.Name()), ", ", ruleStartName, ")")
 			n.AppendLine("defer p.cp.ExitRule()")
 			generateAbstractElementParser(n, context, rule.Body())
 		})
@@ -432,13 +410,13 @@ func generateCompositeParseFunction(node codegen.Node, context *ParserGeneratorC
 	if context.completion {
 		node.AppendLine("func (p *", receiverType, ") Parse", rule.Name(), "() {")
 		node.Indent(func(n codegen.Node) {
-			ruleStartIdx := 0
-			if context.ruleStartIdx != nil {
-				if idx, ok := context.ruleStartIdx[rule]; ok {
-					ruleStartIdx = idx
+			ruleStartName := "0"
+			if context.ruleStartName != nil {
+				if name, ok := context.ruleStartName[rule]; ok {
+					ruleStartName = name
 				}
 			}
-			n.AppendLine("p.cp.EnterRule(", strconv.Quote(rule.Name()), ", ", strconv.Itoa(ruleStartIdx), ")")
+			n.AppendLine("p.cp.EnterRule(", strconv.Quote(rule.Name()), ", ", ruleStartName, ")")
 			n.AppendLine("defer p.cp.ExitRule()")
 			generateAbstractElementParser(n, context, rule.Body())
 		})
@@ -632,7 +610,7 @@ func generateKeywordParser(node codegen.Node, context *ParserGeneratorContext, k
 			n.AppendLine("_ = token")
 			return
 		}
-		n.AppendLine("core.AssignToken(current, token, ", context.accessNames[keyword], ")")
+		n.AppendLine("core.AssignToken(current, token, ", context.elementStateNames[keyword], ")")
 	}, func(n codegen.Node) { n.Append(lookahead) }, nil, keyword.Cardinality())
 	return "token"
 }
@@ -662,15 +640,15 @@ func generateRuleCallParser(node codegen.Node, context *ParserGeneratorContext, 
 				n.AppendLine("_ = token")
 				return
 			}
-			n.AppendLine("core.AssignToken(current, token, ", context.accessNames[ruleCall], ")")
+			n.AppendLine("core.AssignToken(current, token, ", context.elementStateNames[ruleCall], ")")
 		case grammar.ParserRule:
-			followIdx := 0
-			if context.followStateIdx != nil {
-				if idx, ok := context.followStateIdx[ruleCall]; ok {
-					followIdx = idx
+			followName := "0"
+			if context.followStateName != nil {
+				if name, ok := context.followStateName[ruleCall]; ok {
+					followName = name
 				}
 			}
-			n.AppendLine("p.state.EnterRule(", strconv.Itoa(followIdx), ")")
+			n.AppendLine("p.state.EnterRule(", followName, ")")
 			if context.completion {
 				n.AppendLine("p.Parse", t.Name(), "()")
 			} else {
@@ -678,29 +656,29 @@ func generateRuleCallParser(node codegen.Node, context *ParserGeneratorContext, 
 			}
 			n.AppendLine("p.state.ExitRule()")
 		case grammar.CompositeRule:
-			followIdx := 0
-			if context.followStateIdx != nil {
-				if idx, ok := context.followStateIdx[ruleCall]; ok {
-					followIdx = idx
+			followName := "0"
+			if context.followStateName != nil {
+				if name, ok := context.followStateName[ruleCall]; ok {
+					followName = name
 				}
 			}
 			if context.completion {
 				// Composite rules in completion mode never receive a `current`
 				// argument; the generated CompletionParser composite Parse
 				// function has the same no-arg shape as a regular rule.
-				n.AppendLine("p.state.EnterRule(", strconv.Itoa(followIdx), ")")
+				n.AppendLine("p.state.EnterRule(", followName, ")")
 				n.AppendLine("p.Parse", t.Name(), "()")
 				n.AppendLine("p.state.ExitRule()")
 				return
 			}
 			if context.inCompositeRule {
-				n.AppendLine("p.state.EnterRule(", strconv.Itoa(followIdx), ")")
+				n.AppendLine("p.state.EnterRule(", followName, ")")
 				n.AppendLine("p.Parse", t.Name(), "(current)")
 				n.AppendLine("p.state.ExitRule()")
 			} else {
 				n.AppendLine("result ", eq, " core.NewCompositeNode()")
 				n.AppendLine("result.SetSegmentStartToken(p.state.LARaw(1))")
-				n.AppendLine("p.state.EnterRule(", strconv.Itoa(followIdx), ")")
+				n.AppendLine("p.state.EnterRule(", followName, ")")
 				n.AppendLine("p.Parse", t.Name(), "(result)")
 				n.AppendLine("p.state.ExitRule()")
 				n.AppendLine("result.SetSegmentEndToken(p.state.LARaw(0))")
