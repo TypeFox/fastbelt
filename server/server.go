@@ -53,10 +53,6 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			DefinitionProvider: &lsp.Or_ServerCapabilities_definitionProvider{
 				Value: service.Has[DefinitionProvider](s.sc),
 			},
-			ReferencesProvider: &lsp.Or_ServerCapabilities_referencesProvider{
-				Value: service.Has[ReferencesProvider](s.sc),
-			},
-			RenameProvider: service.Has[RenameProvider](s.sc),
 			DocumentSymbolProvider: &lsp.Or_ServerCapabilities_documentSymbolProvider{
 				Value: service.Has[DocumentSymbolProvider](s.sc),
 			},
@@ -69,6 +65,13 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			WorkspaceSymbolProvider: &lsp.Or_ServerCapabilities_workspaceSymbolProvider{
 				Value: service.Has[WorkspaceSymbolProvider](s.sc),
 			},
+			HoverProvider: &lsp.Or_ServerCapabilities_hoverProvider{
+				Value: service.Has[HoverProvider](s.sc),
+			},
+			ReferencesProvider: &lsp.Or_ServerCapabilities_referencesProvider{
+				Value: service.Has[ReferencesProvider](s.sc),
+			},
+			RenameProvider: service.Has[RenameProvider](s.sc),
 		},
 	}, nil
 }
@@ -312,7 +315,22 @@ func (s *DefaultLanguageServer) Formatting(ctx context.Context, params *lsp.Docu
 	return nil, nil
 }
 func (s *DefaultLanguageServer) Hover(ctx context.Context, params *lsp.HoverParams) (*lsp.Hover, error) {
-	return nil, nil
+	var result *lsp.Hover
+	var providerErr error
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	provider, err := service.Get[HoverProvider](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	if err := lock.Read(ctx, func(ctx context.Context) {
+		result, providerErr = provider.HandleHoverRequest(ctx, params)
+	}); err != nil {
+		return nil, err
+	}
+	return result, providerErr
 }
 func (s *DefaultLanguageServer) Implementation(ctx context.Context, params *lsp.ImplementationParams) ([]lsp.DefinitionLink, error) {
 	return nil, nil
