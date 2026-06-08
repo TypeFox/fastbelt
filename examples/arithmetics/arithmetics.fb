@@ -1,0 +1,85 @@
+grammar Arithmetics;
+
+interface Module {
+    name string
+    statements []Statement
+}
+
+interface Statement{}
+
+interface AbstractDefinition {
+    name string
+}
+
+interface Definition extends AbstractDefinition, Statement {
+    args []DeclaredParameter
+    expr Expression
+}
+
+interface DeclaredParameter extends AbstractDefinition {
+}
+
+interface Evaluation extends Statement {
+    expression Expression
+}
+
+interface Expression {}
+
+interface BinaryExpression extends Expression {
+    left Expression
+    operator string //"%" | "*" | "+" | "-" | "/" | "^"
+    right Expression
+}
+
+interface FunctionCall extends Expression {
+    args []Expression
+    func *AbstractDefinition
+}
+
+interface NumberLiteral extends Expression {
+    value string
+}
+
+Module returns Module:
+    "module" name=ID
+    (statements+=Statement)*;
+
+Statement returns Statement:
+    Definition | Evaluation;
+
+Definition:
+    "def" name=ID ("(" args+=DeclaredParameter ("," args+=DeclaredParameter)* ")")?
+    ":" expr=Expression ";";
+
+DeclaredParameter:
+    name=ID;
+
+Evaluation:
+    expression=Expression ";";
+
+Expression:
+    Addition;
+
+Addition returns Expression:
+    Multiplication ({BinaryExpression.left=current} operator=("+" | "-") right=Multiplication)*;
+
+Multiplication returns Expression:
+    Exponentiation ({BinaryExpression.left=current} operator=("*" | "/") right=Exponentiation)*;
+
+Exponentiation returns Expression:
+    Modulo ({BinaryExpression.left=current} operator="^" right=Modulo)*;
+
+Modulo returns Expression:
+    PrimaryExpression ({BinaryExpression.left=current} operator="%" right=PrimaryExpression)*;
+
+PrimaryExpression returns Expression:
+    "(" Expression ")" |
+    { NumberLiteral } value=NUMBER |
+    {FunctionCall} func=[AbstractDefinition:ID] ("(" args+=Expression ("," args+=Expression)* ")")?;
+
+token ID: /[_a-zA-Z][\w_]*/;
+token NUMBER: /[0-9]+(\.[0-9]*)?/;
+
+hidden token WS: /\s+/;
+comment token ML_COMMENT: /\/\*[\s\S]*?\*\//;
+hidden token SL_COMMENT: /\/\/[^\n\r]*/;
