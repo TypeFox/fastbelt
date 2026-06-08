@@ -495,7 +495,7 @@ var Token_SL_COMMENT = core.NewTokenType(
 	Token_SL_COMMENT_Idx,
 	"SL_COMMENT",
 	"SL_COMMENT",
-	core.SkippedGroup,
+	core.CommentGroup,
 	core.TokenKindToken,
 	0,
 	false,

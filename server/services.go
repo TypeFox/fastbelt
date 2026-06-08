@@ -81,4 +81,10 @@ func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[DocumentHighlightProvider](sc) {
 		service.Put(sc, NewDefaultDocumentHighlightProvider(sc))
 	}
+	if !service.Has[DocumentationProvider](sc) {
+		service.Put(sc, NewDefaultDocumentationProvider())
+	}
+	if !service.Has[HoverProvider](sc) {
+		service.Put(sc, NewDefaultHoverProvider(sc))
+	}
 }

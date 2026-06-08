@@ -16,7 +16,7 @@
     "languages": [{
       "id": "statemachine",
       "aliases": ["Statemachine", "statemachine"],
-      "extensions": ["statemachine"],
+      "extensions": [".statemachine"],
       "configuration": "./language-configuration.json"
     }],
     "grammars": [{
