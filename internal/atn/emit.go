@@ -38,7 +38,7 @@ func renderCompletionHint(h *parser.CompletionHint) string {
 	return out
 }
 
-func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, grammr grammar.Grammar, tokenTypeVarNames []string) codegen.Node {
+func EmitGoSource(pkgName string, rtn *ATN, grammr grammar.Grammar, tokenTypeVarNames []string) codegen.Node {
 	idx := BuildStateIndexMap(rtn)
 	elementNames := BuildElementNames(grammr)
 	stateNames := BuildStateNameMap(rtn, elementNames)
@@ -54,7 +54,12 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, grammr grammar
 	n.AppendLine()
 	n.AppendLine("package ", pkgName)
 
-	n.AppendLine("import \"", importPath, "\"")
+	n.AppendLine("import (")
+	n.Indent(func(n codegen.Node) {
+		n.AppendLine(`"sync"`)
+		n.AppendLine(`"typefox.dev/fastbelt/parser"`)
+	})
+	n.AppendLine(")")
 	n.AppendLine()
 
 	// Unified const block: one constant per ATN state.
@@ -70,23 +75,31 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, grammr grammar
 	n.AppendLine(")")
 	n.AppendLine()
 
-	n.AppendLine("func ", funcName, "() *parser.RuntimeATN {")
+	n.AppendLine("var once sync.Once")
+	n.AppendLine("var atn *parser.RuntimeATN")
+
+	n.AppendLine("func ATN() *parser.RuntimeATN {")
+	n.Indent(func(n codegen.Node) {
+		n.AppendLine("once.Do(func() {")
+		n.Indent(func(n codegen.Node) {
+			n.AppendLine("atn = BuildATN()")
+		})
+		n.AppendLine("})")
+		n.AppendLine("return atn")
+	})
+	n.AppendLine("}")
+
+	n.AppendLine("func BuildATN() *parser.RuntimeATN {")
 	n.Indent(func(n codegen.Node) {
 		n.AppendLine("states := make([]*parser.RuntimeATNState, ", strconv.Itoa(len(rtn.States)), ")")
 
 		// Emit state declarations (without transitions so forward refs are fine).
 		for i, s := range rtn.States {
-			n.AppendLine("states[", stateNames[i], "] = &parser.RuntimeATNState{")
-			n.Indent(func(n codegen.Node) {
-				n.AppendLine("StateNumber: ", stateNames[i], ",")
-				n.AppendLine("Type: parser.", atnStateTypeName(s.Type), ",")
-				n.AppendLine("Decision: ", strconv.Itoa(s.Decision), ",")
-
-				if s.EpsilonOnlyTransitions {
-					n.AppendLine("EpsilonOnlyTransitions: true,")
-				}
-			})
-			n.AppendLine("}")
+			n.Append("states[", stateNames[i], "] = parser.NewATNState(", stateNames[i], ",", "parser.", atnStateTypeName(s.Type), ", ", strconv.FormatBool(s.EpsilonOnlyTransitions), ")")
+			if s.Decision >= 0 {
+				n.Append(".SetDecision(", strconv.Itoa(s.Decision), ")")
+			}
+			n.AppendLine()
 		}
 
 		// Emit transitions (states already declared, so pointer refs are valid).
@@ -94,7 +107,7 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, grammr grammar
 			if len(s.Transitions) == 0 {
 				continue
 			}
-			n.AppendLine("states[", stateNames[i], "].Transitions = []parser.RuntimeTransition{")
+			n.AppendLine("states[", stateNames[i], "].AppendTransitions(")
 			n.Indent(func(n codegen.Node) {
 				for _, t := range s.Transitions {
 					switch at := t.(type) {
@@ -123,7 +136,7 @@ func EmitGoSource(pkgName, funcName, importPath string, rtn *ATN, grammr grammar
 					}
 				}
 			})
-			n.AppendLine("}")
+			n.AppendLine(")")
 		}
 
 		// DecisionStates slice.

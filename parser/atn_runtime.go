@@ -58,6 +58,25 @@ type RuntimeATNState struct {
 	Transitions            []RuntimeTransition
 }
 
+func NewATNState(stateNumber int, stateType ATNStateType, epsilonOnly bool) *RuntimeATNState {
+	return &RuntimeATNState{
+		StateNumber:            stateNumber,
+		Type:                   stateType,
+		Decision:               -1,
+		EpsilonOnlyTransitions: epsilonOnly,
+		Transitions:            nil,
+	}
+}
+
+func (s *RuntimeATNState) SetDecision(decision int) *RuntimeATNState {
+	s.Decision = decision
+	return s
+}
+
+func (s *RuntimeATNState) AppendTransitions(transitions ...RuntimeTransition) {
+	s.Transitions = append(s.Transitions, transitions...)
+}
+
 // RuntimeTransition is the interface implemented by all runtime ATN transitions.
 type RuntimeTransition interface {
 	GetTarget() *RuntimeATNState

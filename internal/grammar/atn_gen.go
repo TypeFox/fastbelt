@@ -2,7 +2,10 @@
 
 package grammar
 
-import "typefox.dev/fastbelt/parser"
+import (
+	"sync"
+	"typefox.dev/fastbelt/parser"
+)
 
 const (
 	Grammar__Start = iota
@@ -271,2262 +274,1045 @@ const (
 	CompositeElement__BlockEnd_1
 )
 
+var once sync.Once
+var atn *parser.RuntimeATN
+
+func ATN() *parser.RuntimeATN {
+	once.Do(func() {
+		atn = BuildATN()
+	})
+	return atn
+}
 func BuildATN() *parser.RuntimeATN {
 	states := make([]*parser.RuntimeATNState, 264)
-	states[Grammar__Start] = &parser.RuntimeATNState{
-		StateNumber:            Grammar__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Grammar__Stop] = &parser.RuntimeATNState{
-		StateNumber: Grammar__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[Interface__Start] = &parser.RuntimeATNState{
-		StateNumber:            Interface__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Interface__Stop] = &parser.RuntimeATNState{
-		StateNumber: Interface__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[Field__Start] = &parser.RuntimeATNState{
-		StateNumber:            Field__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Field__Stop] = &parser.RuntimeATNState{
-		StateNumber: Field__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[FieldType__Start] = &parser.RuntimeATNState{
-		StateNumber:            FieldType__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[FieldType__Stop] = &parser.RuntimeATNState{
-		StateNumber: FieldType__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[ArrayType__Start] = &parser.RuntimeATNState{
-		StateNumber:            ArrayType__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[ArrayType__Stop] = &parser.RuntimeATNState{
-		StateNumber: ArrayType__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[ReferenceType__Start] = &parser.RuntimeATNState{
-		StateNumber:            ReferenceType__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[ReferenceType__Stop] = &parser.RuntimeATNState{
-		StateNumber: ReferenceType__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[SimpleType__Start] = &parser.RuntimeATNState{
-		StateNumber:            SimpleType__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[SimpleType__Stop] = &parser.RuntimeATNState{
-		StateNumber: SimpleType__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[PrimitiveType__Start] = &parser.RuntimeATNState{
-		StateNumber:            PrimitiveType__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[PrimitiveType__Stop] = &parser.RuntimeATNState{
-		StateNumber: PrimitiveType__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[ParserRule__Start] = &parser.RuntimeATNState{
-		StateNumber:            ParserRule__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[ParserRule__Stop] = &parser.RuntimeATNState{
-		StateNumber: ParserRule__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[Token__Start] = &parser.RuntimeATNState{
-		StateNumber:            Token__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Token__Stop] = &parser.RuntimeATNState{
-		StateNumber: Token__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[Alternatives__Start] = &parser.RuntimeATNState{
-		StateNumber:            Alternatives__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Alternatives__Stop] = &parser.RuntimeATNState{
-		StateNumber: Alternatives__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[Group__Start] = &parser.RuntimeATNState{
-		StateNumber:            Group__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Group__Stop] = &parser.RuntimeATNState{
-		StateNumber: Group__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[Element__Start] = &parser.RuntimeATNState{
-		StateNumber:            Element__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element__Stop] = &parser.RuntimeATNState{
-		StateNumber: Element__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[Keyword__Start] = &parser.RuntimeATNState{
-		StateNumber:            Keyword__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Keyword__Stop] = &parser.RuntimeATNState{
-		StateNumber: Keyword__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[Assignment__Start] = &parser.RuntimeATNState{
-		StateNumber:            Assignment__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignment__Stop] = &parser.RuntimeATNState{
-		StateNumber: Assignment__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[Assignable__Start] = &parser.RuntimeATNState{
-		StateNumber:            Assignable__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignable__Stop] = &parser.RuntimeATNState{
-		StateNumber: Assignable__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[AssignableWithoutAlts__Start] = &parser.RuntimeATNState{
-		StateNumber:            AssignableWithoutAlts__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[AssignableWithoutAlts__Stop] = &parser.RuntimeATNState{
-		StateNumber: AssignableWithoutAlts__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[AssignableAlternatives__Start] = &parser.RuntimeATNState{
-		StateNumber:            AssignableAlternatives__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[AssignableAlternatives__Stop] = &parser.RuntimeATNState{
-		StateNumber: AssignableAlternatives__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[CrossRef__Start] = &parser.RuntimeATNState{
-		StateNumber:            CrossRef__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CrossRef__Stop] = &parser.RuntimeATNState{
-		StateNumber: CrossRef__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[RuleCall__Start] = &parser.RuntimeATNState{
-		StateNumber:            RuleCall__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[RuleCall__Stop] = &parser.RuntimeATNState{
-		StateNumber: RuleCall__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[Action__Start] = &parser.RuntimeATNState{
-		StateNumber:            Action__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Action__Stop] = &parser.RuntimeATNState{
-		StateNumber: Action__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[CompositeRule__Start] = &parser.RuntimeATNState{
-		StateNumber:            CompositeRule__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeRule__Stop] = &parser.RuntimeATNState{
-		StateNumber: CompositeRule__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[CompositeAlternatives__Start] = &parser.RuntimeATNState{
-		StateNumber:            CompositeAlternatives__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeAlternatives__Stop] = &parser.RuntimeATNState{
-		StateNumber: CompositeAlternatives__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[CompositeGroup__Start] = &parser.RuntimeATNState{
-		StateNumber:            CompositeGroup__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeGroup__Stop] = &parser.RuntimeATNState{
-		StateNumber: CompositeGroup__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[CompositeElement__Start] = &parser.RuntimeATNState{
-		StateNumber:            CompositeElement__Start,
-		Type:                   parser.ATNRuleStart,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeElement__Stop] = &parser.RuntimeATNState{
-		StateNumber: CompositeElement__Stop,
-		Type:        parser.ATNRuleStop,
-		Decision:    -1,
-	}
-	states[Grammar_grammar] = &parser.RuntimeATNState{
-		StateNumber: Grammar_grammar,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Grammar_Name_ID] = &parser.RuntimeATNState{
-		StateNumber: Grammar_Name_ID,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Grammar_Semicolon] = &parser.RuntimeATNState{
-		StateNumber: Grammar_Semicolon,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Grammar__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            Grammar__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Grammar__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            Grammar__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Grammar__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            Grammar__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Grammar__Basic_3] = &parser.RuntimeATNState{
-		StateNumber:            Grammar__Basic_3,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Grammar__Basic_4] = &parser.RuntimeATNState{
-		StateNumber:            Grammar__Basic_4,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Grammar__Basic_5] = &parser.RuntimeATNState{
-		StateNumber:            Grammar__Basic_5,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Grammar__Basic_6] = &parser.RuntimeATNState{
-		StateNumber:            Grammar__Basic_6,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Grammar__Basic_7] = &parser.RuntimeATNState{
-		StateNumber:            Grammar__Basic_7,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Grammar__Basic_8] = &parser.RuntimeATNState{
-		StateNumber:            Grammar__Basic_8,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Grammar__BlockEnd] = &parser.RuntimeATNState{
-		StateNumber:            Grammar__BlockEnd,
-		Type:                   parser.ATNBlockEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Grammar__LoopEntry] = &parser.RuntimeATNState{
-		StateNumber:            Grammar__LoopEntry,
-		Type:                   parser.ATNLoopEntry,
-		Decision:               0,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Grammar__LoopEnd] = &parser.RuntimeATNState{
-		StateNumber:            Grammar__LoopEnd,
-		Type:                   parser.ATNLoopEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Grammar__LoopBack] = &parser.RuntimeATNState{
-		StateNumber:            Grammar__LoopBack,
-		Type:                   parser.ATNLoopBack,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Interface_interface] = &parser.RuntimeATNState{
-		StateNumber: Interface_interface,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Interface_Name_ID] = &parser.RuntimeATNState{
-		StateNumber: Interface_Name_ID,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Interface_extends] = &parser.RuntimeATNState{
-		StateNumber: Interface_extends,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Interface_Extends_ID_0] = &parser.RuntimeATNState{
-		StateNumber: Interface_Extends_ID_0,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Interface_Comma] = &parser.RuntimeATNState{
-		StateNumber: Interface_Comma,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Interface_Extends_ID_1] = &parser.RuntimeATNState{
-		StateNumber: Interface_Extends_ID_1,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Interface__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            Interface__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Interface__LoopEntry_0] = &parser.RuntimeATNState{
-		StateNumber:            Interface__LoopEntry_0,
-		Type:                   parser.ATNLoopEntry,
-		Decision:               1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Interface__LoopEnd_0] = &parser.RuntimeATNState{
-		StateNumber:            Interface__LoopEnd_0,
-		Type:                   parser.ATNLoopEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Interface__LoopBack_0] = &parser.RuntimeATNState{
-		StateNumber:            Interface__LoopBack_0,
-		Type:                   parser.ATNLoopBack,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Interface_LeftBrace] = &parser.RuntimeATNState{
-		StateNumber: Interface_LeftBrace,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Interface__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            Interface__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Interface__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            Interface__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Interface__LoopEntry_1] = &parser.RuntimeATNState{
-		StateNumber:            Interface__LoopEntry_1,
-		Type:                   parser.ATNLoopEntry,
-		Decision:               2,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Interface__LoopEnd_1] = &parser.RuntimeATNState{
-		StateNumber:            Interface__LoopEnd_1,
-		Type:                   parser.ATNLoopEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Interface__LoopBack_1] = &parser.RuntimeATNState{
-		StateNumber:            Interface__LoopBack_1,
-		Type:                   parser.ATNLoopBack,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Interface_RightBrace] = &parser.RuntimeATNState{
-		StateNumber: Interface_RightBrace,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Interface__Basic_3] = &parser.RuntimeATNState{
-		StateNumber:            Interface__Basic_3,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Field_Name_ID] = &parser.RuntimeATNState{
-		StateNumber: Field_Name_ID,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Field__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            Field__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Field__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            Field__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[FieldType__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            FieldType__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[FieldType__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            FieldType__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[FieldType__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            FieldType__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[FieldType__Basic_3] = &parser.RuntimeATNState{
-		StateNumber:            FieldType__Basic_3,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[FieldType__Basic_4] = &parser.RuntimeATNState{
-		StateNumber:            FieldType__Basic_4,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[FieldType__Basic_5] = &parser.RuntimeATNState{
-		StateNumber:            FieldType__Basic_5,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[FieldType__Basic_6] = &parser.RuntimeATNState{
-		StateNumber:            FieldType__Basic_6,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[FieldType__Basic_7] = &parser.RuntimeATNState{
-		StateNumber:            FieldType__Basic_7,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[FieldType__Basic_8] = &parser.RuntimeATNState{
-		StateNumber:            FieldType__Basic_8,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[FieldType__BlockEnd] = &parser.RuntimeATNState{
-		StateNumber:            FieldType__BlockEnd,
-		Type:                   parser.ATNBlockEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[ArrayType_LeftBracket] = &parser.RuntimeATNState{
-		StateNumber: ArrayType_LeftBracket,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[ArrayType_RightBracket] = &parser.RuntimeATNState{
-		StateNumber: ArrayType_RightBracket,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[ArrayType__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            ArrayType__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[ArrayType__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            ArrayType__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[ReferenceType_Asterisk] = &parser.RuntimeATNState{
-		StateNumber: ReferenceType_Asterisk,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[ReferenceType_Type_ID] = &parser.RuntimeATNState{
-		StateNumber: ReferenceType_Type_ID,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[ReferenceType__Basic] = &parser.RuntimeATNState{
-		StateNumber:            ReferenceType__Basic,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[SimpleType_Type_ID] = &parser.RuntimeATNState{
-		StateNumber: SimpleType_Type_ID,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[SimpleType__Basic] = &parser.RuntimeATNState{
-		StateNumber:            SimpleType__Basic,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[PrimitiveType_Type_string] = &parser.RuntimeATNState{
-		StateNumber: PrimitiveType_Type_string,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[PrimitiveType__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            PrimitiveType__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[PrimitiveType_Type_bool] = &parser.RuntimeATNState{
-		StateNumber: PrimitiveType_Type_bool,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[PrimitiveType__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            PrimitiveType__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[PrimitiveType_Type_composite] = &parser.RuntimeATNState{
-		StateNumber: PrimitiveType_Type_composite,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[PrimitiveType__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            PrimitiveType__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[PrimitiveType__Basic_3] = &parser.RuntimeATNState{
-		StateNumber:            PrimitiveType__Basic_3,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[PrimitiveType__BlockEnd] = &parser.RuntimeATNState{
-		StateNumber:            PrimitiveType__BlockEnd,
-		Type:                   parser.ATNBlockEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[ParserRule_Name_ID] = &parser.RuntimeATNState{
-		StateNumber: ParserRule_Name_ID,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[ParserRule_returns] = &parser.RuntimeATNState{
-		StateNumber: ParserRule_returns,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[ParserRule_ReturnType_ID] = &parser.RuntimeATNState{
-		StateNumber: ParserRule_ReturnType_ID,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[ParserRule__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            ParserRule__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[ParserRule_Colon] = &parser.RuntimeATNState{
-		StateNumber: ParserRule_Colon,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[ParserRule__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            ParserRule__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[ParserRule_Semicolon] = &parser.RuntimeATNState{
-		StateNumber: ParserRule_Semicolon,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[ParserRule__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            ParserRule__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Token_Type_hidden] = &parser.RuntimeATNState{
-		StateNumber: Token_Type_hidden,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Token__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            Token__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Token_Type_comment] = &parser.RuntimeATNState{
-		StateNumber: Token_Type_comment,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Token__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            Token__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Token__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            Token__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Token__BlockEnd] = &parser.RuntimeATNState{
-		StateNumber:            Token__BlockEnd,
-		Type:                   parser.ATNBlockEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Token_token] = &parser.RuntimeATNState{
-		StateNumber: Token_token,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Token_Name_ID] = &parser.RuntimeATNState{
-		StateNumber: Token_Name_ID,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Token_Colon] = &parser.RuntimeATNState{
-		StateNumber: Token_Colon,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Token_Regexp_RegexLiteral] = &parser.RuntimeATNState{
-		StateNumber: Token_Regexp_RegexLiteral,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Token_Semicolon] = &parser.RuntimeATNState{
-		StateNumber: Token_Semicolon,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Token__Basic_3] = &parser.RuntimeATNState{
-		StateNumber:            Token__Basic_3,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Alternatives__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            Alternatives__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Alternatives_Pipe] = &parser.RuntimeATNState{
-		StateNumber: Alternatives_Pipe,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Alternatives__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            Alternatives__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Alternatives__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            Alternatives__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Alternatives__LoopBack] = &parser.RuntimeATNState{
-		StateNumber:            Alternatives__LoopBack,
-		Type:                   parser.ATNLoopBack,
-		Decision:               3,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Alternatives__LoopEnd] = &parser.RuntimeATNState{
-		StateNumber:            Alternatives__LoopEnd,
-		Type:                   parser.ATNLoopEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Group__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            Group__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Group__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            Group__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Group__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            Group__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Group__LoopBack] = &parser.RuntimeATNState{
-		StateNumber:            Group__LoopBack,
-		Type:                   parser.ATNLoopBack,
-		Decision:               4,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Group__LoopEnd] = &parser.RuntimeATNState{
-		StateNumber:            Group__LoopEnd,
-		Type:                   parser.ATNLoopEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            Element__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            Element__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            Element__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element__Basic_3] = &parser.RuntimeATNState{
-		StateNumber:            Element__Basic_3,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element__Basic_4] = &parser.RuntimeATNState{
-		StateNumber:            Element__Basic_4,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element__Basic_5] = &parser.RuntimeATNState{
-		StateNumber:            Element__Basic_5,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element__Basic_6] = &parser.RuntimeATNState{
-		StateNumber:            Element__Basic_6,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element__Basic_7] = &parser.RuntimeATNState{
-		StateNumber:            Element__Basic_7,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element_LeftParen] = &parser.RuntimeATNState{
-		StateNumber: Element_LeftParen,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Element__Basic_8] = &parser.RuntimeATNState{
-		StateNumber:            Element__Basic_8,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element_RightParen] = &parser.RuntimeATNState{
-		StateNumber: Element_RightParen,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Element__Basic_9] = &parser.RuntimeATNState{
-		StateNumber:            Element__Basic_9,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element__Basic_10] = &parser.RuntimeATNState{
-		StateNumber:            Element__Basic_10,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element__BlockEnd_0] = &parser.RuntimeATNState{
-		StateNumber:            Element__BlockEnd_0,
-		Type:                   parser.ATNBlockEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element_Cardinality_Asterisk] = &parser.RuntimeATNState{
-		StateNumber: Element_Cardinality_Asterisk,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Element__Basic_11] = &parser.RuntimeATNState{
-		StateNumber:            Element__Basic_11,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element_Cardinality_Plus] = &parser.RuntimeATNState{
-		StateNumber: Element_Cardinality_Plus,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Element__Basic_12] = &parser.RuntimeATNState{
-		StateNumber:            Element__Basic_12,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element_Cardinality_Question] = &parser.RuntimeATNState{
-		StateNumber: Element_Cardinality_Question,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Element__Basic_13] = &parser.RuntimeATNState{
-		StateNumber:            Element__Basic_13,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element__Basic_14] = &parser.RuntimeATNState{
-		StateNumber:            Element__Basic_14,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Element__BlockEnd_1] = &parser.RuntimeATNState{
-		StateNumber:            Element__BlockEnd_1,
-		Type:                   parser.ATNBlockEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Keyword_Value_StringLiteral] = &parser.RuntimeATNState{
-		StateNumber: Keyword_Value_StringLiteral,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Keyword__Basic] = &parser.RuntimeATNState{
-		StateNumber:            Keyword__Basic,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignment_Property_ID] = &parser.RuntimeATNState{
-		StateNumber: Assignment_Property_ID,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Assignment_Operator_PlusEquals] = &parser.RuntimeATNState{
-		StateNumber: Assignment_Operator_PlusEquals,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Assignment__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            Assignment__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignment_Operator_Equals] = &parser.RuntimeATNState{
-		StateNumber: Assignment_Operator_Equals,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Assignment__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            Assignment__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignment_Operator_QuestionEquals] = &parser.RuntimeATNState{
-		StateNumber: Assignment_Operator_QuestionEquals,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Assignment__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            Assignment__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignment__Basic_3] = &parser.RuntimeATNState{
-		StateNumber:            Assignment__Basic_3,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignment__BlockEnd] = &parser.RuntimeATNState{
-		StateNumber:            Assignment__BlockEnd,
-		Type:                   parser.ATNBlockEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignment__Basic_4] = &parser.RuntimeATNState{
-		StateNumber:            Assignment__Basic_4,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignment__Basic_5] = &parser.RuntimeATNState{
-		StateNumber:            Assignment__Basic_5,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignable__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            Assignable__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignable__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            Assignable__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignable__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            Assignable__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignable__Basic_3] = &parser.RuntimeATNState{
-		StateNumber:            Assignable__Basic_3,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignable__Basic_4] = &parser.RuntimeATNState{
-		StateNumber:            Assignable__Basic_4,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignable__Basic_5] = &parser.RuntimeATNState{
-		StateNumber:            Assignable__Basic_5,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignable_LeftParen] = &parser.RuntimeATNState{
-		StateNumber: Assignable_LeftParen,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Assignable__Basic_6] = &parser.RuntimeATNState{
-		StateNumber:            Assignable__Basic_6,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignable_RightParen] = &parser.RuntimeATNState{
-		StateNumber: Assignable_RightParen,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Assignable__Basic_7] = &parser.RuntimeATNState{
-		StateNumber:            Assignable__Basic_7,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignable__Basic_8] = &parser.RuntimeATNState{
-		StateNumber:            Assignable__Basic_8,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Assignable__BlockEnd] = &parser.RuntimeATNState{
-		StateNumber:            Assignable__BlockEnd,
-		Type:                   parser.ATNBlockEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[AssignableWithoutAlts__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            AssignableWithoutAlts__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[AssignableWithoutAlts__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            AssignableWithoutAlts__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[AssignableWithoutAlts__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            AssignableWithoutAlts__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[AssignableWithoutAlts__Basic_3] = &parser.RuntimeATNState{
-		StateNumber:            AssignableWithoutAlts__Basic_3,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[AssignableWithoutAlts__Basic_4] = &parser.RuntimeATNState{
-		StateNumber:            AssignableWithoutAlts__Basic_4,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[AssignableWithoutAlts__Basic_5] = &parser.RuntimeATNState{
-		StateNumber:            AssignableWithoutAlts__Basic_5,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[AssignableWithoutAlts__Basic_6] = &parser.RuntimeATNState{
-		StateNumber:            AssignableWithoutAlts__Basic_6,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[AssignableWithoutAlts__BlockEnd] = &parser.RuntimeATNState{
-		StateNumber:            AssignableWithoutAlts__BlockEnd,
-		Type:                   parser.ATNBlockEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[AssignableAlternatives__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            AssignableAlternatives__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[AssignableAlternatives_Pipe] = &parser.RuntimeATNState{
-		StateNumber: AssignableAlternatives_Pipe,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[AssignableAlternatives__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            AssignableAlternatives__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[AssignableAlternatives__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            AssignableAlternatives__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[AssignableAlternatives__LoopBack] = &parser.RuntimeATNState{
-		StateNumber:            AssignableAlternatives__LoopBack,
-		Type:                   parser.ATNLoopBack,
-		Decision:               5,
-		EpsilonOnlyTransitions: true,
-	}
-	states[AssignableAlternatives__LoopEnd] = &parser.RuntimeATNState{
-		StateNumber:            AssignableAlternatives__LoopEnd,
-		Type:                   parser.ATNLoopEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CrossRef_LeftBracket] = &parser.RuntimeATNState{
-		StateNumber: CrossRef_LeftBracket,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[CrossRef_Type_ID] = &parser.RuntimeATNState{
-		StateNumber: CrossRef_Type_ID,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[CrossRef_Colon] = &parser.RuntimeATNState{
-		StateNumber: CrossRef_Colon,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[CrossRef__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            CrossRef__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CrossRef__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            CrossRef__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CrossRef_RightBracket] = &parser.RuntimeATNState{
-		StateNumber: CrossRef_RightBracket,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[CrossRef__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            CrossRef__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[RuleCall_Rule_ID] = &parser.RuntimeATNState{
-		StateNumber: RuleCall_Rule_ID,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[RuleCall__Basic] = &parser.RuntimeATNState{
-		StateNumber:            RuleCall__Basic,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Action_LeftBrace] = &parser.RuntimeATNState{
-		StateNumber: Action_LeftBrace,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Action_Type_ID] = &parser.RuntimeATNState{
-		StateNumber: Action_Type_ID,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Action_Dot] = &parser.RuntimeATNState{
-		StateNumber: Action_Dot,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Action_Property_ID] = &parser.RuntimeATNState{
-		StateNumber: Action_Property_ID,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Action_Operator_PlusEquals] = &parser.RuntimeATNState{
-		StateNumber: Action_Operator_PlusEquals,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Action__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            Action__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Action_Operator_Equals] = &parser.RuntimeATNState{
-		StateNumber: Action_Operator_Equals,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Action__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            Action__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Action__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            Action__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Action__BlockEnd] = &parser.RuntimeATNState{
-		StateNumber:            Action__BlockEnd,
-		Type:                   parser.ATNBlockEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Action_current] = &parser.RuntimeATNState{
-		StateNumber: Action_current,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Action__Basic_3] = &parser.RuntimeATNState{
-		StateNumber:            Action__Basic_3,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Action_RightBrace] = &parser.RuntimeATNState{
-		StateNumber: Action_RightBrace,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[Action__Basic_4] = &parser.RuntimeATNState{
-		StateNumber:            Action__Basic_4,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeRule_composite] = &parser.RuntimeATNState{
-		StateNumber: CompositeRule_composite,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[CompositeRule_Name_ID] = &parser.RuntimeATNState{
-		StateNumber: CompositeRule_Name_ID,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[CompositeRule_Colon] = &parser.RuntimeATNState{
-		StateNumber: CompositeRule_Colon,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[CompositeRule__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            CompositeRule__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeRule_Semicolon] = &parser.RuntimeATNState{
-		StateNumber: CompositeRule_Semicolon,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[CompositeRule__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            CompositeRule__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeAlternatives__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            CompositeAlternatives__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeAlternatives_Pipe] = &parser.RuntimeATNState{
-		StateNumber: CompositeAlternatives_Pipe,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[CompositeAlternatives__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            CompositeAlternatives__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeAlternatives__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            CompositeAlternatives__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeAlternatives__LoopBack] = &parser.RuntimeATNState{
-		StateNumber:            CompositeAlternatives__LoopBack,
-		Type:                   parser.ATNLoopBack,
-		Decision:               6,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeAlternatives__LoopEnd] = &parser.RuntimeATNState{
-		StateNumber:            CompositeAlternatives__LoopEnd,
-		Type:                   parser.ATNLoopEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeGroup__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            CompositeGroup__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeGroup__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            CompositeGroup__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeGroup__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            CompositeGroup__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeGroup__LoopBack] = &parser.RuntimeATNState{
-		StateNumber:            CompositeGroup__LoopBack,
-		Type:                   parser.ATNLoopBack,
-		Decision:               7,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeGroup__LoopEnd] = &parser.RuntimeATNState{
-		StateNumber:            CompositeGroup__LoopEnd,
-		Type:                   parser.ATNLoopEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeElement__Basic_0] = &parser.RuntimeATNState{
-		StateNumber:            CompositeElement__Basic_0,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeElement__Basic_1] = &parser.RuntimeATNState{
-		StateNumber:            CompositeElement__Basic_1,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeElement__Basic_2] = &parser.RuntimeATNState{
-		StateNumber:            CompositeElement__Basic_2,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeElement__Basic_3] = &parser.RuntimeATNState{
-		StateNumber:            CompositeElement__Basic_3,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeElement_LeftParen] = &parser.RuntimeATNState{
-		StateNumber: CompositeElement_LeftParen,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[CompositeElement__Basic_4] = &parser.RuntimeATNState{
-		StateNumber:            CompositeElement__Basic_4,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeElement_RightParen] = &parser.RuntimeATNState{
-		StateNumber: CompositeElement_RightParen,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[CompositeElement__Basic_5] = &parser.RuntimeATNState{
-		StateNumber:            CompositeElement__Basic_5,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeElement__Basic_6] = &parser.RuntimeATNState{
-		StateNumber:            CompositeElement__Basic_6,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeElement__BlockEnd_0] = &parser.RuntimeATNState{
-		StateNumber:            CompositeElement__BlockEnd_0,
-		Type:                   parser.ATNBlockEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeElement_Cardinality_Asterisk] = &parser.RuntimeATNState{
-		StateNumber: CompositeElement_Cardinality_Asterisk,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[CompositeElement__Basic_7] = &parser.RuntimeATNState{
-		StateNumber:            CompositeElement__Basic_7,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeElement_Cardinality_Plus] = &parser.RuntimeATNState{
-		StateNumber: CompositeElement_Cardinality_Plus,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[CompositeElement__Basic_8] = &parser.RuntimeATNState{
-		StateNumber:            CompositeElement__Basic_8,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeElement_Cardinality_Question] = &parser.RuntimeATNState{
-		StateNumber: CompositeElement_Cardinality_Question,
-		Type:        parser.ATNBasic,
-		Decision:    -1,
-	}
-	states[CompositeElement__Basic_9] = &parser.RuntimeATNState{
-		StateNumber:            CompositeElement__Basic_9,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeElement__Basic_10] = &parser.RuntimeATNState{
-		StateNumber:            CompositeElement__Basic_10,
-		Type:                   parser.ATNBasic,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[CompositeElement__BlockEnd_1] = &parser.RuntimeATNState{
-		StateNumber:            CompositeElement__BlockEnd_1,
-		Type:                   parser.ATNBlockEnd,
-		Decision:               -1,
-		EpsilonOnlyTransitions: true,
-	}
-	states[Grammar__Start].Transitions = []parser.RuntimeTransition{
+	states[Grammar__Start] = parser.NewATNState(Grammar__Start, parser.ATNRuleStart, true)
+	states[Grammar__Stop] = parser.NewATNState(Grammar__Stop, parser.ATNRuleStop, false)
+	states[Interface__Start] = parser.NewATNState(Interface__Start, parser.ATNRuleStart, true)
+	states[Interface__Stop] = parser.NewATNState(Interface__Stop, parser.ATNRuleStop, false)
+	states[Field__Start] = parser.NewATNState(Field__Start, parser.ATNRuleStart, true)
+	states[Field__Stop] = parser.NewATNState(Field__Stop, parser.ATNRuleStop, false)
+	states[FieldType__Start] = parser.NewATNState(FieldType__Start, parser.ATNRuleStart, true)
+	states[FieldType__Stop] = parser.NewATNState(FieldType__Stop, parser.ATNRuleStop, false)
+	states[ArrayType__Start] = parser.NewATNState(ArrayType__Start, parser.ATNRuleStart, true)
+	states[ArrayType__Stop] = parser.NewATNState(ArrayType__Stop, parser.ATNRuleStop, false)
+	states[ReferenceType__Start] = parser.NewATNState(ReferenceType__Start, parser.ATNRuleStart, true)
+	states[ReferenceType__Stop] = parser.NewATNState(ReferenceType__Stop, parser.ATNRuleStop, false)
+	states[SimpleType__Start] = parser.NewATNState(SimpleType__Start, parser.ATNRuleStart, true)
+	states[SimpleType__Stop] = parser.NewATNState(SimpleType__Stop, parser.ATNRuleStop, false)
+	states[PrimitiveType__Start] = parser.NewATNState(PrimitiveType__Start, parser.ATNRuleStart, true)
+	states[PrimitiveType__Stop] = parser.NewATNState(PrimitiveType__Stop, parser.ATNRuleStop, false)
+	states[ParserRule__Start] = parser.NewATNState(ParserRule__Start, parser.ATNRuleStart, true)
+	states[ParserRule__Stop] = parser.NewATNState(ParserRule__Stop, parser.ATNRuleStop, false)
+	states[Token__Start] = parser.NewATNState(Token__Start, parser.ATNRuleStart, true)
+	states[Token__Stop] = parser.NewATNState(Token__Stop, parser.ATNRuleStop, false)
+	states[Alternatives__Start] = parser.NewATNState(Alternatives__Start, parser.ATNRuleStart, true)
+	states[Alternatives__Stop] = parser.NewATNState(Alternatives__Stop, parser.ATNRuleStop, false)
+	states[Group__Start] = parser.NewATNState(Group__Start, parser.ATNRuleStart, true)
+	states[Group__Stop] = parser.NewATNState(Group__Stop, parser.ATNRuleStop, false)
+	states[Element__Start] = parser.NewATNState(Element__Start, parser.ATNRuleStart, true)
+	states[Element__Stop] = parser.NewATNState(Element__Stop, parser.ATNRuleStop, false)
+	states[Keyword__Start] = parser.NewATNState(Keyword__Start, parser.ATNRuleStart, true)
+	states[Keyword__Stop] = parser.NewATNState(Keyword__Stop, parser.ATNRuleStop, false)
+	states[Assignment__Start] = parser.NewATNState(Assignment__Start, parser.ATNRuleStart, true)
+	states[Assignment__Stop] = parser.NewATNState(Assignment__Stop, parser.ATNRuleStop, false)
+	states[Assignable__Start] = parser.NewATNState(Assignable__Start, parser.ATNRuleStart, true)
+	states[Assignable__Stop] = parser.NewATNState(Assignable__Stop, parser.ATNRuleStop, false)
+	states[AssignableWithoutAlts__Start] = parser.NewATNState(AssignableWithoutAlts__Start, parser.ATNRuleStart, true)
+	states[AssignableWithoutAlts__Stop] = parser.NewATNState(AssignableWithoutAlts__Stop, parser.ATNRuleStop, false)
+	states[AssignableAlternatives__Start] = parser.NewATNState(AssignableAlternatives__Start, parser.ATNRuleStart, true)
+	states[AssignableAlternatives__Stop] = parser.NewATNState(AssignableAlternatives__Stop, parser.ATNRuleStop, false)
+	states[CrossRef__Start] = parser.NewATNState(CrossRef__Start, parser.ATNRuleStart, true)
+	states[CrossRef__Stop] = parser.NewATNState(CrossRef__Stop, parser.ATNRuleStop, false)
+	states[RuleCall__Start] = parser.NewATNState(RuleCall__Start, parser.ATNRuleStart, true)
+	states[RuleCall__Stop] = parser.NewATNState(RuleCall__Stop, parser.ATNRuleStop, false)
+	states[Action__Start] = parser.NewATNState(Action__Start, parser.ATNRuleStart, true)
+	states[Action__Stop] = parser.NewATNState(Action__Stop, parser.ATNRuleStop, false)
+	states[CompositeRule__Start] = parser.NewATNState(CompositeRule__Start, parser.ATNRuleStart, true)
+	states[CompositeRule__Stop] = parser.NewATNState(CompositeRule__Stop, parser.ATNRuleStop, false)
+	states[CompositeAlternatives__Start] = parser.NewATNState(CompositeAlternatives__Start, parser.ATNRuleStart, true)
+	states[CompositeAlternatives__Stop] = parser.NewATNState(CompositeAlternatives__Stop, parser.ATNRuleStop, false)
+	states[CompositeGroup__Start] = parser.NewATNState(CompositeGroup__Start, parser.ATNRuleStart, true)
+	states[CompositeGroup__Stop] = parser.NewATNState(CompositeGroup__Stop, parser.ATNRuleStop, false)
+	states[CompositeElement__Start] = parser.NewATNState(CompositeElement__Start, parser.ATNRuleStart, true)
+	states[CompositeElement__Stop] = parser.NewATNState(CompositeElement__Stop, parser.ATNRuleStop, false)
+	states[Grammar_grammar] = parser.NewATNState(Grammar_grammar, parser.ATNBasic, false)
+	states[Grammar_Name_ID] = parser.NewATNState(Grammar_Name_ID, parser.ATNBasic, false)
+	states[Grammar_Semicolon] = parser.NewATNState(Grammar_Semicolon, parser.ATNBasic, false)
+	states[Grammar__Basic_0] = parser.NewATNState(Grammar__Basic_0, parser.ATNBasic, true)
+	states[Grammar__Basic_1] = parser.NewATNState(Grammar__Basic_1, parser.ATNBasic, true)
+	states[Grammar__Basic_2] = parser.NewATNState(Grammar__Basic_2, parser.ATNBasic, true)
+	states[Grammar__Basic_3] = parser.NewATNState(Grammar__Basic_3, parser.ATNBasic, true)
+	states[Grammar__Basic_4] = parser.NewATNState(Grammar__Basic_4, parser.ATNBasic, true)
+	states[Grammar__Basic_5] = parser.NewATNState(Grammar__Basic_5, parser.ATNBasic, true)
+	states[Grammar__Basic_6] = parser.NewATNState(Grammar__Basic_6, parser.ATNBasic, true)
+	states[Grammar__Basic_7] = parser.NewATNState(Grammar__Basic_7, parser.ATNBasic, true)
+	states[Grammar__Basic_8] = parser.NewATNState(Grammar__Basic_8, parser.ATNBasic, true)
+	states[Grammar__BlockEnd] = parser.NewATNState(Grammar__BlockEnd, parser.ATNBlockEnd, true)
+	states[Grammar__LoopEntry] = parser.NewATNState(Grammar__LoopEntry, parser.ATNLoopEntry, true).SetDecision(0)
+	states[Grammar__LoopEnd] = parser.NewATNState(Grammar__LoopEnd, parser.ATNLoopEnd, true)
+	states[Grammar__LoopBack] = parser.NewATNState(Grammar__LoopBack, parser.ATNLoopBack, true)
+	states[Interface_interface] = parser.NewATNState(Interface_interface, parser.ATNBasic, false)
+	states[Interface_Name_ID] = parser.NewATNState(Interface_Name_ID, parser.ATNBasic, false)
+	states[Interface_extends] = parser.NewATNState(Interface_extends, parser.ATNBasic, false)
+	states[Interface_Extends_ID_0] = parser.NewATNState(Interface_Extends_ID_0, parser.ATNBasic, false)
+	states[Interface_Comma] = parser.NewATNState(Interface_Comma, parser.ATNBasic, false)
+	states[Interface_Extends_ID_1] = parser.NewATNState(Interface_Extends_ID_1, parser.ATNBasic, false)
+	states[Interface__Basic_0] = parser.NewATNState(Interface__Basic_0, parser.ATNBasic, true)
+	states[Interface__LoopEntry_0] = parser.NewATNState(Interface__LoopEntry_0, parser.ATNLoopEntry, true).SetDecision(1)
+	states[Interface__LoopEnd_0] = parser.NewATNState(Interface__LoopEnd_0, parser.ATNLoopEnd, true)
+	states[Interface__LoopBack_0] = parser.NewATNState(Interface__LoopBack_0, parser.ATNLoopBack, true)
+	states[Interface_LeftBrace] = parser.NewATNState(Interface_LeftBrace, parser.ATNBasic, false)
+	states[Interface__Basic_1] = parser.NewATNState(Interface__Basic_1, parser.ATNBasic, true)
+	states[Interface__Basic_2] = parser.NewATNState(Interface__Basic_2, parser.ATNBasic, true)
+	states[Interface__LoopEntry_1] = parser.NewATNState(Interface__LoopEntry_1, parser.ATNLoopEntry, true).SetDecision(2)
+	states[Interface__LoopEnd_1] = parser.NewATNState(Interface__LoopEnd_1, parser.ATNLoopEnd, true)
+	states[Interface__LoopBack_1] = parser.NewATNState(Interface__LoopBack_1, parser.ATNLoopBack, true)
+	states[Interface_RightBrace] = parser.NewATNState(Interface_RightBrace, parser.ATNBasic, false)
+	states[Interface__Basic_3] = parser.NewATNState(Interface__Basic_3, parser.ATNBasic, true)
+	states[Field_Name_ID] = parser.NewATNState(Field_Name_ID, parser.ATNBasic, false)
+	states[Field__Basic_0] = parser.NewATNState(Field__Basic_0, parser.ATNBasic, true)
+	states[Field__Basic_1] = parser.NewATNState(Field__Basic_1, parser.ATNBasic, true)
+	states[FieldType__Basic_0] = parser.NewATNState(FieldType__Basic_0, parser.ATNBasic, true)
+	states[FieldType__Basic_1] = parser.NewATNState(FieldType__Basic_1, parser.ATNBasic, true)
+	states[FieldType__Basic_2] = parser.NewATNState(FieldType__Basic_2, parser.ATNBasic, true)
+	states[FieldType__Basic_3] = parser.NewATNState(FieldType__Basic_3, parser.ATNBasic, true)
+	states[FieldType__Basic_4] = parser.NewATNState(FieldType__Basic_4, parser.ATNBasic, true)
+	states[FieldType__Basic_5] = parser.NewATNState(FieldType__Basic_5, parser.ATNBasic, true)
+	states[FieldType__Basic_6] = parser.NewATNState(FieldType__Basic_6, parser.ATNBasic, true)
+	states[FieldType__Basic_7] = parser.NewATNState(FieldType__Basic_7, parser.ATNBasic, true)
+	states[FieldType__Basic_8] = parser.NewATNState(FieldType__Basic_8, parser.ATNBasic, true)
+	states[FieldType__BlockEnd] = parser.NewATNState(FieldType__BlockEnd, parser.ATNBlockEnd, true)
+	states[ArrayType_LeftBracket] = parser.NewATNState(ArrayType_LeftBracket, parser.ATNBasic, false)
+	states[ArrayType_RightBracket] = parser.NewATNState(ArrayType_RightBracket, parser.ATNBasic, false)
+	states[ArrayType__Basic_0] = parser.NewATNState(ArrayType__Basic_0, parser.ATNBasic, true)
+	states[ArrayType__Basic_1] = parser.NewATNState(ArrayType__Basic_1, parser.ATNBasic, true)
+	states[ReferenceType_Asterisk] = parser.NewATNState(ReferenceType_Asterisk, parser.ATNBasic, false)
+	states[ReferenceType_Type_ID] = parser.NewATNState(ReferenceType_Type_ID, parser.ATNBasic, false)
+	states[ReferenceType__Basic] = parser.NewATNState(ReferenceType__Basic, parser.ATNBasic, true)
+	states[SimpleType_Type_ID] = parser.NewATNState(SimpleType_Type_ID, parser.ATNBasic, false)
+	states[SimpleType__Basic] = parser.NewATNState(SimpleType__Basic, parser.ATNBasic, true)
+	states[PrimitiveType_Type_string] = parser.NewATNState(PrimitiveType_Type_string, parser.ATNBasic, false)
+	states[PrimitiveType__Basic_0] = parser.NewATNState(PrimitiveType__Basic_0, parser.ATNBasic, true)
+	states[PrimitiveType_Type_bool] = parser.NewATNState(PrimitiveType_Type_bool, parser.ATNBasic, false)
+	states[PrimitiveType__Basic_1] = parser.NewATNState(PrimitiveType__Basic_1, parser.ATNBasic, true)
+	states[PrimitiveType_Type_composite] = parser.NewATNState(PrimitiveType_Type_composite, parser.ATNBasic, false)
+	states[PrimitiveType__Basic_2] = parser.NewATNState(PrimitiveType__Basic_2, parser.ATNBasic, true)
+	states[PrimitiveType__Basic_3] = parser.NewATNState(PrimitiveType__Basic_3, parser.ATNBasic, true)
+	states[PrimitiveType__BlockEnd] = parser.NewATNState(PrimitiveType__BlockEnd, parser.ATNBlockEnd, true)
+	states[ParserRule_Name_ID] = parser.NewATNState(ParserRule_Name_ID, parser.ATNBasic, false)
+	states[ParserRule_returns] = parser.NewATNState(ParserRule_returns, parser.ATNBasic, false)
+	states[ParserRule_ReturnType_ID] = parser.NewATNState(ParserRule_ReturnType_ID, parser.ATNBasic, false)
+	states[ParserRule__Basic_0] = parser.NewATNState(ParserRule__Basic_0, parser.ATNBasic, true)
+	states[ParserRule_Colon] = parser.NewATNState(ParserRule_Colon, parser.ATNBasic, false)
+	states[ParserRule__Basic_1] = parser.NewATNState(ParserRule__Basic_1, parser.ATNBasic, true)
+	states[ParserRule_Semicolon] = parser.NewATNState(ParserRule_Semicolon, parser.ATNBasic, false)
+	states[ParserRule__Basic_2] = parser.NewATNState(ParserRule__Basic_2, parser.ATNBasic, true)
+	states[Token_Type_hidden] = parser.NewATNState(Token_Type_hidden, parser.ATNBasic, false)
+	states[Token__Basic_0] = parser.NewATNState(Token__Basic_0, parser.ATNBasic, true)
+	states[Token_Type_comment] = parser.NewATNState(Token_Type_comment, parser.ATNBasic, false)
+	states[Token__Basic_1] = parser.NewATNState(Token__Basic_1, parser.ATNBasic, true)
+	states[Token__Basic_2] = parser.NewATNState(Token__Basic_2, parser.ATNBasic, true)
+	states[Token__BlockEnd] = parser.NewATNState(Token__BlockEnd, parser.ATNBlockEnd, true)
+	states[Token_token] = parser.NewATNState(Token_token, parser.ATNBasic, false)
+	states[Token_Name_ID] = parser.NewATNState(Token_Name_ID, parser.ATNBasic, false)
+	states[Token_Colon] = parser.NewATNState(Token_Colon, parser.ATNBasic, false)
+	states[Token_Regexp_RegexLiteral] = parser.NewATNState(Token_Regexp_RegexLiteral, parser.ATNBasic, false)
+	states[Token_Semicolon] = parser.NewATNState(Token_Semicolon, parser.ATNBasic, false)
+	states[Token__Basic_3] = parser.NewATNState(Token__Basic_3, parser.ATNBasic, true)
+	states[Alternatives__Basic_0] = parser.NewATNState(Alternatives__Basic_0, parser.ATNBasic, true)
+	states[Alternatives_Pipe] = parser.NewATNState(Alternatives_Pipe, parser.ATNBasic, false)
+	states[Alternatives__Basic_1] = parser.NewATNState(Alternatives__Basic_1, parser.ATNBasic, true)
+	states[Alternatives__Basic_2] = parser.NewATNState(Alternatives__Basic_2, parser.ATNBasic, true)
+	states[Alternatives__LoopBack] = parser.NewATNState(Alternatives__LoopBack, parser.ATNLoopBack, true).SetDecision(3)
+	states[Alternatives__LoopEnd] = parser.NewATNState(Alternatives__LoopEnd, parser.ATNLoopEnd, true)
+	states[Group__Basic_0] = parser.NewATNState(Group__Basic_0, parser.ATNBasic, true)
+	states[Group__Basic_1] = parser.NewATNState(Group__Basic_1, parser.ATNBasic, true)
+	states[Group__Basic_2] = parser.NewATNState(Group__Basic_2, parser.ATNBasic, true)
+	states[Group__LoopBack] = parser.NewATNState(Group__LoopBack, parser.ATNLoopBack, true).SetDecision(4)
+	states[Group__LoopEnd] = parser.NewATNState(Group__LoopEnd, parser.ATNLoopEnd, true)
+	states[Element__Basic_0] = parser.NewATNState(Element__Basic_0, parser.ATNBasic, true)
+	states[Element__Basic_1] = parser.NewATNState(Element__Basic_1, parser.ATNBasic, true)
+	states[Element__Basic_2] = parser.NewATNState(Element__Basic_2, parser.ATNBasic, true)
+	states[Element__Basic_3] = parser.NewATNState(Element__Basic_3, parser.ATNBasic, true)
+	states[Element__Basic_4] = parser.NewATNState(Element__Basic_4, parser.ATNBasic, true)
+	states[Element__Basic_5] = parser.NewATNState(Element__Basic_5, parser.ATNBasic, true)
+	states[Element__Basic_6] = parser.NewATNState(Element__Basic_6, parser.ATNBasic, true)
+	states[Element__Basic_7] = parser.NewATNState(Element__Basic_7, parser.ATNBasic, true)
+	states[Element_LeftParen] = parser.NewATNState(Element_LeftParen, parser.ATNBasic, false)
+	states[Element__Basic_8] = parser.NewATNState(Element__Basic_8, parser.ATNBasic, true)
+	states[Element_RightParen] = parser.NewATNState(Element_RightParen, parser.ATNBasic, false)
+	states[Element__Basic_9] = parser.NewATNState(Element__Basic_9, parser.ATNBasic, true)
+	states[Element__Basic_10] = parser.NewATNState(Element__Basic_10, parser.ATNBasic, true)
+	states[Element__BlockEnd_0] = parser.NewATNState(Element__BlockEnd_0, parser.ATNBlockEnd, true)
+	states[Element_Cardinality_Asterisk] = parser.NewATNState(Element_Cardinality_Asterisk, parser.ATNBasic, false)
+	states[Element__Basic_11] = parser.NewATNState(Element__Basic_11, parser.ATNBasic, true)
+	states[Element_Cardinality_Plus] = parser.NewATNState(Element_Cardinality_Plus, parser.ATNBasic, false)
+	states[Element__Basic_12] = parser.NewATNState(Element__Basic_12, parser.ATNBasic, true)
+	states[Element_Cardinality_Question] = parser.NewATNState(Element_Cardinality_Question, parser.ATNBasic, false)
+	states[Element__Basic_13] = parser.NewATNState(Element__Basic_13, parser.ATNBasic, true)
+	states[Element__Basic_14] = parser.NewATNState(Element__Basic_14, parser.ATNBasic, true)
+	states[Element__BlockEnd_1] = parser.NewATNState(Element__BlockEnd_1, parser.ATNBlockEnd, true)
+	states[Keyword_Value_StringLiteral] = parser.NewATNState(Keyword_Value_StringLiteral, parser.ATNBasic, false)
+	states[Keyword__Basic] = parser.NewATNState(Keyword__Basic, parser.ATNBasic, true)
+	states[Assignment_Property_ID] = parser.NewATNState(Assignment_Property_ID, parser.ATNBasic, false)
+	states[Assignment_Operator_PlusEquals] = parser.NewATNState(Assignment_Operator_PlusEquals, parser.ATNBasic, false)
+	states[Assignment__Basic_0] = parser.NewATNState(Assignment__Basic_0, parser.ATNBasic, true)
+	states[Assignment_Operator_Equals] = parser.NewATNState(Assignment_Operator_Equals, parser.ATNBasic, false)
+	states[Assignment__Basic_1] = parser.NewATNState(Assignment__Basic_1, parser.ATNBasic, true)
+	states[Assignment_Operator_QuestionEquals] = parser.NewATNState(Assignment_Operator_QuestionEquals, parser.ATNBasic, false)
+	states[Assignment__Basic_2] = parser.NewATNState(Assignment__Basic_2, parser.ATNBasic, true)
+	states[Assignment__Basic_3] = parser.NewATNState(Assignment__Basic_3, parser.ATNBasic, true)
+	states[Assignment__BlockEnd] = parser.NewATNState(Assignment__BlockEnd, parser.ATNBlockEnd, true)
+	states[Assignment__Basic_4] = parser.NewATNState(Assignment__Basic_4, parser.ATNBasic, true)
+	states[Assignment__Basic_5] = parser.NewATNState(Assignment__Basic_5, parser.ATNBasic, true)
+	states[Assignable__Basic_0] = parser.NewATNState(Assignable__Basic_0, parser.ATNBasic, true)
+	states[Assignable__Basic_1] = parser.NewATNState(Assignable__Basic_1, parser.ATNBasic, true)
+	states[Assignable__Basic_2] = parser.NewATNState(Assignable__Basic_2, parser.ATNBasic, true)
+	states[Assignable__Basic_3] = parser.NewATNState(Assignable__Basic_3, parser.ATNBasic, true)
+	states[Assignable__Basic_4] = parser.NewATNState(Assignable__Basic_4, parser.ATNBasic, true)
+	states[Assignable__Basic_5] = parser.NewATNState(Assignable__Basic_5, parser.ATNBasic, true)
+	states[Assignable_LeftParen] = parser.NewATNState(Assignable_LeftParen, parser.ATNBasic, false)
+	states[Assignable__Basic_6] = parser.NewATNState(Assignable__Basic_6, parser.ATNBasic, true)
+	states[Assignable_RightParen] = parser.NewATNState(Assignable_RightParen, parser.ATNBasic, false)
+	states[Assignable__Basic_7] = parser.NewATNState(Assignable__Basic_7, parser.ATNBasic, true)
+	states[Assignable__Basic_8] = parser.NewATNState(Assignable__Basic_8, parser.ATNBasic, true)
+	states[Assignable__BlockEnd] = parser.NewATNState(Assignable__BlockEnd, parser.ATNBlockEnd, true)
+	states[AssignableWithoutAlts__Basic_0] = parser.NewATNState(AssignableWithoutAlts__Basic_0, parser.ATNBasic, true)
+	states[AssignableWithoutAlts__Basic_1] = parser.NewATNState(AssignableWithoutAlts__Basic_1, parser.ATNBasic, true)
+	states[AssignableWithoutAlts__Basic_2] = parser.NewATNState(AssignableWithoutAlts__Basic_2, parser.ATNBasic, true)
+	states[AssignableWithoutAlts__Basic_3] = parser.NewATNState(AssignableWithoutAlts__Basic_3, parser.ATNBasic, true)
+	states[AssignableWithoutAlts__Basic_4] = parser.NewATNState(AssignableWithoutAlts__Basic_4, parser.ATNBasic, true)
+	states[AssignableWithoutAlts__Basic_5] = parser.NewATNState(AssignableWithoutAlts__Basic_5, parser.ATNBasic, true)
+	states[AssignableWithoutAlts__Basic_6] = parser.NewATNState(AssignableWithoutAlts__Basic_6, parser.ATNBasic, true)
+	states[AssignableWithoutAlts__BlockEnd] = parser.NewATNState(AssignableWithoutAlts__BlockEnd, parser.ATNBlockEnd, true)
+	states[AssignableAlternatives__Basic_0] = parser.NewATNState(AssignableAlternatives__Basic_0, parser.ATNBasic, true)
+	states[AssignableAlternatives_Pipe] = parser.NewATNState(AssignableAlternatives_Pipe, parser.ATNBasic, false)
+	states[AssignableAlternatives__Basic_1] = parser.NewATNState(AssignableAlternatives__Basic_1, parser.ATNBasic, true)
+	states[AssignableAlternatives__Basic_2] = parser.NewATNState(AssignableAlternatives__Basic_2, parser.ATNBasic, true)
+	states[AssignableAlternatives__LoopBack] = parser.NewATNState(AssignableAlternatives__LoopBack, parser.ATNLoopBack, true).SetDecision(5)
+	states[AssignableAlternatives__LoopEnd] = parser.NewATNState(AssignableAlternatives__LoopEnd, parser.ATNLoopEnd, true)
+	states[CrossRef_LeftBracket] = parser.NewATNState(CrossRef_LeftBracket, parser.ATNBasic, false)
+	states[CrossRef_Type_ID] = parser.NewATNState(CrossRef_Type_ID, parser.ATNBasic, false)
+	states[CrossRef_Colon] = parser.NewATNState(CrossRef_Colon, parser.ATNBasic, false)
+	states[CrossRef__Basic_0] = parser.NewATNState(CrossRef__Basic_0, parser.ATNBasic, true)
+	states[CrossRef__Basic_1] = parser.NewATNState(CrossRef__Basic_1, parser.ATNBasic, true)
+	states[CrossRef_RightBracket] = parser.NewATNState(CrossRef_RightBracket, parser.ATNBasic, false)
+	states[CrossRef__Basic_2] = parser.NewATNState(CrossRef__Basic_2, parser.ATNBasic, true)
+	states[RuleCall_Rule_ID] = parser.NewATNState(RuleCall_Rule_ID, parser.ATNBasic, false)
+	states[RuleCall__Basic] = parser.NewATNState(RuleCall__Basic, parser.ATNBasic, true)
+	states[Action_LeftBrace] = parser.NewATNState(Action_LeftBrace, parser.ATNBasic, false)
+	states[Action_Type_ID] = parser.NewATNState(Action_Type_ID, parser.ATNBasic, false)
+	states[Action_Dot] = parser.NewATNState(Action_Dot, parser.ATNBasic, false)
+	states[Action_Property_ID] = parser.NewATNState(Action_Property_ID, parser.ATNBasic, false)
+	states[Action_Operator_PlusEquals] = parser.NewATNState(Action_Operator_PlusEquals, parser.ATNBasic, false)
+	states[Action__Basic_0] = parser.NewATNState(Action__Basic_0, parser.ATNBasic, true)
+	states[Action_Operator_Equals] = parser.NewATNState(Action_Operator_Equals, parser.ATNBasic, false)
+	states[Action__Basic_1] = parser.NewATNState(Action__Basic_1, parser.ATNBasic, true)
+	states[Action__Basic_2] = parser.NewATNState(Action__Basic_2, parser.ATNBasic, true)
+	states[Action__BlockEnd] = parser.NewATNState(Action__BlockEnd, parser.ATNBlockEnd, true)
+	states[Action_current] = parser.NewATNState(Action_current, parser.ATNBasic, false)
+	states[Action__Basic_3] = parser.NewATNState(Action__Basic_3, parser.ATNBasic, true)
+	states[Action_RightBrace] = parser.NewATNState(Action_RightBrace, parser.ATNBasic, false)
+	states[Action__Basic_4] = parser.NewATNState(Action__Basic_4, parser.ATNBasic, true)
+	states[CompositeRule_composite] = parser.NewATNState(CompositeRule_composite, parser.ATNBasic, false)
+	states[CompositeRule_Name_ID] = parser.NewATNState(CompositeRule_Name_ID, parser.ATNBasic, false)
+	states[CompositeRule_Colon] = parser.NewATNState(CompositeRule_Colon, parser.ATNBasic, false)
+	states[CompositeRule__Basic_0] = parser.NewATNState(CompositeRule__Basic_0, parser.ATNBasic, true)
+	states[CompositeRule_Semicolon] = parser.NewATNState(CompositeRule_Semicolon, parser.ATNBasic, false)
+	states[CompositeRule__Basic_1] = parser.NewATNState(CompositeRule__Basic_1, parser.ATNBasic, true)
+	states[CompositeAlternatives__Basic_0] = parser.NewATNState(CompositeAlternatives__Basic_0, parser.ATNBasic, true)
+	states[CompositeAlternatives_Pipe] = parser.NewATNState(CompositeAlternatives_Pipe, parser.ATNBasic, false)
+	states[CompositeAlternatives__Basic_1] = parser.NewATNState(CompositeAlternatives__Basic_1, parser.ATNBasic, true)
+	states[CompositeAlternatives__Basic_2] = parser.NewATNState(CompositeAlternatives__Basic_2, parser.ATNBasic, true)
+	states[CompositeAlternatives__LoopBack] = parser.NewATNState(CompositeAlternatives__LoopBack, parser.ATNLoopBack, true).SetDecision(6)
+	states[CompositeAlternatives__LoopEnd] = parser.NewATNState(CompositeAlternatives__LoopEnd, parser.ATNLoopEnd, true)
+	states[CompositeGroup__Basic_0] = parser.NewATNState(CompositeGroup__Basic_0, parser.ATNBasic, true)
+	states[CompositeGroup__Basic_1] = parser.NewATNState(CompositeGroup__Basic_1, parser.ATNBasic, true)
+	states[CompositeGroup__Basic_2] = parser.NewATNState(CompositeGroup__Basic_2, parser.ATNBasic, true)
+	states[CompositeGroup__LoopBack] = parser.NewATNState(CompositeGroup__LoopBack, parser.ATNLoopBack, true).SetDecision(7)
+	states[CompositeGroup__LoopEnd] = parser.NewATNState(CompositeGroup__LoopEnd, parser.ATNLoopEnd, true)
+	states[CompositeElement__Basic_0] = parser.NewATNState(CompositeElement__Basic_0, parser.ATNBasic, true)
+	states[CompositeElement__Basic_1] = parser.NewATNState(CompositeElement__Basic_1, parser.ATNBasic, true)
+	states[CompositeElement__Basic_2] = parser.NewATNState(CompositeElement__Basic_2, parser.ATNBasic, true)
+	states[CompositeElement__Basic_3] = parser.NewATNState(CompositeElement__Basic_3, parser.ATNBasic, true)
+	states[CompositeElement_LeftParen] = parser.NewATNState(CompositeElement_LeftParen, parser.ATNBasic, false)
+	states[CompositeElement__Basic_4] = parser.NewATNState(CompositeElement__Basic_4, parser.ATNBasic, true)
+	states[CompositeElement_RightParen] = parser.NewATNState(CompositeElement_RightParen, parser.ATNBasic, false)
+	states[CompositeElement__Basic_5] = parser.NewATNState(CompositeElement__Basic_5, parser.ATNBasic, true)
+	states[CompositeElement__Basic_6] = parser.NewATNState(CompositeElement__Basic_6, parser.ATNBasic, true)
+	states[CompositeElement__BlockEnd_0] = parser.NewATNState(CompositeElement__BlockEnd_0, parser.ATNBlockEnd, true)
+	states[CompositeElement_Cardinality_Asterisk] = parser.NewATNState(CompositeElement_Cardinality_Asterisk, parser.ATNBasic, false)
+	states[CompositeElement__Basic_7] = parser.NewATNState(CompositeElement__Basic_7, parser.ATNBasic, true)
+	states[CompositeElement_Cardinality_Plus] = parser.NewATNState(CompositeElement_Cardinality_Plus, parser.ATNBasic, false)
+	states[CompositeElement__Basic_8] = parser.NewATNState(CompositeElement__Basic_8, parser.ATNBasic, true)
+	states[CompositeElement_Cardinality_Question] = parser.NewATNState(CompositeElement_Cardinality_Question, parser.ATNBasic, false)
+	states[CompositeElement__Basic_9] = parser.NewATNState(CompositeElement__Basic_9, parser.ATNBasic, true)
+	states[CompositeElement__Basic_10] = parser.NewATNState(CompositeElement__Basic_10, parser.ATNBasic, true)
+	states[CompositeElement__BlockEnd_1] = parser.NewATNState(CompositeElement__BlockEnd_1, parser.ATNBlockEnd, true)
+	states[Grammar__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Grammar_grammar]),
-	}
-	states[Interface__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Interface_interface]),
-	}
-	states[Field__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[Field__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Field_Name_ID]),
-	}
-	states[FieldType__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[FieldType__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[FieldType__Basic_8]),
-	}
-	states[ArrayType__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[ArrayType__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[ArrayType_LeftBracket]),
-	}
-	states[ReferenceType__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[ReferenceType__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[ReferenceType_Asterisk]),
-	}
-	states[SimpleType__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[SimpleType__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[SimpleType_Type_ID]),
-	}
-	states[PrimitiveType__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[PrimitiveType__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[PrimitiveType__Basic_3]),
-	}
-	states[ParserRule__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[ParserRule__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[ParserRule_Name_ID]),
-	}
-	states[Token__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[Token__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Token__Basic_2]),
-	}
-	states[Alternatives__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[Alternatives__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Alternatives__Basic_0]),
-	}
-	states[Group__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[Group__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Group__Basic_0]),
-	}
-	states[Element__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Element__Basic_10]),
-	}
-	states[Keyword__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[Keyword__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Keyword_Value_StringLiteral]),
-	}
-	states[Assignment__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignment__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Assignment_Property_ID]),
-	}
-	states[Assignable__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignable__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Assignable__Basic_8]),
-	}
-	states[AssignableWithoutAlts__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableWithoutAlts__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[AssignableWithoutAlts__Basic_6]),
-	}
-	states[AssignableAlternatives__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableAlternatives__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[AssignableAlternatives__Basic_0]),
-	}
-	states[CrossRef__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[CrossRef__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[CrossRef_LeftBracket]),
-	}
-	states[RuleCall__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[RuleCall__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[RuleCall_Rule_ID]),
-	}
-	states[Action__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[Action__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Action_LeftBrace]),
-	}
-	states[CompositeRule__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeRule__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeRule_composite]),
-	}
-	states[CompositeAlternatives__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeAlternatives__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeAlternatives__Basic_0]),
-	}
-	states[CompositeGroup__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeGroup__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeGroup__Basic_0]),
-	}
-	states[CompositeElement__Start].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeElement__Basic_6]),
-	}
-	states[Grammar_grammar].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar_grammar].AppendTransitions(
 		parser.NewAtomTransition(states[Grammar_Name_ID], Keyword_grammar, nil),
-	}
-	states[Grammar_Name_ID].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar_Name_ID].AppendTransitions(
 		parser.NewAtomTransition(states[Grammar_Semicolon], Token_ID, nil),
-	}
-	states[Grammar_Semicolon].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar_Semicolon].AppendTransitions(
 		parser.NewAtomTransition(states[Grammar__LoopEntry], Keyword_Semicolon, nil),
-	}
-	states[Grammar__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[ParserRule__Start], states[Grammar__Basic_1], nil),
-	}
-	states[Grammar__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Grammar__BlockEnd]),
-	}
-	states[Grammar__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar__Basic_2].AppendTransitions(
 		parser.NewRuleTransition(states[Token__Start], states[Grammar__Basic_3], nil),
-	}
-	states[Grammar__Basic_3].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[Grammar__BlockEnd]),
-	}
-	states[Grammar__Basic_4].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar__Basic_4].AppendTransitions(
 		parser.NewRuleTransition(states[Interface__Start], states[Grammar__Basic_5], nil),
-	}
-	states[Grammar__Basic_5].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar__Basic_5].AppendTransitions(
 		parser.NewEpsilonTransition(states[Grammar__BlockEnd]),
-	}
-	states[Grammar__Basic_6].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar__Basic_6].AppendTransitions(
 		parser.NewRuleTransition(states[CompositeRule__Start], states[Grammar__Basic_7], nil),
-	}
-	states[Grammar__Basic_7].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar__Basic_7].AppendTransitions(
 		parser.NewEpsilonTransition(states[Grammar__BlockEnd]),
-	}
-	states[Grammar__Basic_8].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar__Basic_8].AppendTransitions(
 		parser.NewEpsilonTransition(states[Grammar__Basic_0]),
 		parser.NewEpsilonTransition(states[Grammar__Basic_2]),
 		parser.NewEpsilonTransition(states[Grammar__Basic_4]),
 		parser.NewEpsilonTransition(states[Grammar__Basic_6]),
-	}
-	states[Grammar__BlockEnd].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[Grammar__LoopBack]),
-	}
-	states[Grammar__LoopEntry].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar__LoopEntry].AppendTransitions(
 		parser.NewEpsilonTransition(states[Grammar__Basic_8]),
 		parser.NewEpsilonTransition(states[Grammar__LoopEnd]),
-	}
-	states[Grammar__LoopEnd].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar__LoopEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[Grammar__Stop]),
-	}
-	states[Grammar__LoopBack].Transitions = []parser.RuntimeTransition{
+	)
+	states[Grammar__LoopBack].AppendTransitions(
 		parser.NewEpsilonTransition(states[Grammar__LoopEntry]),
-	}
-	states[Interface_interface].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface_interface].AppendTransitions(
 		parser.NewAtomTransition(states[Interface_Name_ID], Keyword_interface, nil),
-	}
-	states[Interface_Name_ID].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface_Name_ID].AppendTransitions(
 		parser.NewAtomTransition(states[Interface_extends], Token_ID, nil),
-	}
-	states[Interface_extends].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface_extends].AppendTransitions(
 		parser.NewAtomTransition(states[Interface_Extends_ID_0], Keyword_extends, nil),
 		parser.NewEpsilonTransition(states[Interface__LoopEnd_0]),
-	}
-	states[Interface_Extends_ID_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface_Extends_ID_0].AppendTransitions(
 		parser.NewAtomTransition(states[Interface__LoopEntry_0], Token_ID, &parser.CompletionHint{Field: "Interface.Extends"}),
-	}
-	states[Interface_Comma].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface_Comma].AppendTransitions(
 		parser.NewAtomTransition(states[Interface_Extends_ID_1], Keyword_Comma, nil),
-	}
-	states[Interface_Extends_ID_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface_Extends_ID_1].AppendTransitions(
 		parser.NewAtomTransition(states[Interface__Basic_0], Token_ID, &parser.CompletionHint{Field: "Interface.Extends"}),
-	}
-	states[Interface__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface__Basic_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[Interface__LoopBack_0]),
-	}
-	states[Interface__LoopEntry_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface__LoopEntry_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[Interface_Comma]),
 		parser.NewEpsilonTransition(states[Interface__LoopEnd_0]),
-	}
-	states[Interface__LoopEnd_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface__LoopEnd_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[Interface_LeftBrace]),
-	}
-	states[Interface__LoopBack_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface__LoopBack_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[Interface__LoopEntry_0]),
-	}
-	states[Interface_LeftBrace].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface_LeftBrace].AppendTransitions(
 		parser.NewAtomTransition(states[Interface__LoopEntry_1], Keyword_LeftBrace, nil),
-	}
-	states[Interface__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface__Basic_1].AppendTransitions(
 		parser.NewRuleTransition(states[Field__Start], states[Interface__Basic_2], nil),
-	}
-	states[Interface__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[Interface__LoopBack_1]),
-	}
-	states[Interface__LoopEntry_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface__LoopEntry_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Interface__Basic_1]),
 		parser.NewEpsilonTransition(states[Interface__LoopEnd_1]),
-	}
-	states[Interface__LoopEnd_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface__LoopEnd_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Interface_RightBrace]),
-	}
-	states[Interface__LoopBack_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface__LoopBack_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Interface__LoopEntry_1]),
-	}
-	states[Interface_RightBrace].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface_RightBrace].AppendTransitions(
 		parser.NewAtomTransition(states[Interface__Basic_3], Keyword_RightBrace, nil),
-	}
-	states[Interface__Basic_3].Transitions = []parser.RuntimeTransition{
+	)
+	states[Interface__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[Interface__Stop]),
-	}
-	states[Field_Name_ID].Transitions = []parser.RuntimeTransition{
+	)
+	states[Field_Name_ID].AppendTransitions(
 		parser.NewAtomTransition(states[Field__Basic_0], Token_ID, nil),
-	}
-	states[Field__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[Field__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[FieldType__Start], states[Field__Basic_1], nil),
-	}
-	states[Field__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[Field__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Field__Stop]),
-	}
-	states[FieldType__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[FieldType__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[SimpleType__Start], states[FieldType__Basic_1], nil),
-	}
-	states[FieldType__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[FieldType__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[FieldType__BlockEnd]),
-	}
-	states[FieldType__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[FieldType__Basic_2].AppendTransitions(
 		parser.NewRuleTransition(states[ReferenceType__Start], states[FieldType__Basic_3], nil),
-	}
-	states[FieldType__Basic_3].Transitions = []parser.RuntimeTransition{
+	)
+	states[FieldType__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[FieldType__BlockEnd]),
-	}
-	states[FieldType__Basic_4].Transitions = []parser.RuntimeTransition{
+	)
+	states[FieldType__Basic_4].AppendTransitions(
 		parser.NewRuleTransition(states[ArrayType__Start], states[FieldType__Basic_5], nil),
-	}
-	states[FieldType__Basic_5].Transitions = []parser.RuntimeTransition{
+	)
+	states[FieldType__Basic_5].AppendTransitions(
 		parser.NewEpsilonTransition(states[FieldType__BlockEnd]),
-	}
-	states[FieldType__Basic_6].Transitions = []parser.RuntimeTransition{
+	)
+	states[FieldType__Basic_6].AppendTransitions(
 		parser.NewRuleTransition(states[PrimitiveType__Start], states[FieldType__Basic_7], nil),
-	}
-	states[FieldType__Basic_7].Transitions = []parser.RuntimeTransition{
+	)
+	states[FieldType__Basic_7].AppendTransitions(
 		parser.NewEpsilonTransition(states[FieldType__BlockEnd]),
-	}
-	states[FieldType__Basic_8].Transitions = []parser.RuntimeTransition{
+	)
+	states[FieldType__Basic_8].AppendTransitions(
 		parser.NewEpsilonTransition(states[FieldType__Basic_0]),
 		parser.NewEpsilonTransition(states[FieldType__Basic_2]),
 		parser.NewEpsilonTransition(states[FieldType__Basic_4]),
 		parser.NewEpsilonTransition(states[FieldType__Basic_6]),
-	}
-	states[FieldType__BlockEnd].Transitions = []parser.RuntimeTransition{
+	)
+	states[FieldType__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[FieldType__Stop]),
-	}
-	states[ArrayType_LeftBracket].Transitions = []parser.RuntimeTransition{
+	)
+	states[ArrayType_LeftBracket].AppendTransitions(
 		parser.NewAtomTransition(states[ArrayType_RightBracket], Keyword_LeftBracket, nil),
-	}
-	states[ArrayType_RightBracket].Transitions = []parser.RuntimeTransition{
+	)
+	states[ArrayType_RightBracket].AppendTransitions(
 		parser.NewAtomTransition(states[ArrayType__Basic_0], Keyword_RightBracket, nil),
-	}
-	states[ArrayType__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[ArrayType__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[FieldType__Start], states[ArrayType__Basic_1], nil),
-	}
-	states[ArrayType__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[ArrayType__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[ArrayType__Stop]),
-	}
-	states[ReferenceType_Asterisk].Transitions = []parser.RuntimeTransition{
+	)
+	states[ReferenceType_Asterisk].AppendTransitions(
 		parser.NewAtomTransition(states[ReferenceType_Type_ID], Keyword_Asterisk, nil),
-	}
-	states[ReferenceType_Type_ID].Transitions = []parser.RuntimeTransition{
+	)
+	states[ReferenceType_Type_ID].AppendTransitions(
 		parser.NewAtomTransition(states[ReferenceType__Basic], Token_ID, &parser.CompletionHint{Field: "ReferenceType.Type"}),
-	}
-	states[ReferenceType__Basic].Transitions = []parser.RuntimeTransition{
+	)
+	states[ReferenceType__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[ReferenceType__Stop]),
-	}
-	states[SimpleType_Type_ID].Transitions = []parser.RuntimeTransition{
+	)
+	states[SimpleType_Type_ID].AppendTransitions(
 		parser.NewAtomTransition(states[SimpleType__Basic], Token_ID, &parser.CompletionHint{Field: "SimpleType.Type"}),
-	}
-	states[SimpleType__Basic].Transitions = []parser.RuntimeTransition{
+	)
+	states[SimpleType__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[SimpleType__Stop]),
-	}
-	states[PrimitiveType_Type_string].Transitions = []parser.RuntimeTransition{
+	)
+	states[PrimitiveType_Type_string].AppendTransitions(
 		parser.NewAtomTransition(states[PrimitiveType__Basic_0], Keyword_string, nil),
-	}
-	states[PrimitiveType__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[PrimitiveType__Basic_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[PrimitiveType__BlockEnd]),
-	}
-	states[PrimitiveType_Type_bool].Transitions = []parser.RuntimeTransition{
+	)
+	states[PrimitiveType_Type_bool].AppendTransitions(
 		parser.NewAtomTransition(states[PrimitiveType__Basic_1], Keyword_bool, nil),
-	}
-	states[PrimitiveType__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[PrimitiveType__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[PrimitiveType__BlockEnd]),
-	}
-	states[PrimitiveType_Type_composite].Transitions = []parser.RuntimeTransition{
+	)
+	states[PrimitiveType_Type_composite].AppendTransitions(
 		parser.NewAtomTransition(states[PrimitiveType__Basic_2], Keyword_composite, nil),
-	}
-	states[PrimitiveType__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[PrimitiveType__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[PrimitiveType__BlockEnd]),
-	}
-	states[PrimitiveType__Basic_3].Transitions = []parser.RuntimeTransition{
+	)
+	states[PrimitiveType__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[PrimitiveType_Type_string]),
 		parser.NewEpsilonTransition(states[PrimitiveType_Type_bool]),
 		parser.NewEpsilonTransition(states[PrimitiveType_Type_composite]),
-	}
-	states[PrimitiveType__BlockEnd].Transitions = []parser.RuntimeTransition{
+	)
+	states[PrimitiveType__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[PrimitiveType__Stop]),
-	}
-	states[ParserRule_Name_ID].Transitions = []parser.RuntimeTransition{
+	)
+	states[ParserRule_Name_ID].AppendTransitions(
 		parser.NewAtomTransition(states[ParserRule_returns], Token_ID, nil),
-	}
-	states[ParserRule_returns].Transitions = []parser.RuntimeTransition{
+	)
+	states[ParserRule_returns].AppendTransitions(
 		parser.NewAtomTransition(states[ParserRule_ReturnType_ID], Keyword_returns, nil),
 		parser.NewEpsilonTransition(states[ParserRule__Basic_0]),
-	}
-	states[ParserRule_ReturnType_ID].Transitions = []parser.RuntimeTransition{
+	)
+	states[ParserRule_ReturnType_ID].AppendTransitions(
 		parser.NewAtomTransition(states[ParserRule__Basic_0], Token_ID, &parser.CompletionHint{Field: "ParserRule.ReturnType"}),
-	}
-	states[ParserRule__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[ParserRule__Basic_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[ParserRule_Colon]),
-	}
-	states[ParserRule_Colon].Transitions = []parser.RuntimeTransition{
+	)
+	states[ParserRule_Colon].AppendTransitions(
 		parser.NewAtomTransition(states[ParserRule__Basic_1], Keyword_Colon, nil),
-	}
-	states[ParserRule__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[ParserRule__Basic_1].AppendTransitions(
 		parser.NewRuleTransition(states[Alternatives__Start], states[ParserRule_Semicolon], nil),
-	}
-	states[ParserRule_Semicolon].Transitions = []parser.RuntimeTransition{
+	)
+	states[ParserRule_Semicolon].AppendTransitions(
 		parser.NewAtomTransition(states[ParserRule__Basic_2], Keyword_Semicolon, nil),
-	}
-	states[ParserRule__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[ParserRule__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[ParserRule__Stop]),
-	}
-	states[Token_Type_hidden].Transitions = []parser.RuntimeTransition{
+	)
+	states[Token_Type_hidden].AppendTransitions(
 		parser.NewAtomTransition(states[Token__Basic_0], Keyword_hidden, nil),
-	}
-	states[Token__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[Token__Basic_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[Token__BlockEnd]),
-	}
-	states[Token_Type_comment].Transitions = []parser.RuntimeTransition{
+	)
+	states[Token_Type_comment].AppendTransitions(
 		parser.NewAtomTransition(states[Token__Basic_1], Keyword_comment, nil),
-	}
-	states[Token__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[Token__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Token__BlockEnd]),
-	}
-	states[Token__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[Token__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[Token_Type_hidden]),
 		parser.NewEpsilonTransition(states[Token_Type_comment]),
 		parser.NewEpsilonTransition(states[Token__BlockEnd]),
-	}
-	states[Token__BlockEnd].Transitions = []parser.RuntimeTransition{
+	)
+	states[Token__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[Token_token]),
-	}
-	states[Token_token].Transitions = []parser.RuntimeTransition{
+	)
+	states[Token_token].AppendTransitions(
 		parser.NewAtomTransition(states[Token_Name_ID], Keyword_token, nil),
-	}
-	states[Token_Name_ID].Transitions = []parser.RuntimeTransition{
+	)
+	states[Token_Name_ID].AppendTransitions(
 		parser.NewAtomTransition(states[Token_Colon], Token_ID, nil),
-	}
-	states[Token_Colon].Transitions = []parser.RuntimeTransition{
+	)
+	states[Token_Colon].AppendTransitions(
 		parser.NewAtomTransition(states[Token_Regexp_RegexLiteral], Keyword_Colon, nil),
-	}
-	states[Token_Regexp_RegexLiteral].Transitions = []parser.RuntimeTransition{
+	)
+	states[Token_Regexp_RegexLiteral].AppendTransitions(
 		parser.NewAtomTransition(states[Token_Semicolon], Token_RegexLiteral, nil),
-	}
-	states[Token_Semicolon].Transitions = []parser.RuntimeTransition{
+	)
+	states[Token_Semicolon].AppendTransitions(
 		parser.NewAtomTransition(states[Token__Basic_3], Keyword_Semicolon, nil),
-	}
-	states[Token__Basic_3].Transitions = []parser.RuntimeTransition{
+	)
+	states[Token__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[Token__Stop]),
-	}
-	states[Alternatives__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[Alternatives__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[Group__Start], states[Alternatives_Pipe], nil),
-	}
-	states[Alternatives_Pipe].Transitions = []parser.RuntimeTransition{
+	)
+	states[Alternatives_Pipe].AppendTransitions(
 		parser.NewAtomTransition(states[Alternatives__Basic_1], Keyword_Pipe, nil),
 		parser.NewEpsilonTransition(states[Alternatives__LoopEnd]),
-	}
-	states[Alternatives__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[Alternatives__Basic_1].AppendTransitions(
 		parser.NewRuleTransition(states[Group__Start], states[Alternatives__Basic_2], nil),
-	}
-	states[Alternatives__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[Alternatives__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[Alternatives__LoopBack]),
-	}
-	states[Alternatives__LoopBack].Transitions = []parser.RuntimeTransition{
+	)
+	states[Alternatives__LoopBack].AppendTransitions(
 		parser.NewEpsilonTransition(states[Alternatives_Pipe]),
 		parser.NewEpsilonTransition(states[Alternatives__LoopEnd]),
-	}
-	states[Alternatives__LoopEnd].Transitions = []parser.RuntimeTransition{
+	)
+	states[Alternatives__LoopEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[Alternatives__Stop]),
-	}
-	states[Group__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[Group__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[Element__Start], states[Group__Basic_1], nil),
-	}
-	states[Group__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[Group__Basic_1].AppendTransitions(
 		parser.NewRuleTransition(states[Element__Start], states[Group__Basic_2], nil),
 		parser.NewEpsilonTransition(states[Group__LoopEnd]),
-	}
-	states[Group__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[Group__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[Group__LoopBack]),
-	}
-	states[Group__LoopBack].Transitions = []parser.RuntimeTransition{
+	)
+	states[Group__LoopBack].AppendTransitions(
 		parser.NewEpsilonTransition(states[Group__Basic_1]),
 		parser.NewEpsilonTransition(states[Group__LoopEnd]),
-	}
-	states[Group__LoopEnd].Transitions = []parser.RuntimeTransition{
+	)
+	states[Group__LoopEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[Group__Stop]),
-	}
-	states[Element__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[Keyword__Start], states[Element__Basic_1], nil),
-	}
-	states[Element__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Element__BlockEnd_0]),
-	}
-	states[Element__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Basic_2].AppendTransitions(
 		parser.NewRuleTransition(states[Assignment__Start], states[Element__Basic_3], nil),
-	}
-	states[Element__Basic_3].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[Element__BlockEnd_0]),
-	}
-	states[Element__Basic_4].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Basic_4].AppendTransitions(
 		parser.NewRuleTransition(states[RuleCall__Start], states[Element__Basic_5], nil),
-	}
-	states[Element__Basic_5].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Basic_5].AppendTransitions(
 		parser.NewEpsilonTransition(states[Element__BlockEnd_0]),
-	}
-	states[Element__Basic_6].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Basic_6].AppendTransitions(
 		parser.NewRuleTransition(states[Action__Start], states[Element__Basic_7], nil),
-	}
-	states[Element__Basic_7].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Basic_7].AppendTransitions(
 		parser.NewEpsilonTransition(states[Element__BlockEnd_0]),
-	}
-	states[Element_LeftParen].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element_LeftParen].AppendTransitions(
 		parser.NewAtomTransition(states[Element__Basic_8], Keyword_LeftParen, nil),
-	}
-	states[Element__Basic_8].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Basic_8].AppendTransitions(
 		parser.NewRuleTransition(states[Alternatives__Start], states[Element_RightParen], nil),
-	}
-	states[Element_RightParen].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element_RightParen].AppendTransitions(
 		parser.NewAtomTransition(states[Element__Basic_9], Keyword_RightParen, nil),
-	}
-	states[Element__Basic_9].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Basic_9].AppendTransitions(
 		parser.NewEpsilonTransition(states[Element__BlockEnd_0]),
-	}
-	states[Element__Basic_10].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Basic_10].AppendTransitions(
 		parser.NewEpsilonTransition(states[Element__Basic_0]),
 		parser.NewEpsilonTransition(states[Element__Basic_2]),
 		parser.NewEpsilonTransition(states[Element__Basic_4]),
 		parser.NewEpsilonTransition(states[Element__Basic_6]),
 		parser.NewEpsilonTransition(states[Element_LeftParen]),
-	}
-	states[Element__BlockEnd_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__BlockEnd_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[Element__Basic_14]),
-	}
-	states[Element_Cardinality_Asterisk].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element_Cardinality_Asterisk].AppendTransitions(
 		parser.NewAtomTransition(states[Element__Basic_11], Keyword_Asterisk, nil),
-	}
-	states[Element__Basic_11].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Basic_11].AppendTransitions(
 		parser.NewEpsilonTransition(states[Element__BlockEnd_1]),
-	}
-	states[Element_Cardinality_Plus].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element_Cardinality_Plus].AppendTransitions(
 		parser.NewAtomTransition(states[Element__Basic_12], Keyword_Plus, nil),
-	}
-	states[Element__Basic_12].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Basic_12].AppendTransitions(
 		parser.NewEpsilonTransition(states[Element__BlockEnd_1]),
-	}
-	states[Element_Cardinality_Question].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element_Cardinality_Question].AppendTransitions(
 		parser.NewAtomTransition(states[Element__Basic_13], Keyword_Question, nil),
-	}
-	states[Element__Basic_13].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Basic_13].AppendTransitions(
 		parser.NewEpsilonTransition(states[Element__BlockEnd_1]),
-	}
-	states[Element__Basic_14].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__Basic_14].AppendTransitions(
 		parser.NewEpsilonTransition(states[Element_Cardinality_Asterisk]),
 		parser.NewEpsilonTransition(states[Element_Cardinality_Plus]),
 		parser.NewEpsilonTransition(states[Element_Cardinality_Question]),
 		parser.NewEpsilonTransition(states[Element__BlockEnd_1]),
-	}
-	states[Element__BlockEnd_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[Element__BlockEnd_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Element__Stop]),
-	}
-	states[Keyword_Value_StringLiteral].Transitions = []parser.RuntimeTransition{
+	)
+	states[Keyword_Value_StringLiteral].AppendTransitions(
 		parser.NewAtomTransition(states[Keyword__Basic], Token_StringLiteral, nil),
-	}
-	states[Keyword__Basic].Transitions = []parser.RuntimeTransition{
+	)
+	states[Keyword__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[Keyword__Stop]),
-	}
-	states[Assignment_Property_ID].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignment_Property_ID].AppendTransitions(
 		parser.NewAtomTransition(states[Assignment__Basic_3], Token_ID, &parser.CompletionHint{Field: "Assignment.Property"}),
-	}
-	states[Assignment_Operator_PlusEquals].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignment_Operator_PlusEquals].AppendTransitions(
 		parser.NewAtomTransition(states[Assignment__Basic_0], Keyword_PlusEquals, nil),
-	}
-	states[Assignment__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignment__Basic_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[Assignment__BlockEnd]),
-	}
-	states[Assignment_Operator_Equals].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignment_Operator_Equals].AppendTransitions(
 		parser.NewAtomTransition(states[Assignment__Basic_1], Keyword_Equals, nil),
-	}
-	states[Assignment__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignment__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Assignment__BlockEnd]),
-	}
-	states[Assignment_Operator_QuestionEquals].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignment_Operator_QuestionEquals].AppendTransitions(
 		parser.NewAtomTransition(states[Assignment__Basic_2], Keyword_QuestionEquals, nil),
-	}
-	states[Assignment__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignment__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[Assignment__BlockEnd]),
-	}
-	states[Assignment__Basic_3].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignment__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[Assignment_Operator_PlusEquals]),
 		parser.NewEpsilonTransition(states[Assignment_Operator_Equals]),
 		parser.NewEpsilonTransition(states[Assignment_Operator_QuestionEquals]),
-	}
-	states[Assignment__BlockEnd].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignment__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[Assignment__Basic_4]),
-	}
-	states[Assignment__Basic_4].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignment__Basic_4].AppendTransitions(
 		parser.NewRuleTransition(states[Assignable__Start], states[Assignment__Basic_5], nil),
-	}
-	states[Assignment__Basic_5].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignment__Basic_5].AppendTransitions(
 		parser.NewEpsilonTransition(states[Assignment__Stop]),
-	}
-	states[Assignable__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignable__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[Keyword__Start], states[Assignable__Basic_1], nil),
-	}
-	states[Assignable__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignable__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Assignable__BlockEnd]),
-	}
-	states[Assignable__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignable__Basic_2].AppendTransitions(
 		parser.NewRuleTransition(states[RuleCall__Start], states[Assignable__Basic_3], nil),
-	}
-	states[Assignable__Basic_3].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignable__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[Assignable__BlockEnd]),
-	}
-	states[Assignable__Basic_4].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignable__Basic_4].AppendTransitions(
 		parser.NewRuleTransition(states[CrossRef__Start], states[Assignable__Basic_5], nil),
-	}
-	states[Assignable__Basic_5].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignable__Basic_5].AppendTransitions(
 		parser.NewEpsilonTransition(states[Assignable__BlockEnd]),
-	}
-	states[Assignable_LeftParen].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignable_LeftParen].AppendTransitions(
 		parser.NewAtomTransition(states[Assignable__Basic_6], Keyword_LeftParen, nil),
-	}
-	states[Assignable__Basic_6].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignable__Basic_6].AppendTransitions(
 		parser.NewRuleTransition(states[AssignableAlternatives__Start], states[Assignable_RightParen], nil),
-	}
-	states[Assignable_RightParen].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignable_RightParen].AppendTransitions(
 		parser.NewAtomTransition(states[Assignable__Basic_7], Keyword_RightParen, nil),
-	}
-	states[Assignable__Basic_7].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignable__Basic_7].AppendTransitions(
 		parser.NewEpsilonTransition(states[Assignable__BlockEnd]),
-	}
-	states[Assignable__Basic_8].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignable__Basic_8].AppendTransitions(
 		parser.NewEpsilonTransition(states[Assignable__Basic_0]),
 		parser.NewEpsilonTransition(states[Assignable__Basic_2]),
 		parser.NewEpsilonTransition(states[Assignable__Basic_4]),
 		parser.NewEpsilonTransition(states[Assignable_LeftParen]),
-	}
-	states[Assignable__BlockEnd].Transitions = []parser.RuntimeTransition{
+	)
+	states[Assignable__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[Assignable__Stop]),
-	}
-	states[AssignableWithoutAlts__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableWithoutAlts__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[Keyword__Start], states[AssignableWithoutAlts__Basic_1], nil),
-	}
-	states[AssignableWithoutAlts__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableWithoutAlts__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[AssignableWithoutAlts__BlockEnd]),
-	}
-	states[AssignableWithoutAlts__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableWithoutAlts__Basic_2].AppendTransitions(
 		parser.NewRuleTransition(states[RuleCall__Start], states[AssignableWithoutAlts__Basic_3], nil),
-	}
-	states[AssignableWithoutAlts__Basic_3].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableWithoutAlts__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[AssignableWithoutAlts__BlockEnd]),
-	}
-	states[AssignableWithoutAlts__Basic_4].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableWithoutAlts__Basic_4].AppendTransitions(
 		parser.NewRuleTransition(states[CrossRef__Start], states[AssignableWithoutAlts__Basic_5], nil),
-	}
-	states[AssignableWithoutAlts__Basic_5].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableWithoutAlts__Basic_5].AppendTransitions(
 		parser.NewEpsilonTransition(states[AssignableWithoutAlts__BlockEnd]),
-	}
-	states[AssignableWithoutAlts__Basic_6].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableWithoutAlts__Basic_6].AppendTransitions(
 		parser.NewEpsilonTransition(states[AssignableWithoutAlts__Basic_0]),
 		parser.NewEpsilonTransition(states[AssignableWithoutAlts__Basic_2]),
 		parser.NewEpsilonTransition(states[AssignableWithoutAlts__Basic_4]),
-	}
-	states[AssignableWithoutAlts__BlockEnd].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableWithoutAlts__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[AssignableWithoutAlts__Stop]),
-	}
-	states[AssignableAlternatives__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableAlternatives__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[AssignableWithoutAlts__Start], states[AssignableAlternatives_Pipe], nil),
-	}
-	states[AssignableAlternatives_Pipe].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableAlternatives_Pipe].AppendTransitions(
 		parser.NewAtomTransition(states[AssignableAlternatives__Basic_1], Keyword_Pipe, nil),
 		parser.NewEpsilonTransition(states[AssignableAlternatives__LoopEnd]),
-	}
-	states[AssignableAlternatives__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableAlternatives__Basic_1].AppendTransitions(
 		parser.NewRuleTransition(states[AssignableWithoutAlts__Start], states[AssignableAlternatives__Basic_2], nil),
-	}
-	states[AssignableAlternatives__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableAlternatives__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[AssignableAlternatives__LoopBack]),
-	}
-	states[AssignableAlternatives__LoopBack].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableAlternatives__LoopBack].AppendTransitions(
 		parser.NewEpsilonTransition(states[AssignableAlternatives_Pipe]),
 		parser.NewEpsilonTransition(states[AssignableAlternatives__LoopEnd]),
-	}
-	states[AssignableAlternatives__LoopEnd].Transitions = []parser.RuntimeTransition{
+	)
+	states[AssignableAlternatives__LoopEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[AssignableAlternatives__Stop]),
-	}
-	states[CrossRef_LeftBracket].Transitions = []parser.RuntimeTransition{
+	)
+	states[CrossRef_LeftBracket].AppendTransitions(
 		parser.NewAtomTransition(states[CrossRef_Type_ID], Keyword_LeftBracket, nil),
-	}
-	states[CrossRef_Type_ID].Transitions = []parser.RuntimeTransition{
+	)
+	states[CrossRef_Type_ID].AppendTransitions(
 		parser.NewAtomTransition(states[CrossRef_Colon], Token_ID, &parser.CompletionHint{Field: "CrossRef.Type"}),
-	}
-	states[CrossRef_Colon].Transitions = []parser.RuntimeTransition{
+	)
+	states[CrossRef_Colon].AppendTransitions(
 		parser.NewAtomTransition(states[CrossRef__Basic_0], Keyword_Colon, nil),
 		parser.NewEpsilonTransition(states[CrossRef__Basic_1]),
-	}
-	states[CrossRef__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[CrossRef__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[RuleCall__Start], states[CrossRef__Basic_1], nil),
-	}
-	states[CrossRef__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[CrossRef__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[CrossRef_RightBracket]),
-	}
-	states[CrossRef_RightBracket].Transitions = []parser.RuntimeTransition{
+	)
+	states[CrossRef_RightBracket].AppendTransitions(
 		parser.NewAtomTransition(states[CrossRef__Basic_2], Keyword_RightBracket, nil),
-	}
-	states[CrossRef__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[CrossRef__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[CrossRef__Stop]),
-	}
-	states[RuleCall_Rule_ID].Transitions = []parser.RuntimeTransition{
+	)
+	states[RuleCall_Rule_ID].AppendTransitions(
 		parser.NewAtomTransition(states[RuleCall__Basic], Token_ID, &parser.CompletionHint{Field: "RuleCall.Rule"}),
-	}
-	states[RuleCall__Basic].Transitions = []parser.RuntimeTransition{
+	)
+	states[RuleCall__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[RuleCall__Stop]),
-	}
-	states[Action_LeftBrace].Transitions = []parser.RuntimeTransition{
+	)
+	states[Action_LeftBrace].AppendTransitions(
 		parser.NewAtomTransition(states[Action_Type_ID], Keyword_LeftBrace, nil),
-	}
-	states[Action_Type_ID].Transitions = []parser.RuntimeTransition{
+	)
+	states[Action_Type_ID].AppendTransitions(
 		parser.NewAtomTransition(states[Action_Dot], Token_ID, &parser.CompletionHint{Field: "Action.Type"}),
-	}
-	states[Action_Dot].Transitions = []parser.RuntimeTransition{
+	)
+	states[Action_Dot].AppendTransitions(
 		parser.NewAtomTransition(states[Action_Property_ID], Keyword_Dot, nil),
 		parser.NewEpsilonTransition(states[Action__Basic_3]),
-	}
-	states[Action_Property_ID].Transitions = []parser.RuntimeTransition{
+	)
+	states[Action_Property_ID].AppendTransitions(
 		parser.NewAtomTransition(states[Action__Basic_2], Token_ID, &parser.CompletionHint{Field: "Action.Property"}),
-	}
-	states[Action_Operator_PlusEquals].Transitions = []parser.RuntimeTransition{
+	)
+	states[Action_Operator_PlusEquals].AppendTransitions(
 		parser.NewAtomTransition(states[Action__Basic_0], Keyword_PlusEquals, nil),
-	}
-	states[Action__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[Action__Basic_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[Action__BlockEnd]),
-	}
-	states[Action_Operator_Equals].Transitions = []parser.RuntimeTransition{
+	)
+	states[Action_Operator_Equals].AppendTransitions(
 		parser.NewAtomTransition(states[Action__Basic_1], Keyword_Equals, nil),
-	}
-	states[Action__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[Action__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Action__BlockEnd]),
-	}
-	states[Action__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[Action__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[Action_Operator_PlusEquals]),
 		parser.NewEpsilonTransition(states[Action_Operator_Equals]),
-	}
-	states[Action__BlockEnd].Transitions = []parser.RuntimeTransition{
+	)
+	states[Action__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[Action_current]),
-	}
-	states[Action_current].Transitions = []parser.RuntimeTransition{
+	)
+	states[Action_current].AppendTransitions(
 		parser.NewAtomTransition(states[Action__Basic_3], Keyword_current, nil),
-	}
-	states[Action__Basic_3].Transitions = []parser.RuntimeTransition{
+	)
+	states[Action__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[Action_RightBrace]),
-	}
-	states[Action_RightBrace].Transitions = []parser.RuntimeTransition{
+	)
+	states[Action_RightBrace].AppendTransitions(
 		parser.NewAtomTransition(states[Action__Basic_4], Keyword_RightBrace, nil),
-	}
-	states[Action__Basic_4].Transitions = []parser.RuntimeTransition{
+	)
+	states[Action__Basic_4].AppendTransitions(
 		parser.NewEpsilonTransition(states[Action__Stop]),
-	}
-	states[CompositeRule_composite].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeRule_composite].AppendTransitions(
 		parser.NewAtomTransition(states[CompositeRule_Name_ID], Keyword_composite, nil),
-	}
-	states[CompositeRule_Name_ID].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeRule_Name_ID].AppendTransitions(
 		parser.NewAtomTransition(states[CompositeRule_Colon], Token_ID, nil),
-	}
-	states[CompositeRule_Colon].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeRule_Colon].AppendTransitions(
 		parser.NewAtomTransition(states[CompositeRule__Basic_0], Keyword_Colon, nil),
-	}
-	states[CompositeRule__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeRule__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[CompositeAlternatives__Start], states[CompositeRule_Semicolon], nil),
-	}
-	states[CompositeRule_Semicolon].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeRule_Semicolon].AppendTransitions(
 		parser.NewAtomTransition(states[CompositeRule__Basic_1], Keyword_Semicolon, nil),
-	}
-	states[CompositeRule__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeRule__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeRule__Stop]),
-	}
-	states[CompositeAlternatives__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeAlternatives__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[CompositeGroup__Start], states[CompositeAlternatives_Pipe], nil),
-	}
-	states[CompositeAlternatives_Pipe].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeAlternatives_Pipe].AppendTransitions(
 		parser.NewAtomTransition(states[CompositeAlternatives__Basic_1], Keyword_Pipe, nil),
 		parser.NewEpsilonTransition(states[CompositeAlternatives__LoopEnd]),
-	}
-	states[CompositeAlternatives__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeAlternatives__Basic_1].AppendTransitions(
 		parser.NewRuleTransition(states[CompositeGroup__Start], states[CompositeAlternatives__Basic_2], nil),
-	}
-	states[CompositeAlternatives__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeAlternatives__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeAlternatives__LoopBack]),
-	}
-	states[CompositeAlternatives__LoopBack].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeAlternatives__LoopBack].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeAlternatives_Pipe]),
 		parser.NewEpsilonTransition(states[CompositeAlternatives__LoopEnd]),
-	}
-	states[CompositeAlternatives__LoopEnd].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeAlternatives__LoopEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeAlternatives__Stop]),
-	}
-	states[CompositeGroup__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeGroup__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[CompositeElement__Start], states[CompositeGroup__Basic_1], nil),
-	}
-	states[CompositeGroup__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeGroup__Basic_1].AppendTransitions(
 		parser.NewRuleTransition(states[CompositeElement__Start], states[CompositeGroup__Basic_2], nil),
 		parser.NewEpsilonTransition(states[CompositeGroup__LoopEnd]),
-	}
-	states[CompositeGroup__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeGroup__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeGroup__LoopBack]),
-	}
-	states[CompositeGroup__LoopBack].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeGroup__LoopBack].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeGroup__Basic_1]),
 		parser.NewEpsilonTransition(states[CompositeGroup__LoopEnd]),
-	}
-	states[CompositeGroup__LoopEnd].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeGroup__LoopEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeGroup__Stop]),
-	}
-	states[CompositeElement__Basic_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[Keyword__Start], states[CompositeElement__Basic_1], nil),
-	}
-	states[CompositeElement__Basic_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeElement__BlockEnd_0]),
-	}
-	states[CompositeElement__Basic_2].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement__Basic_2].AppendTransitions(
 		parser.NewRuleTransition(states[RuleCall__Start], states[CompositeElement__Basic_3], nil),
-	}
-	states[CompositeElement__Basic_3].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeElement__BlockEnd_0]),
-	}
-	states[CompositeElement_LeftParen].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement_LeftParen].AppendTransitions(
 		parser.NewAtomTransition(states[CompositeElement__Basic_4], Keyword_LeftParen, nil),
-	}
-	states[CompositeElement__Basic_4].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement__Basic_4].AppendTransitions(
 		parser.NewRuleTransition(states[CompositeAlternatives__Start], states[CompositeElement_RightParen], nil),
-	}
-	states[CompositeElement_RightParen].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement_RightParen].AppendTransitions(
 		parser.NewAtomTransition(states[CompositeElement__Basic_5], Keyword_RightParen, nil),
-	}
-	states[CompositeElement__Basic_5].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement__Basic_5].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeElement__BlockEnd_0]),
-	}
-	states[CompositeElement__Basic_6].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement__Basic_6].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeElement__Basic_0]),
 		parser.NewEpsilonTransition(states[CompositeElement__Basic_2]),
 		parser.NewEpsilonTransition(states[CompositeElement_LeftParen]),
-	}
-	states[CompositeElement__BlockEnd_0].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement__BlockEnd_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeElement__Basic_10]),
-	}
-	states[CompositeElement_Cardinality_Asterisk].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement_Cardinality_Asterisk].AppendTransitions(
 		parser.NewAtomTransition(states[CompositeElement__Basic_7], Keyword_Asterisk, nil),
-	}
-	states[CompositeElement__Basic_7].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement__Basic_7].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeElement__BlockEnd_1]),
-	}
-	states[CompositeElement_Cardinality_Plus].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement_Cardinality_Plus].AppendTransitions(
 		parser.NewAtomTransition(states[CompositeElement__Basic_8], Keyword_Plus, nil),
-	}
-	states[CompositeElement__Basic_8].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement__Basic_8].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeElement__BlockEnd_1]),
-	}
-	states[CompositeElement_Cardinality_Question].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement_Cardinality_Question].AppendTransitions(
 		parser.NewAtomTransition(states[CompositeElement__Basic_9], Keyword_Question, nil),
-	}
-	states[CompositeElement__Basic_9].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement__Basic_9].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeElement__BlockEnd_1]),
-	}
-	states[CompositeElement__Basic_10].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement__Basic_10].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeElement_Cardinality_Asterisk]),
 		parser.NewEpsilonTransition(states[CompositeElement_Cardinality_Plus]),
 		parser.NewEpsilonTransition(states[CompositeElement_Cardinality_Question]),
 		parser.NewEpsilonTransition(states[CompositeElement__BlockEnd_1]),
-	}
-	states[CompositeElement__BlockEnd_1].Transitions = []parser.RuntimeTransition{
+	)
+	states[CompositeElement__BlockEnd_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[CompositeElement__Stop]),
-	}
+	)
 	decisionStates := make([]*parser.RuntimeATNState, 8)
 	decisionStates[0] = states[Grammar__LoopEntry]
 	decisionStates[1] = states[Interface__LoopEntry_0]

@@ -11,6 +11,6 @@ import (
 
 func GenerateATN(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult) string {
 	a, _ := atn.CreateATN(grammr, tokenTypes.TokenTypeIds)
-	source := atn.EmitGoSource(packageName, "BuildATN", "typefox.dev/fastbelt/parser", a, grammr, tokenTypes.TokenTypeVarNames)
+	source := atn.EmitGoSource(packageName, a, grammr, tokenTypes.TokenTypeVarNames)
 	return FormatIfPossible(source.String())
 }

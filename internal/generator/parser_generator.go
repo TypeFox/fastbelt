@@ -17,9 +17,9 @@ import (
 )
 
 type ParserGeneratorContext struct {
-	grammar      grammar.Grammar
-	lookaheads   map[core.AstNode]LookaheadValue
-	orLookaheads map[core.AstNode]LookaheadValue
+	grammar         grammar.Grammar
+	lookaheads      map[core.AstNode]LookaheadValue
+	orLookaheads    map[core.AstNode]LookaheadValue
 	inCompositeRule bool
 	// ATN-derived maps for EnterRule/Sync emit (nil when ATN not built).
 	followStateName   map[core.AstNode]string // grammar.RuleCall: follow-state constant name
@@ -69,7 +69,6 @@ func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes Gener
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("\"sync\"")
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
 		n.AppendLine("\"typefox.dev/fastbelt/parser\"")
 		n.AppendLine("\"typefox.dev/fastbelt/util/service\"")
@@ -82,7 +81,6 @@ func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes Gener
 		n.AppendLine("state *parser.ParserState")
 		n.AppendLine("sc *service.Container")
 		n.AppendLine("referencesConstructor ", grammr.Name(), "ReferencesConstructor")
-		n.AppendLine("atn func() *parser.RuntimeATN")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
@@ -98,7 +96,7 @@ func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes Gener
 		n.AppendLine("recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)")
 		n.AppendLine("messages := service.MustGet[parser.ErrorMessageProvider](p.sc)")
 		n.AppendLine("referencesConstructor := service.MustGet[", grammr.Name(), "ReferencesConstructor](p.sc)")
-		n.AppendLine("cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, atn: p.atn, state: parser.NewParserState(document.Tokens, p.atn(), recovery, messages)}")
+		n.AppendLine("cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}")
 		n.AppendLine("result := cp.Parse", firstRule.Name(), "()")
 		n.AppendLine("core.AssignContainers(document, result)")
 		n.AppendLine("return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}")
@@ -109,7 +107,6 @@ func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes Gener
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("return &Parser{")
 		n.AppendLine("	sc: sc,")
-		n.AppendLine("	atn: sync.OnceValue(BuildATN),")
 		n.AppendLine("}")
 	})
 	node.AppendLine("}")
