@@ -6,6 +6,7 @@ package parser
 
 import (
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/collections"
 )
 
 // Parser defines the interface for parsing tokens (lexer output) into AST nodes.
@@ -200,10 +201,10 @@ func (p *ParserState) Sync(decisionStateIdx int) {
 }
 
 // FollowSet returns the union of NextTokensAt for every frame on the follow-state stack.
-func (p *ParserState) FollowSet() *core.BitSet {
-	sets := make([]*core.BitSet, len(p.followStates))
+func (p *ParserState) FollowSet() *collections.BitSet {
+	sets := make([]*collections.BitSet, len(p.followStates))
 	for i, idx := range p.followStates {
 		sets[i] = p.atn.NextTokensAt(idx)
 	}
-	return core.MergeBitSets(sets)
+	return collections.MergeBitSets(sets)
 }

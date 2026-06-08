@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/collections"
 )
 
 // ATNStateType is the discriminator for ATN state kinds.
@@ -180,7 +181,7 @@ type RuntimeATN struct {
 
 	stateIdxCache map[*RuntimeATNState]int // pointer -> array index
 
-	nextTokensCache []*fastbelt.BitSet // stateIdx -> bitset indexed by TokenType.Id
+	nextTokensCache []*collections.BitSet // stateIdx -> bitset indexed by TokenType.Id
 }
 
 func NewRuntimeATN(states []*RuntimeATNState, decisionStates []*RuntimeATNState, decisionMap []*RuntimeATNState) *RuntimeATN {
@@ -216,22 +217,22 @@ func (atn *RuntimeATN) stateIndex(s *RuntimeATNState) int {
 
 // NextTokensAt returns the set of token type IDs reachable from the state at
 // stateIdx via epsilon closure (including rule entries for FIRST-set tokens).
-func (atn *RuntimeATN) NextTokensAt(stateIdx int) *fastbelt.BitSet {
+func (atn *RuntimeATN) NextTokensAt(stateIdx int) *collections.BitSet {
 	if stateIdx < 0 || stateIdx >= len(atn.nextTokensCache) {
-		return fastbelt.NewBitset()
+		return collections.NewBitset()
 	}
 	return atn.nextTokensCache[stateIdx]
 }
 
 func (atn *RuntimeATN) buildNextTokensCache() {
-	atn.nextTokensCache = make([]*fastbelt.BitSet, len(atn.States))
+	atn.nextTokensCache = make([]*collections.BitSet, len(atn.States))
 	for i := range atn.States {
 		atn.nextTokensCache[i] = atn.computeNextTokensAt(i)
 	}
 }
 
-func (atn *RuntimeATN) computeNextTokensAt(stateIdx int) *fastbelt.BitSet {
-	var sets []*fastbelt.BitSet
+func (atn *RuntimeATN) computeNextTokensAt(stateIdx int) *collections.BitSet {
+	var sets []*collections.BitSet
 	visited := make([]bool, len(atn.States))
 	queue := []int{stateIdx}
 	for len(queue) > 0 {
@@ -263,5 +264,5 @@ func (atn *RuntimeATN) computeNextTokensAt(stateIdx int) *fastbelt.BitSet {
 			}
 		}
 	}
-	return fastbelt.MergeBitSets(sets)
+	return collections.MergeBitSets(sets)
 }

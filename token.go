@@ -4,6 +4,8 @@
 
 package fastbelt
 
+import "typefox.dev/fastbelt/util/collections"
+
 // SkippedGroup marks token types that the lexer should drop from all output streams.
 const SkippedGroup = -1
 
@@ -65,12 +67,12 @@ type TokenType struct {
 	Matches TokenTypeMatcher
 	// All TokenTypes that are matched by this TokenType.
 	MatchingTokens []*TokenType
-	bitset         *BitSet
+	bitset         *collections.BitSet
 }
 
 // NewTokenType creates a token type descriptor used by generated lexers and parsers.
 func NewTokenType(id int, name, label string, group int, kind TokenKind, pushMode int, popMode bool, match TokenMatcher, startChars []rune) *TokenType {
-	matching := NewBitset()
+	matching := collections.NewBitset()
 	matching.Insert(id)
 	tt := &TokenType{
 		Id:    id,
@@ -93,11 +95,11 @@ func NewTokenType(id int, name, label string, group int, kind TokenKind, pushMod
 
 // NewTokenGroup creates a token type that represents a named group of other token types.
 func NewTokenGroup(id int, name, label string, matchingTypes []*TokenType) *TokenType {
-	bitsets := make([]*BitSet, len(matchingTypes))
+	bitsets := make([]*collections.BitSet, len(matchingTypes))
 	for _, mt := range matchingTypes {
 		bitsets = append(bitsets, mt.bitset)
 	}
-	matching := MergeBitSets(bitsets)
+	matching := collections.MergeBitSets(bitsets)
 	matching.Insert(id)
 	tt := &TokenType{
 		Id:    id,
@@ -147,7 +149,7 @@ func (t *TokenType) IsKeyword() bool {
 }
 
 // Bitset returns a bitset that contains all token type IDs matched by t.
-func (t *TokenType) Bitset() *BitSet {
+func (t *TokenType) Bitset() *collections.BitSet {
 	return t.bitset
 }
 

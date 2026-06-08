@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package fastbelt
+package collections
 
 // BitSet is a simple implementation of a bitset that supports insertion,
 // deletion, and membership testing. It is designed to be memory efficient for
