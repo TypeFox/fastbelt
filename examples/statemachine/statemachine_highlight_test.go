@@ -11,7 +11,7 @@ import (
 )
 
 func TestHighlightOnEventName(t *testing.T) {
-	f := test.New(t, CreateLspServices())
+	f := test.New(t, CreateLspServices(nil))
 	doc := f.Parse(`
 		statemachine Toggle
 
@@ -32,7 +32,7 @@ func TestHighlightOnEventName(t *testing.T) {
 }
 
 func TestHighlightOnEventReference(t *testing.T) {
-	f := test.New(t, CreateLspServices())
+	f := test.New(t, CreateLspServices(nil))
 	doc := f.Parse(`
 		statemachine Toggle
 
@@ -53,7 +53,7 @@ func TestHighlightOnEventReference(t *testing.T) {
 }
 
 func TestHighlightOnStateName(t *testing.T) {
-	f := test.New(t, CreateLspServices())
+	f := test.New(t, CreateLspServices(nil))
 	doc := f.Parse(`
 		statemachine Toggle
 
@@ -76,7 +76,7 @@ func TestHighlightOnStateName(t *testing.T) {
 // An event and a command can share the same name. Highlighting one kind of
 // element must not bleed into the equally named element of the other kind.
 func TestHighlightDistinguishesCommandFromEvent(t *testing.T) {
-	f := test.New(t, CreateLspServices())
+	f := test.New(t, CreateLspServices(nil))
 	doc := f.Parse(`
 		statemachine Toggle
 

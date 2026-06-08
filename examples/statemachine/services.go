@@ -33,11 +33,14 @@ func CreateServices() *service.Container {
 }
 
 // CreateLspServices creates a service container for the statemachine language to be used in the language server.
-func CreateLspServices() *service.Container {
+func CreateLspServices(setup func(*service.Container)) *service.Container {
 	sc := service.NewContainer()
 	SetupServices(sc)
 	SetupGeneratedServerServices(sc)
 	server.SetupDefaultServices(sc)
+	if setup != nil {
+		setup(sc)
+	}
 	sc.Seal()
 	return sc
 }

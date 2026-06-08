@@ -12,6 +12,7 @@
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
+  "browser": "./dist/extension.web.js",
   "contributes": {
     "languages": [{
       "id": "statemachine",
@@ -26,12 +27,13 @@
     }]
   },
   "scripts": {
-    "build": "npm run check-types && node esbuild.js && npm run build-server",
+    "build": "npm run check-types && node esbuild.js && npm run build-server && npm run build-server-wasm",
     "watch": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch",
     "vscode:prepublish": "npm run check-types && node esbuild.js --production",
     "check-types": "tsc --noEmit",
-    "build-server": "go build -gcflags=\"all=-N -l\" -o dist/ ../../../examples/statemachine/server"
+    "build-server": "go build -gcflags=\"all=-N -l\" -o dist/ ../../../examples/statemachine/server",
+    "build-server-wasm": "node build-wasm.js"
   },
   "dependencies": {
     "vscode-languageclient": "~9.0.1"
