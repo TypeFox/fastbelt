@@ -9,26 +9,29 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode"
 
 	core "typefox.dev/fastbelt"
 )
 
 const (
-	ValidateUniqueRuleName        = "uniqueRuleName"
-	ValidateUniqueInterfaceName   = "uniqueInterfaceName"
-	ValidateEmptyToken            = "emptyTerminalRule"
-	ValidateEmptyKeyword          = "emptyKeyword"
-	ValidateWhitespaceOnlyKeyword = "whitespaceOnlyKeyword"
-	ValidateKeywordWithWhitespace = "keywordWithWhitespace"
-	ValidateRuleReturnType        = "ruleReturnType"
-	ValidateInterfaceExtends      = "interfaceExtends"
-	ValidateRuleCallReturnType    = "ruleCallReturnType"
-	ValidateRuleCallPosition      = "ruleCallPosition"
-	ValidateActionAssignmentType  = "actionAssignmentType"
-	ValidateActionPropertyType    = "actionPropertyType"
-	ValidateAssignmentType        = "assignmentType"
-	ValidateRecursiveTokenGroup   = "recursiveTokenGroup"
-	ValidateInvalidTokenInGroup   = "invalidTokenInGroup"
+	ValidateUniqueRuleName         = "uniqueRuleName"
+	ValidateUniqueInterfaceName    = "uniqueInterfaceName"
+	ValidateEmptyToken             = "emptyTerminalRule"
+	ValidateEmptyKeyword           = "emptyKeyword"
+	ValidateWhitespaceOnlyKeyword  = "whitespaceOnlyKeyword"
+	ValidateKeywordWithWhitespace  = "keywordWithWhitespace"
+	ValidateRuleReturnType         = "ruleReturnType"
+	ValidateInterfaceExtends       = "interfaceExtends"
+	ValidateRuleCallReturnType     = "ruleCallReturnType"
+	ValidateRuleCallPosition       = "ruleCallPosition"
+	ValidateActionAssignmentType   = "actionAssignmentType"
+	ValidateActionPropertyType     = "actionPropertyType"
+	ValidateAssignmentType         = "assignmentType"
+	ValidateRecursiveTokenGroup    = "recursiveTokenGroup"
+	ValidateInvalidTokenInGroup    = "invalidTokenInGroup"
+	ValidateUniqueFieldName        = "uniqueFieldName"
+	ValidateFieldNameCapitalLetter = "fieldNameCapitalLetter"
 )
 
 // GrammarImpl.Validate checks grammar-level constraints:
@@ -192,6 +195,38 @@ func checkRuleReturnType(rule ParserRule, _ context.Context, accept core.Validat
 
 func (i *InterfaceImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
 	checkInterfaceExtends(i, ctx, accept)
+	checkInterfaceFieldNames(i, accept)
+}
+
+func checkInterfaceFieldNames(iface Interface, accept core.ValidationAcceptor) {
+	seen := map[string]struct{}{}
+	for _, field := range iface.Fields() {
+		name := field.Name()
+		if name == "" {
+			continue
+		}
+		if !unicode.IsUpper(rune(name[0])) {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				fmt.Sprintf("Property names must start with a capital letter. '%s' does not.", name),
+				field,
+				core.WithToken(field.NameToken()),
+				core.WithCode(ValidateFieldNameCapitalLetter),
+			))
+		}
+		lower := strings.ToLower(name)
+		if _, duplicate := seen[lower]; duplicate {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				fmt.Sprintf("A property's name has to be unique (case-insensitively). '%s' is already used.", name),
+				field,
+				core.WithToken(field.NameToken()),
+				core.WithCode(ValidateUniqueFieldName),
+			))
+		} else {
+			seen[lower] = struct{}{}
+		}
+	}
 }
 
 func checkInterfaceExtends(iface Interface, ctx context.Context, accept core.ValidationAcceptor) {

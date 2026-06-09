@@ -72,6 +72,76 @@ func TestDuplicateInterfaceNames(t *testing.T) {
 	}
 }
 
+// --- Interface field names uniqueness, capitalization ---
+
+func TestFieldNameUppercaseStart(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			Name string
+		}
+	` + commonTokens)
+	doc.AssertNoErrors()
+}
+
+func TestFieldNameLowercaseStart(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			<|1:name|> string
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateFieldNameCapitalLetter)
+}
+
+func TestDuplicateFieldNames(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			Name string
+			<|1:Name|> string
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateUniqueFieldName)
+}
+
+func TestDuplicateFieldNamesCaseInsensitive(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			Name string
+			<|1:NAME|> string
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateUniqueFieldName)
+}
+
+func TestDuplicateFieldNamesCaseInsensitiveAndCapitalLetter(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			Name string
+			<|1:name|> string
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnosticWithCode("1", ValidateUniqueFieldName)
+	diag.WithSeverity(core.SeverityError)
+
+	diag = doc.ExpectDiagnosticWithCode("1", ValidateFieldNameCapitalLetter)
+	diag.WithSeverity(core.SeverityError)
+}
+
 // --- Terminal ---
 
 func TestTerminalMatchesEmptyString(t *testing.T) {

@@ -130,7 +130,7 @@ func (d *DiagnosticExpectation) WithTags(tags ...core.DiagnosticTag) *Diagnostic
 	return d
 }
 
-// AssertDiagnostic fails the test unless at least one diagnostic has the given
+// ExpectDiagnostic fails the test unless at least one diagnostic has the given
 // severity and a message containing msgSubstring.
 func (d *Doc) ExpectDiagnostic(label string) *DiagnosticExpectation {
 	d.fixture.t.Helper()
@@ -145,6 +145,24 @@ func (d *Doc) ExpectDiagnostic(label string) *DiagnosticExpectation {
 		}
 	}
 	d.fixture.t.Fatalf("fbtest: no diagnostic at label %q", label)
+	return nil
+}
+
+// ExpectDiagnosticWithCode finds the diagnostic at label whose Code matches code.
+// Use this when multiple diagnostics share the same range and you need to distinguish them.
+func (d *Doc) ExpectDiagnosticWithCode(label string, code string) *DiagnosticExpectation {
+	d.fixture.t.Helper()
+	loc, err := d.MarkerRange(label)
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: %v", err)
+		return nil
+	}
+	for _, diag := range d.Document.Diagnostics {
+		if diag.Range == loc && diag.Code == code {
+			return &DiagnosticExpectation{t: d.fixture.t, Diagnostic: diag}
+		}
+	}
+	d.fixture.t.Fatalf("fbtest: no diagnostic at label %q with code %q", label, code)
 	return nil
 }
 
