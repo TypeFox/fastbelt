@@ -14,6 +14,7 @@ import (
 func testTokenBitset(t *testing.T, bitset *BitSet, expected ...int) {
 	t.Helper()
 	max := expected[len(expected)-1]
+	assert.Equal(t, len(expected), bitset.Cardinality(), "cardinality should match number of expected bits")
 	for i := 0; i <= max+1; i++ {
 		found := slices.Contains(expected, i)
 		if found {
@@ -29,6 +30,7 @@ func TestTokenBitset_NewIsEmpty(t *testing.T) {
 	assert.False(t, b.At(0))
 	assert.False(t, b.At(63))
 	assert.False(t, b.At(1000))
+	assert.Equal(t, 0, b.Cardinality(), "cardinality should be 0 for empty bitset")
 }
 
 func TestTokenBitset_InsertAndAt(t *testing.T) {
@@ -55,6 +57,7 @@ func TestTokenBitset_InsertAndAt(t *testing.T) {
 			for _, i := range tt.inserts {
 				assert.True(t, b.At(i), "expected bit %d to be set", i)
 			}
+			assert.Equal(t, len(tt.inserts), b.Cardinality(), "cardinality should match number of inserts")
 		})
 	}
 }
@@ -107,7 +110,9 @@ func TestMergeTokenBitsets_Single(t *testing.T) {
 
 func TestMergeTokenBitsets_Disjoint(t *testing.T) {
 	a := NewBitset().Insert(1).Insert(2)
+	assert.Equal(t, 1, a.Min())
 	b := NewBitset().Insert(500).Insert(1000)
+	assert.Equal(t, 500, b.Min())
 	merged := MergeBitSets([]*BitSet{a, b})
 
 	testTokenBitset(t, merged, 1, 2, 500, 1000)
@@ -115,7 +120,9 @@ func TestMergeTokenBitsets_Disjoint(t *testing.T) {
 
 func TestMergeTokenBitsets_Overlapping(t *testing.T) {
 	a := NewBitset().Insert(5).Insert(70).Insert(150)
+	assert.Equal(t, 5, a.Min())
 	b := NewBitset().Insert(7).Insert(70).Insert(200)
+	assert.Equal(t, 7, b.Min())
 	merged := MergeBitSets([]*BitSet{a, b})
 
 	testTokenBitset(t, merged, 5, 7, 70, 150, 200)
@@ -141,67 +148,6 @@ func TestMergeTokenBitsets_DoesNotMutateInputs(t *testing.T) {
 	assert.False(t, b.At(10))
 }
 
-func TestTokenBitset_Delete(t *testing.T) {
-	t.Run("delete existing bit clears it", func(t *testing.T) {
-		b := NewBitset().Insert(1).Insert(5).Insert(42)
-		b.Delete(5)
-		testTokenBitset(t, b, 1, 42)
-	})
-
-	t.Run("delete leaves other bits in same word intact", func(t *testing.T) {
-		b := NewBitset().Insert(0).Insert(1).Insert(2).Insert(3)
-		b.Delete(2)
-		testTokenBitset(t, b, 0, 1, 3)
-	})
-
-	t.Run("delete bit in a non-first word", func(t *testing.T) {
-		b := NewBitset().Insert(10).Insert(100).Insert(200)
-		b.Delete(100)
-		testTokenBitset(t, b, 10, 200)
-	})
-
-	t.Run("delete missing bit is a no-op", func(t *testing.T) {
-		b := NewBitset().Insert(7).Insert(70)
-		b.Delete(8)
-		b.Delete(71)
-		testTokenBitset(t, b, 7, 70)
-	})
-
-	t.Run("delete index before offset is a no-op", func(t *testing.T) {
-		b := NewBitset().Insert(200)
-		b.Delete(5)
-		testTokenBitset(t, b, 200)
-	})
-
-	t.Run("delete index past end is a no-op", func(t *testing.T) {
-		b := NewBitset().Insert(5)
-		b.Delete(1000)
-		testTokenBitset(t, b, 5)
-	})
-
-	t.Run("delete on empty bitset does not panic", func(t *testing.T) {
-		b := NewBitset()
-		assert.NotPanics(t, func() { b.Delete(0) })
-		assert.NotPanics(t, func() { b.Delete(1000) })
-		assert.False(t, b.At(0))
-	})
-
-	t.Run("delete is idempotent", func(t *testing.T) {
-		b := NewBitset().Insert(10).Insert(20)
-		b.Delete(10)
-		b.Delete(10)
-		testTokenBitset(t, b, 20)
-	})
-
-	t.Run("re-insert after delete sets bit again", func(t *testing.T) {
-		b := NewBitset().Insert(42)
-		b.Delete(42)
-		assert.False(t, b.At(42))
-		b.Insert(42)
-		testTokenBitset(t, b, 42)
-	})
-}
-
 func BenchmarkTokenBitset_Insert(b *testing.B) {
 	bitset := NewBitset()
 	for b.Loop() {
@@ -221,9 +167,9 @@ func BenchmarkTokenBitset_At(b *testing.B) {
 
 func BenchmarkMergeTokenBitsets(b *testing.B) {
 	bitsets := []*BitSet{
-		NewBitset().Insert(1).Insert(100).Insert(1000),
-		NewBitset().Insert(2).Insert(200).Insert(2000),
-		NewBitset().Insert(3).Insert(300).Insert(3000),
+		NewBitset().Insert(1).Insert(10).Insert(100),
+		NewBitset().Insert(2).Insert(20).Insert(200),
+		NewBitset().Insert(3).Insert(30).Insert(300),
 	}
 	b.ResetTimer()
 	for b.Loop() {

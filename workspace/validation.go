@@ -51,7 +51,7 @@ func CreateParserDiagnostics(doc *core.Document) []*core.Diagnostic {
 	diagnostics := make([]*core.Diagnostic, 0, len(doc.ParserErrors))
 	for _, err := range doc.ParserErrors {
 		token := err.Token
-		if token == nil {
+		if token == nil || token.Type == core.EOF {
 			diagnostics = append(diagnostics, &core.Diagnostic{
 				Range:    core.TextRange{Start: end, End: end},
 				Severity: core.SeverityError,

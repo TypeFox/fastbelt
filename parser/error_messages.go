@@ -4,7 +4,11 @@
 
 package parser
 
-import core "typefox.dev/fastbelt"
+import (
+	"strings"
+
+	core "typefox.dev/fastbelt"
+)
 
 // ErrorMessageProvider produces the user-facing strings attached to parser
 // errors. Implementations can override individual messages to change wording
@@ -22,9 +26,11 @@ type ErrorMessageProvider interface {
 	// MissingToken is used when the parser synthesises a token of the
 	// expected type because it appears to be missing at the current position.
 	MissingToken(expected *core.TokenType, found *core.Token) string
-	// NoViableAlternative is used when the parser cannot decide between multiple alternatives.
-	// TODO: This needs a more complex signature, but this depends on the LL(*) implementation.
-	NoViableAlternative(found *core.Token) string
+	// NoViableAlternative is used when the parser cannot decide between multiple
+	// alternatives. The failure carries the divergence token (where input
+	// dead-ended) and, when adaptive prediction produced it, the set of token
+	// types that would have allowed prediction to continue.
+	NoViableAlternative(failure *PredictionFailure) string
 }
 
 // DefaultErrorMessageProvider produces English diagnostic messages. It is the
@@ -51,8 +57,30 @@ func (DefaultErrorMessageProvider) MissingToken(expected *core.TokenType, found 
 	return "Missing '" + expected.Name + "', got '" + tokenImage(found) + "'."
 }
 
-func (DefaultErrorMessageProvider) NoViableAlternative(found *core.Token) string {
-	return "No viable alternative at input '" + tokenImage(found) + "'."
+func (DefaultErrorMessageProvider) NoViableAlternative(failure *PredictionFailure) string {
+	var found *core.Token
+	if failure != nil {
+		found = failure.Token
+	}
+	if failure == nil || len(failure.Expected) == 0 {
+		return "No viable alternative at input '" + tokenImage(found) + "'."
+	}
+	return "No viable alternative at input '" + tokenImage(found) + "', expected one of: " + joinExpected(failure.Expected) + "."
+}
+
+// joinExpected renders expected token types as a comma-separated list of quoted
+// names, e.g. "'A', 'B'".
+func joinExpected(expected []*core.TokenType) string {
+	var b strings.Builder
+	for i, tt := range expected {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteByte('\'')
+		b.WriteString(tt.Name)
+		b.WriteByte('\'')
+	}
+	return b.String()
 }
 
 func tokenImage(t *core.Token) string {

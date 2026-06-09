@@ -45,6 +45,7 @@ type ParserState struct {
 	followStates      []int // stack of atn.States array indices for follow-set computation
 	recovery          ErrorRecoveryStrategy
 	messages          ErrorMessageProvider
+	sim               *parserATNSimulator // lazily created adaptive (ALL(*)) predictor
 }
 
 func (p *ParserState) ATN() *RuntimeATN {
@@ -66,6 +67,9 @@ func (p *ParserState) Errors() []*core.ParserError {
 }
 
 func (p *ParserState) AppendError(msg string, token *core.Token) {
+	if p.ErrorMode != ErrorModeNone {
+		return
+	}
 	p.errors = append(p.errors, core.NewParserError(msg, token))
 	p.ErrorMode = ErrorModeFail
 }
@@ -93,9 +97,14 @@ func (p *ParserState) ReportMatch() {
 	p.ErrorRecoveryMode = false
 }
 
-type LookaheadPath []*core.TokenType
-type LookaheadOption []LookaheadPath
-type LLkLookahead []LookaheadOption
+// LL1Lookahead is an optimized LL(1) lookahead table. Types holds the
+// discriminating token types for error reporting. Lookup is indexed by
+// TokenType.Id; a value >= 1 is the 1-based alternative to take, 0 means
+// no alternative expects that token.
+type LL1Lookahead struct {
+	Types  []*core.TokenType
+	Lookup []int
+}
 
 func NewParserState(tokens []core.Token, atn *RuntimeATN, recovery ErrorRecoveryStrategy, messages ErrorMessageProvider) *ParserState {
 	if atn == nil {
@@ -115,26 +124,11 @@ func NewParserState(tokens []core.Token, atn *RuntimeATN, recovery ErrorRecovery
 }
 
 // LA returns the token at the given lookahead offset.
-// Returns nil if the offset is out of bounds or if the parser is currently in error mode.
+// Returns a pointer to [core.EOFToken] if the offset is out of bounds.
 func (p *ParserState) LA(offset int) *core.Token {
-	// Test for ErrorMode first
-	// prevents LA from returning real tokens while unwinding after an error,
-	// which would cause infinite loops in guards.
-	// Also, enables an optimization for the common EOF case: once LA returns nil, the parser
-	// can short-circuit any remaining work in the current rule.
-	// This circumvents the need for goto cleanup patterns in the generated code.
-	if p.ErrorMode != ErrorModeNone {
-		return nil
-	}
-	return p.LARaw(offset)
-}
-
-// LARaw returns the token at offset without checking inError.
-// Only used inside recovery strategy methods that must see real tokens after an error.
-func (p *ParserState) LARaw(offset int) *core.Token {
 	pos := p.Index + offset - 1
 	if pos < 0 || pos >= p.Length {
-		return nil
+		return &core.EOFToken
 	}
 	return &p.Tokens[pos]
 }
@@ -144,11 +138,11 @@ func (p *ParserState) Consume(tokenType *core.TokenType) *core.Token {
 		return nil
 	}
 	current := p.LA(1)
-	if current == nil {
-		p.AppendError(p.messages.UnexpectedEndOfInput(tokenType), nil)
-		return nil
-	}
 	if !tokenType.Matches(current.Type) {
+		if current.Type == core.EOF {
+			p.AppendError(p.messages.UnexpectedEndOfInput(tokenType), current)
+			return nil
+		}
 		recovered, ok := p.recovery.RecoverInline(p, tokenType)
 		if ok {
 			return recovered
@@ -161,20 +155,94 @@ func (p *ParserState) Consume(tokenType *core.TokenType) *core.Token {
 	return current
 }
 
-func (p *ParserState) Lookahead(value LLkLookahead) int {
-	for i, option := range value {
-	outer:
-		for _, path := range option {
-			for j, tokenType := range path {
-				la := p.LA(j + 1)
-				if la == nil || !tokenType.Matches(la.Type) {
-					continue outer
-				}
-			}
-			return i
+type ParserLookahead interface {
+	PredictionMode() PredictionMode
+	SetPredictionMode(mode PredictionMode)
+}
+
+type DefaultParserLookahead struct {
+	predictionMode PredictionMode
+}
+
+// PredictionMode returns the current prediction mode. See [PredictionMode] for more details.
+func (l *DefaultParserLookahead) PredictionMode() PredictionMode {
+	return l.predictionMode
+}
+
+// SetPredictionMode sets the prediction mode. See [PredictionMode] for more details.
+// Setting the mode will affect all adaptive lookahead decisions performed by the parser.
+// When switching to [PredictionModeLL], it might be beneficial to override the languages'
+// parser lookahead service with a custom implementation that only applies this mode to certain
+// decisions, to avoid the performance cost of full-context prediction where it is not needed.
+func (l *DefaultParserLookahead) SetPredictionMode(mode PredictionMode) {
+	l.predictionMode = mode
+}
+
+// PredictionFailure describes why an alternatives decision could not be
+// resolved. It is self-contained so it can be handed straight to
+// ErrorMessageProvider.NoViableAlternative without further parser access: Token
+// is the divergence point (where input dead-ended, used as the error position),
+// and Expected lists the token types that would have allowed prediction to
+// continue. Expected may be empty (e.g. for the static Lookahead path or an
+// error-mode bail), in which case the message falls back to its generic form.
+type PredictionFailure struct {
+	Token    *core.Token
+	Expected []*core.TokenType
+}
+
+// AdaptivePredict resolves the decision at the given decision index using
+// ALL(*) prediction over the ATN, returning the predicted 0-based
+// alternative (usable directly as a generated switch-case label) or -1 if no
+// alternative is viable. The second result is non-nil exactly when the
+// alternative is -1, carrying the divergence token and expected-token set for
+// the NoViableAlternative diagnostic. Generated code emits this for decisions
+// that a single lookahead token cannot disambiguate; LL(1)-unique decisions keep
+// the cheaper Lookahead path.
+//
+// Prediction is non-consuming and must not run while unwinding after an error:
+// LAId returns -1 in error mode, which the predictor would otherwise mistake
+// for EOF, so we bail out to the no-viable sentinel (the generated switch then
+// takes its default arm, exactly as Lookahead would).
+func (p *ParserState) AdaptivePredict(decision int, mode PredictionMode) (int, *PredictionFailure) {
+	if p.ErrorMode != ErrorModeNone {
+		return -1, &PredictionFailure{Token: p.LA(1)}
+	}
+	if p.sim == nil {
+		p.sim = newParserATNSimulator(p.atn, p)
+	}
+	return p.sim.adaptivePredict(decision, mode, p.initialPredictionContext(mode))
+}
+
+// initialPredictionContext converts the parser's real call stack (followStates,
+// which are atn.States array indices pushed by EnterRule) into the
+// PredictionContext chain used to seed full-context LL prediction.
+func (p *ParserState) initialPredictionContext(mode PredictionMode) *predictionContext {
+	ctx := emptyPredictionContext()
+	if mode == PredictionModeLL {
+		// Only include the full context if we're in full-context LL mode
+		for _, followIdx := range p.followStates {
+			ctx = singletonPredictionContext(ctx, followIdx)
 		}
 	}
-	return -1
+	return ctx
+}
+
+// Lookahead resolves a decision using a pre-built LL(1) lookup table in O(1),
+// returning the matching 0-based alternative or -1 if none matches.
+func (p *ParserState) Lookahead(value LL1Lookahead) (int, *PredictionFailure) {
+	if p.ErrorMode != ErrorModeNone {
+		return -1, &PredictionFailure{Token: p.LA(1)}
+	}
+	la := p.LA(1)
+	id := la.TypeId
+	if id < len(value.Lookup) {
+		// Note: generated lookup tables are 1-based to simplify code generation.
+		// That way, 0 (default value) can simply mean "no match"
+		if alt := value.Lookup[id]; alt >= 1 {
+			return alt - 1, nil
+		}
+	}
+	return -1, &PredictionFailure{Token: la, Expected: value.Types}
 }
 
 // EnterRule pushes a follow-state index onto the stack.

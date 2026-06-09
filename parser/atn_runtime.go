@@ -182,6 +182,11 @@ type RuntimeATN struct {
 	stateIdxCache map[*RuntimeATNState]int // pointer -> array index
 
 	nextTokensCache []*collections.BitSet // stateIdx -> bitset indexed by TokenType.Id
+
+	// decisionToDFA holds one lazily-populated DFA per decision (indexed by
+	// RuntimeATNState.Decision). It is the shared, cross-parse cache used by the
+	// adaptive (ALL(*)) predictor; each DFA guards its own mutation.
+	decisionToDFA []*dfa
 }
 
 func NewRuntimeATN(states []*RuntimeATNState, decisionStates []*RuntimeATNState, decisionMap []*RuntimeATNState) *RuntimeATN {
@@ -198,6 +203,14 @@ func NewRuntimeATN(states []*RuntimeATNState, decisionStates []*RuntimeATNState,
 func (atn *RuntimeATN) Init() {
 	atn.buildIdxCache()
 	atn.buildNextTokensCache()
+	atn.buildDecisionToDFA()
+}
+
+func (atn *RuntimeATN) buildDecisionToDFA() {
+	atn.decisionToDFA = make([]*dfa, len(atn.DecisionStates))
+	for i, ds := range atn.DecisionStates {
+		atn.decisionToDFA[i] = newDFA(i, ds)
+	}
 }
 
 func (atn *RuntimeATN) buildIdxCache() {

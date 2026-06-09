@@ -21,6 +21,9 @@ func SetupGeneratedServices(sc *service.Container) {
 	if !service.Has[StatemachineModelReferencesConstructor](sc) {
 		service.Put(sc, NewDefaultStatemachineModelReferencesConstructor(sc))
 	}
+	if !service.Has[StatemachineModelParserLookahead](sc) {
+		service.Put(sc, NewDefaultStatemachineModelParserLookahead())
+	}
 	if !service.Has[lexer.Lexer](sc) {
 		service.Put(sc, NewLexer())
 	}

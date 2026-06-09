@@ -10,10 +10,11 @@ import (
 )
 
 type CompletionParser struct {
-	state *parser.ParserState
-	cp    *parser.CompletionParserState
-	sc    *service.Container
-	atn   func() *parser.RuntimeATN
+	state     *parser.ParserState
+	cp        *parser.CompletionParserState
+	sc        *service.Container
+	atn       func() *parser.RuntimeATN
+	lookahead token_groupsParserLookahead
 }
 
 func NewCompletionParser(sc *service.Container) *CompletionParser {
@@ -30,7 +31,8 @@ func NewCompletionParser(sc *service.Container) *CompletionParser {
 func (p *CompletionParser) Parse(tokens []core.Token) *parser.CompletionParseResult {
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
-	cp := &CompletionParser{sc: p.sc, atn: p.atn}
+	lookahead := service.MustGet[token_groupsParserLookahead](p.sc)
+	cp := &CompletionParser{sc: p.sc, atn: p.atn, lookahead: lookahead}
 	cp.state = parser.NewParserState(tokens, p.atn(), recovery, messages)
 	cp.cp = parser.NewCompletionParserState(cp.state)
 	cp.ParseModel()
@@ -42,7 +44,7 @@ func (p *CompletionParser) ParseModel() {
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Item")
-		switch p.state.Lookahead(ModelItemLookaheadOr0) {
+		switch prediction, _ := p.lookahead.ModelItemAlternatives(p.state); prediction {
 		case 0:
 			p.state.EnterRule(Model__Basic_1)
 			p.ParseA()
@@ -97,7 +99,7 @@ func (p *CompletionParser) ParseB() {
 	}
 	{
 		p.cp.MarkAssignment("Value")
-		switch p.state.Lookahead(BValueLookaheadOr1) {
+		switch prediction, _ := p.lookahead.BValueAlternatives(p.state); prediction {
 		case 0:
 			p.state.Consume(Token_Identifier)
 		case 1:
@@ -127,9 +129,9 @@ func (p *CompletionParser) ParseD() {
 		p.state.Consume(Keyword_d)
 	}
 	{
-		p.cp.RecordSnapshot(D__Basic_0)
-		p.state.Sync(D__Basic_0)
-		if p.state.Lookahead(DLookahead0) == 0 {
+		p.cp.RecordSnapshot(D__Basic_2)
+		p.state.Sync(D__Basic_2)
+		if p.lookahead.DValueOptional(p.state) {
 			p.cp.MarkAssignment("Value")
 			p.state.Consume(Token_Identifier)
 			p.cp.ClearAssignment()
