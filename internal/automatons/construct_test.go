@@ -10,40 +10,52 @@ var kit = NewConstructionKit()
 
 func TestConstruct_Consume(t *testing.T) {
 	tests := []struct {
-		name        string
-		charset     *RuneSet
-		testRune    rune
-		expectMatch bool
+		name         string
+		charset      *RuneSet
+		testRune     rune
+		expectMatch  bool
+		expectCount  int
+		expectAccept int
 	}{
 		{
-			name:        "single character",
-			charset:     NewRuneSetRange('a', 'a'),
-			testRune:    'a',
-			expectMatch: true,
+			name:         "single character",
+			charset:      NewRuneSetRange('a', 'a'),
+			testRune:     'a',
+			expectMatch:  true,
+			expectCount:  3,
+			expectAccept: 1,
 		},
 		{
-			name:        "single character - no match",
-			charset:     NewRuneSetRange('a', 'a'),
-			testRune:    'b',
-			expectMatch: false,
+			name:         "single character - no match",
+			charset:      NewRuneSetRange('a', 'a'),
+			testRune:     'b',
+			expectMatch:  false,
+			expectCount:  3,
+			expectAccept: 1,
 		},
 		{
-			name:        "character range",
-			charset:     NewRuneSetRange('a', 'z'),
-			testRune:    'm',
-			expectMatch: true,
+			name:         "character range",
+			charset:      NewRuneSetRange('a', 'z'),
+			testRune:     'm',
+			expectMatch:  true,
+			expectCount:  3,
+			expectAccept: 1,
 		},
 		{
-			name:        "character range - outside range",
-			charset:     NewRuneSetRange('a', 'z'),
-			testRune:    'A',
-			expectMatch: false,
+			name:         "character range - outside range",
+			charset:      NewRuneSetRange('a', 'z'),
+			testRune:     'A',
+			expectMatch:  false,
+			expectCount:  3,
+			expectAccept: 1,
 		},
 		{
-			name:        "empty charset",
-			charset:     NewRuneSetEmpty(),
-			testRune:    'a',
-			expectMatch: false,
+			name:         "empty charset",
+			charset:      NewRuneSetEmpty(),
+			testRune:     'a',
+			expectMatch:  false,
+			expectCount:  1,
+			expectAccept: 0,
 		},
 	}
 
@@ -52,15 +64,15 @@ func TestConstruct_Consume(t *testing.T) {
 			nfa := kit.Consume(tt.charset)
 
 			// Test basic properties
-			assert.GreaterOrEqual(t, nfa.StateCount, 2)
-			assert.Equal(t, 1, len(nfa.AcceptingStates))
+			assert.GreaterOrEqual(t, nfa.StateCount, tt.expectCount)
+			assert.Equal(t, tt.expectAccept, len(nfa.AcceptingStates))
 
 			// Test character matching by checking transitions
 			startState := nfa.StartState
 			transitions := nfa.TransitionsBySource[startState]
 			assert.NotNil(t, transitions)
 
-			hasMatch := transitions.Contains(tt.testRune)
+			hasMatch := transitions.Contains(tt.testRune) && nfa.AcceptingStates[(*transitions.GetRuneValues(tt.testRune))[0]]
 			assert.Equal(t, tt.expectMatch, hasMatch)
 		})
 	}
@@ -320,4 +332,21 @@ func TestConstruct_ErrorHandling(t *testing.T) {
 		// Test Concat with valid automaton
 		kit.Concat(validNFA)
 	})
+}
+
+func TestConstruct_IntersectOnDisjointNFAs(t *testing.T) {
+	nfa1 := kit.Consume(NewRuneSetRune('a'))
+	nfa2 := kit.Consume(NewRuneSetRune('b'))
+	intersection := kit.Intersect(nfa1, nfa2)
+
+	assert.Equal(t, 1, intersection.StateCount)
+	assert.False(t, intersection.AcceptingStates[0])
+}
+
+func TestConstruct_ComplementOnSimpleNFA(t *testing.T) {
+	nfa := kit.Consume(NewRuneSetRune('a'))
+	notNFA := kit.Complement(nfa)
+
+	//1 start, 1 dead, 1 accepting
+	assert.Equal(t, 3, notNFA.StateCount)
 }

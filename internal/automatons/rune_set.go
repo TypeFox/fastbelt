@@ -253,11 +253,20 @@ func (set RuneSet) String() string {
 			}
 			first = false
 			if r.Start == r.End {
-				result += "[" + string(rune(r.Start)) + "]"
+				result += "[" + FormatRune(rune(r.Start)) + "]"
 			} else {
-				result += "[" + string(rune(r.Start)) + "-" + string(rune(r.End)) + "]"
+				result += "[" + FormatRune(rune(r.Start)) + "-" + FormatRune(rune(r.End)) + "]"
 			}
 		}
 	}
 	return result
+}
+
+func (set RuneSet) FirstRune() rune {
+	for _, r := range set.Ranges {
+		if r.Includes {
+			return rune(r.Start)
+		}
+	}
+	return -1
 }

@@ -74,5 +74,35 @@ func (nfa *NFA) Determinize() *NFA {
 		builder.AddTransitionForRuneRange(sourceState, targetState, &trans.Range)
 	}
 
+	// Complete the DFA: add a dead/trap state (lazily) and route every state's
+	// uncovered input characters to it so the transition function is total.
+	// The dead state is non-accepting, which is what complement relies on.
+	dead := -1
+	coveredByState := make(map[int]*RuneSet)
+	for _, trans := range transitions {
+		sourceState := dfaStateMapping[trans.Source]
+		prev := coveredByState[sourceState]
+		if prev == nil {
+			prev = NewRuneSetEmpty()
+		}
+		ch := NewRuneSetRange(trans.Range.Start, trans.Range.End)
+		coveredByState[sourceState] = Union(prev, ch)
+	}
+
+	for _, newState := range dfaStateMapping {
+		covered := coveredByState[newState]
+		if covered == nil {
+			covered = NewRuneSetEmpty()
+		}
+		gap := Negate(covered)
+		if gap.Length() > 0 {
+			if dead == -1 {
+				dead = builder.AddState()
+				builder.AddTransitionForRuneSet(dead, dead, NewRuneSetFull())
+			}
+			builder.AddTransitionForRuneSet(newState, dead, gap)
+		}
+	}
+
 	return builder.Build()
 }

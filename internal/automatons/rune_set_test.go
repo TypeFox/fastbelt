@@ -324,7 +324,7 @@ func TestRuneSet_Coverage(t *testing.T) {
 				*NewRuneRange(19, 20, true),
 			},
 		}
-		expected := "[" + string(rune(10)) + "-" + string(rune(14)) + "],[" + string(rune(19)) + "-" + string(rune(20)) + "]"
+		expected := "[" + FormatRune(rune(10)) + "-" + FormatRune(rune(14)) + "],[" + FormatRune(rune(19)) + "-" + FormatRune(rune(20)) + "]"
 		assert.Equal(t, expected, runeSet.String())
 	})
 
@@ -403,6 +403,24 @@ func TestRuneSet_Coverage(t *testing.T) {
 			expectedLength := int(MaxRune) + 1
 			assert.Equal(t, expectedLength, runeSet.Length())
 			assert.Equal(t, true, runeSet.IncludesRange(0, MaxRune))
+		})
+	})
+
+	t.Run("RuneSet_FirstRune", func(t *testing.T) {
+		t.Run("Simple", func(t *testing.T) {
+			runeSet := &RuneSet{
+				Ranges: []RuneRange{
+					*NewRuneRange(0, 14, false),
+					*NewRuneRange(15, 18, true),
+					*NewRuneRange(19, MaxRune, false),
+				},
+			}
+			assert.Equal(t, rune(15), runeSet.FirstRune())
+		})
+
+		t.Run("Empty", func(t *testing.T) {
+			runeSet := NewRuneSetEmpty()
+			assert.Equal(t, rune(-1), runeSet.FirstRune())
 		})
 	})
 }

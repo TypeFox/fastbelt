@@ -62,12 +62,24 @@ func (r *RegexpImpl) FindStringIndex(s string) (loc []int) {
 func (r *RegexpImpl) GetStartChars() *automatons.RuneSet {
 	startCharsSet := automatons.NewRuneSetEmpty()
 	startState := r.dfa.StartState
+	reachabilities := r.dfa.ComputeAcceptanceReachability()
 	transitions := r.dfa.TransitionsBySource[startState]
 	if transitions == nil {
 		return startCharsSet
 	}
 	for transition := range transitions.All() {
 		if !transition.Range.Includes {
+			continue
+		}
+		acceptedStateReachable := false
+		for _, target := range transition.Values {
+			if !reachabilities[target] {
+				continue
+			}
+			acceptedStateReachable = true
+			break
+		}
+		if !acceptedStateReachable {
 			continue
 		}
 		//only save lowest byte
