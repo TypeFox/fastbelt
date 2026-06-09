@@ -107,7 +107,9 @@ func (nfa NFA) ComputeAcceptanceReachability() map[int]bool {
 
 	canReach := make(map[int]bool)
 	queue := []int{}
-
+	for node := 0; node < nfa.StateCount; node++ {
+		canReach[node] = false
+	}
 	for node := range nfa.AcceptingStates {
 		canReach[node] = true
 		queue = append(queue, node)

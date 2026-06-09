@@ -71,7 +71,8 @@ func TestComputeAcceptanceReachability_ConstructedDFA(t *testing.T) {
 	actual := aOrAB.ComputeAcceptanceReachability()
 	expected := map[int]bool{
 		0: true,
-		//1: false, //unreachable, there is only one because the consstruction kit makes DFA-like NFAs which have only one dead state
+		//unreachable, there is only one because the consstruction kit makes DFA-like NFAs which have only one dead state
+		1: false,
 		2: true,
 		3: true,
 	}
@@ -84,6 +85,8 @@ func TestComputeAcceptanceReachability_HandmadeNFA(t *testing.T) {
 	expected := map[int]bool{
 		0: true,
 		1: true,
+		2: false,
+		3: false,
 	}
 	require.Equal(t, expected, actual)
 }
