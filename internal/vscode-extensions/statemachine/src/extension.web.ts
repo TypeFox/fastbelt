@@ -36,7 +36,10 @@ async function startLanguageClient(context: vscode.ExtensionContext): Promise<La
     worker.postMessage({ __init: true, wasm }, [wasm.buffer]);
 
     const clientOptions: LanguageClientOptions = {
-        documentSelector: [{ language: 'statemachine' }]
+        documentSelector: [{ language: 'statemachine' }],
+        outputChannel: vscode.window.createOutputChannel(
+            'Statemachine Language Server'
+        )
     };
     const client = new LanguageClient(
         'statemachine',
