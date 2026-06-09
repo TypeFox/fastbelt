@@ -52,8 +52,10 @@ func (nfa NFA) DotFile() string {
 	result += fmt.Sprintf("  start -> %d;\n", nfa.StartState)
 
 	// Accepting states
-	for state := range nfa.AcceptingStates {
-		result += fmt.Sprintf("  %d [shape=doublecircle];\n", state)
+	for state := 0; state < nfa.StateCount; state++ {
+		if nfa.AcceptingStates[state] {
+			result += fmt.Sprintf("  %d [shape=doublecircle];\n", state)
+		}
 	}
 
 	// Transitions
