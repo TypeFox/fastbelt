@@ -1,81 +1,81 @@
 grammar Arithmetics;
 
 interface Module {
-    name string
-    statements []Statement
+    Name string
+    Statements []Statement
 }
 
 interface Statement{}
 
 interface AbstractDefinition {
-    name string
+    Name string
 }
 
 interface Definition extends AbstractDefinition, Statement {
-    args []DeclaredParameter
-    expr Expression
+    Args []DeclaredParameter
+    Expression Expression
 }
 
 interface DeclaredParameter extends AbstractDefinition {
 }
 
 interface Evaluation extends Statement {
-    expression Expression
+    Expression Expression
 }
 
 interface Expression {}
 
 interface BinaryExpression extends Expression {
-    left Expression
-    operator string //"%" | "*" | "+" | "-" | "/" | "^"
-    right Expression
+    Left Expression
+    Operator string //"%" | "*" | "+" | "-" | "/" | "^"
+    Right Expression
 }
 
 interface FunctionCall extends Expression {
-    args []Expression
-    func *AbstractDefinition
+    Args []Expression
+    Callable *AbstractDefinition
 }
 
 interface NumberLiteral extends Expression {
-    value string
+    Value string
 }
 
 Module returns Module:
-    "module" name=ID
-    (statements+=Statement)*;
+    "module" Name=ID
+    Statements+=Statement*;
 
 Statement returns Statement:
     Definition | Evaluation;
 
 Definition:
-    "def" name=ID ("(" args+=DeclaredParameter ("," args+=DeclaredParameter)* ")")?
-    ":" expr=Expression ";";
+    "def" Name=ID ("(" Args+=DeclaredParameter ("," Args+=DeclaredParameter)* ")")?
+    ":" Expression=Expression ";";
 
 DeclaredParameter:
-    name=ID;
+    Name=ID;
 
 Evaluation:
-    expression=Expression ";";
+    Expression=Expression ";";
 
 Expression:
     Addition;
 
 Addition returns Expression:
-    Multiplication ({BinaryExpression.left=current} operator=("+" | "-") right=Multiplication)*;
+    Multiplication ({BinaryExpression.Left=current} Operator=("+" | "-") Right=Multiplication)*;
 
 Multiplication returns Expression:
-    Exponentiation ({BinaryExpression.left=current} operator=("*" | "/") right=Exponentiation)*;
+    Exponentiation ({BinaryExpression.Left=current} Operator=("*" | "/") Right=Exponentiation)*;
 
 Exponentiation returns Expression:
-    Modulo ({BinaryExpression.left=current} operator="^" right=Modulo)*;
+    Modulo ({BinaryExpression.Left=current} Operator="^" Right=Modulo)*;
 
 Modulo returns Expression:
-    PrimaryExpression ({BinaryExpression.left=current} operator="%" right=PrimaryExpression)*;
+    PrimaryExpression ({BinaryExpression.Left=current} Operator="%" Right=PrimaryExpression)*;
 
 PrimaryExpression returns Expression:
     "(" Expression ")" |
-    { NumberLiteral } value=NUMBER |
-    {FunctionCall} func=[AbstractDefinition:ID] ("(" args+=Expression ("," args+=Expression)* ")")?;
+    { NumberLiteral } Value=NUMBER |
+    {FunctionCall} Callable=[AbstractDefinition:ID] ("(" Args+=Expression ("," Args+=Expression)* ")")?;
 
 token ID: /[_a-zA-Z][\w_]*/;
 token NUMBER: /[0-9]+(\.[0-9]*)?/;

@@ -3,105 +3,104 @@
 package arithmetics
 
 import (
-    core "typefox.dev/fastbelt"
+	core "typefox.dev/fastbelt"
 )
 
 type Module interface {
-    core.AstNode
+	core.AstNode
 
-    IsModule()
-    name() string
-    nameToken() *core.Token
-    Setname(value *core.Token)
-    statements() []Statement
-    SetstatementsItem(item Statement)
+	IsModule()
+	Name() string
+	NameToken() *core.Token
+	SetName(value *core.Token)
+	Statements() []Statement
+	SetStatementsItem(item Statement)
 }
 
 func NewModule() Module {
-    return &ModuleImpl{
-        AstNodeBase: core.NewAstNode(),
-        ModuleData: NewModuleData(),
-    }
+	return &ModuleImpl{
+		AstNodeBase: core.NewAstNode(),
+		ModuleData:  NewModuleData(),
+	}
 }
 
 type ModuleData struct {
-    name *core.Token
-    statements []Statement
+	name       *core.Token
+	statements []Statement
 }
 
 func NewModuleData() ModuleData {
-    return ModuleData{
-        statements: []Statement{},
-    }
+	return ModuleData{
+		statements: []Statement{},
+	}
 }
 
 func (i *ModuleData) IsModule() {}
 
 func (i *ModuleData) ForEachNode(fn func(core.AstNode)) {
-    for _, item := range i.statements {
-        fn(item)
-    }
+	for _, item := range i.statements {
+		fn(item)
+	}
 }
 
 func (i *ModuleData) ForEachReference(fn func(core.UntypedReference)) {
 }
 
-func (i *ModuleData) name() string {
-    if i != nil && i.name != nil {
-        return i.name.Image
-    } else {
-        return ""
-    }
+func (i *ModuleData) Name() string {
+	if i != nil && i.name != nil {
+		return i.name.Image
+	} else {
+		return ""
+	}
 }
 
-func (i *ModuleData) nameToken() *core.Token {
-    return i.name
+func (i *ModuleData) NameToken() *core.Token {
+	return i.name
 }
 
-func (i *ModuleData) Setname(value *core.Token) {
-    i.name = value
+func (i *ModuleData) SetName(value *core.Token) {
+	i.name = value
 }
 
-func (i *ModuleData) statements() []Statement {
-    return i.statements
+func (i *ModuleData) Statements() []Statement {
+	return i.statements
 }
 
-func (i *ModuleData) SetstatementsItem(item Statement) {
-    i.statements = append(i.statements, item)
+func (i *ModuleData) SetStatementsItem(item Statement) {
+	i.statements = append(i.statements, item)
 }
 
 type ModuleImpl struct {
-    core.AstNodeBase
-    ModuleData
+	core.AstNodeBase
+	ModuleData
 }
 
 func (i *ModuleImpl) ForEachNode(fn func(core.AstNode)) {
-    i.ModuleData.ForEachNode(fn)
+	i.ModuleData.ForEachNode(fn)
 }
 
 func (i *ModuleImpl) ForEachReference(fn func(core.UntypedReference)) {
-    i.ModuleData.ForEachReference(fn)
+	i.ModuleData.ForEachReference(fn)
 }
 
 type Statement interface {
-    core.AstNode
+	core.AstNode
 
-    IsStatement()
+	IsStatement()
 }
 
 func NewStatement() Statement {
-    return &StatementImpl{
-        AstNodeBase: core.NewAstNode(),
-        StatementData: NewStatementData(),
-    }
+	return &StatementImpl{
+		AstNodeBase:   core.NewAstNode(),
+		StatementData: NewStatementData(),
+	}
 }
 
 type StatementData struct {
 }
 
 func NewStatementData() StatementData {
-    return StatementData{
-    }
+	return StatementData{}
 }
 
 func (i *StatementData) IsStatement() {}
@@ -113,41 +112,40 @@ func (i *StatementData) ForEachReference(fn func(core.UntypedReference)) {
 }
 
 type StatementImpl struct {
-    core.AstNodeBase
-    StatementData
+	core.AstNodeBase
+	StatementData
 }
 
 func (i *StatementImpl) ForEachNode(fn func(core.AstNode)) {
-    i.StatementData.ForEachNode(fn)
+	i.StatementData.ForEachNode(fn)
 }
 
 func (i *StatementImpl) ForEachReference(fn func(core.UntypedReference)) {
-    i.StatementData.ForEachReference(fn)
+	i.StatementData.ForEachReference(fn)
 }
 
 type AbstractDefinition interface {
-    core.AstNode
+	core.AstNode
 
-    IsAbstractDefinition()
-    name() string
-    nameToken() *core.Token
-    Setname(value *core.Token)
+	IsAbstractDefinition()
+	Name() string
+	NameToken() *core.Token
+	SetName(value *core.Token)
 }
 
 func NewAbstractDefinition() AbstractDefinition {
-    return &AbstractDefinitionImpl{
-        AstNodeBase: core.NewAstNode(),
-        AbstractDefinitionData: NewAbstractDefinitionData(),
-    }
+	return &AbstractDefinitionImpl{
+		AstNodeBase:            core.NewAstNode(),
+		AbstractDefinitionData: NewAbstractDefinitionData(),
+	}
 }
 
 type AbstractDefinitionData struct {
-    name *core.Token
+	name *core.Token
 }
 
 func NewAbstractDefinitionData() AbstractDefinitionData {
-    return AbstractDefinitionData{
-    }
+	return AbstractDefinitionData{}
 }
 
 func (i *AbstractDefinitionData) IsAbstractDefinition() {}
@@ -158,141 +156,140 @@ func (i *AbstractDefinitionData) ForEachNode(fn func(core.AstNode)) {
 func (i *AbstractDefinitionData) ForEachReference(fn func(core.UntypedReference)) {
 }
 
-func (i *AbstractDefinitionData) name() string {
-    if i != nil && i.name != nil {
-        return i.name.Image
-    } else {
-        return ""
-    }
+func (i *AbstractDefinitionData) Name() string {
+	if i != nil && i.name != nil {
+		return i.name.Image
+	} else {
+		return ""
+	}
 }
 
-func (i *AbstractDefinitionData) nameToken() *core.Token {
-    return i.name
+func (i *AbstractDefinitionData) NameToken() *core.Token {
+	return i.name
 }
 
-func (i *AbstractDefinitionData) Setname(value *core.Token) {
-    i.name = value
+func (i *AbstractDefinitionData) SetName(value *core.Token) {
+	i.name = value
 }
 
 type AbstractDefinitionImpl struct {
-    core.AstNodeBase
-    AbstractDefinitionData
+	core.AstNodeBase
+	AbstractDefinitionData
 }
 
 func (i *AbstractDefinitionImpl) ForEachNode(fn func(core.AstNode)) {
-    i.AbstractDefinitionData.ForEachNode(fn)
+	i.AbstractDefinitionData.ForEachNode(fn)
 }
 
 func (i *AbstractDefinitionImpl) ForEachReference(fn func(core.UntypedReference)) {
-    i.AbstractDefinitionData.ForEachReference(fn)
+	i.AbstractDefinitionData.ForEachReference(fn)
 }
 
 type Definition interface {
-    core.AstNode
-    AbstractDefinition
-    Statement
+	core.AstNode
+	AbstractDefinition
+	Statement
 
-    IsDefinition()
-    args() []DeclaredParameter
-    SetargsItem(item DeclaredParameter)
-    expr() Expression
-    Setexpr(value Expression)
+	IsDefinition()
+	Args() []DeclaredParameter
+	SetArgsItem(item DeclaredParameter)
+	Expression() Expression
+	SetExpression(value Expression)
 }
 
 func NewDefinition() Definition {
-    return &DefinitionImpl{
-        AstNodeBase: core.NewAstNode(),
-        AbstractDefinitionData: NewAbstractDefinitionData(),
-        StatementData: NewStatementData(),
-        DefinitionData: NewDefinitionData(),
-    }
+	return &DefinitionImpl{
+		AstNodeBase:            core.NewAstNode(),
+		AbstractDefinitionData: NewAbstractDefinitionData(),
+		StatementData:          NewStatementData(),
+		DefinitionData:         NewDefinitionData(),
+	}
 }
 
 type DefinitionData struct {
-    args []DeclaredParameter
-    expr Expression
+	args       []DeclaredParameter
+	expression Expression
 }
 
 func NewDefinitionData() DefinitionData {
-    return DefinitionData{
-        args: []DeclaredParameter{},
-    }
+	return DefinitionData{
+		args: []DeclaredParameter{},
+	}
 }
 
 func (i *DefinitionData) IsDefinition() {}
 
 func (i *DefinitionData) ForEachNode(fn func(core.AstNode)) {
-    for _, item := range i.args {
-        fn(item)
-    }
-    if i.expr != nil {
-        fn(i.expr)
-    }
+	for _, item := range i.args {
+		fn(item)
+	}
+	if i.expression != nil {
+		fn(i.expression)
+	}
 }
 
 func (i *DefinitionData) ForEachReference(fn func(core.UntypedReference)) {
 }
 
-func (i *DefinitionData) args() []DeclaredParameter {
-    return i.args
+func (i *DefinitionData) Args() []DeclaredParameter {
+	return i.args
 }
 
-func (i *DefinitionData) SetargsItem(item DeclaredParameter) {
-    i.args = append(i.args, item)
+func (i *DefinitionData) SetArgsItem(item DeclaredParameter) {
+	i.args = append(i.args, item)
 }
 
-func (i *DefinitionData) expr() Expression {
-    if i != nil && i.expr != nil {
-        return i.expr
-    } else {
-        return nil
-    }
+func (i *DefinitionData) Expression() Expression {
+	if i != nil && i.expression != nil {
+		return i.expression
+	} else {
+		return nil
+	}
 }
 
-func (i *DefinitionData) Setexpr(value Expression) {
-    i.expr = value
+func (i *DefinitionData) SetExpression(value Expression) {
+	i.expression = value
 }
 
 type DefinitionImpl struct {
-    core.AstNodeBase
-    AbstractDefinitionData
-    StatementData
-    DefinitionData
+	core.AstNodeBase
+	AbstractDefinitionData
+	StatementData
+	DefinitionData
 }
 
 func (i *DefinitionImpl) ForEachNode(fn func(core.AstNode)) {
-    i.AbstractDefinitionData.ForEachNode(fn)
-    i.StatementData.ForEachNode(fn)
-    i.DefinitionData.ForEachNode(fn)
+	i.AbstractDefinitionData.ForEachNode(fn)
+	i.StatementData.ForEachNode(fn)
+	i.DefinitionData.ForEachNode(fn)
 }
 
 func (i *DefinitionImpl) ForEachReference(fn func(core.UntypedReference)) {
-    i.AbstractDefinitionData.ForEachReference(fn)
-    i.StatementData.ForEachReference(fn)
-    i.DefinitionData.ForEachReference(fn)
+	i.AbstractDefinitionData.ForEachReference(fn)
+	i.StatementData.ForEachReference(fn)
+	i.DefinitionData.ForEachReference(fn)
 }
 
 type DeclaredParameter interface {
-    core.AstNode
-    AbstractDefinition
+	core.AstNode
+	AbstractDefinition
 
-    IsDeclaredParameter()
+	IsDeclaredParameter()
 }
 
 func NewDeclaredParameter() DeclaredParameter {
-    return &DeclaredParameterImpl{
-        AstNodeBase: core.NewAstNode(),
-        AbstractDefinitionData: NewAbstractDefinitionData(),
-        DeclaredParameterData: NewDeclaredParameterData(),
-    }
+	return &DeclaredParameterImpl{
+		AstNodeBase:            core.NewAstNode(),
+		AbstractDefinitionData: NewAbstractDefinitionData(),
+		DeclaredParameterData:  NewDeclaredParameterData(),
+	}
 }
 
 type DeclaredParameterData struct {
 }
 
 func NewDeclaredParameterData() DeclaredParameterData {
-    return DeclaredParameterData{
-    }
+	return DeclaredParameterData{}
 }
 
 func (i *DeclaredParameterData) IsDeclaredParameter() {}
@@ -304,105 +301,103 @@ func (i *DeclaredParameterData) ForEachReference(fn func(core.UntypedReference))
 }
 
 type DeclaredParameterImpl struct {
-    core.AstNodeBase
-    AbstractDefinitionData
-    DeclaredParameterData
+	core.AstNodeBase
+	AbstractDefinitionData
+	DeclaredParameterData
 }
 
 func (i *DeclaredParameterImpl) ForEachNode(fn func(core.AstNode)) {
-    i.AbstractDefinitionData.ForEachNode(fn)
-    i.DeclaredParameterData.ForEachNode(fn)
+	i.AbstractDefinitionData.ForEachNode(fn)
+	i.DeclaredParameterData.ForEachNode(fn)
 }
 
 func (i *DeclaredParameterImpl) ForEachReference(fn func(core.UntypedReference)) {
-    i.AbstractDefinitionData.ForEachReference(fn)
-    i.DeclaredParameterData.ForEachReference(fn)
+	i.AbstractDefinitionData.ForEachReference(fn)
+	i.DeclaredParameterData.ForEachReference(fn)
 }
 
 type Evaluation interface {
-    core.AstNode
-    Statement
+	core.AstNode
+	Statement
 
-    IsEvaluation()
-    expression() Expression
-    Setexpression(value Expression)
+	IsEvaluation()
+	Expression() Expression
+	SetExpression(value Expression)
 }
 
 func NewEvaluation() Evaluation {
-    return &EvaluationImpl{
-        AstNodeBase: core.NewAstNode(),
-        StatementData: NewStatementData(),
-        EvaluationData: NewEvaluationData(),
-    }
+	return &EvaluationImpl{
+		AstNodeBase:    core.NewAstNode(),
+		StatementData:  NewStatementData(),
+		EvaluationData: NewEvaluationData(),
+	}
 }
 
 type EvaluationData struct {
-    expression Expression
+	expression Expression
 }
 
 func NewEvaluationData() EvaluationData {
-    return EvaluationData{
-    }
+	return EvaluationData{}
 }
 
 func (i *EvaluationData) IsEvaluation() {}
 
 func (i *EvaluationData) ForEachNode(fn func(core.AstNode)) {
-    if i.expression != nil {
-        fn(i.expression)
-    }
+	if i.expression != nil {
+		fn(i.expression)
+	}
 }
 
 func (i *EvaluationData) ForEachReference(fn func(core.UntypedReference)) {
 }
 
-func (i *EvaluationData) expression() Expression {
-    if i != nil && i.expression != nil {
-        return i.expression
-    } else {
-        return nil
-    }
+func (i *EvaluationData) Expression() Expression {
+	if i != nil && i.expression != nil {
+		return i.expression
+	} else {
+		return nil
+	}
 }
 
-func (i *EvaluationData) Setexpression(value Expression) {
-    i.expression = value
+func (i *EvaluationData) SetExpression(value Expression) {
+	i.expression = value
 }
 
 type EvaluationImpl struct {
-    core.AstNodeBase
-    StatementData
-    EvaluationData
+	core.AstNodeBase
+	StatementData
+	EvaluationData
 }
 
 func (i *EvaluationImpl) ForEachNode(fn func(core.AstNode)) {
-    i.StatementData.ForEachNode(fn)
-    i.EvaluationData.ForEachNode(fn)
+	i.StatementData.ForEachNode(fn)
+	i.EvaluationData.ForEachNode(fn)
 }
 
 func (i *EvaluationImpl) ForEachReference(fn func(core.UntypedReference)) {
-    i.StatementData.ForEachReference(fn)
-    i.EvaluationData.ForEachReference(fn)
+	i.StatementData.ForEachReference(fn)
+	i.EvaluationData.ForEachReference(fn)
 }
 
 type Expression interface {
-    core.AstNode
+	core.AstNode
 
-    IsExpression()
+	IsExpression()
 }
 
 func NewExpression() Expression {
-    return &ExpressionImpl{
-        AstNodeBase: core.NewAstNode(),
-        ExpressionData: NewExpressionData(),
-    }
+	return &ExpressionImpl{
+		AstNodeBase:    core.NewAstNode(),
+		ExpressionData: NewExpressionData(),
+	}
 }
 
 type ExpressionData struct {
 }
 
 func NewExpressionData() ExpressionData {
-    return ExpressionData{
-    }
+	return ExpressionData{}
 }
 
 func (i *ExpressionData) IsExpression() {}
@@ -414,226 +409,224 @@ func (i *ExpressionData) ForEachReference(fn func(core.UntypedReference)) {
 }
 
 type ExpressionImpl struct {
-    core.AstNodeBase
-    ExpressionData
+	core.AstNodeBase
+	ExpressionData
 }
 
 func (i *ExpressionImpl) ForEachNode(fn func(core.AstNode)) {
-    i.ExpressionData.ForEachNode(fn)
+	i.ExpressionData.ForEachNode(fn)
 }
 
 func (i *ExpressionImpl) ForEachReference(fn func(core.UntypedReference)) {
-    i.ExpressionData.ForEachReference(fn)
+	i.ExpressionData.ForEachReference(fn)
 }
 
 type BinaryExpression interface {
-    core.AstNode
-    Expression
+	core.AstNode
+	Expression
 
-    IsBinaryExpression()
-    left() Expression
-    Setleft(value Expression)
-    operator() string
-    operatorToken() *core.Token
-    Setoperator(value *core.Token)
-    right() Expression
-    Setright(value Expression)
+	IsBinaryExpression()
+	Left() Expression
+	SetLeft(value Expression)
+	Operator() string
+	OperatorToken() *core.Token
+	SetOperator(value *core.Token)
+	Right() Expression
+	SetRight(value Expression)
 }
 
 func NewBinaryExpression() BinaryExpression {
-    return &BinaryExpressionImpl{
-        AstNodeBase: core.NewAstNode(),
-        ExpressionData: NewExpressionData(),
-        BinaryExpressionData: NewBinaryExpressionData(),
-    }
+	return &BinaryExpressionImpl{
+		AstNodeBase:          core.NewAstNode(),
+		ExpressionData:       NewExpressionData(),
+		BinaryExpressionData: NewBinaryExpressionData(),
+	}
 }
 
 type BinaryExpressionData struct {
-    left Expression
-    operator *core.Token
-    right Expression
+	left     Expression
+	operator *core.Token
+	right    Expression
 }
 
 func NewBinaryExpressionData() BinaryExpressionData {
-    return BinaryExpressionData{
-    }
+	return BinaryExpressionData{}
 }
 
 func (i *BinaryExpressionData) IsBinaryExpression() {}
 
 func (i *BinaryExpressionData) ForEachNode(fn func(core.AstNode)) {
-    if i.left != nil {
-        fn(i.left)
-    }
-    if i.right != nil {
-        fn(i.right)
-    }
+	if i.left != nil {
+		fn(i.left)
+	}
+	if i.right != nil {
+		fn(i.right)
+	}
 }
 
 func (i *BinaryExpressionData) ForEachReference(fn func(core.UntypedReference)) {
 }
 
-func (i *BinaryExpressionData) left() Expression {
-    if i != nil && i.left != nil {
-        return i.left
-    } else {
-        return nil
-    }
+func (i *BinaryExpressionData) Left() Expression {
+	if i != nil && i.left != nil {
+		return i.left
+	} else {
+		return nil
+	}
 }
 
-func (i *BinaryExpressionData) Setleft(value Expression) {
-    i.left = value
+func (i *BinaryExpressionData) SetLeft(value Expression) {
+	i.left = value
 }
 
-func (i *BinaryExpressionData) operator() string {
-    if i != nil && i.operator != nil {
-        return i.operator.Image
-    } else {
-        return ""
-    }
+func (i *BinaryExpressionData) Operator() string {
+	if i != nil && i.operator != nil {
+		return i.operator.Image
+	} else {
+		return ""
+	}
 }
 
-func (i *BinaryExpressionData) operatorToken() *core.Token {
-    return i.operator
+func (i *BinaryExpressionData) OperatorToken() *core.Token {
+	return i.operator
 }
 
-func (i *BinaryExpressionData) Setoperator(value *core.Token) {
-    i.operator = value
+func (i *BinaryExpressionData) SetOperator(value *core.Token) {
+	i.operator = value
 }
 
-func (i *BinaryExpressionData) right() Expression {
-    if i != nil && i.right != nil {
-        return i.right
-    } else {
-        return nil
-    }
+func (i *BinaryExpressionData) Right() Expression {
+	if i != nil && i.right != nil {
+		return i.right
+	} else {
+		return nil
+	}
 }
 
-func (i *BinaryExpressionData) Setright(value Expression) {
-    i.right = value
+func (i *BinaryExpressionData) SetRight(value Expression) {
+	i.right = value
 }
 
 type BinaryExpressionImpl struct {
-    core.AstNodeBase
-    ExpressionData
-    BinaryExpressionData
+	core.AstNodeBase
+	ExpressionData
+	BinaryExpressionData
 }
 
 func (i *BinaryExpressionImpl) ForEachNode(fn func(core.AstNode)) {
-    i.ExpressionData.ForEachNode(fn)
-    i.BinaryExpressionData.ForEachNode(fn)
+	i.ExpressionData.ForEachNode(fn)
+	i.BinaryExpressionData.ForEachNode(fn)
 }
 
 func (i *BinaryExpressionImpl) ForEachReference(fn func(core.UntypedReference)) {
-    i.ExpressionData.ForEachReference(fn)
-    i.BinaryExpressionData.ForEachReference(fn)
+	i.ExpressionData.ForEachReference(fn)
+	i.BinaryExpressionData.ForEachReference(fn)
 }
 
 type FunctionCall interface {
-    core.AstNode
-    Expression
+	core.AstNode
+	Expression
 
-    IsFunctionCall()
-    args() []Expression
-    SetargsItem(item Expression)
-    func() *core.Reference[AbstractDefinition]
-    Setfunc(value *core.Reference[AbstractDefinition])
+	IsFunctionCall()
+	Args() []Expression
+	SetArgsItem(item Expression)
+	Callable() *core.Reference[AbstractDefinition]
+	SetCallable(value *core.Reference[AbstractDefinition])
 }
 
 func NewFunctionCall() FunctionCall {
-    return &FunctionCallImpl{
-        AstNodeBase: core.NewAstNode(),
-        ExpressionData: NewExpressionData(),
-        FunctionCallData: NewFunctionCallData(),
-    }
+	return &FunctionCallImpl{
+		AstNodeBase:      core.NewAstNode(),
+		ExpressionData:   NewExpressionData(),
+		FunctionCallData: NewFunctionCallData(),
+	}
 }
 
 type FunctionCallData struct {
-    args []Expression
-    _func *core.Reference[AbstractDefinition]
+	args     []Expression
+	callable *core.Reference[AbstractDefinition]
 }
 
 func NewFunctionCallData() FunctionCallData {
-    return FunctionCallData{
-        args: []Expression{},
-    }
+	return FunctionCallData{
+		args: []Expression{},
+	}
 }
 
 func (i *FunctionCallData) IsFunctionCall() {}
 
 func (i *FunctionCallData) ForEachNode(fn func(core.AstNode)) {
-    for _, item := range i.args {
-        fn(item)
-    }
+	for _, item := range i.args {
+		fn(item)
+	}
 }
 
 func (i *FunctionCallData) ForEachReference(fn func(core.UntypedReference)) {
-    if i._func != nil {
-        fn(i._func)
-    }
+	if i.callable != nil {
+		fn(i.callable)
+	}
 }
 
-func (i *FunctionCallData) args() []Expression {
-    return i.args
+func (i *FunctionCallData) Args() []Expression {
+	return i.args
 }
 
-func (i *FunctionCallData) SetargsItem(item Expression) {
-    i.args = append(i.args, item)
+func (i *FunctionCallData) SetArgsItem(item Expression) {
+	i.args = append(i.args, item)
 }
 
-func (i *FunctionCallData) func() *core.Reference[AbstractDefinition] {
-    if i != nil && i._func != nil {
-        return i._func
-    } else {
-        return nil
-    }
+func (i *FunctionCallData) Callable() *core.Reference[AbstractDefinition] {
+	if i != nil && i.callable != nil {
+		return i.callable
+	} else {
+		return nil
+	}
 }
 
-func (i *FunctionCallData) Setfunc(value *core.Reference[AbstractDefinition]) {
-    i._func = value
+func (i *FunctionCallData) SetCallable(value *core.Reference[AbstractDefinition]) {
+	i.callable = value
 }
 
 type FunctionCallImpl struct {
-    core.AstNodeBase
-    ExpressionData
-    FunctionCallData
+	core.AstNodeBase
+	ExpressionData
+	FunctionCallData
 }
 
 func (i *FunctionCallImpl) ForEachNode(fn func(core.AstNode)) {
-    i.ExpressionData.ForEachNode(fn)
-    i.FunctionCallData.ForEachNode(fn)
+	i.ExpressionData.ForEachNode(fn)
+	i.FunctionCallData.ForEachNode(fn)
 }
 
 func (i *FunctionCallImpl) ForEachReference(fn func(core.UntypedReference)) {
-    i.ExpressionData.ForEachReference(fn)
-    i.FunctionCallData.ForEachReference(fn)
+	i.ExpressionData.ForEachReference(fn)
+	i.FunctionCallData.ForEachReference(fn)
 }
 
 type NumberLiteral interface {
-    core.AstNode
-    Expression
+	core.AstNode
+	Expression
 
-    IsNumberLiteral()
-    value() string
-    valueToken() *core.Token
-    Setvalue(value *core.Token)
+	IsNumberLiteral()
+	Value() string
+	ValueToken() *core.Token
+	SetValue(value *core.Token)
 }
 
 func NewNumberLiteral() NumberLiteral {
-    return &NumberLiteralImpl{
-        AstNodeBase: core.NewAstNode(),
-        ExpressionData: NewExpressionData(),
-        NumberLiteralData: NewNumberLiteralData(),
-    }
+	return &NumberLiteralImpl{
+		AstNodeBase:       core.NewAstNode(),
+		ExpressionData:    NewExpressionData(),
+		NumberLiteralData: NewNumberLiteralData(),
+	}
 }
 
 type NumberLiteralData struct {
-    value *core.Token
+	value *core.Token
 }
 
 func NewNumberLiteralData() NumberLiteralData {
-    return NumberLiteralData{
-    }
+	return NumberLiteralData{}
 }
 
 func (i *NumberLiteralData) IsNumberLiteral() {}
@@ -644,35 +637,34 @@ func (i *NumberLiteralData) ForEachNode(fn func(core.AstNode)) {
 func (i *NumberLiteralData) ForEachReference(fn func(core.UntypedReference)) {
 }
 
-func (i *NumberLiteralData) value() string {
-    if i != nil && i.value != nil {
-        return i.value.Image
-    } else {
-        return ""
-    }
+func (i *NumberLiteralData) Value() string {
+	if i != nil && i.value != nil {
+		return i.value.Image
+	} else {
+		return ""
+	}
 }
 
-func (i *NumberLiteralData) valueToken() *core.Token {
-    return i.value
+func (i *NumberLiteralData) ValueToken() *core.Token {
+	return i.value
 }
 
-func (i *NumberLiteralData) Setvalue(value *core.Token) {
-    i.value = value
+func (i *NumberLiteralData) SetValue(value *core.Token) {
+	i.value = value
 }
 
 type NumberLiteralImpl struct {
-    core.AstNodeBase
-    ExpressionData
-    NumberLiteralData
+	core.AstNodeBase
+	ExpressionData
+	NumberLiteralData
 }
 
 func (i *NumberLiteralImpl) ForEachNode(fn func(core.AstNode)) {
-    i.ExpressionData.ForEachNode(fn)
-    i.NumberLiteralData.ForEachNode(fn)
+	i.ExpressionData.ForEachNode(fn)
+	i.NumberLiteralData.ForEachNode(fn)
 }
 
 func (i *NumberLiteralImpl) ForEachReference(fn func(core.UntypedReference)) {
-    i.ExpressionData.ForEachReference(fn)
-    i.NumberLiteralData.ForEachReference(fn)
+	i.ExpressionData.ForEachReference(fn)
+	i.NumberLiteralData.ForEachReference(fn)
 }
-

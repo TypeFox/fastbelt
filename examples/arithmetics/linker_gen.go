@@ -15,7 +15,7 @@ import (
 )
 
 type ArithmeticsScopeProvider interface {
-	ScopeFunctionCallfunc(ctx context.Context, reference *core.Reference[AbstractDefinition]) core.Scope
+	ScopeFunctionCallCallable(ctx context.Context, reference *core.Reference[AbstractDefinition]) core.Scope
 }
 
 type DefaultArithmeticsScopeProvider struct {
@@ -26,12 +26,12 @@ func NewDefaultArithmeticsScopeProvider(sc *service.Container) ArithmeticsScopeP
 	return &DefaultArithmeticsScopeProvider{sc: sc}
 }
 
-func (s *DefaultArithmeticsScopeProvider) ScopeFunctionCallfunc(ctx context.Context, reference *core.Reference[AbstractDefinition]) core.Scope {
+func (s *DefaultArithmeticsScopeProvider) ScopeFunctionCallCallable(ctx context.Context, reference *core.Reference[AbstractDefinition]) core.Scope {
 	return linking.DefaultScopeOfType[AbstractDefinition](reference.Owner())
 }
 
 type ArithmeticsReferenceLinker interface {
-	LinkFunctionCallfunc(ctx context.Context, reference *core.Reference[AbstractDefinition]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkFunctionCallCallable(ctx context.Context, reference *core.Reference[AbstractDefinition]) (*core.SymbolDescription, *core.ReferenceError)
 }
 
 type DefaultArithmeticsReferenceLinker struct {
@@ -48,13 +48,13 @@ func NewDefaultArithmeticsReferenceLinker(sc *service.Container) ArithmeticsRefe
 	}
 }
 
-func (s *DefaultArithmeticsReferenceLinker) LinkFunctionCallfunc(ctx context.Context, reference *core.Reference[AbstractDefinition]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeFunctionCallfunc(ctx, reference)
+func (s *DefaultArithmeticsReferenceLinker) LinkFunctionCallCallable(ctx context.Context, reference *core.Reference[AbstractDefinition]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeFunctionCallCallable(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
 type ArithmeticsReferencesConstructor interface {
-	FunctionCallfunc(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractDefinition]
+	FunctionCallCallable(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractDefinition]
 }
 
 type DefaultArithmeticsReferencesConstructor struct {
@@ -71,8 +71,8 @@ func NewDefaultArithmeticsReferencesConstructor(sc *service.Container) Arithmeti
 	}
 }
 
-func (s *DefaultArithmeticsReferencesConstructor) FunctionCallfunc(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractDefinition] {
-	fn := s.referenceLinker().LinkFunctionCallfunc
+func (s *DefaultArithmeticsReferencesConstructor) FunctionCallCallable(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractDefinition] {
+	fn := s.referenceLinker().LinkFunctionCallCallable
 	return core.NewReference(owner, unit, fn)
 }
 

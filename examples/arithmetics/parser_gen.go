@@ -3,7 +3,6 @@
 package arithmetics
 
 import (
-	"sync"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -13,14 +12,13 @@ type Parser struct {
 	state                 *parser.ParserState
 	sc                    *service.Container
 	referencesConstructor ArithmeticsReferencesConstructor
-	atn                   func() *parser.RuntimeATN
 }
 
 func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
 	referencesConstructor := service.MustGet[ArithmeticsReferencesConstructor](p.sc)
-	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, atn: p.atn, state: parser.NewParserState(document.Tokens, p.atn(), recovery, messages)}
+	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
 	result := cp.ParseModule()
 	core.AssignContainers(document, result)
 	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
@@ -28,37 +26,9 @@ func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
 
 func NewParser(sc *service.Container) *Parser {
 	return &Parser{
-		sc:  sc,
-		atn: sync.OnceValue(BuildATN),
+		sc: sc,
 	}
 }
-
-const (
-	AdditionoperatorDash_0 = iota + 1
-	AdditionoperatorPlus_0
-	DeclaredParameternameID_0
-	DefinitionColon_0
-	DefinitionComma_0
-	DefinitionLeftParen_0
-	DefinitionRightParen_0
-	DefinitionSemicolon_0
-	Definitiondef_0
-	DefinitionnameID_0
-	EvaluationSemicolon_0
-	ExponentiationoperatorCaret_0
-	Modulemodule_0
-	ModulenameID_0
-	ModulooperatorPercent_0
-	MultiplicationoperatorAsterisk_0
-	MultiplicationoperatorSlash_0
-	PrimaryExpressionComma_0
-	PrimaryExpressionLeftParen_0
-	PrimaryExpressionLeftParen_1
-	PrimaryExpressionRightParen_0
-	PrimaryExpressionRightParen_1
-	PrimaryExpressionfuncID_0
-	PrimaryExpressionvalueNUMBER_0
-)
 
 var AdditionLookahead3 = parser.LLkLookahead{
 	parser.LookaheadOption{
@@ -67,7 +37,7 @@ var AdditionLookahead3 = parser.LLkLookahead{
 	},
 }
 
-var AdditionoperatorLookaheadOr1 = parser.LLkLookahead{
+var AdditionOperatorLookaheadOr1 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_Plus_Idx},
 	},
@@ -116,7 +86,7 @@ var MultiplicationLookahead4 = parser.LLkLookahead{
 	},
 }
 
-var MultiplicationoperatorLookaheadOr2 = parser.LLkLookahead{
+var MultiplicationOperatorLookaheadOr2 = parser.LLkLookahead{
 	parser.LookaheadOption{
 		parser.LookaheadPath{Keyword_Asterisk_Idx},
 	},
@@ -165,25 +135,25 @@ func (p *Parser) ParseModule() Module {
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_module)
-		core.AssignToken(current, token, Modulemodule_0)
+		core.AssignToken(current, token, Module_module)
 	}
 	{
 		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, ModulenameID_0)
+		core.AssignToken(current, token, Module_Name_ID)
 		if token != nil {
-			current.Setname(token)
+			current.SetName(token)
 		}
 	}
 	{
-		p.state.Sync(26)
+		p.state.Sync(Module__LoopEntry)
 		for p.state.Lookahead(ModuleLookahead0) == 0 {
-			p.state.EnterRule(25)
+			p.state.EnterRule(Module__Basic_1)
 			result := p.ParseStatement()
 			p.state.ExitRule()
 			if result != nil {
-				current.SetstatementsItem(result)
+				current.SetStatementsItem(result)
 			}
-			p.state.Sync(26)
+			p.state.Sync(Module__LoopEntry)
 		}
 	}
 	current.SetSegmentEndToken(p.state.LARaw(0))
@@ -196,7 +166,7 @@ func (p *Parser) ParseStatement() Statement {
 	switch p.state.Lookahead(StatementLookaheadOr0) {
 	case 0:
 		{
-			p.state.EnterRule(30)
+			p.state.EnterRule(Statement__Basic_1)
 			result := p.ParseDefinition()
 			p.state.ExitRule()
 			core.MergeTokens(result, current.Tokens())
@@ -204,7 +174,7 @@ func (p *Parser) ParseStatement() Statement {
 		}
 	case 1:
 		{
-			p.state.EnterRule(32)
+			p.state.EnterRule(Statement__Basic_3)
 			result := p.ParseEvaluation()
 			p.state.ExitRule()
 			core.MergeTokens(result, current.Tokens())
@@ -223,65 +193,65 @@ func (p *Parser) ParseDefinition() Definition {
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_def)
-		core.AssignToken(current, token, Definitiondef_0)
+		core.AssignToken(current, token, Definition_def)
 	}
 	{
 		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, DefinitionnameID_0)
+		core.AssignToken(current, token, Definition_Name_ID)
 		if token != nil {
-			current.Setname(token)
+			current.SetName(token)
 		}
 	}
-	p.state.Sync(37)
+	p.state.Sync(Definition_LeftParen)
 	if p.state.Lookahead(DefinitionLookahead1) == 0 {
 		{
 			token := p.state.Consume(Keyword_LeftParen)
-			core.AssignToken(current, token, DefinitionLeftParen_0)
+			core.AssignToken(current, token, Definition_LeftParen)
 		}
 		{
-			p.state.EnterRule(42)
+			p.state.EnterRule(Definition__LoopEntry)
 			result := p.ParseDeclaredParameter()
 			p.state.ExitRule()
 			if result != nil {
-				current.SetargsItem(result)
+				current.SetArgsItem(result)
 			}
 		}
-		p.state.Sync(42)
+		p.state.Sync(Definition__LoopEntry)
 		for p.state.Lookahead(DefinitionLookahead2) == 0 {
 			{
 				token := p.state.Consume(Keyword_Comma)
-				core.AssignToken(current, token, DefinitionComma_0)
+				core.AssignToken(current, token, Definition_Comma)
 			}
 			{
-				p.state.EnterRule(41)
+				p.state.EnterRule(Definition__Basic_2)
 				result := p.ParseDeclaredParameter()
 				p.state.ExitRule()
 				if result != nil {
-					current.SetargsItem(result)
+					current.SetArgsItem(result)
 				}
 			}
-			p.state.Sync(42)
+			p.state.Sync(Definition__LoopEntry)
 		}
 		{
 			token := p.state.Consume(Keyword_RightParen)
-			core.AssignToken(current, token, DefinitionRightParen_0)
+			core.AssignToken(current, token, Definition_RightParen)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_Colon)
-		core.AssignToken(current, token, DefinitionColon_0)
+		core.AssignToken(current, token, Definition_Colon)
 	}
 	{
-		p.state.EnterRule(49)
+		p.state.EnterRule(Definition_Semicolon)
 		result := p.ParseExpression()
 		p.state.ExitRule()
 		if result != nil {
-			current.Setexpr(result)
+			current.SetExpression(result)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_Semicolon)
-		core.AssignToken(current, token, DefinitionSemicolon_0)
+		core.AssignToken(current, token, Definition_Semicolon)
 	}
 	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
@@ -292,9 +262,9 @@ func (p *Parser) ParseDeclaredParameter() DeclaredParameter {
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, DeclaredParameternameID_0)
+		core.AssignToken(current, token, DeclaredParameter_Name_ID)
 		if token != nil {
-			current.Setname(token)
+			current.SetName(token)
 		}
 	}
 	current.SetSegmentEndToken(p.state.LARaw(0))
@@ -305,16 +275,16 @@ func (p *Parser) ParseEvaluation() Evaluation {
 	current := NewEvaluation()
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
-		p.state.EnterRule(54)
+		p.state.EnterRule(Evaluation_Semicolon)
 		result := p.ParseExpression()
 		p.state.ExitRule()
 		if result != nil {
-			current.Setexpression(result)
+			current.SetExpression(result)
 		}
 	}
 	{
 		token := p.state.Consume(Keyword_Semicolon)
-		core.AssignToken(current, token, EvaluationSemicolon_0)
+		core.AssignToken(current, token, Evaluation_Semicolon)
 	}
 	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
@@ -324,7 +294,7 @@ func (p *Parser) ParseExpression() Expression {
 	current := NewExpression()
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
-		p.state.EnterRule(57)
+		p.state.EnterRule(Expression__Basic_1)
 		result := p.ParseAddition()
 		p.state.ExitRule()
 		core.MergeTokens(result, current.Tokens())
@@ -338,47 +308,47 @@ func (p *Parser) ParseAddition() Expression {
 	current := NewExpression()
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
-		p.state.EnterRule(67)
+		p.state.EnterRule(Addition__LoopEntry)
 		result := p.ParseMultiplication()
 		p.state.ExitRule()
 		core.MergeTokens(result, current.Tokens())
 		current = result
 	}
-	p.state.Sync(67)
+	p.state.Sync(Addition__LoopEntry)
 	for p.state.Lookahead(AdditionLookahead3) == 0 {
 		{
 			result := NewBinaryExpression()
 			result.SetSegment(current.Segment())
-			result.Setleft(current)
+			result.SetLeft(current)
 			current.SetSegmentEndToken(p.state.LARaw(0))
 			current = result
 		}
 		current := current.(BinaryExpression)
 		{
-			switch p.state.Lookahead(AdditionoperatorLookaheadOr1) {
+			switch p.state.Lookahead(AdditionOperatorLookaheadOr1) {
 			case 0:
 				token := p.state.Consume(Keyword_Plus)
-				core.AssignToken(current, token, AdditionoperatorPlus_0)
+				core.AssignToken(current, token, Addition_Operator_Plus)
 				if token != nil {
-					current.Setoperator(token)
+					current.SetOperator(token)
 				}
 			case 1:
 				token := p.state.Consume(Keyword_Dash)
-				core.AssignToken(current, token, AdditionoperatorDash_0)
+				core.AssignToken(current, token, Addition_Operator_Dash)
 				if token != nil {
-					current.Setoperator(token)
+					current.SetOperator(token)
 				}
 			}
 		}
 		{
-			p.state.EnterRule(66)
+			p.state.EnterRule(Addition__Basic_5)
 			result := p.ParseMultiplication()
 			p.state.ExitRule()
 			if result != nil {
-				current.Setright(result)
+				current.SetRight(result)
 			}
 		}
-		p.state.Sync(67)
+		p.state.Sync(Addition__LoopEntry)
 	}
 	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
@@ -388,47 +358,47 @@ func (p *Parser) ParseMultiplication() Expression {
 	current := NewExpression()
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
-		p.state.EnterRule(79)
+		p.state.EnterRule(Multiplication__LoopEntry)
 		result := p.ParseExponentiation()
 		p.state.ExitRule()
 		core.MergeTokens(result, current.Tokens())
 		current = result
 	}
-	p.state.Sync(79)
+	p.state.Sync(Multiplication__LoopEntry)
 	for p.state.Lookahead(MultiplicationLookahead4) == 0 {
 		{
 			result := NewBinaryExpression()
 			result.SetSegment(current.Segment())
-			result.Setleft(current)
+			result.SetLeft(current)
 			current.SetSegmentEndToken(p.state.LARaw(0))
 			current = result
 		}
 		current := current.(BinaryExpression)
 		{
-			switch p.state.Lookahead(MultiplicationoperatorLookaheadOr2) {
+			switch p.state.Lookahead(MultiplicationOperatorLookaheadOr2) {
 			case 0:
 				token := p.state.Consume(Keyword_Asterisk)
-				core.AssignToken(current, token, MultiplicationoperatorAsterisk_0)
+				core.AssignToken(current, token, Multiplication_Operator_Asterisk)
 				if token != nil {
-					current.Setoperator(token)
+					current.SetOperator(token)
 				}
 			case 1:
 				token := p.state.Consume(Keyword_Slash)
-				core.AssignToken(current, token, MultiplicationoperatorSlash_0)
+				core.AssignToken(current, token, Multiplication_Operator_Slash)
 				if token != nil {
-					current.Setoperator(token)
+					current.SetOperator(token)
 				}
 			}
 		}
 		{
-			p.state.EnterRule(78)
+			p.state.EnterRule(Multiplication__Basic_5)
 			result := p.ParseExponentiation()
 			p.state.ExitRule()
 			if result != nil {
-				current.Setright(result)
+				current.SetRight(result)
 			}
 		}
-		p.state.Sync(79)
+		p.state.Sync(Multiplication__LoopEntry)
 	}
 	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
@@ -438,38 +408,38 @@ func (p *Parser) ParseExponentiation() Expression {
 	current := NewExpression()
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
-		p.state.EnterRule(86)
+		p.state.EnterRule(Exponentiation__LoopEntry)
 		result := p.ParseModulo()
 		p.state.ExitRule()
 		core.MergeTokens(result, current.Tokens())
 		current = result
 	}
-	p.state.Sync(86)
+	p.state.Sync(Exponentiation__LoopEntry)
 	for p.state.Lookahead(ExponentiationLookahead5) == 0 {
 		{
 			result := NewBinaryExpression()
 			result.SetSegment(current.Segment())
-			result.Setleft(current)
+			result.SetLeft(current)
 			current.SetSegmentEndToken(p.state.LARaw(0))
 			current = result
 		}
 		current := current.(BinaryExpression)
 		{
 			token := p.state.Consume(Keyword_Caret)
-			core.AssignToken(current, token, ExponentiationoperatorCaret_0)
+			core.AssignToken(current, token, Exponentiation_Operator_Caret)
 			if token != nil {
-				current.Setoperator(token)
+				current.SetOperator(token)
 			}
 		}
 		{
-			p.state.EnterRule(85)
+			p.state.EnterRule(Exponentiation__Basic_2)
 			result := p.ParseModulo()
 			p.state.ExitRule()
 			if result != nil {
-				current.Setright(result)
+				current.SetRight(result)
 			}
 		}
-		p.state.Sync(86)
+		p.state.Sync(Exponentiation__LoopEntry)
 	}
 	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
@@ -479,38 +449,38 @@ func (p *Parser) ParseModulo() Expression {
 	current := NewExpression()
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
-		p.state.EnterRule(93)
+		p.state.EnterRule(Modulo__LoopEntry)
 		result := p.ParsePrimaryExpression()
 		p.state.ExitRule()
 		core.MergeTokens(result, current.Tokens())
 		current = result
 	}
-	p.state.Sync(93)
+	p.state.Sync(Modulo__LoopEntry)
 	for p.state.Lookahead(ModuloLookahead6) == 0 {
 		{
 			result := NewBinaryExpression()
 			result.SetSegment(current.Segment())
-			result.Setleft(current)
+			result.SetLeft(current)
 			current.SetSegmentEndToken(p.state.LARaw(0))
 			current = result
 		}
 		current := current.(BinaryExpression)
 		{
 			token := p.state.Consume(Keyword_Percent)
-			core.AssignToken(current, token, ModulooperatorPercent_0)
+			core.AssignToken(current, token, Modulo_Operator_Percent)
 			if token != nil {
-				current.Setoperator(token)
+				current.SetOperator(token)
 			}
 		}
 		{
-			p.state.EnterRule(92)
+			p.state.EnterRule(Modulo__Basic_2)
 			result := p.ParsePrimaryExpression()
 			p.state.ExitRule()
 			if result != nil {
-				current.Setright(result)
+				current.SetRight(result)
 			}
 		}
-		p.state.Sync(93)
+		p.state.Sync(Modulo__LoopEntry)
 	}
 	current.SetSegmentEndToken(p.state.LARaw(0))
 	return current
@@ -523,10 +493,10 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 	case 0:
 		{
 			token := p.state.Consume(Keyword_LeftParen)
-			core.AssignToken(current, token, PrimaryExpressionLeftParen_0)
+			core.AssignToken(current, token, PrimaryExpression_LeftParen_0)
 		}
 		{
-			p.state.EnterRule(98)
+			p.state.EnterRule(PrimaryExpression_RightParen_0)
 			result := p.ParseExpression()
 			p.state.ExitRule()
 			core.MergeTokens(result, current.Tokens())
@@ -534,7 +504,7 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 		}
 		{
 			token := p.state.Consume(Keyword_RightParen)
-			core.AssignToken(current, token, PrimaryExpressionRightParen_0)
+			core.AssignToken(current, token, PrimaryExpression_RightParen_0)
 		}
 	case 1:
 		{
@@ -546,9 +516,9 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 		current := current.(NumberLiteral)
 		{
 			token := p.state.Consume(Token_NUMBER)
-			core.AssignToken(current, token, PrimaryExpressionvalueNUMBER_0)
+			core.AssignToken(current, token, PrimaryExpression_Value_NUMBER)
 			if token != nil {
-				current.Setvalue(token)
+				current.SetValue(token)
 			}
 		}
 	case 2:
@@ -561,44 +531,44 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 		current := current.(FunctionCall)
 		{
 			token := p.state.Consume(Token_ID)
-			core.AssignToken(current, token, PrimaryExpressionfuncID_0)
+			core.AssignToken(current, token, PrimaryExpression_Callable_ID)
 			if token != nil {
-				current.Setfunc(p.referencesConstructor.Expressionfunc(current, token))
+				current.SetCallable(p.referencesConstructor.ExpressionCallable(current, token))
 			}
 		}
-		p.state.Sync(103)
+		p.state.Sync(PrimaryExpression_LeftParen_1)
 		if p.state.Lookahead(PrimaryExpressionLookahead7) == 0 {
 			{
 				token := p.state.Consume(Keyword_LeftParen)
-				core.AssignToken(current, token, PrimaryExpressionLeftParen_1)
+				core.AssignToken(current, token, PrimaryExpression_LeftParen_1)
 			}
 			{
-				p.state.EnterRule(108)
+				p.state.EnterRule(PrimaryExpression__LoopEntry)
 				result := p.ParseExpression()
 				p.state.ExitRule()
 				if result != nil {
-					current.SetargsItem(result)
+					current.SetArgsItem(result)
 				}
 			}
-			p.state.Sync(108)
+			p.state.Sync(PrimaryExpression__LoopEntry)
 			for p.state.Lookahead(PrimaryExpressionLookahead8) == 0 {
 				{
 					token := p.state.Consume(Keyword_Comma)
-					core.AssignToken(current, token, PrimaryExpressionComma_0)
+					core.AssignToken(current, token, PrimaryExpression_Comma)
 				}
 				{
-					p.state.EnterRule(107)
+					p.state.EnterRule(PrimaryExpression__Basic_5)
 					result := p.ParseExpression()
 					p.state.ExitRule()
 					if result != nil {
-						current.SetargsItem(result)
+						current.SetArgsItem(result)
 					}
 				}
-				p.state.Sync(108)
+				p.state.Sync(PrimaryExpression__LoopEntry)
 			}
 			{
 				token := p.state.Consume(Keyword_RightParen)
-				core.AssignToken(current, token, PrimaryExpressionRightParen_1)
+				core.AssignToken(current, token, PrimaryExpression_RightParen_1)
 			}
 		}
 	default:
