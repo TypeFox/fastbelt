@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: main
   pull_request:
-    branches: [ main, master ]
+    branches: main
 
 jobs:
   test:
@@ -16,7 +16,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       GONOPROXY: github.com/TypeFox/go-lsp
-
     steps:
     - name: Check out code
       uses: actions/checkout@v4
@@ -73,6 +72,11 @@ jobs:
         node-version: '22'
         cache: 'npm'
         cache-dependency-path: internal/vscode-extensions/package-lock.json
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.26'
 
     - name: Install dependencies
       run: npm install

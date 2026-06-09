@@ -1,0 +1,60 @@
+name: Benchmark
+
+on:
+  push:
+    branches: main
+  pull_request:
+    branches: main
+
+jobs:
+  benchmark:
+    name: Run
+    runs-on: ubuntu-latest
+    env:
+      GONOPROXY: github.com/TypeFox/go-lsp
+      OUTPUT_FILE: output.txt
+      CACHE_DIR: ./ci-cache
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.26'
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Verify dependencies
+      run: go mod verify
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Run benchmarks
+      run: go test -bench 'Benchmark' -run=^$ ./... | tee ${{ env.OUTPUT_FILE }}
+
+    - name: Download previous benchmark data
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.CACHE_DIR }}
+        key: ${{ runner.os }}-benchmark
+
+    - name: Store benchmark result
+      uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba #v1.22.1
+      with:
+        tool: 'go'
+        output-file-path: ${{ env.OUTPUT_FILE }}
+        # Where the previous data file is stored
+        external-data-json-path: ${{ env.CACHE_DIR }}/benchmark-data.json
+        # GitHub API token to make a PR/commit comment
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        # Enable alert commit comment
+        comment-on-alert: true
+        # Enable Job Summary for PRs
+        summary-always: true
+        # Alert if any benchmark regression is more than 2x
+        alert-threshold: "200%"
+        # Only save if we are on the main branch
+        save-data-file: ${{ github.ref == 'refs/heads/main' }}
