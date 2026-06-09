@@ -56,6 +56,20 @@ func (d *Doc) AssertNoParseErrors() *Doc {
 	return d
 }
 
+// AssertNoLinkingErrors fails the test if the document has no references at all,
+// or if any reference failed to resolve.
+func (d *Doc) AssertNoLinkingErrors() *Doc {
+	d.fixture.t.Helper()
+	d.AssertState(core.DocStateLinked)
+
+	for _, ref := range d.Document.References {
+		if err := ref.Error(); err != nil {
+			d.fixture.t.Errorf("fbtest: unresolved reference %q: %s", ref.Text(), err.Msg)
+		}
+	}
+	return d
+}
+
 type DiagnosticExpectation struct {
 	t          testing.TB
 	Diagnostic *core.Diagnostic
