@@ -11,6 +11,6 @@ import (
 
 func GenerateATNMarkdown(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult) string {
 	a, _ := atn.CreateATN(grammr, tokenTypes.TokenTypeIds)
-	source := atn.EmitMarkdownSource(packageName, a, tokenTypes.TokenTypeNames)
+	source := atn.EmitMarkdownSource(packageName, grammr, a, tokenTypes.TokenTypeNames)
 	return source.String()
 }

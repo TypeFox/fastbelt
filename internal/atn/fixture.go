@@ -43,7 +43,7 @@ func FixtureATN(t *testing.T, ruleText string, emitATNMarkdown bool) (*ATN, map[
 	grammr := doc.Root().(grammar.Grammar)
 	atn, rules := CreateATN(grammr, TokenTypeIds)
 	if emitATNMarkdown {
-		node := EmitMarkdownSource("test", atn, TokenTypeNames)
+		node := EmitMarkdownSource("test", grammr, atn, TokenTypeNames)
 		content := node.String()
 		if err := os.WriteFile("atn.test.md", []byte(content), 0644); err != nil {
 			t.Fatalf("failed to write ATN markdown file: %v", err)

@@ -266,7 +266,13 @@ func (rb *ATNRuleBuilderImpl) NewState(stateType parser.ATNStateType) *ATNState 
 func (rb *ATNRuleBuilderImpl) RemoveState(state *ATNState) {
 	index := slices.Index(rb.parent.atn.States, state)
 	if index > -1 {
-		rb.parent.atn.States = append(rb.parent.atn.States[:index], rb.parent.atn.States[index+1:]...)
+		before := rb.parent.atn.States[:index]
+		after := rb.parent.atn.States[index+1:]
+		for _, s := range after {
+			// Decrement state number to maintain consistency after removal.
+			s.StateNumber--
+		}
+		rb.parent.atn.States = append(before, after...)
 	}
 }
 

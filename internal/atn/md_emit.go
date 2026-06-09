@@ -8,12 +8,15 @@ import (
 	"fmt"
 	"strings"
 
+	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/codegen"
 )
 
-func EmitMarkdownSource(pkgName string, atn *ATN, tokenTypeNames []string) codegen.Node {
+func EmitMarkdownSource(pkgName string, grammr grammar.Grammar, atn *ATN, tokenTypeNames []string) codegen.Node {
 	idx := make(map[*ATNState]int, len(atn.States))
+	elementNames := BuildElementNames(grammr)
+	stateNames := BuildStateNameMap(atn, elementNames)
 	for i, s := range atn.States {
 		idx[s] = i
 	}
@@ -42,7 +45,7 @@ func EmitMarkdownSource(pkgName string, atn *ATN, tokenTypeNames []string) codeg
 		n.AppendLine("flowchart TD")
 
 		for _, s := range states {
-			n.AppendLine("    ", mdNode(s, idx[s]))
+			n.AppendLine("    ", mdNode(s, stateNames, idx[s]))
 		}
 
 		n.AppendLine()
@@ -70,19 +73,19 @@ func EmitMarkdownSource(pkgName string, atn *ATN, tokenTypeNames []string) codeg
 }
 
 // mdNode returns the Mermaid node definition string for a state.
-func mdNode(s *ATNState, i int) string {
+func mdNode(s *ATNState, stateNames []string, i int) string {
 	typShort := strings.TrimPrefix(atnStateTypeName(s.Type), "ATN")
 	id := fmt.Sprintf("q%d", i)
 
 	var label string
 	if s.Type == parser.ATNRuleStart || s.Type == parser.ATNRuleStop {
-		label = fmt.Sprintf("SN:%d<br/>%s", s.StateNumber, typShort)
+		label = fmt.Sprintf("%s (%d)<br/>%s", stateNames[s.StateNumber], s.StateNumber, typShort)
 	} else {
 		decStr := ""
 		if s.Decision >= 0 {
 			decStr = fmt.Sprintf("<br/>dec=%d", s.Decision)
 		}
-		label = fmt.Sprintf("SN:%d<br/>%s<br/>%s", s.StateNumber, typShort, decStr)
+		label = fmt.Sprintf("%s (%d)<br/>%s<br/>%s", stateNames[s.StateNumber], s.StateNumber, typShort, decStr)
 	}
 
 	switch s.Type {
