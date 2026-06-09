@@ -59,11 +59,11 @@
 			"request": "launch",
 			"args": [
 				"${workspaceFolder}/examples/arithmetics/examples",
-				"--extensionDevelopmentPath=${workspaceFolder}/examples/arithmetics/vscode-extension"
+				"--extensionDevelopmentPath=${workspaceFolder}/internal/vscode-extensions/arithmetics"
 			],
 			"sourceMaps": true,
 			"outFiles": [
-				"${workspaceFolder}/examples/arithmetics/vscode-extension/dist/**/*.js"
+				"${workspaceFolder}/internal/vscode-extensions/arithmetics/dist/**/*.js"
 			]
 		},
 		{

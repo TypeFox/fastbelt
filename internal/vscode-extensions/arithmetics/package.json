@@ -1,8 +1,8 @@
 {
   "name": "arithmetics-vscode",
-  "publisher": "local",
-  "displayName": "arithmetics",
-  "description": "VS Code support for arithmetics",
+  "publisher": "typefox",
+  "displayName": "Arithmetics Test Language",
+  "description": "VS Code support for Arithmetics",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.104.0"
@@ -42,7 +42,7 @@
     "watch:tsc": "tsc --noEmit --watch",
     "vscode:prepublish": "npm run check-types && node esbuild.js --production",
     "check-types": "tsc --noEmit",
-    "build-server": "go build -o dist/server ../cmd/arithmetics-lsp"
+    "build-server": "go build -o dist/server ../../../examples/arithmetics/server"
   },
   "dependencies": {
     "vscode-languageclient": "~9.0.1"
