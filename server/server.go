@@ -7,6 +7,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"log/slog"
 
 	"golang.org/x/exp/jsonrpc2"
@@ -69,7 +70,9 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 }
 
 func (s *DefaultLanguageServer) Initialized(ctx context.Context, params *lsp.InitializedParams) error {
+	log.Print("LS initializing...")
 	if initializer, err := service.Get[workspace.Initializer](s.sc); err == nil {
+		defer log.Println("done.")
 		workspaceFolders := service.MustGet[*WorkspaceFolders](s.sc).Value
 		return initializer.Initialize(ctx, workspaceFolders)
 	}
