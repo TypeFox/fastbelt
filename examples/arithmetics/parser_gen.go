@@ -533,7 +533,7 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 			token := p.state.Consume(Token_ID)
 			core.AssignToken(current, token, PrimaryExpression_Callable_ID)
 			if token != nil {
-				current.SetCallable(p.referencesConstructor.ExpressionCallable(current, token))
+				current.SetCallable(p.referencesConstructor.FunctionCallCallable(current, token))
 			}
 		}
 		p.state.Sync(PrimaryExpression_LeftParen_1)
