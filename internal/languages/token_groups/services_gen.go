@@ -21,6 +21,9 @@ func SetupGeneratedServices(sc *service.Container) {
 	if !service.Has[token_groupsReferencesConstructor](sc) {
 		service.Put(sc, NewDefaulttoken_groupsReferencesConstructor(sc))
 	}
+	if !service.Has[token_groupsParserLookahead](sc) {
+		service.Put(sc, NewDefaulttoken_groupsParserLookahead())
+	}
 	if !service.Has[lexer.Lexer](sc) {
 		service.Put(sc, NewLexer())
 	}

@@ -56,6 +56,7 @@ const (
 	D_d
 	D__Basic_0
 	D__Basic_1
+	D__Basic_2
 	E_e
 	E__Basic_0
 	E__Basic_1
@@ -78,7 +79,7 @@ func ATN() *parser.RuntimeATN {
 	return atn
 }
 func BuildATN() *parser.RuntimeATN {
-	states := make([]*parser.RuntimeATNState, 58)
+	states := make([]*parser.RuntimeATNState, 59)
 	states[Model__Start] = parser.NewATNState(Model__Start, parser.ATNRuleStart, true)
 	states[Model__Stop] = parser.NewATNState(Model__Stop, parser.ATNRuleStop, false)
 	states[A__Start] = parser.NewATNState(A__Start, parser.ATNRuleStart, true)
@@ -109,7 +110,7 @@ func BuildATN() *parser.RuntimeATN {
 	states[Model__Basic_11] = parser.NewATNState(Model__Basic_11, parser.ATNBasic, true)
 	states[Model__Basic_12] = parser.NewATNState(Model__Basic_12, parser.ATNBasic, true)
 	states[Model__Basic_13] = parser.NewATNState(Model__Basic_13, parser.ATNBasic, true)
-	states[Model__Basic_14] = parser.NewATNState(Model__Basic_14, parser.ATNBasic, true)
+	states[Model__Basic_14] = parser.NewATNState(Model__Basic_14, parser.ATNBasic, true).SetDecision(0)
 	states[Model__BlockEnd] = parser.NewATNState(Model__BlockEnd, parser.ATNBlockEnd, true)
 	states[A_a] = parser.NewATNState(A_a, parser.ATNBasic, false)
 	states[A__Basic_0] = parser.NewATNState(A__Basic_0, parser.ATNBasic, false)
@@ -119,7 +120,7 @@ func BuildATN() *parser.RuntimeATN {
 	states[B__Basic_1] = parser.NewATNState(B__Basic_1, parser.ATNBasic, true)
 	states[B_Value_b] = parser.NewATNState(B_Value_b, parser.ATNBasic, false)
 	states[B__Basic_2] = parser.NewATNState(B__Basic_2, parser.ATNBasic, true)
-	states[B__Basic_3] = parser.NewATNState(B__Basic_3, parser.ATNBasic, true)
+	states[B__Basic_3] = parser.NewATNState(B__Basic_3, parser.ATNBasic, true).SetDecision(1)
 	states[B__BlockEnd] = parser.NewATNState(B__BlockEnd, parser.ATNBlockEnd, true)
 	states[C_c] = parser.NewATNState(C_c, parser.ATNBasic, false)
 	states[C__Basic_0] = parser.NewATNState(C__Basic_0, parser.ATNBasic, false)
@@ -127,6 +128,7 @@ func BuildATN() *parser.RuntimeATN {
 	states[D_d] = parser.NewATNState(D_d, parser.ATNBasic, false)
 	states[D__Basic_0] = parser.NewATNState(D__Basic_0, parser.ATNBasic, false)
 	states[D__Basic_1] = parser.NewATNState(D__Basic_1, parser.ATNBasic, true)
+	states[D__Basic_2] = parser.NewATNState(D__Basic_2, parser.ATNBasic, true).SetDecision(2)
 	states[E_e] = parser.NewATNState(E_e, parser.ATNBasic, false)
 	states[E__Basic_0] = parser.NewATNState(E__Basic_0, parser.ATNBasic, false)
 	states[E__Basic_1] = parser.NewATNState(E__Basic_1, parser.ATNBasic, false)
@@ -256,14 +258,17 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[C__Stop]),
 	)
 	states[D_d].AppendTransitions(
-		parser.NewAtomTransition(states[D__Basic_0], Keyword_d, nil),
+		parser.NewAtomTransition(states[D__Basic_2], Keyword_d, nil),
 	)
 	states[D__Basic_0].AppendTransitions(
 		parser.NewAtomTransition(states[D__Basic_1], Token_Identifier, nil),
-		parser.NewEpsilonTransition(states[D__Basic_1]),
 	)
 	states[D__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[D__Stop]),
+	)
+	states[D__Basic_2].AppendTransitions(
+		parser.NewEpsilonTransition(states[D__Basic_0]),
+		parser.NewEpsilonTransition(states[D__Basic_1]),
 	)
 	states[E_e].AppendTransitions(
 		parser.NewAtomTransition(states[E__Basic_0], Keyword_e, nil),
@@ -295,7 +300,13 @@ func BuildATN() *parser.RuntimeATN {
 	states[G__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[G__Stop]),
 	)
-	decisionStates := make([]*parser.RuntimeATNState, 0)
-	decisionMap := make([]*parser.RuntimeATNState, 0)
+	decisionStates := make([]*parser.RuntimeATNState, 3)
+	decisionStates[0] = states[Model__Basic_14]
+	decisionStates[1] = states[B__Basic_3]
+	decisionStates[2] = states[D__Basic_2]
+	decisionMap := make([]*parser.RuntimeATNState, 3)
+	decisionMap[0] = states[Model__Basic_14]
+	decisionMap[1] = states[B__Basic_3]
+	decisionMap[2] = states[D__Basic_2]
 	return parser.NewRuntimeATN(states, decisionStates, decisionMap)
 }

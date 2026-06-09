@@ -10,10 +10,11 @@ import (
 )
 
 type CompletionParser struct {
-	state *parser.ParserState
-	cp    *parser.CompletionParserState
-	sc    *service.Container
-	atn   func() *parser.RuntimeATN
+	state     *parser.ParserState
+	cp        *parser.CompletionParserState
+	sc        *service.Container
+	atn       func() *parser.RuntimeATN
+	lookahead FastbeltParserLookahead
 }
 
 func NewCompletionParser(sc *service.Container) *CompletionParser {
@@ -30,7 +31,8 @@ func NewCompletionParser(sc *service.Container) *CompletionParser {
 func (p *CompletionParser) Parse(tokens []core.Token) *parser.CompletionParseResult {
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
-	cp := &CompletionParser{sc: p.sc, atn: p.atn}
+	lookahead := service.MustGet[FastbeltParserLookahead](p.sc)
+	cp := &CompletionParser{sc: p.sc, atn: p.atn, lookahead: lookahead}
 	cp.state = parser.NewParserState(tokens, p.atn(), recovery, messages)
 	cp.cp = parser.NewCompletionParserState(cp.state)
 	cp.ParseGrammar()
@@ -53,8 +55,8 @@ func (p *CompletionParser) ParseGrammar() {
 	}
 	p.cp.RecordSnapshot(Grammar__LoopEntry)
 	p.state.Sync(Grammar__LoopEntry)
-	for p.state.Lookahead(GrammarLookahead0) == 0 {
-		switch p.state.Lookahead(GrammarLookaheadOr0) {
+	for p.lookahead.GrammarLoop(p.state) {
+		switch prediction, failure := p.lookahead.GrammarAlternatives(p.state); prediction {
 		case 0:
 			{
 				p.cp.MarkAssignment("Rules")
@@ -96,8 +98,7 @@ func (p *CompletionParser) ParseGrammar() {
 				p.cp.ClearAssignment()
 			}
 		default:
-			token := p.state.LA(1)
-			p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
+			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 		p.cp.RecordSnapshot(Grammar__LoopEntry)
 		p.state.Sync(Grammar__LoopEntry)
@@ -115,9 +116,9 @@ func (p *CompletionParser) ParseInterface() {
 		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
-	p.cp.RecordSnapshot(Interface_extends)
-	p.state.Sync(Interface_extends)
-	if p.state.Lookahead(InterfaceLookahead1) == 0 {
+	p.cp.RecordSnapshot(Interface__Basic_1)
+	p.state.Sync(Interface__Basic_1)
+	if p.lookahead.InterfaceOptional(p.state) {
 		{
 			p.state.Consume(Keyword_extends)
 		}
@@ -128,7 +129,7 @@ func (p *CompletionParser) ParseInterface() {
 		}
 		p.cp.RecordSnapshot(Interface__LoopEntry_0)
 		p.state.Sync(Interface__LoopEntry_0)
-		for p.state.Lookahead(InterfaceLookahead2) == 0 {
+		for p.lookahead.InterfaceLoop(p.state) {
 			{
 				p.state.Consume(Keyword_Comma)
 			}
@@ -147,9 +148,9 @@ func (p *CompletionParser) ParseInterface() {
 	{
 		p.cp.RecordSnapshot(Interface__LoopEntry_1)
 		p.state.Sync(Interface__LoopEntry_1)
-		for p.state.Lookahead(InterfaceLookahead3) == 0 {
+		for p.lookahead.InterfaceFieldsLoop(p.state) {
 			p.cp.MarkAssignment("Fields")
-			p.state.EnterRule(Interface__Basic_2)
+			p.state.EnterRule(Interface__Basic_3)
 			p.ParseField()
 			p.state.ExitRule()
 			p.cp.ClearAssignment()
@@ -182,7 +183,7 @@ func (p *CompletionParser) ParseField() {
 func (p *CompletionParser) ParseFieldType() {
 	p.cp.EnterRule("FieldType", FieldType__Start)
 	defer p.cp.ExitRule()
-	switch p.state.Lookahead(FieldTypeLookaheadOr1) {
+	switch prediction, failure := p.lookahead.FieldTypeAlternatives(p.state); prediction {
 	case 0:
 		{
 			p.state.EnterRule(FieldType__Basic_1)
@@ -208,8 +209,7 @@ func (p *CompletionParser) ParseFieldType() {
 			p.state.ExitRule()
 		}
 	default:
-		token := p.state.LA(1)
-		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 }
 
@@ -259,7 +259,7 @@ func (p *CompletionParser) ParsePrimitiveType() {
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Type")
-		switch p.state.Lookahead(PrimitiveTypeTypeLookaheadOr2) {
+		switch prediction, _ := p.lookahead.PrimitiveTypeTypeAlternatives(p.state); prediction {
 		case 0:
 			p.state.Consume(Keyword_string)
 		case 1:
@@ -279,9 +279,9 @@ func (p *CompletionParser) ParseParserRule() {
 		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
-	p.cp.RecordSnapshot(ParserRule_returns)
-	p.state.Sync(ParserRule_returns)
-	if p.state.Lookahead(ParserRuleLookahead4) == 0 {
+	p.cp.RecordSnapshot(ParserRule__Basic_1)
+	p.state.Sync(ParserRule__Basic_1)
+	if p.lookahead.ParserRuleOptional(p.state) {
 		{
 			p.state.Consume(Keyword_returns)
 		}
@@ -309,25 +309,20 @@ func (p *CompletionParser) ParseParserRule() {
 func (p *CompletionParser) ParseToken() {
 	p.cp.EnterRule("Token", Token__Start)
 	defer p.cp.ExitRule()
-	p.cp.RecordSnapshot(Token__Basic_2)
-	p.state.Sync(Token__Basic_2)
-	if p.state.Lookahead(TokenLookahead5) == 0 {
-		switch p.state.Lookahead(TokenLookaheadOr3) {
-		case 0:
-			{
-				p.cp.MarkAssignment("Type")
-				p.state.Consume(Keyword_hidden)
-				p.cp.ClearAssignment()
-			}
-		case 1:
-			{
-				p.cp.MarkAssignment("Type")
-				p.state.Consume(Keyword_comment)
-				p.cp.ClearAssignment()
-			}
-		default:
-			token := p.state.LA(1)
-			p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
+	p.cp.RecordSnapshot(Token__Basic_3)
+	p.state.Sync(Token__Basic_3)
+	switch prediction, _ := p.lookahead.TokenAlternatives(p.state); prediction {
+	case 0:
+		{
+			p.cp.MarkAssignment("Type")
+			p.state.Consume(Keyword_hidden)
+			p.cp.ClearAssignment()
+		}
+	case 1:
+		{
+			p.cp.MarkAssignment("Type")
+			p.state.Consume(Keyword_comment)
+			p.cp.ClearAssignment()
 		}
 	}
 	{
@@ -370,8 +365,9 @@ func (p *CompletionParser) ParseTokenGroup() {
 	}
 	p.cp.RecordSnapshot(TokenGroup__LoopEntry)
 	p.state.Sync(TokenGroup__LoopEntry)
-	for p.state.Lookahead(TokenGroupLookahead6) == 0 {
-		switch p.state.Lookahead(TokenGroupLookaheadOr4) {
+loop0:
+	for {
+		switch prediction, _ := p.lookahead.TokenGroupAlternatives(p.state); prediction {
 		case 0:
 			{
 				p.cp.MarkAssignment("TokenRefs")
@@ -396,8 +392,7 @@ func (p *CompletionParser) ParseTokenGroup() {
 				p.cp.ClearAssignment()
 			}
 		default:
-			token := p.state.LA(1)
-			p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
+			break loop0
 		}
 		p.cp.RecordSnapshot(TokenGroup__LoopEntry)
 		p.state.Sync(TokenGroup__LoopEntry)
@@ -411,14 +406,14 @@ func (p *CompletionParser) ParseAlternatives() {
 	p.cp.EnterRule("Alternatives", Alternatives__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.EnterRule(Alternatives_Pipe)
+		p.state.EnterRule(Alternatives__Basic_3)
 		p.ParseGroup()
 		p.state.ExitRule()
 	}
-	p.cp.RecordSnapshot(Alternatives_Pipe)
-	p.state.Sync(Alternatives_Pipe)
-	if p.state.Lookahead(AlternativesLookahead7) == 0 {
-		for ok := true; ok; ok = p.state.Lookahead(AlternativesLookahead8) == 0 {
+	p.cp.RecordSnapshot(Alternatives__Basic_3)
+	p.state.Sync(Alternatives__Basic_3)
+	if p.lookahead.AlternativesOptional(p.state) {
+		for ok := true; ok; ok = p.lookahead.AlternativesLoop(p.state) {
 			{
 				p.state.Consume(Keyword_Pipe)
 			}
@@ -439,15 +434,15 @@ func (p *CompletionParser) ParseGroup() {
 	p.cp.EnterRule("Group", Group__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.EnterRule(Group__Basic_1)
+		p.state.EnterRule(Group__Basic_3)
 		p.ParseElement()
 		p.state.ExitRule()
 	}
-	p.cp.RecordSnapshot(Group__Basic_1)
-	p.state.Sync(Group__Basic_1)
-	if p.state.Lookahead(GroupLookahead9) == 0 {
+	p.cp.RecordSnapshot(Group__Basic_3)
+	p.state.Sync(Group__Basic_3)
+	if p.lookahead.GroupOptional(p.state) {
 		{
-			for ok := true; ok; ok = p.state.Lookahead(GroupLookahead10) == 0 {
+			for ok := true; ok; ok = p.lookahead.GroupElementsLoop(p.state) {
 				p.cp.MarkAssignment("Elements")
 				p.state.EnterRule(Group__Basic_2)
 				p.ParseElement()
@@ -463,7 +458,7 @@ func (p *CompletionParser) ParseGroup() {
 func (p *CompletionParser) ParseElement() {
 	p.cp.EnterRule("Element", Element__Start)
 	defer p.cp.ExitRule()
-	switch p.state.Lookahead(ElementLookaheadOr5) {
+	switch prediction, failure := p.lookahead.ElementAlternatives(p.state); prediction {
 	case 0:
 		{
 			p.state.EnterRule(Element__Basic_1)
@@ -501,22 +496,23 @@ func (p *CompletionParser) ParseElement() {
 			p.state.Consume(Keyword_RightParen)
 		}
 	default:
-		token := p.state.LA(1)
-		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 	{
-		p.cp.RecordSnapshot(Element__Basic_14)
-		p.state.Sync(Element__Basic_14)
-		if p.state.Lookahead(ElementLookahead11) == 0 {
+		p.cp.RecordSnapshot(Element__Basic_15)
+		p.state.Sync(Element__Basic_15)
+		switch prediction, _ := p.lookahead.ElementCardinalityAlternatives(p.state); prediction {
+		case 0:
 			p.cp.MarkAssignment("Cardinality")
-			switch p.state.Lookahead(ElementCardinalityLookaheadOr6) {
-			case 0:
-				p.state.Consume(Keyword_Asterisk)
-			case 1:
-				p.state.Consume(Keyword_Plus)
-			case 2:
-				p.state.Consume(Keyword_Question)
-			}
+			p.state.Consume(Keyword_Asterisk)
+			p.cp.ClearAssignment()
+		case 1:
+			p.cp.MarkAssignment("Cardinality")
+			p.state.Consume(Keyword_Plus)
+			p.cp.ClearAssignment()
+		case 2:
+			p.cp.MarkAssignment("Cardinality")
+			p.state.Consume(Keyword_Question)
 			p.cp.ClearAssignment()
 		}
 	}
@@ -542,7 +538,7 @@ func (p *CompletionParser) ParseAssignment() {
 	}
 	{
 		p.cp.MarkAssignment("Operator")
-		switch p.state.Lookahead(AssignmentOperatorLookaheadOr7) {
+		switch prediction, _ := p.lookahead.AssignmentOperatorAlternatives(p.state); prediction {
 		case 0:
 			p.state.Consume(Keyword_PlusEquals)
 		case 1:
@@ -564,7 +560,7 @@ func (p *CompletionParser) ParseAssignment() {
 func (p *CompletionParser) ParseAssignable() {
 	p.cp.EnterRule("Assignable", Assignable__Start)
 	defer p.cp.ExitRule()
-	switch p.state.Lookahead(AssignableLookaheadOr8) {
+	switch prediction, failure := p.lookahead.AssignableAlternatives(p.state); prediction {
 	case 0:
 		{
 			p.state.EnterRule(Assignable__Basic_1)
@@ -596,15 +592,14 @@ func (p *CompletionParser) ParseAssignable() {
 			p.state.Consume(Keyword_RightParen)
 		}
 	default:
-		token := p.state.LA(1)
-		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 }
 
 func (p *CompletionParser) ParseAssignableWithoutAlts() {
 	p.cp.EnterRule("AssignableWithoutAlts", AssignableWithoutAlts__Start)
 	defer p.cp.ExitRule()
-	switch p.state.Lookahead(AssignableWithoutAltsLookaheadOr9) {
+	switch prediction, failure := p.lookahead.AssignableWithoutAltsAlternatives(p.state); prediction {
 	case 0:
 		{
 			p.state.EnterRule(AssignableWithoutAlts__Basic_1)
@@ -624,8 +619,7 @@ func (p *CompletionParser) ParseAssignableWithoutAlts() {
 			p.state.ExitRule()
 		}
 	default:
-		token := p.state.LA(1)
-		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 }
 
@@ -633,14 +627,14 @@ func (p *CompletionParser) ParseAssignableAlternatives() {
 	p.cp.EnterRule("AssignableAlternatives", AssignableAlternatives__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.EnterRule(AssignableAlternatives_Pipe)
+		p.state.EnterRule(AssignableAlternatives__Basic_3)
 		p.ParseAssignableWithoutAlts()
 		p.state.ExitRule()
 	}
-	p.cp.RecordSnapshot(AssignableAlternatives_Pipe)
-	p.state.Sync(AssignableAlternatives_Pipe)
-	if p.state.Lookahead(AssignableAlternativesLookahead12) == 0 {
-		for ok := true; ok; ok = p.state.Lookahead(AssignableAlternativesLookahead13) == 0 {
+	p.cp.RecordSnapshot(AssignableAlternatives__Basic_3)
+	p.state.Sync(AssignableAlternatives__Basic_3)
+	if p.lookahead.AssignableAlternativesOptional(p.state) {
+		for ok := true; ok; ok = p.lookahead.AssignableAlternativesLoop(p.state) {
 			{
 				p.state.Consume(Keyword_Pipe)
 			}
@@ -668,9 +662,9 @@ func (p *CompletionParser) ParseCrossRef() {
 		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
-	p.cp.RecordSnapshot(CrossRef_Colon)
-	p.state.Sync(CrossRef_Colon)
-	if p.state.Lookahead(CrossRefLookahead14) == 0 {
+	p.cp.RecordSnapshot(CrossRef__Basic_2)
+	p.state.Sync(CrossRef__Basic_2)
+	if p.lookahead.CrossRefOptional(p.state) {
 		{
 			p.state.Consume(Keyword_Colon)
 		}
@@ -708,9 +702,9 @@ func (p *CompletionParser) ParseAction() {
 		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
-	p.cp.RecordSnapshot(Action_Dot)
-	p.state.Sync(Action_Dot)
-	if p.state.Lookahead(ActionLookahead15) == 0 {
+	p.cp.RecordSnapshot(Action__Basic_4)
+	p.state.Sync(Action__Basic_4)
+	if p.lookahead.ActionOptional(p.state) {
 		{
 			p.state.Consume(Keyword_Dot)
 		}
@@ -721,7 +715,7 @@ func (p *CompletionParser) ParseAction() {
 		}
 		{
 			p.cp.MarkAssignment("Operator")
-			switch p.state.Lookahead(ActionOperatorLookaheadOr10) {
+			switch prediction, _ := p.lookahead.ActionOperatorAlternatives(p.state); prediction {
 			case 0:
 				p.state.Consume(Keyword_PlusEquals)
 			case 1:
@@ -768,14 +762,14 @@ func (p *CompletionParser) ParseCompositeAlternatives() {
 	p.cp.EnterRule("CompositeAlternatives", CompositeAlternatives__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.EnterRule(CompositeAlternatives_Pipe)
+		p.state.EnterRule(CompositeAlternatives__Basic_3)
 		p.ParseCompositeGroup()
 		p.state.ExitRule()
 	}
-	p.cp.RecordSnapshot(CompositeAlternatives_Pipe)
-	p.state.Sync(CompositeAlternatives_Pipe)
-	if p.state.Lookahead(CompositeAlternativesLookahead16) == 0 {
-		for ok := true; ok; ok = p.state.Lookahead(CompositeAlternativesLookahead17) == 0 {
+	p.cp.RecordSnapshot(CompositeAlternatives__Basic_3)
+	p.state.Sync(CompositeAlternatives__Basic_3)
+	if p.lookahead.CompositeAlternativesOptional(p.state) {
+		for ok := true; ok; ok = p.lookahead.CompositeAlternativesLoop(p.state) {
 			{
 				p.state.Consume(Keyword_Pipe)
 			}
@@ -796,15 +790,15 @@ func (p *CompletionParser) ParseCompositeGroup() {
 	p.cp.EnterRule("CompositeGroup", CompositeGroup__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.EnterRule(CompositeGroup__Basic_1)
+		p.state.EnterRule(CompositeGroup__Basic_3)
 		p.ParseCompositeElement()
 		p.state.ExitRule()
 	}
-	p.cp.RecordSnapshot(CompositeGroup__Basic_1)
-	p.state.Sync(CompositeGroup__Basic_1)
-	if p.state.Lookahead(CompositeGroupLookahead18) == 0 {
+	p.cp.RecordSnapshot(CompositeGroup__Basic_3)
+	p.state.Sync(CompositeGroup__Basic_3)
+	if p.lookahead.CompositeGroupOptional(p.state) {
 		{
-			for ok := true; ok; ok = p.state.Lookahead(CompositeGroupLookahead19) == 0 {
+			for ok := true; ok; ok = p.lookahead.CompositeGroupElementsLoop(p.state) {
 				p.cp.MarkAssignment("Elements")
 				p.state.EnterRule(CompositeGroup__Basic_2)
 				p.ParseCompositeElement()
@@ -820,7 +814,7 @@ func (p *CompletionParser) ParseCompositeGroup() {
 func (p *CompletionParser) ParseCompositeElement() {
 	p.cp.EnterRule("CompositeElement", CompositeElement__Start)
 	defer p.cp.ExitRule()
-	switch p.state.Lookahead(CompositeElementLookaheadOr11) {
+	switch prediction, failure := p.lookahead.CompositeElementAlternatives(p.state); prediction {
 	case 0:
 		{
 			p.state.EnterRule(CompositeElement__Basic_1)
@@ -846,22 +840,23 @@ func (p *CompletionParser) ParseCompositeElement() {
 			p.state.Consume(Keyword_RightParen)
 		}
 	default:
-		token := p.state.LA(1)
-		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 	{
-		p.cp.RecordSnapshot(CompositeElement__Basic_10)
-		p.state.Sync(CompositeElement__Basic_10)
-		if p.state.Lookahead(CompositeElementLookahead20) == 0 {
+		p.cp.RecordSnapshot(CompositeElement__Basic_11)
+		p.state.Sync(CompositeElement__Basic_11)
+		switch prediction, _ := p.lookahead.CompositeElementCardinalityAlternatives(p.state); prediction {
+		case 0:
 			p.cp.MarkAssignment("Cardinality")
-			switch p.state.Lookahead(CompositeElementCardinalityLookaheadOr12) {
-			case 0:
-				p.state.Consume(Keyword_Asterisk)
-			case 1:
-				p.state.Consume(Keyword_Plus)
-			case 2:
-				p.state.Consume(Keyword_Question)
-			}
+			p.state.Consume(Keyword_Asterisk)
+			p.cp.ClearAssignment()
+		case 1:
+			p.cp.MarkAssignment("Cardinality")
+			p.state.Consume(Keyword_Plus)
+			p.cp.ClearAssignment()
+		case 2:
+			p.cp.MarkAssignment("Cardinality")
+			p.state.Consume(Keyword_Question)
 			p.cp.ClearAssignment()
 		}
 	}

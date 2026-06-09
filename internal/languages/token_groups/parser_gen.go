@@ -12,13 +12,15 @@ type Parser struct {
 	state                 *parser.ParserState
 	sc                    *service.Container
 	referencesConstructor token_groupsReferencesConstructor
+	lookahead             token_groupsParserLookahead
 }
 
 func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
 	referencesConstructor := service.MustGet[token_groupsReferencesConstructor](p.sc)
-	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
+	lookahead := service.MustGet[token_groupsParserLookahead](p.sc)
+	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
 	result := cp.ParseModel()
 	core.AssignContainers(document, result)
 	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
@@ -30,50 +32,11 @@ func NewParser(sc *service.Container) *Parser {
 	}
 }
 
-var BValueLookaheadOr1 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_Identifier},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_b},
-	},
-}
-
-var DLookahead0 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_Identifier},
-	},
-}
-
-var ModelItemLookaheadOr0 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_a},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_b},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_c},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_d},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_e},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_f},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_g},
-	},
-}
-
 func (p *Parser) ParseModel() Model {
 	current := NewModel()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		switch p.state.Lookahead(ModelItemLookaheadOr0) {
+		switch prediction, _ := p.lookahead.ModelItemAlternatives(p.state); prediction {
 		case 0:
 			p.state.EnterRule(Model__Basic_1)
 			result := p.ParseA()
@@ -125,13 +88,13 @@ func (p *Parser) ParseModel() Model {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseA() Item {
 	current := NewItem()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_a)
 		core.AssignToken(current, token, A_a)
@@ -143,19 +106,19 @@ func (p *Parser) ParseA() Item {
 			current.SetValue(token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseB() Item {
 	current := NewItem()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_b)
 		core.AssignToken(current, token, B_b)
 	}
 	{
-		switch p.state.Lookahead(BValueLookaheadOr1) {
+		switch prediction, _ := p.lookahead.BValueAlternatives(p.state); prediction {
 		case 0:
 			token := p.state.Consume(Token_Identifier)
 			core.AssignToken(current, token, B__Basic_0)
@@ -170,13 +133,13 @@ func (p *Parser) ParseB() Item {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseC() Item {
 	current := NewItem()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_c)
 		core.AssignToken(current, token, C_c)
@@ -188,20 +151,20 @@ func (p *Parser) ParseC() Item {
 			current.SetValue(token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseD() Item {
 	current := NewItem()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_d)
 		core.AssignToken(current, token, D_d)
 	}
 	{
-		p.state.Sync(D__Basic_0)
-		if p.state.Lookahead(DLookahead0) == 0 {
+		p.state.Sync(D__Basic_2)
+		if p.lookahead.DValueOptional(p.state) {
 			token := p.state.Consume(Token_Identifier)
 			core.AssignToken(current, token, D__Basic_0)
 			if token != nil {
@@ -209,13 +172,13 @@ func (p *Parser) ParseD() Item {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseE() Recovery {
 	current := NewRecovery()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_e)
 		core.AssignToken(current, token, E_e)
@@ -234,13 +197,13 @@ func (p *Parser) ParseE() Recovery {
 			current.SetSecond(token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseF() Item {
 	current := NewItem()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_f)
 		core.AssignToken(current, token, F_f)
@@ -252,13 +215,13 @@ func (p *Parser) ParseF() Item {
 			current.SetValue(token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseG() Item {
 	current := NewItem()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_g)
 		core.AssignToken(current, token, G_g)
@@ -270,6 +233,6 @@ func (p *Parser) ParseG() Item {
 			current.SetValue(token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }

@@ -214,7 +214,7 @@ func convertElement(
 		return convertAssignable(rb, e.Value(), e.Cardinality())
 
 	case grammar.CrossRef:
-		return convertCrossRef(rb, e)
+		return convertCrossRef(rb, e, e.Cardinality())
 
 	case grammar.RuleCall:
 		return convertRuleCall(rb, e, e.Cardinality())
@@ -242,11 +242,9 @@ func convertAssignable(
 	case grammar.RuleCall:
 		return convertRuleCall(rb, v, cardinality)
 	case grammar.CrossRef:
-		//TODO true?
-		// CrossRef cardinality comes from the outer element, not from the Assignable itself.
-		// The CrossRef has its own Cardinality() but the assignment wrapper's cardinality
-		// takes precedence when present.
-		return convertCrossRef(rb, v)
+		// The assignment wrapper's cardinality takes precedence over the CrossRef's
+		// own cardinality when present (e.g. `Actions+=[Command:ID]+`).
+		return convertCrossRef(rb, v, cardinality)
 	case grammar.Alternatives:
 		return convertAlternatives(rb, v, cardinality)
 	default:
@@ -267,7 +265,7 @@ func convertKeyword(
 	handle := rb.TokenRef(id)
 	handle.Left.ConsumedElement = kw
 	lookaheadName := rb.GetLookaheadNameByElement(kw)
-	return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
+	return wrapWithCardinality(rb, handle, cardinality, lookaheadName, kw), nil
 }
 
 func convertRuleCall(
@@ -282,12 +280,12 @@ func convertRuleCall(
 	case grammar.AbstractRuleWithBody:
 		handle := rb.RuleRef(typed)
 		handle.Left.RuleCallEntry = rc // tag so generator can find follow state via RuleCallEntry
-		return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
+		return wrapWithCardinality(rb, handle, cardinality, lookaheadName, rc), nil
 	case grammar.AbstractTokenRule:
 		id := rb.GetTokenTypeByName(typed.Name())
 		termHandle := rb.TokenRef(id)
 		termHandle.Left.ConsumedElement = rc
-		return wrapWithCardinality(rb, termHandle, cardinality, lookaheadName), nil
+		return wrapWithCardinality(rb, termHandle, cardinality, lookaheadName, rc), nil
 	}
 	panic(fmt.Sprintf("unexpected rule type %T", rule))
 }
@@ -295,7 +293,14 @@ func convertRuleCall(
 func convertCrossRef(
 	rb ATNRuleBuilder,
 	cr grammar.CrossRef,
+	cardinality string,
 ) (*ATNHandle, error) {
+	// An enclosing assignment's cardinality (e.g. `Actions+=[Command:ID]+`) takes
+	// precedence over the CrossRef's own; fall back to the CrossRef's when the
+	// caller passes none.
+	if cardinality == "" {
+		cardinality = cr.Cardinality()
+	}
 	rule := cr.Rule().Rule().Ref(context.Background())
 	hint := completionHintFor(rb.Rule(), cr)
 	if abstractRule, ok := rule.(grammar.AbstractRuleWithBody); ok {
@@ -320,8 +325,7 @@ func convertCrossRef(
 		}
 	}
 	lookaheadName := rb.GetLookaheadNameByElement(cr)
-	//TODO true? CrossRef cardinality comes from the outer element, not from the CrossRef itself.
-	return wrapWithCardinality(rb, termHandle, cr.Cardinality(), lookaheadName), nil
+	return wrapWithCardinality(rb, termHandle, cardinality, lookaheadName, cr), nil
 }
 
 func convertAlternatives(
@@ -343,7 +347,9 @@ func convertAlternatives(
 	start := rb.NewState(parser.ATNBasic)
 	lookaheadName := rb.GetLookaheadNameByElement(alts)
 	handle := rb.MakeAlternatives(lookaheadName, start, handles)
-	return wrapWithCardinality(rb, handle, cardinality, lookaheadName), nil
+	// `start` is the alternative-choice decision state for this Alternatives.
+	rb.RecordOrDecision(alts, start)
+	return wrapWithCardinality(rb, handle, cardinality, lookaheadName, alts), nil
 }
 
 func convertGroup(
@@ -363,17 +369,27 @@ func convertGroup(
 	}
 	handle := rb.MakeConcatenation(elementHandles)
 	lookaheadName := rb.GetLookaheadNameByElement(g)
-	return wrapWithCardinality(rb, handle, g.Cardinality(), lookaheadName), nil
+	return wrapWithCardinality(rb, handle, g.Cardinality(), lookaheadName, g), nil
 }
 
-func wrapWithCardinality(rb ATNRuleBuilder, prod *ATNHandle, cardinality string, lookaheadName string) *ATNHandle {
+func wrapWithCardinality(rb ATNRuleBuilder, prod *ATNHandle, cardinality string, lookaheadName string, el grammar.Element) *ATNHandle {
 	switch cardinality {
 	case "?":
-		return rb.Optional(lookaheadName, prod)
+		h := rb.Optional(lookaheadName, prod)
+		// Optional returns the same handle; its Left is the decision state.
+		rb.RecordLoopDecision(el, h.Left)
+		return h
 	case "*":
-		return rb.Star(lookaheadName, prod)
+		h := rb.Star(lookaheadName, prod)
+		// Star returns {Left: entry, ...}; entry is the decision state.
+		rb.RecordLoopDecision(el, h.Left)
+		return h
 	case "+":
-		return rb.Plus(lookaheadName, prod)
+		h := rb.Plus(lookaheadName, prod)
+		// Plus returns {Left: blkStart, ...}; the PlusLoopBack (blkStart.Loopback)
+		// is the decision state.
+		rb.RecordLoopDecision(el, h.Left.Loopback)
+		return h
 	default:
 		return prod
 	}

@@ -51,6 +51,15 @@ type ATN struct {
 	DecisionStates   []*ATNState
 	RuleToStartState map[grammar.AbstractRuleWithBody]*ATNState
 	RuleToStopState  map[grammar.AbstractRuleWithBody]*ATNState
+
+	// OrDecision maps an Alternatives element to the decision state for its
+	// alternative choice (the MakeAlternatives start state). LoopDecision maps
+	// any element carrying a cardinality (?/*/+) to the decision state for its
+	// enter-vs-exit choice. Both are populated during construction and used by
+	// the parser generator to emit AdaptivePredict calls for decisions that a
+	// single lookahead token cannot disambiguate.
+	OrDecision   map[grammar.Element]*ATNState
+	LoopDecision map[grammar.Element]*ATNState
 }
 
 // Transition is the interface implemented by all ATN transitions.
