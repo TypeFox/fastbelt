@@ -5,6 +5,8 @@
 package parser
 
 import (
+	"strconv"
+
 	"typefox.dev/fastbelt"
 )
 
@@ -15,16 +17,35 @@ const (
 	ATNInvalidType ATNStateType = iota
 	ATNBasic
 	ATNRuleStart
-	ATNPlusBlockStart
-	ATNStarBlockStart
-	ATNTokenStart
 	ATNRuleStop
 	ATNBlockEnd
-	ATNStarLoopBack
-	ATNStarLoopEntry
-	ATNPlusLoopBack
+	ATNLoopBack
+	ATNLoopEntry
 	ATNLoopEnd
 )
+
+func (t ATNStateType) String() string {
+	switch t {
+	case ATNInvalidType:
+		return "ATNInvalidType"
+	case ATNBasic:
+		return "ATNBasic"
+	case ATNRuleStart:
+		return "ATNRuleStart"
+	case ATNRuleStop:
+		return "ATNRuleStop"
+	case ATNBlockEnd:
+		return "ATNBlockEnd"
+	case ATNLoopBack:
+		return "ATNLoopBack"
+	case ATNLoopEntry:
+		return "ATNLoopEntry"
+	case ATNLoopEnd:
+		return "ATNLoopEnd"
+	default:
+		return "UnknownATNStateType(" + strconv.Itoa(int(t)) + ")"
+	}
+}
 
 // RuntimeATNState holds only the fields required for prediction at runtime.
 // Back-pointers to the build-time grammar objects (Rule, Production) and
@@ -35,6 +56,25 @@ type RuntimeATNState struct {
 	Decision               int
 	EpsilonOnlyTransitions bool
 	Transitions            []RuntimeTransition
+}
+
+func NewATNState(stateNumber int, stateType ATNStateType, epsilonOnly bool) *RuntimeATNState {
+	return &RuntimeATNState{
+		StateNumber:            stateNumber,
+		Type:                   stateType,
+		Decision:               -1,
+		EpsilonOnlyTransitions: epsilonOnly,
+		Transitions:            nil,
+	}
+}
+
+func (s *RuntimeATNState) SetDecision(decision int) *RuntimeATNState {
+	s.Decision = decision
+	return s
+}
+
+func (s *RuntimeATNState) AppendTransitions(transitions ...RuntimeTransition) {
+	s.Transitions = append(s.Transitions, transitions...)
 }
 
 // RuntimeTransition is the interface implemented by all runtime ATN transitions.
@@ -81,12 +121,26 @@ type RuntimeAtomTransition struct {
 	CompletionHint *CompletionHint
 }
 
+func NewAtomTransition(target *RuntimeATNState, tokenType *fastbelt.TokenType, hint *CompletionHint) *RuntimeAtomTransition {
+	return &RuntimeAtomTransition{
+		Target:         target,
+		TokenType:      tokenType,
+		CompletionHint: hint,
+	}
+}
+
 func (t *RuntimeAtomTransition) GetTarget() *RuntimeATNState { return t.Target }
 func (t *RuntimeAtomTransition) IsEpsilon() bool             { return false }
 
 // RuntimeEpsilonTransition fires without consuming a token.
 type RuntimeEpsilonTransition struct {
 	Target *RuntimeATNState
+}
+
+func NewEpsilonTransition(target *RuntimeATNState) *RuntimeEpsilonTransition {
+	return &RuntimeEpsilonTransition{
+		Target: target,
+	}
 }
 
 func (t *RuntimeEpsilonTransition) GetTarget() *RuntimeATNState { return t.Target }
@@ -104,6 +158,14 @@ type RuntimeRuleTransition struct {
 	Target         *RuntimeATNState // the rule's RuleStartState
 	FollowState    *RuntimeATNState
 	CompletionHint *CompletionHint
+}
+
+func NewRuleTransition(target, followState *RuntimeATNState, hint *CompletionHint) *RuntimeRuleTransition {
+	return &RuntimeRuleTransition{
+		Target:         target,
+		FollowState:    followState,
+		CompletionHint: hint,
+	}
 }
 
 func (t *RuntimeRuleTransition) GetTarget() *RuntimeATNState { return t.Target }

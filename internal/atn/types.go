@@ -12,9 +12,18 @@ import (
 // ATNState is the single concrete ATN state type.
 // Fields specific to certain state kinds are non-nil only for those kinds.
 type ATNState struct {
-	ATN                    *ATN
-	Production             grammar.Element  // set by post-processing for decision states
-	RuleCallEntry          grammar.RuleCall // set in convertRuleCall; not overwritten by post-processing
+	ATN *ATN
+	// Production is the grammar element this decision state represents; set by
+	// post-processing and used to generate decision-state constants.
+	Production grammar.Element
+	// RuleCallEntry is the rule call that caused this state to be the entry point
+	// of a parser-rule invocation; used to locate the corresponding follow state.
+	// Never overwritten by post-processing.
+	RuleCallEntry grammar.RuleCall
+	// ConsumedElement is the grammar element (keyword, token rule call, or
+	// cross-reference) whose token is consumed at this state; used to generate
+	// element-state constants and AssignToken calls.
+	ConsumedElement        grammar.Element
 	StateNumber            int
 	Rule                   grammar.AbstractRuleWithBody
 	EpsilonOnlyTransitions bool

@@ -4,24 +4,24 @@
 
 ```mermaid
 flowchart TD
-    q0(["SN:0<br/>RuleStart"])
-    q1(["SN:1<br/>RuleStop"])
-    q50["SN:50<br/>Basic<br/>"]
-    q51["SN:52<br/>Basic<br/>"]
-    q52["SN:54<br/>Basic<br/>"]
-    q53["SN:56<br/>Basic<br/>"]
-    q54["SN:57<br/>Basic<br/>"]
-    q55["SN:58<br/>Basic<br/>"]
-    q56["SN:59<br/>Basic<br/>"]
-    q57["SN:60<br/>Basic<br/>"]
-    q58["SN:61<br/>Basic<br/>"]
-    q59["SN:62<br/>Basic<br/>"]
-    q60["SN:63<br/>Basic<br/>"]
-    q61["SN:64<br/>Basic<br/>"]
-    q62["SN:65<br/>BlockEnd<br/>"]
-    q63{"SN:66<br/>StarLoopEntry<br/><br/>dec=0"}
-    q64["SN:67<br/>LoopEnd<br/>"]
-    q65["SN:68<br/>StarLoopBack<br/>"]
+    q0(["Grammar__Start (0)<br/>RuleStart"])
+    q1(["Grammar__Stop (1)<br/>RuleStop"])
+    q50["Grammar_grammar (50)<br/>Basic<br/>"]
+    q51["Grammar_Name_ID (51)<br/>Basic<br/>"]
+    q52["Grammar_Semicolon (52)<br/>Basic<br/>"]
+    q53["Grammar__Basic_0 (53)<br/>Basic<br/>"]
+    q54["Grammar__Basic_1 (54)<br/>Basic<br/>"]
+    q55["Grammar__Basic_2 (55)<br/>Basic<br/>"]
+    q56["Grammar__Basic_3 (56)<br/>Basic<br/>"]
+    q57["Grammar__Basic_4 (57)<br/>Basic<br/>"]
+    q58["Grammar__Basic_5 (58)<br/>Basic<br/>"]
+    q59["Grammar__Basic_6 (59)<br/>Basic<br/>"]
+    q60["Grammar__Basic_7 (60)<br/>Basic<br/>"]
+    q61["Grammar__Basic_8 (61)<br/>Basic<br/>"]
+    q62["Grammar__BlockEnd (62)<br/>BlockEnd<br/>"]
+    q63{"Grammar__LoopEntry (63)<br/>LoopEntry<br/><br/>dec=0"}
+    q64["Grammar__LoopEnd (64)<br/>LoopEnd<br/>"]
+    q65["Grammar__LoopBack (65)<br/>LoopBack<br/>"]
 
     q0 --> q50
     q50 -->|"tok(&quot;grammar&quot;)"| q51
@@ -50,26 +50,26 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q2(["SN:2<br/>RuleStart"])
-    q3(["SN:3<br/>RuleStop"])
-    q66["SN:66<br/>Basic<br/>"]
-    q67["SN:68<br/>Basic<br/>"]
-    q68["SN:70<br/>Basic<br/>"]
-    q69["SN:72<br/>Basic<br/>"]
-    q70["SN:74<br/>Basic<br/>"]
-    q71["SN:76<br/>Basic<br/>"]
-    q72["SN:77<br/>Basic<br/>"]
-    q73{"SN:77<br/>StarLoopEntry<br/><br/>dec=1"}
-    q74["SN:78<br/>LoopEnd<br/>"]
-    q75["SN:79<br/>StarLoopBack<br/>"]
-    q76["SN:78<br/>Basic<br/>"]
-    q77["SN:80<br/>Basic<br/>"]
-    q78["SN:81<br/>Basic<br/>"]
-    q79{"SN:82<br/>StarLoopEntry<br/><br/>dec=2"}
-    q80["SN:83<br/>LoopEnd<br/>"]
-    q81["SN:84<br/>StarLoopBack<br/>"]
-    q82["SN:85<br/>Basic<br/>"]
-    q83["SN:86<br/>Basic<br/>"]
+    q2(["Interface__Start (2)<br/>RuleStart"])
+    q3(["Interface__Stop (3)<br/>RuleStop"])
+    q66["Interface_interface (66)<br/>Basic<br/>"]
+    q67["Interface_Name_ID (67)<br/>Basic<br/>"]
+    q68["Interface_extends (68)<br/>Basic<br/>"]
+    q69["Interface_Extends_ID_0 (69)<br/>Basic<br/>"]
+    q70["Interface_Comma (70)<br/>Basic<br/>"]
+    q71["Interface_Extends_ID_1 (71)<br/>Basic<br/>"]
+    q72["Interface__Basic_0 (72)<br/>Basic<br/>"]
+    q73{"Interface__LoopEntry_0 (73)<br/>LoopEntry<br/><br/>dec=1"}
+    q74["Interface__LoopEnd_0 (74)<br/>LoopEnd<br/>"]
+    q75["Interface__LoopBack_0 (75)<br/>LoopBack<br/>"]
+    q76["Interface_LeftBrace (76)<br/>Basic<br/>"]
+    q77["Interface__Basic_1 (77)<br/>Basic<br/>"]
+    q78["Interface__Basic_2 (78)<br/>Basic<br/>"]
+    q79{"Interface__LoopEntry_1 (79)<br/>LoopEntry<br/><br/>dec=2"}
+    q80["Interface__LoopEnd_1 (80)<br/>LoopEnd<br/>"]
+    q81["Interface__LoopBack_1 (81)<br/>LoopBack<br/>"]
+    q82["Interface_RightBrace (82)<br/>Basic<br/>"]
+    q83["Interface__Basic_3 (83)<br/>Basic<br/>"]
 
     q2 --> q66
     q66 -->|"tok(&quot;interface&quot;)"| q67
@@ -99,11 +99,11 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q4(["SN:4<br/>RuleStart"])
-    q5(["SN:5<br/>RuleStop"])
-    q84["SN:84<br/>Basic<br/>"]
-    q85["SN:86<br/>Basic<br/>"]
-    q86["SN:87<br/>Basic<br/>"]
+    q4(["Field__Start (4)<br/>RuleStart"])
+    q5(["Field__Stop (5)<br/>RuleStop"])
+    q84["Field_Name_ID (84)<br/>Basic<br/>"]
+    q85["Field__Basic_0 (85)<br/>Basic<br/>"]
+    q86["Field__Basic_1 (86)<br/>Basic<br/>"]
 
     q4 --> q84
     q84 -->|"tok(ID)"| q85
@@ -115,18 +115,18 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q6(["SN:6<br/>RuleStart"])
-    q7(["SN:7<br/>RuleStop"])
-    q87["SN:87<br/>Basic<br/>"]
-    q88["SN:88<br/>Basic<br/>"]
-    q89["SN:89<br/>Basic<br/>"]
-    q90["SN:90<br/>Basic<br/>"]
-    q91["SN:91<br/>Basic<br/>"]
-    q92["SN:92<br/>Basic<br/>"]
-    q93["SN:93<br/>Basic<br/>"]
-    q94["SN:94<br/>Basic<br/>"]
-    q95["SN:95<br/>Basic<br/>"]
-    q96["SN:96<br/>BlockEnd<br/>"]
+    q6(["FieldType__Start (6)<br/>RuleStart"])
+    q7(["FieldType__Stop (7)<br/>RuleStop"])
+    q87["FieldType__Basic_0 (87)<br/>Basic<br/>"]
+    q88["FieldType__Basic_1 (88)<br/>Basic<br/>"]
+    q89["FieldType__Basic_2 (89)<br/>Basic<br/>"]
+    q90["FieldType__Basic_3 (90)<br/>Basic<br/>"]
+    q91["FieldType__Basic_4 (91)<br/>Basic<br/>"]
+    q92["FieldType__Basic_5 (92)<br/>Basic<br/>"]
+    q93["FieldType__Basic_6 (93)<br/>Basic<br/>"]
+    q94["FieldType__Basic_7 (94)<br/>Basic<br/>"]
+    q95["FieldType__Basic_8 (95)<br/>Basic<br/>"]
+    q96["FieldType__BlockEnd (96)<br/>BlockEnd<br/>"]
 
     q6 --> q95
     q87 -.->|"[SimpleType]"| q88
@@ -148,12 +148,12 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q8(["SN:8<br/>RuleStart"])
-    q9(["SN:9<br/>RuleStop"])
-    q97["SN:97<br/>Basic<br/>"]
-    q98["SN:99<br/>Basic<br/>"]
-    q99["SN:101<br/>Basic<br/>"]
-    q100["SN:102<br/>Basic<br/>"]
+    q8(["ArrayType__Start (8)<br/>RuleStart"])
+    q9(["ArrayType__Stop (9)<br/>RuleStop"])
+    q97["ArrayType_LeftBracket (97)<br/>Basic<br/>"]
+    q98["ArrayType_RightBracket (98)<br/>Basic<br/>"]
+    q99["ArrayType__Basic_0 (99)<br/>Basic<br/>"]
+    q100["ArrayType__Basic_1 (100)<br/>Basic<br/>"]
 
     q8 --> q97
     q97 -->|"tok(&quot;[&quot;)"| q98
@@ -166,11 +166,11 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q10(["SN:10<br/>RuleStart"])
-    q11(["SN:11<br/>RuleStop"])
-    q101["SN:101<br/>Basic<br/>"]
-    q102["SN:103<br/>Basic<br/>"]
-    q103["SN:104<br/>Basic<br/>"]
+    q10(["ReferenceType__Start (10)<br/>RuleStart"])
+    q11(["ReferenceType__Stop (11)<br/>RuleStop"])
+    q101["ReferenceType_Asterisk (101)<br/>Basic<br/>"]
+    q102["ReferenceType_Type_ID (102)<br/>Basic<br/>"]
+    q103["ReferenceType__Basic (103)<br/>Basic<br/>"]
 
     q10 --> q101
     q101 -->|"tok(&quot;*&quot;)"| q102
@@ -182,10 +182,10 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q12(["SN:12<br/>RuleStart"])
-    q13(["SN:13<br/>RuleStop"])
-    q104["SN:104<br/>Basic<br/>"]
-    q105["SN:105<br/>Basic<br/>"]
+    q12(["SimpleType__Start (12)<br/>RuleStart"])
+    q13(["SimpleType__Stop (13)<br/>RuleStop"])
+    q104["SimpleType_Type_ID (104)<br/>Basic<br/>"]
+    q105["SimpleType__Basic (105)<br/>Basic<br/>"]
 
     q12 --> q104
     q104 -->|"tok(ID)"| q105
@@ -196,16 +196,16 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q14(["SN:14<br/>RuleStart"])
-    q15(["SN:15<br/>RuleStop"])
-    q106["SN:106<br/>Basic<br/>"]
-    q107["SN:107<br/>Basic<br/>"]
-    q108["SN:108<br/>Basic<br/>"]
-    q109["SN:109<br/>Basic<br/>"]
-    q110["SN:110<br/>Basic<br/>"]
-    q111["SN:111<br/>Basic<br/>"]
-    q112["SN:112<br/>Basic<br/>"]
-    q113["SN:113<br/>BlockEnd<br/>"]
+    q14(["PrimitiveType__Start (14)<br/>RuleStart"])
+    q15(["PrimitiveType__Stop (15)<br/>RuleStop"])
+    q106["PrimitiveType_Type_string (106)<br/>Basic<br/>"]
+    q107["PrimitiveType__Basic_0 (107)<br/>Basic<br/>"]
+    q108["PrimitiveType_Type_bool (108)<br/>Basic<br/>"]
+    q109["PrimitiveType__Basic_1 (109)<br/>Basic<br/>"]
+    q110["PrimitiveType_Type_composite (110)<br/>Basic<br/>"]
+    q111["PrimitiveType__Basic_2 (111)<br/>Basic<br/>"]
+    q112["PrimitiveType__Basic_3 (112)<br/>Basic<br/>"]
+    q113["PrimitiveType__BlockEnd (113)<br/>BlockEnd<br/>"]
 
     q14 --> q112
     q106 -->|"tok(&quot;string&quot;)"| q107
@@ -224,16 +224,16 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q16(["SN:16<br/>RuleStart"])
-    q17(["SN:17<br/>RuleStop"])
-    q114["SN:114<br/>Basic<br/>"]
-    q115["SN:116<br/>Basic<br/>"]
-    q116["SN:118<br/>Basic<br/>"]
-    q117["SN:119<br/>Basic<br/>"]
-    q118["SN:119<br/>Basic<br/>"]
-    q119["SN:121<br/>Basic<br/>"]
-    q120["SN:123<br/>Basic<br/>"]
-    q121["SN:124<br/>Basic<br/>"]
+    q16(["ParserRule__Start (16)<br/>RuleStart"])
+    q17(["ParserRule__Stop (17)<br/>RuleStop"])
+    q114["ParserRule_Name_ID (114)<br/>Basic<br/>"]
+    q115["ParserRule_returns (115)<br/>Basic<br/>"]
+    q116["ParserRule_ReturnType_ID (116)<br/>Basic<br/>"]
+    q117["ParserRule__Basic_0 (117)<br/>Basic<br/>"]
+    q118["ParserRule_Colon (118)<br/>Basic<br/>"]
+    q119["ParserRule__Basic_1 (119)<br/>Basic<br/>"]
+    q120["ParserRule_Semicolon (120)<br/>Basic<br/>"]
+    q121["ParserRule__Basic_2 (121)<br/>Basic<br/>"]
 
     q16 --> q114
     q114 -->|"tok(ID)"| q115
@@ -251,20 +251,20 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q18(["SN:18<br/>RuleStart"])
-    q19(["SN:19<br/>RuleStop"])
-    q122["SN:122<br/>Basic<br/>"]
-    q123["SN:123<br/>Basic<br/>"]
-    q124["SN:124<br/>Basic<br/>"]
-    q125["SN:125<br/>Basic<br/>"]
-    q126["SN:126<br/>Basic<br/>"]
-    q127["SN:127<br/>BlockEnd<br/>"]
-    q128["SN:128<br/>Basic<br/>"]
-    q129["SN:130<br/>Basic<br/>"]
-    q130["SN:132<br/>Basic<br/>"]
-    q131["SN:134<br/>Basic<br/>"]
-    q132["SN:136<br/>Basic<br/>"]
-    q133["SN:137<br/>Basic<br/>"]
+    q18(["Token__Start (18)<br/>RuleStart"])
+    q19(["Token__Stop (19)<br/>RuleStop"])
+    q122["Token_Type_hidden (122)<br/>Basic<br/>"]
+    q123["Token__Basic_0 (123)<br/>Basic<br/>"]
+    q124["Token_Type_comment (124)<br/>Basic<br/>"]
+    q125["Token__Basic_1 (125)<br/>Basic<br/>"]
+    q126["Token__Basic_2 (126)<br/>Basic<br/>"]
+    q127["Token__BlockEnd (127)<br/>BlockEnd<br/>"]
+    q128["Token_token (128)<br/>Basic<br/>"]
+    q129["Token_Name_ID (129)<br/>Basic<br/>"]
+    q130["Token_Colon (130)<br/>Basic<br/>"]
+    q131["Token_Regexp_RegexLiteral (131)<br/>Basic<br/>"]
+    q132["Token_Semicolon (132)<br/>Basic<br/>"]
+    q133["Token__Basic_3 (133)<br/>Basic<br/>"]
 
     q18 --> q126
     q122 -->|"tok(&quot;hidden&quot;)"| q123
@@ -287,14 +287,14 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q20(["SN:20<br/>RuleStart"])
-    q21(["SN:21<br/>RuleStop"])
-    q134["SN:134<br/>Basic<br/>"]
-    q135["SN:136<br/>Basic<br/>"]
-    q136["SN:138<br/>Basic<br/>"]
-    q137["SN:139<br/>Basic<br/>"]
-    q138{"SN:139<br/>PlusLoopBack<br/><br/>dec=3"}
-    q139["SN:140<br/>LoopEnd<br/>"]
+    q20(["Alternatives__Start (20)<br/>RuleStart"])
+    q21(["Alternatives__Stop (21)<br/>RuleStop"])
+    q134["Alternatives__Basic_0 (134)<br/>Basic<br/>"]
+    q135["Alternatives_Pipe (135)<br/>Basic<br/>"]
+    q136["Alternatives__Basic_1 (136)<br/>Basic<br/>"]
+    q137["Alternatives__Basic_2 (137)<br/>Basic<br/>"]
+    q138{"Alternatives__LoopBack (138)<br/>LoopBack<br/><br/>dec=3"}
+    q139["Alternatives__LoopEnd (139)<br/>LoopEnd<br/>"]
 
     q20 --> q134
     q134 -.->|"[Group]"| q135
@@ -311,13 +311,13 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q22(["SN:22<br/>RuleStart"])
-    q23(["SN:23<br/>RuleStop"])
-    q140["SN:140<br/>Basic<br/>"]
-    q141["SN:142<br/>Basic<br/>"]
-    q142["SN:143<br/>Basic<br/>"]
-    q143{"SN:144<br/>PlusLoopBack<br/><br/>dec=4"}
-    q144["SN:145<br/>LoopEnd<br/>"]
+    q22(["Group__Start (22)<br/>RuleStart"])
+    q23(["Group__Stop (23)<br/>RuleStop"])
+    q140["Group__Basic_0 (140)<br/>Basic<br/>"]
+    q141["Group__Basic_1 (141)<br/>Basic<br/>"]
+    q142["Group__Basic_2 (142)<br/>Basic<br/>"]
+    q143{"Group__LoopBack (143)<br/>LoopBack<br/><br/>dec=4"}
+    q144["Group__LoopEnd (144)<br/>LoopEnd<br/>"]
 
     q22 --> q140
     q140 -.->|"[Element]"| q141
@@ -333,30 +333,30 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q24(["SN:24<br/>RuleStart"])
-    q25(["SN:25<br/>RuleStop"])
-    q145["SN:145<br/>Basic<br/>"]
-    q146["SN:146<br/>Basic<br/>"]
-    q147["SN:147<br/>Basic<br/>"]
-    q148["SN:148<br/>Basic<br/>"]
-    q149["SN:149<br/>Basic<br/>"]
-    q150["SN:150<br/>Basic<br/>"]
-    q151["SN:151<br/>Basic<br/>"]
-    q152["SN:152<br/>Basic<br/>"]
-    q153["SN:153<br/>Basic<br/>"]
-    q154["SN:155<br/>Basic<br/>"]
-    q155["SN:157<br/>Basic<br/>"]
-    q156["SN:158<br/>Basic<br/>"]
-    q157["SN:157<br/>Basic<br/>"]
-    q158["SN:158<br/>BlockEnd<br/>"]
-    q159["SN:159<br/>Basic<br/>"]
-    q160["SN:160<br/>Basic<br/>"]
-    q161["SN:161<br/>Basic<br/>"]
-    q162["SN:162<br/>Basic<br/>"]
-    q163["SN:163<br/>Basic<br/>"]
-    q164["SN:164<br/>Basic<br/>"]
-    q165["SN:165<br/>Basic<br/>"]
-    q166["SN:166<br/>BlockEnd<br/>"]
+    q24(["Element__Start (24)<br/>RuleStart"])
+    q25(["Element__Stop (25)<br/>RuleStop"])
+    q145["Element__Basic_0 (145)<br/>Basic<br/>"]
+    q146["Element__Basic_1 (146)<br/>Basic<br/>"]
+    q147["Element__Basic_2 (147)<br/>Basic<br/>"]
+    q148["Element__Basic_3 (148)<br/>Basic<br/>"]
+    q149["Element__Basic_4 (149)<br/>Basic<br/>"]
+    q150["Element__Basic_5 (150)<br/>Basic<br/>"]
+    q151["Element__Basic_6 (151)<br/>Basic<br/>"]
+    q152["Element__Basic_7 (152)<br/>Basic<br/>"]
+    q153["Element_LeftParen (153)<br/>Basic<br/>"]
+    q154["Element__Basic_8 (154)<br/>Basic<br/>"]
+    q155["Element_RightParen (155)<br/>Basic<br/>"]
+    q156["Element__Basic_9 (156)<br/>Basic<br/>"]
+    q157["Element__Basic_10 (157)<br/>Basic<br/>"]
+    q158["Element__BlockEnd_0 (158)<br/>BlockEnd<br/>"]
+    q159["Element_Cardinality_Asterisk (159)<br/>Basic<br/>"]
+    q160["Element__Basic_11 (160)<br/>Basic<br/>"]
+    q161["Element_Cardinality_Plus (161)<br/>Basic<br/>"]
+    q162["Element__Basic_12 (162)<br/>Basic<br/>"]
+    q163["Element_Cardinality_Question (163)<br/>Basic<br/>"]
+    q164["Element__Basic_13 (164)<br/>Basic<br/>"]
+    q165["Element__Basic_14 (165)<br/>Basic<br/>"]
+    q166["Element__BlockEnd_1 (166)<br/>BlockEnd<br/>"]
 
     q24 --> q157
     q145 -.->|"[Keyword]"| q146
@@ -394,10 +394,10 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q26(["SN:26<br/>RuleStart"])
-    q27(["SN:27<br/>RuleStop"])
-    q167["SN:167<br/>Basic<br/>"]
-    q168["SN:168<br/>Basic<br/>"]
+    q26(["Keyword__Start (26)<br/>RuleStart"])
+    q27(["Keyword__Stop (27)<br/>RuleStop"])
+    q167["Keyword_Value_StringLiteral (167)<br/>Basic<br/>"]
+    q168["Keyword__Basic (168)<br/>Basic<br/>"]
 
     q26 --> q167
     q167 -->|"tok(StringLiteral)"| q168
@@ -408,19 +408,19 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q28(["SN:28<br/>RuleStart"])
-    q29(["SN:29<br/>RuleStop"])
-    q169["SN:169<br/>Basic<br/>"]
-    q170["SN:171<br/>Basic<br/>"]
-    q171["SN:172<br/>Basic<br/>"]
-    q172["SN:173<br/>Basic<br/>"]
-    q173["SN:174<br/>Basic<br/>"]
-    q174["SN:175<br/>Basic<br/>"]
-    q175["SN:176<br/>Basic<br/>"]
-    q176["SN:177<br/>Basic<br/>"]
-    q177["SN:178<br/>BlockEnd<br/>"]
-    q178["SN:179<br/>Basic<br/>"]
-    q179["SN:180<br/>Basic<br/>"]
+    q28(["Assignment__Start (28)<br/>RuleStart"])
+    q29(["Assignment__Stop (29)<br/>RuleStop"])
+    q169["Assignment_Property_ID (169)<br/>Basic<br/>"]
+    q170["Assignment_Operator_PlusEquals (170)<br/>Basic<br/>"]
+    q171["Assignment__Basic_0 (171)<br/>Basic<br/>"]
+    q172["Assignment_Operator_Equals (172)<br/>Basic<br/>"]
+    q173["Assignment__Basic_1 (173)<br/>Basic<br/>"]
+    q174["Assignment_Operator_QuestionEquals (174)<br/>Basic<br/>"]
+    q175["Assignment__Basic_2 (175)<br/>Basic<br/>"]
+    q176["Assignment__Basic_3 (176)<br/>Basic<br/>"]
+    q177["Assignment__BlockEnd (177)<br/>BlockEnd<br/>"]
+    q178["Assignment__Basic_4 (178)<br/>Basic<br/>"]
+    q179["Assignment__Basic_5 (179)<br/>Basic<br/>"]
 
     q28 --> q169
     q169 -->|"tok(ID)"| q176
@@ -442,20 +442,20 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q30(["SN:30<br/>RuleStart"])
-    q31(["SN:31<br/>RuleStop"])
-    q180["SN:180<br/>Basic<br/>"]
-    q181["SN:181<br/>Basic<br/>"]
-    q182["SN:182<br/>Basic<br/>"]
-    q183["SN:183<br/>Basic<br/>"]
-    q184["SN:184<br/>Basic<br/>"]
-    q185["SN:185<br/>Basic<br/>"]
-    q186["SN:186<br/>Basic<br/>"]
-    q187["SN:188<br/>Basic<br/>"]
-    q188["SN:190<br/>Basic<br/>"]
-    q189["SN:191<br/>Basic<br/>"]
-    q190["SN:190<br/>Basic<br/>"]
-    q191["SN:191<br/>BlockEnd<br/>"]
+    q30(["Assignable__Start (30)<br/>RuleStart"])
+    q31(["Assignable__Stop (31)<br/>RuleStop"])
+    q180["Assignable__Basic_0 (180)<br/>Basic<br/>"]
+    q181["Assignable__Basic_1 (181)<br/>Basic<br/>"]
+    q182["Assignable__Basic_2 (182)<br/>Basic<br/>"]
+    q183["Assignable__Basic_3 (183)<br/>Basic<br/>"]
+    q184["Assignable__Basic_4 (184)<br/>Basic<br/>"]
+    q185["Assignable__Basic_5 (185)<br/>Basic<br/>"]
+    q186["Assignable_LeftParen (186)<br/>Basic<br/>"]
+    q187["Assignable__Basic_6 (187)<br/>Basic<br/>"]
+    q188["Assignable_RightParen (188)<br/>Basic<br/>"]
+    q189["Assignable__Basic_7 (189)<br/>Basic<br/>"]
+    q190["Assignable__Basic_8 (190)<br/>Basic<br/>"]
+    q191["Assignable__BlockEnd (191)<br/>BlockEnd<br/>"]
 
     q30 --> q190
     q180 -.->|"[Keyword]"| q181
@@ -479,16 +479,16 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q32(["SN:32<br/>RuleStart"])
-    q33(["SN:33<br/>RuleStop"])
-    q192["SN:192<br/>Basic<br/>"]
-    q193["SN:193<br/>Basic<br/>"]
-    q194["SN:194<br/>Basic<br/>"]
-    q195["SN:195<br/>Basic<br/>"]
-    q196["SN:196<br/>Basic<br/>"]
-    q197["SN:197<br/>Basic<br/>"]
-    q198["SN:198<br/>Basic<br/>"]
-    q199["SN:199<br/>BlockEnd<br/>"]
+    q32(["AssignableWithoutAlts__Start (32)<br/>RuleStart"])
+    q33(["AssignableWithoutAlts__Stop (33)<br/>RuleStop"])
+    q192["AssignableWithoutAlts__Basic_0 (192)<br/>Basic<br/>"]
+    q193["AssignableWithoutAlts__Basic_1 (193)<br/>Basic<br/>"]
+    q194["AssignableWithoutAlts__Basic_2 (194)<br/>Basic<br/>"]
+    q195["AssignableWithoutAlts__Basic_3 (195)<br/>Basic<br/>"]
+    q196["AssignableWithoutAlts__Basic_4 (196)<br/>Basic<br/>"]
+    q197["AssignableWithoutAlts__Basic_5 (197)<br/>Basic<br/>"]
+    q198["AssignableWithoutAlts__Basic_6 (198)<br/>Basic<br/>"]
+    q199["AssignableWithoutAlts__BlockEnd (199)<br/>BlockEnd<br/>"]
 
     q32 --> q198
     q192 -.->|"[Keyword]"| q193
@@ -507,14 +507,14 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q34(["SN:34<br/>RuleStart"])
-    q35(["SN:35<br/>RuleStop"])
-    q200["SN:200<br/>Basic<br/>"]
-    q201["SN:202<br/>Basic<br/>"]
-    q202["SN:204<br/>Basic<br/>"]
-    q203["SN:205<br/>Basic<br/>"]
-    q204{"SN:205<br/>PlusLoopBack<br/><br/>dec=5"}
-    q205["SN:206<br/>LoopEnd<br/>"]
+    q34(["AssignableAlternatives__Start (34)<br/>RuleStart"])
+    q35(["AssignableAlternatives__Stop (35)<br/>RuleStop"])
+    q200["AssignableAlternatives__Basic_0 (200)<br/>Basic<br/>"]
+    q201["AssignableAlternatives_Pipe (201)<br/>Basic<br/>"]
+    q202["AssignableAlternatives__Basic_1 (202)<br/>Basic<br/>"]
+    q203["AssignableAlternatives__Basic_2 (203)<br/>Basic<br/>"]
+    q204{"AssignableAlternatives__LoopBack (204)<br/>LoopBack<br/><br/>dec=5"}
+    q205["AssignableAlternatives__LoopEnd (205)<br/>LoopEnd<br/>"]
 
     q34 --> q200
     q200 -.->|"[AssignableWithoutAlts]"| q201
@@ -531,15 +531,15 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q36(["SN:36<br/>RuleStart"])
-    q37(["SN:37<br/>RuleStop"])
-    q206["SN:206<br/>Basic<br/>"]
-    q207["SN:208<br/>Basic<br/>"]
-    q208["SN:210<br/>Basic<br/>"]
-    q209["SN:212<br/>Basic<br/>"]
-    q210["SN:213<br/>Basic<br/>"]
-    q211["SN:213<br/>Basic<br/>"]
-    q212["SN:214<br/>Basic<br/>"]
+    q36(["CrossRef__Start (36)<br/>RuleStart"])
+    q37(["CrossRef__Stop (37)<br/>RuleStop"])
+    q206["CrossRef_LeftBracket (206)<br/>Basic<br/>"]
+    q207["CrossRef_Type_ID (207)<br/>Basic<br/>"]
+    q208["CrossRef_Colon (208)<br/>Basic<br/>"]
+    q209["CrossRef__Basic_0 (209)<br/>Basic<br/>"]
+    q210["CrossRef__Basic_1 (210)<br/>Basic<br/>"]
+    q211["CrossRef_RightBracket (211)<br/>Basic<br/>"]
+    q212["CrossRef__Basic_2 (212)<br/>Basic<br/>"]
 
     q36 --> q206
     q206 -->|"tok(&quot;[&quot;)"| q207
@@ -556,10 +556,10 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q38(["SN:38<br/>RuleStart"])
-    q39(["SN:39<br/>RuleStop"])
-    q213["SN:213<br/>Basic<br/>"]
-    q214["SN:214<br/>Basic<br/>"]
+    q38(["RuleCall__Start (38)<br/>RuleStart"])
+    q39(["RuleCall__Stop (39)<br/>RuleStop"])
+    q213["RuleCall_Rule_ID (213)<br/>Basic<br/>"]
+    q214["RuleCall__Basic (214)<br/>Basic<br/>"]
 
     q38 --> q213
     q213 -->|"tok(ID)"| q214
@@ -570,22 +570,22 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q40(["SN:40<br/>RuleStart"])
-    q41(["SN:41<br/>RuleStop"])
-    q215["SN:215<br/>Basic<br/>"]
-    q216["SN:217<br/>Basic<br/>"]
-    q217["SN:219<br/>Basic<br/>"]
-    q218["SN:221<br/>Basic<br/>"]
-    q219["SN:223<br/>Basic<br/>"]
-    q220["SN:224<br/>Basic<br/>"]
-    q221["SN:225<br/>Basic<br/>"]
-    q222["SN:226<br/>Basic<br/>"]
-    q223["SN:227<br/>Basic<br/>"]
-    q224["SN:228<br/>BlockEnd<br/>"]
-    q225["SN:229<br/>Basic<br/>"]
-    q226["SN:230<br/>Basic<br/>"]
-    q227["SN:229<br/>Basic<br/>"]
-    q228["SN:230<br/>Basic<br/>"]
+    q40(["Action__Start (40)<br/>RuleStart"])
+    q41(["Action__Stop (41)<br/>RuleStop"])
+    q215["Action_LeftBrace (215)<br/>Basic<br/>"]
+    q216["Action_Type_ID (216)<br/>Basic<br/>"]
+    q217["Action_Dot (217)<br/>Basic<br/>"]
+    q218["Action_Property_ID (218)<br/>Basic<br/>"]
+    q219["Action_Operator_PlusEquals (219)<br/>Basic<br/>"]
+    q220["Action__Basic_0 (220)<br/>Basic<br/>"]
+    q221["Action_Operator_Equals (221)<br/>Basic<br/>"]
+    q222["Action__Basic_1 (222)<br/>Basic<br/>"]
+    q223["Action__Basic_2 (223)<br/>Basic<br/>"]
+    q224["Action__BlockEnd (224)<br/>BlockEnd<br/>"]
+    q225["Action_current (225)<br/>Basic<br/>"]
+    q226["Action__Basic_3 (226)<br/>Basic<br/>"]
+    q227["Action_RightBrace (227)<br/>Basic<br/>"]
+    q228["Action__Basic_4 (228)<br/>Basic<br/>"]
 
     q40 --> q215
     q215 -->|"tok(&quot;{&quot;)"| q216
@@ -610,14 +610,14 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q42(["SN:42<br/>RuleStart"])
-    q43(["SN:43<br/>RuleStop"])
-    q229["SN:229<br/>Basic<br/>"]
-    q230["SN:231<br/>Basic<br/>"]
-    q231["SN:233<br/>Basic<br/>"]
-    q232["SN:235<br/>Basic<br/>"]
-    q233["SN:237<br/>Basic<br/>"]
-    q234["SN:238<br/>Basic<br/>"]
+    q42(["CompositeRule__Start (42)<br/>RuleStart"])
+    q43(["CompositeRule__Stop (43)<br/>RuleStop"])
+    q229["CompositeRule_composite (229)<br/>Basic<br/>"]
+    q230["CompositeRule_Name_ID (230)<br/>Basic<br/>"]
+    q231["CompositeRule_Colon (231)<br/>Basic<br/>"]
+    q232["CompositeRule__Basic_0 (232)<br/>Basic<br/>"]
+    q233["CompositeRule_Semicolon (233)<br/>Basic<br/>"]
+    q234["CompositeRule__Basic_1 (234)<br/>Basic<br/>"]
 
     q42 --> q229
     q229 -->|"tok(&quot;composite&quot;)"| q230
@@ -632,14 +632,14 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q44(["SN:44<br/>RuleStart"])
-    q45(["SN:45<br/>RuleStop"])
-    q235["SN:235<br/>Basic<br/>"]
-    q236["SN:237<br/>Basic<br/>"]
-    q237["SN:239<br/>Basic<br/>"]
-    q238["SN:240<br/>Basic<br/>"]
-    q239{"SN:240<br/>PlusLoopBack<br/><br/>dec=6"}
-    q240["SN:241<br/>LoopEnd<br/>"]
+    q44(["CompositeAlternatives__Start (44)<br/>RuleStart"])
+    q45(["CompositeAlternatives__Stop (45)<br/>RuleStop"])
+    q235["CompositeAlternatives__Basic_0 (235)<br/>Basic<br/>"]
+    q236["CompositeAlternatives_Pipe (236)<br/>Basic<br/>"]
+    q237["CompositeAlternatives__Basic_1 (237)<br/>Basic<br/>"]
+    q238["CompositeAlternatives__Basic_2 (238)<br/>Basic<br/>"]
+    q239{"CompositeAlternatives__LoopBack (239)<br/>LoopBack<br/><br/>dec=6"}
+    q240["CompositeAlternatives__LoopEnd (240)<br/>LoopEnd<br/>"]
 
     q44 --> q235
     q235 -.->|"[CompositeGroup]"| q236
@@ -656,13 +656,13 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q46(["SN:46<br/>RuleStart"])
-    q47(["SN:47<br/>RuleStop"])
-    q241["SN:241<br/>Basic<br/>"]
-    q242["SN:243<br/>Basic<br/>"]
-    q243["SN:244<br/>Basic<br/>"]
-    q244{"SN:245<br/>PlusLoopBack<br/><br/>dec=7"}
-    q245["SN:246<br/>LoopEnd<br/>"]
+    q46(["CompositeGroup__Start (46)<br/>RuleStart"])
+    q47(["CompositeGroup__Stop (47)<br/>RuleStop"])
+    q241["CompositeGroup__Basic_0 (241)<br/>Basic<br/>"]
+    q242["CompositeGroup__Basic_1 (242)<br/>Basic<br/>"]
+    q243["CompositeGroup__Basic_2 (243)<br/>Basic<br/>"]
+    q244{"CompositeGroup__LoopBack (244)<br/>LoopBack<br/><br/>dec=7"}
+    q245["CompositeGroup__LoopEnd (245)<br/>LoopEnd<br/>"]
 
     q46 --> q241
     q241 -.->|"[CompositeElement]"| q242
@@ -678,26 +678,26 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q48(["SN:48<br/>RuleStart"])
-    q49(["SN:49<br/>RuleStop"])
-    q246["SN:246<br/>Basic<br/>"]
-    q247["SN:247<br/>Basic<br/>"]
-    q248["SN:248<br/>Basic<br/>"]
-    q249["SN:249<br/>Basic<br/>"]
-    q250["SN:250<br/>Basic<br/>"]
-    q251["SN:252<br/>Basic<br/>"]
-    q252["SN:254<br/>Basic<br/>"]
-    q253["SN:255<br/>Basic<br/>"]
-    q254["SN:254<br/>Basic<br/>"]
-    q255["SN:255<br/>BlockEnd<br/>"]
-    q256["SN:256<br/>Basic<br/>"]
-    q257["SN:257<br/>Basic<br/>"]
-    q258["SN:258<br/>Basic<br/>"]
-    q259["SN:259<br/>Basic<br/>"]
-    q260["SN:260<br/>Basic<br/>"]
-    q261["SN:261<br/>Basic<br/>"]
-    q262["SN:262<br/>Basic<br/>"]
-    q263["SN:263<br/>BlockEnd<br/>"]
+    q48(["CompositeElement__Start (48)<br/>RuleStart"])
+    q49(["CompositeElement__Stop (49)<br/>RuleStop"])
+    q246["CompositeElement__Basic_0 (246)<br/>Basic<br/>"]
+    q247["CompositeElement__Basic_1 (247)<br/>Basic<br/>"]
+    q248["CompositeElement__Basic_2 (248)<br/>Basic<br/>"]
+    q249["CompositeElement__Basic_3 (249)<br/>Basic<br/>"]
+    q250["CompositeElement_LeftParen (250)<br/>Basic<br/>"]
+    q251["CompositeElement__Basic_4 (251)<br/>Basic<br/>"]
+    q252["CompositeElement_RightParen (252)<br/>Basic<br/>"]
+    q253["CompositeElement__Basic_5 (253)<br/>Basic<br/>"]
+    q254["CompositeElement__Basic_6 (254)<br/>Basic<br/>"]
+    q255["CompositeElement__BlockEnd_0 (255)<br/>BlockEnd<br/>"]
+    q256["CompositeElement_Cardinality_Asterisk (256)<br/>Basic<br/>"]
+    q257["CompositeElement__Basic_7 (257)<br/>Basic<br/>"]
+    q258["CompositeElement_Cardinality_Plus (258)<br/>Basic<br/>"]
+    q259["CompositeElement__Basic_8 (259)<br/>Basic<br/>"]
+    q260["CompositeElement_Cardinality_Question (260)<br/>Basic<br/>"]
+    q261["CompositeElement__Basic_9 (261)<br/>Basic<br/>"]
+    q262["CompositeElement__Basic_10 (262)<br/>Basic<br/>"]
+    q263["CompositeElement__BlockEnd_1 (263)<br/>BlockEnd<br/>"]
 
     q48 --> q254
     q246 -.->|"[Keyword]"| q247

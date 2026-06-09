@@ -126,7 +126,7 @@ func (rb *ATNRuleBuilderImpl) Plus(lookaheadName string, handle *ATNHandle) *ATN
 	blkStart := handle.Left
 	blkEnd := handle.Right
 
-	loop := rb.NewState(parser.ATNPlusLoopBack)
+	loop := rb.NewState(parser.ATNLoopBack)
 	defineDecisionState(atn, loop)
 	end := rb.NewState(parser.ATNLoopEnd)
 	blkStart.Loopback = loop
@@ -147,10 +147,10 @@ func (rb *ATNRuleBuilderImpl) Star(lookaheadName string, handle *ATNHandle) *ATN
 	start := handle.Left
 	end := handle.Right
 
-	entry := rb.NewState(parser.ATNStarLoopEntry)
+	entry := rb.NewState(parser.ATNLoopEntry)
 	defineDecisionState(atn, entry)
 	loopEnd := rb.NewState(parser.ATNLoopEnd)
-	loop := rb.NewState(parser.ATNStarLoopBack)
+	loop := rb.NewState(parser.ATNLoopBack)
 	entry.Loopback = loop
 	loopEnd.Loopback = loop
 
@@ -266,7 +266,13 @@ func (rb *ATNRuleBuilderImpl) NewState(stateType parser.ATNStateType) *ATNState 
 func (rb *ATNRuleBuilderImpl) RemoveState(state *ATNState) {
 	index := slices.Index(rb.parent.atn.States, state)
 	if index > -1 {
-		rb.parent.atn.States = append(rb.parent.atn.States[:index], rb.parent.atn.States[index+1:]...)
+		before := rb.parent.atn.States[:index]
+		after := rb.parent.atn.States[index+1:]
+		for _, s := range after {
+			// Decrement state number to maintain consistency after removal.
+			s.StateNumber--
+		}
+		rb.parent.atn.States = append(before, after...)
 	}
 }
 
