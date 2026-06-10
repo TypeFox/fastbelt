@@ -74,7 +74,7 @@ func GeneratedTokenName(t core.AstNode) string {
 	case grammar.AbstractTokenRule:
 		return "Token_" + t.Name()
 	case grammar.Keyword:
-		return "Keyword_" + KeywordName(t)
+		return "Keyword_" + grammar.KeywordName(t)
 	default:
 		panic("unexpected type")
 	}
@@ -82,14 +82,6 @@ func GeneratedTokenName(t core.AstNode) string {
 
 func GeneratedTokenIdxName(t core.AstNode) string {
 	return GeneratedTokenName(t) + "_Idx"
-}
-
-func GeneratedKeywordName(k grammar.Keyword) string {
-	return "Keyword_" + grammar.KeywordName(k)
-}
-
-func GeneratedKeywordIdxName(k grammar.Keyword) string {
-	return GeneratedKeywordName(k) + "_Idx"
 }
 
 func KeywordValue(k grammar.Keyword) string {

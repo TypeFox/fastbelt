@@ -3,7 +3,6 @@
 package token_groups
 
 import (
-	"sync"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -13,14 +12,13 @@ type Parser struct {
 	state                 *parser.ParserState
 	sc                    *service.Container
 	referencesConstructor token_groupsReferencesConstructor
-	atn                   func() *parser.RuntimeATN
 }
 
 func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
 	referencesConstructor := service.MustGet[token_groupsReferencesConstructor](p.sc)
-	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, atn: p.atn, state: parser.NewParserState(document.Tokens, p.atn(), recovery, messages)}
+	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
 	result := cp.ParseModel()
 	core.AssignContainers(document, result)
 	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
@@ -28,29 +26,9 @@ func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
 
 func NewParser(sc *service.Container) *Parser {
 	return &Parser{
-		sc:  sc,
-		atn: sync.OnceValue(BuildATN),
+		sc: sc,
 	}
 }
-
-const (
-	AValueIdentifier_0 = iota + 1
-	Aa_0
-	BValueIdentifier_0
-	BValueb_0
-	Bb_0
-	CValueNestedIdentifier_0
-	Cc_0
-	DValueIdentifier_0
-	Dd_0
-	EFirstIdentifier_0
-	ESecondNestedIdentifier_0
-	Ee_0
-	FValueKeywordGroup_0
-	Ff_0
-	GValueRegexGroup_0
-	Gg_0
-)
 
 var BValueLookaheadOr1 = parser.LLkLookahead{
 	parser.LookaheadOption{
@@ -97,49 +75,49 @@ func (p *Parser) ParseModel() Model {
 	{
 		switch p.state.Lookahead(ModelItemLookaheadOr0) {
 		case 0:
-			p.state.EnterRule(17)
+			p.state.EnterRule(Model__Basic_1)
 			result := p.ParseA()
 			p.state.ExitRule()
 			if result != nil {
 				current.SetItem(result)
 			}
 		case 1:
-			p.state.EnterRule(19)
+			p.state.EnterRule(Model__Basic_3)
 			result := p.ParseB()
 			p.state.ExitRule()
 			if result != nil {
 				current.SetItem(result)
 			}
 		case 2:
-			p.state.EnterRule(21)
+			p.state.EnterRule(Model__Basic_5)
 			result := p.ParseC()
 			p.state.ExitRule()
 			if result != nil {
 				current.SetItem(result)
 			}
 		case 3:
-			p.state.EnterRule(23)
+			p.state.EnterRule(Model__Basic_7)
 			result := p.ParseD()
 			p.state.ExitRule()
 			if result != nil {
 				current.SetItem(result)
 			}
 		case 4:
-			p.state.EnterRule(25)
+			p.state.EnterRule(Model__Basic_9)
 			result := p.ParseE()
 			p.state.ExitRule()
 			if result != nil {
 				current.SetItem(result)
 			}
 		case 5:
-			p.state.EnterRule(27)
+			p.state.EnterRule(Model__Basic_11)
 			result := p.ParseF()
 			p.state.ExitRule()
 			if result != nil {
 				current.SetItem(result)
 			}
 		case 6:
-			p.state.EnterRule(29)
+			p.state.EnterRule(Model__Basic_13)
 			result := p.ParseG()
 			p.state.ExitRule()
 			if result != nil {
@@ -156,11 +134,11 @@ func (p *Parser) ParseA() Item {
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_a)
-		core.AssignToken(current, token, Aa_0)
+		core.AssignToken(current, token, A_a)
 	}
 	{
 		token := p.state.Consume(Token_Identifier)
-		core.AssignToken(current, token, AValueIdentifier_0)
+		core.AssignToken(current, token, A__Basic_0)
 		if token != nil {
 			current.SetValue(token)
 		}
@@ -174,19 +152,19 @@ func (p *Parser) ParseB() Item {
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_b)
-		core.AssignToken(current, token, Bb_0)
+		core.AssignToken(current, token, B_b)
 	}
 	{
 		switch p.state.Lookahead(BValueLookaheadOr1) {
 		case 0:
 			token := p.state.Consume(Token_Identifier)
-			core.AssignToken(current, token, BValueIdentifier_0)
+			core.AssignToken(current, token, B__Basic_0)
 			if token != nil {
 				current.SetValue(token)
 			}
 		case 1:
 			token := p.state.Consume(Keyword_b)
-			core.AssignToken(current, token, BValueb_0)
+			core.AssignToken(current, token, B_Value_b)
 			if token != nil {
 				current.SetValue(token)
 			}
@@ -201,11 +179,11 @@ func (p *Parser) ParseC() Item {
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_c)
-		core.AssignToken(current, token, Cc_0)
+		core.AssignToken(current, token, C_c)
 	}
 	{
 		token := p.state.Consume(Token_NestedIdentifier)
-		core.AssignToken(current, token, CValueNestedIdentifier_0)
+		core.AssignToken(current, token, C__Basic_0)
 		if token != nil {
 			current.SetValue(token)
 		}
@@ -219,13 +197,13 @@ func (p *Parser) ParseD() Item {
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_d)
-		core.AssignToken(current, token, Dd_0)
+		core.AssignToken(current, token, D_d)
 	}
 	{
-		p.state.Sync(46)
+		p.state.Sync(D__Basic_0)
 		if p.state.Lookahead(DLookahead0) == 0 {
 			token := p.state.Consume(Token_Identifier)
-			core.AssignToken(current, token, DValueIdentifier_0)
+			core.AssignToken(current, token, D__Basic_0)
 			if token != nil {
 				current.SetValue(token)
 			}
@@ -240,18 +218,18 @@ func (p *Parser) ParseE() Recovery {
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_e)
-		core.AssignToken(current, token, Ee_0)
+		core.AssignToken(current, token, E_e)
 	}
 	{
 		token := p.state.Consume(Token_Identifier)
-		core.AssignToken(current, token, EFirstIdentifier_0)
+		core.AssignToken(current, token, E__Basic_0)
 		if token != nil {
 			current.SetFirst(token)
 		}
 	}
 	{
 		token := p.state.Consume(Token_NestedIdentifier)
-		core.AssignToken(current, token, ESecondNestedIdentifier_0)
+		core.AssignToken(current, token, E__Basic_1)
 		if token != nil {
 			current.SetSecond(token)
 		}
@@ -265,11 +243,11 @@ func (p *Parser) ParseF() Item {
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_f)
-		core.AssignToken(current, token, Ff_0)
+		core.AssignToken(current, token, F_f)
 	}
 	{
 		token := p.state.Consume(Token_KeywordGroup)
-		core.AssignToken(current, token, FValueKeywordGroup_0)
+		core.AssignToken(current, token, F__Basic_0)
 		if token != nil {
 			current.SetValue(token)
 		}
@@ -283,11 +261,11 @@ func (p *Parser) ParseG() Item {
 	current.SetSegmentStartToken(p.state.LARaw(1))
 	{
 		token := p.state.Consume(Keyword_g)
-		core.AssignToken(current, token, Gg_0)
+		core.AssignToken(current, token, G_g)
 	}
 	{
 		token := p.state.Consume(Token_RegexGroup)
-		core.AssignToken(current, token, GValueRegexGroup_0)
+		core.AssignToken(current, token, G__Basic_0)
 		if token != nil {
 			current.SetValue(token)
 		}

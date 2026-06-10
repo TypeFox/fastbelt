@@ -362,11 +362,6 @@ func populateContextWithNode(context *ParserGeneratorContext, prefix string, nod
 			name := prefix + "Lookahead" + strconv.Itoa(len(context.lookaheads))
 			context.lookaheads[n] = LookaheadValue{name: name, llk: GetLLkLookaheadOpt(context.grammar, n)}
 		}
-		ruleRef := n.Rule().Ref(ctx.Background())
-		if token, ok := ruleRef.(grammar.AbstractTokenRule); ok {
-			name := prefix + token.Name()
-			context.SetAccessName(node, name)
-		}
 	}
 }
 
