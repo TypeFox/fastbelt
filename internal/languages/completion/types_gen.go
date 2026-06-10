@@ -724,3 +724,67 @@ func (i *KImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.ObjData.ForEachReference(fn)
 	i.KData.ForEachReference(fn)
 }
+
+type N interface {
+	core.AstNode
+	Obj
+
+	IsN()
+	Ref() *core.Reference[Declare]
+	SetRef(value *core.Reference[Declare])
+}
+
+func NewN() N {
+	return &NImpl{
+		AstNodeBase: core.NewAstNode(),
+		ObjData:     NewObjData(),
+		NData:       NewNData(),
+	}
+}
+
+type NData struct {
+	ref *core.Reference[Declare]
+}
+
+func NewNData() NData {
+	return NData{}
+}
+
+func (i *NData) IsN() {}
+
+func (i *NData) ForEachNode(fn func(core.AstNode)) {
+}
+
+func (i *NData) ForEachReference(fn func(core.UntypedReference)) {
+	if i.ref != nil {
+		fn(i.ref)
+	}
+}
+
+func (i *NData) Ref() *core.Reference[Declare] {
+	if i != nil && i.ref != nil {
+		return i.ref
+	} else {
+		return nil
+	}
+}
+
+func (i *NData) SetRef(value *core.Reference[Declare]) {
+	i.ref = value
+}
+
+type NImpl struct {
+	core.AstNodeBase
+	ObjData
+	NData
+}
+
+func (i *NImpl) ForEachNode(fn func(core.AstNode)) {
+	i.ObjData.ForEachNode(fn)
+	i.NData.ForEachNode(fn)
+}
+
+func (i *NImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.ObjData.ForEachReference(fn)
+	i.NData.ForEachReference(fn)
+}

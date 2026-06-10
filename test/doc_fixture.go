@@ -37,7 +37,7 @@ func (d *Doc) AssertNoErrors() *Doc {
 	// The diagnostics contain all kinds of errors
 	for _, diag := range d.Document.Diagnostics {
 		if diag.Severity == core.SeverityError {
-			d.fixture.t.Errorf("fbtest: unexpected error diagnostic: %s", diag.Message)
+			d.fixture.t.Fatalf("fbtest: unexpected error diagnostic: %s", diag.Message)
 		}
 	}
 	return d
@@ -48,10 +48,10 @@ func (d *Doc) AssertNoErrors() *Doc {
 func (d *Doc) AssertNoParseErrors() *Doc {
 	d.fixture.t.Helper()
 	for _, e := range d.Document.LexerErrors {
-		d.fixture.t.Errorf("fbtest: unexpected lexer error: %v", e)
+		d.fixture.t.Fatalf("fbtest: unexpected lexer error: %v", e)
 	}
 	for _, e := range d.Document.ParserErrors {
-		d.fixture.t.Errorf("fbtest: unexpected parser error: %v", e)
+		d.fixture.t.Fatalf("fbtest: unexpected parser error: %v", e)
 	}
 	return d
 }

@@ -29,6 +29,10 @@ func linearATN(t *testing.T, tokenType *core.TokenType) *RuntimeATN {
 	return atn
 }
 
+func createTokenType(id int, name string) *core.TokenType {
+	return core.NewTokenType(id, name, name, 0, 0, 0, false, nil, nil)
+}
+
 // TestSimulator_AlternativeCoverage builds an ATN for `rule: 'a' 'x' | 'a' 'y'`
 // and asserts that simulating consumption of 'a' from the entry state yields a
 // live set whose NextCompletionsFromSet contains BOTH 'x' and 'y'. This is the
@@ -36,9 +40,9 @@ func linearATN(t *testing.T, tokenType *core.TokenType) *RuntimeATN {
 // committed to one branch via LL(k) lookahead, but the simulator must keep
 // every alternative consistent with the consumed input live.
 func TestSimulator_AlternativeCoverage(t *testing.T) {
-	tA := &core.TokenType{Id: 1, Name: "a"}
-	tX := &core.TokenType{Id: 2, Name: "x"}
-	tY := &core.TokenType{Id: 3, Name: "y"}
+	tA := createTokenType(1, "a")
+	tX := createTokenType(2, "x")
+	tY := createTokenType(3, "y")
 
 	// States:
 	//   0 -ε-> 1 (alt A)         1 -a-> 2 -x-> 3
@@ -88,9 +92,9 @@ func TestSimulator_AlternativeCoverage(t *testing.T) {
 // without the simulator advancing the live set token-by-token, the answer
 // would wrongly be the rule's FIRST set.
 func TestSimulator_MidGroupAdvance(t *testing.T) {
-	tA := &core.TokenType{Id: 1, Name: "a"}
-	tB := &core.TokenType{Id: 2, Name: "b"}
-	tC := &core.TokenType{Id: 3, Name: "c"}
+	tA := createTokenType(1, "a")
+	tB := createTokenType(2, "b")
+	tC := createTokenType(3, "c")
 
 	s0 := &RuntimeATNState{StateNumber: 0, Type: ATNBasic, Decision: -1}
 	s1 := &RuntimeATNState{StateNumber: 1, Type: ATNBasic, Decision: -1}
@@ -120,8 +124,8 @@ func TestSimulator_MidGroupAdvance(t *testing.T) {
 // a second token. The expected next-token after the inner call must be the
 // outer's "after-inner" token, not anything from the inner rule.
 func TestSimulator_RuleCallReturnsToFollow(t *testing.T) {
-	tInner := &core.TokenType{Id: 1, Name: "inner"}
-	tOuter := &core.TokenType{Id: 2, Name: "outer"}
+	tInner := createTokenType(1, "inner")
+	tOuter := createTokenType(2, "outer")
 
 	// Inner rule: ruleStart -ε-> innerCall -inner-> ruleStop
 	innerStart := &RuntimeATNState{StateNumber: 10, Type: ATNRuleStart, Decision: -1, EpsilonOnlyTransitions: true}
@@ -178,7 +182,7 @@ func TestSimulator_RuleCallReturnsToFollow(t *testing.T) {
 // transitions are returned alongside the token bitset. Hints are deduplicated
 // by Field value.
 func TestSimulator_HintsSurface(t *testing.T) {
-	tID := &core.TokenType{Id: 1, Name: "ID"}
+	tID := createTokenType(1, "ID")
 	hint := &CompletionHint{Field: "Transition.Event"}
 
 	s0 := &RuntimeATNState{StateNumber: 0, Type: ATNBasic, Decision: -1}
@@ -202,8 +206,8 @@ func TestSimulator_HintsSurface(t *testing.T) {
 // matching transition produces an empty live set (and that subsequent advances
 // short-circuit).
 func TestSimulator_EmptyLiveSetOnMismatch(t *testing.T) {
-	tA := &core.TokenType{Id: 1, Name: "a"}
-	tB := &core.TokenType{Id: 2, Name: "b"}
+	tA := createTokenType(1, "a")
+	tB := createTokenType(2, "b")
 	atn := linearATN(t, tA)
 
 	// Consuming 'b' is invalid at the start.

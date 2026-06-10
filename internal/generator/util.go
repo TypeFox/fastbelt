@@ -69,18 +69,61 @@ func keysFromMap(m map[string]grammar.Keyword) []grammar.Keyword {
 	return keys
 }
 
-func GeneratedTokenName(t grammar.Token) string {
-	return "Token_" + t.Name()
+func GeneratedTokenName(t core.AstNode) string {
+	switch t := t.(type) {
+	case grammar.AbstractTokenRule:
+		return "Token_" + t.Name()
+	case grammar.Keyword:
+		return "Keyword_" + grammar.KeywordName(t)
+	default:
+		panic("unexpected type")
+	}
 }
 
-func GeneratedTokenIdxName(t grammar.Token) string {
+func GeneratedTokenIdxName(t core.AstNode) string {
 	return GeneratedTokenName(t) + "_Idx"
 }
 
-func GeneratedKeywordName(k grammar.Keyword) string {
-	return "Keyword_" + grammar.KeywordName(k)
+func KeywordValue(k grammar.Keyword) string {
+	return k.Value()[1 : len(k.Value())-1]
 }
 
-func GeneratedKeywordIdxName(k grammar.Keyword) string {
-	return GeneratedKeywordName(k) + "_Idx"
+// topoSort returns uniqueTargets sorted so that child elements appear before
+// their parent element.
+func topoSort(uniqueTargets []string, parents map[string][]string, ascending bool) []string {
+	targetSet := map[string]bool{}
+	for _, t := range uniqueTargets {
+		targetSet[t] = true
+	}
+	visited := map[string]bool{}
+	result := []string{}
+	var visit func(name string)
+	visit = func(name string) {
+		if visited[name] {
+			return
+		}
+		visited[name] = true
+		for _, parent := range parents[name] {
+			visit(parent)
+		}
+		if ascending {
+			// Prepend so children end up before parents in the final slice.
+			result = append([]string{name}, result...)
+		} else {
+			// Append so parents end up after children in the final slice.
+			result = append(result, name)
+		}
+	}
+	for _, t := range uniqueTargets {
+		visit(t)
+	}
+	// Keep only types that were in uniqueTargets (visit may have walked ancestors
+	// not in the set; filter them out while preserving order).
+	filtered := result[:0]
+	for _, t := range result {
+		if targetSet[t] {
+			filtered = append(filtered, t)
+		}
+	}
+	return filtered
 }

@@ -7,7 +7,7 @@ interface Root {
     Objects []Obj
 }
 
-Root: Objects+=(Declare | A | B | C | D | E | F | G | H | I | J | K | L)*;
+Root: Objects+=(Declare | A | B | C | D | E | F | G | H | I | J | K | L | M | N)*;
 
 interface Declare extends Obj {
     Name composite
@@ -18,18 +18,23 @@ Declare: "declare" Name=FQN ("{" Children+=Declare* "}")?;
 
 composite FQN: ID ("." ID)*;
 
+// straight-line continuation
 A returns Obj: "a" "first";
 
+// flat alternative - both branches must stay live post-commit
 B returns Obj: "b" ("first" | "second");
 
+// shared-prefix alternative - keep both alts past the prefix
 C returns Obj: "c" ("common" "first" | "common" "second");
 
+// rule-call alternative with shared prefix (DLong/DShort)
 D returns Obj: "d" (DLong | DShort);
 
 interface E extends Obj {
     Ref *Declare
 }
 
+// cross-reference via FQN composite
 E: "e" Ref=[Declare:FQN];
 
 DLong returns Obj: "common" "then" "long";
@@ -39,6 +44,7 @@ interface F extends Obj {
     Items []FItem
 }
 
+// nested rule with FItem children (synthetic chain coverage)
 F: "f" Items+=FItem+;
 
 interface FItem {
@@ -51,6 +57,7 @@ interface G extends Obj {
     Ref *Declare
 }
 
+// cross-reference via plain ID
 G: "g" Ref=[Declare:ID];
 
 interface H extends Obj {
@@ -62,8 +69,11 @@ interface MemberCall {
     Previous MemberCall
 }
 
+// cross-references with tree-rewriting actions (member calls)
 H: "h" Member=MemberCall;
 
+// same as H, but without the dot to separate chained calls
+// ensures that synthetic references can properly complete
 I returns H: "i" Member=MemberCallNoDot;
 
 MemberCall: Ref=[Declare:ID] ({MemberCall.Previous=current} "." Ref=[Declare:ID])*;
@@ -74,6 +84,7 @@ interface J extends Obj {
     Ref *Declare
 }
 
+// cross-reference and keyword alternative at the same position
 J: "j" (Ref=[Declare:ID] | "self");
 
 interface K extends Obj {
@@ -81,10 +92,25 @@ interface K extends Obj {
     Ref2 *Declare
 }
 
+// two assignments to the same target type - dedup check
 K: "k" (Ref1=[Declare:ID] "x" | Ref2=[Declare:ID] "y");
 
-
+// fully optional group in front of mandatory content
 L returns Obj: "l" ("optional" "and")? "then" "end";
+
+token group SomeTokenGroup {
+    ID "a" "b"
+}
+
+// token group after initial keyword - expect no completion
+M returns Obj: "m" SomeTokenGroup;
+
+interface N extends Obj {
+    Ref *Declare
+}
+
+// token group used to perform cross reference
+N: "n" Ref=[Declare:SomeTokenGroup];
 
 hidden token WS: /[ \t\r\n]+/;
 token ID: /\w[\w0-9]*/;

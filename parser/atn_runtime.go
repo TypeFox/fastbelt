@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/collections"
 )
 
 // ATNStateType is the discriminator for ATN state kinds.
@@ -180,8 +181,7 @@ type RuntimeATN struct {
 
 	stateIdxCache map[*RuntimeATNState]int // pointer -> array index
 
-	nextTokensCache [][]bool // stateIdx -> bitset indexed by TokenType.Id
-	tokenSetSize    int      // common length of every entry in nextTokensCache
+	nextTokensCache []*collections.BitSet // stateIdx -> bitset indexed by TokenType.Id
 }
 
 func NewRuntimeATN(states []*RuntimeATNState, decisionStates []*RuntimeATNState, decisionMap []*RuntimeATNState) *RuntimeATN {
@@ -215,43 +215,24 @@ func (atn *RuntimeATN) stateIndex(s *RuntimeATNState) int {
 	return -1
 }
 
-// TokenSetSize returns the length of any slice returned by NextTokensAt.
-// Callers can use it to allocate compatible token bitsets.
-func (atn *RuntimeATN) TokenSetSize() int {
-	return atn.tokenSetSize
-}
-
 // NextTokensAt returns the set of token type IDs reachable from the state at
 // stateIdx via epsilon closure (including rule entries for FIRST-set tokens).
-// The returned slice is indexed by TokenType.Id; it is shared and must not be
-// mutated by callers. Returns nil if stateIdx is out of bounds.
-func (atn *RuntimeATN) NextTokensAt(stateIdx int) []bool {
+func (atn *RuntimeATN) NextTokensAt(stateIdx int) *collections.BitSet {
 	if stateIdx < 0 || stateIdx >= len(atn.nextTokensCache) {
-		return nil
+		return collections.NewBitset()
 	}
 	return atn.nextTokensCache[stateIdx]
 }
 
 func (atn *RuntimeATN) buildNextTokensCache() {
-	maxId := 0
-	for _, st := range atn.States {
-		for _, t := range st.Transitions {
-			if at, ok := t.(*RuntimeAtomTransition); ok && at.TokenType != nil {
-				if at.TokenType.Id > maxId {
-					maxId = at.TokenType.Id
-				}
-			}
-		}
-	}
-	atn.tokenSetSize = maxId + 1
-	atn.nextTokensCache = make([][]bool, len(atn.States))
+	atn.nextTokensCache = make([]*collections.BitSet, len(atn.States))
 	for i := range atn.States {
 		atn.nextTokensCache[i] = atn.computeNextTokensAt(i)
 	}
 }
 
-func (atn *RuntimeATN) computeNextTokensAt(stateIdx int) []bool {
-	result := make([]bool, atn.tokenSetSize)
+func (atn *RuntimeATN) computeNextTokensAt(stateIdx int) *collections.BitSet {
+	var sets []*collections.BitSet
 	visited := make([]bool, len(atn.States))
 	queue := []int{stateIdx}
 	for len(queue) > 0 {
@@ -269,7 +250,7 @@ func (atn *RuntimeATN) computeNextTokensAt(stateIdx int) []bool {
 			switch at := t.(type) {
 			case *RuntimeAtomTransition:
 				if at.TokenType != nil {
-					result[at.TokenType.Id] = true
+					sets = append(sets, at.TokenType.Bitset())
 				}
 			case *RuntimeEpsilonTransition:
 				if tidx := atn.stateIndex(at.Target); tidx >= 0 {
@@ -283,5 +264,5 @@ func (atn *RuntimeATN) computeNextTokensAt(stateIdx int) []bool {
 			}
 		}
 	}
-	return result
+	return collections.MergeBitSets(sets)
 }

@@ -4,6 +4,8 @@
 
 package fastbelt
 
+import "typefox.dev/fastbelt/util/collections"
+
 // SkippedGroup marks token types that the lexer should drop from all output streams.
 const SkippedGroup = -1
 
@@ -26,12 +28,20 @@ const (
 	// TokenKindKeyword is a TokenType produced by a literal string in a
 	// parser rule (e.g. `"statemachine"`). Matched by a string prefix.
 	TokenKindKeyword TokenKind = 1
+	// TokenKindGroup is a TokenType that represents a named group of other
+	// TokenTypes. It is not directly matched against the input, but instead
+	// serves as a convenient (and fast!) way to refer to multiple TokenTypes
+	// in the grammar and downstream features.
+	TokenKindGroup TokenKind = 2
 )
 
-// Matcher reports how many bytes a token type matches at offset in input.
-//
-// It returns 0 when there is no match.
-type Matcher func(input string, offset int) int
+// TokenMatcher is a function that attempts to match a token at the given offset in the input string.
+// Returns the byte-length of the match if successful, or 0 if no match is found.
+type TokenMatcher func(input string, offset int) int
+
+// TokenTypeMatcher is a function that checks if the specified other TokenType can be matched by this TokenType.
+// Used for optimizations in the lookahead and other parts of the parser.
+type TokenTypeMatcher func(other *TokenType) bool
 
 // TokenType describes one lexer token category generated from a grammar.
 type TokenType struct {
@@ -52,22 +62,75 @@ type TokenType struct {
 	// PopMode reports whether matching this token pops one lexer mode.
 	PopMode bool
 	// Match performs the actual token match at a given input offset.
-	Match Matcher
+	Match TokenMatcher
+	// Matches returns whether the token type matches another, given type
+	Matches TokenTypeMatcher
+	// All TokenTypes that are matched by this TokenType.
+	MatchingTokens []*TokenType
+	bitset         *collections.BitSet
 }
 
 // NewTokenType creates a token type descriptor used by generated lexers and parsers.
-func NewTokenType(id int, name, label string, group int, kind TokenKind, pushMode int, popMode bool, match Matcher, startChars []rune) *TokenType {
-	return &TokenType{
-		Id:         id,
-		Name:       name,
-		Label:      label,
-		Group:      group,
-		Kind:       kind,
-		Match:      match,
+func NewTokenType(id int, name, label string, group int, kind TokenKind, pushMode int, popMode bool, match TokenMatcher, startChars []rune) *TokenType {
+	matching := collections.NewBitset()
+	matching.Insert(id)
+	tt := &TokenType{
+		Id:    id,
+		Name:  name,
+		Label: label,
+		Group: group,
+		Kind:  kind,
+		Match: match,
+		Matches: func(other *TokenType) bool {
+			return other.Id == id
+		},
+		bitset:     matching,
 		PushMode:   pushMode,
 		PopMode:    popMode,
 		StartChars: startChars,
 	}
+	tt.MatchingTokens = []*TokenType{tt}
+	return tt
+}
+
+// NewTokenGroup creates a token type that represents a named group of other token types.
+func NewTokenGroup(id int, name, label string, matchingTypes []*TokenType) *TokenType {
+	bitsets := make([]*collections.BitSet, len(matchingTypes))
+	for _, mt := range matchingTypes {
+		bitsets = append(bitsets, mt.bitset)
+	}
+	matching := collections.MergeBitSets(bitsets)
+	matching.Insert(id)
+	tt := &TokenType{
+		Id:    id,
+		Name:  name,
+		Label: label,
+		Kind:  TokenKindGroup,
+		Matches: func(other *TokenType) bool {
+			return matching.At(other.Id)
+		},
+		bitset: matching,
+	}
+	tt.MatchingTokens = unrollMatchingTokens(matchingTypes)
+	return tt
+}
+
+func unrollMatchingTokens(matchingTypes []*TokenType) []*TokenType {
+	result := map[int]*TokenType{}
+	for _, mt := range matchingTypes {
+		if mt.Kind == TokenKindGroup {
+			for _, t := range unrollMatchingTokens(mt.MatchingTokens) {
+				result[t.Id] = t
+			}
+		} else {
+			result[mt.Id] = mt
+		}
+	}
+	unrolled := make([]*TokenType, 0, len(result))
+	for _, t := range result {
+		unrolled = append(unrolled, t)
+	}
+	return unrolled
 }
 
 // IsSkipped reports whether t is routed to the skipped-token group.
@@ -85,9 +148,14 @@ func (t *TokenType) IsKeyword() bool {
 	return t.Kind == TokenKindKeyword
 }
 
+// Bitset returns a bitset that contains all token type IDs matched by t.
+func (t *TokenType) Bitset() *collections.BitSet {
+	return t.bitset
+}
+
 // EOF is the sentinel token type used to represent end of input.
 var EOF = NewTokenType(
-	-1,
+	0,
 	"EOF",
 	"EOF",
 	0,
@@ -95,7 +163,7 @@ var EOF = NewTokenType(
 	0,
 	false,
 	nil,
-	[]rune{},
+	nil,
 )
 
 // EOFToken is the reusable sentinel token value for end of input.

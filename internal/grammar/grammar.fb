@@ -5,11 +5,18 @@ interface Grammar {
     Rules []ParserRule
     Composites []CompositeRule
     Terminals []Token
+    TokenGroups []TokenGroup
     Interfaces []Interface
 }
 
 Grammar: "grammar" Name=ID ";"
-    (Rules+=ParserRule | Terminals+=Token | Interfaces+=Interface | Composites+=CompositeRule)*
+    (
+        Rules+=ParserRule
+        | Terminals+=Token
+        | TokenGroups+=TokenGroup
+        | Interfaces+=Interface
+        | Composites+=CompositeRule
+    )*
 ;
 
 interface Interface {
@@ -67,18 +74,31 @@ interface AbstractRuleWithBody extends AbstractRule {
     Body Element
 }
 
+// Base type for Token and TokenGroup
+interface AbstractTokenRule extends AbstractRule{}
+
 interface ParserRule extends AbstractRuleWithBody {
     ReturnType *Interface
 }
 
 ParserRule: Name=ID ("returns" ReturnType=[Interface:ID])? ":" Body=Alternatives ";";
 
-interface Token extends AbstractRule {
+interface Token extends AbstractTokenRule {
     Type string
     Regexp string
 }
 
 Token: (Type="hidden" | Type="comment")? "token" Name=ID ":" Regexp=RegexLiteral ";";
+
+interface TokenGroup extends AbstractTokenRule {
+    TokenRefs []*AbstractTokenRule
+    Regexps []string
+    Keywords []Keyword
+}
+
+TokenGroup: "token" "group" Name=ID "{"
+    (TokenRefs+=[AbstractTokenRule:ID] | "keywords" Regexps+=RegexLiteral | Keywords+=Keyword)*
+"}";
 
 interface Element {
     Cardinality string

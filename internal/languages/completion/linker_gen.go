@@ -22,6 +22,7 @@ type CompletionScopeProvider interface {
 	ScopeJRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
 	ScopeKRef1(ctx context.Context, reference *core.Reference[Declare]) core.Scope
 	ScopeKRef2(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeNRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
 }
 
 type DefaultCompletionScopeProvider struct {
@@ -60,6 +61,10 @@ func (s *DefaultCompletionScopeProvider) ScopeKRef2(ctx context.Context, referen
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
+func (s *DefaultCompletionScopeProvider) ScopeNRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+	return linking.DefaultScopeOfType[Declare](reference.Owner())
+}
+
 type CompletionReferenceLinker interface {
 	LinkERef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkFItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
@@ -68,6 +73,7 @@ type CompletionReferenceLinker interface {
 	LinkJRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkKRef1(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkKRef2(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkNRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
 }
 
 type DefaultCompletionReferenceLinker struct {
@@ -119,6 +125,11 @@ func (s *DefaultCompletionReferenceLinker) LinkKRef2(ctx context.Context, refere
 	return core.DefaultLink(scope, reference.Text())
 }
 
+func (s *DefaultCompletionReferenceLinker) LinkNRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeNRef(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
+}
+
 type CompletionReferencesConstructor interface {
 	ERef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
 	FItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
@@ -127,6 +138,7 @@ type CompletionReferencesConstructor interface {
 	JRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
 	KRef1(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
 	KRef2(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	NRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
 }
 
 type DefaultCompletionReferencesConstructor struct {
@@ -175,6 +187,11 @@ func (s *DefaultCompletionReferencesConstructor) KRef1(owner core.AstNode, unit 
 
 func (s *DefaultCompletionReferencesConstructor) KRef2(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
 	fn := s.referenceLinker().LinkKRef2
+	return core.NewReference(owner, unit, fn)
+}
+
+func (s *DefaultCompletionReferencesConstructor) NRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	fn := s.referenceLinker().LinkNRef
 	return core.NewReference(owner, unit, fn)
 }
 

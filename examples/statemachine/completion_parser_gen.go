@@ -41,21 +41,18 @@ func (p *CompletionParser) ParseStatemachine() {
 	p.cp.EnterRule("Statemachine", Statemachine__Start)
 	defer p.cp.ExitRule()
 	{
-		token := p.state.Consume(Keyword_statemachine)
-		_ = token
+		p.state.Consume(Keyword_statemachine)
 	}
 	{
 		p.cp.MarkAssignment("Name")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 	p.cp.RecordSnapshot(Statemachine_events)
 	p.state.Sync(Statemachine_events)
 	if p.state.Lookahead(StatemachineLookahead0) == 0 {
 		{
-			token := p.state.Consume(Keyword_events)
-			_ = token
+			p.state.Consume(Keyword_events)
 		}
 		{
 			for ok := true; ok; ok = p.state.Lookahead(StatemachineLookahead1) == 0 {
@@ -73,8 +70,7 @@ func (p *CompletionParser) ParseStatemachine() {
 	p.state.Sync(Statemachine_commands)
 	if p.state.Lookahead(StatemachineLookahead2) == 0 {
 		{
-			token := p.state.Consume(Keyword_commands)
-			_ = token
+			p.state.Consume(Keyword_commands)
 		}
 		{
 			for ok := true; ok; ok = p.state.Lookahead(StatemachineLookahead3) == 0 {
@@ -89,13 +85,11 @@ func (p *CompletionParser) ParseStatemachine() {
 		}
 	}
 	{
-		token := p.state.Consume(Keyword_initialState)
-		_ = token
+		p.state.Consume(Keyword_initialState)
 	}
 	{
 		p.cp.MarkAssignment("Init")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 	{
@@ -118,8 +112,7 @@ func (p *CompletionParser) ParseEvent() {
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Name")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 }
@@ -129,8 +122,7 @@ func (p *CompletionParser) ParseCommand() {
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Name")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 }
@@ -139,37 +131,31 @@ func (p *CompletionParser) ParseState() {
 	p.cp.EnterRule("State", State__Start)
 	defer p.cp.ExitRule()
 	{
-		token := p.state.Consume(Keyword_state)
-		_ = token
+		p.state.Consume(Keyword_state)
 	}
 	{
 		p.cp.MarkAssignment("Name")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 	p.cp.RecordSnapshot(State_actions)
 	p.state.Sync(State_actions)
 	if p.state.Lookahead(StateLookahead5) == 0 {
 		{
-			token := p.state.Consume(Keyword_actions)
-			_ = token
+			p.state.Consume(Keyword_actions)
 		}
 		{
-			token := p.state.Consume(Keyword_LeftBrace)
-			_ = token
+			p.state.Consume(Keyword_LeftBrace)
 		}
 		{
 			for ok := true; ok; ok = p.state.Lookahead(StateLookahead6) == 0 {
 				p.cp.MarkAssignment("Actions")
-				token := p.state.Consume(Token_ID)
-				_ = token
+				p.state.Consume(Token_ID)
 				p.cp.ClearAssignment()
 			}
 		}
 		{
-			token := p.state.Consume(Keyword_RightBrace)
-			_ = token
+			p.state.Consume(Keyword_RightBrace)
 		}
 	}
 	{
@@ -186,8 +172,7 @@ func (p *CompletionParser) ParseState() {
 		}
 	}
 	{
-		token := p.state.Consume(Keyword_end)
-		_ = token
+		p.state.Consume(Keyword_end)
 	}
 }
 
@@ -196,18 +181,15 @@ func (p *CompletionParser) ParseTransition() {
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Event")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 	{
-		token := p.state.Consume(Keyword_EqualsGreaterThan)
-		_ = token
+		p.state.Consume(Keyword_EqualsGreaterThan)
 	}
 	{
 		p.cp.MarkAssignment("State")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 }

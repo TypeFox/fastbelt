@@ -41,18 +41,15 @@ func (p *CompletionParser) ParseGrammar() {
 	p.cp.EnterRule("Grammar", Grammar__Start)
 	defer p.cp.ExitRule()
 	{
-		token := p.state.Consume(Keyword_grammar)
-		_ = token
+		p.state.Consume(Keyword_grammar)
 	}
 	{
 		p.cp.MarkAssignment("Name")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 	{
-		token := p.state.Consume(Keyword_Semicolon)
-		_ = token
+		p.state.Consume(Keyword_Semicolon)
 	}
 	p.cp.RecordSnapshot(Grammar__LoopEntry)
 	p.state.Sync(Grammar__LoopEntry)
@@ -76,16 +73,24 @@ func (p *CompletionParser) ParseGrammar() {
 			}
 		case 2:
 			{
-				p.cp.MarkAssignment("Interfaces")
+				p.cp.MarkAssignment("TokenGroups")
 				p.state.EnterRule(Grammar__Basic_5)
-				p.ParseInterface()
+				p.ParseTokenGroup()
 				p.state.ExitRule()
 				p.cp.ClearAssignment()
 			}
 		case 3:
 			{
-				p.cp.MarkAssignment("Composites")
+				p.cp.MarkAssignment("Interfaces")
 				p.state.EnterRule(Grammar__Basic_7)
+				p.ParseInterface()
+				p.state.ExitRule()
+				p.cp.ClearAssignment()
+			}
+		case 4:
+			{
+				p.cp.MarkAssignment("Composites")
+				p.state.EnterRule(Grammar__Basic_9)
 				p.ParseCompositeRule()
 				p.state.ExitRule()
 				p.cp.ClearAssignment()
@@ -103,39 +108,33 @@ func (p *CompletionParser) ParseInterface() {
 	p.cp.EnterRule("Interface", Interface__Start)
 	defer p.cp.ExitRule()
 	{
-		token := p.state.Consume(Keyword_interface)
-		_ = token
+		p.state.Consume(Keyword_interface)
 	}
 	{
 		p.cp.MarkAssignment("Name")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 	p.cp.RecordSnapshot(Interface_extends)
 	p.state.Sync(Interface_extends)
 	if p.state.Lookahead(InterfaceLookahead1) == 0 {
 		{
-			token := p.state.Consume(Keyword_extends)
-			_ = token
+			p.state.Consume(Keyword_extends)
 		}
 		{
 			p.cp.MarkAssignment("Extends")
-			token := p.state.Consume(Token_ID)
-			_ = token
+			p.state.Consume(Token_ID)
 			p.cp.ClearAssignment()
 		}
 		p.cp.RecordSnapshot(Interface__LoopEntry_0)
 		p.state.Sync(Interface__LoopEntry_0)
 		for p.state.Lookahead(InterfaceLookahead2) == 0 {
 			{
-				token := p.state.Consume(Keyword_Comma)
-				_ = token
+				p.state.Consume(Keyword_Comma)
 			}
 			{
 				p.cp.MarkAssignment("Extends")
-				token := p.state.Consume(Token_ID)
-				_ = token
+				p.state.Consume(Token_ID)
 				p.cp.ClearAssignment()
 			}
 			p.cp.RecordSnapshot(Interface__LoopEntry_0)
@@ -143,8 +142,7 @@ func (p *CompletionParser) ParseInterface() {
 		}
 	}
 	{
-		token := p.state.Consume(Keyword_LeftBrace)
-		_ = token
+		p.state.Consume(Keyword_LeftBrace)
 	}
 	{
 		p.cp.RecordSnapshot(Interface__LoopEntry_1)
@@ -160,8 +158,7 @@ func (p *CompletionParser) ParseInterface() {
 		}
 	}
 	{
-		token := p.state.Consume(Keyword_RightBrace)
-		_ = token
+		p.state.Consume(Keyword_RightBrace)
 	}
 }
 
@@ -170,8 +167,7 @@ func (p *CompletionParser) ParseField() {
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Name")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 	{
@@ -221,12 +217,10 @@ func (p *CompletionParser) ParseArrayType() {
 	p.cp.EnterRule("ArrayType", ArrayType__Start)
 	defer p.cp.ExitRule()
 	{
-		token := p.state.Consume(Keyword_LeftBracket)
-		_ = token
+		p.state.Consume(Keyword_LeftBracket)
 	}
 	{
-		token := p.state.Consume(Keyword_RightBracket)
-		_ = token
+		p.state.Consume(Keyword_RightBracket)
 	}
 	{
 		p.cp.MarkAssignment("InternalType")
@@ -241,13 +235,11 @@ func (p *CompletionParser) ParseReferenceType() {
 	p.cp.EnterRule("ReferenceType", ReferenceType__Start)
 	defer p.cp.ExitRule()
 	{
-		token := p.state.Consume(Keyword_Asterisk)
-		_ = token
+		p.state.Consume(Keyword_Asterisk)
 	}
 	{
 		p.cp.MarkAssignment("Type")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 }
@@ -257,8 +249,7 @@ func (p *CompletionParser) ParseSimpleType() {
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Type")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 }
@@ -270,14 +261,11 @@ func (p *CompletionParser) ParsePrimitiveType() {
 		p.cp.MarkAssignment("Type")
 		switch p.state.Lookahead(PrimitiveTypeTypeLookaheadOr2) {
 		case 0:
-			token := p.state.Consume(Keyword_string)
-			_ = token
+			p.state.Consume(Keyword_string)
 		case 1:
-			token := p.state.Consume(Keyword_bool)
-			_ = token
+			p.state.Consume(Keyword_bool)
 		case 2:
-			token := p.state.Consume(Keyword_composite)
-			_ = token
+			p.state.Consume(Keyword_composite)
 		}
 		p.cp.ClearAssignment()
 	}
@@ -288,27 +276,23 @@ func (p *CompletionParser) ParseParserRule() {
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Name")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 	p.cp.RecordSnapshot(ParserRule_returns)
 	p.state.Sync(ParserRule_returns)
 	if p.state.Lookahead(ParserRuleLookahead4) == 0 {
 		{
-			token := p.state.Consume(Keyword_returns)
-			_ = token
+			p.state.Consume(Keyword_returns)
 		}
 		{
 			p.cp.MarkAssignment("ReturnType")
-			token := p.state.Consume(Token_ID)
-			_ = token
+			p.state.Consume(Token_ID)
 			p.cp.ClearAssignment()
 		}
 	}
 	{
-		token := p.state.Consume(Keyword_Colon)
-		_ = token
+		p.state.Consume(Keyword_Colon)
 	}
 	{
 		p.cp.MarkAssignment("Body")
@@ -318,8 +302,7 @@ func (p *CompletionParser) ParseParserRule() {
 		p.cp.ClearAssignment()
 	}
 	{
-		token := p.state.Consume(Keyword_Semicolon)
-		_ = token
+		p.state.Consume(Keyword_Semicolon)
 	}
 }
 
@@ -333,15 +316,13 @@ func (p *CompletionParser) ParseToken() {
 		case 0:
 			{
 				p.cp.MarkAssignment("Type")
-				token := p.state.Consume(Keyword_hidden)
-				_ = token
+				p.state.Consume(Keyword_hidden)
 				p.cp.ClearAssignment()
 			}
 		case 1:
 			{
 				p.cp.MarkAssignment("Type")
-				token := p.state.Consume(Keyword_comment)
-				_ = token
+				p.state.Consume(Keyword_comment)
 				p.cp.ClearAssignment()
 			}
 		default:
@@ -350,28 +331,79 @@ func (p *CompletionParser) ParseToken() {
 		}
 	}
 	{
-		token := p.state.Consume(Keyword_token)
-		_ = token
+		p.state.Consume(Keyword_token)
 	}
 	{
 		p.cp.MarkAssignment("Name")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 	{
-		token := p.state.Consume(Keyword_Colon)
-		_ = token
+		p.state.Consume(Keyword_Colon)
 	}
 	{
 		p.cp.MarkAssignment("Regexp")
-		token := p.state.Consume(Token_RegexLiteral)
-		_ = token
+		p.state.Consume(Token_RegexLiteral)
 		p.cp.ClearAssignment()
 	}
 	{
-		token := p.state.Consume(Keyword_Semicolon)
-		_ = token
+		p.state.Consume(Keyword_Semicolon)
+	}
+}
+
+func (p *CompletionParser) ParseTokenGroup() {
+	p.cp.EnterRule("TokenGroup", TokenGroup__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_token)
+	}
+	{
+		p.state.Consume(Keyword_group)
+	}
+	{
+		p.cp.MarkAssignment("Name")
+		p.state.Consume(Token_ID)
+		p.cp.ClearAssignment()
+	}
+	{
+		p.state.Consume(Keyword_LeftBrace)
+	}
+	p.cp.RecordSnapshot(TokenGroup__LoopEntry)
+	p.state.Sync(TokenGroup__LoopEntry)
+	for p.state.Lookahead(TokenGroupLookahead6) == 0 {
+		switch p.state.Lookahead(TokenGroupLookaheadOr4) {
+		case 0:
+			{
+				p.cp.MarkAssignment("TokenRefs")
+				p.state.Consume(Token_ID)
+				p.cp.ClearAssignment()
+			}
+		case 1:
+			{
+				p.state.Consume(Keyword_keywords)
+			}
+			{
+				p.cp.MarkAssignment("Regexps")
+				p.state.Consume(Token_RegexLiteral)
+				p.cp.ClearAssignment()
+			}
+		case 2:
+			{
+				p.cp.MarkAssignment("Keywords")
+				p.state.EnterRule(TokenGroup__Basic_3)
+				p.ParseKeyword()
+				p.state.ExitRule()
+				p.cp.ClearAssignment()
+			}
+		default:
+			token := p.state.LA(1)
+			p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
+		}
+		p.cp.RecordSnapshot(TokenGroup__LoopEntry)
+		p.state.Sync(TokenGroup__LoopEntry)
+	}
+	{
+		p.state.Consume(Keyword_RightBrace)
 	}
 }
 
@@ -385,11 +417,10 @@ func (p *CompletionParser) ParseAlternatives() {
 	}
 	p.cp.RecordSnapshot(Alternatives_Pipe)
 	p.state.Sync(Alternatives_Pipe)
-	if p.state.Lookahead(AlternativesLookahead6) == 0 {
-		for ok := true; ok; ok = p.state.Lookahead(AlternativesLookahead7) == 0 {
+	if p.state.Lookahead(AlternativesLookahead7) == 0 {
+		for ok := true; ok; ok = p.state.Lookahead(AlternativesLookahead8) == 0 {
 			{
-				token := p.state.Consume(Keyword_Pipe)
-				_ = token
+				p.state.Consume(Keyword_Pipe)
 			}
 			{
 				p.cp.MarkAssignment("Alts")
@@ -414,9 +445,9 @@ func (p *CompletionParser) ParseGroup() {
 	}
 	p.cp.RecordSnapshot(Group__Basic_1)
 	p.state.Sync(Group__Basic_1)
-	if p.state.Lookahead(GroupLookahead8) == 0 {
+	if p.state.Lookahead(GroupLookahead9) == 0 {
 		{
-			for ok := true; ok; ok = p.state.Lookahead(GroupLookahead9) == 0 {
+			for ok := true; ok; ok = p.state.Lookahead(GroupLookahead10) == 0 {
 				p.cp.MarkAssignment("Elements")
 				p.state.EnterRule(Group__Basic_2)
 				p.ParseElement()
@@ -432,7 +463,7 @@ func (p *CompletionParser) ParseGroup() {
 func (p *CompletionParser) ParseElement() {
 	p.cp.EnterRule("Element", Element__Start)
 	defer p.cp.ExitRule()
-	switch p.state.Lookahead(ElementLookaheadOr4) {
+	switch p.state.Lookahead(ElementLookaheadOr5) {
 	case 0:
 		{
 			p.state.EnterRule(Element__Basic_1)
@@ -459,8 +490,7 @@ func (p *CompletionParser) ParseElement() {
 		}
 	case 4:
 		{
-			token := p.state.Consume(Keyword_LeftParen)
-			_ = token
+			p.state.Consume(Keyword_LeftParen)
 		}
 		{
 			p.state.EnterRule(Element_RightParen)
@@ -468,8 +498,7 @@ func (p *CompletionParser) ParseElement() {
 			p.state.ExitRule()
 		}
 		{
-			token := p.state.Consume(Keyword_RightParen)
-			_ = token
+			p.state.Consume(Keyword_RightParen)
 		}
 	default:
 		token := p.state.LA(1)
@@ -478,18 +507,15 @@ func (p *CompletionParser) ParseElement() {
 	{
 		p.cp.RecordSnapshot(Element__Basic_14)
 		p.state.Sync(Element__Basic_14)
-		if p.state.Lookahead(ElementLookahead10) == 0 {
+		if p.state.Lookahead(ElementLookahead11) == 0 {
 			p.cp.MarkAssignment("Cardinality")
-			switch p.state.Lookahead(ElementCardinalityLookaheadOr5) {
+			switch p.state.Lookahead(ElementCardinalityLookaheadOr6) {
 			case 0:
-				token := p.state.Consume(Keyword_Asterisk)
-				_ = token
+				p.state.Consume(Keyword_Asterisk)
 			case 1:
-				token := p.state.Consume(Keyword_Plus)
-				_ = token
+				p.state.Consume(Keyword_Plus)
 			case 2:
-				token := p.state.Consume(Keyword_Question)
-				_ = token
+				p.state.Consume(Keyword_Question)
 			}
 			p.cp.ClearAssignment()
 		}
@@ -501,8 +527,7 @@ func (p *CompletionParser) ParseKeyword() {
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Value")
-		token := p.state.Consume(Token_StringLiteral)
-		_ = token
+		p.state.Consume(Token_StringLiteral)
 		p.cp.ClearAssignment()
 	}
 }
@@ -512,22 +537,18 @@ func (p *CompletionParser) ParseAssignment() {
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Property")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 	{
 		p.cp.MarkAssignment("Operator")
-		switch p.state.Lookahead(AssignmentOperatorLookaheadOr6) {
+		switch p.state.Lookahead(AssignmentOperatorLookaheadOr7) {
 		case 0:
-			token := p.state.Consume(Keyword_PlusEquals)
-			_ = token
+			p.state.Consume(Keyword_PlusEquals)
 		case 1:
-			token := p.state.Consume(Keyword_Equals)
-			_ = token
+			p.state.Consume(Keyword_Equals)
 		case 2:
-			token := p.state.Consume(Keyword_QuestionEquals)
-			_ = token
+			p.state.Consume(Keyword_QuestionEquals)
 		}
 		p.cp.ClearAssignment()
 	}
@@ -543,7 +564,7 @@ func (p *CompletionParser) ParseAssignment() {
 func (p *CompletionParser) ParseAssignable() {
 	p.cp.EnterRule("Assignable", Assignable__Start)
 	defer p.cp.ExitRule()
-	switch p.state.Lookahead(AssignableLookaheadOr7) {
+	switch p.state.Lookahead(AssignableLookaheadOr8) {
 	case 0:
 		{
 			p.state.EnterRule(Assignable__Basic_1)
@@ -564,8 +585,7 @@ func (p *CompletionParser) ParseAssignable() {
 		}
 	case 3:
 		{
-			token := p.state.Consume(Keyword_LeftParen)
-			_ = token
+			p.state.Consume(Keyword_LeftParen)
 		}
 		{
 			p.state.EnterRule(Assignable_RightParen)
@@ -573,8 +593,7 @@ func (p *CompletionParser) ParseAssignable() {
 			p.state.ExitRule()
 		}
 		{
-			token := p.state.Consume(Keyword_RightParen)
-			_ = token
+			p.state.Consume(Keyword_RightParen)
 		}
 	default:
 		token := p.state.LA(1)
@@ -585,7 +604,7 @@ func (p *CompletionParser) ParseAssignable() {
 func (p *CompletionParser) ParseAssignableWithoutAlts() {
 	p.cp.EnterRule("AssignableWithoutAlts", AssignableWithoutAlts__Start)
 	defer p.cp.ExitRule()
-	switch p.state.Lookahead(AssignableWithoutAltsLookaheadOr8) {
+	switch p.state.Lookahead(AssignableWithoutAltsLookaheadOr9) {
 	case 0:
 		{
 			p.state.EnterRule(AssignableWithoutAlts__Basic_1)
@@ -620,11 +639,10 @@ func (p *CompletionParser) ParseAssignableAlternatives() {
 	}
 	p.cp.RecordSnapshot(AssignableAlternatives_Pipe)
 	p.state.Sync(AssignableAlternatives_Pipe)
-	if p.state.Lookahead(AssignableAlternativesLookahead11) == 0 {
-		for ok := true; ok; ok = p.state.Lookahead(AssignableAlternativesLookahead12) == 0 {
+	if p.state.Lookahead(AssignableAlternativesLookahead12) == 0 {
+		for ok := true; ok; ok = p.state.Lookahead(AssignableAlternativesLookahead13) == 0 {
 			{
-				token := p.state.Consume(Keyword_Pipe)
-				_ = token
+				p.state.Consume(Keyword_Pipe)
 			}
 			{
 				p.cp.MarkAssignment("Alts")
@@ -643,21 +661,18 @@ func (p *CompletionParser) ParseCrossRef() {
 	p.cp.EnterRule("CrossRef", CrossRef__Start)
 	defer p.cp.ExitRule()
 	{
-		token := p.state.Consume(Keyword_LeftBracket)
-		_ = token
+		p.state.Consume(Keyword_LeftBracket)
 	}
 	{
 		p.cp.MarkAssignment("Type")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 	p.cp.RecordSnapshot(CrossRef_Colon)
 	p.state.Sync(CrossRef_Colon)
-	if p.state.Lookahead(CrossRefLookahead13) == 0 {
+	if p.state.Lookahead(CrossRefLookahead14) == 0 {
 		{
-			token := p.state.Consume(Keyword_Colon)
-			_ = token
+			p.state.Consume(Keyword_Colon)
 		}
 		{
 			p.cp.MarkAssignment("Rule")
@@ -668,8 +683,7 @@ func (p *CompletionParser) ParseCrossRef() {
 		}
 	}
 	{
-		token := p.state.Consume(Keyword_RightBracket)
-		_ = token
+		p.state.Consume(Keyword_RightBracket)
 	}
 }
 
@@ -678,8 +692,7 @@ func (p *CompletionParser) ParseRuleCall() {
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Rule")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 }
@@ -688,48 +701,40 @@ func (p *CompletionParser) ParseAction() {
 	p.cp.EnterRule("Action", Action__Start)
 	defer p.cp.ExitRule()
 	{
-		token := p.state.Consume(Keyword_LeftBrace)
-		_ = token
+		p.state.Consume(Keyword_LeftBrace)
 	}
 	{
 		p.cp.MarkAssignment("Type")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 	p.cp.RecordSnapshot(Action_Dot)
 	p.state.Sync(Action_Dot)
-	if p.state.Lookahead(ActionLookahead14) == 0 {
+	if p.state.Lookahead(ActionLookahead15) == 0 {
 		{
-			token := p.state.Consume(Keyword_Dot)
-			_ = token
+			p.state.Consume(Keyword_Dot)
 		}
 		{
 			p.cp.MarkAssignment("Property")
-			token := p.state.Consume(Token_ID)
-			_ = token
+			p.state.Consume(Token_ID)
 			p.cp.ClearAssignment()
 		}
 		{
 			p.cp.MarkAssignment("Operator")
-			switch p.state.Lookahead(ActionOperatorLookaheadOr9) {
+			switch p.state.Lookahead(ActionOperatorLookaheadOr10) {
 			case 0:
-				token := p.state.Consume(Keyword_PlusEquals)
-				_ = token
+				p.state.Consume(Keyword_PlusEquals)
 			case 1:
-				token := p.state.Consume(Keyword_Equals)
-				_ = token
+				p.state.Consume(Keyword_Equals)
 			}
 			p.cp.ClearAssignment()
 		}
 		{
-			token := p.state.Consume(Keyword_current)
-			_ = token
+			p.state.Consume(Keyword_current)
 		}
 	}
 	{
-		token := p.state.Consume(Keyword_RightBrace)
-		_ = token
+		p.state.Consume(Keyword_RightBrace)
 	}
 }
 
@@ -737,18 +742,15 @@ func (p *CompletionParser) ParseCompositeRule() {
 	p.cp.EnterRule("CompositeRule", CompositeRule__Start)
 	defer p.cp.ExitRule()
 	{
-		token := p.state.Consume(Keyword_composite)
-		_ = token
+		p.state.Consume(Keyword_composite)
 	}
 	{
 		p.cp.MarkAssignment("Name")
-		token := p.state.Consume(Token_ID)
-		_ = token
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 	{
-		token := p.state.Consume(Keyword_Colon)
-		_ = token
+		p.state.Consume(Keyword_Colon)
 	}
 	{
 		p.cp.MarkAssignment("Body")
@@ -758,8 +760,7 @@ func (p *CompletionParser) ParseCompositeRule() {
 		p.cp.ClearAssignment()
 	}
 	{
-		token := p.state.Consume(Keyword_Semicolon)
-		_ = token
+		p.state.Consume(Keyword_Semicolon)
 	}
 }
 
@@ -773,11 +774,10 @@ func (p *CompletionParser) ParseCompositeAlternatives() {
 	}
 	p.cp.RecordSnapshot(CompositeAlternatives_Pipe)
 	p.state.Sync(CompositeAlternatives_Pipe)
-	if p.state.Lookahead(CompositeAlternativesLookahead15) == 0 {
-		for ok := true; ok; ok = p.state.Lookahead(CompositeAlternativesLookahead16) == 0 {
+	if p.state.Lookahead(CompositeAlternativesLookahead16) == 0 {
+		for ok := true; ok; ok = p.state.Lookahead(CompositeAlternativesLookahead17) == 0 {
 			{
-				token := p.state.Consume(Keyword_Pipe)
-				_ = token
+				p.state.Consume(Keyword_Pipe)
 			}
 			{
 				p.cp.MarkAssignment("Alts")
@@ -802,9 +802,9 @@ func (p *CompletionParser) ParseCompositeGroup() {
 	}
 	p.cp.RecordSnapshot(CompositeGroup__Basic_1)
 	p.state.Sync(CompositeGroup__Basic_1)
-	if p.state.Lookahead(CompositeGroupLookahead17) == 0 {
+	if p.state.Lookahead(CompositeGroupLookahead18) == 0 {
 		{
-			for ok := true; ok; ok = p.state.Lookahead(CompositeGroupLookahead18) == 0 {
+			for ok := true; ok; ok = p.state.Lookahead(CompositeGroupLookahead19) == 0 {
 				p.cp.MarkAssignment("Elements")
 				p.state.EnterRule(CompositeGroup__Basic_2)
 				p.ParseCompositeElement()
@@ -820,7 +820,7 @@ func (p *CompletionParser) ParseCompositeGroup() {
 func (p *CompletionParser) ParseCompositeElement() {
 	p.cp.EnterRule("CompositeElement", CompositeElement__Start)
 	defer p.cp.ExitRule()
-	switch p.state.Lookahead(CompositeElementLookaheadOr10) {
+	switch p.state.Lookahead(CompositeElementLookaheadOr11) {
 	case 0:
 		{
 			p.state.EnterRule(CompositeElement__Basic_1)
@@ -835,8 +835,7 @@ func (p *CompletionParser) ParseCompositeElement() {
 		}
 	case 2:
 		{
-			token := p.state.Consume(Keyword_LeftParen)
-			_ = token
+			p.state.Consume(Keyword_LeftParen)
 		}
 		{
 			p.state.EnterRule(CompositeElement_RightParen)
@@ -844,8 +843,7 @@ func (p *CompletionParser) ParseCompositeElement() {
 			p.state.ExitRule()
 		}
 		{
-			token := p.state.Consume(Keyword_RightParen)
-			_ = token
+			p.state.Consume(Keyword_RightParen)
 		}
 	default:
 		token := p.state.LA(1)
@@ -854,18 +852,15 @@ func (p *CompletionParser) ParseCompositeElement() {
 	{
 		p.cp.RecordSnapshot(CompositeElement__Basic_10)
 		p.state.Sync(CompositeElement__Basic_10)
-		if p.state.Lookahead(CompositeElementLookahead19) == 0 {
+		if p.state.Lookahead(CompositeElementLookahead20) == 0 {
 			p.cp.MarkAssignment("Cardinality")
-			switch p.state.Lookahead(CompositeElementCardinalityLookaheadOr11) {
+			switch p.state.Lookahead(CompositeElementCardinalityLookaheadOr12) {
 			case 0:
-				token := p.state.Consume(Keyword_Asterisk)
-				_ = token
+				p.state.Consume(Keyword_Asterisk)
 			case 1:
-				token := p.state.Consume(Keyword_Plus)
-				_ = token
+				p.state.Consume(Keyword_Plus)
 			case 2:
-				token := p.state.Consume(Keyword_Question)
-				_ = token
+				p.state.Consume(Keyword_Question)
 			}
 			p.cp.ClearAssignment()
 		}

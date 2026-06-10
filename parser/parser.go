@@ -6,6 +6,7 @@ package parser
 
 import (
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/collections"
 )
 
 // Parser defines the interface for parsing tokens (lexer output) into AST nodes.
@@ -92,7 +93,7 @@ func (p *ParserState) ReportMatch() {
 	p.ErrorRecoveryMode = false
 }
 
-type LookaheadPath []int
+type LookaheadPath []*core.TokenType
 type LookaheadOption []LookaheadPath
 type LLkLookahead []LookaheadOption
 
@@ -138,21 +139,6 @@ func (p *ParserState) LARaw(offset int) *core.Token {
 	return &p.Tokens[pos]
 }
 
-func (p *ParserState) LAId(offset int) int {
-	la := p.LA(offset)
-	if la == nil {
-		// Return a sentinel that can NEVER collide with a real token-type
-		// ID. core.EOF.Id is 0, which is also the first generated keyword's
-		// ID, so returning it here causes LL(k) lookahead paths whose
-		// first expected token has ID 0 to match at EOF - a silent bug
-		// that mis-commits to the wrong alternative when the input is
-		// exhausted mid-decision. Negative values can never be real
-		// TokenType IDs (they're assigned by the generator starting at 0).
-		return -1
-	}
-	return la.TypeId
-}
-
 func (p *ParserState) Consume(tokenType *core.TokenType) *core.Token {
 	if p.ErrorMode != ErrorModeNone {
 		return nil
@@ -162,7 +148,7 @@ func (p *ParserState) Consume(tokenType *core.TokenType) *core.Token {
 		p.AppendError(p.messages.UnexpectedEndOfInput(tokenType), nil)
 		return nil
 	}
-	if current.TypeId != tokenType.Id {
+	if !tokenType.Matches(current.Type) {
 		recovered, ok := p.recovery.RecoverInline(p, tokenType)
 		if ok {
 			return recovered
@@ -180,7 +166,8 @@ func (p *ParserState) Lookahead(value LLkLookahead) int {
 	outer:
 		for _, path := range option {
 			for j, tokenType := range path {
-				if p.LAId(j+1) != tokenType {
+				la := p.LA(j + 1)
+				if la == nil || !tokenType.Matches(la.Type) {
 					continue outer
 				}
 			}
@@ -214,17 +201,10 @@ func (p *ParserState) Sync(decisionStateIdx int) {
 }
 
 // FollowSet returns the union of NextTokensAt for every frame on the follow-state stack.
-// The returned slice is indexed by TokenType.Id; out-of-range indices indicate
-// "not in the follow set".
-func (p *ParserState) FollowSet() []bool {
-	result := make([]bool, p.atn.TokenSetSize())
-	for _, idx := range p.followStates {
-		next := p.atn.NextTokensAt(idx)
-		for i, v := range next {
-			if v {
-				result[i] = true
-			}
-		}
+func (p *ParserState) FollowSet() *collections.BitSet {
+	sets := make([]*collections.BitSet, len(p.followStates))
+	for i, idx := range p.followStates {
+		sets[i] = p.atn.NextTokensAt(idx)
 	}
-	return result
+	return collections.MergeBitSets(sets)
 }
