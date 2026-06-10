@@ -56,7 +56,6 @@ type templateParams struct {
 
 func newTemplateParams(s *Scaffolder) (templateParams, error) {
 	modulePath := s.ImportPath
-	languageLabel := s.Language
 	modulePath = strings.TrimSpace(modulePath)
 	if modulePath == "" {
 		return templateParams{}, fmt.Errorf("module path is empty")
@@ -66,7 +65,9 @@ func newTemplateParams(s *Scaffolder) (templateParams, error) {
 	if base == "." || base == "/" {
 		return templateParams{}, fmt.Errorf("invalid module path %q", modulePath)
 	}
+	languageLabel := s.Language
 	languageLabel = strings.TrimSpace(languageLabel)
+	languageLabel = strings.ToUpper(languageLabel[0:1]) + languageLabel[1:]
 	if languageLabel == "" {
 		return templateParams{}, fmt.Errorf("language name is empty")
 	}

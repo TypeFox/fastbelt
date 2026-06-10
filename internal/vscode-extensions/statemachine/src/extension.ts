@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-import type * as vscode from 'vscode';
+import * as vscode from 'vscode';
 import type { LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node.js';
 import * as path from 'node:path';
 import { LanguageClient, TransportKind } from 'vscode-languageclient/node.js';
@@ -32,7 +32,10 @@ async function startLanguageClient(context: vscode.ExtensionContext): Promise<La
 
     // Options to control the language client
     const clientOptions: LanguageClientOptions = {
-        documentSelector: [{ scheme: 'file', language: 'statemachine' }]
+        documentSelector: [{ scheme: 'file', language: 'statemachine' }],
+        outputChannel: vscode.window.createOutputChannel(
+            'Statemachine Language Server'
+        )
     };
     const client = new LanguageClient(
         'statemachine',
