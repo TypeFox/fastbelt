@@ -136,7 +136,7 @@ func (o *Overlay) Text(r *lsp.Range) string {
 	return o.File.Text(r)
 }
 
-// PositionAt converts a zero-based offset to a position.
+// PositionAt converts a zero-based byte-offset to a UTF16 position.
 // This method is thread-safe.
 func (o *Overlay) PositionAt(offset int) lsp.Position {
 	o.mu.RLock()
@@ -144,7 +144,7 @@ func (o *Overlay) PositionAt(offset int) lsp.Position {
 	return o.File.PositionAt(offset)
 }
 
-// OffsetAt converts a position to a zero-based offset.
+// OffsetAt converts a UTF16 position to a zero-based byte-offset.
 // This method is thread-safe.
 func (o *Overlay) OffsetAt(position lsp.Position) int {
 	o.mu.RLock()
@@ -190,7 +190,7 @@ func (o *Overlay) applyChangeLocked(change lsp.TextDocumentContentChangeEvent) e
 			} else {
 				lineEnd = len(o.content)
 			}
-			maxChar := lineEnd - lineStart
+			maxChar := utf16LineLen(o.content, lineStart, lineEnd)
 			if int(pos.Character) > maxChar {
 				return fmt.Errorf("textdoc: invalid range: character %d exceeds line %d length %d",
 					pos.Character, pos.Line, maxChar)

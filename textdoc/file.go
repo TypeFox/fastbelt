@@ -6,6 +6,8 @@ package textdoc
 
 import (
 	"errors"
+	"unicode/utf16"
+	"unicode/utf8"
 
 	"typefox.dev/lsp"
 )
@@ -70,7 +72,7 @@ func (f *File) Text(r *lsp.Range) string {
 	return string(f.content)
 }
 
-// PositionAt converts a zero-based offset to a position.
+// PositionAt converts a zero-based byte-offset to a UTF16 position.
 func (f *File) PositionAt(offset int) lsp.Position {
 	offset = max(min(offset, len(f.content)), 0)
 	lineOffsets := f.getLineOffsets()
@@ -80,10 +82,7 @@ func (f *File) PositionAt(offset int) lsp.Position {
 	if len(lineOffsets) == 1 {
 		// Only one line, so we're on line 0
 		offset = f.ensureBeforeEOL(offset, lineOffsets[0])
-		return lsp.Position{
-			Line:      0,
-			Character: uint32(offset - lineOffsets[0]),
-		}
+		return f.toUTF16Position(0, offset, lineOffsets)
 	}
 
 	// Binary search for the line
@@ -99,21 +98,21 @@ func (f *File) PositionAt(offset int) lsp.Position {
 
 	// low is the least x for which lineOffsets[x] > offset
 	// So the line we want is low - 1
-	line := low - 1
-
-	// Ensure line is valid (should never be negative, but be defensive)
-	if line < 0 {
-		line = 0
-	}
+	line := max(low-1, 0)
 
 	offset = f.ensureBeforeEOL(offset, lineOffsets[line])
+	return f.toUTF16Position(line, offset, lineOffsets)
+}
+
+func (f *File) toUTF16Position(line, offset int, offsets []int) lsp.Position {
+	lineOffset := offsets[line]
 	return lsp.Position{
 		Line:      uint32(line),
-		Character: uint32(offset - lineOffsets[line]),
+		Character: uint32(utf16LineLen(f.content, lineOffset, offset)),
 	}
 }
 
-// OffsetAt converts a position to a zero-based offset.
+// OffsetAt converts a UTF16 position to a zero-based byte-offset.
 func (f *File) OffsetAt(position lsp.Position) int {
 	return f.offsetAt(position)
 }
@@ -138,7 +137,13 @@ func (f *File) offsetAt(position lsp.Position) int {
 		nextLineOffset = len(f.content)
 	}
 
-	offset := min(lineOffset+int(position.Character), nextLineOffset)
+	character := int(position.Character)
+	offset := lineOffset
+	for i := 0; i < character && offset < nextLineOffset; {
+		r, size := utf8.DecodeRune(f.content[offset:nextLineOffset])
+		offset += size
+		i += utf16.RuneLen(r)
+	}
 	return f.ensureBeforeEOL(offset, lineOffset)
 }
 
@@ -163,4 +168,15 @@ func (f *File) ensureBeforeEOL(offset, lineOffset int) int {
 		offset--
 	}
 	return offset
+}
+
+// utf16LineLen returns the number of UTF-16 code units in content[start:end].
+func utf16LineLen(content []byte, start, end int) int {
+	count := 0
+	for i := start; i < end; {
+		r, size := utf8.DecodeRune(content[i:end])
+		count += utf16.RuneLen(r)
+		i += size
+	}
+	return count
 }
