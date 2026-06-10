@@ -166,8 +166,8 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 const maxChar = 256
 
 // NewDefaultLexer returns a lexer that recognizes the given token types.
-// The order of arguments is not significant; matching uses longest match at
-// each position.
+// At each position the longest match wins; among equal-length matches, the
+// first argument wins.
 func NewDefaultLexer(tokenTypes ...*core.TokenType) *DefaultLexer {
 	tokenMap := make([][]*core.TokenType, maxChar)
 	for i := range maxChar {

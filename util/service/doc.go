@@ -25,9 +25,6 @@
 //	    return sc
 //	}
 //
-// Framework code that must resolve a dependency at runtime calls
-// [MustGet] after the container has been sealed.
-//
 // # SetupDefaultServices in framework packages
 //
 // Each key package of Fastbelt exposes a SetupDefaultServices function that
@@ -39,8 +36,10 @@
 //   - [typefox.dev/fastbelt/server.SetupDefaultServices]
 //
 // These functions are idempotent: they call [Has] before [Put] and skip types
-// that are already registered, so a language can pre-register custom
-// implementations and still call the framework defaults for everything else.
+// that are already registered. A language can pre-register custom
+// implementations before calling them, or call [Override] afterward to replace
+// specific defaults while still using the framework defaults for everything
+// else.
 //
 // # SetupServices and CreateServices in language implementations
 //

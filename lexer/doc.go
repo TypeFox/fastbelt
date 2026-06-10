@@ -38,7 +38,9 @@
 //     types in a fixed-size map keyed by rune % 256 (each [core.TokenType]'s
 //     StartChars slice).
 //  2. Run each candidate's [core.Matcher] and keep the longest match (maximal
-//     munch). Keywords and regex token rules compete on equal footing.
+//     munch). Among equal-length matches, the first registered token type wins;
+//     generated lexers list keywords before regex token rules, so keywords take
+//     precedence when both match the same span.
 //  3. Route the match by [core.TokenType.Group]: default tokens go to
 //     [LexerResult.Tokens], hidden tokens are dropped, comments go to
 //     [LexerResult.Comments], and other groups are collected in
