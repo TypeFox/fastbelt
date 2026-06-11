@@ -9,8 +9,32 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/lexer"
+	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/test"
+	"typefox.dev/fastbelt/util/service"
 )
+
+// Benchmarks the adaptive prediction of a long prefix in an alternative
+func BenchmarkNestedQualifiedNameLookahead(b *testing.B) {
+	content := "g A.B.C.D.E.F.G hello"
+	srv := CreateServices()
+	lexerService := service.MustGet[lexer.Lexer](srv)
+	parserService := service.MustGet[parser.Parser](srv)
+	tokens := lexerService.Lex(content).Tokens
+	doc, err := fastbelt.NewDocumentFromString("file:///workspace/test.la", "lookahead", content)
+	if err != nil {
+		b.Fatal(err)
+	}
+	doc.Tokens = tokens
+	b.SetBytes(int64(len(content)))
+	b.ResetTimer()
+	for b.Loop() {
+		result := parserService.Parse(doc)
+		doc.Root = result.Node
+	}
+}
 
 func expectValue(t *testing.T, doc *test.Doc, expected string) Obj {
 	root := doc.Document.Root.(Root)
@@ -144,5 +168,37 @@ func TestFUnlimitedLookaheadPositiveWorld(t *testing.T) {
 func TestFUnlimitedLookaheadNegative(t *testing.T) {
 	sc := CreateServices()
 	doc := test.New(t, sc).Parse("f A B C D E F G")
-	assert.Greater(t, len(doc.Document.ParserErrors), 0, "expected parse errors")
+	require.NotEmpty(t, doc.Document.ParserErrors)
+}
+
+func TestGUnlimitedNestedLookaheadPositiveHello(t *testing.T) {
+	sc := CreateServices()
+	doc := test.New(t, sc).Parse("g A.B.C.D.E.F.G hello")
+	doc.AssertNoParseErrors()
+	obj := expectValue(t, doc, "hello")
+	assert.Equal(t, "A.B.C.D.E.F.G", obj.Node())
+}
+
+func TestGUnlimitedNestedLookaheadPositiveWorld(t *testing.T) {
+	sc := CreateServices()
+	doc := test.New(t, sc).Parse("g A.B.C.D.E.F.G world")
+	doc.AssertNoParseErrors()
+	obj := expectValue(t, doc, "world")
+	assert.Equal(t, "A.B.C.D.E.F.G", obj.Node())
+}
+
+func TestHUnlimitedRecursiveLookaheadPositiveHello(t *testing.T) {
+	sc := CreateServices()
+	doc := test.New(t, sc).Parse("h A.B.C.D.E.F.G hello")
+	doc.AssertNoParseErrors()
+	obj := expectValue(t, doc, "hello")
+	assert.Equal(t, "A.B.C.D.E.F.G", obj.Node())
+}
+
+func TestHUnlimitedRecursiveLookaheadPositiveWorld(t *testing.T) {
+	sc := CreateServices()
+	doc := test.New(t, sc).Parse("h A.B.C.D.E.F.G world")
+	doc.AssertNoParseErrors()
+	obj := expectValue(t, doc, "world")
+	assert.Equal(t, "A.B.C.D.E.F.G", obj.Node())
 }

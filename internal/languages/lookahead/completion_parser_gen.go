@@ -91,6 +91,18 @@ func (p *CompletionParser) ParseObj() {
 			p.ParseF()
 			p.state.ExitRule()
 		}
+	case 6:
+		{
+			p.state.EnterRule(Obj__Basic_13)
+			p.ParseG()
+			p.state.ExitRule()
+		}
+	case 7:
+		{
+			p.state.EnterRule(Obj__Basic_15)
+			p.ParseH()
+			p.state.ExitRule()
+		}
 	default:
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
@@ -244,6 +256,82 @@ func (p *CompletionParser) ParseF() {
 	}
 }
 
+func (p *CompletionParser) ParseG() {
+	p.cp.EnterRule("G", G__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_g)
+	}
+	switch prediction, failure := p.lookahead.GAlternatives(p.state); prediction {
+	case 0:
+		{
+			p.cp.MarkAssignment("Node")
+			p.state.EnterRule(G_Value_hello)
+			p.ParseQualifiedName()
+			p.state.ExitRule()
+			p.cp.ClearAssignment()
+		}
+		{
+			p.cp.MarkAssignment("Value")
+			p.state.Consume(Keyword_hello)
+			p.cp.ClearAssignment()
+		}
+	case 1:
+		{
+			p.cp.MarkAssignment("Node")
+			p.state.EnterRule(G_Value_world)
+			p.ParseQualifiedName()
+			p.state.ExitRule()
+			p.cp.ClearAssignment()
+		}
+		{
+			p.cp.MarkAssignment("Value")
+			p.state.Consume(Keyword_world)
+			p.cp.ClearAssignment()
+		}
+	default:
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+	}
+}
+
+func (p *CompletionParser) ParseH() {
+	p.cp.EnterRule("H", H__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_h)
+	}
+	switch prediction, failure := p.lookahead.HAlternatives(p.state); prediction {
+	case 0:
+		{
+			p.cp.MarkAssignment("Node")
+			p.state.EnterRule(H_Value_hello)
+			p.ParseQualifiedNameRecursive()
+			p.state.ExitRule()
+			p.cp.ClearAssignment()
+		}
+		{
+			p.cp.MarkAssignment("Value")
+			p.state.Consume(Keyword_hello)
+			p.cp.ClearAssignment()
+		}
+	case 1:
+		{
+			p.cp.MarkAssignment("Node")
+			p.state.EnterRule(H_Value_world)
+			p.ParseQualifiedNameRecursive()
+			p.state.ExitRule()
+			p.cp.ClearAssignment()
+		}
+		{
+			p.cp.MarkAssignment("Value")
+			p.state.Consume(Keyword_world)
+			p.cp.ClearAssignment()
+		}
+	default:
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+	}
+}
+
 func (p *CompletionParser) ParseQualifiedName() {
 	p.cp.EnterRule("QualifiedName", QualifiedName__Start)
 	defer p.cp.ExitRule()
@@ -362,6 +450,26 @@ func (p *CompletionParser) ParseDOpt() {
 		}
 		{
 			p.state.Consume(Token_ID)
+		}
+	}
+}
+
+func (p *CompletionParser) ParseQualifiedNameRecursive() {
+	p.cp.EnterRule("QualifiedNameRecursive", QualifiedNameRecursive__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Token_ID)
+	}
+	p.cp.RecordSnapshot(QualifiedNameRecursive__Basic_2)
+	p.state.Sync(QualifiedNameRecursive__Basic_2)
+	if p.lookahead.QualifiedNameRecursiveOptional(p.state) {
+		{
+			p.state.Consume(Keyword_Dot)
+		}
+		{
+			p.state.EnterRule(QualifiedNameRecursive__Basic_1)
+			p.ParseQualifiedNameRecursive()
+			p.state.ExitRule()
 		}
 	}
 }

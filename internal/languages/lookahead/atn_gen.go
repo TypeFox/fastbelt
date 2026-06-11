@@ -24,6 +24,10 @@ const (
 	E__Stop
 	F__Start
 	F__Stop
+	G__Start
+	G__Stop
+	H__Start
+	H__Stop
 	QualifiedName__Start
 	QualifiedName__Stop
 	Path__Start
@@ -34,6 +38,8 @@ const (
 	CLoop__Stop
 	DOpt__Start
 	DOpt__Stop
+	QualifiedNameRecursive__Start
+	QualifiedNameRecursive__Stop
 	Root__Basic_0
 	Root__Basic_1
 	Obj__Basic_0
@@ -49,6 +55,10 @@ const (
 	Obj__Basic_10
 	Obj__Basic_11
 	Obj__Basic_12
+	Obj__Basic_13
+	Obj__Basic_14
+	Obj__Basic_15
+	Obj__Basic_16
 	Obj__BlockEnd
 	A_a
 	A__Basic_0
@@ -94,6 +104,24 @@ const (
 	F__Basic_3
 	F__Basic_4
 	F__BlockEnd
+	G_g
+	G__Basic_0
+	G_Value_hello
+	G__Basic_1
+	G__Basic_2
+	G_Value_world
+	G__Basic_3
+	G__Basic_4
+	G__BlockEnd
+	H_h
+	H__Basic_0
+	H_Value_hello
+	H__Basic_1
+	H__Basic_2
+	H_Value_world
+	H__Basic_3
+	H__Basic_4
+	H__BlockEnd
 	QualifiedName_ID_0
 	QualifiedName_Dot
 	QualifiedName_ID_1
@@ -135,6 +163,11 @@ const (
 	DOpt_ID_1
 	DOpt__Basic_0
 	DOpt__Basic_1
+	QualifiedNameRecursive_ID
+	QualifiedNameRecursive_Dot
+	QualifiedNameRecursive__Basic_0
+	QualifiedNameRecursive__Basic_1
+	QualifiedNameRecursive__Basic_2
 )
 
 var once sync.Once
@@ -147,7 +180,7 @@ func ATN() *parser.RuntimeATN {
 	return atn
 }
 func BuildATN() *parser.RuntimeATN {
-	states := make([]*parser.RuntimeATNState, 127)
+	states := make([]*parser.RuntimeATNState, 160)
 	states[Root__Start] = parser.NewATNState(Root__Start, parser.ATNRuleStart, true)
 	states[Root__Stop] = parser.NewATNState(Root__Stop, parser.ATNRuleStop, false)
 	states[Obj__Start] = parser.NewATNState(Obj__Start, parser.ATNRuleStart, true)
@@ -164,6 +197,10 @@ func BuildATN() *parser.RuntimeATN {
 	states[E__Stop] = parser.NewATNState(E__Stop, parser.ATNRuleStop, false)
 	states[F__Start] = parser.NewATNState(F__Start, parser.ATNRuleStart, true)
 	states[F__Stop] = parser.NewATNState(F__Stop, parser.ATNRuleStop, false)
+	states[G__Start] = parser.NewATNState(G__Start, parser.ATNRuleStart, true)
+	states[G__Stop] = parser.NewATNState(G__Stop, parser.ATNRuleStop, false)
+	states[H__Start] = parser.NewATNState(H__Start, parser.ATNRuleStart, true)
+	states[H__Stop] = parser.NewATNState(H__Stop, parser.ATNRuleStop, false)
 	states[QualifiedName__Start] = parser.NewATNState(QualifiedName__Start, parser.ATNRuleStart, true)
 	states[QualifiedName__Stop] = parser.NewATNState(QualifiedName__Stop, parser.ATNRuleStop, false)
 	states[Path__Start] = parser.NewATNState(Path__Start, parser.ATNRuleStart, true)
@@ -174,6 +211,8 @@ func BuildATN() *parser.RuntimeATN {
 	states[CLoop__Stop] = parser.NewATNState(CLoop__Stop, parser.ATNRuleStop, false)
 	states[DOpt__Start] = parser.NewATNState(DOpt__Start, parser.ATNRuleStart, true)
 	states[DOpt__Stop] = parser.NewATNState(DOpt__Stop, parser.ATNRuleStop, false)
+	states[QualifiedNameRecursive__Start] = parser.NewATNState(QualifiedNameRecursive__Start, parser.ATNRuleStart, true)
+	states[QualifiedNameRecursive__Stop] = parser.NewATNState(QualifiedNameRecursive__Stop, parser.ATNRuleStop, false)
 	states[Root__Basic_0] = parser.NewATNState(Root__Basic_0, parser.ATNBasic, true)
 	states[Root__Basic_1] = parser.NewATNState(Root__Basic_1, parser.ATNBasic, true)
 	states[Obj__Basic_0] = parser.NewATNState(Obj__Basic_0, parser.ATNBasic, true)
@@ -188,7 +227,11 @@ func BuildATN() *parser.RuntimeATN {
 	states[Obj__Basic_9] = parser.NewATNState(Obj__Basic_9, parser.ATNBasic, true)
 	states[Obj__Basic_10] = parser.NewATNState(Obj__Basic_10, parser.ATNBasic, true)
 	states[Obj__Basic_11] = parser.NewATNState(Obj__Basic_11, parser.ATNBasic, true)
-	states[Obj__Basic_12] = parser.NewATNState(Obj__Basic_12, parser.ATNBasic, true).SetDecision(0)
+	states[Obj__Basic_12] = parser.NewATNState(Obj__Basic_12, parser.ATNBasic, true)
+	states[Obj__Basic_13] = parser.NewATNState(Obj__Basic_13, parser.ATNBasic, true)
+	states[Obj__Basic_14] = parser.NewATNState(Obj__Basic_14, parser.ATNBasic, true)
+	states[Obj__Basic_15] = parser.NewATNState(Obj__Basic_15, parser.ATNBasic, true)
+	states[Obj__Basic_16] = parser.NewATNState(Obj__Basic_16, parser.ATNBasic, true).SetDecision(0)
 	states[Obj__BlockEnd] = parser.NewATNState(Obj__BlockEnd, parser.ATNBlockEnd, true)
 	states[A_a] = parser.NewATNState(A_a, parser.ATNBasic, false)
 	states[A__Basic_0] = parser.NewATNState(A__Basic_0, parser.ATNBasic, true)
@@ -234,18 +277,36 @@ func BuildATN() *parser.RuntimeATN {
 	states[F__Basic_3] = parser.NewATNState(F__Basic_3, parser.ATNBasic, true)
 	states[F__Basic_4] = parser.NewATNState(F__Basic_4, parser.ATNBasic, true).SetDecision(7)
 	states[F__BlockEnd] = parser.NewATNState(F__BlockEnd, parser.ATNBlockEnd, true)
+	states[G_g] = parser.NewATNState(G_g, parser.ATNBasic, false)
+	states[G__Basic_0] = parser.NewATNState(G__Basic_0, parser.ATNBasic, true)
+	states[G_Value_hello] = parser.NewATNState(G_Value_hello, parser.ATNBasic, false)
+	states[G__Basic_1] = parser.NewATNState(G__Basic_1, parser.ATNBasic, true)
+	states[G__Basic_2] = parser.NewATNState(G__Basic_2, parser.ATNBasic, true)
+	states[G_Value_world] = parser.NewATNState(G_Value_world, parser.ATNBasic, false)
+	states[G__Basic_3] = parser.NewATNState(G__Basic_3, parser.ATNBasic, true)
+	states[G__Basic_4] = parser.NewATNState(G__Basic_4, parser.ATNBasic, true).SetDecision(8)
+	states[G__BlockEnd] = parser.NewATNState(G__BlockEnd, parser.ATNBlockEnd, true)
+	states[H_h] = parser.NewATNState(H_h, parser.ATNBasic, false)
+	states[H__Basic_0] = parser.NewATNState(H__Basic_0, parser.ATNBasic, true)
+	states[H_Value_hello] = parser.NewATNState(H_Value_hello, parser.ATNBasic, false)
+	states[H__Basic_1] = parser.NewATNState(H__Basic_1, parser.ATNBasic, true)
+	states[H__Basic_2] = parser.NewATNState(H__Basic_2, parser.ATNBasic, true)
+	states[H_Value_world] = parser.NewATNState(H_Value_world, parser.ATNBasic, false)
+	states[H__Basic_3] = parser.NewATNState(H__Basic_3, parser.ATNBasic, true)
+	states[H__Basic_4] = parser.NewATNState(H__Basic_4, parser.ATNBasic, true).SetDecision(9)
+	states[H__BlockEnd] = parser.NewATNState(H__BlockEnd, parser.ATNBlockEnd, true)
 	states[QualifiedName_ID_0] = parser.NewATNState(QualifiedName_ID_0, parser.ATNBasic, false)
 	states[QualifiedName_Dot] = parser.NewATNState(QualifiedName_Dot, parser.ATNBasic, false)
 	states[QualifiedName_ID_1] = parser.NewATNState(QualifiedName_ID_1, parser.ATNBasic, false)
 	states[QualifiedName__Basic] = parser.NewATNState(QualifiedName__Basic, parser.ATNBasic, true)
-	states[QualifiedName__LoopEntry] = parser.NewATNState(QualifiedName__LoopEntry, parser.ATNLoopEntry, true).SetDecision(8)
+	states[QualifiedName__LoopEntry] = parser.NewATNState(QualifiedName__LoopEntry, parser.ATNLoopEntry, true).SetDecision(10)
 	states[QualifiedName__LoopEnd] = parser.NewATNState(QualifiedName__LoopEnd, parser.ATNLoopEnd, true)
 	states[QualifiedName__LoopBack] = parser.NewATNState(QualifiedName__LoopBack, parser.ATNLoopBack, true)
 	states[Path_ID_0] = parser.NewATNState(Path_ID_0, parser.ATNBasic, false)
 	states[Path_Slash] = parser.NewATNState(Path_Slash, parser.ATNBasic, false)
 	states[Path_ID_1] = parser.NewATNState(Path_ID_1, parser.ATNBasic, false)
 	states[Path__Basic_0] = parser.NewATNState(Path__Basic_0, parser.ATNBasic, true)
-	states[Path__LoopEntry] = parser.NewATNState(Path__LoopEntry, parser.ATNLoopEntry, true).SetDecision(9)
+	states[Path__LoopEntry] = parser.NewATNState(Path__LoopEntry, parser.ATNLoopEntry, true).SetDecision(11)
 	states[Path__LoopEnd] = parser.NewATNState(Path__LoopEnd, parser.ATNLoopEnd, true)
 	states[Path__LoopBack] = parser.NewATNState(Path__LoopBack, parser.ATNLoopBack, true)
 	states[Path_Colon] = parser.NewATNState(Path_Colon, parser.ATNBasic, false)
@@ -253,7 +314,7 @@ func BuildATN() *parser.RuntimeATN {
 	states[Path__Basic_1] = parser.NewATNState(Path__Basic_1, parser.ATNBasic, true)
 	states[Path_ID_3] = parser.NewATNState(Path_ID_3, parser.ATNBasic, false)
 	states[Path__Basic_2] = parser.NewATNState(Path__Basic_2, parser.ATNBasic, true)
-	states[Path__Basic_3] = parser.NewATNState(Path__Basic_3, parser.ATNBasic, true).SetDecision(10)
+	states[Path__Basic_3] = parser.NewATNState(Path__Basic_3, parser.ATNBasic, true).SetDecision(12)
 	states[Path__BlockEnd] = parser.NewATNState(Path__BlockEnd, parser.ATNBlockEnd, true)
 	states[QualifiedPath__Basic_0] = parser.NewATNState(QualifiedPath__Basic_0, parser.ATNBasic, true)
 	states[QualifiedPath_ColonColon] = parser.NewATNState(QualifiedPath_ColonColon, parser.ATNBasic, false)
@@ -261,25 +322,30 @@ func BuildATN() *parser.RuntimeATN {
 	states[QualifiedPath__Basic_2] = parser.NewATNState(QualifiedPath__Basic_2, parser.ATNBasic, true)
 	states[QualifiedPath__Basic_3] = parser.NewATNState(QualifiedPath__Basic_3, parser.ATNBasic, true)
 	states[QualifiedPath__Basic_4] = parser.NewATNState(QualifiedPath__Basic_4, parser.ATNBasic, true)
-	states[QualifiedPath__Basic_5] = parser.NewATNState(QualifiedPath__Basic_5, parser.ATNBasic, true).SetDecision(11)
+	states[QualifiedPath__Basic_5] = parser.NewATNState(QualifiedPath__Basic_5, parser.ATNBasic, true).SetDecision(13)
 	states[QualifiedPath__BlockEnd] = parser.NewATNState(QualifiedPath__BlockEnd, parser.ATNBlockEnd, true)
 	states[CLoop_ID_0] = parser.NewATNState(CLoop_ID_0, parser.ATNBasic, false)
 	states[CLoop_ColonColon] = parser.NewATNState(CLoop_ColonColon, parser.ATNBasic, false)
 	states[CLoop_ID_1] = parser.NewATNState(CLoop_ID_1, parser.ATNBasic, false)
 	states[CLoop__Basic] = parser.NewATNState(CLoop__Basic, parser.ATNBasic, true)
-	states[CLoop__LoopEntry] = parser.NewATNState(CLoop__LoopEntry, parser.ATNLoopEntry, true).SetDecision(12)
+	states[CLoop__LoopEntry] = parser.NewATNState(CLoop__LoopEntry, parser.ATNLoopEntry, true).SetDecision(14)
 	states[CLoop__LoopEnd] = parser.NewATNState(CLoop__LoopEnd, parser.ATNLoopEnd, true)
 	states[CLoop__LoopBack] = parser.NewATNState(CLoop__LoopBack, parser.ATNLoopBack, true)
 	states[DOpt_ID_0] = parser.NewATNState(DOpt_ID_0, parser.ATNBasic, false)
 	states[DOpt_ColonColon] = parser.NewATNState(DOpt_ColonColon, parser.ATNBasic, false)
 	states[DOpt_ID_1] = parser.NewATNState(DOpt_ID_1, parser.ATNBasic, false)
 	states[DOpt__Basic_0] = parser.NewATNState(DOpt__Basic_0, parser.ATNBasic, true)
-	states[DOpt__Basic_1] = parser.NewATNState(DOpt__Basic_1, parser.ATNBasic, true).SetDecision(13)
+	states[DOpt__Basic_1] = parser.NewATNState(DOpt__Basic_1, parser.ATNBasic, true).SetDecision(15)
+	states[QualifiedNameRecursive_ID] = parser.NewATNState(QualifiedNameRecursive_ID, parser.ATNBasic, false)
+	states[QualifiedNameRecursive_Dot] = parser.NewATNState(QualifiedNameRecursive_Dot, parser.ATNBasic, false)
+	states[QualifiedNameRecursive__Basic_0] = parser.NewATNState(QualifiedNameRecursive__Basic_0, parser.ATNBasic, true)
+	states[QualifiedNameRecursive__Basic_1] = parser.NewATNState(QualifiedNameRecursive__Basic_1, parser.ATNBasic, true)
+	states[QualifiedNameRecursive__Basic_2] = parser.NewATNState(QualifiedNameRecursive__Basic_2, parser.ATNBasic, true).SetDecision(16)
 	states[Root__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__Basic_0]),
 	)
 	states[Obj__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[Obj__Basic_12]),
+		parser.NewEpsilonTransition(states[Obj__Basic_16]),
 	)
 	states[A__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[A_a]),
@@ -299,6 +365,12 @@ func BuildATN() *parser.RuntimeATN {
 	states[F__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[F_f]),
 	)
+	states[G__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[G_g]),
+	)
+	states[H__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[H_h]),
+	)
 	states[QualifiedName__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[QualifiedName_ID_0]),
 	)
@@ -313,6 +385,9 @@ func BuildATN() *parser.RuntimeATN {
 	)
 	states[DOpt__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[DOpt_ID_0]),
+	)
+	states[QualifiedNameRecursive__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[QualifiedNameRecursive_ID]),
 	)
 	states[Root__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[Obj__Start], states[Root__Basic_1], nil),
@@ -357,12 +432,26 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[Obj__BlockEnd]),
 	)
 	states[Obj__Basic_12].AppendTransitions(
+		parser.NewRuleTransition(states[G__Start], states[Obj__Basic_13], nil),
+	)
+	states[Obj__Basic_13].AppendTransitions(
+		parser.NewEpsilonTransition(states[Obj__BlockEnd]),
+	)
+	states[Obj__Basic_14].AppendTransitions(
+		parser.NewRuleTransition(states[H__Start], states[Obj__Basic_15], nil),
+	)
+	states[Obj__Basic_15].AppendTransitions(
+		parser.NewEpsilonTransition(states[Obj__BlockEnd]),
+	)
+	states[Obj__Basic_16].AppendTransitions(
 		parser.NewEpsilonTransition(states[Obj__Basic_0]),
 		parser.NewEpsilonTransition(states[Obj__Basic_2]),
 		parser.NewEpsilonTransition(states[Obj__Basic_4]),
 		parser.NewEpsilonTransition(states[Obj__Basic_6]),
 		parser.NewEpsilonTransition(states[Obj__Basic_8]),
 		parser.NewEpsilonTransition(states[Obj__Basic_10]),
+		parser.NewEpsilonTransition(states[Obj__Basic_12]),
+		parser.NewEpsilonTransition(states[Obj__Basic_14]),
 	)
 	states[Obj__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[Obj__Stop]),
@@ -506,6 +595,62 @@ func BuildATN() *parser.RuntimeATN {
 	states[F__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[F__Stop]),
 	)
+	states[G_g].AppendTransitions(
+		parser.NewAtomTransition(states[G__Basic_4], Keyword_g, nil),
+	)
+	states[G__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[QualifiedName__Start], states[G_Value_hello], nil),
+	)
+	states[G_Value_hello].AppendTransitions(
+		parser.NewAtomTransition(states[G__Basic_1], Keyword_hello, nil),
+	)
+	states[G__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[G__BlockEnd]),
+	)
+	states[G__Basic_2].AppendTransitions(
+		parser.NewRuleTransition(states[QualifiedName__Start], states[G_Value_world], nil),
+	)
+	states[G_Value_world].AppendTransitions(
+		parser.NewAtomTransition(states[G__Basic_3], Keyword_world, nil),
+	)
+	states[G__Basic_3].AppendTransitions(
+		parser.NewEpsilonTransition(states[G__BlockEnd]),
+	)
+	states[G__Basic_4].AppendTransitions(
+		parser.NewEpsilonTransition(states[G__Basic_0]),
+		parser.NewEpsilonTransition(states[G__Basic_2]),
+	)
+	states[G__BlockEnd].AppendTransitions(
+		parser.NewEpsilonTransition(states[G__Stop]),
+	)
+	states[H_h].AppendTransitions(
+		parser.NewAtomTransition(states[H__Basic_4], Keyword_h, nil),
+	)
+	states[H__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[QualifiedNameRecursive__Start], states[H_Value_hello], nil),
+	)
+	states[H_Value_hello].AppendTransitions(
+		parser.NewAtomTransition(states[H__Basic_1], Keyword_hello, nil),
+	)
+	states[H__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[H__BlockEnd]),
+	)
+	states[H__Basic_2].AppendTransitions(
+		parser.NewRuleTransition(states[QualifiedNameRecursive__Start], states[H_Value_world], nil),
+	)
+	states[H_Value_world].AppendTransitions(
+		parser.NewAtomTransition(states[H__Basic_3], Keyword_world, nil),
+	)
+	states[H__Basic_3].AppendTransitions(
+		parser.NewEpsilonTransition(states[H__BlockEnd]),
+	)
+	states[H__Basic_4].AppendTransitions(
+		parser.NewEpsilonTransition(states[H__Basic_0]),
+		parser.NewEpsilonTransition(states[H__Basic_2]),
+	)
+	states[H__BlockEnd].AppendTransitions(
+		parser.NewEpsilonTransition(states[H__Stop]),
+	)
 	states[QualifiedName_ID_0].AppendTransitions(
 		parser.NewAtomTransition(states[QualifiedName__LoopEntry], Token_ID, nil),
 	)
@@ -635,8 +780,24 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[DOpt_ColonColon]),
 		parser.NewEpsilonTransition(states[DOpt__Basic_0]),
 	)
-	decisionStates := make([]*parser.RuntimeATNState, 14)
-	decisionStates[0] = states[Obj__Basic_12]
+	states[QualifiedNameRecursive_ID].AppendTransitions(
+		parser.NewAtomTransition(states[QualifiedNameRecursive__Basic_2], Token_ID, nil),
+	)
+	states[QualifiedNameRecursive_Dot].AppendTransitions(
+		parser.NewAtomTransition(states[QualifiedNameRecursive__Basic_0], Keyword_Dot, nil),
+	)
+	states[QualifiedNameRecursive__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[QualifiedNameRecursive__Start], states[QualifiedNameRecursive__Basic_1], nil),
+	)
+	states[QualifiedNameRecursive__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[QualifiedNameRecursive__Stop]),
+	)
+	states[QualifiedNameRecursive__Basic_2].AppendTransitions(
+		parser.NewEpsilonTransition(states[QualifiedNameRecursive_Dot]),
+		parser.NewEpsilonTransition(states[QualifiedNameRecursive__Basic_1]),
+	)
+	decisionStates := make([]*parser.RuntimeATNState, 17)
+	decisionStates[0] = states[Obj__Basic_16]
 	decisionStates[1] = states[C__Basic_2]
 	decisionStates[2] = states[D__Basic_2]
 	decisionStates[3] = states[E__Basic_1]
@@ -644,14 +805,17 @@ func BuildATN() *parser.RuntimeATN {
 	decisionStates[5] = states[F__LoopEntry_0]
 	decisionStates[6] = states[F__LoopEntry_1]
 	decisionStates[7] = states[F__Basic_4]
-	decisionStates[8] = states[QualifiedName__LoopEntry]
-	decisionStates[9] = states[Path__LoopEntry]
-	decisionStates[10] = states[Path__Basic_3]
-	decisionStates[11] = states[QualifiedPath__Basic_5]
-	decisionStates[12] = states[CLoop__LoopEntry]
-	decisionStates[13] = states[DOpt__Basic_1]
-	decisionMap := make([]*parser.RuntimeATNState, 14)
-	decisionMap[0] = states[Obj__Basic_12]
+	decisionStates[8] = states[G__Basic_4]
+	decisionStates[9] = states[H__Basic_4]
+	decisionStates[10] = states[QualifiedName__LoopEntry]
+	decisionStates[11] = states[Path__LoopEntry]
+	decisionStates[12] = states[Path__Basic_3]
+	decisionStates[13] = states[QualifiedPath__Basic_5]
+	decisionStates[14] = states[CLoop__LoopEntry]
+	decisionStates[15] = states[DOpt__Basic_1]
+	decisionStates[16] = states[QualifiedNameRecursive__Basic_2]
+	decisionMap := make([]*parser.RuntimeATNState, 17)
+	decisionMap[0] = states[Obj__Basic_16]
 	decisionMap[1] = states[C__Basic_2]
 	decisionMap[2] = states[D__Basic_2]
 	decisionMap[3] = states[E__Basic_1]
@@ -659,11 +823,14 @@ func BuildATN() *parser.RuntimeATN {
 	decisionMap[5] = states[F__LoopEntry_0]
 	decisionMap[6] = states[F__LoopEntry_1]
 	decisionMap[7] = states[F__Basic_4]
-	decisionMap[8] = states[QualifiedName__LoopEntry]
-	decisionMap[9] = states[Path__LoopEntry]
-	decisionMap[10] = states[Path__Basic_3]
-	decisionMap[11] = states[QualifiedPath__Basic_5]
-	decisionMap[12] = states[CLoop__LoopEntry]
-	decisionMap[13] = states[DOpt__Basic_1]
+	decisionMap[8] = states[G__Basic_4]
+	decisionMap[9] = states[H__Basic_4]
+	decisionMap[10] = states[QualifiedName__LoopEntry]
+	decisionMap[11] = states[Path__LoopEntry]
+	decisionMap[12] = states[Path__Basic_3]
+	decisionMap[13] = states[QualifiedPath__Basic_5]
+	decisionMap[14] = states[CLoop__LoopEntry]
+	decisionMap[15] = states[DOpt__Basic_1]
+	decisionMap[16] = states[QualifiedNameRecursive__Basic_2]
 	return parser.NewRuntimeATN(states, decisionStates, decisionMap)
 }
