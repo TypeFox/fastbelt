@@ -21,11 +21,11 @@ var ModelItemAlternatives = parser.LL1Lookahead{
 	Lookup: []int{1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8},
 }
 
-// token_groupsParserLookahead abstracts every lookahead/prediction decision performed by
+// TokenGroupsParserLookahead abstracts every lookahead/prediction decision performed by
 // the generated parser. Each method corresponds to a single decision point;
 // implementations may override individual decisions while delegating the rest
-// to Defaulttoken_groupsParserLookahead.
-type token_groupsParserLookahead interface {
+// to DefaultTokenGroupsParserLookahead.
+type TokenGroupsParserLookahead interface {
 	parser.ParserLookahead
 
 	BValueAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
@@ -34,28 +34,28 @@ type token_groupsParserLookahead interface {
 	ModelItemAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 }
 
-// Defaulttoken_groupsParserLookahead resolves every decision with the parser state's built-in
+// DefaultTokenGroupsParserLookahead resolves every decision with the parser state's built-in
 // static LL(1) and adaptive ALL(*) prediction.
-type Defaulttoken_groupsParserLookahead struct {
+type DefaultTokenGroupsParserLookahead struct {
 	parser.DefaultParserLookahead
 }
 
-func NewDefaulttoken_groupsParserLookahead() token_groupsParserLookahead {
-	return &Defaulttoken_groupsParserLookahead{}
+func NewDefaultTokenGroupsParserLookahead() TokenGroupsParserLookahead {
+	return &DefaultTokenGroupsParserLookahead{}
 }
 
-func (l *Defaulttoken_groupsParserLookahead) BValueAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+func (l *DefaultTokenGroupsParserLookahead) BValueAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
 	return state.Lookahead(BValueAlternatives)
 }
 
-func (l *Defaulttoken_groupsParserLookahead) DValueOptional(state *parser.ParserState) bool {
+func (l *DefaultTokenGroupsParserLookahead) DValueOptional(state *parser.ParserState) bool {
 	return Token_Identifier.Matches(state.LA(1).Type)
 }
 
-func (l *Defaulttoken_groupsParserLookahead) HAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+func (l *DefaultTokenGroupsParserLookahead) HAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
 	return state.AdaptivePredict(DecisionHAlternatives, l.PredictionMode())
 }
 
-func (l *Defaulttoken_groupsParserLookahead) ModelItemAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+func (l *DefaultTokenGroupsParserLookahead) ModelItemAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
 	return state.Lookahead(ModelItemAlternatives)
 }
