@@ -16,10 +16,10 @@ jobs:
       CACHE_DIR: ./ci-cache
     steps:
     - name: Check out code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
         go-version: '1.26'
 
@@ -38,7 +38,7 @@ jobs:
       run: go test -bench 'Benchmark' -benchtime=5s -run=^$ ./... | tee ${{ env.OUTPUT_FILE }}
 
     - name: Download previous benchmark data
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         # Cached data comes from main branch
         path: ${{ env.CACHE_DIR }}
