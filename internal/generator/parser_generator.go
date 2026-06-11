@@ -162,68 +162,7 @@ func GenerateParserLookahead(grammr grammar.Grammar, packageName string, tokenTy
 		atnData:      atnData,
 	}
 	populateContext(context)
-
-	// lookaheadMethod represents one decision point in the generated service.
-	// OR decisions (alternative selection) return both the chosen alternative
-	// and a failure descriptor; guard decisions (cardinality enter/continue)
-	// return a bool. table is the static LL(1) table to emit as a package var,
-	// or nil when the decision uses adaptive prediction or a direct keyword check.
-	type lookaheadMethod struct {
-		name        string
-		body        []string
-		isOr        bool
-		table       *LL1Decision
-		adaptiveIdx *int
-	}
-	methods := make([]lookaheadMethod, 0, len(context.orLookaheads)+len(context.lookaheads))
-
-	for alts, lv := range context.orLookaheads {
-		m := lookaheadMethod{name: lv.name, isOr: true}
-		if idx, ok := atnData.orAdaptive[alts]; ok {
-			idx := idx
-			m.adaptiveIdx = &idx
-			m.body = []string{"return state.AdaptivePredict(" + decisionConstName(m.name) + ", l.PredictionMode())"}
-		} else {
-			table := lv.lookup
-			m.table = &table
-			m.body = []string{"return state.Lookahead(" + lv.name + ")"}
-		}
-		methods = append(methods, m)
-	}
-
-	for el, lv := range context.lookaheads {
-		// The adaptive decision map is keyed by the assignable value for
-		// assignments (what the ATN actually sees), not the Assignment wrapper.
-		adaptiveKey := el
-		if assignment, ok := el.(grammar.Assignment); ok {
-			adaptiveKey = assignment.Value()
-		}
-		m := lookaheadMethod{name: lv.name, isOr: false}
-		if idx, ok := atnData.loopAdaptive[adaptiveKey]; ok {
-			idx := idx
-			m.adaptiveIdx = &idx
-			m.body = []string{
-				"prediction, _ := state.AdaptivePredict(" + decisionConstName(m.name) + ", l.PredictionMode())",
-				"return prediction == 0",
-			}
-		} else if keyword, ok := el.(grammar.Keyword); ok {
-			// Keywords are always LL(1) by definition: the keyword token type
-			// uniquely identifies them, so we skip the lookup table entirely.
-			m.body = []string{"return state.LA(1).Type == " + GeneratedTokenName(keyword)}
-		} else {
-			table := lv.lookup
-			m.table = &table
-			m.body = []string{
-				"prediction, _ := state.Lookahead(" + lv.name + ")",
-				"return prediction == 0",
-			}
-		}
-		methods = append(methods, m)
-	}
-
-	slices.SortFunc(methods, func(a, b lookaheadMethod) int {
-		return strings.Compare(a.name, b.name)
-	})
+	methods := generateLookaheadMethods(context)
 
 	interfaceName := grammr.Name() + "ParserLookahead"
 	defaultName := "Default" + interfaceName
@@ -333,6 +272,101 @@ func GenerateParserLookahead(grammr grammar.Grammar, packageName string, tokenTy
 	}
 
 	return FormatIfPossible(node.String())
+}
+
+// lookaheadMethod represents one decision point in the generated service.
+// OR decisions (alternative selection) return both the chosen alternative
+// and a failure descriptor; guard decisions (cardinality enter/continue)
+// return a bool. table is the static LL(1) table to emit as a package var,
+// or nil when the decision uses adaptive prediction or a direct keyword check.
+type lookaheadMethod struct {
+	name        string
+	body        []string
+	isOr        bool
+	table       *LL1Decision
+	adaptiveIdx *int
+}
+
+func generateLookaheadMethods(context *ParserGeneratorContext) []lookaheadMethod {
+	methods := make([]lookaheadMethod, 0, len(context.orLookaheads)+len(context.lookaheads))
+
+	for alts, lv := range context.orLookaheads {
+		m := lookaheadMethod{name: lv.name, isOr: true}
+		if idx, ok := context.atnData.orAdaptive[alts]; ok {
+			idx := idx
+			m.adaptiveIdx = &idx
+			m.body = []string{"return state.AdaptivePredict(" + decisionConstName(m.name) + ", l.PredictionMode())"}
+		} else {
+			table := lv.lookup
+			m.table = &table
+			m.body = []string{"return state.Lookahead(" + lv.name + ")"}
+		}
+		methods = append(methods, m)
+	}
+
+	// Token-group var names need the membership-aware Matches check; single
+	// token types (keywords, terminals) can use a direct identity comparison.
+	groupNames := make(map[string]bool)
+	for _, tg := range context.grammar.TokenGroups() {
+		groupNames[GeneratedTokenName(tg)] = true
+	}
+
+	for el, lv := range context.lookaheads {
+		// The adaptive decision map is keyed by the assignable value for
+		// assignments (what the ATN actually sees), not the Assignment wrapper.
+		adaptiveKey := el
+		if assignment, ok := el.(grammar.Assignment); ok {
+			adaptiveKey = assignment.Value()
+		}
+		m := lookaheadMethod{name: lv.name, isOr: false}
+		if idx, ok := context.atnData.loopAdaptive[adaptiveKey]; ok {
+			// Complex, non-LL(1) decision that requires adaptive prediction
+			idx := idx
+			m.adaptiveIdx = &idx
+			m.body = []string{
+				"prediction, _ := state.AdaptivePredict(" + decisionConstName(m.name) + ", l.PredictionMode())",
+				"return prediction == 0",
+			}
+		} else if token, ok := singleTokenGuard(lv.lookup); ok {
+			// The guard is a true/false decision whose FIRST set is a single token
+			// type, so a one-token check decides it - skip the lookup table entirely.
+			// This is an optimization that applies to cardinality guards ONLY.
+			if groupNames[token] {
+				// Call Matches on token groups, will internally check all member types
+				// using a bitset lookup.
+				m.body = []string{"return " + token + ".Matches(state.LA(1).Type)"}
+			} else {
+				// Keyword or simple token type - direct comparison is the fastest way
+				m.body = []string{"return state.LA(1).Type == " + token}
+			}
+		} else {
+			// Requires a full lookup table, since multiple token types are involved in the decision
+			table := lv.lookup
+			m.table = &table
+			m.body = []string{
+				"prediction, _ := state.Lookahead(" + lv.name + ")",
+				"return prediction == 0",
+			}
+		}
+		methods = append(methods, m)
+	}
+
+	slices.SortFunc(methods, func(a, b lookaheadMethod) int {
+		return strings.Compare(a.name, b.name)
+	})
+	return methods
+}
+
+// singleTokenGuard reports whether a cardinality guard's LL(1) table reduces to
+// exactly one token type and, if so, returns its generated var name. A guard
+// table always holds a single option (the enter FIRST set); when that option
+// names just one token type, a one-token check fully decides the guard and the
+// lookup table can be skipped.
+func singleTokenGuard(lookup LL1Decision) (string, bool) {
+	if len(lookup) == 1 && len(lookup[0]) == 1 {
+		return lookup[0][0], true
+	}
+	return "", false
 }
 
 func decisionConstName(methodName string) string {

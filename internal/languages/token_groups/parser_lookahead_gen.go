@@ -16,11 +16,6 @@ var BValueAlternatives = parser.LL1Lookahead{
 	Lookup: []int{1: 1, 2: 2, 12: 1, 13: 1},
 }
 
-var DValueOptional = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_Identifier},
-	Lookup: []int{1: 1, 12: 1, 13: 1},
-}
-
 var ModelItemAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h},
 	Lookup: []int{1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8},
@@ -54,8 +49,7 @@ func (l *Defaulttoken_groupsParserLookahead) BValueAlternatives(state *parser.Pa
 }
 
 func (l *Defaulttoken_groupsParserLookahead) DValueOptional(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(DValueOptional)
-	return prediction == 0
+	return Token_Identifier.Matches(state.LA(1).Type)
 }
 
 func (l *Defaulttoken_groupsParserLookahead) HAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {

@@ -3,49 +3,8 @@
 package statemachine
 
 import (
-	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 )
-
-var StateActionsLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_ID},
-	Lookup: []int{11: 1},
-}
-
-var StateOptional = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_actions},
-	Lookup: []int{2: 1},
-}
-
-var StateTransitionsLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_ID},
-	Lookup: []int{11: 1},
-}
-
-var StatemachineCommandsLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_ID},
-	Lookup: []int{11: 1},
-}
-
-var StatemachineEventsLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_ID},
-	Lookup: []int{11: 1},
-}
-
-var StatemachineOptional_0 = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_events},
-	Lookup: []int{5: 1},
-}
-
-var StatemachineOptional_1 = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_commands},
-	Lookup: []int{3: 1},
-}
-
-var StatemachineStatesLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_state},
-	Lookup: []int{7: 1},
-}
 
 // StatemachineModelParserLookahead abstracts every lookahead/prediction decision performed by
 // the generated parser. Each method corresponds to a single decision point;
@@ -75,41 +34,33 @@ func NewDefaultStatemachineModelParserLookahead() StatemachineModelParserLookahe
 }
 
 func (l *DefaultStatemachineModelParserLookahead) StateActionsLoop(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(StateActionsLoop)
-	return prediction == 0
+	return state.LA(1).Type == Token_ID
 }
 
 func (l *DefaultStatemachineModelParserLookahead) StateOptional(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(StateOptional)
-	return prediction == 0
+	return state.LA(1).Type == Keyword_actions
 }
 
 func (l *DefaultStatemachineModelParserLookahead) StateTransitionsLoop(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(StateTransitionsLoop)
-	return prediction == 0
+	return state.LA(1).Type == Token_ID
 }
 
 func (l *DefaultStatemachineModelParserLookahead) StatemachineCommandsLoop(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(StatemachineCommandsLoop)
-	return prediction == 0
+	return state.LA(1).Type == Token_ID
 }
 
 func (l *DefaultStatemachineModelParserLookahead) StatemachineEventsLoop(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(StatemachineEventsLoop)
-	return prediction == 0
+	return state.LA(1).Type == Token_ID
 }
 
 func (l *DefaultStatemachineModelParserLookahead) StatemachineOptional_0(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(StatemachineOptional_0)
-	return prediction == 0
+	return state.LA(1).Type == Keyword_events
 }
 
 func (l *DefaultStatemachineModelParserLookahead) StatemachineOptional_1(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(StatemachineOptional_1)
-	return prediction == 0
+	return state.LA(1).Type == Keyword_commands
 }
 
 func (l *DefaultStatemachineModelParserLookahead) StatemachineStatesLoop(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(StatemachineStatesLoop)
-	return prediction == 0
+	return state.LA(1).Type == Keyword_state
 }

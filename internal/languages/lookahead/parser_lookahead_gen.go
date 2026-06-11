@@ -17,49 +17,9 @@ const (
 	DecisionQualifiedPathAlternatives = 13
 )
 
-var COptional = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_ColonColon},
-	Lookup: []int{5: 1},
-}
-
-var DOptional = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_ColonColon},
-	Lookup: []int{5: 1},
-}
-
-var EValueOptional = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_hello},
-	Lookup: []int{14: 1},
-}
-
-var FLoop_0 = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_ID},
-	Lookup: []int{17: 1},
-}
-
-var FLoop_1 = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_ID},
-	Lookup: []int{17: 1},
-}
-
 var ObjAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h},
 	Lookup: []int{6: 1, 7: 2, 8: 3, 9: 4, 10: 5, 11: 6, 12: 7, 13: 8},
-}
-
-var PathLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_Slash},
-	Lookup: []int{3: 1},
-}
-
-var QualifiedNameLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_Dot},
-	Lookup: []int{2: 1},
-}
-
-var QualifiedNameRecursiveOptional = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_Dot},
-	Lookup: []int{2: 1},
 }
 
 // LookaheadParserLookahead abstracts every lookahead/prediction decision performed by
@@ -104,8 +64,7 @@ func (l *DefaultLookaheadParserLookahead) CLoopLoop(state *parser.ParserState) b
 }
 
 func (l *DefaultLookaheadParserLookahead) COptional(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(COptional)
-	return prediction == 0
+	return state.LA(1).Type == Keyword_ColonColon
 }
 
 func (l *DefaultLookaheadParserLookahead) DOptOptional(state *parser.ParserState) bool {
@@ -114,13 +73,11 @@ func (l *DefaultLookaheadParserLookahead) DOptOptional(state *parser.ParserState
 }
 
 func (l *DefaultLookaheadParserLookahead) DOptional(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(DOptional)
-	return prediction == 0
+	return state.LA(1).Type == Keyword_ColonColon
 }
 
 func (l *DefaultLookaheadParserLookahead) EValueOptional(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(EValueOptional)
-	return prediction == 0
+	return state.LA(1).Type == Keyword_hello
 }
 
 func (l *DefaultLookaheadParserLookahead) EworldOptional(state *parser.ParserState) bool {
@@ -132,13 +89,11 @@ func (l *DefaultLookaheadParserLookahead) FAlternatives(state *parser.ParserStat
 }
 
 func (l *DefaultLookaheadParserLookahead) FLoop_0(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(FLoop_0)
-	return prediction == 0
+	return state.LA(1).Type == Token_ID
 }
 
 func (l *DefaultLookaheadParserLookahead) FLoop_1(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(FLoop_1)
-	return prediction == 0
+	return state.LA(1).Type == Token_ID
 }
 
 func (l *DefaultLookaheadParserLookahead) GAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
@@ -158,18 +113,15 @@ func (l *DefaultLookaheadParserLookahead) PathAlternatives(state *parser.ParserS
 }
 
 func (l *DefaultLookaheadParserLookahead) PathLoop(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(PathLoop)
-	return prediction == 0
+	return state.LA(1).Type == Keyword_Slash
 }
 
 func (l *DefaultLookaheadParserLookahead) QualifiedNameLoop(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(QualifiedNameLoop)
-	return prediction == 0
+	return state.LA(1).Type == Keyword_Dot
 }
 
 func (l *DefaultLookaheadParserLookahead) QualifiedNameRecursiveOptional(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(QualifiedNameRecursiveOptional)
-	return prediction == 0
+	return state.LA(1).Type == Keyword_Dot
 }
 
 func (l *DefaultLookaheadParserLookahead) QualifiedPathAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
