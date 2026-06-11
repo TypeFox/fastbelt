@@ -4,7 +4,7 @@ interface Model {
     Item Item
 }
 
-Model: Item=(A | B | C | D | E | F | G);
+Model: Item=(A | B | C | D | E | F | G | H);
 
 interface Item {
     Value string
@@ -34,6 +34,9 @@ E returns Recovery: "e" First=Identifier Second=NestedIdentifier;
 F returns Item: "f" Value=KeywordGroup;
 
 G returns Item: "g" Value=RegexGroup;
+
+// Token group as part of a longer alternative
+H returns Item: "h" (Identifier Value="a" | Identifier Value="b");
 
 token group Identifier {
     ID INT "a"

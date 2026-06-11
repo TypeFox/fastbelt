@@ -30,6 +30,7 @@ var token_groupsSyntheticFactories = map[string]func() core.AstNode{
 	"E":     func() core.AstNode { return NewRecovery() },
 	"F":     func() core.AstNode { return NewItem() },
 	"G":     func() core.AstNode { return NewItem() },
+	"H":     func() core.AstNode { return NewItem() },
 	"Model": func() core.AstNode { return NewModel() },
 }
 

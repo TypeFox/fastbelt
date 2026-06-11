@@ -99,6 +99,22 @@ func (p *Parser) ParseObj() Obj {
 			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
+	case 6:
+		{
+			p.state.EnterRule(Obj__Basic_13)
+			result := p.ParseG()
+			p.state.ExitRule()
+			core.MergeTokens(result, current.Tokens())
+			current = result
+		}
+	case 7:
+		{
+			p.state.EnterRule(Obj__Basic_15)
+			result := p.ParseH()
+			p.state.ExitRule()
+			core.MergeTokens(result, current.Tokens())
+			current = result
+		}
 	default:
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
@@ -303,6 +319,112 @@ func (p *Parser) ParseF() Obj {
 	return current
 }
 
+func (p *Parser) ParseG() Obj {
+	current := NewObj()
+	current.SetSegmentStartToken(p.state.LA(1))
+	{
+		token := p.state.Consume(Keyword_g)
+		core.AssignToken(current, token, G_g)
+	}
+	switch prediction, failure := p.lookahead.GAlternatives(p.state); prediction {
+	case 0:
+		{
+			result := core.NewCompositeNode()
+			result.SetSegmentStartToken(p.state.LA(1))
+			p.state.EnterRule(G_Value_hello)
+			p.ParseQualifiedName(result)
+			p.state.ExitRule()
+			result.SetSegmentEndToken(p.state.LA(0))
+			if result != nil {
+				current.SetNode(result)
+			}
+		}
+		{
+			token := p.state.Consume(Keyword_hello)
+			core.AssignToken(current, token, G_Value_hello)
+			if token != nil {
+				current.SetValue(token)
+			}
+		}
+	case 1:
+		{
+			result := core.NewCompositeNode()
+			result.SetSegmentStartToken(p.state.LA(1))
+			p.state.EnterRule(G_Value_world)
+			p.ParseQualifiedName(result)
+			p.state.ExitRule()
+			result.SetSegmentEndToken(p.state.LA(0))
+			if result != nil {
+				current.SetNode(result)
+			}
+		}
+		{
+			token := p.state.Consume(Keyword_world)
+			core.AssignToken(current, token, G_Value_world)
+			if token != nil {
+				current.SetValue(token)
+			}
+		}
+	default:
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+	}
+	current.SetSegmentEndToken(p.state.LA(0))
+	return current
+}
+
+func (p *Parser) ParseH() Obj {
+	current := NewObj()
+	current.SetSegmentStartToken(p.state.LA(1))
+	{
+		token := p.state.Consume(Keyword_h)
+		core.AssignToken(current, token, H_h)
+	}
+	switch prediction, failure := p.lookahead.HAlternatives(p.state); prediction {
+	case 0:
+		{
+			result := core.NewCompositeNode()
+			result.SetSegmentStartToken(p.state.LA(1))
+			p.state.EnterRule(H_Value_hello)
+			p.ParseQualifiedNameRecursive(result)
+			p.state.ExitRule()
+			result.SetSegmentEndToken(p.state.LA(0))
+			if result != nil {
+				current.SetNode(result)
+			}
+		}
+		{
+			token := p.state.Consume(Keyword_hello)
+			core.AssignToken(current, token, H_Value_hello)
+			if token != nil {
+				current.SetValue(token)
+			}
+		}
+	case 1:
+		{
+			result := core.NewCompositeNode()
+			result.SetSegmentStartToken(p.state.LA(1))
+			p.state.EnterRule(H_Value_world)
+			p.ParseQualifiedNameRecursive(result)
+			p.state.ExitRule()
+			result.SetSegmentEndToken(p.state.LA(0))
+			if result != nil {
+				current.SetNode(result)
+			}
+		}
+		{
+			token := p.state.Consume(Keyword_world)
+			core.AssignToken(current, token, H_Value_world)
+			if token != nil {
+				current.SetValue(token)
+			}
+		}
+	default:
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+	}
+	current.SetSegmentEndToken(p.state.LA(0))
+	return current
+}
+
 func (p *Parser) ParseQualifiedName(current core.CompositeNode) {
 	{
 		token := p.state.Consume(Token_ID)
@@ -420,6 +542,25 @@ func (p *Parser) ParseDOpt(current core.CompositeNode) {
 		{
 			token := p.state.Consume(Token_ID)
 			core.AssignToken(current, token, DOpt_ID_1)
+		}
+	}
+}
+
+func (p *Parser) ParseQualifiedNameRecursive(current core.CompositeNode) {
+	{
+		token := p.state.Consume(Token_ID)
+		core.AssignToken(current, token, QualifiedNameRecursive_ID)
+	}
+	p.state.Sync(QualifiedNameRecursive__Basic_2)
+	if p.lookahead.QualifiedNameRecursiveOptional(p.state) {
+		{
+			token := p.state.Consume(Keyword_Dot)
+			core.AssignToken(current, token, QualifiedNameRecursive_Dot)
+		}
+		{
+			p.state.EnterRule(QualifiedNameRecursive__Basic_1)
+			p.ParseQualifiedNameRecursive(current)
+			p.state.ExitRule()
 		}
 	}
 }

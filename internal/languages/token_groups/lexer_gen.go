@@ -142,7 +142,26 @@ var Keyword_g = core.NewTokenType(
 	[]rune{'g'},
 )
 
-const Keyword_nested_Idx = 8
+const Keyword_h_Idx = 8
+
+var Keyword_h = core.NewTokenType(
+	Keyword_h_Idx,
+	"h",
+	"h",
+	0,
+	core.TokenKindKeyword,
+	0,
+	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "h") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'h'},
+)
+
+const Keyword_nested_Idx = 9
 
 var Keyword_nested = core.NewTokenType(
 	Keyword_nested_Idx,
@@ -161,7 +180,7 @@ var Keyword_nested = core.NewTokenType(
 	[]rune{'n'},
 )
 
-const Keyword_one_Idx = 9
+const Keyword_one_Idx = 10
 
 var Keyword_one = core.NewTokenType(
 	Keyword_one_Idx,
@@ -180,7 +199,7 @@ var Keyword_one = core.NewTokenType(
 	[]rune{'o'},
 )
 
-const Keyword_two_Idx = 10
+const Keyword_two_Idx = 11
 
 var Keyword_two = core.NewTokenType(
 	Keyword_two_Idx,
@@ -199,7 +218,7 @@ var Keyword_two = core.NewTokenType(
 	[]rune{'t'},
 )
 
-const Token_ID_Idx = 11
+const Token_ID_Idx = 12
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
@@ -273,7 +292,7 @@ var Token_ID_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_INT_Idx = 12
+const Token_INT_Idx = 13
 
 var Token_INT = core.NewTokenType(
 	Token_INT_Idx,
@@ -347,7 +366,7 @@ var Token_INT_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_WS_Idx = 13
+const Token_WS_Idx = 14
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
@@ -421,7 +440,7 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_Identifier_Idx = 14
+const Token_Identifier_Idx = 15
 
 var Token_Identifier = core.NewTokenGroup(
 	Token_Identifier_Idx,
@@ -434,7 +453,7 @@ var Token_Identifier = core.NewTokenGroup(
 	},
 )
 
-const Token_KeywordGroup_Idx = 15
+const Token_KeywordGroup_Idx = 16
 
 var Token_KeywordGroup = core.NewTokenGroup(
 	Token_KeywordGroup_Idx,
@@ -446,7 +465,7 @@ var Token_KeywordGroup = core.NewTokenGroup(
 	},
 )
 
-const Token_NestedIdentifier_Idx = 16
+const Token_NestedIdentifier_Idx = 17
 
 var Token_NestedIdentifier = core.NewTokenGroup(
 	Token_NestedIdentifier_Idx,
@@ -458,7 +477,7 @@ var Token_NestedIdentifier = core.NewTokenGroup(
 	},
 )
 
-const Token_RegexGroup_Idx = 17
+const Token_RegexGroup_Idx = 18
 
 var Token_RegexGroup = core.NewTokenGroup(
 	Token_RegexGroup_Idx,
@@ -479,6 +498,7 @@ func NewLexer() lexer.Lexer {
 		Keyword_e,
 		Keyword_f,
 		Keyword_g,
+		Keyword_h,
 		Keyword_nested,
 		Keyword_one,
 		Keyword_two,

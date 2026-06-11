@@ -19,22 +19,22 @@ var DOptional = parser.LL1Lookahead{
 
 var EValueOptional = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_hello},
-	Lookup: []int{12: 1},
+	Lookup: []int{14: 1},
 }
 
 var FLoop_0 = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID},
-	Lookup: []int{15: 1},
+	Lookup: []int{17: 1},
 }
 
 var FLoop_1 = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID},
-	Lookup: []int{15: 1},
+	Lookup: []int{17: 1},
 }
 
 var ObjAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f},
-	Lookup: []int{6: 1, 7: 2, 8: 3, 9: 4, 10: 5, 11: 6},
+	Types:  []*core.TokenType{Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h},
+	Lookup: []int{6: 1, 7: 2, 8: 3, 9: 4, 10: 5, 11: 6, 12: 7, 13: 8},
 }
 
 var PathLoop = parser.LL1Lookahead{
@@ -43,6 +43,11 @@ var PathLoop = parser.LL1Lookahead{
 }
 
 var QualifiedNameLoop = parser.LL1Lookahead{
+	Types:  []*core.TokenType{Keyword_Dot},
+	Lookup: []int{2: 1},
+}
+
+var QualifiedNameRecursiveOptional = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_Dot},
 	Lookup: []int{2: 1},
 }
@@ -63,10 +68,13 @@ type LookaheadParserLookahead interface {
 	FAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	FLoop_0(state *parser.ParserState) bool
 	FLoop_1(state *parser.ParserState) bool
+	GAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
+	HAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	ObjAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	PathAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	PathLoop(state *parser.ParserState) bool
 	QualifiedNameLoop(state *parser.ParserState) bool
+	QualifiedNameRecursiveOptional(state *parser.ParserState) bool
 	QualifiedPathAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 }
 
@@ -81,7 +89,7 @@ func NewDefaultLookaheadParserLookahead() LookaheadParserLookahead {
 }
 
 func (l *DefaultLookaheadParserLookahead) CLoopLoop(state *parser.ParserState) bool {
-	prediction, _ := state.AdaptivePredict(12, l.PredictionMode())
+	prediction, _ := state.AdaptivePredict(14, l.PredictionMode())
 	return prediction == 0
 }
 
@@ -91,7 +99,7 @@ func (l *DefaultLookaheadParserLookahead) COptional(state *parser.ParserState) b
 }
 
 func (l *DefaultLookaheadParserLookahead) DOptOptional(state *parser.ParserState) bool {
-	prediction, _ := state.AdaptivePredict(13, l.PredictionMode())
+	prediction, _ := state.AdaptivePredict(15, l.PredictionMode())
 	return prediction == 0
 }
 
@@ -123,12 +131,20 @@ func (l *DefaultLookaheadParserLookahead) FLoop_1(state *parser.ParserState) boo
 	return prediction == 0
 }
 
+func (l *DefaultLookaheadParserLookahead) GAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+	return state.AdaptivePredict(8, l.PredictionMode())
+}
+
+func (l *DefaultLookaheadParserLookahead) HAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+	return state.AdaptivePredict(9, l.PredictionMode())
+}
+
 func (l *DefaultLookaheadParserLookahead) ObjAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
 	return state.Lookahead(ObjAlternatives)
 }
 
 func (l *DefaultLookaheadParserLookahead) PathAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.AdaptivePredict(10, l.PredictionMode())
+	return state.AdaptivePredict(12, l.PredictionMode())
 }
 
 func (l *DefaultLookaheadParserLookahead) PathLoop(state *parser.ParserState) bool {
@@ -141,6 +157,11 @@ func (l *DefaultLookaheadParserLookahead) QualifiedNameLoop(state *parser.Parser
 	return prediction == 0
 }
 
+func (l *DefaultLookaheadParserLookahead) QualifiedNameRecursiveOptional(state *parser.ParserState) bool {
+	prediction, _ := state.Lookahead(QualifiedNameRecursiveOptional)
+	return prediction == 0
+}
+
 func (l *DefaultLookaheadParserLookahead) QualifiedPathAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.AdaptivePredict(11, l.PredictionMode())
+	return state.AdaptivePredict(13, l.PredictionMode())
 }

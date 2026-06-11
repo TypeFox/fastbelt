@@ -73,6 +73,10 @@ func (p *CompletionParser) ParseModel() {
 			p.state.EnterRule(Model__Basic_13)
 			p.ParseG()
 			p.state.ExitRule()
+		case 7:
+			p.state.EnterRule(Model__Basic_15)
+			p.ParseH()
+			p.state.ExitRule()
 		}
 		p.cp.ClearAssignment()
 	}
@@ -180,5 +184,35 @@ func (p *CompletionParser) ParseG() {
 		p.cp.MarkAssignment("Value")
 		p.state.Consume(Token_RegexGroup)
 		p.cp.ClearAssignment()
+	}
+}
+
+func (p *CompletionParser) ParseH() {
+	p.cp.EnterRule("H", H__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_h)
+	}
+	switch prediction, failure := p.lookahead.HAlternatives(p.state); prediction {
+	case 0:
+		{
+			p.state.Consume(Token_Identifier)
+		}
+		{
+			p.cp.MarkAssignment("Value")
+			p.state.Consume(Keyword_a)
+			p.cp.ClearAssignment()
+		}
+	case 1:
+		{
+			p.state.Consume(Token_Identifier)
+		}
+		{
+			p.cp.MarkAssignment("Value")
+			p.state.Consume(Keyword_b)
+			p.cp.ClearAssignment()
+		}
+	default:
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 }

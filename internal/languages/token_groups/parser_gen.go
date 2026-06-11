@@ -86,6 +86,13 @@ func (p *Parser) ParseModel() Model {
 			if result != nil {
 				current.SetItem(result)
 			}
+		case 7:
+			p.state.EnterRule(Model__Basic_15)
+			result := p.ParseH()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetItem(result)
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -232,6 +239,45 @@ func (p *Parser) ParseG() Item {
 		if token != nil {
 			current.SetValue(token)
 		}
+	}
+	current.SetSegmentEndToken(p.state.LA(0))
+	return current
+}
+
+func (p *Parser) ParseH() Item {
+	current := NewItem()
+	current.SetSegmentStartToken(p.state.LA(1))
+	{
+		token := p.state.Consume(Keyword_h)
+		core.AssignToken(current, token, H_h)
+	}
+	switch prediction, failure := p.lookahead.HAlternatives(p.state); prediction {
+	case 0:
+		{
+			token := p.state.Consume(Token_Identifier)
+			core.AssignToken(current, token, H__Basic_0)
+		}
+		{
+			token := p.state.Consume(Keyword_a)
+			core.AssignToken(current, token, H_Value_a)
+			if token != nil {
+				current.SetValue(token)
+			}
+		}
+	case 1:
+		{
+			token := p.state.Consume(Token_Identifier)
+			core.AssignToken(current, token, H__Basic_2)
+		}
+		{
+			token := p.state.Consume(Keyword_b)
+			core.AssignToken(current, token, H_Value_b)
+			if token != nil {
+				current.SetValue(token)
+			}
+		}
+	default:
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
