@@ -33,11 +33,14 @@ jobs:
       run: go build -v ./...
 
     - name: Run benchmarks
-      run: go test -bench 'Benchmark' -run=^$ ./... | tee ${{ env.OUTPUT_FILE }}
+      # Run benchmarks for 5s each to improve stability
+      # -run=^$ ensures that no tests are run, only benchmarks
+      run: go test -bench 'Benchmark' -benchtime=5s -run=^$ ./... | tee ${{ env.OUTPUT_FILE }}
 
     - name: Download previous benchmark data
       uses: actions/cache@v4
       with:
+        # Cached data comes from main branch
         path: ${{ env.CACHE_DIR }}
         key: ${{ runner.os }}-benchmark
 
@@ -54,7 +57,7 @@ jobs:
         comment-on-alert: true
         # Enable Job Summary for PRs
         summary-always: true
-        # Alert if any benchmark regression is more than 2x
-        alert-threshold: "200%"
-        # Only save if we are on the main branch
+        # Alert if any benchmark regression is more than 1.5x
+        alert-threshold: "150%"
+        # Only save if we are on main branch
         save-data-file: ${{ github.ref == 'refs/heads/main' }}
