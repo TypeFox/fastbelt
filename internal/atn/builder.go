@@ -31,6 +31,12 @@ type ATNRuleBuilder interface {
 	GetRuleByName(name string) grammar.AbstractRuleWithBody
 	GetLookaheadNameByElement(el grammar.Element) string
 	Rule() grammar.AbstractRuleWithBody
+
+	// RecordOrDecision records the decision state for an Alternatives element's
+	// alternative choice; RecordLoopDecision records the decision state for an
+	// element's cardinality (enter-vs-exit) choice.
+	RecordOrDecision(el grammar.Element, state *ATNState)
+	RecordLoopDecision(el grammar.Element, state *ATNState)
 }
 
 type ATNBuilder interface {
@@ -55,6 +61,8 @@ func NewATNBuilder(names map[grammar.Element]string, tokenTypeIds map[string]int
 			DecisionStates:   []*ATNState{},
 			RuleToStartState: map[grammar.AbstractRuleWithBody]*ATNState{},
 			RuleToStopState:  map[grammar.AbstractRuleWithBody]*ATNState{},
+			OrDecision:       map[grammar.Element]*ATNState{},
+			LoopDecision:     map[grammar.Element]*ATNState{},
 		},
 		names:        names,
 		tokenTypeIds: tokenTypeIds,
@@ -78,6 +86,14 @@ func (rb *ATNRuleBuilderImpl) GetRuleByName(name string) grammar.AbstractRuleWit
 
 func (rb *ATNRuleBuilderImpl) Rule() grammar.AbstractRuleWithBody {
 	return rb.rule
+}
+
+func (rb *ATNRuleBuilderImpl) RecordOrDecision(el grammar.Element, state *ATNState) {
+	rb.parent.atn.OrDecision[el] = state
+}
+
+func (rb *ATNRuleBuilderImpl) RecordLoopDecision(el grammar.Element, state *ATNState) {
+	rb.parent.atn.LoopDecision[el] = state
 }
 
 func (rb *ATNRuleBuilderImpl) GetLookaheadNameByElement(el grammar.Element) string {
@@ -165,13 +181,23 @@ func (rb *ATNRuleBuilderImpl) Star(lookaheadName string, handle *ATNHandle) *ATN
 }
 
 func (rb *ATNRuleBuilderImpl) Optional(lookaheadName string, handle *ATNHandle) *ATNHandle {
-	start := handle.Left
+	atn := rb.parent.atn
+	body := handle.Left
 	end := handle.Right
 
-	rb.NewEpsilonTransition(start, end)
+	// Insert a dedicated epsilon-only decision state in front of the body, like
+	// Star/Plus, rather than appending a skip edge onto the body's own start
+	// state. This keeps the invariant the adaptive predictor relies on - decision
+	// states have only epsilon transitions to their alternatives - and avoids
+	// polluting an inner alternatives decision (e.g. `(a|b)?`) with a skip edge.
+	// Transition 0 enters the body; transition 1 skips to the end.
+	decision := rb.NewState(parser.ATNBasic)
+	defineDecisionState(atn, decision)
+	rb.NewEpsilonTransition(decision, body) // alt 0: enter the body
+	rb.NewEpsilonTransition(decision, end)  // alt 1: skip
 
-	rb.parent.atn.DecisionMap[lookaheadName] = start
-	return handle
+	atn.DecisionMap[lookaheadName] = decision
+	return &ATNHandle{Left: decision, Right: end}
 }
 
 func (rb *ATNRuleBuilderImpl) MakeAlternatives(lookaheadName string, start *ATNState, alts []*ATNHandle) *ATNHandle {
@@ -189,6 +215,10 @@ func (rb *ATNRuleBuilderImpl) MakeAlternatives(lookaheadName string, start *ATNS
 		}
 	}
 
+	// The alternative-choice point is a decision so the adaptive predictor can
+	// address it. defineDecisionState is idempotent, so a later cardinality
+	// wrapper on the same state does not double-register it.
+	defineDecisionState(atn, start)
 	atn.DecisionMap[lookaheadName] = start
 
 	return &ATNHandle{Left: start, Right: end}
@@ -289,7 +319,15 @@ func newATNState(atn *ATN, rule grammar.AbstractRuleWithBody, typ parser.ATNStat
 	return s
 }
 
+// defineDecisionState assigns state a decision index and adds it to
+// DecisionStates. It is idempotent: a state that is already a decision (e.g. an
+// alternatives block that also carries a cardinality, where MakeAlternatives
+// and the cardinality wrapper both target the same state) keeps its index and
+// is not registered twice.
 func defineDecisionState(atn *ATN, state *ATNState) int {
+	if state.Decision >= 0 {
+		return state.Decision
+	}
 	atn.DecisionStates = append(atn.DecisionStates, state)
 	state.Decision = len(atn.DecisionStates) - 1
 	return state.Decision

@@ -40,12 +40,12 @@ func NewBailErrorRecovery() BailErrorRecovery {
 }
 
 func (DefaultErrorRecovery) RecoverInline(parserState *ParserState, expectedTokenType *core.TokenType) (*core.Token, bool) {
-	la1 := parserState.LARaw(1)
+	la1 := parserState.LA(1)
 	if la1 == nil {
 		parserState.AppendError(parserState.messages.UnexpectedEndOfInput(expectedTokenType), nil)
 		return nil, false
 	}
-	la2 := parserState.LARaw(2)
+	la2 := parserState.LA(2)
 	// Single-token deletion: if the next-next token matches, skip the current one.
 	if la2 != nil && expectedTokenType.Matches(la2.Type) {
 		parserState.ReportError(parserState.messages.ExtraneousInput(la1), la1)
@@ -72,8 +72,8 @@ func (DefaultErrorRecovery) Recover(parserState *ParserState) {
 	followSet := parserState.FollowSet()
 	if !followSet.Empty() {
 		for {
-			la := parserState.LARaw(1)
-			if la == nil {
+			la := parserState.LA(1)
+			if la.Type == core.EOF {
 				// EOF reached, give up and let the parser unwind.
 				return
 			}
@@ -98,12 +98,12 @@ func (DefaultErrorRecovery) Sync(parserState *ParserState, decisionStateIdx int)
 			return
 		}
 	}
-	tok := parserState.LARaw(1)
+	tok := parserState.LA(1)
 	validTokens := parserState.atn.NextTokensAt(decisionStateIdx)
 	// This is the expected case: LA(1) is in the set of valid tokens.
 	// We can immediately return, the parser is valid and ready to continue.
 	// This is the hot path for error-free parsing, so it's important that this check is fast.
-	if tok == nil || validTokens.At(tok.TypeId) {
+	if tok.Type == core.EOF || validTokens.At(tok.TypeId) {
 		return
 	}
 	followTokens := parserState.FollowSet()
@@ -112,7 +112,7 @@ func (DefaultErrorRecovery) Sync(parserState *ParserState, decisionStateIdx int)
 	}
 	// Single-token deletion: if the *next* token is in the valid set, treat
 	// the current token as extraneous and skip it.
-	la2 := parserState.LARaw(2)
+	la2 := parserState.LA(2)
 	if la2 != nil && validTokens.At(la2.TypeId) {
 		parserState.ReportError(parserState.messages.ExtraneousInput(tok), tok)
 		parserState.Index++
@@ -125,8 +125,8 @@ func (DefaultErrorRecovery) Sync(parserState *ParserState, decisionStateIdx int)
 	parserState.ReportError(parserState.messages.ExtraneousInput(tok), tok)
 	for {
 		parserState.Index++
-		la := parserState.LARaw(1)
-		if la == nil || validTokens.At(la.TypeId) || followTokens.At(la.TypeId) {
+		la := parserState.LA(1)
+		if la.Type == core.EOF || validTokens.At(la.TypeId) || followTokens.At(la.TypeId) {
 			return
 		}
 	}

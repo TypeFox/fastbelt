@@ -21,6 +21,9 @@ func SetupGeneratedServices(sc *service.Container) {
 	if !service.Has[FastbeltReferencesConstructor](sc) {
 		service.Put(sc, NewDefaultFastbeltReferencesConstructor(sc))
 	}
+	if !service.Has[FastbeltParserLookahead](sc) {
+		service.Put(sc, NewDefaultFastbeltParserLookahead())
+	}
 	if !service.Has[lexer.Lexer](sc) {
 		service.Put(sc, NewLexer())
 	}

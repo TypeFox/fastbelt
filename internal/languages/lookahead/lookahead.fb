@@ -1,0 +1,58 @@
+grammar Lookahead;
+
+interface Obj {
+    Value string
+    Node composite
+}
+
+interface Root {
+    Item Obj
+}
+
+Root: Item=Obj;
+
+Obj: A | B | C | D | E | F | G | H;
+
+// Assert that the Path composite alternative is evaluated correctly
+A returns Obj: "a" Node=QualifiedPath;
+
+interface B extends Obj {
+    Post string
+}
+
+// Assert that the QualifiedName lookahead respects the outer context
+// Should correctly parse the Post value even though the QualifiedName could be greedy
+B: "b" Node=QualifiedPath "." Post=ID;
+
+composite QualifiedName: ID ("." ID)*;
+composite Path: ID ("/" ID)* ":" ID | ID;
+composite QualifiedPath: QualifiedName "::" Path | Path;
+
+// Assert that the CLoop rule (theoretically LL(1)) correctly dips into outer context for prediction
+C returns Obj: "c" Node=CLoop ("::" Value="**")?;
+
+composite CLoop: ID ("::" ID)*; 
+
+// Assert that the DOpt rule (theoretically LL(1)) correctly dips into outer context for prediction
+D returns Obj: "d" Node=DOpt ("::" Value="**")?;
+
+composite DOpt: ID ("::" ID)?;
+
+E returns Obj: "e" Value="hello"? "world"?;
+
+F returns Obj: "f" (ID* Value="hello" | ID* Value="world");
+
+G returns Obj: "g" (
+    Node=QualifiedName Value="hello" 
+    | Node=QualifiedName Value="world"
+);
+
+H returns Obj: "h" (
+    Node=QualifiedNameRecursive Value="hello" 
+    | Node=QualifiedNameRecursive Value="world"
+);
+
+composite QualifiedNameRecursive: ID ("." QualifiedNameRecursive)?;
+
+hidden token WS: /[ \t\r\n]+/;
+token ID: /\w[\w0-9]*/;
