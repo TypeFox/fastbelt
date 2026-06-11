@@ -7,6 +7,10 @@ import (
 	"typefox.dev/fastbelt/parser"
 )
 
+const (
+	DecisionHAlternatives = 3
+)
+
 var BValueAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_Identifier, Keyword_b},
 	Lookup: []int{1: 1, 2: 2, 12: 1, 13: 1},
@@ -55,7 +59,7 @@ func (l *Defaulttoken_groupsParserLookahead) DValueOptional(state *parser.Parser
 }
 
 func (l *Defaulttoken_groupsParserLookahead) HAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.AdaptivePredict(3, l.PredictionMode())
+	return state.AdaptivePredict(DecisionHAlternatives, l.PredictionMode())
 }
 
 func (l *Defaulttoken_groupsParserLookahead) ModelItemAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {

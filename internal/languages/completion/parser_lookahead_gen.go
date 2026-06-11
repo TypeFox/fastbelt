@@ -7,6 +7,12 @@ import (
 	"typefox.dev/fastbelt/parser"
 )
 
+const (
+	DecisionCAlternatives = 5
+	DecisionDAlternatives = 6
+	DecisionKAlternatives = 11
+)
+
 var BAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_first, Keyword_second},
 	Lookup: []int{12: 1, 23: 2},
@@ -94,11 +100,11 @@ func (l *DefaultCompletionParserLookahead) BAlternatives(state *parser.ParserSta
 }
 
 func (l *DefaultCompletionParserLookahead) CAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.AdaptivePredict(5, l.PredictionMode())
+	return state.AdaptivePredict(DecisionCAlternatives, l.PredictionMode())
 }
 
 func (l *DefaultCompletionParserLookahead) DAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.AdaptivePredict(6, l.PredictionMode())
+	return state.AdaptivePredict(DecisionDAlternatives, l.PredictionMode())
 }
 
 func (l *DefaultCompletionParserLookahead) DeclareChildrenLoop(state *parser.ParserState) bool {
@@ -126,7 +132,7 @@ func (l *DefaultCompletionParserLookahead) JAlternatives(state *parser.ParserSta
 }
 
 func (l *DefaultCompletionParserLookahead) KAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.AdaptivePredict(11, l.PredictionMode())
+	return state.AdaptivePredict(DecisionKAlternatives, l.PredictionMode())
 }
 
 func (l *DefaultCompletionParserLookahead) LOptional(state *parser.ParserState) bool {
