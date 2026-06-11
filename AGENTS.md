@@ -6,6 +6,15 @@ For project documentation, read the package documentation written in Go doc form
 
 - `doc.go`: General overview of the Fastbelt framework
 - `grammar/doc.go`: Reference documentation for the grammar language
+- `lexer/doc.go`: Shared lexer runtime used by Fastbelt-generated languages
+- `textdoc/doc.go`: Text documents, overlays, and LSP position mapping
+
+Utility packages:
+
+- `util/codegen/doc.go`: Building indented multi-line source for code generators
+- `util/collections/doc.go`: Generic collection data structures (e.g. MultiMap)
+- `util/extiter/doc.go`: Utilities for `iter.Seq` sequences
+- `util/service/doc.go`: Typed dependency injection container
 
 ## VS Code extensions
 

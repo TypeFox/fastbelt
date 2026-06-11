@@ -11,7 +11,10 @@ import (
 	"reflect"
 )
 
-// Container holds a collection of services to be used in the framework.
+// A Container holds a collection of services keyed by Go type.
+// Register services with [Put] and [Override] during setup, call [Container.Seal]
+// when wiring is complete, then retrieve services with [Get] or [MustGet].
+// The zero value is not usable; create containers with [NewContainer].
 type Container struct {
 	services map[reflect.Type]any
 	sealed   bool
