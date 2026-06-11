@@ -11,15 +11,15 @@ import (
 type Parser struct {
 	state                 *parser.ParserState
 	sc                    *service.Container
-	referencesConstructor token_groupsReferencesConstructor
-	lookahead             token_groupsParserLookahead
+	referencesConstructor TokenGroupsReferencesConstructor
+	lookahead             TokenGroupsParserLookahead
 }
 
 func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
-	referencesConstructor := service.MustGet[token_groupsReferencesConstructor](p.sc)
-	lookahead := service.MustGet[token_groupsParserLookahead](p.sc)
+	referencesConstructor := service.MustGet[TokenGroupsReferencesConstructor](p.sc)
+	lookahead := service.MustGet[TokenGroupsParserLookahead](p.sc)
 	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
 	result := cp.ParseModel()
 	core.AssignContainers(document, result)

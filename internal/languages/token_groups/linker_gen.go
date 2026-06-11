@@ -10,72 +10,72 @@ import (
 	"typefox.dev/fastbelt/util/service"
 )
 
-type token_groupsScopeProvider interface {
+type TokenGroupsScopeProvider interface {
 }
 
-type Defaulttoken_groupsScopeProvider struct {
+type DefaultTokenGroupsScopeProvider struct {
 	sc *service.Container
 }
 
-func NewDefaulttoken_groupsScopeProvider(sc *service.Container) token_groupsScopeProvider {
-	return &Defaulttoken_groupsScopeProvider{sc: sc}
+func NewDefaultTokenGroupsScopeProvider(sc *service.Container) TokenGroupsScopeProvider {
+	return &DefaultTokenGroupsScopeProvider{sc: sc}
 }
 
-type token_groupsReferenceLinker interface {
+type TokenGroupsReferenceLinker interface {
 }
 
-type Defaulttoken_groupsReferenceLinker struct {
+type DefaultTokenGroupsReferenceLinker struct {
 	sc            *service.Container
-	scopeProvider func() token_groupsScopeProvider
+	scopeProvider func() TokenGroupsScopeProvider
 }
 
-func NewDefaulttoken_groupsReferenceLinker(sc *service.Container) token_groupsReferenceLinker {
-	return &Defaulttoken_groupsReferenceLinker{
+func NewDefaultTokenGroupsReferenceLinker(sc *service.Container) TokenGroupsReferenceLinker {
+	return &DefaultTokenGroupsReferenceLinker{
 		sc: sc,
-		scopeProvider: sync.OnceValue(func() token_groupsScopeProvider {
-			return service.MustGet[token_groupsScopeProvider](sc)
+		scopeProvider: sync.OnceValue(func() TokenGroupsScopeProvider {
+			return service.MustGet[TokenGroupsScopeProvider](sc)
 		}),
 	}
 }
 
-type token_groupsReferencesConstructor interface {
+type TokenGroupsReferencesConstructor interface {
 }
 
-type Defaulttoken_groupsReferencesConstructor struct {
+type DefaultTokenGroupsReferencesConstructor struct {
 	sc              *service.Container
-	referenceLinker func() token_groupsReferenceLinker
+	referenceLinker func() TokenGroupsReferenceLinker
 }
 
-func NewDefaulttoken_groupsReferencesConstructor(sc *service.Container) token_groupsReferencesConstructor {
-	return &Defaulttoken_groupsReferencesConstructor{
+func NewDefaultTokenGroupsReferencesConstructor(sc *service.Container) TokenGroupsReferencesConstructor {
+	return &DefaultTokenGroupsReferencesConstructor{
 		sc: sc,
-		referenceLinker: sync.OnceValue(func() token_groupsReferenceLinker {
-			return service.MustGet[token_groupsReferenceLinker](sc)
+		referenceLinker: sync.OnceValue(func() TokenGroupsReferenceLinker {
+			return service.MustGet[TokenGroupsReferenceLinker](sc)
 		}),
 	}
 }
 
-type token_groupsSymbolContainers struct{}
+type TokenGroupsSymbolContainers struct{}
 
-func (c *token_groupsSymbolContainers) New() core.SymbolContainer {
-	return &token_groupsSymbolContainer{}
+func (c *TokenGroupsSymbolContainers) New() core.SymbolContainer {
+	return &TokenGroupsSymbolContainer{}
 }
 
-func NewSymbolContainers() *token_groupsSymbolContainers {
-	return &token_groupsSymbolContainers{}
+func NewSymbolContainers() *TokenGroupsSymbolContainers {
+	return &TokenGroupsSymbolContainers{}
 }
 
-type token_groupsSymbolContainer struct {
+type TokenGroupsSymbolContainer struct {
 }
 
-func (sc *token_groupsSymbolContainer) Put(desc *core.SymbolDescription) bool {
+func (sc *TokenGroupsSymbolContainer) Put(desc *core.SymbolDescription) bool {
 	return false
 }
 
-func (sc *token_groupsSymbolContainer) All() core.SymbolSeq {
+func (sc *TokenGroupsSymbolContainer) All() core.SymbolSeq {
 	return core.EmptySymbolDescriptions
 }
 
-func (sc *token_groupsSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
+func (sc *TokenGroupsSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 	return core.EmptySymbolDescriptions
 }

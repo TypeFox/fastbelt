@@ -12,17 +12,17 @@ import (
 // SetupGeneratedServices sets up the generated services for this grammar.
 // If any service is already set, it's not overwritten.
 func SetupGeneratedServices(sc *service.Container) {
-	if !service.Has[token_groupsScopeProvider](sc) {
-		service.Put(sc, NewDefaulttoken_groupsScopeProvider(sc))
+	if !service.Has[TokenGroupsScopeProvider](sc) {
+		service.Put(sc, NewDefaultTokenGroupsScopeProvider(sc))
 	}
-	if !service.Has[token_groupsReferenceLinker](sc) {
-		service.Put(sc, NewDefaulttoken_groupsReferenceLinker(sc))
+	if !service.Has[TokenGroupsReferenceLinker](sc) {
+		service.Put(sc, NewDefaultTokenGroupsReferenceLinker(sc))
 	}
-	if !service.Has[token_groupsReferencesConstructor](sc) {
-		service.Put(sc, NewDefaulttoken_groupsReferencesConstructor(sc))
+	if !service.Has[TokenGroupsReferencesConstructor](sc) {
+		service.Put(sc, NewDefaultTokenGroupsReferencesConstructor(sc))
 	}
-	if !service.Has[token_groupsParserLookahead](sc) {
-		service.Put(sc, NewDefaulttoken_groupsParserLookahead())
+	if !service.Has[TokenGroupsParserLookahead](sc) {
+		service.Put(sc, NewDefaultTokenGroupsParserLookahead())
 	}
 	if !service.Has[lexer.Lexer](sc) {
 		service.Put(sc, NewLexer())
@@ -44,10 +44,10 @@ func SetupGeneratedServices(sc *service.Container) {
 // SetupGeneratedServerServices sets up the generated language server services for this grammar.
 // If any service is already set, it's not overwritten.
 func SetupGeneratedServerServices(sc *service.Container) {
-	if !service.Has[token_groupsCompletionFilter](sc) {
-		service.Put(sc, NewDefaulttoken_groupsCompletionFilter())
+	if !service.Has[TokenGroupsCompletionFilter](sc) {
+		service.Put(sc, NewDefaultTokenGroupsCompletionFilter())
 	}
 	if !service.Has[parser.LanguageCompletionAdapter](sc) {
-		service.Put[parser.LanguageCompletionAdapter](sc, Newtoken_groupsCompletionAdapter(sc))
+		service.Put[parser.LanguageCompletionAdapter](sc, NewTokenGroupsCompletionAdapter(sc))
 	}
 }

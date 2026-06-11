@@ -1,4 +1,4 @@
-grammar token_groups;
+grammar TokenGroups;
 
 interface Model {
     Item Item
