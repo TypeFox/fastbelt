@@ -110,8 +110,8 @@ type ParserGeneratorContext struct {
 }
 
 type LookaheadValue struct {
-	name string
-	llk  LL1Decision
+	name   string
+	lookup LL1Decision
 }
 
 // canCombineAltsWithLoop reports whether an Alternatives node can have its loop
@@ -169,19 +169,22 @@ func GenerateParserLookahead(grammr grammar.Grammar, packageName string, tokenTy
 	// return a bool. table is the static LL(1) table to emit as a package var,
 	// or nil when the decision uses adaptive prediction or a direct keyword check.
 	type lookaheadMethod struct {
-		name  string
-		body  []string
-		isOr  bool
-		table *LL1Decision
+		name        string
+		body        []string
+		isOr        bool
+		table       *LL1Decision
+		adaptiveIdx *int
 	}
 	methods := make([]lookaheadMethod, 0, len(context.orLookaheads)+len(context.lookaheads))
 
 	for alts, lv := range context.orLookaheads {
 		m := lookaheadMethod{name: lv.name, isOr: true}
 		if idx, ok := atnData.orAdaptive[alts]; ok {
-			m.body = []string{"return state.AdaptivePredict(" + strconv.Itoa(idx) + ", l.PredictionMode())"}
+			idx := idx
+			m.adaptiveIdx = &idx
+			m.body = []string{"return state.AdaptivePredict(" + decisionConstName(m.name) + ", l.PredictionMode())"}
 		} else {
-			table := lv.llk
+			table := lv.lookup
 			m.table = &table
 			m.body = []string{"return state.Lookahead(" + lv.name + ")"}
 		}
@@ -197,8 +200,10 @@ func GenerateParserLookahead(grammr grammar.Grammar, packageName string, tokenTy
 		}
 		m := lookaheadMethod{name: lv.name, isOr: false}
 		if idx, ok := atnData.loopAdaptive[adaptiveKey]; ok {
+			idx := idx
+			m.adaptiveIdx = &idx
 			m.body = []string{
-				"prediction, _ := state.AdaptivePredict(" + strconv.Itoa(idx) + ", l.PredictionMode())",
+				"prediction, _ := state.AdaptivePredict(" + decisionConstName(m.name) + ", l.PredictionMode())",
 				"return prediction == 0",
 			}
 		} else if keyword, ok := el.(grammar.Keyword); ok {
@@ -206,7 +211,7 @@ func GenerateParserLookahead(grammr grammar.Grammar, packageName string, tokenTy
 			// uniquely identifies them, so we skip the lookup table entirely.
 			m.body = []string{"return state.LA(1).Type == " + GeneratedTokenName(keyword)}
 		} else {
-			table := lv.llk
+			table := lv.lookup
 			m.table = &table
 			m.body = []string{
 				"prediction, _ := state.Lookahead(" + lv.name + ")",
@@ -258,6 +263,27 @@ func GenerateParserLookahead(grammr grammar.Grammar, packageName string, tokenTy
 	node.AppendLine(")")
 	node.AppendLine()
 
+	// Generate named constants for every ALL(*) decision index
+	hasAdaptive := false
+	for _, m := range methods {
+		if m.adaptiveIdx != nil {
+			hasAdaptive = true
+			break
+		}
+	}
+	if hasAdaptive {
+		node.AppendLine("const (")
+		node.Indent(func(n codegen.Node) {
+			for _, m := range methods {
+				if m.adaptiveIdx != nil {
+					n.AppendLine(decisionConstName(m.name), " = ", strconv.Itoa(*m.adaptiveIdx))
+				}
+			}
+		})
+		node.AppendLine(")")
+		node.AppendLine()
+	}
+
 	// Static LL(1) lookup tables, one per decision that uses the static path.
 	for _, m := range methods {
 		if m.table != nil {
@@ -307,6 +333,10 @@ func GenerateParserLookahead(grammr grammar.Grammar, packageName string, tokenTy
 	}
 
 	return FormatIfPossible(node.String())
+}
+
+func decisionConstName(methodName string) string {
+	return "Decision" + methodName
 }
 
 func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult, atnData *parserATNData) string {
@@ -708,10 +738,10 @@ func buildSyncCall(context *ParserGeneratorContext, el core.AstNode) string {
 // lookaheadDecl is one prediction decision discovered while walking the grammar,
 // before its final (collision-free) name is assigned.
 type lookaheadDecl struct {
-	node core.AstNode
-	isOr bool
-	base string
-	llk  LL1Decision
+	node   core.AstNode
+	isOr   bool
+	base   string
+	lookup LL1Decision
 }
 
 func populateContext(context *ParserGeneratorContext) {
@@ -739,9 +769,9 @@ func populateContext(context *ParserGeneratorContext) {
 			seen[d.base]++
 		}
 		if d.isOr {
-			context.orLookaheads[d.node] = LookaheadValue{name: name, llk: d.llk}
+			context.orLookaheads[d.node] = LookaheadValue{name: name, lookup: d.lookup}
 		} else {
-			context.lookaheads[d.node] = LookaheadValue{name: name, llk: d.llk}
+			context.lookaheads[d.node] = LookaheadValue{name: name, lookup: d.lookup}
 		}
 	}
 }
@@ -758,27 +788,27 @@ func collectLookaheadDecls(context *ParserGeneratorContext, decls []lookaheadDec
 	switch n := node.(type) {
 	case grammar.Alternatives:
 		if len(n.Alts()) > 1 {
-			decls = append(decls, lookaheadDecl{node: n, isOr: true, base: prefix + "Alternatives", llk: ll1DecisionOr(context.atnData, n)})
+			decls = append(decls, lookaheadDecl{node: n, isOr: true, base: prefix + "Alternatives", lookup: ll1DecisionOr(context.atnData, n)})
 		}
 		// When the OR lookahead can drive both entry/continuation and alternative
 		// selection, skip the separate guard variable entirely — the OR switch's
 		// default case serves as the exit.
 		if n.Cardinality() != CardinalityOne && !context.canCombineAlternatives(n) {
-			decls = append(decls, lookaheadDecl{node: n, base: prefix + cardinalityWord(n.Cardinality()), llk: ll1DecisionOpt(context.atnData, n)})
+			decls = append(decls, lookaheadDecl{node: n, base: prefix + cardinalityWord(n.Cardinality()), lookup: ll1DecisionOpt(context.atnData, n)})
 		}
 		for _, alt := range n.Alts() {
 			decls = collectLookaheadDecls(context, decls, prefix, alt)
 		}
 	case grammar.Group:
 		if n.Cardinality() != CardinalityOne {
-			decls = append(decls, lookaheadDecl{node: n, base: prefix + cardinalityWord(n.Cardinality()), llk: ll1DecisionOpt(context.atnData, n)})
+			decls = append(decls, lookaheadDecl{node: n, base: prefix + cardinalityWord(n.Cardinality()), lookup: ll1DecisionOpt(context.atnData, n)})
 		}
 		for _, element := range n.Elements() {
 			decls = collectLookaheadDecls(context, decls, prefix, element)
 		}
 	case grammar.Keyword:
 		if n.Cardinality() != CardinalityOne {
-			decls = append(decls, lookaheadDecl{node: n, base: prefix + grammar.KeywordName(n) + cardinalityWord(n.Cardinality()), llk: ll1DecisionOpt(context.atnData, n)})
+			decls = append(decls, lookaheadDecl{node: n, base: prefix + grammar.KeywordName(n) + cardinalityWord(n.Cardinality()), lookup: ll1DecisionOpt(context.atnData, n)})
 		}
 	case grammar.Assignment:
 		if n.Cardinality() != CardinalityOne {
@@ -786,7 +816,7 @@ func collectLookaheadDecls(context *ParserGeneratorContext, decls []lookaheadDec
 			// the OR lookahead alone will drive both entry and selection.
 			alts, valueIsAlts := n.Value().(grammar.Alternatives)
 			if !valueIsAlts || !context.canCombineAltsWithLoop(alts) {
-				decls = append(decls, lookaheadDecl{node: n, base: prefix + n.Property().Text() + cardinalityWord(n.Cardinality()), llk: ll1DecisionOpt(context.atnData, n)})
+				decls = append(decls, lookaheadDecl{node: n, base: prefix + n.Property().Text() + cardinalityWord(n.Cardinality()), lookup: ll1DecisionOpt(context.atnData, n)})
 			}
 		}
 		decls = collectLookaheadDecls(context, decls, prefix+n.Property().Text(), n.Value())
@@ -794,7 +824,7 @@ func collectLookaheadDecls(context *ParserGeneratorContext, decls []lookaheadDec
 		decls = collectLookaheadDecls(context, decls, prefix, n.Rule())
 	case grammar.RuleCall:
 		if n.Cardinality() != CardinalityOne {
-			decls = append(decls, lookaheadDecl{node: n, base: prefix + cardinalityWord(n.Cardinality()), llk: ll1DecisionOpt(context.atnData, n)})
+			decls = append(decls, lookaheadDecl{node: n, base: prefix + cardinalityWord(n.Cardinality()), lookup: ll1DecisionOpt(context.atnData, n)})
 		}
 	}
 	return decls

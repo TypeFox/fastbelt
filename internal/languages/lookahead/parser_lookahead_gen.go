@@ -7,6 +7,16 @@ import (
 	"typefox.dev/fastbelt/parser"
 )
 
+const (
+	DecisionCLoopLoop                 = 14
+	DecisionDOptOptional              = 15
+	DecisionFAlternatives             = 7
+	DecisionGAlternatives             = 8
+	DecisionHAlternatives             = 9
+	DecisionPathAlternatives          = 12
+	DecisionQualifiedPathAlternatives = 13
+)
+
 var COptional = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_ColonColon},
 	Lookup: []int{5: 1},
@@ -89,7 +99,7 @@ func NewDefaultLookaheadParserLookahead() LookaheadParserLookahead {
 }
 
 func (l *DefaultLookaheadParserLookahead) CLoopLoop(state *parser.ParserState) bool {
-	prediction, _ := state.AdaptivePredict(14, l.PredictionMode())
+	prediction, _ := state.AdaptivePredict(DecisionCLoopLoop, l.PredictionMode())
 	return prediction == 0
 }
 
@@ -99,7 +109,7 @@ func (l *DefaultLookaheadParserLookahead) COptional(state *parser.ParserState) b
 }
 
 func (l *DefaultLookaheadParserLookahead) DOptOptional(state *parser.ParserState) bool {
-	prediction, _ := state.AdaptivePredict(15, l.PredictionMode())
+	prediction, _ := state.AdaptivePredict(DecisionDOptOptional, l.PredictionMode())
 	return prediction == 0
 }
 
@@ -118,7 +128,7 @@ func (l *DefaultLookaheadParserLookahead) EworldOptional(state *parser.ParserSta
 }
 
 func (l *DefaultLookaheadParserLookahead) FAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.AdaptivePredict(7, l.PredictionMode())
+	return state.AdaptivePredict(DecisionFAlternatives, l.PredictionMode())
 }
 
 func (l *DefaultLookaheadParserLookahead) FLoop_0(state *parser.ParserState) bool {
@@ -132,11 +142,11 @@ func (l *DefaultLookaheadParserLookahead) FLoop_1(state *parser.ParserState) boo
 }
 
 func (l *DefaultLookaheadParserLookahead) GAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.AdaptivePredict(8, l.PredictionMode())
+	return state.AdaptivePredict(DecisionGAlternatives, l.PredictionMode())
 }
 
 func (l *DefaultLookaheadParserLookahead) HAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.AdaptivePredict(9, l.PredictionMode())
+	return state.AdaptivePredict(DecisionHAlternatives, l.PredictionMode())
 }
 
 func (l *DefaultLookaheadParserLookahead) ObjAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
@@ -144,7 +154,7 @@ func (l *DefaultLookaheadParserLookahead) ObjAlternatives(state *parser.ParserSt
 }
 
 func (l *DefaultLookaheadParserLookahead) PathAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.AdaptivePredict(12, l.PredictionMode())
+	return state.AdaptivePredict(DecisionPathAlternatives, l.PredictionMode())
 }
 
 func (l *DefaultLookaheadParserLookahead) PathLoop(state *parser.ParserState) bool {
@@ -163,5 +173,5 @@ func (l *DefaultLookaheadParserLookahead) QualifiedNameRecursiveOptional(state *
 }
 
 func (l *DefaultLookaheadParserLookahead) QualifiedPathAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.AdaptivePredict(13, l.PredictionMode())
+	return state.AdaptivePredict(DecisionQualifiedPathAlternatives, l.PredictionMode())
 }

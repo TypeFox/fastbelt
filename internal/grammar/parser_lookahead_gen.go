@@ -7,6 +7,11 @@ import (
 	"typefox.dev/fastbelt/parser"
 )
 
+const (
+	DecisionElementAlternatives = 16
+	DecisionGrammarAlternatives = 0
+)
+
 var ActionOperatorAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_PlusEquals, Keyword_Equals},
 	Lookup: []int{5: 1, 10: 2},
@@ -271,7 +276,7 @@ func (l *DefaultFastbeltParserLookahead) CrossRefOptional(state *parser.ParserSt
 }
 
 func (l *DefaultFastbeltParserLookahead) ElementAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.AdaptivePredict(16, l.PredictionMode())
+	return state.AdaptivePredict(DecisionElementAlternatives, l.PredictionMode())
 }
 
 func (l *DefaultFastbeltParserLookahead) ElementCardinalityAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
@@ -283,7 +288,7 @@ func (l *DefaultFastbeltParserLookahead) FieldTypeAlternatives(state *parser.Par
 }
 
 func (l *DefaultFastbeltParserLookahead) GrammarAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.AdaptivePredict(0, l.PredictionMode())
+	return state.AdaptivePredict(DecisionGrammarAlternatives, l.PredictionMode())
 }
 
 func (l *DefaultFastbeltParserLookahead) GrammarLoop(state *parser.ParserState) bool {
