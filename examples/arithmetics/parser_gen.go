@@ -32,101 +32,101 @@ func NewParser(sc *service.Container) *Parser {
 
 var AdditionLookahead3 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Plus_Idx},
-		parser.LookaheadPath{Keyword_Dash_Idx},
+		parser.LookaheadPath{Keyword_Plus},
+		parser.LookaheadPath{Keyword_Dash},
 	},
 }
 
 var AdditionOperatorLookaheadOr1 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Plus_Idx},
+		parser.LookaheadPath{Keyword_Plus},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Dash_Idx},
+		parser.LookaheadPath{Keyword_Dash},
 	},
 }
 
 var DefinitionLookahead1 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftParen_Idx},
+		parser.LookaheadPath{Keyword_LeftParen},
 	},
 }
 
 var DefinitionLookahead2 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Comma_Idx},
+		parser.LookaheadPath{Keyword_Comma},
 	},
 }
 
 var ExponentiationLookahead5 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Caret_Idx},
+		parser.LookaheadPath{Keyword_Caret},
 	},
 }
 
 var ModuleLookahead0 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_def_Idx},
-		parser.LookaheadPath{Keyword_LeftParen_Idx},
-		parser.LookaheadPath{Token_NUMBER_Idx},
-		parser.LookaheadPath{Token_ID_Idx},
+		parser.LookaheadPath{Keyword_def},
+		parser.LookaheadPath{Keyword_LeftParen},
+		parser.LookaheadPath{Token_NUMBER},
+		parser.LookaheadPath{Token_ID},
 	},
 }
 
 var ModuloLookahead6 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Percent_Idx},
+		parser.LookaheadPath{Keyword_Percent},
 	},
 }
 
 var MultiplicationLookahead4 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Asterisk_Idx},
-		parser.LookaheadPath{Keyword_Slash_Idx},
+		parser.LookaheadPath{Keyword_Asterisk},
+		parser.LookaheadPath{Keyword_Slash},
 	},
 }
 
 var MultiplicationOperatorLookaheadOr2 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Asterisk_Idx},
+		parser.LookaheadPath{Keyword_Asterisk},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Slash_Idx},
+		parser.LookaheadPath{Keyword_Slash},
 	},
 }
 
 var PrimaryExpressionLookahead7 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftParen_Idx},
+		parser.LookaheadPath{Keyword_LeftParen},
 	},
 }
 
 var PrimaryExpressionLookahead8 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Comma_Idx},
+		parser.LookaheadPath{Keyword_Comma},
 	},
 }
 
 var PrimaryExpressionLookaheadOr3 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftParen_Idx},
+		parser.LookaheadPath{Keyword_LeftParen},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_NUMBER_Idx},
+		parser.LookaheadPath{Token_NUMBER},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID_Idx},
+		parser.LookaheadPath{Token_ID},
 	},
 }
 
 var StatementLookaheadOr0 = parser.LLkLookahead{
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_def_Idx},
+		parser.LookaheadPath{Keyword_def},
 	},
 	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftParen_Idx},
-		parser.LookaheadPath{Token_NUMBER_Idx},
-		parser.LookaheadPath{Token_ID_Idx},
+		parser.LookaheadPath{Keyword_LeftParen},
+		parser.LookaheadPath{Token_NUMBER},
+		parser.LookaheadPath{Token_ID},
 	},
 }
 

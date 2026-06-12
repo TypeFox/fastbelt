@@ -9,7 +9,7 @@ import (
 	"unicode/utf8"
 )
 
-const Keyword_Percent_Idx = 0
+const Keyword_Percent_Idx = 1
 
 var Keyword_Percent = core.NewTokenType(
 	Keyword_Percent_Idx,
@@ -28,7 +28,7 @@ var Keyword_Percent = core.NewTokenType(
 	[]rune{'%'},
 )
 
-const Keyword_LeftParen_Idx = 1
+const Keyword_LeftParen_Idx = 2
 
 var Keyword_LeftParen = core.NewTokenType(
 	Keyword_LeftParen_Idx,
@@ -47,7 +47,7 @@ var Keyword_LeftParen = core.NewTokenType(
 	[]rune{'('},
 )
 
-const Keyword_RightParen_Idx = 2
+const Keyword_RightParen_Idx = 3
 
 var Keyword_RightParen = core.NewTokenType(
 	Keyword_RightParen_Idx,
@@ -66,7 +66,7 @@ var Keyword_RightParen = core.NewTokenType(
 	[]rune{')'},
 )
 
-const Keyword_Asterisk_Idx = 3
+const Keyword_Asterisk_Idx = 4
 
 var Keyword_Asterisk = core.NewTokenType(
 	Keyword_Asterisk_Idx,
@@ -85,7 +85,7 @@ var Keyword_Asterisk = core.NewTokenType(
 	[]rune{'*'},
 )
 
-const Keyword_Plus_Idx = 4
+const Keyword_Plus_Idx = 5
 
 var Keyword_Plus = core.NewTokenType(
 	Keyword_Plus_Idx,
@@ -104,7 +104,7 @@ var Keyword_Plus = core.NewTokenType(
 	[]rune{'+'},
 )
 
-const Keyword_Comma_Idx = 5
+const Keyword_Comma_Idx = 6
 
 var Keyword_Comma = core.NewTokenType(
 	Keyword_Comma_Idx,
@@ -123,7 +123,7 @@ var Keyword_Comma = core.NewTokenType(
 	[]rune{','},
 )
 
-const Keyword_Dash_Idx = 6
+const Keyword_Dash_Idx = 7
 
 var Keyword_Dash = core.NewTokenType(
 	Keyword_Dash_Idx,
@@ -142,7 +142,7 @@ var Keyword_Dash = core.NewTokenType(
 	[]rune{'-'},
 )
 
-const Keyword_Slash_Idx = 7
+const Keyword_Slash_Idx = 8
 
 var Keyword_Slash = core.NewTokenType(
 	Keyword_Slash_Idx,
@@ -161,7 +161,7 @@ var Keyword_Slash = core.NewTokenType(
 	[]rune{'/'},
 )
 
-const Keyword_Colon_Idx = 8
+const Keyword_Colon_Idx = 9
 
 var Keyword_Colon = core.NewTokenType(
 	Keyword_Colon_Idx,
@@ -180,7 +180,7 @@ var Keyword_Colon = core.NewTokenType(
 	[]rune{':'},
 )
 
-const Keyword_Semicolon_Idx = 9
+const Keyword_Semicolon_Idx = 10
 
 var Keyword_Semicolon = core.NewTokenType(
 	Keyword_Semicolon_Idx,
@@ -199,7 +199,7 @@ var Keyword_Semicolon = core.NewTokenType(
 	[]rune{';'},
 )
 
-const Keyword_Caret_Idx = 10
+const Keyword_Caret_Idx = 11
 
 var Keyword_Caret = core.NewTokenType(
 	Keyword_Caret_Idx,
@@ -218,7 +218,7 @@ var Keyword_Caret = core.NewTokenType(
 	[]rune{'^'},
 )
 
-const Keyword_def_Idx = 11
+const Keyword_def_Idx = 12
 
 var Keyword_def = core.NewTokenType(
 	Keyword_def_Idx,
@@ -237,7 +237,7 @@ var Keyword_def = core.NewTokenType(
 	[]rune{'d'},
 )
 
-const Keyword_module_Idx = 12
+const Keyword_module_Idx = 13
 
 var Keyword_module = core.NewTokenType(
 	Keyword_module_Idx,
@@ -256,7 +256,7 @@ var Keyword_module = core.NewTokenType(
 	[]rune{'m'},
 )
 
-const Token_ID_Idx = 13
+const Token_ID_Idx = 14
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
@@ -330,7 +330,7 @@ var Token_ID_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_NUMBER_Idx = 14
+const Token_NUMBER_Idx = 15
 
 var Token_NUMBER = core.NewTokenType(
 	Token_NUMBER_Idx,
@@ -422,7 +422,7 @@ var Token_NUMBER_Accepting = [3]bool{
 	2: true,
 }
 
-const Token_WS_Idx = 15
+const Token_WS_Idx = 16
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
@@ -496,7 +496,7 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_ML_COMMENT_Idx = 16
+const Token_ML_COMMENT_Idx = 17
 
 var Token_ML_COMMENT = core.NewTokenType(
 	Token_ML_COMMENT_Idx,
@@ -621,7 +621,7 @@ var Token_ML_COMMENT_Accepting = [5]bool{
 	4: true,
 }
 
-const Token_SL_COMMENT_Idx = 17
+const Token_SL_COMMENT_Idx = 18
 
 var Token_SL_COMMENT = core.NewTokenType(
 	Token_SL_COMMENT_Idx,
