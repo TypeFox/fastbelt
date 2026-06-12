@@ -71,63 +71,78 @@ func (d *Doc) AssertNoLinkingErrors() *Doc {
 }
 
 type DiagnosticExpectation struct {
-	t          testing.TB
-	Diagnostic *core.Diagnostic
+	t           testing.TB
+	Diagnostics []*core.Diagnostic
+}
+
+func (d *DiagnosticExpectation) filter(criterion string, keep func(*core.Diagnostic) bool) *DiagnosticExpectation {
+	d.t.Helper()
+	var remaining []*core.Diagnostic
+	for _, diag := range d.Diagnostics {
+		if keep(diag) {
+			remaining = append(remaining, diag)
+		}
+	}
+	if len(remaining) == 0 {
+		msgs := make([]string, len(d.Diagnostics))
+		for i, diag := range d.Diagnostics {
+			msgs[i] = fmt.Sprintf("{ code:%q severity:%v message:%q }", diag.Code, diag.Severity, diag.Message)
+		}
+		d.t.Fatalf("fbtest: expected diagnostic message with %s, got %d candidate(s):\n%s",
+			criterion, len(d.Diagnostics), strings.Join(msgs, "\n"))
+	}
+	d.Diagnostics = remaining
+	return d
 }
 
 func (d *DiagnosticExpectation) WithMessage(msg string) *DiagnosticExpectation {
 	d.t.Helper()
-	if d.Diagnostic.Message != msg {
-		d.t.Errorf("fbtest: expected diagnostic message %q, got %q", msg, d.Diagnostic.Message)
-	}
-	return d
+	return d.filter(fmt.Sprintf("message=%q", msg), func(diag *core.Diagnostic) bool {
+		return diag.Message == msg
+	})
 }
 
 func (d *DiagnosticExpectation) WithMessageContaining(substring string) *DiagnosticExpectation {
 	d.t.Helper()
-	if !strings.Contains(d.Diagnostic.Message, substring) {
-		d.t.Errorf("fbtest: expected diagnostic message containing %q, got %q", substring, d.Diagnostic.Message)
-	}
-	return d
+	return d.filter(fmt.Sprintf("message containing %q", substring), func(diag *core.Diagnostic) bool {
+		return strings.Contains(diag.Message, substring)
+	})
 }
 
 func (d *DiagnosticExpectation) WithCode(code string) *DiagnosticExpectation {
 	d.t.Helper()
-	if d.Diagnostic.Code != code {
-		d.t.Errorf("fbtest: expected diagnostic code %q, got %q", code, d.Diagnostic.Code)
-	}
-	return d
+	return d.filter(fmt.Sprintf("code=%q", code), func(diag *core.Diagnostic) bool {
+		return diag.Code == code
+	})
 }
 
 func (d *DiagnosticExpectation) WithSource(source string) *DiagnosticExpectation {
 	d.t.Helper()
-	if d.Diagnostic.Source != source {
-		d.t.Errorf("fbtest: expected diagnostic source %q, got %q", source, d.Diagnostic.Source)
-	}
-	return d
+	return d.filter(fmt.Sprintf("source=%q", source), func(diag *core.Diagnostic) bool {
+		return diag.Source == source
+	})
 }
 
 func (d *DiagnosticExpectation) WithSeverity(severity core.DiagnosticSeverity) *DiagnosticExpectation {
 	d.t.Helper()
-	if d.Diagnostic.Severity != severity {
-		d.t.Errorf("fbtest: expected diagnostic severity %q, got %q", severity, d.Diagnostic.Severity)
-	}
-	return d
+	return d.filter(fmt.Sprintf("severity=%v", severity), func(diag *core.Diagnostic) bool {
+		return diag.Severity == severity
+	})
 }
 
 func (d *DiagnosticExpectation) WithTags(tags ...core.DiagnosticTag) *DiagnosticExpectation {
 	d.t.Helper()
-	if len(d.Diagnostic.Tags) != len(tags) {
-		d.t.Errorf("fbtest: expected diagnostic tags %v, got %v", tags, d.Diagnostic.Tags)
-		return d
-	}
-	for _, tag := range tags {
-		found := slices.Contains(d.Diagnostic.Tags, tag)
-		if !found {
-			d.t.Errorf("fbtest: expected diagnostic tag %v not found in actual tags %v", tag, d.Diagnostic.Tags)
+	return d.filter(fmt.Sprintf("tags=%v", tags), func(diag *core.Diagnostic) bool {
+		if len(diag.Tags) != len(tags) {
+			return false
 		}
-	}
-	return d
+		for _, tag := range tags {
+			if !slices.Contains(diag.Tags, tag) {
+				return false
+			}
+		}
+		return true
+	})
 }
 
 // ExpectDiagnostic fails the test unless at least one diagnostic has the given
@@ -139,18 +154,22 @@ func (d *Doc) ExpectDiagnostic(label string) *DiagnosticExpectation {
 		d.fixture.t.Fatalf("fbtest: %v", err)
 		return nil
 	}
+	var matched []*core.Diagnostic
 	for _, diag := range d.Document.Diagnostics {
 		if diag.Range == loc {
-			return &DiagnosticExpectation{t: d.fixture.t, Diagnostic: diag}
+			matched = append(matched, diag)
 		}
 	}
-	d.fixture.t.Fatalf("fbtest: no diagnostic at label %q", label)
-	return nil
+	if len(matched) == 0 {
+		d.fixture.t.Fatalf("fbtest: no diagnostic at label %q", label)
+		return nil
+	}
+	return &DiagnosticExpectation{t: d.fixture.t, Diagnostics: matched}
 }
 
-// ExpectDiagnosticWithCode finds the diagnostic at label whose Code matches code.
-// Use this when multiple diagnostics share the same range and you need to distinguish them.
-func (d *Doc) ExpectDiagnosticWithCode(label string, code string) *DiagnosticExpectation {
+// ExpectNoDiagnostic fails the test if at least one diagnostic has the given
+// severity and a message containing msgSubstring.
+func (d *Doc) ExpectNoDiagnostic(label string) *Doc {
 	d.fixture.t.Helper()
 	loc, err := d.MarkerRange(label)
 	if err != nil {
@@ -158,12 +177,11 @@ func (d *Doc) ExpectDiagnosticWithCode(label string, code string) *DiagnosticExp
 		return nil
 	}
 	for _, diag := range d.Document.Diagnostics {
-		if diag.Range == loc && diag.Code == code {
-			return &DiagnosticExpectation{t: d.fixture.t, Diagnostic: diag}
+		if diag.Range == loc {
+			d.fixture.t.Fatalf("fbtest: no diagnostic at label %q", label)
 		}
 	}
-	d.fixture.t.Fatalf("fbtest: no diagnostic at label %q with code %q", label, code)
-	return nil
+	return d
 }
 
 // AssertNoDiagnostics fails the test if any diagnostics exist at any severity.

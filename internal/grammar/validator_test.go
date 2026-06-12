@@ -135,10 +135,12 @@ func TestDuplicateFieldNamesCaseInsensitiveAndCapitalLetter(t *testing.T) {
 			<|1:name|> string
 		}
 	` + commonTokens)
-	diag := doc.ExpectDiagnosticWithCode("1", ValidateUniqueFieldName)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithCode(ValidateUniqueFieldName)
 	diag.WithSeverity(core.SeverityError)
 
-	diag = doc.ExpectDiagnosticWithCode("1", ValidateFieldNameCapitalLetter)
+	diag = doc.ExpectDiagnostic("1")
+	diag.WithCode(ValidateFieldNameCapitalLetter)
 	diag.WithSeverity(core.SeverityError)
 }
 
