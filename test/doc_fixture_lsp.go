@@ -272,6 +272,7 @@ func (d *Doc) ExpectHoverAt(label, markup string) *Doc {
 	}
 	if result == nil {
 		d.fixture.t.Fatalf("fbtest: expected hover result at %q, got nil", label)
+		return d
 	}
 	if result.Contents.Kind != lsp.Markdown {
 		d.fixture.t.Errorf("fbtest: expected Markdown content kind at %q, got %v", label, result.Contents.Kind)
