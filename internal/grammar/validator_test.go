@@ -142,6 +142,86 @@ func TestDuplicateFieldNamesCaseInsensitiveAndCapitalLetter(t *testing.T) {
 	diag.WithSeverity(core.SeverityError)
 }
 
+func TestInheritedFieldNameValid(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Base {
+			Name string
+		}
+		interface Derived extends Base {
+			Other string
+		}
+	` + commonTokens)
+	doc.AssertNoErrors()
+}
+
+func TestInheritedFieldNameDuplicate(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Base {
+			Name string
+		}
+		interface Derived extends Base {
+			<|1:Name|> string
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateUniqueFieldName)
+}
+
+func TestInheritedFieldNameDuplicateCaseInsensitive(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Base {
+			Name string
+		}
+		interface Derived extends Base {
+			<|1:NAME|> string
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateUniqueFieldName)
+}
+
+func TestInheritedFieldNameDuplicateDeepHierarchy(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface C {
+			Foo string
+		}
+		interface B extends C {}
+		interface A extends B {
+			<|1:Foo|> string
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateUniqueFieldName)
+}
+
+func TestInheritedFieldNameDuplicateInDeepHierarchyNoErrorAtTopElement(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface C {
+			Foo string
+		}
+		interface B extends C {
+			Foo string
+		}
+		interface A extends B {
+			<|1:Bar|> string
+		}
+	` + commonTokens)
+	doc.ExpectNoDiagnostic("1")
+}
+
 // --- Terminal ---
 
 func TestTerminalMatchesEmptyString(t *testing.T) {

@@ -195,10 +195,39 @@ func checkRuleReturnType(rule ParserRule, _ context.Context, accept core.Validat
 
 func (i *InterfaceImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
 	checkInterfaceExtends(i, ctx, accept)
-	checkInterfaceFieldNames(i, accept)
+	checkInterfaceFieldNames(i, ctx, accept)
 }
 
-func checkInterfaceFieldNames(iface Interface, accept core.ValidationAcceptor) {
+func collectInheritedFieldNames(iface Interface, ctx context.Context, collected map[string]Interface, visited map[string]struct{}) {
+	if _, alreadyVisited := visited[iface.Name()]; alreadyVisited {
+		return
+	}
+	visited[iface.Name()] = struct{}{}
+	for _, ext := range iface.Extends() {
+		extType := ext.Ref(ctx)
+		if extType == nil {
+			continue
+		}
+		// Recurse into the parent's ancestry first so the deepest (originating)
+		// declarant wins in `collected` when the same name appears at multiple levels.
+		collectInheritedFieldNames(extType, ctx, collected, visited)
+		for _, field := range extType.Fields() {
+			name := field.Name()
+			if name == "" {
+				continue
+			}
+			lower := strings.ToLower(name)
+			if _, exists := collected[lower]; !exists {
+				collected[lower] = extType
+			}
+		}
+	}
+}
+
+func checkInterfaceFieldNames(iface Interface, ctx context.Context, accept core.ValidationAcceptor) {
+	inherited := map[string]Interface{}
+	collectInheritedFieldNames(iface, ctx, inherited, map[string]struct{}{})
+
 	seen := map[string]struct{}{}
 	for _, field := range iface.Fields() {
 		name := field.Name()
@@ -215,16 +244,25 @@ func checkInterfaceFieldNames(iface Interface, accept core.ValidationAcceptor) {
 			))
 		}
 		lower := strings.ToLower(name)
-		if _, duplicate := seen[lower]; duplicate {
+		if _, dup := seen[lower]; dup {
 			accept(core.NewDiagnostic(
 				core.SeverityError,
-				fmt.Sprintf("A property's name has to be unique (case-insensitively). '%s' is already used.", name),
+				fmt.Sprintf("A property's name has to be unique (case-insensitively). '%s' is already used above.", name),
 				field,
 				core.WithToken(field.NameToken()),
 				core.WithCode(ValidateUniqueFieldName),
 			))
 		} else {
 			seen[lower] = struct{}{}
+			if declaringIface, dup := inherited[lower]; dup {
+				accept(core.NewDiagnostic(
+					core.SeverityError,
+					fmt.Sprintf("A property's name has to be unique (case-insensitively). '%s' is already declared in '%s'.", name, declaringIface.Name()),
+					field,
+					core.WithToken(field.NameToken()),
+					core.WithCode(ValidateUniqueFieldName),
+				))
+			}
 		}
 	}
 }
