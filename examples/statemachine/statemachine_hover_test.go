@@ -8,11 +8,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/test"
 	"typefox.dev/fastbelt/util/service"
-	"typefox.dev/lsp"
 )
 
 // createHoverServices builds a service container with both the statemachine language
@@ -25,40 +23,6 @@ func createHoverServices() *service.Container {
 	return sc
 }
 
-// hoverAt calls the hover provider at the position of the named marker.
-// Accepts both index markers (<|label>) and range markers (<|label:text|>);
-// for range markers the start of the range is used as the cursor position.
-func hoverAt(t *testing.T, f *test.Fixture, doc *test.Doc, label string) *lsp.Hover {
-	t.Helper()
-	offset := -1
-	for _, idx := range doc.Indices {
-		if idx.Label == label {
-			offset = idx.Offset
-			break
-		}
-	}
-	if offset == -1 {
-		for _, r := range doc.Ranges {
-			if r.Label == label {
-				offset = r.Start
-				break
-			}
-		}
-	}
-	if offset == -1 {
-		t.Fatalf("no marker with label %q", label)
-	}
-	pos := doc.Document.TextDoc.PositionAt(offset)
-	provider := service.MustGet[server.HoverProvider](f.Services())
-	result, err := provider.HandleHoverRequest(f.Ctx(), &lsp.HoverParams{
-		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
-			TextDocument: lsp.TextDocumentIdentifier{URI: doc.Document.URI.DocumentURI()},
-			Position:     pos,
-		},
-	})
-	require.NoError(t, err)
-	return result
-}
 
 func TestDocumentationSingleLineComment(t *testing.T) {
 	f := test.New(t, createHoverServices())
@@ -105,6 +69,31 @@ end
 
 	off := test.MustFindNamedNode[State](doc, "off")
 	assert.Equal(t, "line one  \nline two", docProvider.Documentation(off))
+}
+
+func TestDocumentationBlankLinePreserved(t *testing.T) {
+	f := test.New(t, createHoverServices())
+	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
+
+	doc := f.Parse(`
+statemachine Test
+events flick
+initialState off
+
+// line one
+//
+// line two
+state off
+  flick => on
+end
+
+state on
+  flick => off
+end
+`).AssertNoErrors()
+
+	off := test.MustFindNamedNode[State](doc, "off")
+	assert.Equal(t, "line one  \n  \nline two", docProvider.Documentation(off))
 }
 
 func TestDocumentationBlockComment(t *testing.T) {
@@ -158,7 +147,7 @@ end
 func TestHoverReturnsDocumentationForReference(t *testing.T) {
 	f := test.New(t, createHoverServices())
 
-	doc := f.Parse(`
+	f.Parse(`
 statemachine Test
 events flick
 initialState off
@@ -171,22 +160,13 @@ end
 state on
   flick => off
 end
-`).AssertNoErrors()
-
-	result := hoverAt(t, f, doc, "toOn")
-	require.NotNil(t, result)
-	assert.Equal(t, lsp.Markdown, result.Contents.Kind)
-	assert.Equal(t, "The on state", result.Contents.Value)
-
-	expectedRange, err := doc.MarkerRange("toOn")
-	require.NoError(t, err)
-	assert.Equal(t, expectedRange.LspRange(), result.Range)
+`).AssertNoErrors().ExpectHoverAt("toOn", "The on state")
 }
 
 func TestHoverNilForUndocumentedReference(t *testing.T) {
 	f := test.New(t, createHoverServices())
 
-	doc := f.Parse(`
+	f.Parse(`
 statemachine Test
 events flick
 initialState off
@@ -198,15 +178,13 @@ end
 state on
   flick => off
 end
-`).AssertNoErrors()
-
-	assert.Nil(t, hoverAt(t, f, doc, "toOn"))
+`).AssertNoErrors().ExpectNoHoverAt("toOn")
 }
 
 func TestHoverNilForWhitespace(t *testing.T) {
 	f := test.New(t, createHoverServices())
 
-	doc := f.Parse(`
+	f.Parse(`
 statemachine<|ws> Test
 events flick
 initialState off
@@ -218,7 +196,5 @@ end
 state on
   flick => off
 end
-`).AssertNoErrors()
-
-	assert.Nil(t, hoverAt(t, f, doc, "ws"))
+`).AssertNoErrors().ExpectNoHoverAt("ws")
 }

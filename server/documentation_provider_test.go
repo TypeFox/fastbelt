@@ -10,29 +10,26 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStripCommentMarkersLineComment(t *testing.T) {
-	assert.Equal(t, "foo bar", stripCommentMarkers("// foo bar"))
+func TestTrimCommentLineComment(t *testing.T) {
+	assert.Equal(t, "foo bar", (&DefaultDocumentationTrimmer{}).TrimComment("// foo bar"))
 }
 
-func TestStripCommentMarkersHashComment(t *testing.T) {
-	assert.Equal(t, "foo bar", stripCommentMarkers("# foo bar"))
+func TestTrimCommentBlockComment(t *testing.T) {
+	assert.Equal(t, "foo bar", (&DefaultDocumentationTrimmer{}).TrimComment("/* foo bar */"))
 }
 
-func TestStripCommentMarkersDoubleDashComment(t *testing.T) {
-	assert.Equal(t, "foo bar", stripCommentMarkers("-- foo bar"))
-}
-
-func TestStripCommentMarkersBlockComment(t *testing.T) {
-	assert.Equal(t, "foo bar", stripCommentMarkers("/* foo bar */"))
-}
-
-func TestStripCommentMarkersMultilineBlockComment(t *testing.T) {
+func TestTrimCommentMultilineBlockComment(t *testing.T) {
 	input := "/*\n * line one\n * line two\n */"
-	assert.Equal(t, "line one\nline two", stripCommentMarkers(input))
+	assert.Equal(t, "line one\nline two", (&DefaultDocumentationTrimmer{}).TrimComment(input))
 }
 
-func TestStripCommentMarkersEmpty(t *testing.T) {
-	assert.Equal(t, "", stripCommentMarkers("//"))
-	assert.Equal(t, "", stripCommentMarkers("/* */"))
-	assert.Equal(t, "", stripCommentMarkers("//   "))
+func TestTrimCommentEmpty(t *testing.T) {
+	trimmer := &DefaultDocumentationTrimmer{}
+	assert.Equal(t, "", trimmer.TrimComment("//"))
+	assert.Equal(t, "", trimmer.TrimComment("/* */"))
+	assert.Equal(t, "", trimmer.TrimComment("//   "))
+}
+
+func TestTrimCommentPreservesTrailingPeriod(t *testing.T) {
+	assert.Equal(t, "foo bar.", (&DefaultDocumentationTrimmer{}).TrimComment("// foo bar."))
 }

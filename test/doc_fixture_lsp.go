@@ -248,6 +248,75 @@ func (d *Doc) AssertFoldingRanges(labels ...string) *Doc {
 	return d
 }
 
+// ExpectHoverAt asserts that a hover at the named marker returns Markdown content equal to markup.
+// For range markers the start of the range is used as the cursor position.
+// Returns the Doc for chaining.
+func (d *Doc) ExpectHoverAt(label, markup string) *Doc {
+	d.fixture.t.Helper()
+	location, err := d.markerLocation(label, true)
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: %v", err)
+	}
+	hoverProvider, err := service.Get[server.HoverProvider](d.fixture.sc)
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: no hover provider available: %v", err)
+	}
+	result, err := hoverProvider.HandleHoverRequest(d.fixture.ctx, &lsp.HoverParams{
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{URI: d.Document.URI.DocumentURI()},
+			Position:     location.LspPosition(),
+		},
+	})
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: hover request failed: %v", err)
+	}
+	if result == nil {
+		d.fixture.t.Fatalf("fbtest: expected hover result at %q, got nil", label)
+	}
+	if result.Contents.Kind != lsp.Markdown {
+		d.fixture.t.Errorf("fbtest: expected Markdown content kind at %q, got %v", label, result.Contents.Kind)
+	}
+	if result.Contents.Value != markup {
+		d.fixture.t.Errorf("fbtest: expected hover value %q at %q, got %q", markup, label, result.Contents.Value)
+	}
+	expectedRange, err := d.MarkerRange(label)
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: %v", err)
+	}
+	if result.Range != expectedRange.LspRange() {
+		d.fixture.t.Errorf("fbtest: expected hover range %v at %q, got %v", expectedRange.LspRange(), label, result.Range)
+	}
+	return d
+}
+
+// ExpectNoHoverAt asserts that a hover at the named marker returns nil.
+// For range markers the start of the range is used as the cursor position.
+// Returns the Doc for chaining.
+func (d *Doc) ExpectNoHoverAt(label string) *Doc {
+	d.fixture.t.Helper()
+	location, err := d.markerLocation(label, true)
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: %v", err)
+	}
+	hoverProvider, err := service.Get[server.HoverProvider](d.fixture.sc)
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: no hover provider available: %v", err)
+	}
+	result, err := hoverProvider.HandleHoverRequest(d.fixture.ctx, &lsp.HoverParams{
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{URI: d.Document.URI.DocumentURI()},
+			Position:     location.LspPosition(),
+		},
+	})
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: hover request failed: %v", err)
+	}
+	if result != nil {
+		d.fixture.t.Errorf("fbtest: expected nil hover at %q, got non-nil result", label)
+	}
+	return d
+}
+
 func (d *Doc) CompletionItems(label string) []lsp.CompletionItem {
 	d.fixture.t.Helper()
 	location, err := d.markerLocation(label, true)
