@@ -5,8 +5,8 @@
 package server
 
 import (
+	"sort"
 	"strings"
-	"unicode"
 
 	core "typefox.dev/fastbelt"
 )
@@ -16,11 +16,55 @@ type DocumentationProvider interface {
 	Documentation(node core.AstNode) string
 }
 
-// DefaultDocumentationProvider is the default implementation of [DocumentationProvider].
-type DefaultDocumentationProvider struct{}
+// DocumentationTrimmer strips comment markers from a raw comment token image.
+// Implement this interface to support comment styles beyond the defaults (// and /* */).
+type DocumentationTrimmer interface {
+	TrimComment(content string) string
+}
 
+// DefaultDocumentationTrimmer strips // single-line and /* */ block comment markers.
+type DefaultDocumentationTrimmer struct{}
+
+// TrimComment removes comment markers from a raw comment token image.
+// For // single-line comments the prefix is stripped and surrounding whitespace trimmed.
+// For /* */ block comments the delimiters and leading * prefixes are removed per line.
+func (t *DefaultDocumentationTrimmer) TrimComment(content string) string {
+	trimmed := strings.TrimSpace(content)
+	if strings.HasPrefix(trimmed, "/*") {
+		inner := strings.TrimSuffix(strings.TrimPrefix(trimmed, "/*"), "*/")
+		lines := strings.Split(inner, "\n")
+		result := make([]string, 0, len(lines))
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			line = strings.TrimPrefix(line, "*")
+			line = strings.TrimSpace(line)
+			result = append(result, line)
+		}
+		for len(result) > 0 && result[0] == "" {
+			result = result[1:]
+		}
+		for len(result) > 0 && result[len(result)-1] == "" {
+			result = result[:len(result)-1]
+		}
+		return strings.Join(result, "\n")
+	}
+	// Single-line // comment: strip prefix and trim surrounding whitespace.
+	return strings.TrimSpace(strings.TrimPrefix(trimmed, "//"))
+}
+
+// DefaultDocumentationProvider is the default implementation of [DocumentationProvider].
+type DefaultDocumentationProvider struct {
+	trimmer DocumentationTrimmer
+}
+
+// NewDefaultDocumentationProvider creates a DocumentationProvider with the default trimmer.
 func NewDefaultDocumentationProvider() DocumentationProvider {
-	return &DefaultDocumentationProvider{}
+	return &DefaultDocumentationProvider{trimmer: &DefaultDocumentationTrimmer{}}
+}
+
+// NewDocumentationProviderWithTrimmer creates a DocumentationProvider with a custom trimmer.
+func NewDocumentationProviderWithTrimmer(trimmer DocumentationTrimmer) DocumentationProvider {
+	return &DefaultDocumentationProvider{trimmer: trimmer}
 }
 
 // Documentation returns the documentation comment block immediately preceding node,
@@ -31,70 +75,37 @@ func (s *DefaultDocumentationProvider) Documentation(node core.AstNode) string {
 		return ""
 	}
 
-	targetStart := int(node.Segment().Indices.Start)
-
-	var block []core.Token
-	prevEnd := targetStart
-	for i := len(doc.Comments) - 1; i >= 0; i-- {
-		c := doc.Comments[i]
-		commentEnd := int(c.TextSegment.Indices.End)
-		if commentEnd > prevEnd {
-			continue
-		}
-		if hasTokenInRange(doc.Tokens, commentEnd, prevEnd) {
-			break
-		}
-		block = append(block, c)
-		prevEnd = int(c.TextSegment.Indices.Start)
-	}
-
-	if len(block) == 0 {
+	nodeTokens := node.Tokens()
+	if len(nodeTokens) == 0 {
 		return ""
 	}
+	nodeStart := int(nodeTokens[0].TextSegment.Indices.Start)
 
-	// Reverse to restore chronological order.
-	for i, j := 0, len(block)-1; i < j; i, j = i+1, j-1 {
-		block[i], block[j] = block[j], block[i]
+	// Find the lower bound: end of the code token immediately before this node.
+	// doc.Tokens is sorted by offset; comments live in doc.Comments, not doc.Tokens.
+	lowerBound := 0
+	i := sort.Search(len(doc.Tokens), func(k int) bool {
+		return int(doc.Tokens[k].TextSegment.Indices.Start) >= nodeStart
+	})
+	if i > 0 {
+		lowerBound = int(doc.Tokens[i-1].TextSegment.Indices.End)
 	}
 
-	var lines []string
-	for _, c := range block {
-		if line := stripCommentMarkers(c.Image); line != "" {
-			lines = append(lines, line)
+	// Collect comments in [lowerBound, nodeStart) — doc.Comments is sorted by offset,
+	// so results are already in chronological order; no reversal needed.
+	first := sort.Search(len(doc.Comments), func(j int) bool {
+		return int(doc.Comments[j].TextSegment.Indices.Start) >= lowerBound
+	})
+	var parts []string
+	for j := first; j < len(doc.Comments); j++ {
+		c := doc.Comments[j]
+		if int(c.TextSegment.Indices.Start) >= nodeStart {
+			break
 		}
+		parts = append(parts, s.trimmer.TrimComment(c.Image))
 	}
-	return strings.Join(lines, "  \n")
-}
-
-// hasTokenInRange reports whether any token in ts starts in the half-open range [lo, hi).
-// lo is the end of the preceding comment; hi is the start of the target node.
-func hasTokenInRange(ts core.TokenSlice, lo, hi int) bool {
-	left, right := 0, len(ts)-1
-	for left <= right {
-		mid := (left + right) / 2
-		if int(ts[mid].TextSegment.Indices.Start) < lo {
-			left = mid + 1
-		} else {
-			right = mid - 1
-		}
+	if len(parts) == 0 {
+		return ""
 	}
-	return left < len(ts) && int(ts[left].TextSegment.Indices.Start) < hi
-}
-
-// stripCommentMarkers removes comment markers from a raw comment token image.
-// Leading and trailing non-alphanumeric runes are trimmed from the whole image
-// and then again from each individual line, stripping interior markers (e.g. the
-// * in /* */ blocks). Works for any comment style (// # -- /* */ etc.).
-func stripCommentMarkers(raw string) string {
-	isMarker := func(r rune) bool {
-		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
-	}
-	raw = strings.TrimFunc(strings.TrimSpace(raw), isMarker)
-	var lines []string
-	for _, line := range strings.Split(raw, "\n") {
-		if line = strings.TrimFunc(line, isMarker); line != "" {
-			lines = append(lines, line)
-		}
-	}
-	return strings.Join(lines, "\n")
+	return strings.Join(parts, "  \n")
 }

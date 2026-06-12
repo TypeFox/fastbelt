@@ -43,12 +43,15 @@ func (s *DefaultHoverProvider) HandleHoverRequest(ctx context.Context, params *l
 
 	nameFinder := service.MustGet[NameFinder](s.sc)
 	foundName := nameFinder.Find(ctx, sourceToken)
-	if foundName.Target == nil {
+	if foundName.Target == nil || foundName.Source == nil {
 		return nil, nil
 	}
 
 	targetNode := foundName.Target.Owner()
-	docProvider := service.MustGet[DocumentationProvider](s.sc)
+	docProvider, err := service.Get[DocumentationProvider](s.sc)
+	if err != nil {
+		return nil, nil
+	}
 	content := docProvider.Documentation(targetNode)
 	if content == "" {
 		return nil, nil
