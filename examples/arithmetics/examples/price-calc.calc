@@ -1,0 +1,20 @@
+module priceCalculator
+
+def materialPerUnit:               100;
+def laborPerUnit:                  200;
+def expectedNoOfSales:             200;
+def costPerUnit:                   materialPerUnit + laborPerUnit;
+
+def costOfGoodsSold:               expectedNoOfSales * costPerUnit;
+def generalExpensesAndSales:       10000;
+
+def desiredProfitPerUnit:          50;
+def netPrice:
+    (costOfGoodsSold + generalExpensesAndSales) / expectedNoOfSales + desiredProfitPerUnit;
+
+def vat:                           0.15;
+
+def calcGrossListPrice(net, tax):
+    net / (1 - tax);
+
+calcGrossListPrice(netPrice, vat);
