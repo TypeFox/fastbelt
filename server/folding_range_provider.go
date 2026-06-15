@@ -96,7 +96,7 @@ func (p *DefaultFoldingRangeProvider) collectFolding(document *core.Document) []
 
 	foldings := []lsp.FoldingRange{}
 
-	for node := range core.AllNodes(document.Root) {
+	for node := range core.AllChildren(document.Root) {
 		if p.filter.ShouldProcess(node) {
 			includeLastLine := p.filter.IncludeLastFoldingLine(node)
 			if foldingRange := p.toFoldingRange(node.Segment(), "", includeLastLine); foldingRange != nil {
