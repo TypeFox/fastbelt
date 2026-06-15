@@ -44,27 +44,32 @@ PersonRule: /[a-z]+/;
 	fixture.ParseURI(grammar1, "file:///test1.fb")
 	fixture.ParseURI(grammar2, "file:///test2.fb")
 
-	// Test 1: Empty query returns all symbols
-	fixture.ExpectWorkspaceSymbols("").ExactMatch(
-		"Test1", "Test2",
-		"Person", "Address", "Company",
-		"name", "age", "street", "title",
-		"PersonRule",
-	)
+	t.Run("Empty query returns all symbols", func(t *testing.T) {
+		fixture.ExpectWorkspaceSymbols("").ExactMatch(
+			"Test1", "Test2",
+			"Person", "Address", "Company",
+			"name", "age", "street", "title",
+			"PersonRule",
+		)
+	})
 
-	// Test 2: Query filtering returns matching subset
-	fixture.ExpectWorkspaceSymbols("Per").ExactMatch("Person", "PersonRule")
+	t.Run("Query filtering returns matching subset", func(t *testing.T) {
+		fixture.ExpectWorkspaceSymbols("Per").ExactMatch("Person", "PersonRule")
+	})
 
-	// Test 3: Verify correct symbol kinds for different node types
-	fixture.ExpectWorkspaceSymbols("Test1").SymbolKind("Test1", lsp.File) // Grammar
-	fixture.ExpectWorkspaceSymbols("Person").
-		SymbolKind("Person", lsp.Interface).   // Interface
-		SymbolKind("PersonRule", lsp.Function) // Parser rule (also matches "Person")
-	fixture.ExpectWorkspaceSymbols("name").SymbolKind("name", lsp.Property) // Field
+	t.Run("Verify correct symbol kinds for different node types", func(t *testing.T) {
+		fixture.ExpectWorkspaceSymbols("Test1").SymbolKind("Test1", lsp.File) // Grammar
+		fixture.ExpectWorkspaceSymbols("Person").
+			SymbolKind("Person", lsp.Interface).   // Interface
+			SymbolKind("PersonRule", lsp.Function) // Parser rule (also matches "Person")
+		fixture.ExpectWorkspaceSymbols("name").SymbolKind("name", lsp.Property) // Field
+	})
 
-	// Test 4: Case-insensitive matching
-	fixture.ExpectWorkspaceSymbols("person").ExactMatch("Person", "PersonRule")
+	t.Run("Case-insensitive matching", func(t *testing.T) {
+		fixture.ExpectWorkspaceSymbols("person").ExactMatch("Person", "PersonRule")
+	})
 
-	// Test 5: No match
-	fixture.ExpectWorkspaceSymbols("XYZ").ExactMatch()
+	t.Run("No match", func(t *testing.T) {
+		fixture.ExpectWorkspaceSymbols("XYZ").ExactMatch()
+	})
 }
