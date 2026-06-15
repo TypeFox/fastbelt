@@ -7,47 +7,55 @@ package server
 import (
 	"context"
 	"log/slog"
-	"strings"
 
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/lsp"
 )
 
-type slogHandler struct {
+// SlogHandler is a [slog.Handler] that sends log messages to the
+// LSP client via the connection. Note that this handler does not
+// take attributes or groups into account when writing the message
+// to the language client.
+type SlogHandler struct {
 	sc *service.Container
 }
 
 // NewSlogHandler creates a new slog handler that writes to the LSP connection.
 func NewSlogHandler(sc *service.Container) slog.Handler {
-	return &slogHandler{sc: sc}
+	return &SlogHandler{sc: sc}
 }
 
-func (h *slogHandler) Enabled(ctx context.Context, level slog.Level) bool {
+func (h *SlogHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	// Enable all log levels. You can customize this to filter based on level or context.
 	return true
 }
 
-func (h *slogHandler) Handle(ctx context.Context, record slog.Record) error {
-	sb := strings.Builder{}
-	sb.WriteString(record.Time.Format("15:04:05.000"))
-	sb.WriteString(" [")
-	sb.WriteString(record.Level.String())
-	sb.WriteString("] ")
-	sb.WriteString(record.Message)
-	return h.write(ctx, lsp.Info, sb.String())
+func (h *SlogHandler) Handle(ctx context.Context, record slog.Record) error {
+	var lspLevel lsp.MessageType
+	switch {
+	case record.Level < slog.LevelInfo:
+		lspLevel = lsp.Log
+	case record.Level < slog.LevelWarn:
+		lspLevel = lsp.Info
+	case record.Level < slog.LevelError:
+		lspLevel = lsp.Warning
+	default:
+		lspLevel = lsp.Error
+	}
+	return h.write(ctx, lspLevel, record.Message)
 }
 
-func (h *slogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	// Ignore for now - we can implement attribute handling if needed. Just return the same handler.
+// No-op implementation. [SlogHandler] does not support attributes.
+func (h *SlogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return h
 }
 
-func (h *slogHandler) WithGroup(name string) slog.Handler {
-	// Ignore for now - we can implement group handling if needed. Just return the same handler.
+// No-op implementation. [SlogHandler] does not support groups.
+func (h *SlogHandler) WithGroup(name string) slog.Handler {
 	return h
 }
 
-func (h *slogHandler) write(ctx context.Context, level lsp.MessageType, msg string) error {
+func (h *SlogHandler) write(ctx context.Context, level lsp.MessageType, msg string) error {
 	conn, err := service.Get[*Connection](h.sc)
 	if err != nil {
 		return err
