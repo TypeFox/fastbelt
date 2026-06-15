@@ -45,25 +45,26 @@ PersonRule: /[a-z]+/;
 	fixture.ParseURI(grammar2, "file:///test2.fb")
 
 	// Test 1: Empty query returns all symbols
-	fixture.AssertWorkspaceSymbols("", []string{
+	fixture.ExpectWorkspaceSymbols("").ExactMatch(
 		"Test1", "Test2",
 		"Person", "Address", "Company",
 		"name", "age", "street", "title",
 		"PersonRule",
-	})
+	)
 
 	// Test 2: Query filtering returns matching subset
-	fixture.AssertWorkspaceSymbols("Per", []string{"Person", "PersonRule"})
+	fixture.ExpectWorkspaceSymbols("Per").ExactMatch("Person", "PersonRule")
 
 	// Test 3: Verify correct symbol kinds for different node types
-	fixture.AssertWorkspaceSymbolKind("Test1", lsp.File)          // Grammar
-	fixture.AssertWorkspaceSymbolKind("Person", lsp.Interface)    // Interface
-	fixture.AssertWorkspaceSymbolKind("name", lsp.Property)       // Field
-	fixture.AssertWorkspaceSymbolKind("PersonRule", lsp.Function) // Parser rule
+	fixture.ExpectWorkspaceSymbols("Test1").SymbolKind("Test1", lsp.File) // Grammar
+	fixture.ExpectWorkspaceSymbols("Person").
+		SymbolKind("Person", lsp.Interface).   // Interface
+		SymbolKind("PersonRule", lsp.Function) // Parser rule (also matches "Person")
+	fixture.ExpectWorkspaceSymbols("name").SymbolKind("name", lsp.Property) // Field
 
 	// Test 4: Case-insensitive matching
-	fixture.AssertWorkspaceSymbols("person", []string{"Person", "PersonRule"})
+	fixture.ExpectWorkspaceSymbols("person").ExactMatch("Person", "PersonRule")
 
 	// Test 5: No match
-	fixture.AssertWorkspaceSymbols("XYZ", []string{})
+	fixture.ExpectWorkspaceSymbols("XYZ").ExactMatch()
 }

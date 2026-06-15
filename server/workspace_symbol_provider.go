@@ -10,7 +10,6 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
-	"typefox.dev/fastbelt/server/fuzzy"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
@@ -67,10 +66,14 @@ func NewWorkspaceSymbolProviderWithFilter(sc *service.Container, filter Workspac
 
 func (p *DefaultWorkspaceSymbolProvider) HandleWorkspaceSymbolRequest(ctx context.Context, params *lsp.WorkspaceSymbolParams) ([]lsp.SymbolInformation, error) {
 	documentManager := service.MustGet[workspace.DocumentManager](p.sc)
+	matcher := p.resolveFuzzyMatcher()
 	query := strings.ToLower(params.Query)
 	maxCount := p.filter.MaxSymbolCount()
 
 	var symbols []lsp.SymbolInformation
+	if maxCount > 0 {
+		symbols = make([]lsp.SymbolInformation, 0, maxCount)
+	}
 
 	// Iterate all documents in workspace
 	for doc := range documentManager.All() {
@@ -78,9 +81,8 @@ func (p *DefaultWorkspaceSymbolProvider) HandleWorkspaceSymbolRequest(ctx contex
 			continue
 		}
 
-		// Collect symbols from this document, passing current count and max for early abort
-		docSymbols := p.collectSymbolsFromDocument(doc, query, len(symbols), maxCount)
-		symbols = append(symbols, docSymbols...)
+		// Collect symbols from this document, appending directly to the main slice
+		symbols = p.collectSymbolsFromDocument(doc, query, symbols, maxCount, matcher)
 
 		if maxCount > 0 && len(symbols) >= maxCount {
 			return symbols[:maxCount], nil
@@ -90,12 +92,10 @@ func (p *DefaultWorkspaceSymbolProvider) HandleWorkspaceSymbolRequest(ctx contex
 	return symbols, nil
 }
 
-func (p *DefaultWorkspaceSymbolProvider) collectSymbolsFromDocument(doc *core.Document, query string, currentCount, maxCount int) []lsp.SymbolInformation {
-	var symbols []lsp.SymbolInformation
-
+func (p *DefaultWorkspaceSymbolProvider) collectSymbolsFromDocument(doc *core.Document, query string, symbols []lsp.SymbolInformation, maxCount int, matcher FuzzyMatcher) []lsp.SymbolInformation {
 	// Iterate all nodes in document
 	for node := range core.AllNodes(doc.Root) {
-		if maxCount > 0 && currentCount >= maxCount {
+		if maxCount > 0 && len(symbols) >= maxCount {
 			break
 		}
 
@@ -110,7 +110,7 @@ func (p *DefaultWorkspaceSymbolProvider) collectSymbolsFromDocument(doc *core.Do
 
 		name := nameUnit.String()
 
-		if !fuzzy.Match(query, name) {
+		if !matcher.Match(query, name) {
 			continue
 		}
 
@@ -119,7 +119,6 @@ func (p *DefaultWorkspaceSymbolProvider) collectSymbolsFromDocument(doc *core.Do
 			continue
 		}
 
-		// Create SymbolInformation (matching Langium's structure)
 		symbol := lsp.SymbolInformation{
 			Name: name,
 			Kind: SymbolKind(node),
@@ -130,8 +129,14 @@ func (p *DefaultWorkspaceSymbolProvider) collectSymbolsFromDocument(doc *core.Do
 		}
 
 		symbols = append(symbols, symbol)
-		currentCount++
 	}
 
 	return symbols
+}
+
+func (s *DefaultWorkspaceSymbolProvider) resolveFuzzyMatcher() FuzzyMatcher {
+	if m, err := service.Get[FuzzyMatcher](s.sc); err == nil && m != nil {
+		return m
+	}
+	return &DefaultFuzzyMatcher{}
 }

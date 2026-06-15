@@ -2,11 +2,13 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package fuzzy
+package server
 
 import "testing"
 
-func TestMatch(t *testing.T) {
+func TestFuzzyMatcherMatch(t *testing.T) {
+	matcher := NewDefaultFuzzyMatcher()
+
 	tests := []struct {
 		name     string
 		query    string
@@ -143,7 +145,7 @@ func TestMatch(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Match(tt.query, tt.text)
+			result := matcher.Match(tt.query, tt.text)
 			if result != tt.expected {
 				t.Errorf("Match(%q, %q) = %v, expected %v", tt.query, tt.text, result, tt.expected)
 			}
