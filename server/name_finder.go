@@ -24,7 +24,11 @@ type FoundName struct {
 // Adopters should customize this service if they want to change how names are found in LSP services.
 // Downstream LSP services will automatically use the new implementation.
 type NameFinder interface {
-	Find(ctx context.Context, token *core.Token) FoundName
+	// Find returns the source and target [core.StringUnit] for the given tokens.
+	// This method accepts two tokens, as in some cases (i.e. if the cursor is between two tokens),
+	// there may be two relevant tokens that could be used to find a name.
+	// Use [core.TokenSlice.SearchOffset2] to get the tokens at a given offset.
+	Find(ctx context.Context, first, second *core.Token) FoundName
 }
 
 type DefaultNameFinder struct {
@@ -35,7 +39,32 @@ func NewDefaultNameFinder(sc *service.Container) NameFinder {
 	return &DefaultNameFinder{sc: sc}
 }
 
-func (nf *DefaultNameFinder) Find(ctx context.Context, token *core.Token) FoundName {
+func (nf *DefaultNameFinder) Find(ctx context.Context, first, second *core.Token) FoundName {
+	firstResult := nf.forToken(ctx, first)
+	// Early guard: if the first token already resolves to a name, return it immediately
+	if firstResult.Target != nil {
+		return firstResult
+	}
+	// Try the second token now
+	secondResult := nf.forToken(ctx, second)
+	if secondResult.Target != nil {
+		return secondResult
+	}
+	// Neither token could be resolved to a name.
+	// Try to return the one that has a source unit.
+	if firstResult.Source != nil {
+		return firstResult
+	} else if secondResult.Source != nil {
+		return secondResult
+	}
+	// Found nothing, return empty result
+	return FoundName{}
+}
+
+func (nf *DefaultNameFinder) forToken(ctx context.Context, token *core.Token) FoundName {
+	if token == nil {
+		return FoundName{}
+	}
 	ref := core.ReferenceOfToken(token)
 	if ref != nil {
 		// The token is a reference, try to resolve it and return the target name unit

@@ -252,21 +252,45 @@ func (t *Token) Owner() AstNode {
 // TokenSlice is a token sequence sorted by source offsets.
 type TokenSlice []Token
 
-// SearchOffset returns the token that contains offset.
+// SearchOffset returns the token that contains the given offset. If the
+// offset is exactly between two tokens, it returns the token after the
+// offset (i.e. the one that starts at that offset). If no token contains
+// the offset, it returns nil.
 //
-// It expects ts to be sorted by token offsets and uses binary search.
+// It expects the tokens to be sorted by token offsets and uses binary search.
 func (ts TokenSlice) SearchOffset(offset int) *Token {
+	prev, next := ts.SearchOffset2(offset)
+	if next != nil {
+		return next
+	}
+	return prev
+}
+
+// SearchOffset2 returns the tokens at the given offset. If the offset is
+// inside of a token, the first return value is that token and the second
+// is nil. If the offset is exactly between two tokens, the first return
+// value is the previous token and the second is the next token.
+//
+// It expects the tokens to be sorted by token offsets and uses binary search.
+func (ts TokenSlice) SearchOffset2(offset int) (*Token, *Token) {
 	low, high := 0, len(ts)-1
 	for low <= high {
 		mid := (low + high) / 2
-		token := ts[mid]
+		token := &ts[mid]
 		if offset < int(token.TextSegment.Indices.Start) {
 			high = mid - 1
 		} else if offset >= int(token.TextSegment.Indices.End) {
 			low = mid + 1
 		} else {
-			return &token
+			// Offset sits exactly on the boundary between this token and the
+			// previous one (prev.End == offset == token.Start): return both.
+			if offset == int(token.TextSegment.Indices.Start) && mid > 0 {
+				if prev := &ts[mid-1]; int(prev.TextSegment.Indices.End) == offset {
+					return prev, token
+				}
+			}
+			return token, nil
 		}
 	}
-	return nil
+	return nil, nil
 }
