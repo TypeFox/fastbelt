@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
@@ -306,4 +307,96 @@ func locationInRange(loc core.TextLocation, r core.TextRange) bool {
 		return false
 	}
 	return true
+}
+
+// WorkspaceSymbolsExpectation holds the results of a workspace symbol query
+// and provides chainable assertion methods.
+type WorkspaceSymbolsExpectation struct {
+	t       testing.TB
+	query   string
+	symbols []lsp.SymbolInformation
+}
+
+func (e *WorkspaceSymbolsExpectation) Contains(names ...string) *WorkspaceSymbolsExpectation {
+	e.t.Helper()
+
+	actualNames := make(map[string]bool)
+	for _, sym := range e.symbols {
+		actualNames[sym.Name] = true
+	}
+
+	for _, name := range names {
+		if !actualNames[name] {
+			e.t.Errorf("fbtest: workspace symbol query %q missing expected symbol %q", e.query, name)
+		}
+	}
+
+	return e
+}
+
+func (e *WorkspaceSymbolsExpectation) SymbolKind(name string, expectedKind lsp.SymbolKind) *WorkspaceSymbolsExpectation {
+	e.t.Helper()
+
+	for _, sym := range e.symbols {
+		if sym.Name == name {
+			if sym.Kind != expectedKind {
+				e.t.Errorf("fbtest: workspace symbol %q has kind %v, expected %v",
+					name, sym.Kind, expectedKind)
+			}
+			return e
+		}
+	}
+
+	e.t.Errorf("fbtest: workspace symbol %q not found in query %q results", name, e.query)
+	return e
+}
+
+func (e *WorkspaceSymbolsExpectation) ExactMatch(expectedNames ...string) *WorkspaceSymbolsExpectation {
+	e.t.Helper()
+
+	actualNames := make(map[string]bool)
+	for _, sym := range e.symbols {
+		actualNames[sym.Name] = true
+	}
+
+	for _, expectedName := range expectedNames {
+		if !actualNames[expectedName] {
+			e.t.Errorf("fbtest: workspace symbol query %q missing expected symbol %q", e.query, expectedName)
+		} else {
+			delete(actualNames, expectedName)
+		}
+	}
+
+	for symName := range actualNames {
+		e.t.Errorf("fbtest: workspace symbol query %q has unexpected symbol %q",
+			e.query, symName)
+	}
+
+	return e
+}
+
+func (f *Fixture) ExpectWorkspaceSymbols(query string) *WorkspaceSymbolsExpectation {
+	f.t.Helper()
+
+	provider, err := service.Get[server.WorkspaceSymbolProvider](f.sc)
+	if err != nil {
+		f.t.Fatalf("fbtest: no workspace symbol provider registered")
+		return nil
+	}
+
+	params := &lsp.WorkspaceSymbolParams{
+		Query: query,
+	}
+
+	result, err := provider.HandleWorkspaceSymbolRequest(f.ctx, params)
+	if err != nil {
+		f.t.Fatalf("fbtest: workspace symbol request failed: %v", err)
+		return nil
+	}
+
+	return &WorkspaceSymbolsExpectation{
+		t:       f.t,
+		query:   query,
+		symbols: result,
+	}
 }

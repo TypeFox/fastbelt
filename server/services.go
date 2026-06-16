@@ -76,4 +76,7 @@ func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[DocumentHighlightProvider](sc) {
 		service.Put(sc, NewDefaultDocumentHighlightProvider(sc))
 	}
+	if !service.Has[WorkspaceSymbolProvider](sc) {
+		service.Put(sc, NewDefaultWorkspaceSymbolProvider(sc))
+	}
 }
