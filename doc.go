@@ -20,26 +20,6 @@
 // grammar definition, which you can integrate and customize with additional
 // code.
 //
-// # Scaffolding
-//
-// The [typefox.dev/fastbelt/cmd/fastbelt] command can scaffold a new language
-// project with:
-//
-//	fastbelt scaffold -module example.com/you/mylang -language "MyLanguage"
-//
-// The scaffold creates these root files in the generated package directory:
-//
-//   - gen.go with go:generate directives for grammar-based code generation.
-//   - services.go with customization points for generated services.
-//   - <language-id>.fb as the initial grammar definition file.
-//   - cmd/<language-id>-lsp/main.go as the LSP server entrypoint.
-//
-// By default, scaffolding also creates VS Code extension files in a
-// `vscode-extension` subfolder.
-//
-// After writing templates, scaffolding runs go generate and go mod tidy so the
-// generated parser, lexer, linker, and supporting files are ready to use.
-//
 // # Defining the Grammar
 //
 // Defining a language in Fastbelt is an iterative design process. You
@@ -109,9 +89,9 @@
 //   - calls needed `SetupDefaultServices` functions from framework packages, and
 //   - calls `SetupGeneratedServices` from generated code.
 //
-// When you scaffold a new language project, Fastbelt generates a `services.go`
-// file that follows this pattern and can be used as a starting point for your
-// own service-container customization.
+// Scaffolded language projects include a generated `services.go` that follows
+// this pattern and can be used as a starting point for service-container
+// customization.
 //
 // # To Go Further
 //

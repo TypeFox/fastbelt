@@ -15,7 +15,7 @@ import (
 )
 
 // Overlay represents an open text document in the editor.
-// It may have unsaved edits and implements both Handle and Mapper.
+// It may have unsaved edits and implements [Handle].
 // Conceptually, an overlay models in-memory edits layered on top of any on-disk file content.
 type Overlay struct {
 	File
