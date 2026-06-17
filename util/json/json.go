@@ -14,28 +14,18 @@ import (
 
 // Unmarshal decodes data into T by reading the "$type" field to select a factory from factories.
 func Unmarshal[T any](data []byte, factories map[string]func() core.AstNode) (T, error) {
-	var raw map[string]json.RawMessage
-	if err := json.Unmarshal(data, &raw); err != nil {
+	node := &struct {
+		Type string `json:"$type"`
+	}{}
+	if err := json.Unmarshal(data, node); err != nil {
 		var zero T
 		return zero, fmt.Errorf("unmarshal: %w", err)
 	}
 
-	typeRaw, ok := raw["$type"]
+	factory, ok := factories[node.Type]
 	if !ok {
 		var zero T
-		return zero, fmt.Errorf("unmarshal: missing $type field")
-	}
-
-	var typeName string
-	if err := json.Unmarshal(typeRaw, &typeName); err != nil {
-		var zero T
-		return zero, fmt.Errorf("unmarshal $type: %w", err)
-	}
-
-	factory, ok := factories[typeName]
-	if !ok {
-		var zero T
-		return zero, fmt.Errorf("unmarshal: unknown type %q", typeName)
+		return zero, fmt.Errorf("unmarshal: unknown type %q", node.Type)
 	}
 
 	instance := factory()
@@ -47,7 +37,7 @@ func Unmarshal[T any](data []byte, factories map[string]func() core.AstNode) (T,
 
 	if err := json.Unmarshal(data, casted); err != nil {
 		var zero T
-		return zero, fmt.Errorf("unmarshal %s: %w", typeName, err)
+		return zero, fmt.Errorf("unmarshal %s: %w", node.Type, err)
 	}
 
 	return casted, nil
