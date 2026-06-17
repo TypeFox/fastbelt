@@ -8,6 +8,8 @@ For project documentation, read the package documentation written in Go doc form
 - `grammar/doc.go`: Reference documentation for the grammar language
 - `lexer/doc.go`: Shared lexer runtime used by Fastbelt-generated languages
 - `textdoc/doc.go`: Text documents, overlays, and LSP position mapping
+- `linking/doc.go`: Cross-reference resolution, symbol tables, and scopes
+- `workspace/doc.go`: Document lifecycle, loading, edits, and the build pipeline
 
 Utility packages:
 

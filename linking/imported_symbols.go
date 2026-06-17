@@ -27,6 +27,8 @@ type DefaultSymbolImporter struct {
 	sc *service.Container
 }
 
+// NewDefaultSymbolImporter returns a [SymbolImporter] that merges exported
+// symbols from all workspace documents into a single lazy sequence.
 func NewDefaultSymbolImporter(sc *service.Container) SymbolImporter {
 	return &DefaultSymbolImporter{sc: sc}
 }

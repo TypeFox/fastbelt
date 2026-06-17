@@ -24,6 +24,8 @@ type DefaultReferenceDescriptionsProvider struct {
 	sc *service.Container
 }
 
+// NewDefaultReferenceDescriptionsProvider returns a [ReferenceDescriptionsProvider]
+// that indexes resolved references by their source node.
 func NewDefaultReferenceDescriptionsProvider(sc *service.Container) ReferenceDescriptionsProvider {
 	return &DefaultReferenceDescriptionsProvider{sc: sc}
 }
@@ -58,6 +60,8 @@ type DefaultReferenceDescriber struct {
 	sc *service.Container
 }
 
+// NewDefaultReferenceDescriber returns a [ReferenceDescriber] that records
+// source node, target node, and text segment for each reference.
 func NewDefaultReferenceDescriber(sc *service.Container) ReferenceDescriber {
 	return &DefaultReferenceDescriber{sc: sc}
 }

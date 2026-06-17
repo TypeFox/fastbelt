@@ -18,11 +18,13 @@ type LocalSymbolsProvider interface {
 	LocalSymbols(ctx context.Context, document *core.Document) core.LocalSymbols
 }
 
-// DefaultLocalSymbolsProvider is the default implementation of LocalSymbolsProvider.
+// DefaultLocalSymbolsProvider is the default implementation of [LocalSymbolsProvider].
 type DefaultLocalSymbolsProvider struct {
 	sc *service.Container
 }
 
+// NewDefaultLocalSymbolsProvider returns a [LocalSymbolsProvider] that walks
+// the document AST and records locally visible symbols per container node.
 func NewDefaultLocalSymbolsProvider(sc *service.Container) LocalSymbolsProvider {
 	return &DefaultLocalSymbolsProvider{sc: sc}
 }

@@ -26,6 +26,8 @@ type DefaultLinker struct {
 	sc *service.Container
 }
 
+// NewDefaultLinker returns a [Linker] that resolves every reference in a
+// document's AST in parallel.
 func NewDefaultLinker(sc *service.Container) Linker {
 	return &DefaultLinker{sc: sc}
 }

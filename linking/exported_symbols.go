@@ -25,6 +25,8 @@ type DefaultSymbolExporter struct {
 	sc *service.Container
 }
 
+// NewDefaultSymbolExporter returns a [SymbolExporter] that exports the document
+// root and its direct named children.
 func NewDefaultSymbolExporter(sc *service.Container) SymbolExporter {
 	return &DefaultSymbolExporter{sc: sc}
 }

@@ -18,10 +18,12 @@ import (
 	"typefox.dev/lsp"
 )
 
-// Initializer initializes the documents of a workspace.
+// Initializer loads workspace files into [DocumentManager] when an LSP
+// workspace folder is opened.
 type Initializer interface {
-	// Initialize walks the given workspace folders, reads files matching the
-	// configured extensions, and creates documents for them.
+	// Initialize walks folders on disk, reads files whose extension matches
+	// [FileExtensions], and registers them with [DocumentManager]. Hidden
+	// directories (names starting with ".") are skipped.
 	Initialize(ctx context.Context, folders []lsp.WorkspaceFolder) error
 }
 
@@ -30,6 +32,8 @@ type DefaultInitializer struct {
 	sc *service.Container
 }
 
+// NewDefaultInitializer returns an [Initializer] that scans workspace folders
+// for files matching [FileExtensions].
 func NewDefaultInitializer(sc *service.Container) Initializer {
 	return &DefaultInitializer{sc: sc}
 }

@@ -9,7 +9,9 @@ import (
 	"sync"
 )
 
-// Lock controls read/write access to the workspace.
+// Lock controls read/write access to workspace [core.Document] data.
+// LSP request handlers use [Lock.Read]; document updates and builds use
+// [Lock.Write] with an atomic downgrade to shared access for validation.
 type Lock interface {
 	// Write cancels any pending or in-progress write, then acquires an exclusive
 	// lock and calls do with a fresh context and a downgrade function. Calling
@@ -19,11 +21,11 @@ type Lock interface {
 	Write(ctx context.Context, do func(ctx context.Context, downgrade func()))
 	// Read acquires a shared lock, calls do, then releases the lock.
 	// It blocks while a write is in progress or pending.
-	// Returns ctx.Err() if the context is cancelled while waiting.
+	// Read returns ctx.Err() if ctx is cancelled while waiting to acquire the lock.
 	Read(ctx context.Context, do func(ctx context.Context)) error
 }
 
-// DefaultLock is the default implementation of WorkspaceLock.
+// DefaultLock is the default implementation of [Lock].
 //
 // The key property is atomic write-to-read downgrade: when downgrade is called,
 // the caller atomically transitions from holding the exclusive write lock to holding
@@ -46,7 +48,8 @@ type DefaultLock struct {
 	cancelWrite  context.CancelFunc // cancels the current pending or in-progress write
 }
 
-// NewDefaultLock creates a new default workspace lock.
+// NewDefaultLock returns a [Lock] with write-priority scheduling and atomic
+// write-to-read downgrade.
 func NewDefaultLock() Lock {
 	l := &DefaultLock{}
 	l.cond = sync.NewCond(&l.mu)

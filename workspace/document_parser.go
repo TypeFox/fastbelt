@@ -11,10 +11,10 @@ import (
 	"typefox.dev/fastbelt/util/service"
 )
 
-// DocumentParser is a service for parsing documents.
+// DocumentParser lexes and parses a single document.
 type DocumentParser interface {
-	// Parses the document and stores the resulting Tokens and AST node Root (incl. potential errors) into the document.
-	// The caller must hold the document's write lock.
+	// Parse tokenizes doc.TextDoc, builds doc.Root, and stores lexer and parser
+	// errors on doc. The caller must hold the workspace write [Lock].
 	Parse(doc *core.Document)
 }
 
@@ -23,6 +23,8 @@ type DefaultDocumentParser struct {
 	sc *service.Container
 }
 
+// NewDefaultDocumentParser returns a [DocumentParser] that uses the registered
+// [lexer.Lexer] and [parser.Parser] services.
 func NewDefaultDocumentParser(sc *service.Container) DocumentParser {
 	return &DefaultDocumentParser{sc: sc}
 }

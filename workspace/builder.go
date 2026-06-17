@@ -15,7 +15,8 @@ import (
 	"typefox.dev/fastbelt/util/service"
 )
 
-// Builder is a service for applying build steps to workspace documents.
+// Builder runs the workspace document build pipeline: parse, symbol export/import,
+// linking, reference indexing, and validation.
 type Builder interface {
 	// Build processes the provided documents through all build phases (parse, compute
 	// symbol table, link, validate). It should regularly check ctx for cancellation
@@ -35,8 +36,9 @@ type Builder interface {
 	RemoveBuildStepListener(listener BuildStepListener)
 }
 
-// BuildStepListener is called right after a document has completed a build step.
-// If the listener returns an error, it will be logged but will not prevent other listeners from being called.
+// BuildStepListener is called right after a document completes a build step
+// selected by [Builder.AddBuildStepListener]. If the listener returns an error,
+// it is logged and does not stop other listeners or the build.
 type BuildStepListener func(ctx context.Context, doc *core.Document) error
 
 type buildStepEntry struct {
@@ -51,6 +53,8 @@ type DefaultBuilder struct {
 	listenersMu sync.RWMutex
 }
 
+// NewDefaultBuilder returns a [Builder] that runs the standard three-phase
+// build pipeline in parallel per document within each phase.
 func NewDefaultBuilder(sc *service.Container) Builder {
 	return &DefaultBuilder{sc: sc}
 }

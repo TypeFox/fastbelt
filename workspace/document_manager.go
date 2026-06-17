@@ -14,19 +14,19 @@ import (
 )
 
 // DocumentManager holds all known documents of a workspace in memory.
-// All methods of DocumentManager are thread-safe and can be called concurrently.
+// All methods are safe for concurrent use.
 type DocumentManager interface {
-	// Checks if a document with the given URI exists.
+	// Has reports whether a document with the given URI is managed.
 	Has(uri core.URI) bool
-	// Retrieves the document for the given URI, or nil if it does not exist.
+	// Get returns the document for uri, or nil if it is not managed.
 	Get(uri core.URI) *core.Document
-	// Adds or updates the given document.
+	// Set adds or replaces a document keyed by document.URI.
 	Set(document *core.Document)
-	// Returns a sequence of all managed documents.
+	// All returns every managed document. The sequence may be iterated only once.
 	All() iter.Seq[*core.Document]
-	// Deletes the document with the given URI and returns it, or nil if it did not exist.
+	// Delete removes the document for uri and returns it, or nil if it was not managed.
 	Delete(uri core.URI) *core.Document
-	// Clears all documents from the manager.
+	// Clear removes every document from the manager.
 	Clear()
 }
 
@@ -36,6 +36,7 @@ type DefaultDocumentManager struct {
 	documents sync.Map
 }
 
+// NewDefaultDocumentManager returns a [DocumentManager] backed by a concurrent map.
 func NewDefaultDocumentManager(sc *service.Container) DocumentManager {
 	return &DefaultDocumentManager{
 		sc:        sc,

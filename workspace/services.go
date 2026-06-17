@@ -8,16 +8,22 @@ import (
 	"typefox.dev/fastbelt/util/service"
 )
 
-// LanguageID is the identifier of the language managed by this workspace.
-// It must be set by adopters and corresponds to the language ID used in the LSP protocol.
+// LanguageID is the LSP language identifier for documents in this workspace.
+// Adopters must register a value with [service.Put] before sealing the
+// container; [DefaultInitializer] and the LSP document sync layer read it
+// when creating [core.Document] values.
 type LanguageID string
 
-// FileExtensions contains the file extensions to include, with leading dot
-// (e.g. []string{".statemachine"}). It must be set by adopters.
+// FileExtensions lists filename suffixes that belong to this language, each
+// with a leading dot (for example []string{".statemachine"}). Adopters must
+// register a value with [service.Put]; [DefaultInitializer] uses it to
+// decide which files to load when a workspace folder is opened.
 type FileExtensions []string
 
-// SetupDefaultServices sets up the default services for the workspace package.
-// If any service is already set, it's not overwritten.
+// SetupDefaultServices registers default workspace services in sc.
+// It is idempotent: types that are already registered are left unchanged.
+// Call it from a language's SetupServices after registering [LanguageID] and
+// [FileExtensions], and before [service.Container.Seal].
 func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[DocumentManager](sc) {
 		service.Put(sc, NewDefaultDocumentManager(sc))
