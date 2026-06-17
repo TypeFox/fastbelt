@@ -41,8 +41,10 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 	if triggers, err := service.Get[CompletionTriggers](s.sc); err == nil && triggers != nil {
 		triggerChars = triggers.TriggerCharacters()
 	}
+	positionEncoding := lsp.UTF16
 	return &lsp.InitializeResult{
 		Capabilities: lsp.ServerCapabilities{
+			PositionEncoding: &positionEncoding,
 			TextDocumentSync: lsp.Incremental,
 			CompletionProvider: &lsp.CompletionOptions{
 				ResolveProvider:   false,

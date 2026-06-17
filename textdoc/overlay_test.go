@@ -457,6 +457,241 @@ func TestUpdateBackwardsRange(t *testing.T) {
 	}
 }
 
+func TestUpdateUTF16(t *testing.T) {
+	testCases := []struct {
+		name     string
+		content  string
+		changes  []lsp.TextDocumentContentChangeEvent
+		expected string
+	}{
+		{
+			// é = U+00E9: 2 UTF-8 bytes, 1 UTF-16 code unit
+			name:    "replace two-byte rune",
+			content: "aéb",
+			changes: []lsp.TextDocumentContentChangeEvent{
+				{
+					Range: &lsp.Range{
+						Start: lsp.Position{Line: 0, Character: 1},
+						End:   lsp.Position{Line: 0, Character: 2},
+					},
+					Text: "x",
+				},
+			},
+			expected: "axb",
+		},
+		{
+			// 😀 = U+1F600: 4 UTF-8 bytes, 2 UTF-16 code units (surrogate pair)
+			name:    "replace surrogate-pair rune",
+			content: "a😀b",
+			changes: []lsp.TextDocumentContentChangeEvent{
+				{
+					Range: &lsp.Range{
+						Start: lsp.Position{Line: 0, Character: 1},
+						End:   lsp.Position{Line: 0, Character: 3},
+					},
+					Text: "x",
+				},
+			},
+			expected: "axb",
+		},
+		{
+			name:    "insert after two-byte rune",
+			content: "aé\nbc",
+			changes: []lsp.TextDocumentContentChangeEvent{
+				{
+					Range: &lsp.Range{
+						Start: lsp.Position{Line: 0, Character: 2},
+						End:   lsp.Position{Line: 0, Character: 2},
+					},
+					Text: "!",
+				},
+			},
+			expected: "aé!\nbc",
+		},
+		{
+			name:    "cross-line range with multi-byte rune",
+			content: "aé\nbc",
+			changes: []lsp.TextDocumentContentChangeEvent{
+				{
+					// Replace from after 'a' on line 0 to after 'b' on line 1
+					Range: &lsp.Range{
+						Start: lsp.Position{Line: 0, Character: 1},
+						End:   lsp.Position{Line: 1, Character: 1},
+					},
+					Text: "X",
+				},
+			},
+			expected: "aXc",
+		},
+		{
+			name:    "replace surrogate-pair rune on second line",
+			content: "ab\n😀x",
+			changes: []lsp.TextDocumentContentChangeEvent{
+				{
+					Range: &lsp.Range{
+						Start: lsp.Position{Line: 1, Character: 0},
+						End:   lsp.Position{Line: 1, Character: 2},
+					},
+					Text: "y",
+				},
+			},
+			expected: "ab\nyx",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			doc, err := NewOverlay("file:///test.txt", "plaintext", 1, tc.content)
+			if err != nil {
+				t.Fatalf("NewOverlay failed: %v", err)
+			}
+			err = doc.Update(tc.changes, 2)
+			if err != nil {
+				t.Fatalf("Update failed: %v", err)
+			}
+			if got := doc.Text(nil); got != tc.expected {
+				t.Errorf("expected %q, got %q", tc.expected, got)
+			}
+		})
+	}
+}
+
+func TestUpdateUTF16Validation(t *testing.T) {
+	testCases := []struct {
+		name        string
+		content     string
+		character   uint32
+		shouldError bool
+	}{
+		{
+			// "aé" has UTF-16 length 2; character 2 is valid (at end of line)
+			name:        "character at end of two-byte rune line is valid",
+			content:     "aé",
+			character:   2,
+			shouldError: false,
+		},
+		{
+			// "aé" has UTF-16 length 2; character 3 exceeds the line
+			name:        "character past end of two-byte rune line is invalid",
+			content:     "aé",
+			character:   3,
+			shouldError: true,
+		},
+		{
+			// "a😀" has UTF-16 length 3 (😀 = 2 units); character 3 is valid
+			name:        "character at end of surrogate-pair line is valid",
+			content:     "a😀",
+			character:   3,
+			shouldError: false,
+		},
+		{
+			// "a😀" has UTF-16 length 3; character 4 exceeds the line
+			name:        "character past end of surrogate-pair line is invalid",
+			content:     "a😀",
+			character:   4,
+			shouldError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			doc, err := NewOverlay("file:///test.txt", "plaintext", 1, tc.content)
+			if err != nil {
+				t.Fatalf("NewOverlay failed: %v", err)
+			}
+			err = doc.Update([]lsp.TextDocumentContentChangeEvent{
+				{
+					Range: &lsp.Range{
+						Start: lsp.Position{Line: 0, Character: tc.character},
+						End:   lsp.Position{Line: 0, Character: tc.character},
+					},
+					Text: "",
+				},
+			}, 2)
+			if tc.shouldError && err == nil {
+				t.Error("expected error, got nil")
+			} else if !tc.shouldError && err != nil {
+				t.Errorf("expected no error, got: %v", err)
+			}
+		})
+	}
+}
+
+func TestApplyEditsUTF16(t *testing.T) {
+	testCases := []struct {
+		name     string
+		content  string
+		edits    []lsp.TextEdit
+		expected string
+	}{
+		{
+			name:    "replace two-byte rune",
+			content: "aéb",
+			edits: []lsp.TextEdit{
+				{
+					Range: lsp.Range{
+						Start: lsp.Position{Line: 0, Character: 1},
+						End:   lsp.Position{Line: 0, Character: 2},
+					},
+					NewText: "x",
+				},
+			},
+			expected: "axb",
+		},
+		{
+			name:    "replace surrogate-pair rune",
+			content: "a😀b",
+			edits: []lsp.TextEdit{
+				{
+					Range: lsp.Range{
+						Start: lsp.Position{Line: 0, Character: 1},
+						End:   lsp.Position{Line: 0, Character: 3},
+					},
+					NewText: "x",
+				},
+			},
+			expected: "axb",
+		},
+		{
+			name:    "multiple edits with multi-byte runes",
+			content: "aé\n😀b",
+			edits: []lsp.TextEdit{
+				{
+					Range: lsp.Range{
+						Start: lsp.Position{Line: 0, Character: 1},
+						End:   lsp.Position{Line: 0, Character: 2},
+					},
+					NewText: "X",
+				},
+				{
+					Range: lsp.Range{
+						Start: lsp.Position{Line: 1, Character: 0},
+						End:   lsp.Position{Line: 1, Character: 2},
+					},
+					NewText: "Y",
+				},
+			},
+			expected: "aX\nYb",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			doc, err := NewOverlay("file:///test.txt", "plaintext", 1, tc.content)
+			if err != nil {
+				t.Fatalf("NewOverlay failed: %v", err)
+			}
+			result, err := doc.ApplyEdits(tc.edits)
+			if err != nil {
+				t.Fatalf("ApplyEdits failed: %v", err)
+			}
+			if result != tc.expected {
+				t.Errorf("expected %q, got %q", tc.expected, result)
+			}
+		})
+	}
+}
+
 func TestUpdateConsecutiveUpdates(t *testing.T) {
 	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "a\nb\nc")
 	if err != nil {
