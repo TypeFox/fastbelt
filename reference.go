@@ -7,7 +7,6 @@ package fastbelt
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"iter"
 	"reflect"
 	"slices"
@@ -303,19 +302,22 @@ func (r *Reference[T]) MarshalJSON() ([]byte, error) {
 		return []byte("null"), nil
 	}
 	// We expect at this point that all references have been attempted to resolve.
-	if !r.resolved.Load() {
-		return nil, errors.New("reference not resolved")
-	}
+	// if !r.resolved.Load() {
+	// 	return nil, errors.New("reference not resolved")
+	// }
 
 	var uri string
 	var errMsg string
 	if r.err != nil {
 		errMsg = r.err.Msg
-	} else if doc := r.ref.Document(); doc != nil {
-		uri = doc.URI.WithFragment("todo-fragment").StringUnencoded()
-	} else {
-		return nil, errors.New("unexpected state: resolved reference has no document")
+	} else if ref := r.ref; any(ref) != nil {
+		if doc := ref.Document(); doc != nil {
+			uri = doc.URI.WithFragment("todo-fragment").StringUnencoded()
+		}
 	}
+	// else {
+	// 	return nil, errors.New("unexpected state: resolved reference has no document")
+	// }
 
 	return json.Marshal(struct {
 		RefText string `json:"$refText"`
