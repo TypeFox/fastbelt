@@ -56,7 +56,7 @@ func (d *Doc) AssertNoParseErrors() *Doc {
 	return d
 }
 
-// AssertNoLinkingErrors fails the test if the document has no references at all,
+// AssertNoLinkingErrors fails the test if the document has not reached state 'core.DocStateLinked',
 // or if any reference failed to resolve.
 func (d *Doc) AssertNoLinkingErrors() *Doc {
 	d.fixture.t.Helper()
@@ -145,8 +145,8 @@ func (d *DiagnosticExpectation) WithTags(tags ...core.DiagnosticTag) *Diagnostic
 	})
 }
 
-// ExpectDiagnostic fails the test unless at least one diagnostic has the given
-// severity and a message containing msgSubstring.
+// ExpectDiagnostic fails the test if no diagnostic exists at the marker range
+// identified by label. Returns a [DiagnosticExpectation] for further filtering.
 func (d *Doc) ExpectDiagnostic(label string) *DiagnosticExpectation {
 	d.fixture.t.Helper()
 	loc, err := d.MarkerRange(label)
@@ -167,9 +167,9 @@ func (d *Doc) ExpectDiagnostic(label string) *DiagnosticExpectation {
 	return &DiagnosticExpectation{t: d.fixture.t, Diagnostics: matched}
 }
 
-// ExpectNoDiagnostic fails the test if at least one diagnostic has the given
-// severity and a message containing msgSubstring.
-func (d *Doc) ExpectNoDiagnostic(label string) *Doc {
+// AssertNoDiagnostic fails the test if unless no diagnostic exists at the marker range
+// identified by label.
+func (d *Doc) AssertNoDiagnostic(label string) *Doc {
 	d.fixture.t.Helper()
 	loc, err := d.MarkerRange(label)
 	if err != nil {
@@ -184,7 +184,7 @@ func (d *Doc) ExpectNoDiagnostic(label string) *Doc {
 	return d
 }
 
-// AssertNoDiagnostics fails the test if any diagnostics exist at any severity.
+// AssertNoDiagnostics fails the test unless the document is free of any diagnostics.
 func (d *Doc) AssertNoDiagnostics() *Doc {
 	d.fixture.t.Helper()
 	for _, diag := range d.Document.Diagnostics {

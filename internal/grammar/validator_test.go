@@ -221,7 +221,7 @@ func TestInheritedFieldNameDuplicateInDeepHierarchyNoErrorAtTopElement(t *testin
 			<|1:Bar|> string
 		}
 	` + commonTokens)
-	doc.ExpectNoDiagnostic("1")
+	doc.AssertNoDiagnostic("1")
 }
 
 // --- Terminal ---
