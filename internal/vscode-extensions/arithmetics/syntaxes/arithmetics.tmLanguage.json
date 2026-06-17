@@ -1,0 +1,47 @@
+{
+  "name": "arithmetics",
+  "scopeName": "source.arithmetics",
+  "fileTypes": [
+    ".calc"
+  ],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "name": "keyword.control.arithmetics",
+      "match": "(?i)\\b(def|module)\\b"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.arithmetics",
+          "begin": "/\\*",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.arithmetics"
+            }
+          },
+          "end": "\\*/",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.arithmetics"
+            }
+          }
+        },
+        {
+          "begin": "//",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.whitespace.comment.leading.arithmetics"
+            }
+          },
+          "end": "(?=$)",
+          "name": "comment.line.arithmetics"
+        }
+      ]
+    }
+  }
+}

@@ -54,6 +54,19 @@
 			]
 		},
 		{
+			"name": "Arithmetics Extension",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"${workspaceFolder}/examples/arithmetics/examples",
+				"--extensionDevelopmentPath=${workspaceFolder}/internal/vscode-extensions/arithmetics"
+			],
+			"sourceMaps": true,
+			"outFiles": [
+				"${workspaceFolder}/internal/vscode-extensions/arithmetics/dist/**/*.js"
+			]
+		},
+		{
 			"name": "Statemachine Extension",
 			"type": "extensionHost",
 			"request": "launch",

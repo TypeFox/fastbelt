@@ -1,0 +1,85 @@
+grammar Arithmetics;
+
+interface Module {
+    Name string
+    Statements []Statement
+}
+
+interface Statement{}
+
+interface AbstractDefinition {
+    Name string
+}
+
+interface Definition extends AbstractDefinition, Statement {
+    Args []DeclaredParameter
+    Expression Expression
+}
+
+interface DeclaredParameter extends AbstractDefinition {
+}
+
+interface Evaluation extends Statement {
+    Expression Expression
+}
+
+interface Expression {}
+
+interface BinaryExpression extends Expression {
+    Left Expression
+    Operator string //"%" | "*" | "+" | "-" | "/" | "^"
+    Right Expression
+}
+
+interface FunctionCall extends Expression {
+    Args []Expression
+    Callable *AbstractDefinition
+}
+
+interface NumberLiteral extends Expression {
+    Value string
+}
+
+Module returns Module:
+    "module" Name=ID
+    Statements+=Statement*;
+
+Statement returns Statement:
+    Definition | Evaluation;
+
+Definition:
+    "def" Name=ID ("(" Args+=DeclaredParameter ("," Args+=DeclaredParameter)* ")")?
+    ":" Expression=Expression ";";
+
+DeclaredParameter:
+    Name=ID;
+
+Evaluation:
+    Expression=Expression ";";
+
+Expression:
+    Addition;
+
+Addition returns Expression:
+    Multiplication ({BinaryExpression.Left=current} Operator=("+" | "-") Right=Multiplication)*;
+
+Multiplication returns Expression:
+    Exponentiation ({BinaryExpression.Left=current} Operator=("*" | "/") Right=Exponentiation)*;
+
+Exponentiation returns Expression:
+    Modulo ({BinaryExpression.Left=current} Operator="^" Right=Modulo)*;
+
+Modulo returns Expression:
+    PrimaryExpression ({BinaryExpression.Left=current} Operator="%" Right=PrimaryExpression)*;
+
+PrimaryExpression returns Expression:
+    "(" Expression ")" |
+    { NumberLiteral } Value=NUMBER |
+    {FunctionCall} Callable=[AbstractDefinition:ID] ("(" Args+=Expression ("," Args+=Expression)* ")")?;
+
+token ID: /[_a-zA-Z][\w_]*/;
+token NUMBER: /[0-9]+(\.[0-9]*)?/;
+
+hidden token WS: /\s+/;
+comment token ML_COMMENT: /\/\*[\s\S]*?\*\//;
+hidden token SL_COMMENT: /\/\/[^\n\r]*/;

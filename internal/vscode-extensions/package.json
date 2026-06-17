@@ -8,7 +8,7 @@
   },
   "scripts": {
     "clean": "shx rm -rf ./*/dist ./*/*.tsbuildinfo",
-    "build": "npm run build --workspace=fastbelt --workspace=statemachine"
+    "build": "npm run build --workspaces"
   },
   "devDependencies": {
     "@types/vscode": "^1.104.0",
@@ -19,6 +19,7 @@
   },
   "workspaces": [
     "fastbelt",
+    "arithmetics",
     "statemachine"
   ]
 }

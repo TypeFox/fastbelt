@@ -1,0 +1,50 @@
+{
+  "name": "arithmetics-vscode",
+  "publisher": "typefox",
+  "displayName": "Arithmetics Test Language",
+  "description": "VS Code support for Arithmetics",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.104.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "arithmetics",
+        "aliases": [
+          "arithmetics",
+          "Arithmetics"
+        ],
+        "extensions": [
+          ".calc"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "arithmetics",
+        "scopeName": "source.arithmetics",
+        "path": "./syntaxes/arithmetics.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "npm run check-types && node esbuild.js && npm run build-server",
+    "bundle": "node esbuild.js --production",
+    "package": "vsce package --no-dependencies --allow-missing-repository --skip-license -o arithmetics-vscode.vsix",
+    "watch": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch",
+    "vscode:prepublish": "npm run check-types && node esbuild.js --production",
+    "check-types": "tsc --noEmit",
+    "build-server": "go build -o dist/server ../../../examples/arithmetics/server"
+  },
+  "dependencies": {
+    "vscode-languageclient": "~9.0.1"
+  }
+}

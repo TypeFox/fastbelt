@@ -9,26 +9,29 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode"
 
 	core "typefox.dev/fastbelt"
 )
 
 const (
-	ValidateUniqueRuleName        = "uniqueRuleName"
-	ValidateUniqueInterfaceName   = "uniqueInterfaceName"
-	ValidateEmptyToken            = "emptyTerminalRule"
-	ValidateEmptyKeyword          = "emptyKeyword"
-	ValidateWhitespaceOnlyKeyword = "whitespaceOnlyKeyword"
-	ValidateKeywordWithWhitespace = "keywordWithWhitespace"
-	ValidateRuleReturnType        = "ruleReturnType"
-	ValidateInterfaceExtends      = "interfaceExtends"
-	ValidateRuleCallReturnType    = "ruleCallReturnType"
-	ValidateRuleCallPosition      = "ruleCallPosition"
-	ValidateActionAssignmentType  = "actionAssignmentType"
-	ValidateActionPropertyType    = "actionPropertyType"
-	ValidateAssignmentType        = "assignmentType"
-	ValidateRecursiveTokenGroup   = "recursiveTokenGroup"
-	ValidateInvalidTokenInGroup   = "invalidTokenInGroup"
+	ValidateUniqueRuleName         = "uniqueRuleName"
+	ValidateUniqueInterfaceName    = "uniqueInterfaceName"
+	ValidateEmptyToken             = "emptyTerminalRule"
+	ValidateEmptyKeyword           = "emptyKeyword"
+	ValidateWhitespaceOnlyKeyword  = "whitespaceOnlyKeyword"
+	ValidateKeywordWithWhitespace  = "keywordWithWhitespace"
+	ValidateRuleReturnType         = "ruleReturnType"
+	ValidateInterfaceExtends       = "interfaceExtends"
+	ValidateRuleCallReturnType     = "ruleCallReturnType"
+	ValidateRuleCallPosition       = "ruleCallPosition"
+	ValidateActionAssignmentType   = "actionAssignmentType"
+	ValidateActionPropertyType     = "actionPropertyType"
+	ValidateAssignmentType         = "assignmentType"
+	ValidateRecursiveTokenGroup    = "recursiveTokenGroup"
+	ValidateInvalidTokenInGroup    = "invalidTokenInGroup"
+	ValidateUniqueFieldName        = "uniqueFieldName"
+	ValidateFieldNameCapitalLetter = "fieldNameCapitalLetter"
 )
 
 // GrammarImpl.Validate checks grammar-level constraints:
@@ -192,6 +195,76 @@ func checkRuleReturnType(rule ParserRule, _ context.Context, accept core.Validat
 
 func (i *InterfaceImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
 	checkInterfaceExtends(i, ctx, accept)
+	checkInterfaceFieldNames(i, ctx, accept)
+}
+
+func collectInheritedFieldNames(iface Interface, ctx context.Context, collected map[string]Interface, visited map[string]struct{}) {
+	if _, alreadyVisited := visited[iface.Name()]; alreadyVisited {
+		return
+	}
+	visited[iface.Name()] = struct{}{}
+	for _, ext := range iface.Extends() {
+		extType := ext.Ref(ctx)
+		if extType == nil {
+			continue
+		}
+		// Recurse into the parent's ancestry first so the deepest (originating)
+		// declarant wins in `collected` when the same name appears at multiple levels.
+		collectInheritedFieldNames(extType, ctx, collected, visited)
+		for _, field := range extType.Fields() {
+			name := field.Name()
+			if name == "" {
+				continue
+			}
+			lower := strings.ToLower(name)
+			if _, exists := collected[lower]; !exists {
+				collected[lower] = extType
+			}
+		}
+	}
+}
+
+func checkInterfaceFieldNames(iface Interface, ctx context.Context, accept core.ValidationAcceptor) {
+	inherited := map[string]Interface{}
+	collectInheritedFieldNames(iface, ctx, inherited, map[string]struct{}{})
+
+	seen := map[string]struct{}{}
+	for _, field := range iface.Fields() {
+		name := field.Name()
+		if name == "" {
+			continue
+		}
+		if !unicode.IsUpper(rune(name[0])) {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				fmt.Sprintf("Property names must start with a capital letter. '%s' does not.", name),
+				field,
+				core.WithToken(field.NameToken()),
+				core.WithCode(ValidateFieldNameCapitalLetter),
+			))
+		}
+		lower := strings.ToLower(name)
+		if _, dup := seen[lower]; dup {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				fmt.Sprintf("A property's name has to be unique (case-insensitively). '%s' is already used above.", name),
+				field,
+				core.WithToken(field.NameToken()),
+				core.WithCode(ValidateUniqueFieldName),
+			))
+		} else {
+			seen[lower] = struct{}{}
+			if declaringIface, dup := inherited[lower]; dup {
+				accept(core.NewDiagnostic(
+					core.SeverityError,
+					fmt.Sprintf("A property's name has to be unique (case-insensitively). '%s' is already declared in '%s'.", name, declaringIface.Name()),
+					field,
+					core.WithToken(field.NameToken()),
+					core.WithCode(ValidateUniqueFieldName),
+				))
+			}
+		}
+	}
 }
 
 func checkInterfaceExtends(iface Interface, ctx context.Context, accept core.ValidationAcceptor) {

@@ -518,9 +518,9 @@ func generateAbstractElementParser(node codegen.Node, context *ParserGeneratorCo
 					}
 					n2.AppendLine("if ", resultName, " != nil {")
 					if _, ok := e.Value().(grammar.CrossRef); ok {
-						parserRuleName := getInterfaceName(e)
+						declaringInterfaceName := getDeclaringInterface(e)
 						// For cross-references, we need to create a Reference object
-						resultName = "p.referencesConstructor." + parserRuleName + e.Property().Text() + "(current, " + resultName + ")"
+						resultName = "p.referencesConstructor." + declaringInterfaceName + e.Property().Text() + "(current, " + resultName + ")"
 					}
 					n2.Indent(func(in codegen.Node) {
 						switch e.Operator() {
@@ -929,14 +929,66 @@ func isUniqueLookahead(lookahead LLkLookahead) bool {
 	return true
 }
 
-func getInterfaceName(element grammar.Element) string {
-	switch c := element.Container().(type) {
+// getDeclaringInterface returns the name of the interface that declares
+// the property being assigned by the given assignment. Searches backwards
+// through the sequential context for the nearest preceding Action (which
+// re-types 'current') and falls back to FindReturnType on the containing
+// ParserRule.
+func getDeclaringInterface(assignment grammar.Assignment) string {
+	action, parserRule := findPrecedingAction(assignment)
+	if action != nil {
+		return action.Type().Text()
+	}
+	if parserRule != nil {
+		if iface := grammar.FindReturnType(parserRule, ctx.Background()); iface != nil {
+			return iface.Name()
+		}
+		panic("No return type for rule: " + parserRule.Name())
+	}
+	panic("Unable to find containing parser rule for cross-reference assignment")
+}
+
+// findPrecedingAction searches backwards from element through its containing
+// sequential contexts (Groups) for the most recent preceding grammar.Action.
+// Stops at ParserRule boundaries (returning the rule). Passes through other
+// container types such as Alternatives by recursing upward without scanning
+// their siblings. Panics for unexpected container types (e.g. CompositeRule,
+// which cannot contain assignments by design).
+func findPrecedingAction(element grammar.Element) (grammar.Action, grammar.ParserRule) {
+	container := element.Container()
+	switch c := container.(type) {
+	case grammar.Group:
+		elements := c.Elements()
+		idx := slices.Index(elements, element)
+		for j := idx - 1; j >= 0; j-- {
+			if act := lastActionIn(elements[j]); act != nil {
+				return act, nil
+			}
+		}
+		return findPrecedingAction(c)
 	case grammar.ParserRule:
-		iface := grammar.FindReturnType(c, ctx.Background())
-		return iface.Name()
+		return nil, c
 	case grammar.Element:
-		return getInterfaceName(c)
+		return findPrecedingAction(c)
 	default:
 		panic("Unable to find parser rule for element")
 	}
+}
+
+// lastActionIn returns the last grammar.Action in the sequential tail of
+// element, scanning backwards. Used to check whether a Group preceding the
+// assignment contains a trailing action that re-typed 'current'. Returns nil
+// for Alternatives (conditional branches are not scanned).
+func lastActionIn(element grammar.Element) grammar.Action {
+	switch e := element.(type) {
+	case grammar.Action:
+		return e
+	case grammar.Group:
+		for i := len(e.Elements()) - 1; i >= 0; i-- {
+			if act := lastActionIn(e.Elements()[i]); act != nil {
+				return act
+			}
+		}
+	}
+	return nil
 }
