@@ -5,6 +5,7 @@
 package generator
 
 import (
+	"context"
 	"strings"
 
 	"typefox.dev/fastbelt/internal/grammar"
@@ -27,6 +28,14 @@ func GenerateJSON(grammr grammar.Grammar, packageName string) string {
 	node.AppendLine(")")
 	node.AppendLine()
 
+	node.AppendLine(("func newToken(tokenType *core.TokenType, view string) *core.Token {"))
+	node.Indent(func(n codegen.Node) {
+		n.AppendLine("token := core.NewToken(tokenType, view, 0, 0, 0, 0, 0, 0)")
+		n.AppendLine("return &token")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
 	for _, iface := range grammr.Interfaces() {
 		generateJSONMarshal(node, iface)
 	}
@@ -38,13 +47,27 @@ func GenerateJSON(grammr grammar.Grammar, packageName string) string {
 	return FormatIfPossible(node.String())
 }
 
-func generateJSONMarshal(node codegen.Node, iface grammar.Interface) {
+func collectAllFields(iface grammar.Interface, visited map[string]struct{}) []FieldInfo {
+	if _, seen := visited[iface.Name()]; seen {
+		return nil
+	}
+	visited[iface.Name()] = struct{}{}
 	fields := []FieldInfo{}
+	for _, ext := range iface.Extends() {
+		if parent := ext.Ref(context.TODO()); parent != nil {
+			fields = append(fields, collectAllFields(parent, visited)...)
+		}
+	}
 	for _, field := range iface.Fields() {
 		fields = append(fields, getFieldInfo(field))
 	}
+	return fields
+}
 
-	node.AppendLine("func (i *", iface.Name(), "Data) MarshalJSON() ([]byte, error) {")
+func generateJSONMarshal(node codegen.Node, iface grammar.Interface) {
+	fields := collectAllFields(iface, map[string]struct{}{})
+
+	node.AppendLine("func (i *", iface.Name(), "Impl) MarshalJSON() ([]byte, error) {")
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("return json.Marshal(struct {")
 		n.Indent(func(n2 codegen.Node) {
@@ -103,12 +126,9 @@ func getAuxFieldType(field FieldInfo) string {
 }
 
 func generateJSONUnmarshal(node codegen.Node, iface grammar.Interface) {
-	fields := []FieldInfo{}
-	for _, field := range iface.Fields() {
-		fields = append(fields, getFieldInfo(field))
-	}
+	fields := collectAllFields(iface, map[string]struct{}{})
 
-	node.AppendLine("func (i *", iface.Name(), "Data) UnmarshalJSON(data []byte) error {")
+	node.AppendLine("func (i *", iface.Name(), "Impl) UnmarshalJSON(data []byte) error {")
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("aux := &struct {")
 		n.Indent(func(n2 codegen.Node) {
@@ -131,17 +151,26 @@ func generateJSONUnmarshal(node codegen.Node, iface grammar.Interface) {
 				n.AppendLine("i.", field.PName, " = []", field.GType, "{}")
 				n.AppendLine("for _, item := range aux.", field.Name, " {")
 				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine("i.Set", field.Name, "Item(item)")
+					switch field.GType {
+					case TOKEN_TYPE:
+						n2.AppendLine("i.Set", field.Name, "Item(newToken(Token_ID, item))")
+					case COMPOSITE_TYPE:
+						n.AppendLine("cn := core.NewCompositeNode()")
+						n.AppendLine("cn.SetToken(newToken(Token_ID, item))")
+						n2.AppendLine("i.Set", field.Name, "Item(cn)")
+					default:
+						n2.AppendLine("i.Set", field.Name, "Item(item)")
+					}
 				})
 				n.AppendLine("}")
-			} else if field.Boolean || field.HasTokenGetter {
-				n.AppendLine("i.Set", field.Name, "(&core.Token{Image: aux.", field.Name, "})")
-			} else if field.HasNodeGetter {
+			} else if field.Boolean || field.GType == TOKEN_TYPE {
+				n.AppendLine("i.Set", field.Name, "(newToken(Token_ID, aux.", field.Name, "))")
+			} else if field.GType == COMPOSITE_TYPE {
 				if !hasComposeNodeTempVar {
 					n.AppendLine("var cn core.CompositeNode")
 				}
 				n.AppendLine("cn = core.NewCompositeNode()")
-				n.AppendLine("cn.SetToken(&core.Token{Image: aux.", field.Name, "})")
+				n.AppendLine("cn.SetToken(newToken(Token_ID, aux.", field.Name, "))")
 				n.AppendLine("i.Set", field.Name, "(cn)")
 			} else {
 				n.AppendLine("i.Set", field.Name, "(aux.", field.Name, ")")
