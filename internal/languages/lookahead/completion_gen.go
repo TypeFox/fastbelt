@@ -31,6 +31,7 @@ var LookaheadSyntheticFactories = map[string]func() core.AstNode{
 	"F":    func() core.AstNode { return NewObj() },
 	"G":    func() core.AstNode { return NewObj() },
 	"H":    func() core.AstNode { return NewObj() },
+	"I":    func() core.AstNode { return NewObj() },
 	"Obj":  func() core.AstNode { return NewObj() },
 	"Root": func() core.AstNode { return NewRoot() },
 }

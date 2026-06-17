@@ -115,6 +115,14 @@ func (p *Parser) ParseObj() Obj {
 			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
+	case 8:
+		{
+			p.state.EnterRule(Obj__Basic_17)
+			result := p.ParseI()
+			p.state.ExitRule()
+			core.MergeTokens(result, current.Tokens())
+			current = result
+		}
 	default:
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
@@ -414,6 +422,59 @@ func (p *Parser) ParseH() Obj {
 		{
 			token := p.state.Consume(Keyword_world)
 			core.AssignToken(current, token, H_Value_world)
+			if token != nil {
+				current.SetValue(token)
+			}
+		}
+	default:
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+	}
+	current.SetSegmentEndToken(p.state.LA(0))
+	return current
+}
+
+func (p *Parser) ParseI() Obj {
+	current := NewObj()
+	current.SetSegmentStartToken(p.state.LA(1))
+	{
+		token := p.state.Consume(Keyword_i)
+		core.AssignToken(current, token, I_i)
+	}
+	switch prediction, failure := p.lookahead.IAlternatives(p.state); prediction {
+	case 0:
+		{
+			result := core.NewCompositeNode()
+			result.SetSegmentStartToken(p.state.LA(1))
+			p.state.EnterRule(I_Value_ID_0)
+			p.ParseQualifiedNameRecursive(result)
+			p.state.ExitRule()
+			result.SetSegmentEndToken(p.state.LA(0))
+			if result != nil {
+				current.SetNode(result)
+			}
+		}
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, I_Value_ID_0)
+			if token != nil {
+				current.SetValue(token)
+			}
+		}
+	case 1:
+		{
+			result := core.NewCompositeNode()
+			result.SetSegmentStartToken(p.state.LA(1))
+			p.state.EnterRule(I_Value_ID_1)
+			p.ParseQualifiedNameRecursive(result)
+			p.state.ExitRule()
+			result.SetSegmentEndToken(p.state.LA(0))
+			if result != nil {
+				current.SetNode(result)
+			}
+		}
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, I_Value_ID_1)
 			if token != nil {
 				current.SetValue(token)
 			}

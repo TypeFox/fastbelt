@@ -201,3 +201,10 @@ func TestHUnlimitedRecursiveLookaheadPositiveWorld(t *testing.T) {
 	obj := expectValue(t, doc, "world")
 	assert.Equal(t, "A.B.C.D.E.F.G", obj.Node())
 }
+
+func TestIAmbiguousLookahead(t *testing.T) {
+	sc := CreateServices()
+	doc := test.New(t, sc).Parse("i A.B.C.D.E.F.G someValue")
+	doc.AssertNoParseErrors()
+	expectValue(t, doc, "someValue")
+}

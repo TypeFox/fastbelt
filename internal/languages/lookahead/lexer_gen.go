@@ -275,7 +275,26 @@ var Keyword_hello = core.NewTokenType(
 	[]rune{'h'},
 )
 
-const Keyword_world_Idx = 15
+const Keyword_i_Idx = 15
+
+var Keyword_i = core.NewTokenType(
+	Keyword_i_Idx,
+	"i",
+	"i",
+	0,
+	core.TokenKindKeyword,
+	0,
+	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "i") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'i'},
+)
+
+const Keyword_world_Idx = 16
 
 var Keyword_world = core.NewTokenType(
 	Keyword_world_Idx,
@@ -294,7 +313,7 @@ var Keyword_world = core.NewTokenType(
 	[]rune{'w'},
 )
 
-const Token_WS_Idx = 16
+const Token_WS_Idx = 17
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
@@ -368,7 +387,7 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_ID_Idx = 17
+const Token_ID_Idx = 18
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
@@ -458,6 +477,7 @@ func NewLexer() lexer.Lexer {
 		Keyword_g,
 		Keyword_h,
 		Keyword_hello,
+		Keyword_i,
 		Keyword_world,
 		Token_WS,
 		Token_ID,

@@ -11,7 +11,7 @@ interface Root {
 
 Root: Item=Obj;
 
-Obj: A | B | C | D | E | F | G | H;
+Obj: A | B | C | D | E | F | G | H | I;
 
 // Assert that the Path composite alternative is evaluated correctly
 A returns Obj: "a" Node=QualifiedPath;
@@ -50,6 +50,13 @@ G returns Obj: "g" (
 H returns Obj: "h" (
     Node=QualifiedNameRecursive Value="hello" 
     | Node=QualifiedNameRecursive Value="world"
+);
+
+I returns Obj: "i" (
+    // Ambiguous alternatives
+    // TODO: Implement warning for those
+    Node=QualifiedNameRecursive Value=ID
+    | Node=QualifiedNameRecursive Value=ID
 );
 
 composite QualifiedNameRecursive: ID ("." QualifiedNameRecursive)?;

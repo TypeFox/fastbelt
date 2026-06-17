@@ -8,18 +8,19 @@ import (
 )
 
 const (
-	DecisionCLoopLoop                 = 14
-	DecisionDOptOptional              = 15
+	DecisionCLoopLoop                 = 15
+	DecisionDOptOptional              = 16
 	DecisionFAlternatives             = 7
 	DecisionGAlternatives             = 8
 	DecisionHAlternatives             = 9
-	DecisionPathAlternatives          = 12
-	DecisionQualifiedPathAlternatives = 13
+	DecisionIAlternatives             = 10
+	DecisionPathAlternatives          = 13
+	DecisionQualifiedPathAlternatives = 14
 )
 
 var ObjAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h},
-	Lookup: []int{6: 1, 7: 2, 8: 3, 9: 4, 10: 5, 11: 6, 12: 7, 13: 8},
+	Types:  []*core.TokenType{Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h, Keyword_i},
+	Lookup: []int{6: 1, 7: 2, 8: 3, 9: 4, 10: 5, 11: 6, 12: 7, 13: 8, 15: 9},
 }
 
 // LookaheadParserLookahead abstracts every lookahead/prediction decision performed by
@@ -40,6 +41,7 @@ type LookaheadParserLookahead interface {
 	FLoop_1(state *parser.ParserState) bool
 	GAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	HAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
+	IAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	ObjAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	PathAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	PathLoop(state *parser.ParserState) bool
@@ -102,6 +104,10 @@ func (l *DefaultLookaheadParserLookahead) GAlternatives(state *parser.ParserStat
 
 func (l *DefaultLookaheadParserLookahead) HAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
 	return state.AdaptivePredict(DecisionHAlternatives, l.PredictionMode())
+}
+
+func (l *DefaultLookaheadParserLookahead) IAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+	return state.AdaptivePredict(DecisionIAlternatives, l.PredictionMode())
 }
 
 func (l *DefaultLookaheadParserLookahead) ObjAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
