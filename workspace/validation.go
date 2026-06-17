@@ -8,7 +8,9 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
-// CreateLexerDiagnostics creates diagnostics from lexer errors.
+// CreateLexerDiagnostics converts [core.Document.LexerErrors] into
+// [core.Diagnostic] values with error severity. It returns a non-nil empty
+// slice when there are no lexer errors.
 func CreateLexerDiagnostics(doc *core.Document) []*core.Diagnostic {
 	if len(doc.LexerErrors) == 0 {
 		return []*core.Diagnostic{}
@@ -34,7 +36,9 @@ func CreateLexerDiagnostics(doc *core.Document) []*core.Diagnostic {
 	return diagnostics
 }
 
-// CreateParserDiagnostics creates diagnostics from parser errors.
+// CreateParserDiagnostics converts [core.Document.ParserErrors] into
+// [core.Diagnostic] values with error severity. When a parser error has no
+// associated token, its range is the end of the document text.
 func CreateParserDiagnostics(doc *core.Document) []*core.Diagnostic {
 	if len(doc.ParserErrors) == 0 {
 		return []*core.Diagnostic{}
@@ -64,7 +68,10 @@ func CreateParserDiagnostics(doc *core.Document) []*core.Diagnostic {
 	return diagnostics
 }
 
-// CreateLinkerDiagnostics creates diagnostics from linker errors (unresolved references).
+// CreateLinkerDiagnostics converts unresolved [core.Document.References] into
+// [core.Diagnostic] values. A reference contributes a diagnostic only when
+// [core.UntypedReference.Error] and [core.UntypedReference.Segment] are both
+// non-nil; severity comes from the reference error.
 func CreateLinkerDiagnostics(doc *core.Document) []*core.Diagnostic {
 	diagnostics := []*core.Diagnostic{}
 	for _, ref := range doc.References {

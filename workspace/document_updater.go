@@ -14,24 +14,27 @@ import (
 	"typefox.dev/fastbelt/util/service"
 )
 
-// DocumentUpdater manages document updates and coordinates builds.
-// It sits between the document synchronization layer and the Builder,
-// handling write-locking for safe concurrent requests and cancellation of in-progress builds.
+// DocumentUpdater applies text-document changes to the workspace and triggers
+// rebuilds. It sits between the LSP document sync layer and [Builder],
+// serializing mutations through [Lock.Write] and cancelling in-progress builds
+// when new changes arrive.
 //
-// Thread Safety: All methods are safe for concurrent use.
+// All methods are safe for concurrent use.
 type DocumentUpdater interface {
-	// Update processes document changes and triggers a new build.
-	// Changed handles are used to create or update Documents in the DocumentManager.
-	// Deleted URIs cause documents to be removed from the DocumentManager.
-	// Any in-progress build is cancelled before starting a new one.
+	// Update creates or updates [core.Document] values for changed handles,
+	// removes deleted URIs from [DocumentManager], and starts a new build.
+	// It returns immediately; the build runs asynchronously in a background
+	// goroutine. Any in-progress build is cancelled before the new one starts.
 	Update(ctx context.Context, changed []textdoc.Handle, deleted []core.URI)
 }
 
-// DefaultDocumentUpdater is the default implementation of DocumentUpdater.
+// DefaultDocumentUpdater is the default implementation of [DocumentUpdater].
 type DefaultDocumentUpdater struct {
 	sc *service.Container
 }
 
+// NewDefaultDocumentUpdater returns a [DocumentUpdater] that coordinates
+// [DocumentManager], [Builder], and [Lock].
 func NewDefaultDocumentUpdater(sc *service.Container) DocumentUpdater {
 	return &DefaultDocumentUpdater{sc: sc}
 }

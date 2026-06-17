@@ -11,12 +11,11 @@ import (
 	"typefox.dev/fastbelt/util/service"
 )
 
-// DocumentValidator validates a document's AST.
+// DocumentValidator validates a document's AST and collects diagnostics.
 type DocumentValidator interface {
-	// Validate validates the given document by traversing all nodes and calling
-	// any [core.Validator] implementations found on them.
-	// The level parameter identifies when validation runs (e.g. "on-type", "on-save").
-	// The accept callback is used to collect diagnostics.
+	// Validate returns diagnostics for doc at the given validation level
+	// (for example "on-save"). It walks doc.Root and calls [core.Validator]
+	// methods on AST nodes that implement that interface.
 	Validate(ctx context.Context, doc *core.Document, level string) []*core.Diagnostic
 }
 
@@ -25,6 +24,8 @@ type DefaultDocumentValidator struct {
 	sc *service.Container
 }
 
+// NewDefaultDocumentValidator returns a [DocumentValidator] that includes
+// lexer, parser, and linker diagnostics before running AST validators.
 func NewDefaultDocumentValidator(sc *service.Container) DocumentValidator {
 	return &DefaultDocumentValidator{sc: sc}
 }
