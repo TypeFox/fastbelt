@@ -8,7 +8,12 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
-func (i *StatemachineData) MarshalJSON() ([]byte, error) {
+func newToken(tokenType *core.TokenType, view string) *core.Token {
+	token := core.NewToken(tokenType, view, 0, 0, 0, 0, 0, 0)
+	return &token
+}
+
+func (i *StatemachineImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__      string                 `json:"$type"`
 		Name     string                 `json:"name"`
@@ -26,7 +31,7 @@ func (i *StatemachineData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *EventData) MarshalJSON() ([]byte, error) {
+func (i *EventImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__  string `json:"$type"`
 		Name string `json:"name"`
@@ -36,7 +41,7 @@ func (i *EventData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *CommandData) MarshalJSON() ([]byte, error) {
+func (i *CommandImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__  string `json:"$type"`
 		Name string `json:"name"`
@@ -46,7 +51,7 @@ func (i *CommandData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *StateData) MarshalJSON() ([]byte, error) {
+func (i *StateImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__         string                     `json:"$type"`
 		Name        string                     `json:"name"`
@@ -60,7 +65,7 @@ func (i *StateData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *TransitionData) MarshalJSON() ([]byte, error) {
+func (i *TransitionImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__   string                 `json:"$type"`
 		Event *core.Reference[Event] `json:"event"`
@@ -72,7 +77,7 @@ func (i *TransitionData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *StatemachineData) UnmarshalJSON(data []byte) error {
+func (i *StatemachineImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__      string                 `json:"$type"`
 		Name     string                 `json:"name"`
@@ -84,7 +89,7 @@ func (i *StatemachineData) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(&core.Token{Image: aux.Name})
+	i.SetName(newToken(Token_ID, aux.Name))
 	i.events = []Event{}
 	for _, item := range aux.Events {
 		i.SetEventsItem(item)
@@ -101,7 +106,7 @@ func (i *StatemachineData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *EventData) UnmarshalJSON(data []byte) error {
+func (i *EventImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__  string `json:"$type"`
 		Name string `json:"name"`
@@ -109,11 +114,11 @@ func (i *EventData) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(&core.Token{Image: aux.Name})
+	i.SetName(newToken(Token_ID, aux.Name))
 	return nil
 }
 
-func (i *CommandData) UnmarshalJSON(data []byte) error {
+func (i *CommandImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__  string `json:"$type"`
 		Name string `json:"name"`
@@ -121,11 +126,11 @@ func (i *CommandData) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(&core.Token{Image: aux.Name})
+	i.SetName(newToken(Token_ID, aux.Name))
 	return nil
 }
 
-func (i *StateData) UnmarshalJSON(data []byte) error {
+func (i *StateImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__         string                     `json:"$type"`
 		Name        string                     `json:"name"`
@@ -135,7 +140,7 @@ func (i *StateData) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(&core.Token{Image: aux.Name})
+	i.SetName(newToken(Token_ID, aux.Name))
 	i.actions = []*core.Reference[Command]{}
 	for _, item := range aux.Actions {
 		i.SetActionsItem(item)
@@ -147,7 +152,7 @@ func (i *StateData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *TransitionData) UnmarshalJSON(data []byte) error {
+func (i *TransitionImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__   string                 `json:"$type"`
 		Event *core.Reference[Event] `json:"event"`

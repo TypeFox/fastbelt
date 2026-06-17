@@ -8,7 +8,12 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
-func (i *ObjData) MarshalJSON() ([]byte, error) {
+func newToken(tokenType *core.TokenType, view string) *core.Token {
+	token := core.NewToken(tokenType, view, 0, 0, 0, 0, 0, 0)
+	return &token
+}
+
+func (i *ObjImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__ string `json:"$type"`
 	}{
@@ -16,7 +21,7 @@ func (i *ObjData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *RootData) MarshalJSON() ([]byte, error) {
+func (i *RootImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__     string `json:"$type"`
 		Objects []Obj  `json:"objects"`
@@ -26,7 +31,7 @@ func (i *RootData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *DeclareData) MarshalJSON() ([]byte, error) {
+func (i *DeclareImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__      string    `json:"$type"`
 		Name     string    `json:"name"`
@@ -38,7 +43,7 @@ func (i *DeclareData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *EData) MarshalJSON() ([]byte, error) {
+func (i *EImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__ string                   `json:"$type"`
 		Ref *core.Reference[Declare] `json:"ref"`
@@ -48,7 +53,7 @@ func (i *EData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *FData) MarshalJSON() ([]byte, error) {
+func (i *FImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__   string  `json:"$type"`
 		Items []FItem `json:"items"`
@@ -58,7 +63,7 @@ func (i *FData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *FItemData) MarshalJSON() ([]byte, error) {
+func (i *FItemImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__ string                   `json:"$type"`
 		Ref *core.Reference[Declare] `json:"ref"`
@@ -68,7 +73,7 @@ func (i *FItemData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *GData) MarshalJSON() ([]byte, error) {
+func (i *GImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__ string                   `json:"$type"`
 		Ref *core.Reference[Declare] `json:"ref"`
@@ -78,7 +83,7 @@ func (i *GData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *HData) MarshalJSON() ([]byte, error) {
+func (i *HImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__    string     `json:"$type"`
 		Member MemberCall `json:"member"`
@@ -88,7 +93,7 @@ func (i *HData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *MemberCallData) MarshalJSON() ([]byte, error) {
+func (i *MemberCallImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__      string                   `json:"$type"`
 		Ref      *core.Reference[Declare] `json:"ref"`
@@ -100,7 +105,7 @@ func (i *MemberCallData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *JData) MarshalJSON() ([]byte, error) {
+func (i *JImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__ string                   `json:"$type"`
 		Ref *core.Reference[Declare] `json:"ref"`
@@ -110,7 +115,7 @@ func (i *JData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *KData) MarshalJSON() ([]byte, error) {
+func (i *KImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__  string                   `json:"$type"`
 		Ref1 *core.Reference[Declare] `json:"ref1"`
@@ -122,7 +127,17 @@ func (i *KData) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *ObjData) UnmarshalJSON(data []byte) error {
+func (i *NImpl) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T__ string                   `json:"$type"`
+		Ref *core.Reference[Declare] `json:"ref"`
+	}{
+		T__: "N",
+		Ref: i.Ref(),
+	})
+}
+
+func (i *ObjImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__ string `json:"$type"`
 	}{}
@@ -132,7 +147,7 @@ func (i *ObjData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *RootData) UnmarshalJSON(data []byte) error {
+func (i *RootImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__     string     `json:"$type"`
 		Objects []*ObjImpl `json:"objects"`
@@ -147,7 +162,7 @@ func (i *RootData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *DeclareData) UnmarshalJSON(data []byte) error {
+func (i *DeclareImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__      string         `json:"$type"`
 		Name     string         `json:"name"`
@@ -158,7 +173,7 @@ func (i *DeclareData) UnmarshalJSON(data []byte) error {
 	}
 	var cn core.CompositeNode
 	cn = core.NewCompositeNode()
-	cn.SetToken(&core.Token{Image: aux.Name})
+	cn.SetToken(newToken(Token_ID, aux.Name))
 	i.SetName(cn)
 	i.children = []Declare{}
 	for _, item := range aux.Children {
@@ -167,7 +182,7 @@ func (i *DeclareData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *EData) UnmarshalJSON(data []byte) error {
+func (i *EImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__ string                   `json:"$type"`
 		Ref *core.Reference[Declare] `json:"ref"`
@@ -179,7 +194,7 @@ func (i *EData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *FData) UnmarshalJSON(data []byte) error {
+func (i *FImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__   string       `json:"$type"`
 		Items []*FItemImpl `json:"items"`
@@ -194,7 +209,7 @@ func (i *FData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *FItemData) UnmarshalJSON(data []byte) error {
+func (i *FItemImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__ string                   `json:"$type"`
 		Ref *core.Reference[Declare] `json:"ref"`
@@ -206,7 +221,7 @@ func (i *FItemData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *GData) UnmarshalJSON(data []byte) error {
+func (i *GImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__ string                   `json:"$type"`
 		Ref *core.Reference[Declare] `json:"ref"`
@@ -218,7 +233,7 @@ func (i *GData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *HData) UnmarshalJSON(data []byte) error {
+func (i *HImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__    string          `json:"$type"`
 		Member *MemberCallImpl `json:"member"`
@@ -230,7 +245,7 @@ func (i *HData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *MemberCallData) UnmarshalJSON(data []byte) error {
+func (i *MemberCallImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__      string                   `json:"$type"`
 		Ref      *core.Reference[Declare] `json:"ref"`
@@ -244,7 +259,7 @@ func (i *MemberCallData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *JData) UnmarshalJSON(data []byte) error {
+func (i *JImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__ string                   `json:"$type"`
 		Ref *core.Reference[Declare] `json:"ref"`
@@ -256,7 +271,7 @@ func (i *JData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *KData) UnmarshalJSON(data []byte) error {
+func (i *KImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__  string                   `json:"$type"`
 		Ref1 *core.Reference[Declare] `json:"ref1"`
@@ -267,5 +282,17 @@ func (i *KData) UnmarshalJSON(data []byte) error {
 	}
 	i.SetRef1(aux.Ref1)
 	i.SetRef2(aux.Ref2)
+	return nil
+}
+
+func (i *NImpl) UnmarshalJSON(data []byte) error {
+	aux := &struct {
+		T__ string                   `json:"$type"`
+		Ref *core.Reference[Declare] `json:"ref"`
+	}{}
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+	i.SetRef(aux.Ref)
 	return nil
 }
