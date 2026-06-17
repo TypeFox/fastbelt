@@ -76,32 +76,32 @@ func (s *parserATNSimulator) adaptivePredict(decision int, mode PredictionMode, 
 	s.mergeCache = newMergeCache()
 	dfa := s.atn.decisionToDFA[decision]
 
-	s0 := dfa.getS0()
-	if s0 == nil {
-		s0Closure := s.computeStartState(dfa.atnStartState, emptyPredictionContext(), false)
-		s0 = dfa.addState(newDFAState(-1, s0Closure))
-		dfa.setS0(s0)
+	start := dfa.getStart()
+	if start == nil {
+		startClosure := s.computeStartState(dfa.atnStartState, emptyPredictionContext(), false)
+		start = dfa.addState(newDFAState(-1, startClosure))
+		dfa.setStart(start)
 	}
-	return s.execATN(dfa, s0, mode, outerContext)
+	return s.execATN(dfa, start, mode, outerContext)
 }
 
-func (s *parserATNSimulator) execATN(dfa *dfa, s0 *dfaState, mode PredictionMode, outerContext *predictionContext) (int, *PredictionFailure) {
-	previousD := s0
+func (s *parserATNSimulator) execATN(dfa *dfa, start *dfaState, mode PredictionMode, outerContext *predictionContext) (int, *PredictionFailure) {
+	previousState := start
 	offset := 1
-	t := s.parserState.LA(offset)
+	token := s.parserState.LA(offset)
 	for {
-		d := dfa.getExistingEdge(previousD, t.Type)
+		d := dfa.getExistingEdge(previousState, token.Type)
 		if d == nil {
-			d = s.computeTargetState(dfa, previousD, mode, t.Type)
+			d = s.computeTargetState(dfa, previousState, mode, token.Type)
 		}
 		if d == errorDFAState {
 			// No viable target. If a path actually finished the decision rule,
 			// commit to it so the eventual syntax error is reported at a more
 			// localized spot; otherwise signal no-viable-alt and capture the
 			// divergence point (offset) and expected tokens for diagnostics.
-			alt := s.getAltThatFinishedDecisionEntryRule(previousD.configs)
+			alt := s.getAltThatFinishedDecisionEntryRule(previousState.configs)
 			if alt == invalidAlt {
-				return alt, buildFailure(t, previousD.configs)
+				return alt, buildFailure(token, previousState.configs)
 			}
 			return alt, nil
 		}
@@ -109,16 +109,16 @@ func (s *parserATNSimulator) execATN(dfa *dfa, s0 *dfaState, mode PredictionMode
 			// Some decision paths have a conflict that depends on the full parser context
 			// We essentially restart the simulator here, using the full context
 			// Note that we're not preserving the DFA in this case
-			s0Closure := s.computeStartState(dfa.atnStartState, outerContext, true)
-			return s.execATNWithFullContext(s0Closure)
+			startClosure := s.computeStartState(dfa.atnStartState, outerContext, true)
+			return s.execATNWithFullContext(startClosure)
 		}
 		if d.isAcceptState {
 			return d.prediction, nil
 		}
-		previousD = d
-		if t.Type != core.EOF {
+		previousState = d
+		if token.Type != core.EOF {
 			offset++
-			t = s.parserState.LA(offset)
+			token = s.parserState.LA(offset)
 		}
 	}
 }
@@ -151,34 +151,34 @@ func (s *parserATNSimulator) computeTargetState(dfa *dfa, previousD *dfaState, m
 	if reach == nil {
 		return dfa.addEdge(previousD, t, errorDFAState)
 	}
-	d := newDFAState(-1, reach)
+	state := newDFAState(-1, reach)
 	predictedAlt := getUniqueAlt(reach)
 	if predictedAlt != invalidAlt {
-		d.isAcceptState = true
+		state.isAcceptState = true
 		reach.uniqueAlt = predictedAlt
-		d.prediction = predictedAlt
+		state.prediction = predictedAlt
 	} else if hasConflictTerminatingPrediction(reach) {
 		reach.conflictingAlts = s.getConflictingAlts(reach)
-		d.requiresFullContext = true
-		d.isAcceptState = true
-		d.prediction = reach.conflictingAlts.Min()
+		state.requiresFullContext = true
+		state.isAcceptState = true
+		state.prediction = reach.conflictingAlts.Min()
 	}
-	return dfa.addEdge(previousD, t, d)
+	return dfa.addEdge(previousD, t, state)
 }
 
-func (s *parserATNSimulator) execATNWithFullContext(s0 *atnConfigSet) (int, *PredictionFailure) {
+func (s *parserATNSimulator) execATNWithFullContext(start *atnConfigSet) (int, *PredictionFailure) {
 	const fullCtx = true
 	var reach *atnConfigSet
-	previous := s0
+	previousState := start
 	offset := 1
-	t := s.parserState.LA(offset)
+	token := s.parserState.LA(offset)
 	predictedAlt := invalidAlt
 	for {
-		reach = s.computeReachSet(previous, t.Type, fullCtx)
+		reach = s.computeReachSet(previousState, token.Type, fullCtx)
 		if reach == nil {
-			alt := s.getAltThatFinishedDecisionEntryRule(previous)
+			alt := s.getAltThatFinishedDecisionEntryRule(previousState)
 			if alt == invalidAlt {
-				return alt, buildFailure(t, previous)
+				return alt, buildFailure(token, previousState)
 			}
 			return alt, nil
 		}
@@ -192,22 +192,22 @@ func (s *parserATNSimulator) execATNWithFullContext(s0 *atnConfigSet) (int, *Pre
 		if predictedAlt != invalidAlt {
 			break
 		}
-		previous = reach
-		if t.Type != core.EOF {
+		previousState = reach
+		if token.Type != core.EOF {
 			offset++
-			t = s.parserState.LA(offset)
+			token = s.parserState.LA(offset)
 		}
 	}
 	return predictedAlt, nil
 }
 
-func (s *parserATNSimulator) computeReachSet(closure *atnConfigSet, t *core.TokenType, fullCtx bool) *atnConfigSet {
+func (s *parserATNSimulator) computeReachSet(closure *atnConfigSet, tokenType *core.TokenType, fullCtx bool) *atnConfigSet {
 	intermediate := newATNConfigSet(fullCtx)
 	var skippedStopStates []*atnConfig
 
 	for _, c := range closure.configs {
 		if isRuleStop(c) {
-			if fullCtx || t == core.EOF {
+			if fullCtx || tokenType == core.EOF {
 				// Only track stop states if we might need to dip into the outer context.
 				// Will always be done in LL prediction mode, but only for EOF in SLL.
 				skippedStopStates = append(skippedStopStates, c)
@@ -215,7 +215,7 @@ func (s *parserATNSimulator) computeReachSet(closure *atnConfigSet, t *core.Toke
 			continue
 		}
 		for _, trans := range c.state.Transitions {
-			target := getReachableTarget(trans, t)
+			target := getReachableTarget(trans, tokenType)
 			if target != nil {
 				intermediate.Add(newATNConfigWithState(c, target, c.context), s.mergeCache)
 			}
@@ -223,7 +223,7 @@ func (s *parserATNSimulator) computeReachSet(closure *atnConfigSet, t *core.Toke
 	}
 
 	var reach *atnConfigSet
-	if skippedStopStates == nil && t != core.EOF {
+	if skippedStopStates == nil && tokenType != core.EOF {
 		if len(intermediate.configs) == 1 || getUniqueAlt(intermediate) != invalidAlt {
 			reach = intermediate
 		}
@@ -236,8 +236,8 @@ func (s *parserATNSimulator) computeReachSet(closure *atnConfigSet, t *core.Toke
 		}
 	}
 
-	if t == core.EOF {
-		reach = s.removeAllConfigsNotInRuleStopState(reach, reach.Equals(intermediate))
+	if tokenType == core.EOF {
+		reach = s.removeAllConfigsNotInRuleStopState(reach)
 	}
 
 	if skippedStopStates != nil && (!fullCtx || !hasConfigInRuleStopState(reach)) {
@@ -252,7 +252,7 @@ func (s *parserATNSimulator) computeReachSet(closure *atnConfigSet, t *core.Toke
 	return reach
 }
 
-func (s *parserATNSimulator) removeAllConfigsNotInRuleStopState(configs *atnConfigSet, lookToEndOfRule bool) *atnConfigSet {
+func (s *parserATNSimulator) removeAllConfigsNotInRuleStopState(configs *atnConfigSet) *atnConfigSet {
 	if allConfigsInRuleStopStates(configs) {
 		return configs
 	}
@@ -278,8 +278,8 @@ func (s *parserATNSimulator) computeStartState(start *RuntimeATNState, ctx *pred
 	return configs
 }
 
-func getReachableTarget(trans RuntimeTransition, t *core.TokenType) *RuntimeATNState {
-	if at, ok := trans.(*RuntimeAtomTransition); ok && at.TokenType != nil && at.TokenType.Matches(t) {
+func getReachableTarget(trans RuntimeTransition, tokenType *core.TokenType) *RuntimeATNState {
+	if at, ok := trans.(*RuntimeAtomTransition); ok && at.TokenType != nil && at.TokenType.Matches(tokenType) {
 		return at.Target
 	}
 	return nil

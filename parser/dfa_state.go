@@ -11,7 +11,7 @@ import (
 // dfaState is a node in a decision's DFA. Each state wraps the ATNConfigSet
 // reachable on the input consumed so far.
 //
-// edges is indexed by tokenType.Id + 1, so the EOF symbol (t == -1) maps to slot 0
+// edges is indexed by tokenType.Id
 type dfaState struct {
 	stateNumber         int
 	configs             *atnConfigSet
@@ -29,19 +29,19 @@ func newDFAState(stateNumber int, configs *atnConfigSet) *dfaState {
 var errorDFAState = newDFAState(0x7FFFFFFF, newATNConfigSet(false))
 
 func (d *dfaState) getEdge(t *core.TokenType) *dfaState {
-	i := t.Id + 1
-	if i < 0 || i >= len(d.edges) {
+	edgeIndex := t.Id
+	if edgeIndex < 0 || edgeIndex >= len(d.edges) {
 		return nil
 	}
-	return d.edges[i]
+	return d.edges[edgeIndex]
 }
 
 func (d *dfaState) setEdge(t *core.TokenType, target *dfaState) {
-	i := t.Id + 1
-	for i >= len(d.edges) {
+	edgeIndex := t.Id
+	for edgeIndex >= len(d.edges) {
 		d.edges = append(d.edges, nil)
 	}
-	d.edges[i] = target
+	d.edges[edgeIndex] = target
 }
 
 // Equals for DFA-state deduplication compares the underlying config sets.

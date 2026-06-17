@@ -15,6 +15,8 @@ type BitSet struct {
 	words []uint64
 }
 
+const wordSize = 64
+
 // Merges multiple bitsets into a single bitset that contains all the set bits from
 // the input bitsets. The resulting bitset's offset is the minimum offset of the
 // input bitsets, and its length is determined by the maximum integer in the
@@ -56,7 +58,7 @@ func (b *BitSet) Insert(i int) *BitSet {
 	for w >= len(b.words) {
 		b.words = append(b.words, 0)
 	}
-	b.words[w] |= 1 << (uint(i) & 63)
+	b.words[w] |= 1 << (uint(i) % wordSize)
 	return b
 }
 
@@ -67,9 +69,10 @@ func (b *BitSet) At(i int) bool {
 	if w >= len(b.words) {
 		return false
 	}
-	return b.words[w]&(1<<(uint(i)&63)) != 0
+	return b.words[w]&(1<<(uint(i)%wordSize)) != 0
 }
 
+// Cardinality computes the number of set bits
 func (b *BitSet) Cardinality() int {
 	n := 0
 	for _, w := range b.words {
@@ -78,10 +81,11 @@ func (b *BitSet) Cardinality() int {
 	return n
 }
 
+// Min returns the smallest integer in the bitset, or -1 if the bitset is empty.
 func (b *BitSet) Min() int {
 	for wi, w := range b.words {
 		if w != 0 {
-			return wi<<6 + bits.TrailingZeros64(w)
+			return (wi * wordSize) + bits.TrailingZeros64(w)
 		}
 	}
 	return -1
@@ -92,11 +96,12 @@ func (b *BitSet) Empty() bool {
 	return b.Cardinality() == 0
 }
 
+// Equals returns true if the bitset is equal to another bitset (i.e. they have the same set bits),
 func (b *BitSet) Equals(other *BitSet) bool {
-	if b == other {
-		return true
+	if other == nil || b == nil {
+		return b == other
 	}
-	if other == nil || b == nil || len(b.words) != len(other.words) {
+	if len(b.words) != len(other.words) {
 		return false
 	}
 	length := len(b.words)

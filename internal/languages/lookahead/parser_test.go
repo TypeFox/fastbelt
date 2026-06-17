@@ -31,8 +31,7 @@ func BenchmarkNestedQualifiedNameLookahead(b *testing.B) {
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		result := parserService.Parse(doc)
-		doc.Root = result.Node
+		parserService.Parse(doc)
 	}
 }
 

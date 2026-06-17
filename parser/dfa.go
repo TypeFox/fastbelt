@@ -15,14 +15,13 @@ import (
 // adaptive prediction.
 //
 // The dfa is shared across concurrent parses (it hangs off the shared
-// RuntimeATN), so all mutation of s0, the state set, and edges is guarded by
-// mu.
+// RuntimeATN), so all mutation of start, and edges is guarded by mu.
 type dfa struct {
 	decision      int
 	atnStartState *RuntimeATNState
 
 	mu     sync.RWMutex
-	s0     *dfaState
+	start  *dfaState
 	states *collections.BucketMap[*dfaState, *dfaState]
 }
 
@@ -34,16 +33,16 @@ func newDFA(decision int, atnStartState *RuntimeATNState) *dfa {
 	}
 }
 
-func (d *dfa) getS0() *dfaState {
+func (d *dfa) getStart() *dfaState {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	return d.s0
+	return d.start
 }
 
-func (d *dfa) setS0(s *dfaState) {
+func (d *dfa) setStart(s *dfaState) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	d.s0 = s
+	d.start = s
 }
 
 // addState deduplicates d against the existing states and returns the canonical

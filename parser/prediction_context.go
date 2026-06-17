@@ -15,22 +15,10 @@ import "strconv"
 //     by returnState with the empty return state ($) last.
 type predictionContext struct {
 	cachedHash uint64
-	pcType     int
 
-	// singleton
-	parent      *predictionContext
-	returnState int
-
-	// array
 	parents      []*predictionContext
 	returnStates []int
 }
-
-const (
-	pcEmpty = iota
-	pcSingleton
-	pcArray
-)
 
 // predictionContextEmptyReturnState marks the "$" return state inside an array
 // context (full-context mode). It can never collide with a real ATN state
@@ -39,9 +27,8 @@ const predictionContextEmptyReturnState = 0x7FFFFFFF
 
 // basePredictionContextEMPTY is the shared empty context ("$").
 var basePredictionContextEMPTY = &predictionContext{
-	pcType:      pcEmpty,
-	returnState: predictionContextEmptyReturnState,
-	cachedHash:  emptyContextHash(),
+	returnStates: []int{predictionContextEmptyReturnState},
+	cachedHash:   emptyContextHash(),
 }
 
 func emptyContextHash() uint64 { return hashCombine(1, 0) }
@@ -53,9 +40,8 @@ func singletonPredictionContext(parent *predictionContext, returnState int) *pre
 		return basePredictionContextEMPTY
 	}
 	pc := &predictionContext{
-		pcType:      pcSingleton,
-		parent:      parent,
-		returnState: returnState,
+		parents:      []*predictionContext{parent},
+		returnStates: []int{returnState},
 	}
 	if parent != nil {
 		pc.cachedHash = hashCombine(parent.cachedHash, uint64(returnState))
@@ -78,7 +64,6 @@ func newArrayPredictionContext(parents []*predictionContext, returnStates []int)
 		h = hashCombine(h, uint64(rs))
 	}
 	return &predictionContext{
-		pcType:       pcArray,
 		parents:      parents,
 		returnStates: returnStates,
 		cachedHash:   hashCombine(h, uint64(len(parents))<<1),
@@ -86,49 +71,28 @@ func newArrayPredictionContext(parents []*predictionContext, returnStates []int)
 }
 
 func (p *predictionContext) length() int {
-	if p.pcType == pcArray {
-		return len(p.returnStates)
-	}
-	return 1
+	return len(p.returnStates)
 }
 
-// getParent returns the parent context at index i. For singleton/empty contexts
-// the index is ignored (matching ANTLR), so a -1 index passed by mergeRoot is
-// safe for the singleton callers there.
 func (p *predictionContext) getParent(i int) *predictionContext {
-	switch p.pcType {
-	case pcArray:
-		return p.parents[i]
-	case pcSingleton:
-		return p.parent
-	default: // empty
+	if i < 0 || i >= len(p.parents) {
 		return nil
 	}
+	return p.parents[i]
 }
 
 func (p *predictionContext) getReturnState(i int) int {
-	if p.pcType == pcArray {
-		return p.returnStates[i]
+	if i < 0 || i >= len(p.returnStates) {
+		return predictionContextEmptyReturnState
 	}
-	return p.returnState
+	return p.returnStates[i]
 }
 
 func (p *predictionContext) isEmpty() bool {
-	switch p.pcType {
-	case pcEmpty:
-		return true
-	case pcArray:
-		// $ can only appear last, so size==1 need not be checked.
-		return p.returnStates[0] == predictionContextEmptyReturnState
-	default:
-		return false
-	}
+	return p.getReturnState(0) == predictionContextEmptyReturnState
 }
 
 func (p *predictionContext) hasEmptyPath() bool {
-	if p.pcType == pcSingleton {
-		return p.returnState == predictionContextEmptyReturnState
-	}
 	return p.getReturnState(p.length()-1) == predictionContextEmptyReturnState
 }
 
@@ -141,78 +105,43 @@ func (p *predictionContext) Equals(other *predictionContext) bool {
 	if other == nil {
 		return false
 	}
-	switch p.pcType {
-	case pcEmpty:
-		return other.isEmpty()
-	case pcSingleton:
-		if other.pcType != pcSingleton {
-			return false
-		}
-		if p.cachedHash != other.cachedHash || p.returnState != other.returnState {
-			return false
-		}
-		if p.parent == nil {
-			return other.parent == nil
-		}
-		return p.parent.Equals(other.parent)
-	case pcArray:
-		if other.pcType != pcArray || p.cachedHash != other.cachedHash {
-			return false
-		}
-		if len(p.returnStates) != len(other.returnStates) {
-			return false
-		}
-		for i := range p.returnStates {
-			if p.returnStates[i] != other.returnStates[i] {
-				return false
-			}
-			a, b := p.parents[i], other.parents[i]
-			if a == nil || b == nil {
-				if a != b {
-					return false
-				}
-				continue
-			}
-			if !a.Equals(b) {
-				return false
-			}
-		}
-		return true
+	if p.cachedHash != other.cachedHash {
+		return false
 	}
-	return false
+	if len(p.returnStates) != len(other.returnStates) {
+		return false
+	}
+	for i := range p.returnStates {
+		if p.returnStates[i] != other.returnStates[i] {
+			return false
+		}
+		a, b := p.parents[i], other.parents[i]
+		if a == nil || b == nil {
+			if a != b {
+				return false
+			}
+			continue
+		}
+		if !a.Equals(b) {
+			return false
+		}
+	}
+	return true
 }
 
 func (p *predictionContext) String() string {
-	switch p.pcType {
-	case pcEmpty:
-		return "$"
-	case pcSingleton:
-		up := ""
-		if p.parent != nil {
-			up = p.parent.String()
+	s := "["
+	for i := range p.returnStates {
+		if i > 0 {
+			s += ", "
 		}
-		if up == "" {
-			if p.returnState == predictionContextEmptyReturnState {
-				return "$"
-			}
-			return strconv.Itoa(p.returnState)
+		if p.returnStates[i] == predictionContextEmptyReturnState {
+			s += "$"
+			continue
 		}
-		return strconv.Itoa(p.returnState) + " " + up
-	case pcArray:
-		s := "["
-		for i := range p.returnStates {
-			if i > 0 {
-				s += ", "
-			}
-			if p.returnStates[i] == predictionContextEmptyReturnState {
-				s += "$"
-				continue
-			}
-			s += strconv.Itoa(p.returnStates[i])
-		}
-		return s + "]"
+		s += strconv.Itoa(p.returnStates[i])
 	}
-	return "?"
+	return s + "]"
 }
 
 // mergeCache memoizes prediction-context merges within a single prediction.
@@ -243,9 +172,6 @@ func mergePredictionContexts(a, b *predictionContext, rootIsWildcard bool, cache
 	if a == b || a.Equals(b) {
 		return a
 	}
-	if a.pcType == pcSingleton && b.pcType == pcSingleton {
-		return mergeSingletons(a, b, rootIsWildcard, cache)
-	}
 	if rootIsWildcard {
 		if a.isEmpty() {
 			return a
@@ -254,95 +180,7 @@ func mergePredictionContexts(a, b *predictionContext, rootIsWildcard bool, cache
 			return b
 		}
 	}
-	return mergeArrays(convertToArray(a), convertToArray(b), rootIsWildcard, cache)
-}
-
-func convertToArray(pc *predictionContext) *predictionContext {
-	switch pc.pcType {
-	case pcEmpty:
-		return newArrayPredictionContext([]*predictionContext{}, []int{})
-	case pcSingleton:
-		return newArrayPredictionContext([]*predictionContext{pc.getParent(0)}, []int{pc.getReturnState(0)})
-	default:
-		return pc
-	}
-}
-
-func mergeSingletons(a, b *predictionContext, rootIsWildcard bool, cache *mergeCache) *predictionContext {
-	if v, ok := cache.get(a, b); ok {
-		return v
-	}
-	if v, ok := cache.get(b, a); ok {
-		return v
-	}
-
-	if rootMerge := mergeRoot(a, b, rootIsWildcard); rootMerge != nil {
-		cache.put(a, b, rootMerge)
-		return rootMerge
-	}
-
-	if a.returnState == b.returnState {
-		parent := mergePredictionContexts(a.parent, b.parent, rootIsWildcard, cache)
-		if parent.Equals(a.parent) {
-			return a
-		}
-		if parent.Equals(b.parent) {
-			return b
-		}
-		spc := singletonPredictionContext(parent, a.returnState)
-		cache.put(a, b, spc)
-		return spc
-	}
-
-	// payloads differ
-	var singleParent *predictionContext
-	if a.Equals(b) || (a.parent != nil && a.parent.Equals(b.parent)) {
-		singleParent = a.parent
-	}
-	if singleParent != nil {
-		payloads := []int{a.returnState, b.returnState}
-		if a.returnState > b.returnState {
-			payloads[0], payloads[1] = b.returnState, a.returnState
-		}
-		apc := newArrayPredictionContext([]*predictionContext{singleParent, singleParent}, payloads)
-		cache.put(a, b, apc)
-		return apc
-	}
-
-	payloads := []int{a.returnState, b.returnState}
-	parents := []*predictionContext{a.parent, b.parent}
-	if a.returnState > b.returnState {
-		payloads[0], payloads[1] = b.returnState, a.returnState
-		parents = []*predictionContext{b.parent, a.parent}
-	}
-	apc := newArrayPredictionContext(parents, payloads)
-	cache.put(a, b, apc)
-	return apc
-}
-
-func mergeRoot(a, b *predictionContext, rootIsWildcard bool) *predictionContext {
-	if rootIsWildcard {
-		if a.pcType == pcEmpty {
-			return basePredictionContextEMPTY
-		}
-		if b.pcType == pcEmpty {
-			return basePredictionContextEMPTY
-		}
-		return nil
-	}
-	switch {
-	case a.isEmpty() && b.isEmpty():
-		return basePredictionContextEMPTY
-	case a.isEmpty():
-		payloads := []int{b.getReturnState(b.length() - 1), predictionContextEmptyReturnState}
-		parents := []*predictionContext{b.getParent(b.length() - 1), nil}
-		return newArrayPredictionContext(parents, payloads)
-	case b.isEmpty():
-		payloads := []int{a.getReturnState(a.length() - 1), predictionContextEmptyReturnState}
-		parents := []*predictionContext{a.getParent(a.length() - 1), nil}
-		return newArrayPredictionContext(parents, payloads)
-	}
-	return nil
+	return mergeArrays(a, b, rootIsWildcard, cache)
 }
 
 func mergeArrays(a, b *predictionContext, rootIsWildcard bool, cache *mergeCache) *predictionContext {
