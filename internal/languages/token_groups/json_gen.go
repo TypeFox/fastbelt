@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 
 	core "typefox.dev/fastbelt"
+	utilJson "typefox.dev/fastbelt/util/json"
 )
 
 func newToken(tokenType *core.TokenType, view string) *core.Token {
@@ -49,13 +50,17 @@ func (i *RecoveryImpl) MarshalJSON() ([]byte, error) {
 
 func (i *ModelImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__  string    `json:"$type"`
-		Item *ItemImpl `json:"item"`
+		T__  string          `json:"$type"`
+		Item json.RawMessage `json:"item"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetItem(aux.Item)
+	item, err := utilJson.Unmarshal[Item](aux.Item, token_groupsSyntheticFactories)
+	if err != nil {
+		return err
+	}
+	i.SetItem(item)
 	return nil
 }
 

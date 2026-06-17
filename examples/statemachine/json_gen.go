@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 
 	core "typefox.dev/fastbelt"
+	utilJson "typefox.dev/fastbelt/util/json"
 )
 
 func newToken(tokenType *core.TokenType, view string) *core.Token {
@@ -81,10 +82,10 @@ func (i *StatemachineImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__      string                 `json:"$type"`
 		Name     string                 `json:"name"`
-		Events   []*EventImpl           `json:"events"`
-		Commands []*CommandImpl         `json:"commands"`
+		Events   []json.RawMessage      `json:"events"`
+		Commands []json.RawMessage      `json:"commands"`
 		Init     *core.Reference[State] `json:"init"`
-		States   []*StateImpl           `json:"states"`
+		States   []json.RawMessage      `json:"states"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -92,16 +93,28 @@ func (i *StatemachineImpl) UnmarshalJSON(data []byte) error {
 	i.SetName(newToken(Token_ID, aux.Name))
 	i.events = []Event{}
 	for _, item := range aux.Events {
-		i.SetEventsItem(item)
+		node, err := utilJson.Unmarshal[Event](item, StatemachineModelSyntheticFactories)
+		if err != nil {
+			return err
+		}
+		i.SetEventsItem(node)
 	}
 	i.commands = []Command{}
 	for _, item := range aux.Commands {
-		i.SetCommandsItem(item)
+		node, err := utilJson.Unmarshal[Command](item, StatemachineModelSyntheticFactories)
+		if err != nil {
+			return err
+		}
+		i.SetCommandsItem(node)
 	}
 	i.SetInit(aux.Init)
 	i.states = []State{}
 	for _, item := range aux.States {
-		i.SetStatesItem(item)
+		node, err := utilJson.Unmarshal[State](item, StatemachineModelSyntheticFactories)
+		if err != nil {
+			return err
+		}
+		i.SetStatesItem(node)
 	}
 	return nil
 }
@@ -135,7 +148,7 @@ func (i *StateImpl) UnmarshalJSON(data []byte) error {
 		T__         string                     `json:"$type"`
 		Name        string                     `json:"name"`
 		Actions     []*core.Reference[Command] `json:"actions"`
-		Transitions []*TransitionImpl          `json:"transitions"`
+		Transitions []json.RawMessage          `json:"transitions"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -147,7 +160,11 @@ func (i *StateImpl) UnmarshalJSON(data []byte) error {
 	}
 	i.transitions = []Transition{}
 	for _, item := range aux.Transitions {
-		i.SetTransitionsItem(item)
+		node, err := utilJson.Unmarshal[Transition](item, StatemachineModelSyntheticFactories)
+		if err != nil {
+			return err
+		}
+		i.SetTransitionsItem(node)
 	}
 	return nil
 }

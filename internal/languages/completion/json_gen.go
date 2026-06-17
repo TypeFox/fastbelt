@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 
 	core "typefox.dev/fastbelt"
+	utilJson "typefox.dev/fastbelt/util/json"
 )
 
 func newToken(tokenType *core.TokenType, view string) *core.Token {
@@ -138,35 +139,33 @@ func (i *NImpl) MarshalJSON() ([]byte, error) {
 }
 
 func (i *ObjImpl) UnmarshalJSON(data []byte) error {
-	aux := &struct {
-		T__ string `json:"$type"`
-	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
-		return err
-	}
 	return nil
 }
 
 func (i *RootImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__     string     `json:"$type"`
-		Objects []*ObjImpl `json:"objects"`
+		T__     string            `json:"$type"`
+		Objects []json.RawMessage `json:"objects"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
 	i.objects = []Obj{}
 	for _, item := range aux.Objects {
-		i.SetObjectsItem(item)
+		node, err := utilJson.Unmarshal[Obj](item, CompletionSyntheticFactories)
+		if err != nil {
+			return err
+		}
+		i.SetObjectsItem(node)
 	}
 	return nil
 }
 
 func (i *DeclareImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__      string         `json:"$type"`
-		Name     string         `json:"name"`
-		Children []*DeclareImpl `json:"children"`
+		T__      string            `json:"$type"`
+		Name     string            `json:"name"`
+		Children []json.RawMessage `json:"children"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -177,7 +176,11 @@ func (i *DeclareImpl) UnmarshalJSON(data []byte) error {
 	i.SetName(cn)
 	i.children = []Declare{}
 	for _, item := range aux.Children {
-		i.SetChildrenItem(item)
+		node, err := utilJson.Unmarshal[Declare](item, CompletionSyntheticFactories)
+		if err != nil {
+			return err
+		}
+		i.SetChildrenItem(node)
 	}
 	return nil
 }
@@ -196,15 +199,19 @@ func (i *EImpl) UnmarshalJSON(data []byte) error {
 
 func (i *FImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__   string       `json:"$type"`
-		Items []*FItemImpl `json:"items"`
+		T__   string            `json:"$type"`
+		Items []json.RawMessage `json:"items"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
 	i.items = []FItem{}
 	for _, item := range aux.Items {
-		i.SetItemsItem(item)
+		node, err := utilJson.Unmarshal[FItem](item, CompletionSyntheticFactories)
+		if err != nil {
+			return err
+		}
+		i.SetItemsItem(node)
 	}
 	return nil
 }
@@ -236,12 +243,16 @@ func (i *GImpl) UnmarshalJSON(data []byte) error {
 func (i *HImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__    string          `json:"$type"`
-		Member *MemberCallImpl `json:"member"`
+		Member json.RawMessage `json:"member"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetMember(aux.Member)
+	member, err := utilJson.Unmarshal[MemberCall](aux.Member, CompletionSyntheticFactories)
+	if err != nil {
+		return err
+	}
+	i.SetMember(member)
 	return nil
 }
 
@@ -249,13 +260,17 @@ func (i *MemberCallImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__      string                   `json:"$type"`
 		Ref      *core.Reference[Declare] `json:"ref"`
-		Previous *MemberCallImpl          `json:"previous"`
+		Previous json.RawMessage          `json:"previous"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
 	i.SetRef(aux.Ref)
-	i.SetPrevious(aux.Previous)
+	previous, err := utilJson.Unmarshal[MemberCall](aux.Previous, CompletionSyntheticFactories)
+	if err != nil {
+		return err
+	}
+	i.SetPrevious(previous)
 	return nil
 }
 
