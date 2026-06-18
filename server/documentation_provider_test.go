@@ -10,26 +10,27 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var trimmer = &DefaultDocumentationTrimmer{}
+
 func TestTrimCommentLineComment(t *testing.T) {
-	assert.Equal(t, "foo bar", (&DefaultDocumentationTrimmer{}).TrimComment("// foo bar"))
+	assert.Equal(t, "foo bar", trimmer.TrimComment("// foo bar"))
 }
 
 func TestTrimCommentBlockComment(t *testing.T) {
-	assert.Equal(t, "foo bar", (&DefaultDocumentationTrimmer{}).TrimComment("/* foo bar */"))
+	assert.Equal(t, "foo bar", trimmer.TrimComment("/* foo bar */"))
 }
 
 func TestTrimCommentMultilineBlockComment(t *testing.T) {
 	input := "/*\n * line one\n * line two\n */"
-	assert.Equal(t, "line one\nline two", (&DefaultDocumentationTrimmer{}).TrimComment(input))
+	assert.Equal(t, "line one\nline two", trimmer.TrimComment(input))
 }
 
 func TestTrimCommentEmpty(t *testing.T) {
-	trimmer := &DefaultDocumentationTrimmer{}
 	assert.Equal(t, "", trimmer.TrimComment("//"))
 	assert.Equal(t, "", trimmer.TrimComment("/* */"))
 	assert.Equal(t, "", trimmer.TrimComment("//   "))
 }
 
 func TestTrimCommentPreservesTrailingPeriod(t *testing.T) {
-	assert.Equal(t, "foo bar.", (&DefaultDocumentationTrimmer{}).TrimComment("// foo bar."))
+	assert.Equal(t, "foo bar.", trimmer.TrimComment("// foo bar."))
 }

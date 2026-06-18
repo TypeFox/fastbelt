@@ -91,21 +91,31 @@ func (s *DefaultDocumentationProvider) Documentation(node core.AstNode) string {
 		lowerBound = int(doc.Tokens[i-1].TextSegment.Indices.End)
 	}
 
-	// Collect comments in [lowerBound, nodeStart) — doc.Comments is sorted by offset,
-	// so results are already in chronological order; no reversal needed.
+	// Collect comments in [lowerBound, nodeStart).
 	first := sort.Search(len(doc.Comments), func(j int) bool {
 		return int(doc.Comments[j].TextSegment.Indices.Start) >= lowerBound
 	})
-	var parts []string
-	for j := first; j < len(doc.Comments); j++ {
-		c := doc.Comments[j]
-		if int(c.TextSegment.Indices.Start) >= nodeStart {
+	last := sort.Search(len(doc.Comments), func(j int) bool {
+		return int(doc.Comments[j].TextSegment.Indices.Start) >= nodeStart
+	}) - 1
+	if last < first {
+		return ""
+	}
+
+	// Only include the last contiguous block — stop at any blank line between comments.
+	blockStart := last
+	for blockStart > first {
+		prev := doc.Comments[blockStart-1]
+		curr := doc.Comments[blockStart]
+		if int(curr.TextSegment.Range.Start.Line)-int(prev.TextSegment.Range.End.Line) > 1 {
 			break
 		}
-		parts = append(parts, s.trimmer.TrimComment(c.Image))
+		blockStart--
 	}
-	if len(parts) == 0 {
-		return ""
+
+	var parts []string
+	for k := blockStart; k <= last; k++ {
+		parts = append(parts, s.trimmer.TrimComment(doc.Comments[k].Image))
 	}
 	return strings.Join(parts, "  \n")
 }

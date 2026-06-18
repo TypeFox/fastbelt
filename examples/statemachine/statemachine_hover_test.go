@@ -122,6 +122,31 @@ end
 	assert.Equal(t, "line one\nline two", docProvider.Documentation(off))
 }
 
+func TestDocumentationIgnoresCommentsSeparatedByBlankLine(t *testing.T) {
+	f := test.New(t, createHoverServices())
+	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
+
+	doc := f.Parse(`
+statemachine Test
+events flick
+initialState off
+
+/* Section header */
+
+// The off state
+state off
+  flick => on
+end
+
+state on
+  flick => off
+end
+`).AssertNoErrors()
+
+	off := test.MustFindNamedNode[State](doc, "off")
+	assert.Equal(t, "The off state", docProvider.Documentation(off))
+}
+
 func TestDocumentationNoComment(t *testing.T) {
 	f := test.New(t, createHoverServices())
 	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
