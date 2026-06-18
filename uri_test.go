@@ -628,3 +628,100 @@ func TestParseUri_LowerCaseSchemeAndAuthority(t *testing.T) {
 	parsed := ParseURI(input)
 	assert.Equal(t, expected, parsed.StringUnencoded())
 }
+
+func TestURI_FilePath(t *testing.T) {
+	tests := []struct {
+		name     string
+		uri      URI
+		expected string
+	}{
+		{
+			name:     "unix path",
+			uri:      &uri{scheme: "file", path: "/home/user/document.txt"},
+			expected: "/home/user/document.txt",
+		},
+		{
+			name:     "windows drive path",
+			uri:      &uri{scheme: "file", path: "/C:/Users/John Doe/file.txt"},
+			expected: `C:\Users\John Doe\file.txt`,
+		},
+		{
+			name:     "UNC path with authority",
+			uri:      &uri{scheme: "file", authority: "server", path: "/share/file.txt"},
+			expected: `\\server\share\file.txt`,
+		},
+		{
+			name:     "non-file scheme returns empty",
+			uri:      &uri{scheme: "https", authority: "example.com", path: "/path"},
+			expected: "",
+		},
+		{
+			name:     "round trip with FileURI on windows path",
+			uri:      FileURI(`C:\Users\John Doe\Documents\my file.txt`),
+			expected: `C:\Users\John Doe\Documents\my file.txt`,
+		},
+		{
+			name:     "round trip with FileURI on unix path",
+			uri:      FileURI("/home/user/document.txt"),
+			expected: "/home/user/document.txt",
+		},
+		{
+			name:     "round trip with FileURI on UNC path",
+			uri:      FileURI(`\\server\share\file.txt`),
+			expected: `\\server\share\file.txt`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.uri.FilePath())
+		})
+	}
+}
+
+func TestURI_JoinPath(t *testing.T) {
+	tests := []struct {
+		name     string
+		uri      URI
+		segments []string
+		expected string
+	}{
+		{
+			name:     "no segments returns same path",
+			uri:      &uri{scheme: "file", path: "/home/user"},
+			segments: nil,
+			expected: "/home/user",
+		},
+		{
+			name:     "single segment without trailing slash",
+			uri:      &uri{scheme: "file", path: "/home/user"},
+			segments: []string{"file.txt"},
+			expected: "/home/user/file.txt",
+		},
+		{
+			name:     "single segment with trailing slash",
+			uri:      &uri{scheme: "file", path: "/home/user/"},
+			segments: []string{"file.txt"},
+			expected: "/home/user/file.txt",
+		},
+		{
+			name:     "multiple segments",
+			uri:      &uri{scheme: "file", path: "/home/user"},
+			segments: []string{"dir", "sub", "file.txt"},
+			expected: "/home/user/dir/sub/file.txt",
+		},
+		{
+			name:     "empty path",
+			uri:      &uri{scheme: "file"},
+			segments: []string{"file.txt"},
+			expected: "/file.txt",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.uri.JoinPath(tt.segments...)
+			assert.Equal(t, tt.expected, result.Path())
+		})
+	}
+}

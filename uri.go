@@ -33,6 +33,10 @@ type URI interface {
 	// StringUnencoded returns the URI as a string without percent-encoding.
 	// This is useful for debugging and logging purposes.
 	StringUnencoded() string
+	// FilePath returns the URI as a file path, which is the format used by the local file system.
+	FilePath() string
+	// JoinPath joins the given path segments to the URI's path and returns a new URI.
+	JoinPath(segments ...string) URI
 	// DocumentURI converts the URI to a lsp.DocumentURI, which is the format used by the LSP library.
 	DocumentURI() lsp.DocumentURI
 	// WithScheme returns a new URI with the specified scheme, keeping other components unchanged.
@@ -210,6 +214,47 @@ func (u *uri) DocumentURI() lsp.DocumentURI {
 	return lsp.DocumentURI(u.String())
 }
 
+func (u *uri) FilePath() string {
+	if u.Scheme() != FileScheme {
+		// What to do with a non-file URI?
+		// Simply return an empty string for now
+		return ""
+	}
+	sb := strings.Builder{}
+	path := u.Path()
+	withAuthority := u.Authority() != ""
+	isWindows := withAuthority || windowsDriveLetterOffset(path) != -1
+	if withAuthority {
+		// UNC path: \\server\share\file.txt
+		sb.WriteString(`\\`)
+		sb.WriteString(u.Authority())
+		isWindows = true
+	}
+	if isWindows && !withAuthority && strings.HasPrefix(path, "/") {
+		// Omit first slash for normal (non-UNC) windows file paths
+		path = path[1:]
+	}
+	if isWindows {
+		// Normalize Windows paths by replacing forward slashes with backslashes
+		path = strings.ReplaceAll(path, "/", "\\")
+	}
+	sb.WriteString(path)
+	return sb.String()
+}
+
+func (u *uri) JoinPath(segments ...string) URI {
+	if len(segments) == 0 {
+		return u
+	}
+	joined := strings.Join(segments, "/")
+	newPath := u.Path()
+	if !strings.HasSuffix(u.Path(), "/") {
+		newPath += "/"
+	}
+	newPath += joined
+	return u.WithPath(newPath)
+}
+
 // NewURI returns a URI from the given components.
 // The components are not validated or normalized, so callers must ensure they
 // are valid for their use case.
@@ -316,7 +361,22 @@ func ParseURI(value string) URI {
 // FileURI replaces Windows backslashes with forward slashes, ensures the URI
 // path starts with a slash, and normalizes Windows drive letters to uppercase.
 // This is used when creating document URIs from workspace file paths.
+// It is also capable of handling UNC paths.
 func FileURI(path string) URI {
+	authority := ""
+	if strings.HasPrefix(path, `\\`) {
+		// UNC path: \\server\share\file.txt
+		// Authority is "server" and path is "/share/file.txt"
+		parts := strings.SplitN(path[2:], `\`, 2)
+		if len(parts) == 2 {
+			authority = parts[0]
+			path = `\` + parts[1]
+		} else {
+			// Malformed UNC path, treat entire path as authority
+			authority = path[2:]
+			path = `\`
+		}
+	}
 	// Normalize Windows paths by replacing backslashes with forward slashes
 	normalized := strings.ReplaceAll(path, "\\", "/")
 	// Ensure the path starts with a slash
@@ -325,19 +385,28 @@ func FileURI(path string) URI {
 	}
 	// Further normalize the drive letter
 	normalized = normalizeDriveLetter(normalized)
-	return NewURI("file", "", normalized, "", "")
+	return NewURI("file", authority, normalized, "", "")
 }
 
 // Uppercases the drive letter in Windows file paths to ensure consistent URIs across platforms
 func normalizeDriveLetter(path string) string {
+	offset := windowsDriveLetterOffset(path)
+	if offset == -1 {
+		// No drive letter found
+		return path
+	}
+	return path[0:offset] + strings.ToUpper(string(path[offset:1+offset])) + path[1+offset:]
+}
+
+func windowsDriveLetterOffset(path string) int {
 	offset := 0
 	if strings.HasPrefix(path, "/") {
 		offset = 1
 	}
-	if len(path) >= 3+offset && path[2+offset] == '/' && path[1+offset] == ':' && (path[0+offset] >= 'a' && path[0+offset] <= 'z') {
-		return path[0:offset] + strings.ToUpper(string(path[offset:1+offset])) + path[1+offset:]
+	if len(path) >= 3+offset && path[2+offset] == '/' && path[1+offset] == ':' && ((path[0+offset] >= 'a' && path[0+offset] <= 'z') || (path[0+offset] >= 'A' && path[0+offset] <= 'Z')) {
+		return offset
 	}
-	return path
+	return -1
 }
 
 const upperhex = "0123456789ABCDEF"

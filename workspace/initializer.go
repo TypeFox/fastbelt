@@ -6,10 +6,9 @@ package workspace
 
 import (
 	"context"
-	"io/fs"
 	"log"
-	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	core "typefox.dev/fastbelt"
@@ -42,6 +41,20 @@ type Initializer interface {
 	Initialize(ctx context.Context, folders []lsp.WorkspaceFolder) error
 }
 
+// NoopInitializer is an [Initializer] that does nothing.
+// It can be used in environments where there is no file system to scan, such as the browser.
+type NoopInitializer struct{}
+
+// NewNoopInitializer creates a new instance of [NoopInitializer].
+func NewNoopInitializer() Initializer {
+	return NoopInitializer{}
+}
+
+// Initialize does nothing and returns nil.
+func (NoopInitializer) Initialize(ctx context.Context, folders []lsp.WorkspaceFolder) error {
+	return nil
+}
+
 // DefaultInitializer is the default implementation of [Initializer].
 type DefaultInitializer struct {
 	sc *service.Container
@@ -54,34 +67,34 @@ func NewDefaultInitializer(sc *service.Container) Initializer {
 }
 
 func (s *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.WorkspaceFolder) error {
-	if !service.Has[LanguageID](s.sc) {
+	fs, err := service.Get[FileSystem](s.sc)
+	if err != nil {
+		return nil
+	}
+	languageID, err := service.Get[LanguageID](s.sc)
+	if err != nil {
 		log.Print("workspace LanguageID is not set")
 	}
-	if !service.Has[FileExtensions](s.sc) {
+	extensions, err := service.Get[FileExtensions](s.sc)
+	if err != nil {
 		log.Print("workspace FileExtensions is not set")
 		return nil
 	}
 	for _, folder := range folders {
-		root := core.ParseURI(folder.URI).Path()
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if err := ctx.Err(); err != nil {
-				return err
-			}
-			name := d.Name()
-			if d.IsDir() {
+		root := core.ParseURI(folder.URI)
+		err := WalkFileSystem(ctx, fs, root, func(entry DirEntry) error {
+			name := filepath.Base(entry.URI.Path())
+			if entry.IsDir {
 				if strings.HasPrefix(name, ".") {
 					return filepath.SkipDir
 				}
 				return nil
 			}
 			ext := filepath.Ext(name)
-			if !s.matchesExtension(ext) {
+			if !slices.Contains(extensions, ext) {
 				return nil
 			}
-			s.loadFile(path)
+			s.loadFile(ctx, entry.URI, fs, languageID)
 			return nil
 		})
 		if err != nil {
@@ -91,29 +104,17 @@ func (s *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 	return nil
 }
 
-func (s *DefaultInitializer) loadFile(path string) {
-	content, err := os.ReadFile(path)
+func (s *DefaultInitializer) loadFile(ctx context.Context, uri core.URI, fs FileSystem, languageID LanguageID) {
+	content, err := fs.ReadFile(ctx, uri)
 	if err != nil {
-		log.Printf("failed to read file %s: %v", path, err)
+		log.Printf("failed to read file %s: %v", uri.String(), err)
 		return
 	}
-	uri := core.FileURI(path)
-	languageID := service.MustGet[LanguageID](s.sc)
 	textDoc, err := textdoc.NewFile(uri.DocumentURI(), string(languageID), 0, string(content))
 	if err != nil {
-		log.Printf("failed to create text document for %s: %v", path, err)
+		log.Printf("failed to create text document for %s: %v", uri.String(), err)
 		return
 	}
 	doc := core.NewDocument(textDoc)
 	service.MustGet[DocumentManager](s.sc).Set(doc)
-}
-
-func (s *DefaultInitializer) matchesExtension(ext string) bool {
-	extensions := service.MustGet[FileExtensions](s.sc)
-	for _, e := range extensions {
-		if e == ext {
-			return true
-		}
-	}
-	return false
 }
