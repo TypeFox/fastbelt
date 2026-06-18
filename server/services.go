@@ -78,10 +78,11 @@ func SetupDefaultServices(sc *service.Container) {
 	}
 	if !service.Has[WorkspaceSymbolProvider](sc) {
 		service.Put(sc, NewDefaultWorkspaceSymbolProvider(sc))
-	if !service.Has[DocumentationProvider](sc) {
-		service.Put(sc, NewDefaultDocumentationProvider())
-	}
-	if !service.Has[HoverProvider](sc) {
-		service.Put(sc, NewDefaultHoverProvider(sc))
+		if !service.Has[DocumentationProvider](sc) {
+			service.Put(sc, NewDefaultDocumentationProvider())
+		}
+		if !service.Has[HoverProvider](sc) {
+			service.Put(sc, NewDefaultHoverProvider(sc))
+		}
 	}
 }
