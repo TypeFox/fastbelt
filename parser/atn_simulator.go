@@ -209,8 +209,7 @@ func (atn *RuntimeATN) NextCompletionsFromSet(live []simPath) CompletionInfo {
 				continue
 			}
 			tk := [2]int{p.stateIdx, at.TokenType.Id}
-			if !seenToken.Has(tk) {
-				seenToken.Add(tk)
+			if seenToken.Add(tk) {
 				tokenComps = append(tokenComps, TokenCompletion{
 					TokenType:   at.TokenType,
 					ATNStateIdx: p.stateIdx,
@@ -232,8 +231,7 @@ func (atn *RuntimeATN) NextCompletionsFromSet(live []simPath) CompletionInfo {
 					state int
 					field string
 				}{p.stateIdx, effectiveHint.Field}
-				if !seenHint.Has(hk) {
-					seenHint.Add(hk)
+				if seenHint.Add(hk) {
 					hints = append(hints, HintCompletion{
 						Hint:        effectiveHint,
 						ATNStateIdx: p.stateIdx,
@@ -266,10 +264,9 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 	stack := make([]simPath, 0, len(seed))
 	for _, p := range seed {
 		k := p.key()
-		if seen.Has(k) {
+		if !seen.Add(k) {
 			continue
 		}
-		seen.Add(k)
 		out = append(out, p)
 		stack = append(stack, p)
 	}
@@ -292,8 +289,7 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 			nextHints := append([]*CompletionHint{}, cur.hints[:len(cur.hints)-1]...)
 			np := simPath{stateIdx: top, stack: nextStack, hints: nextHints}
 			k := np.key()
-			if !seen.Has(k) {
-				seen.Add(k)
+			if seen.Add(k) {
 				out = append(out, np)
 				stack = append(stack, np)
 			}
@@ -309,10 +305,9 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 				}
 				np := simPath{stateIdx: idx, stack: cur.stack, hints: cur.hints}
 				k := np.key()
-				if seen.Has(k) {
+				if !seen.Add(k) {
 					continue
 				}
-				seen.Add(k)
 				out = append(out, np)
 				stack = append(stack, np)
 			case *RuntimeRuleTransition:
@@ -332,10 +327,9 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 				newHints[len(cur.hints)] = tt.CompletionHint
 				np := simPath{stateIdx: targetIdx, stack: newStack, hints: newHints}
 				k := np.key()
-				if seen.Has(k) {
+				if !seen.Add(k) {
 					continue
 				}
-				seen.Add(k)
 				out = append(out, np)
 				stack = append(stack, np)
 			}
@@ -375,10 +369,9 @@ func (atn *RuntimeATN) advance(live []simPath, tokenType *core.TokenType, cfg Si
 			}
 			np := simPath{stateIdx: targetIdx, stack: p.stack, hints: p.hints}
 			k := np.key()
-			if seen.Has(k) {
+			if !seen.Add(k) {
 				continue
 			}
-			seen.Add(k)
 			next = append(next, np)
 		}
 	}

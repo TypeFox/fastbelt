@@ -32,9 +32,14 @@ func NewSet[T comparable](values ...T) Set[T] {
 	return s
 }
 
-// Add inserts value into the set. Adding a value already present is a no-op.
-func (s Set[T]) Add(value T) {
+// Add inserts value into the set. It reports whether value was newly added;
+// adding a value already present is a no-op and returns false.
+func (s Set[T]) Add(value T) bool {
+	if _, ok := s[value]; ok {
+		return false
+	}
 	s[value] = struct{}{}
+	return true
 }
 
 // Has reports whether value is a member of the set.
@@ -43,9 +48,14 @@ func (s Set[T]) Has(value T) bool {
 	return ok
 }
 
-// Remove deletes value from the set. Removing an absent value is a no-op.
-func (s Set[T]) Remove(value T) {
+// Remove deletes value from the set. It reports whether value was present and
+// removed; removing an absent value is a no-op and returns false.
+func (s Set[T]) Remove(value T) bool {
+	if _, ok := s[value]; !ok {
+		return false
+	}
 	delete(s, value)
+	return true
 }
 
 // Len returns the number of values in the set.

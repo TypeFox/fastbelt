@@ -200,10 +200,9 @@ func (i *InterfaceImpl) Validate(ctx context.Context, _ string, accept core.Vali
 }
 
 func collectInheritedFieldNames(iface Interface, ctx context.Context, collected map[string]Interface, visited collections.Set[string]) {
-	if visited.Has(iface.Name()) {
+	if !visited.Add(iface.Name()) {
 		return
 	}
-	visited.Add(iface.Name())
 	for _, ext := range iface.Extends() {
 		extType := ext.Ref(ctx)
 		if extType == nil {
@@ -290,10 +289,9 @@ func appearsInExtends(target Interface, current Interface, ctx context.Context, 
 	if current.Name() == target.Name() {
 		return true
 	}
-	if visited.Has(current.Name()) {
+	if !visited.Add(current.Name()) {
 		return false
 	}
-	visited.Add(current.Name())
 	for _, ext := range current.Extends() {
 		extType := ext.Ref(ctx)
 		if extType == nil {
@@ -613,10 +611,9 @@ func doInterfaceIsAssignableTo(source Interface, target Interface, visited colle
 	if source.Name() == target.Name() {
 		return true
 	}
-	if visited.Has(source.Name()) {
+	if !visited.Add(source.Name()) {
 		return false
 	}
-	visited.Add(source.Name())
 	for _, ext := range source.Extends() {
 		extType := ext.Ref(context.Background())
 		if extType == nil {
@@ -647,10 +644,9 @@ func checkRecursiveTokenGroup(tg TokenGroup, accept core.ValidationAcceptor) {
 }
 
 func appearsInTokenGroup(target TokenGroup, current TokenGroup, ctx context.Context, visited collections.Set[string]) bool {
-	if visited.Has(current.Name()) {
+	if !visited.Add(current.Name()) {
 		return false
 	}
-	visited.Add(current.Name())
 	for _, ext := range current.TokenRefs() {
 		token := ext.Ref(ctx)
 		if token == nil {

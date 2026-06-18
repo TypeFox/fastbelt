@@ -208,10 +208,9 @@ func (s *DefaultCompletionProvider) completionsForContext(
 		tokenTypes := make([]*core.TokenType, 0, len(info.Tokens))
 		seen := make(collections.Set[int], len(info.Tokens))
 		for _, tc := range info.Tokens {
-			if seen.Has(tc.TokenType.Id) {
+			if !seen.Add(tc.TokenType.Id) {
 				continue
 			}
-			seen.Add(tc.TokenType.Id)
 			tokenTypes = append(tokenTypes, tc.TokenType)
 		}
 		sctx := SnippetContext{
@@ -429,10 +428,9 @@ func deduplicateItems(items []lsp.CompletionItem) []lsp.CompletionItem {
 	out := items[:0]
 	for _, it := range items {
 		key := fmt.Sprintf("%d|%s", it.Kind, it.Label)
-		if seen.Has(key) {
+		if !seen.Add(key) {
 			continue
 		}
-		seen.Add(key)
 		out = append(out, it)
 	}
 	return out

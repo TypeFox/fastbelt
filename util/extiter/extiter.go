@@ -338,11 +338,8 @@ func Distinct[T any](seq iter.Seq[T], keyFn func(T) any) iter.Seq[T] {
 				key = value
 			}
 
-			if !seen.Has(key) {
-				seen.Add(key)
-				if !yield(value) {
-					return
-				}
+			if seen.Add(key) && !yield(value) {
+				return
 			}
 		}
 	}
