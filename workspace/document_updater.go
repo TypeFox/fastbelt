@@ -59,24 +59,19 @@ func (s *DefaultDocumentUpdater) Update(ctx context.Context, changed []textdoc.H
 			}
 
 			// Reset documents that depend on a changed document so their references
-			// are resolved again. Their parsed AST, exported symbols, and local
-			// symbols stay valid because the documents themselves did not change.
+			// are resolved again, then collect every document that has not yet
+			// completed all build phases. This covers the changed documents, the
+			// documents reset above, documents left incomplete by a previously
+			// cancelled build, and documents that have not been built at all
+			// (e.g. after the initial workspace load). Relinked documents keep
+			// their parsed AST, exported symbols, and local symbols because the
+			// documents themselves did not change.
 			keepState := core.DocStateParsed | core.DocStateExportedSymbols | core.DocStateLocalSymbols
-			for doc := range docManager.All() {
-				if changedURIs.Has(doc.URI.StringUnencoded()) {
-					continue
-				}
-				if shouldRelink(doc, changedURIs) {
-					builder.Reset(doc, keepState)
-				}
-			}
-
-			// Build every document that has not yet completed all build phases. This
-			// covers the changed documents, the documents reset above, documents left
-			// incomplete by a previously cancelled build, and documents that have not
-			// been built at all (e.g. after the initial workspace load).
 			docs := make([]*core.Document, 0, len(changed)+10)
 			for doc := range docManager.All() {
+				if !changedURIs.Has(doc.URI.StringUnencoded()) && shouldRelink(doc, changedURIs) {
+					builder.Reset(doc, keepState)
+				}
 				if !doc.State.IsComplete() {
 					docs = append(docs, doc)
 				}
