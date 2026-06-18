@@ -14,7 +14,7 @@ import (
 )
 
 func TestDocumentationSingleLineComment(t *testing.T) {
-	f := test.New(t, CreateLspServices())
+	f := test.New(t, CreateLspServices(nil))
 	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
 
 	doc := f.Parse(`
@@ -37,7 +37,7 @@ end
 }
 
 func TestDocumentationMultipleLineComments(t *testing.T) {
-	f := test.New(t, CreateLspServices())
+	f := test.New(t, CreateLspServices(nil))
 	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
 
 	doc := f.Parse(`
@@ -61,7 +61,7 @@ end
 }
 
 func TestDocumentationBlankLinePreserved(t *testing.T) {
-	f := test.New(t, CreateLspServices())
+	f := test.New(t, CreateLspServices(nil))
 	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
 
 	doc := f.Parse(`
@@ -86,7 +86,7 @@ end
 }
 
 func TestDocumentationBlockComment(t *testing.T) {
-	f := test.New(t, CreateLspServices())
+	f := test.New(t, CreateLspServices(nil))
 	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
 
 	doc := f.Parse(`
@@ -112,7 +112,7 @@ end
 }
 
 func TestDocumentationIgnoresCommentsSeparatedByBlankLine(t *testing.T) {
-	f := test.New(t, CreateLspServices())
+	f := test.New(t, CreateLspServices(nil))
 	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
 
 	doc := f.Parse(`
@@ -137,7 +137,7 @@ end
 }
 
 func TestDocumentationNoComment(t *testing.T) {
-	f := test.New(t, CreateLspServices())
+	f := test.New(t, CreateLspServices(nil))
 	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
 
 	doc := f.Parse(`
@@ -159,7 +159,7 @@ end
 }
 
 func TestHoverReturnsDocumentationForReference(t *testing.T) {
-	f := test.New(t, CreateLspServices())
+	f := test.New(t, CreateLspServices(nil))
 
 	f.Parse(`
 statemachine Test
@@ -178,7 +178,7 @@ end
 }
 
 func TestHoverNilForUndocumentedReference(t *testing.T) {
-	f := test.New(t, CreateLspServices())
+	f := test.New(t, CreateLspServices(nil))
 
 	f.Parse(`
 statemachine Test
@@ -196,7 +196,7 @@ end
 }
 
 func TestHoverNilForWhitespace(t *testing.T) {
-	f := test.New(t, CreateLspServices())
+	f := test.New(t, CreateLspServices(nil))
 
 	f.Parse(`
 statemachine<|ws> Test
