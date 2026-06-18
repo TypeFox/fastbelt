@@ -44,7 +44,7 @@ func BuildParserATNData(grammr grammar.Grammar, tokenTypes GenerateTokenTypesRes
 	elementNames := internalATN.BuildElementNames(grammr)
 	stateNames := internalATN.BuildStateNameMap(builtATN, elementNames)
 	stateIdx := internalATN.BuildStateIndexMap(builtATN)
-	orAdaptive, loopAdaptive := buildAdaptiveDecisionMaps(builtATN, grammr)
+	orAdaptive, loopAdaptive := buildAdaptiveDecisionMaps(builtATN)
 	return &parserATNData{
 		followStateName:   buildFollowStateNameMap(builtATN, stateIdx, stateNames),
 		decisionStateName: buildDecisionStateNameMap(builtATN, stateIdx, stateNames),
@@ -568,7 +568,7 @@ func buildDecisionStateNameMap(builtATN *internalATN.ATN, stateIdx map[*internal
 //     and exit FIRST sets overlap, i.e. a single token cannot decide. The exit
 //     set is the loop's full FOLLOW, crossing rule-stop boundaries so the guard
 //     is correct even when the loop sits at the end of its rule.
-func buildAdaptiveDecisionMaps(a *internalATN.ATN, grammr grammar.Grammar) (orMap, loopMap map[core.AstNode]int) {
+func buildAdaptiveDecisionMaps(a *internalATN.ATN) (orMap, loopMap map[core.AstNode]int) {
 	orMap = map[core.AstNode]int{}
 	for el, ds := range a.OrDecision {
 		alts, ok := el.(grammar.Alternatives)
@@ -1238,8 +1238,8 @@ func generateCombinedAssignmentParser(node codegen.Node, context *ParserGenerato
 		}
 		n.AppendLine("if ", resultName, " != nil {")
 		if _, ok := e.Value().(grammar.CrossRef); ok {
-			parserRuleName := getInterfaceName(e)
-			resultName = "p.referencesConstructor." + parserRuleName + e.Property().Text() + "(current, " + resultName + ")"
+			interfaceName := getDeclaringInterface(e)
+			resultName = "p.referencesConstructor." + interfaceName + e.Property().Text() + "(current, " + resultName + ")"
 		}
 		n.Indent(func(in codegen.Node) {
 			switch e.Operator() {

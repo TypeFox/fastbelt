@@ -21,6 +21,9 @@ func SetupGeneratedServices(sc *service.Container) {
 	if !service.Has[ArithmeticsReferencesConstructor](sc) {
 		service.Put(sc, NewDefaultArithmeticsReferencesConstructor(sc))
 	}
+	if !service.Has[ArithmeticsParserLookahead](sc) {
+		service.Put(sc, NewDefaultArithmeticsParserLookahead())
+	}
 	if !service.Has[lexer.Lexer](sc) {
 		service.Put(sc, NewLexer())
 	}

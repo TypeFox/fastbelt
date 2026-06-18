@@ -10,10 +10,11 @@ import (
 )
 
 type CompletionParser struct {
-	state *parser.ParserState
-	cp    *parser.CompletionParserState
-	sc    *service.Container
-	atn   func() *parser.RuntimeATN
+	state     *parser.ParserState
+	cp        *parser.CompletionParserState
+	sc        *service.Container
+	atn       func() *parser.RuntimeATN
+	lookahead ArithmeticsParserLookahead
 }
 
 func NewCompletionParser(sc *service.Container) *CompletionParser {
@@ -30,7 +31,8 @@ func NewCompletionParser(sc *service.Container) *CompletionParser {
 func (p *CompletionParser) Parse(tokens []core.Token) *parser.CompletionParseResult {
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
-	cp := &CompletionParser{sc: p.sc, atn: p.atn}
+	lookahead := service.MustGet[ArithmeticsParserLookahead](p.sc)
+	cp := &CompletionParser{sc: p.sc, atn: p.atn, lookahead: lookahead}
 	cp.state = parser.NewParserState(tokens, p.atn(), recovery, messages)
 	cp.cp = parser.NewCompletionParserState(cp.state)
 	cp.ParseModule()
@@ -51,7 +53,7 @@ func (p *CompletionParser) ParseModule() {
 	{
 		p.cp.RecordSnapshot(Module__LoopEntry)
 		p.state.Sync(Module__LoopEntry)
-		for p.state.Lookahead(ModuleLookahead0) == 0 {
+		for p.lookahead.ModuleStatementsLoop(p.state) {
 			p.cp.MarkAssignment("Statements")
 			p.state.EnterRule(Module__Basic_1)
 			p.ParseStatement()
@@ -66,7 +68,7 @@ func (p *CompletionParser) ParseModule() {
 func (p *CompletionParser) ParseStatement() {
 	p.cp.EnterRule("Statement", Statement__Start)
 	defer p.cp.ExitRule()
-	switch p.state.Lookahead(StatementLookaheadOr0) {
+	switch prediction, failure := p.lookahead.StatementAlternatives(p.state); prediction {
 	case 0:
 		{
 			p.state.EnterRule(Statement__Basic_1)
@@ -80,8 +82,7 @@ func (p *CompletionParser) ParseStatement() {
 			p.state.ExitRule()
 		}
 	default:
-		token := p.state.LA(1)
-		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 }
 
@@ -96,9 +97,9 @@ func (p *CompletionParser) ParseDefinition() {
 		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
-	p.cp.RecordSnapshot(Definition_LeftParen)
-	p.state.Sync(Definition_LeftParen)
-	if p.state.Lookahead(DefinitionLookahead1) == 0 {
+	p.cp.RecordSnapshot(Definition__Basic_4)
+	p.state.Sync(Definition__Basic_4)
+	if p.lookahead.DefinitionOptional(p.state) {
 		{
 			p.state.Consume(Keyword_LeftParen)
 		}
@@ -111,7 +112,7 @@ func (p *CompletionParser) ParseDefinition() {
 		}
 		p.cp.RecordSnapshot(Definition__LoopEntry)
 		p.state.Sync(Definition__LoopEntry)
-		for p.state.Lookahead(DefinitionLookahead2) == 0 {
+		for p.lookahead.DefinitionLoop(p.state) {
 			{
 				p.state.Consume(Keyword_Comma)
 			}
@@ -189,10 +190,10 @@ func (p *CompletionParser) ParseAddition() {
 	}
 	p.cp.RecordSnapshot(Addition__LoopEntry)
 	p.state.Sync(Addition__LoopEntry)
-	for p.state.Lookahead(AdditionLookahead3) == 0 {
+	for p.lookahead.AdditionLoop(p.state) {
 		{
 			p.cp.MarkAssignment("Operator")
-			switch p.state.Lookahead(AdditionOperatorLookaheadOr1) {
+			switch prediction, _ := p.lookahead.AdditionOperatorAlternatives(p.state); prediction {
 			case 0:
 				p.state.Consume(Keyword_Plus)
 			case 1:
@@ -222,10 +223,10 @@ func (p *CompletionParser) ParseMultiplication() {
 	}
 	p.cp.RecordSnapshot(Multiplication__LoopEntry)
 	p.state.Sync(Multiplication__LoopEntry)
-	for p.state.Lookahead(MultiplicationLookahead4) == 0 {
+	for p.lookahead.MultiplicationLoop(p.state) {
 		{
 			p.cp.MarkAssignment("Operator")
-			switch p.state.Lookahead(MultiplicationOperatorLookaheadOr2) {
+			switch prediction, _ := p.lookahead.MultiplicationOperatorAlternatives(p.state); prediction {
 			case 0:
 				p.state.Consume(Keyword_Asterisk)
 			case 1:
@@ -255,7 +256,7 @@ func (p *CompletionParser) ParseExponentiation() {
 	}
 	p.cp.RecordSnapshot(Exponentiation__LoopEntry)
 	p.state.Sync(Exponentiation__LoopEntry)
-	for p.state.Lookahead(ExponentiationLookahead5) == 0 {
+	for p.lookahead.ExponentiationLoop(p.state) {
 		{
 			p.cp.MarkAssignment("Operator")
 			p.state.Consume(Keyword_Caret)
@@ -283,7 +284,7 @@ func (p *CompletionParser) ParseModulo() {
 	}
 	p.cp.RecordSnapshot(Modulo__LoopEntry)
 	p.state.Sync(Modulo__LoopEntry)
-	for p.state.Lookahead(ModuloLookahead6) == 0 {
+	for p.lookahead.ModuloLoop(p.state) {
 		{
 			p.cp.MarkAssignment("Operator")
 			p.state.Consume(Keyword_Percent)
@@ -304,7 +305,7 @@ func (p *CompletionParser) ParseModulo() {
 func (p *CompletionParser) ParsePrimaryExpression() {
 	p.cp.EnterRule("PrimaryExpression", PrimaryExpression__Start)
 	defer p.cp.ExitRule()
-	switch p.state.Lookahead(PrimaryExpressionLookaheadOr3) {
+	switch prediction, failure := p.lookahead.PrimaryExpressionAlternatives(p.state); prediction {
 	case 0:
 		{
 			p.state.Consume(Keyword_LeftParen)
@@ -329,9 +330,9 @@ func (p *CompletionParser) ParsePrimaryExpression() {
 			p.state.Consume(Token_ID)
 			p.cp.ClearAssignment()
 		}
-		p.cp.RecordSnapshot(PrimaryExpression_LeftParen_1)
-		p.state.Sync(PrimaryExpression_LeftParen_1)
-		if p.state.Lookahead(PrimaryExpressionLookahead7) == 0 {
+		p.cp.RecordSnapshot(PrimaryExpression__Basic_7)
+		p.state.Sync(PrimaryExpression__Basic_7)
+		if p.lookahead.PrimaryExpressionOptional(p.state) {
 			{
 				p.state.Consume(Keyword_LeftParen)
 			}
@@ -344,7 +345,7 @@ func (p *CompletionParser) ParsePrimaryExpression() {
 			}
 			p.cp.RecordSnapshot(PrimaryExpression__LoopEntry)
 			p.state.Sync(PrimaryExpression__LoopEntry)
-			for p.state.Lookahead(PrimaryExpressionLookahead8) == 0 {
+			for p.lookahead.PrimaryExpressionLoop(p.state) {
 				{
 					p.state.Consume(Keyword_Comma)
 				}
@@ -363,7 +364,6 @@ func (p *CompletionParser) ParsePrimaryExpression() {
 			}
 		}
 	default:
-		token := p.state.LA(1)
-		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 }

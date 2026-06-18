@@ -213,10 +213,10 @@ func generateInterface(node codegen.Node, grammr grammar.Grammar, iface grammar.
 	node.AppendLine("}")
 	node.AppendLine()
 	generateDataStruct(node, iface, fields)
-	generateImplStruct(node, grammr, iface, fields)
+	generateImplStruct(node, grammr, iface)
 }
 
-func generateImplStruct(node codegen.Node, grammr grammar.Grammar, iface grammar.Interface, fields []FieldInfo) {
+func generateImplStruct(node codegen.Node, grammr grammar.Grammar, iface grammar.Interface) {
 	node.AppendLine("type ", iface.Name(), "Impl struct {")
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("core.AstNodeBase")

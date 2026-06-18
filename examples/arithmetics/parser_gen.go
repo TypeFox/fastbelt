@@ -12,13 +12,15 @@ type Parser struct {
 	state                 *parser.ParserState
 	sc                    *service.Container
 	referencesConstructor ArithmeticsReferencesConstructor
+	lookahead             ArithmeticsParserLookahead
 }
 
 func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
 	referencesConstructor := service.MustGet[ArithmeticsReferencesConstructor](p.sc)
-	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
+	lookahead := service.MustGet[ArithmeticsParserLookahead](p.sc)
+	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
 	result := cp.ParseModule()
 	core.AssignContainers(document, result)
 	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
@@ -30,109 +32,9 @@ func NewParser(sc *service.Container) *Parser {
 	}
 }
 
-var AdditionLookahead3 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Plus},
-		parser.LookaheadPath{Keyword_Dash},
-	},
-}
-
-var AdditionOperatorLookaheadOr1 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Plus},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Dash},
-	},
-}
-
-var DefinitionLookahead1 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftParen},
-	},
-}
-
-var DefinitionLookahead2 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Comma},
-	},
-}
-
-var ExponentiationLookahead5 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Caret},
-	},
-}
-
-var ModuleLookahead0 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_def},
-		parser.LookaheadPath{Keyword_LeftParen},
-		parser.LookaheadPath{Token_NUMBER},
-		parser.LookaheadPath{Token_ID},
-	},
-}
-
-var ModuloLookahead6 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Percent},
-	},
-}
-
-var MultiplicationLookahead4 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Asterisk},
-		parser.LookaheadPath{Keyword_Slash},
-	},
-}
-
-var MultiplicationOperatorLookaheadOr2 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Asterisk},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Slash},
-	},
-}
-
-var PrimaryExpressionLookahead7 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftParen},
-	},
-}
-
-var PrimaryExpressionLookahead8 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_Comma},
-	},
-}
-
-var PrimaryExpressionLookaheadOr3 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftParen},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_NUMBER},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Token_ID},
-	},
-}
-
-var StatementLookaheadOr0 = parser.LLkLookahead{
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_def},
-	},
-	parser.LookaheadOption{
-		parser.LookaheadPath{Keyword_LeftParen},
-		parser.LookaheadPath{Token_NUMBER},
-		parser.LookaheadPath{Token_ID},
-	},
-}
-
 func (p *Parser) ParseModule() Module {
 	current := NewModule()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_module)
 		core.AssignToken(current, token, Module_module)
@@ -146,7 +48,7 @@ func (p *Parser) ParseModule() Module {
 	}
 	{
 		p.state.Sync(Module__LoopEntry)
-		for p.state.Lookahead(ModuleLookahead0) == 0 {
+		for p.lookahead.ModuleStatementsLoop(p.state) {
 			p.state.EnterRule(Module__Basic_1)
 			result := p.ParseStatement()
 			p.state.ExitRule()
@@ -156,14 +58,14 @@ func (p *Parser) ParseModule() Module {
 			p.state.Sync(Module__LoopEntry)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseStatement() Statement {
 	current := NewStatement()
-	current.SetSegmentStartToken(p.state.LARaw(1))
-	switch p.state.Lookahead(StatementLookaheadOr0) {
+	current.SetSegmentStartToken(p.state.LA(1))
+	switch prediction, failure := p.lookahead.StatementAlternatives(p.state); prediction {
 	case 0:
 		{
 			p.state.EnterRule(Statement__Basic_1)
@@ -181,16 +83,15 @@ func (p *Parser) ParseStatement() Statement {
 			current = result
 		}
 	default:
-		token := p.state.LA(1)
-		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseDefinition() Definition {
 	current := NewDefinition()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Keyword_def)
 		core.AssignToken(current, token, Definition_def)
@@ -202,8 +103,8 @@ func (p *Parser) ParseDefinition() Definition {
 			current.SetName(token)
 		}
 	}
-	p.state.Sync(Definition_LeftParen)
-	if p.state.Lookahead(DefinitionLookahead1) == 0 {
+	p.state.Sync(Definition__Basic_4)
+	if p.lookahead.DefinitionOptional(p.state) {
 		{
 			token := p.state.Consume(Keyword_LeftParen)
 			core.AssignToken(current, token, Definition_LeftParen)
@@ -217,7 +118,7 @@ func (p *Parser) ParseDefinition() Definition {
 			}
 		}
 		p.state.Sync(Definition__LoopEntry)
-		for p.state.Lookahead(DefinitionLookahead2) == 0 {
+		for p.lookahead.DefinitionLoop(p.state) {
 			{
 				token := p.state.Consume(Keyword_Comma)
 				core.AssignToken(current, token, Definition_Comma)
@@ -253,13 +154,13 @@ func (p *Parser) ParseDefinition() Definition {
 		token := p.state.Consume(Keyword_Semicolon)
 		core.AssignToken(current, token, Definition_Semicolon)
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseDeclaredParameter() DeclaredParameter {
 	current := NewDeclaredParameter()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		token := p.state.Consume(Token_ID)
 		core.AssignToken(current, token, DeclaredParameter_Name_ID)
@@ -267,13 +168,13 @@ func (p *Parser) ParseDeclaredParameter() DeclaredParameter {
 			current.SetName(token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseEvaluation() Evaluation {
 	current := NewEvaluation()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		p.state.EnterRule(Evaluation_Semicolon)
 		result := p.ParseExpression()
@@ -286,13 +187,13 @@ func (p *Parser) ParseEvaluation() Evaluation {
 		token := p.state.Consume(Keyword_Semicolon)
 		core.AssignToken(current, token, Evaluation_Semicolon)
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseExpression() Expression {
 	current := NewExpression()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		p.state.EnterRule(Expression__Basic_1)
 		result := p.ParseAddition()
@@ -300,13 +201,13 @@ func (p *Parser) ParseExpression() Expression {
 		core.MergeTokens(result, current.Tokens())
 		current = result
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseAddition() Expression {
 	current := NewExpression()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		p.state.EnterRule(Addition__LoopEntry)
 		result := p.ParseMultiplication()
@@ -315,17 +216,17 @@ func (p *Parser) ParseAddition() Expression {
 		current = result
 	}
 	p.state.Sync(Addition__LoopEntry)
-	for p.state.Lookahead(AdditionLookahead3) == 0 {
+	for p.lookahead.AdditionLoop(p.state) {
 		{
 			result := NewBinaryExpression()
 			result.SetSegment(current.Segment())
 			result.SetLeft(current)
-			current.SetSegmentEndToken(p.state.LARaw(0))
+			current.SetSegmentEndToken(p.state.LA(0))
 			current = result
 		}
 		current := current.(BinaryExpression)
 		{
-			switch p.state.Lookahead(AdditionOperatorLookaheadOr1) {
+			switch prediction, _ := p.lookahead.AdditionOperatorAlternatives(p.state); prediction {
 			case 0:
 				token := p.state.Consume(Keyword_Plus)
 				core.AssignToken(current, token, Addition_Operator_Plus)
@@ -350,13 +251,13 @@ func (p *Parser) ParseAddition() Expression {
 		}
 		p.state.Sync(Addition__LoopEntry)
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseMultiplication() Expression {
 	current := NewExpression()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		p.state.EnterRule(Multiplication__LoopEntry)
 		result := p.ParseExponentiation()
@@ -365,17 +266,17 @@ func (p *Parser) ParseMultiplication() Expression {
 		current = result
 	}
 	p.state.Sync(Multiplication__LoopEntry)
-	for p.state.Lookahead(MultiplicationLookahead4) == 0 {
+	for p.lookahead.MultiplicationLoop(p.state) {
 		{
 			result := NewBinaryExpression()
 			result.SetSegment(current.Segment())
 			result.SetLeft(current)
-			current.SetSegmentEndToken(p.state.LARaw(0))
+			current.SetSegmentEndToken(p.state.LA(0))
 			current = result
 		}
 		current := current.(BinaryExpression)
 		{
-			switch p.state.Lookahead(MultiplicationOperatorLookaheadOr2) {
+			switch prediction, _ := p.lookahead.MultiplicationOperatorAlternatives(p.state); prediction {
 			case 0:
 				token := p.state.Consume(Keyword_Asterisk)
 				core.AssignToken(current, token, Multiplication_Operator_Asterisk)
@@ -400,13 +301,13 @@ func (p *Parser) ParseMultiplication() Expression {
 		}
 		p.state.Sync(Multiplication__LoopEntry)
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseExponentiation() Expression {
 	current := NewExpression()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		p.state.EnterRule(Exponentiation__LoopEntry)
 		result := p.ParseModulo()
@@ -415,12 +316,12 @@ func (p *Parser) ParseExponentiation() Expression {
 		current = result
 	}
 	p.state.Sync(Exponentiation__LoopEntry)
-	for p.state.Lookahead(ExponentiationLookahead5) == 0 {
+	for p.lookahead.ExponentiationLoop(p.state) {
 		{
 			result := NewBinaryExpression()
 			result.SetSegment(current.Segment())
 			result.SetLeft(current)
-			current.SetSegmentEndToken(p.state.LARaw(0))
+			current.SetSegmentEndToken(p.state.LA(0))
 			current = result
 		}
 		current := current.(BinaryExpression)
@@ -441,13 +342,13 @@ func (p *Parser) ParseExponentiation() Expression {
 		}
 		p.state.Sync(Exponentiation__LoopEntry)
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseModulo() Expression {
 	current := NewExpression()
-	current.SetSegmentStartToken(p.state.LARaw(1))
+	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		p.state.EnterRule(Modulo__LoopEntry)
 		result := p.ParsePrimaryExpression()
@@ -456,12 +357,12 @@ func (p *Parser) ParseModulo() Expression {
 		current = result
 	}
 	p.state.Sync(Modulo__LoopEntry)
-	for p.state.Lookahead(ModuloLookahead6) == 0 {
+	for p.lookahead.ModuloLoop(p.state) {
 		{
 			result := NewBinaryExpression()
 			result.SetSegment(current.Segment())
 			result.SetLeft(current)
-			current.SetSegmentEndToken(p.state.LARaw(0))
+			current.SetSegmentEndToken(p.state.LA(0))
 			current = result
 		}
 		current := current.(BinaryExpression)
@@ -482,14 +383,14 @@ func (p *Parser) ParseModulo() Expression {
 		}
 		p.state.Sync(Modulo__LoopEntry)
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParsePrimaryExpression() Expression {
 	current := NewExpression()
-	current.SetSegmentStartToken(p.state.LARaw(1))
-	switch p.state.Lookahead(PrimaryExpressionLookaheadOr3) {
+	current.SetSegmentStartToken(p.state.LA(1))
+	switch prediction, failure := p.lookahead.PrimaryExpressionAlternatives(p.state); prediction {
 	case 0:
 		{
 			token := p.state.Consume(Keyword_LeftParen)
@@ -536,8 +437,8 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 				current.SetCallable(p.referencesConstructor.FunctionCallCallable(current, token))
 			}
 		}
-		p.state.Sync(PrimaryExpression_LeftParen_1)
-		if p.state.Lookahead(PrimaryExpressionLookahead7) == 0 {
+		p.state.Sync(PrimaryExpression__Basic_7)
+		if p.lookahead.PrimaryExpressionOptional(p.state) {
 			{
 				token := p.state.Consume(Keyword_LeftParen)
 				core.AssignToken(current, token, PrimaryExpression_LeftParen_1)
@@ -551,7 +452,7 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 				}
 			}
 			p.state.Sync(PrimaryExpression__LoopEntry)
-			for p.state.Lookahead(PrimaryExpressionLookahead8) == 0 {
+			for p.lookahead.PrimaryExpressionLoop(p.state) {
 				{
 					token := p.state.Consume(Keyword_Comma)
 					core.AssignToken(current, token, PrimaryExpression_Comma)
@@ -572,9 +473,8 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 			}
 		}
 	default:
-		token := p.state.LA(1)
-		p.state.AppendError(p.state.Messages().NoViableAlternative(token), token)
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
-	current.SetSegmentEndToken(p.state.LARaw(0))
+	current.SetSegmentEndToken(p.state.LA(0))
 	return current
 }
