@@ -38,12 +38,12 @@ func (s *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context,
 	}
 	offset := doc.TextDoc.OffsetAt(params.Position)
 	tokens := doc.Tokens
-	sourceToken := tokens.SearchOffset(offset)
-	if sourceToken == nil {
+	first, second := tokens.SearchOffset2(offset)
+	if first == nil {
 		return nil, nil // No token at the given position
 	}
 	nameFinder := service.MustGet[NameFinder](s.sc)
-	foundName := nameFinder.Find(ctx, sourceToken)
+	foundName := nameFinder.Find(ctx, first, second)
 	if foundName.Target == nil || foundName.Source == nil {
 		return nil, nil // Could not find a name
 	}

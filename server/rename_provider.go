@@ -70,11 +70,11 @@ func (rp *DefaultRenameProvider) findTargetNode(ctx context.Context, params *lsp
 	}
 	offset := targetDoc.TextDoc.OffsetAt(params.Position)
 	tokens := targetDoc.Tokens
-	sourceToken := tokens.SearchOffset(offset)
-	if sourceToken == nil {
+	first, second := tokens.SearchOffset2(offset)
+	if first == nil {
 		return FoundName{} // No token at the given position
 	}
 	nameFinder := service.MustGet[NameFinder](rp.sc)
-	foundName := nameFinder.Find(ctx, sourceToken)
+	foundName := nameFinder.Find(ctx, first, second)
 	return foundName
 }
