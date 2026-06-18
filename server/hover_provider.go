@@ -36,13 +36,13 @@ func (s *DefaultHoverProvider) HandleHoverRequest(ctx context.Context, params *l
 	}
 
 	offset := doc.TextDoc.OffsetAt(params.Position)
-	sourceToken := doc.Tokens.SearchOffset(offset)
-	if sourceToken == nil {
+	first, second := doc.Tokens.SearchOffset2(offset)
+	if first == nil {
 		return nil, nil
 	}
 
 	nameFinder := service.MustGet[NameFinder](s.sc)
-	foundName := nameFinder.Find(ctx, sourceToken)
+	foundName := nameFinder.Find(ctx, first, second)
 	if foundName.Target == nil || foundName.Source == nil {
 		return nil, nil
 	}
