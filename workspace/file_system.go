@@ -47,9 +47,8 @@ func WalkFileSystem(ctx context.Context, fs FileSystem, uri core.URI, fn func(Di
 	entry, err := fs.Stat(ctx, uri)
 	if err != nil {
 		return err
-	} else {
-		err = walkDir(ctx, fs, entry, fn)
 	}
+	err = walkDir(ctx, fs, entry, fn)
 	if err == SkipAll || err == SkipDir {
 		return nil
 	}

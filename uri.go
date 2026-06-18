@@ -36,6 +36,8 @@ type URI interface {
 	// FilePath returns the URI as a file path, which is the format used by the local file system.
 	FilePath() string
 	// JoinPath joins the given path segments to the URI's path and returns a new URI.
+	// It will automatically attempt to normalize the resulting path by resolving "." and ".." segments,
+	// and by collapsing multiple slashes.
 	JoinPath(segments ...string) URI
 	// DocumentURI converts the URI to a lsp.DocumentURI, which is the format used by the LSP library.
 	DocumentURI() lsp.DocumentURI
@@ -228,7 +230,6 @@ func (u *uri) FilePath() string {
 		// UNC path: \\server\share\file.txt
 		sb.WriteString(`\\`)
 		sb.WriteString(u.Authority())
-		isWindows = true
 	}
 	if isWindows && !withAuthority && strings.HasPrefix(path, "/") {
 		// Omit first slash for normal (non-UNC) windows file paths
@@ -246,13 +247,40 @@ func (u *uri) JoinPath(segments ...string) URI {
 	if len(segments) == 0 {
 		return u
 	}
-	joined := strings.Join(segments, "/")
-	newPath := u.Path()
-	if !strings.HasSuffix(u.Path(), "/") {
-		newPath += "/"
+	// An empty path is treated as the root, so the result stays absolute.
+	absolute := u.Path() == "" || strings.HasPrefix(u.Path(), "/")
+
+	// Resolve "." and ".." against a stack of real segments. Slashes (both
+	// kinds) split segments, so leading/trailing/repeated slashes normalize away.
+	var stack []string
+	splitSlashes := func(r rune) bool { return r == '/' || r == '\\' }
+	handleSegment := func(seg string) {
+		for _, seg := range strings.FieldsFunc(seg, splitSlashes) {
+			switch seg {
+			case "", ".":
+				// no-op
+			case "..":
+				if n := len(stack); n > 0 && stack[n-1] != ".." {
+					stack = stack[:n-1]
+				} else if !absolute {
+					// Can't go above the root of an absolute path; keep ".." only for relative paths.
+					stack = append(stack, "..")
+				}
+			default:
+				stack = append(stack, seg)
+			}
+		}
 	}
-	newPath += joined
-	return u.WithPath(newPath)
+	handleSegment(u.Path())
+	for _, seg := range segments {
+		handleSegment(seg)
+	}
+
+	joined := strings.Join(stack, "/")
+	if absolute {
+		joined = "/" + joined
+	}
+	return u.WithPath(joined)
 }
 
 // NewURI returns a URI from the given components.
@@ -395,7 +423,7 @@ func normalizeDriveLetter(path string) string {
 		// No drive letter found
 		return path
 	}
-	return path[0:offset] + strings.ToUpper(string(path[offset:1+offset])) + path[1+offset:]
+	return path[0:offset] + strings.ToUpper(path[offset:1+offset]) + path[1+offset:]
 }
 
 func windowsDriveLetterOffset(path string) int {
@@ -403,10 +431,16 @@ func windowsDriveLetterOffset(path string) int {
 	if strings.HasPrefix(path, "/") {
 		offset = 1
 	}
-	if len(path) >= 3+offset && path[2+offset] == '/' && path[1+offset] == ':' && ((path[0+offset] >= 'a' && path[0+offset] <= 'z') || (path[0+offset] >= 'A' && path[0+offset] <= 'Z')) {
+	if len(path) >= 3+offset && path[2+offset] == '/' && path[1+offset] == ':' && isLetter(path[0+offset]) {
 		return offset
 	}
 	return -1
+}
+
+func isLetter(c byte) bool {
+	// OR with 0x20 converts uppercase ASCII letters to lowercase
+	// Other characters will be rejected by the range check, so this is safe
+	return ((c|0x20) >= 'a' && (c|0x20) <= 'z')
 }
 
 const upperhex = "0123456789ABCDEF"
@@ -466,11 +500,6 @@ func shouldEscape(c byte, isPath, isAuthority bool) bool {
 		(isAuthority && c == ']') ||
 		(isAuthority && c == ':')
 	return !shouldKeep
-}
-
-// isLetter checks if a byte is an ASCII letter
-func isLetter(c byte) bool {
-	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
 }
 
 // isDigit checks if a byte is an ASCII digit

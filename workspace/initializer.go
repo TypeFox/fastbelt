@@ -74,6 +74,7 @@ func (s *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 	languageID, err := service.Get[LanguageID](s.sc)
 	if err != nil {
 		log.Print("workspace LanguageID is not set")
+		return nil
 	}
 	extensions, err := service.Get[FileExtensions](s.sc)
 	if err != nil {
@@ -86,7 +87,7 @@ func (s *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 			name := filepath.Base(entry.URI.Path())
 			if entry.IsDir {
 				if strings.HasPrefix(name, ".") {
-					return filepath.SkipDir
+					return SkipDir
 				}
 				return nil
 			}
