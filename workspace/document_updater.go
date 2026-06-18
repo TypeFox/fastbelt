@@ -7,10 +7,10 @@ package workspace
 import (
 	"context"
 	"log"
-	"slices"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/fastbelt/util/collections"
 	"typefox.dev/fastbelt/util/service"
 )
 
@@ -40,29 +40,46 @@ func NewDefaultDocumentUpdater(sc *service.Container) DocumentUpdater {
 }
 
 func (s *DefaultDocumentUpdater) Update(ctx context.Context, changed []textdoc.Handle, deleted []core.URI) {
-	// Write cancels any previous pending or in-progress build and issues a
-	// fresh context. The outer ctx is from jsonrpc2 and has a different lifetime than the build.
 	go func() {
 		docManager := service.MustGet[DocumentManager](s.sc)
 		builder := service.MustGet[Builder](s.sc)
 		lock := service.MustGet[Lock](s.sc)
+		// Write cancels any previous pending or in-progress build and issues a
+		// fresh context. The outer ctx is from jsonrpc2 and has a different lifetime than the build.
 		lock.Write(context.Background(), func(ctx context.Context, downgrade func()) {
+			changedURIs := make(collections.Set[string], len(changed)+len(deleted))
 			for _, handle := range changed {
 				doc := core.NewDocument(handle)
 				docManager.Set(doc)
+				changedURIs.Add(doc.URI.StringUnencoded())
 			}
 			for _, uri := range deleted {
 				docManager.Delete(uri)
+				changedURIs.Add(uri.StringUnencoded())
 			}
 
-			// Collect all documents to be processed.
-			// TODO implement this properly: determine the minimal set of documents to be processed
-			docs := slices.Collect(docManager.All())
-
-			// Reset documents so linking and validation are re-executed.
+			// Reset documents that depend on a changed document so their references
+			// are resolved again. Their parsed AST, exported symbols, and local
+			// symbols stay valid because the documents themselves did not change.
 			keepState := core.DocStateParsed | core.DocStateExportedSymbols | core.DocStateLocalSymbols
-			for _, doc := range docs {
-				builder.Reset(doc, keepState)
+			for doc := range docManager.All() {
+				if changedURIs.Has(doc.URI.StringUnencoded()) {
+					continue
+				}
+				if shouldRelink(doc, changedURIs) {
+					builder.Reset(doc, keepState)
+				}
+			}
+
+			// Build every document that has not yet completed all build phases. This
+			// covers the changed documents, the documents reset above, documents left
+			// incomplete by a previously cancelled build, and documents that have not
+			// been built at all (e.g. after the initial workspace load).
+			docs := make([]*core.Document, 0, len(changed)+10)
+			for doc := range docManager.All() {
+				if !doc.State.IsComplete() {
+					docs = append(docs, doc)
+				}
 			}
 
 			if err := builder.Build(ctx, docs, downgrade); err != nil {
@@ -72,4 +89,46 @@ func (s *DefaultDocumentUpdater) Update(ctx context.Context, changed []textdoc.H
 			}
 		})
 	}()
+}
+
+// shouldRelink reports whether doc must be rebuilt after the documents identified
+// by changedURIs were created, updated, or deleted.
+//
+// A document is relinked when it has an unresolved reference, which might resolve
+// against a symbol introduced by the change, or when it references any of the
+// changed documents (see [isAffected]).
+func shouldRelink(doc *core.Document, changedURIs collections.Set[string]) bool {
+	for _, ref := range doc.References {
+		if ref.Error() != nil {
+			return true
+		}
+	}
+	return isAffected(doc, changedURIs)
+}
+
+// isAffected reports whether doc contains a cross-document reference to any of the
+// documents identified by changedURIs. URIs are compared using
+// [core.URI.StringUnencoded].
+//
+// References to nodes within doc itself are ignored: such local references cannot
+// be invalidated by a change to another document.
+func isAffected(doc *core.Document, changedURIs collections.Set[string]) bool {
+	if doc.ReferenceDescriptions == nil {
+		return false
+	}
+	docURI := doc.URI.StringUnencoded()
+	for desc := range doc.ReferenceDescriptions.All() {
+		targetURI := desc.TargetURI()
+		if targetURI == nil {
+			continue
+		}
+		target := targetURI.StringUnencoded()
+		if target == docURI {
+			continue
+		}
+		if changedURIs.Has(target) {
+			return true
+		}
+	}
+	return false
 }

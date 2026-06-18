@@ -12,6 +12,7 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
+	"typefox.dev/fastbelt/util/collections"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
@@ -205,12 +206,12 @@ func (s *DefaultCompletionProvider) completionsForContext(
 	// Snippet pass.
 	if reg, err := service.Get[SnippetRegistry](s.sc); err == nil && reg != nil {
 		tokenTypes := make([]*core.TokenType, 0, len(info.Tokens))
-		seen := make(map[int]struct{}, len(info.Tokens))
+		seen := make(collections.Set[int], len(info.Tokens))
 		for _, tc := range info.Tokens {
-			if _, dup := seen[tc.TokenType.Id]; dup {
+			if seen.Has(tc.TokenType.Id) {
 				continue
 			}
-			seen[tc.TokenType.Id] = struct{}{}
+			seen.Add(tc.TokenType.Id)
 			tokenTypes = append(tokenTypes, tc.TokenType)
 		}
 		sctx := SnippetContext{
@@ -424,14 +425,14 @@ func tokenLabel(tt *core.TokenType) string {
 // "complete current" items (which are emitted first) keep their
 // TextEdit replacement range.
 func deduplicateItems(items []lsp.CompletionItem) []lsp.CompletionItem {
-	seen := make(map[string]struct{}, len(items))
+	seen := make(collections.Set[string], len(items))
 	out := items[:0]
 	for _, it := range items {
 		key := fmt.Sprintf("%d|%s", it.Kind, it.Label)
-		if _, dup := seen[key]; dup {
+		if seen.Has(key) {
 			continue
 		}
-		seen[key] = struct{}{}
+		seen.Add(key)
 		out = append(out, it)
 	}
 	return out

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/collections"
 )
 
 // SimConfig holds the configurable cost/loop limits for an ATN simulation.
@@ -141,7 +142,7 @@ type HintCompletion struct {
 type CompletionInfo struct {
 	Tokens        []TokenCompletion
 	Hints         []HintCompletion
-	HintedOnlyIDs map[int]struct{}
+	HintedOnlyIDs collections.Set[int]
 }
 
 // HasToken reports whether tokenID appears in any TokenCompletion.
@@ -185,13 +186,13 @@ func (info CompletionInfo) HasHintField(field string) bool {
 func (atn *RuntimeATN) NextCompletionsFromSet(live []simPath) CompletionInfo {
 	var tokenComps []TokenCompletion
 	var hints []HintCompletion
-	seenToken := map[[2]int]struct{}{}
-	seenHint := map[struct {
+	seenToken := make(collections.Set[[2]int])
+	seenHint := make(collections.Set[struct {
 		state int
 		field string
-	}]struct{}{}
-	hinted := map[int]struct{}{}
-	unhinted := map[int]struct{}{}
+	}])
+	hinted := make(collections.Set[int])
+	unhinted := make(collections.Set[int])
 	closure := atn.epsilonClosure(live, DefaultSimConfig)
 	for _, p := range closure {
 		if p.stateIdx < 0 || p.stateIdx >= len(atn.States) {
@@ -208,8 +209,8 @@ func (atn *RuntimeATN) NextCompletionsFromSet(live []simPath) CompletionInfo {
 				continue
 			}
 			tk := [2]int{p.stateIdx, at.TokenType.Id}
-			if _, dup := seenToken[tk]; !dup {
-				seenToken[tk] = struct{}{}
+			if !seenToken.Has(tk) {
+				seenToken.Add(tk)
 				tokenComps = append(tokenComps, TokenCompletion{
 					TokenType:   at.TokenType,
 					ATNStateIdx: p.stateIdx,
@@ -226,27 +227,27 @@ func (atn *RuntimeATN) NextCompletionsFromSet(live []simPath) CompletionInfo {
 				effectiveHint = pathHint
 			}
 			if effectiveHint != nil {
-				hinted[at.TokenType.Id] = struct{}{}
+				hinted.Add(at.TokenType.Id)
 				hk := struct {
 					state int
 					field string
 				}{p.stateIdx, effectiveHint.Field}
-				if _, dup := seenHint[hk]; !dup {
-					seenHint[hk] = struct{}{}
+				if !seenHint.Has(hk) {
+					seenHint.Add(hk)
 					hints = append(hints, HintCompletion{
 						Hint:        effectiveHint,
 						ATNStateIdx: p.stateIdx,
 					})
 				}
 			} else {
-				unhinted[at.TokenType.Id] = struct{}{}
+				unhinted.Add(at.TokenType.Id)
 			}
 		}
 	}
-	hintedOnly := map[int]struct{}{}
+	hintedOnly := make(collections.Set[int])
 	for id := range hinted {
-		if _, alsoUnhinted := unhinted[id]; !alsoUnhinted {
-			hintedOnly[id] = struct{}{}
+		if !unhinted.Has(id) {
+			hintedOnly.Add(id)
 		}
 	}
 	return CompletionInfo{
@@ -261,14 +262,14 @@ func (atn *RuntimeATN) NextCompletionsFromSet(live []simPath) CompletionInfo {
 // (pop the top of the return stack). The result includes the seed states.
 func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 	out := make([]simPath, 0, len(seed))
-	seen := make(map[string]struct{}, len(seed)*2)
+	seen := make(collections.Set[string], len(seed)*2)
 	stack := make([]simPath, 0, len(seed))
 	for _, p := range seed {
 		k := p.key()
-		if _, ok := seen[k]; ok {
+		if seen.Has(k) {
 			continue
 		}
-		seen[k] = struct{}{}
+		seen.Add(k)
 		out = append(out, p)
 		stack = append(stack, p)
 	}
@@ -291,8 +292,8 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 			nextHints := append([]*CompletionHint{}, cur.hints[:len(cur.hints)-1]...)
 			np := simPath{stateIdx: top, stack: nextStack, hints: nextHints}
 			k := np.key()
-			if _, ok := seen[k]; !ok {
-				seen[k] = struct{}{}
+			if !seen.Has(k) {
+				seen.Add(k)
 				out = append(out, np)
 				stack = append(stack, np)
 			}
@@ -308,10 +309,10 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 				}
 				np := simPath{stateIdx: idx, stack: cur.stack, hints: cur.hints}
 				k := np.key()
-				if _, ok := seen[k]; ok {
+				if seen.Has(k) {
 					continue
 				}
-				seen[k] = struct{}{}
+				seen.Add(k)
 				out = append(out, np)
 				stack = append(stack, np)
 			case *RuntimeRuleTransition:
@@ -331,10 +332,10 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 				newHints[len(cur.hints)] = tt.CompletionHint
 				np := simPath{stateIdx: targetIdx, stack: newStack, hints: newHints}
 				k := np.key()
-				if _, ok := seen[k]; ok {
+				if seen.Has(k) {
 					continue
 				}
-				seen[k] = struct{}{}
+				seen.Add(k)
 				out = append(out, np)
 				stack = append(stack, np)
 			}
@@ -354,7 +355,7 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 func (atn *RuntimeATN) advance(live []simPath, tokenType *core.TokenType, cfg SimConfig) []simPath {
 	closure := atn.epsilonClosure(live, cfg)
 	next := make([]simPath, 0, len(closure))
-	seen := make(map[string]struct{}, len(closure))
+	seen := make(collections.Set[string], len(closure))
 	for _, p := range closure {
 		if p.stateIdx < 0 || p.stateIdx >= len(atn.States) {
 			continue
@@ -374,10 +375,10 @@ func (atn *RuntimeATN) advance(live []simPath, tokenType *core.TokenType, cfg Si
 			}
 			np := simPath{stateIdx: targetIdx, stack: p.stack, hints: p.hints}
 			k := np.key()
-			if _, ok := seen[k]; ok {
+			if seen.Has(k) {
 				continue
 			}
-			seen[k] = struct{}{}
+			seen.Add(k)
 			next = append(next, np)
 		}
 	}

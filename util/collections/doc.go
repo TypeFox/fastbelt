@@ -4,5 +4,6 @@
 
 // Package collections provides generic collection data structures shared across
 // Fastbelt. Use [MultiMap] when a key may map to many values and callers need
-// grouped lookup, ordered values per key, or a total element count.
+// grouped lookup, ordered values per key, or a total element count. Use [Set]
+// for membership tracking when only the presence of distinct values matters.
 package collections

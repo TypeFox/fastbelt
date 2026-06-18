@@ -20,6 +20,21 @@ import (
 
 // Initializer loads workspace files into [DocumentManager] when an LSP
 // workspace folder is opened.
+//
+// A build is not triggered automatically after initialization. Created
+// documents are left in the initial document state until [Builder.Build] runs.
+//
+// In a language server context, the first workspace build is triggered when a
+// file is opened. The textDocument/didOpen notification reaches the server's
+// document sync layer, which calls [DocumentUpdater.Update]. The updater
+// gathers every document that has not yet completed all build phases,
+// including files loaded during initialization.
+//
+// Adopters who wish to pre-build the workspace before a file is opened should
+// set a broader activation event for their IDE extension and invoke
+// [DocumentUpdater.Update] after the server receives the "initialized"
+// notification. In other usage contexts, such as a CLI, call the
+// [Initializer] and then [Builder] directly.
 type Initializer interface {
 	// Initialize walks folders on disk, reads files whose extension matches
 	// [FileExtensions], and registers them with [DocumentManager]. Hidden
@@ -91,8 +106,6 @@ func (s *DefaultInitializer) loadFile(path string) {
 	}
 	doc := core.NewDocument(textDoc)
 	service.MustGet[DocumentManager](s.sc).Set(doc)
-	// TODO parse the document and collect exported symbols
-	// We don't need that right now because all documents are rebuilt on every change
 }
 
 func (s *DefaultInitializer) matchesExtension(ext string) bool {

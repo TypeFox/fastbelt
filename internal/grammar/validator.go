@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/collections"
 )
 
 const (
@@ -198,11 +199,11 @@ func (i *InterfaceImpl) Validate(ctx context.Context, _ string, accept core.Vali
 	checkInterfaceFieldNames(i, ctx, accept)
 }
 
-func collectInheritedFieldNames(iface Interface, ctx context.Context, collected map[string]Interface, visited map[string]struct{}) {
-	if _, alreadyVisited := visited[iface.Name()]; alreadyVisited {
+func collectInheritedFieldNames(iface Interface, ctx context.Context, collected map[string]Interface, visited collections.Set[string]) {
+	if visited.Has(iface.Name()) {
 		return
 	}
-	visited[iface.Name()] = struct{}{}
+	visited.Add(iface.Name())
 	for _, ext := range iface.Extends() {
 		extType := ext.Ref(ctx)
 		if extType == nil {
@@ -226,9 +227,9 @@ func collectInheritedFieldNames(iface Interface, ctx context.Context, collected 
 
 func checkInterfaceFieldNames(iface Interface, ctx context.Context, accept core.ValidationAcceptor) {
 	inherited := map[string]Interface{}
-	collectInheritedFieldNames(iface, ctx, inherited, map[string]struct{}{})
+	collectInheritedFieldNames(iface, ctx, inherited, collections.NewSet[string]())
 
-	seen := map[string]struct{}{}
+	seen := collections.NewSet[string]()
 	for _, field := range iface.Fields() {
 		name := field.Name()
 		if name == "" {
@@ -244,7 +245,7 @@ func checkInterfaceFieldNames(iface Interface, ctx context.Context, accept core.
 			))
 		}
 		lower := strings.ToLower(name)
-		if _, dup := seen[lower]; dup {
+		if seen.Has(lower) {
 			accept(core.NewDiagnostic(
 				core.SeverityError,
 				fmt.Sprintf("A property's name has to be unique (case-insensitively). '%s' is already used above.", name),
@@ -253,7 +254,7 @@ func checkInterfaceFieldNames(iface Interface, ctx context.Context, accept core.
 				core.WithCode(ValidateUniqueFieldName),
 			))
 		} else {
-			seen[lower] = struct{}{}
+			seen.Add(lower)
 			if declaringIface, dup := inherited[lower]; dup {
 				accept(core.NewDiagnostic(
 					core.SeverityError,
@@ -273,7 +274,7 @@ func checkInterfaceExtends(iface Interface, ctx context.Context, accept core.Val
 		if extType == nil {
 			continue
 		}
-		if appearsInExtends(iface, extType, ctx, map[string]struct{}{}) {
+		if appearsInExtends(iface, extType, ctx, collections.NewSet[string]()) {
 			accept(core.NewDiagnostic(
 				core.SeverityError,
 				"An interface cannot extend itself, neither directly nor indirectly.",
@@ -285,14 +286,14 @@ func checkInterfaceExtends(iface Interface, ctx context.Context, accept core.Val
 	}
 }
 
-func appearsInExtends(target Interface, current Interface, ctx context.Context, visited map[string]struct{}) bool {
+func appearsInExtends(target Interface, current Interface, ctx context.Context, visited collections.Set[string]) bool {
 	if current.Name() == target.Name() {
 		return true
 	}
-	if _, alreadyVisited := visited[current.Name()]; alreadyVisited {
+	if visited.Has(current.Name()) {
 		return false
 	}
-	visited[current.Name()] = struct{}{}
+	visited.Add(current.Name())
 	for _, ext := range current.Extends() {
 		extType := ext.Ref(ctx)
 		if extType == nil {
@@ -605,17 +606,17 @@ func isAssignableTo(ctx context.Context, source Assignable, fieldType FieldType,
 }
 
 func interfaceIsAssignableTo(source Interface, target Interface) bool {
-	return doInterfaceIsAssignableTo(source, target, map[string]struct{}{})
+	return doInterfaceIsAssignableTo(source, target, collections.NewSet[string]())
 }
 
-func doInterfaceIsAssignableTo(source Interface, target Interface, visited map[string]struct{}) bool {
+func doInterfaceIsAssignableTo(source Interface, target Interface, visited collections.Set[string]) bool {
 	if source.Name() == target.Name() {
 		return true
 	}
-	if _, alreadyVisited := visited[source.Name()]; alreadyVisited {
+	if visited.Has(source.Name()) {
 		return false
 	}
-	visited[source.Name()] = struct{}{}
+	visited.Add(source.Name())
 	for _, ext := range source.Extends() {
 		extType := ext.Ref(context.Background())
 		if extType == nil {
@@ -634,7 +635,7 @@ func (tg *TokenGroupImpl) Validate(_ context.Context, _ string, accept core.Vali
 }
 
 func checkRecursiveTokenGroup(tg TokenGroup, accept core.ValidationAcceptor) {
-	if appearsInTokenGroup(tg, tg, context.Background(), map[string]struct{}{}) {
+	if appearsInTokenGroup(tg, tg, context.Background(), collections.NewSet[string]()) {
 		accept(core.NewDiagnostic(
 			core.SeverityError,
 			"A token group cannot contain itself, neither directly nor indirectly.",
@@ -645,11 +646,11 @@ func checkRecursiveTokenGroup(tg TokenGroup, accept core.ValidationAcceptor) {
 	}
 }
 
-func appearsInTokenGroup(target TokenGroup, current TokenGroup, ctx context.Context, visited map[string]struct{}) bool {
-	if _, alreadyVisited := visited[current.Name()]; alreadyVisited {
+func appearsInTokenGroup(target TokenGroup, current TokenGroup, ctx context.Context, visited collections.Set[string]) bool {
+	if visited.Has(current.Name()) {
 		return false
 	}
-	visited[current.Name()] = struct{}{}
+	visited.Add(current.Name())
 	for _, ext := range current.TokenRefs() {
 		token := ext.Ref(ctx)
 		if token == nil {
