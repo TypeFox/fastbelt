@@ -13,19 +13,8 @@ import (
 	"typefox.dev/fastbelt/util/service"
 )
 
-// createHoverServices builds a service container with both the statemachine language
-// and the default server services (DocumentationProvider, HoverProvider, etc.).
-func createHoverServices() *service.Container {
-	sc := service.NewContainer()
-	SetupServices(sc)
-	server.SetupDefaultServices(sc)
-	sc.Seal()
-	return sc
-}
-
-
 func TestDocumentationSingleLineComment(t *testing.T) {
-	f := test.New(t, createHoverServices())
+	f := test.New(t, CreateLspServices())
 	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
 
 	doc := f.Parse(`
@@ -48,7 +37,7 @@ end
 }
 
 func TestDocumentationMultipleLineComments(t *testing.T) {
-	f := test.New(t, createHoverServices())
+	f := test.New(t, CreateLspServices())
 	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
 
 	doc := f.Parse(`
@@ -72,7 +61,7 @@ end
 }
 
 func TestDocumentationBlankLinePreserved(t *testing.T) {
-	f := test.New(t, createHoverServices())
+	f := test.New(t, CreateLspServices())
 	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
 
 	doc := f.Parse(`
@@ -97,7 +86,7 @@ end
 }
 
 func TestDocumentationBlockComment(t *testing.T) {
-	f := test.New(t, createHoverServices())
+	f := test.New(t, CreateLspServices())
 	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
 
 	doc := f.Parse(`
@@ -123,7 +112,7 @@ end
 }
 
 func TestDocumentationIgnoresCommentsSeparatedByBlankLine(t *testing.T) {
-	f := test.New(t, createHoverServices())
+	f := test.New(t, CreateLspServices())
 	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
 
 	doc := f.Parse(`
@@ -148,7 +137,7 @@ end
 }
 
 func TestDocumentationNoComment(t *testing.T) {
-	f := test.New(t, createHoverServices())
+	f := test.New(t, CreateLspServices())
 	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
 
 	doc := f.Parse(`
@@ -170,7 +159,7 @@ end
 }
 
 func TestHoverReturnsDocumentationForReference(t *testing.T) {
-	f := test.New(t, createHoverServices())
+	f := test.New(t, CreateLspServices())
 
 	f.Parse(`
 statemachine Test
@@ -189,7 +178,7 @@ end
 }
 
 func TestHoverNilForUndocumentedReference(t *testing.T) {
-	f := test.New(t, createHoverServices())
+	f := test.New(t, CreateLspServices())
 
 	f.Parse(`
 statemachine Test
@@ -207,7 +196,7 @@ end
 }
 
 func TestHoverNilForWhitespace(t *testing.T) {
-	f := test.New(t, createHoverServices())
+	f := test.New(t, CreateLspServices())
 
 	f.Parse(`
 statemachine<|ws> Test
