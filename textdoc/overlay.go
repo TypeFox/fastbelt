@@ -201,6 +201,9 @@ func (o *Overlay) applyChangeLocked(change lsp.TextDocumentContentChangeEvent) e
 		endOffset := o.offsetAtLocked(wellFormedRange.End)
 
 		// Update content using []byte operations for efficiency
+		// Note: never modify the original content slice in-place:
+		// The byte array is returned directly by Text() so in-place modifications
+		// would affect all existing string views.
 		newContent := make([]byte, 0, startOffset+len(change.Text)+(len(o.content)-endOffset))
 		newContent = append(newContent, o.content[:startOffset]...)
 		newContent = append(newContent, change.Text...)
