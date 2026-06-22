@@ -46,7 +46,8 @@ func (s *DefaultDocumentUpdater) Update(ctx context.Context, changed []textdoc.H
 		builder := service.MustGet[Builder](s.sc)
 		lock := service.MustGet[Lock](s.sc)
 		// Write cancels any previous pending or in-progress build and issues a
-		// fresh context. The outer ctx is from jsonrpc2 and has a different lifetime than the build.
+		// fresh context. The outer ctx is from jsonrpc2 and has a different
+		// lifetime than the build.
 		lock.Write(context.Background(), func(ctx context.Context, downgrade func()) {
 			changedURIs := make(collections.Set[string], len(changed)+len(deleted))
 			for _, handle := range changed {
@@ -70,7 +71,7 @@ func (s *DefaultDocumentUpdater) Update(ctx context.Context, changed []textdoc.H
 			keepState := core.DocStateParsed | core.DocStateExportedSymbols | core.DocStateLocalSymbols
 			docs := make([]*core.Document, 0, len(changed)+10)
 			for doc := range docManager.All() {
-				if !changedURIs.Has(doc.URI.StringUnencoded()) && shouldRelink(doc, changedURIs, changeImpact) {
+				if !changedURIs.Has(doc.URI.StringUnencoded()) && changeImpact.Affected(doc, changedURIs) {
 					builder.Reset(doc, keepState)
 				}
 				if !doc.State.IsComplete() {
@@ -87,30 +88,11 @@ func (s *DefaultDocumentUpdater) Update(ctx context.Context, changed []textdoc.H
 	}()
 }
 
-// shouldRelink reports whether doc must be rebuilt after the documents identified
-// by changedURIs were created, updated, or deleted.
-//
-// A document is relinked when it has an unresolved reference, which might resolve
-// against a symbol introduced by the change, or when it references any of the
-// changed documents (see [DocumentChangeImpact.Affected]).
-func shouldRelink(doc *core.Document, changedURIs collections.Set[string], changeImpact DocumentChangeImpact) bool {
-	for _, ref := range doc.References {
-		if ref.Error() != nil {
-			return true
-		}
-	}
-	return changeImpact.Affected(doc, changedURIs)
-}
-
-// DocumentChangeImpact reports whether a document depends on changes to other
-// documents through cross-document references.
+// DocumentChangeImpact reports whether a document should be relinked in response
+// to changes in other documents.
 type DocumentChangeImpact interface {
-	// Affected reports whether doc contains a cross-document reference to any of the
-	// documents identified by changedURIs. URIs are compared using
-	// [core.URI.StringUnencoded].
-	//
-	// References to nodes within doc itself are ignored: such local references cannot
-	// be invalidated by a change to another document.
+	// Affected reports whether doc is affected by changedURIs and thus should be
+	// relinked.
 	Affected(doc *core.Document, changedURIs collections.Set[string]) bool
 }
 
@@ -125,7 +107,22 @@ func NewDefaultDocumentChangeImpact(sc *service.Container) DocumentChangeImpact 
 	return &DefaultDocumentChangeImpact{sc: sc}
 }
 
+// Affected reports whether doc contains a cross-document reference to any of the
+// documents identified by changedURIs. URIs are compared using
+// [core.URI.StringUnencoded].
+//
+// References to nodes within doc itself are ignored: such local references cannot
+// be invalidated by a change to another document.
+//
+// Documents with unresolved references are also considered affected, since they
+// might resolve against a symbol introduced by the change.
 func (s *DefaultDocumentChangeImpact) Affected(doc *core.Document, changedURIs collections.Set[string]) bool {
+	for _, ref := range doc.References {
+		if ref.Error() != nil {
+			return true
+		}
+	}
+
 	if doc.ReferenceDescriptions == nil {
 		return false
 	}
