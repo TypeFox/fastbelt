@@ -47,6 +47,23 @@ func TestWalkFileSystemVisitsAll(t *testing.T) {
 	}, visited)
 }
 
+func TestWalkFileSystemVisitsAllInAlphabeticalOrder(t *testing.T) {
+	fs := NewVirtualFileSystem()
+	require.NoError(t, fs.WriteFile(core.FileURI("/workspace/a.txt"), []byte("a")))
+	require.NoError(t, fs.WriteFile(core.FileURI("/workspace/d.txt"), []byte("d")))
+	require.NoError(t, fs.WriteFile(core.FileURI("/workspace/c.txt"), []byte("c")))
+	require.NoError(t, fs.WriteFile(core.FileURI("/workspace/b.txt"), []byte("b")))
+
+	visited := walkVisited(t, fs, core.FileURI("/workspace"), nil)
+	assert.Equal(t, []string{
+		"file:///workspace",
+		"file:///workspace/a.txt",
+		"file:///workspace/b.txt",
+		"file:///workspace/c.txt",
+		"file:///workspace/d.txt",
+	}, visited)
+}
+
 func TestWalkFileSystemSingleFile(t *testing.T) {
 	fs := NewVirtualFileSystem()
 	require.NoError(t, fs.WriteFile(core.FileURI("/a/b/c.txt"), []byte("c")))
@@ -70,6 +87,27 @@ func TestWalkFileSystemSkipDir(t *testing.T) {
 	assert.Equal(t, []string{
 		"file:///a",
 		"file:///a/b",
+		"file:///a/d.txt",
+	}, visited)
+}
+
+func TestWalkFileSystemSkipFile(t *testing.T) {
+	fs := NewVirtualFileSystem()
+	require.NoError(t, fs.WriteFile(core.FileURI("/a/b/c.txt"), []byte("c")))
+	require.NoError(t, fs.WriteFile(core.FileURI("/a/d.txt"), []byte("d")))
+	require.NoError(t, fs.WriteFile(core.FileURI("/a/e.txt"), []byte("e")))
+
+	// Skip file d: will prevent further siblings from being visited
+	visited := walkVisited(t, fs, core.FileURI("/a"), func(e DirEntry) error {
+		if e.URI.String() == "file:///a/d.txt" {
+			return SkipDir
+		}
+		return nil
+	})
+	assert.Equal(t, []string{
+		"file:///a",
+		"file:///a/b",
+		"file:///a/b/c.txt",
 		"file:///a/d.txt",
 	}, visited)
 }

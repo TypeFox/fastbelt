@@ -8,6 +8,7 @@ import (
 	"context"
 	"io/fs"
 	"os"
+	"sort"
 	"strings"
 
 	core "typefox.dev/fastbelt"
@@ -258,6 +259,10 @@ func (s *VirtualFileSystem) ReadDir(ctx context.Context, uri core.URI) ([]DirEnt
 	for name, child := range node.children {
 		result = append(result, entryFor(child, uri.JoinPath(name)))
 	}
+	// Produce stable order for testing and deterministic behavior
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].URI.String() < result[j].URI.String()
+	})
 	return result, nil
 }
 
