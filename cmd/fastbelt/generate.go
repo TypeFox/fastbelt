@@ -125,12 +125,17 @@ func runGenerateCLI(opts generateOptions) error {
 		return err
 	}
 	tokenTypes := generator.GenerateTokenTypes(grammar)
+	atnData := generator.BuildParserATNData(grammar, tokenTypes)
 	if err := writeFile("parser", filepath.Join(outputPath, "parser_gen.go"),
-		generator.GenerateParser(grammar, packageName, tokenTypes)); err != nil {
+		generator.GenerateParser(grammar, packageName, tokenTypes, atnData)); err != nil {
 		return err
 	}
 	if err := writeFile("completion-parser", filepath.Join(outputPath, "completion_parser_gen.go"),
-		generator.GenerateCompletionParser(grammar, packageName, tokenTypes)); err != nil {
+		generator.GenerateCompletionParser(grammar, packageName, tokenTypes, atnData)); err != nil {
+		return err
+	}
+	if err := writeFile("parser-lookahead", filepath.Join(outputPath, "parser_lookahead_gen.go"),
+		generator.GenerateParserLookahead(grammar, packageName, tokenTypes, atnData)); err != nil {
 		return err
 	}
 	if err := writeFile("completion", filepath.Join(outputPath, "completion_gen.go"),

@@ -11,18 +11,18 @@ import (
 	"typefox.dev/fastbelt/util/service"
 )
 
-// token_groupsCompletionFilter lets adopters refine the candidates produced by
-// the existing token_groupsScopeProvider when completing a cross-reference.
-type token_groupsCompletionFilter interface {
+// TokenGroupsCompletionFilter lets adopters refine the candidates produced by
+// the existing TokenGroupsScopeProvider when completing a cross-reference.
+type TokenGroupsCompletionFilter interface {
 }
 
-type Defaulttoken_groupsCompletionFilter struct{}
+type DefaultTokenGroupsCompletionFilter struct{}
 
-func NewDefaulttoken_groupsCompletionFilter() token_groupsCompletionFilter {
-	return &Defaulttoken_groupsCompletionFilter{}
+func NewDefaultTokenGroupsCompletionFilter() TokenGroupsCompletionFilter {
+	return &DefaultTokenGroupsCompletionFilter{}
 }
 
-var token_groupsSyntheticFactories = map[string]func() core.AstNode{
+var TokenGroupsSyntheticFactories = map[string]func() core.AstNode{
 	"A":     func() core.AstNode { return NewItem() },
 	"B":     func() core.AstNode { return NewItem() },
 	"C":     func() core.AstNode { return NewItem() },
@@ -30,51 +30,52 @@ var token_groupsSyntheticFactories = map[string]func() core.AstNode{
 	"E":     func() core.AstNode { return NewRecovery() },
 	"F":     func() core.AstNode { return NewItem() },
 	"G":     func() core.AstNode { return NewItem() },
+	"H":     func() core.AstNode { return NewItem() },
 	"Model": func() core.AstNode { return NewModel() },
 }
 
-var token_groupsCompletionDispatch = map[string]token_groupsCompletionDispatchFunc{}
+var TokenGroupsCompletionDispatch = map[string]TokenGroupsCompletionDispatchFunc{}
 
-type token_groupsCompletionDispatchFunc func(ctx context.Context, sc *core.AstNode) iter.Seq[*core.SymbolDescription]
+type TokenGroupsCompletionDispatchFunc func(ctx context.Context, sc *core.AstNode) iter.Seq[*core.SymbolDescription]
 
-type token_groupsCompletionAdapter struct {
+type TokenGroupsCompletionAdapter struct {
 	sc *service.Container
 }
 
-func Newtoken_groupsCompletionAdapter(sc *service.Container) *token_groupsCompletionAdapter {
-	return &token_groupsCompletionAdapter{sc: sc}
+func NewTokenGroupsCompletionAdapter(sc *service.Container) *TokenGroupsCompletionAdapter {
+	return &TokenGroupsCompletionAdapter{sc: sc}
 }
 
-func (a *token_groupsCompletionAdapter) Parse(tokens []core.Token) *parser.CompletionParseResult {
+func (a *TokenGroupsCompletionAdapter) Parse(tokens []core.Token) *parser.CompletionParseResult {
 	return NewCompletionParser(a.sc).Parse(tokens)
 }
 
-func (a *token_groupsCompletionAdapter) ATN() *parser.RuntimeATN {
+func (a *TokenGroupsCompletionAdapter) ATN() *parser.RuntimeATN {
 	return BuildATN()
 }
 
-func (a *token_groupsCompletionAdapter) SyntheticOwnerFor(ruleKey string) (core.AstNode, bool) {
-	factory, ok := token_groupsSyntheticFactories[ruleKey]
+func (a *TokenGroupsCompletionAdapter) SyntheticOwnerFor(ruleKey string) (core.AstNode, bool) {
+	factory, ok := TokenGroupsSyntheticFactories[ruleKey]
 	if !ok {
 		return nil, false
 	}
 	return factory(), true
 }
 
-func (a *token_groupsCompletionAdapter) DispatchCompletion(ctx context.Context, field string, owner core.AstNode) (iter.Seq[*core.SymbolDescription], bool) {
+func (a *TokenGroupsCompletionAdapter) DispatchCompletion(ctx context.Context, field string, owner core.AstNode) (iter.Seq[*core.SymbolDescription], bool) {
 	_ = field
 	_ = owner
 	_ = ctx
 	return nil, false
 }
 
-func (a *token_groupsCompletionAdapter) HasAssignment(node core.AstNode, property string) bool {
+func (a *TokenGroupsCompletionAdapter) HasAssignment(node core.AstNode, property string) bool {
 	_ = node
 	_ = property
 	return false
 }
 
-func (a *token_groupsCompletionAdapter) ApplyAction(actionType, property string, value core.AstNode) core.AstNode {
+func (a *TokenGroupsCompletionAdapter) ApplyAction(actionType, property string, value core.AstNode) core.AstNode {
 	_ = actionType
 	_ = property
 	_ = value

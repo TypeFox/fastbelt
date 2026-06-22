@@ -4,17 +4,18 @@
 
 package collections
 
+import "math/bits"
+
 // BitSet is a simple implementation of a bitset that supports insertion,
-// deletion, and membership testing. It is designed to be memory efficient for
-// sparse sets of integers, where the integers can be large but the number of
-// integers in the set is relatively small.
+// and membership testing.
 //
 // Inside of Fastbelt, BitSets are mostly used to handle sets of token types
 // in the parser engine.
 type BitSet struct {
-	offset int
-	set    []uint64
+	words []uint64
 }
+
+const wordSize = 64
 
 // Merges multiple bitsets into a single bitset that contains all the set bits from
 // the input bitsets. The resulting bitset's offset is the minimum offset of the
@@ -22,44 +23,24 @@ type BitSet struct {
 // input bitsets.
 func MergeBitSets(bitsets []*BitSet) *BitSet {
 	b := &BitSet{}
-	first := -1
-	for i, bs := range bitsets {
-		if bs != nil {
-			first = i
-			break
-		}
-	}
-	if first == -1 {
-		return b
-	}
-	min := bitsets[first].offset
 	max := 0
 	for _, bs := range bitsets {
 		if bs == nil {
 			continue
 		}
-		if bs.offset < min {
-			min = bs.offset
-		}
-		total := bs.offset + len(bs.set)
+		total := len(bs.words)
 		if total > max {
 			max = total
 		}
 	}
-	b.offset = min
-	b.set = make([]uint64, max-min)
-	for i := min; i < max; i++ {
-		for _, bs := range bitsets {
-			if bs == nil {
-				continue
-			}
-			delta := i - bs.offset
-			if delta < 0 || delta >= len(bs.set) {
-				// Outside of source bitset
-				continue
-			}
+	b.words = make([]uint64, max)
+	for _, bs := range bitsets {
+		if bs == nil {
+			continue
+		}
+		for i := range bs.words {
 			// Combine existing word with new word
-			b.set[i-min] |= bs.set[delta]
+			b.words[i] |= bs.words[i]
 		}
 	}
 	return b
@@ -70,72 +51,62 @@ func NewBitset() *BitSet {
 	return &BitSet{}
 }
 
-const wordSize = 64
-
-func computeIndex(i int) (int, int) {
-	return i / wordSize, i % wordSize
-}
-
 // Insert adds the integer i to the bitset, setting the corresponding bit to 1.
 // The bitset will grow dynamically to accommodate larger integers as needed.
 func (b *BitSet) Insert(i int) *BitSet {
-	index, offset := computeIndex(i)
-	delta := index - b.offset
-	length := len(b.set)
-	if delta < 0 {
-		// index is less than offset, append to the front
-		b.offset = index
-		intermediate := make([]uint64, (-delta)+length)
-		copy(intermediate[-delta:], b.set)
-		b.set = intermediate
-		delta = 0
-	} else if delta >= length {
-		// index is larger than offset+len, append to the end
-		if length == 0 {
-			// Special case if bitset is still empty
-			b.offset = index
-			b.set = make([]uint64, 1)
-			delta = 0
-		} else {
-			intermediate := make([]uint64, delta+1)
-			copy(intermediate, b.set)
-			b.set = intermediate
-		}
+	w := i >> 6
+	for w >= len(b.words) {
+		b.words = append(b.words, 0)
 	}
-	b.set[delta] |= 1 << offset
+	b.words[w] |= 1 << (uint(i) % wordSize)
 	return b
 }
 
-// Delete removes the integer i from the bitset, setting the corresponding bit to 0.
-// If i is outside the current range of the bitset, Delete does nothing.
-func (b *BitSet) Delete(i int) {
-	index, offset := computeIndex(i)
-	delta := index - b.offset
-	if delta < 0 || delta >= len(b.set) {
-		// Outside of bitset, nothing to delete
-		return
-	}
-	b.set[delta] &^= 1 << offset
-}
-
 // At returns true if the integer i is in the bitset (i.e. the corresponding bit is 1),
-// and false otherwise. If i is outside the current range of the bitset, At returns false.
+// and false otherwise.
 func (b *BitSet) At(i int) bool {
-	index, offset := computeIndex(i)
-	diff := index - b.offset
-	if diff < 0 || diff >= len(b.set) {
+	w := i >> 6
+	if w >= len(b.words) {
 		return false
 	}
-	return (b.set[diff] & (1 << offset)) != 0
+	return b.words[w]&(1<<(uint(i)%wordSize)) != 0
 }
 
-// Empty returns true if the bitset contains no set bits (i.e. all bits are 0), and false otherwise.
-func (b *BitSet) Empty() bool {
-	if len(b.set) == 0 {
-		return true
+// Cardinality computes the number of set bits
+func (b *BitSet) Cardinality() int {
+	n := 0
+	for _, w := range b.words {
+		n += bits.OnesCount64(w)
 	}
-	for _, word := range b.set {
-		if word != 0 {
+	return n
+}
+
+// Min returns the smallest integer in the bitset, or -1 if the bitset is empty.
+func (b *BitSet) Min() int {
+	for wi, w := range b.words {
+		if w != 0 {
+			return (wi * wordSize) + bits.TrailingZeros64(w)
+		}
+	}
+	return -1
+}
+
+// Empty returns true if the bitset contains no set bits, and false otherwise.
+func (b *BitSet) Empty() bool {
+	return b.Cardinality() == 0
+}
+
+// Equals returns true if the bitset is equal to another bitset (i.e. they have the same set bits),
+func (b *BitSet) Equals(other *BitSet) bool {
+	if other == nil || b == nil {
+		return b == other
+	}
+	if len(b.words) != len(other.words) {
+		return false
+	}
+	length := len(b.words)
+	for i := range length {
+		if b.words[i] != other.words[i] {
 			return false
 		}
 	}

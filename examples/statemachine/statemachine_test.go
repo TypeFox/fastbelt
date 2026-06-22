@@ -44,6 +44,38 @@ func TestParsing(t *testing.T) {
 	doc.AssertState(fastbelt.DocStateLinked)
 }
 
+// TestMultipleActions guards the `Actions+=[Command:ID]+` cardinality loop: the
+// lookahead guard must keep consuming commands after the first. Regression for a
+// latent ATN gap where an assignment's cardinality was dropped for a CrossRef
+// value, so the `+` loop was never modeled and the guard stopped after one item.
+func TestMultipleActions(t *testing.T) {
+	const input = `
+statemachine LightSwitch
+
+events
+  flick
+
+commands
+  turnOn
+  turnOff
+  reset
+
+initialState off
+
+state off
+  actions { turnOff reset turnOn }
+  flick => off
+end
+`
+	f := test.New(t, CreateServices())
+	doc := f.Parse(input).AssertNoErrors()
+	doc.AssertState(fastbelt.DocStateLinked)
+
+	model := doc.Root().(Statemachine)
+	require.Len(t, model.States(), 1)
+	assert.Len(t, model.States()[0].Actions(), 3)
+}
+
 // TestMultilineCommentsBetweenContent guards against the regression where
 // the ML_COMMENT lexer regex `\/\*[\s\S]*?\*\/` was treated greedily.
 func TestMultilineCommentsBetweenContent(t *testing.T) {

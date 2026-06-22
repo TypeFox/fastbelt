@@ -21,6 +21,9 @@ func SetupGeneratedServices(sc *service.Container) {
 	if !service.Has[CompletionReferencesConstructor](sc) {
 		service.Put(sc, NewDefaultCompletionReferencesConstructor(sc))
 	}
+	if !service.Has[CompletionParserLookahead](sc) {
+		service.Put(sc, NewDefaultCompletionParserLookahead())
+	}
 	if !service.Has[lexer.Lexer](sc) {
 		service.Put(sc, NewLexer())
 	}

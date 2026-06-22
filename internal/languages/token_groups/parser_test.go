@@ -162,3 +162,21 @@ func TestRegexpGroupRejectsNonMember(t *testing.T) {
 	doc := fixture.Parse("g three")
 	require.NotEmpty(t, doc.Document.ParserErrors)
 }
+
+func TestLookaheadTokenGroupPositiveA(t *testing.T) {
+	fixture := test.New(t, CreateServices())
+	doc := fixture.Parse("h Lookahead a")
+	assertIdentifier(t, doc, "a")
+}
+
+func TestLookaheadTokenGroupPositiveB(t *testing.T) {
+	fixture := test.New(t, CreateServices())
+	doc := fixture.Parse("h Lookahead b")
+	assertIdentifier(t, doc, "b")
+}
+
+func TestLookaheadTokenGroupNegative(t *testing.T) {
+	fixture := test.New(t, CreateServices())
+	doc := fixture.Parse("h b a")
+	require.NotEmpty(t, doc.Document.ParserErrors)
+}
