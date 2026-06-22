@@ -7,7 +7,7 @@ package collections
 import "math/bits"
 
 // BitSet is a simple implementation of a bitset that supports insertion,
-// deletion, and membership testing.
+// and membership testing.
 //
 // Inside of Fastbelt, BitSets are mostly used to handle sets of token types
 // in the parser engine.

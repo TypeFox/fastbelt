@@ -4,8 +4,11 @@
 
 package collections
 
+// Comparable is an interface that types must implement to be used as keys in a [BucketMap].
 type Comparable[T any] interface {
+	// Hash returns a hash code for the value, which is used to determine the bucket in the map.
 	Hash() uint64
+	// Equals returns true if the value is equal to another value of the same type, and false otherwise.
 	Equals(other T) bool
 }
 
@@ -14,10 +17,13 @@ type pair[K Comparable[K], V any] struct {
 	value V
 }
 
+// BucketMap is a simple hash map implementation that uses separate chaining for collision resolution.
+// It is designed for use with keys that implement the [Comparable] interface.
 type BucketMap[K Comparable[K], V any] struct {
 	data map[uint64][]pair[K, V]
 }
 
+// NewBucketMap creates a new empty [BucketMap].
 func NewBucketMap[K Comparable[K], V any]() *BucketMap[K, V] {
 	return &BucketMap[K, V]{
 		data: make(map[uint64][]pair[K, V]),
@@ -107,10 +113,13 @@ func (m *BucketMap[K, V]) Remove(key K) bool {
 	return false
 }
 
+// BucketSet is a set implementation that uses separate chaining for collision resolution.
+// Items must implement the [Comparable] interface to be used in a [BucketSet].
 type BucketSet[T Comparable[T]] struct {
 	impl *BucketMap[T, struct{}]
 }
 
+// NewBucketSet creates a new empty [BucketSet].
 func NewBucketSet[T Comparable[T]]() *BucketSet[T] {
 	return &BucketSet[T]{
 		impl: NewBucketMap[T, struct{}](),
