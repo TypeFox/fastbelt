@@ -10,6 +10,8 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+
+	"typefox.dev/fastbelt/util/collections"
 )
 
 // Empty returns an empty [iter.Seq] of type T.
@@ -327,7 +329,7 @@ func Limit[T any](seq iter.Seq[T], maxSize int) iter.Seq[T] {
 // for each key is kept.
 func Distinct[T any](seq iter.Seq[T], keyFn func(T) any) iter.Seq[T] {
 	return func(yield func(T) bool) {
-		seen := make(map[any]struct{})
+		seen := make(collections.Set[any])
 		for value := range seq {
 			var key any
 			if keyFn != nil {
@@ -336,11 +338,8 @@ func Distinct[T any](seq iter.Seq[T], keyFn func(T) any) iter.Seq[T] {
 				key = value
 			}
 
-			if _, exists := seen[key]; !exists {
-				seen[key] = struct{}{}
-				if !yield(value) {
-					return
-				}
+			if seen.Add(key) && !yield(value) {
+				return
 			}
 		}
 	}
@@ -352,7 +351,7 @@ func Distinct[T any](seq iter.Seq[T], keyFn func(T) any) iter.Seq[T] {
 // nil, elements are compared by value; otherwise keyFn defines the comparison key.
 func Exclude[T any](seq iter.Seq[T], other iter.Seq[T], keyFn func(T) any) iter.Seq[T] {
 	// Collect keys from the other sequence
-	otherKeySet := make(map[any]struct{})
+	otherKeySet := make(collections.Set[any])
 	for value := range other {
 		var key any
 		if keyFn != nil {
@@ -360,7 +359,7 @@ func Exclude[T any](seq iter.Seq[T], other iter.Seq[T], keyFn func(T) any) iter.
 		} else {
 			key = value
 		}
-		otherKeySet[key] = struct{}{}
+		otherKeySet.Add(key)
 	}
 
 	return Filter(seq, func(e T) bool {
@@ -370,8 +369,7 @@ func Exclude[T any](seq iter.Seq[T], other iter.Seq[T], keyFn func(T) any) iter.
 		} else {
 			ownKey = e
 		}
-		_, exists := otherKeySet[ownKey]
-		return !exists
+		return !otherKeySet.Has(ownKey)
 	})
 }
 

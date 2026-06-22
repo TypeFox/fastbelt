@@ -37,6 +37,9 @@ func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[DocumentUpdater](sc) {
 		service.Put(sc, NewDefaultDocumentUpdater(sc))
 	}
+	if !service.Has[DocumentChangeImpact](sc) {
+		service.Put(sc, NewDefaultDocumentChangeImpact(sc))
+	}
 	if !service.Has[Builder](sc) {
 		service.Put(sc, NewDefaultBuilder(sc))
 	}

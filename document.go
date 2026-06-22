@@ -166,3 +166,17 @@ func (s DocumentState) With(flag DocumentState) DocumentState {
 func (s DocumentState) Without(flag DocumentState) DocumentState {
 	return s &^ flag
 }
+
+const docStateComplete = DocStateParsed | DocStateExportedSymbols | DocStateImportedSymbols |
+	DocStateLocalSymbols | DocStateLinked | DocStateReferences | DocStateValidated
+
+// IsComplete reports whether all framework-defined build phases have completed,
+// i.e. every state bit from DocStateParsed through DocStateValidated is set.
+//
+// IsComplete only considers the framework-defined states; custom document states
+// defined by adopters (which occupy higher bits) are ignored, so a document is
+// reported complete as soon as the framework phases are done regardless of any
+// custom bits.
+func (s DocumentState) IsComplete() bool {
+	return s&docStateComplete == docStateComplete
+}

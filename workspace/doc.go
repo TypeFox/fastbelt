@@ -27,6 +27,7 @@
 //   - [Builder] — runs the build pipeline that takes documents to a linked, validated state
 //   - [DocumentManager] — concurrent in-memory store of all documents, keyed by URI
 //   - [DocumentUpdater] — entry point for edits; serializes mutations and triggers builds
+//   - [DocumentChangeImpact] — reports cross-document reference dependencies on changed files
 //   - [DocumentParser] — lexes and parses a single document into tokens and an AST
 //   - [DocumentValidator] — collects diagnostics for a single document
 //
