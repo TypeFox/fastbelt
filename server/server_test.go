@@ -8,6 +8,7 @@ import (
 	"context"
 	"testing"
 
+	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
@@ -17,6 +18,7 @@ import (
 func TestLanguageServerBasicLifecycle(t *testing.T) {
 	sc := service.NewContainer()
 	workspace.SetupDefaultServices(sc)
+	textdoc.SetupDefaultServices(sc)
 	SetupDefaultServices(sc)
 	service.Put[workspace.LanguageID](sc, "plaintext")
 	service.Put[workspace.FileExtensions](sc, []string{".txt"})
