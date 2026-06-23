@@ -15,6 +15,7 @@ type Handle interface {
 	// Version returns the version number of this document.
 	Version() int32
 	// Content returns the document content as a byte slice.
+	// Do not modify the returned slice, as it may lead to unexpected behavior.
 	Content() []byte
 	// Text returns the text content or a substring if range is provided.
 	Text(r *lsp.Range) string

@@ -118,9 +118,9 @@ func (o *Overlay) Version() int32 {
 	return o.version
 }
 
-// Content returns a copy of the document content as a byte slice.
-// Returning bytes enables efficient manipulation; a copy is returned to prevent
-// external modification of internal state. This method is thread-safe.
+// Content returns the byte slice that represents the document content.
+// This is not a copy. Do not modify the returned slice, as it may lead
+// to unexpected behavior. This method is thread-safe.
 func (o *Overlay) Content() []byte {
 	o.mu.RLock()
 	defer o.mu.RUnlock()
