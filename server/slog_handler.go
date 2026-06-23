@@ -25,6 +25,11 @@ func NewSlogHandler(sc *service.Container) slog.Handler {
 	return &SlogHandler{sc: sc}
 }
 
+// Initializes the default slog handler to send log messages to the LSP client.
+func (h *SlogHandler) OnServerInitialize(_ *lsp.ParamInitialize) {
+	slog.SetDefault(slog.New(h))
+}
+
 func (h *SlogHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	// Enable all log levels. You can customize this to filter based on level or context.
 	return true

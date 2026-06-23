@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"context"
 	"log"
-	"os"
+	"sync"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/textdoc"
@@ -51,11 +51,25 @@ type DocumentSyncher interface {
 	WillSave(ctx context.Context, params *lsp.WillSaveTextDocumentParams)
 	WillSaveWaitUntil(ctx context.Context, params *lsp.WillSaveTextDocumentParams) ([]lsp.TextEdit, error)
 	DidSave(ctx context.Context, params *lsp.DidSaveTextDocumentParams)
+
+	OnDidOpen(handler TextDocumentChangeHandler)
+	OnDidChange(handler TextDocumentChangeHandler)
+	OnDidClose(handler TextDocumentChangeHandler)
+	OnWillSave(handler TextDocumentWillSaveHandler)
+	OnWillSaveWaitUntil(handler TextDocumentWillSaveWaitUntilHandler)
+	OnDidSave(handler TextDocumentChangeHandler)
 }
 
 // DefaultDocumentSyncher is the default implementation of DocumentSyncher.
 type DefaultDocumentSyncher struct {
-	sc *service.Container
+	sc                        *service.Container
+	didOpenHandlers           []TextDocumentChangeHandler
+	didChangeHandlers         []TextDocumentChangeHandler
+	didCloseHandlers          []TextDocumentChangeHandler
+	willSaveHandlers          []TextDocumentWillSaveHandler
+	willSaveWaitUntilHandlers []TextDocumentWillSaveWaitUntilHandler
+	didSaveHandlers           []TextDocumentChangeHandler
+	mu                        sync.RWMutex
 }
 
 func NewDefaultDocumentSyncher(sc *service.Container) DocumentSyncher {
@@ -64,10 +78,11 @@ func NewDefaultDocumentSyncher(sc *service.Container) DocumentSyncher {
 
 func (s *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *lsp.DidOpenTextDocumentParams) {
 	textdocStore := service.MustGet[textdoc.Store](s.sc)
-	existing := textdocStore.Get(params.TextDocument.URI)
+	uri := core.ParseURI(string(params.TextDocument.URI)).DocumentURI()
+	existing := textdocStore.Get(uri)
 
 	doc, err := textdoc.NewOverlay(
-		params.TextDocument.URI,
+		uri,
 		string(params.TextDocument.LanguageID),
 		params.TextDocument.Version,
 		params.TextDocument.Text,
@@ -79,6 +94,11 @@ func (s *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *lsp.DidOpe
 	}
 
 	textdocStore.AddOverlay(doc)
+	s.mu.RLock()
+	for _, handler := range s.didOpenHandlers {
+		handler(ctx, &TextDocumentChangeEvent{Document: doc})
+	}
+	s.mu.RUnlock()
 	if existing != nil && existing.Text(nil) == params.TextDocument.Text {
 		// The text editor content is the same as the file content
 		return
@@ -87,13 +107,20 @@ func (s *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *lsp.DidOpe
 	updater.Update(ctx, []textdoc.Handle{doc}, nil)
 }
 
+func (s *DefaultDocumentSyncher) OnDidOpen(handler TextDocumentChangeHandler) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.didOpenHandlers = append(s.didOpenHandlers, handler)
+}
+
 func (s *DefaultDocumentSyncher) DidChange(ctx context.Context, params *lsp.DidChangeTextDocumentParams) {
 	if len(params.ContentChanges) == 0 {
 		return
 	}
 
 	textdocStore := service.MustGet[textdoc.Store](s.sc)
-	doc := textdocStore.GetOverlay(params.TextDocument.URI)
+	uri := core.ParseURI(string(params.TextDocument.URI)).DocumentURI()
+	doc := textdocStore.GetOverlay(uri)
 	if doc == nil {
 		return
 	}
@@ -107,56 +134,107 @@ func (s *DefaultDocumentSyncher) DidChange(ctx context.Context, params *lsp.DidC
 	}
 
 	if bytes.Equal(oldContent, doc.Content()) {
+		// Document hasn't actually changed, no need to notify handlers or update the workspace
 		return
 	}
+	s.mu.RLock()
+	for _, handler := range s.didChangeHandlers {
+		handler(ctx, &TextDocumentChangeEvent{Document: doc})
+	}
+	s.mu.RUnlock()
 	updater := service.MustGet[workspace.DocumentUpdater](s.sc)
 	updater.Update(ctx, []textdoc.Handle{doc}, nil)
 }
 
+func (s *DefaultDocumentSyncher) OnDidChange(handler TextDocumentChangeHandler) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.didChangeHandlers = append(s.didChangeHandlers, handler)
+}
+
 func (s *DefaultDocumentSyncher) DidClose(ctx context.Context, params *lsp.DidCloseTextDocumentParams) {
 	textdocStore := service.MustGet[textdoc.Store](s.sc)
-	textdocStore.RemoveOverlay(params.TextDocument.URI)
 	uri := core.ParseURI(string(params.TextDocument.URI))
-
-	var file *textdoc.File
-	if uri.Scheme() == core.FileScheme {
-		if content, err := os.ReadFile(uri.Path()); err == nil {
-			languageID := service.MustGet[workspace.LanguageID](s.sc)
-			file, _ = textdoc.NewFile(params.TextDocument.URI, string(languageID), 0, string(content))
+	existing := textdocStore.GetOverlay(uri.DocumentURI())
+	if existing != nil {
+		s.mu.Lock()
+		for _, handler := range s.didCloseHandlers {
+			handler(ctx, &TextDocumentChangeEvent{Document: existing})
 		}
+		s.mu.Unlock()
 	}
-	updater := service.MustGet[workspace.DocumentUpdater](s.sc)
-	if file != nil {
-		// Revert to the original file content
-		updater.Update(ctx, []textdoc.Handle{file}, nil)
-	} else {
-		// We don't find the document in the file system, so delete it from our workspace
-		updater.Update(ctx, nil, []core.URI{uri})
-	}
+	textdocStore.RemoveOverlay(uri.DocumentURI())
+}
 
-	if connection := service.MustGet[*Connection](s.sc); connection.Value != nil {
-		// Ensure we clear diagnostics on close
-		// TODO: Make this configurable - some adopters might want to keep diagnostics for closed documents
-		client := lsp.ClientDispatcher(connection.Value)
-		err := client.PublishDiagnostics(ctx, &lsp.PublishDiagnosticsParams{
-			URI:         params.TextDocument.URI,
-			Diagnostics: []lsp.Diagnostic{},
-		})
-		if err != nil {
-			log.Printf("failed to publish diagnostics after document close: %v", err)
-		}
-	}
+func (s *DefaultDocumentSyncher) OnDidClose(handler TextDocumentChangeHandler) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.didCloseHandlers = append(s.didCloseHandlers, handler)
 }
 
 // WillSave does nothing by default.
 func (s *DefaultDocumentSyncher) WillSave(ctx context.Context, params *lsp.WillSaveTextDocumentParams) {
+	store := service.MustGet[textdoc.Store](s.sc)
+	uri := core.ParseURI(string(params.TextDocument.URI)).DocumentURI()
+	doc := store.GetOverlay(uri)
+	if doc != nil {
+		s.mu.RLock()
+		for _, handler := range s.willSaveHandlers {
+			handler(ctx, &TextDocumentWillSaveEvent{Document: doc, Reason: params.Reason})
+		}
+		s.mu.RUnlock()
+	}
+}
+
+func (s *DefaultDocumentSyncher) OnWillSave(handler TextDocumentWillSaveHandler) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.willSaveHandlers = append(s.willSaveHandlers, handler)
 }
 
 // WillSaveWaitUntil does nothing by default.
 func (s *DefaultDocumentSyncher) WillSaveWaitUntil(ctx context.Context, params *lsp.WillSaveTextDocumentParams) ([]lsp.TextEdit, error) {
-	return []lsp.TextEdit{}, nil
+	edits := []lsp.TextEdit{}
+	store := service.MustGet[textdoc.Store](s.sc)
+	uri := core.ParseURI(string(params.TextDocument.URI)).DocumentURI()
+	doc := store.GetOverlay(uri)
+	if doc == nil {
+		return edits, nil
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, handler := range s.willSaveWaitUntilHandlers {
+		handlerEdits, err := handler(ctx, &TextDocumentWillSaveEvent{Document: doc, Reason: params.Reason})
+		if err != nil {
+			return nil, err
+		}
+		edits = append(edits, handlerEdits...)
+	}
+	return edits, nil
+}
+
+func (s *DefaultDocumentSyncher) OnWillSaveWaitUntil(handler TextDocumentWillSaveWaitUntilHandler) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.willSaveWaitUntilHandlers = append(s.willSaveWaitUntilHandlers, handler)
 }
 
 // DidSave does nothing by default.
 func (s *DefaultDocumentSyncher) DidSave(ctx context.Context, params *lsp.DidSaveTextDocumentParams) {
+	store := service.MustGet[textdoc.Store](s.sc)
+	uri := core.ParseURI(string(params.TextDocument.URI)).DocumentURI()
+	doc := store.GetOverlay(uri)
+	if doc != nil {
+		s.mu.RLock()
+		for _, handler := range s.didSaveHandlers {
+			handler(ctx, &TextDocumentChangeEvent{Document: doc})
+		}
+		s.mu.RUnlock()
+	}
+}
+
+func (s *DefaultDocumentSyncher) OnDidSave(handler TextDocumentChangeHandler) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.didSaveHandlers = append(s.didSaveHandlers, handler)
 }
