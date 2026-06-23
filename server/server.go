@@ -11,19 +11,18 @@ import (
 
 	"golang.org/x/exp/jsonrpc2"
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
 
-// ServerInitializeParticipant is an interface for services that want to
+// InitializeParticipant is an interface for services that want to
 // participate in the LSP server initialization process.
 //
 // All services implementing this interface and registered in the [service.Container]
-// instance will have their [ServerInitializeParticipant.OnServerInitialize]
+// instance will have their [InitializeParticipant.OnServerInitialize]
 // method called during the [lsp.Server.Initialize] request.
-type ServerInitializeParticipant interface {
+type InitializeParticipant interface {
 	OnServerInitialize(params *lsp.ParamInitialize)
 }
 
@@ -39,10 +38,8 @@ func NewDefaultLanguageServer(sc *service.Container) lsp.Server {
 
 func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.ParamInitialize) (*lsp.InitializeResult, error) {
 	// Initialize all participants first
-	for service := range s.sc.All() {
-		if initializer, ok := service.(ServerInitializeParticipant); ok {
-			initializer.OnServerInitialize(params)
-		}
+	for service := range service.GetAll[InitializeParticipant](s.sc) {
+		service.OnServerInitialize(params)
 	}
 	workspaceFolders, err := service.Get[*WorkspaceFolders](s.sc)
 	if err != nil {
@@ -520,32 +517,6 @@ func StartLanguageServer(ctx context.Context, sc *service.Container) error {
 	defer func() {
 		_ = conn.Close() // Ignore error in defer
 	}()
-
-	// Register build step listener to publish diagnostics after validation
-	client := lsp.ClientDispatcher(conn)
-	builder, err := service.Get[workspace.Builder](sc)
-	if err != nil {
-		return err
-	}
-	store, err := service.Get[textdoc.Store](sc)
-	if err != nil {
-		return err
-	}
-	builder.AddBuildStepListener(core.DocStateValidated, func(ctx context.Context, doc *core.Document) error {
-		if store.GetOverlay(doc.URI.DocumentURI()) == nil {
-			return nil // Document is not open, skip publishing diagnostics
-		}
-		lspDiags := make([]lsp.Diagnostic, 0, len(doc.Diagnostics))
-		for _, d := range doc.Diagnostics {
-			lspDiags = append(lspDiags, toLspDiagnostic(*d))
-		}
-		params := &lsp.PublishDiagnosticsParams{
-			URI:         doc.URI.DocumentURI(),
-			Version:     doc.TextDoc.Version(),
-			Diagnostics: lspDiags,
-		}
-		return client.PublishDiagnostics(ctx, params)
-	})
 
 	// Wait for the connection to close
 	return conn.Wait()

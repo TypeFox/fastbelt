@@ -78,7 +78,7 @@ func NewDefaultDocumentSyncher(sc *service.Container) DocumentSyncher {
 
 func (s *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *lsp.DidOpenTextDocumentParams) {
 	textdocStore := service.MustGet[textdoc.Store](s.sc)
-	uri := core.ParseURI(string(params.TextDocument.URI)).DocumentURI()
+	uri := core.NormalizeURI(params.TextDocument.URI)
 	existing := textdocStore.Get(uri)
 
 	doc, err := textdoc.NewOverlay(
@@ -119,7 +119,7 @@ func (s *DefaultDocumentSyncher) DidChange(ctx context.Context, params *lsp.DidC
 	}
 
 	textdocStore := service.MustGet[textdoc.Store](s.sc)
-	uri := core.ParseURI(string(params.TextDocument.URI)).DocumentURI()
+	uri := core.NormalizeURI(params.TextDocument.URI)
 	doc := textdocStore.GetOverlay(uri)
 	if doc == nil {
 		return
@@ -154,8 +154,8 @@ func (s *DefaultDocumentSyncher) OnDidChange(handler TextDocumentChangeHandler) 
 
 func (s *DefaultDocumentSyncher) DidClose(ctx context.Context, params *lsp.DidCloseTextDocumentParams) {
 	textdocStore := service.MustGet[textdoc.Store](s.sc)
-	uri := core.ParseURI(string(params.TextDocument.URI))
-	existing := textdocStore.GetOverlay(uri.DocumentURI())
+	uri := core.NormalizeURI(params.TextDocument.URI)
+	existing := textdocStore.GetOverlay(uri)
 	if existing != nil {
 		s.mu.Lock()
 		for _, handler := range s.didCloseHandlers {
@@ -163,7 +163,7 @@ func (s *DefaultDocumentSyncher) DidClose(ctx context.Context, params *lsp.DidCl
 		}
 		s.mu.Unlock()
 	}
-	textdocStore.RemoveOverlay(uri.DocumentURI())
+	textdocStore.RemoveOverlay(uri)
 }
 
 func (s *DefaultDocumentSyncher) OnDidClose(handler TextDocumentChangeHandler) {
@@ -175,7 +175,7 @@ func (s *DefaultDocumentSyncher) OnDidClose(handler TextDocumentChangeHandler) {
 // WillSave does nothing by default.
 func (s *DefaultDocumentSyncher) WillSave(ctx context.Context, params *lsp.WillSaveTextDocumentParams) {
 	store := service.MustGet[textdoc.Store](s.sc)
-	uri := core.ParseURI(string(params.TextDocument.URI)).DocumentURI()
+	uri := core.NormalizeURI(params.TextDocument.URI)
 	doc := store.GetOverlay(uri)
 	if doc != nil {
 		s.mu.RLock()
@@ -196,7 +196,7 @@ func (s *DefaultDocumentSyncher) OnWillSave(handler TextDocumentWillSaveHandler)
 func (s *DefaultDocumentSyncher) WillSaveWaitUntil(ctx context.Context, params *lsp.WillSaveTextDocumentParams) ([]lsp.TextEdit, error) {
 	edits := []lsp.TextEdit{}
 	store := service.MustGet[textdoc.Store](s.sc)
-	uri := core.ParseURI(string(params.TextDocument.URI)).DocumentURI()
+	uri := core.NormalizeURI(params.TextDocument.URI)
 	doc := store.GetOverlay(uri)
 	if doc == nil {
 		return edits, nil
@@ -222,7 +222,7 @@ func (s *DefaultDocumentSyncher) OnWillSaveWaitUntil(handler TextDocumentWillSav
 // DidSave does nothing by default.
 func (s *DefaultDocumentSyncher) DidSave(ctx context.Context, params *lsp.DidSaveTextDocumentParams) {
 	store := service.MustGet[textdoc.Store](s.sc)
-	uri := core.ParseURI(string(params.TextDocument.URI)).DocumentURI()
+	uri := core.NormalizeURI(params.TextDocument.URI)
 	doc := store.GetOverlay(uri)
 	if doc != nil {
 		s.mu.RLock()

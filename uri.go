@@ -328,6 +328,17 @@ func (u *uri) With(scheme, authority, path, query, fragment *string) URI {
 	return &result
 }
 
+// NormalizeURI normalizes a [lsp.DocumentURI] by parsing it and re-serializing it.
+// Ensures consistent formatting for reliable comparisons and storage.
+//
+// Different LSP clients use different formats for URIs. For example:
+// VS Code uses "file:///c%3A/path/to/file.txt".
+// Eclipse (LSP4E) uses "file:/C:/path/to/file.txt".
+// Normalization ensures that these variations are treated as equivalent.
+func NormalizeURI(value lsp.DocumentURI) lsp.DocumentURI {
+	return ParseURI(string(value)).DocumentURI()
+}
+
 var parseRegexp = regexp.MustCompile(`^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?`)
 
 // ParseURI parses value into URI components.

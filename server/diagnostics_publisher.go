@@ -32,8 +32,14 @@ func NewDiagnosticsPublisher(sc *service.Container) *DiagnosticsPublisher {
 }
 
 func (d *DiagnosticsPublisher) OnServerInitialize(_ *lsp.ParamInitialize) {
-	store := service.MustGet[textdoc.Store](d.sc)
-	syncher := service.MustGet[DocumentSyncher](d.sc)
+	store, err := service.Get[textdoc.Store](d.sc)
+	if err != nil {
+		return
+	}
+	syncher, err := service.Get[DocumentSyncher](d.sc)
+	if err != nil {
+		return
+	}
 	syncher.OnDidOpen(func(ctx context.Context, event *TextDocumentChangeEvent) {
 		docManager, err := service.Get[workspace.DocumentManager](d.sc)
 		if err != nil {
@@ -54,7 +60,10 @@ func (d *DiagnosticsPublisher) OnServerInitialize(_ *lsp.ParamInitialize) {
 			d.publishDiagnostics(ctx, handle, []lsp.Diagnostic{})
 		}
 	})
-	builder := service.MustGet[workspace.Builder](d.sc)
+	builder, err := service.Get[workspace.Builder](d.sc)
+	if err != nil {
+		return
+	}
 	builder.AddBuildStepListener(core.DocStateValidated, func(ctx context.Context, doc *core.Document) error {
 		if store.GetOverlay(doc.URI.DocumentURI()) == nil {
 			return nil // Document is not open, skip publishing diagnostics
@@ -73,9 +82,12 @@ func (d *DiagnosticsPublisher) publishDocumentDiagnostics(ctx context.Context, d
 }
 
 func (d *DiagnosticsPublisher) publishDiagnostics(ctx context.Context, handle textdoc.Handle, diagnostics []lsp.Diagnostic) {
-	connection := service.MustGet[*Connection](d.sc)
+	connection, err := service.Get[*Connection](d.sc)
+	if err != nil {
+		return
+	}
 	client := lsp.ClientDispatcher(connection.Value)
-	err := client.PublishDiagnostics(ctx, &lsp.PublishDiagnosticsParams{
+	err = client.PublishDiagnostics(ctx, &lsp.PublishDiagnosticsParams{
 		URI:         handle.URI(),
 		Diagnostics: diagnostics,
 	})
