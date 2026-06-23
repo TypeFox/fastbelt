@@ -537,6 +537,16 @@ func TestCompletion_AfterN_TokenGroupCrossRef_MultipleDeclares(t *testing.T) {
 	}
 }
 
+// We use a token group as a cross reference terminal
+// It should propose the names as usual
+func TestCompletion_AfterO_ActionCrossRef(t *testing.T) {
+	items := completionAt(t, "declare some o <|cursor>")
+	assert.Len(t, items, 1)
+	if !hasLabel(items, "some") {
+		t.Errorf("expected 'some' as O.Ref candidate; got %v", itemLabels(items))
+	}
+}
+
 // A token group used as a cross-reference terminal must resolve like any other
 // cross-reference, not just drive completion.
 func TestTokenGroupReference_Resolves(t *testing.T) {

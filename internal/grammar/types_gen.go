@@ -1747,3 +1747,30 @@ func (i *CompositeRuleImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.AbstractRuleData.ForEachReference(fn)
 	i.CompositeRuleData.ForEachReference(fn)
 }
+
+var FastbeltSyntheticFactories = map[string]func() core.AstNode{
+	"AbstractRule":         func() core.AstNode { return NewAbstractRule() },
+	"AbstractRuleWithBody": func() core.AstNode { return NewAbstractRuleWithBody() },
+	"AbstractTokenRule":    func() core.AstNode { return NewAbstractTokenRule() },
+	"Action":               func() core.AstNode { return NewAction() },
+	"Alternatives":         func() core.AstNode { return NewAlternatives() },
+	"ArrayType":            func() core.AstNode { return NewArrayType() },
+	"Assignable":           func() core.AstNode { return NewAssignable() },
+	"Assignment":           func() core.AstNode { return NewAssignment() },
+	"CompositeRule":        func() core.AstNode { return NewCompositeRule() },
+	"CrossRef":             func() core.AstNode { return NewCrossRef() },
+	"Element":              func() core.AstNode { return NewElement() },
+	"Field":                func() core.AstNode { return NewField() },
+	"FieldType":            func() core.AstNode { return NewFieldType() },
+	"Grammar":              func() core.AstNode { return NewGrammar() },
+	"Group":                func() core.AstNode { return NewGroup() },
+	"Interface":            func() core.AstNode { return NewInterface() },
+	"Keyword":              func() core.AstNode { return NewKeyword() },
+	"ParserRule":           func() core.AstNode { return NewParserRule() },
+	"PrimitiveType":        func() core.AstNode { return NewPrimitiveType() },
+	"ReferenceType":        func() core.AstNode { return NewReferenceType() },
+	"RuleCall":             func() core.AstNode { return NewRuleCall() },
+	"SimpleType":           func() core.AstNode { return NewSimpleType() },
+	"Token":                func() core.AstNode { return NewToken() },
+	"TokenGroup":           func() core.AstNode { return NewTokenGroup() },
+}

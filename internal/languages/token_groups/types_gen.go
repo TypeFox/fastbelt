@@ -211,3 +211,9 @@ func (i *RecoveryImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.ItemData.ForEachReference(fn)
 	i.RecoveryData.ForEachReference(fn)
 }
+
+var TokenGroupsSyntheticFactories = map[string]func() core.AstNode{
+	"Item":     func() core.AstNode { return NewItem() },
+	"Model":    func() core.AstNode { return NewModel() },
+	"Recovery": func() core.AstNode { return NewRecovery() },
+}

@@ -27,20 +27,6 @@ func (*DefaultArithmeticsCompletionFilter) FilterFunctionCallCallable(_ context.
 	return in
 }
 
-var ArithmeticsSyntheticFactories = map[string]func() core.AstNode{
-	"Addition":          func() core.AstNode { return NewExpression() },
-	"DeclaredParameter": func() core.AstNode { return NewDeclaredParameter() },
-	"Definition":        func() core.AstNode { return NewDefinition() },
-	"Evaluation":        func() core.AstNode { return NewEvaluation() },
-	"Exponentiation":    func() core.AstNode { return NewExpression() },
-	"Expression":        func() core.AstNode { return NewExpression() },
-	"Module":            func() core.AstNode { return NewModule() },
-	"Modulo":            func() core.AstNode { return NewExpression() },
-	"Multiplication":    func() core.AstNode { return NewExpression() },
-	"PrimaryExpression": func() core.AstNode { return NewExpression() },
-	"Statement":         func() core.AstNode { return NewStatement() },
-}
-
 type ArithmeticsCompletionDispatchFunc func(
 	ctx context.Context,
 	sc *service.Container,

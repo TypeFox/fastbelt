@@ -33,7 +33,6 @@ func GenerateCompletion(grammr grammar.Grammar, packageName string) string {
 	actions := collectActions(grammr)
 
 	node.AppendNode(generateCompletionProvider(ctx))
-	node.AppendNode(generateSyntheticFactories(ctx, grammr))
 	node.AppendNode(generateCompletionDispatch(ctx))
 	node.AppendNode(generateLspAdapter(ctx, actions))
 
@@ -135,37 +134,6 @@ func generateCompletionProvider(ctx *LinkerGeneratorContext) codegen.Node {
 	return node
 }
 
-// Synthetic factories are required to produce the expected AST shape for completion
-// when the user is completing an element which hasn't been produced by the parser yet.
-func generateSyntheticFactories(ctx *LinkerGeneratorContext, grammr grammar.Grammar) codegen.Node {
-	node := codegen.NewNode()
-	name := ctx.grammar.Name()
-
-	// One entry per parser rule (composite rules don't carry their own AST node).
-	type ruleEntry struct {
-		ruleName string
-		typeName string
-	}
-	entries := []ruleEntry{}
-	for _, rule := range grammr.Rules() {
-		if returnType, ok := ruleReturnTypeName(rule); ok {
-			entries = append(entries, ruleEntry{ruleName: rule.Name(), typeName: returnType})
-		}
-	}
-	// Sort for stable output.
-	sort.Slice(entries, func(i, j int) bool { return entries[i].ruleName < entries[j].ruleName })
-
-	node.AppendLine("var ", name, "SyntheticFactories = map[string]func() core.AstNode{")
-	node.Indent(func(n codegen.Node) {
-		for _, e := range entries {
-			n.AppendLine("\"", e.ruleName, "\": func() core.AstNode { return New", e.typeName, "() },")
-		}
-	})
-	node.AppendLine("}")
-	node.AppendLine()
-	return node
-}
-
 // generateCompletionDispatch emits the hint-field -> dispatcher map. Each
 // dispatcher resolves scope candidates for the in-progress reference and runs
 // them through the language's CompletionProvider filter for that field.
@@ -211,14 +179,6 @@ func generateCompletionDispatch(ctx *LinkerGeneratorContext) codegen.Node {
 	node.AppendLine("}")
 	node.AppendLine()
 	return node
-}
-
-func ruleReturnTypeName(rule grammar.ParserRule) (string, bool) {
-	rt := grammar.FindReturnType(rule, context.Background())
-	if rt == nil {
-		return "", false
-	}
-	return rt.Name(), true
 }
 
 func generateLspAdapter(ctx *LinkerGeneratorContext, actions []actionEntry) codegen.Node {

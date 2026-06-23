@@ -7,7 +7,7 @@ interface Root {
     Objects []Obj
 }
 
-Root: Objects+=(Declare | A | B | C | D | E | F | G | H | I | J | K | L | M | N)*;
+Root: Objects+=(Declare | A | B | C | D | E | F | G | H | I | J | K | L | M | N | O)*;
 
 interface Declare extends Obj {
     Name composite
@@ -111,6 +111,13 @@ interface N extends Obj {
 
 // token group used to perform cross reference
 N: "n" Ref=[Declare:SomeTokenGroup];
+
+interface O extends Obj {
+    Ref *Declare
+}
+
+// action used to change type
+O returns Obj: {O} "o" Ref=[Declare:ID];
 
 hidden token WS: /[ \t\r\n]+/;
 token ID: /\w[\w0-9]*/;

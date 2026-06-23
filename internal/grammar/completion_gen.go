@@ -72,35 +72,6 @@ func (*DefaultFastbeltCompletionFilter) FilterActionProperty(_ context.Context, 
 	return in
 }
 
-var FastbeltSyntheticFactories = map[string]func() core.AstNode{
-	"Action":                 func() core.AstNode { return NewAction() },
-	"Alternatives":           func() core.AstNode { return NewElement() },
-	"ArrayType":              func() core.AstNode { return NewArrayType() },
-	"Assignable":             func() core.AstNode { return NewAssignable() },
-	"AssignableAlternatives": func() core.AstNode { return NewAssignable() },
-	"AssignableWithoutAlts":  func() core.AstNode { return NewAssignable() },
-	"Assignment":             func() core.AstNode { return NewAssignment() },
-	"CompositeAlternatives":  func() core.AstNode { return NewElement() },
-	"CompositeElement":       func() core.AstNode { return NewElement() },
-	"CompositeGroup":         func() core.AstNode { return NewElement() },
-	"CompositeRule":          func() core.AstNode { return NewCompositeRule() },
-	"CrossRef":               func() core.AstNode { return NewCrossRef() },
-	"Element":                func() core.AstNode { return NewElement() },
-	"Field":                  func() core.AstNode { return NewField() },
-	"FieldType":              func() core.AstNode { return NewFieldType() },
-	"Grammar":                func() core.AstNode { return NewGrammar() },
-	"Group":                  func() core.AstNode { return NewElement() },
-	"Interface":              func() core.AstNode { return NewInterface() },
-	"Keyword":                func() core.AstNode { return NewKeyword() },
-	"ParserRule":             func() core.AstNode { return NewParserRule() },
-	"PrimitiveType":          func() core.AstNode { return NewPrimitiveType() },
-	"ReferenceType":          func() core.AstNode { return NewReferenceType() },
-	"RuleCall":               func() core.AstNode { return NewRuleCall() },
-	"SimpleType":             func() core.AstNode { return NewSimpleType() },
-	"Token":                  func() core.AstNode { return NewToken() },
-	"TokenGroup":             func() core.AstNode { return NewTokenGroup() },
-}
-
 type FastbeltCompletionDispatchFunc func(
 	ctx context.Context,
 	sc *service.Container,

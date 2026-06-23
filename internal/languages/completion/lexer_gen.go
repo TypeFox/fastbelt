@@ -408,7 +408,26 @@ var Keyword_n = core.NewTokenType(
 	[]rune{'n'},
 )
 
-const Keyword_optional_Idx = 22
+const Keyword_o_Idx = 22
+
+var Keyword_o = core.NewTokenType(
+	Keyword_o_Idx,
+	"o",
+	"o",
+	0,
+	core.TokenKindKeyword,
+	0,
+	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "o") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'o'},
+)
+
+const Keyword_optional_Idx = 23
 
 var Keyword_optional = core.NewTokenType(
 	Keyword_optional_Idx,
@@ -427,7 +446,7 @@ var Keyword_optional = core.NewTokenType(
 	[]rune{'o'},
 )
 
-const Keyword_second_Idx = 23
+const Keyword_second_Idx = 24
 
 var Keyword_second = core.NewTokenType(
 	Keyword_second_Idx,
@@ -446,7 +465,7 @@ var Keyword_second = core.NewTokenType(
 	[]rune{'s'},
 )
 
-const Keyword_self_Idx = 24
+const Keyword_self_Idx = 25
 
 var Keyword_self = core.NewTokenType(
 	Keyword_self_Idx,
@@ -465,7 +484,7 @@ var Keyword_self = core.NewTokenType(
 	[]rune{'s'},
 )
 
-const Keyword_then_Idx = 25
+const Keyword_then_Idx = 26
 
 var Keyword_then = core.NewTokenType(
 	Keyword_then_Idx,
@@ -484,7 +503,7 @@ var Keyword_then = core.NewTokenType(
 	[]rune{'t'},
 )
 
-const Keyword_x_Idx = 26
+const Keyword_x_Idx = 27
 
 var Keyword_x = core.NewTokenType(
 	Keyword_x_Idx,
@@ -503,7 +522,7 @@ var Keyword_x = core.NewTokenType(
 	[]rune{'x'},
 )
 
-const Keyword_y_Idx = 27
+const Keyword_y_Idx = 28
 
 var Keyword_y = core.NewTokenType(
 	Keyword_y_Idx,
@@ -522,7 +541,7 @@ var Keyword_y = core.NewTokenType(
 	[]rune{'y'},
 )
 
-const Keyword_LeftBrace_Idx = 28
+const Keyword_LeftBrace_Idx = 29
 
 var Keyword_LeftBrace = core.NewTokenType(
 	Keyword_LeftBrace_Idx,
@@ -541,7 +560,7 @@ var Keyword_LeftBrace = core.NewTokenType(
 	[]rune{'{'},
 )
 
-const Keyword_RightBrace_Idx = 29
+const Keyword_RightBrace_Idx = 30
 
 var Keyword_RightBrace = core.NewTokenType(
 	Keyword_RightBrace_Idx,
@@ -560,7 +579,7 @@ var Keyword_RightBrace = core.NewTokenType(
 	[]rune{'}'},
 )
 
-const Token_WS_Idx = 30
+const Token_WS_Idx = 31
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
@@ -634,7 +653,7 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_ID_Idx = 31
+const Token_ID_Idx = 32
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
@@ -708,7 +727,7 @@ var Token_ID_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_SomeTokenGroup_Idx = 32
+const Token_SomeTokenGroup_Idx = 33
 
 var Token_SomeTokenGroup = core.NewTokenGroup(
 	Token_SomeTokenGroup_Idx,
@@ -744,6 +763,7 @@ func NewLexer() lexer.Lexer {
 		Keyword_long,
 		Keyword_m,
 		Keyword_n,
+		Keyword_o,
 		Keyword_optional,
 		Keyword_second,
 		Keyword_self,

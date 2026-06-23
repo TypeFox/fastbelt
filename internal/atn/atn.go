@@ -17,6 +17,9 @@ import (
 // completionHintFor returns the per-field CompletionHint for a CrossRef whose
 // container is an Assignment in the given rule. Returns nil if the CrossRef is
 // not nested inside an Assignment (bare cross-references contribute no hint).
+// completionHintFor returns the per-field CompletionHint for a CrossRef whose
+// container is an Assignment in the given rule. Returns nil if the CrossRef is
+// not nested inside an Assignment (bare cross-references contribute no hint).
 func completionHintFor(rule grammar.AbstractRuleWithBody, cr grammar.CrossRef) *parser.CompletionHint {
 	if rule == nil {
 		return nil
@@ -29,11 +32,16 @@ func completionHintFor(rule grammar.AbstractRuleWithBody, cr grammar.CrossRef) *
 	if prop == nil {
 		return nil
 	}
-	propName := prop.Text()
-	if propName == "" {
+	field := prop.Ref(context.Background())
+	if field == nil {
 		return nil
 	}
-	hint := &parser.CompletionHint{Field: ruleTypeName(rule) + "." + propName}
+	fieldName := field.Name()
+	if fieldName == "" {
+		return nil
+	}
+	iface := field.Container().(grammar.Interface)
+	hint := &parser.CompletionHint{Field: iface.Name() + "." + fieldName}
 	if action := findPrecedingAction(assignment); action != nil {
 		typeName := ""
 		if t := action.Type(); t != nil {
@@ -49,22 +57,6 @@ func completionHintFor(rule grammar.AbstractRuleWithBody, cr grammar.CrossRef) *
 		}
 	}
 	return hint
-}
-
-// ruleTypeName returns the name of the interface a rule produces. For a rule
-// like `Foo returns Bar: ...` it returns "Bar"; for `Foo: ...` it returns
-// "Foo" (the rule name doubles as the produced interface). The completion
-// dispatch tables are keyed by interface name, so the hint must use this
-// name and not the rule name.
-func ruleTypeName(rule grammar.AbstractRuleWithBody) string {
-	if pr, ok := rule.(grammar.ParserRule); ok {
-		if rt := pr.ReturnType(); rt != nil {
-			if name := rt.Text(); name != "" {
-				return name
-			}
-		}
-	}
-	return rule.Name()
 }
 
 // findPrecedingAction returns the grammar.Action that fires immediately

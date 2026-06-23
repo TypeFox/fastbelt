@@ -50,6 +50,8 @@ const (
 	M__Stop
 	N__Start
 	N__Stop
+	O__Start
+	O__Stop
 	FQN__Start
 	FQN__Stop
 	Root__Basic_0
@@ -83,6 +85,8 @@ const (
 	Root__Basic_28
 	Root__Basic_29
 	Root__Basic_30
+	Root__Basic_31
+	Root__Basic_32
 	Root__BlockEnd
 	Root__LoopEntry
 	Root__LoopEnd
@@ -192,6 +196,9 @@ const (
 	N_n
 	N__Basic_0
 	N__Basic_1
+	O_o
+	O_Ref_ID
+	O__Basic
 	FQN_ID_0
 	FQN_Dot
 	FQN_ID_1
@@ -211,7 +218,7 @@ func ATN() *parser.RuntimeATN {
 	return atn
 }
 func BuildATN() *parser.RuntimeATN {
-	states := make([]*parser.RuntimeATNState, 191)
+	states := make([]*parser.RuntimeATNState, 198)
 	states[Root__Start] = parser.NewATNState(Root__Start, parser.ATNRuleStart, true)
 	states[Root__Stop] = parser.NewATNState(Root__Stop, parser.ATNRuleStop, false)
 	states[Declare__Start] = parser.NewATNState(Declare__Start, parser.ATNRuleStart, true)
@@ -254,6 +261,8 @@ func BuildATN() *parser.RuntimeATN {
 	states[M__Stop] = parser.NewATNState(M__Stop, parser.ATNRuleStop, false)
 	states[N__Start] = parser.NewATNState(N__Start, parser.ATNRuleStart, true)
 	states[N__Stop] = parser.NewATNState(N__Stop, parser.ATNRuleStop, false)
+	states[O__Start] = parser.NewATNState(O__Start, parser.ATNRuleStart, true)
+	states[O__Stop] = parser.NewATNState(O__Stop, parser.ATNRuleStop, false)
 	states[FQN__Start] = parser.NewATNState(FQN__Start, parser.ATNRuleStart, true)
 	states[FQN__Stop] = parser.NewATNState(FQN__Stop, parser.ATNRuleStop, false)
 	states[Root__Basic_0] = parser.NewATNState(Root__Basic_0, parser.ATNBasic, true)
@@ -286,7 +295,9 @@ func BuildATN() *parser.RuntimeATN {
 	states[Root__Basic_27] = parser.NewATNState(Root__Basic_27, parser.ATNBasic, true)
 	states[Root__Basic_28] = parser.NewATNState(Root__Basic_28, parser.ATNBasic, true)
 	states[Root__Basic_29] = parser.NewATNState(Root__Basic_29, parser.ATNBasic, true)
-	states[Root__Basic_30] = parser.NewATNState(Root__Basic_30, parser.ATNBasic, true).SetDecision(0)
+	states[Root__Basic_30] = parser.NewATNState(Root__Basic_30, parser.ATNBasic, true)
+	states[Root__Basic_31] = parser.NewATNState(Root__Basic_31, parser.ATNBasic, true)
+	states[Root__Basic_32] = parser.NewATNState(Root__Basic_32, parser.ATNBasic, true).SetDecision(0)
 	states[Root__BlockEnd] = parser.NewATNState(Root__BlockEnd, parser.ATNBlockEnd, true)
 	states[Root__LoopEntry] = parser.NewATNState(Root__LoopEntry, parser.ATNLoopEntry, true).SetDecision(1)
 	states[Root__LoopEnd] = parser.NewATNState(Root__LoopEnd, parser.ATNLoopEnd, true)
@@ -396,6 +407,9 @@ func BuildATN() *parser.RuntimeATN {
 	states[N_n] = parser.NewATNState(N_n, parser.ATNBasic, false)
 	states[N__Basic_0] = parser.NewATNState(N__Basic_0, parser.ATNBasic, false)
 	states[N__Basic_1] = parser.NewATNState(N__Basic_1, parser.ATNBasic, true)
+	states[O_o] = parser.NewATNState(O_o, parser.ATNBasic, false)
+	states[O_Ref_ID] = parser.NewATNState(O_Ref_ID, parser.ATNBasic, false)
+	states[O__Basic] = parser.NewATNState(O__Basic, parser.ATNBasic, true)
 	states[FQN_ID_0] = parser.NewATNState(FQN_ID_0, parser.ATNBasic, false)
 	states[FQN_Dot] = parser.NewATNState(FQN_Dot, parser.ATNBasic, false)
 	states[FQN_ID_1] = parser.NewATNState(FQN_ID_1, parser.ATNBasic, false)
@@ -465,6 +479,9 @@ func BuildATN() *parser.RuntimeATN {
 	)
 	states[N__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[N_n]),
+	)
+	states[O__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[O_o]),
 	)
 	states[FQN__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[FQN_ID_0]),
@@ -560,6 +577,12 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_30].AppendTransitions(
+		parser.NewRuleTransition(states[O__Start], states[Root__Basic_31], nil),
+	)
+	states[Root__Basic_31].AppendTransitions(
+		parser.NewEpsilonTransition(states[Root__BlockEnd]),
+	)
+	states[Root__Basic_32].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__Basic_0]),
 		parser.NewEpsilonTransition(states[Root__Basic_2]),
 		parser.NewEpsilonTransition(states[Root__Basic_4]),
@@ -575,12 +598,13 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[Root__Basic_24]),
 		parser.NewEpsilonTransition(states[Root__Basic_26]),
 		parser.NewEpsilonTransition(states[Root__Basic_28]),
+		parser.NewEpsilonTransition(states[Root__Basic_30]),
 	)
 	states[Root__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__LoopBack]),
 	)
 	states[Root__LoopEntry].AppendTransitions(
-		parser.NewEpsilonTransition(states[Root__Basic_30]),
+		parser.NewEpsilonTransition(states[Root__Basic_32]),
 		parser.NewEpsilonTransition(states[Root__LoopEnd]),
 	)
 	states[Root__LoopEnd].AppendTransitions(
@@ -915,6 +939,15 @@ func BuildATN() *parser.RuntimeATN {
 	states[N__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[N__Stop]),
 	)
+	states[O_o].AppendTransitions(
+		parser.NewAtomTransition(states[O_Ref_ID], Keyword_o, nil),
+	)
+	states[O_Ref_ID].AppendTransitions(
+		parser.NewAtomTransition(states[O__Basic], Token_ID, &parser.CompletionHint{Field: "O.Ref"}),
+	)
+	states[O__Basic].AppendTransitions(
+		parser.NewEpsilonTransition(states[O__Stop]),
+	)
 	states[FQN_ID_0].AppendTransitions(
 		parser.NewAtomTransition(states[FQN__LoopEntry], Token_ID, nil),
 	)
@@ -938,7 +971,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[FQN__LoopEntry]),
 	)
 	decisionStates := make([]*parser.RuntimeATNState, 14)
-	decisionStates[0] = states[Root__Basic_30]
+	decisionStates[0] = states[Root__Basic_32]
 	decisionStates[1] = states[Root__LoopEntry]
 	decisionStates[2] = states[Declare__LoopEntry]
 	decisionStates[3] = states[Declare__Basic_4]
@@ -953,7 +986,7 @@ func BuildATN() *parser.RuntimeATN {
 	decisionStates[12] = states[L__Basic_1]
 	decisionStates[13] = states[FQN__LoopEntry]
 	decisionMap := make([]*parser.RuntimeATNState, 14)
-	decisionMap[0] = states[Root__Basic_30]
+	decisionMap[0] = states[Root__Basic_32]
 	decisionMap[1] = states[Root__LoopEntry]
 	decisionMap[2] = states[Declare__LoopEntry]
 	decisionMap[3] = states[Declare__Basic_4]

@@ -5,7 +5,9 @@
 package generator
 
 import (
+	"cmp"
 	"slices"
+	"sort"
 	"strings"
 
 	"typefox.dev/fastbelt/internal/grammar"
@@ -28,6 +30,9 @@ func GenerateTypes(grammr grammar.Grammar, packageName string) string {
 	for _, iface := range grammr.Interfaces() {
 		generateInterface(node, grammr, iface)
 	}
+
+	node.AppendNode(generateSyntheticFactories(grammr))
+
 	return FormatIfPossible(node.String())
 }
 
@@ -406,4 +411,37 @@ func generateDataStruct(node codegen.Node, iface grammar.Interface, fields []Fie
 		node.AppendLine("}")
 		node.AppendLine()
 	}
+}
+
+// Synthetic factories are required to produce the expected AST shape for completion
+// when the user is completing an element which hasn't been produced by the parser yet.
+func generateSyntheticFactories(grammr grammar.Grammar) codegen.Node {
+	node := codegen.NewNode()
+	name := grammr.Name()
+
+	// One entry per parser rule (composite rules don't carry their own AST node).
+	type factoryEntry struct {
+		key      string
+		typeName string
+	}
+	entries := []factoryEntry{}
+	for _, iface := range grammr.Interfaces() {
+		entries = append(entries, factoryEntry{key: iface.Name(), typeName: iface.Name()})
+	}
+	slices.SortStableFunc(entries, func(a, b factoryEntry) int {
+		return cmp.Compare(a.key, b.key)
+	})
+
+	// Sort for stable output.
+	sort.Slice(entries, func(i, j int) bool { return entries[i].key < entries[j].key })
+
+	node.AppendLine("var ", name, "SyntheticFactories = map[string]func() core.AstNode{")
+	node.Indent(func(n codegen.Node) {
+		for _, e := range entries {
+			n.AppendLine("\"", e.key, "\": func() core.AstNode { return New", e.typeName, "() },")
+		}
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+	return node
 }
