@@ -41,6 +41,45 @@ type Initializer interface {
 	Initialize(ctx context.Context, folders []lsp.WorkspaceFolder) error
 }
 
+// IncludeFilter determines whether a file system entry should be included
+// in the workspace initialization process. It is used by [DefaultInitializer]
+// to filter files and directories.
+type IncludeFilter interface {
+	// Include returns true if the given file system entry should be included.
+	Include(entry DirEntry) bool
+}
+
+// DefaultIncludeFilter is the default implementation of [IncludeFilter].
+// It includes files whose extension matches [FileExtensions] and skips hidden
+// directories (names starting with ".").
+type DefaultIncludeFilter struct {
+	sc *service.Container
+}
+
+// Include returns true if the given file system entry should be included.
+// See [DefaultIncludeFilter] for more info.
+func (s *DefaultIncludeFilter) Include(entry DirEntry) bool {
+	if entry.IsDir {
+		name := filepath.Base(entry.URI.Path())
+		// Don't include hidden directories
+		return !strings.HasPrefix(name, ".")
+	}
+	extensions, err := service.Get[FileExtensions](s.sc)
+	ext := filepath.Ext(entry.URI.Path())
+	if err != nil {
+		// No file extensions are configured
+		// Only include files without an extension
+		return ext == ""
+	}
+	// Include files whose extension matches the configured file extensions
+	return slices.Contains(extensions, ext)
+}
+
+// NewDefaultIncludeFilter returns a new instance of [DefaultIncludeFilter].
+func NewDefaultIncludeFilter(sc *service.Container) IncludeFilter {
+	return &DefaultIncludeFilter{sc: sc}
+}
+
 // NoopInitializer is an [Initializer] that does nothing.
 // It can be used in environments where there is no file system to scan, such as the browser.
 type NoopInitializer struct{}
@@ -56,12 +95,14 @@ func (NoopInitializer) Initialize(ctx context.Context, folders []lsp.WorkspaceFo
 }
 
 // DefaultInitializer is the default implementation of [Initializer].
+// It scans the given workspace folders for files and matches them
+// against the configured [IncludeFilter].
 type DefaultInitializer struct {
 	sc *service.Container
 }
 
 // NewDefaultInitializer returns an [Initializer] that scans workspace folders
-// for files matching [FileExtensions].
+// for files matching [FileExtensions]. Will skip hidden directories (names starting with ".").
 func NewDefaultInitializer(sc *service.Container) Initializer {
 	return &DefaultInitializer{sc: sc}
 }
@@ -76,23 +117,24 @@ func (s *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 		log.Print("workspace LanguageID is not set")
 		return nil
 	}
-	extensions, err := service.Get[FileExtensions](s.sc)
+	filter, err := service.Get[IncludeFilter](s.sc)
 	if err != nil {
-		log.Print("workspace FileExtensions is not set")
+		log.Print("workspace IncludeFilter is not set")
 		return nil
 	}
 	for _, folder := range folders {
 		root := core.ParseURI(folder.URI)
 		err := WalkFileSystem(ctx, fs, root, func(entry DirEntry) error {
-			name := filepath.Base(entry.URI.Path())
+			included := filter.Include(entry)
 			if entry.IsDir {
-				if strings.HasPrefix(name, ".") {
+				if !included {
+					// Skip this directory and its contents
 					return SkipDir
+				} else {
+					return nil
 				}
-				return nil
-			}
-			ext := filepath.Ext(name)
-			if !slices.Contains(extensions, ext) {
+			} else if !included {
+				// Just skip this file
 				return nil
 			}
 			s.loadFile(ctx, entry.URI, fs, languageID)
