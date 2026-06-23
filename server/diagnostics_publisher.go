@@ -59,19 +59,20 @@ func (d *DiagnosticsPublisher) OnServerInitialize(_ *lsp.ParamInitialize) {
 		if store.GetOverlay(doc.URI.DocumentURI()) == nil {
 			return nil // Document is not open, skip publishing diagnostics
 		}
-		return d.publishDocumentDiagnostics(ctx, doc)
+		d.publishDocumentDiagnostics(ctx, doc)
+		return nil
 	})
 }
 
-func (d *DiagnosticsPublisher) publishDocumentDiagnostics(ctx context.Context, doc *core.Document) error {
+func (d *DiagnosticsPublisher) publishDocumentDiagnostics(ctx context.Context, doc *core.Document) {
 	lspDiags := make([]lsp.Diagnostic, 0, len(doc.Diagnostics))
 	for _, d := range doc.Diagnostics {
 		lspDiags = append(lspDiags, toLspDiagnostic(*d))
 	}
-	return d.publishDiagnostics(ctx, doc.TextDoc, lspDiags)
+	d.publishDiagnostics(ctx, doc.TextDoc, lspDiags)
 }
 
-func (d *DiagnosticsPublisher) publishDiagnostics(ctx context.Context, handle textdoc.Handle, diagnostics []lsp.Diagnostic) error {
+func (d *DiagnosticsPublisher) publishDiagnostics(ctx context.Context, handle textdoc.Handle, diagnostics []lsp.Diagnostic) {
 	connection := service.MustGet[*Connection](d.sc)
 	client := lsp.ClientDispatcher(connection.Value)
 	err := client.PublishDiagnostics(ctx, &lsp.PublishDiagnosticsParams{
@@ -81,5 +82,4 @@ func (d *DiagnosticsPublisher) publishDiagnostics(ctx context.Context, handle te
 	if err != nil {
 		log.Printf("failed to publish diagnostics: %v", err)
 	}
-	return err
 }

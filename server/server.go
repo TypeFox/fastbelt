@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"log/slog"
 
 	"golang.org/x/exp/jsonrpc2"
 	core "typefox.dev/fastbelt"
