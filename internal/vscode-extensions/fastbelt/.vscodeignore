@@ -1,6 +1,11 @@
+../**
 .vscode/**
 .vscode-test/**
 .gitignore
+node_modules/**
+src/**
 *.vsix
 esbuild.js
 publish.sh
+tsconfig.json
+.DS_Store

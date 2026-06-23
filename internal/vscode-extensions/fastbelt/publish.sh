@@ -23,7 +23,11 @@ PACKAGE_VERSION="$(node -p "require('./package.json').version")"
 # Format: "<vsce-target> <GOOS> <GOARCH>"
 targets=(
   "win32-x64 windows amd64"
+  "win32-arm64 windows arm64"
   "linux-x64 linux amd64"
+  "linux-arm64 linux arm64"
+  "alpine-x64 linux amd64"
+  "alpine-arm64 linux arm64"
   "darwin-x64 darwin amd64"
   "darwin-arm64 darwin arm64"
 )
@@ -38,13 +42,13 @@ for target_info in "${targets[@]}"; do
   # Rebuild from a clean dist directory for this platform.
   rm -rf dist
 
-  GOOS="$goos" GOARCH="$goarch" npx vsce package --target "$target" --out "$vsix_file"
+  CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" npx vsce package --target "$target" --out "$vsix_file"
 
   echo "==> Publishing ${vsix_file} to VS Marketplace"
-  npx vsce publish --packagePath "$vsix_file"
+  npx --no-install vsce publish --packagePath "$vsix_file"
 
   echo "==> Publishing ${vsix_file} to Open VSX"
-  npx ovsx publish "$vsix_file"
+  npx --no-install ovsx publish "$vsix_file"
 done
 
 echo "Done publishing all platform-specific extensions."

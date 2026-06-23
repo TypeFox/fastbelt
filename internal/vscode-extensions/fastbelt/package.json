@@ -1,13 +1,22 @@
 {
   "name": "fastbelt-vscode",
   "publisher": "fastbelt",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "preview": true,
   "displayName": "Fastbelt",
   "description": "Support for the Fastbelt grammar language",
   "homepage": "https://pkg.go.dev/typefox.dev/fastbelt",
   "categories": [
     "Programming Languages"
+  ],
+  "keywords": [
+    "go",
+    "fastbelt",
+    "grammar",
+    "parser",
+    "dsl",
+    "lsp",
+    "language server"
   ],
   "license": "MIT",
   "icon": "data/fastbelt-logo.png",
@@ -16,8 +25,9 @@
     "theme": "dark"
   },
   "engines": {
-    "vscode": "^1.104.0"
+    "vscode": "^1.91.0"
   },
+  "extensionKind": ["workspace"],
   "contributes": {
     "languages": [{
       "id": "fastbelt",
@@ -45,7 +55,6 @@
     "watch": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch",
     "vscode:prepublish": "npm run check-types && node esbuild.js --production && npm run build-server",
-    "publish:platforms": "bash ./publish-platform-extensions.sh",
     "check-types": "tsc --noEmit",
     "build-server": "go build -o dist/ ../../grammar/server"
   },

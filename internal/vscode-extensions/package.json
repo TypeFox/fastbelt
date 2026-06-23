@@ -11,9 +11,11 @@
     "build": "npm run build --workspaces"
   },
   "devDependencies": {
-    "@types/vscode": "^1.104.0",
     "@types/node": "24.x",
+    "@types/vscode": "^1.104.0",
+    "@vscode/vsce": "^3.9.2",
     "esbuild": "^0.27.0",
+    "ovsx": "^1.0.1",
     "shx": "^0.4.0",
     "typescript": "^6.0.3"
   },
