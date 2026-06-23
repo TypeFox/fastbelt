@@ -28,8 +28,14 @@ func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[DocumentManager](sc) {
 		service.Put(sc, NewDefaultDocumentManager(sc))
 	}
+	if !service.Has[FileSystem](sc) {
+		service.Put(sc, NewDiskFileSystem())
+	}
 	if !service.Has[Initializer](sc) {
 		service.Put(sc, NewDefaultInitializer(sc))
+	}
+	if !service.Has[IncludeFilter](sc) {
+		service.Put(sc, NewDefaultIncludeFilter(sc))
 	}
 	if !service.Has[Lock](sc) {
 		service.Put(sc, NewDefaultLock())

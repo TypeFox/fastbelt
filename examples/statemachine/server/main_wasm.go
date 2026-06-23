@@ -13,16 +13,7 @@ import (
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
-	"typefox.dev/lsp"
 )
-
-// noopInitializer is used in the browser build, where there is no filesystem to
-// scan. The server only operates on documents delivered over the LSP connection.
-type noopInitializer struct{}
-
-func (noopInitializer) Initialize(ctx context.Context, folders []lsp.WorkspaceFolder) error {
-	return nil
-}
 
 func main() {
 	ctx := context.Background()
@@ -30,7 +21,7 @@ func main() {
 	sc := statemachine.CreateLspServices(func(sc *service.Container) {
 		// Override the default services with browser-compatible implementations.
 		server.SetupWasmServices(sc)
-		service.Override[workspace.Initializer](sc, noopInitializer{})
+		service.Override(sc, workspace.NewNoopInitializer())
 	})
 
 	// StartLanguageServer blocks on the connection until it is closed, which

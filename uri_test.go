@@ -69,12 +69,45 @@ func TestParseURI(t *testing.T) {
 			},
 		},
 		{
-			name:  "relative path only",
+			name:  "path only",
 			input: "/path/to/resource",
 			expected: &uri{
 				scheme:    "",
 				authority: "",
 				path:      "/path/to/resource",
+				query:     "",
+				fragment:  "",
+			},
+		},
+		{
+			name:  "relative path",
+			input: "file:path/to/resource",
+			expected: &uri{
+				scheme:    "file",
+				authority: "",
+				path:      "path/to/resource",
+				query:     "",
+				fragment:  "",
+			},
+		},
+		{
+			name:  "relative path with dot",
+			input: "file:./path/to/resource",
+			expected: &uri{
+				scheme:    "file",
+				authority: "",
+				path:      "./path/to/resource",
+				query:     "",
+				fragment:  "",
+			},
+		},
+		{
+			name:  "relative path with double dot",
+			input: "file:../path/to/resource",
+			expected: &uri{
+				scheme:    "file",
+				authority: "",
+				path:      "../path/to/resource",
 				query:     "",
 				fragment:  "",
 			},
@@ -591,6 +624,62 @@ func TestString_RoundTrip(t *testing.T) {
 	}
 }
 
+func TestString_PercentRoundTrip(t *testing.T) {
+	// A literal '%' must survive uri -> String (escaped to %25) -> ParseURI (decoded back to '%').
+	testCases := []*uri{
+		{
+			scheme:    "https",
+			authority: "example.com",
+			path:      "/discount/50%off",
+			query:     "code=SAVE%NOW",
+			fragment:  "terms%conditions",
+		},
+		{
+			scheme:    "https",
+			authority: "example.com",
+			path:      "/100%/done",
+		},
+		{
+			// '%' next to sequences that look like valid percent-encoding must not be misread.
+			scheme:    "https",
+			authority: "example.com",
+			path:      "/a%20b/c%3Ad",
+			query:     "x=%2F&y=%25",
+			fragment:  "%41%42",
+		},
+		{
+			scheme: "file",
+			path:   "/C:/100% complete/file%.txt",
+		},
+	}
+
+	for i, original := range testCases {
+		t.Run(fmt.Sprintf("case_%d", i), func(t *testing.T) {
+			parsed := ParseURI(original.String())
+			assert.Equal(t, original.scheme, parsed.Scheme())
+			assert.Equal(t, original.authority, parsed.Authority())
+			assert.Equal(t, original.path, parsed.Path())
+			assert.Equal(t, original.query, parsed.Query())
+			assert.Equal(t, original.fragment, parsed.Fragment())
+		})
+	}
+}
+
+func TestParseUri_PercentEncodedStringRoundTrip(t *testing.T) {
+	// An already-encoded URI string must round-trip unchanged through ParseURI -> String.
+	inputs := []string{
+		"https://example.com/discount/50%25off?code%3DSAVE%25NOW#terms%25conditions",
+		"file:///C%3A/100%25%20complete/file%25.txt",
+		"https://example.com/a%20b/c?x%3D%252F",
+	}
+
+	for _, input := range inputs {
+		t.Run(input, func(t *testing.T) {
+			assert.Equal(t, input, ParseURI(input).String())
+		})
+	}
+}
+
 func TestParseUri_WindowsDriveHandling(t *testing.T) {
 	input := "file:///c%3A/Users/Document/%23source.go"
 	expected := "file:///C:/Users/Document/#source.go"
@@ -627,4 +716,173 @@ func TestParseUri_LowerCaseSchemeAndAuthority(t *testing.T) {
 	expected := "http://example.com/PATH"
 	parsed := ParseURI(input)
 	assert.Equal(t, expected, parsed.StringUnencoded())
+}
+
+func TestURI_FilePath(t *testing.T) {
+	tests := []struct {
+		name     string
+		uri      URI
+		expected string
+	}{
+		{
+			name:     "unix path",
+			uri:      &uri{scheme: "file", path: "/home/user/document.txt"},
+			expected: "/home/user/document.txt",
+		},
+		{
+			name:     "windows drive path",
+			uri:      &uri{scheme: "file", path: "/C:/Users/John Doe/file.txt"},
+			expected: `C:\Users\John Doe\file.txt`,
+		},
+		{
+			name:     "UNC path with authority",
+			uri:      &uri{scheme: "file", authority: "server", path: "/share/file.txt"},
+			expected: `\\server\share\file.txt`,
+		},
+		{
+			name:     "non-file scheme returns empty",
+			uri:      &uri{scheme: "https", authority: "example.com", path: "/path"},
+			expected: "",
+		},
+		{
+			name:     "round trip with FileURI on windows path",
+			uri:      FileURI(`C:\Users\John Doe\Documents\my file.txt`),
+			expected: `C:\Users\John Doe\Documents\my file.txt`,
+		},
+		{
+			name:     "round trip with FileURI on unix path",
+			uri:      FileURI("/home/user/document.txt"),
+			expected: "/home/user/document.txt",
+		},
+		{
+			name:     "round trip with FileURI on UNC path",
+			uri:      FileURI(`\\server\share\file.txt`),
+			expected: `\\server\share\file.txt`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.uri.FilePath())
+		})
+	}
+}
+
+func TestURI_JoinPath(t *testing.T) {
+	tests := []struct {
+		name     string
+		uri      URI
+		segments []string
+		expected string
+	}{
+		{
+			name:     "no segments returns same path",
+			uri:      &uri{scheme: "file", path: "/home/user"},
+			segments: nil,
+			expected: "/home/user",
+		},
+		{
+			name:     "single segment without trailing slash",
+			uri:      &uri{scheme: "file", path: "/home/user"},
+			segments: []string{"file.txt"},
+			expected: "/home/user/file.txt",
+		},
+		{
+			name:     "single segment with trailing slash",
+			uri:      &uri{scheme: "file", path: "/home/user/"},
+			segments: []string{"file.txt"},
+			expected: "/home/user/file.txt",
+		},
+		{
+			name:     "multiple segments",
+			uri:      &uri{scheme: "file", path: "/home/user"},
+			segments: []string{"dir", "sub", "file.txt"},
+			expected: "/home/user/dir/sub/file.txt",
+		},
+		{
+			name:     "empty path",
+			uri:      &uri{scheme: "file"},
+			segments: []string{"file.txt"},
+			expected: "/file.txt",
+		},
+		{
+			name:     "single dot is dropped",
+			uri:      &uri{scheme: "file", path: "/home/user"},
+			segments: []string{"a", ".", "b"},
+			expected: "/home/user/a/b",
+		},
+		{
+			name:     "consecutive dots are dropped",
+			uri:      &uri{scheme: "file", path: "/home/user"},
+			segments: []string{".", ".", "x"},
+			expected: "/home/user/x",
+		},
+		{
+			name:     "double dot pops the previous segment",
+			uri:      &uri{scheme: "file", path: "/home/user"},
+			segments: []string{"a", "..", "b"},
+			expected: "/home/user/b",
+		},
+		{
+			name:     "double dot pops the base path",
+			uri:      &uri{scheme: "file", path: "/home/user"},
+			segments: []string{".."},
+			expected: "/home",
+		},
+		{
+			name:     "consecutive double dots pop multiple segments",
+			uri:      &uri{scheme: "file", path: "/a/b/c"},
+			segments: []string{"..", ".."},
+			expected: "/a",
+		},
+		{
+			name:     "consecutive double dots then a segment",
+			uri:      &uri{scheme: "file", path: "/a/b/c"},
+			segments: []string{"..", "..", "x"},
+			expected: "/a/x",
+		},
+		{
+			name:     "double dots inside a single segment",
+			uri:      &uri{scheme: "file", path: "/a/b"},
+			segments: []string{"x/../../y"},
+			expected: "/a/y",
+		},
+		{
+			name:     "double dot at root is clamped",
+			uri:      &uri{scheme: "file", path: "/"},
+			segments: []string{".."},
+			expected: "/",
+		},
+		{
+			name:     "consecutive double dots past root are clamped",
+			uri:      &uri{scheme: "file", path: "/a"},
+			segments: []string{"..", "..", ".."},
+			expected: "/",
+		},
+		{
+			name:     "double dot past root then a segment",
+			uri:      &uri{scheme: "file", path: "/a"},
+			segments: []string{"..", "..", "b"},
+			expected: "/b",
+		},
+		{
+			name:     "double dot preserved merged on relative path",
+			uri:      &uri{scheme: "file", path: "a"},
+			segments: []string{"..", "..", "b"},
+			expected: "../b",
+		},
+		{
+			name:     "double dot preserved on relative path",
+			uri:      &uri{scheme: "file", path: "../.."},
+			segments: []string{"..", "b"},
+			expected: "../../../b",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.uri.JoinPath(tt.segments...)
+			assert.Equal(t, tt.expected, result.Path())
+		})
+	}
 }
