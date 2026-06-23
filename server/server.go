@@ -12,10 +12,21 @@ import (
 
 	"golang.org/x/exp/jsonrpc2"
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
+
+// ServerInitializeParticipant is an interface for services that want to
+// participate in the LSP server initialization process.
+//
+// All services implementing this interface and registered in the [service.Container]
+// instance will have their [ServerInitializeParticipant.OnServerInitialize]
+// method called during the [lsp.Server.Initialize] request.
+type ServerInitializeParticipant interface {
+	OnServerInitialize(params *lsp.ParamInitialize)
+}
 
 // DefaultLanguageServer implements the [lsp.Server] interface
 type DefaultLanguageServer struct {
@@ -28,10 +39,11 @@ func NewDefaultLanguageServer(sc *service.Container) lsp.Server {
 }
 
 func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.ParamInitialize) (*lsp.InitializeResult, error) {
-	if slogHandler, _ := service.Get[slog.Handler](s.sc); slogHandler != nil {
-		// Set the default logger to use the configured slog handler
-		// It will send logs to the client via the LSP connection
-		slog.SetDefault(slog.New(slogHandler))
+	// Initialize all participants first
+	for service := range s.sc.All() {
+		if initializer, ok := service.(ServerInitializeParticipant); ok {
+			initializer.OnServerInitialize(params)
+		}
 	}
 	workspaceFolders, err := service.Get[*WorkspaceFolders](s.sc)
 	if err != nil {
@@ -516,7 +528,14 @@ func StartLanguageServer(ctx context.Context, sc *service.Container) error {
 	if err != nil {
 		return err
 	}
+	store, err := service.Get[textdoc.Store](sc)
+	if err != nil {
+		return err
+	}
 	builder.AddBuildStepListener(core.DocStateValidated, func(ctx context.Context, doc *core.Document) error {
+		if store.GetOverlay(doc.URI.DocumentURI()) == nil {
+			return nil // Document is not open, skip publishing diagnostics
+		}
 		lspDiags := make([]lsp.Diagnostic, 0, len(doc.Diagnostics))
 		for _, d := range doc.Diagnostics {
 			lspDiags = append(lspDiags, toLspDiagnostic(*d))
