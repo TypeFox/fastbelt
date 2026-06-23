@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-import type * as vscode from 'vscode';
+import * as vscode from 'vscode';
 import type { LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node.js';
 import * as path from 'node:path';
 import { LanguageClient, TransportKind } from 'vscode-languageclient/node.js';
@@ -28,7 +28,10 @@ async function startLanguageClient(context: vscode.ExtensionContext): Promise<La
     };
 
     const clientOptions: LanguageClientOptions = {
-        documentSelector: [{ scheme: 'file', language: 'arithmetics' }]
+        documentSelector: [{ scheme: 'file', language: 'arithmetics' }],
+        outputChannel: vscode.window.createOutputChannel(
+            'Arithmetics Language Server'
+        )
     };
     const lc = new LanguageClient(
         'arithmetics',
