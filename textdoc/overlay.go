@@ -118,9 +118,9 @@ func (o *Overlay) Version() int32 {
 	return o.version
 }
 
-// Content returns a copy of the document content as a byte slice.
-// Returning bytes enables efficient manipulation; a copy is returned to prevent
-// external modification of internal state. This method is thread-safe.
+// Content returns the byte slice that represents the document content.
+// This is not a copy. Do not modify the returned slice, as it may lead
+// to unexpected behavior. This method is thread-safe.
 func (o *Overlay) Content() []byte {
 	o.mu.RLock()
 	defer o.mu.RUnlock()
@@ -201,6 +201,9 @@ func (o *Overlay) applyChangeLocked(change lsp.TextDocumentContentChangeEvent) e
 		endOffset := o.offsetAtLocked(wellFormedRange.End)
 
 		// Update content using []byte operations for efficiency
+		// Note: never modify the original content slice in-place:
+		// The byte array is returned directly by Text() so in-place modifications
+		// would affect all existing string views.
 		newContent := make([]byte, 0, startOffset+len(change.Text)+(len(o.content)-endOffset))
 		newContent = append(newContent, o.content[:startOffset]...)
 		newContent = append(newContent, change.Text...)

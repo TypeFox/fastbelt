@@ -8,6 +8,7 @@ import (
 	"errors"
 	"unicode/utf16"
 	"unicode/utf8"
+	"unsafe"
 
 	"typefox.dev/lsp"
 )
@@ -56,20 +57,28 @@ func (f *File) Version() int32 {
 	return f.version
 }
 
-// Content returns a copy of the document content as a byte slice.
+// Content returns the byte slice that represents the document content.
+// This is not a copy. Do not modify the returned slice, as it may lead
+// to unexpected behavior.
 func (f *File) Content() []byte {
 	return f.content
 }
 
 // Text returns the text content or a substring if range is provided.
 // This is a convenience method that returns a string instead of []byte.
+//
+// Note: This string is not a copy, and holding onto it will prevent
+// the underlying byte slice from being garbage collected.
 func (f *File) Text(r *lsp.Range) string {
+	content := f.content
 	if r != nil {
 		start := f.offsetAt(r.Start)
 		end := f.offsetAt(r.End)
-		return string(f.content[start:end])
+		content = f.content[start:end]
 	}
-	return string(f.content)
+	// We are creating an "unsafe" view on the byte slice to avoid copying it.
+	// This is safe, since the content is never actually modified after creation.
+	return unsafe.String(unsafe.SliceData(content), len(content))
 }
 
 // PositionAt converts a zero-based byte-offset to a UTF16 position.
