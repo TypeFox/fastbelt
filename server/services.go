@@ -31,6 +31,9 @@ func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[slog.Handler](sc) {
 		service.Put(sc, NewSlogHandler(sc))
 	}
+	if !service.Has[DiagnosticsPublisher](sc) {
+		service.Put(sc, NewDiagnosticsPublisher(sc))
+	}
 	if !service.Has[lsp.Server](sc) {
 		service.Put(sc, NewDefaultLanguageServer(sc))
 	}

@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"log/slog"
 
 	"golang.org/x/exp/jsonrpc2"
 	core "typefox.dev/fastbelt"
@@ -16,6 +15,16 @@ import (
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
+
+// InitializeParticipant is an interface for services that want to
+// participate in the LSP server initialization process.
+//
+// All services implementing this interface and registered in the [service.Container]
+// instance will have their [InitializeParticipant.OnServerInitialize]
+// method called during the [lsp.Server.Initialize] request.
+type InitializeParticipant interface {
+	OnServerInitialize(params *lsp.ParamInitialize)
+}
 
 // DefaultLanguageServer implements the [lsp.Server] interface
 type DefaultLanguageServer struct {
@@ -28,10 +37,9 @@ func NewDefaultLanguageServer(sc *service.Container) lsp.Server {
 }
 
 func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.ParamInitialize) (*lsp.InitializeResult, error) {
-	if slogHandler, _ := service.Get[slog.Handler](s.sc); slogHandler != nil {
-		// Set the default logger to use the configured slog handler
-		// It will send logs to the client via the LSP connection
-		slog.SetDefault(slog.New(slogHandler))
+	// Initialize all participants first
+	for service := range service.GetAll[InitializeParticipant](s.sc) {
+		service.OnServerInitialize(params)
 	}
 	workspaceFolders, err := service.Get[*WorkspaceFolders](s.sc)
 	if err != nil {
@@ -509,25 +517,6 @@ func StartLanguageServer(ctx context.Context, sc *service.Container) error {
 	defer func() {
 		_ = conn.Close() // Ignore error in defer
 	}()
-
-	// Register build step listener to publish diagnostics after validation
-	client := lsp.ClientDispatcher(conn)
-	builder, err := service.Get[workspace.Builder](sc)
-	if err != nil {
-		return err
-	}
-	builder.AddBuildStepListener(core.DocStateValidated, func(ctx context.Context, doc *core.Document) error {
-		lspDiags := make([]lsp.Diagnostic, 0, len(doc.Diagnostics))
-		for _, d := range doc.Diagnostics {
-			lspDiags = append(lspDiags, toLspDiagnostic(*d))
-		}
-		params := &lsp.PublishDiagnosticsParams{
-			URI:         doc.URI.DocumentURI(),
-			Version:     doc.TextDoc.Version(),
-			Diagnostics: lspDiags,
-		}
-		return client.PublishDiagnostics(ctx, params)
-	})
 
 	// Wait for the connection to close
 	return conn.Wait()

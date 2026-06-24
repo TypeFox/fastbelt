@@ -9,6 +9,8 @@ import (
 	"iter"
 	"maps"
 	"reflect"
+
+	"typefox.dev/fastbelt/util/extiter"
 )
 
 // A Container holds a collection of services keyed by Go type.
@@ -58,6 +60,23 @@ func Get[T any](container *Container) (T, error) {
 		return zero, fmt.Errorf("service %s not found", t.Name())
 	}
 	return service.(T), nil
+}
+
+// GetAll retrieves all services of type T from the container.
+// Will return an empty sequence if the container is not sealed.
+//
+// TODO make this a method once generic methods are supported in Go.
+func GetAll[T any](container *Container) iter.Seq[T] {
+	if !container.sealed {
+		return extiter.Empty[T]()
+	}
+	return func(yield func(T) bool) {
+		for service := range container.All() {
+			if t, ok := service.(T); ok && !yield(t) {
+				return
+			}
+		}
+	}
 }
 
 // MustGet retrieves a service from the container.

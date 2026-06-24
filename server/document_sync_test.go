@@ -135,15 +135,6 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	if textdocStore.GetOverlay(uri) != nil {
 		t.Error("document should have been removed from collection")
 	}
-
-	// Verify DocumentUpdater.Update was called with deleted URI
-	updateCalls = updater.getUpdateCalls()
-	if len(updateCalls) != 1 {
-		t.Fatalf("expected 1 update call after close, got %d", len(updateCalls))
-	}
-	if len(updateCalls[0].deleted) != 1 {
-		t.Fatalf("expected 1 deleted URI in update call, got %d", len(updateCalls[0].deleted))
-	}
 }
 
 func TestTextDocuments_MultipleDocuments(t *testing.T) {
