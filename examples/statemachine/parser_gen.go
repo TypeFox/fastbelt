@@ -22,6 +22,7 @@ func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
 	lookahead := service.MustGet[StatemachineModelParserLookahead](p.sc)
 	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
 	result := cp.ParseStatemachine()
+	cp.state.ExpectEndOfInput()
 	core.AssignContainers(document, result)
 	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
 }

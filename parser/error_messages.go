@@ -17,6 +17,9 @@ type ErrorMessageProvider interface {
 	// UnexpectedEndOfInput is used when the parser needs another token but
 	// the token stream is already exhausted.
 	UnexpectedEndOfInput(expected *core.TokenType) string
+	// ExpectedEndOfInput is used when the parser has already exited, but
+	// the token stream still has more tokens.
+	ExpectedEndOfInput(found *core.Token) string
 	// UnexpectedToken is used when the current token does not match what the
 	// parser expected and recovery decided not to synthesise or skip a token.
 	UnexpectedToken(found *core.Token) string
@@ -43,6 +46,10 @@ func NewDefaultErrorMessageProvider() DefaultErrorMessageProvider {
 
 func (DefaultErrorMessageProvider) UnexpectedEndOfInput(expected *core.TokenType) string {
 	return "Unexpected end of input, expected '" + expected.Name + "'."
+}
+
+func (DefaultErrorMessageProvider) ExpectedEndOfInput(found *core.Token) string {
+	return "Expected end of input, but found '" + tokenImage(found) + "'."
 }
 
 func (DefaultErrorMessageProvider) UnexpectedToken(found *core.Token) string {

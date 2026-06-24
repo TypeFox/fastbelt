@@ -416,6 +416,7 @@ func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes Gener
 		n.AppendLine("lookahead := service.MustGet[", grammr.Name(), "ParserLookahead](p.sc)")
 		n.AppendLine("cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}")
 		n.AppendLine("result := cp.Parse", firstRule.Name(), "()")
+		n.AppendLine("cp.state.ExpectEndOfInput()")
 		n.AppendLine("core.AssignContainers(document, result)")
 		n.AppendLine("return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}")
 	})
