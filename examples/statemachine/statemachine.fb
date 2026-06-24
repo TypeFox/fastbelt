@@ -54,8 +54,8 @@ Transition returns Transition:
     Event=[Event:ID] "=>"
     State=[State:ID]
 
-token ID: /[_a-zA-Z][\w_]*/;
+token ID: /[_a-zA-Z][\w_]*/
 
-hidden token WS: /\s+/;
-comment token ML_COMMENT: /\/\*[\s\S]*?\*\//;
-comment token SL_COMMENT: /\/\/[^\n\r]*/;
+hidden token WS: /\s+/
+comment token ML_COMMENT: /\/\*[\s\S]*?\*\//
+comment token SL_COMMENT: /\/\/[^\n\r]*/
