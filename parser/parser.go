@@ -91,6 +91,20 @@ func (p *ParserState) ReportError(msg string, token *core.Token) {
 	p.errors = append(p.errors, core.NewParserError(msg, token))
 }
 
+// ExpectEndOfInput reports an error if the parser has exited before consuming
+// all tokens. This is called after the top-level rule has returned.
+func (p *ParserState) ExpectEndOfInput() {
+	if p.ErrorRecoveryMode {
+		// If we're already in error-recovery mode, don't report another error.
+		return
+	}
+	nextToken := p.LA(1)
+	if nextToken.Type != core.EOF {
+		// Parser has already exited, but the next token is not EOF.
+		p.ReportError(p.messages.ExpectedEndOfInput(nextToken), nextToken)
+	}
+}
+
 // ReportMatch exits error-recovery mode after a token has been successfully
 // matched (either directly or via inline recovery).
 func (p *ParserState) ReportMatch() {
@@ -153,29 +167,6 @@ func (p *ParserState) Consume(tokenType *core.TokenType) *core.Token {
 	p.ReportMatch()
 	p.Index++
 	return current
-}
-
-type ParserLookahead interface {
-	PredictionMode() PredictionMode
-	SetPredictionMode(mode PredictionMode)
-}
-
-type DefaultParserLookahead struct {
-	predictionMode PredictionMode
-}
-
-// PredictionMode returns the current prediction mode. See [PredictionMode] for more details.
-func (l *DefaultParserLookahead) PredictionMode() PredictionMode {
-	return l.predictionMode
-}
-
-// SetPredictionMode sets the prediction mode. See [PredictionMode] for more details.
-// Setting the mode will affect all adaptive lookahead decisions performed by the parser.
-// When switching to [PredictionModeLL], it might be beneficial to override the languages'
-// parser lookahead service with a custom implementation that only applies this mode to certain
-// decisions, to avoid the performance cost of full-context prediction where it is not needed.
-func (l *DefaultParserLookahead) SetPredictionMode(mode PredictionMode) {
-	l.predictionMode = mode
 }
 
 // PredictionFailure describes why an alternatives decision could not be
@@ -275,4 +266,33 @@ func (p *ParserState) FollowSet() *collections.BitSet {
 		sets[i] = p.atn.NextTokensAt(idx)
 	}
 	return collections.MergeBitSets(sets)
+}
+
+// Base interface for all generated parser lookahead services.
+// It allows the parser to query and set the prediction mode.
+type ParserLookahead interface {
+	// PredictionMode returns the current prediction mode. See [PredictionMode] for more details.
+	PredictionMode() PredictionMode
+	// SetPredictionMode sets the general prediction mode. See [PredictionMode] for more details.
+	// Setting the mode will affect all adaptive lookahead decisions performed by the parser.
+	// When switching to [PredictionModeLL], it might be beneficial to override the languages'
+	// parser lookahead service with a custom implementation that only applies this mode to certain
+	// decisions, to avoid the performance cost of full-context prediction where it is not needed.
+	SetPredictionMode(mode PredictionMode)
+}
+
+// DefaultParserLookahead is the default implementation of [ParserLookahead].
+// It is embedded in all generated default parser lookahead services.
+type DefaultParserLookahead struct {
+	predictionMode PredictionMode
+}
+
+// PredictionMode returns the current prediction mode. See [PredictionMode] for more details.
+func (l *DefaultParserLookahead) PredictionMode() PredictionMode {
+	return l.predictionMode
+}
+
+// SetPredictionMode sets the general prediction mode. See [PredictionMode] for more details.
+func (l *DefaultParserLookahead) SetPredictionMode(mode PredictionMode) {
+	l.predictionMode = mode
 }

@@ -41,13 +41,13 @@ func NewBailErrorRecovery() BailErrorRecovery {
 
 func (DefaultErrorRecovery) RecoverInline(parserState *ParserState, expectedTokenType *core.TokenType) (*core.Token, bool) {
 	la1 := parserState.LA(1)
-	if la1 == nil {
-		parserState.AppendError(parserState.messages.UnexpectedEndOfInput(expectedTokenType), nil)
+	if la1.Type == core.EOF {
+		parserState.AppendError(parserState.messages.UnexpectedEndOfInput(expectedTokenType), la1)
 		return nil, false
 	}
 	la2 := parserState.LA(2)
 	// Single-token deletion: if the next-next token matches, skip the current one.
-	if la2 != nil && expectedTokenType.Matches(la2.Type) {
+	if expectedTokenType.Matches(la2.Type) {
 		parserState.ReportError(parserState.messages.ExtraneousInput(la1), la1)
 		// Skip the bad token and return the next one as if it were a match.
 		parserState.Index += 2

@@ -150,6 +150,16 @@ func TestEBothValueLookahead(t *testing.T) {
 	expectValue(t, doc, "hello")
 }
 
+func TestErrorTokenAfterExpectedEOF(t *testing.T) {
+	sc := CreateServices()
+	doc := test.New(t, sc).Parse("e hello world someExtraToken otherExtraToken")
+	// Only expect one error, because the extra token report should only flag
+	// the first unexpected token after the parser exits
+	require.Len(t, doc.Document.ParserErrors, 1)
+	first := doc.Document.ParserErrors[0]
+	assert.Equal(t, "Expected end of input, but found 'someExtraToken'.", first.Msg)
+}
+
 func TestFUnlimitedLookaheadPositiveHello(t *testing.T) {
 	sc := CreateServices()
 	doc := test.New(t, sc).Parse("f A B C D E F G hello")
