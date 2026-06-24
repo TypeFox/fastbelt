@@ -5,7 +5,6 @@
 package generator
 
 import (
-	"cmp"
 	"slices"
 	"sort"
 	"strings"
@@ -428,17 +427,13 @@ func generateSyntheticFactories(grammr grammar.Grammar) codegen.Node {
 	for _, iface := range grammr.Interfaces() {
 		entries = append(entries, factoryEntry{key: iface.Name(), typeName: iface.Name()})
 	}
-	slices.SortStableFunc(entries, func(a, b factoryEntry) int {
-		return cmp.Compare(a.key, b.key)
-	})
-
 	// Sort for stable output.
 	sort.Slice(entries, func(i, j int) bool { return entries[i].key < entries[j].key })
 
 	node.AppendLine("var ", name, "SyntheticFactories = map[string]func() core.AstNode{")
 	node.Indent(func(n codegen.Node) {
 		for _, e := range entries {
-			n.AppendLine("\"", e.key, "\": func() core.AstNode { return New", e.typeName, "() },")
+			n.AppendLine(`"`, e.key, `": func() core.AstNode { return New`, e.typeName, "() },")
 		}
 	})
 	node.AppendLine("}")

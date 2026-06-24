@@ -879,7 +879,7 @@ func generateParseFunction(node codegen.Node, context *ParserGeneratorContext, r
 		node.Indent(func(n codegen.Node) {
 			n.AppendLine("current := New", returnType.Name(), "()")
 			n.AppendLine("current.SetSegmentStartToken(p.state.LA(1))")
-			// Generate new lexical scope for actions that immediately trigger on tule start
+			// Generate new lexical scope for actions that immediately trigger on rule start
 			n.AppendLine("{")
 			generateAbstractElementParser(n, context, rule.Body())
 			n.AppendLine("}")
