@@ -51,7 +51,9 @@ func (p *CompletionParser) ParseGrammar() {
 		p.cp.ClearAssignment()
 	}
 	{
-		p.state.Consume(Keyword_Semicolon)
+		if p.lookahead.GrammarSemicolonOptional(p.state) {
+			p.state.Consume(Keyword_Semicolon)
+		}
 	}
 	p.cp.RecordSnapshot(Grammar__LoopEntry)
 	p.state.Sync(Grammar__LoopEntry)
@@ -60,7 +62,7 @@ func (p *CompletionParser) ParseGrammar() {
 		case 0:
 			{
 				p.cp.MarkAssignment("Rules")
-				p.state.EnterRule(Grammar__Basic_1)
+				p.state.EnterRule(Grammar__Basic_3)
 				p.ParseParserRule()
 				p.state.ExitRule()
 				p.cp.ClearAssignment()
@@ -68,7 +70,7 @@ func (p *CompletionParser) ParseGrammar() {
 		case 1:
 			{
 				p.cp.MarkAssignment("Terminals")
-				p.state.EnterRule(Grammar__Basic_3)
+				p.state.EnterRule(Grammar__Basic_5)
 				p.ParseToken()
 				p.state.ExitRule()
 				p.cp.ClearAssignment()
@@ -76,7 +78,7 @@ func (p *CompletionParser) ParseGrammar() {
 		case 2:
 			{
 				p.cp.MarkAssignment("TokenGroups")
-				p.state.EnterRule(Grammar__Basic_5)
+				p.state.EnterRule(Grammar__Basic_7)
 				p.ParseTokenGroup()
 				p.state.ExitRule()
 				p.cp.ClearAssignment()
@@ -84,7 +86,7 @@ func (p *CompletionParser) ParseGrammar() {
 		case 3:
 			{
 				p.cp.MarkAssignment("Interfaces")
-				p.state.EnterRule(Grammar__Basic_7)
+				p.state.EnterRule(Grammar__Basic_9)
 				p.ParseInterface()
 				p.state.ExitRule()
 				p.cp.ClearAssignment()
@@ -92,7 +94,7 @@ func (p *CompletionParser) ParseGrammar() {
 		case 4:
 			{
 				p.cp.MarkAssignment("Composites")
-				p.state.EnterRule(Grammar__Basic_9)
+				p.state.EnterRule(Grammar__Basic_11)
 				p.ParseCompositeRule()
 				p.state.ExitRule()
 				p.cp.ClearAssignment()
@@ -296,13 +298,15 @@ func (p *CompletionParser) ParseParserRule() {
 	}
 	{
 		p.cp.MarkAssignment("Body")
-		p.state.EnterRule(ParserRule_Semicolon)
+		p.state.EnterRule(ParserRule__Basic_4)
 		p.ParseAlternatives()
 		p.state.ExitRule()
 		p.cp.ClearAssignment()
 	}
 	{
-		p.state.Consume(Keyword_Semicolon)
+		if p.lookahead.ParserRuleSemicolonOptional(p.state) {
+			p.state.Consume(Keyword_Semicolon)
+		}
 	}
 }
 
@@ -342,7 +346,9 @@ func (p *CompletionParser) ParseToken() {
 		p.cp.ClearAssignment()
 	}
 	{
-		p.state.Consume(Keyword_Semicolon)
+		if p.lookahead.TokenSemicolonOptional(p.state) {
+			p.state.Consume(Keyword_Semicolon)
+		}
 	}
 }
 
@@ -748,13 +754,15 @@ func (p *CompletionParser) ParseCompositeRule() {
 	}
 	{
 		p.cp.MarkAssignment("Body")
-		p.state.EnterRule(CompositeRule_Semicolon)
+		p.state.EnterRule(CompositeRule__Basic_2)
 		p.ParseCompositeAlternatives()
 		p.state.ExitRule()
 		p.cp.ClearAssignment()
 	}
 	{
-		p.state.Consume(Keyword_Semicolon)
+		if p.lookahead.CompositeRuleSemicolonOptional(p.state) {
+			p.state.Consume(Keyword_Semicolon)
+		}
 	}
 }
 

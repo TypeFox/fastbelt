@@ -1,4 +1,4 @@
-grammar Fastbelt;
+grammar Fastbelt
 
 interface Grammar {
     Name string
@@ -9,7 +9,7 @@ interface Grammar {
     Interfaces []Interface
 }
 
-Grammar: "grammar" Name=ID ";"
+Grammar: "grammar" Name=ID ";"?
     (
         Rules+=ParserRule
         | Terminals+=Token
@@ -17,7 +17,6 @@ Grammar: "grammar" Name=ID ";"
         | Interfaces+=Interface
         | Composites+=CompositeRule
     )*
-;
 
 interface Interface {
     Name string
@@ -29,7 +28,6 @@ Interface:
     "interface" Name=ID ("extends" Extends+=[Interface:ID] ("," Extends+=[Interface:ID])*)? "{"
         Fields+=Field*
     "}"
-;
 
 interface Field {
     Name string
@@ -81,14 +79,14 @@ interface ParserRule extends AbstractRuleWithBody {
     ReturnType *Interface
 }
 
-ParserRule: Name=ID ("returns" ReturnType=[Interface:ID])? ":" Body=Alternatives ";";
+ParserRule: Name=ID ("returns" ReturnType=[Interface:ID])? ":" Body=Alternatives ";"?;
 
 interface Token extends AbstractTokenRule {
     Type string
     Regexp string
 }
 
-Token: (Type="hidden" | Type="comment")? "token" Name=ID ":" Regexp=RegexLiteral ";";
+Token: (Type="hidden" | Type="comment")? "token" Name=ID ":" Regexp=RegexLiteral ";"?;
 
 interface TokenGroup extends AbstractTokenRule {
     TokenRefs []*AbstractTokenRule
@@ -98,7 +96,7 @@ interface TokenGroup extends AbstractTokenRule {
 
 TokenGroup: "token" "group" Name=ID "{"
     (TokenRefs+=[AbstractTokenRule:ID] | "keywords" Regexps+=RegexLiteral | Keywords+=Keyword)*
-"}";
+"}"
 
 interface Element {
     Cardinality string
@@ -164,7 +162,7 @@ Action: "{" Type=[Interface:ID] ("." Property=[Field:ID] Operator=("+=" | "=") "
 interface CompositeRule extends AbstractRuleWithBody {
 }
 
-CompositeRule: "composite" Name=ID ":" Body=CompositeAlternatives ";";
+CompositeRule: "composite" Name=ID ":" Body=CompositeAlternatives ";"?;
 
 CompositeAlternatives returns Element: CompositeGroup ({Alternatives.Alts+=current} ("|" Alts+=CompositeGroup)+)?;
 
