@@ -22,6 +22,7 @@ type CompletionCompletionFilter interface {
 	FilterKRef1(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterKRef2(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterNRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterORef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 }
 
 type DefaultCompletionCompletionFilter struct{}
@@ -62,28 +63,8 @@ func (*DefaultCompletionCompletionFilter) FilterNRef(_ context.Context, _ *core.
 	return in
 }
 
-var CompletionSyntheticFactories = map[string]func() core.AstNode{
-	"A":               func() core.AstNode { return NewObj() },
-	"B":               func() core.AstNode { return NewObj() },
-	"C":               func() core.AstNode { return NewObj() },
-	"D":               func() core.AstNode { return NewObj() },
-	"DLong":           func() core.AstNode { return NewObj() },
-	"DShort":          func() core.AstNode { return NewObj() },
-	"Declare":         func() core.AstNode { return NewDeclare() },
-	"E":               func() core.AstNode { return NewE() },
-	"F":               func() core.AstNode { return NewF() },
-	"FItem":           func() core.AstNode { return NewFItem() },
-	"G":               func() core.AstNode { return NewG() },
-	"H":               func() core.AstNode { return NewH() },
-	"I":               func() core.AstNode { return NewH() },
-	"J":               func() core.AstNode { return NewJ() },
-	"K":               func() core.AstNode { return NewK() },
-	"L":               func() core.AstNode { return NewObj() },
-	"M":               func() core.AstNode { return NewObj() },
-	"MemberCall":      func() core.AstNode { return NewMemberCall() },
-	"MemberCallNoDot": func() core.AstNode { return NewMemberCall() },
-	"N":               func() core.AstNode { return NewN() },
-	"Root":            func() core.AstNode { return NewRoot() },
+func (*DefaultCompletionCompletionFilter) FilterORef(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
 }
 
 type CompletionCompletionDispatchFunc func(
@@ -189,6 +170,18 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		candidates := scopes.ScopeNRef(ctx, ref).AllElements()
 		return filter.FilterNRef(ctx, ref, candidates)
 	},
+	"O.Ref": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(O)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[CompletionReferencesConstructor](sc)
+		scopes := service.MustGet[CompletionScopeProvider](sc)
+		filter := service.MustGet[CompletionCompletionFilter](sc)
+		ref := refs.ORef(typedOwner, nil)
+		candidates := scopes.ScopeORef(ctx, ref).AllElements()
+		return filter.FilterORef(ctx, ref, candidates)
+	},
 }
 
 type CompletionCompletionAdapter struct {
@@ -258,6 +251,11 @@ func (a *CompletionCompletionAdapter) HasAssignment(node core.AstNode, property 
 			return n.Ref() != nil
 		}
 	case N:
+		switch property {
+		case "Ref":
+			return n.Ref() != nil
+		}
+	case O:
 		switch property {
 		case "Ref":
 			return n.Ref() != nil

@@ -668,3 +668,16 @@ func (i *NumberLiteralImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.ExpressionData.ForEachReference(fn)
 	i.NumberLiteralData.ForEachReference(fn)
 }
+
+var ArithmeticsSyntheticFactories = map[string]func() core.AstNode{
+	"AbstractDefinition": func() core.AstNode { return NewAbstractDefinition() },
+	"BinaryExpression":   func() core.AstNode { return NewBinaryExpression() },
+	"DeclaredParameter":  func() core.AstNode { return NewDeclaredParameter() },
+	"Definition":         func() core.AstNode { return NewDefinition() },
+	"Evaluation":         func() core.AstNode { return NewEvaluation() },
+	"Expression":         func() core.AstNode { return NewExpression() },
+	"FunctionCall":       func() core.AstNode { return NewFunctionCall() },
+	"Module":             func() core.AstNode { return NewModule() },
+	"NumberLiteral":      func() core.AstNode { return NewNumberLiteral() },
+	"Statement":          func() core.AstNode { return NewStatement() },
+}

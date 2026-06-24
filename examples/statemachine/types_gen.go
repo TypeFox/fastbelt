@@ -421,3 +421,11 @@ func (i *TransitionImpl) ForEachNode(fn func(core.AstNode)) {
 func (i *TransitionImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.TransitionData.ForEachReference(fn)
 }
+
+var StatemachineModelSyntheticFactories = map[string]func() core.AstNode{
+	"Command":      func() core.AstNode { return NewCommand() },
+	"Event":        func() core.AstNode { return NewEvent() },
+	"State":        func() core.AstNode { return NewState() },
+	"Statemachine": func() core.AstNode { return NewStatemachine() },
+	"Transition":   func() core.AstNode { return NewTransition() },
+}

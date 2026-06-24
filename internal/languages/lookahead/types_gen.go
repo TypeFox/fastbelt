@@ -214,3 +214,9 @@ func (i *BImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.ObjData.ForEachReference(fn)
 	i.BData.ForEachReference(fn)
 }
+
+var LookaheadSyntheticFactories = map[string]func() core.AstNode{
+	"B":    func() core.AstNode { return NewB() },
+	"Obj":  func() core.AstNode { return NewObj() },
+	"Root": func() core.AstNode { return NewRoot() },
+}

@@ -22,20 +22,6 @@ func NewDefaultLookaheadCompletionFilter() LookaheadCompletionFilter {
 	return &DefaultLookaheadCompletionFilter{}
 }
 
-var LookaheadSyntheticFactories = map[string]func() core.AstNode{
-	"A":    func() core.AstNode { return NewObj() },
-	"B":    func() core.AstNode { return NewB() },
-	"C":    func() core.AstNode { return NewObj() },
-	"D":    func() core.AstNode { return NewObj() },
-	"E":    func() core.AstNode { return NewObj() },
-	"F":    func() core.AstNode { return NewObj() },
-	"G":    func() core.AstNode { return NewObj() },
-	"H":    func() core.AstNode { return NewObj() },
-	"I":    func() core.AstNode { return NewObj() },
-	"Obj":  func() core.AstNode { return NewObj() },
-	"Root": func() core.AstNode { return NewRoot() },
-}
-
 var LookaheadCompletionDispatch = map[string]LookaheadCompletionDispatchFunc{}
 
 type LookaheadCompletionDispatchFunc func(ctx context.Context, sc *core.AstNode) iter.Seq[*core.SymbolDescription]

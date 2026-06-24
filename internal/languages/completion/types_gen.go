@@ -788,3 +788,83 @@ func (i *NImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.ObjData.ForEachReference(fn)
 	i.NData.ForEachReference(fn)
 }
+
+type O interface {
+	core.AstNode
+	Obj
+
+	IsO()
+	Ref() *core.Reference[Declare]
+	SetRef(value *core.Reference[Declare])
+}
+
+func NewO() O {
+	return &OImpl{
+		AstNodeBase: core.NewAstNode(),
+		ObjData:     NewObjData(),
+		OData:       NewOData(),
+	}
+}
+
+type OData struct {
+	ref *core.Reference[Declare]
+}
+
+func NewOData() OData {
+	return OData{}
+}
+
+func (i *OData) IsO() {}
+
+func (i *OData) ForEachNode(fn func(core.AstNode)) {
+}
+
+func (i *OData) ForEachReference(fn func(core.UntypedReference)) {
+	if i.ref != nil {
+		fn(i.ref)
+	}
+}
+
+func (i *OData) Ref() *core.Reference[Declare] {
+	if i != nil && i.ref != nil {
+		return i.ref
+	} else {
+		return nil
+	}
+}
+
+func (i *OData) SetRef(value *core.Reference[Declare]) {
+	i.ref = value
+}
+
+type OImpl struct {
+	core.AstNodeBase
+	ObjData
+	OData
+}
+
+func (i *OImpl) ForEachNode(fn func(core.AstNode)) {
+	i.ObjData.ForEachNode(fn)
+	i.OData.ForEachNode(fn)
+}
+
+func (i *OImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.ObjData.ForEachReference(fn)
+	i.OData.ForEachReference(fn)
+}
+
+var CompletionSyntheticFactories = map[string]func() core.AstNode{
+	"Declare":    func() core.AstNode { return NewDeclare() },
+	"E":          func() core.AstNode { return NewE() },
+	"F":          func() core.AstNode { return NewF() },
+	"FItem":      func() core.AstNode { return NewFItem() },
+	"G":          func() core.AstNode { return NewG() },
+	"H":          func() core.AstNode { return NewH() },
+	"J":          func() core.AstNode { return NewJ() },
+	"K":          func() core.AstNode { return NewK() },
+	"MemberCall": func() core.AstNode { return NewMemberCall() },
+	"N":          func() core.AstNode { return NewN() },
+	"O":          func() core.AstNode { return NewO() },
+	"Obj":        func() core.AstNode { return NewObj() },
+	"Root":       func() core.AstNode { return NewRoot() },
+}

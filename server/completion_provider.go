@@ -475,7 +475,7 @@ func buildSyntheticOwnerChain(adapter parser.LanguageCompletionAdapter, doc *cor
 // completion request then yields no candidates for this hint rather than
 // silently returning the wrong scope.
 func buildSyntheticOwnerChainFor(adapter parser.LanguageCompletionAdapter, doc *core.Document, ruleStack []parser.RuleContext, hintField string, cursorOffset int) core.AstNode {
-	ownerRule, _, ok := splitHintField(hintField)
+	ownerType, _, ok := splitHintField(hintField)
 	if !ok {
 		return buildSyntheticOwnerChain(adapter, doc, ruleStack)
 	}
@@ -484,7 +484,7 @@ func buildSyntheticOwnerChainFor(adapter parser.LanguageCompletionAdapter, doc *
 	// the cursor already carries the chain a scope provider needs -
 	// reusing it avoids resynthesising state the parser tracked
 	// correctly.
-	if real := findExistingOwnerAtCursor(adapter, doc, ownerRule, cursorOffset); real != nil {
+	if real := findExistingOwnerAtCursor(adapter, doc, ownerType, cursorOffset); real != nil {
 		return real
 	}
 	// If the owner rule appears anywhere on the stack, the parser is
@@ -495,7 +495,7 @@ func buildSyntheticOwnerChainFor(adapter parser.LanguageCompletionAdapter, doc *
 	// reference) sits one frame higher. Searching from the top down
 	// picks the innermost matching frame.
 	for i := len(ruleStack) - 1; i >= 0; i-- {
-		if ruleStack[i].RuleKey == ownerRule {
+		if ruleStack[i].RuleKey == ownerType {
 			return buildSyntheticOwnerChain(adapter, doc, ruleStack[:i+1])
 		}
 	}
@@ -505,7 +505,7 @@ func buildSyntheticOwnerChainFor(adapter parser.LanguageCompletionAdapter, doc *
 	// dispatch on.
 	extended := make([]parser.RuleContext, 0, len(ruleStack)+1)
 	extended = append(extended, ruleStack...)
-	extended = append(extended, parser.RuleContext{RuleKey: ownerRule})
+	extended = append(extended, parser.RuleContext{RuleKey: ownerType})
 	return buildSyntheticOwnerChain(adapter, doc, extended)
 }
 
@@ -543,7 +543,7 @@ func applyPrecedingAction(adapter parser.LanguageCompletionAdapter, owner core.A
 	return wrapper
 }
 
-// findExistingOwnerAtCursor returns the AST node of the hint's owner-rule
+// findExistingOwnerAtCursor returns the AST node of the hint's owner-ast
 // type that is closest to (and contains) the cursor, by walking up from
 // the owner of the token immediately preceding the cursor. Returns nil
 // if no such node exists - typically because the cursor is at a position

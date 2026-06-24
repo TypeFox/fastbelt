@@ -15,25 +15,30 @@ import (
 )
 
 // completionHintFor returns the per-field CompletionHint for a CrossRef whose
-// container is an Assignment in the given rule. Returns nil if the CrossRef is
-// not nested inside an Assignment (bare cross-references contribute no hint).
-func completionHintFor(rule grammar.AbstractRuleWithBody, cr grammar.CrossRef) *parser.CompletionHint {
-	if rule == nil {
-		return nil
-	}
+// container is an Assignment in the given rule.
+// The return value is never nil.
+func completionHintFor(cr grammar.CrossRef) *parser.CompletionHint {
 	assignment, ok := cr.Container().(grammar.Assignment)
 	if !ok {
-		return nil
+		panic(fmt.Sprintf("expected CrossRef's container to be an Assignment, got %T", cr.Container()))
 	}
 	prop := assignment.Property()
 	if prop == nil {
-		return nil
+		panic(fmt.Sprintf("expected Assignment to have a Property, got nil for %T", assignment))
 	}
-	propName := prop.Text()
-	if propName == "" {
-		return nil
+	field := prop.Ref(context.Background())
+	if field == nil {
+		panic(fmt.Sprintf("expected Property to resolve to a Field, got nil for %T", prop))
 	}
-	hint := &parser.CompletionHint{Field: ruleTypeName(rule) + "." + propName}
+	fieldName := field.Name()
+	if fieldName == "" {
+		panic(fmt.Sprintf("expected Field to have a name, got empty string for %T", field))
+	}
+	iface, ok := field.Container().(grammar.Interface)
+	if !ok {
+		panic(fmt.Sprintf("expected Field's container to be an Interface, got %T", field.Container()))
+	}
+	hint := &parser.CompletionHint{Field: iface.Name() + "." + fieldName}
 	if action := findPrecedingAction(assignment); action != nil {
 		typeName := ""
 		if t := action.Type(); t != nil {
@@ -49,22 +54,6 @@ func completionHintFor(rule grammar.AbstractRuleWithBody, cr grammar.CrossRef) *
 		}
 	}
 	return hint
-}
-
-// ruleTypeName returns the name of the interface a rule produces. For a rule
-// like `Foo returns Bar: ...` it returns "Bar"; for `Foo: ...` it returns
-// "Foo" (the rule name doubles as the produced interface). The completion
-// dispatch tables are keyed by interface name, so the hint must use this
-// name and not the rule name.
-func ruleTypeName(rule grammar.AbstractRuleWithBody) string {
-	if pr, ok := rule.(grammar.ParserRule); ok {
-		if rt := pr.ReturnType(); rt != nil {
-			if name := rt.Text(); name != "" {
-				return name
-			}
-		}
-	}
-	return rule.Name()
 }
 
 // findPrecedingAction returns the grammar.Action that fires immediately
@@ -302,14 +291,12 @@ func convertCrossRef(
 		cardinality = cr.Cardinality()
 	}
 	rule := cr.Rule().Rule().Ref(context.Background())
-	hint := completionHintFor(rb.Rule(), cr)
+	hint := completionHintFor(cr)
 	if abstractRule, ok := rule.(grammar.AbstractRuleWithBody); ok {
 		handle := rb.RuleRef(abstractRule)
-		if hint != nil {
-			for _, t := range handle.Left.Transitions {
-				if rt, ok := t.(*RuleTransition); ok && rt.Rule == abstractRule {
-					rt.CompletionHint = hint
-				}
+		for _, t := range handle.Left.Transitions {
+			if rt, ok := t.(*RuleTransition); ok && rt.Rule == abstractRule {
+				rt.CompletionHint = hint
 			}
 		}
 		return handle, nil
@@ -317,11 +304,9 @@ func convertCrossRef(
 	id := rb.GetTokenTypeByName(rule.Name())
 	termHandle := rb.TokenRef(id)
 	termHandle.Left.ConsumedElement = cr.Rule() // tag with inner RuleCall to match generator naming
-	if hint != nil {
-		for _, t := range termHandle.Left.Transitions {
-			if at, ok := t.(*AtomTransition); ok && at.TokenTypeId == id {
-				at.CompletionHint = hint
-			}
+	for _, t := range termHandle.Left.Transitions {
+		if at, ok := t.(*AtomTransition); ok && at.TokenTypeId == id {
+			at.CompletionHint = hint
 		}
 	}
 	lookaheadName := rb.GetLookaheadNameByElement(cr)

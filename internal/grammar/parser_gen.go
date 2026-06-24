@@ -36,72 +36,74 @@ func (p *Parser) ParseGrammar() Grammar {
 	current := NewGrammar()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Keyword_grammar)
-		core.AssignToken(current, token, Grammar_grammar)
-	}
-	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, Grammar_Name_ID)
-		if token != nil {
-			current.SetName(token)
+		{
+			token := p.state.Consume(Keyword_grammar)
+			core.AssignToken(current, token, Grammar_grammar)
 		}
-	}
-	{
-		token := p.state.Consume(Keyword_Semicolon)
-		core.AssignToken(current, token, Grammar_Semicolon)
-	}
-	p.state.Sync(Grammar__LoopEntry)
-	for p.lookahead.GrammarLoop(p.state) {
-		switch prediction, failure := p.lookahead.GrammarAlternatives(p.state); prediction {
-		case 0:
-			{
-				p.state.EnterRule(Grammar__Basic_1)
-				result := p.ParseParserRule()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetRulesItem(result)
-				}
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, Grammar_Name_ID)
+			if token != nil {
+				current.SetName(token)
 			}
-		case 1:
-			{
-				p.state.EnterRule(Grammar__Basic_3)
-				result := p.ParseToken()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetTerminalsItem(result)
-				}
-			}
-		case 2:
-			{
-				p.state.EnterRule(Grammar__Basic_5)
-				result := p.ParseTokenGroup()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetTokenGroupsItem(result)
-				}
-			}
-		case 3:
-			{
-				p.state.EnterRule(Grammar__Basic_7)
-				result := p.ParseInterface()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetInterfacesItem(result)
-				}
-			}
-		case 4:
-			{
-				p.state.EnterRule(Grammar__Basic_9)
-				result := p.ParseCompositeRule()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetCompositesItem(result)
-				}
-			}
-		default:
-			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		{
+			token := p.state.Consume(Keyword_Semicolon)
+			core.AssignToken(current, token, Grammar_Semicolon)
 		}
 		p.state.Sync(Grammar__LoopEntry)
+		for p.lookahead.GrammarLoop(p.state) {
+			switch prediction, failure := p.lookahead.GrammarAlternatives(p.state); prediction {
+			case 0:
+				{
+					p.state.EnterRule(Grammar__Basic_1)
+					result := p.ParseParserRule()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetRulesItem(result)
+					}
+				}
+			case 1:
+				{
+					p.state.EnterRule(Grammar__Basic_3)
+					result := p.ParseToken()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetTerminalsItem(result)
+					}
+				}
+			case 2:
+				{
+					p.state.EnterRule(Grammar__Basic_5)
+					result := p.ParseTokenGroup()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetTokenGroupsItem(result)
+					}
+				}
+			case 3:
+				{
+					p.state.EnterRule(Grammar__Basic_7)
+					result := p.ParseInterface()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetInterfacesItem(result)
+					}
+				}
+			case 4:
+				{
+					p.state.EnterRule(Grammar__Basic_9)
+					result := p.ParseCompositeRule()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetCompositesItem(result)
+					}
+				}
+			default:
+				p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+			}
+			p.state.Sync(Grammar__LoopEntry)
+		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
@@ -111,64 +113,66 @@ func (p *Parser) ParseInterface() Interface {
 	current := NewInterface()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Keyword_interface)
-		core.AssignToken(current, token, Interface_interface)
-	}
-	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, Interface_Name_ID)
-		if token != nil {
-			current.SetName(token)
-		}
-	}
-	p.state.Sync(Interface__Basic_1)
-	if p.lookahead.InterfaceOptional(p.state) {
 		{
-			token := p.state.Consume(Keyword_extends)
-			core.AssignToken(current, token, Interface_extends)
+			token := p.state.Consume(Keyword_interface)
+			core.AssignToken(current, token, Interface_interface)
 		}
 		{
 			token := p.state.Consume(Token_ID)
-			core.AssignToken(current, token, Interface_Extends_ID_0)
+			core.AssignToken(current, token, Interface_Name_ID)
 			if token != nil {
-				current.SetExtendsItem(p.referencesConstructor.InterfaceExtends(current, token))
+				current.SetName(token)
 			}
 		}
-		p.state.Sync(Interface__LoopEntry_0)
-		for p.lookahead.InterfaceLoop(p.state) {
+		p.state.Sync(Interface__Basic_1)
+		if p.lookahead.InterfaceOptional(p.state) {
 			{
-				token := p.state.Consume(Keyword_Comma)
-				core.AssignToken(current, token, Interface_Comma)
+				token := p.state.Consume(Keyword_extends)
+				core.AssignToken(current, token, Interface_extends)
 			}
 			{
 				token := p.state.Consume(Token_ID)
-				core.AssignToken(current, token, Interface_Extends_ID_1)
+				core.AssignToken(current, token, Interface_Extends_ID_0)
 				if token != nil {
 					current.SetExtendsItem(p.referencesConstructor.InterfaceExtends(current, token))
 				}
 			}
 			p.state.Sync(Interface__LoopEntry_0)
-		}
-	}
-	{
-		token := p.state.Consume(Keyword_LeftBrace)
-		core.AssignToken(current, token, Interface_LeftBrace)
-	}
-	{
-		p.state.Sync(Interface__LoopEntry_1)
-		for p.lookahead.InterfaceFieldsLoop(p.state) {
-			p.state.EnterRule(Interface__Basic_3)
-			result := p.ParseField()
-			p.state.ExitRule()
-			if result != nil {
-				current.SetFieldsItem(result)
+			for p.lookahead.InterfaceLoop(p.state) {
+				{
+					token := p.state.Consume(Keyword_Comma)
+					core.AssignToken(current, token, Interface_Comma)
+				}
+				{
+					token := p.state.Consume(Token_ID)
+					core.AssignToken(current, token, Interface_Extends_ID_1)
+					if token != nil {
+						current.SetExtendsItem(p.referencesConstructor.InterfaceExtends(current, token))
+					}
+				}
+				p.state.Sync(Interface__LoopEntry_0)
 			}
-			p.state.Sync(Interface__LoopEntry_1)
 		}
-	}
-	{
-		token := p.state.Consume(Keyword_RightBrace)
-		core.AssignToken(current, token, Interface_RightBrace)
+		{
+			token := p.state.Consume(Keyword_LeftBrace)
+			core.AssignToken(current, token, Interface_LeftBrace)
+		}
+		{
+			p.state.Sync(Interface__LoopEntry_1)
+			for p.lookahead.InterfaceFieldsLoop(p.state) {
+				p.state.EnterRule(Interface__Basic_3)
+				result := p.ParseField()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetFieldsItem(result)
+				}
+				p.state.Sync(Interface__LoopEntry_1)
+			}
+		}
+		{
+			token := p.state.Consume(Keyword_RightBrace)
+			core.AssignToken(current, token, Interface_RightBrace)
+		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
@@ -178,18 +182,20 @@ func (p *Parser) ParseField() Field {
 	current := NewField()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, Field_Name_ID)
-		if token != nil {
-			current.SetName(token)
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, Field_Name_ID)
+			if token != nil {
+				current.SetName(token)
+			}
 		}
-	}
-	{
-		p.state.EnterRule(Field__Basic_1)
-		result := p.ParseFieldType()
-		p.state.ExitRule()
-		if result != nil {
-			current.SetType(result)
+		{
+			p.state.EnterRule(Field__Basic_1)
+			result := p.ParseFieldType()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetType(result)
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -199,41 +205,43 @@ func (p *Parser) ParseField() Field {
 func (p *Parser) ParseFieldType() FieldType {
 	current := NewFieldType()
 	current.SetSegmentStartToken(p.state.LA(1))
-	switch prediction, failure := p.lookahead.FieldTypeAlternatives(p.state); prediction {
-	case 0:
-		{
-			p.state.EnterRule(FieldType__Basic_1)
-			result := p.ParseSimpleType()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
+	{
+		switch prediction, failure := p.lookahead.FieldTypeAlternatives(p.state); prediction {
+		case 0:
+			{
+				p.state.EnterRule(FieldType__Basic_1)
+				result := p.ParseSimpleType()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+		case 1:
+			{
+				p.state.EnterRule(FieldType__Basic_3)
+				result := p.ParseReferenceType()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+		case 2:
+			{
+				p.state.EnterRule(FieldType__Basic_5)
+				result := p.ParseArrayType()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+		case 3:
+			{
+				p.state.EnterRule(FieldType__Basic_7)
+				result := p.ParsePrimitiveType()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+		default:
+			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
-	case 1:
-		{
-			p.state.EnterRule(FieldType__Basic_3)
-			result := p.ParseReferenceType()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-	case 2:
-		{
-			p.state.EnterRule(FieldType__Basic_5)
-			result := p.ParseArrayType()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-	case 3:
-		{
-			p.state.EnterRule(FieldType__Basic_7)
-			result := p.ParsePrimitiveType()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-	default:
-		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
@@ -243,19 +251,21 @@ func (p *Parser) ParseArrayType() ArrayType {
 	current := NewArrayType()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Keyword_LeftBracket)
-		core.AssignToken(current, token, ArrayType_LeftBracket)
-	}
-	{
-		token := p.state.Consume(Keyword_RightBracket)
-		core.AssignToken(current, token, ArrayType_RightBracket)
-	}
-	{
-		p.state.EnterRule(ArrayType__Basic_1)
-		result := p.ParseFieldType()
-		p.state.ExitRule()
-		if result != nil {
-			current.SetInternalType(result)
+		{
+			token := p.state.Consume(Keyword_LeftBracket)
+			core.AssignToken(current, token, ArrayType_LeftBracket)
+		}
+		{
+			token := p.state.Consume(Keyword_RightBracket)
+			core.AssignToken(current, token, ArrayType_RightBracket)
+		}
+		{
+			p.state.EnterRule(ArrayType__Basic_1)
+			result := p.ParseFieldType()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetInternalType(result)
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -266,14 +276,16 @@ func (p *Parser) ParseReferenceType() ReferenceType {
 	current := NewReferenceType()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Keyword_Asterisk)
-		core.AssignToken(current, token, ReferenceType_Asterisk)
-	}
-	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, ReferenceType_Type_ID)
-		if token != nil {
-			current.SetType(p.referencesConstructor.ReferenceTypeType(current, token))
+		{
+			token := p.state.Consume(Keyword_Asterisk)
+			core.AssignToken(current, token, ReferenceType_Asterisk)
+		}
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, ReferenceType_Type_ID)
+			if token != nil {
+				current.SetType(p.referencesConstructor.ReferenceTypeType(current, token))
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -284,10 +296,12 @@ func (p *Parser) ParseSimpleType() SimpleType {
 	current := NewSimpleType()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, SimpleType_Type_ID)
-		if token != nil {
-			current.SetType(p.referencesConstructor.SimpleTypeType(current, token))
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, SimpleType_Type_ID)
+			if token != nil {
+				current.SetType(p.referencesConstructor.SimpleTypeType(current, token))
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -298,24 +312,26 @@ func (p *Parser) ParsePrimitiveType() PrimitiveType {
 	current := NewPrimitiveType()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		switch prediction, _ := p.lookahead.PrimitiveTypeTypeAlternatives(p.state); prediction {
-		case 0:
-			token := p.state.Consume(Keyword_string)
-			core.AssignToken(current, token, PrimitiveType_Type_string)
-			if token != nil {
-				current.SetType(token)
-			}
-		case 1:
-			token := p.state.Consume(Keyword_bool)
-			core.AssignToken(current, token, PrimitiveType_Type_bool)
-			if token != nil {
-				current.SetType(token)
-			}
-		case 2:
-			token := p.state.Consume(Keyword_composite)
-			core.AssignToken(current, token, PrimitiveType_Type_composite)
-			if token != nil {
-				current.SetType(token)
+		{
+			switch prediction, _ := p.lookahead.PrimitiveTypeTypeAlternatives(p.state); prediction {
+			case 0:
+				token := p.state.Consume(Keyword_string)
+				core.AssignToken(current, token, PrimitiveType_Type_string)
+				if token != nil {
+					current.SetType(token)
+				}
+			case 1:
+				token := p.state.Consume(Keyword_bool)
+				core.AssignToken(current, token, PrimitiveType_Type_bool)
+				if token != nil {
+					current.SetType(token)
+				}
+			case 2:
+				token := p.state.Consume(Keyword_composite)
+				core.AssignToken(current, token, PrimitiveType_Type_composite)
+				if token != nil {
+					current.SetType(token)
+				}
 			}
 		}
 	}
@@ -327,41 +343,43 @@ func (p *Parser) ParseParserRule() ParserRule {
 	current := NewParserRule()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, ParserRule_Name_ID)
-		if token != nil {
-			current.SetName(token)
-		}
-	}
-	p.state.Sync(ParserRule__Basic_1)
-	if p.lookahead.ParserRuleOptional(p.state) {
-		{
-			token := p.state.Consume(Keyword_returns)
-			core.AssignToken(current, token, ParserRule_returns)
-		}
 		{
 			token := p.state.Consume(Token_ID)
-			core.AssignToken(current, token, ParserRule_ReturnType_ID)
+			core.AssignToken(current, token, ParserRule_Name_ID)
 			if token != nil {
-				current.SetReturnType(p.referencesConstructor.ParserRuleReturnType(current, token))
+				current.SetName(token)
 			}
 		}
-	}
-	{
-		token := p.state.Consume(Keyword_Colon)
-		core.AssignToken(current, token, ParserRule_Colon)
-	}
-	{
-		p.state.EnterRule(ParserRule_Semicolon)
-		result := p.ParseAlternatives()
-		p.state.ExitRule()
-		if result != nil {
-			current.SetBody(result)
+		p.state.Sync(ParserRule__Basic_1)
+		if p.lookahead.ParserRuleOptional(p.state) {
+			{
+				token := p.state.Consume(Keyword_returns)
+				core.AssignToken(current, token, ParserRule_returns)
+			}
+			{
+				token := p.state.Consume(Token_ID)
+				core.AssignToken(current, token, ParserRule_ReturnType_ID)
+				if token != nil {
+					current.SetReturnType(p.referencesConstructor.ParserRuleReturnType(current, token))
+				}
+			}
 		}
-	}
-	{
-		token := p.state.Consume(Keyword_Semicolon)
-		core.AssignToken(current, token, ParserRule_Semicolon)
+		{
+			token := p.state.Consume(Keyword_Colon)
+			core.AssignToken(current, token, ParserRule_Colon)
+		}
+		{
+			p.state.EnterRule(ParserRule_Semicolon)
+			result := p.ParseAlternatives()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetBody(result)
+			}
+		}
+		{
+			token := p.state.Consume(Keyword_Semicolon)
+			core.AssignToken(current, token, ParserRule_Semicolon)
+		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
@@ -370,50 +388,52 @@ func (p *Parser) ParseParserRule() ParserRule {
 func (p *Parser) ParseToken() Token {
 	current := NewToken()
 	current.SetSegmentStartToken(p.state.LA(1))
-	p.state.Sync(Token__Basic_3)
-	switch prediction, _ := p.lookahead.TokenAlternatives(p.state); prediction {
-	case 0:
-		{
-			token := p.state.Consume(Keyword_hidden)
-			core.AssignToken(current, token, Token_Type_hidden)
-			if token != nil {
-				current.SetType(token)
+	{
+		p.state.Sync(Token__Basic_3)
+		switch prediction, _ := p.lookahead.TokenAlternatives(p.state); prediction {
+		case 0:
+			{
+				token := p.state.Consume(Keyword_hidden)
+				core.AssignToken(current, token, Token_Type_hidden)
+				if token != nil {
+					current.SetType(token)
+				}
+			}
+		case 1:
+			{
+				token := p.state.Consume(Keyword_comment)
+				core.AssignToken(current, token, Token_Type_comment)
+				if token != nil {
+					current.SetType(token)
+				}
 			}
 		}
-	case 1:
 		{
-			token := p.state.Consume(Keyword_comment)
-			core.AssignToken(current, token, Token_Type_comment)
+			token := p.state.Consume(Keyword_token)
+			core.AssignToken(current, token, Token_token)
+		}
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, Token_Name_ID)
 			if token != nil {
-				current.SetType(token)
+				current.SetName(token)
 			}
 		}
-	}
-	{
-		token := p.state.Consume(Keyword_token)
-		core.AssignToken(current, token, Token_token)
-	}
-	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, Token_Name_ID)
-		if token != nil {
-			current.SetName(token)
+		{
+			token := p.state.Consume(Keyword_Colon)
+			core.AssignToken(current, token, Token_Colon)
 		}
-	}
-	{
-		token := p.state.Consume(Keyword_Colon)
-		core.AssignToken(current, token, Token_Colon)
-	}
-	{
-		token := p.state.Consume(Token_RegexLiteral)
-		core.AssignToken(current, token, Token_Regexp_RegexLiteral)
-		if token != nil {
-			current.SetRegexp(token)
+		{
+			token := p.state.Consume(Token_RegexLiteral)
+			core.AssignToken(current, token, Token_Regexp_RegexLiteral)
+			if token != nil {
+				current.SetRegexp(token)
+			}
 		}
-	}
-	{
-		token := p.state.Consume(Keyword_Semicolon)
-		core.AssignToken(current, token, Token_Semicolon)
+		{
+			token := p.state.Consume(Keyword_Semicolon)
+			core.AssignToken(current, token, Token_Semicolon)
+		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
@@ -423,65 +443,67 @@ func (p *Parser) ParseTokenGroup() TokenGroup {
 	current := NewTokenGroup()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Keyword_token)
-		core.AssignToken(current, token, TokenGroup_token)
-	}
-	{
-		token := p.state.Consume(Keyword_group)
-		core.AssignToken(current, token, TokenGroup_group)
-	}
-	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, TokenGroup_Name_ID)
-		if token != nil {
-			current.SetName(token)
+		{
+			token := p.state.Consume(Keyword_token)
+			core.AssignToken(current, token, TokenGroup_token)
 		}
-	}
-	{
-		token := p.state.Consume(Keyword_LeftBrace)
-		core.AssignToken(current, token, TokenGroup_LeftBrace)
-	}
-	p.state.Sync(TokenGroup__LoopEntry)
-loop0:
-	for {
-		switch prediction, _ := p.lookahead.TokenGroupAlternatives(p.state); prediction {
-		case 0:
-			{
-				token := p.state.Consume(Token_ID)
-				core.AssignToken(current, token, TokenGroup_TokenRefs_ID)
-				if token != nil {
-					current.SetTokenRefsItem(p.referencesConstructor.TokenGroupTokenRefs(current, token))
-				}
+		{
+			token := p.state.Consume(Keyword_group)
+			core.AssignToken(current, token, TokenGroup_group)
+		}
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, TokenGroup_Name_ID)
+			if token != nil {
+				current.SetName(token)
 			}
-		case 1:
-			{
-				token := p.state.Consume(Keyword_keywords)
-				core.AssignToken(current, token, TokenGroup_keywords)
-			}
-			{
-				token := p.state.Consume(Token_RegexLiteral)
-				core.AssignToken(current, token, TokenGroup_Regexps_RegexLiteral)
-				if token != nil {
-					current.SetRegexpsItem(token)
-				}
-			}
-		case 2:
-			{
-				p.state.EnterRule(TokenGroup__Basic_3)
-				result := p.ParseKeyword()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetKeywordsItem(result)
-				}
-			}
-		default:
-			break loop0
+		}
+		{
+			token := p.state.Consume(Keyword_LeftBrace)
+			core.AssignToken(current, token, TokenGroup_LeftBrace)
 		}
 		p.state.Sync(TokenGroup__LoopEntry)
-	}
-	{
-		token := p.state.Consume(Keyword_RightBrace)
-		core.AssignToken(current, token, TokenGroup_RightBrace)
+	loop0:
+		for {
+			switch prediction, _ := p.lookahead.TokenGroupAlternatives(p.state); prediction {
+			case 0:
+				{
+					token := p.state.Consume(Token_ID)
+					core.AssignToken(current, token, TokenGroup_TokenRefs_ID)
+					if token != nil {
+						current.SetTokenRefsItem(p.referencesConstructor.TokenGroupTokenRefs(current, token))
+					}
+				}
+			case 1:
+				{
+					token := p.state.Consume(Keyword_keywords)
+					core.AssignToken(current, token, TokenGroup_keywords)
+				}
+				{
+					token := p.state.Consume(Token_RegexLiteral)
+					core.AssignToken(current, token, TokenGroup_Regexps_RegexLiteral)
+					if token != nil {
+						current.SetRegexpsItem(token)
+					}
+				}
+			case 2:
+				{
+					p.state.EnterRule(TokenGroup__Basic_3)
+					result := p.ParseKeyword()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetKeywordsItem(result)
+					}
+				}
+			default:
+				break loop0
+			}
+			p.state.Sync(TokenGroup__LoopEntry)
+		}
+		{
+			token := p.state.Consume(Keyword_RightBrace)
+			core.AssignToken(current, token, TokenGroup_RightBrace)
+		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
@@ -491,36 +513,38 @@ func (p *Parser) ParseAlternatives() Element {
 	current := NewElement()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		p.state.EnterRule(Alternatives__Basic_3)
-		result := p.ParseGroup()
-		p.state.ExitRule()
-		core.MergeTokens(result, current.Tokens())
-		current = result
-	}
-	p.state.Sync(Alternatives__Basic_3)
-	if p.lookahead.AlternativesOptional(p.state) {
 		{
-			result := NewAlternatives()
-			result.SetSegment(current.Segment())
-			result.SetAltsItem(current)
-			current.SetSegmentEndToken(p.state.LA(0))
+			p.state.EnterRule(Alternatives__Basic_3)
+			result := p.ParseGroup()
+			p.state.ExitRule()
+			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
-		current := current.(Alternatives)
-		for ok := true; ok; ok = p.lookahead.AlternativesLoop(p.state) {
+		p.state.Sync(Alternatives__Basic_3)
+		if p.lookahead.AlternativesOptional(p.state) {
 			{
-				token := p.state.Consume(Keyword_Pipe)
-				core.AssignToken(current, token, Alternatives_Pipe)
+				result := NewAlternatives()
+				result.SetSegment(current.Segment())
+				result.SetAltsItem(current)
+				current.SetSegmentEndToken(p.state.LA(0))
+				current = result
 			}
-			{
-				p.state.EnterRule(Alternatives__Basic_2)
-				result := p.ParseGroup()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetAltsItem(result)
+			current := current.(Alternatives)
+			for ok := true; ok; ok = p.lookahead.AlternativesLoop(p.state) {
+				{
+					token := p.state.Consume(Keyword_Pipe)
+					core.AssignToken(current, token, Alternatives_Pipe)
 				}
+				{
+					p.state.EnterRule(Alternatives__Basic_2)
+					result := p.ParseGroup()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetAltsItem(result)
+					}
+				}
+				p.state.Sync(Alternatives__LoopBack)
 			}
-			p.state.Sync(Alternatives__LoopBack)
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -531,31 +555,33 @@ func (p *Parser) ParseGroup() Element {
 	current := NewElement()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		p.state.EnterRule(Group__Basic_3)
-		result := p.ParseElement()
-		p.state.ExitRule()
-		core.MergeTokens(result, current.Tokens())
-		current = result
-	}
-	p.state.Sync(Group__Basic_3)
-	if p.lookahead.GroupOptional(p.state) {
 		{
-			result := NewGroup()
-			result.SetSegment(current.Segment())
-			result.SetElementsItem(current)
-			current.SetSegmentEndToken(p.state.LA(0))
+			p.state.EnterRule(Group__Basic_3)
+			result := p.ParseElement()
+			p.state.ExitRule()
+			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
-		current := current.(Group)
-		{
-			for ok := true; ok; ok = p.lookahead.GroupElementsLoop(p.state) {
-				p.state.EnterRule(Group__Basic_2)
-				result := p.ParseElement()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetElementsItem(result)
+		p.state.Sync(Group__Basic_3)
+		if p.lookahead.GroupOptional(p.state) {
+			{
+				result := NewGroup()
+				result.SetSegment(current.Segment())
+				result.SetElementsItem(current)
+				current.SetSegmentEndToken(p.state.LA(0))
+				current = result
+			}
+			current := current.(Group)
+			{
+				for ok := true; ok; ok = p.lookahead.GroupElementsLoop(p.state) {
+					p.state.EnterRule(Group__Basic_2)
+					result := p.ParseElement()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetElementsItem(result)
+					}
+					p.state.Sync(Group__LoopBack)
 				}
-				p.state.Sync(Group__LoopBack)
 			}
 		}
 	}
@@ -566,78 +592,80 @@ func (p *Parser) ParseGroup() Element {
 func (p *Parser) ParseElement() Element {
 	current := NewElement()
 	current.SetSegmentStartToken(p.state.LA(1))
-	switch prediction, failure := p.lookahead.ElementAlternatives(p.state); prediction {
-	case 0:
-		{
-			p.state.EnterRule(Element__Basic_1)
-			result := p.ParseKeyword()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-	case 1:
-		{
-			p.state.EnterRule(Element__Basic_3)
-			result := p.ParseAssignment()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-	case 2:
-		{
-			p.state.EnterRule(Element__Basic_5)
-			result := p.ParseRuleCall()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-	case 3:
-		{
-			p.state.EnterRule(Element__Basic_7)
-			result := p.ParseAction()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-	case 4:
-		{
-			token := p.state.Consume(Keyword_LeftParen)
-			core.AssignToken(current, token, Element_LeftParen)
-		}
-		{
-			p.state.EnterRule(Element_RightParen)
-			result := p.ParseAlternatives()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-		{
-			token := p.state.Consume(Keyword_RightParen)
-			core.AssignToken(current, token, Element_RightParen)
-		}
-	default:
-		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
-	}
 	{
-		p.state.Sync(Element__Basic_15)
-		switch prediction, _ := p.lookahead.ElementCardinalityAlternatives(p.state); prediction {
+		switch prediction, failure := p.lookahead.ElementAlternatives(p.state); prediction {
 		case 0:
-			token := p.state.Consume(Keyword_Asterisk)
-			core.AssignToken(current, token, Element_Cardinality_Asterisk)
-			if token != nil {
-				current.SetCardinality(token)
+			{
+				p.state.EnterRule(Element__Basic_1)
+				result := p.ParseKeyword()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
 			}
 		case 1:
-			token := p.state.Consume(Keyword_Plus)
-			core.AssignToken(current, token, Element_Cardinality_Plus)
-			if token != nil {
-				current.SetCardinality(token)
+			{
+				p.state.EnterRule(Element__Basic_3)
+				result := p.ParseAssignment()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
 			}
 		case 2:
-			token := p.state.Consume(Keyword_Question)
-			core.AssignToken(current, token, Element_Cardinality_Question)
-			if token != nil {
-				current.SetCardinality(token)
+			{
+				p.state.EnterRule(Element__Basic_5)
+				result := p.ParseRuleCall()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+		case 3:
+			{
+				p.state.EnterRule(Element__Basic_7)
+				result := p.ParseAction()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+		case 4:
+			{
+				token := p.state.Consume(Keyword_LeftParen)
+				core.AssignToken(current, token, Element_LeftParen)
+			}
+			{
+				p.state.EnterRule(Element_RightParen)
+				result := p.ParseAlternatives()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+			{
+				token := p.state.Consume(Keyword_RightParen)
+				core.AssignToken(current, token, Element_RightParen)
+			}
+		default:
+			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		{
+			p.state.Sync(Element__Basic_15)
+			switch prediction, _ := p.lookahead.ElementCardinalityAlternatives(p.state); prediction {
+			case 0:
+				token := p.state.Consume(Keyword_Asterisk)
+				core.AssignToken(current, token, Element_Cardinality_Asterisk)
+				if token != nil {
+					current.SetCardinality(token)
+				}
+			case 1:
+				token := p.state.Consume(Keyword_Plus)
+				core.AssignToken(current, token, Element_Cardinality_Plus)
+				if token != nil {
+					current.SetCardinality(token)
+				}
+			case 2:
+				token := p.state.Consume(Keyword_Question)
+				core.AssignToken(current, token, Element_Cardinality_Question)
+				if token != nil {
+					current.SetCardinality(token)
+				}
 			}
 		}
 	}
@@ -649,10 +677,12 @@ func (p *Parser) ParseKeyword() Keyword {
 	current := NewKeyword()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Token_StringLiteral)
-		core.AssignToken(current, token, Keyword_Value_StringLiteral)
-		if token != nil {
-			current.SetValue(token)
+		{
+			token := p.state.Consume(Token_StringLiteral)
+			core.AssignToken(current, token, Keyword_Value_StringLiteral)
+			if token != nil {
+				current.SetValue(token)
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -663,40 +693,42 @@ func (p *Parser) ParseAssignment() Assignment {
 	current := NewAssignment()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, Assignment_Property_ID)
-		if token != nil {
-			current.SetProperty(p.referencesConstructor.AssignmentProperty(current, token))
-		}
-	}
-	{
-		switch prediction, _ := p.lookahead.AssignmentOperatorAlternatives(p.state); prediction {
-		case 0:
-			token := p.state.Consume(Keyword_PlusEquals)
-			core.AssignToken(current, token, Assignment_Operator_PlusEquals)
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, Assignment_Property_ID)
 			if token != nil {
-				current.SetOperator(token)
-			}
-		case 1:
-			token := p.state.Consume(Keyword_Equals)
-			core.AssignToken(current, token, Assignment_Operator_Equals)
-			if token != nil {
-				current.SetOperator(token)
-			}
-		case 2:
-			token := p.state.Consume(Keyword_QuestionEquals)
-			core.AssignToken(current, token, Assignment_Operator_QuestionEquals)
-			if token != nil {
-				current.SetOperator(token)
+				current.SetProperty(p.referencesConstructor.AssignmentProperty(current, token))
 			}
 		}
-	}
-	{
-		p.state.EnterRule(Assignment__Basic_5)
-		result := p.ParseAssignable()
-		p.state.ExitRule()
-		if result != nil {
-			current.SetValue(result)
+		{
+			switch prediction, _ := p.lookahead.AssignmentOperatorAlternatives(p.state); prediction {
+			case 0:
+				token := p.state.Consume(Keyword_PlusEquals)
+				core.AssignToken(current, token, Assignment_Operator_PlusEquals)
+				if token != nil {
+					current.SetOperator(token)
+				}
+			case 1:
+				token := p.state.Consume(Keyword_Equals)
+				core.AssignToken(current, token, Assignment_Operator_Equals)
+				if token != nil {
+					current.SetOperator(token)
+				}
+			case 2:
+				token := p.state.Consume(Keyword_QuestionEquals)
+				core.AssignToken(current, token, Assignment_Operator_QuestionEquals)
+				if token != nil {
+					current.SetOperator(token)
+				}
+			}
+		}
+		{
+			p.state.EnterRule(Assignment__Basic_5)
+			result := p.ParseAssignable()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetValue(result)
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -706,49 +738,51 @@ func (p *Parser) ParseAssignment() Assignment {
 func (p *Parser) ParseAssignable() Assignable {
 	current := NewAssignable()
 	current.SetSegmentStartToken(p.state.LA(1))
-	switch prediction, failure := p.lookahead.AssignableAlternatives(p.state); prediction {
-	case 0:
-		{
-			p.state.EnterRule(Assignable__Basic_1)
-			result := p.ParseKeyword()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
+	{
+		switch prediction, failure := p.lookahead.AssignableAlternatives(p.state); prediction {
+		case 0:
+			{
+				p.state.EnterRule(Assignable__Basic_1)
+				result := p.ParseKeyword()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+		case 1:
+			{
+				p.state.EnterRule(Assignable__Basic_3)
+				result := p.ParseRuleCall()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+		case 2:
+			{
+				p.state.EnterRule(Assignable__Basic_5)
+				result := p.ParseCrossRef()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+		case 3:
+			{
+				token := p.state.Consume(Keyword_LeftParen)
+				core.AssignToken(current, token, Assignable_LeftParen)
+			}
+			{
+				p.state.EnterRule(Assignable_RightParen)
+				result := p.ParseAssignableAlternatives()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+			{
+				token := p.state.Consume(Keyword_RightParen)
+				core.AssignToken(current, token, Assignable_RightParen)
+			}
+		default:
+			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
-	case 1:
-		{
-			p.state.EnterRule(Assignable__Basic_3)
-			result := p.ParseRuleCall()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-	case 2:
-		{
-			p.state.EnterRule(Assignable__Basic_5)
-			result := p.ParseCrossRef()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-	case 3:
-		{
-			token := p.state.Consume(Keyword_LeftParen)
-			core.AssignToken(current, token, Assignable_LeftParen)
-		}
-		{
-			p.state.EnterRule(Assignable_RightParen)
-			result := p.ParseAssignableAlternatives()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-		{
-			token := p.state.Consume(Keyword_RightParen)
-			core.AssignToken(current, token, Assignable_RightParen)
-		}
-	default:
-		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
@@ -757,33 +791,35 @@ func (p *Parser) ParseAssignable() Assignable {
 func (p *Parser) ParseAssignableWithoutAlts() Assignable {
 	current := NewAssignable()
 	current.SetSegmentStartToken(p.state.LA(1))
-	switch prediction, failure := p.lookahead.AssignableWithoutAltsAlternatives(p.state); prediction {
-	case 0:
-		{
-			p.state.EnterRule(AssignableWithoutAlts__Basic_1)
-			result := p.ParseKeyword()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
+	{
+		switch prediction, failure := p.lookahead.AssignableWithoutAltsAlternatives(p.state); prediction {
+		case 0:
+			{
+				p.state.EnterRule(AssignableWithoutAlts__Basic_1)
+				result := p.ParseKeyword()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+		case 1:
+			{
+				p.state.EnterRule(AssignableWithoutAlts__Basic_3)
+				result := p.ParseRuleCall()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+		case 2:
+			{
+				p.state.EnterRule(AssignableWithoutAlts__Basic_5)
+				result := p.ParseCrossRef()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+		default:
+			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
-	case 1:
-		{
-			p.state.EnterRule(AssignableWithoutAlts__Basic_3)
-			result := p.ParseRuleCall()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-	case 2:
-		{
-			p.state.EnterRule(AssignableWithoutAlts__Basic_5)
-			result := p.ParseCrossRef()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-	default:
-		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
@@ -793,36 +829,38 @@ func (p *Parser) ParseAssignableAlternatives() Assignable {
 	current := NewAssignable()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		p.state.EnterRule(AssignableAlternatives__Basic_3)
-		result := p.ParseAssignableWithoutAlts()
-		p.state.ExitRule()
-		core.MergeTokens(result, current.Tokens())
-		current = result
-	}
-	p.state.Sync(AssignableAlternatives__Basic_3)
-	if p.lookahead.AssignableAlternativesOptional(p.state) {
 		{
-			result := NewAlternatives()
-			result.SetSegment(current.Segment())
-			result.SetAltsItem(current)
-			current.SetSegmentEndToken(p.state.LA(0))
+			p.state.EnterRule(AssignableAlternatives__Basic_3)
+			result := p.ParseAssignableWithoutAlts()
+			p.state.ExitRule()
+			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
-		current := current.(Alternatives)
-		for ok := true; ok; ok = p.lookahead.AssignableAlternativesLoop(p.state) {
+		p.state.Sync(AssignableAlternatives__Basic_3)
+		if p.lookahead.AssignableAlternativesOptional(p.state) {
 			{
-				token := p.state.Consume(Keyword_Pipe)
-				core.AssignToken(current, token, AssignableAlternatives_Pipe)
+				result := NewAlternatives()
+				result.SetSegment(current.Segment())
+				result.SetAltsItem(current)
+				current.SetSegmentEndToken(p.state.LA(0))
+				current = result
 			}
-			{
-				p.state.EnterRule(AssignableAlternatives__Basic_2)
-				result := p.ParseAssignableWithoutAlts()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetAltsItem(result)
+			current := current.(Alternatives)
+			for ok := true; ok; ok = p.lookahead.AssignableAlternativesLoop(p.state) {
+				{
+					token := p.state.Consume(Keyword_Pipe)
+					core.AssignToken(current, token, AssignableAlternatives_Pipe)
 				}
+				{
+					p.state.EnterRule(AssignableAlternatives__Basic_2)
+					result := p.ParseAssignableWithoutAlts()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetAltsItem(result)
+					}
+				}
+				p.state.Sync(AssignableAlternatives__LoopBack)
 			}
-			p.state.Sync(AssignableAlternatives__LoopBack)
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -833,34 +871,36 @@ func (p *Parser) ParseCrossRef() CrossRef {
 	current := NewCrossRef()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Keyword_LeftBracket)
-		core.AssignToken(current, token, CrossRef_LeftBracket)
-	}
-	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, CrossRef_Type_ID)
-		if token != nil {
-			current.SetType(p.referencesConstructor.CrossRefType(current, token))
-		}
-	}
-	p.state.Sync(CrossRef__Basic_2)
-	if p.lookahead.CrossRefOptional(p.state) {
 		{
-			token := p.state.Consume(Keyword_Colon)
-			core.AssignToken(current, token, CrossRef_Colon)
+			token := p.state.Consume(Keyword_LeftBracket)
+			core.AssignToken(current, token, CrossRef_LeftBracket)
 		}
 		{
-			p.state.EnterRule(CrossRef__Basic_1)
-			result := p.ParseRuleCall()
-			p.state.ExitRule()
-			if result != nil {
-				current.SetRule(result)
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, CrossRef_Type_ID)
+			if token != nil {
+				current.SetType(p.referencesConstructor.CrossRefType(current, token))
 			}
 		}
-	}
-	{
-		token := p.state.Consume(Keyword_RightBracket)
-		core.AssignToken(current, token, CrossRef_RightBracket)
+		p.state.Sync(CrossRef__Basic_2)
+		if p.lookahead.CrossRefOptional(p.state) {
+			{
+				token := p.state.Consume(Keyword_Colon)
+				core.AssignToken(current, token, CrossRef_Colon)
+			}
+			{
+				p.state.EnterRule(CrossRef__Basic_1)
+				result := p.ParseRuleCall()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetRule(result)
+				}
+			}
+		}
+		{
+			token := p.state.Consume(Keyword_RightBracket)
+			core.AssignToken(current, token, CrossRef_RightBracket)
+		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
@@ -870,10 +910,12 @@ func (p *Parser) ParseRuleCall() RuleCall {
 	current := NewRuleCall()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, RuleCall_Rule_ID)
-		if token != nil {
-			current.SetRule(p.referencesConstructor.RuleCallRule(current, token))
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, RuleCall_Rule_ID)
+			if token != nil {
+				current.SetRule(p.referencesConstructor.RuleCallRule(current, token))
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -884,53 +926,55 @@ func (p *Parser) ParseAction() Action {
 	current := NewAction()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Keyword_LeftBrace)
-		core.AssignToken(current, token, Action_LeftBrace)
-	}
-	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, Action_Type_ID)
-		if token != nil {
-			current.SetType(p.referencesConstructor.ActionType(current, token))
-		}
-	}
-	p.state.Sync(Action__Basic_4)
-	if p.lookahead.ActionOptional(p.state) {
 		{
-			token := p.state.Consume(Keyword_Dot)
-			core.AssignToken(current, token, Action_Dot)
+			token := p.state.Consume(Keyword_LeftBrace)
+			core.AssignToken(current, token, Action_LeftBrace)
 		}
 		{
 			token := p.state.Consume(Token_ID)
-			core.AssignToken(current, token, Action_Property_ID)
+			core.AssignToken(current, token, Action_Type_ID)
 			if token != nil {
-				current.SetProperty(p.referencesConstructor.ActionProperty(current, token))
+				current.SetType(p.referencesConstructor.ActionType(current, token))
+			}
+		}
+		p.state.Sync(Action__Basic_4)
+		if p.lookahead.ActionOptional(p.state) {
+			{
+				token := p.state.Consume(Keyword_Dot)
+				core.AssignToken(current, token, Action_Dot)
+			}
+			{
+				token := p.state.Consume(Token_ID)
+				core.AssignToken(current, token, Action_Property_ID)
+				if token != nil {
+					current.SetProperty(p.referencesConstructor.ActionProperty(current, token))
+				}
+			}
+			{
+				switch prediction, _ := p.lookahead.ActionOperatorAlternatives(p.state); prediction {
+				case 0:
+					token := p.state.Consume(Keyword_PlusEquals)
+					core.AssignToken(current, token, Action_Operator_PlusEquals)
+					if token != nil {
+						current.SetOperator(token)
+					}
+				case 1:
+					token := p.state.Consume(Keyword_Equals)
+					core.AssignToken(current, token, Action_Operator_Equals)
+					if token != nil {
+						current.SetOperator(token)
+					}
+				}
+			}
+			{
+				token := p.state.Consume(Keyword_current)
+				core.AssignToken(current, token, Action_current)
 			}
 		}
 		{
-			switch prediction, _ := p.lookahead.ActionOperatorAlternatives(p.state); prediction {
-			case 0:
-				token := p.state.Consume(Keyword_PlusEquals)
-				core.AssignToken(current, token, Action_Operator_PlusEquals)
-				if token != nil {
-					current.SetOperator(token)
-				}
-			case 1:
-				token := p.state.Consume(Keyword_Equals)
-				core.AssignToken(current, token, Action_Operator_Equals)
-				if token != nil {
-					current.SetOperator(token)
-				}
-			}
+			token := p.state.Consume(Keyword_RightBrace)
+			core.AssignToken(current, token, Action_RightBrace)
 		}
-		{
-			token := p.state.Consume(Keyword_current)
-			core.AssignToken(current, token, Action_current)
-		}
-	}
-	{
-		token := p.state.Consume(Keyword_RightBrace)
-		core.AssignToken(current, token, Action_RightBrace)
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
@@ -940,31 +984,33 @@ func (p *Parser) ParseCompositeRule() CompositeRule {
 	current := NewCompositeRule()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Keyword_composite)
-		core.AssignToken(current, token, CompositeRule_composite)
-	}
-	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, CompositeRule_Name_ID)
-		if token != nil {
-			current.SetName(token)
+		{
+			token := p.state.Consume(Keyword_composite)
+			core.AssignToken(current, token, CompositeRule_composite)
 		}
-	}
-	{
-		token := p.state.Consume(Keyword_Colon)
-		core.AssignToken(current, token, CompositeRule_Colon)
-	}
-	{
-		p.state.EnterRule(CompositeRule_Semicolon)
-		result := p.ParseCompositeAlternatives()
-		p.state.ExitRule()
-		if result != nil {
-			current.SetBody(result)
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, CompositeRule_Name_ID)
+			if token != nil {
+				current.SetName(token)
+			}
 		}
-	}
-	{
-		token := p.state.Consume(Keyword_Semicolon)
-		core.AssignToken(current, token, CompositeRule_Semicolon)
+		{
+			token := p.state.Consume(Keyword_Colon)
+			core.AssignToken(current, token, CompositeRule_Colon)
+		}
+		{
+			p.state.EnterRule(CompositeRule_Semicolon)
+			result := p.ParseCompositeAlternatives()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetBody(result)
+			}
+		}
+		{
+			token := p.state.Consume(Keyword_Semicolon)
+			core.AssignToken(current, token, CompositeRule_Semicolon)
+		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
@@ -974,36 +1020,38 @@ func (p *Parser) ParseCompositeAlternatives() Element {
 	current := NewElement()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		p.state.EnterRule(CompositeAlternatives__Basic_3)
-		result := p.ParseCompositeGroup()
-		p.state.ExitRule()
-		core.MergeTokens(result, current.Tokens())
-		current = result
-	}
-	p.state.Sync(CompositeAlternatives__Basic_3)
-	if p.lookahead.CompositeAlternativesOptional(p.state) {
 		{
-			result := NewAlternatives()
-			result.SetSegment(current.Segment())
-			result.SetAltsItem(current)
-			current.SetSegmentEndToken(p.state.LA(0))
+			p.state.EnterRule(CompositeAlternatives__Basic_3)
+			result := p.ParseCompositeGroup()
+			p.state.ExitRule()
+			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
-		current := current.(Alternatives)
-		for ok := true; ok; ok = p.lookahead.CompositeAlternativesLoop(p.state) {
+		p.state.Sync(CompositeAlternatives__Basic_3)
+		if p.lookahead.CompositeAlternativesOptional(p.state) {
 			{
-				token := p.state.Consume(Keyword_Pipe)
-				core.AssignToken(current, token, CompositeAlternatives_Pipe)
+				result := NewAlternatives()
+				result.SetSegment(current.Segment())
+				result.SetAltsItem(current)
+				current.SetSegmentEndToken(p.state.LA(0))
+				current = result
 			}
-			{
-				p.state.EnterRule(CompositeAlternatives__Basic_2)
-				result := p.ParseCompositeGroup()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetAltsItem(result)
+			current := current.(Alternatives)
+			for ok := true; ok; ok = p.lookahead.CompositeAlternativesLoop(p.state) {
+				{
+					token := p.state.Consume(Keyword_Pipe)
+					core.AssignToken(current, token, CompositeAlternatives_Pipe)
 				}
+				{
+					p.state.EnterRule(CompositeAlternatives__Basic_2)
+					result := p.ParseCompositeGroup()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetAltsItem(result)
+					}
+				}
+				p.state.Sync(CompositeAlternatives__LoopBack)
 			}
-			p.state.Sync(CompositeAlternatives__LoopBack)
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -1014,31 +1062,33 @@ func (p *Parser) ParseCompositeGroup() Element {
 	current := NewElement()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		p.state.EnterRule(CompositeGroup__Basic_3)
-		result := p.ParseCompositeElement()
-		p.state.ExitRule()
-		core.MergeTokens(result, current.Tokens())
-		current = result
-	}
-	p.state.Sync(CompositeGroup__Basic_3)
-	if p.lookahead.CompositeGroupOptional(p.state) {
 		{
-			result := NewGroup()
-			result.SetSegment(current.Segment())
-			result.SetElementsItem(current)
-			current.SetSegmentEndToken(p.state.LA(0))
+			p.state.EnterRule(CompositeGroup__Basic_3)
+			result := p.ParseCompositeElement()
+			p.state.ExitRule()
+			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
-		current := current.(Group)
-		{
-			for ok := true; ok; ok = p.lookahead.CompositeGroupElementsLoop(p.state) {
-				p.state.EnterRule(CompositeGroup__Basic_2)
-				result := p.ParseCompositeElement()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetElementsItem(result)
+		p.state.Sync(CompositeGroup__Basic_3)
+		if p.lookahead.CompositeGroupOptional(p.state) {
+			{
+				result := NewGroup()
+				result.SetSegment(current.Segment())
+				result.SetElementsItem(current)
+				current.SetSegmentEndToken(p.state.LA(0))
+				current = result
+			}
+			current := current.(Group)
+			{
+				for ok := true; ok; ok = p.lookahead.CompositeGroupElementsLoop(p.state) {
+					p.state.EnterRule(CompositeGroup__Basic_2)
+					result := p.ParseCompositeElement()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetElementsItem(result)
+					}
+					p.state.Sync(CompositeGroup__LoopBack)
 				}
-				p.state.Sync(CompositeGroup__LoopBack)
 			}
 		}
 	}
@@ -1049,62 +1099,64 @@ func (p *Parser) ParseCompositeGroup() Element {
 func (p *Parser) ParseCompositeElement() Element {
 	current := NewElement()
 	current.SetSegmentStartToken(p.state.LA(1))
-	switch prediction, failure := p.lookahead.CompositeElementAlternatives(p.state); prediction {
-	case 0:
-		{
-			p.state.EnterRule(CompositeElement__Basic_1)
-			result := p.ParseKeyword()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-	case 1:
-		{
-			p.state.EnterRule(CompositeElement__Basic_3)
-			result := p.ParseRuleCall()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-	case 2:
-		{
-			token := p.state.Consume(Keyword_LeftParen)
-			core.AssignToken(current, token, CompositeElement_LeftParen)
-		}
-		{
-			p.state.EnterRule(CompositeElement_RightParen)
-			result := p.ParseCompositeAlternatives()
-			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
-			current = result
-		}
-		{
-			token := p.state.Consume(Keyword_RightParen)
-			core.AssignToken(current, token, CompositeElement_RightParen)
-		}
-	default:
-		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
-	}
 	{
-		p.state.Sync(CompositeElement__Basic_11)
-		switch prediction, _ := p.lookahead.CompositeElementCardinalityAlternatives(p.state); prediction {
+		switch prediction, failure := p.lookahead.CompositeElementAlternatives(p.state); prediction {
 		case 0:
-			token := p.state.Consume(Keyword_Asterisk)
-			core.AssignToken(current, token, CompositeElement_Cardinality_Asterisk)
-			if token != nil {
-				current.SetCardinality(token)
+			{
+				p.state.EnterRule(CompositeElement__Basic_1)
+				result := p.ParseKeyword()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
 			}
 		case 1:
-			token := p.state.Consume(Keyword_Plus)
-			core.AssignToken(current, token, CompositeElement_Cardinality_Plus)
-			if token != nil {
-				current.SetCardinality(token)
+			{
+				p.state.EnterRule(CompositeElement__Basic_3)
+				result := p.ParseRuleCall()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
 			}
 		case 2:
-			token := p.state.Consume(Keyword_Question)
-			core.AssignToken(current, token, CompositeElement_Cardinality_Question)
-			if token != nil {
-				current.SetCardinality(token)
+			{
+				token := p.state.Consume(Keyword_LeftParen)
+				core.AssignToken(current, token, CompositeElement_LeftParen)
+			}
+			{
+				p.state.EnterRule(CompositeElement_RightParen)
+				result := p.ParseCompositeAlternatives()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+			{
+				token := p.state.Consume(Keyword_RightParen)
+				core.AssignToken(current, token, CompositeElement_RightParen)
+			}
+		default:
+			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		{
+			p.state.Sync(CompositeElement__Basic_11)
+			switch prediction, _ := p.lookahead.CompositeElementCardinalityAlternatives(p.state); prediction {
+			case 0:
+				token := p.state.Consume(Keyword_Asterisk)
+				core.AssignToken(current, token, CompositeElement_Cardinality_Asterisk)
+				if token != nil {
+					current.SetCardinality(token)
+				}
+			case 1:
+				token := p.state.Consume(Keyword_Plus)
+				core.AssignToken(current, token, CompositeElement_Cardinality_Plus)
+				if token != nil {
+					current.SetCardinality(token)
+				}
+			case 2:
+				token := p.state.Consume(Keyword_Question)
+				core.AssignToken(current, token, CompositeElement_Cardinality_Question)
+				if token != nil {
+					current.SetCardinality(token)
+				}
 			}
 		}
 	}

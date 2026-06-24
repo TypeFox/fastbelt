@@ -138,6 +138,12 @@ func (p *CompletionParser) ParseRoot() {
 				p.ParseN()
 				p.state.ExitRule()
 				p.cp.ClearAssignment()
+			case 15:
+				p.cp.MarkAssignment("Objects")
+				p.state.EnterRule(Root__Basic_31)
+				p.ParseO()
+				p.state.ExitRule()
+				p.cp.ClearAssignment()
 			default:
 				break loop0
 			}
@@ -518,6 +524,19 @@ func (p *CompletionParser) ParseN() {
 	{
 		p.cp.MarkAssignment("Ref")
 		p.state.Consume(Token_SomeTokenGroup)
+		p.cp.ClearAssignment()
+	}
+}
+
+func (p *CompletionParser) ParseO() {
+	p.cp.EnterRule("O", O__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_o)
+	}
+	{
+		p.cp.MarkAssignment("Ref")
+		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
 }

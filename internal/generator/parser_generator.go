@@ -879,7 +879,10 @@ func generateParseFunction(node codegen.Node, context *ParserGeneratorContext, r
 		node.Indent(func(n codegen.Node) {
 			n.AppendLine("current := New", returnType.Name(), "()")
 			n.AppendLine("current.SetSegmentStartToken(p.state.LA(1))")
+			// Generate new lexical scope for actions that immediately trigger on rule start
+			n.AppendLine("{")
 			generateAbstractElementParser(n, context, rule.Body())
+			n.AppendLine("}")
 			n.AppendLine("current.SetSegmentEndToken(p.state.LA(0))")
 			n.AppendLine("return current")
 		})
@@ -1051,9 +1054,11 @@ func generateAssignableAlternatives(node codegen.Node, context *ParserGeneratorC
 func generateGroupParser(node codegen.Node, context *ParserGeneratorContext, group grammar.Group) {
 	syncCall := buildSyncCall(context, group)
 	generateCardinality(node, func(n codegen.Node) {
-		for _, element := range group.Elements() {
-			generateAbstractElementParser(n, context, element)
-		}
+		n.Indent(func(in codegen.Node) {
+			for _, element := range group.Elements() {
+				generateAbstractElementParser(in, context, element)
+			}
+		})
 	}, func(n codegen.Node) {
 		n.Append(guardCall(context, group))
 	}, syncCall, group.Cardinality())

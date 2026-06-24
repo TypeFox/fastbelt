@@ -22,18 +22,6 @@ func NewDefaultTokenGroupsCompletionFilter() TokenGroupsCompletionFilter {
 	return &DefaultTokenGroupsCompletionFilter{}
 }
 
-var TokenGroupsSyntheticFactories = map[string]func() core.AstNode{
-	"A":     func() core.AstNode { return NewItem() },
-	"B":     func() core.AstNode { return NewItem() },
-	"C":     func() core.AstNode { return NewItem() },
-	"D":     func() core.AstNode { return NewItem() },
-	"E":     func() core.AstNode { return NewRecovery() },
-	"F":     func() core.AstNode { return NewItem() },
-	"G":     func() core.AstNode { return NewItem() },
-	"H":     func() core.AstNode { return NewItem() },
-	"Model": func() core.AstNode { return NewModel() },
-}
-
 var TokenGroupsCompletionDispatch = map[string]TokenGroupsCompletionDispatchFunc{}
 
 type TokenGroupsCompletionDispatchFunc func(ctx context.Context, sc *core.AstNode) iter.Seq[*core.SymbolDescription]

@@ -36,73 +36,75 @@ func (p *Parser) ParseStatemachine() Statemachine {
 	current := NewStatemachine()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Keyword_statemachine)
-		core.AssignToken(current, token, Statemachine_statemachine)
-	}
-	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, Statemachine_Name_ID)
-		if token != nil {
-			current.SetName(token)
-		}
-	}
-	p.state.Sync(Statemachine__Basic_2)
-	if p.lookahead.StatemachineOptional_0(p.state) {
 		{
-			token := p.state.Consume(Keyword_events)
-			core.AssignToken(current, token, Statemachine_events)
+			token := p.state.Consume(Keyword_statemachine)
+			core.AssignToken(current, token, Statemachine_statemachine)
 		}
 		{
-			for ok := true; ok; ok = p.lookahead.StatemachineEventsLoop(p.state) {
-				p.state.EnterRule(Statemachine__Basic_1)
-				result := p.ParseEvent()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetEventsItem(result)
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, Statemachine_Name_ID)
+			if token != nil {
+				current.SetName(token)
+			}
+		}
+		p.state.Sync(Statemachine__Basic_2)
+		if p.lookahead.StatemachineOptional_0(p.state) {
+			{
+				token := p.state.Consume(Keyword_events)
+				core.AssignToken(current, token, Statemachine_events)
+			}
+			{
+				for ok := true; ok; ok = p.lookahead.StatemachineEventsLoop(p.state) {
+					p.state.EnterRule(Statemachine__Basic_1)
+					result := p.ParseEvent()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetEventsItem(result)
+					}
+					p.state.Sync(Statemachine__LoopBack_0)
 				}
-				p.state.Sync(Statemachine__LoopBack_0)
 			}
 		}
-	}
-	p.state.Sync(Statemachine__Basic_5)
-	if p.lookahead.StatemachineOptional_1(p.state) {
-		{
-			token := p.state.Consume(Keyword_commands)
-			core.AssignToken(current, token, Statemachine_commands)
-		}
-		{
-			for ok := true; ok; ok = p.lookahead.StatemachineCommandsLoop(p.state) {
-				p.state.EnterRule(Statemachine__Basic_4)
-				result := p.ParseCommand()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetCommandsItem(result)
+		p.state.Sync(Statemachine__Basic_5)
+		if p.lookahead.StatemachineOptional_1(p.state) {
+			{
+				token := p.state.Consume(Keyword_commands)
+				core.AssignToken(current, token, Statemachine_commands)
+			}
+			{
+				for ok := true; ok; ok = p.lookahead.StatemachineCommandsLoop(p.state) {
+					p.state.EnterRule(Statemachine__Basic_4)
+					result := p.ParseCommand()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetCommandsItem(result)
+					}
+					p.state.Sync(Statemachine__LoopBack_1)
 				}
-				p.state.Sync(Statemachine__LoopBack_1)
 			}
 		}
-	}
-	{
-		token := p.state.Consume(Keyword_initialState)
-		core.AssignToken(current, token, Statemachine_initialState)
-	}
-	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, Statemachine_Init_ID)
-		if token != nil {
-			current.SetInit(p.referencesConstructor.StatemachineInit(current, token))
+		{
+			token := p.state.Consume(Keyword_initialState)
+			core.AssignToken(current, token, Statemachine_initialState)
 		}
-	}
-	{
-		p.state.Sync(Statemachine__LoopEntry)
-		for p.lookahead.StatemachineStatesLoop(p.state) {
-			p.state.EnterRule(Statemachine__Basic_7)
-			result := p.ParseState()
-			p.state.ExitRule()
-			if result != nil {
-				current.SetStatesItem(result)
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, Statemachine_Init_ID)
+			if token != nil {
+				current.SetInit(p.referencesConstructor.StatemachineInit(current, token))
 			}
+		}
+		{
 			p.state.Sync(Statemachine__LoopEntry)
+			for p.lookahead.StatemachineStatesLoop(p.state) {
+				p.state.EnterRule(Statemachine__Basic_7)
+				result := p.ParseState()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetStatesItem(result)
+				}
+				p.state.Sync(Statemachine__LoopEntry)
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -113,10 +115,12 @@ func (p *Parser) ParseEvent() Event {
 	current := NewEvent()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, Event_Name_ID)
-		if token != nil {
-			current.SetName(token)
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, Event_Name_ID)
+			if token != nil {
+				current.SetName(token)
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -127,10 +131,12 @@ func (p *Parser) ParseCommand() Command {
 	current := NewCommand()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, Command_Name_ID)
-		if token != nil {
-			current.SetName(token)
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, Command_Name_ID)
+			if token != nil {
+				current.SetName(token)
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -141,56 +147,58 @@ func (p *Parser) ParseState() State {
 	current := NewState()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Keyword_state)
-		core.AssignToken(current, token, State_state)
-	}
-	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, State_Name_ID)
-		if token != nil {
-			current.SetName(token)
-		}
-	}
-	p.state.Sync(State__Basic_2)
-	if p.lookahead.StateOptional(p.state) {
 		{
-			token := p.state.Consume(Keyword_actions)
-			core.AssignToken(current, token, State_actions)
+			token := p.state.Consume(Keyword_state)
+			core.AssignToken(current, token, State_state)
 		}
 		{
-			token := p.state.Consume(Keyword_LeftBrace)
-			core.AssignToken(current, token, State_LeftBrace)
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, State_Name_ID)
+			if token != nil {
+				current.SetName(token)
+			}
 		}
-		{
-			for ok := true; ok; ok = p.lookahead.StateActionsLoop(p.state) {
-				token := p.state.Consume(Token_ID)
-				core.AssignToken(current, token, State_Actions_ID)
-				if token != nil {
-					current.SetActionsItem(p.referencesConstructor.StateActions(current, token))
+		p.state.Sync(State__Basic_2)
+		if p.lookahead.StateOptional(p.state) {
+			{
+				token := p.state.Consume(Keyword_actions)
+				core.AssignToken(current, token, State_actions)
+			}
+			{
+				token := p.state.Consume(Keyword_LeftBrace)
+				core.AssignToken(current, token, State_LeftBrace)
+			}
+			{
+				for ok := true; ok; ok = p.lookahead.StateActionsLoop(p.state) {
+					token := p.state.Consume(Token_ID)
+					core.AssignToken(current, token, State_Actions_ID)
+					if token != nil {
+						current.SetActionsItem(p.referencesConstructor.StateActions(current, token))
+					}
+					p.state.Sync(State__LoopBack_0)
 				}
-				p.state.Sync(State__LoopBack_0)
+			}
+			{
+				token := p.state.Consume(Keyword_RightBrace)
+				core.AssignToken(current, token, State_RightBrace)
 			}
 		}
 		{
-			token := p.state.Consume(Keyword_RightBrace)
-			core.AssignToken(current, token, State_RightBrace)
-		}
-	}
-	{
-		p.state.Sync(State__LoopEntry)
-		for p.lookahead.StateTransitionsLoop(p.state) {
-			p.state.EnterRule(State__Basic_4)
-			result := p.ParseTransition()
-			p.state.ExitRule()
-			if result != nil {
-				current.SetTransitionsItem(result)
-			}
 			p.state.Sync(State__LoopEntry)
+			for p.lookahead.StateTransitionsLoop(p.state) {
+				p.state.EnterRule(State__Basic_4)
+				result := p.ParseTransition()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetTransitionsItem(result)
+				}
+				p.state.Sync(State__LoopEntry)
+			}
 		}
-	}
-	{
-		token := p.state.Consume(Keyword_end)
-		core.AssignToken(current, token, State_end)
+		{
+			token := p.state.Consume(Keyword_end)
+			core.AssignToken(current, token, State_end)
+		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
 	return current
@@ -200,21 +208,23 @@ func (p *Parser) ParseTransition() Transition {
 	current := NewTransition()
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, Transition_Event_ID)
-		if token != nil {
-			current.SetEvent(p.referencesConstructor.TransitionEvent(current, token))
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, Transition_Event_ID)
+			if token != nil {
+				current.SetEvent(p.referencesConstructor.TransitionEvent(current, token))
+			}
 		}
-	}
-	{
-		token := p.state.Consume(Keyword_EqualsGreaterThan)
-		core.AssignToken(current, token, Transition_EqualsGreaterThan)
-	}
-	{
-		token := p.state.Consume(Token_ID)
-		core.AssignToken(current, token, Transition_State_ID)
-		if token != nil {
-			current.SetState(p.referencesConstructor.TransitionState(current, token))
+		{
+			token := p.state.Consume(Keyword_EqualsGreaterThan)
+			core.AssignToken(current, token, Transition_EqualsGreaterThan)
+		}
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, Transition_State_ID)
+			if token != nil {
+				current.SetState(p.referencesConstructor.TransitionState(current, token))
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
