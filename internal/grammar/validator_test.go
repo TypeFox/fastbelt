@@ -144,6 +144,177 @@ func TestDuplicateFieldNamesCaseInsensitiveAndCapitalLetter(t *testing.T) {
 	diag.WithSeverity(core.SeverityError)
 }
 
+func TestReservedFieldNameDocument(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			<|1:Document|> string
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateReservedFieldName)
+}
+
+func TestReservedFieldNameTokens(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			<|1:Tokens|> string
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateReservedFieldName)
+}
+
+func TestReservedFieldNameSetPrefix(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			<|1:SetName|> string
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateReservedFieldName)
+}
+
+func TestReservedFieldNameIsPrefix(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			<|1:IsActive|> bool
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateReservedFieldName)
+}
+
+func TestReservedFieldNameTokenArrayAllowed(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			Token []string
+		}
+	` + commonTokens)
+	doc.AssertNoErrors()
+}
+
+func TestReservedFieldNameText(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			<|1:Text|> string
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateReservedFieldName)
+}
+
+func TestReservedFieldNameForEachNode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			<|1:ForEachNode|> string
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateReservedFieldName)
+}
+
+func TestReservedFieldNameSameAsInterface(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			<|1:Foo|> string
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateReservedFieldName)
+}
+
+func TestReservedFieldNameSuffixTokenConflict(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			Name string
+			<|1:NameToken|> string
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateReservedFieldName)
+}
+
+func TestReservedFieldNameSuffixNodeConflictInherited(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Base {
+			Target composite
+		}
+		interface Derived extends Base {
+			<|1:TargetNode|> string
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateReservedFieldName)
+}
+
+func TestNestedArrayType(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			Items <|1:[][]string|>
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateNestedArrayType)
+}
+
+func TestNestedArrayTypeWithInterface(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Bar { Name string }
+		interface Foo {
+			Items <|1:[][]Bar|>
+		}
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateNestedArrayType)
+}
+
+func TestSingleArrayTypeAllowed(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo {
+			Items []string
+			Refs []*Foo
+		}
+	` + commonTokens)
+	doc.AssertNoErrors()
+}
+
 func TestInheritedFieldNameValid(t *testing.T) {
 	f := test.New(t, CreateServices())
 	doc := f.Parse(`
@@ -474,6 +645,43 @@ func TestKeywordAssignedToNonStringField(t *testing.T) {
 	diag.WithCode(ValidateAssignmentType)
 }
 
+func TestCompositeRuleAssignedToStringField(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Name string }
+		composite QualifiedName: ID ("." ID)*;
+		Foo: Name=<|QualifiedName|>;
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("QualifiedName")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateAssignmentType)
+}
+
+func TestCompositeRuleAssignedToCompositeField(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Name composite }
+		composite QualifiedName: ID ("." ID)*;
+		Foo: Name=QualifiedName;
+	` + commonTokens)
+	doc.AssertNoErrors()
+}
+
+func TestCompositeRuleAssignedToNonCompositeField(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Flag bool }
+		composite QualifiedName: ID ("." ID)*;
+		Foo: Flag=<|QualifiedName|>;
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("QualifiedName")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateAssignmentType)
+}
+
 // --- Token groups ---
 
 func TestTokenGroupRecursiveDirect(t *testing.T) {
@@ -520,4 +728,57 @@ func TestTokenGroupWithInvalidToken(t *testing.T) {
 	diag := doc.ExpectDiagnostic("WS")
 	diag.WithSeverity(core.SeverityError)
 	diag.WithCode(ValidateInvalidTokenInGroup)
+}
+
+// --- Cross-references ---
+
+func TestCrossRefWithHiddenToken(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Target { Name string }
+		interface Foo { Ref *Target }
+		Foo: Ref=[Target:<|WS|>];
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("WS")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateInvalidTokenInCrossRef)
+}
+
+func TestCrossRefWithCommentToken(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Target { Name string }
+		interface Foo { Ref *Target }
+		comment token SL_COMMENT: /\/\/[^\r\n]*/;
+		Foo: Ref=[Target:<|SL_COMMENT|>];
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("SL_COMMENT")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateInvalidTokenInCrossRef)
+}
+
+func TestCrossRefWithValidToken(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Target { Name string }
+		interface Foo { Ref *Target }
+		Foo: Ref=[Target:ID];
+	` + commonTokens)
+	doc.AssertNoErrors()
+}
+
+func TestCrossRefMissingTerminal(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Target { Name string }
+		interface Foo { Ref *Target }
+		Foo: Ref=[<|Target|>];
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("Target")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateMissingCrossRefTerminal)
 }
