@@ -53,12 +53,9 @@ func (d *DiagnosticsPublisher) OnServerInitialize(_ *lsp.ParamInitialize) {
 		}
 	})
 	syncher.OnDidClose(func(ctx context.Context, event *TextDocumentChangeEvent) {
-		uri := core.ParseURI(string(event.Document.URI()))
-		handle := store.Get(uri.DocumentURI())
-		if handle != nil {
-			// Clear diagnostics for the closed document.
-			d.publishDiagnostics(ctx, handle, []lsp.Diagnostic{})
-		}
+		uri := core.NormalizeURI(event.Document.URI())
+		// Clear diagnostics for the closed document.
+		d.publishDiagnostics(ctx, uri, []lsp.Diagnostic{})
 	})
 	builder, err := service.Get[workspace.Builder](d.sc)
 	if err != nil {
@@ -78,17 +75,17 @@ func (d *DiagnosticsPublisher) publishDocumentDiagnostics(ctx context.Context, d
 	for _, d := range doc.Diagnostics {
 		lspDiags = append(lspDiags, toLspDiagnostic(*d))
 	}
-	d.publishDiagnostics(ctx, doc.TextDoc, lspDiags)
+	d.publishDiagnostics(ctx, doc.TextDoc.URI(), lspDiags)
 }
 
-func (d *DiagnosticsPublisher) publishDiagnostics(ctx context.Context, handle textdoc.Handle, diagnostics []lsp.Diagnostic) {
+func (d *DiagnosticsPublisher) publishDiagnostics(ctx context.Context, uri lsp.DocumentURI, diagnostics []lsp.Diagnostic) {
 	connection, err := service.Get[*Connection](d.sc)
 	if err != nil {
 		return
 	}
 	client := lsp.ClientDispatcher(connection.Value)
 	err = client.PublishDiagnostics(ctx, &lsp.PublishDiagnosticsParams{
-		URI:         handle.URI(),
+		URI:         uri,
 		Diagnostics: diagnostics,
 	})
 	if err != nil {
