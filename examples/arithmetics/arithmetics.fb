@@ -1,4 +1,4 @@
-grammar Arithmetics;
+grammar Arithmetics
 
 interface Module {
     Name string
@@ -40,46 +40,46 @@ interface NumberLiteral extends Expression {
     Value string
 }
 
-Module returns Module:
+entry Module returns Module:
     "module" Name=ID
-    Statements+=Statement*;
+    Statements+=Statement*
 
 Statement returns Statement:
-    Definition | Evaluation;
+    Definition | Evaluation
 
 Definition:
     "def" Name=ID ("(" Args+=DeclaredParameter ("," Args+=DeclaredParameter)* ")")?
-    ":" Expression=Expression ";";
+    ":" Expression=Expression ";"
 
 DeclaredParameter:
-    Name=ID;
+    Name=ID
 
 Evaluation:
-    Expression=Expression ";";
+    Expression=Expression ";"
 
 Expression:
-    Addition;
+    Addition
 
 Addition returns Expression:
-    Multiplication ({BinaryExpression.Left=current} Operator=("+" | "-") Right=Multiplication)*;
+    Multiplication ({BinaryExpression.Left=current} Operator=("+" | "-") Right=Multiplication)*
 
 Multiplication returns Expression:
-    Exponentiation ({BinaryExpression.Left=current} Operator=("*" | "/") Right=Exponentiation)*;
+    Exponentiation ({BinaryExpression.Left=current} Operator=("*" | "/") Right=Exponentiation)*
 
 Exponentiation returns Expression:
-    Modulo ({BinaryExpression.Left=current} Operator="^" Right=Modulo)*;
+    Modulo ({BinaryExpression.Left=current} Operator="^" Right=Modulo)*
 
 Modulo returns Expression:
-    PrimaryExpression ({BinaryExpression.Left=current} Operator="%" Right=PrimaryExpression)*;
+    PrimaryExpression ({BinaryExpression.Left=current} Operator="%" Right=PrimaryExpression)*
 
 PrimaryExpression returns Expression:
     "(" Expression ")" |
-    { NumberLiteral } Value=NUMBER |
-    {FunctionCall} Callable=[AbstractDefinition:ID] ("(" Args+=Expression ("," Args+=Expression)* ")")?;
+    {NumberLiteral} Value=NUMBER |
+    {FunctionCall} Callable=[AbstractDefinition:ID] ("(" Args+=Expression ("," Args+=Expression)* ")")?
 
-token ID: /[_a-zA-Z][\w_]*/;
-token NUMBER: /[0-9]+(\.[0-9]*)?/;
+token ID: /[_a-zA-Z][\w_]*/
+token NUMBER: /[0-9]+(\.[0-9]*)?/
 
-hidden token WS: /\s+/;
-comment token ML_COMMENT: /\/\*[\s\S]*?\*\//;
-hidden token SL_COMMENT: /\/\/[^\n\r]*/;
+hidden token WS: /\s+/
+comment token ML_COMMENT: /\/\*[\s\S]*?\*\//
+hidden token SL_COMMENT: /\/\/[^\n\r]*/

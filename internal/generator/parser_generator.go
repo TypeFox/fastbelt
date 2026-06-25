@@ -371,7 +371,7 @@ func decisionConstName(methodName string) string {
 	return "Decision" + methodName
 }
 
-func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult, atnData *parserATNData) string {
+func GenerateParser(grammr grammar.Grammar, entryRule grammar.ParserRule, packageName string, tokenTypes GenerateTokenTypesResult, atnData *parserATNData) string {
 	context := &ParserGeneratorContext{
 		grammar:      grammr,
 		lookaheads:   make(map[core.AstNode]LookaheadValue),
@@ -402,12 +402,6 @@ func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes Gener
 	node.AppendLine("}")
 	node.AppendLine()
 
-	rules := grammr.Rules()
-	if len(rules) == 0 {
-		return FormatIfPossible(node.String())
-	}
-
-	firstRule := rules[0]
 	node.AppendLine("func (p *Parser) Parse(document *core.Document) *parser.ParseResult {")
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)")
@@ -415,7 +409,7 @@ func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes Gener
 		n.AppendLine("referencesConstructor := service.MustGet[", grammr.Name(), "ReferencesConstructor](p.sc)")
 		n.AppendLine("lookahead := service.MustGet[", grammr.Name(), "ParserLookahead](p.sc)")
 		n.AppendLine("cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}")
-		n.AppendLine("result := cp.Parse", firstRule.Name(), "()")
+		n.AppendLine("result := cp.Parse", entryRule.Name(), "()")
 		n.AppendLine("cp.state.ExpectEndOfInput()")
 		n.AppendLine("core.AssignContainers(document, result)")
 		n.AppendLine("return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}")
@@ -448,7 +442,7 @@ func GenerateParser(grammr grammar.Grammar, packageName string, tokenTypes Gener
 //
 // The generated file reuses the lookahead tables and ATN builder defined by
 // GenerateParser/EmitGoSource, so it must be emitted into the same package.
-func GenerateCompletionParser(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult, atnData *parserATNData) string {
+func GenerateCompletionParser(grammr grammar.Grammar, entryRule grammar.ParserRule, packageName string, tokenTypes GenerateTokenTypesResult, atnData *parserATNData) string {
 	context := &ParserGeneratorContext{
 		grammar:      grammr,
 		lookaheads:   make(map[core.AstNode]LookaheadValue),
@@ -482,12 +476,6 @@ func GenerateCompletionParser(grammr grammar.Grammar, packageName string, tokenT
 	node.AppendLine("}")
 	node.AppendLine()
 
-	rules := grammr.Rules()
-	if len(rules) == 0 {
-		return FormatIfPossible(node.String())
-	}
-	firstRule := rules[0]
-
 	node.AppendLine("func NewCompletionParser(sc *service.Container) *CompletionParser {")
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("return &CompletionParser{")
@@ -510,7 +498,7 @@ func GenerateCompletionParser(grammr grammar.Grammar, packageName string, tokenT
 		n.AppendLine("cp := &CompletionParser{sc: p.sc, atn: p.atn, lookahead: lookahead}")
 		n.AppendLine("cp.state = parser.NewParserState(tokens, p.atn(), recovery, messages)")
 		n.AppendLine("cp.cp = parser.NewCompletionParserState(cp.state)")
-		n.AppendLine("cp.Parse", firstRule.Name(), "()")
+		n.AppendLine("cp.Parse", entryRule.Name(), "()")
 		n.AppendLine("return cp.cp.Result(tokens)")
 	})
 	node.AppendLine("}")

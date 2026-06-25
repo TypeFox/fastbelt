@@ -1,15 +1,15 @@
-grammar Fastbelt;
+grammar Fastbelt
 
 interface Grammar {
-    Name string
-    Rules []ParserRule
-    Composites []CompositeRule
-    Terminals []Token
+    Name        string
+    Rules       []ParserRule
+    Composites  []CompositeRule
+    Terminals   []Token
     TokenGroups []TokenGroup
-    Interfaces []Interface
+    Interfaces  []Interface
 }
 
-Grammar: "grammar" Name=ID ";"
+entry Grammar: "grammar" Name=ID ";"?
     (
         Rules+=ParserRule
         | Terminals+=Token
@@ -17,7 +17,6 @@ Grammar: "grammar" Name=ID ";"
         | Interfaces+=Interface
         | Composites+=CompositeRule
     )*
-;
 
 interface Interface {
     Name string
@@ -29,7 +28,6 @@ Interface:
     "interface" Name=ID ("extends" Extends+=[Interface:ID] ("," Extends+=[Interface:ID])*)? "{"
         Fields+=Field*
     "}"
-;
 
 interface Field {
     Name string
@@ -54,17 +52,17 @@ interface PrimitiveType extends FieldType {
     Type string
 }
 
-Field: Name=ID Type=FieldType;
+Field: Name=ID Type=FieldType
 
-FieldType: SimpleType | ReferenceType | ArrayType | PrimitiveType;
+FieldType: SimpleType | ReferenceType | ArrayType | PrimitiveType
 
-ArrayType: "[" "]" InternalType=FieldType;
+ArrayType: "[" "]" InternalType=FieldType
 
-ReferenceType: "*" Type=[Interface:ID];
+ReferenceType: "*" Type=[Interface:ID]
 
-SimpleType: Type=[Interface:ID];
+SimpleType: Type=[Interface:ID]
 
-PrimitiveType: Type=("string" | "bool" | "composite");
+PrimitiveType: Type=("string" | "bool" | "composite")
 
 interface AbstractRule {
     Name string
@@ -78,27 +76,28 @@ interface AbstractRuleWithBody extends AbstractRule {
 interface AbstractTokenRule extends AbstractRule{}
 
 interface ParserRule extends AbstractRuleWithBody {
+    Entry      bool
     ReturnType *Interface
 }
 
-ParserRule: Name=ID ("returns" ReturnType=[Interface:ID])? ":" Body=Alternatives ";";
+ParserRule: (Entry?="entry")? Name=ID ("returns" ReturnType=[Interface:ID])? ":" Body=Alternatives ";"?
 
 interface Token extends AbstractTokenRule {
-    Type string
+    Type   string
     Regexp string
 }
 
-Token: (Type="hidden" | Type="comment")? "token" Name=ID ":" Regexp=RegexLiteral ";";
+Token: (Type="hidden" | Type="comment")? "token" Name=ID ":" Regexp=RegexLiteral ";"?
 
 interface TokenGroup extends AbstractTokenRule {
     TokenRefs []*AbstractTokenRule
-    Regexps []string
-    Keywords []Keyword
+    Regexps   []string
+    Keywords  []Keyword
 }
 
 TokenGroup: "token" "group" Name=ID "{"
     (TokenRefs+=[AbstractTokenRule:ID] | "keywords" Regexps+=RegexLiteral | Keywords+=Keyword)*
-"}";
+"}"
 
 interface Element {
     Cardinality string
@@ -108,75 +107,75 @@ interface Alternatives extends Assignable {
     Alts []Element
 }
 
-Alternatives returns Element: Group ({Alternatives.Alts+=current} ("|" Alts+=Group)+)?;
+Alternatives returns Element: Group ({Alternatives.Alts+=current} ("|" Alts+=Group)+)?
 
 interface Group extends Element {
     Elements []Element
 }
 
-Group returns Element: Element ({Group.Elements+=current} Elements+=Element+)?;
+Group returns Element: Element ({Group.Elements+=current} Elements+=Element+)?
 
-Element: (Keyword | Assignment | RuleCall | Action | "(" Alternatives ")") Cardinality=("*" | "+" | "?")?;
+Element: (Keyword | Assignment | RuleCall | Action | "(" Alternatives ")") Cardinality=("*" | "+" | "?")?
 
 interface Keyword extends Assignable {
     Value string
 }
 
-Keyword: Value=StringLiteral;
+Keyword: Value=StringLiteral
 
 interface Assignment extends Element {
     Property *Field
     Operator string
-    Value Assignable
+    Value    Assignable
 }
 
-Assignment: Property=[Field:ID] Operator=("+=" | "=" | "?=") Value=Assignable;
+Assignment: Property=[Field:ID] Operator=("+=" | "=" | "?=") Value=Assignable
 
 interface Assignable extends Element {}
 
-Assignable: Keyword | RuleCall | CrossRef | "(" AssignableAlternatives ")";
+Assignable: Keyword | RuleCall | CrossRef | "(" AssignableAlternatives ")"
 
-AssignableWithoutAlts returns Assignable: Keyword | RuleCall | CrossRef;
+AssignableWithoutAlts returns Assignable: Keyword | RuleCall | CrossRef
 
-AssignableAlternatives returns Assignable: AssignableWithoutAlts ({Alternatives.Alts+=current} ("|" Alts+=AssignableWithoutAlts)+)?;
+AssignableAlternatives returns Assignable: AssignableWithoutAlts ({Alternatives.Alts+=current} ("|" Alts+=AssignableWithoutAlts)+)?
 
 interface CrossRef extends Assignable {
     Type *Interface
     Rule RuleCall
 }
 
-CrossRef: "[" Type=[Interface:ID] (":" Rule=RuleCall)? "]";
+CrossRef: "[" Type=[Interface:ID] (":" Rule=RuleCall)? "]"
 
 interface RuleCall extends Assignable {
     Rule *AbstractRule
 }
 
-RuleCall: Rule=[AbstractRule:ID];
+RuleCall: Rule=[AbstractRule:ID]
 
 interface Action extends Element {
-    Type *Interface
+    Type     *Interface
     Operator string
     Property *Field
 }
 
-Action: "{" Type=[Interface:ID] ("." Property=[Field:ID] Operator=("+=" | "=") "current")? "}";
+Action: "{" Type=[Interface:ID] ("." Property=[Field:ID] Operator=("+=" | "=") "current")? "}"
 
 interface CompositeRule extends AbstractRuleWithBody {
 }
 
-CompositeRule: "composite" Name=ID ":" Body=CompositeAlternatives ";";
+CompositeRule: "composite" Name=ID ":" Body=CompositeAlternatives ";"?
 
-CompositeAlternatives returns Element: CompositeGroup ({Alternatives.Alts+=current} ("|" Alts+=CompositeGroup)+)?;
+CompositeAlternatives returns Element: CompositeGroup ({Alternatives.Alts+=current} ("|" Alts+=CompositeGroup)+)?
 
-CompositeGroup returns Element: CompositeElement ({Group.Elements+=current} Elements+=CompositeElement+)?;
+CompositeGroup returns Element: CompositeElement ({Group.Elements+=current} Elements+=CompositeElement+)?
 
-CompositeElement returns Element: (Keyword | RuleCall | "(" CompositeAlternatives ")") Cardinality=("*" | "+" | "?")?;
+CompositeElement returns Element: (Keyword | RuleCall | "(" CompositeAlternatives ")") Cardinality=("*" | "+" | "?")?
 
 // Move comments in front of RegexLiteral
-comment token SL_COMMENT: /\/\/[^\r\n]*/;
-comment token ML_COMMENT: /\/\*[\s\S]*?\*\//;
+comment token SL_COMMENT: /\/\/[^\r\n]*/
+comment token ML_COMMENT: /\/\*[\s\S]*?\*\//
 
-token StringLiteral: /"[^"]*"/;
-token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
-token RegexLiteral: /\/([^\r\n\[\/\\]|\\.|\[([^\r\n\]\\]|\\.)*\])+\//;
-hidden token WS: /[ \n\r\t]+/;
+token StringLiteral: /"[^"]*"/
+token ID: /[a-zA-Z_][a-zA-Z0-9_]*/
+token RegexLiteral: /\/([^\r\n\[\/\\]|\\.|\[([^\r\n\]\\]|\\.)*\])+\//
+hidden token WS: /[ \n\r\t]+/

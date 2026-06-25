@@ -35,9 +35,11 @@ func (s *DefaultDocumentValidator) Validate(ctx context.Context, doc *core.Docum
 		return nil
 	}
 
-	lexerErrors := CreateLexerDiagnostics(doc)
-	parserErrors := CreateParserDiagnostics(doc)
-	linkerErrors := CreateLinkerDiagnostics(doc)
+	source := diagnosticSource(s.sc, doc)
+
+	lexerErrors := CreateLexerDiagnostics(doc, source)
+	parserErrors := CreateParserDiagnostics(doc, source)
+	linkerErrors := CreateLinkerDiagnostics(doc, source)
 
 	capacity := len(lexerErrors) + len(parserErrors) + len(linkerErrors) + 8
 	diagnostics := make([]*core.Diagnostic, 0, capacity)
@@ -46,6 +48,9 @@ func (s *DefaultDocumentValidator) Validate(ctx context.Context, doc *core.Docum
 	diagnostics = append(diagnostics, linkerErrors...)
 
 	accept := func(d *core.Diagnostic) {
+		if d.Source == "" {
+			d.Source = source
+		}
 		diagnostics = append(diagnostics, d)
 	}
 	for node := range core.AllNodes(doc.Root) {
@@ -57,4 +62,16 @@ func (s *DefaultDocumentValidator) Validate(ctx context.Context, doc *core.Docum
 		}
 	}
 	return diagnostics
+}
+
+func diagnosticSource(sc *service.Container, doc *core.Document) string {
+	if doc.TextDoc != nil {
+		if source := doc.TextDoc.LanguageID(); source != "" {
+			return source
+		}
+	}
+	if languageID, err := service.Get[LanguageID](sc); err == nil {
+		return string(languageID)
+	}
+	return ""
 }

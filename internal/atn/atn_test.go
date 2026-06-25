@@ -152,7 +152,7 @@ func TestThreePaths(t *testing.T) {
 
 func TestCompositeRuleRef(t *testing.T) {
 	atn, rules, tokenTypes := FixtureATN(t, `
-		interface Start { Name string }
+		interface Start { Name composite }
 		composite SimpleComposite: ID;
 		Start: Name=SimpleComposite;
 	`, false)
@@ -161,7 +161,7 @@ func TestCompositeRuleRef(t *testing.T) {
 
 func TestCompositeRuleWithAlternativesRef(t *testing.T) {
 	atn, rules, tokenTypes := FixtureATN(t, `
-		interface Start { Name string }
+		interface Start { Name composite }
 		composite IDOrNumber: ID | NUMBER;
 		Start: Name=IDOrNumber;
 	`, false)

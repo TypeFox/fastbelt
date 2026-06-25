@@ -12,12 +12,14 @@
 // See [typefox.dev/fastbelt] for the toolchain overview and the
 // [typefox.dev/fastbelt/cmd/fastbelt] command for code generation.
 //
+// Semicolons are optional at the end of each statement and can generally
+// be omitted.
+//
 // # Language Declaration
 //
-// Every grammar file begins with the grammar keyword, the language name,
-// and a semicolon:
+// Every grammar file begins with the grammar keyword and the language name.
 //
-//	grammar MyLanguage;
+//	grammar MyLanguage
 //
 // The name is used by Fastbelt when naming the generated package and
 // language server.
@@ -107,8 +109,8 @@
 // assigns it a name. Token rule names are conventionally written in upper
 // case:
 //
-//	token ID:  /[_a-zA-Z][\w_]*/;
-//	token INT: /[0-9]+/;
+//	token ID:  /[_a-zA-Z][\w_]*/
+//	token INT: /[0-9]+/
 //
 // The lexer returns the first, longest match. If multiple token rules
 // match the same text with equal length, the token rule declared first wins.
@@ -119,9 +121,9 @@
 // Tokens that should be silently consumed — whitespace, comments — are
 // declared with the hidden modifier:
 //
-//	hidden token WS:         /\s+/;
-//	hidden token ML_COMMENT: /\/\*[\s\S]*?\*\//;
-//	hidden token SL_COMMENT: /\/\/[^\r\n]*/;
+//	hidden token WS:         /\s+/
+//	hidden token ML_COMMENT: /\/\*[\s\S]*?\*\//
+//	hidden token SL_COMMENT: /\/\/[^\r\n]*/
 //
 // Hidden tokens are global and apply to the entire grammar. They may
 // appear anywhere without interrupting assignment groups.
@@ -131,7 +133,7 @@
 // Documentation comments attached to the grammar element that follows them
 // are declared with the comment modifier:
 //
-//	comment token SL_COMMENT: /\/\/[^\r\n]*/;
+//	comment token SL_COMMENT: /\/\/[^\r\n]*/
 //
 // Parsed comment tokens are stored in the document's `Comments []Token`
 // slice, where tooling can access them.
@@ -145,14 +147,14 @@
 //	token group Operator { "+" "-" "*" "/" }
 //
 //	Expr:
-//	    Left=INT Op=Operator Right=INT;
+//	    Left=INT Op=Operator Right=INT
 //
 // A token group may contain token rule names, double-quoted keywords, and
 // other token group names. Keywords inside a group are matched the same way as
 // keywords anywhere else in the grammar:
 //
-//	token ID:  /[_a-zA-Z][\w]*/;
-//	token INT: /[0-9]+/;
+//	token ID:  /[_a-zA-Z][\w]*/
+//	token INT: /[0-9]+/
 //
 //	token group Literal { ID INT "null" "true" "false" }
 //
@@ -173,7 +175,7 @@
 // problem of parsing keywords as identifiers:
 //
 //	token group Identifier { ID keywords /^\w+$/ }
-//	NamedElement: Name=Identifier;
+//	NamedElement: Name=Identifier
 //
 // Two constraints apply: hidden and comment tokens may not appear inside a
 // group, and token groups must not be recursive (directly or transitively).
@@ -185,13 +187,19 @@
 // is the entry rule: the starting point of the parse.
 //
 // A parser rule starts with its name, an optional returns clause naming the
-// interface type it creates, a colon, the rule body, and a semicolon:
+// interface type it creates, a colon, and the rule body:
 //
 //	Person returns Person:
-//	    "person" Name=ID;
+//	    "person" Name=ID
 //
 // When the rule name matches a declared interface the returns clause may be
 // omitted and Fastbelt resolves the type by name.
+//
+// A parser rule that is used as entry rule for a language must be marked
+// with the entry modifier:
+//
+//	entry PersonModel:
+//	    Persons+=Person*
 //
 // # Cardinalities
 //
@@ -207,14 +215,14 @@
 // Elements in sequence form a group and must appear in the declared order:
 //
 //	Person returns Person:
-//	    "person" Name=ID Address=Address;
+//	    "person" Name=ID Address=Address
 //
 // Parentheses create a sub-group that can carry its own cardinality:
 //
 //	State returns State:
 //	    "state" Name=ID
 //	        ("actions" "{" Actions+=[Command:ID]+ "}")?
-//	    "end";
+//	    "end"
 //
 // # Alternatives
 //
@@ -222,7 +230,7 @@
 // parentheses can carry a cardinality:
 //
 //	Model returns Model:
-//	    (Persons+=Person | Greetings+=Greeting)*;
+//	    (Persons+=Person | Greetings+=Greeting)*
 //
 // # Keywords
 //
@@ -230,7 +238,7 @@
 // and provide visible structure to the language. They must not be empty:
 //
 //	Person returns Person:
-//	    "person" Name=ID "age" Age=INT;
+//	    "person" Name=ID "age" Age=INT
 //
 // Keywords help the parser disambiguate between alternatives that would
 // otherwise be identical:
@@ -239,13 +247,13 @@
 //	interface Teacher { Name string }
 //
 //	Student returns Student:
-//	    "student" Name=ID;
+//	    "student" Name=ID
 //
 //	Teacher returns Teacher:
-//	    "teacher" Name=ID;
+//	    "teacher" Name=ID
 //
 //	Person:
-//	    Student | Teacher;
+//	    Student | Teacher
 //
 // Without the "student" and "teacher" keywords the grammar would be
 // ambiguous and the parser could not distinguish the two rules.
@@ -259,18 +267,18 @@
 // Single-value assignment (=) stores one parsed value in the field:
 //
 //	Person returns Person:
-//	    "person" Name=ID;
+//	    "person" Name=ID
 //
 // Array assignment (+=) appends each matched value to a slice field:
 //
 //	Model returns Model:
-//	    Events+=Event*;
+//	    Events+=Event*
 //
 // Boolean assignment (?=) sets a bool field to true when the right side is
 // consumed; the field remains false otherwise:
 //
 //	Employee returns Employee:
-//	    "employee" Name=ID (Remote?="remote")?;
+//	    "employee" Name=ID (Remote?="remote")?
 //
 // Assignments with cardinality + or * form a contiguous group: the sequence
 // of matched values must not be interrupted by elements belonging to a
@@ -298,7 +306,7 @@
 //	}
 //
 //	Transition returns Transition:
-//	    Event=[Event:ID] "=>" State=[State:ID];
+//	    Event=[Event:ID] "=>" State=[State:ID]
 //
 // The linker resolves cross-references after parsing. If no object matching
 // the token value is found in scope, a diagnostic error is reported.
@@ -310,7 +318,7 @@
 // for producing the object:
 //
 //	AbstractDefinition:
-//	    Definition | DeclaredParameter;
+//	    Definition | DeclaredParameter
 //
 // The parser rule AbstractDefinition does not create an object of its own.
 // Instead it calls either Definition or DeclaredParameter, and whichever
@@ -335,7 +343,7 @@
 //	interface TypeTwo extends TypeOne {}
 //
 //	RuleOne returns TypeOne:
-//	    "one" Name=ID | {TypeTwo} "two" Name=ID;
+//	    "one" Name=ID | {TypeTwo} "two" Name=ID
 //
 // A tree-rewriting action creates a new object of the named type and assigns
 // the object built so far to one of its properties. This technique handles
@@ -343,7 +351,7 @@
 // current object is referred to by the keyword current:
 //
 //	Addition returns Expression:
-//	    SimpleExpr ({Addition.Left=current} "+" Right=SimpleExpr)*;
+//	    SimpleExpr ({Addition.Left=current} "+" Right=SimpleExpr)*
 //
 // When the "+" keyword is found, a new Addition object is created, the
 // object parsed so far is stored in its Left property, and that new Addition
@@ -360,7 +368,7 @@
 // Composite rules support keywords, rule calls, parenthesized alternatives,
 // and cardinalities, but not assignments or cross-references:
 //
-//	composite QualifiedName: ID ("." ID)*;
+//	composite QualifiedName: ID ("." ID)*
 //
 // Composite values can also be used to define object names and resolve
 // cross-references:
@@ -372,6 +380,6 @@
 //	    Item *Type
 //	}
 //
-//	Type: Name=QualifiedName;
-//	TypeRef: Item=[Type:QualifiedName];
+//	Type: Name=QualifiedName
+//	TypeRef: Item=[Type:QualifiedName]
 package grammar

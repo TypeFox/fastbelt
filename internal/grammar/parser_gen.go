@@ -49,15 +49,17 @@ func (p *Parser) ParseGrammar() Grammar {
 			}
 		}
 		{
-			token := p.state.Consume(Keyword_Semicolon)
-			core.AssignToken(current, token, Grammar_Semicolon)
+			if p.lookahead.GrammarSemicolonOptional(p.state) {
+				token := p.state.Consume(Keyword_Semicolon)
+				core.AssignToken(current, token, Grammar_Semicolon)
+			}
 		}
 		p.state.Sync(Grammar__LoopEntry)
 		for p.lookahead.GrammarLoop(p.state) {
 			switch prediction, failure := p.lookahead.GrammarAlternatives(p.state); prediction {
 			case 0:
 				{
-					p.state.EnterRule(Grammar__Basic_1)
+					p.state.EnterRule(Grammar__Basic_3)
 					result := p.ParseParserRule()
 					p.state.ExitRule()
 					if result != nil {
@@ -66,7 +68,7 @@ func (p *Parser) ParseGrammar() Grammar {
 				}
 			case 1:
 				{
-					p.state.EnterRule(Grammar__Basic_3)
+					p.state.EnterRule(Grammar__Basic_5)
 					result := p.ParseToken()
 					p.state.ExitRule()
 					if result != nil {
@@ -75,7 +77,7 @@ func (p *Parser) ParseGrammar() Grammar {
 				}
 			case 2:
 				{
-					p.state.EnterRule(Grammar__Basic_5)
+					p.state.EnterRule(Grammar__Basic_7)
 					result := p.ParseTokenGroup()
 					p.state.ExitRule()
 					if result != nil {
@@ -84,7 +86,7 @@ func (p *Parser) ParseGrammar() Grammar {
 				}
 			case 3:
 				{
-					p.state.EnterRule(Grammar__Basic_7)
+					p.state.EnterRule(Grammar__Basic_9)
 					result := p.ParseInterface()
 					p.state.ExitRule()
 					if result != nil {
@@ -93,7 +95,7 @@ func (p *Parser) ParseGrammar() Grammar {
 				}
 			case 4:
 				{
-					p.state.EnterRule(Grammar__Basic_9)
+					p.state.EnterRule(Grammar__Basic_11)
 					result := p.ParseCompositeRule()
 					p.state.ExitRule()
 					if result != nil {
@@ -345,13 +347,23 @@ func (p *Parser) ParseParserRule() ParserRule {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
+			p.state.Sync(ParserRule__Basic_1)
+			if p.lookahead.ParserRuleEntryOptional(p.state) {
+				token := p.state.Consume(Keyword_entry)
+				core.AssignToken(current, token, ParserRule_Entry_entry)
+				if token != nil {
+					current.SetEntry(token)
+				}
+			}
+		}
+		{
 			token := p.state.Consume(Token_ID)
 			core.AssignToken(current, token, ParserRule_Name_ID)
 			if token != nil {
 				current.SetName(token)
 			}
 		}
-		p.state.Sync(ParserRule__Basic_1)
+		p.state.Sync(ParserRule__Basic_3)
 		if p.lookahead.ParserRuleOptional(p.state) {
 			{
 				token := p.state.Consume(Keyword_returns)
@@ -370,7 +382,7 @@ func (p *Parser) ParseParserRule() ParserRule {
 			core.AssignToken(current, token, ParserRule_Colon)
 		}
 		{
-			p.state.EnterRule(ParserRule_Semicolon)
+			p.state.EnterRule(ParserRule__Basic_6)
 			result := p.ParseAlternatives()
 			p.state.ExitRule()
 			if result != nil {
@@ -378,8 +390,10 @@ func (p *Parser) ParseParserRule() ParserRule {
 			}
 		}
 		{
-			token := p.state.Consume(Keyword_Semicolon)
-			core.AssignToken(current, token, ParserRule_Semicolon)
+			if p.lookahead.ParserRuleSemicolonOptional(p.state) {
+				token := p.state.Consume(Keyword_Semicolon)
+				core.AssignToken(current, token, ParserRule_Semicolon)
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -432,8 +446,10 @@ func (p *Parser) ParseToken() Token {
 			}
 		}
 		{
-			token := p.state.Consume(Keyword_Semicolon)
-			core.AssignToken(current, token, Token_Semicolon)
+			if p.lookahead.TokenSemicolonOptional(p.state) {
+				token := p.state.Consume(Keyword_Semicolon)
+				core.AssignToken(current, token, Token_Semicolon)
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -1001,7 +1017,7 @@ func (p *Parser) ParseCompositeRule() CompositeRule {
 			core.AssignToken(current, token, CompositeRule_Colon)
 		}
 		{
-			p.state.EnterRule(CompositeRule_Semicolon)
+			p.state.EnterRule(CompositeRule__Basic_2)
 			result := p.ParseCompositeAlternatives()
 			p.state.ExitRule()
 			if result != nil {
@@ -1009,8 +1025,10 @@ func (p *Parser) ParseCompositeRule() CompositeRule {
 			}
 		}
 		{
-			token := p.state.Consume(Keyword_Semicolon)
-			core.AssignToken(current, token, CompositeRule_Semicolon)
+			if p.lookahead.CompositeRuleSemicolonOptional(p.state) {
+				token := p.state.Consume(Keyword_Semicolon)
+				core.AssignToken(current, token, CompositeRule_Semicolon)
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))

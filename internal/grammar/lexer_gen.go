@@ -351,7 +351,26 @@ var Keyword_current = core.NewTokenType(
 	[]rune{'c'},
 )
 
-const Keyword_extends_Idx = 19
+const Keyword_entry_Idx = 19
+
+var Keyword_entry = core.NewTokenType(
+	Keyword_entry_Idx,
+	"entry",
+	"entry",
+	0,
+	core.TokenKindKeyword,
+	0,
+	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "entry") {
+			return 5
+		}
+		return 0
+	},
+	[]rune{'e'},
+)
+
+const Keyword_extends_Idx = 20
 
 var Keyword_extends = core.NewTokenType(
 	Keyword_extends_Idx,
@@ -370,7 +389,7 @@ var Keyword_extends = core.NewTokenType(
 	[]rune{'e'},
 )
 
-const Keyword_grammar_Idx = 20
+const Keyword_grammar_Idx = 21
 
 var Keyword_grammar = core.NewTokenType(
 	Keyword_grammar_Idx,
@@ -389,7 +408,7 @@ var Keyword_grammar = core.NewTokenType(
 	[]rune{'g'},
 )
 
-const Keyword_group_Idx = 21
+const Keyword_group_Idx = 22
 
 var Keyword_group = core.NewTokenType(
 	Keyword_group_Idx,
@@ -408,7 +427,7 @@ var Keyword_group = core.NewTokenType(
 	[]rune{'g'},
 )
 
-const Keyword_hidden_Idx = 22
+const Keyword_hidden_Idx = 23
 
 var Keyword_hidden = core.NewTokenType(
 	Keyword_hidden_Idx,
@@ -427,7 +446,7 @@ var Keyword_hidden = core.NewTokenType(
 	[]rune{'h'},
 )
 
-const Keyword_interface_Idx = 23
+const Keyword_interface_Idx = 24
 
 var Keyword_interface = core.NewTokenType(
 	Keyword_interface_Idx,
@@ -446,7 +465,7 @@ var Keyword_interface = core.NewTokenType(
 	[]rune{'i'},
 )
 
-const Keyword_keywords_Idx = 24
+const Keyword_keywords_Idx = 25
 
 var Keyword_keywords = core.NewTokenType(
 	Keyword_keywords_Idx,
@@ -465,7 +484,7 @@ var Keyword_keywords = core.NewTokenType(
 	[]rune{'k'},
 )
 
-const Keyword_returns_Idx = 25
+const Keyword_returns_Idx = 26
 
 var Keyword_returns = core.NewTokenType(
 	Keyword_returns_Idx,
@@ -484,7 +503,7 @@ var Keyword_returns = core.NewTokenType(
 	[]rune{'r'},
 )
 
-const Keyword_string_Idx = 26
+const Keyword_string_Idx = 27
 
 var Keyword_string = core.NewTokenType(
 	Keyword_string_Idx,
@@ -503,7 +522,7 @@ var Keyword_string = core.NewTokenType(
 	[]rune{'s'},
 )
 
-const Keyword_token_Idx = 27
+const Keyword_token_Idx = 28
 
 var Keyword_token = core.NewTokenType(
 	Keyword_token_Idx,
@@ -522,7 +541,7 @@ var Keyword_token = core.NewTokenType(
 	[]rune{'t'},
 )
 
-const Keyword_LeftBrace_Idx = 28
+const Keyword_LeftBrace_Idx = 29
 
 var Keyword_LeftBrace = core.NewTokenType(
 	Keyword_LeftBrace_Idx,
@@ -541,7 +560,7 @@ var Keyword_LeftBrace = core.NewTokenType(
 	[]rune{'{'},
 )
 
-const Keyword_Pipe_Idx = 29
+const Keyword_Pipe_Idx = 30
 
 var Keyword_Pipe = core.NewTokenType(
 	Keyword_Pipe_Idx,
@@ -560,7 +579,7 @@ var Keyword_Pipe = core.NewTokenType(
 	[]rune{'|'},
 )
 
-const Keyword_RightBrace_Idx = 30
+const Keyword_RightBrace_Idx = 31
 
 var Keyword_RightBrace = core.NewTokenType(
 	Keyword_RightBrace_Idx,
@@ -579,7 +598,7 @@ var Keyword_RightBrace = core.NewTokenType(
 	[]rune{'}'},
 )
 
-const Token_SL_COMMENT_Idx = 31
+const Token_SL_COMMENT_Idx = 32
 
 var Token_SL_COMMENT = core.NewTokenType(
 	Token_SL_COMMENT_Idx,
@@ -670,7 +689,7 @@ var Token_SL_COMMENT_Accepting = [3]bool{
 	2: true,
 }
 
-const Token_ML_COMMENT_Idx = 32
+const Token_ML_COMMENT_Idx = 33
 
 var Token_ML_COMMENT = core.NewTokenType(
 	Token_ML_COMMENT_Idx,
@@ -795,7 +814,7 @@ var Token_ML_COMMENT_Accepting = [5]bool{
 	4: true,
 }
 
-const Token_StringLiteral_Idx = 33
+const Token_StringLiteral_Idx = 34
 
 var Token_StringLiteral = core.NewTokenType(
 	Token_StringLiteral_Idx,
@@ -886,7 +905,7 @@ var Token_StringLiteral_Accepting = [3]bool{
 	2: true,
 }
 
-const Token_ID_Idx = 34
+const Token_ID_Idx = 35
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
@@ -960,7 +979,7 @@ var Token_ID_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_RegexLiteral_Idx = 35
+const Token_RegexLiteral_Idx = 36
 
 var Token_RegexLiteral = core.NewTokenType(
 	Token_RegexLiteral_Idx,
@@ -1119,7 +1138,7 @@ var Token_RegexLiteral_Accepting = [7]bool{
 	5: true,
 }
 
-const Token_WS_Idx = 36
+const Token_WS_Idx = 37
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
@@ -1213,6 +1232,7 @@ func NewLexer() lexer.Lexer {
 		Keyword_comment,
 		Keyword_composite,
 		Keyword_current,
+		Keyword_entry,
 		Keyword_extends,
 		Keyword_grammar,
 		Keyword_group,

@@ -5,8 +5,8 @@ interface Document {
 	Message string
 }
 
-Document returns Document:
-	"hello" Message=ID;
+entry Document returns Document:
+	"hello" Message=ID
 
-token ID: /[_a-zA-Z][\w_]*/;
-hidden token WS: /\s+/;
+token ID: /[_a-zA-Z][\w_]*/
+hidden token WS: /\s+/

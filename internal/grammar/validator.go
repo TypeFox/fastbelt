@@ -16,24 +16,40 @@ import (
 )
 
 const (
-	ValidateUniqueRuleName         = "uniqueRuleName"
-	ValidateUniqueInterfaceName    = "uniqueInterfaceName"
-	ValidateEmptyToken             = "emptyTerminalRule"
-	ValidateEmptyKeyword           = "emptyKeyword"
-	ValidateWhitespaceOnlyKeyword  = "whitespaceOnlyKeyword"
-	ValidateKeywordWithWhitespace  = "keywordWithWhitespace"
-	ValidateRuleReturnType         = "ruleReturnType"
-	ValidateInterfaceExtends       = "interfaceExtends"
-	ValidateRuleCallReturnType     = "ruleCallReturnType"
-	ValidateRuleCallPosition       = "ruleCallPosition"
-	ValidateActionAssignmentType   = "actionAssignmentType"
-	ValidateActionPropertyType     = "actionPropertyType"
-	ValidateAssignmentType         = "assignmentType"
-	ValidateRecursiveTokenGroup    = "recursiveTokenGroup"
-	ValidateInvalidTokenInGroup    = "invalidTokenInGroup"
-	ValidateUniqueFieldName        = "uniqueFieldName"
-	ValidateFieldNameCapitalLetter = "fieldNameCapitalLetter"
+	ValidateUniqueRuleName          = "uniqueRuleName"
+	ValidateUniqueInterfaceName     = "uniqueInterfaceName"
+	ValidateEmptyToken              = "emptyTerminalRule"
+	ValidateEmptyKeyword            = "emptyKeyword"
+	ValidateWhitespaceOnlyKeyword   = "whitespaceOnlyKeyword"
+	ValidateKeywordWithWhitespace   = "keywordWithWhitespace"
+	ValidateRuleReturnType          = "ruleReturnType"
+	ValidateInterfaceExtends        = "interfaceExtends"
+	ValidateRuleCallReturnType      = "ruleCallReturnType"
+	ValidateRuleCallPosition        = "ruleCallPosition"
+	ValidateActionAssignmentType    = "actionAssignmentType"
+	ValidateActionPropertyType      = "actionPropertyType"
+	ValidateAssignmentType          = "assignmentType"
+	ValidateRecursiveTokenGroup     = "recursiveTokenGroup"
+	ValidateInvalidTokenInGroup     = "invalidTokenInGroup"
+	ValidateInvalidTokenInCrossRef  = "invalidTokenInCrossRef"
+	ValidateMissingCrossRefTerminal = "missingCrossRefTerminal"
+	ValidateUniqueFieldName         = "uniqueFieldName"
+	ValidateFieldNameCapitalLetter  = "fieldNameCapitalLetter"
+	ValidateReservedFieldName       = "reservedFieldName"
+	ValidateNestedArrayType         = "nestedArrayType"
 )
+
+// reservedFieldNames lists field names that must not be used because they
+// conflict with [core.AstNode] methods. Keep in sync with ast.go.
+var reservedFieldNames = map[string]string{
+	"Document":         "AstNode.Document",
+	"Container":        "AstNode.Container",
+	"Tokens":           "AstNode.Tokens",
+	"Segment":          "AstNode.Segment",
+	"Text":             "AstNode.Text",
+	"ForEachNode":      "AstNode.ForEachNode",
+	"ForEachReference": "AstNode.ForEachReference",
+}
 
 // GrammarImpl.Validate checks grammar-level constraints:
 //   - Rule names must be unique within the grammar.
@@ -197,6 +213,7 @@ func checkRuleReturnType(rule ParserRule, _ context.Context, accept core.Validat
 func (i *InterfaceImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
 	checkInterfaceExtends(i, ctx, accept)
 	checkInterfaceFieldNames(i, ctx, accept)
+	checkInterfaceFieldTypes(i, accept)
 }
 
 func collectInheritedFieldNames(iface Interface, ctx context.Context, collected map[string]Interface, visited collections.Set[string]) {
@@ -228,6 +245,21 @@ func checkInterfaceFieldNames(iface Interface, ctx context.Context, accept core.
 	inherited := map[string]Interface{}
 	collectInheritedFieldNames(iface, ctx, inherited, collections.NewSet[string]())
 
+	allFields := map[string]Interface{}
+	for lower, declaringIface := range inherited {
+		allFields[lower] = declaringIface
+	}
+	for _, field := range iface.Fields() {
+		name := field.Name()
+		if name == "" {
+			continue
+		}
+		lower := strings.ToLower(name)
+		if _, exists := allFields[lower]; !exists {
+			allFields[lower] = iface
+		}
+	}
+
 	seen := collections.NewSet[string]()
 	for _, field := range iface.Fields() {
 		name := field.Name()
@@ -237,17 +269,18 @@ func checkInterfaceFieldNames(iface Interface, ctx context.Context, accept core.
 		if !unicode.IsUpper(rune(name[0])) {
 			accept(core.NewDiagnostic(
 				core.SeverityError,
-				fmt.Sprintf("Property names must start with a capital letter. '%s' does not.", name),
+				"Field names must start with a capital letter.",
 				field,
 				core.WithToken(field.NameToken()),
 				core.WithCode(ValidateFieldNameCapitalLetter),
 			))
 		}
+		checkReservedFieldName(field, iface, allFields, accept)
 		lower := strings.ToLower(name)
 		if seen.Has(lower) {
 			accept(core.NewDiagnostic(
 				core.SeverityError,
-				fmt.Sprintf("A property's name has to be unique (case-insensitively). '%s' is already used above.", name),
+				fmt.Sprintf("A field's name has to be unique (case-insensitively). '%s' is already used above.", name),
 				field,
 				core.WithToken(field.NameToken()),
 				core.WithCode(ValidateUniqueFieldName),
@@ -257,7 +290,7 @@ func checkInterfaceFieldNames(iface Interface, ctx context.Context, accept core.
 			if declaringIface, dup := inherited[lower]; dup {
 				accept(core.NewDiagnostic(
 					core.SeverityError,
-					fmt.Sprintf("A property's name has to be unique (case-insensitively). '%s' is already declared in '%s'.", name, declaringIface.Name()),
+					fmt.Sprintf("A field's name has to be unique (case-insensitively). '%s' is already declared in '%s'.", name, declaringIface.Name()),
 					field,
 					core.WithToken(field.NameToken()),
 					core.WithCode(ValidateUniqueFieldName),
@@ -265,6 +298,98 @@ func checkInterfaceFieldNames(iface Interface, ctx context.Context, accept core.
 			}
 		}
 	}
+}
+
+func checkInterfaceFieldTypes(iface Interface, accept core.ValidationAcceptor) {
+	for _, field := range iface.Fields() {
+		fieldType := field.Type()
+		if isNestedArrayType(fieldType) {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				"Nested array types are not supported.",
+				fieldType,
+				core.WithCode(ValidateNestedArrayType),
+			))
+		}
+	}
+}
+
+func isNestedArrayType(fieldType FieldType) bool {
+	arrayType, ok := fieldType.(ArrayType)
+	if !ok {
+		return false
+	}
+	_, ok = arrayType.InternalType().(ArrayType)
+	return ok
+}
+
+func checkReservedFieldName(field Field, iface Interface, allFields map[string]Interface, accept core.ValidationAcceptor) {
+	name := field.Name()
+	if name == "" {
+		return
+	}
+
+	if strings.HasPrefix(name, "Set") {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			"Field names must not start with 'Set' because the framework generates Set{Name}() setter methods.",
+			field,
+			core.WithToken(field.NameToken()),
+			core.WithCode(ValidateReservedFieldName),
+		))
+		return
+	}
+	if strings.HasPrefix(name, "Is") {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			"Field names must not start with 'Is' because the framework generates Is{Name}() methods for boolean fields.",
+			field,
+			core.WithToken(field.NameToken()),
+			core.WithCode(ValidateReservedFieldName),
+		))
+		return
+	}
+	if name == iface.Name() {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			"A field's name cannot be the same as the interface name due to potential conflicts with generated methods.",
+			field,
+			core.WithToken(field.NameToken()),
+			core.WithCode(ValidateReservedFieldName),
+		))
+		return
+	}
+	if reserved, ok := reservedFieldNames[name]; ok {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			fmt.Sprintf("The field name '%s' is reserved by the framework and cannot be used because it would conflict with %s.", name, reserved),
+			field,
+			core.WithToken(field.NameToken()),
+			core.WithCode(ValidateReservedFieldName),
+		))
+		return
+	}
+	if base, _, ok := tokenOrNodeSuffixBase(name); ok {
+		lower := strings.ToLower(base)
+		if _, exists := allFields[lower]; exists && !strings.EqualFold(base, name) {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				fmt.Sprintf("The field name '%s' conflicts with '%s' due to potential conflicts with generated methods.", name, base),
+				field,
+				core.WithToken(field.NameToken()),
+				core.WithCode(ValidateReservedFieldName),
+			))
+		}
+	}
+}
+
+func tokenOrNodeSuffixBase(name string) (base, suffix string, ok bool) {
+	for _, suffix := range []string{"Token", "Node"} {
+		if strings.HasSuffix(name, suffix) && len(name) > len(suffix) {
+			return name[:len(name)-len(suffix)], suffix, true
+		}
+	}
+	return "", "", false
 }
 
 func checkInterfaceExtends(iface Interface, ctx context.Context, accept core.ValidationAcceptor) {
@@ -584,6 +709,24 @@ func isAssignableTo(ctx context.Context, source Assignable, fieldType FieldType,
 					core.WithCode(ValidateAssignmentType),
 				))
 			}
+		case CompositeRule:
+			if primitiveType, ok := fieldType.(PrimitiveType); !ok || primitiveType.Type() != "composite" {
+				if primitiveType, ok := fieldType.(PrimitiveType); ok && primitiveType.Type() == "string" {
+					accept(core.NewDiagnostic(
+						core.SeverityError,
+						"Cannot assign a composite rule to a string field. Use 'composite' as the field type instead.",
+						v,
+						core.WithCode(ValidateAssignmentType),
+					))
+				} else {
+					accept(core.NewDiagnostic(
+						core.SeverityError,
+						"Cannot assign a composite rule to a non-composite field.",
+						v,
+						core.WithCode(ValidateAssignmentType),
+					))
+				}
+			}
 		}
 	case Keyword:
 		if primitiveType, ok := fieldType.(PrimitiveType); !ok || primitiveType.Type() != "string" {
@@ -660,6 +803,17 @@ func appearsInTokenGroup(target TokenGroup, current TokenGroup, ctx context.Cont
 	return false
 }
 
+func hiddenOrCommentTokenDescription(token Token) (description string, ok bool) {
+	switch token.Type() {
+	case "hidden":
+		return "hidden", true
+	case "comment":
+		return "a comment", true
+	default:
+		return "", false
+	}
+}
+
 func checkInvalidTokensInGroup(tg TokenGroup, accept core.ValidationAcceptor) {
 	for _, ext := range tg.TokenRefs() {
 		abstractToken := ext.Ref(context.Background())
@@ -667,23 +821,66 @@ func checkInvalidTokensInGroup(tg TokenGroup, accept core.ValidationAcceptor) {
 			continue
 		}
 		if token, ok := abstractToken.(Token); ok {
-			tokenType := token.Type()
-			// Hidden/comment tokens are not allowed in token groups
+			// Hidden/comment tokens are not allowed in token groups.
 			// They are not meant to be consumed in parser rules,
-			// and do not appear in the token slice
-			special := tokenType == "hidden" || tokenType == "comment"
-			if special {
-				if tokenType == "comment" {
-					tokenType = "a comment"
-				}
+			// and do not appear in the token slice.
+			if description, special := hiddenOrCommentTokenDescription(token); special {
 				accept(core.NewDiagnostic(
 					core.SeverityError,
-					fmt.Sprintf("The token '%s' cannot be used in a token group, because it is %s.", token.Name(), tokenType),
+					fmt.Sprintf("The token '%s' cannot be used in a token group because it is %s.", token.Name(), description),
 					tg,
 					core.WithReference(ext),
 					core.WithCode(ValidateInvalidTokenInGroup),
 				))
 			}
 		}
+	}
+}
+
+func (cr *CrossRefImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
+	checkCrossRefHasTerminal(cr, ctx, accept)
+	checkCrossRefToken(cr, ctx, accept)
+}
+
+func checkCrossRefHasTerminal(cr CrossRef, ctx context.Context, accept core.ValidationAcceptor) {
+	if cr.Rule() != nil {
+		return
+	}
+	resolvedType := cr.Type().Ref(ctx)
+	if resolvedType == nil {
+		return
+	}
+	accept(core.NewDiagnostic(
+		core.SeverityError,
+		fmt.Sprintf("A cross-reference must specify a token or composite rule after ':' (e.g. [%s:ID]).", resolvedType.Name()),
+		cr,
+		core.WithReference(cr.Type()),
+		core.WithCode(ValidateMissingCrossRefTerminal),
+	))
+}
+
+func checkCrossRefToken(cr CrossRef, ctx context.Context, accept core.ValidationAcceptor) {
+	ruleCall := cr.Rule()
+	if ruleCall == nil {
+		return
+	}
+	resolved := ruleCall.Rule().Ref(ctx)
+	if resolved == nil {
+		return
+	}
+	token, ok := resolved.(Token)
+	if !ok {
+		return
+	}
+	// Hidden/comment tokens are not allowed in cross-references because they
+	// are not stored in the token slice and cannot identify named elements.
+	if description, special := hiddenOrCommentTokenDescription(token); special {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			fmt.Sprintf("The token '%s' cannot be used in a cross-reference because it is %s.", token.Name(), description),
+			cr,
+			core.WithReference(ruleCall.Rule()),
+			core.WithCode(ValidateInvalidTokenInCrossRef),
+		))
 	}
 }

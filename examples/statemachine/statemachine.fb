@@ -1,4 +1,4 @@
-grammar StatemachineModel;
+grammar StatemachineModel
 
 interface Statemachine {
     Name string
@@ -8,7 +8,7 @@ interface Statemachine {
     States []State
 }
 
-Statemachine returns Statemachine:
+entry Statemachine returns Statemachine:
     "statemachine"
     Name=ID
     ("events"
@@ -17,21 +17,21 @@ Statemachine returns Statemachine:
       Commands+=Command+)?
     "initialState"
     Init=[State:ID]
-    States+=State*;
+    States+=State*
 
 interface Event {
     Name string
 }
 
 Event returns Event:
-    Name=ID;
+    Name=ID
 
 interface Command {
     Name string
 }
 
 Command returns Command:
-    Name=ID;
+    Name=ID
 
 interface State {
     Name string
@@ -43,7 +43,7 @@ State returns State:
     "state" Name=ID
         ("actions" "{" Actions+=[Command:ID]+ "}")?
         Transitions+=Transition*
-    "end";
+    "end"
 
 interface Transition {
     Event *Event
@@ -52,10 +52,10 @@ interface Transition {
 
 Transition returns Transition:
     Event=[Event:ID] "=>"
-    State=[State:ID];
+    State=[State:ID]
 
-token ID: /[_a-zA-Z][\w_]*/;
+token ID: /[_a-zA-Z][\w_]*/
 
-hidden token WS: /\s+/;
-comment token ML_COMMENT: /\/\*[\s\S]*?\*\//;
-comment token SL_COMMENT: /\/\/[^\n\r]*/;
+hidden token WS: /\s+/
+comment token ML_COMMENT: /\/\*[\s\S]*?\*\//
+comment token SL_COMMENT: /\/\/[^\n\r]*/

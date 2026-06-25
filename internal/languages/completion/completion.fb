@@ -7,7 +7,7 @@ interface Root {
     Objects []Obj
 }
 
-Root: Objects+=(Declare | A | B | C | D | E | F | G | H | I | J | K | L | M | N | O)*;
+entry Root: Objects+=(Declare | A | B | C | D | E | F | G | H | I | J | K | L | M | N | O)*;
 
 interface Declare extends Obj {
     Name composite
