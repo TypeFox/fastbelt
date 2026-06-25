@@ -106,7 +106,8 @@ func runGenerateCLI(opts generateOptions) error {
 	if !ok {
 		return fmt.Errorf("parser result is not a Grammar")
 	}
-	if err := validateEntryRule(grammar); err != nil {
+	entryRule, err := validateEntryRule(grammar)
+	if err != nil {
 		return err
 	}
 
@@ -131,11 +132,11 @@ func runGenerateCLI(opts generateOptions) error {
 	tokenTypes := generator.GenerateTokenTypes(grammar)
 	atnData := generator.BuildParserATNData(grammar, tokenTypes)
 	if err := writeFile("parser", filepath.Join(outputPath, "parser_gen.go"),
-		generator.GenerateParser(grammar, packageName, tokenTypes, atnData)); err != nil {
+		generator.GenerateParser(grammar, entryRule, packageName, tokenTypes, atnData)); err != nil {
 		return err
 	}
 	if err := writeFile("completion-parser", filepath.Join(outputPath, "completion_parser_gen.go"),
-		generator.GenerateCompletionParser(grammar, packageName, tokenTypes, atnData)); err != nil {
+		generator.GenerateCompletionParser(grammar, entryRule, packageName, tokenTypes, atnData)); err != nil {
 		return err
 	}
 	if err := writeFile("parser-lookahead", filepath.Join(outputPath, "parser_lookahead_gen.go"),
@@ -168,7 +169,7 @@ func runGenerateCLI(opts generateOptions) error {
 	return nil
 }
 
-func validateEntryRule(g grammar.Grammar) error {
+func validateEntryRule(g grammar.Grammar) (grammar.ParserRule, error) {
 	var entries []grammar.ParserRule
 	for _, rule := range g.Rules() {
 		if rule.IsEntry() {
@@ -177,15 +178,15 @@ func validateEntryRule(g grammar.Grammar) error {
 	}
 	switch len(entries) {
 	case 1:
-		return nil
+		return entries[0], nil
 	case 0:
-		return fmt.Errorf("grammar must have exactly one parser rule marked as entry, but none were found")
+		return nil, fmt.Errorf("grammar must have exactly one parser rule marked as entry, but none were found")
 	default:
 		names := make([]string, len(entries))
 		for i, rule := range entries {
 			names[i] = rule.Name()
 		}
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"grammar must have exactly one parser rule marked as entry, but found %d: %s",
 			len(entries),
 			strings.Join(names, ", "),
