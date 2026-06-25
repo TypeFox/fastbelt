@@ -56,5 +56,26 @@ func (s *DefaultDocumentValidator) Validate(ctx context.Context, doc *core.Docum
 			validator.Validate(ctx, level, accept)
 		}
 	}
+	setDiagnosticSource(s.sc, doc, diagnostics)
 	return diagnostics
+}
+
+func setDiagnosticSource(sc *service.Container, doc *core.Document, diagnostics []*core.Diagnostic) {
+	source := ""
+	if doc.TextDoc != nil {
+		source = doc.TextDoc.LanguageID()
+	}
+	if source == "" {
+		if languageID, err := service.Get[LanguageID](sc); err == nil {
+			source = string(languageID)
+		}
+	}
+	if source == "" {
+		return
+	}
+	for _, d := range diagnostics {
+		if d.Source == "" {
+			d.Source = source
+		}
+	}
 }
