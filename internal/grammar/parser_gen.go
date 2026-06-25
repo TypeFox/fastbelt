@@ -347,13 +347,23 @@ func (p *Parser) ParseParserRule() ParserRule {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
+			p.state.Sync(ParserRule__Basic_1)
+			if p.lookahead.ParserRuleEntryOptional(p.state) {
+				token := p.state.Consume(Keyword_entry)
+				core.AssignToken(current, token, ParserRule_Entry_entry)
+				if token != nil {
+					current.SetEntry(token)
+				}
+			}
+		}
+		{
 			token := p.state.Consume(Token_ID)
 			core.AssignToken(current, token, ParserRule_Name_ID)
 			if token != nil {
 				current.SetName(token)
 			}
 		}
-		p.state.Sync(ParserRule__Basic_1)
+		p.state.Sync(ParserRule__Basic_3)
 		if p.lookahead.ParserRuleOptional(p.state) {
 			{
 				token := p.state.Consume(Keyword_returns)
@@ -372,7 +382,7 @@ func (p *Parser) ParseParserRule() ParserRule {
 			core.AssignToken(current, token, ParserRule_Colon)
 		}
 		{
-			p.state.EnterRule(ParserRule__Basic_4)
+			p.state.EnterRule(ParserRule__Basic_6)
 			result := p.ParseAlternatives()
 			p.state.ExitRule()
 			if result != nil {

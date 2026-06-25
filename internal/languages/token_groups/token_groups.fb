@@ -4,7 +4,7 @@ interface Model {
     Item Item
 }
 
-Model: Item=(A | B | C | D | E | F | G | H);
+entry Model: Item=(A | B | C | D | E | F | G | H);
 
 interface Item {
     Value string

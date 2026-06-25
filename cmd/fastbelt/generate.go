@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/internal/generator"
@@ -105,6 +106,9 @@ func runGenerateCLI(opts generateOptions) error {
 	if !ok {
 		return fmt.Errorf("parser result is not a Grammar")
 	}
+	if err := validateEntryRule(grammar); err != nil {
+		return err
+	}
 
 	writeFile := func(name, path, content string) error {
 		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
@@ -162,4 +166,29 @@ func runGenerateCLI(opts generateOptions) error {
 	}
 
 	return nil
+}
+
+func validateEntryRule(g grammar.Grammar) error {
+	var entries []grammar.ParserRule
+	for _, rule := range g.Rules() {
+		if rule.IsEntry() {
+			entries = append(entries, rule)
+		}
+	}
+	switch len(entries) {
+	case 1:
+		return nil
+	case 0:
+		return fmt.Errorf("grammar must have exactly one parser rule marked as entry, but none were found")
+	default:
+		names := make([]string, len(entries))
+		for i, rule := range entries {
+			names[i] = rule.Name()
+		}
+		return fmt.Errorf(
+			"grammar must have exactly one parser rule marked as entry, but found %d: %s",
+			len(entries),
+			strings.Join(names, ", "),
+		)
+	}
 }

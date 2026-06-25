@@ -238,30 +238,37 @@ flowchart TD
 flowchart TD
     q16(["ParserRule__Start (16)<br/>RuleStart"])
     q17(["ParserRule__Stop (17)<br/>RuleStop"])
-    q121["ParserRule_Name_ID (121)<br/>Basic<br/>"]
-    q122["ParserRule_returns (122)<br/>Basic<br/>"]
-    q123["ParserRule_ReturnType_ID (123)<br/>Basic<br/>"]
-    q124["ParserRule__Basic_0 (124)<br/>Basic<br/>"]
-    q125{"ParserRule__Basic_1 (125)<br/>Basic<br/><br/>dec=8"}
-    q126["ParserRule_Colon (126)<br/>Basic<br/>"]
+    q121["ParserRule_Entry_entry (121)<br/>Basic<br/>"]
+    q122["ParserRule__Basic_0 (122)<br/>Basic<br/>"]
+    q123{"ParserRule__Basic_1 (123)<br/>Basic<br/><br/>dec=8"}
+    q124["ParserRule_Name_ID (124)<br/>Basic<br/>"]
+    q125["ParserRule_returns (125)<br/>Basic<br/>"]
+    q126["ParserRule_ReturnType_ID (126)<br/>Basic<br/>"]
     q127["ParserRule__Basic_2 (127)<br/>Basic<br/>"]
-    q128["ParserRule_Semicolon (128)<br/>Basic<br/>"]
-    q129["ParserRule__Basic_3 (129)<br/>Basic<br/>"]
-    q130{"ParserRule__Basic_4 (130)<br/>Basic<br/><br/>dec=9"}
+    q128{"ParserRule__Basic_3 (128)<br/>Basic<br/><br/>dec=9"}
+    q129["ParserRule_Colon (129)<br/>Basic<br/>"]
+    q130["ParserRule__Basic_4 (130)<br/>Basic<br/>"]
+    q131["ParserRule_Semicolon (131)<br/>Basic<br/>"]
+    q132["ParserRule__Basic_5 (132)<br/>Basic<br/>"]
+    q133{"ParserRule__Basic_6 (133)<br/>Basic<br/><br/>dec=10"}
 
-    q16 --> q121
-    q121 -->|"tok(ID)"| q125
-    q122 -->|"tok(&quot;returns&quot;)"| q123
-    q123 -->|"tok(ID)"| q124
-    q124 --> q126
-    q125 --> q122
-    q125 --> q124
-    q126 -->|"tok(&quot;:&quot;)"| q127
-    q127 -.->|"[Alternatives]"| q130
-    q128 -->|"tok(&quot;;&quot;)"| q129
-    q129 --> q17
-    q130 --> q128
-    q130 --> q129
+    q16 --> q123
+    q121 -->|"tok(&quot;entry&quot;)"| q122
+    q122 --> q124
+    q123 --> q121
+    q123 --> q122
+    q124 -->|"tok(ID)"| q128
+    q125 -->|"tok(&quot;returns&quot;)"| q126
+    q126 -->|"tok(ID)"| q127
+    q127 --> q129
+    q128 --> q125
+    q128 --> q127
+    q129 -->|"tok(&quot;:&quot;)"| q130
+    q130 -.->|"[Alternatives]"| q133
+    q131 -->|"tok(&quot;;&quot;)"| q132
+    q132 --> q17
+    q133 --> q131
+    q133 --> q132
 ```
 
 ## Token
@@ -270,39 +277,39 @@ flowchart TD
 flowchart TD
     q18(["Token__Start (18)<br/>RuleStart"])
     q19(["Token__Stop (19)<br/>RuleStop"])
-    q131["Token_Type_hidden (131)<br/>Basic<br/>"]
-    q132["Token__Basic_0 (132)<br/>Basic<br/>"]
-    q133["Token_Type_comment (133)<br/>Basic<br/>"]
-    q134["Token__Basic_1 (134)<br/>Basic<br/>"]
-    q135{"Token__Basic_2 (135)<br/>Basic<br/><br/>dec=10"}
-    q136["Token__BlockEnd (136)<br/>BlockEnd<br/>"]
-    q137{"Token__Basic_3 (137)<br/>Basic<br/><br/>dec=11"}
-    q138["Token_token (138)<br/>Basic<br/>"]
-    q139["Token_Name_ID (139)<br/>Basic<br/>"]
-    q140["Token_Colon (140)<br/>Basic<br/>"]
-    q141["Token_Regexp_RegexLiteral (141)<br/>Basic<br/>"]
-    q142["Token_Semicolon (142)<br/>Basic<br/>"]
-    q143["Token__Basic_4 (143)<br/>Basic<br/>"]
-    q144{"Token__Basic_5 (144)<br/>Basic<br/><br/>dec=12"}
+    q134["Token_Type_hidden (134)<br/>Basic<br/>"]
+    q135["Token__Basic_0 (135)<br/>Basic<br/>"]
+    q136["Token_Type_comment (136)<br/>Basic<br/>"]
+    q137["Token__Basic_1 (137)<br/>Basic<br/>"]
+    q138{"Token__Basic_2 (138)<br/>Basic<br/><br/>dec=11"}
+    q139["Token__BlockEnd (139)<br/>BlockEnd<br/>"]
+    q140{"Token__Basic_3 (140)<br/>Basic<br/><br/>dec=12"}
+    q141["Token_token (141)<br/>Basic<br/>"]
+    q142["Token_Name_ID (142)<br/>Basic<br/>"]
+    q143["Token_Colon (143)<br/>Basic<br/>"]
+    q144["Token_Regexp_RegexLiteral (144)<br/>Basic<br/>"]
+    q145["Token_Semicolon (145)<br/>Basic<br/>"]
+    q146["Token__Basic_4 (146)<br/>Basic<br/>"]
+    q147{"Token__Basic_5 (147)<br/>Basic<br/><br/>dec=13"}
 
-    q18 --> q137
-    q131 -->|"tok(&quot;hidden&quot;)"| q132
-    q132 --> q136
-    q133 -->|"tok(&quot;comment&quot;)"| q134
-    q134 --> q136
-    q135 --> q131
-    q135 --> q133
-    q136 --> q138
-    q137 --> q135
-    q137 --> q136
-    q138 -->|"tok(&quot;token&quot;)"| q139
-    q139 -->|"tok(ID)"| q140
-    q140 -->|"tok(&quot;:&quot;)"| q141
-    q141 -->|"tok(RegexLiteral)"| q144
-    q142 -->|"tok(&quot;;&quot;)"| q143
-    q143 --> q19
-    q144 --> q142
-    q144 --> q143
+    q18 --> q140
+    q134 -->|"tok(&quot;hidden&quot;)"| q135
+    q135 --> q139
+    q136 -->|"tok(&quot;comment&quot;)"| q137
+    q137 --> q139
+    q138 --> q134
+    q138 --> q136
+    q139 --> q141
+    q140 --> q138
+    q140 --> q139
+    q141 -->|"tok(&quot;token&quot;)"| q142
+    q142 -->|"tok(ID)"| q143
+    q143 -->|"tok(&quot;:&quot;)"| q144
+    q144 -->|"tok(RegexLiteral)"| q147
+    q145 -->|"tok(&quot;;&quot;)"| q146
+    q146 --> q19
+    q147 --> q145
+    q147 --> q146
 ```
 
 ## TokenGroup
@@ -311,47 +318,47 @@ flowchart TD
 flowchart TD
     q20(["TokenGroup__Start (20)<br/>RuleStart"])
     q21(["TokenGroup__Stop (21)<br/>RuleStop"])
-    q145["TokenGroup_token (145)<br/>Basic<br/>"]
-    q146["TokenGroup_group (146)<br/>Basic<br/>"]
-    q147["TokenGroup_Name_ID (147)<br/>Basic<br/>"]
-    q148["TokenGroup_LeftBrace (148)<br/>Basic<br/>"]
-    q149["TokenGroup_TokenRefs_ID (149)<br/>Basic<br/>"]
-    q150["TokenGroup__Basic_0 (150)<br/>Basic<br/>"]
-    q151["TokenGroup_keywords (151)<br/>Basic<br/>"]
-    q152["TokenGroup_Regexps_RegexLiteral (152)<br/>Basic<br/>"]
-    q153["TokenGroup__Basic_1 (153)<br/>Basic<br/>"]
-    q154["TokenGroup__Basic_2 (154)<br/>Basic<br/>"]
-    q155["TokenGroup__Basic_3 (155)<br/>Basic<br/>"]
-    q156{"TokenGroup__Basic_4 (156)<br/>Basic<br/><br/>dec=13"}
-    q157["TokenGroup__BlockEnd (157)<br/>BlockEnd<br/>"]
-    q158{"TokenGroup__LoopEntry (158)<br/>LoopEntry<br/><br/>dec=14"}
-    q159["TokenGroup__LoopEnd (159)<br/>LoopEnd<br/>"]
-    q160["TokenGroup__LoopBack (160)<br/>LoopBack<br/>"]
-    q161["TokenGroup_RightBrace (161)<br/>Basic<br/>"]
-    q162["TokenGroup__Basic_5 (162)<br/>Basic<br/>"]
+    q148["TokenGroup_token (148)<br/>Basic<br/>"]
+    q149["TokenGroup_group (149)<br/>Basic<br/>"]
+    q150["TokenGroup_Name_ID (150)<br/>Basic<br/>"]
+    q151["TokenGroup_LeftBrace (151)<br/>Basic<br/>"]
+    q152["TokenGroup_TokenRefs_ID (152)<br/>Basic<br/>"]
+    q153["TokenGroup__Basic_0 (153)<br/>Basic<br/>"]
+    q154["TokenGroup_keywords (154)<br/>Basic<br/>"]
+    q155["TokenGroup_Regexps_RegexLiteral (155)<br/>Basic<br/>"]
+    q156["TokenGroup__Basic_1 (156)<br/>Basic<br/>"]
+    q157["TokenGroup__Basic_2 (157)<br/>Basic<br/>"]
+    q158["TokenGroup__Basic_3 (158)<br/>Basic<br/>"]
+    q159{"TokenGroup__Basic_4 (159)<br/>Basic<br/><br/>dec=14"}
+    q160["TokenGroup__BlockEnd (160)<br/>BlockEnd<br/>"]
+    q161{"TokenGroup__LoopEntry (161)<br/>LoopEntry<br/><br/>dec=15"}
+    q162["TokenGroup__LoopEnd (162)<br/>LoopEnd<br/>"]
+    q163["TokenGroup__LoopBack (163)<br/>LoopBack<br/>"]
+    q164["TokenGroup_RightBrace (164)<br/>Basic<br/>"]
+    q165["TokenGroup__Basic_5 (165)<br/>Basic<br/>"]
 
-    q20 --> q145
-    q145 -->|"tok(&quot;token&quot;)"| q146
-    q146 -->|"tok(&quot;group&quot;)"| q147
-    q147 -->|"tok(ID)"| q148
-    q148 -->|"tok(&quot;{&quot;)"| q158
-    q149 -->|"tok(ID)"| q150
-    q150 --> q157
-    q151 -->|"tok(&quot;keywords&quot;)"| q152
-    q152 -->|"tok(RegexLiteral)"| q153
-    q153 --> q157
-    q154 -.->|"[Keyword]"| q155
-    q155 --> q157
-    q156 --> q149
-    q156 --> q151
-    q156 --> q154
-    q157 --> q160
-    q158 --> q156
-    q158 --> q159
-    q159 --> q161
-    q160 --> q158
-    q161 -->|"tok(&quot;}&quot;)"| q162
-    q162 --> q21
+    q20 --> q148
+    q148 -->|"tok(&quot;token&quot;)"| q149
+    q149 -->|"tok(&quot;group&quot;)"| q150
+    q150 -->|"tok(ID)"| q151
+    q151 -->|"tok(&quot;{&quot;)"| q161
+    q152 -->|"tok(ID)"| q153
+    q153 --> q160
+    q154 -->|"tok(&quot;keywords&quot;)"| q155
+    q155 -->|"tok(RegexLiteral)"| q156
+    q156 --> q160
+    q157 -.->|"[Keyword]"| q158
+    q158 --> q160
+    q159 --> q152
+    q159 --> q154
+    q159 --> q157
+    q160 --> q163
+    q161 --> q159
+    q161 --> q162
+    q162 --> q164
+    q163 --> q161
+    q164 -->|"tok(&quot;}&quot;)"| q165
+    q165 --> q21
 ```
 
 ## Alternatives
@@ -360,24 +367,24 @@ flowchart TD
 flowchart TD
     q22(["Alternatives__Start (22)<br/>RuleStart"])
     q23(["Alternatives__Stop (23)<br/>RuleStop"])
-    q163["Alternatives__Basic_0 (163)<br/>Basic<br/>"]
-    q164["Alternatives_Pipe (164)<br/>Basic<br/>"]
-    q165["Alternatives__Basic_1 (165)<br/>Basic<br/>"]
-    q166["Alternatives__Basic_2 (166)<br/>Basic<br/>"]
-    q167{"Alternatives__LoopBack (167)<br/>LoopBack<br/><br/>dec=15"}
-    q168["Alternatives__LoopEnd (168)<br/>LoopEnd<br/>"]
-    q169{"Alternatives__Basic_3 (169)<br/>Basic<br/><br/>dec=16"}
+    q166["Alternatives__Basic_0 (166)<br/>Basic<br/>"]
+    q167["Alternatives_Pipe (167)<br/>Basic<br/>"]
+    q168["Alternatives__Basic_1 (168)<br/>Basic<br/>"]
+    q169["Alternatives__Basic_2 (169)<br/>Basic<br/>"]
+    q170{"Alternatives__LoopBack (170)<br/>LoopBack<br/><br/>dec=16"}
+    q171["Alternatives__LoopEnd (171)<br/>LoopEnd<br/>"]
+    q172{"Alternatives__Basic_3 (172)<br/>Basic<br/><br/>dec=17"}
 
-    q22 --> q163
-    q163 -.->|"[Group]"| q169
-    q164 -->|"tok(&quot;|&quot;)"| q165
-    q165 -.->|"[Group]"| q166
-    q166 --> q167
-    q167 --> q164
-    q167 --> q168
-    q168 --> q23
-    q169 --> q164
-    q169 --> q168
+    q22 --> q166
+    q166 -.->|"[Group]"| q172
+    q167 -->|"tok(&quot;|&quot;)"| q168
+    q168 -.->|"[Group]"| q169
+    q169 --> q170
+    q170 --> q167
+    q170 --> q171
+    q171 --> q23
+    q172 --> q167
+    q172 --> q171
 ```
 
 ## Group
@@ -386,22 +393,22 @@ flowchart TD
 flowchart TD
     q24(["Group__Start (24)<br/>RuleStart"])
     q25(["Group__Stop (25)<br/>RuleStop"])
-    q170["Group__Basic_0 (170)<br/>Basic<br/>"]
-    q171["Group__Basic_1 (171)<br/>Basic<br/>"]
-    q172["Group__Basic_2 (172)<br/>Basic<br/>"]
-    q173{"Group__LoopBack (173)<br/>LoopBack<br/><br/>dec=17"}
-    q174["Group__LoopEnd (174)<br/>LoopEnd<br/>"]
-    q175{"Group__Basic_3 (175)<br/>Basic<br/><br/>dec=18"}
+    q173["Group__Basic_0 (173)<br/>Basic<br/>"]
+    q174["Group__Basic_1 (174)<br/>Basic<br/>"]
+    q175["Group__Basic_2 (175)<br/>Basic<br/>"]
+    q176{"Group__LoopBack (176)<br/>LoopBack<br/><br/>dec=18"}
+    q177["Group__LoopEnd (177)<br/>LoopEnd<br/>"]
+    q178{"Group__Basic_3 (178)<br/>Basic<br/><br/>dec=19"}
 
-    q24 --> q170
-    q170 -.->|"[Element]"| q175
-    q171 -.->|"[Element]"| q172
-    q172 --> q173
-    q173 --> q171
-    q173 --> q174
-    q174 --> q25
-    q175 --> q171
-    q175 --> q174
+    q24 --> q173
+    q173 -.->|"[Element]"| q178
+    q174 -.->|"[Element]"| q175
+    q175 --> q176
+    q176 --> q174
+    q176 --> q177
+    q177 --> q25
+    q178 --> q174
+    q178 --> q177
 ```
 
 ## Element
@@ -410,61 +417,61 @@ flowchart TD
 flowchart TD
     q26(["Element__Start (26)<br/>RuleStart"])
     q27(["Element__Stop (27)<br/>RuleStop"])
-    q176["Element__Basic_0 (176)<br/>Basic<br/>"]
-    q177["Element__Basic_1 (177)<br/>Basic<br/>"]
-    q178["Element__Basic_2 (178)<br/>Basic<br/>"]
-    q179["Element__Basic_3 (179)<br/>Basic<br/>"]
-    q180["Element__Basic_4 (180)<br/>Basic<br/>"]
-    q181["Element__Basic_5 (181)<br/>Basic<br/>"]
-    q182["Element__Basic_6 (182)<br/>Basic<br/>"]
-    q183["Element__Basic_7 (183)<br/>Basic<br/>"]
-    q184["Element_LeftParen (184)<br/>Basic<br/>"]
-    q185["Element__Basic_8 (185)<br/>Basic<br/>"]
-    q186["Element_RightParen (186)<br/>Basic<br/>"]
-    q187["Element__Basic_9 (187)<br/>Basic<br/>"]
-    q188{"Element__Basic_10 (188)<br/>Basic<br/><br/>dec=19"}
-    q189["Element__BlockEnd_0 (189)<br/>BlockEnd<br/>"]
-    q190["Element_Cardinality_Asterisk (190)<br/>Basic<br/>"]
-    q191["Element__Basic_11 (191)<br/>Basic<br/>"]
-    q192["Element_Cardinality_Plus (192)<br/>Basic<br/>"]
-    q193["Element__Basic_12 (193)<br/>Basic<br/>"]
-    q194["Element_Cardinality_Question (194)<br/>Basic<br/>"]
-    q195["Element__Basic_13 (195)<br/>Basic<br/>"]
-    q196{"Element__Basic_14 (196)<br/>Basic<br/><br/>dec=20"}
-    q197["Element__BlockEnd_1 (197)<br/>BlockEnd<br/>"]
-    q198{"Element__Basic_15 (198)<br/>Basic<br/><br/>dec=21"}
+    q179["Element__Basic_0 (179)<br/>Basic<br/>"]
+    q180["Element__Basic_1 (180)<br/>Basic<br/>"]
+    q181["Element__Basic_2 (181)<br/>Basic<br/>"]
+    q182["Element__Basic_3 (182)<br/>Basic<br/>"]
+    q183["Element__Basic_4 (183)<br/>Basic<br/>"]
+    q184["Element__Basic_5 (184)<br/>Basic<br/>"]
+    q185["Element__Basic_6 (185)<br/>Basic<br/>"]
+    q186["Element__Basic_7 (186)<br/>Basic<br/>"]
+    q187["Element_LeftParen (187)<br/>Basic<br/>"]
+    q188["Element__Basic_8 (188)<br/>Basic<br/>"]
+    q189["Element_RightParen (189)<br/>Basic<br/>"]
+    q190["Element__Basic_9 (190)<br/>Basic<br/>"]
+    q191{"Element__Basic_10 (191)<br/>Basic<br/><br/>dec=20"}
+    q192["Element__BlockEnd_0 (192)<br/>BlockEnd<br/>"]
+    q193["Element_Cardinality_Asterisk (193)<br/>Basic<br/>"]
+    q194["Element__Basic_11 (194)<br/>Basic<br/>"]
+    q195["Element_Cardinality_Plus (195)<br/>Basic<br/>"]
+    q196["Element__Basic_12 (196)<br/>Basic<br/>"]
+    q197["Element_Cardinality_Question (197)<br/>Basic<br/>"]
+    q198["Element__Basic_13 (198)<br/>Basic<br/>"]
+    q199{"Element__Basic_14 (199)<br/>Basic<br/><br/>dec=21"}
+    q200["Element__BlockEnd_1 (200)<br/>BlockEnd<br/>"]
+    q201{"Element__Basic_15 (201)<br/>Basic<br/><br/>dec=22"}
 
-    q26 --> q188
-    q176 -.->|"[Keyword]"| q177
-    q177 --> q189
-    q178 -.->|"[Assignment]"| q179
-    q179 --> q189
-    q180 -.->|"[RuleCall]"| q181
-    q181 --> q189
-    q182 -.->|"[Action]"| q183
-    q183 --> q189
-    q184 -->|"tok(&quot;(&quot;)"| q185
-    q185 -.->|"[Alternatives]"| q186
-    q186 -->|"tok(&quot;)&quot;)"| q187
-    q187 --> q189
-    q188 --> q176
-    q188 --> q178
-    q188 --> q180
-    q188 --> q182
-    q188 --> q184
-    q189 --> q198
-    q190 -->|"tok(&quot;*&quot;)"| q191
-    q191 --> q197
-    q192 -->|"tok(&quot;+&quot;)"| q193
-    q193 --> q197
-    q194 -->|"tok(&quot;?&quot;)"| q195
-    q195 --> q197
-    q196 --> q190
-    q196 --> q192
-    q196 --> q194
-    q197 --> q27
-    q198 --> q196
-    q198 --> q197
+    q26 --> q191
+    q179 -.->|"[Keyword]"| q180
+    q180 --> q192
+    q181 -.->|"[Assignment]"| q182
+    q182 --> q192
+    q183 -.->|"[RuleCall]"| q184
+    q184 --> q192
+    q185 -.->|"[Action]"| q186
+    q186 --> q192
+    q187 -->|"tok(&quot;(&quot;)"| q188
+    q188 -.->|"[Alternatives]"| q189
+    q189 -->|"tok(&quot;)&quot;)"| q190
+    q190 --> q192
+    q191 --> q179
+    q191 --> q181
+    q191 --> q183
+    q191 --> q185
+    q191 --> q187
+    q192 --> q201
+    q193 -->|"tok(&quot;*&quot;)"| q194
+    q194 --> q200
+    q195 -->|"tok(&quot;+&quot;)"| q196
+    q196 --> q200
+    q197 -->|"tok(&quot;?&quot;)"| q198
+    q198 --> q200
+    q199 --> q193
+    q199 --> q195
+    q199 --> q197
+    q200 --> q27
+    q201 --> q199
+    q201 --> q200
 ```
 
 ## Keyword
@@ -473,12 +480,12 @@ flowchart TD
 flowchart TD
     q28(["Keyword__Start (28)<br/>RuleStart"])
     q29(["Keyword__Stop (29)<br/>RuleStop"])
-    q199["Keyword_Value_StringLiteral (199)<br/>Basic<br/>"]
-    q200["Keyword__Basic (200)<br/>Basic<br/>"]
+    q202["Keyword_Value_StringLiteral (202)<br/>Basic<br/>"]
+    q203["Keyword__Basic (203)<br/>Basic<br/>"]
 
-    q28 --> q199
-    q199 -->|"tok(StringLiteral)"| q200
-    q200 --> q29
+    q28 --> q202
+    q202 -->|"tok(StringLiteral)"| q203
+    q203 --> q29
 ```
 
 ## Assignment
@@ -487,32 +494,32 @@ flowchart TD
 flowchart TD
     q30(["Assignment__Start (30)<br/>RuleStart"])
     q31(["Assignment__Stop (31)<br/>RuleStop"])
-    q201["Assignment_Property_ID (201)<br/>Basic<br/>"]
-    q202["Assignment_Operator_PlusEquals (202)<br/>Basic<br/>"]
-    q203["Assignment__Basic_0 (203)<br/>Basic<br/>"]
-    q204["Assignment_Operator_Equals (204)<br/>Basic<br/>"]
-    q205["Assignment__Basic_1 (205)<br/>Basic<br/>"]
-    q206["Assignment_Operator_QuestionEquals (206)<br/>Basic<br/>"]
-    q207["Assignment__Basic_2 (207)<br/>Basic<br/>"]
-    q208{"Assignment__Basic_3 (208)<br/>Basic<br/><br/>dec=22"}
-    q209["Assignment__BlockEnd (209)<br/>BlockEnd<br/>"]
-    q210["Assignment__Basic_4 (210)<br/>Basic<br/>"]
-    q211["Assignment__Basic_5 (211)<br/>Basic<br/>"]
+    q204["Assignment_Property_ID (204)<br/>Basic<br/>"]
+    q205["Assignment_Operator_PlusEquals (205)<br/>Basic<br/>"]
+    q206["Assignment__Basic_0 (206)<br/>Basic<br/>"]
+    q207["Assignment_Operator_Equals (207)<br/>Basic<br/>"]
+    q208["Assignment__Basic_1 (208)<br/>Basic<br/>"]
+    q209["Assignment_Operator_QuestionEquals (209)<br/>Basic<br/>"]
+    q210["Assignment__Basic_2 (210)<br/>Basic<br/>"]
+    q211{"Assignment__Basic_3 (211)<br/>Basic<br/><br/>dec=23"}
+    q212["Assignment__BlockEnd (212)<br/>BlockEnd<br/>"]
+    q213["Assignment__Basic_4 (213)<br/>Basic<br/>"]
+    q214["Assignment__Basic_5 (214)<br/>Basic<br/>"]
 
-    q30 --> q201
-    q201 -->|"tok(ID)"| q208
-    q202 -->|"tok(&quot;+=&quot;)"| q203
-    q203 --> q209
-    q204 -->|"tok(&quot;=&quot;)"| q205
-    q205 --> q209
-    q206 -->|"tok(&quot;?=&quot;)"| q207
-    q207 --> q209
-    q208 --> q202
-    q208 --> q204
-    q208 --> q206
-    q209 --> q210
-    q210 -.->|"[Assignable]"| q211
-    q211 --> q31
+    q30 --> q204
+    q204 -->|"tok(ID)"| q211
+    q205 -->|"tok(&quot;+=&quot;)"| q206
+    q206 --> q212
+    q207 -->|"tok(&quot;=&quot;)"| q208
+    q208 --> q212
+    q209 -->|"tok(&quot;?=&quot;)"| q210
+    q210 --> q212
+    q211 --> q205
+    q211 --> q207
+    q211 --> q209
+    q212 --> q213
+    q213 -.->|"[Assignable]"| q214
+    q214 --> q31
 ```
 
 ## Assignable
@@ -521,35 +528,35 @@ flowchart TD
 flowchart TD
     q32(["Assignable__Start (32)<br/>RuleStart"])
     q33(["Assignable__Stop (33)<br/>RuleStop"])
-    q212["Assignable__Basic_0 (212)<br/>Basic<br/>"]
-    q213["Assignable__Basic_1 (213)<br/>Basic<br/>"]
-    q214["Assignable__Basic_2 (214)<br/>Basic<br/>"]
-    q215["Assignable__Basic_3 (215)<br/>Basic<br/>"]
-    q216["Assignable__Basic_4 (216)<br/>Basic<br/>"]
-    q217["Assignable__Basic_5 (217)<br/>Basic<br/>"]
-    q218["Assignable_LeftParen (218)<br/>Basic<br/>"]
-    q219["Assignable__Basic_6 (219)<br/>Basic<br/>"]
-    q220["Assignable_RightParen (220)<br/>Basic<br/>"]
-    q221["Assignable__Basic_7 (221)<br/>Basic<br/>"]
-    q222{"Assignable__Basic_8 (222)<br/>Basic<br/><br/>dec=23"}
-    q223["Assignable__BlockEnd (223)<br/>BlockEnd<br/>"]
+    q215["Assignable__Basic_0 (215)<br/>Basic<br/>"]
+    q216["Assignable__Basic_1 (216)<br/>Basic<br/>"]
+    q217["Assignable__Basic_2 (217)<br/>Basic<br/>"]
+    q218["Assignable__Basic_3 (218)<br/>Basic<br/>"]
+    q219["Assignable__Basic_4 (219)<br/>Basic<br/>"]
+    q220["Assignable__Basic_5 (220)<br/>Basic<br/>"]
+    q221["Assignable_LeftParen (221)<br/>Basic<br/>"]
+    q222["Assignable__Basic_6 (222)<br/>Basic<br/>"]
+    q223["Assignable_RightParen (223)<br/>Basic<br/>"]
+    q224["Assignable__Basic_7 (224)<br/>Basic<br/>"]
+    q225{"Assignable__Basic_8 (225)<br/>Basic<br/><br/>dec=24"}
+    q226["Assignable__BlockEnd (226)<br/>BlockEnd<br/>"]
 
-    q32 --> q222
-    q212 -.->|"[Keyword]"| q213
-    q213 --> q223
-    q214 -.->|"[RuleCall]"| q215
-    q215 --> q223
-    q216 -.->|"[CrossRef]"| q217
-    q217 --> q223
-    q218 -->|"tok(&quot;(&quot;)"| q219
-    q219 -.->|"[AssignableAlternatives]"| q220
-    q220 -->|"tok(&quot;)&quot;)"| q221
-    q221 --> q223
-    q222 --> q212
-    q222 --> q214
-    q222 --> q216
-    q222 --> q218
-    q223 --> q33
+    q32 --> q225
+    q215 -.->|"[Keyword]"| q216
+    q216 --> q226
+    q217 -.->|"[RuleCall]"| q218
+    q218 --> q226
+    q219 -.->|"[CrossRef]"| q220
+    q220 --> q226
+    q221 -->|"tok(&quot;(&quot;)"| q222
+    q222 -.->|"[AssignableAlternatives]"| q223
+    q223 -->|"tok(&quot;)&quot;)"| q224
+    q224 --> q226
+    q225 --> q215
+    q225 --> q217
+    q225 --> q219
+    q225 --> q221
+    q226 --> q33
 ```
 
 ## AssignableWithoutAlts
@@ -558,26 +565,26 @@ flowchart TD
 flowchart TD
     q34(["AssignableWithoutAlts__Start (34)<br/>RuleStart"])
     q35(["AssignableWithoutAlts__Stop (35)<br/>RuleStop"])
-    q224["AssignableWithoutAlts__Basic_0 (224)<br/>Basic<br/>"]
-    q225["AssignableWithoutAlts__Basic_1 (225)<br/>Basic<br/>"]
-    q226["AssignableWithoutAlts__Basic_2 (226)<br/>Basic<br/>"]
-    q227["AssignableWithoutAlts__Basic_3 (227)<br/>Basic<br/>"]
-    q228["AssignableWithoutAlts__Basic_4 (228)<br/>Basic<br/>"]
-    q229["AssignableWithoutAlts__Basic_5 (229)<br/>Basic<br/>"]
-    q230{"AssignableWithoutAlts__Basic_6 (230)<br/>Basic<br/><br/>dec=24"}
-    q231["AssignableWithoutAlts__BlockEnd (231)<br/>BlockEnd<br/>"]
+    q227["AssignableWithoutAlts__Basic_0 (227)<br/>Basic<br/>"]
+    q228["AssignableWithoutAlts__Basic_1 (228)<br/>Basic<br/>"]
+    q229["AssignableWithoutAlts__Basic_2 (229)<br/>Basic<br/>"]
+    q230["AssignableWithoutAlts__Basic_3 (230)<br/>Basic<br/>"]
+    q231["AssignableWithoutAlts__Basic_4 (231)<br/>Basic<br/>"]
+    q232["AssignableWithoutAlts__Basic_5 (232)<br/>Basic<br/>"]
+    q233{"AssignableWithoutAlts__Basic_6 (233)<br/>Basic<br/><br/>dec=25"}
+    q234["AssignableWithoutAlts__BlockEnd (234)<br/>BlockEnd<br/>"]
 
-    q34 --> q230
-    q224 -.->|"[Keyword]"| q225
-    q225 --> q231
-    q226 -.->|"[RuleCall]"| q227
-    q227 --> q231
-    q228 -.->|"[CrossRef]"| q229
-    q229 --> q231
-    q230 --> q224
-    q230 --> q226
-    q230 --> q228
-    q231 --> q35
+    q34 --> q233
+    q227 -.->|"[Keyword]"| q228
+    q228 --> q234
+    q229 -.->|"[RuleCall]"| q230
+    q230 --> q234
+    q231 -.->|"[CrossRef]"| q232
+    q232 --> q234
+    q233 --> q227
+    q233 --> q229
+    q233 --> q231
+    q234 --> q35
 ```
 
 ## AssignableAlternatives
@@ -586,24 +593,24 @@ flowchart TD
 flowchart TD
     q36(["AssignableAlternatives__Start (36)<br/>RuleStart"])
     q37(["AssignableAlternatives__Stop (37)<br/>RuleStop"])
-    q232["AssignableAlternatives__Basic_0 (232)<br/>Basic<br/>"]
-    q233["AssignableAlternatives_Pipe (233)<br/>Basic<br/>"]
-    q234["AssignableAlternatives__Basic_1 (234)<br/>Basic<br/>"]
-    q235["AssignableAlternatives__Basic_2 (235)<br/>Basic<br/>"]
-    q236{"AssignableAlternatives__LoopBack (236)<br/>LoopBack<br/><br/>dec=25"}
-    q237["AssignableAlternatives__LoopEnd (237)<br/>LoopEnd<br/>"]
-    q238{"AssignableAlternatives__Basic_3 (238)<br/>Basic<br/><br/>dec=26"}
+    q235["AssignableAlternatives__Basic_0 (235)<br/>Basic<br/>"]
+    q236["AssignableAlternatives_Pipe (236)<br/>Basic<br/>"]
+    q237["AssignableAlternatives__Basic_1 (237)<br/>Basic<br/>"]
+    q238["AssignableAlternatives__Basic_2 (238)<br/>Basic<br/>"]
+    q239{"AssignableAlternatives__LoopBack (239)<br/>LoopBack<br/><br/>dec=26"}
+    q240["AssignableAlternatives__LoopEnd (240)<br/>LoopEnd<br/>"]
+    q241{"AssignableAlternatives__Basic_3 (241)<br/>Basic<br/><br/>dec=27"}
 
-    q36 --> q232
-    q232 -.->|"[AssignableWithoutAlts]"| q238
-    q233 -->|"tok(&quot;|&quot;)"| q234
-    q234 -.->|"[AssignableWithoutAlts]"| q235
-    q235 --> q236
-    q236 --> q233
-    q236 --> q237
-    q237 --> q37
-    q238 --> q233
-    q238 --> q237
+    q36 --> q235
+    q235 -.->|"[AssignableWithoutAlts]"| q241
+    q236 -->|"tok(&quot;|&quot;)"| q237
+    q237 -.->|"[AssignableWithoutAlts]"| q238
+    q238 --> q239
+    q239 --> q236
+    q239 --> q240
+    q240 --> q37
+    q241 --> q236
+    q241 --> q240
 ```
 
 ## CrossRef
@@ -612,25 +619,25 @@ flowchart TD
 flowchart TD
     q38(["CrossRef__Start (38)<br/>RuleStart"])
     q39(["CrossRef__Stop (39)<br/>RuleStop"])
-    q239["CrossRef_LeftBracket (239)<br/>Basic<br/>"]
-    q240["CrossRef_Type_ID (240)<br/>Basic<br/>"]
-    q241["CrossRef_Colon (241)<br/>Basic<br/>"]
-    q242["CrossRef__Basic_0 (242)<br/>Basic<br/>"]
-    q243["CrossRef__Basic_1 (243)<br/>Basic<br/>"]
-    q244{"CrossRef__Basic_2 (244)<br/>Basic<br/><br/>dec=27"}
-    q245["CrossRef_RightBracket (245)<br/>Basic<br/>"]
-    q246["CrossRef__Basic_3 (246)<br/>Basic<br/>"]
+    q242["CrossRef_LeftBracket (242)<br/>Basic<br/>"]
+    q243["CrossRef_Type_ID (243)<br/>Basic<br/>"]
+    q244["CrossRef_Colon (244)<br/>Basic<br/>"]
+    q245["CrossRef__Basic_0 (245)<br/>Basic<br/>"]
+    q246["CrossRef__Basic_1 (246)<br/>Basic<br/>"]
+    q247{"CrossRef__Basic_2 (247)<br/>Basic<br/><br/>dec=28"}
+    q248["CrossRef_RightBracket (248)<br/>Basic<br/>"]
+    q249["CrossRef__Basic_3 (249)<br/>Basic<br/>"]
 
-    q38 --> q239
-    q239 -->|"tok(&quot;[&quot;)"| q240
-    q240 -->|"tok(ID)"| q244
-    q241 -->|"tok(&quot;:&quot;)"| q242
-    q242 -.->|"[RuleCall]"| q243
-    q243 --> q245
-    q244 --> q241
-    q244 --> q243
-    q245 -->|"tok(&quot;]&quot;)"| q246
-    q246 --> q39
+    q38 --> q242
+    q242 -->|"tok(&quot;[&quot;)"| q243
+    q243 -->|"tok(ID)"| q247
+    q244 -->|"tok(&quot;:&quot;)"| q245
+    q245 -.->|"[RuleCall]"| q246
+    q246 --> q248
+    q247 --> q244
+    q247 --> q246
+    q248 -->|"tok(&quot;]&quot;)"| q249
+    q249 --> q39
 ```
 
 ## RuleCall
@@ -639,12 +646,12 @@ flowchart TD
 flowchart TD
     q40(["RuleCall__Start (40)<br/>RuleStart"])
     q41(["RuleCall__Stop (41)<br/>RuleStop"])
-    q247["RuleCall_Rule_ID (247)<br/>Basic<br/>"]
-    q248["RuleCall__Basic (248)<br/>Basic<br/>"]
+    q250["RuleCall_Rule_ID (250)<br/>Basic<br/>"]
+    q251["RuleCall__Basic (251)<br/>Basic<br/>"]
 
-    q40 --> q247
-    q247 -->|"tok(ID)"| q248
-    q248 --> q41
+    q40 --> q250
+    q250 -->|"tok(ID)"| q251
+    q251 --> q41
 ```
 
 ## Action
@@ -653,40 +660,40 @@ flowchart TD
 flowchart TD
     q42(["Action__Start (42)<br/>RuleStart"])
     q43(["Action__Stop (43)<br/>RuleStop"])
-    q249["Action_LeftBrace (249)<br/>Basic<br/>"]
-    q250["Action_Type_ID (250)<br/>Basic<br/>"]
-    q251["Action_Dot (251)<br/>Basic<br/>"]
-    q252["Action_Property_ID (252)<br/>Basic<br/>"]
-    q253["Action_Operator_PlusEquals (253)<br/>Basic<br/>"]
-    q254["Action__Basic_0 (254)<br/>Basic<br/>"]
-    q255["Action_Operator_Equals (255)<br/>Basic<br/>"]
-    q256["Action__Basic_1 (256)<br/>Basic<br/>"]
-    q257{"Action__Basic_2 (257)<br/>Basic<br/><br/>dec=28"}
-    q258["Action__BlockEnd (258)<br/>BlockEnd<br/>"]
-    q259["Action_current (259)<br/>Basic<br/>"]
-    q260["Action__Basic_3 (260)<br/>Basic<br/>"]
-    q261{"Action__Basic_4 (261)<br/>Basic<br/><br/>dec=29"}
-    q262["Action_RightBrace (262)<br/>Basic<br/>"]
-    q263["Action__Basic_5 (263)<br/>Basic<br/>"]
+    q252["Action_LeftBrace (252)<br/>Basic<br/>"]
+    q253["Action_Type_ID (253)<br/>Basic<br/>"]
+    q254["Action_Dot (254)<br/>Basic<br/>"]
+    q255["Action_Property_ID (255)<br/>Basic<br/>"]
+    q256["Action_Operator_PlusEquals (256)<br/>Basic<br/>"]
+    q257["Action__Basic_0 (257)<br/>Basic<br/>"]
+    q258["Action_Operator_Equals (258)<br/>Basic<br/>"]
+    q259["Action__Basic_1 (259)<br/>Basic<br/>"]
+    q260{"Action__Basic_2 (260)<br/>Basic<br/><br/>dec=29"}
+    q261["Action__BlockEnd (261)<br/>BlockEnd<br/>"]
+    q262["Action_current (262)<br/>Basic<br/>"]
+    q263["Action__Basic_3 (263)<br/>Basic<br/>"]
+    q264{"Action__Basic_4 (264)<br/>Basic<br/><br/>dec=30"}
+    q265["Action_RightBrace (265)<br/>Basic<br/>"]
+    q266["Action__Basic_5 (266)<br/>Basic<br/>"]
 
-    q42 --> q249
-    q249 -->|"tok(&quot;{&quot;)"| q250
-    q250 -->|"tok(ID)"| q261
-    q251 -->|"tok(&quot;.&quot;)"| q252
-    q252 -->|"tok(ID)"| q257
-    q253 -->|"tok(&quot;+=&quot;)"| q254
-    q254 --> q258
-    q255 -->|"tok(&quot;=&quot;)"| q256
-    q256 --> q258
-    q257 --> q253
-    q257 --> q255
-    q258 --> q259
-    q259 -->|"tok(&quot;current&quot;)"| q260
-    q260 --> q262
-    q261 --> q251
-    q261 --> q260
-    q262 -->|"tok(&quot;}&quot;)"| q263
-    q263 --> q43
+    q42 --> q252
+    q252 -->|"tok(&quot;{&quot;)"| q253
+    q253 -->|"tok(ID)"| q264
+    q254 -->|"tok(&quot;.&quot;)"| q255
+    q255 -->|"tok(ID)"| q260
+    q256 -->|"tok(&quot;+=&quot;)"| q257
+    q257 --> q261
+    q258 -->|"tok(&quot;=&quot;)"| q259
+    q259 --> q261
+    q260 --> q256
+    q260 --> q258
+    q261 --> q262
+    q262 -->|"tok(&quot;current&quot;)"| q263
+    q263 --> q265
+    q264 --> q254
+    q264 --> q263
+    q265 -->|"tok(&quot;}&quot;)"| q266
+    q266 --> q43
 ```
 
 ## CompositeRule
@@ -695,23 +702,23 @@ flowchart TD
 flowchart TD
     q44(["CompositeRule__Start (44)<br/>RuleStart"])
     q45(["CompositeRule__Stop (45)<br/>RuleStop"])
-    q264["CompositeRule_composite (264)<br/>Basic<br/>"]
-    q265["CompositeRule_Name_ID (265)<br/>Basic<br/>"]
-    q266["CompositeRule_Colon (266)<br/>Basic<br/>"]
-    q267["CompositeRule__Basic_0 (267)<br/>Basic<br/>"]
-    q268["CompositeRule_Semicolon (268)<br/>Basic<br/>"]
-    q269["CompositeRule__Basic_1 (269)<br/>Basic<br/>"]
-    q270{"CompositeRule__Basic_2 (270)<br/>Basic<br/><br/>dec=30"}
+    q267["CompositeRule_composite (267)<br/>Basic<br/>"]
+    q268["CompositeRule_Name_ID (268)<br/>Basic<br/>"]
+    q269["CompositeRule_Colon (269)<br/>Basic<br/>"]
+    q270["CompositeRule__Basic_0 (270)<br/>Basic<br/>"]
+    q271["CompositeRule_Semicolon (271)<br/>Basic<br/>"]
+    q272["CompositeRule__Basic_1 (272)<br/>Basic<br/>"]
+    q273{"CompositeRule__Basic_2 (273)<br/>Basic<br/><br/>dec=31"}
 
-    q44 --> q264
-    q264 -->|"tok(&quot;composite&quot;)"| q265
-    q265 -->|"tok(ID)"| q266
-    q266 -->|"tok(&quot;:&quot;)"| q267
-    q267 -.->|"[CompositeAlternatives]"| q270
-    q268 -->|"tok(&quot;;&quot;)"| q269
-    q269 --> q45
-    q270 --> q268
-    q270 --> q269
+    q44 --> q267
+    q267 -->|"tok(&quot;composite&quot;)"| q268
+    q268 -->|"tok(ID)"| q269
+    q269 -->|"tok(&quot;:&quot;)"| q270
+    q270 -.->|"[CompositeAlternatives]"| q273
+    q271 -->|"tok(&quot;;&quot;)"| q272
+    q272 --> q45
+    q273 --> q271
+    q273 --> q272
 ```
 
 ## CompositeAlternatives
@@ -720,24 +727,24 @@ flowchart TD
 flowchart TD
     q46(["CompositeAlternatives__Start (46)<br/>RuleStart"])
     q47(["CompositeAlternatives__Stop (47)<br/>RuleStop"])
-    q271["CompositeAlternatives__Basic_0 (271)<br/>Basic<br/>"]
-    q272["CompositeAlternatives_Pipe (272)<br/>Basic<br/>"]
-    q273["CompositeAlternatives__Basic_1 (273)<br/>Basic<br/>"]
-    q274["CompositeAlternatives__Basic_2 (274)<br/>Basic<br/>"]
-    q275{"CompositeAlternatives__LoopBack (275)<br/>LoopBack<br/><br/>dec=31"}
-    q276["CompositeAlternatives__LoopEnd (276)<br/>LoopEnd<br/>"]
-    q277{"CompositeAlternatives__Basic_3 (277)<br/>Basic<br/><br/>dec=32"}
+    q274["CompositeAlternatives__Basic_0 (274)<br/>Basic<br/>"]
+    q275["CompositeAlternatives_Pipe (275)<br/>Basic<br/>"]
+    q276["CompositeAlternatives__Basic_1 (276)<br/>Basic<br/>"]
+    q277["CompositeAlternatives__Basic_2 (277)<br/>Basic<br/>"]
+    q278{"CompositeAlternatives__LoopBack (278)<br/>LoopBack<br/><br/>dec=32"}
+    q279["CompositeAlternatives__LoopEnd (279)<br/>LoopEnd<br/>"]
+    q280{"CompositeAlternatives__Basic_3 (280)<br/>Basic<br/><br/>dec=33"}
 
-    q46 --> q271
-    q271 -.->|"[CompositeGroup]"| q277
-    q272 -->|"tok(&quot;|&quot;)"| q273
-    q273 -.->|"[CompositeGroup]"| q274
-    q274 --> q275
-    q275 --> q272
-    q275 --> q276
-    q276 --> q47
-    q277 --> q272
-    q277 --> q276
+    q46 --> q274
+    q274 -.->|"[CompositeGroup]"| q280
+    q275 -->|"tok(&quot;|&quot;)"| q276
+    q276 -.->|"[CompositeGroup]"| q277
+    q277 --> q278
+    q278 --> q275
+    q278 --> q279
+    q279 --> q47
+    q280 --> q275
+    q280 --> q279
 ```
 
 ## CompositeGroup
@@ -746,22 +753,22 @@ flowchart TD
 flowchart TD
     q48(["CompositeGroup__Start (48)<br/>RuleStart"])
     q49(["CompositeGroup__Stop (49)<br/>RuleStop"])
-    q278["CompositeGroup__Basic_0 (278)<br/>Basic<br/>"]
-    q279["CompositeGroup__Basic_1 (279)<br/>Basic<br/>"]
-    q280["CompositeGroup__Basic_2 (280)<br/>Basic<br/>"]
-    q281{"CompositeGroup__LoopBack (281)<br/>LoopBack<br/><br/>dec=33"}
-    q282["CompositeGroup__LoopEnd (282)<br/>LoopEnd<br/>"]
-    q283{"CompositeGroup__Basic_3 (283)<br/>Basic<br/><br/>dec=34"}
+    q281["CompositeGroup__Basic_0 (281)<br/>Basic<br/>"]
+    q282["CompositeGroup__Basic_1 (282)<br/>Basic<br/>"]
+    q283["CompositeGroup__Basic_2 (283)<br/>Basic<br/>"]
+    q284{"CompositeGroup__LoopBack (284)<br/>LoopBack<br/><br/>dec=34"}
+    q285["CompositeGroup__LoopEnd (285)<br/>LoopEnd<br/>"]
+    q286{"CompositeGroup__Basic_3 (286)<br/>Basic<br/><br/>dec=35"}
 
-    q48 --> q278
-    q278 -.->|"[CompositeElement]"| q283
-    q279 -.->|"[CompositeElement]"| q280
-    q280 --> q281
-    q281 --> q279
-    q281 --> q282
-    q282 --> q49
-    q283 --> q279
-    q283 --> q282
+    q48 --> q281
+    q281 -.->|"[CompositeElement]"| q286
+    q282 -.->|"[CompositeElement]"| q283
+    q283 --> q284
+    q284 --> q282
+    q284 --> q285
+    q285 --> q49
+    q286 --> q282
+    q286 --> q285
 ```
 
 ## CompositeElement
@@ -770,50 +777,50 @@ flowchart TD
 flowchart TD
     q50(["CompositeElement__Start (50)<br/>RuleStart"])
     q51(["CompositeElement__Stop (51)<br/>RuleStop"])
-    q284["CompositeElement__Basic_0 (284)<br/>Basic<br/>"]
-    q285["CompositeElement__Basic_1 (285)<br/>Basic<br/>"]
-    q286["CompositeElement__Basic_2 (286)<br/>Basic<br/>"]
-    q287["CompositeElement__Basic_3 (287)<br/>Basic<br/>"]
-    q288["CompositeElement_LeftParen (288)<br/>Basic<br/>"]
-    q289["CompositeElement__Basic_4 (289)<br/>Basic<br/>"]
-    q290["CompositeElement_RightParen (290)<br/>Basic<br/>"]
-    q291["CompositeElement__Basic_5 (291)<br/>Basic<br/>"]
-    q292{"CompositeElement__Basic_6 (292)<br/>Basic<br/><br/>dec=35"}
-    q293["CompositeElement__BlockEnd_0 (293)<br/>BlockEnd<br/>"]
-    q294["CompositeElement_Cardinality_Asterisk (294)<br/>Basic<br/>"]
-    q295["CompositeElement__Basic_7 (295)<br/>Basic<br/>"]
-    q296["CompositeElement_Cardinality_Plus (296)<br/>Basic<br/>"]
-    q297["CompositeElement__Basic_8 (297)<br/>Basic<br/>"]
-    q298["CompositeElement_Cardinality_Question (298)<br/>Basic<br/>"]
-    q299["CompositeElement__Basic_9 (299)<br/>Basic<br/>"]
-    q300{"CompositeElement__Basic_10 (300)<br/>Basic<br/><br/>dec=36"}
-    q301["CompositeElement__BlockEnd_1 (301)<br/>BlockEnd<br/>"]
-    q302{"CompositeElement__Basic_11 (302)<br/>Basic<br/><br/>dec=37"}
+    q287["CompositeElement__Basic_0 (287)<br/>Basic<br/>"]
+    q288["CompositeElement__Basic_1 (288)<br/>Basic<br/>"]
+    q289["CompositeElement__Basic_2 (289)<br/>Basic<br/>"]
+    q290["CompositeElement__Basic_3 (290)<br/>Basic<br/>"]
+    q291["CompositeElement_LeftParen (291)<br/>Basic<br/>"]
+    q292["CompositeElement__Basic_4 (292)<br/>Basic<br/>"]
+    q293["CompositeElement_RightParen (293)<br/>Basic<br/>"]
+    q294["CompositeElement__Basic_5 (294)<br/>Basic<br/>"]
+    q295{"CompositeElement__Basic_6 (295)<br/>Basic<br/><br/>dec=36"}
+    q296["CompositeElement__BlockEnd_0 (296)<br/>BlockEnd<br/>"]
+    q297["CompositeElement_Cardinality_Asterisk (297)<br/>Basic<br/>"]
+    q298["CompositeElement__Basic_7 (298)<br/>Basic<br/>"]
+    q299["CompositeElement_Cardinality_Plus (299)<br/>Basic<br/>"]
+    q300["CompositeElement__Basic_8 (300)<br/>Basic<br/>"]
+    q301["CompositeElement_Cardinality_Question (301)<br/>Basic<br/>"]
+    q302["CompositeElement__Basic_9 (302)<br/>Basic<br/>"]
+    q303{"CompositeElement__Basic_10 (303)<br/>Basic<br/><br/>dec=37"}
+    q304["CompositeElement__BlockEnd_1 (304)<br/>BlockEnd<br/>"]
+    q305{"CompositeElement__Basic_11 (305)<br/>Basic<br/><br/>dec=38"}
 
-    q50 --> q292
-    q284 -.->|"[Keyword]"| q285
-    q285 --> q293
-    q286 -.->|"[RuleCall]"| q287
-    q287 --> q293
-    q288 -->|"tok(&quot;(&quot;)"| q289
-    q289 -.->|"[CompositeAlternatives]"| q290
-    q290 -->|"tok(&quot;)&quot;)"| q291
-    q291 --> q293
-    q292 --> q284
-    q292 --> q286
-    q292 --> q288
-    q293 --> q302
-    q294 -->|"tok(&quot;*&quot;)"| q295
-    q295 --> q301
-    q296 -->|"tok(&quot;+&quot;)"| q297
-    q297 --> q301
-    q298 -->|"tok(&quot;?&quot;)"| q299
-    q299 --> q301
-    q300 --> q294
-    q300 --> q296
-    q300 --> q298
-    q301 --> q51
-    q302 --> q300
-    q302 --> q301
+    q50 --> q295
+    q287 -.->|"[Keyword]"| q288
+    q288 --> q296
+    q289 -.->|"[RuleCall]"| q290
+    q290 --> q296
+    q291 -->|"tok(&quot;(&quot;)"| q292
+    q292 -.->|"[CompositeAlternatives]"| q293
+    q293 -->|"tok(&quot;)&quot;)"| q294
+    q294 --> q296
+    q295 --> q287
+    q295 --> q289
+    q295 --> q291
+    q296 --> q305
+    q297 -->|"tok(&quot;*&quot;)"| q298
+    q298 --> q304
+    q299 -->|"tok(&quot;+&quot;)"| q300
+    q300 --> q304
+    q301 -->|"tok(&quot;?&quot;)"| q302
+    q302 --> q304
+    q303 --> q297
+    q303 --> q299
+    q303 --> q301
+    q304 --> q51
+    q305 --> q303
+    q305 --> q304
 ```
 

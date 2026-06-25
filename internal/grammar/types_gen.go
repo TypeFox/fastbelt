@@ -789,6 +789,9 @@ type ParserRule interface {
 	AbstractRuleWithBody
 
 	IsParserRule()
+	IsEntry() bool
+	EntryToken() *core.Token
+	SetEntry(value *core.Token)
 	ReturnType() *core.Reference[Interface]
 	SetReturnType(value *core.Reference[Interface])
 }
@@ -803,6 +806,7 @@ func NewParserRule() ParserRule {
 }
 
 type ParserRuleData struct {
+	entry      *core.Token
 	returnType *core.Reference[Interface]
 }
 
@@ -819,6 +823,18 @@ func (i *ParserRuleData) ForEachReference(fn func(core.UntypedReference)) {
 	if i.returnType != nil {
 		fn(i.returnType)
 	}
+}
+
+func (i *ParserRuleData) IsEntry() bool {
+	return i != nil && i.entry != nil
+}
+
+func (i *ParserRuleData) EntryToken() *core.Token {
+	return i.entry
+}
+
+func (i *ParserRuleData) SetEntry(value *core.Token) {
+	i.entry = value
 }
 
 func (i *ParserRuleData) ReturnType() *core.Reference[Interface] {

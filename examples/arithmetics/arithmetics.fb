@@ -40,7 +40,7 @@ interface NumberLiteral extends Expression {
     Value string
 }
 
-Module returns Module:
+entry Module returns Module:
     "module" Name=ID
     Statements+=Statement*
 
@@ -74,7 +74,7 @@ Modulo returns Expression:
 
 PrimaryExpression returns Expression:
     "(" Expression ")" |
-    { NumberLiteral } Value=NUMBER |
+    {NumberLiteral} Value=NUMBER |
     {FunctionCall} Callable=[AbstractDefinition:ID] ("(" Args+=Expression ("," Args+=Expression)* ")")?
 
 token ID: /[_a-zA-Z][\w_]*/

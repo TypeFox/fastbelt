@@ -9,7 +9,7 @@ interface Root {
     Item Obj
 }
 
-Root: Item=Obj;
+entry Root: Item=Obj;
 
 Obj: A | B | C | D | E | F | G | H | I;
 

@@ -277,12 +277,21 @@ func (p *CompletionParser) ParseParserRule() {
 	p.cp.EnterRule("ParserRule", ParserRule__Start)
 	defer p.cp.ExitRule()
 	{
+		p.cp.RecordSnapshot(ParserRule__Basic_1)
+		p.state.Sync(ParserRule__Basic_1)
+		if p.lookahead.ParserRuleEntryOptional(p.state) {
+			p.cp.MarkAssignment("Entry")
+			p.state.Consume(Keyword_entry)
+			p.cp.ClearAssignment()
+		}
+	}
+	{
 		p.cp.MarkAssignment("Name")
 		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
-	p.cp.RecordSnapshot(ParserRule__Basic_1)
-	p.state.Sync(ParserRule__Basic_1)
+	p.cp.RecordSnapshot(ParserRule__Basic_3)
+	p.state.Sync(ParserRule__Basic_3)
 	if p.lookahead.ParserRuleOptional(p.state) {
 		{
 			p.state.Consume(Keyword_returns)
@@ -298,7 +307,7 @@ func (p *CompletionParser) ParseParserRule() {
 	}
 	{
 		p.cp.MarkAssignment("Body")
-		p.state.EnterRule(ParserRule__Basic_4)
+		p.state.EnterRule(ParserRule__Basic_6)
 		p.ParseAlternatives()
 		p.state.ExitRule()
 		p.cp.ClearAssignment()

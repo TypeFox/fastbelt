@@ -8,7 +8,7 @@ interface Statemachine {
     States []State
 }
 
-Statemachine returns Statemachine:
+entry Statemachine returns Statemachine:
     "statemachine"
     Name=ID
     ("events"
