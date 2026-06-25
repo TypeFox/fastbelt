@@ -11,7 +11,7 @@ import (
 // CreateLexerDiagnostics converts [core.Document.LexerErrors] into
 // [core.Diagnostic] values with error severity. It returns a non-nil empty
 // slice when there are no lexer errors.
-func CreateLexerDiagnostics(doc *core.Document) []*core.Diagnostic {
+func CreateLexerDiagnostics(doc *core.Document, source string) []*core.Diagnostic {
 	if len(doc.LexerErrors) == 0 {
 		return []*core.Diagnostic{}
 	}
@@ -31,6 +31,7 @@ func CreateLexerDiagnostics(doc *core.Document) []*core.Diagnostic {
 			},
 			Severity: core.SeverityError,
 			Message:  lexErr.Msg,
+			Source:   source,
 		})
 	}
 	return diagnostics
@@ -39,7 +40,7 @@ func CreateLexerDiagnostics(doc *core.Document) []*core.Diagnostic {
 // CreateParserDiagnostics converts [core.Document.ParserErrors] into
 // [core.Diagnostic] values with error severity. When a parser error has no
 // associated token, its range is the end of the document text.
-func CreateParserDiagnostics(doc *core.Document) []*core.Diagnostic {
+func CreateParserDiagnostics(doc *core.Document, source string) []*core.Diagnostic {
 	if len(doc.ParserErrors) == 0 {
 		return []*core.Diagnostic{}
 	}
@@ -56,12 +57,14 @@ func CreateParserDiagnostics(doc *core.Document) []*core.Diagnostic {
 				Range:    core.TextRange{Start: end, End: end},
 				Severity: core.SeverityError,
 				Message:  err.Msg,
+				Source:   source,
 			})
 		} else {
 			diagnostics = append(diagnostics, &core.Diagnostic{
 				Range:    token.TextSegment.Range,
 				Severity: core.SeverityError,
 				Message:  err.Msg,
+				Source:   source,
 			})
 		}
 	}
@@ -72,7 +75,7 @@ func CreateParserDiagnostics(doc *core.Document) []*core.Diagnostic {
 // [core.Diagnostic] values. A reference contributes a diagnostic only when
 // [core.UntypedReference.Error] and [core.UntypedReference.Segment] are both
 // non-nil; severity comes from the reference error.
-func CreateLinkerDiagnostics(doc *core.Document) []*core.Diagnostic {
+func CreateLinkerDiagnostics(doc *core.Document, source string) []*core.Diagnostic {
 	diagnostics := []*core.Diagnostic{}
 	for _, ref := range doc.References {
 		err := ref.Error()
@@ -82,6 +85,7 @@ func CreateLinkerDiagnostics(doc *core.Document) []*core.Diagnostic {
 				Range:    segment.Range,
 				Severity: core.DiagnosticSeverity(err.Severity),
 				Message:  err.Msg,
+				Source:   source,
 			})
 		}
 	}
