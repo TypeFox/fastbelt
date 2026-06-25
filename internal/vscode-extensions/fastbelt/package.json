@@ -1,7 +1,7 @@
 {
   "name": "fastbelt-vscode",
   "publisher": "fastbelt",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "preview": true,
   "displayName": "Fastbelt",
   "description": "Support for the Fastbelt grammar language",
