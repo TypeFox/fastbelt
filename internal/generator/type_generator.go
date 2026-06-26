@@ -5,8 +5,10 @@
 package generator
 
 import (
+	"context"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	"typefox.dev/fastbelt/internal/grammar"
@@ -23,6 +25,7 @@ func GenerateTypes(grammr grammar.Grammar, packageName string) string {
 	node.AppendLine("import (")
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
+		n.AppendLine("\"unique\"")
 	})
 	node.AppendLine(")")
 	node.AppendLine()
@@ -31,6 +34,8 @@ func GenerateTypes(grammr grammar.Grammar, packageName string) string {
 	}
 
 	node.AppendNode(generateSyntheticFactories(grammr))
+
+	node.AppendNode(generateFieldInfos(grammr))
 
 	return FormatIfPossible(node.String())
 }
@@ -232,7 +237,7 @@ func generateImplStruct(node codegen.Node, grammr grammar.Grammar, iface grammar
 	node.AppendLine("}")
 	node.AppendLine()
 
-	node.AppendLine("func (i *", iface.Name(), "Impl) ForEachNode(fn func(core.AstNode)) {")
+	node.AppendLine("func (i *", iface.Name(), "Impl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {")
 	node.Indent(func(n codegen.Node) {
 		for _, extends := range getAllExtends(grammr, iface) {
 			n.AppendLine("i.", extends, "Data.ForEachNode(fn)")
@@ -241,12 +246,18 @@ func generateImplStruct(node codegen.Node, grammr grammar.Grammar, iface grammar
 	})
 	node.AppendLine("}")
 	node.AppendLine()
-	node.AppendLine("func (i *", iface.Name(), "Impl) ForEachReference(fn func(core.UntypedReference)) {")
+	node.AppendLine("func (i *", iface.Name(), "Impl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {")
 	node.Indent(func(n codegen.Node) {
 		for _, extends := range getAllExtends(grammr, iface) {
 			n.AppendLine("i.", extends, "Data.ForEachReference(fn)")
 		}
 		n.AppendLine("i.", iface.Name(), "Data.ForEachReference(fn)")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+	node.AppendLine("func (i *", iface.Name(), "Impl) FieldInfos(field unique.Handle[string]) core.FieldInfos {")
+	node.Indent(func(n codegen.Node) {
+		n.AppendLine("return ", grammr.Name(), "FieldInfos[\"", iface.Name(), "\"][field.Value()]")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
@@ -283,7 +294,7 @@ func generateDataStruct(node codegen.Node, iface grammar.Interface, fields []Fie
 	node.AppendLine()
 	node.AppendLine("func (i *", iface.Name(), "Data) Is", iface.Name(), "() {}")
 	node.AppendLine()
-	node.AppendLine("func (i *", iface.Name(), "Data) ForEachNode(fn func(core.AstNode)) {")
+	node.AppendLine("func (i *", iface.Name(), "Data) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {")
 	node.Indent(func(n codegen.Node) {
 		for _, field := range fields {
 			if field.GType == TOKEN_TYPE || field.Reference {
@@ -291,15 +302,15 @@ func generateDataStruct(node codegen.Node, iface grammar.Interface, fields []Fie
 			}
 			name := field.PName
 			if field.Array {
-				n.AppendLine("for _, item := range i.", name, " {")
+				n.AppendLine("for j, item := range i.", name, " {")
 				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine("fn(item)")
+					n2.AppendLine("fn(item, unique.Make(\"", name, "\"), uint16(j))")
 				})
 				n.AppendLine("}")
 			} else {
 				n.AppendLine("if i.", name, " != nil {")
 				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine("fn(i.", name, ")")
+					n2.AppendLine("fn(i.", name, ", unique.Make(\"", name, "\"), 0)")
 				})
 				n.AppendLine("}")
 			}
@@ -307,7 +318,7 @@ func generateDataStruct(node codegen.Node, iface grammar.Interface, fields []Fie
 	})
 	node.AppendLine("}")
 	node.AppendLine()
-	node.AppendLine("func (i *", iface.Name(), "Data) ForEachReference(fn func(core.UntypedReference)) {")
+	node.AppendLine("func (i *", iface.Name(), "Data) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {")
 	node.Indent(func(n codegen.Node) {
 		for _, field := range fields {
 			if !field.Reference {
@@ -315,15 +326,15 @@ func generateDataStruct(node codegen.Node, iface grammar.Interface, fields []Fie
 			}
 			name := field.PName
 			if field.Array {
-				n.AppendLine("for _, item := range i.", name, " {")
+				n.AppendLine("for j, item := range i.", name, " {")
 				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine("fn(item)")
+					n2.AppendLine("fn(item, unique.Make(\"", name, "\"), uint16(j))")
 				})
 				n.AppendLine("}")
 			} else {
 				n.AppendLine("if i.", name, " != nil {")
 				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine("fn(i.", name, ")")
+					n2.AppendLine("fn(i.", name, ", unique.Make(\"", name, "\"), 0)")
 				})
 				n.AppendLine("}")
 			}
@@ -434,6 +445,68 @@ func generateSyntheticFactories(grammr grammar.Grammar) codegen.Node {
 	node.Indent(func(n codegen.Node) {
 		for _, e := range entries {
 			n.AppendLine(`"`, e.key, `": func() core.AstNode { return New`, e.typeName, "() },")
+		}
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+	return node
+}
+
+func generateFieldInfos(grammr grammar.Grammar) codegen.Node {
+	node := codegen.NewNode()
+	name := grammr.Name()
+
+	type fieldsByIface struct {
+		name   string
+		fields []FieldInfo
+	}
+	fieldsByIfaces := []fieldsByIface{}
+
+	for _, iface := range grammr.Interfaces() {
+		fields := []FieldInfo{}
+		visited := map[string]bool{}
+		queue := []grammar.Interface{iface}
+		for len(queue) > 0 {
+			current := queue[0]
+			queue = queue[1:]
+			if visited[current.Name()] {
+				continue
+			}
+			visited[current.Name()] = true
+			for _, field := range current.Fields() {
+				fields = append(fields, getFieldInfo(field))
+			}
+			for _, ext := range current.Extends() {
+				parent := ext.Ref(context.Background())
+				if parent != nil && !visited[parent.Name()] {
+					queue = append(queue, parent)
+				}
+			}
+		}
+
+		sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
+
+		fieldsByIfaces = append(fieldsByIfaces, fieldsByIface{
+			name:   iface.Name(),
+			fields: fields,
+		})
+	}
+	// Sort for stable output.
+	sort.Slice(fieldsByIfaces, func(i, j int) bool { return fieldsByIfaces[i].name < fieldsByIfaces[j].name })
+
+	node.AppendLine("var ", name, "FieldInfos = map[string]map[string]core.FieldInfos{")
+	node.Indent(func(n codegen.Node) {
+		for _, e := range fieldsByIfaces {
+			n.AppendLine(`"`, e.name, `": map[string]core.FieldInfos{`)
+			n.Indent(func(n2 codegen.Node) {
+				for _, field := range e.fields {
+					n2.AppendLine("\"", field.PName, "\": {")
+					n2.AppendLine("Multi: ", strconv.FormatBool(field.Array), ",")
+					n2.AppendLine("Reference: ", strconv.FormatBool(field.Reference), ",")
+					n2.AppendLine("},")
+				}
+			})
+			n.AppendLine("},")
 		}
 	})
 	node.AppendLine("}")

@@ -4,6 +4,7 @@ package token_groups
 
 import (
 	core "typefox.dev/fastbelt"
+	"unique"
 )
 
 type Model interface {
@@ -31,13 +32,13 @@ func NewModelData() ModelData {
 
 func (i *ModelData) IsModel() {}
 
-func (i *ModelData) ForEachNode(fn func(core.AstNode)) {
+func (i *ModelData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.item != nil {
-		fn(i.item)
+		fn(i.item, unique.Make("item"), 0)
 	}
 }
 
-func (i *ModelData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ModelData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *ModelData) Item() Item {
@@ -57,12 +58,16 @@ type ModelImpl struct {
 	ModelData
 }
 
-func (i *ModelImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *ModelImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.ModelData.ForEachNode(fn)
 }
 
-func (i *ModelImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ModelImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.ModelData.ForEachReference(fn)
+}
+
+func (i *ModelImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return TokenGroupsFieldInfos["Model"][field.Value()]
 }
 
 type Item interface {
@@ -91,10 +96,10 @@ func NewItemData() ItemData {
 
 func (i *ItemData) IsItem() {}
 
-func (i *ItemData) ForEachNode(fn func(core.AstNode)) {
+func (i *ItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 }
 
-func (i *ItemData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *ItemData) Value() string {
@@ -118,12 +123,16 @@ type ItemImpl struct {
 	ItemData
 }
 
-func (i *ItemImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *ItemImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.ItemData.ForEachNode(fn)
 }
 
-func (i *ItemImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.ItemData.ForEachReference(fn)
+}
+
+func (i *ItemImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return TokenGroupsFieldInfos["Item"][field.Value()]
 }
 
 type Recovery interface {
@@ -158,10 +167,10 @@ func NewRecoveryData() RecoveryData {
 
 func (i *RecoveryData) IsRecovery() {}
 
-func (i *RecoveryData) ForEachNode(fn func(core.AstNode)) {
+func (i *RecoveryData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 }
 
-func (i *RecoveryData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *RecoveryData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *RecoveryData) First() string {
@@ -202,18 +211,51 @@ type RecoveryImpl struct {
 	RecoveryData
 }
 
-func (i *RecoveryImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *RecoveryImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.ItemData.ForEachNode(fn)
 	i.RecoveryData.ForEachNode(fn)
 }
 
-func (i *RecoveryImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *RecoveryImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.ItemData.ForEachReference(fn)
 	i.RecoveryData.ForEachReference(fn)
+}
+
+func (i *RecoveryImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return TokenGroupsFieldInfos["Recovery"][field.Value()]
 }
 
 var TokenGroupsSyntheticFactories = map[string]func() core.AstNode{
 	"Item":     func() core.AstNode { return NewItem() },
 	"Model":    func() core.AstNode { return NewModel() },
 	"Recovery": func() core.AstNode { return NewRecovery() },
+}
+
+var TokenGroupsFieldInfos = map[string]map[string]core.FieldInfos{
+	"Item": map[string]core.FieldInfos{
+		"value": {
+			Multi:     false,
+			Reference: false,
+		},
+	},
+	"Model": map[string]core.FieldInfos{
+		"item": {
+			Multi:     false,
+			Reference: false,
+		},
+	},
+	"Recovery": map[string]core.FieldInfos{
+		"first": {
+			Multi:     false,
+			Reference: false,
+		},
+		"second": {
+			Multi:     false,
+			Reference: false,
+		},
+		"value": {
+			Multi:     false,
+			Reference: false,
+		},
+	},
 }

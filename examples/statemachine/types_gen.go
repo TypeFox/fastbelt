@@ -4,6 +4,7 @@ package statemachine
 
 import (
 	core "typefox.dev/fastbelt"
+	"unique"
 )
 
 type Statemachine interface {
@@ -48,21 +49,21 @@ func NewStatemachineData() StatemachineData {
 
 func (i *StatemachineData) IsStatemachine() {}
 
-func (i *StatemachineData) ForEachNode(fn func(core.AstNode)) {
-	for _, item := range i.events {
-		fn(item)
+func (i *StatemachineData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+	for j, item := range i.events {
+		fn(item, unique.Make("events"), uint16(j))
 	}
-	for _, item := range i.commands {
-		fn(item)
+	for j, item := range i.commands {
+		fn(item, unique.Make("commands"), uint16(j))
 	}
-	for _, item := range i.states {
-		fn(item)
+	for j, item := range i.states {
+		fn(item, unique.Make("states"), uint16(j))
 	}
 }
 
-func (i *StatemachineData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *StatemachineData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.init != nil {
-		fn(i.init)
+		fn(i.init, unique.Make("init"), 0)
 	}
 }
 
@@ -123,12 +124,16 @@ type StatemachineImpl struct {
 	StatemachineData
 }
 
-func (i *StatemachineImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *StatemachineImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.StatemachineData.ForEachNode(fn)
 }
 
-func (i *StatemachineImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *StatemachineImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.StatemachineData.ForEachReference(fn)
+}
+
+func (i *StatemachineImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return StatemachineModelFieldInfos["Statemachine"][field.Value()]
 }
 
 type Event interface {
@@ -157,10 +162,10 @@ func NewEventData() EventData {
 
 func (i *EventData) IsEvent() {}
 
-func (i *EventData) ForEachNode(fn func(core.AstNode)) {
+func (i *EventData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 }
 
-func (i *EventData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *EventData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *EventData) Name() string {
@@ -184,12 +189,16 @@ type EventImpl struct {
 	EventData
 }
 
-func (i *EventImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *EventImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.EventData.ForEachNode(fn)
 }
 
-func (i *EventImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *EventImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.EventData.ForEachReference(fn)
+}
+
+func (i *EventImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return StatemachineModelFieldInfos["Event"][field.Value()]
 }
 
 type Command interface {
@@ -218,10 +227,10 @@ func NewCommandData() CommandData {
 
 func (i *CommandData) IsCommand() {}
 
-func (i *CommandData) ForEachNode(fn func(core.AstNode)) {
+func (i *CommandData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 }
 
-func (i *CommandData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *CommandData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *CommandData) Name() string {
@@ -245,12 +254,16 @@ type CommandImpl struct {
 	CommandData
 }
 
-func (i *CommandImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *CommandImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.CommandData.ForEachNode(fn)
 }
 
-func (i *CommandImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *CommandImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.CommandData.ForEachReference(fn)
+}
+
+func (i *CommandImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return StatemachineModelFieldInfos["Command"][field.Value()]
 }
 
 type State interface {
@@ -288,15 +301,15 @@ func NewStateData() StateData {
 
 func (i *StateData) IsState() {}
 
-func (i *StateData) ForEachNode(fn func(core.AstNode)) {
-	for _, item := range i.transitions {
-		fn(item)
+func (i *StateData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+	for j, item := range i.transitions {
+		fn(item, unique.Make("transitions"), uint16(j))
 	}
 }
 
-func (i *StateData) ForEachReference(fn func(core.UntypedReference)) {
-	for _, item := range i.actions {
-		fn(item)
+func (i *StateData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+	for j, item := range i.actions {
+		fn(item, unique.Make("actions"), uint16(j))
 	}
 }
 
@@ -337,12 +350,16 @@ type StateImpl struct {
 	StateData
 }
 
-func (i *StateImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *StateImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.StateData.ForEachNode(fn)
 }
 
-func (i *StateImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *StateImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.StateData.ForEachReference(fn)
+}
+
+func (i *StateImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return StatemachineModelFieldInfos["State"][field.Value()]
 }
 
 type Transition interface {
@@ -373,15 +390,15 @@ func NewTransitionData() TransitionData {
 
 func (i *TransitionData) IsTransition() {}
 
-func (i *TransitionData) ForEachNode(fn func(core.AstNode)) {
+func (i *TransitionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 }
 
-func (i *TransitionData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *TransitionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.event != nil {
-		fn(i.event)
+		fn(i.event, unique.Make("event"), 0)
 	}
 	if i.state != nil {
-		fn(i.state)
+		fn(i.state, unique.Make("state"), 0)
 	}
 }
 
@@ -414,12 +431,16 @@ type TransitionImpl struct {
 	TransitionData
 }
 
-func (i *TransitionImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *TransitionImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.TransitionData.ForEachNode(fn)
 }
 
-func (i *TransitionImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *TransitionImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.TransitionData.ForEachReference(fn)
+}
+
+func (i *TransitionImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return StatemachineModelFieldInfos["Transition"][field.Value()]
 }
 
 var StatemachineModelSyntheticFactories = map[string]func() core.AstNode{
@@ -428,4 +449,65 @@ var StatemachineModelSyntheticFactories = map[string]func() core.AstNode{
 	"State":        func() core.AstNode { return NewState() },
 	"Statemachine": func() core.AstNode { return NewStatemachine() },
 	"Transition":   func() core.AstNode { return NewTransition() },
+}
+
+var StatemachineModelFieldInfos = map[string]map[string]core.FieldInfos{
+	"Command": map[string]core.FieldInfos{
+		"name": {
+			Multi:     false,
+			Reference: false,
+		},
+	},
+	"Event": map[string]core.FieldInfos{
+		"name": {
+			Multi:     false,
+			Reference: false,
+		},
+	},
+	"State": map[string]core.FieldInfos{
+		"actions": {
+			Multi:     true,
+			Reference: true,
+		},
+		"name": {
+			Multi:     false,
+			Reference: false,
+		},
+		"transitions": {
+			Multi:     true,
+			Reference: false,
+		},
+	},
+	"Statemachine": map[string]core.FieldInfos{
+		"commands": {
+			Multi:     true,
+			Reference: false,
+		},
+		"events": {
+			Multi:     true,
+			Reference: false,
+		},
+		"init": {
+			Multi:     false,
+			Reference: true,
+		},
+		"name": {
+			Multi:     false,
+			Reference: false,
+		},
+		"states": {
+			Multi:     true,
+			Reference: false,
+		},
+	},
+	"Transition": map[string]core.FieldInfos{
+		"event": {
+			Multi:     false,
+			Reference: true,
+		},
+		"state": {
+			Multi:     false,
+			Reference: true,
+		},
+	},
 }

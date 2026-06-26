@@ -4,6 +4,7 @@ package lookahead
 
 import (
 	core "typefox.dev/fastbelt"
+	"unique"
 )
 
 type Obj interface {
@@ -36,13 +37,13 @@ func NewObjData() ObjData {
 
 func (i *ObjData) IsObj() {}
 
-func (i *ObjData) ForEachNode(fn func(core.AstNode)) {
+func (i *ObjData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.node != nil {
-		fn(i.node)
+		fn(i.node, unique.Make("node"), 0)
 	}
 }
 
-func (i *ObjData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ObjData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *ObjData) Value() string {
@@ -82,12 +83,16 @@ type ObjImpl struct {
 	ObjData
 }
 
-func (i *ObjImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *ObjImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.ObjData.ForEachNode(fn)
 }
 
-func (i *ObjImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ObjImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.ObjData.ForEachReference(fn)
+}
+
+func (i *ObjImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return LookaheadFieldInfos["Obj"][field.Value()]
 }
 
 type Root interface {
@@ -115,13 +120,13 @@ func NewRootData() RootData {
 
 func (i *RootData) IsRoot() {}
 
-func (i *RootData) ForEachNode(fn func(core.AstNode)) {
+func (i *RootData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.item != nil {
-		fn(i.item)
+		fn(i.item, unique.Make("item"), 0)
 	}
 }
 
-func (i *RootData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *RootData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *RootData) Item() Obj {
@@ -141,12 +146,16 @@ type RootImpl struct {
 	RootData
 }
 
-func (i *RootImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *RootImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.RootData.ForEachNode(fn)
 }
 
-func (i *RootImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *RootImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.RootData.ForEachReference(fn)
+}
+
+func (i *RootImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return LookaheadFieldInfos["Root"][field.Value()]
 }
 
 type B interface {
@@ -177,10 +186,10 @@ func NewBData() BData {
 
 func (i *BData) IsB() {}
 
-func (i *BData) ForEachNode(fn func(core.AstNode)) {
+func (i *BData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 }
 
-func (i *BData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *BData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *BData) Post() string {
@@ -205,18 +214,55 @@ type BImpl struct {
 	BData
 }
 
-func (i *BImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *BImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.ObjData.ForEachNode(fn)
 	i.BData.ForEachNode(fn)
 }
 
-func (i *BImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *BImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.ObjData.ForEachReference(fn)
 	i.BData.ForEachReference(fn)
+}
+
+func (i *BImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return LookaheadFieldInfos["B"][field.Value()]
 }
 
 var LookaheadSyntheticFactories = map[string]func() core.AstNode{
 	"B":    func() core.AstNode { return NewB() },
 	"Obj":  func() core.AstNode { return NewObj() },
 	"Root": func() core.AstNode { return NewRoot() },
+}
+
+var LookaheadFieldInfos = map[string]map[string]core.FieldInfos{
+	"B": map[string]core.FieldInfos{
+		"node": {
+			Multi:     false,
+			Reference: false,
+		},
+		"post": {
+			Multi:     false,
+			Reference: false,
+		},
+		"value": {
+			Multi:     false,
+			Reference: false,
+		},
+	},
+	"Obj": map[string]core.FieldInfos{
+		"node": {
+			Multi:     false,
+			Reference: false,
+		},
+		"value": {
+			Multi:     false,
+			Reference: false,
+		},
+	},
+	"Root": map[string]core.FieldInfos{
+		"item": {
+			Multi:     false,
+			Reference: false,
+		},
+	},
 }

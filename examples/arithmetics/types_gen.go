@@ -4,6 +4,7 @@ package arithmetics
 
 import (
 	core "typefox.dev/fastbelt"
+	"unique"
 )
 
 type Module interface {
@@ -37,13 +38,13 @@ func NewModuleData() ModuleData {
 
 func (i *ModuleData) IsModule() {}
 
-func (i *ModuleData) ForEachNode(fn func(core.AstNode)) {
-	for _, item := range i.statements {
-		fn(item)
+func (i *ModuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+	for j, item := range i.statements {
+		fn(item, unique.Make("statements"), uint16(j))
 	}
 }
 
-func (i *ModuleData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ModuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *ModuleData) Name() string {
@@ -75,12 +76,16 @@ type ModuleImpl struct {
 	ModuleData
 }
 
-func (i *ModuleImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *ModuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.ModuleData.ForEachNode(fn)
 }
 
-func (i *ModuleImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ModuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.ModuleData.ForEachReference(fn)
+}
+
+func (i *ModuleImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return ArithmeticsFieldInfos["Module"][field.Value()]
 }
 
 type Statement interface {
@@ -105,10 +110,10 @@ func NewStatementData() StatementData {
 
 func (i *StatementData) IsStatement() {}
 
-func (i *StatementData) ForEachNode(fn func(core.AstNode)) {
+func (i *StatementData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 }
 
-func (i *StatementData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *StatementData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 type StatementImpl struct {
@@ -116,12 +121,16 @@ type StatementImpl struct {
 	StatementData
 }
 
-func (i *StatementImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *StatementImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.StatementData.ForEachNode(fn)
 }
 
-func (i *StatementImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *StatementImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.StatementData.ForEachReference(fn)
+}
+
+func (i *StatementImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return ArithmeticsFieldInfos["Statement"][field.Value()]
 }
 
 type AbstractDefinition interface {
@@ -150,10 +159,10 @@ func NewAbstractDefinitionData() AbstractDefinitionData {
 
 func (i *AbstractDefinitionData) IsAbstractDefinition() {}
 
-func (i *AbstractDefinitionData) ForEachNode(fn func(core.AstNode)) {
+func (i *AbstractDefinitionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 }
 
-func (i *AbstractDefinitionData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *AbstractDefinitionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *AbstractDefinitionData) Name() string {
@@ -177,12 +186,16 @@ type AbstractDefinitionImpl struct {
 	AbstractDefinitionData
 }
 
-func (i *AbstractDefinitionImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *AbstractDefinitionImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.AbstractDefinitionData.ForEachNode(fn)
 }
 
-func (i *AbstractDefinitionImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *AbstractDefinitionImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.AbstractDefinitionData.ForEachReference(fn)
+}
+
+func (i *AbstractDefinitionImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return ArithmeticsFieldInfos["AbstractDefinition"][field.Value()]
 }
 
 type Definition interface {
@@ -219,16 +232,16 @@ func NewDefinitionData() DefinitionData {
 
 func (i *DefinitionData) IsDefinition() {}
 
-func (i *DefinitionData) ForEachNode(fn func(core.AstNode)) {
-	for _, item := range i.args {
-		fn(item)
+func (i *DefinitionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+	for j, item := range i.args {
+		fn(item, unique.Make("args"), uint16(j))
 	}
 	if i.expression != nil {
-		fn(i.expression)
+		fn(i.expression, unique.Make("expression"), 0)
 	}
 }
 
-func (i *DefinitionData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *DefinitionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *DefinitionData) Args() []DeclaredParameter {
@@ -258,16 +271,20 @@ type DefinitionImpl struct {
 	DefinitionData
 }
 
-func (i *DefinitionImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *DefinitionImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.AbstractDefinitionData.ForEachNode(fn)
 	i.StatementData.ForEachNode(fn)
 	i.DefinitionData.ForEachNode(fn)
 }
 
-func (i *DefinitionImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *DefinitionImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.AbstractDefinitionData.ForEachReference(fn)
 	i.StatementData.ForEachReference(fn)
 	i.DefinitionData.ForEachReference(fn)
+}
+
+func (i *DefinitionImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return ArithmeticsFieldInfos["Definition"][field.Value()]
 }
 
 type DeclaredParameter interface {
@@ -294,10 +311,10 @@ func NewDeclaredParameterData() DeclaredParameterData {
 
 func (i *DeclaredParameterData) IsDeclaredParameter() {}
 
-func (i *DeclaredParameterData) ForEachNode(fn func(core.AstNode)) {
+func (i *DeclaredParameterData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 }
 
-func (i *DeclaredParameterData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *DeclaredParameterData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 type DeclaredParameterImpl struct {
@@ -306,14 +323,18 @@ type DeclaredParameterImpl struct {
 	DeclaredParameterData
 }
 
-func (i *DeclaredParameterImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *DeclaredParameterImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.AbstractDefinitionData.ForEachNode(fn)
 	i.DeclaredParameterData.ForEachNode(fn)
 }
 
-func (i *DeclaredParameterImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *DeclaredParameterImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.AbstractDefinitionData.ForEachReference(fn)
 	i.DeclaredParameterData.ForEachReference(fn)
+}
+
+func (i *DeclaredParameterImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return ArithmeticsFieldInfos["DeclaredParameter"][field.Value()]
 }
 
 type Evaluation interface {
@@ -343,13 +364,13 @@ func NewEvaluationData() EvaluationData {
 
 func (i *EvaluationData) IsEvaluation() {}
 
-func (i *EvaluationData) ForEachNode(fn func(core.AstNode)) {
+func (i *EvaluationData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.expression != nil {
-		fn(i.expression)
+		fn(i.expression, unique.Make("expression"), 0)
 	}
 }
 
-func (i *EvaluationData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *EvaluationData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *EvaluationData) Expression() Expression {
@@ -370,14 +391,18 @@ type EvaluationImpl struct {
 	EvaluationData
 }
 
-func (i *EvaluationImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *EvaluationImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.StatementData.ForEachNode(fn)
 	i.EvaluationData.ForEachNode(fn)
 }
 
-func (i *EvaluationImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *EvaluationImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.StatementData.ForEachReference(fn)
 	i.EvaluationData.ForEachReference(fn)
+}
+
+func (i *EvaluationImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return ArithmeticsFieldInfos["Evaluation"][field.Value()]
 }
 
 type Expression interface {
@@ -402,10 +427,10 @@ func NewExpressionData() ExpressionData {
 
 func (i *ExpressionData) IsExpression() {}
 
-func (i *ExpressionData) ForEachNode(fn func(core.AstNode)) {
+func (i *ExpressionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 }
 
-func (i *ExpressionData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ExpressionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 type ExpressionImpl struct {
@@ -413,12 +438,16 @@ type ExpressionImpl struct {
 	ExpressionData
 }
 
-func (i *ExpressionImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *ExpressionImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.ExpressionData.ForEachNode(fn)
 }
 
-func (i *ExpressionImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ExpressionImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.ExpressionData.ForEachReference(fn)
+}
+
+func (i *ExpressionImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return ArithmeticsFieldInfos["Expression"][field.Value()]
 }
 
 type BinaryExpression interface {
@@ -455,16 +484,16 @@ func NewBinaryExpressionData() BinaryExpressionData {
 
 func (i *BinaryExpressionData) IsBinaryExpression() {}
 
-func (i *BinaryExpressionData) ForEachNode(fn func(core.AstNode)) {
+func (i *BinaryExpressionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.left != nil {
-		fn(i.left)
+		fn(i.left, unique.Make("left"), 0)
 	}
 	if i.right != nil {
-		fn(i.right)
+		fn(i.right, unique.Make("right"), 0)
 	}
 }
 
-func (i *BinaryExpressionData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *BinaryExpressionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *BinaryExpressionData) Left() Expression {
@@ -513,14 +542,18 @@ type BinaryExpressionImpl struct {
 	BinaryExpressionData
 }
 
-func (i *BinaryExpressionImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *BinaryExpressionImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.ExpressionData.ForEachNode(fn)
 	i.BinaryExpressionData.ForEachNode(fn)
 }
 
-func (i *BinaryExpressionImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *BinaryExpressionImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.ExpressionData.ForEachReference(fn)
 	i.BinaryExpressionData.ForEachReference(fn)
+}
+
+func (i *BinaryExpressionImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return ArithmeticsFieldInfos["BinaryExpression"][field.Value()]
 }
 
 type FunctionCall interface {
@@ -555,15 +588,15 @@ func NewFunctionCallData() FunctionCallData {
 
 func (i *FunctionCallData) IsFunctionCall() {}
 
-func (i *FunctionCallData) ForEachNode(fn func(core.AstNode)) {
-	for _, item := range i.args {
-		fn(item)
+func (i *FunctionCallData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+	for j, item := range i.args {
+		fn(item, unique.Make("args"), uint16(j))
 	}
 }
 
-func (i *FunctionCallData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *FunctionCallData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.callable != nil {
-		fn(i.callable)
+		fn(i.callable, unique.Make("callable"), 0)
 	}
 }
 
@@ -593,14 +626,18 @@ type FunctionCallImpl struct {
 	FunctionCallData
 }
 
-func (i *FunctionCallImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *FunctionCallImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.ExpressionData.ForEachNode(fn)
 	i.FunctionCallData.ForEachNode(fn)
 }
 
-func (i *FunctionCallImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *FunctionCallImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.ExpressionData.ForEachReference(fn)
 	i.FunctionCallData.ForEachReference(fn)
+}
+
+func (i *FunctionCallImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return ArithmeticsFieldInfos["FunctionCall"][field.Value()]
 }
 
 type NumberLiteral interface {
@@ -631,10 +668,10 @@ func NewNumberLiteralData() NumberLiteralData {
 
 func (i *NumberLiteralData) IsNumberLiteral() {}
 
-func (i *NumberLiteralData) ForEachNode(fn func(core.AstNode)) {
+func (i *NumberLiteralData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 }
 
-func (i *NumberLiteralData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *NumberLiteralData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *NumberLiteralData) Value() string {
@@ -659,14 +696,18 @@ type NumberLiteralImpl struct {
 	NumberLiteralData
 }
 
-func (i *NumberLiteralImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *NumberLiteralImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.ExpressionData.ForEachNode(fn)
 	i.NumberLiteralData.ForEachNode(fn)
 }
 
-func (i *NumberLiteralImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *NumberLiteralImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.ExpressionData.ForEachReference(fn)
 	i.NumberLiteralData.ForEachReference(fn)
+}
+
+func (i *NumberLiteralImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	return ArithmeticsFieldInfos["NumberLiteral"][field.Value()]
 }
 
 var ArithmeticsSyntheticFactories = map[string]func() core.AstNode{
@@ -680,4 +721,81 @@ var ArithmeticsSyntheticFactories = map[string]func() core.AstNode{
 	"Module":             func() core.AstNode { return NewModule() },
 	"NumberLiteral":      func() core.AstNode { return NewNumberLiteral() },
 	"Statement":          func() core.AstNode { return NewStatement() },
+}
+
+var ArithmeticsFieldInfos = map[string]map[string]core.FieldInfos{
+	"AbstractDefinition": map[string]core.FieldInfos{
+		"name": {
+			Multi:     false,
+			Reference: false,
+		},
+	},
+	"BinaryExpression": map[string]core.FieldInfos{
+		"left": {
+			Multi:     false,
+			Reference: false,
+		},
+		"operator": {
+			Multi:     false,
+			Reference: false,
+		},
+		"right": {
+			Multi:     false,
+			Reference: false,
+		},
+	},
+	"DeclaredParameter": map[string]core.FieldInfos{
+		"name": {
+			Multi:     false,
+			Reference: false,
+		},
+	},
+	"Definition": map[string]core.FieldInfos{
+		"args": {
+			Multi:     true,
+			Reference: false,
+		},
+		"expression": {
+			Multi:     false,
+			Reference: false,
+		},
+		"name": {
+			Multi:     false,
+			Reference: false,
+		},
+	},
+	"Evaluation": map[string]core.FieldInfos{
+		"expression": {
+			Multi:     false,
+			Reference: false,
+		},
+	},
+	"Expression": map[string]core.FieldInfos{},
+	"FunctionCall": map[string]core.FieldInfos{
+		"args": {
+			Multi:     true,
+			Reference: false,
+		},
+		"callable": {
+			Multi:     false,
+			Reference: true,
+		},
+	},
+	"Module": map[string]core.FieldInfos{
+		"name": {
+			Multi:     false,
+			Reference: false,
+		},
+		"statements": {
+			Multi:     true,
+			Reference: false,
+		},
+	},
+	"NumberLiteral": map[string]core.FieldInfos{
+		"value": {
+			Multi:     false,
+			Reference: false,
+		},
+	},
+	"Statement": map[string]core.FieldInfos{},
 }
