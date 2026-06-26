@@ -39,7 +39,7 @@ func (i *ObjData) IsObj() {}
 
 func (i *ObjData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.node != nil {
-		fn(i.node, unique.Make("node"), 0)
+		fn(i.node, fieldNameNode, 0)
 	}
 }
 
@@ -92,7 +92,14 @@ func (i *ObjImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[
 }
 
 func (i *ObjImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return LookaheadFieldInfos["Obj"][field.Value()]
+	switch field {
+	case fieldNameNode:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameValue:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Root interface {
@@ -122,7 +129,7 @@ func (i *RootData) IsRoot() {}
 
 func (i *RootData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.item != nil {
-		fn(i.item, unique.Make("item"), 0)
+		fn(i.item, fieldNameItem, 0)
 	}
 }
 
@@ -155,7 +162,12 @@ func (i *RootImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle
 }
 
 func (i *RootImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return LookaheadFieldInfos["Root"][field.Value()]
+	switch field {
+	case fieldNameItem:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type B interface {
@@ -225,44 +237,27 @@ func (i *BImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *BImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return LookaheadFieldInfos["B"][field.Value()]
+	switch field {
+	case fieldNameNode:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNamePost:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameValue:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
+
+var (
+	fieldNameItem  = unique.Make("item")
+	fieldNameNode  = unique.Make("node")
+	fieldNamePost  = unique.Make("post")
+	fieldNameValue = unique.Make("value")
+)
 
 var LookaheadSyntheticFactories = map[string]func() core.AstNode{
 	"B":    func() core.AstNode { return NewB() },
 	"Obj":  func() core.AstNode { return NewObj() },
 	"Root": func() core.AstNode { return NewRoot() },
-}
-
-var LookaheadFieldInfos = map[string]map[string]core.FieldInfos{
-	"B": map[string]core.FieldInfos{
-		"node": {
-			Multi:     false,
-			Reference: false,
-		},
-		"post": {
-			Multi:     false,
-			Reference: false,
-		},
-		"value": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"Obj": map[string]core.FieldInfos{
-		"node": {
-			Multi:     false,
-			Reference: false,
-		},
-		"value": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"Root": map[string]core.FieldInfos{
-		"item": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
 }

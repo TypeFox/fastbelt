@@ -49,7 +49,7 @@ func (i *ObjImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[
 }
 
 func (i *ObjImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return CompletionFieldInfos["Obj"][field.Value()]
+	return core.FieldInfos{}
 }
 
 type Root interface {
@@ -81,7 +81,7 @@ func (i *RootData) IsRoot() {}
 
 func (i *RootData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	for j, item := range i.objects {
-		fn(item, unique.Make("objects"), uint16(j))
+		fn(item, fieldNameObjects, uint16(j))
 	}
 }
 
@@ -110,7 +110,12 @@ func (i *RootImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle
 }
 
 func (i *RootImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return CompletionFieldInfos["Root"][field.Value()]
+	switch field {
+	case fieldNameObjects:
+		return core.FieldInfos{Multi: true, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Declare interface {
@@ -148,10 +153,10 @@ func (i *DeclareData) IsDeclare() {}
 
 func (i *DeclareData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.name != nil {
-		fn(i.name, unique.Make("name"), 0)
+		fn(i.name, fieldNameName, 0)
 	}
 	for j, item := range i.children {
-		fn(item, unique.Make("children"), uint16(j))
+		fn(item, fieldNameChildren, uint16(j))
 	}
 }
 
@@ -199,7 +204,14 @@ func (i *DeclareImpl) ForEachReference(fn func(core.UntypedReference, unique.Han
 }
 
 func (i *DeclareImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return CompletionFieldInfos["Declare"][field.Value()]
+	switch field {
+	case fieldNameChildren:
+		return core.FieldInfos{Multi: true, Reference: false}
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type E interface {
@@ -234,7 +246,7 @@ func (i *EData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)
 
 func (i *EData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.ref != nil {
-		fn(i.ref, unique.Make("ref"), 0)
+		fn(i.ref, fieldNameRef, 0)
 	}
 }
 
@@ -267,7 +279,12 @@ func (i *EImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *EImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return CompletionFieldInfos["E"][field.Value()]
+	switch field {
+	case fieldNameRef:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type F interface {
@@ -301,7 +318,7 @@ func (i *FData) IsF() {}
 
 func (i *FData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	for j, item := range i.items {
-		fn(item, unique.Make("items"), uint16(j))
+		fn(item, fieldNameItems, uint16(j))
 	}
 }
 
@@ -333,7 +350,12 @@ func (i *FImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *FImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return CompletionFieldInfos["F"][field.Value()]
+	switch field {
+	case fieldNameItems:
+		return core.FieldInfos{Multi: true, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type FItem interface {
@@ -366,7 +388,7 @@ func (i *FItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uin
 
 func (i *FItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.ref != nil {
-		fn(i.ref, unique.Make("ref"), 0)
+		fn(i.ref, fieldNameRef, 0)
 	}
 }
 
@@ -396,7 +418,12 @@ func (i *FItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 }
 
 func (i *FItemImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return CompletionFieldInfos["FItem"][field.Value()]
+	switch field {
+	case fieldNameRef:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type G interface {
@@ -431,7 +458,7 @@ func (i *GData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)
 
 func (i *GData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.ref != nil {
-		fn(i.ref, unique.Make("ref"), 0)
+		fn(i.ref, fieldNameRef, 0)
 	}
 }
 
@@ -464,7 +491,12 @@ func (i *GImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *GImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return CompletionFieldInfos["G"][field.Value()]
+	switch field {
+	case fieldNameRef:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type H interface {
@@ -496,7 +528,7 @@ func (i *HData) IsH() {}
 
 func (i *HData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.member != nil {
-		fn(i.member, unique.Make("member"), 0)
+		fn(i.member, fieldNameMember, 0)
 	}
 }
 
@@ -532,7 +564,12 @@ func (i *HImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *HImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return CompletionFieldInfos["H"][field.Value()]
+	switch field {
+	case fieldNameMember:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type MemberCall interface {
@@ -565,13 +602,13 @@ func (i *MemberCallData) IsMemberCall() {}
 
 func (i *MemberCallData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.previous != nil {
-		fn(i.previous, unique.Make("previous"), 0)
+		fn(i.previous, fieldNamePrevious, 0)
 	}
 }
 
 func (i *MemberCallData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.ref != nil {
-		fn(i.ref, unique.Make("ref"), 0)
+		fn(i.ref, fieldNameRef, 0)
 	}
 }
 
@@ -613,7 +650,14 @@ func (i *MemberCallImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *MemberCallImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return CompletionFieldInfos["MemberCall"][field.Value()]
+	switch field {
+	case fieldNamePrevious:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameRef:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type J interface {
@@ -648,7 +692,7 @@ func (i *JData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)
 
 func (i *JData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.ref != nil {
-		fn(i.ref, unique.Make("ref"), 0)
+		fn(i.ref, fieldNameRef, 0)
 	}
 }
 
@@ -681,7 +725,12 @@ func (i *JImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *JImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return CompletionFieldInfos["J"][field.Value()]
+	switch field {
+	case fieldNameRef:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type K interface {
@@ -719,10 +768,10 @@ func (i *KData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)
 
 func (i *KData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.ref1 != nil {
-		fn(i.ref1, unique.Make("ref1"), 0)
+		fn(i.ref1, fieldNameRef1, 0)
 	}
 	if i.ref2 != nil {
-		fn(i.ref2, unique.Make("ref2"), 0)
+		fn(i.ref2, fieldNameRef2, 0)
 	}
 }
 
@@ -767,7 +816,14 @@ func (i *KImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *KImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return CompletionFieldInfos["K"][field.Value()]
+	switch field {
+	case fieldNameRef1:
+		return core.FieldInfos{Multi: false, Reference: true}
+	case fieldNameRef2:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type N interface {
@@ -802,7 +858,7 @@ func (i *NData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)
 
 func (i *NData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.ref != nil {
-		fn(i.ref, unique.Make("ref"), 0)
+		fn(i.ref, fieldNameRef, 0)
 	}
 }
 
@@ -835,7 +891,12 @@ func (i *NImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *NImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return CompletionFieldInfos["N"][field.Value()]
+	switch field {
+	case fieldNameRef:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type O interface {
@@ -870,7 +931,7 @@ func (i *OData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)
 
 func (i *OData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.ref != nil {
-		fn(i.ref, unique.Make("ref"), 0)
+		fn(i.ref, fieldNameRef, 0)
 	}
 }
 
@@ -903,8 +964,25 @@ func (i *OImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *OImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return CompletionFieldInfos["O"][field.Value()]
+	switch field {
+	case fieldNameRef:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
+
+var (
+	fieldNameChildren = unique.Make("children")
+	fieldNameItems    = unique.Make("items")
+	fieldNameMember   = unique.Make("member")
+	fieldNameName     = unique.Make("name")
+	fieldNameObjects  = unique.Make("objects")
+	fieldNamePrevious = unique.Make("previous")
+	fieldNameRef      = unique.Make("ref")
+	fieldNameRef1     = unique.Make("ref1")
+	fieldNameRef2     = unique.Make("ref2")
+)
 
 var CompletionSyntheticFactories = map[string]func() core.AstNode{
 	"Declare":    func() core.AstNode { return NewDeclare() },
@@ -920,92 +998,4 @@ var CompletionSyntheticFactories = map[string]func() core.AstNode{
 	"O":          func() core.AstNode { return NewO() },
 	"Obj":        func() core.AstNode { return NewObj() },
 	"Root":       func() core.AstNode { return NewRoot() },
-}
-
-var CompletionFieldInfos = map[string]map[string]core.FieldInfos{
-	"Declare": map[string]core.FieldInfos{
-		"children": {
-			Multi:     true,
-			Reference: false,
-		},
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"E": map[string]core.FieldInfos{
-		"ref": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
-	"F": map[string]core.FieldInfos{
-		"items": {
-			Multi:     true,
-			Reference: false,
-		},
-	},
-	"FItem": map[string]core.FieldInfos{
-		"ref": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
-	"G": map[string]core.FieldInfos{
-		"ref": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
-	"H": map[string]core.FieldInfos{
-		"member": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"J": map[string]core.FieldInfos{
-		"ref": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
-	"K": map[string]core.FieldInfos{
-		"ref1": {
-			Multi:     false,
-			Reference: true,
-		},
-		"ref2": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
-	"MemberCall": map[string]core.FieldInfos{
-		"previous": {
-			Multi:     false,
-			Reference: false,
-		},
-		"ref": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
-	"N": map[string]core.FieldInfos{
-		"ref": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
-	"O": map[string]core.FieldInfos{
-		"ref": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
-	"Obj": map[string]core.FieldInfos{},
-	"Root": map[string]core.FieldInfos{
-		"objects": {
-			Multi:     true,
-			Reference: false,
-		},
-	},
 }

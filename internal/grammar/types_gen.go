@@ -56,19 +56,19 @@ func (i *GrammarData) IsGrammar() {}
 
 func (i *GrammarData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	for j, item := range i.rules {
-		fn(item, unique.Make("rules"), uint16(j))
+		fn(item, fieldNameRules, uint16(j))
 	}
 	for j, item := range i.composites {
-		fn(item, unique.Make("composites"), uint16(j))
+		fn(item, fieldNameComposites, uint16(j))
 	}
 	for j, item := range i.terminals {
-		fn(item, unique.Make("terminals"), uint16(j))
+		fn(item, fieldNameTerminals, uint16(j))
 	}
 	for j, item := range i.tokenGroups {
-		fn(item, unique.Make("tokenGroups"), uint16(j))
+		fn(item, fieldNameTokenGroups, uint16(j))
 	}
 	for j, item := range i.interfaces {
-		fn(item, unique.Make("interfaces"), uint16(j))
+		fn(item, fieldNameInterfaces, uint16(j))
 	}
 }
 
@@ -145,7 +145,22 @@ func (i *GrammarImpl) ForEachReference(fn func(core.UntypedReference, unique.Han
 }
 
 func (i *GrammarImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["Grammar"][field.Value()]
+	switch field {
+	case fieldNameComposites:
+		return core.FieldInfos{Multi: true, Reference: false}
+	case fieldNameInterfaces:
+		return core.FieldInfos{Multi: true, Reference: false}
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameRules:
+		return core.FieldInfos{Multi: true, Reference: false}
+	case fieldNameTerminals:
+		return core.FieldInfos{Multi: true, Reference: false}
+	case fieldNameTokenGroups:
+		return core.FieldInfos{Multi: true, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Interface interface {
@@ -185,13 +200,13 @@ func (i *InterfaceData) IsInterface() {}
 
 func (i *InterfaceData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	for j, item := range i.fields {
-		fn(item, unique.Make("fields"), uint16(j))
+		fn(item, fieldNameFields, uint16(j))
 	}
 }
 
 func (i *InterfaceData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	for j, item := range i.extends {
-		fn(item, unique.Make("extends"), uint16(j))
+		fn(item, fieldNameExtends, uint16(j))
 	}
 }
 
@@ -241,7 +256,16 @@ func (i *InterfaceImpl) ForEachReference(fn func(core.UntypedReference, unique.H
 }
 
 func (i *InterfaceImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["Interface"][field.Value()]
+	switch field {
+	case fieldNameExtends:
+		return core.FieldInfos{Multi: true, Reference: true}
+	case fieldNameFields:
+		return core.FieldInfos{Multi: true, Reference: false}
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Field interface {
@@ -275,7 +299,7 @@ func (i *FieldData) IsField() {}
 
 func (i *FieldData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i._Type != nil {
-		fn(i._Type, unique.Make("_Type"), 0)
+		fn(i._Type, fieldNameType, 0)
 	}
 }
 
@@ -324,7 +348,14 @@ func (i *FieldImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 }
 
 func (i *FieldImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["Field"][field.Value()]
+	switch field {
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameType:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type FieldType interface {
@@ -369,7 +400,7 @@ func (i *FieldTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.H
 }
 
 func (i *FieldTypeImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["FieldType"][field.Value()]
+	return core.FieldInfos{}
 }
 
 type ArrayType interface {
@@ -401,7 +432,7 @@ func (i *ArrayTypeData) IsArrayType() {}
 
 func (i *ArrayTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.internalType != nil {
-		fn(i.internalType, unique.Make("internalType"), 0)
+		fn(i.internalType, fieldNameInternalType, 0)
 	}
 }
 
@@ -437,7 +468,12 @@ func (i *ArrayTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.H
 }
 
 func (i *ArrayTypeImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["ArrayType"][field.Value()]
+	switch field {
+	case fieldNameInternalType:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type ReferenceType interface {
@@ -472,7 +508,7 @@ func (i *ReferenceTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[stri
 
 func (i *ReferenceTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i._Type != nil {
-		fn(i._Type, unique.Make("_Type"), 0)
+		fn(i._Type, fieldNameType, 0)
 	}
 }
 
@@ -505,7 +541,12 @@ func (i *ReferenceTypeImpl) ForEachReference(fn func(core.UntypedReference, uniq
 }
 
 func (i *ReferenceTypeImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["ReferenceType"][field.Value()]
+	switch field {
+	case fieldNameType:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type SimpleType interface {
@@ -540,7 +581,7 @@ func (i *SimpleTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string]
 
 func (i *SimpleTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i._Type != nil {
-		fn(i._Type, unique.Make("_Type"), 0)
+		fn(i._Type, fieldNameType, 0)
 	}
 }
 
@@ -573,7 +614,12 @@ func (i *SimpleTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *SimpleTypeImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["SimpleType"][field.Value()]
+	switch field {
+	case fieldNameType:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type PrimitiveType interface {
@@ -643,7 +689,12 @@ func (i *PrimitiveTypeImpl) ForEachReference(fn func(core.UntypedReference, uniq
 }
 
 func (i *PrimitiveTypeImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["PrimitiveType"][field.Value()]
+	switch field {
+	case fieldNameType:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type AbstractRule interface {
@@ -708,7 +759,12 @@ func (i *AbstractRuleImpl) ForEachReference(fn func(core.UntypedReference, uniqu
 }
 
 func (i *AbstractRuleImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["AbstractRule"][field.Value()]
+	switch field {
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type AbstractRuleWithBody interface {
@@ -740,7 +796,7 @@ func (i *AbstractRuleWithBodyData) IsAbstractRuleWithBody() {}
 
 func (i *AbstractRuleWithBodyData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.body != nil {
-		fn(i.body, unique.Make("body"), 0)
+		fn(i.body, fieldNameBody, 0)
 	}
 }
 
@@ -776,7 +832,14 @@ func (i *AbstractRuleWithBodyImpl) ForEachReference(fn func(core.UntypedReferenc
 }
 
 func (i *AbstractRuleWithBodyImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["AbstractRuleWithBody"][field.Value()]
+	switch field {
+	case fieldNameBody:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type AbstractTokenRule interface {
@@ -826,7 +889,12 @@ func (i *AbstractTokenRuleImpl) ForEachReference(fn func(core.UntypedReference, 
 }
 
 func (i *AbstractTokenRuleImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["AbstractTokenRule"][field.Value()]
+	switch field {
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type ParserRule interface {
@@ -866,7 +934,7 @@ func (i *ParserRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string]
 
 func (i *ParserRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.returnType != nil {
-		fn(i.returnType, unique.Make("returnType"), 0)
+		fn(i.returnType, fieldNameReturnType, 0)
 	}
 }
 
@@ -914,7 +982,18 @@ func (i *ParserRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *ParserRuleImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["ParserRule"][field.Value()]
+	switch field {
+	case fieldNameBody:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameEntry:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameReturnType:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Token interface {
@@ -1008,7 +1087,16 @@ func (i *TokenImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 }
 
 func (i *TokenImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["Token"][field.Value()]
+	switch field {
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameRegexp:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameType:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type TokenGroup interface {
@@ -1051,13 +1139,13 @@ func (i *TokenGroupData) IsTokenGroup() {}
 
 func (i *TokenGroupData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	for j, item := range i.keywords {
-		fn(item, unique.Make("keywords"), uint16(j))
+		fn(item, fieldNameKeywords, uint16(j))
 	}
 }
 
 func (i *TokenGroupData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	for j, item := range i.tokenRefs {
-		fn(item, unique.Make("tokenRefs"), uint16(j))
+		fn(item, fieldNameTokenRefs, uint16(j))
 	}
 }
 
@@ -1105,7 +1193,18 @@ func (i *TokenGroupImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *TokenGroupImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["TokenGroup"][field.Value()]
+	switch field {
+	case fieldNameKeywords:
+		return core.FieldInfos{Multi: true, Reference: false}
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameRegexps:
+		return core.FieldInfos{Multi: true, Reference: false}
+	case fieldNameTokenRefs:
+		return core.FieldInfos{Multi: true, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Element interface {
@@ -1170,7 +1269,12 @@ func (i *ElementImpl) ForEachReference(fn func(core.UntypedReference, unique.Han
 }
 
 func (i *ElementImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["Element"][field.Value()]
+	switch field {
+	case fieldNameCardinality:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Alternatives interface {
@@ -1205,7 +1309,7 @@ func (i *AlternativesData) IsAlternatives() {}
 
 func (i *AlternativesData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	for j, item := range i.alts {
-		fn(item, unique.Make("alts"), uint16(j))
+		fn(item, fieldNameAlts, uint16(j))
 	}
 }
 
@@ -1240,7 +1344,14 @@ func (i *AlternativesImpl) ForEachReference(fn func(core.UntypedReference, uniqu
 }
 
 func (i *AlternativesImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["Alternatives"][field.Value()]
+	switch field {
+	case fieldNameAlts:
+		return core.FieldInfos{Multi: true, Reference: false}
+	case fieldNameCardinality:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Group interface {
@@ -1274,7 +1385,7 @@ func (i *GroupData) IsGroup() {}
 
 func (i *GroupData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	for j, item := range i.elements {
-		fn(item, unique.Make("elements"), uint16(j))
+		fn(item, fieldNameElements, uint16(j))
 	}
 }
 
@@ -1306,7 +1417,14 @@ func (i *GroupImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 }
 
 func (i *GroupImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["Group"][field.Value()]
+	switch field {
+	case fieldNameCardinality:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameElements:
+		return core.FieldInfos{Multi: true, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Keyword interface {
@@ -1380,7 +1498,14 @@ func (i *KeywordImpl) ForEachReference(fn func(core.UntypedReference, unique.Han
 }
 
 func (i *KeywordImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["Keyword"][field.Value()]
+	switch field {
+	case fieldNameCardinality:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameValue:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Assignment interface {
@@ -1419,13 +1544,13 @@ func (i *AssignmentData) IsAssignment() {}
 
 func (i *AssignmentData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.value != nil {
-		fn(i.value, unique.Make("value"), 0)
+		fn(i.value, fieldNameValue, 0)
 	}
 }
 
 func (i *AssignmentData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.property != nil {
-		fn(i.property, unique.Make("property"), 0)
+		fn(i.property, fieldNameProperty, 0)
 	}
 }
 
@@ -1486,7 +1611,18 @@ func (i *AssignmentImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *AssignmentImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["Assignment"][field.Value()]
+	switch field {
+	case fieldNameCardinality:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameOperator:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameProperty:
+		return core.FieldInfos{Multi: false, Reference: true}
+	case fieldNameValue:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Assignable interface {
@@ -1536,7 +1672,12 @@ func (i *AssignableImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *AssignableImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["Assignable"][field.Value()]
+	switch field {
+	case fieldNameCardinality:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type CrossRef interface {
@@ -1572,13 +1713,13 @@ func (i *CrossRefData) IsCrossRef() {}
 
 func (i *CrossRefData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.rule != nil {
-		fn(i.rule, unique.Make("rule"), 0)
+		fn(i.rule, fieldNameRule, 0)
 	}
 }
 
 func (i *CrossRefData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i._Type != nil {
-		fn(i._Type, unique.Make("_Type"), 0)
+		fn(i._Type, fieldNameType, 0)
 	}
 }
 
@@ -1626,7 +1767,16 @@ func (i *CrossRefImpl) ForEachReference(fn func(core.UntypedReference, unique.Ha
 }
 
 func (i *CrossRefImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["CrossRef"][field.Value()]
+	switch field {
+	case fieldNameCardinality:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameRule:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameType:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type RuleCall interface {
@@ -1662,7 +1812,7 @@ func (i *RuleCallData) ForEachNode(fn func(core.AstNode, unique.Handle[string], 
 
 func (i *RuleCallData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.rule != nil {
-		fn(i.rule, unique.Make("rule"), 0)
+		fn(i.rule, fieldNameRule, 0)
 	}
 }
 
@@ -1698,7 +1848,14 @@ func (i *RuleCallImpl) ForEachReference(fn func(core.UntypedReference, unique.Ha
 }
 
 func (i *RuleCallImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["RuleCall"][field.Value()]
+	switch field {
+	case fieldNameCardinality:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameRule:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Action interface {
@@ -1740,10 +1897,10 @@ func (i *ActionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], ui
 
 func (i *ActionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i._Type != nil {
-		fn(i._Type, unique.Make("_Type"), 0)
+		fn(i._Type, fieldNameType, 0)
 	}
 	if i.property != nil {
-		fn(i.property, unique.Make("property"), 0)
+		fn(i.property, fieldNameProperty, 0)
 	}
 }
 
@@ -1804,7 +1961,18 @@ func (i *ActionImpl) ForEachReference(fn func(core.UntypedReference, unique.Hand
 }
 
 func (i *ActionImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["Action"][field.Value()]
+	switch field {
+	case fieldNameCardinality:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameOperator:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameProperty:
+		return core.FieldInfos{Multi: false, Reference: true}
+	case fieldNameType:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type CompositeRule interface {
@@ -1858,8 +2026,42 @@ func (i *CompositeRuleImpl) ForEachReference(fn func(core.UntypedReference, uniq
 }
 
 func (i *CompositeRuleImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return FastbeltFieldInfos["CompositeRule"][field.Value()]
+	switch field {
+	case fieldNameBody:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
+
+var (
+	fieldNameType         = unique.Make("_Type")
+	fieldNameAlts         = unique.Make("alts")
+	fieldNameBody         = unique.Make("body")
+	fieldNameCardinality  = unique.Make("cardinality")
+	fieldNameComposites   = unique.Make("composites")
+	fieldNameElements     = unique.Make("elements")
+	fieldNameEntry        = unique.Make("entry")
+	fieldNameExtends      = unique.Make("extends")
+	fieldNameFields       = unique.Make("fields")
+	fieldNameInterfaces   = unique.Make("interfaces")
+	fieldNameInternalType = unique.Make("internalType")
+	fieldNameKeywords     = unique.Make("keywords")
+	fieldNameName         = unique.Make("name")
+	fieldNameOperator     = unique.Make("operator")
+	fieldNameProperty     = unique.Make("property")
+	fieldNameRegexp       = unique.Make("regexp")
+	fieldNameRegexps      = unique.Make("regexps")
+	fieldNameReturnType   = unique.Make("returnType")
+	fieldNameRule         = unique.Make("rule")
+	fieldNameRules        = unique.Make("rules")
+	fieldNameTerminals    = unique.Make("terminals")
+	fieldNameTokenGroups  = unique.Make("tokenGroups")
+	fieldNameTokenRefs    = unique.Make("tokenRefs")
+	fieldNameValue        = unique.Make("value")
+)
 
 var FastbeltSyntheticFactories = map[string]func() core.AstNode{
 	"AbstractRule":         func() core.AstNode { return NewAbstractRule() },
@@ -1886,266 +2088,4 @@ var FastbeltSyntheticFactories = map[string]func() core.AstNode{
 	"SimpleType":           func() core.AstNode { return NewSimpleType() },
 	"Token":                func() core.AstNode { return NewToken() },
 	"TokenGroup":           func() core.AstNode { return NewTokenGroup() },
-}
-
-var FastbeltFieldInfos = map[string]map[string]core.FieldInfos{
-	"AbstractRule": map[string]core.FieldInfos{
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"AbstractRuleWithBody": map[string]core.FieldInfos{
-		"body": {
-			Multi:     false,
-			Reference: false,
-		},
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"AbstractTokenRule": map[string]core.FieldInfos{
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"Action": map[string]core.FieldInfos{
-		"cardinality": {
-			Multi:     false,
-			Reference: false,
-		},
-		"operator": {
-			Multi:     false,
-			Reference: false,
-		},
-		"property": {
-			Multi:     false,
-			Reference: true,
-		},
-		"_Type": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
-	"Alternatives": map[string]core.FieldInfos{
-		"alts": {
-			Multi:     true,
-			Reference: false,
-		},
-		"cardinality": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"ArrayType": map[string]core.FieldInfos{
-		"internalType": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"Assignable": map[string]core.FieldInfos{
-		"cardinality": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"Assignment": map[string]core.FieldInfos{
-		"cardinality": {
-			Multi:     false,
-			Reference: false,
-		},
-		"operator": {
-			Multi:     false,
-			Reference: false,
-		},
-		"property": {
-			Multi:     false,
-			Reference: true,
-		},
-		"value": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"CompositeRule": map[string]core.FieldInfos{
-		"body": {
-			Multi:     false,
-			Reference: false,
-		},
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"CrossRef": map[string]core.FieldInfos{
-		"cardinality": {
-			Multi:     false,
-			Reference: false,
-		},
-		"rule": {
-			Multi:     false,
-			Reference: false,
-		},
-		"_Type": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
-	"Element": map[string]core.FieldInfos{
-		"cardinality": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"Field": map[string]core.FieldInfos{
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-		"_Type": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"FieldType": map[string]core.FieldInfos{},
-	"Grammar": map[string]core.FieldInfos{
-		"composites": {
-			Multi:     true,
-			Reference: false,
-		},
-		"interfaces": {
-			Multi:     true,
-			Reference: false,
-		},
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-		"rules": {
-			Multi:     true,
-			Reference: false,
-		},
-		"terminals": {
-			Multi:     true,
-			Reference: false,
-		},
-		"tokenGroups": {
-			Multi:     true,
-			Reference: false,
-		},
-	},
-	"Group": map[string]core.FieldInfos{
-		"cardinality": {
-			Multi:     false,
-			Reference: false,
-		},
-		"elements": {
-			Multi:     true,
-			Reference: false,
-		},
-	},
-	"Interface": map[string]core.FieldInfos{
-		"extends": {
-			Multi:     true,
-			Reference: true,
-		},
-		"fields": {
-			Multi:     true,
-			Reference: false,
-		},
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"Keyword": map[string]core.FieldInfos{
-		"cardinality": {
-			Multi:     false,
-			Reference: false,
-		},
-		"value": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"ParserRule": map[string]core.FieldInfos{
-		"body": {
-			Multi:     false,
-			Reference: false,
-		},
-		"entry": {
-			Multi:     false,
-			Reference: false,
-		},
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-		"returnType": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
-	"PrimitiveType": map[string]core.FieldInfos{
-		"_Type": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"ReferenceType": map[string]core.FieldInfos{
-		"_Type": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
-	"RuleCall": map[string]core.FieldInfos{
-		"cardinality": {
-			Multi:     false,
-			Reference: false,
-		},
-		"rule": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
-	"SimpleType": map[string]core.FieldInfos{
-		"_Type": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
-	"Token": map[string]core.FieldInfos{
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-		"regexp": {
-			Multi:     false,
-			Reference: false,
-		},
-		"_Type": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"TokenGroup": map[string]core.FieldInfos{
-		"keywords": {
-			Multi:     true,
-			Reference: false,
-		},
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-		"regexps": {
-			Multi:     true,
-			Reference: false,
-		},
-		"tokenRefs": {
-			Multi:     true,
-			Reference: true,
-		},
-	},
 }

@@ -33,9 +33,8 @@ func GenerateTypes(grammr grammar.Grammar, packageName string) string {
 		generateInterface(node, grammr, iface)
 	}
 
+	node.AppendNode(generateFieldHandles(grammr))
 	node.AppendNode(generateSyntheticFactories(grammr))
-
-	node.AppendNode(generateFieldInfos(grammr))
 
 	return FormatIfPossible(node.String())
 }
@@ -257,7 +256,24 @@ func generateImplStruct(node codegen.Node, grammr grammar.Grammar, iface grammar
 	node.AppendLine()
 	node.AppendLine("func (i *", iface.Name(), "Impl) FieldInfos(field unique.Handle[string]) core.FieldInfos {")
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("return ", grammr.Name(), "FieldInfos[\"", iface.Name(), "\"][field.Value()]")
+		fields := collectAllFields(iface, map[string]struct{}{})
+		sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
+		if len(fields) == 0 {
+			n.AppendLine("return core.FieldInfos{}")
+		} else {
+			n.AppendLine("switch field {")
+			for _, f := range fields {
+				n.AppendLine("case ", fieldHandleVarName(f.PName), ":")
+				n.Indent(func(n2 codegen.Node) {
+					n2.AppendLine("return core.FieldInfos{Multi: ", strconv.FormatBool(f.Array), ", Reference: ", strconv.FormatBool(f.Reference), "}")
+				})
+			}
+			n.AppendLine("default:")
+			n.Indent(func(n2 codegen.Node) {
+				n2.AppendLine("return core.FieldInfos{}")
+			})
+			n.AppendLine("}")
+		}
 	})
 	node.AppendLine("}")
 	node.AppendLine()
@@ -304,13 +320,13 @@ func generateDataStruct(node codegen.Node, iface grammar.Interface, fields []Fie
 			if field.Array {
 				n.AppendLine("for j, item := range i.", name, " {")
 				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine("fn(item, unique.Make(\"", name, "\"), uint16(j))")
+					n2.AppendLine("fn(item, ", fieldHandleVarName(name), ", uint16(j))")
 				})
 				n.AppendLine("}")
 			} else {
 				n.AppendLine("if i.", name, " != nil {")
 				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine("fn(i.", name, ", unique.Make(\"", name, "\"), 0)")
+					n2.AppendLine("fn(i.", name, ", ", fieldHandleVarName(name), ", 0)")
 				})
 				n.AppendLine("}")
 			}
@@ -328,13 +344,13 @@ func generateDataStruct(node codegen.Node, iface grammar.Interface, fields []Fie
 			if field.Array {
 				n.AppendLine("for j, item := range i.", name, " {")
 				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine("fn(item, unique.Make(\"", name, "\"), uint16(j))")
+					n2.AppendLine("fn(item, ", fieldHandleVarName(name), ", uint16(j))")
 				})
 				n.AppendLine("}")
 			} else {
 				n.AppendLine("if i.", name, " != nil {")
 				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine("fn(i.", name, ", unique.Make(\"", name, "\"), 0)")
+					n2.AppendLine("fn(i.", name, ", ", fieldHandleVarName(name), ", 0)")
 				})
 				n.AppendLine("}")
 			}
@@ -452,64 +468,48 @@ func generateSyntheticFactories(grammr grammar.Grammar) codegen.Node {
 	return node
 }
 
-func generateFieldInfos(grammr grammar.Grammar) codegen.Node {
+func fieldHandleVarName(pname string) string {
+	clean := strings.TrimLeft(pname, "_")
+	return "fieldName" + strings.ToUpper(clean[:1]) + clean[1:]
+}
+
+func generateFieldHandles(grammr grammar.Grammar) codegen.Node {
 	node := codegen.NewNode()
-	name := grammr.Name()
-
-	type fieldsByIface struct {
-		name   string
-		fields []FieldInfo
-	}
-	fieldsByIfaces := []fieldsByIface{}
-
+	seen := map[string]bool{}
+	var pnames []string
 	for _, iface := range grammr.Interfaces() {
-		fields := []FieldInfo{}
-		visited := map[string]bool{}
-		queue := []grammar.Interface{iface}
-		for len(queue) > 0 {
-			current := queue[0]
-			queue = queue[1:]
-			if visited[current.Name()] {
-				continue
-			}
-			visited[current.Name()] = true
-			for _, field := range current.Fields() {
-				fields = append(fields, getFieldInfo(field))
-			}
-			for _, ext := range current.Extends() {
-				parent := ext.Ref(context.Background())
-				if parent != nil && !visited[parent.Name()] {
-					queue = append(queue, parent)
-				}
+		for _, f := range collectAllFields(iface, map[string]struct{}{}) {
+			if !seen[f.PName] {
+				seen[f.PName] = true
+				pnames = append(pnames, f.PName)
 			}
 		}
-
-		sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
-
-		fieldsByIfaces = append(fieldsByIfaces, fieldsByIface{
-			name:   iface.Name(),
-			fields: fields,
-		})
 	}
-	// Sort for stable output.
-	sort.Slice(fieldsByIfaces, func(i, j int) bool { return fieldsByIfaces[i].name < fieldsByIfaces[j].name })
-
-	node.AppendLine("var ", name, "FieldInfos = map[string]map[string]core.FieldInfos{")
+	sort.Strings(pnames)
+	node.AppendLine("var (")
 	node.Indent(func(n codegen.Node) {
-		for _, e := range fieldsByIfaces {
-			n.AppendLine(`"`, e.name, `": map[string]core.FieldInfos{`)
-			n.Indent(func(n2 codegen.Node) {
-				for _, field := range e.fields {
-					n2.AppendLine("\"", field.PName, "\": {")
-					n2.AppendLine("Multi: ", strconv.FormatBool(field.Array), ",")
-					n2.AppendLine("Reference: ", strconv.FormatBool(field.Reference), ",")
-					n2.AppendLine("},")
-				}
-			})
-			n.AppendLine("},")
+		for _, pname := range pnames {
+			n.AppendLine(fieldHandleVarName(pname), ` = unique.Make("`, pname, `")`)
 		}
 	})
-	node.AppendLine("}")
+	node.AppendLine(")")
 	node.AppendLine()
 	return node
+}
+
+func collectAllFields(iface grammar.Interface, visited map[string]struct{}) []FieldInfo {
+	if _, seen := visited[iface.Name()]; seen {
+		return nil
+	}
+	visited[iface.Name()] = struct{}{}
+	fields := []FieldInfo{}
+	for _, ext := range iface.Extends() {
+		if parent := ext.Ref(context.TODO()); parent != nil {
+			fields = append(fields, collectAllFields(parent, visited)...)
+		}
+	}
+	for _, field := range iface.Fields() {
+		fields = append(fields, getFieldInfo(field))
+	}
+	return fields
 }

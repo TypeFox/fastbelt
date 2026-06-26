@@ -51,19 +51,19 @@ func (i *StatemachineData) IsStatemachine() {}
 
 func (i *StatemachineData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	for j, item := range i.events {
-		fn(item, unique.Make("events"), uint16(j))
+		fn(item, fieldNameEvents, uint16(j))
 	}
 	for j, item := range i.commands {
-		fn(item, unique.Make("commands"), uint16(j))
+		fn(item, fieldNameCommands, uint16(j))
 	}
 	for j, item := range i.states {
-		fn(item, unique.Make("states"), uint16(j))
+		fn(item, fieldNameStates, uint16(j))
 	}
 }
 
 func (i *StatemachineData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.init != nil {
-		fn(i.init, unique.Make("init"), 0)
+		fn(i.init, fieldNameInit, 0)
 	}
 }
 
@@ -133,7 +133,20 @@ func (i *StatemachineImpl) ForEachReference(fn func(core.UntypedReference, uniqu
 }
 
 func (i *StatemachineImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return StatemachineModelFieldInfos["Statemachine"][field.Value()]
+	switch field {
+	case fieldNameCommands:
+		return core.FieldInfos{Multi: true, Reference: false}
+	case fieldNameEvents:
+		return core.FieldInfos{Multi: true, Reference: false}
+	case fieldNameInit:
+		return core.FieldInfos{Multi: false, Reference: true}
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameStates:
+		return core.FieldInfos{Multi: true, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Event interface {
@@ -198,7 +211,12 @@ func (i *EventImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 }
 
 func (i *EventImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return StatemachineModelFieldInfos["Event"][field.Value()]
+	switch field {
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Command interface {
@@ -263,7 +281,12 @@ func (i *CommandImpl) ForEachReference(fn func(core.UntypedReference, unique.Han
 }
 
 func (i *CommandImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return StatemachineModelFieldInfos["Command"][field.Value()]
+	switch field {
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type State interface {
@@ -303,13 +326,13 @@ func (i *StateData) IsState() {}
 
 func (i *StateData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	for j, item := range i.transitions {
-		fn(item, unique.Make("transitions"), uint16(j))
+		fn(item, fieldNameTransitions, uint16(j))
 	}
 }
 
 func (i *StateData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	for j, item := range i.actions {
-		fn(item, unique.Make("actions"), uint16(j))
+		fn(item, fieldNameActions, uint16(j))
 	}
 }
 
@@ -359,7 +382,16 @@ func (i *StateImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 }
 
 func (i *StateImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return StatemachineModelFieldInfos["State"][field.Value()]
+	switch field {
+	case fieldNameActions:
+		return core.FieldInfos{Multi: true, Reference: true}
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameTransitions:
+		return core.FieldInfos{Multi: true, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Transition interface {
@@ -395,10 +427,10 @@ func (i *TransitionData) ForEachNode(fn func(core.AstNode, unique.Handle[string]
 
 func (i *TransitionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.event != nil {
-		fn(i.event, unique.Make("event"), 0)
+		fn(i.event, fieldNameEvent, 0)
 	}
 	if i.state != nil {
-		fn(i.state, unique.Make("state"), 0)
+		fn(i.state, fieldNameState, 0)
 	}
 }
 
@@ -440,8 +472,27 @@ func (i *TransitionImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *TransitionImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return StatemachineModelFieldInfos["Transition"][field.Value()]
+	switch field {
+	case fieldNameEvent:
+		return core.FieldInfos{Multi: false, Reference: true}
+	case fieldNameState:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
+
+var (
+	fieldNameActions     = unique.Make("actions")
+	fieldNameCommands    = unique.Make("commands")
+	fieldNameEvent       = unique.Make("event")
+	fieldNameEvents      = unique.Make("events")
+	fieldNameInit        = unique.Make("init")
+	fieldNameName        = unique.Make("name")
+	fieldNameState       = unique.Make("state")
+	fieldNameStates      = unique.Make("states")
+	fieldNameTransitions = unique.Make("transitions")
+)
 
 var StatemachineModelSyntheticFactories = map[string]func() core.AstNode{
 	"Command":      func() core.AstNode { return NewCommand() },
@@ -449,65 +500,4 @@ var StatemachineModelSyntheticFactories = map[string]func() core.AstNode{
 	"State":        func() core.AstNode { return NewState() },
 	"Statemachine": func() core.AstNode { return NewStatemachine() },
 	"Transition":   func() core.AstNode { return NewTransition() },
-}
-
-var StatemachineModelFieldInfos = map[string]map[string]core.FieldInfos{
-	"Command": map[string]core.FieldInfos{
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"Event": map[string]core.FieldInfos{
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"State": map[string]core.FieldInfos{
-		"actions": {
-			Multi:     true,
-			Reference: true,
-		},
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-		"transitions": {
-			Multi:     true,
-			Reference: false,
-		},
-	},
-	"Statemachine": map[string]core.FieldInfos{
-		"commands": {
-			Multi:     true,
-			Reference: false,
-		},
-		"events": {
-			Multi:     true,
-			Reference: false,
-		},
-		"init": {
-			Multi:     false,
-			Reference: true,
-		},
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-		"states": {
-			Multi:     true,
-			Reference: false,
-		},
-	},
-	"Transition": map[string]core.FieldInfos{
-		"event": {
-			Multi:     false,
-			Reference: true,
-		},
-		"state": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
 }

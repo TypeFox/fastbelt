@@ -34,7 +34,7 @@ func (i *ModelData) IsModel() {}
 
 func (i *ModelData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.item != nil {
-		fn(i.item, unique.Make("item"), 0)
+		fn(i.item, fieldNameItem, 0)
 	}
 }
 
@@ -67,7 +67,12 @@ func (i *ModelImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 }
 
 func (i *ModelImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return TokenGroupsFieldInfos["Model"][field.Value()]
+	switch field {
+	case fieldNameItem:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Item interface {
@@ -132,7 +137,12 @@ func (i *ItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle
 }
 
 func (i *ItemImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return TokenGroupsFieldInfos["Item"][field.Value()]
+	switch field {
+	case fieldNameValue:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Recovery interface {
@@ -222,40 +232,27 @@ func (i *RecoveryImpl) ForEachReference(fn func(core.UntypedReference, unique.Ha
 }
 
 func (i *RecoveryImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return TokenGroupsFieldInfos["Recovery"][field.Value()]
+	switch field {
+	case fieldNameFirst:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameSecond:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameValue:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
+
+var (
+	fieldNameFirst  = unique.Make("first")
+	fieldNameItem   = unique.Make("item")
+	fieldNameSecond = unique.Make("second")
+	fieldNameValue  = unique.Make("value")
+)
 
 var TokenGroupsSyntheticFactories = map[string]func() core.AstNode{
 	"Item":     func() core.AstNode { return NewItem() },
 	"Model":    func() core.AstNode { return NewModel() },
 	"Recovery": func() core.AstNode { return NewRecovery() },
-}
-
-var TokenGroupsFieldInfos = map[string]map[string]core.FieldInfos{
-	"Item": map[string]core.FieldInfos{
-		"value": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"Model": map[string]core.FieldInfos{
-		"item": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"Recovery": map[string]core.FieldInfos{
-		"first": {
-			Multi:     false,
-			Reference: false,
-		},
-		"second": {
-			Multi:     false,
-			Reference: false,
-		},
-		"value": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
 }

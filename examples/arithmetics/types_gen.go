@@ -40,7 +40,7 @@ func (i *ModuleData) IsModule() {}
 
 func (i *ModuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	for j, item := range i.statements {
-		fn(item, unique.Make("statements"), uint16(j))
+		fn(item, fieldNameStatements, uint16(j))
 	}
 }
 
@@ -85,7 +85,14 @@ func (i *ModuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Hand
 }
 
 func (i *ModuleImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return ArithmeticsFieldInfos["Module"][field.Value()]
+	switch field {
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameStatements:
+		return core.FieldInfos{Multi: true, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Statement interface {
@@ -130,7 +137,7 @@ func (i *StatementImpl) ForEachReference(fn func(core.UntypedReference, unique.H
 }
 
 func (i *StatementImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return ArithmeticsFieldInfos["Statement"][field.Value()]
+	return core.FieldInfos{}
 }
 
 type AbstractDefinition interface {
@@ -195,7 +202,12 @@ func (i *AbstractDefinitionImpl) ForEachReference(fn func(core.UntypedReference,
 }
 
 func (i *AbstractDefinitionImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return ArithmeticsFieldInfos["AbstractDefinition"][field.Value()]
+	switch field {
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Definition interface {
@@ -234,10 +246,10 @@ func (i *DefinitionData) IsDefinition() {}
 
 func (i *DefinitionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	for j, item := range i.args {
-		fn(item, unique.Make("args"), uint16(j))
+		fn(item, fieldNameArgs, uint16(j))
 	}
 	if i.expression != nil {
-		fn(i.expression, unique.Make("expression"), 0)
+		fn(i.expression, fieldNameExpression, 0)
 	}
 }
 
@@ -284,7 +296,16 @@ func (i *DefinitionImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *DefinitionImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return ArithmeticsFieldInfos["Definition"][field.Value()]
+	switch field {
+	case fieldNameArgs:
+		return core.FieldInfos{Multi: true, Reference: false}
+	case fieldNameExpression:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type DeclaredParameter interface {
@@ -334,7 +355,12 @@ func (i *DeclaredParameterImpl) ForEachReference(fn func(core.UntypedReference, 
 }
 
 func (i *DeclaredParameterImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return ArithmeticsFieldInfos["DeclaredParameter"][field.Value()]
+	switch field {
+	case fieldNameName:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Evaluation interface {
@@ -366,7 +392,7 @@ func (i *EvaluationData) IsEvaluation() {}
 
 func (i *EvaluationData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.expression != nil {
-		fn(i.expression, unique.Make("expression"), 0)
+		fn(i.expression, fieldNameExpression, 0)
 	}
 }
 
@@ -402,7 +428,12 @@ func (i *EvaluationImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *EvaluationImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return ArithmeticsFieldInfos["Evaluation"][field.Value()]
+	switch field {
+	case fieldNameExpression:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type Expression interface {
@@ -447,7 +478,7 @@ func (i *ExpressionImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *ExpressionImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return ArithmeticsFieldInfos["Expression"][field.Value()]
+	return core.FieldInfos{}
 }
 
 type BinaryExpression interface {
@@ -486,10 +517,10 @@ func (i *BinaryExpressionData) IsBinaryExpression() {}
 
 func (i *BinaryExpressionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.left != nil {
-		fn(i.left, unique.Make("left"), 0)
+		fn(i.left, fieldNameLeft, 0)
 	}
 	if i.right != nil {
-		fn(i.right, unique.Make("right"), 0)
+		fn(i.right, fieldNameRight, 0)
 	}
 }
 
@@ -553,7 +584,16 @@ func (i *BinaryExpressionImpl) ForEachReference(fn func(core.UntypedReference, u
 }
 
 func (i *BinaryExpressionImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return ArithmeticsFieldInfos["BinaryExpression"][field.Value()]
+	switch field {
+	case fieldNameLeft:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameOperator:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameRight:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type FunctionCall interface {
@@ -590,13 +630,13 @@ func (i *FunctionCallData) IsFunctionCall() {}
 
 func (i *FunctionCallData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	for j, item := range i.args {
-		fn(item, unique.Make("args"), uint16(j))
+		fn(item, fieldNameArgs, uint16(j))
 	}
 }
 
 func (i *FunctionCallData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	if i.callable != nil {
-		fn(i.callable, unique.Make("callable"), 0)
+		fn(i.callable, fieldNameCallable, 0)
 	}
 }
 
@@ -637,7 +677,14 @@ func (i *FunctionCallImpl) ForEachReference(fn func(core.UntypedReference, uniqu
 }
 
 func (i *FunctionCallImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return ArithmeticsFieldInfos["FunctionCall"][field.Value()]
+	switch field {
+	case fieldNameArgs:
+		return core.FieldInfos{Multi: true, Reference: false}
+	case fieldNameCallable:
+		return core.FieldInfos{Multi: false, Reference: true}
+	default:
+		return core.FieldInfos{}
+	}
 }
 
 type NumberLiteral interface {
@@ -707,8 +754,25 @@ func (i *NumberLiteralImpl) ForEachReference(fn func(core.UntypedReference, uniq
 }
 
 func (i *NumberLiteralImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return ArithmeticsFieldInfos["NumberLiteral"][field.Value()]
+	switch field {
+	case fieldNameValue:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
 }
+
+var (
+	fieldNameArgs       = unique.Make("args")
+	fieldNameCallable   = unique.Make("callable")
+	fieldNameExpression = unique.Make("expression")
+	fieldNameLeft       = unique.Make("left")
+	fieldNameName       = unique.Make("name")
+	fieldNameOperator   = unique.Make("operator")
+	fieldNameRight      = unique.Make("right")
+	fieldNameStatements = unique.Make("statements")
+	fieldNameValue      = unique.Make("value")
+)
 
 var ArithmeticsSyntheticFactories = map[string]func() core.AstNode{
 	"AbstractDefinition": func() core.AstNode { return NewAbstractDefinition() },
@@ -721,81 +785,4 @@ var ArithmeticsSyntheticFactories = map[string]func() core.AstNode{
 	"Module":             func() core.AstNode { return NewModule() },
 	"NumberLiteral":      func() core.AstNode { return NewNumberLiteral() },
 	"Statement":          func() core.AstNode { return NewStatement() },
-}
-
-var ArithmeticsFieldInfos = map[string]map[string]core.FieldInfos{
-	"AbstractDefinition": map[string]core.FieldInfos{
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"BinaryExpression": map[string]core.FieldInfos{
-		"left": {
-			Multi:     false,
-			Reference: false,
-		},
-		"operator": {
-			Multi:     false,
-			Reference: false,
-		},
-		"right": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"DeclaredParameter": map[string]core.FieldInfos{
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"Definition": map[string]core.FieldInfos{
-		"args": {
-			Multi:     true,
-			Reference: false,
-		},
-		"expression": {
-			Multi:     false,
-			Reference: false,
-		},
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"Evaluation": map[string]core.FieldInfos{
-		"expression": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"Expression": map[string]core.FieldInfos{},
-	"FunctionCall": map[string]core.FieldInfos{
-		"args": {
-			Multi:     true,
-			Reference: false,
-		},
-		"callable": {
-			Multi:     false,
-			Reference: true,
-		},
-	},
-	"Module": map[string]core.FieldInfos{
-		"name": {
-			Multi:     false,
-			Reference: false,
-		},
-		"statements": {
-			Multi:     true,
-			Reference: false,
-		},
-	},
-	"NumberLiteral": map[string]core.FieldInfos{
-		"value": {
-			Multi:     false,
-			Reference: false,
-		},
-	},
-	"Statement": map[string]core.FieldInfos{},
 }
