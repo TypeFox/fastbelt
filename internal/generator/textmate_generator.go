@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"typefox.dev/fastbelt/internal/grammar"
+	"typefox.dev/fastbelt/workspace"
 )
 
 type textMateGrammar struct {
@@ -47,16 +48,16 @@ type pattern struct {
 type captures = map[string]pattern
 
 type TextMateGeneratorConfig struct {
-	id              string
-	fileExtensions  []string
-	caseInsensitive bool
+	Id              workspace.LanguageID
+	FileExtensions  workspace.FileExtensions
+	CaseInsensitive bool
 }
 
 func GenerateTextMate(grammar grammar.Grammar, config TextMateGeneratorConfig) string {
 	obj := textMateGrammar{
-		name:       config.id,
-		scopeName:  `source.${config.id}`,
-		fileTypes:  config.fileExtensions,
+		name:       string(config.Id),
+		scopeName:  fmt.Sprintf("source.%s", config.Id),
+		fileTypes:  []string(config.FileExtensions),
 		patterns:   GetPatterns(grammar, config),
 		repository: GetRepository(grammar, config),
 	}
@@ -85,17 +86,17 @@ func GetRepository(grammar grammar.Grammar, config TextMateGeneratorConfig) repo
 			for _, part := range parts {
 				if part.end != "" {
 					commentPatterns = append(commentPatterns, pattern{
-						name:  fmt.Sprintf(`comment.block.%s`, config.id),
+						name:  fmt.Sprintf(`comment.block.%s`, config.Id),
 						begin: part.start,
 						beginCaptures: captures{
 							"0": pattern{
-								name: fmt.Sprintf(`punctuation.definition.comment.%s`, config.id),
+								name: fmt.Sprintf(`punctuation.definition.comment.%s`, config.Id),
 							},
 						},
 						end: part.end,
 						endCaptures: captures{
 							"0": pattern{
-								name: fmt.Sprintf(`punctuation.definition.comment.%s`, config.id),
+								name: fmt.Sprintf(`punctuation.definition.comment.%s`, config.Id),
 							},
 						},
 					})
@@ -104,17 +105,17 @@ func GetRepository(grammar grammar.Grammar, config TextMateGeneratorConfig) repo
 						begin: part.start,
 						beginCaptures: captures{
 							"1": pattern{
-								name: fmt.Sprintf(`punctuation.whitespace.comment.leading.%s`, config.id),
+								name: fmt.Sprintf(`punctuation.whitespace.comment.leading.%s`, config.Id),
 							},
 						},
 						end:  `(?=$)`,
-						name: fmt.Sprintf(`comment.line.%s`, config.id),
+						name: fmt.Sprintf(`comment.line.%s`, config.Id),
 					})
 				}
 			}
 		} else if strings.ToLower(terminal.Name()) == "string" {
 			stringEscapePattern = &pattern{
-				name:  fmt.Sprintf(`constant.character.escape.%s`, config.id),
+				name:  fmt.Sprintf(`constant.character.escape.%s`, config.Id),
 				match: `\\(x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|u\{[0-9A-Fa-f]+\}|[0-2][0-7]{0,2}|3[0-6][0-7]?|37[0-7]?|[4-7][0-7]?|.|$)`,
 			}
 		}
@@ -141,8 +142,8 @@ func GetControlKeywords(grammr grammar.Grammar, config TextMateGeneratorConfig) 
 	}
 	groups := GroupKeywords(controlKeywords)
 	return pattern{
-		name:  fmt.Sprintf(`keyword.control.%s`, config.id),
-		match: fmt.Sprintf(`%s%s`, ifThenElse(config.caseInsensitive, `(?i)`, ``), strings.Join(groups, "|")),
+		name:  fmt.Sprintf(`keyword.control.%s`, config.Id),
+		match: fmt.Sprintf(`%s%s`, ifThenElse(config.CaseInsensitive, `(?i)`, ``), strings.Join(groups, "|")),
 	}
 }
 
@@ -217,7 +218,7 @@ func GetStringPatterns(grammr grammar.Grammar, config TextMateGeneratorConfig) [
 		for _, part := range parts {
 			if part.end != "" {
 				stringPatterns = append(stringPatterns, pattern{
-					name:  fmt.Sprintf(`string.quoted.%s.%s`, delimiterName(part.start), config.id),
+					name:  fmt.Sprintf(`string.quoted.%s.%s`, delimiterName(part.start), config.Id),
 					begin: part.start,
 					end:   part.end,
 					patterns: []pattern{

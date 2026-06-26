@@ -26,6 +26,7 @@ type generateOptions struct {
 	packageName string
 	atn         bool
 	verbose     bool
+	textMateOut string
 }
 
 func runGenerateCLI(opts generateOptions) error {
@@ -157,6 +158,19 @@ func runGenerateCLI(opts generateOptions) error {
 	if opts.atn {
 		if err := writeFile("atn-md", filepath.Join(outputPath, "atn.md"),
 			generator.GenerateATNMarkdown(grammar, packageName, tokenTypes)); err != nil {
+			return err
+		}
+	}
+	if opts.textMateOut != "" {
+		if err := os.MkdirAll(opts.textMateOut, 0755); err != nil {
+			return err
+		}
+		textMateGrammar := generator.GenerateTextMate(grammar, generator.TextMateGeneratorConfig{
+			Id:              service.MustGet[workspace.LanguageID](sc),
+			FileExtensions:  service.MustGet[workspace.FileExtensions](sc),
+			CaseInsensitive: false, //TODO ftm!
+		})
+		if err := writeFile("textmate", opts.textMateOut, textMateGrammar); err != nil {
 			return err
 		}
 	}
