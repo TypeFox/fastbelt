@@ -162,13 +162,13 @@ func runGenerateCLI(opts generateOptions) error {
 		}
 	}
 	if opts.textMateOut != "" {
-		if err := os.MkdirAll(opts.textMateOut, 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(opts.textMateOut), 0755); err != nil {
 			return err
 		}
 		textMateGrammar := generator.GenerateTextMate(grammar, generator.TextMateGeneratorConfig{
-			Id:              service.MustGet[workspace.LanguageID](sc),
-			FileExtensions:  service.MustGet[workspace.FileExtensions](sc),
-			CaseInsensitive: false, //TODO ftm!
+			Id:              service.MustGet[workspace.LanguageID](sc),     //TODO wrong ID, should be configurable
+			FileExtensions:  service.MustGet[workspace.FileExtensions](sc), //TODO wrong extensions, should be configurable
+			CaseInsensitive: false,                                         //TODO ftm!
 		})
 		if err := writeFile("textmate", opts.textMateOut, textMateGrammar); err != nil {
 			return err

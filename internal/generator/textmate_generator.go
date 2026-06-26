@@ -14,38 +14,38 @@ import (
 	"typefox.dev/fastbelt/workspace"
 )
 
-type textMateGrammar struct {
-	repository        repository
-	scopeName         string
-	patterns          []pattern
-	injections        map[string]pattern //optional
-	injectionSelector string             //optional
-	fileTypes         []string           //optional
-	name              string             //optional
-	firstLineMatch    string             //optional
+type TextMateGrammar struct {
+	Repository        Repository         "json:\"repository\""
+	ScopeName         string             "json:\"scopeName\""
+	Patterns          []Pattern          "json:\"patterns\""
+	Injections        map[string]Pattern "json:\"injections,omitempty\""
+	InjectionSelector string             "json:\"injectionSelector,omitempty\""
+	FileTypes         []string           "json:\"fileTypes,omitempty\""
+	Name              string             "json:\"name,omitempty\""
+	FirstLineMatch    string             "json:\"firstLineMatch,omitempty\""
 }
 
-type repository = map[string]pattern
+type Repository = map[string]Pattern
 
-type pattern struct {
-	id                  int        //optional
-	include             string     //optional
-	name                string     //optional
-	contentName         string     //optional
-	match               string     //optional
-	captures            captures   //optional
-	begin               string     //optional
-	beginCaptures       captures   //optional
-	end                 string     //optional
-	endCaptures         captures   //optional
-	while               string     //optional
-	whileCaptures       captures   //optional
-	patterns            []pattern  //optional
-	repository          repository //optional
-	applyEndPatternLast bool       //optional
+type Pattern struct {
+	Id                  int        "json:\"id,omitempty\""
+	Include             string     "json:\"include,omitempty\""
+	Name                string     "json:\"name,omitempty\""
+	ContentName         string     "json:\"contentName,omitempty\""
+	Match               string     "json:\"match,omitempty\""
+	Captures            Captures   "json:\"captures,omitempty\""
+	Begin               string     "json:\"begin,omitempty\""
+	BeginCaptures       Captures   "json:\"beginCaptures,omitempty\""
+	End                 string     "json:\"end,omitempty\""
+	EndCaptures         Captures   "json:\"endCaptures,omitempty\""
+	While               string     "json:\"while,omitempty\""
+	WhileCaptures       Captures   "json:\"whileCaptures,omitempty\""
+	Patterns            []Pattern  "json:\"patterns,omitempty\""
+	Repository          Repository "json:\"repository,omitempty\""
+	ApplyEndPatternLast bool       "json:\"applyEndPatternLast,omitempty\""
 }
 
-type captures = map[string]pattern
+type Captures = map[string]Pattern
 
 type TextMateGeneratorConfig struct {
 	Id              workspace.LanguageID
@@ -54,21 +54,21 @@ type TextMateGeneratorConfig struct {
 }
 
 func GenerateTextMate(grammar grammar.Grammar, config TextMateGeneratorConfig) string {
-	obj := textMateGrammar{
-		name:       string(config.Id),
-		scopeName:  fmt.Sprintf("source.%s", config.Id),
-		fileTypes:  []string(config.FileExtensions),
-		patterns:   GetPatterns(grammar, config),
-		repository: GetRepository(grammar, config),
+	obj := TextMateGrammar{
+		Name:       string(config.Id),
+		ScopeName:  fmt.Sprintf("source.%s", config.Id),
+		FileTypes:  []string(config.FileExtensions),
+		Patterns:   GetPatterns(grammar, config),
+		Repository: GetRepository(grammar, config),
 	}
 	result, _ := json.MarshalIndent(obj, "", "  ")
 	return string(result)
 }
 
-func GetPatterns(grammar grammar.Grammar, config TextMateGeneratorConfig) []pattern {
-	patterns := []pattern{}
-	patterns = append(patterns, pattern{
-		include: "#comments",
+func GetPatterns(grammar grammar.Grammar, config TextMateGeneratorConfig) []Pattern {
+	patterns := []Pattern{}
+	patterns = append(patterns, Pattern{
+		Include: "#comments",
 	})
 	patterns = append(patterns, GetControlKeywords(grammar, config))
 	patterns = append(patterns, GetStringPatterns(grammar, config)...)
@@ -76,53 +76,55 @@ func GetPatterns(grammar grammar.Grammar, config TextMateGeneratorConfig) []patt
 	return patterns
 }
 
-func GetRepository(grammar grammar.Grammar, config TextMateGeneratorConfig) repository {
-	repository := repository{}
-	commentPatterns := []pattern{}
-	var stringEscapePattern *pattern
+func GetRepository(grammar grammar.Grammar, config TextMateGeneratorConfig) Repository {
+	repository := Repository{}
+	commentPatterns := []Pattern{}
+	var stringEscapePattern *Pattern
 	for _, terminal := range grammar.Terminals() {
 		if terminal.Type() == "comment" {
-			parts := GetTerminalParts(terminal.Regexp())
+			regexPattern := terminal.Regexp()
+			regexPattern = regexPattern[1 : len(regexPattern)-1]
+			parts := GetTerminalParts(regexPattern)
 			for _, part := range parts {
 				if part.end != "" {
-					commentPatterns = append(commentPatterns, pattern{
-						name:  fmt.Sprintf(`comment.block.%s`, config.Id),
-						begin: part.start,
-						beginCaptures: captures{
-							"0": pattern{
-								name: fmt.Sprintf(`punctuation.definition.comment.%s`, config.Id),
+					commentPatterns = append(commentPatterns, Pattern{
+						Name:  fmt.Sprintf(`comment.block.%s`, config.Id),
+						Begin: part.start,
+						BeginCaptures: Captures{
+							"0": Pattern{
+								Name: fmt.Sprintf(`punctuation.definition.comment.%s`, config.Id),
 							},
 						},
-						end: part.end,
-						endCaptures: captures{
-							"0": pattern{
-								name: fmt.Sprintf(`punctuation.definition.comment.%s`, config.Id),
+						End: part.end,
+						EndCaptures: Captures{
+							"0": Pattern{
+								Name: fmt.Sprintf(`punctuation.definition.comment.%s`, config.Id),
 							},
 						},
 					})
 				} else {
-					commentPatterns = append(commentPatterns, pattern{
-						begin: part.start,
-						beginCaptures: captures{
-							"1": pattern{
-								name: fmt.Sprintf(`punctuation.whitespace.comment.leading.%s`, config.Id),
+					commentPatterns = append(commentPatterns, Pattern{
+						Begin: part.start,
+						BeginCaptures: Captures{
+							"1": Pattern{
+								Name: fmt.Sprintf(`punctuation.whitespace.comment.leading.%s`, config.Id),
 							},
 						},
-						end:  `(?=$)`,
-						name: fmt.Sprintf(`comment.line.%s`, config.Id),
+						End:  `(?=$)`,
+						Name: fmt.Sprintf(`comment.line.%s`, config.Id),
 					})
 				}
 			}
 		} else if strings.ToLower(terminal.Name()) == "string" {
-			stringEscapePattern = &pattern{
-				name:  fmt.Sprintf(`constant.character.escape.%s`, config.Id),
-				match: `\\(x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|u\{[0-9A-Fa-f]+\}|[0-2][0-7]{0,2}|3[0-6][0-7]?|37[0-7]?|[4-7][0-7]?|.|$)`,
+			stringEscapePattern = &Pattern{
+				Name:  fmt.Sprintf(`constant.character.escape.%s`, config.Id),
+				Match: `\\(x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|u\{[0-9A-Fa-f]+\}|[0-2][0-7]{0,2}|3[0-6][0-7]?|37[0-7]?|[4-7][0-7]?|.|$)`,
 			}
 		}
 
 		if len(commentPatterns) > 0 {
-			repository["comments"] = pattern{
-				patterns: commentPatterns,
+			repository["comments"] = Pattern{
+				Patterns: commentPatterns,
 			}
 		}
 		if stringEscapePattern != nil {
@@ -132,7 +134,7 @@ func GetRepository(grammar grammar.Grammar, config TextMateGeneratorConfig) repo
 	return repository
 }
 
-func GetControlKeywords(grammr grammar.Grammar, config TextMateGeneratorConfig) pattern {
+func GetControlKeywords(grammr grammar.Grammar, config TextMateGeneratorConfig) Pattern {
 	regex := regexp.MustCompile(`[A-Za-z]`)
 	controlKeywords := []grammar.Keyword{}
 	for _, keyword := range GetAllKeywords(grammr) {
@@ -141,9 +143,9 @@ func GetControlKeywords(grammr grammar.Grammar, config TextMateGeneratorConfig) 
 		}
 	}
 	groups := GroupKeywords(controlKeywords)
-	return pattern{
-		name:  fmt.Sprintf(`keyword.control.%s`, config.Id),
-		match: fmt.Sprintf(`%s%s`, ifThenElse(config.CaseInsensitive, `(?i)`, ``), strings.Join(groups, "|")),
+	return Pattern{
+		Name:  fmt.Sprintf(`keyword.control.%s`, config.Id),
+		Match: fmt.Sprintf(`%s%s`, ifThenElse(config.CaseInsensitive, `(?i)`, ``), strings.Join(groups, "|")),
 	}
 }
 
@@ -203,7 +205,7 @@ func GroupKeywords(keywords []grammar.Keyword) []string {
 	return res
 }
 
-func GetStringPatterns(grammr grammar.Grammar, config TextMateGeneratorConfig) []pattern {
+func GetStringPatterns(grammr grammar.Grammar, config TextMateGeneratorConfig) []Pattern {
 	terminals := grammr.Terminals()
 	var stringTerminal grammar.Token
 	for _, terminal := range terminals {
@@ -212,18 +214,20 @@ func GetStringPatterns(grammr grammar.Grammar, config TextMateGeneratorConfig) [
 			break
 		}
 	}
-	stringPatterns := []pattern{}
+	stringPatterns := []Pattern{}
 	if stringTerminal != nil {
-		parts := GetTerminalParts(stringTerminal.Regexp())
+		regexPattern := stringTerminal.Regexp()
+		regexPattern = regexPattern[1 : len(regexPattern)-1]
+		parts := GetTerminalParts(regexPattern)
 		for _, part := range parts {
 			if part.end != "" {
-				stringPatterns = append(stringPatterns, pattern{
-					name:  fmt.Sprintf(`string.quoted.%s.%s`, delimiterName(part.start), config.Id),
-					begin: part.start,
-					end:   part.end,
-					patterns: []pattern{
+				stringPatterns = append(stringPatterns, Pattern{
+					Name:  fmt.Sprintf(`string.quoted.%s.%s`, delimiterName(part.start), config.Id),
+					Begin: part.start,
+					End:   part.end,
+					Patterns: []Pattern{
 						{
-							include: "#string-character-escape",
+							Include: "#string-character-escape",
 						},
 					},
 				})
