@@ -83,6 +83,7 @@ func newGenerateCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&opts.outputPath, "output", "o", "./", "Path to the output directory")
 	cmd.Flags().StringVarP(&opts.packageName, "package", "p", "", "Package name for generated code (defaults to the last segment of the output path)")
 	cmd.Flags().BoolVar(&opts.atn, "atn", false, "Enable markdown output about ATN construction")
+	cmd.Flags().StringVar(&opts.textMateOut, "textMateOut", "", "Path to output TextMate grammar JSON file (optional; omit to skip TextMate generation)")
 	cmd.Flags().BoolVarP(&opts.verbose, "verbose", "v", false, "Enable verbose output about written files")
 	return cmd
 }
