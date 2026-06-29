@@ -13,7 +13,7 @@ import (
 
 // Lexer tokenizes a complete source string in one shot.
 type Lexer interface {
-	Lex(input string) *LexerResult
+	Exec(input string) *LexerResult
 }
 
 // LexerResult holds everything produced by a single [Lexer.Lex] pass over
@@ -30,6 +30,24 @@ type LexerResult struct {
 	Groups map[int][]core.Token
 }
 
+const DefaultMode = "DefaultMode"
+
+type Mode struct {
+	Name       string
+	TokenTypes []*core.TokenType
+}
+
+func NewMode(name string, tokenTypes ...*core.TokenType) *Mode {
+	return &Mode{
+		Name:       name,
+		TokenTypes: tokenTypes,
+	}
+}
+
+func NewDefaultMode(tokenTypes ...*core.TokenType) *Mode {
+	return NewMode(DefaultMode, tokenTypes...)
+}
+
 // Allocate a new token every ~5 characters on average
 // This average is updated after lexing to adapt to the actual language
 const defaultTokenRatio = 1.0 / 5.0
@@ -44,9 +62,9 @@ type DefaultLexer struct {
 	avgRatio *parallel.RunningAverage
 }
 
-// Lex scans input from left to right using longest-match disambiguation among
+// Exec scans input from left to right using longest-match disambiguation among
 // token types registered at construction time.
-func (l *DefaultLexer) Lex(input string) *LexerResult {
+func (l *DefaultLexer) Exec(input string) *LexerResult {
 	length := len(input)
 	tokens := make([]core.Token, 0, l.avgRatio.Capacity(length))
 	comments := make([]core.Token, 0)

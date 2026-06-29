@@ -6,7 +6,8 @@ interface Grammar {
     Composites  []CompositeRule
     Terminals   []Token
     TokenGroups []TokenGroup
-    Interfaces  []Interface
+    TokenModes []TokenMode
+    Interfaces []Interface
 }
 
 entry Grammar: "grammar" Name=ID ";"?
@@ -14,6 +15,7 @@ entry Grammar: "grammar" Name=ID ";"?
         Rules+=ParserRule
         | Terminals+=Token
         | TokenGroups+=TokenGroup
+        | TokenModes+=TokenMode
         | Interfaces+=Interface
         | Composites+=CompositeRule
     )*
@@ -85,9 +87,18 @@ ParserRule: (Entry?="entry")? Name=ID ("returns" ReturnType=[Interface:ID])? ":"
 interface Token extends AbstractTokenRule {
     Type   string
     Regexp string
+    Command TokenCommand
 }
 
-Token: (Type="hidden" | Type="comment")? "token" Name=ID ":" Regexp=RegexLiteral ";"?
+Token: (Type="hidden" | Type="comment")? "token" Name=ID ":" Regexp=RegexLiteral ("->" Command=TokenCommand)? ";"?;
+
+interface TokenCommand {
+    Type string
+    Mode *TokenMode
+    Default bool
+}
+
+TokenCommand: Type=("push"|"pop"|"mode") ("(" (Mode=[TokenMode:ID] | Default?="default") ")")?;
 
 interface TokenGroup extends AbstractTokenRule {
     TokenRefs []*AbstractTokenRule
@@ -98,6 +109,18 @@ interface TokenGroup extends AbstractTokenRule {
 TokenGroup: "token" "group" Name=ID "{"
     (TokenRefs+=[AbstractTokenRule:ID] | "keywords" Regexps+=RegexLiteral | Keywords+=Keyword)*
 "}"
+
+interface TokenMode {
+    Name string
+    Default bool
+    TokenRefs []*AbstractTokenRule
+    Regexps []string
+    Keywords []Keyword
+}
+
+TokenMode: "token" "mode" (Name=ID | Default?="default") "{"
+    (TokenRefs+=[AbstractTokenRule:ID] | "keywords" Regexps+=RegexLiteral | Keywords+=Keyword)*
+"}";
 
 interface Element {
     Cardinality string
