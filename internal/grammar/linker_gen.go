@@ -19,7 +19,9 @@ type FastbeltScopeProvider interface {
 	ScopeReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
+	ScopeTokenCommandMode(ctx context.Context, reference *core.Reference[TokenMode]) core.Scope
 	ScopeTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) core.Scope
+	ScopeTokenModeTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) core.Scope
 	ScopeAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope
 	ScopeCrossRefType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) core.Scope
@@ -51,7 +53,15 @@ func (s *DefaultFastbeltScopeProvider) ScopeParserRuleReturnType(ctx context.Con
 	return linking.DefaultScopeOfType[Interface](reference.Owner())
 }
 
+func (s *DefaultFastbeltScopeProvider) ScopeTokenCommandMode(ctx context.Context, reference *core.Reference[TokenMode]) core.Scope {
+	return linking.DefaultScopeOfType[TokenMode](reference.Owner())
+}
+
 func (s *DefaultFastbeltScopeProvider) ScopeTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) core.Scope {
+	return linking.DefaultScopeOfType[AbstractTokenRule](reference.Owner())
+}
+
+func (s *DefaultFastbeltScopeProvider) ScopeTokenModeTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) core.Scope {
 	return linking.DefaultScopeOfType[AbstractTokenRule](reference.Owner())
 }
 
@@ -80,7 +90,9 @@ type FastbeltReferenceLinker interface {
 	LinkReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkTokenCommandMode(ctx context.Context, reference *core.Reference[TokenMode]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkTokenModeTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkCrossRefType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) (*core.SymbolDescription, *core.ReferenceError)
@@ -122,8 +134,18 @@ func (s *DefaultFastbeltReferenceLinker) LinkParserRuleReturnType(ctx context.Co
 	return core.DefaultLink(scope, reference.Text())
 }
 
+func (s *DefaultFastbeltReferenceLinker) LinkTokenCommandMode(ctx context.Context, reference *core.Reference[TokenMode]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeTokenCommandMode(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
+}
+
 func (s *DefaultFastbeltReferenceLinker) LinkTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) (*core.SymbolDescription, *core.ReferenceError) {
 	scope := s.scopeProvider().ScopeTokenGroupTokenRefs(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
+}
+
+func (s *DefaultFastbeltReferenceLinker) LinkTokenModeTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeTokenModeTokenRefs(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
@@ -157,7 +179,9 @@ type FastbeltReferencesConstructor interface {
 	ReferenceTypeType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	SimpleTypeType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	ParserRuleReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
+	TokenCommandMode(owner core.AstNode, unit core.StringUnit) *core.Reference[TokenMode]
 	TokenGroupTokenRefs(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractTokenRule]
+	TokenModeTokenRefs(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractTokenRule]
 	AssignmentProperty(owner core.AstNode, unit core.StringUnit) *core.Reference[Field]
 	CrossRefType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	RuleCallRule(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractRule]
@@ -199,8 +223,18 @@ func (s *DefaultFastbeltReferencesConstructor) ParserRuleReturnType(owner core.A
 	return core.NewReference(owner, unit, fn)
 }
 
+func (s *DefaultFastbeltReferencesConstructor) TokenCommandMode(owner core.AstNode, unit core.StringUnit) *core.Reference[TokenMode] {
+	fn := s.referenceLinker().LinkTokenCommandMode
+	return core.NewReference(owner, unit, fn)
+}
+
 func (s *DefaultFastbeltReferencesConstructor) TokenGroupTokenRefs(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractTokenRule] {
 	fn := s.referenceLinker().LinkTokenGroupTokenRefs
+	return core.NewReference(owner, unit, fn)
+}
+
+func (s *DefaultFastbeltReferencesConstructor) TokenModeTokenRefs(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractTokenRule] {
+	fn := s.referenceLinker().LinkTokenModeTokenRefs
 	return core.NewReference(owner, unit, fn)
 }
 
@@ -240,6 +274,7 @@ func NewSymbolContainers() *FastbeltSymbolContainers {
 }
 
 type FastbeltSymbolContainer struct {
+	TokenModes         []*core.SymbolDescription
 	Interfaces         []*core.SymbolDescription
 	Fields             []*core.SymbolDescription
 	AbstractTokenRules []*core.SymbolDescription
@@ -248,6 +283,9 @@ type FastbeltSymbolContainer struct {
 
 func (sc *FastbeltSymbolContainer) Put(desc *core.SymbolDescription) bool {
 	switch desc.Node.(type) {
+	case TokenMode:
+		sc.TokenModes = append(sc.TokenModes, desc)
+		return true
 	case Interface:
 		sc.Interfaces = append(sc.Interfaces, desc)
 		return true
@@ -266,6 +304,7 @@ func (sc *FastbeltSymbolContainer) Put(desc *core.SymbolDescription) bool {
 
 func (sc *FastbeltSymbolContainer) All() core.SymbolSeq {
 	return extiter.Concat(
+		slices.Values(sc.TokenModes),
 		slices.Values(sc.Interfaces),
 		slices.Values(sc.Fields),
 		slices.Values(sc.AbstractTokenRules),
@@ -273,6 +312,7 @@ func (sc *FastbeltSymbolContainer) All() core.SymbolSeq {
 	)
 }
 
+var TypeFor_TokenMode = reflect.TypeFor[TokenMode]()
 var TypeFor_Interface = reflect.TypeFor[Interface]()
 var TypeFor_Field = reflect.TypeFor[Field]()
 var TypeFor_AbstractTokenRule = reflect.TypeFor[AbstractTokenRule]()
@@ -280,6 +320,8 @@ var TypeFor_AbstractRule = reflect.TypeFor[AbstractRule]()
 
 func (sc *FastbeltSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 	switch t {
+	case TypeFor_TokenMode:
+		return slices.Values(sc.TokenModes)
 	case TypeFor_Interface:
 		return slices.Values(sc.Interfaces)
 	case TypeFor_Field:

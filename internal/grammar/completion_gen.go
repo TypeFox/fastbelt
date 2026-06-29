@@ -18,7 +18,9 @@ type FastbeltCompletionFilter interface {
 	FilterReferenceTypeType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterSimpleTypeType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterTokenCommandMode(ctx context.Context, reference *core.Reference[TokenMode], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterTokenModeTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterAssignmentProperty(ctx context.Context, reference *core.Reference[Field], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterCrossRefType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
@@ -48,7 +50,15 @@ func (*DefaultFastbeltCompletionFilter) FilterParserRuleReturnType(_ context.Con
 	return in
 }
 
+func (*DefaultFastbeltCompletionFilter) FilterTokenCommandMode(_ context.Context, _ *core.Reference[TokenMode], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
 func (*DefaultFastbeltCompletionFilter) FilterTokenGroupTokenRefs(_ context.Context, _ *core.Reference[AbstractTokenRule], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
+func (*DefaultFastbeltCompletionFilter) FilterTokenModeTokenRefs(_ context.Context, _ *core.Reference[AbstractTokenRule], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	return in
 }
 
@@ -127,6 +137,18 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		candidates := scopes.ScopeParserRuleReturnType(ctx, ref).AllElements()
 		return filter.FilterParserRuleReturnType(ctx, ref, candidates)
 	},
+	"TokenCommand.Mode": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(TokenCommand)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[FastbeltReferencesConstructor](sc)
+		scopes := service.MustGet[FastbeltScopeProvider](sc)
+		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		ref := refs.TokenCommandMode(typedOwner, nil)
+		candidates := scopes.ScopeTokenCommandMode(ctx, ref).AllElements()
+		return filter.FilterTokenCommandMode(ctx, ref, candidates)
+	},
 	"TokenGroup.TokenRefs": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
 		typedOwner, ok := owner.(TokenGroup)
 		if !ok {
@@ -138,6 +160,18 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		ref := refs.TokenGroupTokenRefs(typedOwner, nil)
 		candidates := scopes.ScopeTokenGroupTokenRefs(ctx, ref).AllElements()
 		return filter.FilterTokenGroupTokenRefs(ctx, ref, candidates)
+	},
+	"TokenMode.TokenRefs": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(TokenMode)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[FastbeltReferencesConstructor](sc)
+		scopes := service.MustGet[FastbeltScopeProvider](sc)
+		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		ref := refs.TokenModeTokenRefs(typedOwner, nil)
+		candidates := scopes.ScopeTokenModeTokenRefs(ctx, ref).AllElements()
+		return filter.FilterTokenModeTokenRefs(ctx, ref, candidates)
 	},
 	"Assignment.Property": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
 		typedOwner, ok := owner.(Assignment)
@@ -277,7 +311,17 @@ func (a *FastbeltCompletionAdapter) HasAssignment(node core.AstNode, property st
 		case "Type":
 			return n.Type() != nil
 		}
+	case TokenCommand:
+		switch property {
+		case "Mode":
+			return n.Mode() != nil
+		}
 	case TokenGroup:
+		switch property {
+		case "TokenRefs":
+			return n.TokenRefs() != nil
+		}
+	case TokenMode:
 		switch property {
 		case "TokenRefs":
 			return n.TokenRefs() != nil
