@@ -238,13 +238,14 @@ func GetStringPatterns(grammr grammar.Grammar, config TextMateGeneratorConfig) [
 }
 
 func delimiterName(delimiter string) string {
-	if delimiter == "'" {
+	switch delimiter {
+	case "'":
 		return "single"
-	} else if delimiter == `"` {
+	case `"`:
 		return "double"
-	} else if delimiter == "`" {
+	case "`":
 		return "backtick"
-	} else {
+	default:
 		return "delimiter"
 	}
 }
