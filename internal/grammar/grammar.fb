@@ -1,23 +1,23 @@
 grammar Fastbelt
 
 interface Grammar {
-    Name        string
-    Rules       []ParserRule
-    Composites  []CompositeRule
-    Terminals   []Token
-    TokenGroups []TokenGroup
-    TokenModes []TokenMode
-    Interfaces []Interface
+    Name              string
+    Rules             []ParserRule
+    TokenDeclarations []TokenDeclaration
+    TokenModes        []TokenMode
+    Interfaces        []Interface
 }
+
+interface TokenDeclaration extends AbstractRule {}
+
+TokenDeclaration: Token | TokenGroup | CompositeRule
 
 entry Grammar: "grammar" Name=ID ";"?
     (
         Rules+=ParserRule
-        | Terminals+=Token
-        | TokenGroups+=TokenGroup
         | TokenModes+=TokenMode
         | Interfaces+=Interface
-        | Composites+=CompositeRule
+        | TokenDeclarations+=TokenDeclaration
     )*
 
 interface Interface {
@@ -70,27 +70,20 @@ interface AbstractRule {
     Name string
 }
 
-interface AbstractRuleWithBody extends AbstractRule {
-    Body Element
-}
-
-// Base type for Token and TokenGroup
-interface AbstractTokenRule extends AbstractRule{}
-
-interface ParserRule extends AbstractRuleWithBody {
+interface ParserRule extends AbstractRule {
+    Body       Element
     Entry      bool
     ReturnType *Interface
 }
 
 ParserRule: (Entry?="entry")? Name=ID ("returns" ReturnType=[Interface:ID])? ":" Body=Alternatives ";"?
 
-interface Token extends AbstractTokenRule {
-    Type   string
+interface Token extends TokenDeclaration {
     Regexp string
-    Command TokenCommand
+    Keyword Keyword
 }
 
-Token: (Type="hidden" | Type="comment")? "token" Name=ID ":" Regexp=RegexLiteral ("->" Command=TokenCommand)? ";"?;
+Token: "token" Name=ID ":" (Regexp=RegexLiteral | Keyword=Keyword)
 
 interface TokenCommand {
     Type string
@@ -100,27 +93,31 @@ interface TokenCommand {
 
 TokenCommand: Type=("push"|"pop"|"mode") ("(" (Mode=[TokenMode:ID] | Default?="default") ")")?;
 
-interface TokenGroup extends AbstractTokenRule {
-    TokenRefs []*AbstractTokenRule
-    Regexps   []string
-    Keywords  []Keyword
+interface TokenGroup extends TokenDeclaration {
+    TokenDeclarations []*TokenDeclaration
 }
 
 TokenGroup: "token" "group" Name=ID "{"
-    (TokenRefs+=[AbstractTokenRule:ID] | "keywords" Regexps+=RegexLiteral | Keywords+=Keyword)*
+    (TokenDeclarations+=[TokenDeclaration:ID])*
 "}"
 
 interface TokenMode {
-    Name string
-    Default bool
-    TokenRefs []*AbstractTokenRule
-    Regexps []string
-    Keywords []Keyword
+    Name              string
+    Default           bool
+    TokenRefs         []TokenUsage
 }
 
 TokenMode: "token" "mode" (Name=ID | Default?="default") "{"
-    (TokenRefs+=[AbstractTokenRule:ID] | "keywords" Regexps+=RegexLiteral | Keywords+=Keyword)*
+    TokenRefs+=TokenUsage*
 "}";
+
+interface TokenUsage {
+    Type    string
+    Token   *TokenDeclaration
+    Command TokenCommand
+}
+
+TokenUsage: Type=("hidden"|"comment") Token=[TokenDeclaration:ID] Command=TokenCommand?
 
 interface Element {
     Cardinality string
@@ -183,7 +180,8 @@ interface Action extends Element {
 
 Action: "{" Type=[Interface:ID] ("." Property=[Field:ID] Operator=("+=" | "=") "current")? "}"
 
-interface CompositeRule extends AbstractRuleWithBody {
+interface CompositeRule extends TokenDeclaration {
+    Body Element
 }
 
 CompositeRule: "composite" Name=ID ":" Body=CompositeAlternatives ";"?
