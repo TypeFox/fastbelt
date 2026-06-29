@@ -15,7 +15,7 @@ import (
 
 // Lexer tokenizes a complete source string in one shot.
 type Lexer interface {
-	Lex(input string) *LexerResult
+	Exec(input string) *LexerResult
 }
 
 // LexerResult holds everything produced by a single [Lexer.Lex] pass over
@@ -30,6 +30,24 @@ type LexerResult struct {
 	// Groups collects tokens routed to custom [core.TokenType.Group] values
 	// other than the default, skipped, or comment groups. Nil when empty.
 	Groups map[int][]core.Token
+}
+
+const DefaultMode = "DefaultMode"
+
+type Mode struct {
+	Name       string
+	TokenTypes []*core.TokenType
+}
+
+func NewMode(name string, tokenTypes ...*core.TokenType) *Mode {
+	return &Mode{
+		Name:       name,
+		TokenTypes: tokenTypes,
+	}
+}
+
+func NewDefaultMode(tokenTypes ...*core.TokenType) *Mode {
+	return NewMode(DefaultMode, tokenTypes...)
 }
 
 // Allocate a new token every ~5 characters on average
@@ -47,9 +65,9 @@ type DefaultLexer struct {
 	avgRatio atomic.Uint64
 }
 
-// Lex scans input from left to right using longest-match disambiguation among
+// Exec scans input from left to right using longest-match disambiguation among
 // token types registered at construction time.
-func (l *DefaultLexer) Lex(input string) *LexerResult {
+func (l *DefaultLexer) Exec(input string) *LexerResult {
 	length := len(input)
 	ratio := math.Float64frombits(l.avgRatio.Load())
 	if ratio == 0 {
