@@ -129,7 +129,7 @@ func parsePath(path string) (fragmentPath, error) {
 			err := error(nil)
 			index, err = strconv.Atoi(fieldAndIndex[1])
 			if err != nil {
-				return nil, fmt.Errorf("parsePath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+				return nil, fmt.Errorf("parsePath: index '%s' is not a valid int: %w", fieldAndIndex[1], err)
 			}
 		}
 		result = append(result, segment{field, index})

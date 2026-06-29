@@ -1,0 +1,18 @@
+grammar TokenModesWithGroups
+
+interface Model {
+    Greeting string
+}
+entry Model: "x" Greeting=X
+
+token group X {
+    "x"
+}
+
+token mode default {
+    "x" -> push(Y)
+}
+
+token mode Y {
+    X -> pop
+}

@@ -1,0 +1,45 @@
+package token_modes
+
+import (
+	"strings"
+	"testing"
+
+	"typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/lexer"
+	"typefox.dev/fastbelt/util/service"
+)
+
+func BenchmarkNestedString(b *testing.B) {
+	content, _ := generateNestedString()
+	srv := CreateServices()
+	lexerService := service.MustGet[lexer.Lexer](srv)
+	doc, err := fastbelt.NewDocumentFromString("file:///workspace/nested_string.mode", "modes", content)
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.SetBytes(int64(len(content)))
+	b.ResetTimer()
+	for b.Loop() {
+		lexerResult := lexerService.Exec(content)
+		doc.Tokens = lexerResult.Tokens
+	}
+}
+
+func generateNestedString() (string, error) {
+	content := strings.Builder{}
+
+	var recursion func(depth int)
+	recursion = func(depth int) {
+		if depth == 0 {
+			content.WriteString("`EXIT!!!`")
+			return
+		}
+		content.WriteString("`Hello, World! #{")
+		recursion(depth - 1)
+		content.WriteString("} How are you?`")
+	}
+
+	recursion(10000)
+
+	return "VAR := " + content.String(), nil
+}

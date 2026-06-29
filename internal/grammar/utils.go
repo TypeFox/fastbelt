@@ -23,7 +23,7 @@ func convertString(keyword Keyword) (string, error) {
 		return "", errMissingKeywordValue
 	}
 	if len(value) >= 2 && value[0] == '"' && value[len(value)-1] == '"' {
-		value = value[1 : len(value)-1]
+		value = KeywordValue(keyword)
 	}
 	return value, nil
 }
