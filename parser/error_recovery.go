@@ -67,6 +67,13 @@ func (DefaultErrorRecovery) Recover(parserState *ParserState) {
 	if parserState.ErrorMode != ErrorModeRecover {
 		return
 	}
+
+	//if we are stuck on the same token, consume it and try to move on
+	if parserState.lastErrorIndex == parserState.Index && parserState.Index < parserState.Length {
+		parserState.Index++
+	}
+	parserState.lastErrorIndex = parserState.Index
+
 	// Discards tokens until we find one that the current follow set, or until we hit EOF.
 	if !parserState.FollowSetEmpty() {
 		for {

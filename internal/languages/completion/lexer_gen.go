@@ -15,10 +15,7 @@ var Keyword_Dot = core.NewTokenType(
 	Keyword_Dot_Idx,
 	".",
 	".",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], ".") {
 			return 1
@@ -34,10 +31,7 @@ var Keyword_a = core.NewTokenType(
 	Keyword_a_Idx,
 	"a",
 	"a",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "a") {
 			return 1
@@ -53,10 +47,7 @@ var Keyword_and = core.NewTokenType(
 	Keyword_and_Idx,
 	"and",
 	"and",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "and") {
 			return 3
@@ -72,10 +63,7 @@ var Keyword_b = core.NewTokenType(
 	Keyword_b_Idx,
 	"b",
 	"b",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "b") {
 			return 1
@@ -91,10 +79,7 @@ var Keyword_c = core.NewTokenType(
 	Keyword_c_Idx,
 	"c",
 	"c",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "c") {
 			return 1
@@ -110,10 +95,7 @@ var Keyword_common = core.NewTokenType(
 	Keyword_common_Idx,
 	"common",
 	"common",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "common") {
 			return 6
@@ -129,10 +111,7 @@ var Keyword_d = core.NewTokenType(
 	Keyword_d_Idx,
 	"d",
 	"d",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "d") {
 			return 1
@@ -148,10 +127,7 @@ var Keyword_declare = core.NewTokenType(
 	Keyword_declare_Idx,
 	"declare",
 	"declare",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "declare") {
 			return 7
@@ -167,10 +143,7 @@ var Keyword_e = core.NewTokenType(
 	Keyword_e_Idx,
 	"e",
 	"e",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "e") {
 			return 1
@@ -186,10 +159,7 @@ var Keyword_end = core.NewTokenType(
 	Keyword_end_Idx,
 	"end",
 	"end",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "end") {
 			return 3
@@ -205,10 +175,7 @@ var Keyword_f = core.NewTokenType(
 	Keyword_f_Idx,
 	"f",
 	"f",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "f") {
 			return 1
@@ -224,10 +191,7 @@ var Keyword_first = core.NewTokenType(
 	Keyword_first_Idx,
 	"first",
 	"first",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "first") {
 			return 5
@@ -243,10 +207,7 @@ var Keyword_g = core.NewTokenType(
 	Keyword_g_Idx,
 	"g",
 	"g",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "g") {
 			return 1
@@ -262,10 +223,7 @@ var Keyword_h = core.NewTokenType(
 	Keyword_h_Idx,
 	"h",
 	"h",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "h") {
 			return 1
@@ -281,10 +239,7 @@ var Keyword_i = core.NewTokenType(
 	Keyword_i_Idx,
 	"i",
 	"i",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "i") {
 			return 1
@@ -300,10 +255,7 @@ var Keyword_j = core.NewTokenType(
 	Keyword_j_Idx,
 	"j",
 	"j",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "j") {
 			return 1
@@ -319,10 +271,7 @@ var Keyword_k = core.NewTokenType(
 	Keyword_k_Idx,
 	"k",
 	"k",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "k") {
 			return 1
@@ -338,10 +287,7 @@ var Keyword_l = core.NewTokenType(
 	Keyword_l_Idx,
 	"l",
 	"l",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "l") {
 			return 1
@@ -357,10 +303,7 @@ var Keyword_long = core.NewTokenType(
 	Keyword_long_Idx,
 	"long",
 	"long",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "long") {
 			return 4
@@ -376,10 +319,7 @@ var Keyword_m = core.NewTokenType(
 	Keyword_m_Idx,
 	"m",
 	"m",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "m") {
 			return 1
@@ -395,10 +335,7 @@ var Keyword_n = core.NewTokenType(
 	Keyword_n_Idx,
 	"n",
 	"n",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "n") {
 			return 1
@@ -414,10 +351,7 @@ var Keyword_o = core.NewTokenType(
 	Keyword_o_Idx,
 	"o",
 	"o",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "o") {
 			return 1
@@ -433,10 +367,7 @@ var Keyword_optional = core.NewTokenType(
 	Keyword_optional_Idx,
 	"optional",
 	"optional",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "optional") {
 			return 8
@@ -452,10 +383,7 @@ var Keyword_second = core.NewTokenType(
 	Keyword_second_Idx,
 	"second",
 	"second",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "second") {
 			return 6
@@ -471,10 +399,7 @@ var Keyword_self = core.NewTokenType(
 	Keyword_self_Idx,
 	"self",
 	"self",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "self") {
 			return 4
@@ -490,10 +415,7 @@ var Keyword_then = core.NewTokenType(
 	Keyword_then_Idx,
 	"then",
 	"then",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "then") {
 			return 4
@@ -509,10 +431,7 @@ var Keyword_x = core.NewTokenType(
 	Keyword_x_Idx,
 	"x",
 	"x",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "x") {
 			return 1
@@ -528,10 +447,7 @@ var Keyword_y = core.NewTokenType(
 	Keyword_y_Idx,
 	"y",
 	"y",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "y") {
 			return 1
@@ -547,10 +463,7 @@ var Keyword_LeftBrace = core.NewTokenType(
 	Keyword_LeftBrace_Idx,
 	"{",
 	"{",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "{") {
 			return 1
@@ -566,10 +479,7 @@ var Keyword_RightBrace = core.NewTokenType(
 	Keyword_RightBrace_Idx,
 	"}",
 	"}",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "}") {
 			return 1
@@ -579,16 +489,65 @@ var Keyword_RightBrace = core.NewTokenType(
 	[]rune{'}'},
 )
 
+const Token_DECLARE_Idx = Keyword_declare_Idx
+
+var Token_DECLARE = Keyword_declare
+
+const Token_FIRST_Idx = Keyword_first_Idx
+
+var Token_FIRST = Keyword_first
+
+const Token_SECOND_Idx = Keyword_second_Idx
+
+var Token_SECOND = Keyword_second
+
+const Token_LONG_Idx = Keyword_long_Idx
+
+var Token_LONG = Keyword_long
+
+const Token_SELF_Idx = Keyword_self_Idx
+
+var Token_SELF = Keyword_self
+
+const Token_COMMON_Idx = Keyword_common_Idx
+
+var Token_COMMON = Keyword_common
+
+const Token_THEN_Idx = Keyword_then_Idx
+
+var Token_THEN = Keyword_then
+
+const Token_LBRACE_Idx = Keyword_LeftBrace_Idx
+
+var Token_LBRACE = Keyword_LeftBrace
+
+const Token_RBRACE_Idx = Keyword_RightBrace_Idx
+
+var Token_RBRACE = Keyword_RightBrace
+
+const Token_DOT_Idx = Keyword_Dot_Idx
+
+var Token_DOT = Keyword_Dot
+
+const Token_OPTIONAL_Idx = Keyword_optional_Idx
+
+var Token_OPTIONAL = Keyword_optional
+
+const Token_AND_Idx = Keyword_and_Idx
+
+var Token_AND = Keyword_and
+
+const Token_END_Idx = Keyword_end_Idx
+
+var Token_END = Keyword_end
+
 const Token_WS_Idx = 31
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
 	"WS",
 	"WS",
-	core.SkippedGroup,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -659,10 +618,7 @@ var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
 	"ID",
 	"ID",
-	0,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -727,10 +683,10 @@ var Token_ID_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_SomeTokenGroup_Idx = 33
+const TokenGroup_SomeTokenGroup_Idx = 33
 
-var Token_SomeTokenGroup = core.NewTokenGroup(
-	Token_SomeTokenGroup_Idx,
+var TokenGroup_SomeTokenGroup = core.NewTokenGroup(
+	TokenGroup_SomeTokenGroup_Idx,
 	"SomeTokenGroup",
 	"SomeTokenGroup",
 	[]*core.TokenType{
@@ -740,39 +696,45 @@ var Token_SomeTokenGroup = core.NewTokenGroup(
 	},
 )
 
+const (
+	TokenMode_default = 0
+)
+
 func NewLexer() lexer.Lexer {
-	return lexer.NewDefaultLexer(
-		Keyword_Dot,
-		Keyword_a,
-		Keyword_and,
-		Keyword_b,
-		Keyword_c,
-		Keyword_common,
-		Keyword_d,
-		Keyword_declare,
-		Keyword_e,
-		Keyword_end,
-		Keyword_f,
-		Keyword_first,
-		Keyword_g,
-		Keyword_h,
-		Keyword_i,
-		Keyword_j,
-		Keyword_k,
-		Keyword_l,
-		Keyword_long,
-		Keyword_m,
-		Keyword_n,
-		Keyword_o,
-		Keyword_optional,
-		Keyword_second,
-		Keyword_self,
-		Keyword_then,
-		Keyword_x,
-		Keyword_y,
-		Keyword_LeftBrace,
-		Keyword_RightBrace,
-		Token_WS,
-		Token_ID,
+	modes := make([]*lexer.TokenMode, 1)
+	modes[TokenMode_default] = lexer.NewTokenMode("default",
+		lexer.UseTokenType(Keyword_a),
+		lexer.UseTokenType(Token_AND),
+		lexer.UseTokenType(Keyword_b),
+		lexer.UseTokenType(Keyword_c),
+		lexer.UseTokenType(Token_COMMON),
+		lexer.UseTokenType(Keyword_d),
+		lexer.UseTokenType(Token_DECLARE),
+		lexer.UseTokenType(Keyword_e),
+		lexer.UseTokenType(Token_END),
+		lexer.UseTokenType(Keyword_f),
+		lexer.UseTokenType(Token_FIRST),
+		lexer.UseTokenType(Keyword_g),
+		lexer.UseTokenType(Keyword_h),
+		lexer.UseTokenType(Keyword_i),
+		lexer.UseTokenType(Keyword_j),
+		lexer.UseTokenType(Keyword_k),
+		lexer.UseTokenType(Keyword_l),
+		lexer.UseTokenType(Token_LONG),
+		lexer.UseTokenType(Keyword_m),
+		lexer.UseTokenType(Keyword_n),
+		lexer.UseTokenType(Keyword_o),
+		lexer.UseTokenType(Token_OPTIONAL),
+		lexer.UseTokenType(Token_SECOND),
+		lexer.UseTokenType(Token_SELF),
+		lexer.UseTokenType(Token_THEN),
+		lexer.UseTokenType(Keyword_x),
+		lexer.UseTokenType(Keyword_y),
+		lexer.UseTokenType(Token_LBRACE),
+		lexer.UseTokenType(Token_RBRACE),
+		lexer.UseTokenType(Token_DOT),
+		lexer.UseTokenType(Token_ID),
+		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
 	)
+	return lexer.NewDefaultLexer(TokenMode_default, modes...)
 }

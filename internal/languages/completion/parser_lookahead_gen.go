@@ -14,17 +14,17 @@ const (
 )
 
 var BAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_first, Keyword_second},
+	Types:  []*core.TokenType{Token_FIRST, Token_SECOND},
 	Lookup: []int{12: 1, 24: 2},
 }
 
 var JAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_ID, Keyword_self},
+	Types:  []*core.TokenType{Token_ID, Token_SELF},
 	Lookup: []int{25: 2, 32: 1},
 }
 
 var RootObjectsAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_declare, Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h, Keyword_i, Keyword_j, Keyword_k, Keyword_l, Keyword_m, Keyword_n, Keyword_o},
+	Types:  []*core.TokenType{Token_DECLARE, Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h, Keyword_i, Keyword_j, Keyword_k, Keyword_l, Keyword_m, Keyword_n, Keyword_o},
 	Lookup: []int{2: 2, 4: 3, 5: 4, 7: 5, 8: 1, 9: 6, 11: 7, 13: 8, 14: 9, 15: 10, 16: 11, 17: 12, 18: 13, 20: 14, 21: 15, 22: 16},
 }
 
@@ -73,11 +73,11 @@ func (l *DefaultCompletionParserLookahead) DAlternatives(state *parser.ParserSta
 }
 
 func (l *DefaultCompletionParserLookahead) DeclareChildrenLoop(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_declare
+	return state.LA(1).Type == Token_DECLARE
 }
 
 func (l *DefaultCompletionParserLookahead) DeclareOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_LeftBrace
+	return state.LA(1).Type == Token_LBRACE
 }
 
 func (l *DefaultCompletionParserLookahead) FItemsLoop(state *parser.ParserState) bool {
@@ -85,7 +85,7 @@ func (l *DefaultCompletionParserLookahead) FItemsLoop(state *parser.ParserState)
 }
 
 func (l *DefaultCompletionParserLookahead) FQNLoop(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_Dot
+	return state.LA(1).Type == Token_DOT
 }
 
 func (l *DefaultCompletionParserLookahead) JAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
@@ -97,11 +97,11 @@ func (l *DefaultCompletionParserLookahead) KAlternatives(state *parser.ParserSta
 }
 
 func (l *DefaultCompletionParserLookahead) LOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_optional
+	return state.LA(1).Type == Token_OPTIONAL
 }
 
 func (l *DefaultCompletionParserLookahead) MemberCallLoop(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_Dot
+	return state.LA(1).Type == Token_DOT
 }
 
 func (l *DefaultCompletionParserLookahead) MemberCallNoDotLoop(state *parser.ParserState) bool {

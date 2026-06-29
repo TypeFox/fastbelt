@@ -30,7 +30,7 @@ func linearATN(t *testing.T, tokenType *core.TokenType) *RuntimeATN {
 }
 
 func createTokenType(id int, name string) *core.TokenType {
-	return core.NewTokenType(id, name, name, 0, 0, 0, false, nil, nil)
+	return core.NewTokenType(id, name, name, 0, nil, nil)
 }
 
 // TestSimulator_AlternativeCoverage builds an ATN for `rule: 'a' 'x' | 'a' 'y'`
