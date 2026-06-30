@@ -51,8 +51,8 @@ func TestNodePath_PriceCalc(t *testing.T) {
 		require.True(t, ok)
 		fc, ok := binExpr.Left().(FunctionCall)
 		require.True(t, ok)
-		assert.Equal(t, "materialPerUnit", fc.Callable().Text())
 		assert.Equal(t, "/statements@3/expression/left", mustNodePath(t, fc))
+		assert.Equal(t, "materialPerUnit", fc.Callable().Text())
 		assert.Equal(t, "/statements@0", mustNodePath(t, fc.Callable().Ref(doc.Ctx())))
 	})
 

@@ -234,7 +234,7 @@ func (node *AstNodeBase) NodePath() (string, error) {
 	if container == nil {
 		return "", nil
 	} else if containerField.Value() == "" {
-		return "", errors.New("Can't determine node path, found AstNode's field 'containerField' being empty.")
+		return "", errors.New("cannot determine node path, found AstNode's field 'containerField' being empty")
 	}
 
 	parentPath, err := container.NodePath()
@@ -254,7 +254,7 @@ func (node *AstNodeBase) NodePath() (string, error) {
 // The generator produces specific overwrites for each generated ...Impl type.
 func (node *AstNodeBase) GetByPath(path string) (AstNode, error) {
 	if path != "" {
-		return nil, errors.New("AstNodeBase.GetByPath: Cannot identify children of plain AstNodeBase instances.")
+		return nil, errors.New("AstNodeBase.GetByPath: Cannot identify children of plain AstNodeBase instances")
 	} else {
 		return node, nil
 	}
