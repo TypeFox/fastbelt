@@ -127,7 +127,7 @@ interface TokenUsage {
     Command  TokenCommand
 }
 
-TokenUsage: Type=("hidden"|"comment") TokenRef=[AbstractTokenRule:ID] Command=TokenCommand?
+TokenUsage: Type=("hidden"|"comment")? TokenRef=[AbstractTokenRule:ID] Command=TokenCommand?
 
 interface Element {
     Cardinality string
@@ -202,10 +202,19 @@ CompositeGroup returns Element: CompositeElement ({Group.Elements+=current} Elem
 CompositeElement returns Element: (Keyword | RuleCall | "(" CompositeAlternatives ")") Cardinality=("*" | "+" | "?")?
 
 // Move comments in front of RegexLiteral
-comment token SL_COMMENT: /\/\/[^\r\n]*/
-comment token ML_COMMENT: /\/\*[\s\S]*?\*\//
+token SL_COMMENT: /\/\/[^\r\n]*/
+token ML_COMMENT: /\/\*[\s\S]*?\*\//
 
 token StringLiteral: /"[^"]*"/
 token ID: /[a-zA-Z_][a-zA-Z0-9_]*/
 token RegexLiteral: /\/([^\r\n\[\/\\]|\\.|\[([^\r\n\]\\]|\\.)*\])+\//
-hidden token WS: /[ \n\r\t]+/
+token WS: /[ \n\r\t]+/
+
+token mode default {
+    comment SL_COMMENT
+    comment ML_COMMENT
+    comment StringLiteral //TODO remove "comment"
+    comment ID            //TODO remove "comment"
+    comment RegexLiteral  //TODO remove "comment"
+    hidden WS
+}

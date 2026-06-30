@@ -219,10 +219,7 @@ func generateKeywordTokenType(keyword grammar.Keyword, id int) codegen.Node {
 		n.AppendLine(GeneratedTokenIdxName(keyword), ",")
 		n.AppendLine("\"", keywordValue, "\",")
 		n.AppendLine("\"", keywordValue, "\",")
-		n.AppendLine("0,")
 		n.AppendLine("core.TokenKindKeyword,")
-		n.AppendLine("0,")
-		n.AppendLine("false,")
 		n.AppendLine("func (text string, offset int) int {")
 		n.Indent(func(nn codegen.Node) {
 			nn.AppendLine("if strings.HasPrefix(text[offset:], \"", keywordValue, "\") {")
