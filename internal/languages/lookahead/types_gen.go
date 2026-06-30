@@ -3,8 +3,11 @@
 package lookahead
 
 import (
-	core "typefox.dev/fastbelt"
+	"fmt"
+	"strings"
 	"unique"
+
+	core "typefox.dev/fastbelt"
 )
 
 type Obj interface {
@@ -102,6 +105,25 @@ func (i *ObjImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 	}
 }
 
+func (i *ObjImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameNode:
+		return nil, fmt.Errorf("ObjImpl.GetByPath: field 'node' holds a primitive value and cannot be navigated")
+	case fieldNameValue:
+		return nil, fmt.Errorf("ObjImpl.GetByPath: field 'value' holds a primitive value and cannot be navigated")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("ObjImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Obj'", fieldAndIndex[0], nodePath)
+	}
+}
+
 type Root interface {
 	core.AstNode
 
@@ -167,6 +189,31 @@ func (i *RootImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 		return core.FieldInfos{Multi: false, Reference: false}
 	default:
 		return core.FieldInfos{}
+	}
+}
+
+func (i *RootImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameItem:
+		if i.Item() == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("RootImpl.GetByPath: field 'item' is nil at '%s'", nodePath)
+		}
+		child := i.Item()
+		if len(parts) == 1 {
+			return child, nil
+		}
+		return child.GetByPath(parts[1])
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("RootImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Root'", fieldAndIndex[0], nodePath)
 	}
 }
 
@@ -246,6 +293,27 @@ func (i *BImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 		return core.FieldInfos{Multi: false, Reference: false}
 	default:
 		return core.FieldInfos{}
+	}
+}
+
+func (i *BImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameNode:
+		return nil, fmt.Errorf("BImpl.GetByPath: field 'node' holds a primitive value and cannot be navigated")
+	case fieldNamePost:
+		return nil, fmt.Errorf("BImpl.GetByPath: field 'post' holds a primitive value and cannot be navigated")
+	case fieldNameValue:
+		return nil, fmt.Errorf("BImpl.GetByPath: field 'value' holds a primitive value and cannot be navigated")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("BImpl.GetByPath: field '%s' does not exist in node '%s' of type 'B'", fieldAndIndex[0], nodePath)
 	}
 }
 

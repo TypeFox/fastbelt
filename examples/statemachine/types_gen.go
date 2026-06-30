@@ -3,8 +3,12 @@
 package statemachine
 
 import (
-	core "typefox.dev/fastbelt"
+	"fmt"
+	"strconv"
+	"strings"
 	"unique"
+
+	core "typefox.dev/fastbelt"
 )
 
 type Statemachine interface {
@@ -149,6 +153,62 @@ func (i *StatemachineImpl) FieldInfos(field unique.Handle[string]) core.FieldInf
 	}
 }
 
+func (i *StatemachineImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameCommands:
+		index, err := strconv.Atoi(fieldAndIndex[1])
+		if err != nil {
+			return nil, err
+		} else if index >= len(i.Commands()) {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("StatemachineImpl.GetByPath: index %d exceeds slice length of 'commands' (%d) at '%s'", index, len(i.Commands()), nodePath)
+		}
+		child := i.Commands()[index]
+		if len(parts) == 1 {
+			return child, nil
+		}
+		return child.GetByPath(parts[1])
+	case fieldNameEvents:
+		index, err := strconv.Atoi(fieldAndIndex[1])
+		if err != nil {
+			return nil, err
+		} else if index >= len(i.Events()) {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("StatemachineImpl.GetByPath: index %d exceeds slice length of 'events' (%d) at '%s'", index, len(i.Events()), nodePath)
+		}
+		child := i.Events()[index]
+		if len(parts) == 1 {
+			return child, nil
+		}
+		return child.GetByPath(parts[1])
+	case fieldNameStates:
+		index, err := strconv.Atoi(fieldAndIndex[1])
+		if err != nil {
+			return nil, err
+		} else if index >= len(i.States()) {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("StatemachineImpl.GetByPath: index %d exceeds slice length of 'states' (%d) at '%s'", index, len(i.States()), nodePath)
+		}
+		child := i.States()[index]
+		if len(parts) == 1 {
+			return child, nil
+		}
+		return child.GetByPath(parts[1])
+	case fieldNameName:
+		return nil, fmt.Errorf("StatemachineImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("StatemachineImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Statemachine'", fieldAndIndex[0], nodePath)
+	}
+}
+
 type Event interface {
 	core.AstNode
 
@@ -219,6 +279,23 @@ func (i *EventImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 	}
 }
 
+func (i *EventImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameName:
+		return nil, fmt.Errorf("EventImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("EventImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Event'", fieldAndIndex[0], nodePath)
+	}
+}
+
 type Command interface {
 	core.AstNode
 
@@ -286,6 +363,23 @@ func (i *CommandImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 		return core.FieldInfos{Multi: false, Reference: false}
 	default:
 		return core.FieldInfos{}
+	}
+}
+
+func (i *CommandImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameName:
+		return nil, fmt.Errorf("CommandImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("CommandImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Command'", fieldAndIndex[0], nodePath)
 	}
 }
 
@@ -394,6 +488,36 @@ func (i *StateImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 	}
 }
 
+func (i *StateImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameTransitions:
+		index, err := strconv.Atoi(fieldAndIndex[1])
+		if err != nil {
+			return nil, err
+		} else if index >= len(i.Transitions()) {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("StateImpl.GetByPath: index %d exceeds slice length of 'transitions' (%d) at '%s'", index, len(i.Transitions()), nodePath)
+		}
+		child := i.Transitions()[index]
+		if len(parts) == 1 {
+			return child, nil
+		}
+		return child.GetByPath(parts[1])
+	case fieldNameName:
+		return nil, fmt.Errorf("StateImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("StateImpl.GetByPath: field '%s' does not exist in node '%s' of type 'State'", fieldAndIndex[0], nodePath)
+	}
+}
+
 type Transition interface {
 	core.AstNode
 
@@ -480,6 +604,17 @@ func (i *TransitionImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos
 	default:
 		return core.FieldInfos{}
 	}
+}
+
+func (i *TransitionImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	nodePath, _ := i.AstNodeBase.NodePath()
+	return nil, fmt.Errorf("TransitionImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Transition'", fieldAndIndex[0], nodePath)
 }
 
 var (

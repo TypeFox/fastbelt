@@ -22,16 +22,28 @@ func GenerateTypes(grammr grammar.Grammar, packageName string) string {
 	node := NewRootNode()
 	node.AppendLine("package ", packageName)
 	node.AppendLine()
+
+	var needsStrconv bool
+	interfaces := codegen.NewNode()
+	for _, iface := range grammr.Interfaces() {
+		res := generateInterface(interfaces, grammr, iface)
+		needsStrconv = needsStrconv || res.needsStrconv
+	}
+
 	node.AppendLine("import (")
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("core \"typefox.dev/fastbelt\"")
+		n.AppendLine("\"fmt\"")
+		if needsStrconv {
+			n.AppendLine("\"strconv\"")
+		}
+		n.AppendLine("\"strings\"")
 		n.AppendLine("\"unique\"")
+		n.AppendLine()
+		n.AppendLine("core \"typefox.dev/fastbelt\"")
 	})
 	node.AppendLine(")")
 	node.AppendLine()
-	for _, iface := range grammr.Interfaces() {
-		generateInterface(node, grammr, iface)
-	}
+	node.AppendNode(interfaces)
 
 	node.AppendNode(generateFieldHandles(grammr))
 	node.AppendNode(generateSyntheticFactories(grammr))
@@ -165,7 +177,7 @@ func llExtends(grammr grammar.Grammar, iface grammar.Interface, result []string)
 	return result
 }
 
-func generateInterface(node codegen.Node, grammr grammar.Grammar, iface grammar.Interface) {
+func generateInterface(node codegen.Node, grammr grammar.Grammar, iface grammar.Interface) struct{ needsStrconv bool } {
 	fields := []FieldInfo{}
 	for _, field := range iface.Fields() {
 		fields = append(fields, getFieldInfo(field))
@@ -221,10 +233,10 @@ func generateInterface(node codegen.Node, grammr grammar.Grammar, iface grammar.
 	node.AppendLine("}")
 	node.AppendLine()
 	generateDataStruct(node, iface, fields)
-	generateImplStruct(node, grammr, iface)
+	return generateImplStruct(node, grammr, iface)
 }
 
-func generateImplStruct(node codegen.Node, grammr grammar.Grammar, iface grammar.Interface) {
+func generateImplStruct(node codegen.Node, grammr grammar.Grammar, iface grammar.Interface) struct{ needsStrconv bool } {
 	node.AppendLine("type ", iface.Name(), "Impl struct {")
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("core.AstNodeBase")
@@ -277,6 +289,7 @@ func generateImplStruct(node codegen.Node, grammr grammar.Grammar, iface grammar
 	})
 	node.AppendLine("}")
 	node.AppendLine()
+	return generateGetByPath(node, iface)
 }
 
 func generateDataStruct(node codegen.Node, iface grammar.Interface, fields []FieldInfo) {
@@ -512,4 +525,90 @@ func collectAllFields(iface grammar.Interface, visited map[string]struct{}) []Fi
 		fields = append(fields, getFieldInfo(field))
 	}
 	return fields
+}
+
+func generateGetByPath(node codegen.Node, iface grammar.Interface) struct{ needsStrconv bool } {
+	var needsStrconv bool
+	allFields := collectAllFields(iface, map[string]struct{}{})
+	sort.Slice(allFields, func(i, j int) bool { return allFields[i].Name < allFields[j].Name })
+
+	var containmentFields, primitiveFields []FieldInfo
+	for _, f := range allFields {
+		if f.Reference {
+			continue
+		}
+		if f.GType == TOKEN_TYPE || f.GType == COMPOSITE_TYPE {
+			primitiveFields = append(primitiveFields, f)
+		} else {
+			containmentFields = append(containmentFields, f)
+		}
+	}
+
+	name := iface.Name()
+	implName := name + "Impl"
+	hasCases := len(containmentFields) > 0 || len(primitiveFields) > 0
+
+	node.AppendLine("func (i *", implName, ") GetByPath(path string) (core.AstNode, error) {")
+	node.Indent(func(n codegen.Node) {
+		n.AppendLine(`path = strings.TrimLeft(path, "/")`)
+		n.AppendLine(`if path == "" {`)
+		n.Indent(func(n2 codegen.Node) { n2.AppendLine("return i, nil") })
+		n.AppendLine("}")
+		n.AppendLine(`parts := strings.SplitN(path, "/", 2)`)
+		n.AppendLine(`fieldAndIndex := strings.SplitN(parts[0], "@", 2)`)
+
+		if !hasCases {
+			n.AppendLine("nodePath, _ := i.AstNodeBase.NodePath()")
+			n.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: field '%s' does not exist in node '%s' of type '`, name, `'", fieldAndIndex[0], nodePath)`)
+		} else {
+			n.AppendLine("field := unique.Make(fieldAndIndex[0])")
+			n.AppendLine("switch field {")
+			for _, f := range containmentFields {
+				n.AppendLine("case ", fieldHandleVarName(f.PName), ":")
+				n.Indent(func(n2 codegen.Node) {
+					if f.Array {
+						needsStrconv = true
+						n2.AppendLine("index, err := strconv.Atoi(fieldAndIndex[1])")
+						n2.AppendLine("if err != nil {")
+						n2.Indent(func(n3 codegen.Node) { n3.AppendLine("return nil, err") })
+						n2.AppendLine("} else if index >= len(i.", f.Name, "()) {")
+						n2.Indent(func(n3 codegen.Node) {
+							n3.AppendLine("nodePath, _ := i.AstNodeBase.NodePath()")
+							n3.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: index %d exceeds slice length of '`, f.PName, `' (%d) at '%s'", index, len(i.`, f.Name, `()), nodePath)`)
+						})
+						n2.AppendLine("}")
+						n2.AppendLine("child := i.", f.Name, "()[index]")
+					} else {
+						n2.AppendLine("if i.", f.Name, "() == nil {")
+						n2.Indent(func(n3 codegen.Node) {
+							n3.AppendLine("nodePath, _ := i.AstNodeBase.NodePath()")
+							n3.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: field '`, f.PName, `' is nil at '%s'", nodePath)`)
+						})
+						n2.AppendLine("}")
+						n2.AppendLine("child := i.", f.Name, "()")
+					}
+					n2.AppendLine("if len(parts) == 1 {")
+					n2.Indent(func(n3 codegen.Node) { n3.AppendLine("return child, nil") })
+					n2.AppendLine("}")
+					n2.AppendLine("return child.GetByPath(parts[1])")
+				})
+			}
+			for _, f := range primitiveFields {
+				n.AppendLine("case ", fieldHandleVarName(f.PName), ":")
+				n.Indent(func(n2 codegen.Node) {
+					n2.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: field '`, f.PName, `' holds a primitive value and cannot be navigated")`)
+				})
+			}
+			n.AppendLine("default:")
+			n.Indent(func(n2 codegen.Node) {
+				n2.AppendLine("nodePath, _ := i.AstNodeBase.NodePath()")
+				n2.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: field '%s' does not exist in node '%s' of type '`, name, `'", fieldAndIndex[0], nodePath)`)
+			})
+			n.AppendLine("}")
+		}
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
+	return struct{ needsStrconv bool }{needsStrconv}
 }

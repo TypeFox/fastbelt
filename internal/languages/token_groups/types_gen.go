@@ -3,8 +3,11 @@
 package token_groups
 
 import (
-	core "typefox.dev/fastbelt"
+	"fmt"
+	"strings"
 	"unique"
+
+	core "typefox.dev/fastbelt"
 )
 
 type Model interface {
@@ -75,6 +78,31 @@ func (i *ModelImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 	}
 }
 
+func (i *ModelImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameItem:
+		if i.Item() == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("ModelImpl.GetByPath: field 'item' is nil at '%s'", nodePath)
+		}
+		child := i.Item()
+		if len(parts) == 1 {
+			return child, nil
+		}
+		return child.GetByPath(parts[1])
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("ModelImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Model'", fieldAndIndex[0], nodePath)
+	}
+}
+
 type Item interface {
 	core.AstNode
 
@@ -142,6 +170,23 @@ func (i *ItemImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 		return core.FieldInfos{Multi: false, Reference: false}
 	default:
 		return core.FieldInfos{}
+	}
+}
+
+func (i *ItemImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameValue:
+		return nil, fmt.Errorf("ItemImpl.GetByPath: field 'value' holds a primitive value and cannot be navigated")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("ItemImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Item'", fieldAndIndex[0], nodePath)
 	}
 }
 
@@ -241,6 +286,27 @@ func (i *RecoveryImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 		return core.FieldInfos{Multi: false, Reference: false}
 	default:
 		return core.FieldInfos{}
+	}
+}
+
+func (i *RecoveryImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameFirst:
+		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field 'first' holds a primitive value and cannot be navigated")
+	case fieldNameSecond:
+		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field 'second' holds a primitive value and cannot be navigated")
+	case fieldNameValue:
+		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field 'value' holds a primitive value and cannot be navigated")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Recovery'", fieldAndIndex[0], nodePath)
 	}
 }
 

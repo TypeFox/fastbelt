@@ -73,6 +73,8 @@ type AstNode interface {
 	// within its document tree, e.g. "rules@2/alternatives@0".
 	// Returns "" for the root node (no container).
 	NodePath() (string, error)
+	// GetByPath returns a (nested) child node denoted by the given path
+	GetByPath(path string) (AstNode, error)
 }
 
 // FieldInfos is a simple struct of meta data describing a field of an AstNode.
@@ -245,6 +247,16 @@ func (node *AstNodeBase) NodePath() (string, error) {
 		return fieldPath + "@" + strconv.Itoa(int(index)), nil
 	} else {
 		return fieldPath, nil
+	}
+}
+
+// Base Implementation for instances of [AstNodeBase].
+// The generator produces specific overwrites for each generated ...Impl type.
+func (node *AstNodeBase) GetByPath(path string) (AstNode, error) {
+	if path != "" {
+		return nil, errors.New("AstNodeBase.GetByPath: Cannot identify children of plain AstNodeBase instances.")
+	} else {
+		return node, nil
 	}
 }
 

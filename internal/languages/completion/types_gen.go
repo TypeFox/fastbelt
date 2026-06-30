@@ -3,8 +3,12 @@
 package completion
 
 import (
-	core "typefox.dev/fastbelt"
+	"fmt"
+	"strconv"
+	"strings"
 	"unique"
+
+	core "typefox.dev/fastbelt"
 )
 
 type Obj interface {
@@ -50,6 +54,17 @@ func (i *ObjImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[
 
 func (i *ObjImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 	return core.FieldInfos{}
+}
+
+func (i *ObjImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	nodePath, _ := i.AstNodeBase.NodePath()
+	return nil, fmt.Errorf("ObjImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Obj'", fieldAndIndex[0], nodePath)
 }
 
 type Root interface {
@@ -115,6 +130,34 @@ func (i *RootImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 		return core.FieldInfos{Multi: true, Reference: false}
 	default:
 		return core.FieldInfos{}
+	}
+}
+
+func (i *RootImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameObjects:
+		index, err := strconv.Atoi(fieldAndIndex[1])
+		if err != nil {
+			return nil, err
+		} else if index >= len(i.Objects()) {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("RootImpl.GetByPath: index %d exceeds slice length of 'objects' (%d) at '%s'", index, len(i.Objects()), nodePath)
+		}
+		child := i.Objects()[index]
+		if len(parts) == 1 {
+			return child, nil
+		}
+		return child.GetByPath(parts[1])
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("RootImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Root'", fieldAndIndex[0], nodePath)
 	}
 }
 
@@ -214,6 +257,36 @@ func (i *DeclareImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 	}
 }
 
+func (i *DeclareImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameChildren:
+		index, err := strconv.Atoi(fieldAndIndex[1])
+		if err != nil {
+			return nil, err
+		} else if index >= len(i.Children()) {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("DeclareImpl.GetByPath: index %d exceeds slice length of 'children' (%d) at '%s'", index, len(i.Children()), nodePath)
+		}
+		child := i.Children()[index]
+		if len(parts) == 1 {
+			return child, nil
+		}
+		return child.GetByPath(parts[1])
+	case fieldNameName:
+		return nil, fmt.Errorf("DeclareImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("DeclareImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Declare'", fieldAndIndex[0], nodePath)
+	}
+}
+
 type E interface {
 	core.AstNode
 	Obj
@@ -287,6 +360,17 @@ func (i *EImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 	}
 }
 
+func (i *EImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	nodePath, _ := i.AstNodeBase.NodePath()
+	return nil, fmt.Errorf("EImpl.GetByPath: field '%s' does not exist in node '%s' of type 'E'", fieldAndIndex[0], nodePath)
+}
+
 type F interface {
 	core.AstNode
 	Obj
@@ -358,6 +442,34 @@ func (i *FImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 	}
 }
 
+func (i *FImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameItems:
+		index, err := strconv.Atoi(fieldAndIndex[1])
+		if err != nil {
+			return nil, err
+		} else if index >= len(i.Items()) {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("FImpl.GetByPath: index %d exceeds slice length of 'items' (%d) at '%s'", index, len(i.Items()), nodePath)
+		}
+		child := i.Items()[index]
+		if len(parts) == 1 {
+			return child, nil
+		}
+		return child.GetByPath(parts[1])
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("FImpl.GetByPath: field '%s' does not exist in node '%s' of type 'F'", fieldAndIndex[0], nodePath)
+	}
+}
+
 type FItem interface {
 	core.AstNode
 
@@ -424,6 +536,17 @@ func (i *FItemImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 	default:
 		return core.FieldInfos{}
 	}
+}
+
+func (i *FItemImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	nodePath, _ := i.AstNodeBase.NodePath()
+	return nil, fmt.Errorf("FItemImpl.GetByPath: field '%s' does not exist in node '%s' of type 'FItem'", fieldAndIndex[0], nodePath)
 }
 
 type G interface {
@@ -499,6 +622,17 @@ func (i *GImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 	}
 }
 
+func (i *GImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	nodePath, _ := i.AstNodeBase.NodePath()
+	return nil, fmt.Errorf("GImpl.GetByPath: field '%s' does not exist in node '%s' of type 'G'", fieldAndIndex[0], nodePath)
+}
+
 type H interface {
 	core.AstNode
 	Obj
@@ -569,6 +703,31 @@ func (i *HImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 		return core.FieldInfos{Multi: false, Reference: false}
 	default:
 		return core.FieldInfos{}
+	}
+}
+
+func (i *HImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameMember:
+		if i.Member() == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("HImpl.GetByPath: field 'member' is nil at '%s'", nodePath)
+		}
+		child := i.Member()
+		if len(parts) == 1 {
+			return child, nil
+		}
+		return child.GetByPath(parts[1])
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("HImpl.GetByPath: field '%s' does not exist in node '%s' of type 'H'", fieldAndIndex[0], nodePath)
 	}
 }
 
@@ -660,6 +819,31 @@ func (i *MemberCallImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos
 	}
 }
 
+func (i *MemberCallImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNamePrevious:
+		if i.Previous() == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("MemberCallImpl.GetByPath: field 'previous' is nil at '%s'", nodePath)
+		}
+		child := i.Previous()
+		if len(parts) == 1 {
+			return child, nil
+		}
+		return child.GetByPath(parts[1])
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("MemberCallImpl.GetByPath: field '%s' does not exist in node '%s' of type 'MemberCall'", fieldAndIndex[0], nodePath)
+	}
+}
+
 type J interface {
 	core.AstNode
 	Obj
@@ -731,6 +915,17 @@ func (i *JImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 	default:
 		return core.FieldInfos{}
 	}
+}
+
+func (i *JImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	nodePath, _ := i.AstNodeBase.NodePath()
+	return nil, fmt.Errorf("JImpl.GetByPath: field '%s' does not exist in node '%s' of type 'J'", fieldAndIndex[0], nodePath)
 }
 
 type K interface {
@@ -826,6 +1021,17 @@ func (i *KImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 	}
 }
 
+func (i *KImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	nodePath, _ := i.AstNodeBase.NodePath()
+	return nil, fmt.Errorf("KImpl.GetByPath: field '%s' does not exist in node '%s' of type 'K'", fieldAndIndex[0], nodePath)
+}
+
 type N interface {
 	core.AstNode
 	Obj
@@ -899,6 +1105,17 @@ func (i *NImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 	}
 }
 
+func (i *NImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	nodePath, _ := i.AstNodeBase.NodePath()
+	return nil, fmt.Errorf("NImpl.GetByPath: field '%s' does not exist in node '%s' of type 'N'", fieldAndIndex[0], nodePath)
+}
+
 type O interface {
 	core.AstNode
 	Obj
@@ -970,6 +1187,17 @@ func (i *OImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
 	default:
 		return core.FieldInfos{}
 	}
+}
+
+func (i *OImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	nodePath, _ := i.AstNodeBase.NodePath()
+	return nil, fmt.Errorf("OImpl.GetByPath: field '%s' does not exist in node '%s' of type 'O'", fieldAndIndex[0], nodePath)
 }
 
 var (
