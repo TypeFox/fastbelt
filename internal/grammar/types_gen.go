@@ -797,14 +797,11 @@ type Token interface {
 	AbstractTokenRule
 
 	IsToken()
-	Type() string
-	TypeToken() *core.Token
-	SetType(value *core.Token)
 	Regexp() string
 	RegexpToken() *core.Token
 	SetRegexp(value *core.Token)
-	Command() TokenCommand
-	SetCommand(value TokenCommand)
+	Keyword() Keyword
+	SetKeyword(value Keyword)
 }
 
 func NewToken() Token {
@@ -812,36 +809,19 @@ func NewToken() Token {
 }
 
 type TokenData struct {
-	_Type   *core.Token
 	regexp  *core.Token
-	command TokenCommand
+	keyword Keyword
 }
 
 func (i *TokenData) IsToken() {}
 
 func (i *TokenData) ForEachNode(fn func(core.AstNode)) {
-	if i.command != nil {
-		fn(i.command)
+	if i.keyword != nil {
+		fn(i.keyword)
 	}
 }
 
 func (i *TokenData) ForEachReference(fn func(core.UntypedReference)) {
-}
-
-func (i *TokenData) Type() string {
-	if i != nil && i._Type != nil {
-		return i._Type.Image
-	} else {
-		return ""
-	}
-}
-
-func (i *TokenData) TypeToken() *core.Token {
-	return i._Type
-}
-
-func (i *TokenData) SetType(value *core.Token) {
-	i._Type = value
 }
 
 func (i *TokenData) Regexp() string {
@@ -860,16 +840,16 @@ func (i *TokenData) SetRegexp(value *core.Token) {
 	i.regexp = value
 }
 
-func (i *TokenData) Command() TokenCommand {
-	if i != nil && i.command != nil {
-		return i.command
+func (i *TokenData) Keyword() Keyword {
+	if i != nil && i.keyword != nil {
+		return i.keyword
 	} else {
 		return nil
 	}
 }
 
-func (i *TokenData) SetCommand(value TokenCommand) {
-	i.command = value
+func (i *TokenData) SetKeyword(value Keyword) {
+	i.keyword = value
 }
 
 type TokenImpl struct {
@@ -1076,8 +1056,8 @@ type TokenMode interface {
 	IsDefault() bool
 	DefaultToken() *core.Token
 	SetDefault(value *core.Token)
-	TokenRefs() []*core.Reference[AbstractTokenRule]
-	SetTokenRefsItem(item *core.Reference[AbstractTokenRule])
+	TokenRefs() []TokenUsage
+	SetTokenRefsItem(item TokenUsage)
 	Regexps() []*core.Token
 	SetRegexpsItem(item *core.Token)
 	Keywords() []Keyword
@@ -1094,14 +1074,14 @@ func NewTokenMode() TokenMode {
 type TokenModeData struct {
 	name      *core.Token
 	_Default  *core.Token
-	tokenRefs []*core.Reference[AbstractTokenRule]
+	tokenRefs []TokenUsage
 	regexps   []*core.Token
 	keywords  []Keyword
 }
 
 func NewTokenModeData() TokenModeData {
 	return TokenModeData{
-		tokenRefs: []*core.Reference[AbstractTokenRule]{},
+		tokenRefs: []TokenUsage{},
 		regexps:   []*core.Token{},
 		keywords:  []Keyword{},
 	}
@@ -1110,15 +1090,15 @@ func NewTokenModeData() TokenModeData {
 func (i *TokenModeData) IsTokenMode() {}
 
 func (i *TokenModeData) ForEachNode(fn func(core.AstNode)) {
+	for _, item := range i.tokenRefs {
+		fn(item)
+	}
 	for _, item := range i.keywords {
 		fn(item)
 	}
 }
 
 func (i *TokenModeData) ForEachReference(fn func(core.UntypedReference)) {
-	for _, item := range i.tokenRefs {
-		fn(item)
-	}
 }
 
 func (i *TokenModeData) Name() string {
@@ -1149,11 +1129,11 @@ func (i *TokenModeData) SetDefault(value *core.Token) {
 	i._Default = value
 }
 
-func (i *TokenModeData) TokenRefs() []*core.Reference[AbstractTokenRule] {
+func (i *TokenModeData) TokenRefs() []TokenUsage {
 	return i.tokenRefs
 }
 
-func (i *TokenModeData) SetTokenRefsItem(item *core.Reference[AbstractTokenRule]) {
+func (i *TokenModeData) SetTokenRefsItem(item TokenUsage) {
 	i.tokenRefs = append(i.tokenRefs, item)
 }
 
@@ -1184,6 +1164,103 @@ func (i *TokenModeImpl) ForEachNode(fn func(core.AstNode)) {
 
 func (i *TokenModeImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.TokenModeData.ForEachReference(fn)
+}
+
+type TokenUsage interface {
+	core.AstNode
+
+	IsTokenUsage()
+	Type() string
+	TypeToken() *core.Token
+	SetType(value *core.Token)
+	TokenRef() *core.Reference[AbstractTokenRule]
+	SetTokenRef(value *core.Reference[AbstractTokenRule])
+	Command() TokenCommand
+	SetCommand(value TokenCommand)
+}
+
+func NewTokenUsage() TokenUsage {
+	return &TokenUsageImpl{
+		AstNodeBase:    core.NewAstNode(),
+		TokenUsageData: NewTokenUsageData(),
+	}
+}
+
+type TokenUsageData struct {
+	_Type    *core.Token
+	tokenRef *core.Reference[AbstractTokenRule]
+	command  TokenCommand
+}
+
+func NewTokenUsageData() TokenUsageData {
+	return TokenUsageData{}
+}
+
+func (i *TokenUsageData) IsTokenUsage() {}
+
+func (i *TokenUsageData) ForEachNode(fn func(core.AstNode)) {
+	if i.command != nil {
+		fn(i.command)
+	}
+}
+
+func (i *TokenUsageData) ForEachReference(fn func(core.UntypedReference)) {
+	if i.tokenRef != nil {
+		fn(i.tokenRef)
+	}
+}
+
+func (i *TokenUsageData) Type() string {
+	if i != nil && i._Type != nil {
+		return i._Type.Image
+	} else {
+		return ""
+	}
+}
+
+func (i *TokenUsageData) TypeToken() *core.Token {
+	return i._Type
+}
+
+func (i *TokenUsageData) SetType(value *core.Token) {
+	i._Type = value
+}
+
+func (i *TokenUsageData) TokenRef() *core.Reference[AbstractTokenRule] {
+	if i != nil && i.tokenRef != nil {
+		return i.tokenRef
+	} else {
+		return nil
+	}
+}
+
+func (i *TokenUsageData) SetTokenRef(value *core.Reference[AbstractTokenRule]) {
+	i.tokenRef = value
+}
+
+func (i *TokenUsageData) Command() TokenCommand {
+	if i != nil && i.command != nil {
+		return i.command
+	} else {
+		return nil
+	}
+}
+
+func (i *TokenUsageData) SetCommand(value TokenCommand) {
+	i.command = value
+}
+
+type TokenUsageImpl struct {
+	core.AstNodeBase
+	TokenUsageData
+}
+
+func (i *TokenUsageImpl) ForEachNode(fn func(core.AstNode)) {
+	i.TokenUsageData.ForEachNode(fn)
+}
+
+func (i *TokenUsageImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.TokenUsageData.ForEachReference(fn)
 }
 
 type Element interface {
@@ -1838,4 +1915,5 @@ var FastbeltSyntheticFactories = map[string]func() core.AstNode{
 	"TokenCommand":         func() core.AstNode { return NewTokenCommand() },
 	"TokenGroup":           func() core.AstNode { return NewTokenGroup() },
 	"TokenMode":            func() core.AstNode { return NewTokenMode() },
+	"TokenUsage":           func() core.AstNode { return NewTokenUsage() },
 }

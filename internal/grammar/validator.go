@@ -773,7 +773,6 @@ func doInterfaceIsAssignableTo(source Interface, target Interface, visited colle
 
 func (tg *TokenGroupImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
 	checkRecursiveTokenGroup(tg, accept)
-	checkInvalidTokensInGroup(tg, accept)
 }
 
 func checkRecursiveTokenGroup(tg TokenGroup, accept core.ValidationAcceptor) {
@@ -805,37 +804,14 @@ func appearsInTokenGroup(target TokenGroup, current TokenGroup, ctx context.Cont
 	return false
 }
 
-func hiddenOrCommentTokenDescription(token Token) (description string, ok bool) {
-	switch token.Type() {
+func hiddenOrCommentTokenDescription(tokenUsage TokenUsage) (description string, ok bool) {
+	switch tokenUsage.Type() {
 	case "hidden":
 		return "hidden", true
 	case "comment":
 		return "a comment", true
 	default:
 		return "", false
-	}
-}
-
-func checkInvalidTokensInGroup(tg TokenGroup, accept core.ValidationAcceptor) {
-	for _, ext := range tg.TokenRefs() {
-		abstractToken := ext.Ref(context.Background())
-		if abstractToken == nil {
-			continue
-		}
-		if token, ok := abstractToken.(Token); ok {
-			// Hidden/comment tokens are not allowed in token groups.
-			// They are not meant to be consumed in parser rules,
-			// and do not appear in the token slice.
-			if description, special := hiddenOrCommentTokenDescription(token); special {
-				accept(core.NewDiagnostic(
-					core.SeverityError,
-					fmt.Sprintf("The token '%s' cannot be used in a token group because it is %s.", token.Name(), description),
-					tg,
-					core.WithReference(ext),
-					core.WithCode(ValidateInvalidTokenInGroup),
-				))
-			}
-		}
 	}
 }
 
@@ -870,16 +846,16 @@ func checkCrossRefToken(cr CrossRef, ctx context.Context, accept core.Validation
 	if resolved == nil {
 		return
 	}
-	token, ok := resolved.(Token)
+	tokenUsage, ok := resolved.(TokenUsage)
 	if !ok {
 		return
 	}
 	// Hidden/comment tokens are not allowed in cross-references because they
 	// are not stored in the token slice and cannot identify named elements.
-	if description, special := hiddenOrCommentTokenDescription(token); special {
+	if description, special := hiddenOrCommentTokenDescription(tokenUsage); special {
 		accept(core.NewDiagnostic(
 			core.SeverityError,
-			fmt.Sprintf("The token '%s' cannot be used in a cross-reference because it is %s.", token.Name(), description),
+			fmt.Sprintf("The token '%s' cannot be used in a cross-reference because it is %s.", tokenUsage.TokenRef().Ref(ctx).Name(), description),
 			cr,
 			core.WithReference(ruleCall.Rule()),
 			core.WithCode(ValidateInvalidTokenInCrossRef),

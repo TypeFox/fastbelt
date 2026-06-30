@@ -412,25 +412,6 @@ func (p *Parser) ParseToken() Token {
 	current := NewToken()
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
-		p.state.Sync(Token__Basic_3)
-		switch prediction, _ := p.lookahead.TokenAlternatives(p.state); prediction {
-		case 0:
-			{
-				token := p.state.Consume(Keyword_hidden)
-				core.AssignToken(current, token, Token_Type_hidden)
-				if token != nil {
-					current.SetType(token)
-				}
-			}
-		case 1:
-			{
-				token := p.state.Consume(Keyword_comment)
-				core.AssignToken(current, token, Token_Type_comment)
-				if token != nil {
-					current.SetType(token)
-				}
-			}
-		}
 		{
 			token := p.state.Consume(Keyword_token)
 			core.AssignToken(current, token, Token_token)
@@ -446,33 +427,26 @@ func (p *Parser) ParseToken() Token {
 			token := p.state.Consume(Keyword_Colon)
 			core.AssignToken(current, token, Token_Colon)
 		}
-		{
-			token := p.state.Consume(Token_RegexLiteral)
-			core.AssignToken(current, token, Token_Regexp_RegexLiteral)
-			if token != nil {
-				current.SetRegexp(token)
-			}
-		}
-		p.state.Sync(Token__Basic_6)
-		if p.lookahead.TokenOptional(p.state) {
+		switch prediction, failure := p.lookahead.TokenAlternatives(p.state); prediction {
+		case 0:
 			{
-				token := p.state.Consume(Keyword_DashGreaterThan)
-				core.AssignToken(current, token, Token_DashGreaterThan)
-			}
-			{
-				p.state.EnterRule(Token__Basic_5)
-				result := p.ParseTokenCommand()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetCommand(result)
+				token := p.state.Consume(Token_RegexLiteral)
+				core.AssignToken(current, token, Token_Regexp_RegexLiteral)
+				if token != nil {
+					current.SetRegexp(token)
 				}
 			}
-		}
-		{
-			if p.lookahead.TokenSemicolonOptional(p.state) {
-				token := p.state.Consume(Keyword_Semicolon)
-				core.AssignToken(current, token, Token_Semicolon)
+		case 1:
+			{
+				p.state.EnterRule(Token__Basic_2)
+				result := p.ParseKeyword()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetKeyword(result)
+				}
 			}
+		default:
+			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -623,7 +597,7 @@ func (p *Parser) ParseTokenMode() TokenMode {
 			token := p.state.Consume(Keyword_mode)
 			core.AssignToken(current, token, TokenMode_mode)
 		}
-		switch prediction, failure := p.lookahead.TokenModeAlternatives_0(p.state); prediction {
+		switch prediction, failure := p.lookahead.TokenModeAlternatives(p.state); prediction {
 		case 0:
 			{
 				token := p.state.Consume(Token_ID)
@@ -647,47 +621,64 @@ func (p *Parser) ParseTokenMode() TokenMode {
 			token := p.state.Consume(Keyword_LeftBrace)
 			core.AssignToken(current, token, TokenMode_LeftBrace)
 		}
-		p.state.Sync(TokenMode__LoopEntry)
-	loop1:
-		for {
-			switch prediction, _ := p.lookahead.TokenModeAlternatives_1(p.state); prediction {
-			case 0:
-				{
-					token := p.state.Consume(Token_ID)
-					core.AssignToken(current, token, TokenMode_TokenRefs_ID)
-					if token != nil {
-						current.SetTokenRefsItem(p.referencesConstructor.TokenModeTokenRefs(current, token))
-					}
-				}
-			case 1:
-				{
-					token := p.state.Consume(Keyword_keywords)
-					core.AssignToken(current, token, TokenMode_keywords)
-				}
-				{
-					token := p.state.Consume(Token_RegexLiteral)
-					core.AssignToken(current, token, TokenMode_Regexps_RegexLiteral)
-					if token != nil {
-						current.SetRegexpsItem(token)
-					}
-				}
-			case 2:
-				{
-					p.state.EnterRule(TokenMode__Basic_6)
-					result := p.ParseKeyword()
-					p.state.ExitRule()
-					if result != nil {
-						current.SetKeywordsItem(result)
-					}
-				}
-			default:
-				break loop1
-			}
+		{
 			p.state.Sync(TokenMode__LoopEntry)
+			for p.lookahead.TokenModeTokenRefsLoop(p.state) {
+				p.state.EnterRule(TokenMode__Basic_4)
+				result := p.ParseTokenUsage()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetTokenRefsItem(result)
+				}
+				p.state.Sync(TokenMode__LoopEntry)
+			}
 		}
 		{
 			token := p.state.Consume(Keyword_RightBrace)
 			core.AssignToken(current, token, TokenMode_RightBrace)
+		}
+	}
+	current.SetSegmentEndToken(p.state.LA(0))
+	return current
+}
+
+func (p *Parser) ParseTokenUsage() TokenUsage {
+	current := NewTokenUsage()
+	current.SetSegmentStartToken(p.state.LA(1))
+	{
+		{
+			switch prediction, _ := p.lookahead.TokenUsageTypeAlternatives(p.state); prediction {
+			case 0:
+				token := p.state.Consume(Keyword_hidden)
+				core.AssignToken(current, token, TokenUsage_Type_hidden)
+				if token != nil {
+					current.SetType(token)
+				}
+			case 1:
+				token := p.state.Consume(Keyword_comment)
+				core.AssignToken(current, token, TokenUsage_Type_comment)
+				if token != nil {
+					current.SetType(token)
+				}
+			}
+		}
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, TokenUsage_TokenRef_ID)
+			if token != nil {
+				current.SetTokenRef(p.referencesConstructor.TokenUsageTokenRef(current, token))
+			}
+		}
+		{
+			p.state.Sync(TokenUsage__Basic_5)
+			if p.lookahead.TokenUsageCommandOptional(p.state) {
+				p.state.EnterRule(TokenUsage__Basic_4)
+				result := p.ParseTokenCommand()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetCommand(result)
+				}
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))

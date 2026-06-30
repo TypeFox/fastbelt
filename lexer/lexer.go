@@ -56,8 +56,8 @@ const defaultTokenRatio = 1.0 / 5.0
 // functions build one from the [core.TokenType] descriptors emitted for a
 // grammar.
 type DefaultLexer struct {
-	tokenTypes []*core.TokenType
-	tokenMap   [][]*core.TokenType
+	tokenModes []*TokenMode
+	stack      TokenModeStack
 	// running exponential moving average of tokens-per-byte
 	avgRatio *parallel.RunningAverage
 }
@@ -75,14 +75,15 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 	for offset < length {
 		r, size := utf8.DecodeRuneInString(input[offset:])
 		mapIndex := int(r) % maxChar
-		candidates := l.tokenMap[mapIndex]
+		candidates := l.stack.Peek().TokenMap[mapIndex]
 		longestMatch := 0
-		var longestType *core.TokenType
-		for _, tokenType := range candidates {
+		var longestType *TokenTypeUsage
+		for _, tokenTypeUsage := range candidates {
+			tokenType := tokenTypeUsage.TokenType
 			tokenMatch := tokenType.Match(input, offset)
 			if tokenMatch > longestMatch {
 				longestMatch = tokenMatch
-				longestType = tokenType
+				longestType = tokenTypeUsage
 			}
 		}
 
@@ -99,13 +100,13 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 				// do nothing
 			case core.CommentGroup:
 				comments = append(comments, core.NewToken(
-					longestType,
+					longestType.TokenType,
 					input[offset:end],
 					offset, end,
 				))
 			case 0:
 				tokens = append(tokens, core.NewToken(
-					longestType,
+					longestType.TokenType,
 					input[offset:end],
 					offset, end,
 				))
@@ -114,7 +115,7 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 					groups = make(map[int][]core.Token)
 				}
 				groups[longestType.Group] = append(groups[longestType.Group], core.NewToken(
-					longestType,
+					longestType.TokenType,
 					input[offset:end],
 					offset, end,
 				))
@@ -144,24 +145,10 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 
 const maxChar = 256
 
-// NewDefaultLexer returns a lexer that recognizes the given token types.
-// At each position the longest match wins; among equal-length matches, the
-// first argument wins.
-func NewDefaultLexer(tokenTypes ...*core.TokenType) *DefaultLexer {
-	tokenMap := make([][]*core.TokenType, maxChar)
-	for i := range maxChar {
-		tokenMap[i] = make([]*core.TokenType, 0)
-	}
-	for _, tokenType := range tokenTypes {
-		for _, r := range tokenType.StartChars {
-			index := int(r) % maxChar
-			tokenMap[index] = append(tokenMap[index], tokenType)
-		}
-	}
-
+func NewDefaultLexer(tokenTypes ...*TokenMode) *DefaultLexer {
 	return &DefaultLexer{
-		tokenTypes: tokenTypes,
-		tokenMap:   tokenMap,
+		tokenModes: tokenTypes,
+		stack:      *NewTokenModeStack(tokenTypes[0]),
 		avgRatio:   parallel.NewRunningAverage(defaultTokenRatio),
 	}
 }

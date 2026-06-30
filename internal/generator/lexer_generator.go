@@ -30,6 +30,10 @@ type GenerateTokenTypesResult struct {
 	TokenTypeVarNames []string
 	TokenTypeNames    []string
 	TokenTypeIds      map[string]int
+	//name -> id|name|tokenusage
+	TokenModeVarNames map[string]string
+	TokenModeIds      map[string]int
+	TokenModes        map[string][]grammar.TokenUsage
 }
 
 func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
@@ -47,6 +51,9 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		TokenTypeVarNames: make([]string, keywordsCount+len(tokens)+len(tokenGroups)),
 		TokenTypeIds:      make(map[string]int),
 		Imports:           map[string]bool{},
+		TokenModeVarNames: map[string]string{},
+		TokenModeIds:      map[string]int{},
+		TokenModes:        map[string][]grammar.TokenUsage{},
 	}
 	// Starting with 1 - prevent clash with EOF (index 0)
 	tokenIndex := 1
@@ -86,6 +93,15 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		result.TokenTypeNames[keywordsCount+len(tokens)+index] = tokName
 		result.TokenTypeIds[tokName] = keywordsCount + len(tokens) + index
 		tokenIndex++
+	}
+	for index, tokenMode := range grammr.TokenModes() {
+		modeName := "default"
+		if !tokenMode.IsDefault() {
+			modeName = tokenMode.Name()
+		}
+		result.TokenModeVarNames[modeName] = "TokenMode_" + modeName
+		result.TokenModeIds[modeName] = index
+		result.TokenModes[modeName] = tokenMode.TokenRefs()
 	}
 	return result
 }
@@ -142,20 +158,50 @@ func GenerateLexer(grammr grammar.Grammar, packageName string, tokenTypes Genera
 		node.AppendLine()
 	}
 
-	generateMainLexerFunction(node, tokenTypes.Tokens, tokenTypes.Keywords)
+	generateMainLexerFunction(context.Background(), node, tokenTypes)
 	return FormatIfPossible(node.String())
 }
 
-func generateMainLexerFunction(node codegen.Node, tokens []grammar.Token, keywords []grammar.Keyword) {
+func generateMainLexerFunction(context context.Context, node codegen.Node, tokenTypes GenerateTokenTypesResult) {
 	node.AppendLine("func NewLexer() lexer.Lexer {")
 	node.Indent(func(n codegen.Node) {
+		for modeName, tokenUsages := range tokenTypes.TokenModes {
+			varName := tokenTypes.TokenModeVarNames[modeName]
+			n.AppendLine(varName, " := lexer.NewTokenMode(\"", modeName, "\",")
+			n.Indent(func(nn codegen.Node) {
+				for _, tokenUsage := range tokenUsages {
+					nn.Append("lexer.UseTokenType(", GeneratedTokenName(tokenUsage.TokenRef().Ref(context)), ")")
+					if cmd := tokenUsage.Command(); cmd != nil {
+						var modeName string
+						if cmd.IsDefault() {
+							modeName = "default"
+						} else {
+							modeName = cmd.Mode().Ref(context).Name()
+						}
+						switch cmd.Type() {
+						case "push":
+							nn.Append(".WithPushMode(", tokenTypes.TokenModeVarNames[modeName], ")")
+						case "pop":
+							nn.Append(".WithPopMode()")
+						default: //"mode"
+							nn.Append(".WithSetMode(", tokenTypes.TokenModeVarNames[modeName], ")")
+						}
+					}
+					if tokenUsage.Type() == "comment" {
+						nn.Append(".WithGroup(core.CommentGroup)")
+					} else if tokenUsage.Type() == "hidden" {
+						nn.Append(".WithGroup(core.SkippedGroup)")
+					}
+					nn.AppendLine(",")
+				}
+			})
+			n.AppendLine(")")
+		}
 		n.AppendLine("return lexer.NewDefaultLexer(")
 		n.Indent(func(nn codegen.Node) {
-			for _, keyword := range keywords {
-				nn.AppendLine(GeneratedTokenName(keyword), ",")
-			}
-			for _, token := range tokens {
-				nn.AppendLine(GeneratedTokenName(token), ",")
+			for modeName, _ := range tokenTypes.TokenModes {
+				varName := tokenTypes.TokenModeVarNames[modeName]
+				nn.AppendLine(varName, ",")
 			}
 		})
 		n.AppendLine(")")
@@ -269,16 +315,7 @@ func generateTokenType(token grammar.Token, id int) GenerateLexerResult {
 		n.AppendLine(GeneratedTokenIdxName(token), ",")
 		n.AppendLine("\"", token.Name(), "\",")
 		n.AppendLine("\"", token.Name(), "\",")
-		if token.Type() == "hidden" {
-			n.AppendLine("core.SkippedGroup,")
-		} else if token.Type() == "comment" {
-			n.AppendLine("core.CommentGroup,")
-		} else {
-			n.AppendLine("0,")
-		}
 		n.AppendLine("core.TokenKindToken,")
-		n.AppendLine("0,")
-		n.AppendLine("false,")
 		impl := regex.(*regexp.RegexpImpl)
 		result = impl.GenerateRegExp("", GeneratedTokenName(token))
 		for imp := range result.Imports {
