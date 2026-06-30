@@ -570,19 +570,28 @@ func generateGetByPath(node codegen.Node, iface grammar.Interface) struct{ needs
 						needsStrconv = true
 						n2.AppendLine("index, err := strconv.Atoi(fieldAndIndex[1])")
 						n2.AppendLine("if err != nil {")
-						n2.Indent(func(n3 codegen.Node) { n3.AppendLine("return nil, err") })
-						n2.AppendLine("} else if index >= len(i.", f.Name, "()) {")
+						n2.Indent(func(n3 codegen.Node) {
+							n3.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)`)
+						})
+						n2.AppendLine("}")
+						n2.AppendLine("if index >= len(i.", f.Name, "()) {")
 						n2.Indent(func(n3 codegen.Node) {
 							n3.AppendLine("nodePath, _ := i.AstNodeBase.NodePath()")
-							n3.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: index %d exceeds slice length of '`, f.PName, `' (%d) at '%s'", index, len(i.`, f.Name, `()), nodePath)`)
+							n3.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: index %d exceeds length of slice in '`, f.PName, `' (length=%d) in node '%s'", index, len(i.`, f.Name, `()), nodePath)`)
 						})
 						n2.AppendLine("}")
 						n2.AppendLine("child := i.", f.Name, "()[index]")
+						n2.AppendLine("if child == nil {")
+						n2.Indent(func(n3 codegen.Node) {
+							n3.AppendLine("nodePath, _ := i.AstNodeBase.NodePath()")
+							n3.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: item %d of slice in field '`, f.PName, `' is nil in node '%s'", index, nodePath)`)
+						})
+						n2.AppendLine("}")
 					} else {
 						n2.AppendLine("if i.", f.Name, "() == nil {")
 						n2.Indent(func(n3 codegen.Node) {
 							n3.AppendLine("nodePath, _ := i.AstNodeBase.NodePath()")
-							n3.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: field '`, f.PName, `' is nil at '%s'", nodePath)`)
+							n3.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: field '`, f.PName, `' is nil in node '%s'", nodePath)`)
 						})
 						n2.AppendLine("}")
 						n2.AppendLine("child := i.", f.Name, "()")

@@ -5,8 +5,10 @@
 package arithmetics
 
 import (
+	"fmt"
 	"os"
 	"testing"
+	"unique"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -234,6 +236,56 @@ func TestNodePath_PriceCalc(t *testing.T) {
 		assert.Equal(t, "/statements@10/expression/args@1", mustNodePath(t, fc))
 		assert.Equal(t, "vat", fc.Callable().Text())
 		assert.Equal(t, "/statements@8", mustNodePath(t, fc.Callable().Ref(doc.Ctx())))
+	})
+
+	t.Run("errorReporting/containerField-has-empty-string", func(t *testing.T) {
+		// this test creates local copies of module, its first stmt, and its contained number literal
+		//  and updates their container references accordingly
+
+		// in order to test the error logging across some levels of nesting an additional root object is created,
+		// which serves a container for the copied module,
+		// while module's 'containerField' is set to the interned value of "" --> error!
+		root := core.NewAstNode()
+
+		module := *module.(*ModuleImpl)
+		module.SetContainer(&root, unique.Make(""), 0)
+
+		def := *stmts[0].(*DefinitionImpl)
+		var field, index = def.ContainmentData()
+		def.SetContainer(&module, field, index)
+
+		expr := *def.expression.(*NumberLiteralImpl)
+		field, index = expr.ContainmentData()
+		expr.SetContainer(&def, field, index)
+
+		path, err := expr.NodePath()
+		assert.Zero(t, path)
+		fmt.Println(err)
+		assert.ErrorContains(
+			t, err,
+			"AstNodeBase.NodePath: error within node of type *arithmetics.ModuleImpl: cannot determine node path, 'containerField' is empty")
+	})
+
+	t.Run("errorReporting/containerField-has-zero-handle", func(t *testing.T) {
+		// this test creates local copies of module, its first stmt, and its contained number literal
+		//  and updates their container references accordingly
+
+		module := *module.(*ModuleImpl)
+		var fieldZero unique.Handle[string]
+
+		def := *stmts[0].(*DefinitionImpl)
+		def.SetContainer(&module, fieldZero, 0)
+
+		expr := *def.expression.(*NumberLiteralImpl)
+		field, index := expr.ContainmentData()
+		expr.SetContainer(&def, field, index)
+
+		path, err := expr.NodePath()
+		assert.Zero(t, path)
+		fmt.Println(err)
+		assert.ErrorContains(
+			t, err,
+			"AstNodeBase.NodePath: error within node of type *arithmetics.DefinitionImpl: cannot determine node path, 'containerField' is empty")
 	})
 }
 
@@ -506,5 +558,66 @@ func TestGetByPath_PriceCalc(t *testing.T) {
 		got, err = root.GetByPath("/statements@8")
 		require.NoError(t, err)
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
+	})
+
+	t.Run("errorReporting/no-such-field", func(t *testing.T) {
+		_, err := root.GetByPath("/statements@3/expressions/left")
+		assert.ErrorContains(t, err, "DefinitionImpl.GetByPath: field 'expressions' does not exist in node '/statements@3' of type 'Definition'")
+	})
+
+	t.Run("errorReporting/field-is-primitive", func(t *testing.T) {
+		_, err := root.GetByPath("/statements@0/name")
+		assert.ErrorContains(t, err, "DefinitionImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
+	})
+
+	t.Run("errorReporting/field-is-reference", func(t *testing.T) {
+		_, err := root.GetByPath("/statements@10/expression/callable")
+		assert.ErrorContains(t, err, "FunctionCallImpl.GetByPath: field 'callable' is a cross-reference instead of a container field")
+	})
+
+	t.Run("errorReporting/field-is-empty", func(t *testing.T) {
+		// create local copies of the relevant ast nodes first to avoid manipulating the shared ones
+		module := *module.(*ModuleImpl)
+		def := *stmts[0].(*DefinitionImpl)
+
+		module.statements = make([]Statement, 1)
+		module.statements[0] = &def
+
+		field, index := def.ContainmentData()
+		def.SetContainer(&module, field, index)
+
+		// set the tested field to 'nil'
+		def.expression = nil
+
+		_, err := module.GetByPath("/statements@0/expression/left")
+		assert.ErrorContains(t, err, "DefinitionImpl.GetByPath: field 'expression' is nil in node '/statements@0'")
+	})
+
+	t.Run("errorReporting/slice-index-out-of-bound-1", func(t *testing.T) {
+		_, err := root.GetByPath("/statements@15/expression")
+		assert.ErrorContains(t, err, "ModuleImpl.GetByPath: index 15 exceeds length of slice in 'statements' (length=11) in node ''")
+	})
+
+	t.Run("errorReporting/slice-index-out-of-bound-2", func(t *testing.T) {
+		_, err := root.GetByPath("/statements@10/expression/args@7/expression")
+		assert.ErrorContains(t, err, "FunctionCallImpl.GetByPath: index 7 exceeds length of slice in 'args' (length=2) in node '/statements@10/expression'")
+	})
+
+	t.Run("errorReporting/slice-item-is-nil", func(t *testing.T) {
+		expr, err := root.GetByPath("/statements@10/expression/")
+		require.NoError(t, err)
+		fc, ok := expr.(FunctionCall)
+		require.True(t, ok)
+
+		// shamelessly manipulate the shared ast and add a 'nil' item, don't want to copy everything right now; shouldn't hurt
+		fc.SetArgsItem(nil)
+		_, err = root.GetByPath("/statements@10/expression/args@2/expression")
+
+		assert.ErrorContains(t, err, "FunctionCallImpl.GetByPath: item 2 of slice in field 'args' is nil in node '/statements@10/expression'")
+	})
+
+	t.Run("errorReporting/slice-index-typo", func(t *testing.T) {
+		_, err := root.GetByPath("/statements@1a/expression")
+		assert.ErrorContains(t, err, "ModuleImpl.GetByPath: index '1a' is not a valid uint: strconv.Atoi: parsing \"1a\": invalid syntax")
 	})
 }

@@ -179,12 +179,17 @@ func (i *GrammarImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameComposites:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.Composites()) {
+			return nil, fmt.Errorf("GrammarImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.Composites()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("GrammarImpl.GetByPath: index %d exceeds slice length of 'composites' (%d) at '%s'", index, len(i.Composites()), nodePath)
+			return nil, fmt.Errorf("GrammarImpl.GetByPath: index %d exceeds length of slice in 'composites' (length=%d) in node '%s'", index, len(i.Composites()), nodePath)
 		}
 		child := i.Composites()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("GrammarImpl.GetByPath: item %d of slice in field 'composites' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}
@@ -192,12 +197,17 @@ func (i *GrammarImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameInterfaces:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.Interfaces()) {
+			return nil, fmt.Errorf("GrammarImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.Interfaces()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("GrammarImpl.GetByPath: index %d exceeds slice length of 'interfaces' (%d) at '%s'", index, len(i.Interfaces()), nodePath)
+			return nil, fmt.Errorf("GrammarImpl.GetByPath: index %d exceeds length of slice in 'interfaces' (length=%d) in node '%s'", index, len(i.Interfaces()), nodePath)
 		}
 		child := i.Interfaces()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("GrammarImpl.GetByPath: item %d of slice in field 'interfaces' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}
@@ -205,12 +215,17 @@ func (i *GrammarImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameRules:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.Rules()) {
+			return nil, fmt.Errorf("GrammarImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.Rules()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("GrammarImpl.GetByPath: index %d exceeds slice length of 'rules' (%d) at '%s'", index, len(i.Rules()), nodePath)
+			return nil, fmt.Errorf("GrammarImpl.GetByPath: index %d exceeds length of slice in 'rules' (length=%d) in node '%s'", index, len(i.Rules()), nodePath)
 		}
 		child := i.Rules()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("GrammarImpl.GetByPath: item %d of slice in field 'rules' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}
@@ -218,12 +233,17 @@ func (i *GrammarImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameTerminals:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.Terminals()) {
+			return nil, fmt.Errorf("GrammarImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.Terminals()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("GrammarImpl.GetByPath: index %d exceeds slice length of 'terminals' (%d) at '%s'", index, len(i.Terminals()), nodePath)
+			return nil, fmt.Errorf("GrammarImpl.GetByPath: index %d exceeds length of slice in 'terminals' (length=%d) in node '%s'", index, len(i.Terminals()), nodePath)
 		}
 		child := i.Terminals()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("GrammarImpl.GetByPath: item %d of slice in field 'terminals' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}
@@ -231,12 +251,17 @@ func (i *GrammarImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameTokenGroups:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.TokenGroups()) {
+			return nil, fmt.Errorf("GrammarImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.TokenGroups()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("GrammarImpl.GetByPath: index %d exceeds slice length of 'tokenGroups' (%d) at '%s'", index, len(i.TokenGroups()), nodePath)
+			return nil, fmt.Errorf("GrammarImpl.GetByPath: index %d exceeds length of slice in 'tokenGroups' (length=%d) in node '%s'", index, len(i.TokenGroups()), nodePath)
 		}
 		child := i.TokenGroups()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("GrammarImpl.GetByPath: item %d of slice in field 'tokenGroups' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}
@@ -366,12 +391,17 @@ func (i *InterfaceImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameFields:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.Fields()) {
+			return nil, fmt.Errorf("InterfaceImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.Fields()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("InterfaceImpl.GetByPath: index %d exceeds slice length of 'fields' (%d) at '%s'", index, len(i.Fields()), nodePath)
+			return nil, fmt.Errorf("InterfaceImpl.GetByPath: index %d exceeds length of slice in 'fields' (length=%d) in node '%s'", index, len(i.Fields()), nodePath)
 		}
 		child := i.Fields()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("InterfaceImpl.GetByPath: item %d of slice in field 'fields' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}
@@ -488,7 +518,7 @@ func (i *FieldImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameType:
 		if i.Type() == nil {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("FieldImpl.GetByPath: field '_Type' is nil at '%s'", nodePath)
+			return nil, fmt.Errorf("FieldImpl.GetByPath: field '_Type' is nil in node '%s'", nodePath)
 		}
 		child := i.Type()
 		if len(parts) == 1 {
@@ -644,7 +674,7 @@ func (i *ArrayTypeImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameInternalType:
 		if i.InternalType() == nil {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("ArrayTypeImpl.GetByPath: field 'internalType' is nil at '%s'", nodePath)
+			return nil, fmt.Errorf("ArrayTypeImpl.GetByPath: field 'internalType' is nil in node '%s'", nodePath)
 		}
 		child := i.InternalType()
 		if len(parts) == 1 {
@@ -1103,7 +1133,7 @@ func (i *AbstractRuleWithBodyImpl) GetByPath(path string) (core.AstNode, error) 
 	case fieldNameBody:
 		if i.Body() == nil {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("AbstractRuleWithBodyImpl.GetByPath: field 'body' is nil at '%s'", nodePath)
+			return nil, fmt.Errorf("AbstractRuleWithBodyImpl.GetByPath: field 'body' is nil in node '%s'", nodePath)
 		}
 		child := i.Body()
 		if len(parts) == 1 {
@@ -1301,7 +1331,7 @@ func (i *ParserRuleImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameBody:
 		if i.Body() == nil {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("ParserRuleImpl.GetByPath: field 'body' is nil at '%s'", nodePath)
+			return nil, fmt.Errorf("ParserRuleImpl.GetByPath: field 'body' is nil in node '%s'", nodePath)
 		}
 		child := i.Body()
 		if len(parts) == 1 {
@@ -1564,12 +1594,17 @@ func (i *TokenGroupImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameKeywords:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.Keywords()) {
+			return nil, fmt.Errorf("TokenGroupImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.Keywords()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("TokenGroupImpl.GetByPath: index %d exceeds slice length of 'keywords' (%d) at '%s'", index, len(i.Keywords()), nodePath)
+			return nil, fmt.Errorf("TokenGroupImpl.GetByPath: index %d exceeds length of slice in 'keywords' (length=%d) in node '%s'", index, len(i.Keywords()), nodePath)
 		}
 		child := i.Keywords()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("TokenGroupImpl.GetByPath: item %d of slice in field 'keywords' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}
@@ -1762,12 +1797,17 @@ func (i *AlternativesImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameAlts:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.Alts()) {
+			return nil, fmt.Errorf("AlternativesImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.Alts()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("AlternativesImpl.GetByPath: index %d exceeds slice length of 'alts' (%d) at '%s'", index, len(i.Alts()), nodePath)
+			return nil, fmt.Errorf("AlternativesImpl.GetByPath: index %d exceeds length of slice in 'alts' (length=%d) in node '%s'", index, len(i.Alts()), nodePath)
 		}
 		child := i.Alts()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("AlternativesImpl.GetByPath: item %d of slice in field 'alts' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}
@@ -1865,12 +1905,17 @@ func (i *GroupImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameElements:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.Elements()) {
+			return nil, fmt.Errorf("GroupImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.Elements()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("GroupImpl.GetByPath: index %d exceeds slice length of 'elements' (%d) at '%s'", index, len(i.Elements()), nodePath)
+			return nil, fmt.Errorf("GroupImpl.GetByPath: index %d exceeds length of slice in 'elements' (length=%d) in node '%s'", index, len(i.Elements()), nodePath)
 		}
 		child := i.Elements()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("GroupImpl.GetByPath: item %d of slice in field 'elements' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}
@@ -2112,7 +2157,7 @@ func (i *AssignmentImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameValue:
 		if i.Value() == nil {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("AssignmentImpl.GetByPath: field 'value' is nil at '%s'", nodePath)
+			return nil, fmt.Errorf("AssignmentImpl.GetByPath: field 'value' is nil in node '%s'", nodePath)
 		}
 		child := i.Value()
 		if len(parts) == 1 {
@@ -2314,7 +2359,7 @@ func (i *CrossRefImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameRule:
 		if i.Rule() == nil {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("CrossRefImpl.GetByPath: field 'rule' is nil at '%s'", nodePath)
+			return nil, fmt.Errorf("CrossRefImpl.GetByPath: field 'rule' is nil in node '%s'", nodePath)
 		}
 		child := i.Rule()
 		if len(parts) == 1 {
@@ -2642,7 +2687,7 @@ func (i *CompositeRuleImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameBody:
 		if i.Body() == nil {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("CompositeRuleImpl.GetByPath: field 'body' is nil at '%s'", nodePath)
+			return nil, fmt.Errorf("CompositeRuleImpl.GetByPath: field 'body' is nil in node '%s'", nodePath)
 		}
 		child := i.Body()
 		if len(parts) == 1 {

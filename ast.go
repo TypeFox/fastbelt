@@ -6,6 +6,7 @@ package fastbelt
 
 import (
 	"errors"
+	"fmt"
 	"iter"
 	"strconv"
 	"strings"
@@ -225,6 +226,8 @@ func (node *AstNodeBase) FieldInfos(field unique.Handle[string]) FieldInfos {
 	return FieldInfos{}
 }
 
+var fieldZero = unique.Handle[string]{}
+
 // NodePath determines node's path with it's root container in a recursive manner,
 // based on node's [AstNodeBase.ContainmentData] and [AstNode.FieldInfos]
 func (node *AstNodeBase) NodePath() (string, error) {
@@ -233,13 +236,19 @@ func (node *AstNodeBase) NodePath() (string, error) {
 
 	if container == nil {
 		return "", nil
-	} else if containerField.Value() == "" {
-		return "", errors.New("cannot determine node path, found AstNode's field 'containerField' being empty")
+	} else if containerField == fieldZero || containerField.Value() == "" {
+		return "", errors.New("cannot determine node path, 'containerField' is empty")
 	}
 
 	parentPath, err := container.NodePath()
 	if err != nil {
-		return "", err
+		if errors.Unwrap(err) == nil {
+			return "", fmt.Errorf(
+				"AstNodeBase.NodePath: error within node of type %T: %w", container, err)
+		} else {
+			return "", fmt.Errorf(
+				"AstNodeBase.NodePath: error within container of type %T:\n %w", container, err)
+		}
 	}
 
 	fieldPath := parentPath + "/" + containerField.Value()

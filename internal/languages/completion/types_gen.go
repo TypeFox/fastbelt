@@ -145,12 +145,17 @@ func (i *RootImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameObjects:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.Objects()) {
+			return nil, fmt.Errorf("RootImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.Objects()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("RootImpl.GetByPath: index %d exceeds slice length of 'objects' (%d) at '%s'", index, len(i.Objects()), nodePath)
+			return nil, fmt.Errorf("RootImpl.GetByPath: index %d exceeds length of slice in 'objects' (length=%d) in node '%s'", index, len(i.Objects()), nodePath)
 		}
 		child := i.Objects()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("RootImpl.GetByPath: item %d of slice in field 'objects' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}
@@ -269,12 +274,17 @@ func (i *DeclareImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameChildren:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.Children()) {
+			return nil, fmt.Errorf("DeclareImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.Children()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("DeclareImpl.GetByPath: index %d exceeds slice length of 'children' (%d) at '%s'", index, len(i.Children()), nodePath)
+			return nil, fmt.Errorf("DeclareImpl.GetByPath: index %d exceeds length of slice in 'children' (length=%d) in node '%s'", index, len(i.Children()), nodePath)
 		}
 		child := i.Children()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("DeclareImpl.GetByPath: item %d of slice in field 'children' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}
@@ -460,12 +470,17 @@ func (i *FImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameItems:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.Items()) {
+			return nil, fmt.Errorf("FImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.Items()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("FImpl.GetByPath: index %d exceeds slice length of 'items' (%d) at '%s'", index, len(i.Items()), nodePath)
+			return nil, fmt.Errorf("FImpl.GetByPath: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
 		}
 		child := i.Items()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("FImpl.GetByPath: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}
@@ -736,7 +751,7 @@ func (i *HImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameMember:
 		if i.Member() == nil {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("HImpl.GetByPath: field 'member' is nil at '%s'", nodePath)
+			return nil, fmt.Errorf("HImpl.GetByPath: field 'member' is nil in node '%s'", nodePath)
 		}
 		child := i.Member()
 		if len(parts) == 1 {
@@ -849,7 +864,7 @@ func (i *MemberCallImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNamePrevious:
 		if i.Previous() == nil {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("MemberCallImpl.GetByPath: field 'previous' is nil at '%s'", nodePath)
+			return nil, fmt.Errorf("MemberCallImpl.GetByPath: field 'previous' is nil in node '%s'", nodePath)
 		}
 		child := i.Previous()
 		if len(parts) == 1 {

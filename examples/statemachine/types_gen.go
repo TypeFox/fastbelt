@@ -165,12 +165,17 @@ func (i *StatemachineImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameCommands:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.Commands()) {
+			return nil, fmt.Errorf("StatemachineImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.Commands()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("StatemachineImpl.GetByPath: index %d exceeds slice length of 'commands' (%d) at '%s'", index, len(i.Commands()), nodePath)
+			return nil, fmt.Errorf("StatemachineImpl.GetByPath: index %d exceeds length of slice in 'commands' (length=%d) in node '%s'", index, len(i.Commands()), nodePath)
 		}
 		child := i.Commands()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("StatemachineImpl.GetByPath: item %d of slice in field 'commands' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}
@@ -178,12 +183,17 @@ func (i *StatemachineImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameEvents:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.Events()) {
+			return nil, fmt.Errorf("StatemachineImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.Events()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("StatemachineImpl.GetByPath: index %d exceeds slice length of 'events' (%d) at '%s'", index, len(i.Events()), nodePath)
+			return nil, fmt.Errorf("StatemachineImpl.GetByPath: index %d exceeds length of slice in 'events' (length=%d) in node '%s'", index, len(i.Events()), nodePath)
 		}
 		child := i.Events()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("StatemachineImpl.GetByPath: item %d of slice in field 'events' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}
@@ -191,12 +201,17 @@ func (i *StatemachineImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameStates:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.States()) {
+			return nil, fmt.Errorf("StatemachineImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.States()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("StatemachineImpl.GetByPath: index %d exceeds slice length of 'states' (%d) at '%s'", index, len(i.States()), nodePath)
+			return nil, fmt.Errorf("StatemachineImpl.GetByPath: index %d exceeds length of slice in 'states' (length=%d) in node '%s'", index, len(i.States()), nodePath)
 		}
 		child := i.States()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("StatemachineImpl.GetByPath: item %d of slice in field 'states' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}
@@ -502,12 +517,17 @@ func (i *StateImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameTransitions:
 		index, err := strconv.Atoi(fieldAndIndex[1])
 		if err != nil {
-			return nil, err
-		} else if index >= len(i.Transitions()) {
+			return nil, fmt.Errorf("StateImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+		}
+		if index >= len(i.Transitions()) {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("StateImpl.GetByPath: index %d exceeds slice length of 'transitions' (%d) at '%s'", index, len(i.Transitions()), nodePath)
+			return nil, fmt.Errorf("StateImpl.GetByPath: index %d exceeds length of slice in 'transitions' (length=%d) in node '%s'", index, len(i.Transitions()), nodePath)
 		}
 		child := i.Transitions()[index]
+		if child == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("StateImpl.GetByPath: item %d of slice in field 'transitions' is nil in node '%s'", index, nodePath)
+		}
 		if len(parts) == 1 {
 			return child, nil
 		}

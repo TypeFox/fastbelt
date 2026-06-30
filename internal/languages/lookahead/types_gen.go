@@ -204,7 +204,7 @@ func (i *RootImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameItem:
 		if i.Item() == nil {
 			nodePath, _ := i.AstNodeBase.NodePath()
-			return nil, fmt.Errorf("RootImpl.GetByPath: field 'item' is nil at '%s'", nodePath)
+			return nil, fmt.Errorf("RootImpl.GetByPath: field 'item' is nil in node '%s'", nodePath)
 		}
 		child := i.Item()
 		if len(parts) == 1 {
