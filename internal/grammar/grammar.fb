@@ -112,12 +112,12 @@ TokenMode: "token" "mode" (Name=ID | Default?="default") "{"
 "}";
 
 interface TokenUsage {
-    Type    string
-    Token   *TokenDeclaration
-    Command TokenCommand
+    Type     string
+    TokenRef *TokenDeclaration
+    Command  TokenCommand
 }
 
-TokenUsage: Type=("hidden"|"comment") Token=[TokenDeclaration:ID] Command=TokenCommand?
+TokenUsage: Type=("hidden"|"comment") TokenRef=[TokenDeclaration:ID] Command=TokenCommand?
 
 interface Element {
     Cardinality string
