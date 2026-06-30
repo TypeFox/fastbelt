@@ -27,14 +27,14 @@ type AstNode interface {
 	// Container returns the direct parent node of the node in the AST.
 	// It returns nil if this is the root node.
 	Container() AstNode
+	// ContainmentData returns a [unique.Handle] denoting the containing property within it's [AstNode.Container],
+	// defaults to a a [unique.Handle] of the empty string,
+	// and the element index within the containing property, defaults to zero for single item fields
+	ContainmentData() (unique.Handle[string], uint16)
 	// SetContainer sets the direct parent node of the node.
 	//
 	// When constructing an AST programmatically, use [AssignContainers] to link the node in the AST.
 	SetContainer(container AstNode, containerField unique.Handle[string], index uint16)
-	// NodePath returns a slash-separated path string that uniquely identifies this node
-	// within its document tree, e.g. "rules@2/alternatives@0".
-	// Returns "" for the root node (no container).
-	NodePath() (string, error)
 	// Tokens returns the tokens associated with the node.
 	Tokens() []*Token
 	// SetToken appends token to the node's token list.
@@ -67,6 +67,18 @@ type AstNode interface {
 	//
 	// Calling this method directly is not recommended. Use [References] instead for better readability.
 	ForEachReference(fn func(UntypedReference, unique.Handle[string], uint16))
+	// FieldInfos returns a descriptor for the denoted field of this AstNode.
+	FieldInfos(field unique.Handle[string]) FieldInfos
+	// NodePath returns a slash-separated path string that uniquely identifies this node
+	// within its document tree, e.g. "rules@2/alternatives@0".
+	// Returns "" for the root node (no container).
+	NodePath() (string, error)
+}
+
+// FieldInfos is a simple struct of meta data describing a field of an AstNode.
+type FieldInfos struct {
+	Multi     bool
+	Reference bool
 }
 
 // AstNodeBase provides the default [AstNode] implementation used by generated AST node types.
@@ -95,63 +107,6 @@ func (node *AstNodeBase) SetDocument(document *Document) {
 	}
 }
 
-type FieldInfos struct {
-	Multi     bool
-	Reference bool
-}
-
-// Base Implementation returning field meta data for an AstNode.
-// The generator produces specific overwrites for each generated ...Impl type.
-func (node *AstNodeBase) FieldInfos(field unique.Handle[string]) FieldInfos {
-	return FieldInfos{
-		Multi:     false,
-		Reference: false,
-	}
-}
-
-func (node *AstNodeBase) NodePath() (string, error) {
-	return GetNodePath(node)
-}
-
-type withFieldInfos interface {
-	ContainerData() (unique.Handle[string], uint16)
-	FieldInfos(field unique.Handle[string]) FieldInfos
-}
-
-func GetNodePath(node AstNode) (string, error) {
-	impl, ok := node.(withFieldInfos)
-	if !ok {
-		return "", errors.New("GetNodePath: conversion failed")
-	}
-
-	container := node.Container()
-	containerField, index := impl.ContainerData()
-
-	if container == nil {
-		return "", nil
-	} else if containerField.Value() == "" {
-		return "", errors.New("Can't determine node path, found AstNode field 'containerField' being empty.")
-	}
-
-	parentPath, err := GetNodePath(container)
-
-	if err == nil {
-		fieldPath := parentPath + "/" + containerField.Value()
-		containerWithInfos, ok := container.(withFieldInfos)
-		if ok && containerWithInfos.FieldInfos(containerField).Multi {
-			return fieldPath + "@" + strconv.Itoa(int(index)), nil
-		} else if ok {
-			x := containerWithInfos.FieldInfos(containerField)
-			println(x.Multi)
-			return fieldPath, nil
-		} else {
-			return "", errors.New("GetNodePath: conversion failed")
-		}
-	} else {
-		return "", err
-	}
-}
-
 // Container returns the direct parent node of the node in the AST.
 // It returns nil if this is the root node.
 func (node *AstNodeBase) Container() AstNode {
@@ -162,7 +117,7 @@ func (node *AstNodeBase) Container() AstNode {
 	}
 }
 
-func (node *AstNodeBase) ContainerData() (unique.Handle[string], uint16) {
+func (node *AstNodeBase) ContainmentData() (unique.Handle[string], uint16) {
 	return node.containerField, node.containerIndex
 }
 
@@ -259,6 +214,37 @@ func (node *AstNodeBase) Text() string {
 	} else {
 		fullText := node.document.TextDoc.Text(nil)
 		return fullText[node.segment.Indices.Start:node.segment.Indices.End]
+	}
+}
+
+// Base Implementation returning field meta data for an AstNode.
+// The generator produces specific overwrites for each generated ...Impl type.
+func (node *AstNodeBase) FieldInfos(field unique.Handle[string]) FieldInfos {
+	return FieldInfos{}
+}
+
+// NodePath determines node's path with it's root container in a recursive manner,
+// based on node's [AstNodeBase.ContainmentData] and [AstNode.FieldInfos]
+func (node *AstNodeBase) NodePath() (string, error) {
+	container := node.Container()
+	containerField, index := node.ContainmentData()
+
+	if container == nil {
+		return "", nil
+	} else if containerField.Value() == "" {
+		return "", errors.New("Can't determine node path, found AstNode's field 'containerField' being empty.")
+	}
+
+	parentPath, err := container.NodePath()
+	if err != nil {
+		return "", err
+	}
+
+	fieldPath := parentPath + "/" + containerField.Value()
+	if container.FieldInfos(containerField).Multi {
+		return fieldPath + "@" + strconv.Itoa(int(index)), nil
+	} else {
+		return fieldPath, nil
 	}
 }
 
