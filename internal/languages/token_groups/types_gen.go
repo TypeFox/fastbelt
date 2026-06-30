@@ -183,7 +183,7 @@ func (i *ItemImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameValue:
-		return nil, fmt.Errorf("ItemImpl.GetByPath: field 'value' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("ItemImpl.GetByPath: field 'value' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("ItemImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Item'", fieldAndIndex[0], nodePath)
@@ -299,11 +299,11 @@ func (i *RecoveryImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameFirst:
-		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field 'first' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field 'first' holds a primitive value instead of an ast node")
 	case fieldNameSecond:
-		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field 'second' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field 'second' holds a primitive value instead of an ast node")
 	case fieldNameValue:
-		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field 'value' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field 'value' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Recovery'", fieldAndIndex[0], nodePath)

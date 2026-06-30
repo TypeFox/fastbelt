@@ -280,7 +280,7 @@ func (i *DeclareImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameName:
-		return nil, fmt.Errorf("DeclareImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("DeclareImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("DeclareImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Declare'", fieldAndIndex[0], nodePath)
@@ -367,8 +367,14 @@ func (i *EImpl) GetByPath(path string) (core.AstNode, error) {
 	}
 	parts := strings.SplitN(path, "/", 2)
 	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	nodePath, _ := i.AstNodeBase.NodePath()
-	return nil, fmt.Errorf("EImpl.GetByPath: field '%s' does not exist in node '%s' of type 'E'", fieldAndIndex[0], nodePath)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameRef:
+		return nil, fmt.Errorf("EImpl.GetByPath: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("EImpl.GetByPath: field '%s' does not exist in node '%s' of type 'E'", fieldAndIndex[0], nodePath)
+	}
 }
 
 type F interface {
@@ -545,8 +551,14 @@ func (i *FItemImpl) GetByPath(path string) (core.AstNode, error) {
 	}
 	parts := strings.SplitN(path, "/", 2)
 	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	nodePath, _ := i.AstNodeBase.NodePath()
-	return nil, fmt.Errorf("FItemImpl.GetByPath: field '%s' does not exist in node '%s' of type 'FItem'", fieldAndIndex[0], nodePath)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameRef:
+		return nil, fmt.Errorf("FItemImpl.GetByPath: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("FItemImpl.GetByPath: field '%s' does not exist in node '%s' of type 'FItem'", fieldAndIndex[0], nodePath)
+	}
 }
 
 type G interface {
@@ -629,8 +641,14 @@ func (i *GImpl) GetByPath(path string) (core.AstNode, error) {
 	}
 	parts := strings.SplitN(path, "/", 2)
 	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	nodePath, _ := i.AstNodeBase.NodePath()
-	return nil, fmt.Errorf("GImpl.GetByPath: field '%s' does not exist in node '%s' of type 'G'", fieldAndIndex[0], nodePath)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameRef:
+		return nil, fmt.Errorf("GImpl.GetByPath: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("GImpl.GetByPath: field '%s' does not exist in node '%s' of type 'G'", fieldAndIndex[0], nodePath)
+	}
 }
 
 type H interface {
@@ -838,6 +856,8 @@ func (i *MemberCallImpl) GetByPath(path string) (core.AstNode, error) {
 			return child, nil
 		}
 		return child.GetByPath(parts[1])
+	case fieldNameRef:
+		return nil, fmt.Errorf("MemberCallImpl.GetByPath: field 'ref' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("MemberCallImpl.GetByPath: field '%s' does not exist in node '%s' of type 'MemberCall'", fieldAndIndex[0], nodePath)
@@ -924,8 +944,14 @@ func (i *JImpl) GetByPath(path string) (core.AstNode, error) {
 	}
 	parts := strings.SplitN(path, "/", 2)
 	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	nodePath, _ := i.AstNodeBase.NodePath()
-	return nil, fmt.Errorf("JImpl.GetByPath: field '%s' does not exist in node '%s' of type 'J'", fieldAndIndex[0], nodePath)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameRef:
+		return nil, fmt.Errorf("JImpl.GetByPath: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("JImpl.GetByPath: field '%s' does not exist in node '%s' of type 'J'", fieldAndIndex[0], nodePath)
+	}
 }
 
 type K interface {
@@ -1028,8 +1054,16 @@ func (i *KImpl) GetByPath(path string) (core.AstNode, error) {
 	}
 	parts := strings.SplitN(path, "/", 2)
 	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	nodePath, _ := i.AstNodeBase.NodePath()
-	return nil, fmt.Errorf("KImpl.GetByPath: field '%s' does not exist in node '%s' of type 'K'", fieldAndIndex[0], nodePath)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameRef1:
+		return nil, fmt.Errorf("KImpl.GetByPath: field 'ref1' is a cross-reference instead of a container field")
+	case fieldNameRef2:
+		return nil, fmt.Errorf("KImpl.GetByPath: field 'ref2' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("KImpl.GetByPath: field '%s' does not exist in node '%s' of type 'K'", fieldAndIndex[0], nodePath)
+	}
 }
 
 type N interface {
@@ -1112,8 +1146,14 @@ func (i *NImpl) GetByPath(path string) (core.AstNode, error) {
 	}
 	parts := strings.SplitN(path, "/", 2)
 	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	nodePath, _ := i.AstNodeBase.NodePath()
-	return nil, fmt.Errorf("NImpl.GetByPath: field '%s' does not exist in node '%s' of type 'N'", fieldAndIndex[0], nodePath)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameRef:
+		return nil, fmt.Errorf("NImpl.GetByPath: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("NImpl.GetByPath: field '%s' does not exist in node '%s' of type 'N'", fieldAndIndex[0], nodePath)
+	}
 }
 
 type O interface {
@@ -1196,8 +1236,14 @@ func (i *OImpl) GetByPath(path string) (core.AstNode, error) {
 	}
 	parts := strings.SplitN(path, "/", 2)
 	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	nodePath, _ := i.AstNodeBase.NodePath()
-	return nil, fmt.Errorf("OImpl.GetByPath: field '%s' does not exist in node '%s' of type 'O'", fieldAndIndex[0], nodePath)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameRef:
+		return nil, fmt.Errorf("OImpl.GetByPath: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("OImpl.GetByPath: field '%s' does not exist in node '%s' of type 'O'", fieldAndIndex[0], nodePath)
+	}
 }
 
 var (

@@ -481,11 +481,6 @@ func generateSyntheticFactories(grammr grammar.Grammar) codegen.Node {
 	return node
 }
 
-func fieldHandleVarName(pname string) string {
-	clean := strings.TrimLeft(pname, "_")
-	return "fieldName" + strings.ToUpper(clean[:1]) + clean[1:]
-}
-
 func generateFieldHandles(grammr grammar.Grammar) codegen.Node {
 	node := codegen.NewNode()
 	seen := map[string]bool{}
@@ -527,26 +522,31 @@ func collectAllFields(iface grammar.Interface, visited map[string]struct{}) []Fi
 	return fields
 }
 
+func fieldHandleVarName(pname string) string {
+	clean := strings.TrimLeft(pname, "_")
+	return "fieldName" + strings.ToUpper(clean[:1]) + clean[1:]
+}
+
 func generateGetByPath(node codegen.Node, iface grammar.Interface) struct{ needsStrconv bool } {
 	var needsStrconv bool
 	allFields := collectAllFields(iface, map[string]struct{}{})
 	sort.Slice(allFields, func(i, j int) bool { return allFields[i].Name < allFields[j].Name })
 
-	var containmentFields, primitiveFields []FieldInfo
+	var containmentFields, primitiveFields, referenceFields []FieldInfo
 	for _, f := range allFields {
-		if f.Reference {
-			continue
-		}
-		if f.GType == TOKEN_TYPE || f.GType == COMPOSITE_TYPE {
+		switch {
+		case f.Reference:
+			referenceFields = append(referenceFields, f)
+		case f.GType == TOKEN_TYPE || f.GType == COMPOSITE_TYPE:
 			primitiveFields = append(primitiveFields, f)
-		} else {
+		default:
 			containmentFields = append(containmentFields, f)
 		}
 	}
 
 	name := iface.Name()
 	implName := name + "Impl"
-	hasCases := len(containmentFields) > 0 || len(primitiveFields) > 0
+	hasCases := len(containmentFields) > 0 || len(primitiveFields) > 0 || len(referenceFields) > 0
 
 	node.AppendLine("func (i *", implName, ") GetByPath(path string) (core.AstNode, error) {")
 	node.Indent(func(n codegen.Node) {
@@ -596,7 +596,13 @@ func generateGetByPath(node codegen.Node, iface grammar.Interface) struct{ needs
 			for _, f := range primitiveFields {
 				n.AppendLine("case ", fieldHandleVarName(f.PName), ":")
 				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: field '`, f.PName, `' holds a primitive value and cannot be navigated")`)
+					n2.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: field '`, f.PName, `' holds a primitive value instead of an ast node")`)
+				})
+			}
+			for _, f := range referenceFields {
+				n.AppendLine("case ", fieldHandleVarName(f.PName), ":")
+				n.Indent(func(n2 codegen.Node) {
+					n2.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: field '`, f.PName, `' is a cross-reference instead of a container field")`)
 				})
 			}
 			n.AppendLine("default:")

@@ -115,9 +115,9 @@ func (i *ObjImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameNode:
-		return nil, fmt.Errorf("ObjImpl.GetByPath: field 'node' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("ObjImpl.GetByPath: field 'node' holds a primitive value instead of an ast node")
 	case fieldNameValue:
-		return nil, fmt.Errorf("ObjImpl.GetByPath: field 'value' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("ObjImpl.GetByPath: field 'value' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("ObjImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Obj'", fieldAndIndex[0], nodePath)
@@ -306,11 +306,11 @@ func (i *BImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameNode:
-		return nil, fmt.Errorf("BImpl.GetByPath: field 'node' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("BImpl.GetByPath: field 'node' holds a primitive value instead of an ast node")
 	case fieldNamePost:
-		return nil, fmt.Errorf("BImpl.GetByPath: field 'post' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("BImpl.GetByPath: field 'post' holds a primitive value instead of an ast node")
 	case fieldNameValue:
-		return nil, fmt.Errorf("BImpl.GetByPath: field 'value' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("BImpl.GetByPath: field 'value' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("BImpl.GetByPath: field '%s' does not exist in node '%s' of type 'B'", fieldAndIndex[0], nodePath)

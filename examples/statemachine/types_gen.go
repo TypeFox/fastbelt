@@ -202,7 +202,9 @@ func (i *StatemachineImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameName:
-		return nil, fmt.Errorf("StatemachineImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("StatemachineImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
+	case fieldNameInit:
+		return nil, fmt.Errorf("StatemachineImpl.GetByPath: field 'init' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("StatemachineImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Statemachine'", fieldAndIndex[0], nodePath)
@@ -289,7 +291,7 @@ func (i *EventImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameName:
-		return nil, fmt.Errorf("EventImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("EventImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("EventImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Event'", fieldAndIndex[0], nodePath)
@@ -376,7 +378,7 @@ func (i *CommandImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameName:
-		return nil, fmt.Errorf("CommandImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("CommandImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("CommandImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Command'", fieldAndIndex[0], nodePath)
@@ -511,7 +513,9 @@ func (i *StateImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameName:
-		return nil, fmt.Errorf("StateImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("StateImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
+	case fieldNameActions:
+		return nil, fmt.Errorf("StateImpl.GetByPath: field 'actions' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("StateImpl.GetByPath: field '%s' does not exist in node '%s' of type 'State'", fieldAndIndex[0], nodePath)
@@ -613,8 +617,16 @@ func (i *TransitionImpl) GetByPath(path string) (core.AstNode, error) {
 	}
 	parts := strings.SplitN(path, "/", 2)
 	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	nodePath, _ := i.AstNodeBase.NodePath()
-	return nil, fmt.Errorf("TransitionImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Transition'", fieldAndIndex[0], nodePath)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameEvent:
+		return nil, fmt.Errorf("TransitionImpl.GetByPath: field 'event' is a cross-reference instead of a container field")
+	case fieldNameState:
+		return nil, fmt.Errorf("TransitionImpl.GetByPath: field 'state' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("TransitionImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Transition'", fieldAndIndex[0], nodePath)
+	}
 }
 
 var (

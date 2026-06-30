@@ -242,7 +242,7 @@ func (i *GrammarImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameName:
-		return nil, fmt.Errorf("GrammarImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("GrammarImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("GrammarImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Grammar'", fieldAndIndex[0], nodePath)
@@ -377,7 +377,9 @@ func (i *InterfaceImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameName:
-		return nil, fmt.Errorf("InterfaceImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("InterfaceImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
+	case fieldNameExtends:
+		return nil, fmt.Errorf("InterfaceImpl.GetByPath: field 'extends' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("InterfaceImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Interface'", fieldAndIndex[0], nodePath)
@@ -494,7 +496,7 @@ func (i *FieldImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameName:
-		return nil, fmt.Errorf("FieldImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("FieldImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("FieldImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Field'", fieldAndIndex[0], nodePath)
@@ -735,8 +737,14 @@ func (i *ReferenceTypeImpl) GetByPath(path string) (core.AstNode, error) {
 	}
 	parts := strings.SplitN(path, "/", 2)
 	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	nodePath, _ := i.AstNodeBase.NodePath()
-	return nil, fmt.Errorf("ReferenceTypeImpl.GetByPath: field '%s' does not exist in node '%s' of type 'ReferenceType'", fieldAndIndex[0], nodePath)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameType:
+		return nil, fmt.Errorf("ReferenceTypeImpl.GetByPath: field '_Type' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("ReferenceTypeImpl.GetByPath: field '%s' does not exist in node '%s' of type 'ReferenceType'", fieldAndIndex[0], nodePath)
+	}
 }
 
 type SimpleType interface {
@@ -819,8 +827,14 @@ func (i *SimpleTypeImpl) GetByPath(path string) (core.AstNode, error) {
 	}
 	parts := strings.SplitN(path, "/", 2)
 	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	nodePath, _ := i.AstNodeBase.NodePath()
-	return nil, fmt.Errorf("SimpleTypeImpl.GetByPath: field '%s' does not exist in node '%s' of type 'SimpleType'", fieldAndIndex[0], nodePath)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameType:
+		return nil, fmt.Errorf("SimpleTypeImpl.GetByPath: field '_Type' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("SimpleTypeImpl.GetByPath: field '%s' does not exist in node '%s' of type 'SimpleType'", fieldAndIndex[0], nodePath)
+	}
 }
 
 type PrimitiveType interface {
@@ -908,7 +922,7 @@ func (i *PrimitiveTypeImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameType:
-		return nil, fmt.Errorf("PrimitiveTypeImpl.GetByPath: field '_Type' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("PrimitiveTypeImpl.GetByPath: field '_Type' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("PrimitiveTypeImpl.GetByPath: field '%s' does not exist in node '%s' of type 'PrimitiveType'", fieldAndIndex[0], nodePath)
@@ -995,7 +1009,7 @@ func (i *AbstractRuleImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameName:
-		return nil, fmt.Errorf("AbstractRuleImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("AbstractRuleImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("AbstractRuleImpl.GetByPath: field '%s' does not exist in node '%s' of type 'AbstractRule'", fieldAndIndex[0], nodePath)
@@ -1097,7 +1111,7 @@ func (i *AbstractRuleWithBodyImpl) GetByPath(path string) (core.AstNode, error) 
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameName:
-		return nil, fmt.Errorf("AbstractRuleWithBodyImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("AbstractRuleWithBodyImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("AbstractRuleWithBodyImpl.GetByPath: field '%s' does not exist in node '%s' of type 'AbstractRuleWithBody'", fieldAndIndex[0], nodePath)
@@ -1169,7 +1183,7 @@ func (i *AbstractTokenRuleImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameName:
-		return nil, fmt.Errorf("AbstractTokenRuleImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("AbstractTokenRuleImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("AbstractTokenRuleImpl.GetByPath: field '%s' does not exist in node '%s' of type 'AbstractTokenRule'", fieldAndIndex[0], nodePath)
@@ -1295,9 +1309,11 @@ func (i *ParserRuleImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameEntry:
-		return nil, fmt.Errorf("ParserRuleImpl.GetByPath: field 'entry' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("ParserRuleImpl.GetByPath: field 'entry' holds a primitive value instead of an ast node")
 	case fieldNameName:
-		return nil, fmt.Errorf("ParserRuleImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("ParserRuleImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
+	case fieldNameReturnType:
+		return nil, fmt.Errorf("ParserRuleImpl.GetByPath: field 'returnType' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("ParserRuleImpl.GetByPath: field '%s' does not exist in node '%s' of type 'ParserRule'", fieldAndIndex[0], nodePath)
@@ -1417,11 +1433,11 @@ func (i *TokenImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameName:
-		return nil, fmt.Errorf("TokenImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("TokenImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	case fieldNameRegexp:
-		return nil, fmt.Errorf("TokenImpl.GetByPath: field 'regexp' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("TokenImpl.GetByPath: field 'regexp' holds a primitive value instead of an ast node")
 	case fieldNameType:
-		return nil, fmt.Errorf("TokenImpl.GetByPath: field '_Type' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("TokenImpl.GetByPath: field '_Type' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("TokenImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Token'", fieldAndIndex[0], nodePath)
@@ -1559,9 +1575,11 @@ func (i *TokenGroupImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameName:
-		return nil, fmt.Errorf("TokenGroupImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("TokenGroupImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	case fieldNameRegexps:
-		return nil, fmt.Errorf("TokenGroupImpl.GetByPath: field 'regexps' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("TokenGroupImpl.GetByPath: field 'regexps' holds a primitive value instead of an ast node")
+	case fieldNameTokenRefs:
+		return nil, fmt.Errorf("TokenGroupImpl.GetByPath: field 'tokenRefs' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("TokenGroupImpl.GetByPath: field '%s' does not exist in node '%s' of type 'TokenGroup'", fieldAndIndex[0], nodePath)
@@ -1648,7 +1666,7 @@ func (i *ElementImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameCardinality:
-		return nil, fmt.Errorf("ElementImpl.GetByPath: field 'cardinality' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("ElementImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("ElementImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Element'", fieldAndIndex[0], nodePath)
@@ -1755,7 +1773,7 @@ func (i *AlternativesImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameCardinality:
-		return nil, fmt.Errorf("AlternativesImpl.GetByPath: field 'cardinality' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("AlternativesImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("AlternativesImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Alternatives'", fieldAndIndex[0], nodePath)
@@ -1858,7 +1876,7 @@ func (i *GroupImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameCardinality:
-		return nil, fmt.Errorf("GroupImpl.GetByPath: field 'cardinality' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("GroupImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("GroupImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Group'", fieldAndIndex[0], nodePath)
@@ -1956,9 +1974,9 @@ func (i *KeywordImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameCardinality:
-		return nil, fmt.Errorf("KeywordImpl.GetByPath: field 'cardinality' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("KeywordImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
 	case fieldNameValue:
-		return nil, fmt.Errorf("KeywordImpl.GetByPath: field 'value' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("KeywordImpl.GetByPath: field 'value' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("KeywordImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Keyword'", fieldAndIndex[0], nodePath)
@@ -2102,9 +2120,11 @@ func (i *AssignmentImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameCardinality:
-		return nil, fmt.Errorf("AssignmentImpl.GetByPath: field 'cardinality' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("AssignmentImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
 	case fieldNameOperator:
-		return nil, fmt.Errorf("AssignmentImpl.GetByPath: field 'operator' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("AssignmentImpl.GetByPath: field 'operator' holds a primitive value instead of an ast node")
+	case fieldNameProperty:
+		return nil, fmt.Errorf("AssignmentImpl.GetByPath: field 'property' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("AssignmentImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Assignment'", fieldAndIndex[0], nodePath)
@@ -2176,7 +2196,7 @@ func (i *AssignableImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameCardinality:
-		return nil, fmt.Errorf("AssignableImpl.GetByPath: field 'cardinality' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("AssignableImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("AssignableImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Assignable'", fieldAndIndex[0], nodePath)
@@ -2302,7 +2322,9 @@ func (i *CrossRefImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameCardinality:
-		return nil, fmt.Errorf("CrossRefImpl.GetByPath: field 'cardinality' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("CrossRefImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
+	case fieldNameType:
+		return nil, fmt.Errorf("CrossRefImpl.GetByPath: field '_Type' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("CrossRefImpl.GetByPath: field '%s' does not exist in node '%s' of type 'CrossRef'", fieldAndIndex[0], nodePath)
@@ -2398,7 +2420,9 @@ func (i *RuleCallImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameCardinality:
-		return nil, fmt.Errorf("RuleCallImpl.GetByPath: field 'cardinality' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("RuleCallImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
+	case fieldNameRule:
+		return nil, fmt.Errorf("RuleCallImpl.GetByPath: field 'rule' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("RuleCallImpl.GetByPath: field '%s' does not exist in node '%s' of type 'RuleCall'", fieldAndIndex[0], nodePath)
@@ -2532,9 +2556,13 @@ func (i *ActionImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameCardinality:
-		return nil, fmt.Errorf("ActionImpl.GetByPath: field 'cardinality' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("ActionImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
 	case fieldNameOperator:
-		return nil, fmt.Errorf("ActionImpl.GetByPath: field 'operator' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("ActionImpl.GetByPath: field 'operator' holds a primitive value instead of an ast node")
+	case fieldNameProperty:
+		return nil, fmt.Errorf("ActionImpl.GetByPath: field 'property' is a cross-reference instead of a container field")
+	case fieldNameType:
+		return nil, fmt.Errorf("ActionImpl.GetByPath: field '_Type' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("ActionImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Action'", fieldAndIndex[0], nodePath)
@@ -2622,7 +2650,7 @@ func (i *CompositeRuleImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameName:
-		return nil, fmt.Errorf("CompositeRuleImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("CompositeRuleImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("CompositeRuleImpl.GetByPath: field '%s' does not exist in node '%s' of type 'CompositeRule'", fieldAndIndex[0], nodePath)

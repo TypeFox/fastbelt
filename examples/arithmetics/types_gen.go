@@ -122,7 +122,7 @@ func (i *ModuleImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameName:
-		return nil, fmt.Errorf("ModuleImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("ModuleImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("ModuleImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Module'", fieldAndIndex[0], nodePath)
@@ -265,7 +265,7 @@ func (i *AbstractDefinitionImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameName:
-		return nil, fmt.Errorf("AbstractDefinitionImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("AbstractDefinitionImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("AbstractDefinitionImpl.GetByPath: field '%s' does not exist in node '%s' of type 'AbstractDefinition'", fieldAndIndex[0], nodePath)
@@ -403,7 +403,7 @@ func (i *DefinitionImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameName:
-		return nil, fmt.Errorf("DefinitionImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("DefinitionImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("DefinitionImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Definition'", fieldAndIndex[0], nodePath)
@@ -475,7 +475,7 @@ func (i *DeclaredParameterImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameName:
-		return nil, fmt.Errorf("DeclaredParameterImpl.GetByPath: field 'name' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("DeclaredParameterImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("DeclaredParameterImpl.GetByPath: field '%s' does not exist in node '%s' of type 'DeclaredParameter'", fieldAndIndex[0], nodePath)
@@ -781,7 +781,7 @@ func (i *BinaryExpressionImpl) GetByPath(path string) (core.AstNode, error) {
 		}
 		return child.GetByPath(parts[1])
 	case fieldNameOperator:
-		return nil, fmt.Errorf("BinaryExpressionImpl.GetByPath: field 'operator' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("BinaryExpressionImpl.GetByPath: field 'operator' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("BinaryExpressionImpl.GetByPath: field '%s' does not exist in node '%s' of type 'BinaryExpression'", fieldAndIndex[0], nodePath)
@@ -901,6 +901,8 @@ func (i *FunctionCallImpl) GetByPath(path string) (core.AstNode, error) {
 			return child, nil
 		}
 		return child.GetByPath(parts[1])
+	case fieldNameCallable:
+		return nil, fmt.Errorf("FunctionCallImpl.GetByPath: field 'callable' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("FunctionCallImpl.GetByPath: field '%s' does not exist in node '%s' of type 'FunctionCall'", fieldAndIndex[0], nodePath)
@@ -992,7 +994,7 @@ func (i *NumberLiteralImpl) GetByPath(path string) (core.AstNode, error) {
 	field := unique.Make(fieldAndIndex[0])
 	switch field {
 	case fieldNameValue:
-		return nil, fmt.Errorf("NumberLiteralImpl.GetByPath: field 'value' holds a primitive value and cannot be navigated")
+		return nil, fmt.Errorf("NumberLiteralImpl.GetByPath: field 'value' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := i.AstNodeBase.NodePath()
 		return nil, fmt.Errorf("NumberLiteralImpl.GetByPath: field '%s' does not exist in node '%s' of type 'NumberLiteral'", fieldAndIndex[0], nodePath)
