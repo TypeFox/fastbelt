@@ -96,6 +96,8 @@ func BuildStateNameMap(a *ATN, elementNames map[grammar.Element]string) []string
 }
 
 func stateBaseName(s *ATNState, elementNames map[grammar.Element]string) string {
+	prefix := "StateNumber__"
+
 	ruleName := ""
 	if s.Rule != nil {
 		ruleName = s.Rule.Name()
@@ -104,13 +106,13 @@ func stateBaseName(s *ATNState, elementNames map[grammar.Element]string) string 
 	// Token-consuming state: use the property-style element name (already includes rule name).
 	if s.ConsumedElement != nil {
 		if name, ok := elementNames[s.ConsumedElement]; ok {
-			return name
+			return prefix + name
 		}
 	}
 
 	// Fallback: rule name + state-type role.
 	// Use double underscore to separate from token-consuming names
-	return ruleName + "__" + atnStateRoleName(s.Type)
+	return prefix + ruleName + "__" + atnStateRoleName(s.Type)
 }
 
 func atnStateRoleName(t parser.ATNStateType) string {

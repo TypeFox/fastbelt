@@ -7,7 +7,6 @@ package grammar
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strings"
 	"unicode"
 
@@ -118,33 +117,33 @@ func checkUniqueInterfaceNames(g Grammar, accept core.ValidationAcceptor) {
 // TokenImpl.Validate checks terminal rule constraints:
 //   - The regular expression should not match the empty string.
 func (t *TokenImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
-	checkEmptyTerminalRule(t, accept)
+	//TODO checkEmptyTerminalRule(t, accept)
 }
 
-func checkEmptyTerminalRule(t Token, accept core.ValidationAcceptor) {
-	raw := t.Regexp()
-	if raw == "" {
-		return
-	}
-	// Strip surrounding slashes from the regex literal
-	pattern := raw
-	if len(pattern) >= 2 && pattern[0] == '/' && pattern[len(pattern)-1] == '/' {
-		pattern = pattern[1 : len(pattern)-1]
-	}
-	re, err := regexp.Compile(pattern)
-	if err != nil {
-		return
-	}
-	if re.MatchString("") {
-		accept(core.NewDiagnostic(
-			core.SeverityError,
-			"This terminal could match an empty string.",
-			t,
-			core.WithToken(t.NameToken()),
-			core.WithCode(ValidateEmptyToken),
-		))
-	}
-}
+// func checkEmptyTerminalRule(t Token, accept core.ValidationAcceptor) {
+// 	raw := t.Regexp()
+// 	if raw == "" {
+// 		return
+// 	}
+// 	// Strip surrounding slashes from the regex literal
+// 	pattern := raw
+// 	if len(pattern) >= 2 && pattern[0] == '/' && pattern[len(pattern)-1] == '/' {
+// 		pattern = pattern[1 : len(pattern)-1]
+// 	}
+// 	re, err := regexp.Compile(pattern)
+// 	if err != nil {
+// 		return
+// 	}
+// 	if re.MatchString("") {
+// 		accept(core.NewDiagnostic(
+// 			core.SeverityError,
+// 			"This terminal could match an empty string.",
+// 			t,
+// 			core.WithToken(t.NameToken()),
+// 			core.WithCode(ValidateEmptyToken),
+// 		))
+// 	}
+// }
 
 // KeywordImpl.Validate checks keyword constraints:
 //   - Keywords cannot be empty.
@@ -436,7 +435,7 @@ func (r *RuleCallImpl) Validate(ctx context.Context, _ string, accept core.Valid
 	if assignment == nil {
 		// Some validations only apply to unassigned rule calls
 		checkRuleCallReturnType(r, ctx, accept)
-		checkRuleCallPosition(r, ctx, accept)
+		//TODO checkRuleCallPosition(r, ctx, accept)
 	}
 }
 

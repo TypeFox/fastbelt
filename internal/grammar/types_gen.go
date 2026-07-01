@@ -797,11 +797,8 @@ type Token interface {
 	AbstractTokenRule
 
 	IsToken()
-	Regexp() string
-	RegexpToken() *core.Token
-	SetRegexp(value *core.Token)
-	Keyword() Keyword
-	SetKeyword(value Keyword)
+	Content() TokenElement
+	SetContent(value TokenElement)
 }
 
 func NewToken() Token {
@@ -809,47 +806,30 @@ func NewToken() Token {
 }
 
 type TokenData struct {
-	regexp  *core.Token
-	keyword Keyword
+	content TokenElement
 }
 
 func (i *TokenData) IsToken() {}
 
 func (i *TokenData) ForEachNode(fn func(core.AstNode)) {
-	if i.keyword != nil {
-		fn(i.keyword)
+	if i.content != nil {
+		fn(i.content)
 	}
 }
 
 func (i *TokenData) ForEachReference(fn func(core.UntypedReference)) {
 }
 
-func (i *TokenData) Regexp() string {
-	if i != nil && i.regexp != nil {
-		return i.regexp.Image
-	} else {
-		return ""
-	}
-}
-
-func (i *TokenData) RegexpToken() *core.Token {
-	return i.regexp
-}
-
-func (i *TokenData) SetRegexp(value *core.Token) {
-	i.regexp = value
-}
-
-func (i *TokenData) Keyword() Keyword {
-	if i != nil && i.keyword != nil {
-		return i.keyword
+func (i *TokenData) Content() TokenElement {
+	if i != nil && i.content != nil {
+		return i.content
 	} else {
 		return nil
 	}
 }
 
-func (i *TokenData) SetKeyword(value Keyword) {
-	i.keyword = value
+func (i *TokenData) SetContent(value TokenElement) {
+	i.content = value
 }
 
 type TokenImpl struct {
@@ -869,6 +849,177 @@ func (i *TokenImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.AbstractTokenRuleData.ForEachReference(fn)
 	i.AbstractRuleData.ForEachReference(fn)
 	i.TokenData.ForEachReference(fn)
+}
+
+type TokenElement interface {
+	core.AstNode
+
+	IsTokenElement()
+}
+
+func NewTokenElement() TokenElement {
+	return &TokenElementImpl{
+		AstNodeBase:      core.NewAstNode(),
+		TokenElementData: NewTokenElementData(),
+	}
+}
+
+type TokenElementData struct {
+}
+
+func NewTokenElementData() TokenElementData {
+	return TokenElementData{}
+}
+
+func (i *TokenElementData) IsTokenElement() {}
+
+func (i *TokenElementData) ForEachNode(fn func(core.AstNode)) {
+}
+
+func (i *TokenElementData) ForEachReference(fn func(core.UntypedReference)) {
+}
+
+type TokenElementImpl struct {
+	core.AstNodeBase
+	TokenElementData
+}
+
+func (i *TokenElementImpl) ForEachNode(fn func(core.AstNode)) {
+	i.TokenElementData.ForEachNode(fn)
+}
+
+func (i *TokenElementImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.TokenElementData.ForEachReference(fn)
+}
+
+type RegexpTokenElement interface {
+	core.AstNode
+	TokenElement
+
+	IsRegexpTokenElement()
+	Regexp() string
+	RegexpToken() *core.Token
+	SetRegexp(value *core.Token)
+}
+
+func NewRegexpTokenElement() RegexpTokenElement {
+	return &RegexpTokenElementImpl{
+		AstNodeBase:            core.NewAstNode(),
+		TokenElementData:       NewTokenElementData(),
+		RegexpTokenElementData: NewRegexpTokenElementData(),
+	}
+}
+
+type RegexpTokenElementData struct {
+	regexp *core.Token
+}
+
+func NewRegexpTokenElementData() RegexpTokenElementData {
+	return RegexpTokenElementData{}
+}
+
+func (i *RegexpTokenElementData) IsRegexpTokenElement() {}
+
+func (i *RegexpTokenElementData) ForEachNode(fn func(core.AstNode)) {
+}
+
+func (i *RegexpTokenElementData) ForEachReference(fn func(core.UntypedReference)) {
+}
+
+func (i *RegexpTokenElementData) Regexp() string {
+	if i != nil && i.regexp != nil {
+		return i.regexp.Image
+	} else {
+		return ""
+	}
+}
+
+func (i *RegexpTokenElementData) RegexpToken() *core.Token {
+	return i.regexp
+}
+
+func (i *RegexpTokenElementData) SetRegexp(value *core.Token) {
+	i.regexp = value
+}
+
+type RegexpTokenElementImpl struct {
+	core.AstNodeBase
+	TokenElementData
+	RegexpTokenElementData
+}
+
+func (i *RegexpTokenElementImpl) ForEachNode(fn func(core.AstNode)) {
+	i.TokenElementData.ForEachNode(fn)
+	i.RegexpTokenElementData.ForEachNode(fn)
+}
+
+func (i *RegexpTokenElementImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.TokenElementData.ForEachReference(fn)
+	i.RegexpTokenElementData.ForEachReference(fn)
+}
+
+type KeywordTokenElement interface {
+	core.AstNode
+	TokenElement
+
+	IsKeywordTokenElement()
+	Keyword() Keyword
+	SetKeyword(value Keyword)
+}
+
+func NewKeywordTokenElement() KeywordTokenElement {
+	return &KeywordTokenElementImpl{
+		AstNodeBase:             core.NewAstNode(),
+		TokenElementData:        NewTokenElementData(),
+		KeywordTokenElementData: NewKeywordTokenElementData(),
+	}
+}
+
+type KeywordTokenElementData struct {
+	keyword Keyword
+}
+
+func NewKeywordTokenElementData() KeywordTokenElementData {
+	return KeywordTokenElementData{}
+}
+
+func (i *KeywordTokenElementData) IsKeywordTokenElement() {}
+
+func (i *KeywordTokenElementData) ForEachNode(fn func(core.AstNode)) {
+	if i.keyword != nil {
+		fn(i.keyword)
+	}
+}
+
+func (i *KeywordTokenElementData) ForEachReference(fn func(core.UntypedReference)) {
+}
+
+func (i *KeywordTokenElementData) Keyword() Keyword {
+	if i != nil && i.keyword != nil {
+		return i.keyword
+	} else {
+		return nil
+	}
+}
+
+func (i *KeywordTokenElementData) SetKeyword(value Keyword) {
+	i.keyword = value
+}
+
+type KeywordTokenElementImpl struct {
+	core.AstNodeBase
+	TokenElementData
+	KeywordTokenElementData
+}
+
+func (i *KeywordTokenElementImpl) ForEachNode(fn func(core.AstNode)) {
+	i.TokenElementData.ForEachNode(fn)
+	i.KeywordTokenElementData.ForEachNode(fn)
+}
+
+func (i *KeywordTokenElementImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.TokenElementData.ForEachReference(fn)
+	i.KeywordTokenElementData.ForEachReference(fn)
 }
 
 type TokenCommand interface {
@@ -973,10 +1124,6 @@ type TokenGroup interface {
 	IsTokenGroup()
 	TokenRefs() []*core.Reference[AbstractTokenRule]
 	SetTokenRefsItem(item *core.Reference[AbstractTokenRule])
-	Regexps() []*core.Token
-	SetRegexpsItem(item *core.Token)
-	Keywords() []Keyword
-	SetKeywordsItem(item Keyword)
 }
 
 func NewTokenGroup() TokenGroup {
@@ -985,16 +1132,17 @@ func NewTokenGroup() TokenGroup {
 
 type TokenGroupData struct {
 	tokenRefs []*core.Reference[AbstractTokenRule]
-	regexps   []*core.Token
-	keywords  []Keyword
+}
+
+func NewTokenGroupData() TokenGroupData {
+	return TokenGroupData{
+		tokenRefs: []*core.Reference[AbstractTokenRule]{},
+	}
 }
 
 func (i *TokenGroupData) IsTokenGroup() {}
 
 func (i *TokenGroupData) ForEachNode(fn func(core.AstNode)) {
-	for _, item := range i.keywords {
-		fn(item)
-	}
 }
 
 func (i *TokenGroupData) ForEachReference(fn func(core.UntypedReference)) {
@@ -1009,22 +1157,6 @@ func (i *TokenGroupData) TokenRefs() []*core.Reference[AbstractTokenRule] {
 
 func (i *TokenGroupData) SetTokenRefsItem(item *core.Reference[AbstractTokenRule]) {
 	i.tokenRefs = append(i.tokenRefs, item)
-}
-
-func (i *TokenGroupData) Regexps() []*core.Token {
-	return i.regexps
-}
-
-func (i *TokenGroupData) SetRegexpsItem(item *core.Token) {
-	i.regexps = append(i.regexps, item)
-}
-
-func (i *TokenGroupData) Keywords() []Keyword {
-	return i.keywords
-}
-
-func (i *TokenGroupData) SetKeywordsItem(item Keyword) {
-	i.keywords = append(i.keywords, item)
 }
 
 type TokenGroupImpl struct {
@@ -1058,10 +1190,6 @@ type TokenMode interface {
 	SetDefault(value *core.Token)
 	TokenRefs() []TokenUsage
 	SetTokenRefsItem(item TokenUsage)
-	Regexps() []*core.Token
-	SetRegexpsItem(item *core.Token)
-	Keywords() []Keyword
-	SetKeywordsItem(item Keyword)
 }
 
 func NewTokenMode() TokenMode {
@@ -1075,15 +1203,11 @@ type TokenModeData struct {
 	name      *core.Token
 	_Default  *core.Token
 	tokenRefs []TokenUsage
-	regexps   []*core.Token
-	keywords  []Keyword
 }
 
 func NewTokenModeData() TokenModeData {
 	return TokenModeData{
 		tokenRefs: []TokenUsage{},
-		regexps:   []*core.Token{},
-		keywords:  []Keyword{},
 	}
 }
 
@@ -1091,9 +1215,6 @@ func (i *TokenModeData) IsTokenMode() {}
 
 func (i *TokenModeData) ForEachNode(fn func(core.AstNode)) {
 	for _, item := range i.tokenRefs {
-		fn(item)
-	}
-	for _, item := range i.keywords {
 		fn(item)
 	}
 }
@@ -1135,22 +1256,6 @@ func (i *TokenModeData) TokenRefs() []TokenUsage {
 
 func (i *TokenModeData) SetTokenRefsItem(item TokenUsage) {
 	i.tokenRefs = append(i.tokenRefs, item)
-}
-
-func (i *TokenModeData) Regexps() []*core.Token {
-	return i.regexps
-}
-
-func (i *TokenModeData) SetRegexpsItem(item *core.Token) {
-	i.regexps = append(i.regexps, item)
-}
-
-func (i *TokenModeData) Keywords() []Keyword {
-	return i.keywords
-}
-
-func (i *TokenModeData) SetKeywordsItem(item Keyword) {
-	i.keywords = append(i.keywords, item)
 }
 
 type TokenModeImpl struct {
@@ -1906,13 +2011,16 @@ var FastbeltSyntheticFactories = map[string]func() core.AstNode{
 	"Group":                func() core.AstNode { return NewGroup() },
 	"Interface":            func() core.AstNode { return NewInterface() },
 	"Keyword":              func() core.AstNode { return NewKeyword() },
+	"KeywordTokenElement":  func() core.AstNode { return NewKeywordTokenElement() },
 	"ParserRule":           func() core.AstNode { return NewParserRule() },
 	"PrimitiveType":        func() core.AstNode { return NewPrimitiveType() },
 	"ReferenceType":        func() core.AstNode { return NewReferenceType() },
+	"RegexpTokenElement":   func() core.AstNode { return NewRegexpTokenElement() },
 	"RuleCall":             func() core.AstNode { return NewRuleCall() },
 	"SimpleType":           func() core.AstNode { return NewSimpleType() },
 	"Token":                func() core.AstNode { return NewToken() },
 	"TokenCommand":         func() core.AstNode { return NewTokenCommand() },
+	"TokenElement":         func() core.AstNode { return NewTokenElement() },
 	"TokenGroup":           func() core.AstNode { return NewTokenGroup() },
 	"TokenMode":            func() core.AstNode { return NewTokenMode() },
 	"TokenUsage":           func() core.AstNode { return NewTokenUsage() },

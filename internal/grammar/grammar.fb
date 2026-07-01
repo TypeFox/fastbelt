@@ -10,7 +10,7 @@ interface Grammar {
     Interfaces []Interface
 }
 
-entry Grammar: "grammar" Name=ID ";"?
+entry Grammar: GRAMMAR Name=ID SEMICOLON?
     (
         Rules+=ParserRule
         | Terminals+=Token
@@ -27,9 +27,9 @@ interface Interface {
 }
 
 Interface:
-    "interface" Name=ID ("extends" Extends+=[Interface:ID] ("," Extends+=[Interface:ID])*)? "{"
+    INTERFACE Name=ID (EXTENDS Extends+=[Interface:ID] (COMMA Extends+=[Interface:ID])*)? LEFTBRACE
         Fields+=Field*
-    "}"
+    RIGHTBRACE
 
 interface Field {
     Name string
@@ -58,13 +58,13 @@ Field: Name=ID Type=FieldType
 
 FieldType: SimpleType | ReferenceType | ArrayType | PrimitiveType
 
-ArrayType: "[" "]" InternalType=FieldType
+ArrayType: LEFTBRACKET RIGHTBRACKET InternalType=FieldType
 
-ReferenceType: "*" Type=[Interface:ID]
+ReferenceType: ASTERISK Type=[Interface:ID]
 
 SimpleType: Type=[Interface:ID]
 
-PrimitiveType: Type=("string" | "bool" | "composite")
+PrimitiveType: Type=(STRING | BOOL | COMPOSITE)
 
 interface AbstractRule {
     Name string
@@ -82,14 +82,29 @@ interface ParserRule extends AbstractRuleWithBody {
     ReturnType *Interface
 }
 
-ParserRule: (Entry?="entry")? Name=ID ("returns" ReturnType=[Interface:ID])? ":" Body=Alternatives ";"?
+ParserRule: (Entry?=ENTRY)? Name=ID (RETURNS ReturnType=[Interface:ID])? COLON Body=Alternatives SEMICOLON?
 
 interface Token extends AbstractTokenRule {
+    Content TokenElement
+}
+
+Token: TOKEN Name=ID COLON Content=TokenElement
+
+interface TokenElement {}
+
+TokenElement: RegexpTokenElement | KeywordTokenElement
+
+interface RegexpTokenElement extends TokenElement {
     Regexp string
+}
+
+RegexpTokenElement: Regexp=RegexLiteral
+
+interface KeywordTokenElement extends TokenElement {
     Keyword Keyword
 }
 
-Token: "token" Name=ID ":" (Regexp=RegexLiteral | Keyword=Keyword)
+KeywordTokenElement: Keyword=Keyword
 
 interface TokenCommand {
     Type string
@@ -97,29 +112,25 @@ interface TokenCommand {
     Default bool
 }
 
-TokenCommand: Type=("push"|"pop"|"mode") ("(" (Mode=[TokenMode:ID] | Default?="default") ")")?;
+TokenCommand: Type=(PUSH|POP|MODE) (LEFTPAREN (Mode=[TokenMode:ID] | Default?=DEFAULT) RIGHTPAREN)?;
 
 interface TokenGroup extends AbstractTokenRule {
     TokenRefs []*AbstractTokenRule
-    Regexps   []string
-    Keywords  []Keyword
 }
 
-TokenGroup: "token" "group" Name=ID "{"
-    (TokenRefs+=[AbstractTokenRule:ID] | "keywords" Regexps+=RegexLiteral | Keywords+=Keyword)*
-"}"
+TokenGroup: TOKEN GROUP Name=ID LEFTBRACE
+    (TokenRefs+=[AbstractTokenRule:ID])*
+RIGHTBRACE
 
 interface TokenMode {
     Name string
     Default bool
     TokenRefs []TokenUsage
-    Regexps []string
-    Keywords []Keyword
 }
 
-TokenMode: "token" "mode" (Name=ID | Default?="default") "{"
+TokenMode: TOKEN MODE (Name=ID | Default?=DEFAULT) LEFTBRACE
     TokenRefs+=TokenUsage*
-"}";
+RIGHTBRACE
 
 interface TokenUsage {
     Type     string
@@ -127,7 +138,7 @@ interface TokenUsage {
     Command  TokenCommand
 }
 
-TokenUsage: Type=("hidden"|"comment")? TokenRef=[AbstractTokenRule:ID] Command=TokenCommand?
+TokenUsage: Type=(HIDDEN|COMMENT)? TokenRef=[AbstractTokenRule:ID] Command=TokenCommand?
 
 interface Element {
     Cardinality string
@@ -137,7 +148,7 @@ interface Alternatives extends Assignable {
     Alts []Element
 }
 
-Alternatives returns Element: Group ({Alternatives.Alts+=current} ("|" Alts+=Group)+)?
+Alternatives returns Element: Group ({Alternatives.Alts+=current} (PIPE Alts+=Group)+)?
 
 interface Group extends Element {
     Elements []Element
@@ -145,7 +156,7 @@ interface Group extends Element {
 
 Group returns Element: Element ({Group.Elements+=current} Elements+=Element+)?
 
-Element: (Keyword | Assignment | RuleCall | Action | "(" Alternatives ")") Cardinality=("*" | "+" | "?")?
+Element: (Keyword | Assignment | RuleCall | Action | LEFTPAREN Alternatives RIGHTPAREN) Cardinality=(ASTERISK | PLUS | QUESTION)?
 
 interface Keyword extends Assignable {
     Value string
@@ -159,22 +170,22 @@ interface Assignment extends Element {
     Value    Assignable
 }
 
-Assignment: Property=[Field:ID] Operator=("+=" | "=" | "?=") Value=Assignable
+Assignment: Property=[Field:ID] Operator=(PLUS_EQUALS | EQUALS | QUESTION_EQUALS) Value=Assignable
 
 interface Assignable extends Element {}
 
-Assignable: Keyword | RuleCall | CrossRef | "(" AssignableAlternatives ")"
+Assignable: RuleCall | CrossRef | LEFTPAREN AssignableAlternatives RIGHTPAREN
 
-AssignableWithoutAlts returns Assignable: Keyword | RuleCall | CrossRef
+AssignableWithoutAlts returns Assignable: RuleCall | CrossRef
 
-AssignableAlternatives returns Assignable: AssignableWithoutAlts ({Alternatives.Alts+=current} ("|" Alts+=AssignableWithoutAlts)+)?
+AssignableAlternatives returns Assignable: AssignableWithoutAlts ({Alternatives.Alts+=current} (PIPE Alts+=AssignableWithoutAlts)+)?
 
 interface CrossRef extends Assignable {
     Type *Interface
     Rule RuleCall
 }
 
-CrossRef: "[" Type=[Interface:ID] (":" Rule=RuleCall)? "]"
+CrossRef: LEFTBRACKET Type=[Interface:ID] (COLON Rule=RuleCall)? RIGHTBRACKET
 
 interface RuleCall extends Assignable {
     Rule *AbstractRule
@@ -188,18 +199,54 @@ interface Action extends Element {
     Property *Field
 }
 
-Action: "{" Type=[Interface:ID] ("." Property=[Field:ID] Operator=("+=" | "=") "current")? "}"
+Action: LEFTBRACE Type=[Interface:ID] (DOT Property=[Field:ID] Operator=(PLUS_EQUALS | EQUALS) CURRENT)? RIGHTBRACE
 
 interface CompositeRule extends AbstractRuleWithBody {
 }
 
-CompositeRule: "composite" Name=ID ":" Body=CompositeAlternatives ";"?
+CompositeRule: COMPOSITE Name=ID COLON Body=CompositeAlternatives SEMICOLON?
 
-CompositeAlternatives returns Element: CompositeGroup ({Alternatives.Alts+=current} ("|" Alts+=CompositeGroup)+)?
+CompositeAlternatives returns Element: CompositeGroup ({Alternatives.Alts+=current} (PIPE Alts+=CompositeGroup)+)?
 
 CompositeGroup returns Element: CompositeElement ({Group.Elements+=current} Elements+=CompositeElement+)?
 
-CompositeElement returns Element: (Keyword | RuleCall | "(" CompositeAlternatives ")") Cardinality=("*" | "+" | "?")?
+CompositeElement returns Element: (RuleCall | LEFTPAREN CompositeAlternatives RIGHTPAREN) Cardinality=(ASTERISK | PLUS | QUESTION)?
+
+token LEFTPAREN: "("
+token RIGHTPAREN: ")"
+token ASTERISK: "*"
+token PLUS: "+"
+token PLUS_EQUALS: "+="
+token COMMA: ","
+token DOT: "."
+token COLON: ":"
+token SEMICOLON: ";"
+token EQUALS: "="
+token QUESTION: "?"
+token QUESTION_EQUALS: "?="
+token LEFTBRACKET: "["
+token RIGHTBRACKET: "]"
+token BOOL: "bool"
+token COMMENT: "comment"
+token COMPOSITE: "composite"
+token CURRENT: "current"
+token DEFAULT: "default"
+token ENTRY: "entry"
+token EXTENDS: "extends"
+token GRAMMAR: "grammar"
+token GROUP: "group"
+token HIDDEN: "hidden"
+token INTERFACE: "interface"
+token KEYWORDS: "keywords"
+token MODE: "mode"
+token POP: "pop"
+token PUSH: "push"
+token RETURNS: "returns"
+token STRING: "string"
+token TOKEN: "token"
+token LEFTBRACE: "{"
+token PIPE: "|"
+token RIGHTBRACE: "}"
 
 // Move comments in front of RegexLiteral
 token SL_COMMENT: /\/\/[^\r\n]*/
@@ -211,6 +258,42 @@ token RegexLiteral: /\/([^\r\n\[\/\\]|\\.|\[([^\r\n\]\\]|\\.)*\])+\//
 token WS: /[ \n\r\t]+/
 
 token mode default {
+    comment LEFTPAREN //TODO remove "comment"
+    comment RIGHTPAREN //TODO remove "comment"
+    comment ASTERISK //TODO remove "comment"
+    comment PLUS //TODO remove "comment"
+    comment PLUS_EQUALS //TODO remove "comment"
+    comment COMMA //TODO remove "comment"
+    comment DOT //TODO remove "comment"
+    comment COLON //TODO remove "comment"
+    comment SEMICOLON //TODO remove "comment"
+    comment EQUALS //TODO remove "comment"
+    comment QUESTION //TODO remove "comment"
+    comment QUESTION_EQUALS //TODO remove "comment"
+    comment LEFTBRACKET //TODO remove "comment"
+    comment RIGHTBRACKET //TODO remove "comment"
+    comment BOOL //TODO remove "comment"
+    comment COMMENT //TODO remove "comment"
+    comment COMPOSITE //TODO remove "comment"
+    comment CURRENT //TODO remove "comment"
+    comment DEFAULT //TODO remove "comment"
+    comment ENTRY //TODO remove "comment"
+    comment EXTENDS //TODO remove "comment"
+    comment GRAMMAR //TODO remove "comment"
+    comment GROUP //TODO remove "comment"
+    comment HIDDEN //TODO remove "comment"
+    comment INTERFACE //TODO remove "comment"
+    comment KEYWORDS //TODO remove "comment"
+    comment MODE //TODO remove "comment"
+    comment POP //TODO remove "comment"
+    comment PUSH //TODO remove "comment"
+    comment RETURNS //TODO remove "comment"
+    comment STRING //TODO remove "comment"
+    comment TOKEN //TODO remove "comment"
+    comment LEFTBRACE //TODO remove "comment"
+    comment PIPE //TODO remove "comment"
+    comment RIGHTBRACE //TODO remove "comment"
+
     comment SL_COMMENT
     comment ML_COMMENT
     comment StringLiteral //TODO remove "comment"

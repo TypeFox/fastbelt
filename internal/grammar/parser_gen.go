@@ -433,7 +433,9 @@ func (p *Parser) ParseToken() Token {
 				token := p.state.Consume(Token_RegexLiteral)
 				core.AssignToken(current, token, Token_Regexp_RegexLiteral)
 				if token != nil {
-					current.SetRegexp(token)
+					element := NewRegexpTokenElement()
+					element.SetRegexp(token)
+					current.SetContent(element)
 				}
 			}
 		case 1:
@@ -442,7 +444,9 @@ func (p *Parser) ParseToken() Token {
 				result := p.ParseKeyword()
 				p.state.ExitRule()
 				if result != nil {
-					current.SetKeyword(result)
+					element := NewKeywordTokenElement()
+					element.SetKeyword(result)
+					current.SetContent(element)
 				}
 			}
 		default:
@@ -558,18 +562,11 @@ func (p *Parser) ParseTokenGroup() TokenGroup {
 				{
 					token := p.state.Consume(Token_RegexLiteral)
 					core.AssignToken(current, token, TokenGroup_Regexps_RegexLiteral)
-					if token != nil {
-						current.SetRegexpsItem(token)
-					}
 				}
 			case 2:
 				{
 					p.state.EnterRule(TokenGroup__Basic_3)
-					result := p.ParseKeyword()
 					p.state.ExitRule()
-					if result != nil {
-						current.SetKeywordsItem(result)
-					}
 				}
 			default:
 				break loop0

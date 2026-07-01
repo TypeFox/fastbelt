@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"maps"
-	goregex "regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -39,16 +38,12 @@ type GenerateTokenTypesResult struct {
 func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	tokens := grammr.Terminals()
 	tokenGroups := grammr.TokenGroups()
-	keywords := GetAllKeywords(grammr)
-	keywordsCount := len(keywords)
 	result := GenerateTokenTypesResult{
 		Tokens:            tokens,
-		Keywords:          keywords,
-		KeywordsCode:      make([]codegen.Node, keywordsCount),
 		TokensCode:        make([]codegen.Node, len(tokens)),
 		TokenGroupCode:    make([]codegen.Node, len(tokenGroups)),
-		TokenTypeNames:    make([]string, keywordsCount+len(tokens)+len(tokenGroups)),
-		TokenTypeVarNames: make([]string, keywordsCount+len(tokens)+len(tokenGroups)),
+		TokenTypeNames:    make([]string, len(tokens)+len(tokenGroups)),
+		TokenTypeVarNames: make([]string, len(tokens)+len(tokenGroups)),
 		TokenTypeIds:      make(map[string]int),
 		Imports:           map[string]bool{},
 		TokenModeVarNames: map[string]string{},
@@ -57,16 +52,6 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	}
 	// Starting with 1 - prevent clash with EOF (index 0)
 	tokenIndex := 1
-	for index, keyword := range keywords {
-		result.KeywordsCode[index] = generateKeywordTokenType(keyword, tokenIndex)
-		varName := GeneratedTokenName(keyword)
-		kwName := keyword.Value()
-		result.TokenTypeVarNames[index] = varName
-		result.TokenTypeNames[index] = kwName
-		result.TokenTypeIds[kwName] = index
-		result.Imports["strings"] = true
-		tokenIndex++
-	}
 	for index, token := range tokens {
 		tokenType := generateTokenType(token, tokenIndex)
 		result.TokensCode[index] = tokenType.Code
@@ -75,23 +60,23 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		}
 		varName := GeneratedTokenName(token)
 		tokName := token.Name()
-		result.TokenTypeVarNames[keywordsCount+index] = varName
-		result.TokenTypeNames[keywordsCount+index] = tokName
-		result.TokenTypeIds[tokName] = keywordsCount + index
+		result.TokenTypeVarNames[index] = varName
+		result.TokenTypeNames[index] = tokName
+		result.TokenTypeIds[tokName] = index
 		tokenIndex++
 	}
 	tokenGroupMembers := map[string][]string{}
 	for _, tokenGroup := range tokenGroups {
-		tokenGroupMembers[tokenGroup.Name()] = getAllTokenGroupMembers(tokenGroup, keywords)
+		tokenGroupMembers[tokenGroup.Name()] = getAllTokenGroupMembers(tokenGroup)
 	}
 	// Token groups need to be topologically sorted, so that nested groups appear after their members
 	for index, tokenGroup := range sortTokenGroups(tokenGroups, tokenGroupMembers) {
 		result.TokenGroupCode[index] = generateTokenGroupType(tokenGroup, tokenGroupMembers, tokenIndex)
 		varName := GeneratedTokenName(tokenGroup)
 		tokName := tokenGroup.Name()
-		result.TokenTypeVarNames[keywordsCount+len(tokens)+index] = varName
-		result.TokenTypeNames[keywordsCount+len(tokens)+index] = tokName
-		result.TokenTypeIds[tokName] = keywordsCount + len(tokens) + index
+		result.TokenTypeVarNames[len(tokens)+index] = varName
+		result.TokenTypeNames[len(tokens)+index] = tokName
+		result.TokenTypeIds[tokName] = len(tokens) + index
 		tokenIndex++
 	}
 	for index, tokenMode := range grammr.TokenModes() {
@@ -209,14 +194,27 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, token
 	node.AppendLine("}")
 }
 
-func generateKeywordTokenType(keyword grammar.Keyword, id int) codegen.Node {
+func generateTokenType(token grammar.Token, id int) GenerateLexerResult {
+	switch element := token.Content().(type) {
+	case grammar.KeywordTokenElement:
+		return generateKeywordTokenElement(token, element, id)
+	case grammar.RegexpTokenElement:
+		return generateRegexpTokenElement(token, element, id)
+	default:
+		panic(fmt.Sprintf("Unknown token element type: %T", element))
+	}
+}
+
+func generateKeywordTokenElement(token grammar.Token, keywordElement grammar.KeywordTokenElement, id int) GenerateLexerResult {
 	code := codegen.NewNode()
-	keywordValue := grammar.KeywordValue(keyword)
-	code.AppendLine("const ", GeneratedTokenIdxName(keyword), " = ", strconv.Itoa(id))
+	keyword := keywordElement.Keyword()
+	keywordToken := keyword.Value()
+	keywordValue := keywordToken[1 : len(keywordToken)-1]
+	code.AppendLine("const ", GeneratedTokenIdxName(token), " = ", strconv.Itoa(id))
 	code.AppendLine()
-	code.AppendLine("var ", GeneratedTokenName(keyword), " = core.NewTokenType(")
+	code.AppendLine("var ", GeneratedTokenName(token), " = core.NewTokenType(")
 	code.Indent(func(n codegen.Node) {
-		n.AppendLine(GeneratedTokenIdxName(keyword), ",")
+		n.AppendLine(GeneratedTokenIdxName(token), ",")
 		n.AppendLine("\"", keywordValue, "\",")
 		n.AppendLine("\"", keywordValue, "\",")
 		n.AppendLine("core.TokenKindKeyword,")
@@ -236,7 +234,12 @@ func generateKeywordTokenType(keyword grammar.Keyword, id int) codegen.Node {
 		n.AppendLine("},")
 	})
 	code.Append(")")
-	return code
+	return GenerateLexerResult{
+		Imports: map[string]bool{
+			"strings": true,
+		},
+		Code: code,
+	}
 }
 
 type GenerateLexerResult struct {
@@ -263,7 +266,7 @@ func generateTokenGroupType(tokenGroup grammar.TokenGroup, tokenGroupMembers map
 	return code
 }
 
-func getAllTokenGroupMembers(tokenGroup grammar.TokenGroup, keywords []grammar.Keyword) []string {
+func getAllTokenGroupMembers(tokenGroup grammar.TokenGroup) []string {
 	members := map[string]bool{}
 	for _, tokenRef := range tokenGroup.TokenRefs() {
 		tokenRule := tokenRef.Ref(context.Background())
@@ -272,35 +275,16 @@ func getAllTokenGroupMembers(tokenGroup grammar.TokenGroup, keywords []grammar.K
 			members[name] = true
 		}
 	}
-	for _, keyword := range tokenGroup.Keywords() {
-		name := GeneratedTokenName(keyword)
-		members[name] = true
-	}
-	for _, regex := range tokenGroup.Regexps() {
-		pattern := regex.Image[1 : len(regex.Image)-1]
-		compiled, err := goregex.Compile(pattern)
-		if err != nil {
-			continue
-		}
-		for _, keyword := range keywords {
-			keywordValue := KeywordValue(keyword)
-			keywordName := GeneratedTokenName(keyword)
-			matches := compiled.MatchString(keywordValue)
-			if matches {
-				members[keywordName] = true
-			}
-		}
-	}
 	slice := slices.Collect(maps.Keys(members))
 	sort.Strings(slice)
 	return slice
 }
 
-func generateTokenType(token grammar.Token, id int) GenerateLexerResult {
+func generateRegexpTokenElement(token grammar.Token, regexpTokenElement grammar.RegexpTokenElement, id int) GenerateLexerResult {
 	var result regexp.GenerateRegExpResult
 	imports := map[string]bool{}
 	code := codegen.NewNode()
-	regexPattern := token.Regexp()
+	regexPattern := regexpTokenElement.Regexp()
 	regexPattern = regexPattern[1 : len(regexPattern)-1] // remove leading and trailing backticks
 	regex, err := regexp.Compile(regexPattern)
 	if err != nil {

@@ -1549,11 +1549,10 @@ func buildVarNameToId(tokenTypes GenerateTokenTypesResult) map[string]int {
 }
 
 func buildGroupVarNameToMembers(grammr grammar.Grammar) map[string][]string {
-	keywords := GetAllKeywords(grammr)
 	groups := make(map[string][]string)
 	for _, tg := range grammr.TokenGroups() {
 		varName := GeneratedTokenName(tg)
-		groups[varName] = getAllTokenGroupMembers(tg, keywords)
+		groups[varName] = getAllTokenGroupMembers(tg)
 	}
 	return groups
 }

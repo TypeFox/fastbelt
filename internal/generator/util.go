@@ -79,10 +79,10 @@ func keysFromMap(m map[string]grammar.Keyword) []grammar.Keyword {
 
 func GeneratedTokenName(t core.AstNode) string {
 	switch t := t.(type) {
-	case grammar.AbstractTokenRule:
+	case grammar.Token:
 		return "Token_" + t.Name()
-	case grammar.Keyword:
-		return "Keyword_" + grammar.KeywordName(t)
+	case grammar.TokenGroup:
+		return "TokenGroup_" + t.Name()
 	default:
 		panic("unexpected type")
 	}
