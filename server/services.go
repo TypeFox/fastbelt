@@ -81,11 +81,56 @@ func SetupDefaultServices(sc *service.Container) {
 	}
 	if !service.Has[WorkspaceSymbolProvider](sc) {
 		service.Put(sc, NewDefaultWorkspaceSymbolProvider(sc))
-		if !service.Has[DocumentationProvider](sc) {
-			service.Put(sc, NewDefaultDocumentationProvider())
-		}
-		if !service.Has[HoverProvider](sc) {
-			service.Put(sc, NewDefaultHoverProvider(sc))
-		}
+	}
+	if !service.Has[DocumentationProvider](sc) {
+		service.Put(sc, NewDefaultDocumentationProvider())
+	}
+	if !service.Has[HoverProvider](sc) {
+		service.Put(sc, NewDefaultHoverProvider(sc))
+	}
+	if !service.Has[DeclarationProvider](sc) {
+		service.Put(sc, NewDefaultDeclarationProvider(sc))
+	}
+	if !service.Has[ImplementationProvider](sc) {
+		service.Put(sc, NewDefaultImplementationProvider(sc))
+	}
+	if !service.Has[TypeDefinitionProvider](sc) {
+		service.Put(sc, NewDefaultTypeDefinitionProvider(sc))
+	}
+	if !service.Has[SemanticTokensProvider](sc) {
+		service.Put(sc, NewDefaultSemanticTokensProvider(sc))
+	}
+	if !service.Has[CallHierarchyProvider](sc) {
+		service.Put(sc, NewDefaultCallHierarchyProvider(sc))
+	}
+	if !service.Has[TypeHierarchyProvider](sc) {
+		service.Put(sc, NewDefaultTypeHierarchyProvider(sc))
+	}
+	if !service.Has[InlayHintProvider](sc) {
+		service.Put(sc, NewDefaultInlayHintProvider(sc))
+	}
+	if !service.Has[SignatureHelpProvider](sc) {
+		service.Put(sc, NewDefaultSignatureHelpProvider(sc))
+	}
+	if !service.Has[SemanticTokensContributor](sc) {
+		service.Put(sc, NewDefaultSemanticTokensContributor())
+	}
+	if !service.Has[CallHierarchyContributor](sc) {
+		service.Put(sc, NewDefaultCallHierarchyContributor())
+	}
+	if !service.Has[TypeHierarchyContributor](sc) {
+		service.Put(sc, NewDefaultTypeHierarchyContributor())
+	}
+	if !service.Has[CodeActionProvider](sc) {
+		service.Put(sc, NewDefaultCodeActionProvider(sc))
+	}
+	if !service.Has[CodeLensProvider](sc) {
+		service.Put(sc, NewDefaultCodeLensProvider(sc))
+	}
+	if !service.Has[DocumentLinkProvider](sc) {
+		service.Put(sc, NewDefaultDocumentLinkProvider(sc))
+	}
+	if !service.Has[CommandProvider](sc) {
+		service.Put(sc, NewDefaultCommandProvider(sc))
 	}
 }
