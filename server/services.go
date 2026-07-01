@@ -81,11 +81,29 @@ func SetupDefaultServices(sc *service.Container) {
 	}
 	if !service.Has[WorkspaceSymbolProvider](sc) {
 		service.Put(sc, NewDefaultWorkspaceSymbolProvider(sc))
-		if !service.Has[DocumentationProvider](sc) {
-			service.Put(sc, NewDefaultDocumentationProvider())
-		}
-		if !service.Has[HoverProvider](sc) {
-			service.Put(sc, NewDefaultHoverProvider(sc))
-		}
+	}
+	if !service.Has[DocumentationProvider](sc) {
+		service.Put(sc, NewDefaultDocumentationProvider())
+	}
+	if !service.Has[HoverProvider](sc) {
+		service.Put(sc, NewDefaultHoverProvider(sc))
+	}
+	if !service.Has[DeclarationProvider](sc) {
+		service.Put(sc, NewDefaultDeclarationProvider(sc))
+	}
+	if !service.Has[ImplementationProvider](sc) {
+		service.Put(sc, NewDefaultImplementationProvider(sc))
+	}
+	if !service.Has[TypeDefinitionProvider](sc) {
+		service.Put(sc, NewDefaultTypeDefinitionProvider(sc))
+	}
+	if !service.Has[SemanticTokensProvider](sc) {
+		service.Put(sc, NewDefaultSemanticTokensProvider(sc))
+	}
+	if !service.Has[InlayHintProvider](sc) {
+		service.Put(sc, NewDefaultInlayHintProvider(sc))
+	}
+	if !service.Has[SignatureHelpProvider](sc) {
+		service.Put(sc, NewDefaultSignatureHelpProvider(sc))
 	}
 }
