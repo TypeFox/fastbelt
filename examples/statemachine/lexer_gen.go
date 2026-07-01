@@ -9,149 +9,13 @@ import (
 	"unicode/utf8"
 )
 
-const Keyword_EqualsGreaterThan_Idx = 1
+const Token_STATEMACHINE_Idx = 1
 
-var Keyword_EqualsGreaterThan = core.NewTokenType(
-	Keyword_EqualsGreaterThan_Idx,
-	"=>",
-	"=>",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "=>") {
-			return 2
-		}
-		return 0
-	},
-	[]rune{'='},
-)
-
-const Keyword_actions_Idx = 2
-
-var Keyword_actions = core.NewTokenType(
-	Keyword_actions_Idx,
-	"actions",
-	"actions",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "actions") {
-			return 7
-		}
-		return 0
-	},
-	[]rune{'a'},
-)
-
-const Keyword_commands_Idx = 3
-
-var Keyword_commands = core.NewTokenType(
-	Keyword_commands_Idx,
-	"commands",
-	"commands",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "commands") {
-			return 8
-		}
-		return 0
-	},
-	[]rune{'c'},
-)
-
-const Keyword_end_Idx = 4
-
-var Keyword_end = core.NewTokenType(
-	Keyword_end_Idx,
-	"end",
-	"end",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "end") {
-			return 3
-		}
-		return 0
-	},
-	[]rune{'e'},
-)
-
-const Keyword_events_Idx = 5
-
-var Keyword_events = core.NewTokenType(
-	Keyword_events_Idx,
-	"events",
-	"events",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "events") {
-			return 6
-		}
-		return 0
-	},
-	[]rune{'e'},
-)
-
-const Keyword_initialState_Idx = 6
-
-var Keyword_initialState = core.NewTokenType(
-	Keyword_initialState_Idx,
-	"initialState",
-	"initialState",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "initialState") {
-			return 12
-		}
-		return 0
-	},
-	[]rune{'i'},
-)
-
-const Keyword_state_Idx = 7
-
-var Keyword_state = core.NewTokenType(
-	Keyword_state_Idx,
-	"state",
-	"state",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "state") {
-			return 5
-		}
-		return 0
-	},
-	[]rune{'s'},
-)
-
-const Keyword_statemachine_Idx = 8
-
-var Keyword_statemachine = core.NewTokenType(
-	Keyword_statemachine_Idx,
+var Token_STATEMACHINE = core.NewTokenType(
+	Token_STATEMACHINE_Idx,
 	"statemachine",
 	"statemachine",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "statemachine") {
 			return 12
@@ -161,16 +25,93 @@ var Keyword_statemachine = core.NewTokenType(
 	[]rune{'s'},
 )
 
-const Keyword_LeftBrace_Idx = 9
+const Token_EVENTS_Idx = 2
 
-var Keyword_LeftBrace = core.NewTokenType(
-	Keyword_LeftBrace_Idx,
-	"{",
-	"{",
-	0,
+var Token_EVENTS = core.NewTokenType(
+	Token_EVENTS_Idx,
+	"events",
+	"events",
 	core.TokenKindKeyword,
-	0,
-	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "events") {
+			return 6
+		}
+		return 0
+	},
+	[]rune{'e'},
+)
+
+const Token_COMMANDS_Idx = 3
+
+var Token_COMMANDS = core.NewTokenType(
+	Token_COMMANDS_Idx,
+	"commands",
+	"commands",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "commands") {
+			return 8
+		}
+		return 0
+	},
+	[]rune{'c'},
+)
+
+const Token_INITIALSTATE_Idx = 4
+
+var Token_INITIALSTATE = core.NewTokenType(
+	Token_INITIALSTATE_Idx,
+	"initialstate",
+	"initialstate",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "initialstate") {
+			return 12
+		}
+		return 0
+	},
+	[]rune{'i'},
+)
+
+const Token_STATE_Idx = 5
+
+var Token_STATE = core.NewTokenType(
+	Token_STATE_Idx,
+	"state",
+	"state",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "state") {
+			return 5
+		}
+		return 0
+	},
+	[]rune{'s'},
+)
+
+const Token_ACTIONS_Idx = 6
+
+var Token_ACTIONS = core.NewTokenType(
+	Token_ACTIONS_Idx,
+	"actions",
+	"actions",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "actions") {
+			return 7
+		}
+		return 0
+	},
+	[]rune{'a'},
+)
+
+const Token_LBRACE_Idx = 7
+
+var Token_LBRACE = core.NewTokenType(
+	Token_LBRACE_Idx,
+	"{",
+	"{",
+	core.TokenKindKeyword,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "{") {
 			return 1
@@ -180,16 +121,13 @@ var Keyword_LeftBrace = core.NewTokenType(
 	[]rune{'{'},
 )
 
-const Keyword_RightBrace_Idx = 10
+const Token_RBRACE_Idx = 8
 
-var Keyword_RightBrace = core.NewTokenType(
-	Keyword_RightBrace_Idx,
+var Token_RBRACE = core.NewTokenType(
+	Token_RBRACE_Idx,
 	"}",
 	"}",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "}") {
 			return 1
@@ -199,16 +137,45 @@ var Keyword_RightBrace = core.NewTokenType(
 	[]rune{'}'},
 )
 
+const Token_ARROW_Idx = 9
+
+var Token_ARROW = core.NewTokenType(
+	Token_ARROW_Idx,
+	"=>",
+	"=>",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "=>") {
+			return 2
+		}
+		return 0
+	},
+	[]rune{'='},
+)
+
+const Token_END_Idx = 10
+
+var Token_END = core.NewTokenType(
+	Token_END_Idx,
+	"end",
+	"end",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "end") {
+			return 3
+		}
+		return 0
+	},
+	[]rune{'e'},
+)
+
 const Token_ID_Idx = 11
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
 	"ID",
 	"ID",
-	0,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -279,10 +246,7 @@ var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
 	"WS",
 	"WS",
-	core.SkippedGroup,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -353,10 +317,7 @@ var Token_ML_COMMENT = core.NewTokenType(
 	Token_ML_COMMENT_Idx,
 	"ML_COMMENT",
 	"ML_COMMENT",
-	core.CommentGroup,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -478,10 +439,7 @@ var Token_SL_COMMENT = core.NewTokenType(
 	Token_SL_COMMENT_Idx,
 	"SL_COMMENT",
 	"SL_COMMENT",
-	core.CommentGroup,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -564,20 +522,23 @@ var Token_SL_COMMENT_Accepting = [3]bool{
 }
 
 func NewLexer() lexer.Lexer {
+	TokenMode_default := lexer.NewTokenMode("default",
+		lexer.UseTokenType(Token_STATEMACHINE),
+		lexer.UseTokenType(Token_EVENTS),
+		lexer.UseTokenType(Token_COMMANDS),
+		lexer.UseTokenType(Token_INITIALSTATE),
+		lexer.UseTokenType(Token_STATE),
+		lexer.UseTokenType(Token_ACTIONS),
+		lexer.UseTokenType(Token_LBRACE),
+		lexer.UseTokenType(Token_RBRACE),
+		lexer.UseTokenType(Token_ARROW),
+		lexer.UseTokenType(Token_END),
+		lexer.UseTokenType(Token_ID),
+		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),
+		lexer.UseTokenType(Token_ML_COMMENT).WithGroup(core.CommentGroup),
+		lexer.UseTokenType(Token_SL_COMMENT).WithGroup(core.CommentGroup),
+	)
 	return lexer.NewDefaultLexer(
-		Keyword_EqualsGreaterThan,
-		Keyword_actions,
-		Keyword_commands,
-		Keyword_end,
-		Keyword_events,
-		Keyword_initialState,
-		Keyword_state,
-		Keyword_statemachine,
-		Keyword_LeftBrace,
-		Keyword_RightBrace,
-		Token_ID,
-		Token_WS,
-		Token_ML_COMMENT,
-		Token_SL_COMMENT,
+		TokenMode_default,
 	)
 }

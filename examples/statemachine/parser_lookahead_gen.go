@@ -38,7 +38,7 @@ func (l *DefaultStatemachineModelParserLookahead) StateActionsLoop(state *parser
 }
 
 func (l *DefaultStatemachineModelParserLookahead) StateOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_actions
+	return state.LA(1).Type == Token_ACTIONS
 }
 
 func (l *DefaultStatemachineModelParserLookahead) StateTransitionsLoop(state *parser.ParserState) bool {
@@ -54,13 +54,13 @@ func (l *DefaultStatemachineModelParserLookahead) StatemachineEventsLoop(state *
 }
 
 func (l *DefaultStatemachineModelParserLookahead) StatemachineOptional_0(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_events
+	return state.LA(1).Type == Token_EVENTS
 }
 
 func (l *DefaultStatemachineModelParserLookahead) StatemachineOptional_1(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_commands
+	return state.LA(1).Type == Token_COMMANDS
 }
 
 func (l *DefaultStatemachineModelParserLookahead) StatemachineStatesLoop(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_state
+	return state.LA(1).Type == Token_STATE
 }

@@ -8,38 +8,38 @@ import (
 )
 
 var AdditionLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_Plus, Keyword_Dash},
-	Lookup: []int{5: 1, 7: 1},
+	Types:  []*core.TokenType{Token_PLUS, Token_MINUS},
+	Lookup: []int{8: 1, 9: 1},
 }
 
 var AdditionOperatorAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_Plus, Keyword_Dash},
-	Lookup: []int{5: 1, 7: 2},
+	Types:  []*core.TokenType{Token_PLUS, Token_MINUS},
+	Lookup: []int{8: 1, 9: 2},
 }
 
 var ModuleStatementsLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_LeftParen, Keyword_def, Token_ID, Token_NUMBER},
-	Lookup: []int{2: 1, 12: 1, 14: 1, 15: 1},
+	Types:  []*core.TokenType{Token_DEF, Token_LPAREN, Token_ID, Token_NUMBER},
+	Lookup: []int{2: 1, 3: 1, 14: 1, 15: 1},
 }
 
 var MultiplicationLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_Asterisk, Keyword_Slash},
-	Lookup: []int{4: 1, 8: 1},
+	Types:  []*core.TokenType{Token_STAR, Token_SLASH},
+	Lookup: []int{10: 1, 11: 1},
 }
 
 var MultiplicationOperatorAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_Asterisk, Keyword_Slash},
-	Lookup: []int{4: 1, 8: 2},
+	Types:  []*core.TokenType{Token_STAR, Token_SLASH},
+	Lookup: []int{10: 1, 11: 2},
 }
 
 var PrimaryExpressionAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_LeftParen, Token_NUMBER, Token_ID},
-	Lookup: []int{2: 1, 14: 3, 15: 2},
+	Types:  []*core.TokenType{Token_LPAREN, Token_NUMBER, Token_ID},
+	Lookup: []int{3: 1, 14: 3, 15: 2},
 }
 
 var StatementAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_def, Keyword_LeftParen, Token_ID, Token_NUMBER},
-	Lookup: []int{2: 2, 12: 1, 14: 2, 15: 2},
+	Types:  []*core.TokenType{Token_DEF, Token_LPAREN, Token_ID, Token_NUMBER},
+	Lookup: []int{2: 1, 3: 2, 14: 2, 15: 2},
 }
 
 // ArithmeticsParserLookahead abstracts every lookahead/prediction decision performed by
@@ -84,15 +84,15 @@ func (l *DefaultArithmeticsParserLookahead) AdditionOperatorAlternatives(state *
 }
 
 func (l *DefaultArithmeticsParserLookahead) DefinitionLoop(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_Comma
+	return state.LA(1).Type == Token_COMMA
 }
 
 func (l *DefaultArithmeticsParserLookahead) DefinitionOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_LeftParen
+	return state.LA(1).Type == Token_LPAREN
 }
 
 func (l *DefaultArithmeticsParserLookahead) ExponentiationLoop(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_Caret
+	return state.LA(1).Type == Token_CARET
 }
 
 func (l *DefaultArithmeticsParserLookahead) ModuleStatementsLoop(state *parser.ParserState) bool {
@@ -101,7 +101,7 @@ func (l *DefaultArithmeticsParserLookahead) ModuleStatementsLoop(state *parser.P
 }
 
 func (l *DefaultArithmeticsParserLookahead) ModuloLoop(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_Percent
+	return state.LA(1).Type == Token_PERCENT
 }
 
 func (l *DefaultArithmeticsParserLookahead) MultiplicationLoop(state *parser.ParserState) bool {
@@ -118,11 +118,11 @@ func (l *DefaultArithmeticsParserLookahead) PrimaryExpressionAlternatives(state 
 }
 
 func (l *DefaultArithmeticsParserLookahead) PrimaryExpressionLoop(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_Comma
+	return state.LA(1).Type == Token_COMMA
 }
 
 func (l *DefaultArithmeticsParserLookahead) PrimaryExpressionOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_LeftParen
+	return state.LA(1).Type == Token_LPAREN
 }
 
 func (l *DefaultArithmeticsParserLookahead) StatementAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
