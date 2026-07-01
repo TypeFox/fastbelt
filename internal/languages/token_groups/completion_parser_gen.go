@@ -40,42 +40,38 @@ func (p *CompletionParser) Parse(tokens []core.Token) *parser.CompletionParseRes
 }
 
 func (p *CompletionParser) ParseModel() {
-	p.cp.EnterRule("Model", Model__Start)
+	p.cp.EnterRule("Model", StateNumber__Model__Start)
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Item")
 		switch prediction, _ := p.lookahead.ModelItemAlternatives(p.state); prediction {
 		case 0:
-			p.state.EnterRule(Model__Basic_1)
+			p.state.EnterRule(StateNumber__Model__Basic_1)
 			p.ParseA()
 			p.state.ExitRule()
 		case 1:
-			p.state.EnterRule(Model__Basic_3)
+			p.state.EnterRule(StateNumber__Model__Basic_3)
 			p.ParseB()
 			p.state.ExitRule()
 		case 2:
-			p.state.EnterRule(Model__Basic_5)
+			p.state.EnterRule(StateNumber__Model__Basic_5)
 			p.ParseC()
 			p.state.ExitRule()
 		case 3:
-			p.state.EnterRule(Model__Basic_7)
+			p.state.EnterRule(StateNumber__Model__Basic_7)
 			p.ParseD()
 			p.state.ExitRule()
 		case 4:
-			p.state.EnterRule(Model__Basic_9)
+			p.state.EnterRule(StateNumber__Model__Basic_9)
 			p.ParseE()
 			p.state.ExitRule()
 		case 5:
-			p.state.EnterRule(Model__Basic_11)
+			p.state.EnterRule(StateNumber__Model__Basic_11)
 			p.ParseF()
 			p.state.ExitRule()
 		case 6:
-			p.state.EnterRule(Model__Basic_13)
+			p.state.EnterRule(StateNumber__Model__Basic_13)
 			p.ParseG()
-			p.state.ExitRule()
-		case 7:
-			p.state.EnterRule(Model__Basic_15)
-			p.ParseH()
 			p.state.ExitRule()
 		}
 		p.cp.ClearAssignment()
@@ -83,133 +79,120 @@ func (p *CompletionParser) ParseModel() {
 }
 
 func (p *CompletionParser) ParseA() {
-	p.cp.EnterRule("A", A__Start)
+	p.cp.EnterRule("A", StateNumber__A__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_a)
+		p.state.Consume(Token_LETTER_A)
 	}
 	{
 		p.cp.MarkAssignment("Value")
-		p.state.Consume(Token_Identifier)
+		p.state.Consume(TokenGroup_Identifier)
 		p.cp.ClearAssignment()
 	}
 }
 
 func (p *CompletionParser) ParseB() {
-	p.cp.EnterRule("B", B__Start)
+	p.cp.EnterRule("B", StateNumber__B__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_b)
+		p.state.Consume(Token_LETTER_B)
 	}
 	{
 		p.cp.MarkAssignment("Value")
 		switch prediction, _ := p.lookahead.BValueAlternatives(p.state); prediction {
 		case 0:
-			p.state.Consume(Token_Identifier)
+			p.state.Consume(TokenGroup_Identifier)
 		case 1:
-			p.state.Consume(Keyword_b)
+			p.state.Consume(Token_LETTER_B)
 		}
 		p.cp.ClearAssignment()
 	}
 }
 
 func (p *CompletionParser) ParseC() {
-	p.cp.EnterRule("C", C__Start)
+	p.cp.EnterRule("C", StateNumber__C__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_c)
+		p.state.Consume(Token_LETTER_C)
 	}
 	{
 		p.cp.MarkAssignment("Value")
-		p.state.Consume(Token_NestedIdentifier)
+		p.state.Consume(TokenGroup_NestedIdentifier)
 		p.cp.ClearAssignment()
 	}
 }
 
 func (p *CompletionParser) ParseD() {
-	p.cp.EnterRule("D", D__Start)
+	p.cp.EnterRule("D", StateNumber__D__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_d)
+		p.state.Consume(Token_LETTER_D)
 	}
 	{
-		p.cp.RecordSnapshot(D__Basic_2)
-		p.state.Sync(D__Basic_2)
+		p.cp.RecordSnapshot(StateNumber__D__Basic_2)
+		p.state.Sync(StateNumber__D__Basic_2)
 		if p.lookahead.DValueOptional(p.state) {
 			p.cp.MarkAssignment("Value")
-			p.state.Consume(Token_Identifier)
+			p.state.Consume(TokenGroup_Identifier)
 			p.cp.ClearAssignment()
 		}
 	}
 }
 
 func (p *CompletionParser) ParseE() {
-	p.cp.EnterRule("E", E__Start)
+	p.cp.EnterRule("E", StateNumber__E__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_e)
+		p.state.Consume(Token_LETTER_E)
 	}
 	{
 		p.cp.MarkAssignment("First")
-		p.state.Consume(Token_Identifier)
+		p.state.Consume(TokenGroup_Identifier)
 		p.cp.ClearAssignment()
 	}
 	{
 		p.cp.MarkAssignment("Second")
-		p.state.Consume(Token_NestedIdentifier)
+		p.state.Consume(TokenGroup_NestedIdentifier)
 		p.cp.ClearAssignment()
 	}
 }
 
 func (p *CompletionParser) ParseF() {
-	p.cp.EnterRule("F", F__Start)
+	p.cp.EnterRule("F", StateNumber__F__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_f)
+		p.state.Consume(Token_LETTER_F)
 	}
 	{
 		p.cp.MarkAssignment("Value")
-		p.state.Consume(Token_KeywordGroup)
+		p.state.Consume(TokenGroup_KeywordGroup)
 		p.cp.ClearAssignment()
 	}
 }
 
 func (p *CompletionParser) ParseG() {
-	p.cp.EnterRule("G", G__Start)
+	p.cp.EnterRule("G", StateNumber__G__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_g)
+		p.state.Consume(Token_LETTER_G)
 	}
-	{
-		p.cp.MarkAssignment("Value")
-		p.state.Consume(Token_RegexGroup)
-		p.cp.ClearAssignment()
-	}
-}
-
-func (p *CompletionParser) ParseH() {
-	p.cp.EnterRule("H", H__Start)
-	defer p.cp.ExitRule()
-	{
-		p.state.Consume(Keyword_h)
-	}
-	switch prediction, failure := p.lookahead.HAlternatives(p.state); prediction {
+	switch prediction, failure := p.lookahead.GAlternatives(p.state); prediction {
 	case 0:
 		{
-			p.state.Consume(Token_Identifier)
+			p.state.Consume(TokenGroup_Identifier)
 		}
 		{
 			p.cp.MarkAssignment("Value")
-			p.state.Consume(Keyword_a)
+			p.state.Consume(Token_LETTER_A)
 			p.cp.ClearAssignment()
 		}
 	case 1:
 		{
-			p.state.Consume(Token_Identifier)
+			p.state.Consume(TokenGroup_Identifier)
 		}
 		{
 			p.cp.MarkAssignment("Value")
-			p.state.Consume(Keyword_b)
+			p.state.Consume(Token_LETTER_B)
 			p.cp.ClearAssignment()
 		}
 	default:

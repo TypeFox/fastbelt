@@ -145,38 +145,20 @@ func TestRecoverySkipMissingIdentifier(t *testing.T) {
 	assert.Equal(t, "nested", second.Image)
 }
 
-func TestRegexpGroupMatchesOne(t *testing.T) {
-	fixture := test.New(t, CreateServices())
-	doc := fixture.Parse("g one")
-	assertIdentifier(t, doc, "one")
-}
-
-func TestRegexpGroupMatchesTwo(t *testing.T) {
-	fixture := test.New(t, CreateServices())
-	doc := fixture.Parse("g two")
-	assertIdentifier(t, doc, "two")
-}
-
-func TestRegexpGroupRejectsNonMember(t *testing.T) {
-	fixture := test.New(t, CreateServices())
-	doc := fixture.Parse("g three")
-	require.NotEmpty(t, doc.Document.ParserErrors)
-}
-
 func TestLookaheadTokenGroupPositiveA(t *testing.T) {
 	fixture := test.New(t, CreateServices())
-	doc := fixture.Parse("h Lookahead a")
+	doc := fixture.Parse("g Lookahead a")
 	assertIdentifier(t, doc, "a")
 }
 
 func TestLookaheadTokenGroupPositiveB(t *testing.T) {
 	fixture := test.New(t, CreateServices())
-	doc := fixture.Parse("h Lookahead b")
+	doc := fixture.Parse("g Lookahead b")
 	assertIdentifier(t, doc, "b")
 }
 
 func TestLookaheadTokenGroupNegative(t *testing.T) {
 	fixture := test.New(t, CreateServices())
-	doc := fixture.Parse("h b a")
+	doc := fixture.Parse("g b a")
 	require.NotEmpty(t, doc.Document.ParserErrors)
 }

@@ -4,23 +4,23 @@ interface Model {
     Item Item
 }
 
-entry Model: Item=(A | B | C | D | E | F | G | H);
+entry Model: Item=(A | B | C | D | E | F | G);
 
 interface Item {
     Value string
 }
 
 // Simply case, "a" followed by a token group
-A returns Item: "a" Value=Identifier;
+A returns Item: LETTER_A Value=Identifier;
 
 // Token group used as part of an alternative
-B returns Item: "b" Value=(Identifier|"b");
+B returns Item: LETTER_B Value=(Identifier|LETTER_B);
 
 // Asserts that nested token groups can be used
-C returns Item: "c" Value=NestedIdentifier;
+C returns Item: LETTER_C Value=NestedIdentifier;
 
 // Optional token group value
-D returns Item: "d" Value=Identifier?;
+D returns Item: LETTER_D Value=Identifier?;
 
 interface Recovery extends Item {
     First string
@@ -28,34 +28,58 @@ interface Recovery extends Item {
 }
 
 // Assert that the recovery can properly interact with token groups
-E returns Recovery: "e" First=Identifier Second=NestedIdentifier;
+E returns Recovery: LETTER_E First=Identifier Second=NestedIdentifier;
 
 // Keyword-only token group (no terminal tokens, only keyword literals)
-F returns Item: "f" Value=KeywordGroup;
-
-G returns Item: "g" Value=RegexGroup;
+F returns Item: LETTER_F Value=KeywordGroup;
 
 // Token group as part of a longer alternative
-H returns Item: "h" (Identifier Value="a" | Identifier Value="b");
+G returns Item: LETTER_G (Identifier Value=LETTER_A | Identifier Value=LETTER_B);
 
 token group Identifier {
-    ID INT "a"
+    ID INT LETTER_A
 }
 
 token group NestedIdentifier {
-    Identifier "nested"
+    Identifier NESTED
 }
 
 token group KeywordGroup {
-    "one" "two"
+    ONE TWO
 }
 
-token group RegexGroup {
-    // All keywords with an "o" (one/two)
-    keywords /o/
+token ONE: "one"
+token TWO: "two"
+token NESTED: "nested"
+token LETTER_A: "a"
+token LETTER_B: "b"
+token LETTER_C: "c"
+token LETTER_D: "d"
+token LETTER_E: "e"
+token LETTER_F: "f"
+token LETTER_G: "g"
+
+token ID: /[a-zA-Z_][a-zA-Z0-9_]*/
+token INT: /[0-9]+/
+
+token WS: /\s+/
+
+token mode default {
+    ONE
+    TWO
+    NESTED
+    Identifier
+    NestedIdentifier
+    KeywordGroup
+    NESTED
+    LETTER_A
+    LETTER_B
+    LETTER_C
+    LETTER_D
+    LETTER_E
+    LETTER_F
+    LETTER_G
+    ID
+    INT
+    hidden WS
 }
-
-token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
-token INT: /[0-9]+/;
-
-hidden token WS: /\s+/;
