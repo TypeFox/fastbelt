@@ -258,46 +258,45 @@ token RegexLiteral: /\/([^\r\n\[\/\\]|\\.|\[([^\r\n\]\\]|\\.)*\])+\//
 token WS: /[ \n\r\t]+/
 
 token mode default {
-    comment LEFTPAREN //TODO remove "comment"
-    comment RIGHTPAREN //TODO remove "comment"
-    comment ASTERISK //TODO remove "comment"
-    comment PLUS //TODO remove "comment"
-    comment PLUS_EQUALS //TODO remove "comment"
-    comment COMMA //TODO remove "comment"
-    comment DOT //TODO remove "comment"
-    comment COLON //TODO remove "comment"
-    comment SEMICOLON //TODO remove "comment"
-    comment EQUALS //TODO remove "comment"
-    comment QUESTION //TODO remove "comment"
-    comment QUESTION_EQUALS //TODO remove "comment"
-    comment LEFTBRACKET //TODO remove "comment"
-    comment RIGHTBRACKET //TODO remove "comment"
-    comment BOOL //TODO remove "comment"
-    comment COMMENT //TODO remove "comment"
-    comment COMPOSITE //TODO remove "comment"
-    comment CURRENT //TODO remove "comment"
-    comment DEFAULT //TODO remove "comment"
-    comment ENTRY //TODO remove "comment"
-    comment EXTENDS //TODO remove "comment"
-    comment GRAMMAR //TODO remove "comment"
-    comment GROUP //TODO remove "comment"
-    comment HIDDEN //TODO remove "comment"
-    comment INTERFACE //TODO remove "comment"
-    comment KEYWORDS //TODO remove "comment"
-    comment MODE //TODO remove "comment"
-    comment POP //TODO remove "comment"
-    comment PUSH //TODO remove "comment"
-    comment RETURNS //TODO remove "comment"
-    comment STRING //TODO remove "comment"
-    comment TOKEN //TODO remove "comment"
-    comment LEFTBRACE //TODO remove "comment"
-    comment PIPE //TODO remove "comment"
-    comment RIGHTBRACE //TODO remove "comment"
-
+    LEFTPAREN
+    RIGHTPAREN
+    ASTERISK
+    PLUS
+    PLUS_EQUALS
+    COMMA
+    DOT
+    COLON
+    SEMICOLON
+    EQUALS
+    QUESTION
+    QUESTION_EQUALS
+    LEFTBRACKET
+    RIGHTBRACKET
+    BOOL
+    COMMENT
+    COMPOSITE
+    CURRENT
+    DEFAULT
+    ENTRY
+    EXTENDS
+    GRAMMAR
+    GROUP
+    HIDDEN
+    INTERFACE
+    KEYWORDS
+    MODE
+    POP
+    PUSH
+    RETURNS
+    STRING
+    TOKEN
+    LEFTBRACE
+    PIPE
+    RIGHTBRACE
     comment SL_COMMENT
     comment ML_COMMENT
-    comment StringLiteral //TODO remove "comment"
-    comment ID            //TODO remove "comment"
-    comment RegexLiteral  //TODO remove "comment"
+    StringLiteral
+    ID
+    RegexLiteral
     hidden WS
 }

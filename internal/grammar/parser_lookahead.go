@@ -27,7 +27,7 @@ func isNextParserRule(state *parser.ParserState) bool {
 		return false
 	}
 	switch state.LA(2).Type {
-	case Keyword_Colon, Keyword_returns:
+	case Token_COLON, Token_RETURNS:
 		return true
 	default:
 		return false
