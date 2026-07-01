@@ -8,179 +8,179 @@ import (
 )
 
 const (
-	Root__Start = iota
-	Root__Stop
-	Obj__Start
-	Obj__Stop
-	A__Start
-	A__Stop
-	B__Start
-	B__Stop
-	C__Start
-	C__Stop
-	D__Start
-	D__Stop
-	E__Start
-	E__Stop
-	F__Start
-	F__Stop
-	G__Start
-	G__Stop
-	H__Start
-	H__Stop
-	I__Start
-	I__Stop
-	QualifiedName__Start
-	QualifiedName__Stop
-	Path__Start
-	Path__Stop
-	QualifiedPath__Start
-	QualifiedPath__Stop
-	CLoop__Start
-	CLoop__Stop
-	DOpt__Start
-	DOpt__Stop
-	QualifiedNameRecursive__Start
-	QualifiedNameRecursive__Stop
-	Root__Basic_0
-	Root__Basic_1
-	Obj__Basic_0
-	Obj__Basic_1
-	Obj__Basic_2
-	Obj__Basic_3
-	Obj__Basic_4
-	Obj__Basic_5
-	Obj__Basic_6
-	Obj__Basic_7
-	Obj__Basic_8
-	Obj__Basic_9
-	Obj__Basic_10
-	Obj__Basic_11
-	Obj__Basic_12
-	Obj__Basic_13
-	Obj__Basic_14
-	Obj__Basic_15
-	Obj__Basic_16
-	Obj__Basic_17
-	Obj__Basic_18
-	Obj__BlockEnd
-	A_a
-	A__Basic_0
-	A__Basic_1
-	B_b
-	B__Basic_0
-	B_Dot
-	B_Post_ID
-	B__Basic_1
-	C_c
-	C__Basic_0
-	C_ColonColon
-	C_Value_AsteriskAsterisk
-	C__Basic_1
-	C__Basic_2
-	D_d
-	D__Basic_0
-	D_ColonColon
-	D_Value_AsteriskAsterisk
-	D__Basic_1
-	D__Basic_2
-	E_e
-	E_Value_hello
-	E__Basic_0
-	E__Basic_1
-	E_world
-	E__Basic_2
-	E__Basic_3
-	F_f
-	F_ID_0
-	F__Basic_0
-	F__LoopEntry_0
-	F__LoopEnd_0
-	F__LoopBack_0
-	F_Value_hello
-	F__Basic_1
-	F_ID_1
-	F__Basic_2
-	F__LoopEntry_1
-	F__LoopEnd_1
-	F__LoopBack_1
-	F_Value_world
-	F__Basic_3
-	F__Basic_4
-	F__BlockEnd
-	G_g
-	G__Basic_0
-	G_Value_hello
-	G__Basic_1
-	G__Basic_2
-	G_Value_world
-	G__Basic_3
-	G__Basic_4
-	G__BlockEnd
-	H_h
-	H__Basic_0
-	H_Value_hello
-	H__Basic_1
-	H__Basic_2
-	H_Value_world
-	H__Basic_3
-	H__Basic_4
-	H__BlockEnd
-	I_i
-	I__Basic_0
-	I_Value_ID_0
-	I__Basic_1
-	I__Basic_2
-	I_Value_ID_1
-	I__Basic_3
-	I__Basic_4
-	I__BlockEnd
-	QualifiedName_ID_0
-	QualifiedName_Dot
-	QualifiedName_ID_1
-	QualifiedName__Basic
-	QualifiedName__LoopEntry
-	QualifiedName__LoopEnd
-	QualifiedName__LoopBack
-	Path_ID_0
-	Path_Slash
-	Path_ID_1
-	Path__Basic_0
-	Path__LoopEntry
-	Path__LoopEnd
-	Path__LoopBack
-	Path_Colon
-	Path_ID_2
-	Path__Basic_1
-	Path_ID_3
-	Path__Basic_2
-	Path__Basic_3
-	Path__BlockEnd
-	QualifiedPath__Basic_0
-	QualifiedPath_ColonColon
-	QualifiedPath__Basic_1
-	QualifiedPath__Basic_2
-	QualifiedPath__Basic_3
-	QualifiedPath__Basic_4
-	QualifiedPath__Basic_5
-	QualifiedPath__BlockEnd
-	CLoop_ID_0
-	CLoop_ColonColon
-	CLoop_ID_1
-	CLoop__Basic
-	CLoop__LoopEntry
-	CLoop__LoopEnd
-	CLoop__LoopBack
-	DOpt_ID_0
-	DOpt_ColonColon
-	DOpt_ID_1
-	DOpt__Basic_0
-	DOpt__Basic_1
-	QualifiedNameRecursive_ID
-	QualifiedNameRecursive_Dot
-	QualifiedNameRecursive__Basic_0
-	QualifiedNameRecursive__Basic_1
-	QualifiedNameRecursive__Basic_2
+	StateNumber__Root__Start = iota
+	StateNumber__Root__Stop
+	StateNumber__Obj__Start
+	StateNumber__Obj__Stop
+	StateNumber__A__Start
+	StateNumber__A__Stop
+	StateNumber__B__Start
+	StateNumber__B__Stop
+	StateNumber__C__Start
+	StateNumber__C__Stop
+	StateNumber__D__Start
+	StateNumber__D__Stop
+	StateNumber__E__Start
+	StateNumber__E__Stop
+	StateNumber__F__Start
+	StateNumber__F__Stop
+	StateNumber__G__Start
+	StateNumber__G__Stop
+	StateNumber__H__Start
+	StateNumber__H__Stop
+	StateNumber__I__Start
+	StateNumber__I__Stop
+	StateNumber__QualifiedName__Start
+	StateNumber__QualifiedName__Stop
+	StateNumber__Path__Start
+	StateNumber__Path__Stop
+	StateNumber__QualifiedPath__Start
+	StateNumber__QualifiedPath__Stop
+	StateNumber__CLoop__Start
+	StateNumber__CLoop__Stop
+	StateNumber__DOpt__Start
+	StateNumber__DOpt__Stop
+	StateNumber__QualifiedNameRecursive__Start
+	StateNumber__QualifiedNameRecursive__Stop
+	StateNumber__Root__Basic_0
+	StateNumber__Root__Basic_1
+	StateNumber__Obj__Basic_0
+	StateNumber__Obj__Basic_1
+	StateNumber__Obj__Basic_2
+	StateNumber__Obj__Basic_3
+	StateNumber__Obj__Basic_4
+	StateNumber__Obj__Basic_5
+	StateNumber__Obj__Basic_6
+	StateNumber__Obj__Basic_7
+	StateNumber__Obj__Basic_8
+	StateNumber__Obj__Basic_9
+	StateNumber__Obj__Basic_10
+	StateNumber__Obj__Basic_11
+	StateNumber__Obj__Basic_12
+	StateNumber__Obj__Basic_13
+	StateNumber__Obj__Basic_14
+	StateNumber__Obj__Basic_15
+	StateNumber__Obj__Basic_16
+	StateNumber__Obj__Basic_17
+	StateNumber__Obj__Basic_18
+	StateNumber__Obj__BlockEnd
+	StateNumber__A_LETTER_A
+	StateNumber__A__Basic_0
+	StateNumber__A__Basic_1
+	StateNumber__B_LETTER_B
+	StateNumber__B__Basic_0
+	StateNumber__B_DOT
+	StateNumber__B_Post_ID
+	StateNumber__B__Basic_1
+	StateNumber__C_LETTER_C
+	StateNumber__C__Basic_0
+	StateNumber__C_DOUBLE_COLON
+	StateNumber__C_Value_DOUBLE_ASTERISK
+	StateNumber__C__Basic_1
+	StateNumber__C__Basic_2
+	StateNumber__D_LETTER_D
+	StateNumber__D__Basic_0
+	StateNumber__D_DOUBLE_COLON
+	StateNumber__D_Value_DOUBLE_ASTERISK
+	StateNumber__D__Basic_1
+	StateNumber__D__Basic_2
+	StateNumber__E_LETTER_E
+	StateNumber__E_Value_HELLO
+	StateNumber__E__Basic_0
+	StateNumber__E__Basic_1
+	StateNumber__E_WORLD
+	StateNumber__E__Basic_2
+	StateNumber__E__Basic_3
+	StateNumber__F_LETTER_F
+	StateNumber__F_ID_0
+	StateNumber__F__Basic_0
+	StateNumber__F__LoopEntry_0
+	StateNumber__F__LoopEnd_0
+	StateNumber__F__LoopBack_0
+	StateNumber__F_Value_HELLO
+	StateNumber__F__Basic_1
+	StateNumber__F_ID_1
+	StateNumber__F__Basic_2
+	StateNumber__F__LoopEntry_1
+	StateNumber__F__LoopEnd_1
+	StateNumber__F__LoopBack_1
+	StateNumber__F_Value_WORLD
+	StateNumber__F__Basic_3
+	StateNumber__F__Basic_4
+	StateNumber__F__BlockEnd
+	StateNumber__G_LETTER_G
+	StateNumber__G__Basic_0
+	StateNumber__G_Value_HELLO
+	StateNumber__G__Basic_1
+	StateNumber__G__Basic_2
+	StateNumber__G_Value_WORLD
+	StateNumber__G__Basic_3
+	StateNumber__G__Basic_4
+	StateNumber__G__BlockEnd
+	StateNumber__H_LETTER_H
+	StateNumber__H__Basic_0
+	StateNumber__H_Value_HELLO
+	StateNumber__H__Basic_1
+	StateNumber__H__Basic_2
+	StateNumber__H_Value_WORLD
+	StateNumber__H__Basic_3
+	StateNumber__H__Basic_4
+	StateNumber__H__BlockEnd
+	StateNumber__I_LETTER_I
+	StateNumber__I__Basic_0
+	StateNumber__I_Value_ID_0
+	StateNumber__I__Basic_1
+	StateNumber__I__Basic_2
+	StateNumber__I_Value_ID_1
+	StateNumber__I__Basic_3
+	StateNumber__I__Basic_4
+	StateNumber__I__BlockEnd
+	StateNumber__QualifiedName_ID_0
+	StateNumber__QualifiedName_DOT
+	StateNumber__QualifiedName_ID_1
+	StateNumber__QualifiedName__Basic
+	StateNumber__QualifiedName__LoopEntry
+	StateNumber__QualifiedName__LoopEnd
+	StateNumber__QualifiedName__LoopBack
+	StateNumber__Path_ID_0
+	StateNumber__Path_SLASH
+	StateNumber__Path_ID_1
+	StateNumber__Path__Basic_0
+	StateNumber__Path__LoopEntry
+	StateNumber__Path__LoopEnd
+	StateNumber__Path__LoopBack
+	StateNumber__Path_COLON
+	StateNumber__Path_ID_2
+	StateNumber__Path__Basic_1
+	StateNumber__Path_ID_3
+	StateNumber__Path__Basic_2
+	StateNumber__Path__Basic_3
+	StateNumber__Path__BlockEnd
+	StateNumber__QualifiedPath__Basic_0
+	StateNumber__QualifiedPath_DOUBLE_COLON
+	StateNumber__QualifiedPath__Basic_1
+	StateNumber__QualifiedPath__Basic_2
+	StateNumber__QualifiedPath__Basic_3
+	StateNumber__QualifiedPath__Basic_4
+	StateNumber__QualifiedPath__Basic_5
+	StateNumber__QualifiedPath__BlockEnd
+	StateNumber__CLoop_ID_0
+	StateNumber__CLoop_DOUBLE_COLON
+	StateNumber__CLoop_ID_1
+	StateNumber__CLoop__Basic
+	StateNumber__CLoop__LoopEntry
+	StateNumber__CLoop__LoopEnd
+	StateNumber__CLoop__LoopBack
+	StateNumber__DOpt_ID_0
+	StateNumber__DOpt_DOUBLE_COLON
+	StateNumber__DOpt_ID_1
+	StateNumber__DOpt__Basic_0
+	StateNumber__DOpt__Basic_1
+	StateNumber__QualifiedNameRecursive_ID
+	StateNumber__QualifiedNameRecursive_DOT
+	StateNumber__QualifiedNameRecursive__Basic_0
+	StateNumber__QualifiedNameRecursive__Basic_1
+	StateNumber__QualifiedNameRecursive__Basic_2
 )
 
 var once sync.Once
@@ -194,709 +194,709 @@ func ATN() *parser.RuntimeATN {
 }
 func BuildATN() *parser.RuntimeATN {
 	states := make([]*parser.RuntimeATNState, 173)
-	states[Root__Start] = parser.NewATNState(Root__Start, parser.ATNRuleStart, true)
-	states[Root__Stop] = parser.NewATNState(Root__Stop, parser.ATNRuleStop, false)
-	states[Obj__Start] = parser.NewATNState(Obj__Start, parser.ATNRuleStart, true)
-	states[Obj__Stop] = parser.NewATNState(Obj__Stop, parser.ATNRuleStop, false)
-	states[A__Start] = parser.NewATNState(A__Start, parser.ATNRuleStart, true)
-	states[A__Stop] = parser.NewATNState(A__Stop, parser.ATNRuleStop, false)
-	states[B__Start] = parser.NewATNState(B__Start, parser.ATNRuleStart, true)
-	states[B__Stop] = parser.NewATNState(B__Stop, parser.ATNRuleStop, false)
-	states[C__Start] = parser.NewATNState(C__Start, parser.ATNRuleStart, true)
-	states[C__Stop] = parser.NewATNState(C__Stop, parser.ATNRuleStop, false)
-	states[D__Start] = parser.NewATNState(D__Start, parser.ATNRuleStart, true)
-	states[D__Stop] = parser.NewATNState(D__Stop, parser.ATNRuleStop, false)
-	states[E__Start] = parser.NewATNState(E__Start, parser.ATNRuleStart, true)
-	states[E__Stop] = parser.NewATNState(E__Stop, parser.ATNRuleStop, false)
-	states[F__Start] = parser.NewATNState(F__Start, parser.ATNRuleStart, true)
-	states[F__Stop] = parser.NewATNState(F__Stop, parser.ATNRuleStop, false)
-	states[G__Start] = parser.NewATNState(G__Start, parser.ATNRuleStart, true)
-	states[G__Stop] = parser.NewATNState(G__Stop, parser.ATNRuleStop, false)
-	states[H__Start] = parser.NewATNState(H__Start, parser.ATNRuleStart, true)
-	states[H__Stop] = parser.NewATNState(H__Stop, parser.ATNRuleStop, false)
-	states[I__Start] = parser.NewATNState(I__Start, parser.ATNRuleStart, true)
-	states[I__Stop] = parser.NewATNState(I__Stop, parser.ATNRuleStop, false)
-	states[QualifiedName__Start] = parser.NewATNState(QualifiedName__Start, parser.ATNRuleStart, true)
-	states[QualifiedName__Stop] = parser.NewATNState(QualifiedName__Stop, parser.ATNRuleStop, false)
-	states[Path__Start] = parser.NewATNState(Path__Start, parser.ATNRuleStart, true)
-	states[Path__Stop] = parser.NewATNState(Path__Stop, parser.ATNRuleStop, false)
-	states[QualifiedPath__Start] = parser.NewATNState(QualifiedPath__Start, parser.ATNRuleStart, true)
-	states[QualifiedPath__Stop] = parser.NewATNState(QualifiedPath__Stop, parser.ATNRuleStop, false)
-	states[CLoop__Start] = parser.NewATNState(CLoop__Start, parser.ATNRuleStart, true)
-	states[CLoop__Stop] = parser.NewATNState(CLoop__Stop, parser.ATNRuleStop, false)
-	states[DOpt__Start] = parser.NewATNState(DOpt__Start, parser.ATNRuleStart, true)
-	states[DOpt__Stop] = parser.NewATNState(DOpt__Stop, parser.ATNRuleStop, false)
-	states[QualifiedNameRecursive__Start] = parser.NewATNState(QualifiedNameRecursive__Start, parser.ATNRuleStart, true)
-	states[QualifiedNameRecursive__Stop] = parser.NewATNState(QualifiedNameRecursive__Stop, parser.ATNRuleStop, false)
-	states[Root__Basic_0] = parser.NewATNState(Root__Basic_0, parser.ATNBasic, true)
-	states[Root__Basic_1] = parser.NewATNState(Root__Basic_1, parser.ATNBasic, true)
-	states[Obj__Basic_0] = parser.NewATNState(Obj__Basic_0, parser.ATNBasic, true)
-	states[Obj__Basic_1] = parser.NewATNState(Obj__Basic_1, parser.ATNBasic, true)
-	states[Obj__Basic_2] = parser.NewATNState(Obj__Basic_2, parser.ATNBasic, true)
-	states[Obj__Basic_3] = parser.NewATNState(Obj__Basic_3, parser.ATNBasic, true)
-	states[Obj__Basic_4] = parser.NewATNState(Obj__Basic_4, parser.ATNBasic, true)
-	states[Obj__Basic_5] = parser.NewATNState(Obj__Basic_5, parser.ATNBasic, true)
-	states[Obj__Basic_6] = parser.NewATNState(Obj__Basic_6, parser.ATNBasic, true)
-	states[Obj__Basic_7] = parser.NewATNState(Obj__Basic_7, parser.ATNBasic, true)
-	states[Obj__Basic_8] = parser.NewATNState(Obj__Basic_8, parser.ATNBasic, true)
-	states[Obj__Basic_9] = parser.NewATNState(Obj__Basic_9, parser.ATNBasic, true)
-	states[Obj__Basic_10] = parser.NewATNState(Obj__Basic_10, parser.ATNBasic, true)
-	states[Obj__Basic_11] = parser.NewATNState(Obj__Basic_11, parser.ATNBasic, true)
-	states[Obj__Basic_12] = parser.NewATNState(Obj__Basic_12, parser.ATNBasic, true)
-	states[Obj__Basic_13] = parser.NewATNState(Obj__Basic_13, parser.ATNBasic, true)
-	states[Obj__Basic_14] = parser.NewATNState(Obj__Basic_14, parser.ATNBasic, true)
-	states[Obj__Basic_15] = parser.NewATNState(Obj__Basic_15, parser.ATNBasic, true)
-	states[Obj__Basic_16] = parser.NewATNState(Obj__Basic_16, parser.ATNBasic, true)
-	states[Obj__Basic_17] = parser.NewATNState(Obj__Basic_17, parser.ATNBasic, true)
-	states[Obj__Basic_18] = parser.NewATNState(Obj__Basic_18, parser.ATNBasic, true).SetDecision(0)
-	states[Obj__BlockEnd] = parser.NewATNState(Obj__BlockEnd, parser.ATNBlockEnd, true)
-	states[A_a] = parser.NewATNState(A_a, parser.ATNBasic, false)
-	states[A__Basic_0] = parser.NewATNState(A__Basic_0, parser.ATNBasic, true)
-	states[A__Basic_1] = parser.NewATNState(A__Basic_1, parser.ATNBasic, true)
-	states[B_b] = parser.NewATNState(B_b, parser.ATNBasic, false)
-	states[B__Basic_0] = parser.NewATNState(B__Basic_0, parser.ATNBasic, true)
-	states[B_Dot] = parser.NewATNState(B_Dot, parser.ATNBasic, false)
-	states[B_Post_ID] = parser.NewATNState(B_Post_ID, parser.ATNBasic, false)
-	states[B__Basic_1] = parser.NewATNState(B__Basic_1, parser.ATNBasic, true)
-	states[C_c] = parser.NewATNState(C_c, parser.ATNBasic, false)
-	states[C__Basic_0] = parser.NewATNState(C__Basic_0, parser.ATNBasic, true)
-	states[C_ColonColon] = parser.NewATNState(C_ColonColon, parser.ATNBasic, false)
-	states[C_Value_AsteriskAsterisk] = parser.NewATNState(C_Value_AsteriskAsterisk, parser.ATNBasic, false)
-	states[C__Basic_1] = parser.NewATNState(C__Basic_1, parser.ATNBasic, true)
-	states[C__Basic_2] = parser.NewATNState(C__Basic_2, parser.ATNBasic, true).SetDecision(1)
-	states[D_d] = parser.NewATNState(D_d, parser.ATNBasic, false)
-	states[D__Basic_0] = parser.NewATNState(D__Basic_0, parser.ATNBasic, true)
-	states[D_ColonColon] = parser.NewATNState(D_ColonColon, parser.ATNBasic, false)
-	states[D_Value_AsteriskAsterisk] = parser.NewATNState(D_Value_AsteriskAsterisk, parser.ATNBasic, false)
-	states[D__Basic_1] = parser.NewATNState(D__Basic_1, parser.ATNBasic, true)
-	states[D__Basic_2] = parser.NewATNState(D__Basic_2, parser.ATNBasic, true).SetDecision(2)
-	states[E_e] = parser.NewATNState(E_e, parser.ATNBasic, false)
-	states[E_Value_hello] = parser.NewATNState(E_Value_hello, parser.ATNBasic, false)
-	states[E__Basic_0] = parser.NewATNState(E__Basic_0, parser.ATNBasic, true)
-	states[E__Basic_1] = parser.NewATNState(E__Basic_1, parser.ATNBasic, true).SetDecision(3)
-	states[E_world] = parser.NewATNState(E_world, parser.ATNBasic, false)
-	states[E__Basic_2] = parser.NewATNState(E__Basic_2, parser.ATNBasic, true)
-	states[E__Basic_3] = parser.NewATNState(E__Basic_3, parser.ATNBasic, true).SetDecision(4)
-	states[F_f] = parser.NewATNState(F_f, parser.ATNBasic, false)
-	states[F_ID_0] = parser.NewATNState(F_ID_0, parser.ATNBasic, false)
-	states[F__Basic_0] = parser.NewATNState(F__Basic_0, parser.ATNBasic, true)
-	states[F__LoopEntry_0] = parser.NewATNState(F__LoopEntry_0, parser.ATNLoopEntry, true).SetDecision(5)
-	states[F__LoopEnd_0] = parser.NewATNState(F__LoopEnd_0, parser.ATNLoopEnd, true)
-	states[F__LoopBack_0] = parser.NewATNState(F__LoopBack_0, parser.ATNLoopBack, true)
-	states[F_Value_hello] = parser.NewATNState(F_Value_hello, parser.ATNBasic, false)
-	states[F__Basic_1] = parser.NewATNState(F__Basic_1, parser.ATNBasic, true)
-	states[F_ID_1] = parser.NewATNState(F_ID_1, parser.ATNBasic, false)
-	states[F__Basic_2] = parser.NewATNState(F__Basic_2, parser.ATNBasic, true)
-	states[F__LoopEntry_1] = parser.NewATNState(F__LoopEntry_1, parser.ATNLoopEntry, true).SetDecision(6)
-	states[F__LoopEnd_1] = parser.NewATNState(F__LoopEnd_1, parser.ATNLoopEnd, true)
-	states[F__LoopBack_1] = parser.NewATNState(F__LoopBack_1, parser.ATNLoopBack, true)
-	states[F_Value_world] = parser.NewATNState(F_Value_world, parser.ATNBasic, false)
-	states[F__Basic_3] = parser.NewATNState(F__Basic_3, parser.ATNBasic, true)
-	states[F__Basic_4] = parser.NewATNState(F__Basic_4, parser.ATNBasic, true).SetDecision(7)
-	states[F__BlockEnd] = parser.NewATNState(F__BlockEnd, parser.ATNBlockEnd, true)
-	states[G_g] = parser.NewATNState(G_g, parser.ATNBasic, false)
-	states[G__Basic_0] = parser.NewATNState(G__Basic_0, parser.ATNBasic, true)
-	states[G_Value_hello] = parser.NewATNState(G_Value_hello, parser.ATNBasic, false)
-	states[G__Basic_1] = parser.NewATNState(G__Basic_1, parser.ATNBasic, true)
-	states[G__Basic_2] = parser.NewATNState(G__Basic_2, parser.ATNBasic, true)
-	states[G_Value_world] = parser.NewATNState(G_Value_world, parser.ATNBasic, false)
-	states[G__Basic_3] = parser.NewATNState(G__Basic_3, parser.ATNBasic, true)
-	states[G__Basic_4] = parser.NewATNState(G__Basic_4, parser.ATNBasic, true).SetDecision(8)
-	states[G__BlockEnd] = parser.NewATNState(G__BlockEnd, parser.ATNBlockEnd, true)
-	states[H_h] = parser.NewATNState(H_h, parser.ATNBasic, false)
-	states[H__Basic_0] = parser.NewATNState(H__Basic_0, parser.ATNBasic, true)
-	states[H_Value_hello] = parser.NewATNState(H_Value_hello, parser.ATNBasic, false)
-	states[H__Basic_1] = parser.NewATNState(H__Basic_1, parser.ATNBasic, true)
-	states[H__Basic_2] = parser.NewATNState(H__Basic_2, parser.ATNBasic, true)
-	states[H_Value_world] = parser.NewATNState(H_Value_world, parser.ATNBasic, false)
-	states[H__Basic_3] = parser.NewATNState(H__Basic_3, parser.ATNBasic, true)
-	states[H__Basic_4] = parser.NewATNState(H__Basic_4, parser.ATNBasic, true).SetDecision(9)
-	states[H__BlockEnd] = parser.NewATNState(H__BlockEnd, parser.ATNBlockEnd, true)
-	states[I_i] = parser.NewATNState(I_i, parser.ATNBasic, false)
-	states[I__Basic_0] = parser.NewATNState(I__Basic_0, parser.ATNBasic, true)
-	states[I_Value_ID_0] = parser.NewATNState(I_Value_ID_0, parser.ATNBasic, false)
-	states[I__Basic_1] = parser.NewATNState(I__Basic_1, parser.ATNBasic, true)
-	states[I__Basic_2] = parser.NewATNState(I__Basic_2, parser.ATNBasic, true)
-	states[I_Value_ID_1] = parser.NewATNState(I_Value_ID_1, parser.ATNBasic, false)
-	states[I__Basic_3] = parser.NewATNState(I__Basic_3, parser.ATNBasic, true)
-	states[I__Basic_4] = parser.NewATNState(I__Basic_4, parser.ATNBasic, true).SetDecision(10)
-	states[I__BlockEnd] = parser.NewATNState(I__BlockEnd, parser.ATNBlockEnd, true)
-	states[QualifiedName_ID_0] = parser.NewATNState(QualifiedName_ID_0, parser.ATNBasic, false)
-	states[QualifiedName_Dot] = parser.NewATNState(QualifiedName_Dot, parser.ATNBasic, false)
-	states[QualifiedName_ID_1] = parser.NewATNState(QualifiedName_ID_1, parser.ATNBasic, false)
-	states[QualifiedName__Basic] = parser.NewATNState(QualifiedName__Basic, parser.ATNBasic, true)
-	states[QualifiedName__LoopEntry] = parser.NewATNState(QualifiedName__LoopEntry, parser.ATNLoopEntry, true).SetDecision(11)
-	states[QualifiedName__LoopEnd] = parser.NewATNState(QualifiedName__LoopEnd, parser.ATNLoopEnd, true)
-	states[QualifiedName__LoopBack] = parser.NewATNState(QualifiedName__LoopBack, parser.ATNLoopBack, true)
-	states[Path_ID_0] = parser.NewATNState(Path_ID_0, parser.ATNBasic, false)
-	states[Path_Slash] = parser.NewATNState(Path_Slash, parser.ATNBasic, false)
-	states[Path_ID_1] = parser.NewATNState(Path_ID_1, parser.ATNBasic, false)
-	states[Path__Basic_0] = parser.NewATNState(Path__Basic_0, parser.ATNBasic, true)
-	states[Path__LoopEntry] = parser.NewATNState(Path__LoopEntry, parser.ATNLoopEntry, true).SetDecision(12)
-	states[Path__LoopEnd] = parser.NewATNState(Path__LoopEnd, parser.ATNLoopEnd, true)
-	states[Path__LoopBack] = parser.NewATNState(Path__LoopBack, parser.ATNLoopBack, true)
-	states[Path_Colon] = parser.NewATNState(Path_Colon, parser.ATNBasic, false)
-	states[Path_ID_2] = parser.NewATNState(Path_ID_2, parser.ATNBasic, false)
-	states[Path__Basic_1] = parser.NewATNState(Path__Basic_1, parser.ATNBasic, true)
-	states[Path_ID_3] = parser.NewATNState(Path_ID_3, parser.ATNBasic, false)
-	states[Path__Basic_2] = parser.NewATNState(Path__Basic_2, parser.ATNBasic, true)
-	states[Path__Basic_3] = parser.NewATNState(Path__Basic_3, parser.ATNBasic, true).SetDecision(13)
-	states[Path__BlockEnd] = parser.NewATNState(Path__BlockEnd, parser.ATNBlockEnd, true)
-	states[QualifiedPath__Basic_0] = parser.NewATNState(QualifiedPath__Basic_0, parser.ATNBasic, true)
-	states[QualifiedPath_ColonColon] = parser.NewATNState(QualifiedPath_ColonColon, parser.ATNBasic, false)
-	states[QualifiedPath__Basic_1] = parser.NewATNState(QualifiedPath__Basic_1, parser.ATNBasic, true)
-	states[QualifiedPath__Basic_2] = parser.NewATNState(QualifiedPath__Basic_2, parser.ATNBasic, true)
-	states[QualifiedPath__Basic_3] = parser.NewATNState(QualifiedPath__Basic_3, parser.ATNBasic, true)
-	states[QualifiedPath__Basic_4] = parser.NewATNState(QualifiedPath__Basic_4, parser.ATNBasic, true)
-	states[QualifiedPath__Basic_5] = parser.NewATNState(QualifiedPath__Basic_5, parser.ATNBasic, true).SetDecision(14)
-	states[QualifiedPath__BlockEnd] = parser.NewATNState(QualifiedPath__BlockEnd, parser.ATNBlockEnd, true)
-	states[CLoop_ID_0] = parser.NewATNState(CLoop_ID_0, parser.ATNBasic, false)
-	states[CLoop_ColonColon] = parser.NewATNState(CLoop_ColonColon, parser.ATNBasic, false)
-	states[CLoop_ID_1] = parser.NewATNState(CLoop_ID_1, parser.ATNBasic, false)
-	states[CLoop__Basic] = parser.NewATNState(CLoop__Basic, parser.ATNBasic, true)
-	states[CLoop__LoopEntry] = parser.NewATNState(CLoop__LoopEntry, parser.ATNLoopEntry, true).SetDecision(15)
-	states[CLoop__LoopEnd] = parser.NewATNState(CLoop__LoopEnd, parser.ATNLoopEnd, true)
-	states[CLoop__LoopBack] = parser.NewATNState(CLoop__LoopBack, parser.ATNLoopBack, true)
-	states[DOpt_ID_0] = parser.NewATNState(DOpt_ID_0, parser.ATNBasic, false)
-	states[DOpt_ColonColon] = parser.NewATNState(DOpt_ColonColon, parser.ATNBasic, false)
-	states[DOpt_ID_1] = parser.NewATNState(DOpt_ID_1, parser.ATNBasic, false)
-	states[DOpt__Basic_0] = parser.NewATNState(DOpt__Basic_0, parser.ATNBasic, true)
-	states[DOpt__Basic_1] = parser.NewATNState(DOpt__Basic_1, parser.ATNBasic, true).SetDecision(16)
-	states[QualifiedNameRecursive_ID] = parser.NewATNState(QualifiedNameRecursive_ID, parser.ATNBasic, false)
-	states[QualifiedNameRecursive_Dot] = parser.NewATNState(QualifiedNameRecursive_Dot, parser.ATNBasic, false)
-	states[QualifiedNameRecursive__Basic_0] = parser.NewATNState(QualifiedNameRecursive__Basic_0, parser.ATNBasic, true)
-	states[QualifiedNameRecursive__Basic_1] = parser.NewATNState(QualifiedNameRecursive__Basic_1, parser.ATNBasic, true)
-	states[QualifiedNameRecursive__Basic_2] = parser.NewATNState(QualifiedNameRecursive__Basic_2, parser.ATNBasic, true).SetDecision(17)
-	states[Root__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[Root__Basic_0]),
-	)
-	states[Obj__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[Obj__Basic_18]),
-	)
-	states[A__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[A_a]),
-	)
-	states[B__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[B_b]),
-	)
-	states[C__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[C_c]),
-	)
-	states[D__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[D_d]),
-	)
-	states[E__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[E_e]),
-	)
-	states[F__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[F_f]),
-	)
-	states[G__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[G_g]),
-	)
-	states[H__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[H_h]),
-	)
-	states[I__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[I_i]),
-	)
-	states[QualifiedName__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[QualifiedName_ID_0]),
-	)
-	states[Path__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[Path__Basic_3]),
-	)
-	states[QualifiedPath__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[QualifiedPath__Basic_5]),
-	)
-	states[CLoop__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[CLoop_ID_0]),
-	)
-	states[DOpt__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[DOpt_ID_0]),
-	)
-	states[QualifiedNameRecursive__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[QualifiedNameRecursive_ID]),
-	)
-	states[Root__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[Obj__Start], states[Root__Basic_1], nil),
-	)
-	states[Root__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[Root__Stop]),
-	)
-	states[Obj__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[A__Start], states[Obj__Basic_1], nil),
-	)
-	states[Obj__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[Obj__BlockEnd]),
-	)
-	states[Obj__Basic_2].AppendTransitions(
-		parser.NewRuleTransition(states[B__Start], states[Obj__Basic_3], nil),
-	)
-	states[Obj__Basic_3].AppendTransitions(
-		parser.NewEpsilonTransition(states[Obj__BlockEnd]),
-	)
-	states[Obj__Basic_4].AppendTransitions(
-		parser.NewRuleTransition(states[C__Start], states[Obj__Basic_5], nil),
-	)
-	states[Obj__Basic_5].AppendTransitions(
-		parser.NewEpsilonTransition(states[Obj__BlockEnd]),
-	)
-	states[Obj__Basic_6].AppendTransitions(
-		parser.NewRuleTransition(states[D__Start], states[Obj__Basic_7], nil),
-	)
-	states[Obj__Basic_7].AppendTransitions(
-		parser.NewEpsilonTransition(states[Obj__BlockEnd]),
-	)
-	states[Obj__Basic_8].AppendTransitions(
-		parser.NewRuleTransition(states[E__Start], states[Obj__Basic_9], nil),
-	)
-	states[Obj__Basic_9].AppendTransitions(
-		parser.NewEpsilonTransition(states[Obj__BlockEnd]),
-	)
-	states[Obj__Basic_10].AppendTransitions(
-		parser.NewRuleTransition(states[F__Start], states[Obj__Basic_11], nil),
-	)
-	states[Obj__Basic_11].AppendTransitions(
-		parser.NewEpsilonTransition(states[Obj__BlockEnd]),
-	)
-	states[Obj__Basic_12].AppendTransitions(
-		parser.NewRuleTransition(states[G__Start], states[Obj__Basic_13], nil),
-	)
-	states[Obj__Basic_13].AppendTransitions(
-		parser.NewEpsilonTransition(states[Obj__BlockEnd]),
-	)
-	states[Obj__Basic_14].AppendTransitions(
-		parser.NewRuleTransition(states[H__Start], states[Obj__Basic_15], nil),
-	)
-	states[Obj__Basic_15].AppendTransitions(
-		parser.NewEpsilonTransition(states[Obj__BlockEnd]),
-	)
-	states[Obj__Basic_16].AppendTransitions(
-		parser.NewRuleTransition(states[I__Start], states[Obj__Basic_17], nil),
-	)
-	states[Obj__Basic_17].AppendTransitions(
-		parser.NewEpsilonTransition(states[Obj__BlockEnd]),
-	)
-	states[Obj__Basic_18].AppendTransitions(
-		parser.NewEpsilonTransition(states[Obj__Basic_0]),
-		parser.NewEpsilonTransition(states[Obj__Basic_2]),
-		parser.NewEpsilonTransition(states[Obj__Basic_4]),
-		parser.NewEpsilonTransition(states[Obj__Basic_6]),
-		parser.NewEpsilonTransition(states[Obj__Basic_8]),
-		parser.NewEpsilonTransition(states[Obj__Basic_10]),
-		parser.NewEpsilonTransition(states[Obj__Basic_12]),
-		parser.NewEpsilonTransition(states[Obj__Basic_14]),
-		parser.NewEpsilonTransition(states[Obj__Basic_16]),
-	)
-	states[Obj__BlockEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[Obj__Stop]),
-	)
-	states[A_a].AppendTransitions(
-		parser.NewAtomTransition(states[A__Basic_0], Keyword_a, nil),
-	)
-	states[A__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[QualifiedPath__Start], states[A__Basic_1], nil),
-	)
-	states[A__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[A__Stop]),
-	)
-	states[B_b].AppendTransitions(
-		parser.NewAtomTransition(states[B__Basic_0], Keyword_b, nil),
-	)
-	states[B__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[QualifiedPath__Start], states[B_Dot], nil),
-	)
-	states[B_Dot].AppendTransitions(
-		parser.NewAtomTransition(states[B_Post_ID], Keyword_Dot, nil),
-	)
-	states[B_Post_ID].AppendTransitions(
-		parser.NewAtomTransition(states[B__Basic_1], Token_ID, nil),
-	)
-	states[B__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[B__Stop]),
-	)
-	states[C_c].AppendTransitions(
-		parser.NewAtomTransition(states[C__Basic_0], Keyword_c, nil),
-	)
-	states[C__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[CLoop__Start], states[C__Basic_2], nil),
-	)
-	states[C_ColonColon].AppendTransitions(
-		parser.NewAtomTransition(states[C_Value_AsteriskAsterisk], Keyword_ColonColon, nil),
-	)
-	states[C_Value_AsteriskAsterisk].AppendTransitions(
-		parser.NewAtomTransition(states[C__Basic_1], Keyword_AsteriskAsterisk, nil),
-	)
-	states[C__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[C__Stop]),
-	)
-	states[C__Basic_2].AppendTransitions(
-		parser.NewEpsilonTransition(states[C_ColonColon]),
-		parser.NewEpsilonTransition(states[C__Basic_1]),
-	)
-	states[D_d].AppendTransitions(
-		parser.NewAtomTransition(states[D__Basic_0], Keyword_d, nil),
-	)
-	states[D__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[DOpt__Start], states[D__Basic_2], nil),
-	)
-	states[D_ColonColon].AppendTransitions(
-		parser.NewAtomTransition(states[D_Value_AsteriskAsterisk], Keyword_ColonColon, nil),
-	)
-	states[D_Value_AsteriskAsterisk].AppendTransitions(
-		parser.NewAtomTransition(states[D__Basic_1], Keyword_AsteriskAsterisk, nil),
+	states[StateNumber__Root__Start] = parser.NewATNState(StateNumber__Root__Start, parser.ATNRuleStart, true)
+	states[StateNumber__Root__Stop] = parser.NewATNState(StateNumber__Root__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__Obj__Start] = parser.NewATNState(StateNumber__Obj__Start, parser.ATNRuleStart, true)
+	states[StateNumber__Obj__Stop] = parser.NewATNState(StateNumber__Obj__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__A__Start] = parser.NewATNState(StateNumber__A__Start, parser.ATNRuleStart, true)
+	states[StateNumber__A__Stop] = parser.NewATNState(StateNumber__A__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__B__Start] = parser.NewATNState(StateNumber__B__Start, parser.ATNRuleStart, true)
+	states[StateNumber__B__Stop] = parser.NewATNState(StateNumber__B__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__C__Start] = parser.NewATNState(StateNumber__C__Start, parser.ATNRuleStart, true)
+	states[StateNumber__C__Stop] = parser.NewATNState(StateNumber__C__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__D__Start] = parser.NewATNState(StateNumber__D__Start, parser.ATNRuleStart, true)
+	states[StateNumber__D__Stop] = parser.NewATNState(StateNumber__D__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__E__Start] = parser.NewATNState(StateNumber__E__Start, parser.ATNRuleStart, true)
+	states[StateNumber__E__Stop] = parser.NewATNState(StateNumber__E__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__F__Start] = parser.NewATNState(StateNumber__F__Start, parser.ATNRuleStart, true)
+	states[StateNumber__F__Stop] = parser.NewATNState(StateNumber__F__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__G__Start] = parser.NewATNState(StateNumber__G__Start, parser.ATNRuleStart, true)
+	states[StateNumber__G__Stop] = parser.NewATNState(StateNumber__G__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__H__Start] = parser.NewATNState(StateNumber__H__Start, parser.ATNRuleStart, true)
+	states[StateNumber__H__Stop] = parser.NewATNState(StateNumber__H__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__I__Start] = parser.NewATNState(StateNumber__I__Start, parser.ATNRuleStart, true)
+	states[StateNumber__I__Stop] = parser.NewATNState(StateNumber__I__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__QualifiedName__Start] = parser.NewATNState(StateNumber__QualifiedName__Start, parser.ATNRuleStart, true)
+	states[StateNumber__QualifiedName__Stop] = parser.NewATNState(StateNumber__QualifiedName__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__Path__Start] = parser.NewATNState(StateNumber__Path__Start, parser.ATNRuleStart, true)
+	states[StateNumber__Path__Stop] = parser.NewATNState(StateNumber__Path__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__QualifiedPath__Start] = parser.NewATNState(StateNumber__QualifiedPath__Start, parser.ATNRuleStart, true)
+	states[StateNumber__QualifiedPath__Stop] = parser.NewATNState(StateNumber__QualifiedPath__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__CLoop__Start] = parser.NewATNState(StateNumber__CLoop__Start, parser.ATNRuleStart, true)
+	states[StateNumber__CLoop__Stop] = parser.NewATNState(StateNumber__CLoop__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__DOpt__Start] = parser.NewATNState(StateNumber__DOpt__Start, parser.ATNRuleStart, true)
+	states[StateNumber__DOpt__Stop] = parser.NewATNState(StateNumber__DOpt__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__QualifiedNameRecursive__Start] = parser.NewATNState(StateNumber__QualifiedNameRecursive__Start, parser.ATNRuleStart, true)
+	states[StateNumber__QualifiedNameRecursive__Stop] = parser.NewATNState(StateNumber__QualifiedNameRecursive__Stop, parser.ATNRuleStop, false)
+	states[StateNumber__Root__Basic_0] = parser.NewATNState(StateNumber__Root__Basic_0, parser.ATNBasic, true)
+	states[StateNumber__Root__Basic_1] = parser.NewATNState(StateNumber__Root__Basic_1, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_0] = parser.NewATNState(StateNumber__Obj__Basic_0, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_1] = parser.NewATNState(StateNumber__Obj__Basic_1, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_2] = parser.NewATNState(StateNumber__Obj__Basic_2, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_3] = parser.NewATNState(StateNumber__Obj__Basic_3, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_4] = parser.NewATNState(StateNumber__Obj__Basic_4, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_5] = parser.NewATNState(StateNumber__Obj__Basic_5, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_6] = parser.NewATNState(StateNumber__Obj__Basic_6, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_7] = parser.NewATNState(StateNumber__Obj__Basic_7, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_8] = parser.NewATNState(StateNumber__Obj__Basic_8, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_9] = parser.NewATNState(StateNumber__Obj__Basic_9, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_10] = parser.NewATNState(StateNumber__Obj__Basic_10, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_11] = parser.NewATNState(StateNumber__Obj__Basic_11, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_12] = parser.NewATNState(StateNumber__Obj__Basic_12, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_13] = parser.NewATNState(StateNumber__Obj__Basic_13, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_14] = parser.NewATNState(StateNumber__Obj__Basic_14, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_15] = parser.NewATNState(StateNumber__Obj__Basic_15, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_16] = parser.NewATNState(StateNumber__Obj__Basic_16, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_17] = parser.NewATNState(StateNumber__Obj__Basic_17, parser.ATNBasic, true)
+	states[StateNumber__Obj__Basic_18] = parser.NewATNState(StateNumber__Obj__Basic_18, parser.ATNBasic, true).SetDecision(0)
+	states[StateNumber__Obj__BlockEnd] = parser.NewATNState(StateNumber__Obj__BlockEnd, parser.ATNBlockEnd, true)
+	states[StateNumber__A_LETTER_A] = parser.NewATNState(StateNumber__A_LETTER_A, parser.ATNBasic, false)
+	states[StateNumber__A__Basic_0] = parser.NewATNState(StateNumber__A__Basic_0, parser.ATNBasic, true)
+	states[StateNumber__A__Basic_1] = parser.NewATNState(StateNumber__A__Basic_1, parser.ATNBasic, true)
+	states[StateNumber__B_LETTER_B] = parser.NewATNState(StateNumber__B_LETTER_B, parser.ATNBasic, false)
+	states[StateNumber__B__Basic_0] = parser.NewATNState(StateNumber__B__Basic_0, parser.ATNBasic, true)
+	states[StateNumber__B_DOT] = parser.NewATNState(StateNumber__B_DOT, parser.ATNBasic, false)
+	states[StateNumber__B_Post_ID] = parser.NewATNState(StateNumber__B_Post_ID, parser.ATNBasic, false)
+	states[StateNumber__B__Basic_1] = parser.NewATNState(StateNumber__B__Basic_1, parser.ATNBasic, true)
+	states[StateNumber__C_LETTER_C] = parser.NewATNState(StateNumber__C_LETTER_C, parser.ATNBasic, false)
+	states[StateNumber__C__Basic_0] = parser.NewATNState(StateNumber__C__Basic_0, parser.ATNBasic, true)
+	states[StateNumber__C_DOUBLE_COLON] = parser.NewATNState(StateNumber__C_DOUBLE_COLON, parser.ATNBasic, false)
+	states[StateNumber__C_Value_DOUBLE_ASTERISK] = parser.NewATNState(StateNumber__C_Value_DOUBLE_ASTERISK, parser.ATNBasic, false)
+	states[StateNumber__C__Basic_1] = parser.NewATNState(StateNumber__C__Basic_1, parser.ATNBasic, true)
+	states[StateNumber__C__Basic_2] = parser.NewATNState(StateNumber__C__Basic_2, parser.ATNBasic, true).SetDecision(1)
+	states[StateNumber__D_LETTER_D] = parser.NewATNState(StateNumber__D_LETTER_D, parser.ATNBasic, false)
+	states[StateNumber__D__Basic_0] = parser.NewATNState(StateNumber__D__Basic_0, parser.ATNBasic, true)
+	states[StateNumber__D_DOUBLE_COLON] = parser.NewATNState(StateNumber__D_DOUBLE_COLON, parser.ATNBasic, false)
+	states[StateNumber__D_Value_DOUBLE_ASTERISK] = parser.NewATNState(StateNumber__D_Value_DOUBLE_ASTERISK, parser.ATNBasic, false)
+	states[StateNumber__D__Basic_1] = parser.NewATNState(StateNumber__D__Basic_1, parser.ATNBasic, true)
+	states[StateNumber__D__Basic_2] = parser.NewATNState(StateNumber__D__Basic_2, parser.ATNBasic, true).SetDecision(2)
+	states[StateNumber__E_LETTER_E] = parser.NewATNState(StateNumber__E_LETTER_E, parser.ATNBasic, false)
+	states[StateNumber__E_Value_HELLO] = parser.NewATNState(StateNumber__E_Value_HELLO, parser.ATNBasic, false)
+	states[StateNumber__E__Basic_0] = parser.NewATNState(StateNumber__E__Basic_0, parser.ATNBasic, true)
+	states[StateNumber__E__Basic_1] = parser.NewATNState(StateNumber__E__Basic_1, parser.ATNBasic, true).SetDecision(3)
+	states[StateNumber__E_WORLD] = parser.NewATNState(StateNumber__E_WORLD, parser.ATNBasic, false)
+	states[StateNumber__E__Basic_2] = parser.NewATNState(StateNumber__E__Basic_2, parser.ATNBasic, true)
+	states[StateNumber__E__Basic_3] = parser.NewATNState(StateNumber__E__Basic_3, parser.ATNBasic, true).SetDecision(4)
+	states[StateNumber__F_LETTER_F] = parser.NewATNState(StateNumber__F_LETTER_F, parser.ATNBasic, false)
+	states[StateNumber__F_ID_0] = parser.NewATNState(StateNumber__F_ID_0, parser.ATNBasic, false)
+	states[StateNumber__F__Basic_0] = parser.NewATNState(StateNumber__F__Basic_0, parser.ATNBasic, true)
+	states[StateNumber__F__LoopEntry_0] = parser.NewATNState(StateNumber__F__LoopEntry_0, parser.ATNLoopEntry, true).SetDecision(5)
+	states[StateNumber__F__LoopEnd_0] = parser.NewATNState(StateNumber__F__LoopEnd_0, parser.ATNLoopEnd, true)
+	states[StateNumber__F__LoopBack_0] = parser.NewATNState(StateNumber__F__LoopBack_0, parser.ATNLoopBack, true)
+	states[StateNumber__F_Value_HELLO] = parser.NewATNState(StateNumber__F_Value_HELLO, parser.ATNBasic, false)
+	states[StateNumber__F__Basic_1] = parser.NewATNState(StateNumber__F__Basic_1, parser.ATNBasic, true)
+	states[StateNumber__F_ID_1] = parser.NewATNState(StateNumber__F_ID_1, parser.ATNBasic, false)
+	states[StateNumber__F__Basic_2] = parser.NewATNState(StateNumber__F__Basic_2, parser.ATNBasic, true)
+	states[StateNumber__F__LoopEntry_1] = parser.NewATNState(StateNumber__F__LoopEntry_1, parser.ATNLoopEntry, true).SetDecision(6)
+	states[StateNumber__F__LoopEnd_1] = parser.NewATNState(StateNumber__F__LoopEnd_1, parser.ATNLoopEnd, true)
+	states[StateNumber__F__LoopBack_1] = parser.NewATNState(StateNumber__F__LoopBack_1, parser.ATNLoopBack, true)
+	states[StateNumber__F_Value_WORLD] = parser.NewATNState(StateNumber__F_Value_WORLD, parser.ATNBasic, false)
+	states[StateNumber__F__Basic_3] = parser.NewATNState(StateNumber__F__Basic_3, parser.ATNBasic, true)
+	states[StateNumber__F__Basic_4] = parser.NewATNState(StateNumber__F__Basic_4, parser.ATNBasic, true).SetDecision(7)
+	states[StateNumber__F__BlockEnd] = parser.NewATNState(StateNumber__F__BlockEnd, parser.ATNBlockEnd, true)
+	states[StateNumber__G_LETTER_G] = parser.NewATNState(StateNumber__G_LETTER_G, parser.ATNBasic, false)
+	states[StateNumber__G__Basic_0] = parser.NewATNState(StateNumber__G__Basic_0, parser.ATNBasic, true)
+	states[StateNumber__G_Value_HELLO] = parser.NewATNState(StateNumber__G_Value_HELLO, parser.ATNBasic, false)
+	states[StateNumber__G__Basic_1] = parser.NewATNState(StateNumber__G__Basic_1, parser.ATNBasic, true)
+	states[StateNumber__G__Basic_2] = parser.NewATNState(StateNumber__G__Basic_2, parser.ATNBasic, true)
+	states[StateNumber__G_Value_WORLD] = parser.NewATNState(StateNumber__G_Value_WORLD, parser.ATNBasic, false)
+	states[StateNumber__G__Basic_3] = parser.NewATNState(StateNumber__G__Basic_3, parser.ATNBasic, true)
+	states[StateNumber__G__Basic_4] = parser.NewATNState(StateNumber__G__Basic_4, parser.ATNBasic, true).SetDecision(8)
+	states[StateNumber__G__BlockEnd] = parser.NewATNState(StateNumber__G__BlockEnd, parser.ATNBlockEnd, true)
+	states[StateNumber__H_LETTER_H] = parser.NewATNState(StateNumber__H_LETTER_H, parser.ATNBasic, false)
+	states[StateNumber__H__Basic_0] = parser.NewATNState(StateNumber__H__Basic_0, parser.ATNBasic, true)
+	states[StateNumber__H_Value_HELLO] = parser.NewATNState(StateNumber__H_Value_HELLO, parser.ATNBasic, false)
+	states[StateNumber__H__Basic_1] = parser.NewATNState(StateNumber__H__Basic_1, parser.ATNBasic, true)
+	states[StateNumber__H__Basic_2] = parser.NewATNState(StateNumber__H__Basic_2, parser.ATNBasic, true)
+	states[StateNumber__H_Value_WORLD] = parser.NewATNState(StateNumber__H_Value_WORLD, parser.ATNBasic, false)
+	states[StateNumber__H__Basic_3] = parser.NewATNState(StateNumber__H__Basic_3, parser.ATNBasic, true)
+	states[StateNumber__H__Basic_4] = parser.NewATNState(StateNumber__H__Basic_4, parser.ATNBasic, true).SetDecision(9)
+	states[StateNumber__H__BlockEnd] = parser.NewATNState(StateNumber__H__BlockEnd, parser.ATNBlockEnd, true)
+	states[StateNumber__I_LETTER_I] = parser.NewATNState(StateNumber__I_LETTER_I, parser.ATNBasic, false)
+	states[StateNumber__I__Basic_0] = parser.NewATNState(StateNumber__I__Basic_0, parser.ATNBasic, true)
+	states[StateNumber__I_Value_ID_0] = parser.NewATNState(StateNumber__I_Value_ID_0, parser.ATNBasic, false)
+	states[StateNumber__I__Basic_1] = parser.NewATNState(StateNumber__I__Basic_1, parser.ATNBasic, true)
+	states[StateNumber__I__Basic_2] = parser.NewATNState(StateNumber__I__Basic_2, parser.ATNBasic, true)
+	states[StateNumber__I_Value_ID_1] = parser.NewATNState(StateNumber__I_Value_ID_1, parser.ATNBasic, false)
+	states[StateNumber__I__Basic_3] = parser.NewATNState(StateNumber__I__Basic_3, parser.ATNBasic, true)
+	states[StateNumber__I__Basic_4] = parser.NewATNState(StateNumber__I__Basic_4, parser.ATNBasic, true).SetDecision(10)
+	states[StateNumber__I__BlockEnd] = parser.NewATNState(StateNumber__I__BlockEnd, parser.ATNBlockEnd, true)
+	states[StateNumber__QualifiedName_ID_0] = parser.NewATNState(StateNumber__QualifiedName_ID_0, parser.ATNBasic, false)
+	states[StateNumber__QualifiedName_DOT] = parser.NewATNState(StateNumber__QualifiedName_DOT, parser.ATNBasic, false)
+	states[StateNumber__QualifiedName_ID_1] = parser.NewATNState(StateNumber__QualifiedName_ID_1, parser.ATNBasic, false)
+	states[StateNumber__QualifiedName__Basic] = parser.NewATNState(StateNumber__QualifiedName__Basic, parser.ATNBasic, true)
+	states[StateNumber__QualifiedName__LoopEntry] = parser.NewATNState(StateNumber__QualifiedName__LoopEntry, parser.ATNLoopEntry, true).SetDecision(11)
+	states[StateNumber__QualifiedName__LoopEnd] = parser.NewATNState(StateNumber__QualifiedName__LoopEnd, parser.ATNLoopEnd, true)
+	states[StateNumber__QualifiedName__LoopBack] = parser.NewATNState(StateNumber__QualifiedName__LoopBack, parser.ATNLoopBack, true)
+	states[StateNumber__Path_ID_0] = parser.NewATNState(StateNumber__Path_ID_0, parser.ATNBasic, false)
+	states[StateNumber__Path_SLASH] = parser.NewATNState(StateNumber__Path_SLASH, parser.ATNBasic, false)
+	states[StateNumber__Path_ID_1] = parser.NewATNState(StateNumber__Path_ID_1, parser.ATNBasic, false)
+	states[StateNumber__Path__Basic_0] = parser.NewATNState(StateNumber__Path__Basic_0, parser.ATNBasic, true)
+	states[StateNumber__Path__LoopEntry] = parser.NewATNState(StateNumber__Path__LoopEntry, parser.ATNLoopEntry, true).SetDecision(12)
+	states[StateNumber__Path__LoopEnd] = parser.NewATNState(StateNumber__Path__LoopEnd, parser.ATNLoopEnd, true)
+	states[StateNumber__Path__LoopBack] = parser.NewATNState(StateNumber__Path__LoopBack, parser.ATNLoopBack, true)
+	states[StateNumber__Path_COLON] = parser.NewATNState(StateNumber__Path_COLON, parser.ATNBasic, false)
+	states[StateNumber__Path_ID_2] = parser.NewATNState(StateNumber__Path_ID_2, parser.ATNBasic, false)
+	states[StateNumber__Path__Basic_1] = parser.NewATNState(StateNumber__Path__Basic_1, parser.ATNBasic, true)
+	states[StateNumber__Path_ID_3] = parser.NewATNState(StateNumber__Path_ID_3, parser.ATNBasic, false)
+	states[StateNumber__Path__Basic_2] = parser.NewATNState(StateNumber__Path__Basic_2, parser.ATNBasic, true)
+	states[StateNumber__Path__Basic_3] = parser.NewATNState(StateNumber__Path__Basic_3, parser.ATNBasic, true).SetDecision(13)
+	states[StateNumber__Path__BlockEnd] = parser.NewATNState(StateNumber__Path__BlockEnd, parser.ATNBlockEnd, true)
+	states[StateNumber__QualifiedPath__Basic_0] = parser.NewATNState(StateNumber__QualifiedPath__Basic_0, parser.ATNBasic, true)
+	states[StateNumber__QualifiedPath_DOUBLE_COLON] = parser.NewATNState(StateNumber__QualifiedPath_DOUBLE_COLON, parser.ATNBasic, false)
+	states[StateNumber__QualifiedPath__Basic_1] = parser.NewATNState(StateNumber__QualifiedPath__Basic_1, parser.ATNBasic, true)
+	states[StateNumber__QualifiedPath__Basic_2] = parser.NewATNState(StateNumber__QualifiedPath__Basic_2, parser.ATNBasic, true)
+	states[StateNumber__QualifiedPath__Basic_3] = parser.NewATNState(StateNumber__QualifiedPath__Basic_3, parser.ATNBasic, true)
+	states[StateNumber__QualifiedPath__Basic_4] = parser.NewATNState(StateNumber__QualifiedPath__Basic_4, parser.ATNBasic, true)
+	states[StateNumber__QualifiedPath__Basic_5] = parser.NewATNState(StateNumber__QualifiedPath__Basic_5, parser.ATNBasic, true).SetDecision(14)
+	states[StateNumber__QualifiedPath__BlockEnd] = parser.NewATNState(StateNumber__QualifiedPath__BlockEnd, parser.ATNBlockEnd, true)
+	states[StateNumber__CLoop_ID_0] = parser.NewATNState(StateNumber__CLoop_ID_0, parser.ATNBasic, false)
+	states[StateNumber__CLoop_DOUBLE_COLON] = parser.NewATNState(StateNumber__CLoop_DOUBLE_COLON, parser.ATNBasic, false)
+	states[StateNumber__CLoop_ID_1] = parser.NewATNState(StateNumber__CLoop_ID_1, parser.ATNBasic, false)
+	states[StateNumber__CLoop__Basic] = parser.NewATNState(StateNumber__CLoop__Basic, parser.ATNBasic, true)
+	states[StateNumber__CLoop__LoopEntry] = parser.NewATNState(StateNumber__CLoop__LoopEntry, parser.ATNLoopEntry, true).SetDecision(15)
+	states[StateNumber__CLoop__LoopEnd] = parser.NewATNState(StateNumber__CLoop__LoopEnd, parser.ATNLoopEnd, true)
+	states[StateNumber__CLoop__LoopBack] = parser.NewATNState(StateNumber__CLoop__LoopBack, parser.ATNLoopBack, true)
+	states[StateNumber__DOpt_ID_0] = parser.NewATNState(StateNumber__DOpt_ID_0, parser.ATNBasic, false)
+	states[StateNumber__DOpt_DOUBLE_COLON] = parser.NewATNState(StateNumber__DOpt_DOUBLE_COLON, parser.ATNBasic, false)
+	states[StateNumber__DOpt_ID_1] = parser.NewATNState(StateNumber__DOpt_ID_1, parser.ATNBasic, false)
+	states[StateNumber__DOpt__Basic_0] = parser.NewATNState(StateNumber__DOpt__Basic_0, parser.ATNBasic, true)
+	states[StateNumber__DOpt__Basic_1] = parser.NewATNState(StateNumber__DOpt__Basic_1, parser.ATNBasic, true).SetDecision(16)
+	states[StateNumber__QualifiedNameRecursive_ID] = parser.NewATNState(StateNumber__QualifiedNameRecursive_ID, parser.ATNBasic, false)
+	states[StateNumber__QualifiedNameRecursive_DOT] = parser.NewATNState(StateNumber__QualifiedNameRecursive_DOT, parser.ATNBasic, false)
+	states[StateNumber__QualifiedNameRecursive__Basic_0] = parser.NewATNState(StateNumber__QualifiedNameRecursive__Basic_0, parser.ATNBasic, true)
+	states[StateNumber__QualifiedNameRecursive__Basic_1] = parser.NewATNState(StateNumber__QualifiedNameRecursive__Basic_1, parser.ATNBasic, true)
+	states[StateNumber__QualifiedNameRecursive__Basic_2] = parser.NewATNState(StateNumber__QualifiedNameRecursive__Basic_2, parser.ATNBasic, true).SetDecision(17)
+	states[StateNumber__Root__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Root__Basic_0]),
+	)
+	states[StateNumber__Obj__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Obj__Basic_18]),
+	)
+	states[StateNumber__A__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__A_LETTER_A]),
+	)
+	states[StateNumber__B__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__B_LETTER_B]),
+	)
+	states[StateNumber__C__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__C_LETTER_C]),
+	)
+	states[StateNumber__D__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__D_LETTER_D]),
+	)
+	states[StateNumber__E__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__E_LETTER_E]),
+	)
+	states[StateNumber__F__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__F_LETTER_F]),
+	)
+	states[StateNumber__G__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__G_LETTER_G]),
+	)
+	states[StateNumber__H__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__H_LETTER_H]),
+	)
+	states[StateNumber__I__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__I_LETTER_I]),
+	)
+	states[StateNumber__QualifiedName__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedName_ID_0]),
+	)
+	states[StateNumber__Path__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Path__Basic_3]),
+	)
+	states[StateNumber__QualifiedPath__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedPath__Basic_5]),
+	)
+	states[StateNumber__CLoop__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__CLoop_ID_0]),
+	)
+	states[StateNumber__DOpt__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__DOpt_ID_0]),
+	)
+	states[StateNumber__QualifiedNameRecursive__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedNameRecursive_ID]),
+	)
+	states[StateNumber__Root__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__Obj__Start], states[StateNumber__Root__Basic_1], nil),
+	)
+	states[StateNumber__Root__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Root__Stop]),
+	)
+	states[StateNumber__Obj__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__A__Start], states[StateNumber__Obj__Basic_1], nil),
+	)
+	states[StateNumber__Obj__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Obj__BlockEnd]),
+	)
+	states[StateNumber__Obj__Basic_2].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__B__Start], states[StateNumber__Obj__Basic_3], nil),
+	)
+	states[StateNumber__Obj__Basic_3].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Obj__BlockEnd]),
+	)
+	states[StateNumber__Obj__Basic_4].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__C__Start], states[StateNumber__Obj__Basic_5], nil),
+	)
+	states[StateNumber__Obj__Basic_5].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Obj__BlockEnd]),
+	)
+	states[StateNumber__Obj__Basic_6].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__D__Start], states[StateNumber__Obj__Basic_7], nil),
+	)
+	states[StateNumber__Obj__Basic_7].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Obj__BlockEnd]),
+	)
+	states[StateNumber__Obj__Basic_8].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__E__Start], states[StateNumber__Obj__Basic_9], nil),
+	)
+	states[StateNumber__Obj__Basic_9].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Obj__BlockEnd]),
+	)
+	states[StateNumber__Obj__Basic_10].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__F__Start], states[StateNumber__Obj__Basic_11], nil),
+	)
+	states[StateNumber__Obj__Basic_11].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Obj__BlockEnd]),
+	)
+	states[StateNumber__Obj__Basic_12].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__G__Start], states[StateNumber__Obj__Basic_13], nil),
+	)
+	states[StateNumber__Obj__Basic_13].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Obj__BlockEnd]),
+	)
+	states[StateNumber__Obj__Basic_14].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__H__Start], states[StateNumber__Obj__Basic_15], nil),
+	)
+	states[StateNumber__Obj__Basic_15].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Obj__BlockEnd]),
+	)
+	states[StateNumber__Obj__Basic_16].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__I__Start], states[StateNumber__Obj__Basic_17], nil),
+	)
+	states[StateNumber__Obj__Basic_17].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Obj__BlockEnd]),
+	)
+	states[StateNumber__Obj__Basic_18].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Obj__Basic_0]),
+		parser.NewEpsilonTransition(states[StateNumber__Obj__Basic_2]),
+		parser.NewEpsilonTransition(states[StateNumber__Obj__Basic_4]),
+		parser.NewEpsilonTransition(states[StateNumber__Obj__Basic_6]),
+		parser.NewEpsilonTransition(states[StateNumber__Obj__Basic_8]),
+		parser.NewEpsilonTransition(states[StateNumber__Obj__Basic_10]),
+		parser.NewEpsilonTransition(states[StateNumber__Obj__Basic_12]),
+		parser.NewEpsilonTransition(states[StateNumber__Obj__Basic_14]),
+		parser.NewEpsilonTransition(states[StateNumber__Obj__Basic_16]),
+	)
+	states[StateNumber__Obj__BlockEnd].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Obj__Stop]),
+	)
+	states[StateNumber__A_LETTER_A].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__A__Basic_0], Token_LETTER_A, nil),
+	)
+	states[StateNumber__A__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__QualifiedPath__Start], states[StateNumber__A__Basic_1], nil),
+	)
+	states[StateNumber__A__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__A__Stop]),
+	)
+	states[StateNumber__B_LETTER_B].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__B__Basic_0], Token_LETTER_B, nil),
+	)
+	states[StateNumber__B__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__QualifiedPath__Start], states[StateNumber__B_DOT], nil),
+	)
+	states[StateNumber__B_DOT].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__B_Post_ID], Token_DOT, nil),
+	)
+	states[StateNumber__B_Post_ID].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__B__Basic_1], Token_ID, nil),
+	)
+	states[StateNumber__B__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__B__Stop]),
+	)
+	states[StateNumber__C_LETTER_C].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__C__Basic_0], Token_LETTER_C, nil),
+	)
+	states[StateNumber__C__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__CLoop__Start], states[StateNumber__C__Basic_2], nil),
+	)
+	states[StateNumber__C_DOUBLE_COLON].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__C_Value_DOUBLE_ASTERISK], Token_DOUBLE_COLON, nil),
+	)
+	states[StateNumber__C_Value_DOUBLE_ASTERISK].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__C__Basic_1], Token_DOUBLE_ASTERISK, nil),
+	)
+	states[StateNumber__C__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__C__Stop]),
+	)
+	states[StateNumber__C__Basic_2].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__C_DOUBLE_COLON]),
+		parser.NewEpsilonTransition(states[StateNumber__C__Basic_1]),
+	)
+	states[StateNumber__D_LETTER_D].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__D__Basic_0], Token_LETTER_D, nil),
+	)
+	states[StateNumber__D__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__DOpt__Start], states[StateNumber__D__Basic_2], nil),
+	)
+	states[StateNumber__D_DOUBLE_COLON].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__D_Value_DOUBLE_ASTERISK], Token_DOUBLE_COLON, nil),
+	)
+	states[StateNumber__D_Value_DOUBLE_ASTERISK].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__D__Basic_1], Token_DOUBLE_ASTERISK, nil),
 	)
-	states[D__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[D__Stop]),
+	states[StateNumber__D__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__D__Stop]),
 	)
-	states[D__Basic_2].AppendTransitions(
-		parser.NewEpsilonTransition(states[D_ColonColon]),
-		parser.NewEpsilonTransition(states[D__Basic_1]),
+	states[StateNumber__D__Basic_2].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__D_DOUBLE_COLON]),
+		parser.NewEpsilonTransition(states[StateNumber__D__Basic_1]),
 	)
-	states[E_e].AppendTransitions(
-		parser.NewAtomTransition(states[E__Basic_1], Keyword_e, nil),
+	states[StateNumber__E_LETTER_E].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__E__Basic_1], Token_LETTER_E, nil),
 	)
-	states[E_Value_hello].AppendTransitions(
-		parser.NewAtomTransition(states[E__Basic_0], Keyword_hello, nil),
+	states[StateNumber__E_Value_HELLO].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__E__Basic_0], Token_HELLO, nil),
 	)
-	states[E__Basic_0].AppendTransitions(
-		parser.NewEpsilonTransition(states[E__Basic_3]),
+	states[StateNumber__E__Basic_0].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__E__Basic_3]),
 	)
-	states[E__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[E_Value_hello]),
-		parser.NewEpsilonTransition(states[E__Basic_0]),
+	states[StateNumber__E__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__E_Value_HELLO]),
+		parser.NewEpsilonTransition(states[StateNumber__E__Basic_0]),
 	)
-	states[E_world].AppendTransitions(
-		parser.NewAtomTransition(states[E__Basic_2], Keyword_world, nil),
+	states[StateNumber__E_WORLD].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__E__Basic_2], Token_WORLD, nil),
 	)
-	states[E__Basic_2].AppendTransitions(
-		parser.NewEpsilonTransition(states[E__Stop]),
+	states[StateNumber__E__Basic_2].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__E__Stop]),
 	)
-	states[E__Basic_3].AppendTransitions(
-		parser.NewEpsilonTransition(states[E_world]),
-		parser.NewEpsilonTransition(states[E__Basic_2]),
+	states[StateNumber__E__Basic_3].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__E_WORLD]),
+		parser.NewEpsilonTransition(states[StateNumber__E__Basic_2]),
 	)
-	states[F_f].AppendTransitions(
-		parser.NewAtomTransition(states[F__Basic_4], Keyword_f, nil),
+	states[StateNumber__F_LETTER_F].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__F__Basic_4], Token_LETTER_F, nil),
 	)
-	states[F_ID_0].AppendTransitions(
-		parser.NewAtomTransition(states[F__Basic_0], Token_ID, nil),
+	states[StateNumber__F_ID_0].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__F__Basic_0], Token_ID, nil),
 	)
-	states[F__Basic_0].AppendTransitions(
-		parser.NewEpsilonTransition(states[F__LoopBack_0]),
+	states[StateNumber__F__Basic_0].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__F__LoopBack_0]),
 	)
-	states[F__LoopEntry_0].AppendTransitions(
-		parser.NewEpsilonTransition(states[F_ID_0]),
-		parser.NewEpsilonTransition(states[F__LoopEnd_0]),
+	states[StateNumber__F__LoopEntry_0].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__F_ID_0]),
+		parser.NewEpsilonTransition(states[StateNumber__F__LoopEnd_0]),
 	)
-	states[F__LoopEnd_0].AppendTransitions(
-		parser.NewEpsilonTransition(states[F_Value_hello]),
+	states[StateNumber__F__LoopEnd_0].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__F_Value_HELLO]),
 	)
-	states[F__LoopBack_0].AppendTransitions(
-		parser.NewEpsilonTransition(states[F__LoopEntry_0]),
+	states[StateNumber__F__LoopBack_0].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__F__LoopEntry_0]),
 	)
-	states[F_Value_hello].AppendTransitions(
-		parser.NewAtomTransition(states[F__Basic_1], Keyword_hello, nil),
+	states[StateNumber__F_Value_HELLO].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__F__Basic_1], Token_HELLO, nil),
 	)
-	states[F__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[F__BlockEnd]),
+	states[StateNumber__F__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__F__BlockEnd]),
 	)
-	states[F_ID_1].AppendTransitions(
-		parser.NewAtomTransition(states[F__Basic_2], Token_ID, nil),
+	states[StateNumber__F_ID_1].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__F__Basic_2], Token_ID, nil),
 	)
-	states[F__Basic_2].AppendTransitions(
-		parser.NewEpsilonTransition(states[F__LoopBack_1]),
+	states[StateNumber__F__Basic_2].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__F__LoopBack_1]),
 	)
-	states[F__LoopEntry_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[F_ID_1]),
-		parser.NewEpsilonTransition(states[F__LoopEnd_1]),
+	states[StateNumber__F__LoopEntry_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__F_ID_1]),
+		parser.NewEpsilonTransition(states[StateNumber__F__LoopEnd_1]),
 	)
-	states[F__LoopEnd_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[F_Value_world]),
+	states[StateNumber__F__LoopEnd_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__F_Value_WORLD]),
 	)
-	states[F__LoopBack_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[F__LoopEntry_1]),
+	states[StateNumber__F__LoopBack_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__F__LoopEntry_1]),
 	)
-	states[F_Value_world].AppendTransitions(
-		parser.NewAtomTransition(states[F__Basic_3], Keyword_world, nil),
+	states[StateNumber__F_Value_WORLD].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__F__Basic_3], Token_WORLD, nil),
 	)
-	states[F__Basic_3].AppendTransitions(
-		parser.NewEpsilonTransition(states[F__BlockEnd]),
+	states[StateNumber__F__Basic_3].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__F__BlockEnd]),
 	)
-	states[F__Basic_4].AppendTransitions(
-		parser.NewEpsilonTransition(states[F__LoopEntry_0]),
-		parser.NewEpsilonTransition(states[F__LoopEntry_1]),
+	states[StateNumber__F__Basic_4].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__F__LoopEntry_0]),
+		parser.NewEpsilonTransition(states[StateNumber__F__LoopEntry_1]),
 	)
-	states[F__BlockEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[F__Stop]),
+	states[StateNumber__F__BlockEnd].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__F__Stop]),
 	)
-	states[G_g].AppendTransitions(
-		parser.NewAtomTransition(states[G__Basic_4], Keyword_g, nil),
+	states[StateNumber__G_LETTER_G].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__G__Basic_4], Token_LETTER_G, nil),
 	)
-	states[G__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[QualifiedName__Start], states[G_Value_hello], nil),
+	states[StateNumber__G__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__QualifiedName__Start], states[StateNumber__G_Value_HELLO], nil),
 	)
-	states[G_Value_hello].AppendTransitions(
-		parser.NewAtomTransition(states[G__Basic_1], Keyword_hello, nil),
+	states[StateNumber__G_Value_HELLO].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__G__Basic_1], Token_HELLO, nil),
 	)
-	states[G__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[G__BlockEnd]),
+	states[StateNumber__G__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__G__BlockEnd]),
 	)
-	states[G__Basic_2].AppendTransitions(
-		parser.NewRuleTransition(states[QualifiedName__Start], states[G_Value_world], nil),
+	states[StateNumber__G__Basic_2].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__QualifiedName__Start], states[StateNumber__G_Value_WORLD], nil),
 	)
-	states[G_Value_world].AppendTransitions(
-		parser.NewAtomTransition(states[G__Basic_3], Keyword_world, nil),
+	states[StateNumber__G_Value_WORLD].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__G__Basic_3], Token_WORLD, nil),
 	)
-	states[G__Basic_3].AppendTransitions(
-		parser.NewEpsilonTransition(states[G__BlockEnd]),
+	states[StateNumber__G__Basic_3].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__G__BlockEnd]),
 	)
-	states[G__Basic_4].AppendTransitions(
-		parser.NewEpsilonTransition(states[G__Basic_0]),
-		parser.NewEpsilonTransition(states[G__Basic_2]),
+	states[StateNumber__G__Basic_4].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__G__Basic_0]),
+		parser.NewEpsilonTransition(states[StateNumber__G__Basic_2]),
 	)
-	states[G__BlockEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[G__Stop]),
+	states[StateNumber__G__BlockEnd].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__G__Stop]),
 	)
-	states[H_h].AppendTransitions(
-		parser.NewAtomTransition(states[H__Basic_4], Keyword_h, nil),
+	states[StateNumber__H_LETTER_H].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__H__Basic_4], Token_LETTER_H, nil),
 	)
-	states[H__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[QualifiedNameRecursive__Start], states[H_Value_hello], nil),
+	states[StateNumber__H__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__QualifiedNameRecursive__Start], states[StateNumber__H_Value_HELLO], nil),
 	)
-	states[H_Value_hello].AppendTransitions(
-		parser.NewAtomTransition(states[H__Basic_1], Keyword_hello, nil),
+	states[StateNumber__H_Value_HELLO].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__H__Basic_1], Token_HELLO, nil),
 	)
-	states[H__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[H__BlockEnd]),
+	states[StateNumber__H__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__H__BlockEnd]),
 	)
-	states[H__Basic_2].AppendTransitions(
-		parser.NewRuleTransition(states[QualifiedNameRecursive__Start], states[H_Value_world], nil),
+	states[StateNumber__H__Basic_2].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__QualifiedNameRecursive__Start], states[StateNumber__H_Value_WORLD], nil),
 	)
-	states[H_Value_world].AppendTransitions(
-		parser.NewAtomTransition(states[H__Basic_3], Keyword_world, nil),
+	states[StateNumber__H_Value_WORLD].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__H__Basic_3], Token_WORLD, nil),
 	)
-	states[H__Basic_3].AppendTransitions(
-		parser.NewEpsilonTransition(states[H__BlockEnd]),
+	states[StateNumber__H__Basic_3].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__H__BlockEnd]),
 	)
-	states[H__Basic_4].AppendTransitions(
-		parser.NewEpsilonTransition(states[H__Basic_0]),
-		parser.NewEpsilonTransition(states[H__Basic_2]),
+	states[StateNumber__H__Basic_4].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__H__Basic_0]),
+		parser.NewEpsilonTransition(states[StateNumber__H__Basic_2]),
 	)
-	states[H__BlockEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[H__Stop]),
+	states[StateNumber__H__BlockEnd].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__H__Stop]),
 	)
-	states[I_i].AppendTransitions(
-		parser.NewAtomTransition(states[I__Basic_4], Keyword_i, nil),
+	states[StateNumber__I_LETTER_I].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__I__Basic_4], Token_LETTER_I, nil),
 	)
-	states[I__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[QualifiedNameRecursive__Start], states[I_Value_ID_0], nil),
+	states[StateNumber__I__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__QualifiedNameRecursive__Start], states[StateNumber__I_Value_ID_0], nil),
 	)
-	states[I_Value_ID_0].AppendTransitions(
-		parser.NewAtomTransition(states[I__Basic_1], Token_ID, nil),
+	states[StateNumber__I_Value_ID_0].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__I__Basic_1], Token_ID, nil),
 	)
-	states[I__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[I__BlockEnd]),
+	states[StateNumber__I__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__I__BlockEnd]),
 	)
-	states[I__Basic_2].AppendTransitions(
-		parser.NewRuleTransition(states[QualifiedNameRecursive__Start], states[I_Value_ID_1], nil),
+	states[StateNumber__I__Basic_2].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__QualifiedNameRecursive__Start], states[StateNumber__I_Value_ID_1], nil),
 	)
-	states[I_Value_ID_1].AppendTransitions(
-		parser.NewAtomTransition(states[I__Basic_3], Token_ID, nil),
+	states[StateNumber__I_Value_ID_1].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__I__Basic_3], Token_ID, nil),
 	)
-	states[I__Basic_3].AppendTransitions(
-		parser.NewEpsilonTransition(states[I__BlockEnd]),
+	states[StateNumber__I__Basic_3].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__I__BlockEnd]),
 	)
-	states[I__Basic_4].AppendTransitions(
-		parser.NewEpsilonTransition(states[I__Basic_0]),
-		parser.NewEpsilonTransition(states[I__Basic_2]),
+	states[StateNumber__I__Basic_4].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__I__Basic_0]),
+		parser.NewEpsilonTransition(states[StateNumber__I__Basic_2]),
 	)
-	states[I__BlockEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[I__Stop]),
+	states[StateNumber__I__BlockEnd].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__I__Stop]),
 	)
-	states[QualifiedName_ID_0].AppendTransitions(
-		parser.NewAtomTransition(states[QualifiedName__LoopEntry], Token_ID, nil),
+	states[StateNumber__QualifiedName_ID_0].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__QualifiedName__LoopEntry], Token_ID, nil),
 	)
-	states[QualifiedName_Dot].AppendTransitions(
-		parser.NewAtomTransition(states[QualifiedName_ID_1], Keyword_Dot, nil),
+	states[StateNumber__QualifiedName_DOT].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__QualifiedName_ID_1], Token_DOT, nil),
 	)
-	states[QualifiedName_ID_1].AppendTransitions(
-		parser.NewAtomTransition(states[QualifiedName__Basic], Token_ID, nil),
+	states[StateNumber__QualifiedName_ID_1].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__QualifiedName__Basic], Token_ID, nil),
 	)
-	states[QualifiedName__Basic].AppendTransitions(
-		parser.NewEpsilonTransition(states[QualifiedName__LoopBack]),
+	states[StateNumber__QualifiedName__Basic].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedName__LoopBack]),
 	)
-	states[QualifiedName__LoopEntry].AppendTransitions(
-		parser.NewEpsilonTransition(states[QualifiedName_Dot]),
-		parser.NewEpsilonTransition(states[QualifiedName__LoopEnd]),
+	states[StateNumber__QualifiedName__LoopEntry].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedName_DOT]),
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedName__LoopEnd]),
 	)
-	states[QualifiedName__LoopEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[QualifiedName__Stop]),
+	states[StateNumber__QualifiedName__LoopEnd].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedName__Stop]),
 	)
-	states[QualifiedName__LoopBack].AppendTransitions(
-		parser.NewEpsilonTransition(states[QualifiedName__LoopEntry]),
+	states[StateNumber__QualifiedName__LoopBack].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedName__LoopEntry]),
 	)
-	states[Path_ID_0].AppendTransitions(
-		parser.NewAtomTransition(states[Path__LoopEntry], Token_ID, nil),
+	states[StateNumber__Path_ID_0].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Path__LoopEntry], Token_ID, nil),
 	)
-	states[Path_Slash].AppendTransitions(
-		parser.NewAtomTransition(states[Path_ID_1], Keyword_Slash, nil),
+	states[StateNumber__Path_SLASH].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Path_ID_1], Token_SLASH, nil),
 	)
-	states[Path_ID_1].AppendTransitions(
-		parser.NewAtomTransition(states[Path__Basic_0], Token_ID, nil),
+	states[StateNumber__Path_ID_1].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Path__Basic_0], Token_ID, nil),
 	)
-	states[Path__Basic_0].AppendTransitions(
-		parser.NewEpsilonTransition(states[Path__LoopBack]),
+	states[StateNumber__Path__Basic_0].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Path__LoopBack]),
 	)
-	states[Path__LoopEntry].AppendTransitions(
-		parser.NewEpsilonTransition(states[Path_Slash]),
-		parser.NewEpsilonTransition(states[Path__LoopEnd]),
+	states[StateNumber__Path__LoopEntry].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Path_SLASH]),
+		parser.NewEpsilonTransition(states[StateNumber__Path__LoopEnd]),
 	)
-	states[Path__LoopEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[Path_Colon]),
+	states[StateNumber__Path__LoopEnd].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Path_COLON]),
 	)
-	states[Path__LoopBack].AppendTransitions(
-		parser.NewEpsilonTransition(states[Path__LoopEntry]),
+	states[StateNumber__Path__LoopBack].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Path__LoopEntry]),
 	)
-	states[Path_Colon].AppendTransitions(
-		parser.NewAtomTransition(states[Path_ID_2], Keyword_Colon, nil),
+	states[StateNumber__Path_COLON].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Path_ID_2], Token_COLON, nil),
 	)
-	states[Path_ID_2].AppendTransitions(
-		parser.NewAtomTransition(states[Path__Basic_1], Token_ID, nil),
+	states[StateNumber__Path_ID_2].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Path__Basic_1], Token_ID, nil),
 	)
-	states[Path__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[Path__BlockEnd]),
+	states[StateNumber__Path__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Path__BlockEnd]),
 	)
-	states[Path_ID_3].AppendTransitions(
-		parser.NewAtomTransition(states[Path__Basic_2], Token_ID, nil),
+	states[StateNumber__Path_ID_3].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Path__Basic_2], Token_ID, nil),
 	)
-	states[Path__Basic_2].AppendTransitions(
-		parser.NewEpsilonTransition(states[Path__BlockEnd]),
+	states[StateNumber__Path__Basic_2].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Path__BlockEnd]),
 	)
-	states[Path__Basic_3].AppendTransitions(
-		parser.NewEpsilonTransition(states[Path_ID_0]),
-		parser.NewEpsilonTransition(states[Path_ID_3]),
+	states[StateNumber__Path__Basic_3].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Path_ID_0]),
+		parser.NewEpsilonTransition(states[StateNumber__Path_ID_3]),
 	)
-	states[Path__BlockEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[Path__Stop]),
+	states[StateNumber__Path__BlockEnd].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__Path__Stop]),
 	)
-	states[QualifiedPath__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[QualifiedName__Start], states[QualifiedPath_ColonColon], nil),
+	states[StateNumber__QualifiedPath__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__QualifiedName__Start], states[StateNumber__QualifiedPath_DOUBLE_COLON], nil),
 	)
-	states[QualifiedPath_ColonColon].AppendTransitions(
-		parser.NewAtomTransition(states[QualifiedPath__Basic_1], Keyword_ColonColon, nil),
+	states[StateNumber__QualifiedPath_DOUBLE_COLON].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__QualifiedPath__Basic_1], Token_DOUBLE_COLON, nil),
 	)
-	states[QualifiedPath__Basic_1].AppendTransitions(
-		parser.NewRuleTransition(states[Path__Start], states[QualifiedPath__Basic_2], nil),
+	states[StateNumber__QualifiedPath__Basic_1].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__Path__Start], states[StateNumber__QualifiedPath__Basic_2], nil),
 	)
-	states[QualifiedPath__Basic_2].AppendTransitions(
-		parser.NewEpsilonTransition(states[QualifiedPath__BlockEnd]),
+	states[StateNumber__QualifiedPath__Basic_2].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedPath__BlockEnd]),
 	)
-	states[QualifiedPath__Basic_3].AppendTransitions(
-		parser.NewRuleTransition(states[Path__Start], states[QualifiedPath__Basic_4], nil),
+	states[StateNumber__QualifiedPath__Basic_3].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__Path__Start], states[StateNumber__QualifiedPath__Basic_4], nil),
 	)
-	states[QualifiedPath__Basic_4].AppendTransitions(
-		parser.NewEpsilonTransition(states[QualifiedPath__BlockEnd]),
+	states[StateNumber__QualifiedPath__Basic_4].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedPath__BlockEnd]),
 	)
-	states[QualifiedPath__Basic_5].AppendTransitions(
-		parser.NewEpsilonTransition(states[QualifiedPath__Basic_0]),
-		parser.NewEpsilonTransition(states[QualifiedPath__Basic_3]),
+	states[StateNumber__QualifiedPath__Basic_5].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedPath__Basic_0]),
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedPath__Basic_3]),
 	)
-	states[QualifiedPath__BlockEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[QualifiedPath__Stop]),
+	states[StateNumber__QualifiedPath__BlockEnd].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedPath__Stop]),
 	)
-	states[CLoop_ID_0].AppendTransitions(
-		parser.NewAtomTransition(states[CLoop__LoopEntry], Token_ID, nil),
+	states[StateNumber__CLoop_ID_0].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__CLoop__LoopEntry], Token_ID, nil),
 	)
-	states[CLoop_ColonColon].AppendTransitions(
-		parser.NewAtomTransition(states[CLoop_ID_1], Keyword_ColonColon, nil),
+	states[StateNumber__CLoop_DOUBLE_COLON].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__CLoop_ID_1], Token_DOUBLE_COLON, nil),
 	)
-	states[CLoop_ID_1].AppendTransitions(
-		parser.NewAtomTransition(states[CLoop__Basic], Token_ID, nil),
+	states[StateNumber__CLoop_ID_1].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__CLoop__Basic], Token_ID, nil),
 	)
-	states[CLoop__Basic].AppendTransitions(
-		parser.NewEpsilonTransition(states[CLoop__LoopBack]),
+	states[StateNumber__CLoop__Basic].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__CLoop__LoopBack]),
 	)
-	states[CLoop__LoopEntry].AppendTransitions(
-		parser.NewEpsilonTransition(states[CLoop_ColonColon]),
-		parser.NewEpsilonTransition(states[CLoop__LoopEnd]),
+	states[StateNumber__CLoop__LoopEntry].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__CLoop_DOUBLE_COLON]),
+		parser.NewEpsilonTransition(states[StateNumber__CLoop__LoopEnd]),
 	)
-	states[CLoop__LoopEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[CLoop__Stop]),
+	states[StateNumber__CLoop__LoopEnd].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__CLoop__Stop]),
 	)
-	states[CLoop__LoopBack].AppendTransitions(
-		parser.NewEpsilonTransition(states[CLoop__LoopEntry]),
+	states[StateNumber__CLoop__LoopBack].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__CLoop__LoopEntry]),
 	)
-	states[DOpt_ID_0].AppendTransitions(
-		parser.NewAtomTransition(states[DOpt__Basic_1], Token_ID, nil),
+	states[StateNumber__DOpt_ID_0].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__DOpt__Basic_1], Token_ID, nil),
 	)
-	states[DOpt_ColonColon].AppendTransitions(
-		parser.NewAtomTransition(states[DOpt_ID_1], Keyword_ColonColon, nil),
+	states[StateNumber__DOpt_DOUBLE_COLON].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__DOpt_ID_1], Token_DOUBLE_COLON, nil),
 	)
-	states[DOpt_ID_1].AppendTransitions(
-		parser.NewAtomTransition(states[DOpt__Basic_0], Token_ID, nil),
+	states[StateNumber__DOpt_ID_1].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__DOpt__Basic_0], Token_ID, nil),
 	)
-	states[DOpt__Basic_0].AppendTransitions(
-		parser.NewEpsilonTransition(states[DOpt__Stop]),
+	states[StateNumber__DOpt__Basic_0].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__DOpt__Stop]),
 	)
-	states[DOpt__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[DOpt_ColonColon]),
-		parser.NewEpsilonTransition(states[DOpt__Basic_0]),
+	states[StateNumber__DOpt__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__DOpt_DOUBLE_COLON]),
+		parser.NewEpsilonTransition(states[StateNumber__DOpt__Basic_0]),
 	)
-	states[QualifiedNameRecursive_ID].AppendTransitions(
-		parser.NewAtomTransition(states[QualifiedNameRecursive__Basic_2], Token_ID, nil),
+	states[StateNumber__QualifiedNameRecursive_ID].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__QualifiedNameRecursive__Basic_2], Token_ID, nil),
 	)
-	states[QualifiedNameRecursive_Dot].AppendTransitions(
-		parser.NewAtomTransition(states[QualifiedNameRecursive__Basic_0], Keyword_Dot, nil),
+	states[StateNumber__QualifiedNameRecursive_DOT].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__QualifiedNameRecursive__Basic_0], Token_DOT, nil),
 	)
-	states[QualifiedNameRecursive__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[QualifiedNameRecursive__Start], states[QualifiedNameRecursive__Basic_1], nil),
+	states[StateNumber__QualifiedNameRecursive__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[StateNumber__QualifiedNameRecursive__Start], states[StateNumber__QualifiedNameRecursive__Basic_1], nil),
 	)
-	states[QualifiedNameRecursive__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[QualifiedNameRecursive__Stop]),
+	states[StateNumber__QualifiedNameRecursive__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedNameRecursive__Stop]),
 	)
-	states[QualifiedNameRecursive__Basic_2].AppendTransitions(
-		parser.NewEpsilonTransition(states[QualifiedNameRecursive_Dot]),
-		parser.NewEpsilonTransition(states[QualifiedNameRecursive__Basic_1]),
+	states[StateNumber__QualifiedNameRecursive__Basic_2].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedNameRecursive_DOT]),
+		parser.NewEpsilonTransition(states[StateNumber__QualifiedNameRecursive__Basic_1]),
 	)
 	decisionStates := make([]*parser.RuntimeATNState, 18)
-	decisionStates[0] = states[Obj__Basic_18]
-	decisionStates[1] = states[C__Basic_2]
-	decisionStates[2] = states[D__Basic_2]
-	decisionStates[3] = states[E__Basic_1]
-	decisionStates[4] = states[E__Basic_3]
-	decisionStates[5] = states[F__LoopEntry_0]
-	decisionStates[6] = states[F__LoopEntry_1]
-	decisionStates[7] = states[F__Basic_4]
-	decisionStates[8] = states[G__Basic_4]
-	decisionStates[9] = states[H__Basic_4]
-	decisionStates[10] = states[I__Basic_4]
-	decisionStates[11] = states[QualifiedName__LoopEntry]
-	decisionStates[12] = states[Path__LoopEntry]
-	decisionStates[13] = states[Path__Basic_3]
-	decisionStates[14] = states[QualifiedPath__Basic_5]
-	decisionStates[15] = states[CLoop__LoopEntry]
-	decisionStates[16] = states[DOpt__Basic_1]
-	decisionStates[17] = states[QualifiedNameRecursive__Basic_2]
+	decisionStates[0] = states[StateNumber__Obj__Basic_18]
+	decisionStates[1] = states[StateNumber__C__Basic_2]
+	decisionStates[2] = states[StateNumber__D__Basic_2]
+	decisionStates[3] = states[StateNumber__E__Basic_1]
+	decisionStates[4] = states[StateNumber__E__Basic_3]
+	decisionStates[5] = states[StateNumber__F__LoopEntry_0]
+	decisionStates[6] = states[StateNumber__F__LoopEntry_1]
+	decisionStates[7] = states[StateNumber__F__Basic_4]
+	decisionStates[8] = states[StateNumber__G__Basic_4]
+	decisionStates[9] = states[StateNumber__H__Basic_4]
+	decisionStates[10] = states[StateNumber__I__Basic_4]
+	decisionStates[11] = states[StateNumber__QualifiedName__LoopEntry]
+	decisionStates[12] = states[StateNumber__Path__LoopEntry]
+	decisionStates[13] = states[StateNumber__Path__Basic_3]
+	decisionStates[14] = states[StateNumber__QualifiedPath__Basic_5]
+	decisionStates[15] = states[StateNumber__CLoop__LoopEntry]
+	decisionStates[16] = states[StateNumber__DOpt__Basic_1]
+	decisionStates[17] = states[StateNumber__QualifiedNameRecursive__Basic_2]
 	decisionMap := make([]*parser.RuntimeATNState, 18)
-	decisionMap[0] = states[Obj__Basic_18]
-	decisionMap[1] = states[C__Basic_2]
-	decisionMap[2] = states[D__Basic_2]
-	decisionMap[3] = states[E__Basic_1]
-	decisionMap[4] = states[E__Basic_3]
-	decisionMap[5] = states[F__LoopEntry_0]
-	decisionMap[6] = states[F__LoopEntry_1]
-	decisionMap[7] = states[F__Basic_4]
-	decisionMap[8] = states[G__Basic_4]
-	decisionMap[9] = states[H__Basic_4]
-	decisionMap[10] = states[I__Basic_4]
-	decisionMap[11] = states[QualifiedName__LoopEntry]
-	decisionMap[12] = states[Path__LoopEntry]
-	decisionMap[13] = states[Path__Basic_3]
-	decisionMap[14] = states[QualifiedPath__Basic_5]
-	decisionMap[15] = states[CLoop__LoopEntry]
-	decisionMap[16] = states[DOpt__Basic_1]
-	decisionMap[17] = states[QualifiedNameRecursive__Basic_2]
+	decisionMap[0] = states[StateNumber__Obj__Basic_18]
+	decisionMap[1] = states[StateNumber__C__Basic_2]
+	decisionMap[2] = states[StateNumber__D__Basic_2]
+	decisionMap[3] = states[StateNumber__E__Basic_1]
+	decisionMap[4] = states[StateNumber__E__Basic_3]
+	decisionMap[5] = states[StateNumber__F__LoopEntry_0]
+	decisionMap[6] = states[StateNumber__F__LoopEntry_1]
+	decisionMap[7] = states[StateNumber__F__Basic_4]
+	decisionMap[8] = states[StateNumber__G__Basic_4]
+	decisionMap[9] = states[StateNumber__H__Basic_4]
+	decisionMap[10] = states[StateNumber__I__Basic_4]
+	decisionMap[11] = states[StateNumber__QualifiedName__LoopEntry]
+	decisionMap[12] = states[StateNumber__Path__LoopEntry]
+	decisionMap[13] = states[StateNumber__Path__Basic_3]
+	decisionMap[14] = states[StateNumber__QualifiedPath__Basic_5]
+	decisionMap[15] = states[StateNumber__CLoop__LoopEntry]
+	decisionMap[16] = states[StateNumber__DOpt__Basic_1]
+	decisionMap[17] = states[StateNumber__QualifiedNameRecursive__Basic_2]
 	return parser.NewRuntimeATN(states, decisionStates, decisionMap)
 }

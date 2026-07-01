@@ -9,111 +9,13 @@ import (
 	"unicode/utf8"
 )
 
-const Keyword_AsteriskAsterisk_Idx = 1
+const Token_LETTER_A_Idx = 1
 
-var Keyword_AsteriskAsterisk = core.NewTokenType(
-	Keyword_AsteriskAsterisk_Idx,
-	"**",
-	"**",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "**") {
-			return 2
-		}
-		return 0
-	},
-	[]rune{'*'},
-)
-
-const Keyword_Dot_Idx = 2
-
-var Keyword_Dot = core.NewTokenType(
-	Keyword_Dot_Idx,
-	".",
-	".",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], ".") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'.'},
-)
-
-const Keyword_Slash_Idx = 3
-
-var Keyword_Slash = core.NewTokenType(
-	Keyword_Slash_Idx,
-	"/",
-	"/",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "/") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'/'},
-)
-
-const Keyword_Colon_Idx = 4
-
-var Keyword_Colon = core.NewTokenType(
-	Keyword_Colon_Idx,
-	":",
-	":",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], ":") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{':'},
-)
-
-const Keyword_ColonColon_Idx = 5
-
-var Keyword_ColonColon = core.NewTokenType(
-	Keyword_ColonColon_Idx,
-	"::",
-	"::",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "::") {
-			return 2
-		}
-		return 0
-	},
-	[]rune{':'},
-)
-
-const Keyword_a_Idx = 6
-
-var Keyword_a = core.NewTokenType(
-	Keyword_a_Idx,
+var Token_LETTER_A = core.NewTokenType(
+	Token_LETTER_A_Idx,
 	"a",
 	"a",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "a") {
 			return 1
@@ -123,16 +25,13 @@ var Keyword_a = core.NewTokenType(
 	[]rune{'a'},
 )
 
-const Keyword_b_Idx = 7
+const Token_LETTER_B_Idx = 2
 
-var Keyword_b = core.NewTokenType(
-	Keyword_b_Idx,
+var Token_LETTER_B = core.NewTokenType(
+	Token_LETTER_B_Idx,
 	"b",
 	"b",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "b") {
 			return 1
@@ -142,16 +41,13 @@ var Keyword_b = core.NewTokenType(
 	[]rune{'b'},
 )
 
-const Keyword_c_Idx = 8
+const Token_LETTER_C_Idx = 3
 
-var Keyword_c = core.NewTokenType(
-	Keyword_c_Idx,
+var Token_LETTER_C = core.NewTokenType(
+	Token_LETTER_C_Idx,
 	"c",
 	"c",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "c") {
 			return 1
@@ -161,16 +57,13 @@ var Keyword_c = core.NewTokenType(
 	[]rune{'c'},
 )
 
-const Keyword_d_Idx = 9
+const Token_LETTER_D_Idx = 4
 
-var Keyword_d = core.NewTokenType(
-	Keyword_d_Idx,
+var Token_LETTER_D = core.NewTokenType(
+	Token_LETTER_D_Idx,
 	"d",
 	"d",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "d") {
 			return 1
@@ -180,16 +73,13 @@ var Keyword_d = core.NewTokenType(
 	[]rune{'d'},
 )
 
-const Keyword_e_Idx = 10
+const Token_LETTER_E_Idx = 5
 
-var Keyword_e = core.NewTokenType(
-	Keyword_e_Idx,
+var Token_LETTER_E = core.NewTokenType(
+	Token_LETTER_E_Idx,
 	"e",
 	"e",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "e") {
 			return 1
@@ -199,16 +89,13 @@ var Keyword_e = core.NewTokenType(
 	[]rune{'e'},
 )
 
-const Keyword_f_Idx = 11
+const Token_LETTER_F_Idx = 6
 
-var Keyword_f = core.NewTokenType(
-	Keyword_f_Idx,
+var Token_LETTER_F = core.NewTokenType(
+	Token_LETTER_F_Idx,
 	"f",
 	"f",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "f") {
 			return 1
@@ -218,16 +105,13 @@ var Keyword_f = core.NewTokenType(
 	[]rune{'f'},
 )
 
-const Keyword_g_Idx = 12
+const Token_LETTER_G_Idx = 7
 
-var Keyword_g = core.NewTokenType(
-	Keyword_g_Idx,
+var Token_LETTER_G = core.NewTokenType(
+	Token_LETTER_G_Idx,
 	"g",
 	"g",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "g") {
 			return 1
@@ -237,16 +121,13 @@ var Keyword_g = core.NewTokenType(
 	[]rune{'g'},
 )
 
-const Keyword_h_Idx = 13
+const Token_LETTER_H_Idx = 8
 
-var Keyword_h = core.NewTokenType(
-	Keyword_h_Idx,
+var Token_LETTER_H = core.NewTokenType(
+	Token_LETTER_H_Idx,
 	"h",
 	"h",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "h") {
 			return 1
@@ -256,35 +137,13 @@ var Keyword_h = core.NewTokenType(
 	[]rune{'h'},
 )
 
-const Keyword_hello_Idx = 14
+const Token_LETTER_I_Idx = 9
 
-var Keyword_hello = core.NewTokenType(
-	Keyword_hello_Idx,
-	"hello",
-	"hello",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "hello") {
-			return 5
-		}
-		return 0
-	},
-	[]rune{'h'},
-)
-
-const Keyword_i_Idx = 15
-
-var Keyword_i = core.NewTokenType(
-	Keyword_i_Idx,
+var Token_LETTER_I = core.NewTokenType(
+	Token_LETTER_I_Idx,
 	"i",
 	"i",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "i") {
 			return 1
@@ -294,16 +153,125 @@ var Keyword_i = core.NewTokenType(
 	[]rune{'i'},
 )
 
-const Keyword_world_Idx = 16
+const Token_COMMA_Idx = 10
 
-var Keyword_world = core.NewTokenType(
-	Keyword_world_Idx,
-	"world",
-	"world",
-	0,
+var Token_COMMA = core.NewTokenType(
+	Token_COMMA_Idx,
+	",",
+	",",
 	core.TokenKindKeyword,
-	0,
-	false,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], ",") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{','},
+)
+
+const Token_DOT_Idx = 11
+
+var Token_DOT = core.NewTokenType(
+	Token_DOT_Idx,
+	".",
+	".",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], ".") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'.'},
+)
+
+const Token_DOUBLE_ASTERISK_Idx = 12
+
+var Token_DOUBLE_ASTERISK = core.NewTokenType(
+	Token_DOUBLE_ASTERISK_Idx,
+	"**",
+	"**",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "**") {
+			return 2
+		}
+		return 0
+	},
+	[]rune{'*'},
+)
+
+const Token_DOUBLE_COLON_Idx = 13
+
+var Token_DOUBLE_COLON = core.NewTokenType(
+	Token_DOUBLE_COLON_Idx,
+	"::",
+	"::",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "::") {
+			return 2
+		}
+		return 0
+	},
+	[]rune{':'},
+)
+
+const Token_COLON_Idx = 14
+
+var Token_COLON = core.NewTokenType(
+	Token_COLON_Idx,
+	":",
+	":",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], ":") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{':'},
+)
+
+const Token_SLASH_Idx = 15
+
+var Token_SLASH = core.NewTokenType(
+	Token_SLASH_Idx,
+	"/",
+	"/",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "/") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'/'},
+)
+
+const Token_HELLO_Idx = 16
+
+var Token_HELLO = core.NewTokenType(
+	Token_HELLO_Idx,
+	"hello",
+	"hello",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "hello") {
+			return 5
+		}
+		return 0
+	},
+	[]rune{'h'},
+)
+
+const Token_WORLD_Idx = 17
+
+var Token_WORLD = core.NewTokenType(
+	Token_WORLD_Idx,
+	"world",
+	"world",
+	core.TokenKindKeyword,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "world") {
 			return 5
@@ -313,16 +281,13 @@ var Keyword_world = core.NewTokenType(
 	[]rune{'w'},
 )
 
-const Token_WS_Idx = 17
+const Token_WS_Idx = 18
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
 	"WS",
 	"WS",
-	core.SkippedGroup,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -387,16 +352,13 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_ID_Idx = 18
+const Token_ID_Idx = 19
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
 	"ID",
 	"ID",
-	0,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -462,24 +424,28 @@ var Token_ID_Accepting = [2]bool{
 }
 
 func NewLexer() lexer.Lexer {
+	TokenMode_default := lexer.NewTokenMode("default",
+		lexer.UseTokenType(Token_LETTER_A),
+		lexer.UseTokenType(Token_LETTER_B),
+		lexer.UseTokenType(Token_LETTER_C),
+		lexer.UseTokenType(Token_LETTER_D),
+		lexer.UseTokenType(Token_LETTER_E),
+		lexer.UseTokenType(Token_LETTER_F),
+		lexer.UseTokenType(Token_LETTER_G),
+		lexer.UseTokenType(Token_LETTER_H),
+		lexer.UseTokenType(Token_LETTER_I),
+		lexer.UseTokenType(Token_COMMA),
+		lexer.UseTokenType(Token_DOT),
+		lexer.UseTokenType(Token_DOUBLE_ASTERISK),
+		lexer.UseTokenType(Token_DOUBLE_COLON),
+		lexer.UseTokenType(Token_COLON),
+		lexer.UseTokenType(Token_SLASH),
+		lexer.UseTokenType(Token_HELLO),
+		lexer.UseTokenType(Token_WORLD),
+		lexer.UseTokenType(Token_ID),
+		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),
+	)
 	return lexer.NewDefaultLexer(
-		Keyword_AsteriskAsterisk,
-		Keyword_Dot,
-		Keyword_Slash,
-		Keyword_Colon,
-		Keyword_ColonColon,
-		Keyword_a,
-		Keyword_b,
-		Keyword_c,
-		Keyword_d,
-		Keyword_e,
-		Keyword_f,
-		Keyword_g,
-		Keyword_h,
-		Keyword_hello,
-		Keyword_i,
-		Keyword_world,
-		Token_WS,
-		Token_ID,
+		TokenMode_default,
 	)
 }

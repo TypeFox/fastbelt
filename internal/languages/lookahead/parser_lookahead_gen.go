@@ -19,8 +19,8 @@ const (
 )
 
 var ObjAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h, Keyword_i},
-	Lookup: []int{6: 1, 7: 2, 8: 3, 9: 4, 10: 5, 11: 6, 12: 7, 13: 8, 15: 9},
+	Types:  []*core.TokenType{Token_LETTER_A, Token_LETTER_B, Token_LETTER_C, Token_LETTER_D, Token_LETTER_E, Token_LETTER_F, Token_LETTER_G, Token_LETTER_H, Token_LETTER_I},
+	Lookup: []int{1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9},
 }
 
 // LookaheadParserLookahead abstracts every lookahead/prediction decision performed by
@@ -34,8 +34,8 @@ type LookaheadParserLookahead interface {
 	COptional(state *parser.ParserState) bool
 	DOptOptional(state *parser.ParserState) bool
 	DOptional(state *parser.ParserState) bool
+	EOptional(state *parser.ParserState) bool
 	EValueOptional(state *parser.ParserState) bool
-	EworldOptional(state *parser.ParserState) bool
 	FAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	FLoop_0(state *parser.ParserState) bool
 	FLoop_1(state *parser.ParserState) bool
@@ -66,7 +66,7 @@ func (l *DefaultLookaheadParserLookahead) CLoopLoop(state *parser.ParserState) b
 }
 
 func (l *DefaultLookaheadParserLookahead) COptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_ColonColon
+	return state.LA(1).Type == Token_DOUBLE_COLON
 }
 
 func (l *DefaultLookaheadParserLookahead) DOptOptional(state *parser.ParserState) bool {
@@ -75,15 +75,15 @@ func (l *DefaultLookaheadParserLookahead) DOptOptional(state *parser.ParserState
 }
 
 func (l *DefaultLookaheadParserLookahead) DOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_ColonColon
+	return state.LA(1).Type == Token_DOUBLE_COLON
+}
+
+func (l *DefaultLookaheadParserLookahead) EOptional(state *parser.ParserState) bool {
+	return state.LA(1).Type == Token_WORLD
 }
 
 func (l *DefaultLookaheadParserLookahead) EValueOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_hello
-}
-
-func (l *DefaultLookaheadParserLookahead) EworldOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_world
+	return state.LA(1).Type == Token_HELLO
 }
 
 func (l *DefaultLookaheadParserLookahead) FAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
@@ -119,15 +119,15 @@ func (l *DefaultLookaheadParserLookahead) PathAlternatives(state *parser.ParserS
 }
 
 func (l *DefaultLookaheadParserLookahead) PathLoop(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_Slash
+	return state.LA(1).Type == Token_SLASH
 }
 
 func (l *DefaultLookaheadParserLookahead) QualifiedNameLoop(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_Dot
+	return state.LA(1).Type == Token_DOT
 }
 
 func (l *DefaultLookaheadParserLookahead) QualifiedNameRecursiveOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_Dot
+	return state.LA(1).Type == Token_DOT
 }
 
 func (l *DefaultLookaheadParserLookahead) QualifiedPathAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
