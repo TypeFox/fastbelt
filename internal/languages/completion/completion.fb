@@ -14,38 +14,38 @@ interface Declare extends Obj {
     Children []Declare
 }
 
-Declare: "declare" Name=FQN ("{" Children+=Declare* "}")?;
+Declare: DECLARE Name=FQN (LBRACE Children+=Declare* RBRACE)?;
 
-composite FQN: ID ("." ID)*;
+composite FQN: ID (DOT ID)*;
 
 // straight-line continuation
-A returns Obj: "a" "first";
+A returns Obj: LETTER_A FIRST;
 
 // flat alternative - both branches must stay live post-commit
-B returns Obj: "b" ("first" | "second");
+B returns Obj: LETTER_B (FIRST | SECOND);
 
 // shared-prefix alternative - keep both alts past the prefix
-C returns Obj: "c" ("common" "first" | "common" "second");
+C returns Obj: LETTER_C (COMMON FIRST | COMMON SECOND);
 
 // rule-call alternative with shared prefix (DLong/DShort)
-D returns Obj: "d" (DLong | DShort);
+D returns Obj: LETTER_D (DLong | DShort);
 
 interface E extends Obj {
     Ref *Declare
 }
 
 // cross-reference via FQN composite
-E: "e" Ref=[Declare:FQN];
+E: LETTER_E Ref=[Declare:FQN];
 
-DLong returns Obj: "common" "then" "long";
-DShort returns Obj: "common";
+DLong returns Obj: COMMON THEN LONG;
+DShort returns Obj: COMMON;
 
 interface F extends Obj {
     Items []FItem
 }
 
 // nested rule with FItem children (synthetic chain coverage)
-F: "f" Items+=FItem+;
+F: LETTER_F Items+=FItem+;
 
 interface FItem {
     Ref *Declare
@@ -58,7 +58,7 @@ interface G extends Obj {
 }
 
 // cross-reference via plain ID
-G: "g" Ref=[Declare:ID];
+G: LETTER_G Ref=[Declare:ID];
 
 interface H extends Obj {
     Member MemberCall
@@ -70,13 +70,13 @@ interface MemberCall {
 }
 
 // cross-references with tree-rewriting actions (member calls)
-H: "h" Member=MemberCall;
+H: LETTER_H Member=MemberCall;
 
 // same as H, but without the dot to separate chained calls
 // ensures that synthetic references can properly complete
-I returns H: "i" Member=MemberCallNoDot;
+I returns H: LETTER_I Member=MemberCallNoDot;
 
-MemberCall: Ref=[Declare:ID] ({MemberCall.Previous=current} "." Ref=[Declare:ID])*;
+MemberCall: Ref=[Declare:ID] ({MemberCall.Previous=current} DOT Ref=[Declare:ID])*;
 
 MemberCallNoDot returns MemberCall: Ref=[Declare:ID] ({MemberCall.Previous=current} Ref=[Declare:ID])*;
 
@@ -85,7 +85,7 @@ interface J extends Obj {
 }
 
 // cross-reference and keyword alternative at the same position
-J: "j" (Ref=[Declare:ID] | "self");
+J: LETTER_J (Ref=[Declare:ID] | SELF);
 
 interface K extends Obj {
     Ref1 *Declare
@@ -93,31 +93,98 @@ interface K extends Obj {
 }
 
 // two assignments to the same target type - dedup check
-K: "k" (Ref1=[Declare:ID] "x" | Ref2=[Declare:ID] "y");
+K: LETTER_K (Ref1=[Declare:ID] LETTER_X | Ref2=[Declare:ID] LETTER_Y);
 
 // fully optional group in front of mandatory content
-L returns Obj: "l" ("optional" "and")? "then" "end";
+L returns Obj: LETTER_L (OPTIONAL AND)? THEN END;
 
 token group SomeTokenGroup {
-    ID "a" "b"
+    ID LETTER_A LETTER_B
 }
 
 // token group after initial keyword - expect no completion
-M returns Obj: "m" SomeTokenGroup;
+M returns Obj: LETTER_M SomeTokenGroup;
 
 interface N extends Obj {
     Ref *Declare
 }
 
 // token group used to perform cross reference
-N: "n" Ref=[Declare:SomeTokenGroup];
+N: LETTER_N Ref=[Declare:SomeTokenGroup];
 
 interface O extends Obj {
     Ref *Declare
 }
 
 // action used to change type
-O returns Obj: {O} "o" Ref=[Declare:ID];
+O returns Obj: {O} LETTER_O Ref=[Declare:ID];
 
-hidden token WS: /[ \t\r\n]+/;
-token ID: /\w[\w0-9]*/;
+token LETTER_A: "a"
+token LETTER_B: "b"
+token LETTER_C: "c"
+token LETTER_D: "d"
+token LETTER_E: "e"
+token LETTER_F: "f"
+token LETTER_G: "g"
+token LETTER_H: "h"
+token LETTER_I: "i"
+token LETTER_J: "j"
+token LETTER_K: "k"
+token LETTER_L: "l"
+token LETTER_M: "m"
+token LETTER_N: "n"
+token LETTER_O: "o"
+token LETTER_X: "x"
+token LETTER_Y: "y"
+token DECLARE: "declare"
+token FIRST: "first"
+token SECOND: "second"
+token LONG: "long"
+token SELF: "self"
+token COMMON: "common"
+token THEN: "then"
+token LBRACE: "{"
+token RBRACE: "}"
+token DOT: "."
+token OPTIONAL: "optional"
+token AND: "and"
+token END: "end"
+
+token WS: /[ \t\r\n]+/
+token ID: /\w[\w0-9]*/
+
+token mode default {
+    LETTER_A
+    LETTER_B
+    LETTER_C
+    LETTER_D
+    LETTER_E
+    LETTER_F
+    LETTER_G
+    LETTER_H
+    LETTER_I
+    LETTER_J
+    LETTER_K
+    LETTER_L
+    LETTER_M
+    LETTER_N
+    LETTER_O
+    LETTER_X
+    LETTER_Y
+    DECLARE
+    FIRST
+    SECOND
+    LONG
+    SELF
+    COMMON
+    THEN
+    LBRACE
+    RBRACE
+    DOT
+    OPTIONAL
+    AND
+    ID
+    END
+
+    hidden WS
+}
