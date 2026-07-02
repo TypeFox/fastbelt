@@ -7,6 +7,7 @@ package fastbelt
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"iter"
 	"reflect"
 	"slices"
@@ -294,7 +295,9 @@ func NewReferenceDescriptionsFromMap(descriptions collections.MultiMap[AstNode, 
 	}
 }
 
-// MarshalJSON serializes the reference as a JSON object containing the URI of the resolved target's document.
+// MarshalJSON serializes the reference as a JSON object containing the URI of the resolved target ast node,
+// the cross ref text, as well as the err msg if the reference is unresolvable.
+// Returns an error if the reference has not been attempted to resolve (r.resolved == false).
 // With this function Reference[T] implements json.Marshaler.MarshalJSON() and the method is called by `json.Marshal()` and `json.MarshalIndent()`.
 func (r *Reference[T]) MarshalJSON() ([]byte, error) {
 	// A nil reference marshals as JSON null.
@@ -302,22 +305,35 @@ func (r *Reference[T]) MarshalJSON() ([]byte, error) {
 		return []byte("null"), nil
 	}
 	// We expect at this point that all references have been attempted to resolve.
-	// if !r.resolved.Load() {
-	// 	return nil, errors.New("reference not resolved")
-	// }
+	if !r.resolved.Load() {
+		if path, err := r.Owner().NodePath(); err == nil {
+			return nil, errors.New("Reference.MarshalJSON(): reference not resolved in node '" + path + "'")
+		}
+		return nil, errors.New("Reference.MarshalJSON(): reference not resolved")
+	}
 
 	var uri string
 	var errMsg string
 	if r.err != nil {
 		errMsg = r.err.Msg
-	} else if ref := r.ref; any(ref) != nil {
-		if doc := ref.Document(); doc != nil {
-			uri = doc.URI.WithFragment("todo-fragment").StringUnencoded()
+
+	} else if referenced := r.ref; any(referenced) != nil {
+		refPath, err := referenced.NodePath()
+		if err != nil {
+			return nil, errors.New("Reference.MarshalJSON(): failed to compute path fragment of referenced node")
 		}
+
+		refDoc := referenced.Document()
+		if refDoc != nil {
+			if r.Owner() != nil && r.Owner().Document() == refDoc {
+				uri = "#" + refPath
+			} else {
+				uri = refDoc.URI.WithFragment(refPath).StringUnencoded()
+			}
+		}
+	} else {
+		return nil, errors.New("Reference.MarshalJSON(): unexpected state")
 	}
-	// else {
-	// 	return nil, errors.New("unexpected state: resolved reference has no document")
-	// }
 
 	return json.Marshal(struct {
 		RefText string `json:"$refText"`
@@ -330,48 +346,95 @@ func (r *Reference[T]) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// UnmarshalJSON revives the reference as a JSON object. It inspects properties named 'ref', 'refText', and 'err'.
+// 'ref' is expected to contain a URI string denoting the target node within the same or another document, may be absent if the reference was unresolvable before serializing.
+// 'refText' denotes the cross reference string.
+// 'err' contains the error msg if the reference was unresolvable before serializing
+// With this function Reference[T] implements json.Unmarshaler.UnmarshalJSON() and the method is called by `json.Unmarshal()`.
 func (r *Reference[T]) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		RefText string `json:"$refText"`
-		Ref     string `json:"$ref,omitempty"`
-		Err     string `json:"$error,omitempty"`
+		Ref     string `json:"$ref"`
+		Err     string `json:"$error"`
 	}{}
-
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-
-	r.unit = &RefText{
+	r.unit = &JsonRefText{
 		refText: aux.RefText,
+		owner:   r.owner,
 	}
+	r.getter = NewJsonReferenceGetter[T](aux.Ref)
 	if aux.Err != "" {
 		r.err = NewReferenceError(aux.Err)
 	}
-	r.getter = func(ctx context.Context, ref *Reference[T]) (*SymbolDescription, *ReferenceError) {
-		if ref.err != nil {
-			return nil, ref.err
-		}
-		return &SymbolDescription{
-			URI: ParseURI(aux.Ref),
-		}, nil
-	}
-
 	return nil
 }
 
-type RefText struct {
+type JsonLinkingHelper interface {
+	GetDocument(uri URI) *Document
+}
+
+var jsonLinkingHelperKey = reflect.TypeFor[JsonLinkingHelper]()
+
+func JsonLinkingHelperKey() any {
+	return jsonLinkingHelperKey
+}
+
+type JsonRefText struct {
 	owner   AstNode
 	refText string
 }
 
-func (r *RefText) String() string {
+func (r *JsonRefText) String() string {
 	return r.refText
 }
 
-func (r *RefText) Owner() AstNode {
+func (r *JsonRefText) Owner() AstNode {
 	return r.owner
 }
 
-func (r *RefText) Segment() *TextSegment {
+func (r *JsonRefText) Segment() *TextSegment {
 	return nil
+}
+
+func NewJsonReferenceGetter[T AstNode](uriString string) ReferenceGetter[T] {
+	return func(ctx context.Context, ref *Reference[T]) (*SymbolDescription, *ReferenceError) {
+		if ref.err != nil {
+			return nil, ref.err
+		}
+		if uriString == "" {
+			return nil, NewReferenceError("Reviving reference in Json document failed, 'ref' is absent of empty")
+		}
+		helper, ok := ctx.Value(jsonLinkingHelperKey).(JsonLinkingHelper)
+		if !ok {
+			return nil, &ReferenceError{
+				Msg: "JsonLinkingHelper unavailable",
+			}
+		}
+		var document *Document
+		uri := ParseURI(uriString)
+		if uri.Path() == "" {
+			document = ref.Owner().Document()
+
+		} else if doc := helper.GetDocument(uri); doc != nil {
+			document = doc
+
+		} else {
+			return nil, NewReferenceError("Document not found: '" + uri.StringUnencoded() + "'")
+		}
+
+		if document.Root == nil {
+			return nil, NewReferenceError("Document is empty: '" + document.URI.StringUnencoded() + "'")
+		}
+
+		node, err := document.Root.GetByPath(uri.Fragment())
+		if err != nil {
+			return nil, NewReferenceError(err.Error())
+		}
+		return &SymbolDescription{
+			URI:  uri,
+			Node: node,
+		}, nil
+	}
 }

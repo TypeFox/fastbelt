@@ -4,9 +4,10 @@ package arithmetics
 
 import (
 	"encoding/json"
+	"fmt"
+	"reflect"
 
 	core "typefox.dev/fastbelt"
-	utilJson "typefox.dev/fastbelt/util/json"
 )
 
 func newToken(tokenType *core.TokenType, view string) *core.Token {
@@ -134,7 +135,7 @@ func (i *ModuleImpl) UnmarshalJSON(data []byte) error {
 	i.SetName(newToken(Token_ID, aux.Name))
 	i.statements = []Statement{}
 	for _, item := range aux.Statements {
-		node, err := utilJson.Unmarshal[Statement](item, ArithmeticsSyntheticFactories)
+		node, err := Unmarshal[Statement](item)
 		if err != nil {
 			return err
 		}
@@ -172,13 +173,13 @@ func (i *DefinitionImpl) UnmarshalJSON(data []byte) error {
 	i.SetName(newToken(Token_ID, aux.Name))
 	i.args = []DeclaredParameter{}
 	for _, item := range aux.Args {
-		node, err := utilJson.Unmarshal[DeclaredParameter](item, ArithmeticsSyntheticFactories)
+		node, err := Unmarshal[DeclaredParameter](item)
 		if err != nil {
 			return err
 		}
 		i.SetArgsItem(node)
 	}
-	expression, err := utilJson.Unmarshal[Expression](aux.Expression, ArithmeticsSyntheticFactories)
+	expression, err := Unmarshal[Expression](aux.Expression)
 	if err != nil {
 		return err
 	}
@@ -206,7 +207,7 @@ func (i *EvaluationImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	expression, err := utilJson.Unmarshal[Expression](aux.Expression, ArithmeticsSyntheticFactories)
+	expression, err := Unmarshal[Expression](aux.Expression)
 	if err != nil {
 		return err
 	}
@@ -228,13 +229,13 @@ func (i *BinaryExpressionImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	left, err := utilJson.Unmarshal[Expression](aux.Left, ArithmeticsSyntheticFactories)
+	left, err := Unmarshal[Expression](aux.Left)
 	if err != nil {
 		return err
 	}
 	i.SetLeft(left)
 	i.SetOperator(newToken(Token_ID, aux.Operator))
-	right, err := utilJson.Unmarshal[Expression](aux.Right, ArithmeticsSyntheticFactories)
+	right, err := Unmarshal[Expression](aux.Right)
 	if err != nil {
 		return err
 	}
@@ -244,22 +245,26 @@ func (i *BinaryExpressionImpl) UnmarshalJSON(data []byte) error {
 
 func (i *FunctionCallImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__      string                              `json:"$type"`
-		Args     []json.RawMessage                   `json:"args"`
-		Callable *core.Reference[AbstractDefinition] `json:"callable"`
+		T__      string            `json:"$type"`
+		Args     []json.RawMessage `json:"args"`
+		Callable json.RawMessage   `json:"callable"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
 	i.args = []Expression{}
 	for _, item := range aux.Args {
-		node, err := utilJson.Unmarshal[Expression](item, ArithmeticsSyntheticFactories)
+		node, err := Unmarshal[Expression](item)
 		if err != nil {
 			return err
 		}
 		i.SetArgsItem(node)
 	}
-	i.SetCallable(aux.Callable)
+	callable := core.NewReference[AbstractDefinition](i, nil, nil)
+	if err := json.Unmarshal(aux.Callable, &callable); err != nil {
+		return err
+	}
+	i.SetCallable(callable)
 	return nil
 }
 
@@ -273,4 +278,32 @@ func (i *NumberLiteralImpl) UnmarshalJSON(data []byte) error {
 	}
 	i.SetValue(newToken(Token_ID, aux.Value))
 	return nil
+}
+
+// Unmarshal decodes data into an instance of type T by reading the "$type" field,
+// selecting a corresponding factory, creating an instance, and unmarshaling its content.
+func Unmarshal[T core.AstNode](data []byte) (T, error) {
+	node := &struct {
+		Type string `json:"$type"`
+	}{}
+	if err := json.Unmarshal(data, node); err != nil {
+		var zero T
+		return zero, fmt.Errorf("unmarshal: %w", err)
+	}
+	factory, ok := ArithmeticsSyntheticFactories[node.Type]
+	if !ok {
+		var zero T
+		return zero, fmt.Errorf("unmarshal: unknown type %q", node.Type)
+	}
+	instance := factory()
+	casted, ok := instance.(T)
+	if !ok {
+		var zero T
+		return zero, fmt.Errorf("unmarshal: %T is not convertible to type %s", instance, reflect.TypeFor[T]())
+	}
+	if err := json.Unmarshal(data, casted); err != nil {
+		var zero T
+		return zero, fmt.Errorf("unmarshal %s: %w", node.Type, err)
+	}
+	return casted, nil
 }

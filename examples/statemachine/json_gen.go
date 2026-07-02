@@ -4,9 +4,10 @@ package statemachine
 
 import (
 	"encoding/json"
+	"fmt"
+	"reflect"
 
 	core "typefox.dev/fastbelt"
-	utilJson "typefox.dev/fastbelt/util/json"
 )
 
 func newToken(tokenType *core.TokenType, view string) *core.Token {
@@ -80,12 +81,12 @@ func (i *TransitionImpl) MarshalJSON() ([]byte, error) {
 
 func (i *StatemachineImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__      string                 `json:"$type"`
-		Name     string                 `json:"name"`
-		Events   []json.RawMessage      `json:"events"`
-		Commands []json.RawMessage      `json:"commands"`
-		Init     *core.Reference[State] `json:"init"`
-		States   []json.RawMessage      `json:"states"`
+		T__      string            `json:"$type"`
+		Name     string            `json:"name"`
+		Events   []json.RawMessage `json:"events"`
+		Commands []json.RawMessage `json:"commands"`
+		Init     json.RawMessage   `json:"init"`
+		States   []json.RawMessage `json:"states"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -93,7 +94,7 @@ func (i *StatemachineImpl) UnmarshalJSON(data []byte) error {
 	i.SetName(newToken(Token_ID, aux.Name))
 	i.events = []Event{}
 	for _, item := range aux.Events {
-		node, err := utilJson.Unmarshal[Event](item, StatemachineModelSyntheticFactories)
+		node, err := Unmarshal[Event](item)
 		if err != nil {
 			return err
 		}
@@ -101,16 +102,20 @@ func (i *StatemachineImpl) UnmarshalJSON(data []byte) error {
 	}
 	i.commands = []Command{}
 	for _, item := range aux.Commands {
-		node, err := utilJson.Unmarshal[Command](item, StatemachineModelSyntheticFactories)
+		node, err := Unmarshal[Command](item)
 		if err != nil {
 			return err
 		}
 		i.SetCommandsItem(node)
 	}
-	i.SetInit(aux.Init)
+	init := core.NewReference[State](i, nil, nil)
+	if err := json.Unmarshal(aux.Init, &init); err != nil {
+		return err
+	}
+	i.SetInit(init)
 	i.states = []State{}
 	for _, item := range aux.States {
-		node, err := utilJson.Unmarshal[State](item, StatemachineModelSyntheticFactories)
+		node, err := Unmarshal[State](item)
 		if err != nil {
 			return err
 		}
@@ -145,10 +150,10 @@ func (i *CommandImpl) UnmarshalJSON(data []byte) error {
 
 func (i *StateImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__         string                     `json:"$type"`
-		Name        string                     `json:"name"`
-		Actions     []*core.Reference[Command] `json:"actions"`
-		Transitions []json.RawMessage          `json:"transitions"`
+		T__         string            `json:"$type"`
+		Name        string            `json:"name"`
+		Actions     []json.RawMessage `json:"actions"`
+		Transitions []json.RawMessage `json:"transitions"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -156,11 +161,15 @@ func (i *StateImpl) UnmarshalJSON(data []byte) error {
 	i.SetName(newToken(Token_ID, aux.Name))
 	i.actions = []*core.Reference[Command]{}
 	for _, item := range aux.Actions {
-		i.SetActionsItem(item)
+		node := core.NewReference[Command](i, nil, nil)
+		if err := json.Unmarshal(item, &node); err != nil {
+			return err
+		}
+		i.SetActionsItem(node)
 	}
 	i.transitions = []Transition{}
 	for _, item := range aux.Transitions {
-		node, err := utilJson.Unmarshal[Transition](item, StatemachineModelSyntheticFactories)
+		node, err := Unmarshal[Transition](item)
 		if err != nil {
 			return err
 		}
@@ -171,14 +180,50 @@ func (i *StateImpl) UnmarshalJSON(data []byte) error {
 
 func (i *TransitionImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__   string                 `json:"$type"`
-		Event *core.Reference[Event] `json:"event"`
-		State *core.Reference[State] `json:"state"`
+		T__   string          `json:"$type"`
+		Event json.RawMessage `json:"event"`
+		State json.RawMessage `json:"state"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetEvent(aux.Event)
-	i.SetState(aux.State)
+	event := core.NewReference[Event](i, nil, nil)
+	if err := json.Unmarshal(aux.Event, &event); err != nil {
+		return err
+	}
+	i.SetEvent(event)
+	state := core.NewReference[State](i, nil, nil)
+	if err := json.Unmarshal(aux.State, &state); err != nil {
+		return err
+	}
+	i.SetState(state)
 	return nil
+}
+
+// Unmarshal decodes data into an instance of type T by reading the "$type" field,
+// selecting a corresponding factory, creating an instance, and unmarshaling its content.
+func Unmarshal[T core.AstNode](data []byte) (T, error) {
+	node := &struct {
+		Type string `json:"$type"`
+	}{}
+	if err := json.Unmarshal(data, node); err != nil {
+		var zero T
+		return zero, fmt.Errorf("unmarshal: %w", err)
+	}
+	factory, ok := StatemachineModelSyntheticFactories[node.Type]
+	if !ok {
+		var zero T
+		return zero, fmt.Errorf("unmarshal: unknown type %q", node.Type)
+	}
+	instance := factory()
+	casted, ok := instance.(T)
+	if !ok {
+		var zero T
+		return zero, fmt.Errorf("unmarshal: %T is not convertible to type %s", instance, reflect.TypeFor[T]())
+	}
+	if err := json.Unmarshal(data, casted); err != nil {
+		var zero T
+		return zero, fmt.Errorf("unmarshal %s: %w", node.Type, err)
+	}
+	return casted, nil
 }

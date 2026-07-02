@@ -5,7 +5,6 @@
 package generator
 
 import (
-	"context"
 	"strings"
 
 	"typefox.dev/fastbelt/internal/grammar"
@@ -19,27 +18,23 @@ func GenerateJSON(grammar grammar.Grammar, packageName string) string {
 	node.AppendLine("package ", packageName)
 	node.AppendLine()
 
-	content, requireUtilJson := generateFunctions(grammar)
-
 	node.AppendLine("import (")
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("\"encoding/json\"")
+		n.AppendLine("\"fmt\"")
+		n.AppendLine("\"reflect\"")
 		n.AppendLine()
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
-		if requireUtilJson {
-			n.AppendLine("utilJson \"typefox.dev/fastbelt/util/json\"")
-		}
 	})
 	node.AppendLine(")")
 	node.AppendLine()
 
-	node.AppendNode(content)
+	generateFunctions(grammar, node)
 
 	return FormatIfPossible(node.String())
 }
 
-func generateFunctions(grammar grammar.Grammar) (node codegen.Node, requireUtilJson bool) {
-	node = codegen.NewNode()
+func generateFunctions(grammar grammar.Grammar, node codegen.Node) {
 	node.AppendLine(("func newToken(tokenType *core.TokenType, view string) *core.Token {"))
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("token := core.NewToken(tokenType, view, 0, 0, 0, 0, 0, 0)")
@@ -53,27 +48,10 @@ func generateFunctions(grammar grammar.Grammar) (node codegen.Node, requireUtilJ
 	}
 
 	for _, iface := range grammar.Interfaces() {
-		requireUtilJson = generateJSONUnmarshal(node, iface) || requireUtilJson
+		generateJSONUnmarshal(node, iface)
 	}
 
-	return node, requireUtilJson
-}
-
-func collectAllFields(iface grammar.Interface, visited map[string]struct{}) []FieldInfo {
-	if _, seen := visited[iface.Name()]; seen {
-		return nil
-	}
-	visited[iface.Name()] = struct{}{}
-	fields := []FieldInfo{}
-	for _, ext := range iface.Extends() {
-		if parent := ext.Ref(context.TODO()); parent != nil {
-			fields = append(fields, collectAllFields(parent, visited)...)
-		}
-	}
-	for _, field := range iface.Fields() {
-		fields = append(fields, getFieldInfo(field))
-	}
-	return fields
+	generateDispatchingUnmarshalFunc(node, grammar)
 }
 
 func generateJSONMarshal(node codegen.Node, iface grammar.Interface) {
@@ -114,9 +92,7 @@ func generateJSONMarshal(node codegen.Node, iface grammar.Interface) {
 
 func getAuxFieldType(field FieldInfo) string {
 	var typ string
-	if field.Reference {
-		typ = field.GType
-	} else if field.Boolean {
+	if field.Boolean {
 		typ = "bool"
 	} else if field.GType == TOKEN_TYPE || field.GType == COMPOSITE_TYPE {
 		typ = "string"
@@ -131,7 +107,7 @@ func getAuxFieldType(field FieldInfo) string {
 	}
 }
 
-func generateJSONUnmarshal(node codegen.Node, iface grammar.Interface) (requireUtilJson bool) {
+func generateJSONUnmarshal(node codegen.Node, iface grammar.Interface) {
 	fields := collectAllFields(iface, map[string]struct{}{})
 
 	node.AppendLine("func (i *", iface.Name(), "Impl) UnmarshalJSON(data []byte) error {")
@@ -144,8 +120,6 @@ func generateJSONUnmarshal(node codegen.Node, iface grammar.Interface) (requireU
 		node.AppendLine()
 		return
 	}
-
-	factoriesName := iface.Container().(grammar.Grammar).Name() + "SyntheticFactories"
 
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("aux := &struct {")
@@ -175,15 +149,20 @@ func generateJSONUnmarshal(node codegen.Node, iface grammar.Interface) (requireU
 						n2.AppendLine("i.Set", field.Name, "Item(cn)")
 					default:
 						if field.Reference {
-							n2.AppendLine("i.Set", field.Name, "Item(item)")
+							genUnmarshalReference(n2, field, "item", "node", true)
 						} else {
-							genUnmarshalChild(n2, field, "item", "node", true, factoriesName)
-							requireUtilJson = true
+							genUnmarshalChild(n2, field, "item", "node", true)
 						}
 					}
 				})
 				n.AppendLine("}")
-			} else if field.Boolean || field.GType == TOKEN_TYPE {
+			} else if field.Boolean {
+				n.AppendLine("if aux.", field.Name, "{")
+				n.Indent(func(n2 codegen.Node) {
+					n2.AppendLine("i.Set", field.Name, "(newToken(Token_ID, \"\"))")
+				})
+				n.AppendLine("}")
+			} else if field.GType == TOKEN_TYPE {
 				n.AppendLine("i.Set", field.Name, "(newToken(Token_ID, aux.", field.Name, "))")
 			} else if field.GType == COMPOSITE_TYPE {
 				if !hasComposeNodeTempVar {
@@ -193,22 +172,31 @@ func generateJSONUnmarshal(node codegen.Node, iface grammar.Interface) (requireU
 				n.AppendLine("cn.SetToken(newToken(Token_ID, aux.", field.Name, "))")
 				n.AppendLine("i.Set", field.Name, "(cn)")
 			} else if field.Reference {
-				n.AppendLine("i.Set", field.Name, "(aux.", field.Name, ")")
+				genUnmarshalReference(n, field, "aux."+field.Name, field.PName, false)
 			} else {
-				genUnmarshalChild(n, field, "aux."+field.Name, field.PName, false, factoriesName)
-				requireUtilJson = true
+				genUnmarshalChild(n, field, "aux."+field.Name, field.PName, false)
 			}
 		}
 		n.AppendLine("return nil")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
-
-	return requireUtilJson
 }
 
-func genUnmarshalChild(node codegen.Node, field FieldInfo, srcName string, targetName string, loopItem bool, factoriesName string) {
-	node.AppendLine(targetName, ", err := utilJson.Unmarshal[", field.Type, "](", srcName, ", ", factoriesName, ")")
+func genUnmarshalReference(node codegen.Node, field FieldInfo, srcName string, targetName string, loopItem bool) {
+	node.AppendLine(targetName, " := core.NewReference[", strings.Split(field.Type, "[")[1], "(i, nil, nil)")
+	node.AppendLine("if err := json.Unmarshal(", srcName, ", &", targetName, "); err != nil {")
+	genReturnErr(node)
+
+	if loopItem {
+		node.AppendLine("i.Set", field.Name, "Item(", targetName, ")")
+	} else {
+		node.AppendLine("i.Set", field.Name, "(", targetName, ")")
+	}
+}
+
+func genUnmarshalChild(node codegen.Node, field FieldInfo, srcName string, targetName string, loopItem bool) {
+	node.AppendLine(targetName, ", err := Unmarshal[", field.Type, "](", srcName, ")")
 	node.AppendLine("if err != nil {")
 	genReturnErr(node)
 
@@ -224,4 +212,47 @@ func genReturnErr(node codegen.Node) {
 		n2.AppendLine("return err")
 	})
 	node.AppendLine("}")
+}
+
+func generateDispatchingUnmarshalFunc(node codegen.Node, g grammar.Grammar) {
+	node.AppendLine(`// Unmarshal decodes data into an instance of type T by reading the "$type" field,`)
+	node.AppendLine(`// selecting a corresponding factory, creating an instance, and unmarshaling its content.`)
+	node.AppendLine("func Unmarshal[T core.AstNode](data []byte) (T, error) {")
+	node.Indent(func(n codegen.Node) {
+		n.AppendLine("node := &struct {")
+		n.Indent(func(n2 codegen.Node) {
+			n2.AppendLine("Type string `json:\"$type\"`")
+		})
+		n.AppendLine("}{}")
+		n.AppendLine("if err := json.Unmarshal(data, node); err != nil {")
+		n.Indent(func(n2 codegen.Node) {
+			n2.AppendLine("var zero T")
+			n2.AppendLine(`return zero, fmt.Errorf("unmarshal: %w", err)`)
+		})
+		n.AppendLine("}")
+		n.AppendLine("factory, ok := ", g.Name()+"SyntheticFactories", "[node.Type]")
+		n.AppendLine("if !ok {")
+		n.Indent(func(n2 codegen.Node) {
+			n2.AppendLine("var zero T")
+			n2.AppendLine(`return zero, fmt.Errorf("unmarshal: unknown type %q", node.Type)`)
+		})
+		n.AppendLine("}")
+		n.AppendLine("instance := factory()")
+		n.AppendLine("casted, ok := instance.(T)")
+		n.AppendLine("if !ok {")
+		n.Indent(func(n2 codegen.Node) {
+			n2.AppendLine("var zero T")
+			n2.AppendLine(`return zero, fmt.Errorf("unmarshal: %T is not convertible to type %s", instance, reflect.TypeFor[T]())`)
+		})
+		n.AppendLine("}")
+		n.AppendLine("if err := json.Unmarshal(data, casted); err != nil {")
+		n.Indent(func(n2 codegen.Node) {
+			n2.AppendLine("var zero T")
+			n2.AppendLine(`return zero, fmt.Errorf("unmarshal %s: %w", node.Type, err)`)
+		})
+		n.AppendLine("}")
+		n.AppendLine("return casted, nil")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
 }
