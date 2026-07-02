@@ -3,6 +3,10 @@
 package token_groups
 
 import (
+	"fmt"
+	"strings"
+	"unique"
+
 	core "typefox.dev/fastbelt"
 )
 
@@ -31,13 +35,13 @@ func NewModelData() ModelData {
 
 func (i *ModelData) IsModel() {}
 
-func (i *ModelData) ForEachNode(fn func(core.AstNode)) {
+func (i *ModelData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	if i.item != nil {
-		fn(i.item)
+		fn(i.item, fieldNameItem, 0)
 	}
 }
 
-func (i *ModelData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ModelData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *ModelData) Item() Item {
@@ -57,12 +61,46 @@ type ModelImpl struct {
 	ModelData
 }
 
-func (i *ModelImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *ModelImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.ModelData.ForEachNode(fn)
 }
 
-func (i *ModelImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ModelImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.ModelData.ForEachReference(fn)
+}
+
+func (i *ModelImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	switch field {
+	case fieldNameItem:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
+}
+
+func (i *ModelImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameItem:
+		if i.Item() == nil {
+			nodePath, _ := i.AstNodeBase.NodePath()
+			return nil, fmt.Errorf("ModelImpl.GetByPath: field 'item' is nil in node '%s'", nodePath)
+		}
+		child := i.Item()
+		if len(parts) == 1 {
+			return child, nil
+		}
+		return child.GetByPath(parts[1])
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("ModelImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Model'", fieldAndIndex[0], nodePath)
+	}
 }
 
 type Item interface {
@@ -91,10 +129,10 @@ func NewItemData() ItemData {
 
 func (i *ItemData) IsItem() {}
 
-func (i *ItemData) ForEachNode(fn func(core.AstNode)) {
+func (i *ItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 }
 
-func (i *ItemData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *ItemData) Value() string {
@@ -118,12 +156,38 @@ type ItemImpl struct {
 	ItemData
 }
 
-func (i *ItemImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *ItemImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.ItemData.ForEachNode(fn)
 }
 
-func (i *ItemImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.ItemData.ForEachReference(fn)
+}
+
+func (i *ItemImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	switch field {
+	case fieldNameValue:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
+}
+
+func (i *ItemImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameValue:
+		return nil, fmt.Errorf("ItemImpl.GetByPath: field 'value' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("ItemImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Item'", fieldAndIndex[0], nodePath)
+	}
 }
 
 type Recovery interface {
@@ -158,10 +222,10 @@ func NewRecoveryData() RecoveryData {
 
 func (i *RecoveryData) IsRecovery() {}
 
-func (i *RecoveryData) ForEachNode(fn func(core.AstNode)) {
+func (i *RecoveryData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 }
 
-func (i *RecoveryData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *RecoveryData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 }
 
 func (i *RecoveryData) First() string {
@@ -202,15 +266,56 @@ type RecoveryImpl struct {
 	RecoveryData
 }
 
-func (i *RecoveryImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *RecoveryImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
 	i.ItemData.ForEachNode(fn)
 	i.RecoveryData.ForEachNode(fn)
 }
 
-func (i *RecoveryImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *RecoveryImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
 	i.ItemData.ForEachReference(fn)
 	i.RecoveryData.ForEachReference(fn)
 }
+
+func (i *RecoveryImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+	switch field {
+	case fieldNameFirst:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameSecond:
+		return core.FieldInfos{Multi: false, Reference: false}
+	case fieldNameValue:
+		return core.FieldInfos{Multi: false, Reference: false}
+	default:
+		return core.FieldInfos{}
+	}
+}
+
+func (i *RecoveryImpl) GetByPath(path string) (core.AstNode, error) {
+	path = strings.TrimLeft(path, "/")
+	if path == "" {
+		return i, nil
+	}
+	parts := strings.SplitN(path, "/", 2)
+	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
+	field := unique.Make(fieldAndIndex[0])
+	switch field {
+	case fieldNameFirst:
+		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field 'first' holds a primitive value instead of an ast node")
+	case fieldNameSecond:
+		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field 'second' holds a primitive value instead of an ast node")
+	case fieldNameValue:
+		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field 'value' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := i.AstNodeBase.NodePath()
+		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Recovery'", fieldAndIndex[0], nodePath)
+	}
+}
+
+var (
+	fieldNameFirst  = unique.Make("first")
+	fieldNameItem   = unique.Make("item")
+	fieldNameSecond = unique.Make("second")
+	fieldNameValue  = unique.Make("value")
+)
 
 var TokenGroupsSyntheticFactories = map[string]func() core.AstNode{
 	"Item":     func() core.AstNode { return NewItem() },
