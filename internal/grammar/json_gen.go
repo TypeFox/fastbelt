@@ -172,17 +172,21 @@ func (i *TokenImpl) MarshalJSON() ([]byte, error) {
 }
 
 func (i *TokenGroupImpl) MarshalJSON() ([]byte, error) {
+	regexps := make([]string, len(i.Regexps()))
+	for j, item := range i.Regexps() {
+		regexps[j] = item.String()
+	}
 	return json.Marshal(struct {
 		T__       string                               `json:"$type"`
 		Name      string                               `json:"name"`
 		TokenRefs []*core.Reference[AbstractTokenRule] `json:"tokenRefs"`
-		Regexps   []*core.Token                        `json:"regexps"`
+		Regexps   []string                             `json:"regexps"`
 		Keywords  []Keyword                            `json:"keywords"`
 	}{
 		T__:       "TokenGroup",
 		Name:      i.Name(),
 		TokenRefs: i.TokenRefs(),
-		Regexps:   i.Regexps(),
+		Regexps:   regexps,
 		Keywords:  i.Keywords(),
 	})
 }
@@ -811,14 +815,19 @@ func Unmarshal[T core.AstNode](data []byte) (T, error) {
 		return zero, fmt.Errorf("unmarshal: unknown type %q", node.Type)
 	}
 	instance := factory()
-	casted, ok := instance.(T)
+	asT, ok := instance.(T)
 	if !ok {
 		var zero T
 		return zero, fmt.Errorf("unmarshal: %T is not convertible to type %s", instance, reflect.TypeFor[T]())
 	}
-	if err := json.Unmarshal(data, casted); err != nil {
+	if unmarshaler, ok := instance.(json.Unmarshaler); ok {
+		if err := unmarshaler.UnmarshalJSON(data); err != nil {
+			var zero T
+			return zero, fmt.Errorf("unmarshal %s: %w", node.Type, err)
+		}
+	} else {
 		var zero T
-		return zero, fmt.Errorf("unmarshal %s: %w", node.Type, err)
+		return zero, fmt.Errorf("unmarshal: %T is not convertible to type json.Unmarshaler", instance)
 	}
-	return casted, nil
+	return asT, nil
 }
