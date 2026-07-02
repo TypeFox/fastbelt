@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"iter"
 	"reflect"
 	"slices"
@@ -303,30 +304,32 @@ func (r *Reference[T]) MarshalJSON() ([]byte, error) {
 	}
 	// We expect at this point that all references have been attempted to resolve.
 	if !r.resolved.Load() {
-		if path, err := r.Owner().NodePath(); err == nil {
-			return nil, errors.New("Reference.MarshalJSON(): reference not resolved in node '" + path + "'")
+		if path, err := PathOf(r.Owner()); err == nil {
+			return nil, errors.New("Reference.MarshalJSON(): reference not resolved in node '" + path.String() + "'")
 		}
 		return nil, errors.New("Reference.MarshalJSON(): reference not resolved")
 	}
 
-	var uri string
-	var errMsg string
+	var uri, errMsg string
 	if r.err != nil {
 		errMsg = r.err.Msg
-
 	} else if referenced := r.ref; any(referenced) != nil {
-		refPath, err := referenced.NodePath()
+		refPath, err := PathOf(referenced)
 		if err != nil {
-			return nil, errors.New("Reference.MarshalJSON(): failed to compute path fragment of referenced node")
+			referencerPath, _ := PathOf(r.Owner())
+			return nil, fmt.Errorf("Reference.MarshalJSON(): failed to compute path fragment of node of type %T referenced by '%s'", referenced, referencerPath)
 		}
 
 		refDoc := referenced.Document()
-		if refDoc != nil {
-			if r.Owner() != nil && r.Owner().Document() == refDoc {
-				uri = "#" + refPath
-			} else {
-				uri = refDoc.URI.WithFragment(refPath).StringUnencoded()
-			}
+		if refDoc == nil {
+			referencerPath, _ := PathOf(r.Owner())
+			return nil, fmt.Errorf("Reference.MarshalJSON(): node of type %T referenced by '%s' is not contained in any document", referenced, referencerPath)
+		}
+
+		if r.Owner() != nil && r.Owner().Document() == refDoc {
+			uri = "#" + refPath.String()
+		} else {
+			uri = refDoc.URI.WithFragment(refPath.String()).StringUnencoded()
 		}
 	} else {
 		return nil, errors.New("Reference.MarshalJSON(): unexpected state")
@@ -413,10 +416,8 @@ func NewJsonReferenceGetter[T AstNode](uriString string) ReferenceGetter[T] {
 		uri := ParseURI(uriString)
 		if uri.Path() == "" {
 			document = ref.Owner().Document()
-
-		} else if doc := helper.GetDocument(uri); doc != nil {
+		} else if doc := helper.GetDocument(uri.WithFragment("") /* zeros the fragment part */); doc != nil {
 			document = doc
-
 		} else {
 			return nil, NewReferenceError("Document not found: '" + uri.StringUnencoded() + "'")
 		}
@@ -425,7 +426,7 @@ func NewJsonReferenceGetter[T AstNode](uriString string) ReferenceGetter[T] {
 			return nil, NewReferenceError("Document is empty: '" + document.URI.StringUnencoded() + "'")
 		}
 
-		node, err := document.Root.GetByPath(uri.Fragment())
+		node, err := Resolve(document.Root, uri.Fragment())
 		if err != nil {
 			return nil, NewReferenceError(err.Error())
 		}

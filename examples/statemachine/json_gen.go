@@ -18,11 +18,11 @@ func newToken(tokenType *core.TokenType, view string) *core.Token {
 func (i *StatemachineImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__      string                 `json:"$type"`
-		Name     string                 `json:"name"`
-		Events   []Event                `json:"events"`
-		Commands []Command              `json:"commands"`
-		Init     *core.Reference[State] `json:"init"`
-		States   []State                `json:"states"`
+		Name     string                 `json:"name,omitempty"`
+		Events   []Event                `json:"events,omitempty"`
+		Commands []Command              `json:"commands,omitempty"`
+		Init     *core.Reference[State] `json:"init,omitempty"`
+		States   []State                `json:"states,omitempty"`
 	}{
 		T__:      "Statemachine",
 		Name:     i.Name(),
@@ -36,7 +36,7 @@ func (i *StatemachineImpl) MarshalJSON() ([]byte, error) {
 func (i *EventImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__  string `json:"$type"`
-		Name string `json:"name"`
+		Name string `json:"name,omitempty"`
 	}{
 		T__:  "Event",
 		Name: i.Name(),
@@ -46,7 +46,7 @@ func (i *EventImpl) MarshalJSON() ([]byte, error) {
 func (i *CommandImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__  string `json:"$type"`
-		Name string `json:"name"`
+		Name string `json:"name,omitempty"`
 	}{
 		T__:  "Command",
 		Name: i.Name(),
@@ -56,9 +56,9 @@ func (i *CommandImpl) MarshalJSON() ([]byte, error) {
 func (i *StateImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__         string                     `json:"$type"`
-		Name        string                     `json:"name"`
-		Actions     []*core.Reference[Command] `json:"actions"`
-		Transitions []Transition               `json:"transitions"`
+		Name        string                     `json:"name,omitempty"`
+		Actions     []*core.Reference[Command] `json:"actions,omitempty"`
+		Transitions []Transition               `json:"transitions,omitempty"`
 	}{
 		T__:         "State",
 		Name:        i.Name(),
@@ -70,8 +70,8 @@ func (i *StateImpl) MarshalJSON() ([]byte, error) {
 func (i *TransitionImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__   string                 `json:"$type"`
-		Event *core.Reference[Event] `json:"event"`
-		State *core.Reference[State] `json:"state"`
+		Event *core.Reference[Event] `json:"event,omitempty"`
+		State *core.Reference[State] `json:"state,omitempty"`
 	}{
 		T__:   "Transition",
 		Event: i.Event(),
@@ -108,11 +108,13 @@ func (i *StatemachineImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetCommandsItem(node)
 	}
-	init := core.NewReference[State](i, nil, nil)
-	if err := json.Unmarshal(aux.Init, &init); err != nil {
-		return err
+	if aux.Init != nil {
+		init := core.NewReference[State](i, nil, nil)
+		if err := init.UnmarshalJSON(aux.Init); err != nil {
+			return err
+		}
+		i.SetInit(init)
 	}
-	i.SetInit(init)
 	i.states = []State{}
 	for _, item := range aux.States {
 		node, err := Unmarshal[State](item)
@@ -162,7 +164,7 @@ func (i *StateImpl) UnmarshalJSON(data []byte) error {
 	i.actions = []*core.Reference[Command]{}
 	for _, item := range aux.Actions {
 		node := core.NewReference[Command](i, nil, nil)
-		if err := json.Unmarshal(item, &node); err != nil {
+		if err := node.UnmarshalJSON(item); err != nil {
 			return err
 		}
 		i.SetActionsItem(node)
@@ -187,16 +189,20 @@ func (i *TransitionImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	event := core.NewReference[Event](i, nil, nil)
-	if err := json.Unmarshal(aux.Event, &event); err != nil {
-		return err
+	if aux.Event != nil {
+		event := core.NewReference[Event](i, nil, nil)
+		if err := event.UnmarshalJSON(aux.Event); err != nil {
+			return err
+		}
+		i.SetEvent(event)
 	}
-	i.SetEvent(event)
-	state := core.NewReference[State](i, nil, nil)
-	if err := json.Unmarshal(aux.State, &state); err != nil {
-		return err
+	if aux.State != nil {
+		state := core.NewReference[State](i, nil, nil)
+		if err := state.UnmarshalJSON(aux.State); err != nil {
+			return err
+		}
+		i.SetState(state)
 	}
-	i.SetState(state)
 	return nil
 }
 

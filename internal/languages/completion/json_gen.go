@@ -26,7 +26,7 @@ func (i *ObjImpl) MarshalJSON() ([]byte, error) {
 func (i *RootImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__     string `json:"$type"`
-		Objects []Obj  `json:"objects"`
+		Objects []Obj  `json:"objects,omitempty"`
 	}{
 		T__:     "Root",
 		Objects: i.Objects(),
@@ -36,8 +36,8 @@ func (i *RootImpl) MarshalJSON() ([]byte, error) {
 func (i *DeclareImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__      string    `json:"$type"`
-		Name     string    `json:"name"`
-		Children []Declare `json:"children"`
+		Name     string    `json:"name,omitempty"`
+		Children []Declare `json:"children,omitempty"`
 	}{
 		T__:      "Declare",
 		Name:     i.Name(),
@@ -48,7 +48,7 @@ func (i *DeclareImpl) MarshalJSON() ([]byte, error) {
 func (i *EImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__ string                   `json:"$type"`
-		Ref *core.Reference[Declare] `json:"ref"`
+		Ref *core.Reference[Declare] `json:"ref,omitempty"`
 	}{
 		T__: "E",
 		Ref: i.Ref(),
@@ -58,7 +58,7 @@ func (i *EImpl) MarshalJSON() ([]byte, error) {
 func (i *FImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__   string  `json:"$type"`
-		Items []FItem `json:"items"`
+		Items []FItem `json:"items,omitempty"`
 	}{
 		T__:   "F",
 		Items: i.Items(),
@@ -68,7 +68,7 @@ func (i *FImpl) MarshalJSON() ([]byte, error) {
 func (i *FItemImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__ string                   `json:"$type"`
-		Ref *core.Reference[Declare] `json:"ref"`
+		Ref *core.Reference[Declare] `json:"ref,omitempty"`
 	}{
 		T__: "FItem",
 		Ref: i.Ref(),
@@ -78,7 +78,7 @@ func (i *FItemImpl) MarshalJSON() ([]byte, error) {
 func (i *GImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__ string                   `json:"$type"`
-		Ref *core.Reference[Declare] `json:"ref"`
+		Ref *core.Reference[Declare] `json:"ref,omitempty"`
 	}{
 		T__: "G",
 		Ref: i.Ref(),
@@ -88,7 +88,7 @@ func (i *GImpl) MarshalJSON() ([]byte, error) {
 func (i *HImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__    string     `json:"$type"`
-		Member MemberCall `json:"member"`
+		Member MemberCall `json:"member,omitempty"`
 	}{
 		T__:    "H",
 		Member: i.Member(),
@@ -98,8 +98,8 @@ func (i *HImpl) MarshalJSON() ([]byte, error) {
 func (i *MemberCallImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__      string                   `json:"$type"`
-		Ref      *core.Reference[Declare] `json:"ref"`
-		Previous MemberCall               `json:"previous"`
+		Ref      *core.Reference[Declare] `json:"ref,omitempty"`
+		Previous MemberCall               `json:"previous,omitempty"`
 	}{
 		T__:      "MemberCall",
 		Ref:      i.Ref(),
@@ -110,7 +110,7 @@ func (i *MemberCallImpl) MarshalJSON() ([]byte, error) {
 func (i *JImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__ string                   `json:"$type"`
-		Ref *core.Reference[Declare] `json:"ref"`
+		Ref *core.Reference[Declare] `json:"ref,omitempty"`
 	}{
 		T__: "J",
 		Ref: i.Ref(),
@@ -120,8 +120,8 @@ func (i *JImpl) MarshalJSON() ([]byte, error) {
 func (i *KImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__  string                   `json:"$type"`
-		Ref1 *core.Reference[Declare] `json:"ref1"`
-		Ref2 *core.Reference[Declare] `json:"ref2"`
+		Ref1 *core.Reference[Declare] `json:"ref1,omitempty"`
+		Ref2 *core.Reference[Declare] `json:"ref2,omitempty"`
 	}{
 		T__:  "K",
 		Ref1: i.Ref1(),
@@ -132,7 +132,7 @@ func (i *KImpl) MarshalJSON() ([]byte, error) {
 func (i *NImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__ string                   `json:"$type"`
-		Ref *core.Reference[Declare] `json:"ref"`
+		Ref *core.Reference[Declare] `json:"ref,omitempty"`
 	}{
 		T__: "N",
 		Ref: i.Ref(),
@@ -142,7 +142,7 @@ func (i *NImpl) MarshalJSON() ([]byte, error) {
 func (i *OImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__ string                   `json:"$type"`
-		Ref *core.Reference[Declare] `json:"ref"`
+		Ref *core.Reference[Declare] `json:"ref,omitempty"`
 	}{
 		T__: "O",
 		Ref: i.Ref(),
@@ -204,11 +204,13 @@ func (i *EImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	ref := core.NewReference[Declare](i, nil, nil)
-	if err := json.Unmarshal(aux.Ref, &ref); err != nil {
-		return err
+	if aux.Ref != nil {
+		ref := core.NewReference[Declare](i, nil, nil)
+		if err := ref.UnmarshalJSON(aux.Ref); err != nil {
+			return err
+		}
+		i.SetRef(ref)
 	}
-	i.SetRef(ref)
 	return nil
 }
 
@@ -239,11 +241,13 @@ func (i *FItemImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	ref := core.NewReference[Declare](i, nil, nil)
-	if err := json.Unmarshal(aux.Ref, &ref); err != nil {
-		return err
+	if aux.Ref != nil {
+		ref := core.NewReference[Declare](i, nil, nil)
+		if err := ref.UnmarshalJSON(aux.Ref); err != nil {
+			return err
+		}
+		i.SetRef(ref)
 	}
-	i.SetRef(ref)
 	return nil
 }
 
@@ -255,11 +259,13 @@ func (i *GImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	ref := core.NewReference[Declare](i, nil, nil)
-	if err := json.Unmarshal(aux.Ref, &ref); err != nil {
-		return err
+	if aux.Ref != nil {
+		ref := core.NewReference[Declare](i, nil, nil)
+		if err := ref.UnmarshalJSON(aux.Ref); err != nil {
+			return err
+		}
+		i.SetRef(ref)
 	}
-	i.SetRef(ref)
 	return nil
 }
 
@@ -271,11 +277,13 @@ func (i *HImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	member, err := Unmarshal[MemberCall](aux.Member)
-	if err != nil {
-		return err
+	if aux.Member != nil {
+		member, err := Unmarshal[MemberCall](aux.Member)
+		if err != nil {
+			return err
+		}
+		i.SetMember(member)
 	}
-	i.SetMember(member)
 	return nil
 }
 
@@ -288,16 +296,20 @@ func (i *MemberCallImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	ref := core.NewReference[Declare](i, nil, nil)
-	if err := json.Unmarshal(aux.Ref, &ref); err != nil {
-		return err
+	if aux.Ref != nil {
+		ref := core.NewReference[Declare](i, nil, nil)
+		if err := ref.UnmarshalJSON(aux.Ref); err != nil {
+			return err
+		}
+		i.SetRef(ref)
 	}
-	i.SetRef(ref)
-	previous, err := Unmarshal[MemberCall](aux.Previous)
-	if err != nil {
-		return err
+	if aux.Previous != nil {
+		previous, err := Unmarshal[MemberCall](aux.Previous)
+		if err != nil {
+			return err
+		}
+		i.SetPrevious(previous)
 	}
-	i.SetPrevious(previous)
 	return nil
 }
 
@@ -309,11 +321,13 @@ func (i *JImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	ref := core.NewReference[Declare](i, nil, nil)
-	if err := json.Unmarshal(aux.Ref, &ref); err != nil {
-		return err
+	if aux.Ref != nil {
+		ref := core.NewReference[Declare](i, nil, nil)
+		if err := ref.UnmarshalJSON(aux.Ref); err != nil {
+			return err
+		}
+		i.SetRef(ref)
 	}
-	i.SetRef(ref)
 	return nil
 }
 
@@ -326,16 +340,20 @@ func (i *KImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	ref1 := core.NewReference[Declare](i, nil, nil)
-	if err := json.Unmarshal(aux.Ref1, &ref1); err != nil {
-		return err
+	if aux.Ref1 != nil {
+		ref1 := core.NewReference[Declare](i, nil, nil)
+		if err := ref1.UnmarshalJSON(aux.Ref1); err != nil {
+			return err
+		}
+		i.SetRef1(ref1)
 	}
-	i.SetRef1(ref1)
-	ref2 := core.NewReference[Declare](i, nil, nil)
-	if err := json.Unmarshal(aux.Ref2, &ref2); err != nil {
-		return err
+	if aux.Ref2 != nil {
+		ref2 := core.NewReference[Declare](i, nil, nil)
+		if err := ref2.UnmarshalJSON(aux.Ref2); err != nil {
+			return err
+		}
+		i.SetRef2(ref2)
 	}
-	i.SetRef2(ref2)
 	return nil
 }
 
@@ -347,11 +365,13 @@ func (i *NImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	ref := core.NewReference[Declare](i, nil, nil)
-	if err := json.Unmarshal(aux.Ref, &ref); err != nil {
-		return err
+	if aux.Ref != nil {
+		ref := core.NewReference[Declare](i, nil, nil)
+		if err := ref.UnmarshalJSON(aux.Ref); err != nil {
+			return err
+		}
+		i.SetRef(ref)
 	}
-	i.SetRef(ref)
 	return nil
 }
 
@@ -363,11 +383,13 @@ func (i *OImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	ref := core.NewReference[Declare](i, nil, nil)
-	if err := json.Unmarshal(aux.Ref, &ref); err != nil {
-		return err
+	if aux.Ref != nil {
+		ref := core.NewReference[Declare](i, nil, nil)
+		if err := ref.UnmarshalJSON(aux.Ref); err != nil {
+			return err
+		}
+		i.SetRef(ref)
 	}
-	i.SetRef(ref)
 	return nil
 }
 

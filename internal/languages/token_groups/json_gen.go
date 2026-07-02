@@ -18,7 +18,7 @@ func newToken(tokenType *core.TokenType, view string) *core.Token {
 func (i *ModelImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__  string `json:"$type"`
-		Item Item   `json:"item"`
+		Item Item   `json:"item,omitempty"`
 	}{
 		T__:  "Model",
 		Item: i.Item(),
@@ -28,7 +28,7 @@ func (i *ModelImpl) MarshalJSON() ([]byte, error) {
 func (i *ItemImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__   string `json:"$type"`
-		Value string `json:"value"`
+		Value string `json:"value,omitempty"`
 	}{
 		T__:   "Item",
 		Value: i.Value(),
@@ -38,9 +38,9 @@ func (i *ItemImpl) MarshalJSON() ([]byte, error) {
 func (i *RecoveryImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__    string `json:"$type"`
-		Value  string `json:"value"`
-		First  string `json:"first"`
-		Second string `json:"second"`
+		Value  string `json:"value,omitempty"`
+		First  string `json:"first,omitempty"`
+		Second string `json:"second,omitempty"`
 	}{
 		T__:    "Recovery",
 		Value:  i.Value(),
@@ -57,11 +57,13 @@ func (i *ModelImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	item, err := Unmarshal[Item](aux.Item)
-	if err != nil {
-		return err
+	if aux.Item != nil {
+		item, err := Unmarshal[Item](aux.Item)
+		if err != nil {
+			return err
+		}
+		i.SetItem(item)
 	}
-	i.SetItem(item)
 	return nil
 }
 
