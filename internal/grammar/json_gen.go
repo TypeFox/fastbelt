@@ -4,9 +4,10 @@ package grammar
 
 import (
 	"encoding/json"
+	"fmt"
+	"reflect"
 
 	core "typefox.dev/fastbelt"
-	utilJson "typefox.dev/fastbelt/util/json"
 )
 
 func newToken(tokenType *core.TokenType, view string) *core.Token {
@@ -145,11 +146,13 @@ func (i *ParserRuleImpl) MarshalJSON() ([]byte, error) {
 		T__        string                     `json:"$type"`
 		Name       string                     `json:"name"`
 		Body       Element                    `json:"body"`
+		Entry      bool                       `json:"entry"`
 		ReturnType *core.Reference[Interface] `json:"returnType"`
 	}{
 		T__:        "ParserRule",
 		Name:       i.Name(),
 		Body:       i.Body(),
+		Entry:      i.IsEntry(),
 		ReturnType: i.ReturnType(),
 	})
 }
@@ -326,7 +329,7 @@ func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 	i.SetName(newToken(Token_ID, aux.Name))
 	i.rules = []ParserRule{}
 	for _, item := range aux.Rules {
-		node, err := utilJson.Unmarshal[ParserRule](item, FastbeltSyntheticFactories)
+		node, err := Unmarshal[ParserRule](item)
 		if err != nil {
 			return err
 		}
@@ -334,7 +337,7 @@ func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 	}
 	i.composites = []CompositeRule{}
 	for _, item := range aux.Composites {
-		node, err := utilJson.Unmarshal[CompositeRule](item, FastbeltSyntheticFactories)
+		node, err := Unmarshal[CompositeRule](item)
 		if err != nil {
 			return err
 		}
@@ -342,7 +345,7 @@ func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 	}
 	i.terminals = []Token{}
 	for _, item := range aux.Terminals {
-		node, err := utilJson.Unmarshal[Token](item, FastbeltSyntheticFactories)
+		node, err := Unmarshal[Token](item)
 		if err != nil {
 			return err
 		}
@@ -350,7 +353,7 @@ func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 	}
 	i.tokenGroups = []TokenGroup{}
 	for _, item := range aux.TokenGroups {
-		node, err := utilJson.Unmarshal[TokenGroup](item, FastbeltSyntheticFactories)
+		node, err := Unmarshal[TokenGroup](item)
 		if err != nil {
 			return err
 		}
@@ -358,7 +361,7 @@ func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 	}
 	i.interfaces = []Interface{}
 	for _, item := range aux.Interfaces {
-		node, err := utilJson.Unmarshal[Interface](item, FastbeltSyntheticFactories)
+		node, err := Unmarshal[Interface](item)
 		if err != nil {
 			return err
 		}
@@ -369,10 +372,10 @@ func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 
 func (i *InterfaceImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__     string                       `json:"$type"`
-		Name    string                       `json:"name"`
-		Extends []*core.Reference[Interface] `json:"extends"`
-		Fields  []json.RawMessage            `json:"fields"`
+		T__     string            `json:"$type"`
+		Name    string            `json:"name"`
+		Extends []json.RawMessage `json:"extends"`
+		Fields  []json.RawMessage `json:"fields"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -380,11 +383,15 @@ func (i *InterfaceImpl) UnmarshalJSON(data []byte) error {
 	i.SetName(newToken(Token_ID, aux.Name))
 	i.extends = []*core.Reference[Interface]{}
 	for _, item := range aux.Extends {
-		i.SetExtendsItem(item)
+		node := core.NewReference[Interface](i, nil, nil)
+		if err := json.Unmarshal(item, &node); err != nil {
+			return err
+		}
+		i.SetExtendsItem(node)
 	}
 	i.fields = []Field{}
 	for _, item := range aux.Fields {
-		node, err := utilJson.Unmarshal[Field](item, FastbeltSyntheticFactories)
+		node, err := Unmarshal[Field](item)
 		if err != nil {
 			return err
 		}
@@ -403,7 +410,7 @@ func (i *FieldImpl) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	i.SetName(newToken(Token_ID, aux.Name))
-	_Type, err := utilJson.Unmarshal[FieldType](aux.Type, FastbeltSyntheticFactories)
+	_Type, err := Unmarshal[FieldType](aux.Type)
 	if err != nil {
 		return err
 	}
@@ -423,7 +430,7 @@ func (i *ArrayTypeImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	internalType, err := utilJson.Unmarshal[FieldType](aux.InternalType, FastbeltSyntheticFactories)
+	internalType, err := Unmarshal[FieldType](aux.InternalType)
 	if err != nil {
 		return err
 	}
@@ -433,25 +440,33 @@ func (i *ArrayTypeImpl) UnmarshalJSON(data []byte) error {
 
 func (i *ReferenceTypeImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__  string                     `json:"$type"`
-		Type *core.Reference[Interface] `json:"type"`
+		T__  string          `json:"$type"`
+		Type json.RawMessage `json:"type"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetType(aux.Type)
+	_Type := core.NewReference[Interface](i, nil, nil)
+	if err := json.Unmarshal(aux.Type, &_Type); err != nil {
+		return err
+	}
+	i.SetType(_Type)
 	return nil
 }
 
 func (i *SimpleTypeImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__  string                     `json:"$type"`
-		Type *core.Reference[Interface] `json:"type"`
+		T__  string          `json:"$type"`
+		Type json.RawMessage `json:"type"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetType(aux.Type)
+	_Type := core.NewReference[Interface](i, nil, nil)
+	if err := json.Unmarshal(aux.Type, &_Type); err != nil {
+		return err
+	}
+	i.SetType(_Type)
 	return nil
 }
 
@@ -489,7 +504,7 @@ func (i *AbstractRuleWithBodyImpl) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	i.SetName(newToken(Token_ID, aux.Name))
-	body, err := utilJson.Unmarshal[Element](aux.Body, FastbeltSyntheticFactories)
+	body, err := Unmarshal[Element](aux.Body)
 	if err != nil {
 		return err
 	}
@@ -511,21 +526,29 @@ func (i *AbstractTokenRuleImpl) UnmarshalJSON(data []byte) error {
 
 func (i *ParserRuleImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__        string                     `json:"$type"`
-		Name       string                     `json:"name"`
-		Body       json.RawMessage            `json:"body"`
-		ReturnType *core.Reference[Interface] `json:"returnType"`
+		T__        string          `json:"$type"`
+		Name       string          `json:"name"`
+		Body       json.RawMessage `json:"body"`
+		Entry      bool            `json:"entry"`
+		ReturnType json.RawMessage `json:"returnType"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
 	i.SetName(newToken(Token_ID, aux.Name))
-	body, err := utilJson.Unmarshal[Element](aux.Body, FastbeltSyntheticFactories)
+	body, err := Unmarshal[Element](aux.Body)
 	if err != nil {
 		return err
 	}
 	i.SetBody(body)
-	i.SetReturnType(aux.ReturnType)
+	if aux.Entry {
+		i.SetEntry(newToken(Token_ID, ""))
+	}
+	returnType := core.NewReference[Interface](i, nil, nil)
+	if err := json.Unmarshal(aux.ReturnType, &returnType); err != nil {
+		return err
+	}
+	i.SetReturnType(returnType)
 	return nil
 }
 
@@ -547,11 +570,11 @@ func (i *TokenImpl) UnmarshalJSON(data []byte) error {
 
 func (i *TokenGroupImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__       string                               `json:"$type"`
-		Name      string                               `json:"name"`
-		TokenRefs []*core.Reference[AbstractTokenRule] `json:"tokenRefs"`
-		Regexps   []string                             `json:"regexps"`
-		Keywords  []json.RawMessage                    `json:"keywords"`
+		T__       string            `json:"$type"`
+		Name      string            `json:"name"`
+		TokenRefs []json.RawMessage `json:"tokenRefs"`
+		Regexps   []string          `json:"regexps"`
+		Keywords  []json.RawMessage `json:"keywords"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -559,7 +582,11 @@ func (i *TokenGroupImpl) UnmarshalJSON(data []byte) error {
 	i.SetName(newToken(Token_ID, aux.Name))
 	i.tokenRefs = []*core.Reference[AbstractTokenRule]{}
 	for _, item := range aux.TokenRefs {
-		i.SetTokenRefsItem(item)
+		node := core.NewReference[AbstractTokenRule](i, nil, nil)
+		if err := json.Unmarshal(item, &node); err != nil {
+			return err
+		}
+		i.SetTokenRefsItem(node)
 	}
 	i.regexps = []*core.Token{}
 	for _, item := range aux.Regexps {
@@ -567,7 +594,7 @@ func (i *TokenGroupImpl) UnmarshalJSON(data []byte) error {
 	}
 	i.keywords = []Keyword{}
 	for _, item := range aux.Keywords {
-		node, err := utilJson.Unmarshal[Keyword](item, FastbeltSyntheticFactories)
+		node, err := Unmarshal[Keyword](item)
 		if err != nil {
 			return err
 		}
@@ -600,7 +627,7 @@ func (i *AlternativesImpl) UnmarshalJSON(data []byte) error {
 	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
 	i.alts = []Element{}
 	for _, item := range aux.Alts {
-		node, err := utilJson.Unmarshal[Element](item, FastbeltSyntheticFactories)
+		node, err := Unmarshal[Element](item)
 		if err != nil {
 			return err
 		}
@@ -621,7 +648,7 @@ func (i *GroupImpl) UnmarshalJSON(data []byte) error {
 	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
 	i.elements = []Element{}
 	for _, item := range aux.Elements {
-		node, err := utilJson.Unmarshal[Element](item, FastbeltSyntheticFactories)
+		node, err := Unmarshal[Element](item)
 		if err != nil {
 			return err
 		}
@@ -646,19 +673,23 @@ func (i *KeywordImpl) UnmarshalJSON(data []byte) error {
 
 func (i *AssignmentImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__         string                 `json:"$type"`
-		Cardinality string                 `json:"cardinality"`
-		Property    *core.Reference[Field] `json:"property"`
-		Operator    string                 `json:"operator"`
-		Value       json.RawMessage        `json:"value"`
+		T__         string          `json:"$type"`
+		Cardinality string          `json:"cardinality"`
+		Property    json.RawMessage `json:"property"`
+		Operator    string          `json:"operator"`
+		Value       json.RawMessage `json:"value"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
 	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
-	i.SetProperty(aux.Property)
+	property := core.NewReference[Field](i, nil, nil)
+	if err := json.Unmarshal(aux.Property, &property); err != nil {
+		return err
+	}
+	i.SetProperty(property)
 	i.SetOperator(newToken(Token_ID, aux.Operator))
-	value, err := utilJson.Unmarshal[Assignable](aux.Value, FastbeltSyntheticFactories)
+	value, err := Unmarshal[Assignable](aux.Value)
 	if err != nil {
 		return err
 	}
@@ -680,17 +711,21 @@ func (i *AssignableImpl) UnmarshalJSON(data []byte) error {
 
 func (i *CrossRefImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__         string                     `json:"$type"`
-		Cardinality string                     `json:"cardinality"`
-		Type        *core.Reference[Interface] `json:"type"`
-		Rule        json.RawMessage            `json:"rule"`
+		T__         string          `json:"$type"`
+		Cardinality string          `json:"cardinality"`
+		Type        json.RawMessage `json:"type"`
+		Rule        json.RawMessage `json:"rule"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
 	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
-	i.SetType(aux.Type)
-	rule, err := utilJson.Unmarshal[RuleCall](aux.Rule, FastbeltSyntheticFactories)
+	_Type := core.NewReference[Interface](i, nil, nil)
+	if err := json.Unmarshal(aux.Type, &_Type); err != nil {
+		return err
+	}
+	i.SetType(_Type)
+	rule, err := Unmarshal[RuleCall](aux.Rule)
 	if err != nil {
 		return err
 	}
@@ -700,33 +735,45 @@ func (i *CrossRefImpl) UnmarshalJSON(data []byte) error {
 
 func (i *RuleCallImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__         string                        `json:"$type"`
-		Cardinality string                        `json:"cardinality"`
-		Rule        *core.Reference[AbstractRule] `json:"rule"`
+		T__         string          `json:"$type"`
+		Cardinality string          `json:"cardinality"`
+		Rule        json.RawMessage `json:"rule"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
 	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
-	i.SetRule(aux.Rule)
+	rule := core.NewReference[AbstractRule](i, nil, nil)
+	if err := json.Unmarshal(aux.Rule, &rule); err != nil {
+		return err
+	}
+	i.SetRule(rule)
 	return nil
 }
 
 func (i *ActionImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__         string                     `json:"$type"`
-		Cardinality string                     `json:"cardinality"`
-		Type        *core.Reference[Interface] `json:"type"`
-		Operator    string                     `json:"operator"`
-		Property    *core.Reference[Field]     `json:"property"`
+		T__         string          `json:"$type"`
+		Cardinality string          `json:"cardinality"`
+		Type        json.RawMessage `json:"type"`
+		Operator    string          `json:"operator"`
+		Property    json.RawMessage `json:"property"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
 	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
-	i.SetType(aux.Type)
+	_Type := core.NewReference[Interface](i, nil, nil)
+	if err := json.Unmarshal(aux.Type, &_Type); err != nil {
+		return err
+	}
+	i.SetType(_Type)
 	i.SetOperator(newToken(Token_ID, aux.Operator))
-	i.SetProperty(aux.Property)
+	property := core.NewReference[Field](i, nil, nil)
+	if err := json.Unmarshal(aux.Property, &property); err != nil {
+		return err
+	}
+	i.SetProperty(property)
 	return nil
 }
 
@@ -740,10 +787,38 @@ func (i *CompositeRuleImpl) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	i.SetName(newToken(Token_ID, aux.Name))
-	body, err := utilJson.Unmarshal[Element](aux.Body, FastbeltSyntheticFactories)
+	body, err := Unmarshal[Element](aux.Body)
 	if err != nil {
 		return err
 	}
 	i.SetBody(body)
 	return nil
+}
+
+// Unmarshal decodes data into an instance of type T by reading the "$type" field,
+// selecting a corresponding factory, creating an instance, and unmarshaling its content.
+func Unmarshal[T core.AstNode](data []byte) (T, error) {
+	node := &struct {
+		Type string `json:"$type"`
+	}{}
+	if err := json.Unmarshal(data, node); err != nil {
+		var zero T
+		return zero, fmt.Errorf("unmarshal: %w", err)
+	}
+	factory, ok := FastbeltSyntheticFactories[node.Type]
+	if !ok {
+		var zero T
+		return zero, fmt.Errorf("unmarshal: unknown type %q", node.Type)
+	}
+	instance := factory()
+	casted, ok := instance.(T)
+	if !ok {
+		var zero T
+		return zero, fmt.Errorf("unmarshal: %T is not convertible to type %s", instance, reflect.TypeFor[T]())
+	}
+	if err := json.Unmarshal(data, casted); err != nil {
+		var zero T
+		return zero, fmt.Errorf("unmarshal %s: %w", node.Type, err)
+	}
+	return casted, nil
 }
