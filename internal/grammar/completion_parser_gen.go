@@ -397,6 +397,9 @@ func (p *CompletionParser) ParseTokenCommand() {
 	p.cp.EnterRule("TokenCommand", StateNumber__TokenCommand__Start)
 	defer p.cp.ExitRule()
 	{
+		p.state.Consume(Token_ARROW)
+	}
+	{
 		p.cp.MarkAssignment("Type")
 		switch prediction, _ := p.lookahead.TokenCommandTypeAlternatives(p.state); prediction {
 		case 0:

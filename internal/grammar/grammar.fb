@@ -112,7 +112,7 @@ interface TokenCommand {
     Default bool
 }
 
-TokenCommand: Type=(PUSH|POP|MODE) (LEFTPAREN (Mode=[TokenMode:ID] | Default?=DEFAULT) RIGHTPAREN)?;
+TokenCommand: ARROW Type=(PUSH|POP|MODE) (LEFTPAREN (Mode=[TokenMode:ID] | Default?=DEFAULT) RIGHTPAREN)?;
 
 interface TokenGroup extends AbstractTokenRule {
     TokenRefs []*AbstractTokenRule
@@ -212,6 +212,7 @@ CompositeGroup returns Element: CompositeElement ({Group.Elements+=current} Elem
 
 CompositeElement returns Element: (RuleCall | LEFTPAREN CompositeAlternatives RIGHTPAREN) Cardinality=(ASTERISK | PLUS | QUESTION)?
 
+token ARROW: "->"
 token LEFTPAREN: "("
 token RIGHTPAREN: ")"
 token ASTERISK: "*"
@@ -258,6 +259,7 @@ token RegexLiteral: /\/([^\r\n\[\/\\]|\\.|\[([^\r\n\]\\]|\\.)*\])+\//
 token WS: /[ \n\r\t]+/
 
 token mode default {
+    ARROW
     LEFTPAREN
     RIGHTPAREN
     ASTERISK

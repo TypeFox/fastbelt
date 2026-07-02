@@ -171,6 +171,7 @@ const (
 	StateNumber__RegexpTokenElement__Basic
 	StateNumber__KeywordTokenElement__Basic_0
 	StateNumber__KeywordTokenElement__Basic_1
+	StateNumber__TokenCommand_ARROW
 	StateNumber__TokenCommand_Type_PUSH
 	StateNumber__TokenCommand__Basic_0
 	StateNumber__TokenCommand_Type_POP
@@ -373,7 +374,7 @@ func ATN() *parser.RuntimeATN {
 	return atn
 }
 func BuildATN() *parser.RuntimeATN {
-	states := make([]*parser.RuntimeATNState, 353)
+	states := make([]*parser.RuntimeATNState, 354)
 	states[StateNumber__Grammar__Start] = parser.NewATNState(StateNumber__Grammar__Start, parser.ATNRuleStart, true)
 	states[StateNumber__Grammar__Stop] = parser.NewATNState(StateNumber__Grammar__Stop, parser.ATNRuleStop, false)
 	states[StateNumber__Interface__Start] = parser.NewATNState(StateNumber__Interface__Start, parser.ATNRuleStart, true)
@@ -537,6 +538,7 @@ func BuildATN() *parser.RuntimeATN {
 	states[StateNumber__RegexpTokenElement__Basic] = parser.NewATNState(StateNumber__RegexpTokenElement__Basic, parser.ATNBasic, true)
 	states[StateNumber__KeywordTokenElement__Basic_0] = parser.NewATNState(StateNumber__KeywordTokenElement__Basic_0, parser.ATNBasic, true)
 	states[StateNumber__KeywordTokenElement__Basic_1] = parser.NewATNState(StateNumber__KeywordTokenElement__Basic_1, parser.ATNBasic, true)
+	states[StateNumber__TokenCommand_ARROW] = parser.NewATNState(StateNumber__TokenCommand_ARROW, parser.ATNBasic, false)
 	states[StateNumber__TokenCommand_Type_PUSH] = parser.NewATNState(StateNumber__TokenCommand_Type_PUSH, parser.ATNBasic, false)
 	states[StateNumber__TokenCommand__Basic_0] = parser.NewATNState(StateNumber__TokenCommand__Basic_0, parser.ATNBasic, true)
 	states[StateNumber__TokenCommand_Type_POP] = parser.NewATNState(StateNumber__TokenCommand_Type_POP, parser.ATNBasic, false)
@@ -767,7 +769,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[StateNumber__KeywordTokenElement__Basic_0]),
 	)
 	states[StateNumber__TokenCommand__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__TokenCommand__Basic_3]),
+		parser.NewEpsilonTransition(states[StateNumber__TokenCommand_ARROW]),
 	)
 	states[StateNumber__TokenGroup__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__TokenGroup_TOKEN]),
@@ -1138,6 +1140,9 @@ func BuildATN() *parser.RuntimeATN {
 	)
 	states[StateNumber__KeywordTokenElement__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__KeywordTokenElement__Stop]),
+	)
+	states[StateNumber__TokenCommand_ARROW].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__TokenCommand__Basic_3], Token_ARROW, nil),
 	)
 	states[StateNumber__TokenCommand_Type_PUSH].AppendTransitions(
 		parser.NewAtomTransition(states[StateNumber__TokenCommand__Basic_0], Token_PUSH, nil),

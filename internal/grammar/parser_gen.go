@@ -507,6 +507,10 @@ func (p *Parser) ParseTokenCommand() TokenCommand {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
+			token := p.state.Consume(Token_ARROW)
+			core.AssignToken(current, token, StateNumber__TokenCommand_ARROW)
+		}
+		{
 			switch prediction, _ := p.lookahead.TokenCommandTypeAlternatives(p.state); prediction {
 			case 0:
 				token := p.state.Consume(Token_PUSH)

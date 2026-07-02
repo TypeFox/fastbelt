@@ -9,7 +9,23 @@ import (
 	"unicode/utf8"
 )
 
-const Token_LEFTPAREN_Idx = 1
+const Token_ARROW_Idx = 1
+
+var Token_ARROW = core.NewTokenType(
+	Token_ARROW_Idx,
+	"->",
+	"->",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "->") {
+			return 2
+		}
+		return 0
+	},
+	[]rune{'-'},
+)
+
+const Token_LEFTPAREN_Idx = 2
 
 var Token_LEFTPAREN = core.NewTokenType(
 	Token_LEFTPAREN_Idx,
@@ -25,7 +41,7 @@ var Token_LEFTPAREN = core.NewTokenType(
 	[]rune{'('},
 )
 
-const Token_RIGHTPAREN_Idx = 2
+const Token_RIGHTPAREN_Idx = 3
 
 var Token_RIGHTPAREN = core.NewTokenType(
 	Token_RIGHTPAREN_Idx,
@@ -41,7 +57,7 @@ var Token_RIGHTPAREN = core.NewTokenType(
 	[]rune{')'},
 )
 
-const Token_ASTERISK_Idx = 3
+const Token_ASTERISK_Idx = 4
 
 var Token_ASTERISK = core.NewTokenType(
 	Token_ASTERISK_Idx,
@@ -57,7 +73,7 @@ var Token_ASTERISK = core.NewTokenType(
 	[]rune{'*'},
 )
 
-const Token_PLUS_Idx = 4
+const Token_PLUS_Idx = 5
 
 var Token_PLUS = core.NewTokenType(
 	Token_PLUS_Idx,
@@ -73,7 +89,7 @@ var Token_PLUS = core.NewTokenType(
 	[]rune{'+'},
 )
 
-const Token_PLUS_EQUALS_Idx = 5
+const Token_PLUS_EQUALS_Idx = 6
 
 var Token_PLUS_EQUALS = core.NewTokenType(
 	Token_PLUS_EQUALS_Idx,
@@ -89,7 +105,7 @@ var Token_PLUS_EQUALS = core.NewTokenType(
 	[]rune{'+'},
 )
 
-const Token_COMMA_Idx = 6
+const Token_COMMA_Idx = 7
 
 var Token_COMMA = core.NewTokenType(
 	Token_COMMA_Idx,
@@ -105,7 +121,7 @@ var Token_COMMA = core.NewTokenType(
 	[]rune{','},
 )
 
-const Token_DOT_Idx = 7
+const Token_DOT_Idx = 8
 
 var Token_DOT = core.NewTokenType(
 	Token_DOT_Idx,
@@ -121,7 +137,7 @@ var Token_DOT = core.NewTokenType(
 	[]rune{'.'},
 )
 
-const Token_COLON_Idx = 8
+const Token_COLON_Idx = 9
 
 var Token_COLON = core.NewTokenType(
 	Token_COLON_Idx,
@@ -137,7 +153,7 @@ var Token_COLON = core.NewTokenType(
 	[]rune{':'},
 )
 
-const Token_SEMICOLON_Idx = 9
+const Token_SEMICOLON_Idx = 10
 
 var Token_SEMICOLON = core.NewTokenType(
 	Token_SEMICOLON_Idx,
@@ -153,7 +169,7 @@ var Token_SEMICOLON = core.NewTokenType(
 	[]rune{';'},
 )
 
-const Token_EQUALS_Idx = 10
+const Token_EQUALS_Idx = 11
 
 var Token_EQUALS = core.NewTokenType(
 	Token_EQUALS_Idx,
@@ -169,7 +185,7 @@ var Token_EQUALS = core.NewTokenType(
 	[]rune{'='},
 )
 
-const Token_QUESTION_Idx = 11
+const Token_QUESTION_Idx = 12
 
 var Token_QUESTION = core.NewTokenType(
 	Token_QUESTION_Idx,
@@ -185,7 +201,7 @@ var Token_QUESTION = core.NewTokenType(
 	[]rune{'?'},
 )
 
-const Token_QUESTION_EQUALS_Idx = 12
+const Token_QUESTION_EQUALS_Idx = 13
 
 var Token_QUESTION_EQUALS = core.NewTokenType(
 	Token_QUESTION_EQUALS_Idx,
@@ -201,7 +217,7 @@ var Token_QUESTION_EQUALS = core.NewTokenType(
 	[]rune{'?'},
 )
 
-const Token_LEFTBRACKET_Idx = 13
+const Token_LEFTBRACKET_Idx = 14
 
 var Token_LEFTBRACKET = core.NewTokenType(
 	Token_LEFTBRACKET_Idx,
@@ -217,7 +233,7 @@ var Token_LEFTBRACKET = core.NewTokenType(
 	[]rune{'['},
 )
 
-const Token_RIGHTBRACKET_Idx = 14
+const Token_RIGHTBRACKET_Idx = 15
 
 var Token_RIGHTBRACKET = core.NewTokenType(
 	Token_RIGHTBRACKET_Idx,
@@ -233,7 +249,7 @@ var Token_RIGHTBRACKET = core.NewTokenType(
 	[]rune{']'},
 )
 
-const Token_BOOL_Idx = 15
+const Token_BOOL_Idx = 16
 
 var Token_BOOL = core.NewTokenType(
 	Token_BOOL_Idx,
@@ -249,7 +265,7 @@ var Token_BOOL = core.NewTokenType(
 	[]rune{'b'},
 )
 
-const Token_COMMENT_Idx = 16
+const Token_COMMENT_Idx = 17
 
 var Token_COMMENT = core.NewTokenType(
 	Token_COMMENT_Idx,
@@ -265,7 +281,7 @@ var Token_COMMENT = core.NewTokenType(
 	[]rune{'c'},
 )
 
-const Token_COMPOSITE_Idx = 17
+const Token_COMPOSITE_Idx = 18
 
 var Token_COMPOSITE = core.NewTokenType(
 	Token_COMPOSITE_Idx,
@@ -281,7 +297,7 @@ var Token_COMPOSITE = core.NewTokenType(
 	[]rune{'c'},
 )
 
-const Token_CURRENT_Idx = 18
+const Token_CURRENT_Idx = 19
 
 var Token_CURRENT = core.NewTokenType(
 	Token_CURRENT_Idx,
@@ -297,7 +313,7 @@ var Token_CURRENT = core.NewTokenType(
 	[]rune{'c'},
 )
 
-const Token_DEFAULT_Idx = 19
+const Token_DEFAULT_Idx = 20
 
 var Token_DEFAULT = core.NewTokenType(
 	Token_DEFAULT_Idx,
@@ -313,7 +329,7 @@ var Token_DEFAULT = core.NewTokenType(
 	[]rune{'d'},
 )
 
-const Token_ENTRY_Idx = 20
+const Token_ENTRY_Idx = 21
 
 var Token_ENTRY = core.NewTokenType(
 	Token_ENTRY_Idx,
@@ -329,7 +345,7 @@ var Token_ENTRY = core.NewTokenType(
 	[]rune{'e'},
 )
 
-const Token_EXTENDS_Idx = 21
+const Token_EXTENDS_Idx = 22
 
 var Token_EXTENDS = core.NewTokenType(
 	Token_EXTENDS_Idx,
@@ -345,7 +361,7 @@ var Token_EXTENDS = core.NewTokenType(
 	[]rune{'e'},
 )
 
-const Token_GRAMMAR_Idx = 22
+const Token_GRAMMAR_Idx = 23
 
 var Token_GRAMMAR = core.NewTokenType(
 	Token_GRAMMAR_Idx,
@@ -361,7 +377,7 @@ var Token_GRAMMAR = core.NewTokenType(
 	[]rune{'g'},
 )
 
-const Token_GROUP_Idx = 23
+const Token_GROUP_Idx = 24
 
 var Token_GROUP = core.NewTokenType(
 	Token_GROUP_Idx,
@@ -377,7 +393,7 @@ var Token_GROUP = core.NewTokenType(
 	[]rune{'g'},
 )
 
-const Token_HIDDEN_Idx = 24
+const Token_HIDDEN_Idx = 25
 
 var Token_HIDDEN = core.NewTokenType(
 	Token_HIDDEN_Idx,
@@ -393,7 +409,7 @@ var Token_HIDDEN = core.NewTokenType(
 	[]rune{'h'},
 )
 
-const Token_INTERFACE_Idx = 25
+const Token_INTERFACE_Idx = 26
 
 var Token_INTERFACE = core.NewTokenType(
 	Token_INTERFACE_Idx,
@@ -409,7 +425,7 @@ var Token_INTERFACE = core.NewTokenType(
 	[]rune{'i'},
 )
 
-const Token_KEYWORDS_Idx = 26
+const Token_KEYWORDS_Idx = 27
 
 var Token_KEYWORDS = core.NewTokenType(
 	Token_KEYWORDS_Idx,
@@ -425,7 +441,7 @@ var Token_KEYWORDS = core.NewTokenType(
 	[]rune{'k'},
 )
 
-const Token_MODE_Idx = 27
+const Token_MODE_Idx = 28
 
 var Token_MODE = core.NewTokenType(
 	Token_MODE_Idx,
@@ -441,7 +457,7 @@ var Token_MODE = core.NewTokenType(
 	[]rune{'m'},
 )
 
-const Token_POP_Idx = 28
+const Token_POP_Idx = 29
 
 var Token_POP = core.NewTokenType(
 	Token_POP_Idx,
@@ -457,7 +473,7 @@ var Token_POP = core.NewTokenType(
 	[]rune{'p'},
 )
 
-const Token_PUSH_Idx = 29
+const Token_PUSH_Idx = 30
 
 var Token_PUSH = core.NewTokenType(
 	Token_PUSH_Idx,
@@ -473,7 +489,7 @@ var Token_PUSH = core.NewTokenType(
 	[]rune{'p'},
 )
 
-const Token_RETURNS_Idx = 30
+const Token_RETURNS_Idx = 31
 
 var Token_RETURNS = core.NewTokenType(
 	Token_RETURNS_Idx,
@@ -489,7 +505,7 @@ var Token_RETURNS = core.NewTokenType(
 	[]rune{'r'},
 )
 
-const Token_STRING_Idx = 31
+const Token_STRING_Idx = 32
 
 var Token_STRING = core.NewTokenType(
 	Token_STRING_Idx,
@@ -505,7 +521,7 @@ var Token_STRING = core.NewTokenType(
 	[]rune{'s'},
 )
 
-const Token_TOKEN_Idx = 32
+const Token_TOKEN_Idx = 33
 
 var Token_TOKEN = core.NewTokenType(
 	Token_TOKEN_Idx,
@@ -521,7 +537,7 @@ var Token_TOKEN = core.NewTokenType(
 	[]rune{'t'},
 )
 
-const Token_LEFTBRACE_Idx = 33
+const Token_LEFTBRACE_Idx = 34
 
 var Token_LEFTBRACE = core.NewTokenType(
 	Token_LEFTBRACE_Idx,
@@ -537,7 +553,7 @@ var Token_LEFTBRACE = core.NewTokenType(
 	[]rune{'{'},
 )
 
-const Token_PIPE_Idx = 34
+const Token_PIPE_Idx = 35
 
 var Token_PIPE = core.NewTokenType(
 	Token_PIPE_Idx,
@@ -553,7 +569,7 @@ var Token_PIPE = core.NewTokenType(
 	[]rune{'|'},
 )
 
-const Token_RIGHTBRACE_Idx = 35
+const Token_RIGHTBRACE_Idx = 36
 
 var Token_RIGHTBRACE = core.NewTokenType(
 	Token_RIGHTBRACE_Idx,
@@ -569,7 +585,7 @@ var Token_RIGHTBRACE = core.NewTokenType(
 	[]rune{'}'},
 )
 
-const Token_SL_COMMENT_Idx = 36
+const Token_SL_COMMENT_Idx = 37
 
 var Token_SL_COMMENT = core.NewTokenType(
 	Token_SL_COMMENT_Idx,
@@ -657,7 +673,7 @@ var Token_SL_COMMENT_Accepting = [3]bool{
 	2: true,
 }
 
-const Token_ML_COMMENT_Idx = 37
+const Token_ML_COMMENT_Idx = 38
 
 var Token_ML_COMMENT = core.NewTokenType(
 	Token_ML_COMMENT_Idx,
@@ -779,7 +795,7 @@ var Token_ML_COMMENT_Accepting = [5]bool{
 	4: true,
 }
 
-const Token_StringLiteral_Idx = 38
+const Token_StringLiteral_Idx = 39
 
 var Token_StringLiteral = core.NewTokenType(
 	Token_StringLiteral_Idx,
@@ -867,7 +883,7 @@ var Token_StringLiteral_Accepting = [3]bool{
 	2: true,
 }
 
-const Token_ID_Idx = 39
+const Token_ID_Idx = 40
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
@@ -938,7 +954,7 @@ var Token_ID_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_RegexLiteral_Idx = 40
+const Token_RegexLiteral_Idx = 41
 
 var Token_RegexLiteral = core.NewTokenType(
 	Token_RegexLiteral_Idx,
@@ -1094,7 +1110,7 @@ var Token_RegexLiteral_Accepting = [7]bool{
 	5: true,
 }
 
-const Token_WS_Idx = 41
+const Token_WS_Idx = 42
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
@@ -1167,6 +1183,7 @@ var Token_WS_Accepting = [2]bool{
 
 func NewLexer() lexer.Lexer {
 	TokenMode_default := lexer.NewTokenMode("default",
+		lexer.UseTokenType(Token_ARROW),
 		lexer.UseTokenType(Token_LEFTPAREN),
 		lexer.UseTokenType(Token_RIGHTPAREN),
 		lexer.UseTokenType(Token_ASTERISK),
