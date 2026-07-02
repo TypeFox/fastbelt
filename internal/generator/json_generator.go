@@ -87,7 +87,7 @@ func generateJSONMarshal(node codegen.Node, iface grammar.Interface) {
 				} else {
 					typeStr = field.Type
 				}
-				n2.AppendLine(field.Name, " ", typeStr, " `json:\"", jsonTag, "\"`")
+				n2.AppendLine(field.Name, " ", typeStr, " `json:\"", jsonTag, ",omitempty\"`")
 			}
 		})
 		n.AppendLine("}{")
@@ -205,26 +205,35 @@ func generateJSONUnmarshal(node codegen.Node, iface grammar.Interface) {
 }
 
 func genUnmarshalReference(node codegen.Node, field FieldInfo, srcName string, targetName string, loopItem bool) {
-	node.AppendLine(targetName, " := core.NewReference[", strings.Split(field.Type, "[")[1], "(i, nil, nil)")
-	node.AppendLine("if err := json.Unmarshal(", srcName, ", &", targetName, "); err != nil {")
-	genReturnErr(node)
-
-	if loopItem {
-		node.AppendLine("i.Set", field.Name, "Item(", targetName, ")")
-	} else {
-		node.AppendLine("i.Set", field.Name, "(", targetName, ")")
-	}
+	genUnmarshalFieldContent(node, field, srcName, targetName, loopItem, func(body codegen.Node) {
+		body.AppendLine(targetName, " := core.NewReference[", strings.Split(field.Type, "[")[1], "(i, nil, nil)")
+		// for the sake simplicity and performance we call 'target.UnmarshalJSON()' directly instead of taking the route
+		// via json.Unmarshal(...), since Reference implements that method
+		// note: the generic impl has special handling for "RawMessage" being equal "null", sets the target pointer to "nil"
+		body.AppendLine("if err := ", targetName, ".UnmarshalJSON(", srcName, "); err != nil {")
+		genReturnErr(body)
+	})
 }
 
 func genUnmarshalChild(node codegen.Node, field FieldInfo, srcName string, targetName string, loopItem bool) {
-	node.AppendLine(targetName, ", err := Unmarshal[", field.Type, "](", srcName, ")")
-	node.AppendLine("if err != nil {")
-	genReturnErr(node)
+	genUnmarshalFieldContent(node, field, srcName, targetName, loopItem, func(body codegen.Node) {
+		body.AppendLine(targetName, ", err := Unmarshal[", field.Type, "](", srcName, ")")
+		body.AppendLine("if err != nil {")
+		genReturnErr(body)
+	})
+}
 
+func genUnmarshalFieldContent(node codegen.Node, field FieldInfo, srcName string, targetName string, loopItem bool, unmarshalBody func(codegen.Node)) {
 	if loopItem {
+		unmarshalBody(node)
 		node.AppendLine("i.Set", field.Name, "Item(", targetName, ")")
 	} else {
-		node.AppendLine("i.Set", field.Name, "(", targetName, ")")
+		node.AppendLine("if ", srcName, " != nil {")
+		node.Indent(func(n2 codegen.Node) {
+			unmarshalBody(node)
+			node.AppendLine("i.Set", field.Name, "(", targetName, ")")
+		})
+		node.AppendLine("}")
 	}
 }
 

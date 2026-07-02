@@ -18,8 +18,8 @@ func newToken(tokenType *core.TokenType, view string) *core.Token {
 func (i *ObjImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__   string `json:"$type"`
-		Value string `json:"value"`
-		Node  string `json:"node"`
+		Value string `json:"value,omitempty"`
+		Node  string `json:"node,omitempty"`
 	}{
 		T__:   "Obj",
 		Value: i.Value(),
@@ -30,7 +30,7 @@ func (i *ObjImpl) MarshalJSON() ([]byte, error) {
 func (i *RootImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__  string `json:"$type"`
-		Item Obj    `json:"item"`
+		Item Obj    `json:"item,omitempty"`
 	}{
 		T__:  "Root",
 		Item: i.Item(),
@@ -40,9 +40,9 @@ func (i *RootImpl) MarshalJSON() ([]byte, error) {
 func (i *BImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__   string `json:"$type"`
-		Value string `json:"value"`
-		Node  string `json:"node"`
-		Post  string `json:"post"`
+		Value string `json:"value,omitempty"`
+		Node  string `json:"node,omitempty"`
+		Post  string `json:"post,omitempty"`
 	}{
 		T__:   "B",
 		Value: i.Value(),
@@ -76,11 +76,13 @@ func (i *RootImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	item, err := Unmarshal[Obj](aux.Item)
-	if err != nil {
-		return err
+	if aux.Item != nil {
+		item, err := Unmarshal[Obj](aux.Item)
+		if err != nil {
+			return err
+		}
+		i.SetItem(item)
 	}
-	i.SetItem(item)
 	return nil
 }
 

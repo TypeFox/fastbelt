@@ -18,8 +18,8 @@ func newToken(tokenType *core.TokenType, view string) *core.Token {
 func (i *ModuleImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__        string      `json:"$type"`
-		Name       string      `json:"name"`
-		Statements []Statement `json:"statements"`
+		Name       string      `json:"name,omitempty"`
+		Statements []Statement `json:"statements,omitempty"`
 	}{
 		T__:        "Module",
 		Name:       i.Name(),
@@ -38,7 +38,7 @@ func (i *StatementImpl) MarshalJSON() ([]byte, error) {
 func (i *AbstractDefinitionImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__  string `json:"$type"`
-		Name string `json:"name"`
+		Name string `json:"name,omitempty"`
 	}{
 		T__:  "AbstractDefinition",
 		Name: i.Name(),
@@ -48,9 +48,9 @@ func (i *AbstractDefinitionImpl) MarshalJSON() ([]byte, error) {
 func (i *DefinitionImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__        string              `json:"$type"`
-		Name       string              `json:"name"`
-		Args       []DeclaredParameter `json:"args"`
-		Expression Expression          `json:"expression"`
+		Name       string              `json:"name,omitempty"`
+		Args       []DeclaredParameter `json:"args,omitempty"`
+		Expression Expression          `json:"expression,omitempty"`
 	}{
 		T__:        "Definition",
 		Name:       i.Name(),
@@ -62,7 +62,7 @@ func (i *DefinitionImpl) MarshalJSON() ([]byte, error) {
 func (i *DeclaredParameterImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__  string `json:"$type"`
-		Name string `json:"name"`
+		Name string `json:"name,omitempty"`
 	}{
 		T__:  "DeclaredParameter",
 		Name: i.Name(),
@@ -72,7 +72,7 @@ func (i *DeclaredParameterImpl) MarshalJSON() ([]byte, error) {
 func (i *EvaluationImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__        string     `json:"$type"`
-		Expression Expression `json:"expression"`
+		Expression Expression `json:"expression,omitempty"`
 	}{
 		T__:        "Evaluation",
 		Expression: i.Expression(),
@@ -90,9 +90,9 @@ func (i *ExpressionImpl) MarshalJSON() ([]byte, error) {
 func (i *BinaryExpressionImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__      string     `json:"$type"`
-		Left     Expression `json:"left"`
-		Operator string     `json:"operator"`
-		Right    Expression `json:"right"`
+		Left     Expression `json:"left,omitempty"`
+		Operator string     `json:"operator,omitempty"`
+		Right    Expression `json:"right,omitempty"`
 	}{
 		T__:      "BinaryExpression",
 		Left:     i.Left(),
@@ -104,8 +104,8 @@ func (i *BinaryExpressionImpl) MarshalJSON() ([]byte, error) {
 func (i *FunctionCallImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__      string                              `json:"$type"`
-		Args     []Expression                        `json:"args"`
-		Callable *core.Reference[AbstractDefinition] `json:"callable"`
+		Args     []Expression                        `json:"args,omitempty"`
+		Callable *core.Reference[AbstractDefinition] `json:"callable,omitempty"`
 	}{
 		T__:      "FunctionCall",
 		Args:     i.Args(),
@@ -116,7 +116,7 @@ func (i *FunctionCallImpl) MarshalJSON() ([]byte, error) {
 func (i *NumberLiteralImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__   string `json:"$type"`
-		Value string `json:"value"`
+		Value string `json:"value,omitempty"`
 	}{
 		T__:   "NumberLiteral",
 		Value: i.Value(),
@@ -179,11 +179,13 @@ func (i *DefinitionImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetArgsItem(node)
 	}
-	expression, err := Unmarshal[Expression](aux.Expression)
-	if err != nil {
-		return err
+	if aux.Expression != nil {
+		expression, err := Unmarshal[Expression](aux.Expression)
+		if err != nil {
+			return err
+		}
+		i.SetExpression(expression)
 	}
-	i.SetExpression(expression)
 	return nil
 }
 
@@ -207,11 +209,13 @@ func (i *EvaluationImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	expression, err := Unmarshal[Expression](aux.Expression)
-	if err != nil {
-		return err
+	if aux.Expression != nil {
+		expression, err := Unmarshal[Expression](aux.Expression)
+		if err != nil {
+			return err
+		}
+		i.SetExpression(expression)
 	}
-	i.SetExpression(expression)
 	return nil
 }
 
@@ -229,17 +233,21 @@ func (i *BinaryExpressionImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	left, err := Unmarshal[Expression](aux.Left)
-	if err != nil {
-		return err
+	if aux.Left != nil {
+		left, err := Unmarshal[Expression](aux.Left)
+		if err != nil {
+			return err
+		}
+		i.SetLeft(left)
 	}
-	i.SetLeft(left)
 	i.SetOperator(newToken(Token_ID, aux.Operator))
-	right, err := Unmarshal[Expression](aux.Right)
-	if err != nil {
-		return err
+	if aux.Right != nil {
+		right, err := Unmarshal[Expression](aux.Right)
+		if err != nil {
+			return err
+		}
+		i.SetRight(right)
 	}
-	i.SetRight(right)
 	return nil
 }
 
@@ -260,11 +268,13 @@ func (i *FunctionCallImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetArgsItem(node)
 	}
-	callable := core.NewReference[AbstractDefinition](i, nil, nil)
-	if err := json.Unmarshal(aux.Callable, &callable); err != nil {
-		return err
+	if aux.Callable != nil {
+		callable := core.NewReference[AbstractDefinition](i, nil, nil)
+		if err := callable.UnmarshalJSON(aux.Callable); err != nil {
+			return err
+		}
+		i.SetCallable(callable)
 	}
-	i.SetCallable(callable)
 	return nil
 }
 
