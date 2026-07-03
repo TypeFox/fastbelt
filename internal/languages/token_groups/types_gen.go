@@ -68,22 +68,22 @@ func (i *ModelImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 	i.ModelData.ForEachReference(fn)
 }
 
-func (i *ModelImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *ModelImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameItem:
 		if i.Item() == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("ModelImpl.GetByPath: field 'item' is nil in node '%s'", nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("ModelImpl.Resolve: field 'item' is nil in node '%s'", nodePath)
 		}
 		child := i.Item()
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("ModelImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Model'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("ModelImpl.Resolve: field '%s' does not exist in node '%s' of type 'Model'", field.Value(), nodePath)
 	}
 }
 
@@ -148,14 +148,14 @@ func (i *ItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle
 	i.ItemData.ForEachReference(fn)
 }
 
-func (i *ItemImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *ItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameValue:
-		return nil, fmt.Errorf("ItemImpl.GetByPath: field 'value' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("ItemImpl.Resolve: field 'value' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("ItemImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Item'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("ItemImpl.Resolve: field '%s' does not exist in node '%s' of type 'Item'", field.Value(), nodePath)
 	}
 }
 
@@ -245,18 +245,18 @@ func (i *RecoveryImpl) ForEachReference(fn func(core.UntypedReference, unique.Ha
 	i.RecoveryData.ForEachReference(fn)
 }
 
-func (i *RecoveryImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *RecoveryImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameFirst:
-		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field 'first' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("RecoveryImpl.Resolve: field 'first' holds a primitive value instead of an ast node")
 	case fieldNameSecond:
-		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field 'second' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("RecoveryImpl.Resolve: field 'second' holds a primitive value instead of an ast node")
 	case fieldNameValue:
-		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field 'value' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("RecoveryImpl.Resolve: field 'value' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("RecoveryImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Recovery'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("RecoveryImpl.Resolve: field '%s' does not exist in node '%s' of type 'Recovery'", field.Value(), nodePath)
 	}
 }
 

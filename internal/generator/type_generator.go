@@ -256,7 +256,7 @@ func generateImplStruct(node codegen.Node, grammr grammar.Grammar, iface grammar
 	})
 	node.AppendLine("}")
 	node.AppendLine()
-	generateGetByPath(node, iface)
+	generateResolve(node, iface)
 }
 
 func generateDataStruct(node codegen.Node, iface grammar.Interface, fields []FieldInfo) {
@@ -494,7 +494,7 @@ func fieldHandleVarName(pname string) string {
 	return "fieldName" + strings.ToUpper(clean[:1]) + clean[1:]
 }
 
-func generateGetByPath(node codegen.Node, iface grammar.Interface) {
+func generateResolve(node codegen.Node, iface grammar.Interface) {
 	allFields := collectAllFields(iface, map[string]struct{}{})
 	sort.Slice(allFields, func(i, j int) bool { return allFields[i].Name < allFields[j].Name })
 
@@ -514,13 +514,13 @@ func generateGetByPath(node codegen.Node, iface grammar.Interface) {
 	implName := name + "Impl"
 	hasCases := len(containmentFields) > 0 || len(primitiveFields) > 0 || len(referenceFields) > 0
 
-	node.AppendLine("func (i *", implName, ") GetByPath(path *core.PathSegments) (core.AstNode, error) {")
+	node.AppendLine("func (i *", implName, ") Resolve(path core.FragmentPath) (core.AstNode, error) {")
 	node.Indent(func(n codegen.Node) {
-		var needIndex bool = false
+		needIndex := false
 		n2 := codegen.NewNode()
 		if !hasCases {
-			n2.AppendLine("nodePath, _ := core.NodePath(i)")
-			n2.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: field '%s' does not exist in node '%s' of type '`, name, `'", field.Value(), nodePath)`)
+			n2.AppendLine("nodePath, _ := core.PathOf(i)")
+			n2.AppendLine(`return nil, fmt.Errorf("`, implName, `.Resolve: field '%s' does not exist in node '%s' of type '`, name, `'", field.Value(), nodePath)`)
 		} else {
 			n2.AppendLine("switch field {")
 			for _, f := range containmentFields {
@@ -530,22 +530,22 @@ func generateGetByPath(node codegen.Node, iface grammar.Interface) {
 						needIndex = true
 						n2.AppendLine("if index >= len(i.", f.Name, "()) {")
 						n2.Indent(func(n3 codegen.Node) {
-							n3.AppendLine("nodePath, _ := core.NodePath(i)")
-							n3.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: index %d exceeds length of slice in '`, f.PName, `' (length=%d) in node '%s'", index, len(i.`, f.Name, `()), nodePath)`)
+							n3.AppendLine("nodePath, _ := core.PathOf(i)")
+							n3.AppendLine(`return nil, fmt.Errorf("`, implName, `.Resolve: index %d exceeds length of slice in '`, f.PName, `' (length=%d) in node '%s'", index, len(i.`, f.Name, `()), nodePath)`)
 						})
 						n2.AppendLine("}")
 						n2.AppendLine("child := i.", f.Name, "()[index]")
 						n2.AppendLine("if child == nil {")
 						n2.Indent(func(n3 codegen.Node) {
-							n3.AppendLine("nodePath, _ := core.NodePath(i)")
-							n3.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: item %d of slice in field '`, f.PName, `' is nil in node '%s'", index, nodePath)`)
+							n3.AppendLine("nodePath, _ := core.PathOf(i)")
+							n3.AppendLine(`return nil, fmt.Errorf("`, implName, `.Resolve: item %d of slice in field '`, f.PName, `' is nil in node '%s'", index, nodePath)`)
 						})
 						n2.AppendLine("}")
 					} else {
 						n2.AppendLine("if i.", f.Name, "() == nil {")
 						n2.Indent(func(n3 codegen.Node) {
-							n3.AppendLine("nodePath, _ := core.NodePath(i)")
-							n3.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: field '`, f.PName, `' is nil in node '%s'", nodePath)`)
+							n3.AppendLine("nodePath, _ := core.PathOf(i)")
+							n3.AppendLine(`return nil, fmt.Errorf("`, implName, `.Resolve: field '`, f.PName, `' is nil in node '%s'", nodePath)`)
 						})
 						n2.AppendLine("}")
 						n2.AppendLine("child := i.", f.Name, "()")
@@ -553,25 +553,25 @@ func generateGetByPath(node codegen.Node, iface grammar.Interface) {
 					n2.AppendLine("if path.Empty() {")
 					n2.Indent(func(n3 codegen.Node) { n3.AppendLine("return child, nil") })
 					n2.AppendLine("}")
-					n2.AppendLine("return child.GetByPath(path)")
+					n2.AppendLine("return child.Resolve(path)")
 				})
 			}
 			for _, f := range primitiveFields {
 				n2.AppendLine("case ", fieldHandleVarName(f.PName), ":")
 				n2.Indent(func(n2 codegen.Node) {
-					n2.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: field '`, f.PName, `' holds a primitive value instead of an ast node")`)
+					n2.AppendLine(`return nil, fmt.Errorf("`, implName, `.Resolve: field '`, f.PName, `' holds a primitive value instead of an ast node")`)
 				})
 			}
 			for _, f := range referenceFields {
 				n2.AppendLine("case ", fieldHandleVarName(f.PName), ":")
 				n2.Indent(func(n2 codegen.Node) {
-					n2.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: field '`, f.PName, `' is a cross-reference instead of a container field")`)
+					n2.AppendLine(`return nil, fmt.Errorf("`, implName, `.Resolve: field '`, f.PName, `' is a cross-reference instead of a container field")`)
 				})
 			}
 			n2.AppendLine("default:")
 			n2.Indent(func(n2 codegen.Node) {
-				n2.AppendLine("nodePath, _ := core.NodePath(i)")
-				n2.AppendLine(`return nil, fmt.Errorf("`, implName, `.GetByPath: field '%s' does not exist in node '%s' of type '`, name, `'", field.Value(), nodePath)`)
+				n2.AppendLine("nodePath, _ := core.PathOf(i)")
+				n2.AppendLine(`return nil, fmt.Errorf("`, implName, `.Resolve: field '%s' does not exist in node '%s' of type '`, name, `'", field.Value(), nodePath)`)
 			})
 			n2.AppendLine("}")
 		}

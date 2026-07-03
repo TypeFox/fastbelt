@@ -86,28 +86,28 @@ func (i *ModuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Hand
 	i.ModuleData.ForEachReference(fn)
 }
 
-func (i *ModuleImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *ModuleImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, index := path.Shift()
 	switch field {
 	case fieldNameStatements:
 		if index >= len(i.Statements()) {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("ModuleImpl.GetByPath: index %d exceeds length of slice in 'statements' (length=%d) in node '%s'", index, len(i.Statements()), nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("ModuleImpl.Resolve: index %d exceeds length of slice in 'statements' (length=%d) in node '%s'", index, len(i.Statements()), nodePath)
 		}
 		child := i.Statements()[index]
 		if child == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("ModuleImpl.GetByPath: item %d of slice in field 'statements' is nil in node '%s'", index, nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("ModuleImpl.Resolve: item %d of slice in field 'statements' is nil in node '%s'", index, nodePath)
 		}
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	case fieldNameName:
-		return nil, fmt.Errorf("ModuleImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("ModuleImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("ModuleImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Module'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("ModuleImpl.Resolve: field '%s' does not exist in node '%s' of type 'Module'", field.Value(), nodePath)
 	}
 }
 
@@ -152,10 +152,10 @@ func (i *StatementImpl) ForEachReference(fn func(core.UntypedReference, unique.H
 	i.StatementData.ForEachReference(fn)
 }
 
-func (i *StatementImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *StatementImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
-	nodePath, _ := core.NodePath(i)
-	return nil, fmt.Errorf("StatementImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Statement'", field.Value(), nodePath)
+	nodePath, _ := core.PathOf(i)
+	return nil, fmt.Errorf("StatementImpl.Resolve: field '%s' does not exist in node '%s' of type 'Statement'", field.Value(), nodePath)
 }
 
 type AbstractDefinition interface {
@@ -219,14 +219,14 @@ func (i *AbstractDefinitionImpl) ForEachReference(fn func(core.UntypedReference,
 	i.AbstractDefinitionData.ForEachReference(fn)
 }
 
-func (i *AbstractDefinitionImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *AbstractDefinitionImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameName:
-		return nil, fmt.Errorf("AbstractDefinitionImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("AbstractDefinitionImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("AbstractDefinitionImpl.GetByPath: field '%s' does not exist in node '%s' of type 'AbstractDefinition'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("AbstractDefinitionImpl.Resolve: field '%s' does not exist in node '%s' of type 'AbstractDefinition'", field.Value(), nodePath)
 	}
 }
 
@@ -315,38 +315,38 @@ func (i *DefinitionImpl) ForEachReference(fn func(core.UntypedReference, unique.
 	i.DefinitionData.ForEachReference(fn)
 }
 
-func (i *DefinitionImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *DefinitionImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, index := path.Shift()
 	switch field {
 	case fieldNameArgs:
 		if index >= len(i.Args()) {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("DefinitionImpl.GetByPath: index %d exceeds length of slice in 'args' (length=%d) in node '%s'", index, len(i.Args()), nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("DefinitionImpl.Resolve: index %d exceeds length of slice in 'args' (length=%d) in node '%s'", index, len(i.Args()), nodePath)
 		}
 		child := i.Args()[index]
 		if child == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("DefinitionImpl.GetByPath: item %d of slice in field 'args' is nil in node '%s'", index, nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("DefinitionImpl.Resolve: item %d of slice in field 'args' is nil in node '%s'", index, nodePath)
 		}
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	case fieldNameExpression:
 		if i.Expression() == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("DefinitionImpl.GetByPath: field 'expression' is nil in node '%s'", nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("DefinitionImpl.Resolve: field 'expression' is nil in node '%s'", nodePath)
 		}
 		child := i.Expression()
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	case fieldNameName:
-		return nil, fmt.Errorf("DefinitionImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("DefinitionImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("DefinitionImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Definition'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("DefinitionImpl.Resolve: field '%s' does not exist in node '%s' of type 'Definition'", field.Value(), nodePath)
 	}
 }
 
@@ -396,14 +396,14 @@ func (i *DeclaredParameterImpl) ForEachReference(fn func(core.UntypedReference, 
 	i.DeclaredParameterData.ForEachReference(fn)
 }
 
-func (i *DeclaredParameterImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *DeclaredParameterImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameName:
-		return nil, fmt.Errorf("DeclaredParameterImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("DeclaredParameterImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("DeclaredParameterImpl.GetByPath: field '%s' does not exist in node '%s' of type 'DeclaredParameter'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("DeclaredParameterImpl.Resolve: field '%s' does not exist in node '%s' of type 'DeclaredParameter'", field.Value(), nodePath)
 	}
 }
 
@@ -471,22 +471,22 @@ func (i *EvaluationImpl) ForEachReference(fn func(core.UntypedReference, unique.
 	i.EvaluationData.ForEachReference(fn)
 }
 
-func (i *EvaluationImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *EvaluationImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameExpression:
 		if i.Expression() == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("EvaluationImpl.GetByPath: field 'expression' is nil in node '%s'", nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("EvaluationImpl.Resolve: field 'expression' is nil in node '%s'", nodePath)
 		}
 		child := i.Expression()
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("EvaluationImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Evaluation'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("EvaluationImpl.Resolve: field '%s' does not exist in node '%s' of type 'Evaluation'", field.Value(), nodePath)
 	}
 }
 
@@ -531,10 +531,10 @@ func (i *ExpressionImpl) ForEachReference(fn func(core.UntypedReference, unique.
 	i.ExpressionData.ForEachReference(fn)
 }
 
-func (i *ExpressionImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *ExpressionImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
-	nodePath, _ := core.NodePath(i)
-	return nil, fmt.Errorf("ExpressionImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Expression'", field.Value(), nodePath)
+	nodePath, _ := core.PathOf(i)
+	return nil, fmt.Errorf("ExpressionImpl.Resolve: field '%s' does not exist in node '%s' of type 'Expression'", field.Value(), nodePath)
 }
 
 type BinaryExpression interface {
@@ -639,34 +639,34 @@ func (i *BinaryExpressionImpl) ForEachReference(fn func(core.UntypedReference, u
 	i.BinaryExpressionData.ForEachReference(fn)
 }
 
-func (i *BinaryExpressionImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *BinaryExpressionImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameLeft:
 		if i.Left() == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("BinaryExpressionImpl.GetByPath: field 'left' is nil in node '%s'", nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("BinaryExpressionImpl.Resolve: field 'left' is nil in node '%s'", nodePath)
 		}
 		child := i.Left()
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	case fieldNameRight:
 		if i.Right() == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("BinaryExpressionImpl.GetByPath: field 'right' is nil in node '%s'", nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("BinaryExpressionImpl.Resolve: field 'right' is nil in node '%s'", nodePath)
 		}
 		child := i.Right()
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	case fieldNameOperator:
-		return nil, fmt.Errorf("BinaryExpressionImpl.GetByPath: field 'operator' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("BinaryExpressionImpl.Resolve: field 'operator' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("BinaryExpressionImpl.GetByPath: field '%s' does not exist in node '%s' of type 'BinaryExpression'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("BinaryExpressionImpl.Resolve: field '%s' does not exist in node '%s' of type 'BinaryExpression'", field.Value(), nodePath)
 	}
 }
 
@@ -750,28 +750,28 @@ func (i *FunctionCallImpl) ForEachReference(fn func(core.UntypedReference, uniqu
 	i.FunctionCallData.ForEachReference(fn)
 }
 
-func (i *FunctionCallImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *FunctionCallImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, index := path.Shift()
 	switch field {
 	case fieldNameArgs:
 		if index >= len(i.Args()) {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("FunctionCallImpl.GetByPath: index %d exceeds length of slice in 'args' (length=%d) in node '%s'", index, len(i.Args()), nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("FunctionCallImpl.Resolve: index %d exceeds length of slice in 'args' (length=%d) in node '%s'", index, len(i.Args()), nodePath)
 		}
 		child := i.Args()[index]
 		if child == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("FunctionCallImpl.GetByPath: item %d of slice in field 'args' is nil in node '%s'", index, nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("FunctionCallImpl.Resolve: item %d of slice in field 'args' is nil in node '%s'", index, nodePath)
 		}
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	case fieldNameCallable:
-		return nil, fmt.Errorf("FunctionCallImpl.GetByPath: field 'callable' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("FunctionCallImpl.Resolve: field 'callable' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("FunctionCallImpl.GetByPath: field '%s' does not exist in node '%s' of type 'FunctionCall'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("FunctionCallImpl.Resolve: field '%s' does not exist in node '%s' of type 'FunctionCall'", field.Value(), nodePath)
 	}
 }
 
@@ -841,14 +841,14 @@ func (i *NumberLiteralImpl) ForEachReference(fn func(core.UntypedReference, uniq
 	i.NumberLiteralData.ForEachReference(fn)
 }
 
-func (i *NumberLiteralImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *NumberLiteralImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameValue:
-		return nil, fmt.Errorf("NumberLiteralImpl.GetByPath: field 'value' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("NumberLiteralImpl.Resolve: field 'value' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("NumberLiteralImpl.GetByPath: field '%s' does not exist in node '%s' of type 'NumberLiteral'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("NumberLiteralImpl.Resolve: field '%s' does not exist in node '%s' of type 'NumberLiteral'", field.Value(), nodePath)
 	}
 }
 

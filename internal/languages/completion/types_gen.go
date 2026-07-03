@@ -50,10 +50,10 @@ func (i *ObjImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[
 	i.ObjData.ForEachReference(fn)
 }
 
-func (i *ObjImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *ObjImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
-	nodePath, _ := core.NodePath(i)
-	return nil, fmt.Errorf("ObjImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Obj'", field.Value(), nodePath)
+	nodePath, _ := core.PathOf(i)
+	return nil, fmt.Errorf("ObjImpl.Resolve: field '%s' does not exist in node '%s' of type 'Obj'", field.Value(), nodePath)
 }
 
 type Root interface {
@@ -113,26 +113,26 @@ func (i *RootImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle
 	i.RootData.ForEachReference(fn)
 }
 
-func (i *RootImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *RootImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, index := path.Shift()
 	switch field {
 	case fieldNameObjects:
 		if index >= len(i.Objects()) {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("RootImpl.GetByPath: index %d exceeds length of slice in 'objects' (length=%d) in node '%s'", index, len(i.Objects()), nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("RootImpl.Resolve: index %d exceeds length of slice in 'objects' (length=%d) in node '%s'", index, len(i.Objects()), nodePath)
 		}
 		child := i.Objects()[index]
 		if child == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("RootImpl.GetByPath: item %d of slice in field 'objects' is nil in node '%s'", index, nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("RootImpl.Resolve: item %d of slice in field 'objects' is nil in node '%s'", index, nodePath)
 		}
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("RootImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Root'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("RootImpl.Resolve: field '%s' does not exist in node '%s' of type 'Root'", field.Value(), nodePath)
 	}
 }
 
@@ -221,28 +221,28 @@ func (i *DeclareImpl) ForEachReference(fn func(core.UntypedReference, unique.Han
 	i.DeclareData.ForEachReference(fn)
 }
 
-func (i *DeclareImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *DeclareImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, index := path.Shift()
 	switch field {
 	case fieldNameChildren:
 		if index >= len(i.Children()) {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("DeclareImpl.GetByPath: index %d exceeds length of slice in 'children' (length=%d) in node '%s'", index, len(i.Children()), nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("DeclareImpl.Resolve: index %d exceeds length of slice in 'children' (length=%d) in node '%s'", index, len(i.Children()), nodePath)
 		}
 		child := i.Children()[index]
 		if child == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("DeclareImpl.GetByPath: item %d of slice in field 'children' is nil in node '%s'", index, nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("DeclareImpl.Resolve: item %d of slice in field 'children' is nil in node '%s'", index, nodePath)
 		}
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	case fieldNameName:
-		return nil, fmt.Errorf("DeclareImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("DeclareImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("DeclareImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Declare'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("DeclareImpl.Resolve: field '%s' does not exist in node '%s' of type 'Declare'", field.Value(), nodePath)
 	}
 }
 
@@ -310,14 +310,14 @@ func (i *EImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 	i.EData.ForEachReference(fn)
 }
 
-func (i *EImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *EImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("EImpl.GetByPath: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("EImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("EImpl.GetByPath: field '%s' does not exist in node '%s' of type 'E'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("EImpl.Resolve: field '%s' does not exist in node '%s' of type 'E'", field.Value(), nodePath)
 	}
 }
 
@@ -383,26 +383,26 @@ func (i *FImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 	i.FData.ForEachReference(fn)
 }
 
-func (i *FImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *FImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, index := path.Shift()
 	switch field {
 	case fieldNameItems:
 		if index >= len(i.Items()) {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("FImpl.GetByPath: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("FImpl.Resolve: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
 		}
 		child := i.Items()[index]
 		if child == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("FImpl.GetByPath: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("FImpl.Resolve: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
 		}
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("FImpl.GetByPath: field '%s' does not exist in node '%s' of type 'F'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("FImpl.Resolve: field '%s' does not exist in node '%s' of type 'F'", field.Value(), nodePath)
 	}
 }
 
@@ -465,14 +465,14 @@ func (i *FItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 	i.FItemData.ForEachReference(fn)
 }
 
-func (i *FItemImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *FItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("FItemImpl.GetByPath: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("FItemImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("FItemImpl.GetByPath: field '%s' does not exist in node '%s' of type 'FItem'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("FItemImpl.Resolve: field '%s' does not exist in node '%s' of type 'FItem'", field.Value(), nodePath)
 	}
 }
 
@@ -540,14 +540,14 @@ func (i *GImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 	i.GData.ForEachReference(fn)
 }
 
-func (i *GImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *GImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("GImpl.GetByPath: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("GImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("GImpl.GetByPath: field '%s' does not exist in node '%s' of type 'G'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("GImpl.Resolve: field '%s' does not exist in node '%s' of type 'G'", field.Value(), nodePath)
 	}
 }
 
@@ -615,22 +615,22 @@ func (i *HImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 	i.HData.ForEachReference(fn)
 }
 
-func (i *HImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *HImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameMember:
 		if i.Member() == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("HImpl.GetByPath: field 'member' is nil in node '%s'", nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("HImpl.Resolve: field 'member' is nil in node '%s'", nodePath)
 		}
 		child := i.Member()
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("HImpl.GetByPath: field '%s' does not exist in node '%s' of type 'H'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("HImpl.Resolve: field '%s' does not exist in node '%s' of type 'H'", field.Value(), nodePath)
 	}
 }
 
@@ -711,24 +711,24 @@ func (i *MemberCallImpl) ForEachReference(fn func(core.UntypedReference, unique.
 	i.MemberCallData.ForEachReference(fn)
 }
 
-func (i *MemberCallImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *MemberCallImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNamePrevious:
 		if i.Previous() == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("MemberCallImpl.GetByPath: field 'previous' is nil in node '%s'", nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("MemberCallImpl.Resolve: field 'previous' is nil in node '%s'", nodePath)
 		}
 		child := i.Previous()
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	case fieldNameRef:
-		return nil, fmt.Errorf("MemberCallImpl.GetByPath: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("MemberCallImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("MemberCallImpl.GetByPath: field '%s' does not exist in node '%s' of type 'MemberCall'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("MemberCallImpl.Resolve: field '%s' does not exist in node '%s' of type 'MemberCall'", field.Value(), nodePath)
 	}
 }
 
@@ -796,14 +796,14 @@ func (i *JImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 	i.JData.ForEachReference(fn)
 }
 
-func (i *JImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *JImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("JImpl.GetByPath: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("JImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("JImpl.GetByPath: field '%s' does not exist in node '%s' of type 'J'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("JImpl.Resolve: field '%s' does not exist in node '%s' of type 'J'", field.Value(), nodePath)
 	}
 }
 
@@ -889,16 +889,16 @@ func (i *KImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 	i.KData.ForEachReference(fn)
 }
 
-func (i *KImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *KImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameRef1:
-		return nil, fmt.Errorf("KImpl.GetByPath: field 'ref1' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("KImpl.Resolve: field 'ref1' is a cross-reference instead of a container field")
 	case fieldNameRef2:
-		return nil, fmt.Errorf("KImpl.GetByPath: field 'ref2' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("KImpl.Resolve: field 'ref2' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("KImpl.GetByPath: field '%s' does not exist in node '%s' of type 'K'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("KImpl.Resolve: field '%s' does not exist in node '%s' of type 'K'", field.Value(), nodePath)
 	}
 }
 
@@ -966,14 +966,14 @@ func (i *NImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 	i.NData.ForEachReference(fn)
 }
 
-func (i *NImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *NImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("NImpl.GetByPath: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("NImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("NImpl.GetByPath: field '%s' does not exist in node '%s' of type 'N'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("NImpl.Resolve: field '%s' does not exist in node '%s' of type 'N'", field.Value(), nodePath)
 	}
 }
 
@@ -1041,14 +1041,14 @@ func (i *OImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 	i.OData.ForEachReference(fn)
 }
 
-func (i *OImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *OImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("OImpl.GetByPath: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("OImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("OImpl.GetByPath: field '%s' does not exist in node '%s' of type 'O'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("OImpl.Resolve: field '%s' does not exist in node '%s' of type 'O'", field.Value(), nodePath)
 	}
 }
 

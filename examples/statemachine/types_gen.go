@@ -134,58 +134,58 @@ func (i *StatemachineImpl) ForEachReference(fn func(core.UntypedReference, uniqu
 	i.StatemachineData.ForEachReference(fn)
 }
 
-func (i *StatemachineImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *StatemachineImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, index := path.Shift()
 	switch field {
 	case fieldNameCommands:
 		if index >= len(i.Commands()) {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("StatemachineImpl.GetByPath: index %d exceeds length of slice in 'commands' (length=%d) in node '%s'", index, len(i.Commands()), nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StatemachineImpl.Resolve: index %d exceeds length of slice in 'commands' (length=%d) in node '%s'", index, len(i.Commands()), nodePath)
 		}
 		child := i.Commands()[index]
 		if child == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("StatemachineImpl.GetByPath: item %d of slice in field 'commands' is nil in node '%s'", index, nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StatemachineImpl.Resolve: item %d of slice in field 'commands' is nil in node '%s'", index, nodePath)
 		}
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	case fieldNameEvents:
 		if index >= len(i.Events()) {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("StatemachineImpl.GetByPath: index %d exceeds length of slice in 'events' (length=%d) in node '%s'", index, len(i.Events()), nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StatemachineImpl.Resolve: index %d exceeds length of slice in 'events' (length=%d) in node '%s'", index, len(i.Events()), nodePath)
 		}
 		child := i.Events()[index]
 		if child == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("StatemachineImpl.GetByPath: item %d of slice in field 'events' is nil in node '%s'", index, nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StatemachineImpl.Resolve: item %d of slice in field 'events' is nil in node '%s'", index, nodePath)
 		}
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	case fieldNameStates:
 		if index >= len(i.States()) {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("StatemachineImpl.GetByPath: index %d exceeds length of slice in 'states' (length=%d) in node '%s'", index, len(i.States()), nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StatemachineImpl.Resolve: index %d exceeds length of slice in 'states' (length=%d) in node '%s'", index, len(i.States()), nodePath)
 		}
 		child := i.States()[index]
 		if child == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("StatemachineImpl.GetByPath: item %d of slice in field 'states' is nil in node '%s'", index, nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StatemachineImpl.Resolve: item %d of slice in field 'states' is nil in node '%s'", index, nodePath)
 		}
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	case fieldNameName:
-		return nil, fmt.Errorf("StatemachineImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("StatemachineImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	case fieldNameInit:
-		return nil, fmt.Errorf("StatemachineImpl.GetByPath: field 'init' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("StatemachineImpl.Resolve: field 'init' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("StatemachineImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Statemachine'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("StatemachineImpl.Resolve: field '%s' does not exist in node '%s' of type 'Statemachine'", field.Value(), nodePath)
 	}
 }
 
@@ -250,14 +250,14 @@ func (i *EventImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 	i.EventData.ForEachReference(fn)
 }
 
-func (i *EventImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *EventImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameName:
-		return nil, fmt.Errorf("EventImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("EventImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("EventImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Event'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("EventImpl.Resolve: field '%s' does not exist in node '%s' of type 'Event'", field.Value(), nodePath)
 	}
 }
 
@@ -322,14 +322,14 @@ func (i *CommandImpl) ForEachReference(fn func(core.UntypedReference, unique.Han
 	i.CommandData.ForEachReference(fn)
 }
 
-func (i *CommandImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *CommandImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameName:
-		return nil, fmt.Errorf("CommandImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("CommandImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("CommandImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Command'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("CommandImpl.Resolve: field '%s' does not exist in node '%s' of type 'Command'", field.Value(), nodePath)
 	}
 }
 
@@ -425,30 +425,30 @@ func (i *StateImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 	i.StateData.ForEachReference(fn)
 }
 
-func (i *StateImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *StateImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, index := path.Shift()
 	switch field {
 	case fieldNameTransitions:
 		if index >= len(i.Transitions()) {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("StateImpl.GetByPath: index %d exceeds length of slice in 'transitions' (length=%d) in node '%s'", index, len(i.Transitions()), nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StateImpl.Resolve: index %d exceeds length of slice in 'transitions' (length=%d) in node '%s'", index, len(i.Transitions()), nodePath)
 		}
 		child := i.Transitions()[index]
 		if child == nil {
-			nodePath, _ := core.NodePath(i)
-			return nil, fmt.Errorf("StateImpl.GetByPath: item %d of slice in field 'transitions' is nil in node '%s'", index, nodePath)
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StateImpl.Resolve: item %d of slice in field 'transitions' is nil in node '%s'", index, nodePath)
 		}
 		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(path)
+		return child.Resolve(path)
 	case fieldNameName:
-		return nil, fmt.Errorf("StateImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("StateImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	case fieldNameActions:
-		return nil, fmt.Errorf("StateImpl.GetByPath: field 'actions' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("StateImpl.Resolve: field 'actions' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("StateImpl.GetByPath: field '%s' does not exist in node '%s' of type 'State'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("StateImpl.Resolve: field '%s' does not exist in node '%s' of type 'State'", field.Value(), nodePath)
 	}
 }
 
@@ -529,16 +529,16 @@ func (i *TransitionImpl) ForEachReference(fn func(core.UntypedReference, unique.
 	i.TransitionData.ForEachReference(fn)
 }
 
-func (i *TransitionImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+func (i *TransitionImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Shift()
 	switch field {
 	case fieldNameEvent:
-		return nil, fmt.Errorf("TransitionImpl.GetByPath: field 'event' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("TransitionImpl.Resolve: field 'event' is a cross-reference instead of a container field")
 	case fieldNameState:
-		return nil, fmt.Errorf("TransitionImpl.GetByPath: field 'state' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("TransitionImpl.Resolve: field 'state' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := core.NodePath(i)
-		return nil, fmt.Errorf("TransitionImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Transition'", field.Value(), nodePath)
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("TransitionImpl.Resolve: field '%s' does not exist in node '%s' of type 'Transition'", field.Value(), nodePath)
 	}
 }
 
