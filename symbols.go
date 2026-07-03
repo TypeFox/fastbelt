@@ -125,6 +125,12 @@ func (c *mergedSymbolContainer) All() SymbolSeq {
 
 func (c *mergedSymbolContainer) ForType(targetType reflect.Type) SymbolSeq {
 	return extiter.FlatMap(c.containers, func(container SymbolContainer) SymbolSeq {
+		if container == nil {
+			// in case a document in the document manager hasn't been build yet or has been reset
+			// and is not included in the current build cycle its exported symbols container may be absent;
+			// map 'nil' to an empty seq in such cases
+			return func(yield func(*SymbolDescription) bool) {}
+		}
 		return container.ForType(targetType)
 	})
 }
