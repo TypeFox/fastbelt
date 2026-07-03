@@ -29,9 +29,9 @@ func loadPriceCalcDoc(t *testing.T) *test.Doc {
 
 func mustNodePath(t *testing.T, node core.AstNode) string {
 	t.Helper()
-	path, err := node.NodePath()
+	path, err := core.NodePath(node)
 	require.NoError(t, err)
-	return path
+	return path.String()
 }
 
 // TestNodePath_PriceCalc verifies NodePath() for every FunctionCall (cross-reference)
@@ -258,8 +258,8 @@ func TestNodePath_PriceCalc(t *testing.T) {
 		field, index = expr.ContainmentData()
 		expr.SetContainer(&def, field, index)
 
-		path, err := expr.NodePath()
-		assert.Zero(t, path)
+		path, err := core.NodePath(&expr)
+		assert.Zero(t, path.String())
 		fmt.Println(err)
 		assert.ErrorContains(
 			t, err,
@@ -280,8 +280,8 @@ func TestNodePath_PriceCalc(t *testing.T) {
 		field, index := expr.ContainmentData()
 		expr.SetContainer(&def, field, index)
 
-		path, err := expr.NodePath()
-		assert.Zero(t, path)
+		path, err := core.NodePath(&expr)
+		assert.Zero(t, path.String())
 		fmt.Println(err)
 		assert.ErrorContains(
 			t, err,
@@ -311,11 +311,11 @@ func TestGetByPath_PriceCalc(t *testing.T) {
 		fc, ok := binExpr.Left().(FunctionCall)
 		require.True(t, ok)
 
-		got, err := root.GetByPath("/statements@3/expression/left")
+		got, err := core.GetByPath(root, "/statements@3/expression/left")
 		require.NoError(t, err)
 		assert.Same(t, fc, got)
 
-		got, err = root.GetByPath("/statements@0")
+		got, err = core.GetByPath(root, "/statements@0")
 		require.NoError(t, err)
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
 	})
@@ -328,11 +328,11 @@ func TestGetByPath_PriceCalc(t *testing.T) {
 		fc, ok := binExpr.Right().(FunctionCall)
 		require.True(t, ok)
 
-		got, err := root.GetByPath("/statements@3/expression/right")
+		got, err := core.GetByPath(root, "/statements@3/expression/right")
 		require.NoError(t, err)
 		assert.Same(t, fc, got)
 
-		got, err = root.GetByPath("/statements@1")
+		got, err = core.GetByPath(root, "/statements@1")
 		require.NoError(t, err)
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
 	})
@@ -347,11 +347,11 @@ func TestGetByPath_PriceCalc(t *testing.T) {
 		fc, ok := binExpr.Left().(FunctionCall)
 		require.True(t, ok)
 
-		got, err := root.GetByPath("/statements@4/expression/left")
+		got, err := core.GetByPath(root, "/statements@4/expression/left")
 		require.NoError(t, err)
 		assert.Same(t, fc, got)
 
-		got, err = root.GetByPath("/statements@2")
+		got, err = core.GetByPath(root, "/statements@2")
 		require.NoError(t, err)
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
 	})
@@ -364,11 +364,11 @@ func TestGetByPath_PriceCalc(t *testing.T) {
 		fc, ok := binExpr.Right().(FunctionCall)
 		require.True(t, ok)
 
-		got, err := root.GetByPath("/statements@4/expression/right")
+		got, err := core.GetByPath(root, "/statements@4/expression/right")
 		require.NoError(t, err)
 		assert.Same(t, fc, got)
 
-		got, err = root.GetByPath("/statements@3")
+		got, err = core.GetByPath(root, "/statements@3")
 		require.NoError(t, err)
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
 	})
@@ -396,11 +396,11 @@ func TestGetByPath_PriceCalc(t *testing.T) {
 		fc, ok := innerAdd.Left().(FunctionCall)
 		require.True(t, ok)
 
-		got, err := root.GetByPath("/statements@7/expression/left/left/left")
+		got, err := core.GetByPath(root, "/statements@7/expression/left/left/left")
 		require.NoError(t, err)
 		assert.Same(t, fc, got)
 
-		got, err = root.GetByPath("/statements@4")
+		got, err = core.GetByPath(root, "/statements@4")
 		require.NoError(t, err)
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
 	})
@@ -417,11 +417,11 @@ func TestGetByPath_PriceCalc(t *testing.T) {
 		fc, ok := innerAdd.Right().(FunctionCall)
 		require.True(t, ok)
 
-		got, err := root.GetByPath("/statements@7/expression/left/left/right")
+		got, err := core.GetByPath(root, "/statements@7/expression/left/left/right")
 		require.NoError(t, err)
 		assert.Same(t, fc, got)
 
-		got, err = root.GetByPath("/statements@5")
+		got, err = core.GetByPath(root, "/statements@5")
 		require.NoError(t, err)
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
 	})
@@ -436,11 +436,11 @@ func TestGetByPath_PriceCalc(t *testing.T) {
 		fc, ok := div.Right().(FunctionCall)
 		require.True(t, ok)
 
-		got, err := root.GetByPath("/statements@7/expression/left/right")
+		got, err := core.GetByPath(root, "/statements@7/expression/left/right")
 		require.NoError(t, err)
 		assert.Same(t, fc, got)
 
-		got, err = root.GetByPath("/statements@2")
+		got, err = core.GetByPath(root, "/statements@2")
 		require.NoError(t, err)
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
 	})
@@ -453,11 +453,11 @@ func TestGetByPath_PriceCalc(t *testing.T) {
 		fc, ok := outerAdd.Right().(FunctionCall)
 		require.True(t, ok)
 
-		got, err := root.GetByPath("/statements@7/expression/right")
+		got, err := core.GetByPath(root, "/statements@7/expression/right")
 		require.NoError(t, err)
 		assert.Same(t, fc, got)
 
-		got, err = root.GetByPath("/statements@6")
+		got, err = core.GetByPath(root, "/statements@6")
 		require.NoError(t, err)
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
 	})
@@ -479,11 +479,11 @@ func TestGetByPath_PriceCalc(t *testing.T) {
 		fc, ok := div.Left().(FunctionCall)
 		require.True(t, ok)
 
-		got, err := root.GetByPath("/statements@9/expression/left")
+		got, err := core.GetByPath(root, "/statements@9/expression/left")
 		require.NoError(t, err)
 		assert.Same(t, fc, got)
 
-		got, err = root.GetByPath("/statements@9/args@0")
+		got, err = core.GetByPath(root, "/statements@9/args@0")
 		require.NoError(t, err)
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
 	})
@@ -498,11 +498,11 @@ func TestGetByPath_PriceCalc(t *testing.T) {
 		fc, ok := sub.Right().(FunctionCall)
 		require.True(t, ok)
 
-		got, err := root.GetByPath("/statements@9/expression/right/right")
+		got, err := core.GetByPath(root, "/statements@9/expression/right/right")
 		require.NoError(t, err)
 		assert.Same(t, fc, got)
 
-		got, err = root.GetByPath("/statements@9/args@1")
+		got, err = core.GetByPath(root, "/statements@9/args@1")
 		require.NoError(t, err)
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
 	})
@@ -515,11 +515,11 @@ func TestGetByPath_PriceCalc(t *testing.T) {
 		fc, ok := eval.Expression().(FunctionCall)
 		require.True(t, ok)
 
-		got, err := root.GetByPath("/statements@10/expression")
+		got, err := core.GetByPath(root, "/statements@10/expression")
 		require.NoError(t, err)
 		assert.Same(t, fc, got)
 
-		got, err = root.GetByPath("/statements@9")
+		got, err = core.GetByPath(root, "/statements@9")
 		require.NoError(t, err)
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
 	})
@@ -533,11 +533,11 @@ func TestGetByPath_PriceCalc(t *testing.T) {
 		fc, ok := outerFC.Args()[0].(FunctionCall)
 		require.True(t, ok)
 
-		got, err := root.GetByPath("/statements@10/expression/args@0")
+		got, err := core.GetByPath(root, "/statements@10/expression/args@0")
 		require.NoError(t, err)
 		assert.Same(t, fc, got)
 
-		got, err = root.GetByPath("/statements@7")
+		got, err = core.GetByPath(root, "/statements@7")
 		require.NoError(t, err)
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
 	})
@@ -551,27 +551,27 @@ func TestGetByPath_PriceCalc(t *testing.T) {
 		fc, ok := outerFC.Args()[1].(FunctionCall)
 		require.True(t, ok)
 
-		got, err := root.GetByPath("/statements@10/expression/args@1")
+		got, err := core.GetByPath(root, "/statements@10/expression/args@1")
 		require.NoError(t, err)
 		assert.Same(t, fc, got)
 
-		got, err = root.GetByPath("/statements@8")
+		got, err = core.GetByPath(root, "/statements@8")
 		require.NoError(t, err)
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
 	})
 
 	t.Run("errorReporting/no-such-field", func(t *testing.T) {
-		_, err := root.GetByPath("/statements@3/expressions/left")
+		_, err := core.GetByPath(root, "/statements@3/expressions/left")
 		assert.ErrorContains(t, err, "DefinitionImpl.GetByPath: field 'expressions' does not exist in node '/statements@3' of type 'Definition'")
 	})
 
 	t.Run("errorReporting/field-is-primitive", func(t *testing.T) {
-		_, err := root.GetByPath("/statements@0/name")
+		_, err := core.GetByPath(root, "/statements@0/name")
 		assert.ErrorContains(t, err, "DefinitionImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	})
 
 	t.Run("errorReporting/field-is-reference", func(t *testing.T) {
-		_, err := root.GetByPath("/statements@10/expression/callable")
+		_, err := core.GetByPath(root, "/statements@10/expression/callable")
 		assert.ErrorContains(t, err, "FunctionCallImpl.GetByPath: field 'callable' is a cross-reference instead of a container field")
 	})
 
@@ -589,35 +589,35 @@ func TestGetByPath_PriceCalc(t *testing.T) {
 		// set the tested field to 'nil'
 		def.expression = nil
 
-		_, err := module.GetByPath("/statements@0/expression/left")
+		_, err := core.GetByPath(&module, "/statements@0/expression/left")
 		assert.ErrorContains(t, err, "DefinitionImpl.GetByPath: field 'expression' is nil in node '/statements@0'")
 	})
 
 	t.Run("errorReporting/slice-index-out-of-bound-1", func(t *testing.T) {
-		_, err := root.GetByPath("/statements@15/expression")
+		_, err := core.GetByPath(root, "/statements@15/expression")
 		assert.ErrorContains(t, err, "ModuleImpl.GetByPath: index 15 exceeds length of slice in 'statements' (length=11) in node ''")
 	})
 
 	t.Run("errorReporting/slice-index-out-of-bound-2", func(t *testing.T) {
-		_, err := root.GetByPath("/statements@10/expression/args@7/expression")
+		_, err := core.GetByPath(root, "/statements@10/expression/args@7/expression")
 		assert.ErrorContains(t, err, "FunctionCallImpl.GetByPath: index 7 exceeds length of slice in 'args' (length=2) in node '/statements@10/expression'")
 	})
 
 	t.Run("errorReporting/slice-item-is-nil", func(t *testing.T) {
-		expr, err := root.GetByPath("/statements@10/expression/")
+		expr, err := core.GetByPath(root, "/statements@10/expression/")
 		require.NoError(t, err)
 		fc, ok := expr.(FunctionCall)
 		require.True(t, ok)
 
 		// shamelessly manipulate the shared ast and add a 'nil' item, don't want to copy everything right now; shouldn't hurt
 		fc.SetArgsItem(nil)
-		_, err = root.GetByPath("/statements@10/expression/args@2/expression")
+		_, err = core.GetByPath(root, "/statements@10/expression/args@2/expression")
 
 		assert.ErrorContains(t, err, "FunctionCallImpl.GetByPath: item 2 of slice in field 'args' is nil in node '/statements@10/expression'")
 	})
 
 	t.Run("errorReporting/slice-index-typo", func(t *testing.T) {
-		_, err := root.GetByPath("/statements@1a/expression")
-		assert.ErrorContains(t, err, "ModuleImpl.GetByPath: index '1a' is not a valid uint: strconv.Atoi: parsing \"1a\": invalid syntax")
+		_, err := core.GetByPath(root, "/statements@1a/expression")
+		assert.ErrorContains(t, err, "ParsePath: index '1a' is not a valid uint: strconv.Atoi: parsing \"1a\": invalid syntax")
 	})
 }

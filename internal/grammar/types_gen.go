@@ -4,8 +4,6 @@ package grammar
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 	"unique"
 
 	core "typefox.dev/fastbelt"
@@ -58,25 +56,25 @@ func NewGrammarData() GrammarData {
 
 func (i *GrammarData) IsGrammar() {}
 
-func (i *GrammarData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *GrammarData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	for j, item := range i.rules {
-		fn(item, fieldNameRules, uint16(j))
+		fn(item, fieldNameRules, j)
 	}
 	for j, item := range i.composites {
-		fn(item, fieldNameComposites, uint16(j))
+		fn(item, fieldNameComposites, j)
 	}
 	for j, item := range i.terminals {
-		fn(item, fieldNameTerminals, uint16(j))
+		fn(item, fieldNameTerminals, j)
 	}
 	for j, item := range i.tokenGroups {
-		fn(item, fieldNameTokenGroups, uint16(j))
+		fn(item, fieldNameTokenGroups, j)
 	}
 	for j, item := range i.interfaces {
-		fn(item, fieldNameInterfaces, uint16(j))
+		fn(item, fieldNameInterfaces, j)
 	}
 }
 
-func (i *GrammarData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *GrammarData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *GrammarData) Name() string {
@@ -140,137 +138,92 @@ type GrammarImpl struct {
 	GrammarData
 }
 
-func (i *GrammarImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *GrammarImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.GrammarData.ForEachNode(fn)
 }
 
-func (i *GrammarImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *GrammarImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.GrammarData.ForEachReference(fn)
 }
 
-func (i *GrammarImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+func (i *GrammarImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, index := path.Shift()
 	switch field {
 	case fieldNameComposites:
-		return core.FieldInfos{Multi: true, Reference: false}
-	case fieldNameInterfaces:
-		return core.FieldInfos{Multi: true, Reference: false}
-	case fieldNameName:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameRules:
-		return core.FieldInfos{Multi: true, Reference: false}
-	case fieldNameTerminals:
-		return core.FieldInfos{Multi: true, Reference: false}
-	case fieldNameTokenGroups:
-		return core.FieldInfos{Multi: true, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *GrammarImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
-	switch field {
-	case fieldNameComposites:
-		index, err := strconv.Atoi(fieldAndIndex[1])
-		if err != nil {
-			return nil, fmt.Errorf("GrammarImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
-		}
 		if index >= len(i.Composites()) {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("GrammarImpl.GetByPath: index %d exceeds length of slice in 'composites' (length=%d) in node '%s'", index, len(i.Composites()), nodePath)
 		}
 		child := i.Composites()[index]
 		if child == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("GrammarImpl.GetByPath: item %d of slice in field 'composites' is nil in node '%s'", index, nodePath)
 		}
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	case fieldNameInterfaces:
-		index, err := strconv.Atoi(fieldAndIndex[1])
-		if err != nil {
-			return nil, fmt.Errorf("GrammarImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
-		}
 		if index >= len(i.Interfaces()) {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("GrammarImpl.GetByPath: index %d exceeds length of slice in 'interfaces' (length=%d) in node '%s'", index, len(i.Interfaces()), nodePath)
 		}
 		child := i.Interfaces()[index]
 		if child == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("GrammarImpl.GetByPath: item %d of slice in field 'interfaces' is nil in node '%s'", index, nodePath)
 		}
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	case fieldNameRules:
-		index, err := strconv.Atoi(fieldAndIndex[1])
-		if err != nil {
-			return nil, fmt.Errorf("GrammarImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
-		}
 		if index >= len(i.Rules()) {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("GrammarImpl.GetByPath: index %d exceeds length of slice in 'rules' (length=%d) in node '%s'", index, len(i.Rules()), nodePath)
 		}
 		child := i.Rules()[index]
 		if child == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("GrammarImpl.GetByPath: item %d of slice in field 'rules' is nil in node '%s'", index, nodePath)
 		}
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	case fieldNameTerminals:
-		index, err := strconv.Atoi(fieldAndIndex[1])
-		if err != nil {
-			return nil, fmt.Errorf("GrammarImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
-		}
 		if index >= len(i.Terminals()) {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("GrammarImpl.GetByPath: index %d exceeds length of slice in 'terminals' (length=%d) in node '%s'", index, len(i.Terminals()), nodePath)
 		}
 		child := i.Terminals()[index]
 		if child == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("GrammarImpl.GetByPath: item %d of slice in field 'terminals' is nil in node '%s'", index, nodePath)
 		}
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	case fieldNameTokenGroups:
-		index, err := strconv.Atoi(fieldAndIndex[1])
-		if err != nil {
-			return nil, fmt.Errorf("GrammarImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
-		}
 		if index >= len(i.TokenGroups()) {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("GrammarImpl.GetByPath: index %d exceeds length of slice in 'tokenGroups' (length=%d) in node '%s'", index, len(i.TokenGroups()), nodePath)
 		}
 		child := i.TokenGroups()[index]
 		if child == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("GrammarImpl.GetByPath: item %d of slice in field 'tokenGroups' is nil in node '%s'", index, nodePath)
 		}
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	case fieldNameName:
 		return nil, fmt.Errorf("GrammarImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("GrammarImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Grammar'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("GrammarImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Grammar'", field.Value(), nodePath)
 	}
 }
 
@@ -309,15 +262,15 @@ func NewInterfaceData() InterfaceData {
 
 func (i *InterfaceData) IsInterface() {}
 
-func (i *InterfaceData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *InterfaceData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	for j, item := range i.fields {
-		fn(item, fieldNameFields, uint16(j))
+		fn(item, fieldNameFields, j)
 	}
 }
 
-func (i *InterfaceData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *InterfaceData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	for j, item := range i.extends {
-		fn(item, fieldNameExtends, uint16(j))
+		fn(item, fieldNameExtends, j)
 	}
 }
 
@@ -358,61 +311,38 @@ type InterfaceImpl struct {
 	InterfaceData
 }
 
-func (i *InterfaceImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *InterfaceImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.InterfaceData.ForEachNode(fn)
 }
 
-func (i *InterfaceImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *InterfaceImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.InterfaceData.ForEachReference(fn)
 }
 
-func (i *InterfaceImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameExtends:
-		return core.FieldInfos{Multi: true, Reference: true}
-	case fieldNameFields:
-		return core.FieldInfos{Multi: true, Reference: false}
-	case fieldNameName:
-		return core.FieldInfos{Multi: false, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *InterfaceImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *InterfaceImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, index := path.Shift()
 	switch field {
 	case fieldNameFields:
-		index, err := strconv.Atoi(fieldAndIndex[1])
-		if err != nil {
-			return nil, fmt.Errorf("InterfaceImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
-		}
 		if index >= len(i.Fields()) {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("InterfaceImpl.GetByPath: index %d exceeds length of slice in 'fields' (length=%d) in node '%s'", index, len(i.Fields()), nodePath)
 		}
 		child := i.Fields()[index]
 		if child == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("InterfaceImpl.GetByPath: item %d of slice in field 'fields' is nil in node '%s'", index, nodePath)
 		}
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	case fieldNameName:
 		return nil, fmt.Errorf("InterfaceImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	case fieldNameExtends:
 		return nil, fmt.Errorf("InterfaceImpl.GetByPath: field 'extends' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("InterfaceImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Interface'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("InterfaceImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Interface'", field.Value(), nodePath)
 	}
 }
 
@@ -445,13 +375,13 @@ func NewFieldData() FieldData {
 
 func (i *FieldData) IsField() {}
 
-func (i *FieldData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *FieldData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i._Type != nil {
-		fn(i._Type, fieldNameType, 0)
+		fn(i._Type, fieldNameType, -1)
 	}
 }
 
-func (i *FieldData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *FieldData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *FieldData) Name() string {
@@ -487,49 +417,32 @@ type FieldImpl struct {
 	FieldData
 }
 
-func (i *FieldImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *FieldImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.FieldData.ForEachNode(fn)
 }
 
-func (i *FieldImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *FieldImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.FieldData.ForEachReference(fn)
 }
 
-func (i *FieldImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameName:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameType:
-		return core.FieldInfos{Multi: false, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *FieldImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *FieldImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameType:
 		if i.Type() == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("FieldImpl.GetByPath: field '_Type' is nil in node '%s'", nodePath)
 		}
 		child := i.Type()
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	case fieldNameName:
 		return nil, fmt.Errorf("FieldImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("FieldImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Field'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("FieldImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Field'", field.Value(), nodePath)
 	}
 }
 
@@ -555,10 +468,10 @@ func NewFieldTypeData() FieldTypeData {
 
 func (i *FieldTypeData) IsFieldType() {}
 
-func (i *FieldTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *FieldTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *FieldTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *FieldTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 type FieldTypeImpl struct {
@@ -566,27 +479,18 @@ type FieldTypeImpl struct {
 	FieldTypeData
 }
 
-func (i *FieldTypeImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *FieldTypeImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.FieldTypeData.ForEachNode(fn)
 }
 
-func (i *FieldTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *FieldTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.FieldTypeData.ForEachReference(fn)
 }
 
-func (i *FieldTypeImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	return core.FieldInfos{}
-}
-
-func (i *FieldTypeImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	nodePath, _ := i.AstNodeBase.NodePath()
-	return nil, fmt.Errorf("FieldTypeImpl.GetByPath: field '%s' does not exist in node '%s' of type 'FieldType'", fieldAndIndex[0], nodePath)
+func (i *FieldTypeImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
+	nodePath, _ := core.NodePath(i)
+	return nil, fmt.Errorf("FieldTypeImpl.GetByPath: field '%s' does not exist in node '%s' of type 'FieldType'", field.Value(), nodePath)
 }
 
 type ArrayType interface {
@@ -616,13 +520,13 @@ func NewArrayTypeData() ArrayTypeData {
 
 func (i *ArrayTypeData) IsArrayType() {}
 
-func (i *ArrayTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *ArrayTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.internalType != nil {
-		fn(i.internalType, fieldNameInternalType, 0)
+		fn(i.internalType, fieldNameInternalType, -1)
 	}
 }
 
-func (i *ArrayTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *ArrayTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *ArrayTypeData) InternalType() FieldType {
@@ -643,47 +547,32 @@ type ArrayTypeImpl struct {
 	ArrayTypeData
 }
 
-func (i *ArrayTypeImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *ArrayTypeImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.FieldTypeData.ForEachNode(fn)
 	i.ArrayTypeData.ForEachNode(fn)
 }
 
-func (i *ArrayTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *ArrayTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.FieldTypeData.ForEachReference(fn)
 	i.ArrayTypeData.ForEachReference(fn)
 }
 
-func (i *ArrayTypeImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameInternalType:
-		return core.FieldInfos{Multi: false, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *ArrayTypeImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *ArrayTypeImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameInternalType:
 		if i.InternalType() == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("ArrayTypeImpl.GetByPath: field 'internalType' is nil in node '%s'", nodePath)
 		}
 		child := i.InternalType()
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("ArrayTypeImpl.GetByPath: field '%s' does not exist in node '%s' of type 'ArrayType'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("ArrayTypeImpl.GetByPath: field '%s' does not exist in node '%s' of type 'ArrayType'", field.Value(), nodePath)
 	}
 }
 
@@ -714,12 +603,12 @@ func NewReferenceTypeData() ReferenceTypeData {
 
 func (i *ReferenceTypeData) IsReferenceType() {}
 
-func (i *ReferenceTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *ReferenceTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *ReferenceTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *ReferenceTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i._Type != nil {
-		fn(i._Type, fieldNameType, 0)
+		fn(i._Type, fieldNameType, -1)
 	}
 }
 
@@ -741,39 +630,24 @@ type ReferenceTypeImpl struct {
 	ReferenceTypeData
 }
 
-func (i *ReferenceTypeImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *ReferenceTypeImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.FieldTypeData.ForEachNode(fn)
 	i.ReferenceTypeData.ForEachNode(fn)
 }
 
-func (i *ReferenceTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *ReferenceTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.FieldTypeData.ForEachReference(fn)
 	i.ReferenceTypeData.ForEachReference(fn)
 }
 
-func (i *ReferenceTypeImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameType:
-		return core.FieldInfos{Multi: false, Reference: true}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *ReferenceTypeImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *ReferenceTypeImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameType:
 		return nil, fmt.Errorf("ReferenceTypeImpl.GetByPath: field '_Type' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("ReferenceTypeImpl.GetByPath: field '%s' does not exist in node '%s' of type 'ReferenceType'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("ReferenceTypeImpl.GetByPath: field '%s' does not exist in node '%s' of type 'ReferenceType'", field.Value(), nodePath)
 	}
 }
 
@@ -804,12 +678,12 @@ func NewSimpleTypeData() SimpleTypeData {
 
 func (i *SimpleTypeData) IsSimpleType() {}
 
-func (i *SimpleTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *SimpleTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *SimpleTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *SimpleTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i._Type != nil {
-		fn(i._Type, fieldNameType, 0)
+		fn(i._Type, fieldNameType, -1)
 	}
 }
 
@@ -831,39 +705,24 @@ type SimpleTypeImpl struct {
 	SimpleTypeData
 }
 
-func (i *SimpleTypeImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *SimpleTypeImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.FieldTypeData.ForEachNode(fn)
 	i.SimpleTypeData.ForEachNode(fn)
 }
 
-func (i *SimpleTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *SimpleTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.FieldTypeData.ForEachReference(fn)
 	i.SimpleTypeData.ForEachReference(fn)
 }
 
-func (i *SimpleTypeImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameType:
-		return core.FieldInfos{Multi: false, Reference: true}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *SimpleTypeImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *SimpleTypeImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameType:
 		return nil, fmt.Errorf("SimpleTypeImpl.GetByPath: field '_Type' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("SimpleTypeImpl.GetByPath: field '%s' does not exist in node '%s' of type 'SimpleType'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("SimpleTypeImpl.GetByPath: field '%s' does not exist in node '%s' of type 'SimpleType'", field.Value(), nodePath)
 	}
 }
 
@@ -895,10 +754,10 @@ func NewPrimitiveTypeData() PrimitiveTypeData {
 
 func (i *PrimitiveTypeData) IsPrimitiveType() {}
 
-func (i *PrimitiveTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *PrimitiveTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *PrimitiveTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *PrimitiveTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *PrimitiveTypeData) Type() string {
@@ -923,39 +782,24 @@ type PrimitiveTypeImpl struct {
 	PrimitiveTypeData
 }
 
-func (i *PrimitiveTypeImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *PrimitiveTypeImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.FieldTypeData.ForEachNode(fn)
 	i.PrimitiveTypeData.ForEachNode(fn)
 }
 
-func (i *PrimitiveTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *PrimitiveTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.FieldTypeData.ForEachReference(fn)
 	i.PrimitiveTypeData.ForEachReference(fn)
 }
 
-func (i *PrimitiveTypeImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameType:
-		return core.FieldInfos{Multi: false, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *PrimitiveTypeImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *PrimitiveTypeImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameType:
 		return nil, fmt.Errorf("PrimitiveTypeImpl.GetByPath: field '_Type' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("PrimitiveTypeImpl.GetByPath: field '%s' does not exist in node '%s' of type 'PrimitiveType'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("PrimitiveTypeImpl.GetByPath: field '%s' does not exist in node '%s' of type 'PrimitiveType'", field.Value(), nodePath)
 	}
 }
 
@@ -985,10 +829,10 @@ func NewAbstractRuleData() AbstractRuleData {
 
 func (i *AbstractRuleData) IsAbstractRule() {}
 
-func (i *AbstractRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *AbstractRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *AbstractRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *AbstractRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *AbstractRuleData) Name() string {
@@ -1012,37 +856,22 @@ type AbstractRuleImpl struct {
 	AbstractRuleData
 }
 
-func (i *AbstractRuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *AbstractRuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.AbstractRuleData.ForEachNode(fn)
 }
 
-func (i *AbstractRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *AbstractRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.AbstractRuleData.ForEachReference(fn)
 }
 
-func (i *AbstractRuleImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameName:
-		return core.FieldInfos{Multi: false, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *AbstractRuleImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *AbstractRuleImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameName:
 		return nil, fmt.Errorf("AbstractRuleImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("AbstractRuleImpl.GetByPath: field '%s' does not exist in node '%s' of type 'AbstractRule'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("AbstractRuleImpl.GetByPath: field '%s' does not exist in node '%s' of type 'AbstractRule'", field.Value(), nodePath)
 	}
 }
 
@@ -1073,13 +902,13 @@ func NewAbstractRuleWithBodyData() AbstractRuleWithBodyData {
 
 func (i *AbstractRuleWithBodyData) IsAbstractRuleWithBody() {}
 
-func (i *AbstractRuleWithBodyData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *AbstractRuleWithBodyData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.body != nil {
-		fn(i.body, fieldNameBody, 0)
+		fn(i.body, fieldNameBody, -1)
 	}
 }
 
-func (i *AbstractRuleWithBodyData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *AbstractRuleWithBodyData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *AbstractRuleWithBodyData) Body() Element {
@@ -1100,51 +929,34 @@ type AbstractRuleWithBodyImpl struct {
 	AbstractRuleWithBodyData
 }
 
-func (i *AbstractRuleWithBodyImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *AbstractRuleWithBodyImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.AbstractRuleData.ForEachNode(fn)
 	i.AbstractRuleWithBodyData.ForEachNode(fn)
 }
 
-func (i *AbstractRuleWithBodyImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *AbstractRuleWithBodyImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.AbstractRuleData.ForEachReference(fn)
 	i.AbstractRuleWithBodyData.ForEachReference(fn)
 }
 
-func (i *AbstractRuleWithBodyImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameBody:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameName:
-		return core.FieldInfos{Multi: false, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *AbstractRuleWithBodyImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *AbstractRuleWithBodyImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameBody:
 		if i.Body() == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("AbstractRuleWithBodyImpl.GetByPath: field 'body' is nil in node '%s'", nodePath)
 		}
 		child := i.Body()
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	case fieldNameName:
 		return nil, fmt.Errorf("AbstractRuleWithBodyImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("AbstractRuleWithBodyImpl.GetByPath: field '%s' does not exist in node '%s' of type 'AbstractRuleWithBody'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("AbstractRuleWithBodyImpl.GetByPath: field '%s' does not exist in node '%s' of type 'AbstractRuleWithBody'", field.Value(), nodePath)
 	}
 }
 
@@ -1172,10 +984,10 @@ func NewAbstractTokenRuleData() AbstractTokenRuleData {
 
 func (i *AbstractTokenRuleData) IsAbstractTokenRule() {}
 
-func (i *AbstractTokenRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *AbstractTokenRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *AbstractTokenRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *AbstractTokenRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 type AbstractTokenRuleImpl struct {
@@ -1184,39 +996,24 @@ type AbstractTokenRuleImpl struct {
 	AbstractTokenRuleData
 }
 
-func (i *AbstractTokenRuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *AbstractTokenRuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.AbstractRuleData.ForEachNode(fn)
 	i.AbstractTokenRuleData.ForEachNode(fn)
 }
 
-func (i *AbstractTokenRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *AbstractTokenRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.AbstractRuleData.ForEachReference(fn)
 	i.AbstractTokenRuleData.ForEachReference(fn)
 }
 
-func (i *AbstractTokenRuleImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameName:
-		return core.FieldInfos{Multi: false, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *AbstractTokenRuleImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *AbstractTokenRuleImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameName:
 		return nil, fmt.Errorf("AbstractTokenRuleImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("AbstractTokenRuleImpl.GetByPath: field '%s' does not exist in node '%s' of type 'AbstractTokenRule'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("AbstractTokenRuleImpl.GetByPath: field '%s' does not exist in node '%s' of type 'AbstractTokenRule'", field.Value(), nodePath)
 	}
 }
 
@@ -1252,12 +1049,12 @@ func NewParserRuleData() ParserRuleData {
 
 func (i *ParserRuleData) IsParserRule() {}
 
-func (i *ParserRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *ParserRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *ParserRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *ParserRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.returnType != nil {
-		fn(i.returnType, fieldNameReturnType, 0)
+		fn(i.returnType, fieldNameReturnType, -1)
 	}
 }
 
@@ -1292,52 +1089,31 @@ type ParserRuleImpl struct {
 	ParserRuleData
 }
 
-func (i *ParserRuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *ParserRuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.AbstractRuleWithBodyData.ForEachNode(fn)
 	i.AbstractRuleData.ForEachNode(fn)
 	i.ParserRuleData.ForEachNode(fn)
 }
 
-func (i *ParserRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *ParserRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.AbstractRuleWithBodyData.ForEachReference(fn)
 	i.AbstractRuleData.ForEachReference(fn)
 	i.ParserRuleData.ForEachReference(fn)
 }
 
-func (i *ParserRuleImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameBody:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameEntry:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameName:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameReturnType:
-		return core.FieldInfos{Multi: false, Reference: true}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *ParserRuleImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *ParserRuleImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameBody:
 		if i.Body() == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("ParserRuleImpl.GetByPath: field 'body' is nil in node '%s'", nodePath)
 		}
 		child := i.Body()
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	case fieldNameEntry:
 		return nil, fmt.Errorf("ParserRuleImpl.GetByPath: field 'entry' holds a primitive value instead of an ast node")
 	case fieldNameName:
@@ -1345,8 +1121,8 @@ func (i *ParserRuleImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameReturnType:
 		return nil, fmt.Errorf("ParserRuleImpl.GetByPath: field 'returnType' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("ParserRuleImpl.GetByPath: field '%s' does not exist in node '%s' of type 'ParserRule'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("ParserRuleImpl.GetByPath: field '%s' does not exist in node '%s' of type 'ParserRule'", field.Value(), nodePath)
 	}
 }
 
@@ -1383,10 +1159,10 @@ func NewTokenData() TokenData {
 
 func (i *TokenData) IsToken() {}
 
-func (i *TokenData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *TokenData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *TokenData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *TokenData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *TokenData) Type() string {
@@ -1428,39 +1204,20 @@ type TokenImpl struct {
 	TokenData
 }
 
-func (i *TokenImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *TokenImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.AbstractTokenRuleData.ForEachNode(fn)
 	i.AbstractRuleData.ForEachNode(fn)
 	i.TokenData.ForEachNode(fn)
 }
 
-func (i *TokenImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *TokenImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.AbstractTokenRuleData.ForEachReference(fn)
 	i.AbstractRuleData.ForEachReference(fn)
 	i.TokenData.ForEachReference(fn)
 }
 
-func (i *TokenImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameName:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameRegexp:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameType:
-		return core.FieldInfos{Multi: false, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *TokenImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *TokenImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameName:
 		return nil, fmt.Errorf("TokenImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
@@ -1469,8 +1226,8 @@ func (i *TokenImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameType:
 		return nil, fmt.Errorf("TokenImpl.GetByPath: field '_Type' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("TokenImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Token'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("TokenImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Token'", field.Value(), nodePath)
 	}
 }
 
@@ -1512,15 +1269,15 @@ func NewTokenGroupData() TokenGroupData {
 
 func (i *TokenGroupData) IsTokenGroup() {}
 
-func (i *TokenGroupData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *TokenGroupData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	for j, item := range i.keywords {
-		fn(item, fieldNameKeywords, uint16(j))
+		fn(item, fieldNameKeywords, j)
 	}
 }
 
-func (i *TokenGroupData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *TokenGroupData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	for j, item := range i.tokenRefs {
-		fn(item, fieldNameTokenRefs, uint16(j))
+		fn(item, fieldNameTokenRefs, j)
 	}
 }
 
@@ -1555,60 +1312,35 @@ type TokenGroupImpl struct {
 	TokenGroupData
 }
 
-func (i *TokenGroupImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *TokenGroupImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.AbstractTokenRuleData.ForEachNode(fn)
 	i.AbstractRuleData.ForEachNode(fn)
 	i.TokenGroupData.ForEachNode(fn)
 }
 
-func (i *TokenGroupImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *TokenGroupImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.AbstractTokenRuleData.ForEachReference(fn)
 	i.AbstractRuleData.ForEachReference(fn)
 	i.TokenGroupData.ForEachReference(fn)
 }
 
-func (i *TokenGroupImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+func (i *TokenGroupImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, index := path.Shift()
 	switch field {
 	case fieldNameKeywords:
-		return core.FieldInfos{Multi: true, Reference: false}
-	case fieldNameName:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameRegexps:
-		return core.FieldInfos{Multi: true, Reference: false}
-	case fieldNameTokenRefs:
-		return core.FieldInfos{Multi: true, Reference: true}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *TokenGroupImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
-	switch field {
-	case fieldNameKeywords:
-		index, err := strconv.Atoi(fieldAndIndex[1])
-		if err != nil {
-			return nil, fmt.Errorf("TokenGroupImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
-		}
 		if index >= len(i.Keywords()) {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("TokenGroupImpl.GetByPath: index %d exceeds length of slice in 'keywords' (length=%d) in node '%s'", index, len(i.Keywords()), nodePath)
 		}
 		child := i.Keywords()[index]
 		if child == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("TokenGroupImpl.GetByPath: item %d of slice in field 'keywords' is nil in node '%s'", index, nodePath)
 		}
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	case fieldNameName:
 		return nil, fmt.Errorf("TokenGroupImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	case fieldNameRegexps:
@@ -1616,8 +1348,8 @@ func (i *TokenGroupImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameTokenRefs:
 		return nil, fmt.Errorf("TokenGroupImpl.GetByPath: field 'tokenRefs' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("TokenGroupImpl.GetByPath: field '%s' does not exist in node '%s' of type 'TokenGroup'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("TokenGroupImpl.GetByPath: field '%s' does not exist in node '%s' of type 'TokenGroup'", field.Value(), nodePath)
 	}
 }
 
@@ -1647,10 +1379,10 @@ func NewElementData() ElementData {
 
 func (i *ElementData) IsElement() {}
 
-func (i *ElementData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *ElementData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *ElementData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *ElementData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *ElementData) Cardinality() string {
@@ -1674,37 +1406,22 @@ type ElementImpl struct {
 	ElementData
 }
 
-func (i *ElementImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *ElementImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ElementData.ForEachNode(fn)
 }
 
-func (i *ElementImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *ElementImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ElementData.ForEachReference(fn)
 }
 
-func (i *ElementImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameCardinality:
-		return core.FieldInfos{Multi: false, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *ElementImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *ElementImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("ElementImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("ElementImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Element'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("ElementImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Element'", field.Value(), nodePath)
 	}
 }
 
@@ -1738,13 +1455,13 @@ func NewAlternativesData() AlternativesData {
 
 func (i *AlternativesData) IsAlternatives() {}
 
-func (i *AlternativesData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *AlternativesData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	for j, item := range i.alts {
-		fn(item, fieldNameAlts, uint16(j))
+		fn(item, fieldNameAlts, j)
 	}
 }
 
-func (i *AlternativesData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *AlternativesData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *AlternativesData) Alts() []Element {
@@ -1762,61 +1479,40 @@ type AlternativesImpl struct {
 	AlternativesData
 }
 
-func (i *AlternativesImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *AlternativesImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.AssignableData.ForEachNode(fn)
 	i.ElementData.ForEachNode(fn)
 	i.AlternativesData.ForEachNode(fn)
 }
 
-func (i *AlternativesImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *AlternativesImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.AssignableData.ForEachReference(fn)
 	i.ElementData.ForEachReference(fn)
 	i.AlternativesData.ForEachReference(fn)
 }
 
-func (i *AlternativesImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
+func (i *AlternativesImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, index := path.Shift()
 	switch field {
 	case fieldNameAlts:
-		return core.FieldInfos{Multi: true, Reference: false}
-	case fieldNameCardinality:
-		return core.FieldInfos{Multi: false, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *AlternativesImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
-	switch field {
-	case fieldNameAlts:
-		index, err := strconv.Atoi(fieldAndIndex[1])
-		if err != nil {
-			return nil, fmt.Errorf("AlternativesImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
-		}
 		if index >= len(i.Alts()) {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("AlternativesImpl.GetByPath: index %d exceeds length of slice in 'alts' (length=%d) in node '%s'", index, len(i.Alts()), nodePath)
 		}
 		child := i.Alts()[index]
 		if child == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("AlternativesImpl.GetByPath: item %d of slice in field 'alts' is nil in node '%s'", index, nodePath)
 		}
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("AlternativesImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("AlternativesImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Alternatives'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("AlternativesImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Alternatives'", field.Value(), nodePath)
 	}
 }
 
@@ -1849,13 +1545,13 @@ func NewGroupData() GroupData {
 
 func (i *GroupData) IsGroup() {}
 
-func (i *GroupData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *GroupData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	for j, item := range i.elements {
-		fn(item, fieldNameElements, uint16(j))
+		fn(item, fieldNameElements, j)
 	}
 }
 
-func (i *GroupData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *GroupData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *GroupData) Elements() []Element {
@@ -1872,59 +1568,38 @@ type GroupImpl struct {
 	GroupData
 }
 
-func (i *GroupImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *GroupImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ElementData.ForEachNode(fn)
 	i.GroupData.ForEachNode(fn)
 }
 
-func (i *GroupImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *GroupImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ElementData.ForEachReference(fn)
 	i.GroupData.ForEachReference(fn)
 }
 
-func (i *GroupImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameCardinality:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameElements:
-		return core.FieldInfos{Multi: true, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *GroupImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *GroupImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, index := path.Shift()
 	switch field {
 	case fieldNameElements:
-		index, err := strconv.Atoi(fieldAndIndex[1])
-		if err != nil {
-			return nil, fmt.Errorf("GroupImpl.GetByPath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
-		}
 		if index >= len(i.Elements()) {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("GroupImpl.GetByPath: index %d exceeds length of slice in 'elements' (length=%d) in node '%s'", index, len(i.Elements()), nodePath)
 		}
 		child := i.Elements()[index]
 		if child == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("GroupImpl.GetByPath: item %d of slice in field 'elements' is nil in node '%s'", index, nodePath)
 		}
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("GroupImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("GroupImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Group'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("GroupImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Group'", field.Value(), nodePath)
 	}
 }
 
@@ -1957,10 +1632,10 @@ func NewKeywordData() KeywordData {
 
 func (i *KeywordData) IsKeyword() {}
 
-func (i *KeywordData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *KeywordData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *KeywordData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *KeywordData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *KeywordData) Value() string {
@@ -1986,45 +1661,28 @@ type KeywordImpl struct {
 	KeywordData
 }
 
-func (i *KeywordImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *KeywordImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.AssignableData.ForEachNode(fn)
 	i.ElementData.ForEachNode(fn)
 	i.KeywordData.ForEachNode(fn)
 }
 
-func (i *KeywordImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *KeywordImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.AssignableData.ForEachReference(fn)
 	i.ElementData.ForEachReference(fn)
 	i.KeywordData.ForEachReference(fn)
 }
 
-func (i *KeywordImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameCardinality:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameValue:
-		return core.FieldInfos{Multi: false, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *KeywordImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *KeywordImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("KeywordImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
 	case fieldNameValue:
 		return nil, fmt.Errorf("KeywordImpl.GetByPath: field 'value' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("KeywordImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Keyword'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("KeywordImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Keyword'", field.Value(), nodePath)
 	}
 }
 
@@ -2062,15 +1720,15 @@ func NewAssignmentData() AssignmentData {
 
 func (i *AssignmentData) IsAssignment() {}
 
-func (i *AssignmentData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *AssignmentData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.value != nil {
-		fn(i.value, fieldNameValue, 0)
+		fn(i.value, fieldNameValue, -1)
 	}
 }
 
-func (i *AssignmentData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *AssignmentData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.property != nil {
-		fn(i.property, fieldNameProperty, 0)
+		fn(i.property, fieldNameProperty, -1)
 	}
 }
 
@@ -2120,50 +1778,29 @@ type AssignmentImpl struct {
 	AssignmentData
 }
 
-func (i *AssignmentImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *AssignmentImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ElementData.ForEachNode(fn)
 	i.AssignmentData.ForEachNode(fn)
 }
 
-func (i *AssignmentImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *AssignmentImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ElementData.ForEachReference(fn)
 	i.AssignmentData.ForEachReference(fn)
 }
 
-func (i *AssignmentImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameCardinality:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameOperator:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameProperty:
-		return core.FieldInfos{Multi: false, Reference: true}
-	case fieldNameValue:
-		return core.FieldInfos{Multi: false, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *AssignmentImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *AssignmentImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameValue:
 		if i.Value() == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("AssignmentImpl.GetByPath: field 'value' is nil in node '%s'", nodePath)
 		}
 		child := i.Value()
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("AssignmentImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
 	case fieldNameOperator:
@@ -2171,8 +1808,8 @@ func (i *AssignmentImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameProperty:
 		return nil, fmt.Errorf("AssignmentImpl.GetByPath: field 'property' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("AssignmentImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Assignment'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("AssignmentImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Assignment'", field.Value(), nodePath)
 	}
 }
 
@@ -2200,10 +1837,10 @@ func NewAssignableData() AssignableData {
 
 func (i *AssignableData) IsAssignable() {}
 
-func (i *AssignableData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *AssignableData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *AssignableData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *AssignableData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 type AssignableImpl struct {
@@ -2212,39 +1849,24 @@ type AssignableImpl struct {
 	AssignableData
 }
 
-func (i *AssignableImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *AssignableImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ElementData.ForEachNode(fn)
 	i.AssignableData.ForEachNode(fn)
 }
 
-func (i *AssignableImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *AssignableImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ElementData.ForEachReference(fn)
 	i.AssignableData.ForEachReference(fn)
 }
 
-func (i *AssignableImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameCardinality:
-		return core.FieldInfos{Multi: false, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *AssignableImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *AssignableImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("AssignableImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("AssignableImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Assignable'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("AssignableImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Assignable'", field.Value(), nodePath)
 	}
 }
 
@@ -2279,15 +1901,15 @@ func NewCrossRefData() CrossRefData {
 
 func (i *CrossRefData) IsCrossRef() {}
 
-func (i *CrossRefData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *CrossRefData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.rule != nil {
-		fn(i.rule, fieldNameRule, 0)
+		fn(i.rule, fieldNameRule, -1)
 	}
 }
 
-func (i *CrossRefData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *CrossRefData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i._Type != nil {
-		fn(i._Type, fieldNameType, 0)
+		fn(i._Type, fieldNameType, -1)
 	}
 }
 
@@ -2322,57 +1944,38 @@ type CrossRefImpl struct {
 	CrossRefData
 }
 
-func (i *CrossRefImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *CrossRefImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.AssignableData.ForEachNode(fn)
 	i.ElementData.ForEachNode(fn)
 	i.CrossRefData.ForEachNode(fn)
 }
 
-func (i *CrossRefImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *CrossRefImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.AssignableData.ForEachReference(fn)
 	i.ElementData.ForEachReference(fn)
 	i.CrossRefData.ForEachReference(fn)
 }
 
-func (i *CrossRefImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameCardinality:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameRule:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameType:
-		return core.FieldInfos{Multi: false, Reference: true}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *CrossRefImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *CrossRefImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameRule:
 		if i.Rule() == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("CrossRefImpl.GetByPath: field 'rule' is nil in node '%s'", nodePath)
 		}
 		child := i.Rule()
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("CrossRefImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
 	case fieldNameType:
 		return nil, fmt.Errorf("CrossRefImpl.GetByPath: field '_Type' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("CrossRefImpl.GetByPath: field '%s' does not exist in node '%s' of type 'CrossRef'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("CrossRefImpl.GetByPath: field '%s' does not exist in node '%s' of type 'CrossRef'", field.Value(), nodePath)
 	}
 }
 
@@ -2404,12 +2007,12 @@ func NewRuleCallData() RuleCallData {
 
 func (i *RuleCallData) IsRuleCall() {}
 
-func (i *RuleCallData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *RuleCallData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *RuleCallData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *RuleCallData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.rule != nil {
-		fn(i.rule, fieldNameRule, 0)
+		fn(i.rule, fieldNameRule, -1)
 	}
 }
 
@@ -2432,45 +2035,28 @@ type RuleCallImpl struct {
 	RuleCallData
 }
 
-func (i *RuleCallImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *RuleCallImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.AssignableData.ForEachNode(fn)
 	i.ElementData.ForEachNode(fn)
 	i.RuleCallData.ForEachNode(fn)
 }
 
-func (i *RuleCallImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *RuleCallImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.AssignableData.ForEachReference(fn)
 	i.ElementData.ForEachReference(fn)
 	i.RuleCallData.ForEachReference(fn)
 }
 
-func (i *RuleCallImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameCardinality:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameRule:
-		return core.FieldInfos{Multi: false, Reference: true}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *RuleCallImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *RuleCallImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("RuleCallImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
 	case fieldNameRule:
 		return nil, fmt.Errorf("RuleCallImpl.GetByPath: field 'rule' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("RuleCallImpl.GetByPath: field '%s' does not exist in node '%s' of type 'RuleCall'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("RuleCallImpl.GetByPath: field '%s' does not exist in node '%s' of type 'RuleCall'", field.Value(), nodePath)
 	}
 }
 
@@ -2508,15 +2094,15 @@ func NewActionData() ActionData {
 
 func (i *ActionData) IsAction() {}
 
-func (i *ActionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *ActionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *ActionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *ActionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i._Type != nil {
-		fn(i._Type, fieldNameType, 0)
+		fn(i._Type, fieldNameType, -1)
 	}
 	if i.property != nil {
-		fn(i.property, fieldNameProperty, 0)
+		fn(i.property, fieldNameProperty, -1)
 	}
 }
 
@@ -2566,39 +2152,18 @@ type ActionImpl struct {
 	ActionData
 }
 
-func (i *ActionImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *ActionImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ElementData.ForEachNode(fn)
 	i.ActionData.ForEachNode(fn)
 }
 
-func (i *ActionImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *ActionImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ElementData.ForEachReference(fn)
 	i.ActionData.ForEachReference(fn)
 }
 
-func (i *ActionImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameCardinality:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameOperator:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameProperty:
-		return core.FieldInfos{Multi: false, Reference: true}
-	case fieldNameType:
-		return core.FieldInfos{Multi: false, Reference: true}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *ActionImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *ActionImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("ActionImpl.GetByPath: field 'cardinality' holds a primitive value instead of an ast node")
@@ -2609,8 +2174,8 @@ func (i *ActionImpl) GetByPath(path string) (core.AstNode, error) {
 	case fieldNameType:
 		return nil, fmt.Errorf("ActionImpl.GetByPath: field '_Type' is a cross-reference instead of a container field")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("ActionImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Action'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("ActionImpl.GetByPath: field '%s' does not exist in node '%s' of type 'Action'", field.Value(), nodePath)
 	}
 }
 
@@ -2639,10 +2204,10 @@ func NewCompositeRuleData() CompositeRuleData {
 
 func (i *CompositeRuleData) IsCompositeRule() {}
 
-func (i *CompositeRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *CompositeRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *CompositeRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *CompositeRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 type CompositeRuleImpl struct {
@@ -2652,53 +2217,36 @@ type CompositeRuleImpl struct {
 	CompositeRuleData
 }
 
-func (i *CompositeRuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], uint16)) {
+func (i *CompositeRuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.AbstractRuleWithBodyData.ForEachNode(fn)
 	i.AbstractRuleData.ForEachNode(fn)
 	i.CompositeRuleData.ForEachNode(fn)
 }
 
-func (i *CompositeRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], uint16)) {
+func (i *CompositeRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.AbstractRuleWithBodyData.ForEachReference(fn)
 	i.AbstractRuleData.ForEachReference(fn)
 	i.CompositeRuleData.ForEachReference(fn)
 }
 
-func (i *CompositeRuleImpl) FieldInfos(field unique.Handle[string]) core.FieldInfos {
-	switch field {
-	case fieldNameBody:
-		return core.FieldInfos{Multi: false, Reference: false}
-	case fieldNameName:
-		return core.FieldInfos{Multi: false, Reference: false}
-	default:
-		return core.FieldInfos{}
-	}
-}
-
-func (i *CompositeRuleImpl) GetByPath(path string) (core.AstNode, error) {
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
-		return i, nil
-	}
-	parts := strings.SplitN(path, "/", 2)
-	fieldAndIndex := strings.SplitN(parts[0], "@", 2)
-	field := unique.Make(fieldAndIndex[0])
+func (i *CompositeRuleImpl) GetByPath(path *core.PathSegments) (core.AstNode, error) {
+	field, _ := path.Shift()
 	switch field {
 	case fieldNameBody:
 		if i.Body() == nil {
-			nodePath, _ := i.AstNodeBase.NodePath()
+			nodePath, _ := core.NodePath(i)
 			return nil, fmt.Errorf("CompositeRuleImpl.GetByPath: field 'body' is nil in node '%s'", nodePath)
 		}
 		child := i.Body()
-		if len(parts) == 1 {
+		if path.Empty() {
 			return child, nil
 		}
-		return child.GetByPath(parts[1])
+		return child.GetByPath(path)
 	case fieldNameName:
 		return nil, fmt.Errorf("CompositeRuleImpl.GetByPath: field 'name' holds a primitive value instead of an ast node")
 	default:
-		nodePath, _ := i.AstNodeBase.NodePath()
-		return nil, fmt.Errorf("CompositeRuleImpl.GetByPath: field '%s' does not exist in node '%s' of type 'CompositeRule'", fieldAndIndex[0], nodePath)
+		nodePath, _ := core.NodePath(i)
+		return nil, fmt.Errorf("CompositeRuleImpl.GetByPath: field '%s' does not exist in node '%s' of type 'CompositeRule'", field.Value(), nodePath)
 	}
 }
 
