@@ -147,7 +147,10 @@ func (i *GrammarImpl) ForEachReference(fn func(core.UntypedReference, unique.Han
 }
 
 func (i *GrammarImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, index := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
 	switch field {
 	case fieldNameComposites:
 		if index >= len(i.Composites()) {
@@ -159,10 +162,7 @@ func (i *GrammarImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			nodePath, _ := core.PathOf(i)
 			return nil, fmt.Errorf("GrammarImpl.Resolve: item %d of slice in field 'composites' is nil in node '%s'", index, nodePath)
 		}
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameInterfaces:
 		if index >= len(i.Interfaces()) {
 			nodePath, _ := core.PathOf(i)
@@ -173,10 +173,7 @@ func (i *GrammarImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			nodePath, _ := core.PathOf(i)
 			return nil, fmt.Errorf("GrammarImpl.Resolve: item %d of slice in field 'interfaces' is nil in node '%s'", index, nodePath)
 		}
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameRules:
 		if index >= len(i.Rules()) {
 			nodePath, _ := core.PathOf(i)
@@ -187,10 +184,7 @@ func (i *GrammarImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			nodePath, _ := core.PathOf(i)
 			return nil, fmt.Errorf("GrammarImpl.Resolve: item %d of slice in field 'rules' is nil in node '%s'", index, nodePath)
 		}
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameTerminals:
 		if index >= len(i.Terminals()) {
 			nodePath, _ := core.PathOf(i)
@@ -201,10 +195,7 @@ func (i *GrammarImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			nodePath, _ := core.PathOf(i)
 			return nil, fmt.Errorf("GrammarImpl.Resolve: item %d of slice in field 'terminals' is nil in node '%s'", index, nodePath)
 		}
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameTokenGroups:
 		if index >= len(i.TokenGroups()) {
 			nodePath, _ := core.PathOf(i)
@@ -215,10 +206,7 @@ func (i *GrammarImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			nodePath, _ := core.PathOf(i)
 			return nil, fmt.Errorf("GrammarImpl.Resolve: item %d of slice in field 'tokenGroups' is nil in node '%s'", index, nodePath)
 		}
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameName:
 		return nil, fmt.Errorf("GrammarImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	default:
@@ -320,7 +308,10 @@ func (i *InterfaceImpl) ForEachReference(fn func(core.UntypedReference, unique.H
 }
 
 func (i *InterfaceImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, index := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
 	switch field {
 	case fieldNameFields:
 		if index >= len(i.Fields()) {
@@ -332,10 +323,7 @@ func (i *InterfaceImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			nodePath, _ := core.PathOf(i)
 			return nil, fmt.Errorf("InterfaceImpl.Resolve: item %d of slice in field 'fields' is nil in node '%s'", index, nodePath)
 		}
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameName:
 		return nil, fmt.Errorf("InterfaceImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	case fieldNameExtends:
@@ -426,7 +414,10 @@ func (i *FieldImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 }
 
 func (i *FieldImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameType:
 		if i.Type() == nil {
@@ -434,10 +425,7 @@ func (i *FieldImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			return nil, fmt.Errorf("FieldImpl.Resolve: field '_Type' is nil in node '%s'", nodePath)
 		}
 		child := i.Type()
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameName:
 		return nil, fmt.Errorf("FieldImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	default:
@@ -488,7 +476,10 @@ func (i *FieldTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.H
 }
 
 func (i *FieldTypeImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	nodePath, _ := core.PathOf(i)
 	return nil, fmt.Errorf("FieldTypeImpl.Resolve: field '%s' does not exist in node '%s' of type 'FieldType'", field.Value(), nodePath)
 }
@@ -558,7 +549,10 @@ func (i *ArrayTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.H
 }
 
 func (i *ArrayTypeImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameInternalType:
 		if i.InternalType() == nil {
@@ -566,10 +560,7 @@ func (i *ArrayTypeImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			return nil, fmt.Errorf("ArrayTypeImpl.Resolve: field 'internalType' is nil in node '%s'", nodePath)
 		}
 		child := i.InternalType()
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("ArrayTypeImpl.Resolve: field '%s' does not exist in node '%s' of type 'ArrayType'", field.Value(), nodePath)
@@ -641,7 +632,10 @@ func (i *ReferenceTypeImpl) ForEachReference(fn func(core.UntypedReference, uniq
 }
 
 func (i *ReferenceTypeImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameType:
 		return nil, fmt.Errorf("ReferenceTypeImpl.Resolve: field '_Type' is a cross-reference instead of a container field")
@@ -716,7 +710,10 @@ func (i *SimpleTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *SimpleTypeImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameType:
 		return nil, fmt.Errorf("SimpleTypeImpl.Resolve: field '_Type' is a cross-reference instead of a container field")
@@ -793,7 +790,10 @@ func (i *PrimitiveTypeImpl) ForEachReference(fn func(core.UntypedReference, uniq
 }
 
 func (i *PrimitiveTypeImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameType:
 		return nil, fmt.Errorf("PrimitiveTypeImpl.Resolve: field '_Type' holds a primitive value instead of an ast node")
@@ -865,7 +865,10 @@ func (i *AbstractRuleImpl) ForEachReference(fn func(core.UntypedReference, uniqu
 }
 
 func (i *AbstractRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameName:
 		return nil, fmt.Errorf("AbstractRuleImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
@@ -940,7 +943,10 @@ func (i *AbstractRuleWithBodyImpl) ForEachReference(fn func(core.UntypedReferenc
 }
 
 func (i *AbstractRuleWithBodyImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameBody:
 		if i.Body() == nil {
@@ -948,10 +954,7 @@ func (i *AbstractRuleWithBodyImpl) Resolve(path core.FragmentPath) (core.AstNode
 			return nil, fmt.Errorf("AbstractRuleWithBodyImpl.Resolve: field 'body' is nil in node '%s'", nodePath)
 		}
 		child := i.Body()
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameName:
 		return nil, fmt.Errorf("AbstractRuleWithBodyImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	default:
@@ -1007,7 +1010,10 @@ func (i *AbstractTokenRuleImpl) ForEachReference(fn func(core.UntypedReference, 
 }
 
 func (i *AbstractTokenRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameName:
 		return nil, fmt.Errorf("AbstractTokenRuleImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
@@ -1102,7 +1108,10 @@ func (i *ParserRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *ParserRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameBody:
 		if i.Body() == nil {
@@ -1110,10 +1119,7 @@ func (i *ParserRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			return nil, fmt.Errorf("ParserRuleImpl.Resolve: field 'body' is nil in node '%s'", nodePath)
 		}
 		child := i.Body()
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameEntry:
 		return nil, fmt.Errorf("ParserRuleImpl.Resolve: field 'entry' holds a primitive value instead of an ast node")
 	case fieldNameName:
@@ -1217,7 +1223,10 @@ func (i *TokenImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 }
 
 func (i *TokenImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameName:
 		return nil, fmt.Errorf("TokenImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
@@ -1325,7 +1334,10 @@ func (i *TokenGroupImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *TokenGroupImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, index := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
 	switch field {
 	case fieldNameKeywords:
 		if index >= len(i.Keywords()) {
@@ -1337,10 +1349,7 @@ func (i *TokenGroupImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			nodePath, _ := core.PathOf(i)
 			return nil, fmt.Errorf("TokenGroupImpl.Resolve: item %d of slice in field 'keywords' is nil in node '%s'", index, nodePath)
 		}
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameName:
 		return nil, fmt.Errorf("TokenGroupImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	case fieldNameRegexps:
@@ -1415,7 +1424,10 @@ func (i *ElementImpl) ForEachReference(fn func(core.UntypedReference, unique.Han
 }
 
 func (i *ElementImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("ElementImpl.Resolve: field 'cardinality' holds a primitive value instead of an ast node")
@@ -1492,7 +1504,10 @@ func (i *AlternativesImpl) ForEachReference(fn func(core.UntypedReference, uniqu
 }
 
 func (i *AlternativesImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, index := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
 	switch field {
 	case fieldNameAlts:
 		if index >= len(i.Alts()) {
@@ -1504,10 +1519,7 @@ func (i *AlternativesImpl) Resolve(path core.FragmentPath) (core.AstNode, error)
 			nodePath, _ := core.PathOf(i)
 			return nil, fmt.Errorf("AlternativesImpl.Resolve: item %d of slice in field 'alts' is nil in node '%s'", index, nodePath)
 		}
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("AlternativesImpl.Resolve: field 'cardinality' holds a primitive value instead of an ast node")
 	default:
@@ -1579,7 +1591,10 @@ func (i *GroupImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 }
 
 func (i *GroupImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, index := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
 	switch field {
 	case fieldNameElements:
 		if index >= len(i.Elements()) {
@@ -1591,10 +1606,7 @@ func (i *GroupImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			nodePath, _ := core.PathOf(i)
 			return nil, fmt.Errorf("GroupImpl.Resolve: item %d of slice in field 'elements' is nil in node '%s'", index, nodePath)
 		}
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("GroupImpl.Resolve: field 'cardinality' holds a primitive value instead of an ast node")
 	default:
@@ -1674,7 +1686,10 @@ func (i *KeywordImpl) ForEachReference(fn func(core.UntypedReference, unique.Han
 }
 
 func (i *KeywordImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("KeywordImpl.Resolve: field 'cardinality' holds a primitive value instead of an ast node")
@@ -1789,7 +1804,10 @@ func (i *AssignmentImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *AssignmentImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameValue:
 		if i.Value() == nil {
@@ -1797,10 +1815,7 @@ func (i *AssignmentImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			return nil, fmt.Errorf("AssignmentImpl.Resolve: field 'value' is nil in node '%s'", nodePath)
 		}
 		child := i.Value()
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("AssignmentImpl.Resolve: field 'cardinality' holds a primitive value instead of an ast node")
 	case fieldNameOperator:
@@ -1860,7 +1875,10 @@ func (i *AssignableImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *AssignableImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("AssignableImpl.Resolve: field 'cardinality' holds a primitive value instead of an ast node")
@@ -1957,7 +1975,10 @@ func (i *CrossRefImpl) ForEachReference(fn func(core.UntypedReference, unique.Ha
 }
 
 func (i *CrossRefImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameRule:
 		if i.Rule() == nil {
@@ -1965,10 +1986,7 @@ func (i *CrossRefImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			return nil, fmt.Errorf("CrossRefImpl.Resolve: field 'rule' is nil in node '%s'", nodePath)
 		}
 		child := i.Rule()
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("CrossRefImpl.Resolve: field 'cardinality' holds a primitive value instead of an ast node")
 	case fieldNameType:
@@ -2048,7 +2066,10 @@ func (i *RuleCallImpl) ForEachReference(fn func(core.UntypedReference, unique.Ha
 }
 
 func (i *RuleCallImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("RuleCallImpl.Resolve: field 'cardinality' holds a primitive value instead of an ast node")
@@ -2163,7 +2184,10 @@ func (i *ActionImpl) ForEachReference(fn func(core.UntypedReference, unique.Hand
 }
 
 func (i *ActionImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("ActionImpl.Resolve: field 'cardinality' holds a primitive value instead of an ast node")
@@ -2230,7 +2254,10 @@ func (i *CompositeRuleImpl) ForEachReference(fn func(core.UntypedReference, uniq
 }
 
 func (i *CompositeRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameBody:
 		if i.Body() == nil {
@@ -2238,10 +2265,7 @@ func (i *CompositeRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, error
 			return nil, fmt.Errorf("CompositeRuleImpl.Resolve: field 'body' is nil in node '%s'", nodePath)
 		}
 		child := i.Body()
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameName:
 		return nil, fmt.Errorf("CompositeRuleImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	default:

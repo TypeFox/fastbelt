@@ -222,7 +222,7 @@ func TestNodePath_PriceCalc(t *testing.T) {
 		expr.SetContainer(&def, field, index)
 
 		path, err := core.PathOf(&expr)
-		assert.Zero(t, path.String())
+		assert.Nil(t, path)
 		fmt.Println(err)
 		assert.ErrorContains(
 			t, err,
@@ -244,7 +244,7 @@ func TestNodePath_PriceCalc(t *testing.T) {
 		expr.SetContainer(&def, field, index)
 
 		path, err := core.PathOf(&expr)
-		assert.Zero(t, path.String())
+		assert.Nil(t, path)
 		fmt.Println(err)
 		assert.ErrorContains(
 			t, err,

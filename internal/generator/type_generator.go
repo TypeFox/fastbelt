@@ -516,6 +516,10 @@ func generateResolve(node codegen.Node, iface grammar.Interface) {
 
 	node.AppendLine("func (i *", implName, ") Resolve(path core.FragmentPath) (core.AstNode, error) {")
 	node.Indent(func(n codegen.Node) {
+		n.AppendLine("if path.Empty() {")
+		n.Indent(func(n3 codegen.Node) { n3.AppendLine("return i, nil") })
+		n.AppendLine("}")
+
 		needIndex := false
 		n2 := codegen.NewNode()
 		if !hasCases {
@@ -550,10 +554,7 @@ func generateResolve(node codegen.Node, iface grammar.Interface) {
 						n2.AppendLine("}")
 						n2.AppendLine("child := i.", f.Name, "()")
 					}
-					n2.AppendLine("if path.Empty() {")
-					n2.Indent(func(n3 codegen.Node) { n3.AppendLine("return child, nil") })
-					n2.AppendLine("}")
-					n2.AppendLine("return child.Resolve(path)")
+					n2.AppendLine("return child.Resolve(path.Tail())")
 				})
 			}
 			for _, f := range primitiveFields {
@@ -577,9 +578,9 @@ func generateResolve(node codegen.Node, iface grammar.Interface) {
 		}
 
 		if needIndex {
-			n.AppendLine("field, index := path.Shift()")
+			n.AppendLine("field, index := path.Head()")
 		} else {
-			n.AppendLine("field, _ := path.Shift()")
+			n.AppendLine("field, _ := path.Head()")
 		}
 
 		n.AppendNode(n2)

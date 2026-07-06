@@ -69,7 +69,10 @@ func (i *ModelImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 }
 
 func (i *ModelImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameItem:
 		if i.Item() == nil {
@@ -77,10 +80,7 @@ func (i *ModelImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			return nil, fmt.Errorf("ModelImpl.Resolve: field 'item' is nil in node '%s'", nodePath)
 		}
 		child := i.Item()
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("ModelImpl.Resolve: field '%s' does not exist in node '%s' of type 'Model'", field.Value(), nodePath)
@@ -149,7 +149,10 @@ func (i *ItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle
 }
 
 func (i *ItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameValue:
 		return nil, fmt.Errorf("ItemImpl.Resolve: field 'value' holds a primitive value instead of an ast node")
@@ -246,7 +249,10 @@ func (i *RecoveryImpl) ForEachReference(fn func(core.UntypedReference, unique.Ha
 }
 
 func (i *RecoveryImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameFirst:
 		return nil, fmt.Errorf("RecoveryImpl.Resolve: field 'first' holds a primitive value instead of an ast node")

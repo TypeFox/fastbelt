@@ -94,7 +94,10 @@ func (i *ObjImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[
 }
 
 func (i *ObjImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameNode:
 		return nil, fmt.Errorf("ObjImpl.Resolve: field 'node' holds a primitive value instead of an ast node")
@@ -166,7 +169,10 @@ func (i *RootImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle
 }
 
 func (i *RootImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameItem:
 		if i.Item() == nil {
@@ -174,10 +180,7 @@ func (i *RootImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			return nil, fmt.Errorf("RootImpl.Resolve: field 'item' is nil in node '%s'", nodePath)
 		}
 		child := i.Item()
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("RootImpl.Resolve: field '%s' does not exist in node '%s' of type 'Root'", field.Value(), nodePath)
@@ -251,7 +254,10 @@ func (i *BImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *BImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameNode:
 		return nil, fmt.Errorf("BImpl.Resolve: field 'node' holds a primitive value instead of an ast node")

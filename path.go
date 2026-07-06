@@ -1,3 +1,7 @@
+// Copyright 2026 TypeFox GmbH
+// This program and the accompanying materials are made available under the
+// terms of the MIT License, which is available in the project root.
+
 package fastbelt
 
 import (
@@ -8,25 +12,30 @@ import (
 	"unique"
 )
 
+// FragmentPath describes instance of node path descriptors pointing to a child AST node within a parent.
 type FragmentPath interface {
+	// Empty returns [true] if this descriptor is empty and equal to the empty path string, returns [false] otherwise.
 	Empty() bool
-	Push(name unique.Handle[string], index int) FragmentPath
-	Shift() (unique.Handle[string], int)
+	// Head returns field name (unique.Handle) and index of the head segment of the segment list.
+	// index is expected to be negative (-1) for non-list fields.
+	Head() (unique.Handle[string], int)
+	// Tail returns a copy of this path descriptor with the first element dropped from the segments list.
+	Tail() FragmentPath
+	// String returns the corresponding fragment path string
 	String() string
 }
 
-type FragmentPathImpl struct {
+// Base implementation of [FragmentPath]
+type fragmentPathImpl struct {
 	segments []struct {
 		name  unique.Handle[string]
 		index int
 	}
 }
 
-func (p *FragmentPathImpl) Empty() bool {
-	return len(p.segments) == 0
-}
+var _ FragmentPath = (*fragmentPathImpl)(nil)
 
-func (p *FragmentPathImpl) Push(name unique.Handle[string], index int) FragmentPath {
+func (p *fragmentPathImpl) push(name unique.Handle[string], index int) *fragmentPathImpl {
 	p.segments = append(p.segments, struct {
 		name  unique.Handle[string]
 		index int
@@ -34,20 +43,29 @@ func (p *FragmentPathImpl) Push(name unique.Handle[string], index int) FragmentP
 	return p
 }
 
-func (p *FragmentPathImpl) Shift() (name unique.Handle[string], index int) {
-	len := len(p.segments)
-	if len == 0 {
+func (p *fragmentPathImpl) Empty() bool {
+	return len(p.segments) == 0
+}
+
+func (p *fragmentPathImpl) Head() (name unique.Handle[string], index int) {
+	count := len(p.segments)
+	if count == 0 {
 		return fieldZero, -1
 	} else {
 		head := p.segments[0]
-		p.segments = p.segments[1:]
 		return head.name, head.index
 	}
 }
 
-func (ps *FragmentPathImpl) String() string {
+func (p *fragmentPathImpl) Tail() FragmentPath {
+	clone := *p
+	clone.segments = clone.segments[1:]
+	return &clone
+}
+
+func (p *fragmentPathImpl) String() string {
 	var sb strings.Builder
-	for _, s := range ps.segments {
+	for _, s := range p.segments {
 		sb.WriteString("/")
 		sb.WriteString(s.name.Value())
 		if s.index >= 0 {
@@ -60,35 +78,36 @@ func (ps *FragmentPathImpl) String() string {
 
 var fieldZero = unique.Handle[string]{}
 
-// NodePath determines node's path within its root container in a recursive manner,
+// PathOf determines node's path within its root container in a recursive manner
 // based on node's [AstNode.ContainmentData]. It returns a slash-separated
 // path string that uniquely identifies this node within its document tree,
 // e.g. "/rules@2/alternatives@0".
 // Returns "" for the root node (no container).
-func PathOf(node AstNode) (FragmentPath, error) {
+func PathOf(node AstNode) (*fragmentPathImpl, error) {
 	container := node.Container()
 	containerField, index := node.ContainmentData()
 
-	b := &FragmentPathImpl{}
 	if container == nil {
-		return b, nil
+		return &fragmentPathImpl{}, nil
 	} else if containerField == fieldZero || containerField.Value() == "" {
-		return b, errors.New("cannot determine node path, 'containerField' is empty")
+		return nil, errors.New("cannot determine node path, 'containerField' is empty")
 	}
 
 	parentPath, err := PathOf(container)
 	if err != nil {
 		if errors.Unwrap(err) == nil {
-			return b, fmt.Errorf(
-				"AstNodeBase.NodePath: error within node of type %T: %w", container, err)
+			return nil, fmt.Errorf(
+				"PathOf: error within node of type %T: %w", container, err)
 		} else {
-			return b, fmt.Errorf(
-				"AstNodeBase.NodePath: error within container of type %T:\n %w", container, err)
+			return nil, fmt.Errorf(
+				"PathOf: error within container of type %T:\n %w", container, err)
 		}
 	}
-	return parentPath.Push(containerField, index), nil
+	return parentPath.push(containerField, index), nil
 }
 
+// Resolve returns the (deeply) contained child of node denoted by path.
+// Leading slashes of path are ignored, the field names are evaluated child by child starting with node.
 func Resolve(path string, node AstNode) (AstNode, error) {
 	if path == "" {
 		return node, nil
@@ -100,8 +119,8 @@ func Resolve(path string, node AstNode) (AstNode, error) {
 	return node.Resolve(segments)
 }
 
-func parsePath(path string) (FragmentPath, error) {
-	result := &FragmentPathImpl{}
+func parsePath(path string) (*fragmentPathImpl, error) {
+	result := &fragmentPathImpl{}
 	path = strings.TrimLeft(path, "/")
 
 	for segment := range strings.SplitSeq(path, "/") {
@@ -111,13 +130,13 @@ func parsePath(path string) (FragmentPath, error) {
 		fieldAndIndex := strings.SplitN(segment, "@", 2)
 		field := unique.Make(fieldAndIndex[0])
 		if len(fieldAndIndex) == 1 {
-			result.Push(field, -1)
+			result.push(field, -1)
 		} else {
 			index, err := strconv.Atoi(fieldAndIndex[1])
 			if err != nil {
-				return nil, fmt.Errorf("ParsePath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
+				return nil, fmt.Errorf("parsePath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
 			}
-			result.Push(field, index)
+			result.push(field, index)
 		}
 	}
 	return result, nil

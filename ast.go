@@ -66,7 +66,7 @@ type AstNode interface {
 	//
 	// Calling this method directly is not recommended. Use [References] instead for better readability.
 	ForEachReference(fn func(UntypedReference, unique.Handle[string], int))
-	// Resolve returns a (nested) child node denoted by the given relative path
+	// Resolve returns a (nested) child node denoted by the given (relative) fragment path descriptor.
 	Resolve(path FragmentPath) (AstNode, error)
 }
 

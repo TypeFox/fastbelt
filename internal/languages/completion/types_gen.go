@@ -51,7 +51,10 @@ func (i *ObjImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[
 }
 
 func (i *ObjImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	nodePath, _ := core.PathOf(i)
 	return nil, fmt.Errorf("ObjImpl.Resolve: field '%s' does not exist in node '%s' of type 'Obj'", field.Value(), nodePath)
 }
@@ -114,7 +117,10 @@ func (i *RootImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle
 }
 
 func (i *RootImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, index := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
 	switch field {
 	case fieldNameObjects:
 		if index >= len(i.Objects()) {
@@ -126,10 +132,7 @@ func (i *RootImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			nodePath, _ := core.PathOf(i)
 			return nil, fmt.Errorf("RootImpl.Resolve: item %d of slice in field 'objects' is nil in node '%s'", index, nodePath)
 		}
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("RootImpl.Resolve: field '%s' does not exist in node '%s' of type 'Root'", field.Value(), nodePath)
@@ -222,7 +225,10 @@ func (i *DeclareImpl) ForEachReference(fn func(core.UntypedReference, unique.Han
 }
 
 func (i *DeclareImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, index := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
 	switch field {
 	case fieldNameChildren:
 		if index >= len(i.Children()) {
@@ -234,10 +240,7 @@ func (i *DeclareImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			nodePath, _ := core.PathOf(i)
 			return nil, fmt.Errorf("DeclareImpl.Resolve: item %d of slice in field 'children' is nil in node '%s'", index, nodePath)
 		}
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameName:
 		return nil, fmt.Errorf("DeclareImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	default:
@@ -311,7 +314,10 @@ func (i *EImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *EImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
 		return nil, fmt.Errorf("EImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
@@ -384,7 +390,10 @@ func (i *FImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *FImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, index := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
 	switch field {
 	case fieldNameItems:
 		if index >= len(i.Items()) {
@@ -396,10 +405,7 @@ func (i *FImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			nodePath, _ := core.PathOf(i)
 			return nil, fmt.Errorf("FImpl.Resolve: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
 		}
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("FImpl.Resolve: field '%s' does not exist in node '%s' of type 'F'", field.Value(), nodePath)
@@ -466,7 +472,10 @@ func (i *FItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handl
 }
 
 func (i *FItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
 		return nil, fmt.Errorf("FItemImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
@@ -541,7 +550,10 @@ func (i *GImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *GImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
 		return nil, fmt.Errorf("GImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
@@ -616,7 +628,10 @@ func (i *HImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *HImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameMember:
 		if i.Member() == nil {
@@ -624,10 +639,7 @@ func (i *HImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			return nil, fmt.Errorf("HImpl.Resolve: field 'member' is nil in node '%s'", nodePath)
 		}
 		child := i.Member()
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("HImpl.Resolve: field '%s' does not exist in node '%s' of type 'H'", field.Value(), nodePath)
@@ -712,7 +724,10 @@ func (i *MemberCallImpl) ForEachReference(fn func(core.UntypedReference, unique.
 }
 
 func (i *MemberCallImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNamePrevious:
 		if i.Previous() == nil {
@@ -720,10 +735,7 @@ func (i *MemberCallImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			return nil, fmt.Errorf("MemberCallImpl.Resolve: field 'previous' is nil in node '%s'", nodePath)
 		}
 		child := i.Previous()
-		if path.Empty() {
-			return child, nil
-		}
-		return child.Resolve(path)
+		return child.Resolve(path.Tail())
 	case fieldNameRef:
 		return nil, fmt.Errorf("MemberCallImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
@@ -797,7 +809,10 @@ func (i *JImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *JImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
 		return nil, fmt.Errorf("JImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
@@ -890,7 +905,10 @@ func (i *KImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *KImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameRef1:
 		return nil, fmt.Errorf("KImpl.Resolve: field 'ref1' is a cross-reference instead of a container field")
@@ -967,7 +985,10 @@ func (i *NImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *NImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
 		return nil, fmt.Errorf("NImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
@@ -1042,7 +1063,10 @@ func (i *OImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 }
 
 func (i *OImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	field, _ := path.Shift()
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
 		return nil, fmt.Errorf("OImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
