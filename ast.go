@@ -67,6 +67,8 @@ type AstNode interface {
 	// Calling this method directly is not recommended. Use [References] instead for better readability.
 	ForEachReference(fn func(UntypedReference, unique.Handle[string], int))
 	// Resolve returns a (nested) child node denoted by the given (relative) fragment path descriptor.
+	//
+	// Calling this method directly is not recommended. Use [Resolve] instead.
 	Resolve(path FragmentPath) (AstNode, error)
 }
 
@@ -221,7 +223,7 @@ func (node *AstNodeBase) ForEachReference(fn func(UntypedReference, unique.Handl
 }
 
 // Base Implementation for instances of [AstNodeBase].
-// The generator produces specific overwrites for each generated ...Impl type.
+// The generator produces specific override methods for each generated ...Impl type.
 func (node *AstNodeBase) Resolve(path FragmentPath) (AstNode, error) {
 	return nil, errors.New("AstNodeBase.Resolve: Cannot identify children of plain AstNodeBase instances")
 }
