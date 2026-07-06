@@ -4,10 +4,9 @@ package grammar
 
 import (
 	"strings"
-	"unicode/utf8"
-
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
+	"unicode/utf8"
 )
 
 const Token_ARROW_Idx = 1
@@ -1182,6 +1181,31 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
+const TokenGroup_Cardinality_Idx = 43
+
+var TokenGroup_Cardinality = core.NewTokenGroup(
+	TokenGroup_Cardinality_Idx,
+	"Cardinality",
+	"Cardinality",
+	[]*core.TokenType{
+		Token_ASTERISK,
+		Token_PLUS,
+		Token_QUESTION,
+	},
+)
+
+const TokenGroup_GroupType_Idx = 44
+
+var TokenGroup_GroupType = core.NewTokenGroup(
+	TokenGroup_GroupType_Idx,
+	"GroupType",
+	"GroupType",
+	[]*core.TokenType{
+		Token_COMMENT,
+		Token_HIDDEN,
+	},
+)
+
 const (
 	TokenMode_default = 0
 )
@@ -1189,6 +1213,8 @@ const (
 func NewLexer() lexer.Lexer {
 	modes := make([]*lexer.TokenMode, 1, 1)
 	modes[TokenMode_default] = lexer.NewTokenMode("default",
+		lexer.UseTokenType(TokenGroup_GroupType),
+		lexer.UseTokenType(TokenGroup_Cardinality),
 		lexer.UseTokenType(Token_ARROW),
 		lexer.UseTokenType(Token_LEFTPAREN),
 		lexer.UseTokenType(Token_RIGHTPAREN),
