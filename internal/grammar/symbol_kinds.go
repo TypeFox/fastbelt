@@ -28,6 +28,6 @@ func (f *FieldImpl) SymbolKind() lsp.SymbolKind {
 	return lsp.Property
 }
 
-func (t *TokenImpl) SymbolKind() lsp.SymbolKind {
+func (t *TokenDeclImpl) SymbolKind() lsp.SymbolKind {
 	return lsp.Constant
 }

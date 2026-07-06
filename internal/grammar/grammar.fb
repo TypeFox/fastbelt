@@ -4,7 +4,7 @@ interface Grammar {
     Name        string
     Rules       []ParserRule
     Composites  []CompositeRule
-    Terminals   []Token
+    Terminals   []TokenDecl
     TokenGroups []TokenGroup
     TokenModes  []TokenMode
     Interfaces  []Interface
@@ -13,7 +13,7 @@ interface Grammar {
 entry Grammar: GRAMMAR Name=ID SEMICOLON?
     (
         Rules+=ParserRule
-        | Terminals+=Token
+        | Terminals+=TokenDecl
         | TokenGroups+=TokenGroup
         | TokenModes+=TokenMode
         | Interfaces+=Interface
@@ -74,7 +74,7 @@ interface AbstractRuleWithBody extends AbstractRule {
     Body Element
 }
 
-// Base type for Token and TokenGroup
+// Base type for TokenDecl and TokenGroup
 interface AbstractTokenRule extends AbstractRule{}
 
 interface ParserRule extends AbstractRuleWithBody {
@@ -84,11 +84,13 @@ interface ParserRule extends AbstractRuleWithBody {
 
 ParserRule: (Entry?=ENTRY)? Name=ID (RETURNS ReturnType=[Interface:ID])? COLON Body=Alternatives SEMICOLON?
 
-interface Token extends AbstractTokenRule {
+interface TokenDecl extends AbstractTokenRule {
+    Type    string
     Content TokenElement
+    Command TokenCommand
 }
 
-Token: TOKEN Name=ID COLON Content=TokenElement
+TokenDecl: Type=GroupType? TOKEN Name=ID COLON Content=TokenElement Command=TokenCommand? SEMICOLON?
 
 interface TokenElement {}
 
@@ -117,30 +119,31 @@ TokenCommand: ARROW Type=(PUSH|POP|MODE) (LEFTPAREN (Mode=[TokenMode:ID] | Defau
 interface TokenGroup extends AbstractTokenRule {
     TokenRefs []*AbstractTokenRule
     Keywords  []Keyword
-    Regexps   []string
+    KeywordSelectors   []string
 }
 
 TokenGroup: TOKEN GROUP Name=ID LEFTBRACE
     (
         TokenRefs+=[AbstractTokenRule:ID]
         | Keywords+=Keyword
-        | KEYWORDS Regexps+=RegexLiteral
+        | KEYWORDS KeywordSelectors+=RegexLiteral
     )*
 RIGHTBRACE
 
 interface TokenMode {
-    Name      string
-    Default   bool
-    TokenRefs []TokenUsage
-    Keywords  []Keyword
-    Regexps   []string
+    Name             string
+    Default          bool
+    TokenDecls       []TokenDecl
+    TokenRefs        []TokenUsage
+    Keywords         []KeywordUsage
+    KeywordSelectors []string
 }
 
 TokenMode: TOKEN MODE (Name=ID | Default?=DEFAULT) LEFTBRACE
     (
         TokenRefs+=TokenUsage
-        | Keywords+=Keyword
-        | KEYWORDS Regexps+=RegexLiteral
+        | Keywords+=KeywordUsage
+        | KEYWORDS KeywordSelectors+=RegexLiteral
     )*
 RIGHTBRACE
 
@@ -150,7 +153,15 @@ interface TokenUsage {
     Command  TokenCommand
 }
 
-TokenUsage: Type=(HIDDEN|COMMENT)? TokenRef=[AbstractTokenRule:ID] Command=TokenCommand?
+TokenUsage: Type=GroupType? TokenRef=[AbstractTokenRule:ID] Command=TokenCommand? SEMICOLON?
+
+interface KeywordUsage {
+    Type    string
+    Keyword Keyword
+    Command TokenCommand  
+}
+
+KeywordUsage: Type=GroupType? Keyword=Keyword Command=TokenCommand? SEMICOLON?
 
 interface Element {
     Cardinality string
@@ -168,7 +179,7 @@ interface Group extends Element {
 
 Group returns Element: Element ({Group.Elements+=current} Elements+=Element+)?
 
-Element: (Keyword | Assignment | RuleCall | Action | LEFTPAREN Alternatives RIGHTPAREN) Cardinality=(ASTERISK | PLUS | QUESTION)?
+Element: (Keyword | Assignment | RuleCall | Action | LEFTPAREN Alternatives RIGHTPAREN) Cardinality=Cardinality?
 
 interface Keyword extends Assignable {
     Value string
@@ -222,7 +233,7 @@ CompositeAlternatives returns Element: CompositeGroup ({Alternatives.Alts+=curre
 
 CompositeGroup returns Element: CompositeElement ({Group.Elements+=current} Elements+=CompositeElement+)?
 
-CompositeElement returns Element: (RuleCall | LEFTPAREN CompositeAlternatives RIGHTPAREN) Cardinality=(ASTERISK | PLUS | QUESTION)?
+CompositeElement returns Element: (RuleCall | LEFTPAREN CompositeAlternatives RIGHTPAREN) Cardinality=Cardinality?
 
 token ARROW: "->"
 token LEFTPAREN: "("
@@ -261,6 +272,17 @@ token LEFTBRACE: "{"
 token PIPE: "|"
 token RIGHTBRACE: "}"
 
+token group Cardinality {
+    ASTERISK
+    PLUS
+    QUESTION
+}
+
+token group GroupType {
+    HIDDEN
+    COMMENT
+} 
+
 // Move comments in front of RegexLiteral
 token SL_COMMENT: /\/\/[^\r\n]*/
 token ML_COMMENT: /\/\*[\s\S]*?\*\//
@@ -271,6 +293,8 @@ token RegexLiteral: /\/([^\r\n\[\/\\]|\\.|\[([^\r\n\]\\]|\\.)*\])+\//
 token WS: /[ \n\r\t]+/
 
 token mode default {
+    GroupType
+    Cardinality
     ARROW
     LEFTPAREN
     RIGHTPAREN

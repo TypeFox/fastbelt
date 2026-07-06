@@ -79,7 +79,7 @@ func keysFromMap(m map[string]grammar.Keyword) []grammar.Keyword {
 
 func GeneratedTokenName(t core.AstNode) string {
 	switch t := t.(type) {
-	case grammar.Token:
+	case grammar.TokenDecl:
 		return "Token_" + t.Name()
 	case grammar.TokenGroup:
 		return "TokenGroup_" + t.Name()

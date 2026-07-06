@@ -20,7 +20,7 @@ import (
 )
 
 type GenerateTokenTypesResult struct {
-	Tokens            []grammar.Token
+	Tokens            []grammar.TokenDecl
 	Keywords          []grammar.Keyword
 	Imports           map[string]bool
 	KeywordsCode      []codegen.Node
@@ -207,7 +207,7 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, token
 	node.AppendLine("}")
 }
 
-func generateTokenType(token grammar.Token, id int) GenerateLexerResult {
+func generateTokenType(token grammar.TokenDecl, id int) GenerateLexerResult {
 	switch element := token.Content().(type) {
 	case grammar.KeywordTokenElement:
 		return generateKeywordTokenElement(token, element, id)
@@ -218,7 +218,7 @@ func generateTokenType(token grammar.Token, id int) GenerateLexerResult {
 	}
 }
 
-func generateKeywordTokenElement(token grammar.Token, keywordElement grammar.KeywordTokenElement, id int) GenerateLexerResult {
+func generateKeywordTokenElement(token grammar.TokenDecl, keywordElement grammar.KeywordTokenElement, id int) GenerateLexerResult {
 	code := codegen.NewNode()
 	keyword := keywordElement.Keyword()
 	keywordToken := keyword.Value()
@@ -293,7 +293,7 @@ func getAllTokenGroupMembers(tokenGroup grammar.TokenGroup) []string {
 	return slice
 }
 
-func generateRegexpTokenElement(token grammar.Token, regexpTokenElement grammar.RegexpTokenElement, id int) GenerateLexerResult {
+func generateRegexpTokenElement(token grammar.TokenDecl, regexpTokenElement grammar.RegexpTokenElement, id int) GenerateLexerResult {
 	var result regexp.GenerateRegExpResult
 	imports := map[string]bool{}
 	code := codegen.NewNode()

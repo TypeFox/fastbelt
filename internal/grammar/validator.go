@@ -116,7 +116,7 @@ func checkUniqueInterfaceNames(g Grammar, accept core.ValidationAcceptor) {
 
 // TokenImpl.Validate checks terminal rule constraints:
 //   - The regular expression should not match the empty string.
-func (t *TokenImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
+func (t *TokenDeclImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
 	//TODO checkEmptyTerminalRule(t, accept)
 }
 
@@ -675,7 +675,7 @@ func isAssignableTo(ctx context.Context, source Assignable, fieldType FieldType,
 			return
 		}
 		switch rule := resolvedRule.(type) {
-		case Token:
+		case TokenDecl:
 			if primitiveType, ok := fieldType.(PrimitiveType); !ok || primitiveType.Type() != "string" {
 				accept(core.NewDiagnostic(
 					core.SeverityError,
