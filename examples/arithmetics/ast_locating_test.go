@@ -27,11 +27,11 @@ func loadPriceCalcDoc(t *testing.T) *test.Doc {
 	return doc
 }
 
-func mustFragmentGet(t *testing.T, node core.AstNode) string {
+func mustConvert[T core.AstNode](t *testing.T, node core.AstNode) T {
 	t.Helper()
-	path, err := core.PathOf(node)
-	require.NoError(t, err)
-	return path.String()
+	converted, ok := node.(T)
+	require.True(t, ok)
+	return converted
 }
 
 // TestNodePath_PriceCalc verifies NodePath() for every FunctionCall (cross-reference)
@@ -44,56 +44,51 @@ func TestNodePath_PriceCalc(t *testing.T) {
 	stmts := module.Statements()
 	require.Len(t, stmts, 11)
 
+	mustPathOf := func(node core.AstNode) string {
+		t.Helper()
+		path, err := core.PathOf(node)
+		require.NoError(t, err)
+		return path.String()
+	}
+
 	// ── def costPerUnit: materialPerUnit + laborPerUnit ───────────────────────
 
 	t.Run("costPerUnit/materialPerUnit", func(t *testing.T) {
-		def, ok := stmts[3].(Definition)
-		require.True(t, ok)
-		binExpr, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := binExpr.Left().(FunctionCall)
-		require.True(t, ok)
-		assert.Equal(t, "/statements@3/expression/left", mustFragmentGet(t, fc))
+		def := mustConvert[Definition](t, stmts[3])
+		binExpr := mustConvert[BinaryExpression](t, def.Expression())
+		fc := mustConvert[FunctionCall](t, binExpr.Left())
+		assert.Equal(t, "/statements@3/expression/left", mustPathOf(fc))
 		assert.Equal(t, "materialPerUnit", fc.Callable().Text())
-		assert.Equal(t, "/statements@0", mustFragmentGet(t, fc.Callable().Ref(doc.Ctx())))
+		assert.Equal(t, "/statements@0", mustPathOf(fc.Callable().Ref(doc.Ctx())))
 	})
 
 	t.Run("costPerUnit/laborPerUnit", func(t *testing.T) {
-		def, ok := stmts[3].(Definition)
-		require.True(t, ok)
-		binExpr, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := binExpr.Right().(FunctionCall)
-		require.True(t, ok)
-		assert.Equal(t, "/statements@3/expression/right", mustFragmentGet(t, fc))
+		def := mustConvert[Definition](t, stmts[3])
+		binExpr := mustConvert[BinaryExpression](t, def.Expression())
+		fc := mustConvert[FunctionCall](t, binExpr.Right())
+		assert.Equal(t, "/statements@3/expression/right", mustPathOf(fc))
 		assert.Equal(t, "laborPerUnit", fc.Callable().Text())
-		assert.Equal(t, "/statements@1", mustFragmentGet(t, fc.Callable().Ref(doc.Ctx())))
+		assert.Equal(t, "/statements@1", mustPathOf(fc.Callable().Ref(doc.Ctx())))
 	})
 
 	// ── def costOfGoodsSold: expectedNoOfSales * costPerUnit ─────────────────
 
 	t.Run("costOfGoodsSold/expectedNoOfSales", func(t *testing.T) {
-		def, ok := stmts[4].(Definition)
-		require.True(t, ok)
-		binExpr, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := binExpr.Left().(FunctionCall)
-		require.True(t, ok)
-		assert.Equal(t, "/statements@4/expression/left", mustFragmentGet(t, fc))
+		def := mustConvert[Definition](t, stmts[4])
+		binExpr := mustConvert[BinaryExpression](t, def.Expression())
+		fc := mustConvert[FunctionCall](t, binExpr.Left())
+		assert.Equal(t, "/statements@4/expression/left", mustPathOf(fc))
 		assert.Equal(t, "expectedNoOfSales", fc.Callable().Text())
-		assert.Equal(t, "/statements@2", mustFragmentGet(t, fc.Callable().Ref(doc.Ctx())))
+		assert.Equal(t, "/statements@2", mustPathOf(fc.Callable().Ref(doc.Ctx())))
 	})
 
 	t.Run("costOfGoodsSold/costPerUnit", func(t *testing.T) {
-		def, ok := stmts[4].(Definition)
-		require.True(t, ok)
-		binExpr, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := binExpr.Right().(FunctionCall)
-		require.True(t, ok)
-		assert.Equal(t, "/statements@4/expression/right", mustFragmentGet(t, fc))
+		def := mustConvert[Definition](t, stmts[4])
+		binExpr := mustConvert[BinaryExpression](t, def.Expression())
+		fc := mustConvert[FunctionCall](t, binExpr.Right())
+		assert.Equal(t, "/statements@4/expression/right", mustPathOf(fc))
 		assert.Equal(t, "costPerUnit", fc.Callable().Text())
-		assert.Equal(t, "/statements@3", mustFragmentGet(t, fc.Callable().Ref(doc.Ctx())))
+		assert.Equal(t, "/statements@3", mustPathOf(fc.Callable().Ref(doc.Ctx())))
 	})
 
 	// ── def netPrice: (costOfGoodsSold + generalExpensesAndSales) / expectedNoOfSales + desiredProfitPerUnit
@@ -108,61 +103,44 @@ func TestNodePath_PriceCalc(t *testing.T) {
 	//     right: FC "desiredProfitPerUnit"
 
 	t.Run("netPrice/costOfGoodsSold", func(t *testing.T) {
-		def, ok := stmts[7].(Definition)
-		require.True(t, ok)
-		outerAdd, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		div, ok := outerAdd.Left().(BinaryExpression)
-		require.True(t, ok)
-		innerAdd, ok := div.Left().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := innerAdd.Left().(FunctionCall)
-		require.True(t, ok)
-		assert.Equal(t, "/statements@7/expression/left/left/left", mustFragmentGet(t, fc))
+		def := mustConvert[Definition](t, stmts[7])
+		outerAdd := mustConvert[BinaryExpression](t, def.Expression())
+		div := mustConvert[BinaryExpression](t, outerAdd.Left())
+		innerAdd := mustConvert[BinaryExpression](t, div.Left())
+		fc := mustConvert[FunctionCall](t, innerAdd.Left())
+		assert.Equal(t, "/statements@7/expression/left/left/left", mustPathOf(fc))
 		assert.Equal(t, "costOfGoodsSold", fc.Callable().Text())
-		assert.Equal(t, "/statements@4", mustFragmentGet(t, fc.Callable().Ref(doc.Ctx())))
+		assert.Equal(t, "/statements@4", mustPathOf(fc.Callable().Ref(doc.Ctx())))
 	})
 
 	t.Run("netPrice/generalExpensesAndSales", func(t *testing.T) {
-		def, ok := stmts[7].(Definition)
-		require.True(t, ok)
-		outerAdd, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		div, ok := outerAdd.Left().(BinaryExpression)
-		require.True(t, ok)
-		innerAdd, ok := div.Left().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := innerAdd.Right().(FunctionCall)
-		require.True(t, ok)
-		assert.Equal(t, "/statements@7/expression/left/left/right", mustFragmentGet(t, fc))
+		def := mustConvert[Definition](t, stmts[7])
+		outerAdd := mustConvert[BinaryExpression](t, def.Expression())
+		div := mustConvert[BinaryExpression](t, outerAdd.Left())
+		innerAdd := mustConvert[BinaryExpression](t, div.Left())
+		fc := mustConvert[FunctionCall](t, innerAdd.Right())
+		assert.Equal(t, "/statements@7/expression/left/left/right", mustPathOf(fc))
 		assert.Equal(t, "generalExpensesAndSales", fc.Callable().Text())
-		assert.Equal(t, "/statements@5", mustFragmentGet(t, fc.Callable().Ref(doc.Ctx())))
+		assert.Equal(t, "/statements@5", mustPathOf(fc.Callable().Ref(doc.Ctx())))
 	})
 
 	t.Run("netPrice/expectedNoOfSales", func(t *testing.T) {
-		def, ok := stmts[7].(Definition)
-		require.True(t, ok)
-		outerAdd, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		div, ok := outerAdd.Left().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := div.Right().(FunctionCall)
-		require.True(t, ok)
-		assert.Equal(t, "/statements@7/expression/left/right", mustFragmentGet(t, fc))
+		def := mustConvert[Definition](t, stmts[7])
+		outerAdd := mustConvert[BinaryExpression](t, def.Expression())
+		div := mustConvert[BinaryExpression](t, outerAdd.Left())
+		fc := mustConvert[FunctionCall](t, div.Right())
+		assert.Equal(t, "/statements@7/expression/left/right", mustPathOf(fc))
 		assert.Equal(t, "expectedNoOfSales", fc.Callable().Text())
-		assert.Equal(t, "/statements@2", mustFragmentGet(t, fc.Callable().Ref(doc.Ctx())))
+		assert.Equal(t, "/statements@2", mustPathOf(fc.Callable().Ref(doc.Ctx())))
 	})
 
 	t.Run("netPrice/desiredProfitPerUnit", func(t *testing.T) {
-		def, ok := stmts[7].(Definition)
-		require.True(t, ok)
-		outerAdd, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := outerAdd.Right().(FunctionCall)
-		require.True(t, ok)
-		assert.Equal(t, "/statements@7/expression/right", mustFragmentGet(t, fc))
+		def := mustConvert[Definition](t, stmts[7])
+		outerAdd := mustConvert[BinaryExpression](t, def.Expression())
+		fc := mustConvert[FunctionCall](t, outerAdd.Right())
+		assert.Equal(t, "/statements@7/expression/right", mustPathOf(fc))
 		assert.Equal(t, "desiredProfitPerUnit", fc.Callable().Text())
-		assert.Equal(t, "/statements@6", mustFragmentGet(t, fc.Callable().Ref(doc.Ctx())))
+		assert.Equal(t, "/statements@6", mustPathOf(fc.Callable().Ref(doc.Ctx())))
 	})
 
 	// ── def calcGrossListPrice(net, tax): net / (1 - tax)
@@ -175,67 +153,52 @@ func TestNodePath_PriceCalc(t *testing.T) {
 	//       right: FC "tax"
 
 	t.Run("calcGrossListPrice/net", func(t *testing.T) {
-		def, ok := stmts[9].(Definition)
-		require.True(t, ok)
-		div, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := div.Left().(FunctionCall)
-		require.True(t, ok)
-		assert.Equal(t, "/statements@9/expression/left", mustFragmentGet(t, fc))
+		def := mustConvert[Definition](t, stmts[9])
+		div := mustConvert[BinaryExpression](t, def.Expression())
+		fc := mustConvert[FunctionCall](t, div.Left())
+		assert.Equal(t, "/statements@9/expression/left", mustPathOf(fc))
 		assert.Equal(t, "net", fc.Callable().Text())
-		assert.Equal(t, "/statements@9/args@0", mustFragmentGet(t, fc.Callable().Ref(doc.Ctx())))
+		assert.Equal(t, "/statements@9/args@0", mustPathOf(fc.Callable().Ref(doc.Ctx())))
 	})
 
 	t.Run("calcGrossListPrice/tax", func(t *testing.T) {
-		def, ok := stmts[9].(Definition)
-		require.True(t, ok)
-		div, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		sub, ok := div.Right().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := sub.Right().(FunctionCall)
-		require.True(t, ok)
-		assert.Equal(t, "/statements@9/expression/right/right", mustFragmentGet(t, fc))
+		def := mustConvert[Definition](t, stmts[9])
+		div := mustConvert[BinaryExpression](t, def.Expression())
+		sub := mustConvert[BinaryExpression](t, div.Right())
+		fc := mustConvert[FunctionCall](t, sub.Right())
+		assert.Equal(t, "/statements@9/expression/right/right", mustPathOf(fc))
 		assert.Equal(t, "tax", fc.Callable().Text())
-		assert.Equal(t, "/statements@9/args@1", mustFragmentGet(t, fc.Callable().Ref(doc.Ctx())))
+		assert.Equal(t, "/statements@9/args@1", mustPathOf(fc.Callable().Ref(doc.Ctx())))
 	})
 
 	// ── calcGrossListPrice(netPrice, vat) ────────────────────────────────────
 
 	t.Run("evaluation/calcGrossListPrice", func(t *testing.T) {
-		eval, ok := stmts[10].(Evaluation)
-		require.True(t, ok)
-		fc, ok := eval.Expression().(FunctionCall)
-		require.True(t, ok)
-		assert.Equal(t, "/statements@10/expression", mustFragmentGet(t, fc))
+		eval := mustConvert[Evaluation](t, stmts[10])
+		fc := mustConvert[FunctionCall](t, eval.Expression())
+		assert.Equal(t, "/statements@10/expression", mustPathOf(fc))
 		assert.Equal(t, "calcGrossListPrice", fc.Callable().Text())
-		assert.Equal(t, "/statements@9", mustFragmentGet(t, fc.Callable().Ref(doc.Ctx())))
+		assert.Equal(t, "/statements@9", mustPathOf(fc.Callable().Ref(doc.Ctx())))
 	})
 
 	t.Run("evaluation/netPrice", func(t *testing.T) {
-		eval, ok := stmts[10].(Evaluation)
-		require.True(t, ok)
-		outerFC, ok := eval.Expression().(FunctionCall)
-		require.True(t, ok)
+		eval := mustConvert[Evaluation](t, stmts[10])
+		outerFC := mustConvert[FunctionCall](t, eval.Expression())
 		require.Len(t, outerFC.Args(), 2)
-		fc, ok := outerFC.Args()[0].(FunctionCall)
-		require.True(t, ok)
-		assert.Equal(t, "/statements@10/expression/args@0", mustFragmentGet(t, fc))
+		fc := mustConvert[FunctionCall](t, outerFC.Args()[0])
+		assert.Equal(t, "/statements@10/expression/args@0", mustPathOf(fc))
 		assert.Equal(t, "netPrice", fc.Callable().Text())
-		assert.Equal(t, "/statements@7", mustFragmentGet(t, fc.Callable().Ref(doc.Ctx())))
+		assert.Equal(t, "/statements@7", mustPathOf(fc.Callable().Ref(doc.Ctx())))
 	})
 
 	t.Run("evaluation/vat", func(t *testing.T) {
-		eval, ok := stmts[10].(Evaluation)
-		require.True(t, ok)
-		outerFC, ok := eval.Expression().(FunctionCall)
-		require.True(t, ok)
+		eval := mustConvert[Evaluation](t, stmts[10])
+		outerFC := mustConvert[FunctionCall](t, eval.Expression())
 		require.Len(t, outerFC.Args(), 2)
-		fc, ok := outerFC.Args()[1].(FunctionCall)
-		require.True(t, ok)
-		assert.Equal(t, "/statements@10/expression/args@1", mustFragmentGet(t, fc))
+		fc := mustConvert[FunctionCall](t, outerFC.Args()[1])
+		assert.Equal(t, "/statements@10/expression/args@1", mustPathOf(fc))
 		assert.Equal(t, "vat", fc.Callable().Text())
-		assert.Equal(t, "/statements@8", mustFragmentGet(t, fc.Callable().Ref(doc.Ctx())))
+		assert.Equal(t, "/statements@8", mustPathOf(fc.Callable().Ref(doc.Ctx())))
 	})
 
 	t.Run("errorReporting/containerField-has-empty-string", func(t *testing.T) {
@@ -301,76 +264,62 @@ func TestResolve_PriceCalc(t *testing.T) {
 	stmts := module.Statements()
 	require.Len(t, stmts, 11)
 
+	mustResolve := func(path string, node core.AstNode) core.AstNode {
+		t.Helper()
+		child, err := core.Resolve(path, node)
+		require.NoError(t, err)
+		return child
+	}
 	// ── def costPerUnit: materialPerUnit + laborPerUnit ───────────────────────
 
 	t.Run("costPerUnit/materialPerUnit", func(t *testing.T) {
-		def, ok := stmts[3].(Definition)
-		require.True(t, ok)
-		binExpr, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := binExpr.Left().(FunctionCall)
-		require.True(t, ok)
+		def := mustConvert[Definition](t, stmts[3])
+		binExpr := mustConvert[BinaryExpression](t, def.Expression())
+		fc := mustConvert[FunctionCall](t, binExpr.Left())
 
-		got, err := core.Resolve("/statements@3/expression/left", root)
-		require.NoError(t, err)
-		assert.Same(t, fc, got)
+		left := mustResolve("/statements@3/expression/left", root)
+		assert.Same(t, fc, left)
 
-		got, err = core.Resolve("/statements@0", root)
-		require.NoError(t, err)
-		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
+		statement := mustResolve("/statements@0", root)
+		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
 	t.Run("costPerUnit/laborPerUnit", func(t *testing.T) {
-		def, ok := stmts[3].(Definition)
-		require.True(t, ok)
-		binExpr, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := binExpr.Right().(FunctionCall)
-		require.True(t, ok)
+		def := mustConvert[Definition](t, stmts[3])
+		binExpr := mustConvert[BinaryExpression](t, def.Expression())
+		fc := mustConvert[FunctionCall](t, binExpr.Right())
 
-		got, err := core.Resolve("/statements@3/expression/right", root)
-		require.NoError(t, err)
-		assert.Same(t, fc, got)
+		right := mustResolve("/statements@3/expression/right", root)
+		assert.Same(t, fc, right)
 
-		got, err = core.Resolve("/statements@1", root)
-		require.NoError(t, err)
-		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
+		statement := mustResolve("/statements@1", root)
+		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
 	// ── def costOfGoodsSold: expectedNoOfSales * costPerUnit ─────────────────
 
 	t.Run("costOfGoodsSold/expectedNoOfSales", func(t *testing.T) {
-		def, ok := stmts[4].(Definition)
-		require.True(t, ok)
-		binExpr, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := binExpr.Left().(FunctionCall)
-		require.True(t, ok)
+		def := mustConvert[Definition](t, stmts[4])
+		binExpr := mustConvert[BinaryExpression](t, def.Expression())
+		fc := mustConvert[FunctionCall](t, binExpr.Left())
 
-		got, err := core.Resolve("/statements@4/expression/left", root)
-		require.NoError(t, err)
-		assert.Same(t, fc, got)
+		left := mustResolve("/statements@4/expression/left", root)
+		assert.Same(t, fc, left)
 
-		got, err = core.Resolve("/statements@2", root)
-		require.NoError(t, err)
-		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
+		statement := mustResolve("/statements@2", root)
+		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
 	t.Run("costOfGoodsSold/costPerUnit", func(t *testing.T) {
-		def, ok := stmts[4].(Definition)
-		require.True(t, ok)
-		binExpr, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := binExpr.Right().(FunctionCall)
-		require.True(t, ok)
+		def := mustConvert[Definition](t, stmts[4])
+		binExpr := mustConvert[BinaryExpression](t, def.Expression())
+		fc := mustConvert[FunctionCall](t, binExpr.Right())
 
-		got, err := core.Resolve("/statements@4/expression/right", root)
-		require.NoError(t, err)
-		assert.Same(t, fc, got)
+		right := mustResolve("/statements@4/expression/right", root)
+		assert.Same(t, fc, right)
 
-		got, err = core.Resolve("/statements@3", root)
-		require.NoError(t, err)
-		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
+		statement := mustResolve("/statements@3", root)
+		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
 	// ── def netPrice: (costOfGoodsSold + generalExpensesAndSales) / expectedNoOfSales + desiredProfitPerUnit
@@ -385,81 +334,56 @@ func TestResolve_PriceCalc(t *testing.T) {
 	//     right: FC "desiredProfitPerUnit"
 
 	t.Run("netPrice/costOfGoodsSold", func(t *testing.T) {
-		def, ok := stmts[7].(Definition)
-		require.True(t, ok)
-		outerAdd, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		div, ok := outerAdd.Left().(BinaryExpression)
-		require.True(t, ok)
-		innerAdd, ok := div.Left().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := innerAdd.Left().(FunctionCall)
-		require.True(t, ok)
+		def := mustConvert[Definition](t, stmts[7])
+		outerAdd := mustConvert[BinaryExpression](t, def.Expression())
+		div := mustConvert[BinaryExpression](t, outerAdd.Left())
+		innerAdd := mustConvert[BinaryExpression](t, div.Left())
+		fc := mustConvert[FunctionCall](t, innerAdd.Left())
 
-		got, err := core.Resolve("/statements@7/expression/left/left/left", root)
-		require.NoError(t, err)
-		assert.Same(t, fc, got)
+		left := mustResolve("/statements@7/expression/left/left/left", root)
+		assert.Same(t, fc, left)
 
-		got, err = core.Resolve("/statements@4", root)
-		require.NoError(t, err)
-		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
+		statement := mustResolve("/statements@4", root)
+		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
 	t.Run("netPrice/generalExpensesAndSales", func(t *testing.T) {
-		def, ok := stmts[7].(Definition)
-		require.True(t, ok)
-		outerAdd, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		div, ok := outerAdd.Left().(BinaryExpression)
-		require.True(t, ok)
-		innerAdd, ok := div.Left().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := innerAdd.Right().(FunctionCall)
-		require.True(t, ok)
+		def := mustConvert[Definition](t, stmts[7])
+		outerAdd := mustConvert[BinaryExpression](t, def.Expression())
+		div := mustConvert[BinaryExpression](t, outerAdd.Left())
+		innerAdd := mustConvert[BinaryExpression](t, div.Left())
+		fc := mustConvert[FunctionCall](t, innerAdd.Right())
 
-		got, err := core.Resolve("/statements@7/expression/left/left/right", root)
-		require.NoError(t, err)
-		assert.Same(t, fc, got)
+		right := mustResolve("/statements@7/expression/left/left/right", root)
+		assert.Same(t, fc, right)
 
-		got, err = core.Resolve("/statements@5", root)
-		require.NoError(t, err)
-		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
+		statement := mustResolve("/statements@5", root)
+		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
 	t.Run("netPrice/expectedNoOfSales", func(t *testing.T) {
-		def, ok := stmts[7].(Definition)
-		require.True(t, ok)
-		outerAdd, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		div, ok := outerAdd.Left().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := div.Right().(FunctionCall)
-		require.True(t, ok)
+		def := mustConvert[Definition](t, stmts[7])
+		outerAdd := mustConvert[BinaryExpression](t, def.Expression())
+		div := mustConvert[BinaryExpression](t, outerAdd.Left())
+		fc := mustConvert[FunctionCall](t, div.Right())
 
-		got, err := core.Resolve("/statements@7/expression/left/right", root)
-		require.NoError(t, err)
-		assert.Same(t, fc, got)
+		right := mustResolve("/statements@7/expression/left/right", root)
+		assert.Same(t, fc, right)
 
-		got, err = core.Resolve("/statements@2", root)
-		require.NoError(t, err)
-		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
+		statement := mustResolve("/statements@2", root)
+		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
 	t.Run("netPrice/desiredProfitPerUnit", func(t *testing.T) {
-		def, ok := stmts[7].(Definition)
-		require.True(t, ok)
-		outerAdd, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := outerAdd.Right().(FunctionCall)
-		require.True(t, ok)
+		def := mustConvert[Definition](t, stmts[7])
+		outerAdd := mustConvert[BinaryExpression](t, def.Expression())
+		fc := mustConvert[FunctionCall](t, outerAdd.Right())
 
-		got, err := core.Resolve("/statements@7/expression/right", root)
-		require.NoError(t, err)
-		assert.Same(t, fc, got)
+		right := mustResolve("/statements@7/expression/right", root)
+		assert.Same(t, fc, right)
 
-		got, err = core.Resolve("/statements@6", root)
-		require.NoError(t, err)
-		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
+		statement := mustResolve("/statements@6", root)
+		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
 	// ── def calcGrossListPrice(net, tax): net / (1 - tax)
@@ -472,92 +396,67 @@ func TestResolve_PriceCalc(t *testing.T) {
 	//       right: FC "tax"
 
 	t.Run("calcGrossListPrice/net", func(t *testing.T) {
-		def, ok := stmts[9].(Definition)
-		require.True(t, ok)
-		div, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := div.Left().(FunctionCall)
-		require.True(t, ok)
+		def := mustConvert[Definition](t, stmts[9])
+		div := mustConvert[BinaryExpression](t, def.Expression())
+		fc := mustConvert[FunctionCall](t, div.Left())
 
-		got, err := core.Resolve("/statements@9/expression/left", root)
-		require.NoError(t, err)
-		assert.Same(t, fc, got)
+		left := mustResolve("/statements@9/expression/left", root)
+		assert.Same(t, fc, left)
 
-		got, err = core.Resolve("/statements@9/args@0", root)
-		require.NoError(t, err)
-		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
+		arg := mustResolve("/statements@9/args@0", root)
+		assert.Same(t, fc.Callable().Ref(doc.Ctx()), arg)
 	})
 
 	t.Run("calcGrossListPrice/tax", func(t *testing.T) {
-		def, ok := stmts[9].(Definition)
-		require.True(t, ok)
-		div, ok := def.Expression().(BinaryExpression)
-		require.True(t, ok)
-		sub, ok := div.Right().(BinaryExpression)
-		require.True(t, ok)
-		fc, ok := sub.Right().(FunctionCall)
-		require.True(t, ok)
+		def := mustConvert[Definition](t, stmts[9])
+		div := mustConvert[BinaryExpression](t, def.Expression())
+		sub := mustConvert[BinaryExpression](t, div.Right())
+		fc := mustConvert[FunctionCall](t, sub.Right())
 
-		got, err := core.Resolve("/statements@9/expression/right/right", root)
-		require.NoError(t, err)
-		assert.Same(t, fc, got)
+		right := mustResolve("/statements@9/expression/right/right", root)
+		assert.Same(t, fc, right)
 
-		got, err = core.Resolve("/statements@9/args@1", root)
-		require.NoError(t, err)
-		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
+		arg := mustResolve("/statements@9/args@1", root)
+		assert.Same(t, fc.Callable().Ref(doc.Ctx()), arg)
 	})
 
 	// ── calcGrossListPrice(netPrice, vat) ────────────────────────────────────
 
 	t.Run("evaluation/calcGrossListPrice", func(t *testing.T) {
-		eval, ok := stmts[10].(Evaluation)
-		require.True(t, ok)
-		fc, ok := eval.Expression().(FunctionCall)
-		require.True(t, ok)
+		eval := mustConvert[Evaluation](t, stmts[10])
+		fc := mustConvert[FunctionCall](t, eval.Expression())
 
-		got, err := core.Resolve("/statements@10/expression", root)
-		require.NoError(t, err)
-		assert.Same(t, fc, got)
+		expression := mustResolve("/statements@10/expression", root)
+		assert.Same(t, fc, expression)
 
-		got, err = core.Resolve("/statements@9", root)
-		require.NoError(t, err)
-		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
+		statement := mustResolve("/statements@9", root)
+		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
 	t.Run("evaluation/netPrice", func(t *testing.T) {
-		eval, ok := stmts[10].(Evaluation)
-		require.True(t, ok)
-		outerFC, ok := eval.Expression().(FunctionCall)
-		require.True(t, ok)
+		eval := mustConvert[Evaluation](t, stmts[10])
+		outerFC := mustConvert[FunctionCall](t, eval.Expression())
 		require.Len(t, outerFC.Args(), 2)
-		fc, ok := outerFC.Args()[0].(FunctionCall)
-		require.True(t, ok)
+		fc := mustConvert[FunctionCall](t, outerFC.Args()[0])
 
-		got, err := core.Resolve("/statements@10/expression/args@0", root)
-		require.NoError(t, err)
-		assert.Same(t, fc, got)
+		arg := mustResolve("/statements@10/expression/args@0", root)
+		assert.Same(t, fc, arg)
 
-		got, err = core.Resolve("/statements@7", root)
-		require.NoError(t, err)
-		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
+		statement := mustResolve("/statements@7", root)
+		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
 	t.Run("evaluation/vat", func(t *testing.T) {
-		eval, ok := stmts[10].(Evaluation)
-		require.True(t, ok)
-		outerFC, ok := eval.Expression().(FunctionCall)
-		require.True(t, ok)
+		eval := mustConvert[Evaluation](t, stmts[10])
+		outerFC := mustConvert[FunctionCall](t, eval.Expression())
 		require.Len(t, outerFC.Args(), 2)
-		fc, ok := outerFC.Args()[1].(FunctionCall)
-		require.True(t, ok)
+		fc := mustConvert[FunctionCall](t, outerFC.Args()[1])
 
-		got, err := core.Resolve("/statements@10/expression/args@1", root)
-		require.NoError(t, err)
-		assert.Same(t, fc, got)
+		arg := mustResolve("/statements@10/expression/args@1", root)
+		assert.Same(t, fc, arg)
 
-		got, err = core.Resolve("/statements@8", root)
-		require.NoError(t, err)
-		assert.Same(t, fc.Callable().Ref(doc.Ctx()), got)
+		statement := mustResolve("/statements@8", root)
+		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
 	t.Run("errorReporting/no-such-field", func(t *testing.T) {
@@ -580,8 +479,7 @@ func TestResolve_PriceCalc(t *testing.T) {
 		module := *module.(*ModuleImpl)
 		def := *stmts[0].(*DefinitionImpl)
 
-		module.statements = make([]Statement, 1)
-		module.statements[0] = &def
+		module.statements = []Statement{&def}
 
 		field, index := def.ContainmentData()
 		def.SetContainer(&module, field, index)
@@ -606,8 +504,7 @@ func TestResolve_PriceCalc(t *testing.T) {
 	t.Run("errorReporting/slice-item-is-nil", func(t *testing.T) {
 		expr, err := core.Resolve("/statements@10/expression/", root)
 		require.NoError(t, err)
-		fc, ok := expr.(FunctionCall)
-		require.True(t, ok)
+		fc := mustConvert[FunctionCall](t, expr)
 
 		// shamelessly manipulate the shared ast and add a 'nil' item, don't want to copy everything right now; shouldn't hurt
 		fc.SetArgsItem(nil)
