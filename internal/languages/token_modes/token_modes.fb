@@ -1,0 +1,105 @@
+grammar TokenModes;
+
+interface Model {
+    Statements []Statement
+}
+
+entry Model:
+    Statements+=Statement*
+
+
+interface Statement {}
+
+Statement: VariableDecl
+
+interface VariableDecl extends Statement {
+    Name string
+    Value Expression
+}
+
+VariableDecl: Name=ID ASSIGN Value=Expression
+
+interface Expression {}
+
+Expression: VariableRef | NumericLiteral | StringLiteral
+
+interface VariableRef extends Expression {
+    Name *VariableDecl
+}
+
+VariableRef: Name=[VariableDecl:ID]
+
+interface NumericLiteral extends Expression {
+    Value string
+}
+
+NumericLiteral: Value=INT
+
+interface StringLiteral extends Expression {
+    Content []StringContent
+}
+
+StringLiteral: STRING_START Content+=StringContent* STRING_STOP
+
+interface StringContent {}
+
+StringContent: StringText | Interpolation
+
+interface StringText extends StringContent {
+    Value string
+}
+
+StringText: Value=STRING_CONTENT
+
+interface Interpolation extends StringContent {
+    Expression Expression
+}
+Interpolation: INTERPOLATION_START Expression=Expression INTERPOLATION_END
+
+token LPAREN: "("
+token RPAREN: ")"
+token ID: /[a-zA-Z_][a-zA-Z0-9_]*/
+token INT: /[0-9]+/
+token WS: /\s+/
+token ASSIGN: ":="
+token SL_COMMENT: /\/\/[^\r\n]*/
+token ML_COMMENT: /\/\*[\s\S]*?\*\//
+token STRING_START: "`"
+
+token mode default {
+    ASSIGN
+
+    STRING_START -> push(IN_STRING)
+    ID
+    INT
+    LPAREN
+    RPAREN
+    hidden WS
+    comment SL_COMMENT
+    comment ML_COMMENT
+}
+
+token STRING_STOP: "`"
+token STRING_CONTENT: /([^`#]|\\[`#tnr\\])/
+token INTERPOLATION_START: "#{"
+
+token mode IN_STRING {
+    STRING_STOP -> pop
+    STRING_CONTENT
+    INTERPOLATION_START -> push(IN_INTERPOLATION)
+}
+
+token INTERPOLATION_END: "}"
+
+token mode IN_INTERPOLATION {
+    INTERPOLATION_END -> pop
+
+    STRING_START -> push(IN_STRING)
+    ID
+    INT
+    LPAREN
+    RPAREN
+    hidden WS
+    comment SL_COMMENT
+    comment ML_COMMENT
+}

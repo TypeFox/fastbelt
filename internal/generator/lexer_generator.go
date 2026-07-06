@@ -157,19 +157,19 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, token
 				for _, tokenUsage := range tokenUsages {
 					nn.Append("lexer.UseTokenType(", GeneratedTokenName(tokenUsage.TokenRef().Ref(context)), ")")
 					if cmd := tokenUsage.Command(); cmd != nil {
-						var modeName string
+						var cmdModeName string
 						if cmd.IsDefault() {
-							modeName = "default"
+							cmdModeName = "default"
 						} else {
-							modeName = cmd.Mode().Ref(context).Name()
+							cmdModeName = cmd.Mode().Ref(context).Name()
 						}
 						switch cmd.Type() {
 						case "push":
-							nn.Append(".WithPushMode(", tokenTypes.TokenModeVarNames[modeName], ")")
+							nn.Append(".WithPushMode(", tokenTypes.TokenModeVarNames[cmdModeName], ")")
 						case "pop":
 							nn.Append(".WithPopMode()")
 						default: //"mode"
-							nn.Append(".WithSetMode(", tokenTypes.TokenModeVarNames[modeName], ")")
+							nn.Append(".WithSetMode(", tokenTypes.TokenModeVarNames[cmdModeName], ")")
 						}
 					}
 					if tokenUsage.Type() == "comment" {
