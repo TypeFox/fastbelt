@@ -6,8 +6,8 @@ interface Grammar {
     Composites  []CompositeRule
     Terminals   []Token
     TokenGroups []TokenGroup
-    TokenModes []TokenMode
-    Interfaces []Interface
+    TokenModes  []TokenMode
+    Interfaces  []Interface
 }
 
 entry Grammar: GRAMMAR Name=ID SEMICOLON?
@@ -107,8 +107,8 @@ interface KeywordTokenElement extends TokenElement {
 KeywordTokenElement: Keyword=Keyword
 
 interface TokenCommand {
-    Type string
-    Mode *TokenMode
+    Type    string
+    Mode    *TokenMode
     Default bool
 }
 
@@ -116,20 +116,32 @@ TokenCommand: ARROW Type=(PUSH|POP|MODE) (LEFTPAREN (Mode=[TokenMode:ID] | Defau
 
 interface TokenGroup extends AbstractTokenRule {
     TokenRefs []*AbstractTokenRule
+    Keywords  []Keyword
+    Regexps   []string
 }
 
 TokenGroup: TOKEN GROUP Name=ID LEFTBRACE
-    (TokenRefs+=[AbstractTokenRule:ID])*
+    (
+        TokenRefs+=[AbstractTokenRule:ID]
+        | Keywords+=Keyword
+        | KEYWORDS Regexps+=RegexLiteral
+    )*
 RIGHTBRACE
 
 interface TokenMode {
-    Name string
-    Default bool
+    Name      string
+    Default   bool
     TokenRefs []TokenUsage
+    Keywords  []Keyword
+    Regexps   []string
 }
 
 TokenMode: TOKEN MODE (Name=ID | Default?=DEFAULT) LEFTBRACE
-    TokenRefs+=TokenUsage*
+    (
+        TokenRefs+=TokenUsage
+        | Keywords+=Keyword
+        | KEYWORDS Regexps+=RegexLiteral
+    )*
 RIGHTBRACE
 
 interface TokenUsage {

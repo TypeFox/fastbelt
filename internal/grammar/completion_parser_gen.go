@@ -456,16 +456,39 @@ func (p *CompletionParser) ParseTokenGroup() {
 	{
 		p.state.Consume(Token_LEFTBRACE)
 	}
-	{
+	p.cp.RecordSnapshot(StateNumber__TokenGroup__LoopEntry)
+	p.state.Sync(StateNumber__TokenGroup__LoopEntry)
+loop0:
+	for {
+		switch prediction, _ := p.lookahead.TokenGroupAlternatives(p.state); prediction {
+		case 0:
+			{
+				p.cp.MarkAssignment("TokenRefs")
+				p.state.Consume(Token_ID)
+				p.cp.ClearAssignment()
+			}
+		case 1:
+			{
+				p.cp.MarkAssignment("Keywords")
+				p.state.EnterRule(StateNumber__TokenGroup__Basic_2)
+				p.ParseKeyword()
+				p.state.ExitRule()
+				p.cp.ClearAssignment()
+			}
+		case 2:
+			{
+				p.state.Consume(Token_KEYWORDS)
+			}
+			{
+				p.cp.MarkAssignment("Regexps")
+				p.state.Consume(Token_RegexLiteral)
+				p.cp.ClearAssignment()
+			}
+		default:
+			break loop0
+		}
 		p.cp.RecordSnapshot(StateNumber__TokenGroup__LoopEntry)
 		p.state.Sync(StateNumber__TokenGroup__LoopEntry)
-		for p.lookahead.TokenGroupTokenRefsLoop(p.state) {
-			p.cp.MarkAssignment("TokenRefs")
-			p.state.Consume(Token_ID)
-			p.cp.ClearAssignment()
-			p.cp.RecordSnapshot(StateNumber__TokenGroup__LoopEntry)
-			p.state.Sync(StateNumber__TokenGroup__LoopEntry)
-		}
 	}
 	{
 		p.state.Consume(Token_RIGHTBRACE)
@@ -481,7 +504,7 @@ func (p *CompletionParser) ParseTokenMode() {
 	{
 		p.state.Consume(Token_MODE)
 	}
-	switch prediction, failure := p.lookahead.TokenModeAlternatives(p.state); prediction {
+	switch prediction, failure := p.lookahead.TokenModeAlternatives_0(p.state); prediction {
 	case 0:
 		{
 			p.cp.MarkAssignment("Name")
@@ -500,18 +523,41 @@ func (p *CompletionParser) ParseTokenMode() {
 	{
 		p.state.Consume(Token_LEFTBRACE)
 	}
-	{
+	p.cp.RecordSnapshot(StateNumber__TokenMode__LoopEntry)
+	p.state.Sync(StateNumber__TokenMode__LoopEntry)
+loop1:
+	for {
+		switch prediction, _ := p.lookahead.TokenModeAlternatives_1(p.state); prediction {
+		case 0:
+			{
+				p.cp.MarkAssignment("TokenRefs")
+				p.state.EnterRule(StateNumber__TokenMode__Basic_4)
+				p.ParseTokenUsage()
+				p.state.ExitRule()
+				p.cp.ClearAssignment()
+			}
+		case 1:
+			{
+				p.cp.MarkAssignment("Keywords")
+				p.state.EnterRule(StateNumber__TokenMode__Basic_6)
+				p.ParseKeyword()
+				p.state.ExitRule()
+				p.cp.ClearAssignment()
+			}
+		case 2:
+			{
+				p.state.Consume(Token_KEYWORDS)
+			}
+			{
+				p.cp.MarkAssignment("Regexps")
+				p.state.Consume(Token_RegexLiteral)
+				p.cp.ClearAssignment()
+			}
+		default:
+			break loop1
+		}
 		p.cp.RecordSnapshot(StateNumber__TokenMode__LoopEntry)
 		p.state.Sync(StateNumber__TokenMode__LoopEntry)
-		for p.lookahead.TokenModeTokenRefsLoop(p.state) {
-			p.cp.MarkAssignment("TokenRefs")
-			p.state.EnterRule(StateNumber__TokenMode__Basic_4)
-			p.ParseTokenUsage()
-			p.state.ExitRule()
-			p.cp.ClearAssignment()
-			p.cp.RecordSnapshot(StateNumber__TokenMode__LoopEntry)
-			p.state.Sync(StateNumber__TokenMode__LoopEntry)
-		}
 	}
 	{
 		p.state.Consume(Token_RIGHTBRACE)

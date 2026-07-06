@@ -591,16 +591,43 @@ func (p *Parser) ParseTokenGroup() TokenGroup {
 			token := p.state.Consume(Token_LEFTBRACE)
 			core.AssignToken(current, token, StateNumber__TokenGroup_LEFTBRACE)
 		}
-		{
-			p.state.Sync(StateNumber__TokenGroup__LoopEntry)
-			for p.lookahead.TokenGroupTokenRefsLoop(p.state) {
-				token := p.state.Consume(Token_ID)
-				core.AssignToken(current, token, StateNumber__TokenGroup_TokenRefs_ID)
-				if token != nil {
-					current.SetTokenRefsItem(p.referencesConstructor.TokenGroupTokenRefs(current, token))
+		p.state.Sync(StateNumber__TokenGroup__LoopEntry)
+	loop0:
+		for {
+			switch prediction, _ := p.lookahead.TokenGroupAlternatives(p.state); prediction {
+			case 0:
+				{
+					token := p.state.Consume(Token_ID)
+					core.AssignToken(current, token, StateNumber__TokenGroup_TokenRefs_ID)
+					if token != nil {
+						current.SetTokenRefsItem(p.referencesConstructor.TokenGroupTokenRefs(current, token))
+					}
 				}
-				p.state.Sync(StateNumber__TokenGroup__LoopEntry)
+			case 1:
+				{
+					p.state.EnterRule(StateNumber__TokenGroup__Basic_2)
+					result := p.ParseKeyword()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetKeywordsItem(result)
+					}
+				}
+			case 2:
+				{
+					token := p.state.Consume(Token_KEYWORDS)
+					core.AssignToken(current, token, StateNumber__TokenGroup_KEYWORDS)
+				}
+				{
+					token := p.state.Consume(Token_RegexLiteral)
+					core.AssignToken(current, token, StateNumber__TokenGroup_Regexps_RegexLiteral)
+					if token != nil {
+						current.SetRegexpsItem(token)
+					}
+				}
+			default:
+				break loop0
 			}
+			p.state.Sync(StateNumber__TokenGroup__LoopEntry)
 		}
 		{
 			token := p.state.Consume(Token_RIGHTBRACE)
@@ -623,7 +650,7 @@ func (p *Parser) ParseTokenMode() TokenMode {
 			token := p.state.Consume(Token_MODE)
 			core.AssignToken(current, token, StateNumber__TokenMode_MODE)
 		}
-		switch prediction, failure := p.lookahead.TokenModeAlternatives(p.state); prediction {
+		switch prediction, failure := p.lookahead.TokenModeAlternatives_0(p.state); prediction {
 		case 0:
 			{
 				token := p.state.Consume(Token_ID)
@@ -647,17 +674,44 @@ func (p *Parser) ParseTokenMode() TokenMode {
 			token := p.state.Consume(Token_LEFTBRACE)
 			core.AssignToken(current, token, StateNumber__TokenMode_LEFTBRACE)
 		}
-		{
-			p.state.Sync(StateNumber__TokenMode__LoopEntry)
-			for p.lookahead.TokenModeTokenRefsLoop(p.state) {
-				p.state.EnterRule(StateNumber__TokenMode__Basic_4)
-				result := p.ParseTokenUsage()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetTokenRefsItem(result)
+		p.state.Sync(StateNumber__TokenMode__LoopEntry)
+	loop1:
+		for {
+			switch prediction, _ := p.lookahead.TokenModeAlternatives_1(p.state); prediction {
+			case 0:
+				{
+					p.state.EnterRule(StateNumber__TokenMode__Basic_4)
+					result := p.ParseTokenUsage()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetTokenRefsItem(result)
+					}
 				}
-				p.state.Sync(StateNumber__TokenMode__LoopEntry)
+			case 1:
+				{
+					p.state.EnterRule(StateNumber__TokenMode__Basic_6)
+					result := p.ParseKeyword()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetKeywordsItem(result)
+					}
+				}
+			case 2:
+				{
+					token := p.state.Consume(Token_KEYWORDS)
+					core.AssignToken(current, token, StateNumber__TokenMode_KEYWORDS)
+				}
+				{
+					token := p.state.Consume(Token_RegexLiteral)
+					core.AssignToken(current, token, StateNumber__TokenMode_Regexps_RegexLiteral)
+					if token != nil {
+						current.SetRegexpsItem(token)
+					}
+				}
+			default:
+				break loop1
 			}
+			p.state.Sync(StateNumber__TokenMode__LoopEntry)
 		}
 		{
 			token := p.state.Consume(Token_RIGHTBRACE)

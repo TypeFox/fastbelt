@@ -1124,6 +1124,10 @@ type TokenGroup interface {
 	IsTokenGroup()
 	TokenRefs() []*core.Reference[AbstractTokenRule]
 	SetTokenRefsItem(item *core.Reference[AbstractTokenRule])
+	Keywords() []Keyword
+	SetKeywordsItem(item Keyword)
+	Regexps() []*core.Token
+	SetRegexpsItem(item *core.Token)
 }
 
 func NewTokenGroup() TokenGroup {
@@ -1132,17 +1136,24 @@ func NewTokenGroup() TokenGroup {
 
 type TokenGroupData struct {
 	tokenRefs []*core.Reference[AbstractTokenRule]
+	keywords  []Keyword
+	regexps   []*core.Token
 }
 
 func NewTokenGroupData() TokenGroupData {
 	return TokenGroupData{
 		tokenRefs: []*core.Reference[AbstractTokenRule]{},
+		keywords:  []Keyword{},
+		regexps:   []*core.Token{},
 	}
 }
 
 func (i *TokenGroupData) IsTokenGroup() {}
 
 func (i *TokenGroupData) ForEachNode(fn func(core.AstNode)) {
+	for _, item := range i.keywords {
+		fn(item)
+	}
 }
 
 func (i *TokenGroupData) ForEachReference(fn func(core.UntypedReference)) {
@@ -1157,6 +1168,22 @@ func (i *TokenGroupData) TokenRefs() []*core.Reference[AbstractTokenRule] {
 
 func (i *TokenGroupData) SetTokenRefsItem(item *core.Reference[AbstractTokenRule]) {
 	i.tokenRefs = append(i.tokenRefs, item)
+}
+
+func (i *TokenGroupData) Keywords() []Keyword {
+	return i.keywords
+}
+
+func (i *TokenGroupData) SetKeywordsItem(item Keyword) {
+	i.keywords = append(i.keywords, item)
+}
+
+func (i *TokenGroupData) Regexps() []*core.Token {
+	return i.regexps
+}
+
+func (i *TokenGroupData) SetRegexpsItem(item *core.Token) {
+	i.regexps = append(i.regexps, item)
 }
 
 type TokenGroupImpl struct {
@@ -1190,6 +1217,10 @@ type TokenMode interface {
 	SetDefault(value *core.Token)
 	TokenRefs() []TokenUsage
 	SetTokenRefsItem(item TokenUsage)
+	Keywords() []Keyword
+	SetKeywordsItem(item Keyword)
+	Regexps() []*core.Token
+	SetRegexpsItem(item *core.Token)
 }
 
 func NewTokenMode() TokenMode {
@@ -1203,11 +1234,15 @@ type TokenModeData struct {
 	name      *core.Token
 	_Default  *core.Token
 	tokenRefs []TokenUsage
+	keywords  []Keyword
+	regexps   []*core.Token
 }
 
 func NewTokenModeData() TokenModeData {
 	return TokenModeData{
 		tokenRefs: []TokenUsage{},
+		keywords:  []Keyword{},
+		regexps:   []*core.Token{},
 	}
 }
 
@@ -1215,6 +1250,9 @@ func (i *TokenModeData) IsTokenMode() {}
 
 func (i *TokenModeData) ForEachNode(fn func(core.AstNode)) {
 	for _, item := range i.tokenRefs {
+		fn(item)
+	}
+	for _, item := range i.keywords {
 		fn(item)
 	}
 }
@@ -1256,6 +1294,22 @@ func (i *TokenModeData) TokenRefs() []TokenUsage {
 
 func (i *TokenModeData) SetTokenRefsItem(item TokenUsage) {
 	i.tokenRefs = append(i.tokenRefs, item)
+}
+
+func (i *TokenModeData) Keywords() []Keyword {
+	return i.keywords
+}
+
+func (i *TokenModeData) SetKeywordsItem(item Keyword) {
+	i.keywords = append(i.keywords, item)
+}
+
+func (i *TokenModeData) Regexps() []*core.Token {
+	return i.regexps
+}
+
+func (i *TokenModeData) SetRegexpsItem(item *core.Token) {
+	i.regexps = append(i.regexps, item)
 }
 
 type TokenModeImpl struct {

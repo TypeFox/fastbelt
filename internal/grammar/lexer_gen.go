@@ -4,9 +4,10 @@ package grammar
 
 import (
 	"strings"
+	"unicode/utf8"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
-	"unicode/utf8"
 )
 
 const Token_ARROW_Idx = 1
@@ -1181,8 +1182,13 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
+const (
+	TokenMode_default = 0
+)
+
 func NewLexer() lexer.Lexer {
-	TokenMode_default := lexer.NewTokenMode("default",
+	modes := make([]*lexer.TokenMode, 1, 1)
+	modes[TokenMode_default] = lexer.NewTokenMode("default",
 		lexer.UseTokenType(Token_ARROW),
 		lexer.UseTokenType(Token_LEFTPAREN),
 		lexer.UseTokenType(Token_RIGHTPAREN),
@@ -1226,7 +1232,5 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Token_RegexLiteral),
 		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),
 	)
-	return lexer.NewDefaultLexer(
-		TokenMode_default,
-	)
+	return lexer.NewDefaultLexer(modes...)
 }
