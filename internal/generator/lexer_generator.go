@@ -33,6 +33,7 @@ type GenerateTokenTypesResult struct {
 	TokenModeVarNames map[string]string
 	TokenModeIds      map[string]int
 	TokenModes        map[string][]grammar.TokenUsage
+	TokenModeOrder    []string
 }
 
 func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
@@ -87,6 +88,7 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		result.TokenModeVarNames[modeName] = "TokenMode_" + modeName
 		result.TokenModeIds[modeName] = index
 		result.TokenModes[modeName] = tokenMode.TokenRefs()
+		result.TokenModeOrder = append(result.TokenModeOrder, modeName)
 	}
 	return result
 }
@@ -143,25 +145,42 @@ func GenerateLexer(grammr grammar.Grammar, packageName string, tokenTypes Genera
 		node.AppendLine()
 	}
 
+	generateLexerModeEnums(node, tokenTypes)
 	generateMainLexerFunction(context.Background(), node, tokenTypes)
 	return FormatIfPossible(node.String())
+}
+
+func generateLexerModeEnums(node codegen.Node, tokenTypes GenerateTokenTypesResult) {
+	node.AppendLine("const (")
+	node.Indent(func(n codegen.Node) {
+		for _, modeName := range tokenTypes.TokenModeOrder {
+			modeId := tokenTypes.TokenModeIds[modeName]
+			n.AppendLine("TokenMode_", modeName, " = ", strconv.Itoa(modeId))
+		}
+	})
+	node.AppendLine(")")
+	node.AppendLine()
 }
 
 func generateMainLexerFunction(context context.Context, node codegen.Node, tokenTypes GenerateTokenTypesResult) {
 	node.AppendLine("func NewLexer() lexer.Lexer {")
 	node.Indent(func(n codegen.Node) {
-		for modeName, tokenUsages := range tokenTypes.TokenModes {
-			varName := tokenTypes.TokenModeVarNames[modeName]
-			n.AppendLine(varName, " := lexer.NewTokenMode(\"", modeName, "\",")
+		n.AppendLine("modes := make([]*lexer.TokenMode, 0, " + strconv.Itoa(len(tokenTypes.TokenModes)) + ")")
+		for _, modeName := range tokenTypes.TokenModeOrder {
+			tokenUsages := tokenTypes.TokenModes[modeName]
+			varName := "modes[" + tokenTypes.TokenModeVarNames[modeName] + "]"
+			n.AppendLine(varName, " = lexer.NewTokenMode(\"", modeName, "\",")
 			n.Indent(func(nn codegen.Node) {
 				for _, tokenUsage := range tokenUsages {
 					nn.Append("lexer.UseTokenType(", GeneratedTokenName(tokenUsage.TokenRef().Ref(context)), ")")
 					if cmd := tokenUsage.Command(); cmd != nil {
 						var cmdModeName string
-						if cmd.IsDefault() {
-							cmdModeName = "default"
-						} else {
-							cmdModeName = cmd.Mode().Ref(context).Name()
+						if mode := cmd.Mode().Ref(context); cmd.IsDefault() || mode != nil {
+							if cmd.IsDefault() {
+								cmdModeName = "default"
+							} else {
+								cmdModeName = cmd.Mode().Ref(context).Name()
+							}
 						}
 						switch cmd.Type() {
 						case "push":
@@ -182,14 +201,7 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, token
 			})
 			n.AppendLine(")")
 		}
-		n.AppendLine("return lexer.NewDefaultLexer(")
-		n.Indent(func(nn codegen.Node) {
-			for modeName, _ := range tokenTypes.TokenModes {
-				varName := tokenTypes.TokenModeVarNames[modeName]
-				nn.AppendLine(varName, ",")
-			}
-		})
-		n.AppendLine(")")
+		n.AppendLine("return lexer.NewDefaultLexer(modes...)")
 	})
 	node.AppendLine("}")
 }
