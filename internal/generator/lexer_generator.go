@@ -165,7 +165,8 @@ func generateLexerModeEnums(node codegen.Node, tokenTypes GenerateTokenTypesResu
 func generateMainLexerFunction(context context.Context, node codegen.Node, tokenTypes GenerateTokenTypesResult) {
 	node.AppendLine("func NewLexer() lexer.Lexer {")
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("modes := make([]*lexer.TokenMode, 0, " + strconv.Itoa(len(tokenTypes.TokenModes)) + ")")
+		count := strconv.Itoa(len(tokenTypes.TokenModes))
+		n.AppendLine("modes := make([]*lexer.TokenMode, " + count + ", " + count + ")")
 		for _, modeName := range tokenTypes.TokenModeOrder {
 			tokenUsages := tokenTypes.TokenModes[modeName]
 			varName := "modes[" + tokenTypes.TokenModeVarNames[modeName] + "]"

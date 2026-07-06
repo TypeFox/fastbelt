@@ -80,7 +80,7 @@ token mode default {
 }
 
 token STRING_STOP: "`"
-token STRING_CONTENT: /([^`#]|\\[`#tnr\\])/
+token STRING_CONTENT: /([^`#]|\\[`#tnr\\])+/
 token INTERPOLATION_START: "#{"
 
 token mode IN_STRING {

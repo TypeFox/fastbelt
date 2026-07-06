@@ -133,7 +133,7 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 			l.stack.Pop()
 		}
 		if longestType.PushMode > -1 {
-			l.stack.Push(l.stack.modes[longestType.PushMode])
+			l.stack.Push(l.tokenModes[longestType.PushMode])
 		}
 	}
 
