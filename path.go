@@ -25,73 +25,65 @@ type FragmentPath interface {
 	String() string
 }
 
-// Base implementation of [FragmentPath]
-type fragmentPathImpl struct {
-	segments []struct {
-		name  unique.Handle[string]
-		index int
-	}
+type fragmentPath []segment
+type segment struct {
+	name  unique.Handle[string]
+	index int
 }
 
-var _ FragmentPath = (*fragmentPathImpl)(nil)
+var _ FragmentPath = (fragmentPath)(nil)
 
-func (p *fragmentPathImpl) push(name unique.Handle[string], index int) *fragmentPathImpl {
-	p.segments = append(p.segments, struct {
-		name  unique.Handle[string]
-		index int
-	}{name, index})
-	return p
+func (p fragmentPath) Empty() bool {
+	return len(p) == 0
 }
 
-func (p *fragmentPathImpl) Empty() bool {
-	return len(p.segments) == 0
-}
-
-func (p *fragmentPathImpl) Head() (name unique.Handle[string], index int) {
-	count := len(p.segments)
-	if count == 0 {
+func (p fragmentPath) Head() (name unique.Handle[string], index int) {
+	if len(p) == 0 {
 		return fieldZero, -1
 	} else {
-		head := p.segments[0]
+		head := p[0]
 		return head.name, head.index
 	}
 }
 
-func (p *fragmentPathImpl) Tail() FragmentPath {
-	clone := *p
-	clone.segments = clone.segments[1:]
-	return &clone
+func (p fragmentPath) Tail() FragmentPath {
+	if len(p) == 0 {
+		return p
+	} else {
+		return p[1:]
+	}
 }
 
-func (p *fragmentPathImpl) String() string {
+func (p fragmentPath) String() string {
 	var sb strings.Builder
-	for _, s := range p.segments {
+	for _, s := range p {
 		sb.WriteString("/")
 		sb.WriteString(s.name.Value())
 		if s.index >= 0 {
 			sb.WriteString("@")
-			sb.WriteString(strconv.Itoa(int(s.index)))
+			sb.WriteString(strconv.Itoa(s.index))
 		}
 	}
 	return sb.String()
 }
 
 var fieldZero = unique.Handle[string]{}
+var fieldEmpty = unique.Make("")
 
 // PathOf composes a [FragmentPath] denoting node's path within its root container.
 // It does so in a recursive manner based on node's [AstNode.ContainmentData].
 // Calling [FragmentPath.String]() on the result yields a slash-separated
 // path string that uniquely identifies this node within its containment hierarchy.
 // e.g. "/rules@2/alternatives@0".
-// Returns an empty descriptor for root nodes/nodes without a configured container,
+// Returns an empty descriptor for root nodes & nodes with no configured container,
 // its [FragmentPath.String]() yields an empty string.
-func PathOf(node AstNode) (*fragmentPathImpl, error) {
+func PathOf(node AstNode) (fragmentPath, error) {
 	container := node.Container()
 	containerField, index := node.ContainmentData()
 
 	if container == nil {
-		return &fragmentPathImpl{}, nil
-	} else if containerField == fieldZero || containerField.Value() == "" {
+		return fragmentPath{}, nil
+	} else if containerField == fieldZero || containerField == fieldEmpty {
 		return nil, errors.New("cannot determine node path, 'containerField' is empty")
 	}
 
@@ -105,7 +97,7 @@ func PathOf(node AstNode) (*fragmentPathImpl, error) {
 				"PathOf: error within container of type %T:\n %w", container, err)
 		}
 	}
-	return parentPath.push(containerField, index), nil
+	return append(parentPath, segment{containerField, index}), nil
 }
 
 // Resolve returns the (deeply) contained child of node denoted by path.
@@ -121,25 +113,25 @@ func Resolve(path string, node AstNode) (AstNode, error) {
 	return node.Resolve(segments)
 }
 
-func parsePath(path string) (*fragmentPathImpl, error) {
-	result := &fragmentPathImpl{}
+func parsePath(path string) (fragmentPath, error) {
+	result := fragmentPath{}
 	path = strings.TrimLeft(path, "/")
 
-	for segment := range strings.SplitSeq(path, "/") {
-		if segment == "" {
+	for curSegment := range strings.SplitSeq(path, "/") {
+		if curSegment == "" {
 			continue
 		}
-		fieldAndIndex := strings.SplitN(segment, "@", 2)
+		fieldAndIndex := strings.SplitN(curSegment, "@", 2)
 		field := unique.Make(fieldAndIndex[0])
-		if len(fieldAndIndex) == 1 {
-			result.push(field, -1)
-		} else {
-			index, err := strconv.Atoi(fieldAndIndex[1])
+		index := -1
+		if len(fieldAndIndex) == 2 {
+			err := error(nil)
+			index, err = strconv.Atoi(fieldAndIndex[1])
 			if err != nil {
 				return nil, fmt.Errorf("parsePath: index '%s' is not a valid uint: %w", fieldAndIndex[1], err)
 			}
-			result.push(field, index)
 		}
+		result = append(result, segment{field, index})
 	}
 	return result, nil
 }

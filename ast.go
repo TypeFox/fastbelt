@@ -27,8 +27,8 @@ type AstNode interface {
 	// It returns nil if this is the root node.
 	Container() AstNode
 	// ContainmentData returns a [unique.Handle] denoting the containing property within it's [AstNode.Container],
-	// defaults to a a [unique.Handle] of the empty string,
-	// and the element index within the containing property, defaults to zero for single item fields
+	// defaults to a [unique.Handle] of the empty string,
+	// and the element index within the containing property, defaults to -1 for single item fields
 	ContainmentData() (unique.Handle[string], int)
 	// SetContainer sets the direct parent node of the node.
 	//

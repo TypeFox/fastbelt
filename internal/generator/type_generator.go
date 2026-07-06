@@ -12,6 +12,7 @@ import (
 
 	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/util/codegen"
+	"typefox.dev/fastbelt/util/collections"
 )
 
 const TOKEN_TYPE = "*core.Token"
@@ -450,21 +451,18 @@ func generateSyntheticFactories(grammr grammar.Grammar) codegen.Node {
 
 func generateFieldHandles(grammr grammar.Grammar) codegen.Node {
 	node := codegen.NewNode()
-	seen := map[string]bool{}
-	var pnames []string
+	set := collections.NewSet[string]()
 	for _, iface := range grammr.Interfaces() {
 		for _, f := range collectAllFields(iface, map[string]struct{}{}) {
-			if !seen[f.PName] {
-				seen[f.PName] = true
-				pnames = append(pnames, f.PName)
-			}
+			set.Add(f.PName)
 		}
 	}
-	sort.Strings(pnames)
+	pNames := slices.Collect(set.All())
+	slices.Sort(pNames)
 	node.AppendLine("var (")
 	node.Indent(func(n codegen.Node) {
-		for _, pname := range pnames {
-			n.AppendLine(fieldHandleVarName(pname), ` = unique.Make("`, pname, `")`)
+		for _, pName := range pNames {
+			n.AppendLine(fieldHandleVarName(pName), ` = unique.Make("`, pName, `")`)
 		}
 	})
 	node.AppendLine(")")
@@ -479,7 +477,7 @@ func collectAllFields(iface grammar.Interface, visited map[string]struct{}) []Fi
 	visited[iface.Name()] = struct{}{}
 	fields := []FieldInfo{}
 	for _, ext := range iface.Extends() {
-		if parent := ext.Ref(context.TODO()); parent != nil {
+		if parent := ext.Ref(context.Background()); parent != nil {
 			fields = append(fields, collectAllFields(parent, visited)...)
 		}
 	}
