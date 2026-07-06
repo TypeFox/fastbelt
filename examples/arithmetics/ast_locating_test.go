@@ -226,7 +226,7 @@ func TestNodePath_PriceCalc(t *testing.T) {
 		fmt.Println(err)
 		assert.ErrorContains(
 			t, err,
-			"AstNodeBase.NodePath: error within node of type *arithmetics.ModuleImpl: cannot determine node path, 'containerField' is empty")
+			"PathOf: error within node of type *arithmetics.ModuleImpl: cannot determine node path, 'containerField' is empty")
 	})
 
 	t.Run("errorReporting/containerField-has-zero-handle", func(t *testing.T) {
@@ -248,7 +248,7 @@ func TestNodePath_PriceCalc(t *testing.T) {
 		fmt.Println(err)
 		assert.ErrorContains(
 			t, err,
-			"AstNodeBase.NodePath: error within node of type *arithmetics.DefinitionImpl: cannot determine node path, 'containerField' is empty")
+			"PathOf: error within node of type *arithmetics.DefinitionImpl: cannot determine node path, 'containerField' is empty")
 	})
 }
 
@@ -515,6 +515,6 @@ func TestResolve_PriceCalc(t *testing.T) {
 
 	t.Run("errorReporting/slice-index-typo", func(t *testing.T) {
 		_, err := core.Resolve("/statements@1a/expression", root)
-		assert.ErrorContains(t, err, "ParsePath: index '1a' is not a valid uint: strconv.Atoi: parsing \"1a\": invalid syntax")
+		assert.ErrorContains(t, err, "parsePath: index '1a' is not a valid uint: strconv.Atoi: parsing \"1a\": invalid syntax")
 	})
 }

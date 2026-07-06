@@ -78,11 +78,13 @@ func (p *fragmentPathImpl) String() string {
 
 var fieldZero = unique.Handle[string]{}
 
-// PathOf determines node's path within its root container in a recursive manner
-// based on node's [AstNode.ContainmentData]. It returns a slash-separated
-// path string that uniquely identifies this node within its document tree,
+// PathOf composes a [FragmentPath] denoting node's path within its root container.
+// It does so in a recursive manner based on node's [AstNode.ContainmentData].
+// Calling [FragmentPath.String] on the result yields a slash-separated
+// path string that uniquely identifies this node within its containment hierarchy.
 // e.g. "/rules@2/alternatives@0".
-// Returns "" for the root node (no container).
+// Returns an empty descriptor for root nodes/nodes without a configured container,
+// whose [FragmentPath.String] yields an empty string.
 func PathOf(node AstNode) (*fragmentPathImpl, error) {
 	container := node.Container()
 	containerField, index := node.ContainmentData()
