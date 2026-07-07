@@ -27,6 +27,11 @@ type TokenType struct {
 	Code       codegen.Node
 }
 
+type TokenTypeUsage struct {
+	GroupType string
+	Command   grammar.TokenCommand
+}
+
 type TokenMode struct {
 	Id               int
 	VarName          string
@@ -37,13 +42,14 @@ type TokenMode struct {
 }
 
 type GenerateTokenTypesResult struct {
-	Imports        map[string]bool
-	Tokens         map[grammar.TokenDecl]int
-	Keywords       map[grammar.Keyword]int
-	TokenGroups    map[grammar.TokenGroup]int
-	TokenTypes     []TokenType
-	TokenModes     map[string]*TokenMode
-	TokenModeOrder []string
+	Imports         map[string]bool
+	Tokens          map[grammar.TokenDecl]int
+	Keywords        map[grammar.Keyword]int
+	TokenGroups     map[grammar.TokenGroup]int
+	TokenTypes      []TokenType
+	TokenTypeUsages map[int]TokenTypeUsage
+	TokenModes      map[string]*TokenMode
+	TokenModeOrder  []string
 }
 
 func (r GenerateTokenTypesResult) TokenTypeIds() map[string]int {
@@ -67,13 +73,14 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	tokens := grammr.Terminals()
 	tokenGroups := grammr.TokenGroups()
 	result := GenerateTokenTypesResult{
-		Imports:        map[string]bool{},
-		Tokens:         make(map[grammar.TokenDecl]int),
-		Keywords:       keywords.ByAstNode,
-		TokenGroups:    make(map[grammar.TokenGroup]int),
-		TokenTypes:     make([]TokenType, 0),
-		TokenModes:     make(map[string]*TokenMode),
-		TokenModeOrder: []string{},
+		Imports:         map[string]bool{},
+		Tokens:          make(map[grammar.TokenDecl]int),
+		Keywords:        keywords.ByAstNode,
+		TokenGroups:     make(map[grammar.TokenGroup]int),
+		TokenTypes:      make([]TokenType, 0),
+		TokenTypeUsages: make(map[int]TokenTypeUsage),
+		TokenModes:      make(map[string]*TokenMode),
+		TokenModeOrder:  []string{},
 	}
 	// Starting with 1 - prevent clash with EOF (index 0)
 	tokenIndex := 1
@@ -122,6 +129,12 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 			tokenIndex++
 		}
 		result.Tokens[token] = index
+		if token.Type() != "" || token.Command() != nil {
+			result.TokenTypeUsages[index] = TokenTypeUsage{
+				GroupType: token.Type(),
+				Command:   token.Command(),
+			}
+		}
 	}
 	tokenGroupMembers := map[string][]string{}
 	for _, tokenGroup := range tokenGroups {
@@ -151,6 +164,10 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 			Id:          index,
 			VarName:     "TokenMode_" + modeName,
 			TokenUsages: tokenMode.TokenRefs(),
+			//TODO
+			TokenDecls:       nil,
+			Keywords:         nil,
+			KeywordSelectors: nil,
 		}
 		result.TokenModeOrder = append(result.TokenModeOrder, modeName)
 	}
