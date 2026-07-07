@@ -11,7 +11,7 @@ import (
 
 func GenerateATN(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult) string {
 	tokenTypeIds := tokenTypes.TokenTypeIds()
-	tokenTypeNames := tokenTypes.TokenTypeVarNames()
+	tokenTypeNames := tokenTypes.TokenTypeVarNamesByTokenIndex()
 	a, _ := atn.CreateATN(grammr, tokenTypeIds)
 	source := atn.EmitGoSource(packageName, a, grammr, tokenTypeNames)
 	return FormatIfPossible(source.String())

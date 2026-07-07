@@ -617,11 +617,21 @@ func (p *CompletionParser) ParseTokenDeclUsage() {
 		p.cp.ClearAssignment()
 	}
 	{
-		p.cp.RecordSnapshot(StateNumber__TokenDeclUsage__Basic_5)
-		p.state.Sync(StateNumber__TokenDeclUsage__Basic_5)
+		p.state.Consume(Token_COLON)
+	}
+	{
+		p.cp.MarkAssignment("Content")
+		p.state.EnterRule(StateNumber__TokenDeclUsage__Basic_6)
+		p.ParseTokenElement()
+		p.state.ExitRule()
+		p.cp.ClearAssignment()
+	}
+	{
+		p.cp.RecordSnapshot(StateNumber__TokenDeclUsage__Basic_6)
+		p.state.Sync(StateNumber__TokenDeclUsage__Basic_6)
 		if p.lookahead.TokenDeclUsageCommandOptional(p.state) {
 			p.cp.MarkAssignment("Command")
-			p.state.EnterRule(StateNumber__TokenDeclUsage__Basic_4)
+			p.state.EnterRule(StateNumber__TokenDeclUsage__Basic_5)
 			p.ParseTokenCommand()
 			p.state.ExitRule()
 			p.cp.ClearAssignment()

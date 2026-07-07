@@ -1397,6 +1397,8 @@ type TokenDeclUsage interface {
 	Name() string
 	NameToken() *core.Token
 	SetName(value *core.Token)
+	Content() TokenElement
+	SetContent(value TokenElement)
 	Command() TokenCommand
 	SetCommand(value TokenCommand)
 }
@@ -1412,6 +1414,7 @@ func NewTokenDeclUsage() TokenDeclUsage {
 type TokenDeclUsageData struct {
 	_Type   *core.Token
 	name    *core.Token
+	content TokenElement
 	command TokenCommand
 }
 
@@ -1422,6 +1425,9 @@ func NewTokenDeclUsageData() TokenDeclUsageData {
 func (i *TokenDeclUsageData) IsTokenDeclUsage() {}
 
 func (i *TokenDeclUsageData) ForEachNode(fn func(core.AstNode)) {
+	if i.content != nil {
+		fn(i.content)
+	}
 	if i.command != nil {
 		fn(i.command)
 	}
@@ -1460,6 +1466,18 @@ func (i *TokenDeclUsageData) NameToken() *core.Token {
 
 func (i *TokenDeclUsageData) SetName(value *core.Token) {
 	i.name = value
+}
+
+func (i *TokenDeclUsageData) Content() TokenElement {
+	if i != nil && i.content != nil {
+		return i.content
+	} else {
+		return nil
+	}
+}
+
+func (i *TokenDeclUsageData) SetContent(value TokenElement) {
+	i.content = value
 }
 
 func (i *TokenDeclUsageData) Command() TokenCommand {

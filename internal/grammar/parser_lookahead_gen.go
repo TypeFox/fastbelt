@@ -19,72 +19,72 @@ const (
 
 var ActionOperatorAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_PLUS_EQUALS, Token_EQUALS},
-	Lookup: []int{42: 1, 47: 2},
+	Lookup: []int{2: 2, 16: 1},
 }
 
 var AssignableAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_StringLiteral, Token_ID, Token_LEFTBRACKET, Token_LEFTPAREN},
-	Lookup: []int{38: 4, 50: 3, 75: 1, 76: 2},
+	Lookup: []int{18: 3, 23: 4, 39: 1, 40: 2},
 }
 
 var AssignableWithoutAltsAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_StringLiteral, Token_ID, Token_LEFTBRACKET},
-	Lookup: []int{50: 3, 75: 1, 76: 2},
+	Lookup: []int{18: 3, 39: 1, 40: 2},
 }
 
 var AssignmentOperatorAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_PLUS_EQUALS, Token_EQUALS, Token_QUESTION_EQUALS},
-	Lookup: []int{42: 1, 47: 2, 49: 3},
+	Lookup: []int{2: 2, 10: 3, 16: 1},
 }
 
 var CompositeElementAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_StringLiteral, Token_ID, Token_LEFTPAREN},
-	Lookup: []int{38: 3, 75: 1, 76: 2},
+	Lookup: []int{23: 3, 39: 1, 40: 2},
 }
 
 var FieldTypeAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_ID, Token_ASTERISK, Token_LEFTBRACKET, Token_BOOL, Token_COMPOSITE, Token_STRING},
-	Lookup: []int{40: 2, 50: 3, 52: 4, 54: 4, 68: 4, 76: 1},
+	Types:  []*core.TokenType{Token_ID, Token_ASTERISK, Token_LEFTBRACKET, Token_STRING, Token_BOOL, Token_COMPOSITE},
+	Lookup: []int{6: 4, 18: 3, 19: 4, 31: 2, 32: 4, 40: 1},
 }
 
 var GrammarLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_COMPOSITE, Token_ENTRY, Token_INTERFACE, Token_TOKEN, Token_ID, TokenGroup_GroupType},
-	Lookup: []int{53: 1, 54: 1, 57: 1, 61: 1, 62: 1, 69: 1, 76: 1},
+	Types:  []*core.TokenType{Token_INTERFACE, Token_ENTRY, Token_TOKEN, Token_COMPOSITE, Token_ID, TokenGroup_GroupType},
+	Lookup: []int{4: 1, 11: 1, 20: 1, 21: 1, 27: 1, 32: 1, 40: 1},
 }
 
 var PrimitiveTypeTypeAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_STRING, Token_BOOL, Token_COMPOSITE},
-	Lookup: []int{52: 2, 54: 3, 68: 1},
+	Lookup: []int{6: 1, 19: 2, 32: 3},
 }
 
 var TokenCommandAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_DEFAULT},
-	Lookup: []int{56: 2, 76: 1},
+	Lookup: []int{22: 2, 40: 1},
 }
 
 var TokenCommandTypeAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_PUSH, Token_POP, Token_MODE},
-	Lookup: []int{64: 3, 65: 2, 66: 1},
+	Lookup: []int{12: 2, 13: 1, 29: 3},
 }
 
 var TokenElementAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_RegexLiteral, Token_StringLiteral},
-	Lookup: []int{75: 2, 77: 1},
+	Lookup: []int{39: 2, 41: 1},
 }
 
 var TokenGroupAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_StringLiteral, Token_KEYWORDS},
-	Lookup: []int{63: 3, 75: 2, 76: 1},
+	Lookup: []int{5: 3, 39: 2, 40: 1},
 }
 
 var TokenModeAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_DEFAULT},
-	Lookup: []int{56: 2, 76: 1},
+	Lookup: []int{22: 2, 40: 1},
 }
 
 var TokenModeMembersLoop = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_KEYWORDS, Token_StringLiteral, Token_ID, TokenGroup_GroupType},
-	Lookup: []int{53: 1, 61: 1, 63: 1, 75: 1, 76: 1},
+	Lookup: []int{5: 1, 20: 1, 21: 1, 39: 1, 40: 1},
 }
 
 // FastbeltParserLookahead abstracts every lookahead/prediction decision performed by

@@ -790,9 +790,21 @@ func (p *Parser) ParseTokenDeclUsage() TokenDeclUsage {
 			}
 		}
 		{
-			p.state.Sync(StateNumber__TokenDeclUsage__Basic_5)
+			token := p.state.Consume(Token_COLON)
+			core.AssignToken(current, token, StateNumber__TokenDeclUsage_COLON)
+		}
+		{
+			p.state.EnterRule(StateNumber__TokenDeclUsage__Basic_6)
+			result := p.ParseTokenElement()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetContent(result)
+			}
+		}
+		{
+			p.state.Sync(StateNumber__TokenDeclUsage__Basic_6)
 			if p.lookahead.TokenDeclUsageCommandOptional(p.state) {
-				p.state.EnterRule(StateNumber__TokenDeclUsage__Basic_4)
+				p.state.EnterRule(StateNumber__TokenDeclUsage__Basic_5)
 				result := p.ParseTokenCommand()
 				p.state.ExitRule()
 				if result != nil {

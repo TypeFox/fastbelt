@@ -29,7 +29,7 @@ type parserATNData struct {
 	loopAdaptive      map[core.AstNode]int                      // grammar.Element -> ALL(*) decision index
 	orDecision        map[grammar.Element]*internalATN.ATNState // grammar.Alternatives -> alternative-choice state
 	loopDecision      map[grammar.Element]*internalATN.ATNState // grammar.Element -> cardinality-guard state
-	tokenVarNames     []string                                  // ATN token id (0-based) -> generated token var name
+	tokenVarNames     []string                                  // ATN token id (TokenIndex) -> generated token var name
 }
 
 // BuildParserATNData builds the ATN and all derived name/decision maps used by
@@ -54,7 +54,7 @@ func BuildParserATNData(grammr grammar.Grammar, tokenTypes GenerateTokenTypesRes
 		loopAdaptive:      loopAdaptive,
 		orDecision:        builtATN.OrDecision,
 		loopDecision:      builtATN.LoopDecision,
-		tokenVarNames:     tokenTypes.TokenTypeVarNames(),
+		tokenVarNames:     tokenTypes.TokenTypeVarNamesByTokenIndex(),
 	}
 }
 
@@ -1541,10 +1541,11 @@ func (d *parserATNData) firstSetOption(state *internalATN.ATNState) []string {
 }
 
 func buildVarNameToId(tokenTypes GenerateTokenTypesResult) map[string]int {
-	varNames := tokenTypes.TokenTypeVarNames()
-	varNameToId := make(map[string]int, len(varNames))
-	for i, varName := range varNames {
-		varNameToId[varName] = i + 1 // token IDs start at 1
+	varNameToId := make(map[string]int, len(tokenTypes.TokenTypes))
+	for _, tokenType := range tokenTypes.TokenTypes {
+		// Use the runtime token id (TokenIndex), matching la.TypeId at runtime.
+		// Keyword-backed tokens alias their keyword and share its id.
+		varNameToId[tokenType.VarName] = tokenType.TokenIndex
 	}
 	return varNameToId
 }
@@ -1579,7 +1580,14 @@ func getLeafIdsForVarName(varName string, varNameToId map[string]int, groupMembe
 }
 
 func generateLL1Lookahead(node codegen.Node, name string, lookahead LL1Decision, varNameToId map[string]int, groupMembers map[string][]string) {
-	maxId := len(varNameToId) // IDs are 1..N
+	// Token ids may be sparse (keyword-backed tokens alias their keyword), so
+	// size the lookup by the largest id rather than the number of var names.
+	maxId := 0
+	for _, id := range varNameToId {
+		if id > maxId {
+			maxId = id
+		}
+	}
 	lookup := make([]int, maxId+1)
 	for i := range lookup {
 		lookup[i] = -1

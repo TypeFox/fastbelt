@@ -35,10 +35,8 @@ type TokenTypeUsage struct {
 type TokenMode struct {
 	Id               int
 	VarName          string
-	TokenDecls       []grammar.TokenDecl
-	TokenUsages      []grammar.TokenUsage
-	Keywords         []grammar.KeywordUsage
-	KeywordSelectors []string
+	TokenTypeIndices []int
+	TokenTypeUsages  map[int]TokenTypeUsage
 }
 
 type GenerateTokenTypesResult struct {
@@ -55,7 +53,11 @@ type GenerateTokenTypesResult struct {
 func (r GenerateTokenTypesResult) TokenTypeIds() map[string]int {
 	tokenTypeIds := map[string]int{}
 	for _, tokenType := range r.TokenTypes {
-		tokenTypeIds[tokenType.Name] = tokenType.Index
+		// TokenIndex is the runtime token id emitted by the lexer (the _Idx
+		// constant). Keyword-backed tokens alias their keyword, so several
+		// token types can share a TokenIndex. This must match la.TypeId at
+		// runtime, so the ATN and lookahead tables agree with the lexer.
+		tokenTypeIds[tokenType.Name] = tokenType.TokenIndex
 	}
 	return tokenTypeIds
 }
@@ -66,6 +68,24 @@ func (r GenerateTokenTypesResult) TokenTypeVarNames() []string {
 		tokenTypeNames = append(tokenTypeNames, tokenType.VarName)
 	}
 	return tokenTypeNames
+}
+
+// TokenTypeVarNamesByTokenIndex returns a slice mapping runtime token id
+// (TokenIndex) to a token var name. Keyword-backed tokens alias their keyword
+// and share its id; later entries (token declarations, groups) override the
+// earlier keyword entry so the referenced token name wins.
+func (r GenerateTokenTypesResult) TokenTypeVarNamesByTokenIndex() []string {
+	maxId := 0
+	for _, tokenType := range r.TokenTypes {
+		if tokenType.TokenIndex > maxId {
+			maxId = tokenType.TokenIndex
+		}
+	}
+	names := make([]string, maxId+1)
+	for _, tokenType := range r.TokenTypes {
+		names[tokenType.TokenIndex] = tokenType.VarName
+	}
+	return names
 }
 
 func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
@@ -84,9 +104,13 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	}
 	// Starting with 1 - prevent clash with EOF (index 0)
 	tokenIndex := 1
+	// keywordTokenIndex records the runtime token id (TokenIndex) assigned to
+	// each keyword node, so keyword-backed tokens can alias to the correct id.
+	keywordTokenIndex := map[grammar.Keyword]int{}
 	for keyword, index := range keywords.ByAstNode {
 		code := generateKeywordTokenType(keyword, tokenIndex)
 		mergeImports(&result.Imports, code.Imports)
+		keywordTokenIndex[keyword] = tokenIndex
 		result.TokenTypes = append(result.TokenTypes, TokenType{
 			Index:      index,
 			TokenIndex: tokenIndex,
@@ -108,7 +132,7 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 			code.AppendLine()
 			code.AppendLine("var ", varName, " = ", GeneratedTokenName(keyword))
 			mergeImports(&result.Imports, map[string]bool{})
-			keywordsTokenIndex := result.TokenTypes[result.Keywords[keyword]].TokenIndex
+			keywordsTokenIndex := keywordTokenIndex[keyword]
 			result.TokenTypes = append(result.TokenTypes, TokenType{
 				Index:      index,
 				TokenIndex: keywordsTokenIndex,
@@ -160,26 +184,49 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		if !tokenMode.IsDefault() {
 			modeName = tokenMode.Name()
 		}
-		result.TokenModes[modeName] = &TokenMode{
-			Id:          index,
-			VarName:     "TokenMode_" + modeName,
-			TokenUsages: tokenMode.TokenRefs(),
-			//TODO
-			TokenDecls:       nil,
-			Keywords:         nil,
-			KeywordSelectors: nil,
+		current := TokenMode{
+			Id:               index,
+			VarName:          "TokenMode_" + modeName,
+			TokenTypeIndices: make([]int, 0),
+			TokenTypeUsages:  make(map[int]TokenTypeUsage),
+		}
+		result.TokenModes[modeName] = &current
+		for _, member := range tokenMode.Members() {
+			switch member := member.(type) {
+			case grammar.TokenDeclUsage:
+				//TODO
+			case grammar.KeywordUsage:
+				//TODO
+			case grammar.TokenUsage:
+				token := member.TokenRef().Ref(context.Background())
+				var index int
+				switch rule := token.(type) {
+				case grammar.TokenDecl:
+					index = result.Tokens[rule]
+					current.TokenTypeIndices = append(current.TokenTypeIndices, index)
+				case grammar.TokenGroup:
+					index = result.TokenGroups[rule]
+					current.TokenTypeIndices = append(current.TokenTypeIndices, index)
+				}
+				if member.Type() != "" || member.Command() != nil {
+					current.TokenTypeUsages[index] = TokenTypeUsage{
+						GroupType: member.Type(),
+						Command:   member.Command(),
+					}
+				}
+			case grammar.KeywordSelector:
+				//TODO
+			}
 		}
 		result.TokenModeOrder = append(result.TokenModeOrder, modeName)
 	}
 	if result.TokenModes["default"] == nil {
+		//if token mode "default" is not defined, we need to create it
 		result.TokenModes["default"] = &TokenMode{
-			Id:      len(result.TokenModes),
-			VarName: "TokenMode_default",
-			//TODO
-			TokenDecls:       nil,
-			TokenUsages:      nil,
-			Keywords:         nil,
-			KeywordSelectors: nil,
+			Id:               len(result.TokenModes),
+			VarName:          "TokenMode_default",
+			TokenTypeIndices: make([]int, 0),
+			TokenTypeUsages:  make(map[int]TokenTypeUsage),
 		}
 		result.TokenModeOrder = append(result.TokenModeOrder, "default")
 	}
@@ -268,34 +315,37 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, token
 		count := strconv.Itoa(len(tokenTypes.TokenModes))
 		n.AppendLine("modes := make([]*lexer.TokenMode, " + count + ", " + count + ")")
 		for _, modeName := range tokenTypes.TokenModeOrder {
-			tokenUsages := tokenTypes.TokenModes[modeName]
+			tokenMode := tokenTypes.TokenModes[modeName]
 			varName := "modes[" + tokenTypes.TokenModes[modeName].VarName + "]"
 			n.AppendLine(varName, " = lexer.NewTokenMode(\"", modeName, "\",")
 			n.Indent(func(nn codegen.Node) {
-				for _, tokenUsage := range tokenUsages.TokenUsages {
-					nn.Append("lexer.UseTokenType(", GeneratedTokenName(tokenUsage.TokenRef().Ref(context)), ")")
-					if cmd := tokenUsage.Command(); cmd != nil {
-						var cmdModeName string
-						if mode := cmd.Mode().Ref(context); cmd.IsDefault() || mode != nil {
-							if cmd.IsDefault() {
-								cmdModeName = "default"
-							} else {
-								cmdModeName = cmd.Mode().Ref(context).Name()
+				for _, index := range tokenMode.TokenTypeIndices {
+					tokenType := tokenTypes.TokenTypes[index]
+					nn.Append("lexer.UseTokenType(", tokenType.VarName, ")")
+					if usage, ok := tokenMode.TokenTypeUsages[index]; ok {
+						if cmd := usage.Command; cmd != nil {
+							var cmdModeName string
+							if mode := cmd.Mode().Ref(context); cmd.IsDefault() || mode != nil {
+								if cmd.IsDefault() {
+									cmdModeName = "default"
+								} else {
+									cmdModeName = cmd.Mode().Ref(context).Name()
+								}
+							}
+							switch cmd.Type() {
+							case "push":
+								nn.Append(".WithPushMode(", tokenTypes.TokenModes[cmdModeName].VarName, ")")
+							case "pop":
+								nn.Append(".WithPopMode()")
+							default: //"mode"
+								nn.Append(".WithSetMode(", tokenTypes.TokenModes[cmdModeName].VarName, ")")
 							}
 						}
-						switch cmd.Type() {
-						case "push":
-							nn.Append(".WithPushMode(", tokenTypes.TokenModes[cmdModeName].VarName, ")")
-						case "pop":
-							nn.Append(".WithPopMode()")
-						default: //"mode"
-							nn.Append(".WithSetMode(", tokenTypes.TokenModes[cmdModeName].VarName, ")")
+						if usage.GroupType == "comment" {
+							nn.Append(".WithGroup(core.CommentGroup)")
+						} else if usage.GroupType == "hidden" {
+							nn.Append(".WithGroup(core.SkippedGroup)")
 						}
-					}
-					if tokenUsage.Type() == "comment" {
-						nn.Append(".WithGroup(core.CommentGroup)")
-					} else if tokenUsage.Type() == "hidden" {
-						nn.Append(".WithGroup(core.SkippedGroup)")
 					}
 					nn.AppendLine(",")
 				}

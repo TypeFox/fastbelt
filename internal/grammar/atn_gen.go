@@ -254,12 +254,14 @@ const (
 	StateNumber__TokenDeclUsage__Basic_1
 	StateNumber__TokenDeclUsage__Basic_2
 	StateNumber__TokenDeclUsage_Name_ID
+	StateNumber__TokenDeclUsage_COLON
 	StateNumber__TokenDeclUsage__Basic_3
 	StateNumber__TokenDeclUsage__Basic_4
 	StateNumber__TokenDeclUsage__Basic_5
-	StateNumber__TokenDeclUsage_SEMICOLON
 	StateNumber__TokenDeclUsage__Basic_6
+	StateNumber__TokenDeclUsage_SEMICOLON
 	StateNumber__TokenDeclUsage__Basic_7
+	StateNumber__TokenDeclUsage__Basic_8
 	StateNumber__TokenUsage__Basic_0
 	StateNumber__TokenUsage__Basic_1
 	StateNumber__TokenUsage__Basic_2
@@ -425,7 +427,7 @@ func ATN() *parser.RuntimeATN {
 	return atn
 }
 func BuildATN() *parser.RuntimeATN {
-	states := make([]*parser.RuntimeATNState, 405)
+	states := make([]*parser.RuntimeATNState, 407)
 	states[StateNumber__Grammar__Start] = parser.NewATNState(StateNumber__Grammar__Start, parser.ATNRuleStart, true)
 	states[StateNumber__Grammar__Stop] = parser.NewATNState(StateNumber__Grammar__Stop, parser.ATNRuleStop, false)
 	states[StateNumber__Interface__Start] = parser.NewATNState(StateNumber__Interface__Start, parser.ATNRuleStart, true)
@@ -672,12 +674,14 @@ func BuildATN() *parser.RuntimeATN {
 	states[StateNumber__TokenDeclUsage__Basic_1] = parser.NewATNState(StateNumber__TokenDeclUsage__Basic_1, parser.ATNBasic, true)
 	states[StateNumber__TokenDeclUsage__Basic_2] = parser.NewATNState(StateNumber__TokenDeclUsage__Basic_2, parser.ATNBasic, true).SetDecision(23)
 	states[StateNumber__TokenDeclUsage_Name_ID] = parser.NewATNState(StateNumber__TokenDeclUsage_Name_ID, parser.ATNBasic, false)
+	states[StateNumber__TokenDeclUsage_COLON] = parser.NewATNState(StateNumber__TokenDeclUsage_COLON, parser.ATNBasic, false)
 	states[StateNumber__TokenDeclUsage__Basic_3] = parser.NewATNState(StateNumber__TokenDeclUsage__Basic_3, parser.ATNBasic, true)
 	states[StateNumber__TokenDeclUsage__Basic_4] = parser.NewATNState(StateNumber__TokenDeclUsage__Basic_4, parser.ATNBasic, true)
-	states[StateNumber__TokenDeclUsage__Basic_5] = parser.NewATNState(StateNumber__TokenDeclUsage__Basic_5, parser.ATNBasic, true).SetDecision(24)
+	states[StateNumber__TokenDeclUsage__Basic_5] = parser.NewATNState(StateNumber__TokenDeclUsage__Basic_5, parser.ATNBasic, true)
+	states[StateNumber__TokenDeclUsage__Basic_6] = parser.NewATNState(StateNumber__TokenDeclUsage__Basic_6, parser.ATNBasic, true).SetDecision(24)
 	states[StateNumber__TokenDeclUsage_SEMICOLON] = parser.NewATNState(StateNumber__TokenDeclUsage_SEMICOLON, parser.ATNBasic, false)
-	states[StateNumber__TokenDeclUsage__Basic_6] = parser.NewATNState(StateNumber__TokenDeclUsage__Basic_6, parser.ATNBasic, true)
-	states[StateNumber__TokenDeclUsage__Basic_7] = parser.NewATNState(StateNumber__TokenDeclUsage__Basic_7, parser.ATNBasic, true).SetDecision(25)
+	states[StateNumber__TokenDeclUsage__Basic_7] = parser.NewATNState(StateNumber__TokenDeclUsage__Basic_7, parser.ATNBasic, true)
+	states[StateNumber__TokenDeclUsage__Basic_8] = parser.NewATNState(StateNumber__TokenDeclUsage__Basic_8, parser.ATNBasic, true).SetDecision(25)
 	states[StateNumber__TokenUsage__Basic_0] = parser.NewATNState(StateNumber__TokenUsage__Basic_0, parser.ATNBasic, false)
 	states[StateNumber__TokenUsage__Basic_1] = parser.NewATNState(StateNumber__TokenUsage__Basic_1, parser.ATNBasic, true)
 	states[StateNumber__TokenUsage__Basic_2] = parser.NewATNState(StateNumber__TokenUsage__Basic_2, parser.ATNBasic, true).SetDecision(26)
@@ -1494,27 +1498,33 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage__Basic_1]),
 	)
 	states[StateNumber__TokenDeclUsage_Name_ID].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__TokenDeclUsage__Basic_5], Token_ID, nil),
+		parser.NewAtomTransition(states[StateNumber__TokenDeclUsage_COLON], Token_ID, nil),
+	)
+	states[StateNumber__TokenDeclUsage_COLON].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__TokenDeclUsage__Basic_3], Token_COLON, nil),
 	)
 	states[StateNumber__TokenDeclUsage__Basic_3].AppendTransitions(
-		parser.NewRuleTransition(states[StateNumber__TokenCommand__Start], states[StateNumber__TokenDeclUsage__Basic_4], nil),
+		parser.NewRuleTransition(states[StateNumber__TokenElement__Start], states[StateNumber__TokenDeclUsage__Basic_6], nil),
 	)
 	states[StateNumber__TokenDeclUsage__Basic_4].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage__Basic_7]),
+		parser.NewRuleTransition(states[StateNumber__TokenCommand__Start], states[StateNumber__TokenDeclUsage__Basic_5], nil),
 	)
 	states[StateNumber__TokenDeclUsage__Basic_5].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage__Basic_3]),
-		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage__Basic_4]),
-	)
-	states[StateNumber__TokenDeclUsage_SEMICOLON].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__TokenDeclUsage__Basic_6], Token_SEMICOLON, nil),
+		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage__Basic_8]),
 	)
 	states[StateNumber__TokenDeclUsage__Basic_6].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage__Stop]),
+		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage__Basic_4]),
+		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage__Basic_5]),
+	)
+	states[StateNumber__TokenDeclUsage_SEMICOLON].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__TokenDeclUsage__Basic_7], Token_SEMICOLON, nil),
 	)
 	states[StateNumber__TokenDeclUsage__Basic_7].AppendTransitions(
+		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage__Stop]),
+	)
+	states[StateNumber__TokenDeclUsage__Basic_8].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage_SEMICOLON]),
-		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage__Basic_6]),
+		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage__Basic_7]),
 	)
 	states[StateNumber__TokenUsage__Basic_0].AppendTransitions(
 		parser.NewAtomTransition(states[StateNumber__TokenUsage__Basic_1], TokenGroup_GroupType, nil),
@@ -2036,8 +2046,8 @@ func BuildATN() *parser.RuntimeATN {
 	decisionStates[21] = states[StateNumber__TokenMode__LoopEntry]
 	decisionStates[22] = states[StateNumber__TokenModeMember__Basic_8]
 	decisionStates[23] = states[StateNumber__TokenDeclUsage__Basic_2]
-	decisionStates[24] = states[StateNumber__TokenDeclUsage__Basic_5]
-	decisionStates[25] = states[StateNumber__TokenDeclUsage__Basic_7]
+	decisionStates[24] = states[StateNumber__TokenDeclUsage__Basic_6]
+	decisionStates[25] = states[StateNumber__TokenDeclUsage__Basic_8]
 	decisionStates[26] = states[StateNumber__TokenUsage__Basic_2]
 	decisionStates[27] = states[StateNumber__TokenUsage__Basic_5]
 	decisionStates[28] = states[StateNumber__TokenUsage__Basic_7]
@@ -2091,8 +2101,8 @@ func BuildATN() *parser.RuntimeATN {
 	decisionMap[21] = states[StateNumber__TokenMode__LoopEntry]
 	decisionMap[22] = states[StateNumber__TokenModeMember__Basic_8]
 	decisionMap[23] = states[StateNumber__TokenDeclUsage__Basic_2]
-	decisionMap[24] = states[StateNumber__TokenDeclUsage__Basic_5]
-	decisionMap[25] = states[StateNumber__TokenDeclUsage__Basic_7]
+	decisionMap[24] = states[StateNumber__TokenDeclUsage__Basic_6]
+	decisionMap[25] = states[StateNumber__TokenDeclUsage__Basic_8]
 	decisionMap[26] = states[StateNumber__TokenUsage__Basic_2]
 	decisionMap[27] = states[StateNumber__TokenUsage__Basic_5]
 	decisionMap[28] = states[StateNumber__TokenUsage__Basic_7]
