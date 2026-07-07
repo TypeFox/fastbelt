@@ -19,6 +19,14 @@ import (
 	"typefox.dev/fastbelt/util/codegen"
 )
 
+type TokenType struct {
+	Index      int
+	TokenIndex int
+	VarName    string
+	Name       string
+	Code       codegen.Node
+}
+
 type TokenMode struct {
 	Id               int
 	VarName          string
@@ -29,59 +37,109 @@ type TokenMode struct {
 }
 
 type GenerateTokenTypesResult struct {
-	Tokens            []grammar.TokenDecl
-	Keywords          []grammar.Keyword
-	Imports           map[string]bool
-	KeywordsCode      []codegen.Node
-	TokensCode        []codegen.Node
-	TokenGroupCode    []codegen.Node
-	TokenTypeVarNames []string
-	TokenTypeNames    []string
-	TokenTypeIds      map[string]int
-	TokenModes        map[string]*TokenMode
-	TokenModeOrder    []string
+	Imports        map[string]bool
+	Tokens         map[grammar.TokenDecl]int
+	Keywords       map[grammar.Keyword]int
+	TokenGroups    map[grammar.TokenGroup]int
+	TokenTypes     []TokenType
+	TokenModes     map[string]*TokenMode
+	TokenModeOrder []string
+}
+
+func (r GenerateTokenTypesResult) TokenTypeIds() map[string]int {
+	tokenTypeIds := map[string]int{}
+	for _, tokenType := range r.TokenTypes {
+		tokenTypeIds[tokenType.Name] = tokenType.Index
+	}
+	return tokenTypeIds
+}
+
+func (r GenerateTokenTypesResult) TokenTypeVarNames() []string {
+	tokenTypeNames := []string{}
+	for _, tokenType := range r.TokenTypes {
+		tokenTypeNames = append(tokenTypeNames, tokenType.VarName)
+	}
+	return tokenTypeNames
 }
 
 func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
+	keywords := GetAllKeywords(grammr)
 	tokens := grammr.Terminals()
 	tokenGroups := grammr.TokenGroups()
 	result := GenerateTokenTypesResult{
-		Tokens:            tokens,
-		TokensCode:        make([]codegen.Node, len(tokens)),
-		TokenGroupCode:    make([]codegen.Node, len(tokenGroups)),
-		TokenTypeNames:    make([]string, len(tokens)+len(tokenGroups)),
-		TokenTypeVarNames: make([]string, len(tokens)+len(tokenGroups)),
-		TokenTypeIds:      make(map[string]int),
-		Imports:           map[string]bool{},
-		TokenModes:        map[string]*TokenMode{},
+		Imports:        map[string]bool{},
+		Tokens:         make(map[grammar.TokenDecl]int),
+		Keywords:       keywords.ByAstNode,
+		TokenGroups:    make(map[grammar.TokenGroup]int),
+		TokenTypes:     make([]TokenType, 0),
+		TokenModes:     make(map[string]*TokenMode),
+		TokenModeOrder: []string{},
 	}
 	// Starting with 1 - prevent clash with EOF (index 0)
 	tokenIndex := 1
-	for index, token := range tokens {
-		tokenType := generateTokenType(token, tokenIndex)
-		result.TokensCode[index] = tokenType.Code
-		for imp := range tokenType.Imports {
-			result.Imports[imp] = true
-		}
-		varName := GeneratedTokenName(token)
-		tokName := token.Name()
-		result.TokenTypeVarNames[index] = varName
-		result.TokenTypeNames[index] = tokName
-		result.TokenTypeIds[tokName] = index
+	for keyword, index := range keywords.ByAstNode {
+		code := generateKeywordTokenType(keyword, tokenIndex)
+		mergeImports(&result.Imports, code.Imports)
+		result.TokenTypes = append(result.TokenTypes, TokenType{
+			Index:      index,
+			TokenIndex: tokenIndex,
+			VarName:    GeneratedTokenName(keyword),
+			Name:       keyword.Value(),
+			Code:       code.Code,
+		})
 		tokenIndex++
+	}
+	for _, token := range tokens {
+		varName := GeneratedTokenName(token)
+		index := len(result.TokenTypes)
+		switch element := token.Content().(type) {
+		case grammar.KeywordTokenElement:
+			keywordIndex := keywords.ByValue[element.Keyword().Value()]
+			keyword := keywords.Keywords[keywordIndex]
+			code := codegen.NewNode()
+			code.AppendLine("const ", GeneratedTokenIdxName(token), " = ", GeneratedTokenIdxName(keyword))
+			code.AppendLine()
+			code.AppendLine("var ", varName, " = ", GeneratedTokenName(keyword))
+			mergeImports(&result.Imports, map[string]bool{})
+			keywordsTokenIndex := result.TokenTypes[result.Keywords[keyword]].TokenIndex
+			result.TokenTypes = append(result.TokenTypes, TokenType{
+				Index:      index,
+				TokenIndex: keywordsTokenIndex,
+				VarName:    varName,
+				Name:       token.Name(),
+				Code:       code,
+			})
+		case grammar.RegexpTokenElement:
+			lexerResult := generateRegexpTokenElement(token, element, tokenIndex)
+			mergeImports(&result.Imports, lexerResult.Imports)
+			result.TokenTypes = append(result.TokenTypes, TokenType{
+				Index:      index,
+				TokenIndex: tokenIndex,
+				VarName:    varName,
+				Name:       token.Name(),
+				Code:       lexerResult.Code,
+			})
+			tokenIndex++
+		}
+		result.Tokens[token] = index
 	}
 	tokenGroupMembers := map[string][]string{}
 	for _, tokenGroup := range tokenGroups {
 		tokenGroupMembers[tokenGroup.Name()] = getAllTokenGroupMembers(tokenGroup)
 	}
 	// Token groups need to be topologically sorted, so that nested groups appear after their members
-	for index, tokenGroup := range sortTokenGroups(tokenGroups, tokenGroupMembers) {
-		result.TokenGroupCode[index] = generateTokenGroupType(tokenGroup, tokenGroupMembers, tokenIndex)
-		varName := GeneratedTokenName(tokenGroup)
-		tokName := tokenGroup.Name()
-		result.TokenTypeVarNames[len(tokens)+index] = varName
-		result.TokenTypeNames[len(tokens)+index] = tokName
-		result.TokenTypeIds[tokName] = len(tokens) + index
+	for _, tokenGroup := range sortTokenGroups(tokenGroups, tokenGroupMembers) {
+		index := len(result.TokenTypes)
+		lexerResult := generateTokenGroupType(tokenGroup, tokenGroupMembers, tokenIndex)
+		mergeImports(&result.Imports, lexerResult.Imports)
+		result.TokenTypes = append(result.TokenTypes, TokenType{
+			Index:      index,
+			TokenIndex: tokenIndex,
+			VarName:    GeneratedTokenName(tokenGroup),
+			Name:       tokenGroup.Name(),
+			Code:       lexerResult.Code,
+		})
+		result.TokenGroups[tokenGroup] = index
 		tokenIndex++
 	}
 	for index, tokenMode := range grammr.TokenModes() {
@@ -111,6 +169,12 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	return result
 }
 
+func mergeImports(target *map[string]bool, source map[string]bool) {
+	for imp := range source {
+		(*target)[imp] = true
+	}
+}
+
 func sortTokenGroups(tokenGroups []grammar.TokenGroup, members map[string][]string) []grammar.TokenGroup {
 	names := make([]string, len(tokenGroups))
 	for i, tg := range tokenGroups {
@@ -135,9 +199,10 @@ func GenerateLexer(grammr grammar.Grammar, packageName string, tokenTypes Genera
 
 	imports := map[string]bool{}
 	maps.Copy(imports, tokenTypes.Imports)
-	nodes = append(nodes, tokenTypes.KeywordsCode...)
-	nodes = append(nodes, tokenTypes.TokensCode...)
-	nodes = append(nodes, tokenTypes.TokenGroupCode...)
+
+	for _, tokenType := range tokenTypes.TokenTypes {
+		nodes = append(nodes, tokenType.Code)
+	}
 
 	node := NewRootNode()
 	node.AppendLine("package ", packageName)
@@ -225,27 +290,14 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, token
 	node.AppendLine("}")
 }
 
-func generateTokenType(token grammar.TokenDecl, id int) GenerateLexerResult {
-	switch element := token.Content().(type) {
-	case grammar.KeywordTokenElement:
-		return generateKeywordTokenElement(token, element, id)
-	case grammar.RegexpTokenElement:
-		return generateRegexpTokenElement(token, element, id)
-	default:
-		panic(fmt.Sprintf("Unknown token element type: %T", element))
-	}
-}
-
-func generateKeywordTokenElement(token grammar.TokenDecl, keywordElement grammar.KeywordTokenElement, id int) GenerateLexerResult {
+func generateKeywordTokenType(keyword grammar.Keyword, id int) GenerateLexerResult {
 	code := codegen.NewNode()
-	keyword := keywordElement.Keyword()
-	keywordToken := keyword.Value()
-	keywordValue := keywordToken[1 : len(keywordToken)-1]
-	code.AppendLine("const ", GeneratedTokenIdxName(token), " = ", strconv.Itoa(id))
+	keywordValue := grammar.KeywordValue(keyword)
+	code.AppendLine("const ", GeneratedTokenIdxName(keyword), " = ", strconv.Itoa(id))
 	code.AppendLine()
-	code.AppendLine("var ", GeneratedTokenName(token), " = core.NewTokenType(")
+	code.AppendLine("var ", GeneratedTokenName(keyword), " = core.NewTokenType(")
 	code.Indent(func(n codegen.Node) {
-		n.AppendLine(GeneratedTokenIdxName(token), ",")
+		n.AppendLine(GeneratedTokenIdxName(keyword), ",")
 		n.AppendLine("\"", keywordValue, "\",")
 		n.AppendLine("\"", keywordValue, "\",")
 		n.AppendLine("core.TokenKindKeyword,")
@@ -278,7 +330,7 @@ type GenerateLexerResult struct {
 	Code    codegen.Node
 }
 
-func generateTokenGroupType(tokenGroup grammar.TokenGroup, tokenGroupMembers map[string][]string, id int) codegen.Node {
+func generateTokenGroupType(tokenGroup grammar.TokenGroup, tokenGroupMembers map[string][]string, id int) GenerateLexerResult {
 	code := codegen.NewNode()
 	code.AppendLine("const ", GeneratedTokenIdxName(tokenGroup), " = ", strconv.Itoa(id))
 	code.AppendLine()
@@ -294,7 +346,10 @@ func generateTokenGroupType(tokenGroup grammar.TokenGroup, tokenGroupMembers map
 		n.AppendLine("},")
 	})
 	code.Append(")")
-	return code
+	return GenerateLexerResult{
+		Imports: map[string]bool{},
+		Code:    code,
+	}
 }
 
 func getAllTokenGroupMembers(tokenGroup grammar.TokenGroup) []string {

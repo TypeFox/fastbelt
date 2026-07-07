@@ -57,21 +57,24 @@ func WriteSB(sb *strings.Builder, texts ...string) {
 }
 
 type GetAllKeywordsResult struct {
-	Keywords []grammar.Keyword
-	ByValue  map[string]int
+	Keywords  []grammar.Keyword
+	ByValue   map[string]int
+	ByAstNode map[grammar.Keyword]int
 }
 
 func GetAllKeywords(grammr grammar.Grammar) GetAllKeywordsResult {
 	keywords := map[string]grammar.Keyword{}
+	allNodes := []grammar.Keyword{}
 	for node := range core.AllChildren(grammr) {
 		if keyword, ok := node.(grammar.Keyword); ok {
 			keywords[keyword.Value()] = keyword
+			allNodes = append(allNodes, keyword)
 		}
 	}
-	return keysFromMap(keywords)
+	return keysFromMap(keywords, allNodes)
 }
 
-func keysFromMap(m map[string]grammar.Keyword) GetAllKeywordsResult {
+func keysFromMap(m map[string]grammar.Keyword, allNodes []grammar.Keyword) GetAllKeywordsResult {
 	keywords := []grammar.Keyword{}
 	for _, v := range m {
 		keywords = append(keywords, v)
@@ -83,9 +86,15 @@ func keysFromMap(m map[string]grammar.Keyword) GetAllKeywordsResult {
 	for i, k := range keywords {
 		byValue[k.Value()] = i
 	}
+	byAstNode := map[grammar.Keyword]int{}
+	for _, k := range allNodes {
+		index := byValue[k.Value()]
+		byAstNode[k] = index
+	}
 	return GetAllKeywordsResult{
-		Keywords: keywords,
-		ByValue:  byValue,
+		Keywords:  keywords,
+		ByValue:   byValue,
+		ByAstNode: byAstNode,
 	}
 }
 
@@ -95,6 +104,8 @@ func GeneratedTokenName(t core.AstNode) string {
 		return "Token_" + t.Name()
 	case grammar.TokenGroup:
 		return "TokenGroup_" + t.Name()
+	case grammar.Keyword:
+		return "Keyword_" + grammar.KeywordName(t)
 	default:
 		panic("unexpected type")
 	}

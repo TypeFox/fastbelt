@@ -37,7 +37,7 @@ type parserATNData struct {
 // GenerateParser, GenerateCompletionParser, and GenerateParserLookahead.
 // Returns nil when the ATN cannot be built (invalid grammar).
 func BuildParserATNData(grammr grammar.Grammar, tokenTypes GenerateTokenTypesResult) *parserATNData {
-	builtATN, _ := internalATN.CreateATN(grammr, tokenTypes.TokenTypeIds)
+	builtATN, _ := internalATN.CreateATN(grammr, tokenTypes.TokenTypeIds())
 	if builtATN == nil {
 		return nil
 	}
@@ -54,7 +54,7 @@ func BuildParserATNData(grammr grammar.Grammar, tokenTypes GenerateTokenTypesRes
 		loopAdaptive:      loopAdaptive,
 		orDecision:        builtATN.OrDecision,
 		loopDecision:      builtATN.LoopDecision,
-		tokenVarNames:     tokenTypes.TokenTypeVarNames,
+		tokenVarNames:     tokenTypes.TokenTypeVarNames(),
 	}
 }
 
@@ -1541,8 +1541,9 @@ func (d *parserATNData) firstSetOption(state *internalATN.ATNState) []string {
 }
 
 func buildVarNameToId(tokenTypes GenerateTokenTypesResult) map[string]int {
-	varNameToId := make(map[string]int, len(tokenTypes.TokenTypeVarNames))
-	for i, varName := range tokenTypes.TokenTypeVarNames {
+	varNames := tokenTypes.TokenTypeVarNames()
+	varNameToId := make(map[string]int, len(varNames))
+	for i, varName := range varNames {
 		varNameToId[varName] = i + 1 // token IDs start at 1
 	}
 	return varNameToId
