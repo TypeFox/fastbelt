@@ -199,7 +199,7 @@ interface Assignable extends Element {}
 
 Assignable: Keyword | RuleCall | CrossRef | LEFTPAREN AssignableAlternatives RIGHTPAREN
 
-AssignableWithoutAlts returns Assignable: RuleCall | CrossRef
+AssignableWithoutAlts returns Assignable: Keyword | RuleCall | CrossRef
 
 AssignableAlternatives returns Assignable: AssignableWithoutAlts ({Alternatives.Alts+=current} (PIPE Alts+=AssignableWithoutAlts)+)?
 
@@ -233,7 +233,7 @@ CompositeAlternatives returns Element: CompositeGroup ({Alternatives.Alts+=curre
 
 CompositeGroup returns Element: CompositeElement ({Group.Elements+=current} Elements+=CompositeElement+)?
 
-CompositeElement returns Element: (RuleCall | LEFTPAREN CompositeAlternatives RIGHTPAREN) Cardinality=Cardinality?
+CompositeElement returns Element: (Keyword | RuleCall | LEFTPAREN CompositeAlternatives RIGHTPAREN) Cardinality=Cardinality?
 
 token ARROW: "->"
 token LEFTPAREN: "("

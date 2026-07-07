@@ -1111,7 +1111,7 @@ func (p *Parser) ParseAssignableWithoutAlts() Assignable {
 		case 0:
 			{
 				p.state.EnterRule(StateNumber__AssignableWithoutAlts__Basic_1)
-				result := p.ParseRuleCall()
+				result := p.ParseKeyword()
 				p.state.ExitRule()
 				current = result
 			}
@@ -1416,7 +1416,7 @@ func (p *Parser) ParseCompositeElement() Element {
 		case 0:
 			{
 				p.state.EnterRule(StateNumber__CompositeElement__Basic_1)
-				result := p.ParseRuleCall()
+				result := p.ParseKeyword()
 				p.state.ExitRule()
 				current = result
 			}
@@ -1453,10 +1453,10 @@ func (p *Parser) ParseCompositeElement() Element {
 			current.SetTextRangeStart(startPos)
 		}
 		{
-			p.state.Sync(StateNumber__CompositeElement__Basic_7)
+			p.state.Sync(StateNumber__CompositeElement__Basic_9)
 			if p.lookahead.CompositeElementCardinalityOptional(p.state) {
 				token := p.state.Consume(TokenGroup_Cardinality)
-				core.AssignToken(current, token, StateNumber__CompositeElement__Basic_5)
+				core.AssignToken(current, token, StateNumber__CompositeElement__Basic_7)
 				if token != nil {
 					current.SetCardinality(token)
 				}

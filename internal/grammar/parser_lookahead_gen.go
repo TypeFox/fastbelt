@@ -28,8 +28,8 @@ var AssignableAlternatives = parser.LL1Lookahead{
 }
 
 var AssignableWithoutAltsAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_ID, Token_LEFTBRACKET},
-	Lookup: []int{14: 2, 40: 1},
+	Types:  []*core.TokenType{Token_StringLiteral, Token_ID, Token_LEFTBRACKET},
+	Lookup: []int{14: 3, 39: 1, 40: 2},
 }
 
 var AssignmentOperatorAlternatives = parser.LL1Lookahead{
@@ -38,8 +38,8 @@ var AssignmentOperatorAlternatives = parser.LL1Lookahead{
 }
 
 var CompositeElementAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_ID, Token_LEFTPAREN},
-	Lookup: []int{2: 2, 40: 1},
+	Types:  []*core.TokenType{Token_StringLiteral, Token_ID, Token_LEFTPAREN},
+	Lookup: []int{2: 3, 39: 1, 40: 2},
 }
 
 var FieldTypeAlternatives = parser.LL1Lookahead{

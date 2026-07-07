@@ -852,12 +852,18 @@ func (p *CompletionParser) ParseAssignableWithoutAlts() {
 	case 0:
 		{
 			p.state.EnterRule(StateNumber__AssignableWithoutAlts__Basic_1)
-			p.ParseRuleCall()
+			p.ParseKeyword()
 			p.state.ExitRule()
 		}
 	case 1:
 		{
 			p.state.EnterRule(StateNumber__AssignableWithoutAlts__Basic_3)
+			p.ParseRuleCall()
+			p.state.ExitRule()
+		}
+	case 2:
+		{
+			p.state.EnterRule(StateNumber__AssignableWithoutAlts__Basic_5)
 			p.ParseCrossRef()
 			p.state.ExitRule()
 		}
@@ -1063,10 +1069,16 @@ func (p *CompletionParser) ParseCompositeElement() {
 	case 0:
 		{
 			p.state.EnterRule(StateNumber__CompositeElement__Basic_1)
-			p.ParseRuleCall()
+			p.ParseKeyword()
 			p.state.ExitRule()
 		}
 	case 1:
+		{
+			p.state.EnterRule(StateNumber__CompositeElement__Basic_3)
+			p.ParseRuleCall()
+			p.state.ExitRule()
+		}
+	case 2:
 		{
 			p.state.Consume(Token_LEFTPAREN)
 		}
@@ -1082,8 +1094,8 @@ func (p *CompletionParser) ParseCompositeElement() {
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 	{
-		p.cp.RecordSnapshot(StateNumber__CompositeElement__Basic_7)
-		p.state.Sync(StateNumber__CompositeElement__Basic_7)
+		p.cp.RecordSnapshot(StateNumber__CompositeElement__Basic_9)
+		p.state.Sync(StateNumber__CompositeElement__Basic_9)
 		if p.lookahead.CompositeElementCardinalityOptional(p.state) {
 			p.cp.MarkAssignment("Cardinality")
 			p.state.Consume(TokenGroup_Cardinality)

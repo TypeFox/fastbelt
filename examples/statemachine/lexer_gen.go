@@ -4,10 +4,9 @@ package statemachine
 
 import (
 	"strings"
-	"unicode/utf8"
-
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
+	"unicode/utf8"
 )
 
 const Token_STATEMACHINE_Idx = 1
@@ -522,8 +521,13 @@ var Token_SL_COMMENT_Accepting = [3]bool{
 	2: true,
 }
 
+const (
+	TokenMode_default = 0
+)
+
 func NewLexer() lexer.Lexer {
-	TokenMode_default := lexer.NewTokenMode("default",
+	modes := make([]*lexer.TokenMode, 1, 1)
+	modes[TokenMode_default] = lexer.NewTokenMode("default",
 		lexer.UseTokenType(Token_STATEMACHINE),
 		lexer.UseTokenType(Token_EVENTS),
 		lexer.UseTokenType(Token_COMMANDS),
@@ -539,5 +543,5 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Token_ML_COMMENT).WithGroup(core.CommentGroup),
 		lexer.UseTokenType(Token_SL_COMMENT).WithGroup(core.CommentGroup),
 	)
-	return lexer.NewDefaultLexer(0, TokenMode_default)
+	return lexer.NewDefaultLexer(TokenMode_default, modes...)
 }
