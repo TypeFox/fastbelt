@@ -56,7 +56,12 @@ func WriteSB(sb *strings.Builder, texts ...string) {
 	}
 }
 
-func GetAllKeywords(grammr grammar.Grammar) []grammar.Keyword {
+type GetAllKeywordsResult struct {
+	Keywords []grammar.Keyword
+	ByValue  map[string]int
+}
+
+func GetAllKeywords(grammr grammar.Grammar) GetAllKeywordsResult {
 	keywords := map[string]grammar.Keyword{}
 	for node := range core.AllChildren(grammr) {
 		if keyword, ok := node.(grammar.Keyword); ok {
@@ -66,15 +71,22 @@ func GetAllKeywords(grammr grammar.Grammar) []grammar.Keyword {
 	return keysFromMap(keywords)
 }
 
-func keysFromMap(m map[string]grammar.Keyword) []grammar.Keyword {
-	keys := []grammar.Keyword{}
+func keysFromMap(m map[string]grammar.Keyword) GetAllKeywordsResult {
+	keywords := []grammar.Keyword{}
 	for _, v := range m {
-		keys = append(keys, v)
+		keywords = append(keywords, v)
 	}
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i].Value() < keys[j].Value()
+	sort.Slice(keywords, func(i, j int) bool {
+		return keywords[i].Value() < keywords[j].Value()
 	})
-	return keys
+	byValue := map[string]int{}
+	for i, k := range keywords {
+		byValue[k.Value()] = i
+	}
+	return GetAllKeywordsResult{
+		Keywords: keywords,
+		ByValue:  byValue,
+	}
 }
 
 func GeneratedTokenName(t core.AstNode) string {

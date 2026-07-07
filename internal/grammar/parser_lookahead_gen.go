@@ -23,8 +23,8 @@ var ActionOperatorAlternatives = parser.LL1Lookahead{
 }
 
 var AssignableAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_ID, Token_LEFTBRACKET, Token_LEFTPAREN},
-	Lookup: []int{2: 3, 14: 2, 40: 1},
+	Types:  []*core.TokenType{Token_StringLiteral, Token_ID, Token_LEFTBRACKET, Token_LEFTPAREN},
+	Lookup: []int{2: 4, 14: 3, 39: 1, 40: 2},
 }
 
 var AssignableWithoutAltsAlternatives = parser.LL1Lookahead{

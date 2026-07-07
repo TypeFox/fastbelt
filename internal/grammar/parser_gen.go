@@ -1055,14 +1055,14 @@ func (p *Parser) ParseAssignable() Assignable {
 		case 0:
 			{
 				p.state.EnterRule(StateNumber__Assignable__Basic_1)
-				result := p.ParseRuleCall()
+				result := p.ParseKeyword()
 				p.state.ExitRule()
 				current = result
 			}
 		case 1:
 			{
 				p.state.EnterRule(StateNumber__Assignable__Basic_3)
-				result := p.ParseCrossRef()
+				result := p.ParseRuleCall()
 				p.state.ExitRule()
 				current = result
 			}

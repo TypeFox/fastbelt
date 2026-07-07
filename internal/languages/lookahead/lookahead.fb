@@ -14,7 +14,7 @@ entry Root: Item=Obj;
 Obj: A | B | C | D | E | F | G | H | I;
 
 // Assert that the Path composite alternative is evaluated correctly
-A returns Obj: LETTER_A Node=QualifiedPath;
+A returns Obj: "a" Node=QualifiedPath;
 
 interface B extends Obj {
     Post string
@@ -22,85 +22,44 @@ interface B extends Obj {
 
 // Assert that the QualifiedName lookahead respects the outer context
 // Should correctly parse the Post value even though the QualifiedName could be greedy
-B: LETTER_B Node=QualifiedPath DOT Post=ID;
+B: "b" Node=QualifiedPath "." Post=ID;
 
-composite QualifiedName: ID (DOT ID)*;
-composite Path: ID (SLASH ID)* COLON ID | ID;
-composite QualifiedPath: QualifiedName DOUBLE_COLON Path | Path;
+composite QualifiedName: ID ("." ID)*;
+composite Path: ID ("/" ID)* ":" ID | ID;
+composite QualifiedPath: QualifiedName "::" Path | Path;
 
 // Assert that the CLoop rule (theoretically LL(1)) correctly dips into outer context for prediction
-C returns Obj: LETTER_C Node=CLoop (DOUBLE_COLON Value=DOUBLE_ASTERISK)?;
+C returns Obj: "c" Node=CLoop ("::" Value="**")?;
 
-composite CLoop: ID (DOUBLE_COLON ID)*; 
+composite CLoop: ID ("::" ID)*; 
 
 // Assert that the DOpt rule (theoretically LL(1)) correctly dips into outer context for prediction
-D returns Obj: LETTER_D Node=DOpt (DOUBLE_COLON Value=DOUBLE_ASTERISK)?;
+D returns Obj: "d" Node=DOpt ("::" Value="**")?;
 
-composite DOpt: ID (DOUBLE_COLON ID)?;
+composite DOpt: ID ("::" ID)?;
 
-E returns Obj: LETTER_E Value=HELLO? WORLD?;
+E returns Obj: "e" Value="hello"? "world"?;
 
-F returns Obj: LETTER_F (ID* Value=HELLO | ID* Value=WORLD);
+F returns Obj: "f" (ID* Value="hello" | ID* Value="world");
 
-G returns Obj: LETTER_G (
-    Node=QualifiedName Value=HELLO 
-    | Node=QualifiedName Value=WORLD
+G returns Obj: "g" (
+    Node=QualifiedName Value="hello" 
+    | Node=QualifiedName Value="world"
 );
 
-H returns Obj: LETTER_H (
-    Node=QualifiedNameRecursive Value=HELLO 
-    | Node=QualifiedNameRecursive Value=WORLD
+H returns Obj: "h" (
+    Node=QualifiedNameRecursive Value="hello" 
+    | Node=QualifiedNameRecursive Value="world"
 );
 
-I returns Obj: LETTER_I (
+I returns Obj: "i" (
     // Ambiguous alternatives
     // TODO: Implement warning for those
     Node=QualifiedNameRecursive Value=ID
     | Node=QualifiedNameRecursive Value=ID
 );
 
-composite QualifiedNameRecursive: ID (DOT QualifiedNameRecursive)?;
-
-token LETTER_A: "a"
-token LETTER_B: "b"
-token LETTER_C: "c"
-token LETTER_D: "d"
-token LETTER_E: "e"
-token LETTER_F: "f"
-token LETTER_G: "g"
-token LETTER_H: "h"
-token LETTER_I: "i"
-token COMMA: ","
-token DOT: "."
-token DOUBLE_ASTERISK: "**"
-token DOUBLE_COLON: "::"
-token COLON: ":"
-token SLASH: "/"
-token HELLO: "hello"
-token WORLD: "world"
+composite QualifiedNameRecursive: ID ("." QualifiedNameRecursive)?;
 
 token WS: /[ \t\r\n]+/
 token ID: /\w[\w0-9]*/
-
-token mode default {
-    LETTER_A
-    LETTER_B
-    LETTER_C
-    LETTER_D
-    LETTER_E
-    LETTER_F
-    LETTER_G
-    LETTER_H
-    LETTER_I
-    COMMA
-    DOT
-    DOUBLE_ASTERISK
-    DOUBLE_COLON
-    COLON
-    SLASH
-    HELLO
-    WORLD
-
-    ID
-    hidden WS
-}

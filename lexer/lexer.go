@@ -152,10 +152,10 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 
 const maxChar = 256
 
-func NewDefaultLexer(tokenTypes ...*TokenMode) *DefaultLexer {
+func NewDefaultLexer(defaultMode int, tokenModes ...*TokenMode) *DefaultLexer {
 	return &DefaultLexer{
-		tokenModes: tokenTypes,
-		stack:      *NewTokenModeStack(tokenTypes[0]),
+		tokenModes: tokenModes,
+		stack:      *NewTokenModeStack(tokenModes[defaultMode]),
 		avgRatio:   parallel.NewRunningAverage(defaultTokenRatio),
 	}
 }

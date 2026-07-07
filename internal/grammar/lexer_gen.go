@@ -1258,5 +1258,5 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Token_RegexLiteral),
 		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),
 	)
-	return lexer.NewDefaultLexer(modes...)
+	return lexer.NewDefaultLexer(TokenMode_default, modes...)
 }

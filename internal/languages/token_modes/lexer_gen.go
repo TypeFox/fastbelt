@@ -669,5 +669,5 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Token_SL_COMMENT).WithGroup(core.CommentGroup),
 		lexer.UseTokenType(Token_ML_COMMENT).WithGroup(core.CommentGroup),
 	)
-	return lexer.NewDefaultLexer(modes...)
+	return lexer.NewDefaultLexer(TokenMode_default, modes...)
 }

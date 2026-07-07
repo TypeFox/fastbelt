@@ -4,9 +4,10 @@ package completion
 
 import (
 	"strings"
+	"unicode/utf8"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
-	"unicode/utf8"
 )
 
 const Token_LETTER_A_Idx = 1
@@ -679,7 +680,5 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Token_END),
 		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),
 	)
-	return lexer.NewDefaultLexer(
-		TokenMode_default,
-	)
+	return lexer.NewDefaultLexer(0, TokenMode_default)
 }

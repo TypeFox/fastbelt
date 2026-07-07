@@ -197,7 +197,7 @@ Assignment: Property=[Field:ID] Operator=(PLUS_EQUALS | EQUALS | QUESTION_EQUALS
 
 interface Assignable extends Element {}
 
-Assignable: RuleCall | CrossRef | LEFTPAREN AssignableAlternatives RIGHTPAREN
+Assignable: Keyword | RuleCall | CrossRef | LEFTPAREN AssignableAlternatives RIGHTPAREN
 
 AssignableWithoutAlts returns Assignable: RuleCall | CrossRef
 

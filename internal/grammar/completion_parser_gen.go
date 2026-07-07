@@ -813,16 +813,22 @@ func (p *CompletionParser) ParseAssignable() {
 	case 0:
 		{
 			p.state.EnterRule(StateNumber__Assignable__Basic_1)
-			p.ParseRuleCall()
+			p.ParseKeyword()
 			p.state.ExitRule()
 		}
 	case 1:
 		{
 			p.state.EnterRule(StateNumber__Assignable__Basic_3)
-			p.ParseCrossRef()
+			p.ParseRuleCall()
 			p.state.ExitRule()
 		}
 	case 2:
+		{
+			p.state.EnterRule(StateNumber__Assignable__Basic_5)
+			p.ParseCrossRef()
+			p.state.ExitRule()
+		}
+	case 3:
 		{
 			p.state.Consume(Token_LEFTPAREN)
 		}
