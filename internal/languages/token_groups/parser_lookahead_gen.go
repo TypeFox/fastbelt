@@ -13,12 +13,12 @@ const (
 
 var BValueAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{TokenGroup_Identifier, Token_LETTER_B},
-	Lookup: []int{4: 1, 5: 2, 11: 1, 12: 1},
+	Lookup: []int{1: 1, 2: 2, 11: 1, 12: 1},
 }
 
 var ModelItemAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_LETTER_A, Token_LETTER_B, Token_LETTER_C, Token_LETTER_D, Token_LETTER_E, Token_LETTER_F, Token_LETTER_G},
-	Lookup: []int{4: 1, 5: 2, 6: 3, 7: 4, 8: 5, 9: 6, 10: 7},
+	Lookup: []int{1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7},
 }
 
 // TokenGroupsParserLookahead abstracts every lookahead/prediction decision performed by

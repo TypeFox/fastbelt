@@ -9,138 +9,10 @@ import (
 	"unicode/utf8"
 )
 
-const Token_STATEMACHINE_Idx = 1
+const Keyword_EqualsGreaterThan_Idx = 1
 
-var Token_STATEMACHINE = core.NewTokenType(
-	Token_STATEMACHINE_Idx,
-	"statemachine",
-	"statemachine",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "statemachine") {
-			return 12
-		}
-		return 0
-	},
-	[]rune{'s'},
-)
-
-const Token_EVENTS_Idx = 2
-
-var Token_EVENTS = core.NewTokenType(
-	Token_EVENTS_Idx,
-	"events",
-	"events",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "events") {
-			return 6
-		}
-		return 0
-	},
-	[]rune{'e'},
-)
-
-const Token_COMMANDS_Idx = 3
-
-var Token_COMMANDS = core.NewTokenType(
-	Token_COMMANDS_Idx,
-	"commands",
-	"commands",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "commands") {
-			return 8
-		}
-		return 0
-	},
-	[]rune{'c'},
-)
-
-const Token_INITIALSTATE_Idx = 4
-
-var Token_INITIALSTATE = core.NewTokenType(
-	Token_INITIALSTATE_Idx,
-	"initialState",
-	"initialState",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "initialState") {
-			return 12
-		}
-		return 0
-	},
-	[]rune{'i'},
-)
-
-const Token_STATE_Idx = 5
-
-var Token_STATE = core.NewTokenType(
-	Token_STATE_Idx,
-	"state",
-	"state",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "state") {
-			return 5
-		}
-		return 0
-	},
-	[]rune{'s'},
-)
-
-const Token_ACTIONS_Idx = 6
-
-var Token_ACTIONS = core.NewTokenType(
-	Token_ACTIONS_Idx,
-	"actions",
-	"actions",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "actions") {
-			return 7
-		}
-		return 0
-	},
-	[]rune{'a'},
-)
-
-const Token_LBRACE_Idx = 7
-
-var Token_LBRACE = core.NewTokenType(
-	Token_LBRACE_Idx,
-	"{",
-	"{",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "{") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'{'},
-)
-
-const Token_RBRACE_Idx = 8
-
-var Token_RBRACE = core.NewTokenType(
-	Token_RBRACE_Idx,
-	"}",
-	"}",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "}") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'}'},
-)
-
-const Token_ARROW_Idx = 9
-
-var Token_ARROW = core.NewTokenType(
-	Token_ARROW_Idx,
+var Keyword_EqualsGreaterThan = core.NewTokenType(
+	Keyword_EqualsGreaterThan_Idx,
 	"=>",
 	"=>",
 	core.TokenKindKeyword,
@@ -153,10 +25,42 @@ var Token_ARROW = core.NewTokenType(
 	[]rune{'='},
 )
 
-const Token_END_Idx = 10
+const Keyword_actions_Idx = 2
 
-var Token_END = core.NewTokenType(
-	Token_END_Idx,
+var Keyword_actions = core.NewTokenType(
+	Keyword_actions_Idx,
+	"actions",
+	"actions",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "actions") {
+			return 7
+		}
+		return 0
+	},
+	[]rune{'a'},
+)
+
+const Keyword_commands_Idx = 3
+
+var Keyword_commands = core.NewTokenType(
+	Keyword_commands_Idx,
+	"commands",
+	"commands",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "commands") {
+			return 8
+		}
+		return 0
+	},
+	[]rune{'c'},
+)
+
+const Keyword_end_Idx = 4
+
+var Keyword_end = core.NewTokenType(
+	Keyword_end_Idx,
 	"end",
 	"end",
 	core.TokenKindKeyword,
@@ -168,6 +72,142 @@ var Token_END = core.NewTokenType(
 	},
 	[]rune{'e'},
 )
+
+const Keyword_events_Idx = 5
+
+var Keyword_events = core.NewTokenType(
+	Keyword_events_Idx,
+	"events",
+	"events",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "events") {
+			return 6
+		}
+		return 0
+	},
+	[]rune{'e'},
+)
+
+const Keyword_initialState_Idx = 6
+
+var Keyword_initialState = core.NewTokenType(
+	Keyword_initialState_Idx,
+	"initialState",
+	"initialState",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "initialState") {
+			return 12
+		}
+		return 0
+	},
+	[]rune{'i'},
+)
+
+const Keyword_state_Idx = 7
+
+var Keyword_state = core.NewTokenType(
+	Keyword_state_Idx,
+	"state",
+	"state",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "state") {
+			return 5
+		}
+		return 0
+	},
+	[]rune{'s'},
+)
+
+const Keyword_statemachine_Idx = 8
+
+var Keyword_statemachine = core.NewTokenType(
+	Keyword_statemachine_Idx,
+	"statemachine",
+	"statemachine",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "statemachine") {
+			return 12
+		}
+		return 0
+	},
+	[]rune{'s'},
+)
+
+const Keyword_LeftBrace_Idx = 9
+
+var Keyword_LeftBrace = core.NewTokenType(
+	Keyword_LeftBrace_Idx,
+	"{",
+	"{",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "{") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'{'},
+)
+
+const Keyword_RightBrace_Idx = 10
+
+var Keyword_RightBrace = core.NewTokenType(
+	Keyword_RightBrace_Idx,
+	"}",
+	"}",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "}") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'}'},
+)
+
+const Token_STATEMACHINE_Idx = Keyword_statemachine_Idx
+
+var Token_STATEMACHINE = Keyword_statemachine
+
+const Token_EVENTS_Idx = Keyword_events_Idx
+
+var Token_EVENTS = Keyword_events
+
+const Token_COMMANDS_Idx = Keyword_commands_Idx
+
+var Token_COMMANDS = Keyword_commands
+
+const Token_INITIALSTATE_Idx = Keyword_initialState_Idx
+
+var Token_INITIALSTATE = Keyword_initialState
+
+const Token_STATE_Idx = Keyword_state_Idx
+
+var Token_STATE = Keyword_state
+
+const Token_ACTIONS_Idx = Keyword_actions_Idx
+
+var Token_ACTIONS = Keyword_actions
+
+const Token_LBRACE_Idx = Keyword_LeftBrace_Idx
+
+var Token_LBRACE = Keyword_LeftBrace
+
+const Token_RBRACE_Idx = Keyword_RightBrace_Idx
+
+var Token_RBRACE = Keyword_RightBrace
+
+const Token_ARROW_Idx = Keyword_EqualsGreaterThan_Idx
+
+var Token_ARROW = Keyword_EqualsGreaterThan
+
+const Token_END_Idx = Keyword_end_Idx
+
+var Token_END = Keyword_end
 
 const Token_ID_Idx = 11
 

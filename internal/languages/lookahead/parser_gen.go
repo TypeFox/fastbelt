@@ -135,8 +135,8 @@ func (p *Parser) ParseA() Obj {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_A)
-			core.AssignToken(current, token, StateNumber__A_LETTER_A)
+			token := p.state.Consume(Keyword_a)
+			core.AssignToken(current, token, StateNumber__A_a)
 		}
 		{
 			result := core.NewCompositeNode()
@@ -159,13 +159,13 @@ func (p *Parser) ParseB() B {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_B)
-			core.AssignToken(current, token, StateNumber__B_LETTER_B)
+			token := p.state.Consume(Keyword_b)
+			core.AssignToken(current, token, StateNumber__B_b)
 		}
 		{
 			result := core.NewCompositeNode()
 			result.SetSegmentStartToken(p.state.LA(1))
-			p.state.EnterRule(StateNumber__B_DOT)
+			p.state.EnterRule(StateNumber__B_Dot)
 			p.ParseQualifiedPath(result)
 			p.state.ExitRule()
 			result.SetSegmentEndToken(p.state.LA(0))
@@ -174,8 +174,8 @@ func (p *Parser) ParseB() B {
 			}
 		}
 		{
-			token := p.state.Consume(Token_DOT)
-			core.AssignToken(current, token, StateNumber__B_DOT)
+			token := p.state.Consume(Keyword_Dot)
+			core.AssignToken(current, token, StateNumber__B_Dot)
 		}
 		{
 			token := p.state.Consume(Token_ID)
@@ -194,8 +194,8 @@ func (p *Parser) ParseC() Obj {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_C)
-			core.AssignToken(current, token, StateNumber__C_LETTER_C)
+			token := p.state.Consume(Keyword_c)
+			core.AssignToken(current, token, StateNumber__C_c)
 		}
 		{
 			result := core.NewCompositeNode()
@@ -211,12 +211,12 @@ func (p *Parser) ParseC() Obj {
 		p.state.Sync(StateNumber__C__Basic_2)
 		if p.lookahead.COptional(p.state) {
 			{
-				token := p.state.Consume(Token_DOUBLE_COLON)
-				core.AssignToken(current, token, StateNumber__C_DOUBLE_COLON)
+				token := p.state.Consume(Keyword_ColonColon)
+				core.AssignToken(current, token, StateNumber__C_ColonColon)
 			}
 			{
-				token := p.state.Consume(Token_DOUBLE_ASTERISK)
-				core.AssignToken(current, token, StateNumber__C_Value_DOUBLE_ASTERISK)
+				token := p.state.Consume(Keyword_AsteriskAsterisk)
+				core.AssignToken(current, token, StateNumber__C_Value_AsteriskAsterisk)
 				if token != nil {
 					current.SetValue(token)
 				}
@@ -232,8 +232,8 @@ func (p *Parser) ParseD() Obj {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_D)
-			core.AssignToken(current, token, StateNumber__D_LETTER_D)
+			token := p.state.Consume(Keyword_d)
+			core.AssignToken(current, token, StateNumber__D_d)
 		}
 		{
 			result := core.NewCompositeNode()
@@ -249,12 +249,12 @@ func (p *Parser) ParseD() Obj {
 		p.state.Sync(StateNumber__D__Basic_2)
 		if p.lookahead.DOptional(p.state) {
 			{
-				token := p.state.Consume(Token_DOUBLE_COLON)
-				core.AssignToken(current, token, StateNumber__D_DOUBLE_COLON)
+				token := p.state.Consume(Keyword_ColonColon)
+				core.AssignToken(current, token, StateNumber__D_ColonColon)
 			}
 			{
-				token := p.state.Consume(Token_DOUBLE_ASTERISK)
-				core.AssignToken(current, token, StateNumber__D_Value_DOUBLE_ASTERISK)
+				token := p.state.Consume(Keyword_AsteriskAsterisk)
+				core.AssignToken(current, token, StateNumber__D_Value_AsteriskAsterisk)
 				if token != nil {
 					current.SetValue(token)
 				}
@@ -270,23 +270,23 @@ func (p *Parser) ParseE() Obj {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_E)
-			core.AssignToken(current, token, StateNumber__E_LETTER_E)
+			token := p.state.Consume(Keyword_e)
+			core.AssignToken(current, token, StateNumber__E_e)
 		}
 		{
 			p.state.Sync(StateNumber__E__Basic_1)
 			if p.lookahead.EValueOptional(p.state) {
-				token := p.state.Consume(Token_HELLO)
-				core.AssignToken(current, token, StateNumber__E_Value_HELLO)
+				token := p.state.Consume(Keyword_hello)
+				core.AssignToken(current, token, StateNumber__E_Value_hello)
 				if token != nil {
 					current.SetValue(token)
 				}
 			}
 		}
 		{
-			if p.lookahead.EOptional(p.state) {
-				token := p.state.Consume(Token_WORLD)
-				core.AssignToken(current, token, StateNumber__E_WORLD)
+			if p.lookahead.EworldOptional(p.state) {
+				token := p.state.Consume(Keyword_world)
+				core.AssignToken(current, token, StateNumber__E_world)
 			}
 		}
 	}
@@ -299,8 +299,8 @@ func (p *Parser) ParseF() Obj {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_F)
-			core.AssignToken(current, token, StateNumber__F_LETTER_F)
+			token := p.state.Consume(Keyword_f)
+			core.AssignToken(current, token, StateNumber__F_f)
 		}
 		switch prediction, failure := p.lookahead.FAlternatives(p.state); prediction {
 		case 0:
@@ -311,8 +311,8 @@ func (p *Parser) ParseF() Obj {
 				}
 			}
 			{
-				token := p.state.Consume(Token_HELLO)
-				core.AssignToken(current, token, StateNumber__F_Value_HELLO)
+				token := p.state.Consume(Keyword_hello)
+				core.AssignToken(current, token, StateNumber__F_Value_hello)
 				if token != nil {
 					current.SetValue(token)
 				}
@@ -325,8 +325,8 @@ func (p *Parser) ParseF() Obj {
 				}
 			}
 			{
-				token := p.state.Consume(Token_WORLD)
-				core.AssignToken(current, token, StateNumber__F_Value_WORLD)
+				token := p.state.Consume(Keyword_world)
+				core.AssignToken(current, token, StateNumber__F_Value_world)
 				if token != nil {
 					current.SetValue(token)
 				}
@@ -344,15 +344,15 @@ func (p *Parser) ParseG() Obj {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_G)
-			core.AssignToken(current, token, StateNumber__G_LETTER_G)
+			token := p.state.Consume(Keyword_g)
+			core.AssignToken(current, token, StateNumber__G_g)
 		}
 		switch prediction, failure := p.lookahead.GAlternatives(p.state); prediction {
 		case 0:
 			{
 				result := core.NewCompositeNode()
 				result.SetSegmentStartToken(p.state.LA(1))
-				p.state.EnterRule(StateNumber__G_Value_HELLO)
+				p.state.EnterRule(StateNumber__G_Value_hello)
 				p.ParseQualifiedName(result)
 				p.state.ExitRule()
 				result.SetSegmentEndToken(p.state.LA(0))
@@ -361,8 +361,8 @@ func (p *Parser) ParseG() Obj {
 				}
 			}
 			{
-				token := p.state.Consume(Token_HELLO)
-				core.AssignToken(current, token, StateNumber__G_Value_HELLO)
+				token := p.state.Consume(Keyword_hello)
+				core.AssignToken(current, token, StateNumber__G_Value_hello)
 				if token != nil {
 					current.SetValue(token)
 				}
@@ -371,7 +371,7 @@ func (p *Parser) ParseG() Obj {
 			{
 				result := core.NewCompositeNode()
 				result.SetSegmentStartToken(p.state.LA(1))
-				p.state.EnterRule(StateNumber__G_Value_WORLD)
+				p.state.EnterRule(StateNumber__G_Value_world)
 				p.ParseQualifiedName(result)
 				p.state.ExitRule()
 				result.SetSegmentEndToken(p.state.LA(0))
@@ -380,8 +380,8 @@ func (p *Parser) ParseG() Obj {
 				}
 			}
 			{
-				token := p.state.Consume(Token_WORLD)
-				core.AssignToken(current, token, StateNumber__G_Value_WORLD)
+				token := p.state.Consume(Keyword_world)
+				core.AssignToken(current, token, StateNumber__G_Value_world)
 				if token != nil {
 					current.SetValue(token)
 				}
@@ -399,15 +399,15 @@ func (p *Parser) ParseH() Obj {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_H)
-			core.AssignToken(current, token, StateNumber__H_LETTER_H)
+			token := p.state.Consume(Keyword_h)
+			core.AssignToken(current, token, StateNumber__H_h)
 		}
 		switch prediction, failure := p.lookahead.HAlternatives(p.state); prediction {
 		case 0:
 			{
 				result := core.NewCompositeNode()
 				result.SetSegmentStartToken(p.state.LA(1))
-				p.state.EnterRule(StateNumber__H_Value_HELLO)
+				p.state.EnterRule(StateNumber__H_Value_hello)
 				p.ParseQualifiedNameRecursive(result)
 				p.state.ExitRule()
 				result.SetSegmentEndToken(p.state.LA(0))
@@ -416,8 +416,8 @@ func (p *Parser) ParseH() Obj {
 				}
 			}
 			{
-				token := p.state.Consume(Token_HELLO)
-				core.AssignToken(current, token, StateNumber__H_Value_HELLO)
+				token := p.state.Consume(Keyword_hello)
+				core.AssignToken(current, token, StateNumber__H_Value_hello)
 				if token != nil {
 					current.SetValue(token)
 				}
@@ -426,7 +426,7 @@ func (p *Parser) ParseH() Obj {
 			{
 				result := core.NewCompositeNode()
 				result.SetSegmentStartToken(p.state.LA(1))
-				p.state.EnterRule(StateNumber__H_Value_WORLD)
+				p.state.EnterRule(StateNumber__H_Value_world)
 				p.ParseQualifiedNameRecursive(result)
 				p.state.ExitRule()
 				result.SetSegmentEndToken(p.state.LA(0))
@@ -435,8 +435,8 @@ func (p *Parser) ParseH() Obj {
 				}
 			}
 			{
-				token := p.state.Consume(Token_WORLD)
-				core.AssignToken(current, token, StateNumber__H_Value_WORLD)
+				token := p.state.Consume(Keyword_world)
+				core.AssignToken(current, token, StateNumber__H_Value_world)
 				if token != nil {
 					current.SetValue(token)
 				}
@@ -454,8 +454,8 @@ func (p *Parser) ParseI() Obj {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_I)
-			core.AssignToken(current, token, StateNumber__I_LETTER_I)
+			token := p.state.Consume(Keyword_i)
+			core.AssignToken(current, token, StateNumber__I_i)
 		}
 		switch prediction, failure := p.lookahead.IAlternatives(p.state); prediction {
 		case 0:
@@ -512,8 +512,8 @@ func (p *Parser) ParseQualifiedName(current core.CompositeNode) {
 	p.state.Sync(StateNumber__QualifiedName__LoopEntry)
 	for p.lookahead.QualifiedNameLoop(p.state) {
 		{
-			token := p.state.Consume(Token_DOT)
-			core.AssignToken(current, token, StateNumber__QualifiedName_DOT)
+			token := p.state.Consume(Keyword_Dot)
+			core.AssignToken(current, token, StateNumber__QualifiedName_Dot)
 		}
 		{
 			token := p.state.Consume(Token_ID)
@@ -533,8 +533,8 @@ func (p *Parser) ParsePath(current core.CompositeNode) {
 		p.state.Sync(StateNumber__Path__LoopEntry)
 		for p.lookahead.PathLoop(p.state) {
 			{
-				token := p.state.Consume(Token_SLASH)
-				core.AssignToken(current, token, StateNumber__Path_SLASH)
+				token := p.state.Consume(Keyword_Slash)
+				core.AssignToken(current, token, StateNumber__Path_Slash)
 			}
 			{
 				token := p.state.Consume(Token_ID)
@@ -543,8 +543,8 @@ func (p *Parser) ParsePath(current core.CompositeNode) {
 			p.state.Sync(StateNumber__Path__LoopEntry)
 		}
 		{
-			token := p.state.Consume(Token_COLON)
-			core.AssignToken(current, token, StateNumber__Path_COLON)
+			token := p.state.Consume(Keyword_Colon)
+			core.AssignToken(current, token, StateNumber__Path_Colon)
 		}
 		{
 			token := p.state.Consume(Token_ID)
@@ -564,13 +564,13 @@ func (p *Parser) ParseQualifiedPath(current core.CompositeNode) {
 	switch prediction, failure := p.lookahead.QualifiedPathAlternatives(p.state); prediction {
 	case 0:
 		{
-			p.state.EnterRule(StateNumber__QualifiedPath_DOUBLE_COLON)
+			p.state.EnterRule(StateNumber__QualifiedPath_ColonColon)
 			p.ParseQualifiedName(current)
 			p.state.ExitRule()
 		}
 		{
-			token := p.state.Consume(Token_DOUBLE_COLON)
-			core.AssignToken(current, token, StateNumber__QualifiedPath_DOUBLE_COLON)
+			token := p.state.Consume(Keyword_ColonColon)
+			core.AssignToken(current, token, StateNumber__QualifiedPath_ColonColon)
 		}
 		{
 			p.state.EnterRule(StateNumber__QualifiedPath__Basic_2)
@@ -596,8 +596,8 @@ func (p *Parser) ParseCLoop(current core.CompositeNode) {
 	p.state.Sync(StateNumber__CLoop__LoopEntry)
 	for p.lookahead.CLoopLoop(p.state) {
 		{
-			token := p.state.Consume(Token_DOUBLE_COLON)
-			core.AssignToken(current, token, StateNumber__CLoop_DOUBLE_COLON)
+			token := p.state.Consume(Keyword_ColonColon)
+			core.AssignToken(current, token, StateNumber__CLoop_ColonColon)
 		}
 		{
 			token := p.state.Consume(Token_ID)
@@ -615,8 +615,8 @@ func (p *Parser) ParseDOpt(current core.CompositeNode) {
 	p.state.Sync(StateNumber__DOpt__Basic_1)
 	if p.lookahead.DOptOptional(p.state) {
 		{
-			token := p.state.Consume(Token_DOUBLE_COLON)
-			core.AssignToken(current, token, StateNumber__DOpt_DOUBLE_COLON)
+			token := p.state.Consume(Keyword_ColonColon)
+			core.AssignToken(current, token, StateNumber__DOpt_ColonColon)
 		}
 		{
 			token := p.state.Consume(Token_ID)
@@ -633,8 +633,8 @@ func (p *Parser) ParseQualifiedNameRecursive(current core.CompositeNode) {
 	p.state.Sync(StateNumber__QualifiedNameRecursive__Basic_2)
 	if p.lookahead.QualifiedNameRecursiveOptional(p.state) {
 		{
-			token := p.state.Consume(Token_DOT)
-			core.AssignToken(current, token, StateNumber__QualifiedNameRecursive_DOT)
+			token := p.state.Consume(Keyword_Dot)
+			core.AssignToken(current, token, StateNumber__QualifiedNameRecursive_Dot)
 		}
 		{
 			p.state.EnterRule(StateNumber__QualifiedNameRecursive__Basic_1)

@@ -4,16 +4,31 @@ package token_modes
 
 import (
 	"strings"
-	"unicode/utf8"
-
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
+	"unicode/utf8"
 )
 
-const Token_LPAREN_Idx = 1
+const Keyword_HashLeftBrace_Idx = 1
 
-var Token_LPAREN = core.NewTokenType(
-	Token_LPAREN_Idx,
+var Keyword_HashLeftBrace = core.NewTokenType(
+	Keyword_HashLeftBrace_Idx,
+	"#{",
+	"#{",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "#{") {
+			return 2
+		}
+		return 0
+	},
+	[]rune{'#'},
+)
+
+const Keyword_LeftParen_Idx = 2
+
+var Keyword_LeftParen = core.NewTokenType(
+	Keyword_LeftParen_Idx,
 	"(",
 	"(",
 	core.TokenKindKeyword,
@@ -26,10 +41,10 @@ var Token_LPAREN = core.NewTokenType(
 	[]rune{'('},
 )
 
-const Token_RPAREN_Idx = 2
+const Keyword_RightParen_Idx = 3
 
-var Token_RPAREN = core.NewTokenType(
-	Token_RPAREN_Idx,
+var Keyword_RightParen = core.NewTokenType(
+	Keyword_RightParen_Idx,
 	")",
 	")",
 	core.TokenKindKeyword,
@@ -42,7 +57,63 @@ var Token_RPAREN = core.NewTokenType(
 	[]rune{')'},
 )
 
-const Token_ID_Idx = 3
+const Keyword_ColonEquals_Idx = 4
+
+var Keyword_ColonEquals = core.NewTokenType(
+	Keyword_ColonEquals_Idx,
+	":=",
+	":=",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], ":=") {
+			return 2
+		}
+		return 0
+	},
+	[]rune{':'},
+)
+
+const Keyword_Backtick_Idx = 5
+
+var Keyword_Backtick = core.NewTokenType(
+	Keyword_Backtick_Idx,
+	"`",
+	"`",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "`") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'`'},
+)
+
+const Keyword_RightBrace_Idx = 6
+
+var Keyword_RightBrace = core.NewTokenType(
+	Keyword_RightBrace_Idx,
+	"}",
+	"}",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "}") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'}'},
+)
+
+const Token_LPAREN_Idx = Keyword_LeftParen_Idx
+
+var Token_LPAREN = Keyword_LeftParen
+
+const Token_RPAREN_Idx = Keyword_RightParen_Idx
+
+var Token_RPAREN = Keyword_RightParen
+
+const Token_ID_Idx = 7
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
@@ -113,7 +184,7 @@ var Token_ID_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_INT_Idx = 4
+const Token_INT_Idx = 8
 
 var Token_INT = core.NewTokenType(
 	Token_INT_Idx,
@@ -184,7 +255,7 @@ var Token_INT_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_WS_Idx = 5
+const Token_WS_Idx = 9
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
@@ -255,23 +326,11 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_ASSIGN_Idx = 6
+const Token_ASSIGN_Idx = Keyword_ColonEquals_Idx
 
-var Token_ASSIGN = core.NewTokenType(
-	Token_ASSIGN_Idx,
-	":=",
-	":=",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], ":=") {
-			return 2
-		}
-		return 0
-	},
-	[]rune{':'},
-)
+var Token_ASSIGN = Keyword_ColonEquals
 
-const Token_SL_COMMENT_Idx = 7
+const Token_SL_COMMENT_Idx = 10
 
 var Token_SL_COMMENT = core.NewTokenType(
 	Token_SL_COMMENT_Idx,
@@ -359,7 +418,7 @@ var Token_SL_COMMENT_Accepting = [3]bool{
 	2: true,
 }
 
-const Token_ML_COMMENT_Idx = 8
+const Token_ML_COMMENT_Idx = 11
 
 var Token_ML_COMMENT = core.NewTokenType(
 	Token_ML_COMMENT_Idx,
@@ -481,39 +540,15 @@ var Token_ML_COMMENT_Accepting = [5]bool{
 	4: true,
 }
 
-const Token_STRING_START_Idx = 9
+const Token_STRING_START_Idx = Keyword_Backtick_Idx
 
-var Token_STRING_START = core.NewTokenType(
-	Token_STRING_START_Idx,
-	"`",
-	"`",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "`") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'`'},
-)
+var Token_STRING_START = Keyword_Backtick
 
-const Token_STRING_STOP_Idx = 10
+const Token_STRING_STOP_Idx = Keyword_Backtick_Idx
 
-var Token_STRING_STOP = core.NewTokenType(
-	Token_STRING_STOP_Idx,
-	"`",
-	"`",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "`") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'`'},
-)
+var Token_STRING_STOP = Keyword_Backtick
 
-const Token_STRING_CONTENT_Idx = 11
+const Token_STRING_CONTENT_Idx = 12
 
 var Token_STRING_CONTENT = core.NewTokenType(
 	Token_STRING_CONTENT_Idx,
@@ -602,37 +637,13 @@ var Token_STRING_CONTENT_Accepting = [3]bool{
 	2: true,
 }
 
-const Token_INTERPOLATION_START_Idx = 12
+const Token_INTERPOLATION_START_Idx = Keyword_HashLeftBrace_Idx
 
-var Token_INTERPOLATION_START = core.NewTokenType(
-	Token_INTERPOLATION_START_Idx,
-	"#{",
-	"#{",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "#{") {
-			return 2
-		}
-		return 0
-	},
-	[]rune{'#'},
-)
+var Token_INTERPOLATION_START = Keyword_HashLeftBrace
 
-const Token_INTERPOLATION_END_Idx = 13
+const Token_INTERPOLATION_END_Idx = Keyword_RightBrace_Idx
 
-var Token_INTERPOLATION_END = core.NewTokenType(
-	Token_INTERPOLATION_END_Idx,
-	"}",
-	"}",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "}") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'}'},
-)
+var Token_INTERPOLATION_END = Keyword_RightBrace
 
 const (
 	TokenMode_default          = 0

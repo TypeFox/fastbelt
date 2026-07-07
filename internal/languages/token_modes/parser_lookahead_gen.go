@@ -8,18 +8,18 @@ import (
 )
 
 var ExpressionAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_ID, Token_INT, Token_STRING_START},
-	Lookup: []int{3: 1, 4: 2, 9: 3},
+	Types:  []*core.TokenType{Token_ID, Token_INT, Token_STRING_STOP},
+	Lookup: []int{5: 3, 7: 1, 8: 2},
 }
 
 var StringContentAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_STRING_CONTENT, Token_INTERPOLATION_START},
-	Lookup: []int{11: 1, 12: 2},
+	Lookup: []int{1: 2, 12: 1},
 }
 
 var StringLiteralContentLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_STRING_CONTENT, Token_INTERPOLATION_START},
-	Lookup: []int{11: 1, 12: 1},
+	Types:  []*core.TokenType{Token_INTERPOLATION_START, Token_STRING_CONTENT},
+	Lookup: []int{1: 1, 12: 1},
 }
 
 // TokenModesParserLookahead abstracts every lookahead/prediction decision performed by

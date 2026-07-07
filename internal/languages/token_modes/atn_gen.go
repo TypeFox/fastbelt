@@ -4,7 +4,6 @@ package token_modes
 
 import (
 	"sync"
-
 	"typefox.dev/fastbelt/parser"
 )
 
@@ -251,7 +250,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[StateNumber__NumericLiteral__Stop]),
 	)
 	states[StateNumber__StringLiteral_STRING_START].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__StringLiteral__LoopEntry], Token_STRING_START, nil),
+		parser.NewAtomTransition(states[StateNumber__StringLiteral__LoopEntry], Token_STRING_STOP, nil),
 	)
 	states[StateNumber__StringLiteral__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[StateNumber__StringContent__Start], states[StateNumber__StringLiteral__Basic_1], nil),

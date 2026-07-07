@@ -9,37 +9,37 @@ import (
 
 var AdditionLoop = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_PLUS, Token_MINUS},
-	Lookup: []int{8: 1, 9: 1},
+	Lookup: []int{5: 1, 7: 1},
 }
 
 var AdditionOperatorAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_PLUS, Token_MINUS},
-	Lookup: []int{8: 1, 9: 2},
+	Lookup: []int{5: 1, 7: 2},
 }
 
 var ModuleStatementsLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_DEF, Token_LPAREN, Token_ID, Token_NUMBER},
-	Lookup: []int{2: 1, 3: 1, 14: 1, 15: 1},
+	Types:  []*core.TokenType{Token_LPAREN, Token_DEF, Token_ID, Token_NUMBER},
+	Lookup: []int{2: 1, 12: 1, 14: 1, 15: 1},
 }
 
 var MultiplicationLoop = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_STAR, Token_SLASH},
-	Lookup: []int{10: 1, 11: 1},
+	Lookup: []int{4: 1, 8: 1},
 }
 
 var MultiplicationOperatorAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_STAR, Token_SLASH},
-	Lookup: []int{10: 1, 11: 2},
+	Lookup: []int{4: 1, 8: 2},
 }
 
 var PrimaryExpressionAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_LPAREN, Token_NUMBER, Token_ID},
-	Lookup: []int{3: 1, 14: 3, 15: 2},
+	Lookup: []int{2: 1, 14: 3, 15: 2},
 }
 
 var StatementAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_DEF, Token_LPAREN, Token_ID, Token_NUMBER},
-	Lookup: []int{2: 1, 3: 2, 14: 2, 15: 2},
+	Lookup: []int{2: 2, 12: 1, 14: 2, 15: 2},
 }
 
 // ArithmeticsParserLookahead abstracts every lookahead/prediction decision performed by

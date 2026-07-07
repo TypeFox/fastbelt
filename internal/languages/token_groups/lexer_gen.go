@@ -4,64 +4,15 @@ package token_groups
 
 import (
 	"strings"
-	"unicode/utf8"
-
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
+	"unicode/utf8"
 )
 
-const Token_ONE_Idx = 1
+const Keyword_a_Idx = 1
 
-var Token_ONE = core.NewTokenType(
-	Token_ONE_Idx,
-	"one",
-	"one",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "one") {
-			return 3
-		}
-		return 0
-	},
-	[]rune{'o'},
-)
-
-const Token_TWO_Idx = 2
-
-var Token_TWO = core.NewTokenType(
-	Token_TWO_Idx,
-	"two",
-	"two",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "two") {
-			return 3
-		}
-		return 0
-	},
-	[]rune{'t'},
-)
-
-const Token_NESTED_Idx = 3
-
-var Token_NESTED = core.NewTokenType(
-	Token_NESTED_Idx,
-	"nested",
-	"nested",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "nested") {
-			return 6
-		}
-		return 0
-	},
-	[]rune{'n'},
-)
-
-const Token_LETTER_A_Idx = 4
-
-var Token_LETTER_A = core.NewTokenType(
-	Token_LETTER_A_Idx,
+var Keyword_a = core.NewTokenType(
+	Keyword_a_Idx,
 	"a",
 	"a",
 	core.TokenKindKeyword,
@@ -74,10 +25,10 @@ var Token_LETTER_A = core.NewTokenType(
 	[]rune{'a'},
 )
 
-const Token_LETTER_B_Idx = 5
+const Keyword_b_Idx = 2
 
-var Token_LETTER_B = core.NewTokenType(
-	Token_LETTER_B_Idx,
+var Keyword_b = core.NewTokenType(
+	Keyword_b_Idx,
 	"b",
 	"b",
 	core.TokenKindKeyword,
@@ -90,10 +41,10 @@ var Token_LETTER_B = core.NewTokenType(
 	[]rune{'b'},
 )
 
-const Token_LETTER_C_Idx = 6
+const Keyword_c_Idx = 3
 
-var Token_LETTER_C = core.NewTokenType(
-	Token_LETTER_C_Idx,
+var Keyword_c = core.NewTokenType(
+	Keyword_c_Idx,
 	"c",
 	"c",
 	core.TokenKindKeyword,
@@ -106,10 +57,10 @@ var Token_LETTER_C = core.NewTokenType(
 	[]rune{'c'},
 )
 
-const Token_LETTER_D_Idx = 7
+const Keyword_d_Idx = 4
 
-var Token_LETTER_D = core.NewTokenType(
-	Token_LETTER_D_Idx,
+var Keyword_d = core.NewTokenType(
+	Keyword_d_Idx,
 	"d",
 	"d",
 	core.TokenKindKeyword,
@@ -122,10 +73,10 @@ var Token_LETTER_D = core.NewTokenType(
 	[]rune{'d'},
 )
 
-const Token_LETTER_E_Idx = 8
+const Keyword_e_Idx = 5
 
-var Token_LETTER_E = core.NewTokenType(
-	Token_LETTER_E_Idx,
+var Keyword_e = core.NewTokenType(
+	Keyword_e_Idx,
 	"e",
 	"e",
 	core.TokenKindKeyword,
@@ -138,10 +89,10 @@ var Token_LETTER_E = core.NewTokenType(
 	[]rune{'e'},
 )
 
-const Token_LETTER_F_Idx = 9
+const Keyword_f_Idx = 6
 
-var Token_LETTER_F = core.NewTokenType(
-	Token_LETTER_F_Idx,
+var Keyword_f = core.NewTokenType(
+	Keyword_f_Idx,
 	"f",
 	"f",
 	core.TokenKindKeyword,
@@ -154,10 +105,10 @@ var Token_LETTER_F = core.NewTokenType(
 	[]rune{'f'},
 )
 
-const Token_LETTER_G_Idx = 10
+const Keyword_g_Idx = 7
 
-var Token_LETTER_G = core.NewTokenType(
-	Token_LETTER_G_Idx,
+var Keyword_g = core.NewTokenType(
+	Keyword_g_Idx,
 	"g",
 	"g",
 	core.TokenKindKeyword,
@@ -169,6 +120,94 @@ var Token_LETTER_G = core.NewTokenType(
 	},
 	[]rune{'g'},
 )
+
+const Keyword_nested_Idx = 8
+
+var Keyword_nested = core.NewTokenType(
+	Keyword_nested_Idx,
+	"nested",
+	"nested",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "nested") {
+			return 6
+		}
+		return 0
+	},
+	[]rune{'n'},
+)
+
+const Keyword_one_Idx = 9
+
+var Keyword_one = core.NewTokenType(
+	Keyword_one_Idx,
+	"one",
+	"one",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "one") {
+			return 3
+		}
+		return 0
+	},
+	[]rune{'o'},
+)
+
+const Keyword_two_Idx = 10
+
+var Keyword_two = core.NewTokenType(
+	Keyword_two_Idx,
+	"two",
+	"two",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "two") {
+			return 3
+		}
+		return 0
+	},
+	[]rune{'t'},
+)
+
+const Token_ONE_Idx = Keyword_one_Idx
+
+var Token_ONE = Keyword_one
+
+const Token_TWO_Idx = Keyword_two_Idx
+
+var Token_TWO = Keyword_two
+
+const Token_NESTED_Idx = Keyword_nested_Idx
+
+var Token_NESTED = Keyword_nested
+
+const Token_LETTER_A_Idx = Keyword_a_Idx
+
+var Token_LETTER_A = Keyword_a
+
+const Token_LETTER_B_Idx = Keyword_b_Idx
+
+var Token_LETTER_B = Keyword_b
+
+const Token_LETTER_C_Idx = Keyword_c_Idx
+
+var Token_LETTER_C = Keyword_c
+
+const Token_LETTER_D_Idx = Keyword_d_Idx
+
+var Token_LETTER_D = Keyword_d
+
+const Token_LETTER_E_Idx = Keyword_e_Idx
+
+var Token_LETTER_E = Keyword_e
+
+const Token_LETTER_F_Idx = Keyword_f_Idx
+
+var Token_LETTER_F = Keyword_f
+
+const Token_LETTER_G_Idx = Keyword_g_Idx
+
+var Token_LETTER_G = Keyword_g
 
 const Token_ID_Idx = 11
 
@@ -420,8 +459,13 @@ var TokenGroup_NestedIdentifier = core.NewTokenGroup(
 	},
 )
 
+const (
+	TokenMode_default = 0
+)
+
 func NewLexer() lexer.Lexer {
-	TokenMode_default := lexer.NewTokenMode("default",
+	modes := make([]*lexer.TokenMode, 1, 1)
+	modes[TokenMode_default] = lexer.NewTokenMode("default",
 		lexer.UseTokenType(Token_ONE),
 		lexer.UseTokenType(Token_TWO),
 		lexer.UseTokenType(Token_NESTED),
@@ -440,5 +484,5 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Token_INT),
 		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),
 	)
-	return lexer.NewDefaultLexer(0, TokenMode_default)
+	return lexer.NewDefaultLexer(TokenMode_default, modes...)
 }
