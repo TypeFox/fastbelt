@@ -16,11 +16,11 @@ import (
 	"typefox.dev/fastbelt/test"
 )
 
-func loadPriceCalcDoc(t *testing.T) *test.Doc {
-	t.Helper()
+func loadPriceCalcDoc(tb testing.TB) *test.Doc {
+	tb.Helper()
 	content, err := os.ReadFile("examples/price-calc.calc")
-	require.NoError(t, err)
-	f := test.New(t, CreateServices())
+	require.NoError(tb, err)
+	f := test.New(tb, CreateServices())
 	doc := f.Parse(string(content))
 	doc.AssertNoParseErrors()
 	doc.AssertNoLinkingErrors()
@@ -34,10 +34,10 @@ func mustConvert[T core.AstNode](t *testing.T, node core.AstNode) T {
 	return converted
 }
 
-// TestNodePath_PriceCalc verifies NodePath() for every FunctionCall (cross-reference)
+// TestPathOf verifies [core.PathOf] for every FunctionCall (cross-reference)
 // node in price-calc.calc. Each subtest covers one reference site and checks both
 // the referencer (FunctionCall) and the referenced (AbstractDefinition) node paths.
-func TestNodePath_PriceCalc(t *testing.T) {
+func TestPathOf(t *testing.T) {
 	doc := loadPriceCalcDoc(t)
 
 	module := test.MustFindNode[Module](doc)
@@ -252,12 +252,12 @@ func TestNodePath_PriceCalc(t *testing.T) {
 	})
 }
 
-// TestResolve_PriceCalc is the inverse of TestNodePath_PriceCalc: for each of the 13
+// TestResolve is the inverse of TestPathOf: for each of the 13
 // FunctionCall cross-reference sites in price-calc.calc, it resolves the hardcoded path
-// string back to an AST node via Resolve and asserts pointer identity with the node
+// string back to an AST node via [core.Resolve] and asserts pointer identity with the node
 // obtained by direct AST navigation. Both the referencer (FunctionCall) and the
 // referenced (AbstractDefinition) are covered per subtest.
-func TestResolve_PriceCalc(t *testing.T) {
+func TestResolve(t *testing.T) {
 	doc := loadPriceCalcDoc(t)
 	root := doc.Root()
 	module := test.MustFindNode[Module](doc)

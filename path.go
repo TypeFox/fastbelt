@@ -12,9 +12,9 @@ import (
 	"unique"
 )
 
-// FragmentPath describes instance of node path descriptors pointing to a child AST node within a parent.
+// FragmentPath describes node path descriptors pointing to a child AST node within a parent.
 type FragmentPath interface {
-	// Empty returns [true] if this descriptor is empty and equal to the empty path string, returns [false] otherwise.
+	// Empty returns true if this descriptor is empty and equal to the empty path string, returns false otherwise.
 	Empty() bool
 	// Head returns field name (unique.Handle) and index of the head segment of the segment list.
 	// index is expected to be negative (-1) for non-list fields.
@@ -82,7 +82,8 @@ func PathOf(node AstNode) (fragmentPath, error) {
 	containerField, index := node.ContainmentData()
 
 	if container == nil {
-		return fragmentPath{}, nil
+		// initialize the result fragment path with an initial capacity of 5 items (assumed common upper bound)
+		return make(fragmentPath, 0, 5), nil
 	} else if containerField == fieldZero || containerField == fieldEmpty {
 		return nil, errors.New("cannot determine node path, 'containerField' is empty")
 	}
@@ -114,8 +115,8 @@ func Resolve(path string, node AstNode) (AstNode, error) {
 }
 
 func parsePath(path string) (fragmentPath, error) {
-	result := fragmentPath{}
-	path = strings.TrimLeft(path, "/")
+	// initialize the result fragment path with an initial capacity of 5 items (assumed common upper bound)
+	result := make(fragmentPath, 0, 5)
 
 	for curSegment := range strings.SplitSeq(path, "/") {
 		if curSegment == "" {
