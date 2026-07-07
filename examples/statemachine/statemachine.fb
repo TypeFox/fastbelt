@@ -57,7 +57,7 @@ Transition returns Transition:
 token STATEMACHINE: "statemachine"
 token EVENTS: "events"
 token COMMANDS: "commands"
-token INITIALSTATE: "initialstate"
+token INITIALSTATE: "initialState"
 token STATE: "state"
 token ACTIONS: "actions"
 token LBRACE: "{"

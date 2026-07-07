@@ -61,11 +61,11 @@ const Token_INITIALSTATE_Idx = 4
 
 var Token_INITIALSTATE = core.NewTokenType(
 	Token_INITIALSTATE_Idx,
-	"initialstate",
-	"initialstate",
+	"initialState",
+	"initialState",
 	core.TokenKindKeyword,
 	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "initialstate") {
+		if strings.HasPrefix(text[offset:], "initialState") {
 			return 12
 		}
 		return 0
