@@ -1262,14 +1262,8 @@ type TokenMode interface {
 	IsDefault() bool
 	DefaultToken() *core.Token
 	SetDefault(value *core.Token)
-	TokenDecls() []TokenDecl
-	SetTokenDeclsItem(item TokenDecl)
-	TokenRefs() []TokenUsage
-	SetTokenRefsItem(item TokenUsage)
-	Keywords() []KeywordUsage
-	SetKeywordsItem(item KeywordUsage)
-	KeywordSelectors() []*core.Token
-	SetKeywordSelectorsItem(item *core.Token)
+	Members() []TokenModeMember
+	SetMembersItem(item TokenModeMember)
 }
 
 func NewTokenMode() TokenMode {
@@ -1280,33 +1274,21 @@ func NewTokenMode() TokenMode {
 }
 
 type TokenModeData struct {
-	name             *core.Token
-	_Default         *core.Token
-	tokenDecls       []TokenDecl
-	tokenRefs        []TokenUsage
-	keywords         []KeywordUsage
-	keywordSelectors []*core.Token
+	name     *core.Token
+	_Default *core.Token
+	members  []TokenModeMember
 }
 
 func NewTokenModeData() TokenModeData {
 	return TokenModeData{
-		tokenDecls:       []TokenDecl{},
-		tokenRefs:        []TokenUsage{},
-		keywords:         []KeywordUsage{},
-		keywordSelectors: []*core.Token{},
+		members: []TokenModeMember{},
 	}
 }
 
 func (i *TokenModeData) IsTokenMode() {}
 
 func (i *TokenModeData) ForEachNode(fn func(core.AstNode)) {
-	for _, item := range i.tokenDecls {
-		fn(item)
-	}
-	for _, item := range i.tokenRefs {
-		fn(item)
-	}
-	for _, item := range i.keywords {
+	for _, item := range i.members {
 		fn(item)
 	}
 }
@@ -1342,36 +1324,12 @@ func (i *TokenModeData) SetDefault(value *core.Token) {
 	i._Default = value
 }
 
-func (i *TokenModeData) TokenDecls() []TokenDecl {
-	return i.tokenDecls
+func (i *TokenModeData) Members() []TokenModeMember {
+	return i.members
 }
 
-func (i *TokenModeData) SetTokenDeclsItem(item TokenDecl) {
-	i.tokenDecls = append(i.tokenDecls, item)
-}
-
-func (i *TokenModeData) TokenRefs() []TokenUsage {
-	return i.tokenRefs
-}
-
-func (i *TokenModeData) SetTokenRefsItem(item TokenUsage) {
-	i.tokenRefs = append(i.tokenRefs, item)
-}
-
-func (i *TokenModeData) Keywords() []KeywordUsage {
-	return i.keywords
-}
-
-func (i *TokenModeData) SetKeywordsItem(item KeywordUsage) {
-	i.keywords = append(i.keywords, item)
-}
-
-func (i *TokenModeData) KeywordSelectors() []*core.Token {
-	return i.keywordSelectors
-}
-
-func (i *TokenModeData) SetKeywordSelectorsItem(item *core.Token) {
-	i.keywordSelectors = append(i.keywordSelectors, item)
+func (i *TokenModeData) SetMembersItem(item TokenModeMember) {
+	i.members = append(i.members, item)
 }
 
 type TokenModeImpl struct {
@@ -1387,8 +1345,154 @@ func (i *TokenModeImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.TokenModeData.ForEachReference(fn)
 }
 
+type TokenModeMember interface {
+	core.AstNode
+
+	IsTokenModeMember()
+}
+
+func NewTokenModeMember() TokenModeMember {
+	return &TokenModeMemberImpl{
+		AstNodeBase:         core.NewAstNode(),
+		TokenModeMemberData: NewTokenModeMemberData(),
+	}
+}
+
+type TokenModeMemberData struct {
+}
+
+func NewTokenModeMemberData() TokenModeMemberData {
+	return TokenModeMemberData{}
+}
+
+func (i *TokenModeMemberData) IsTokenModeMember() {}
+
+func (i *TokenModeMemberData) ForEachNode(fn func(core.AstNode)) {
+}
+
+func (i *TokenModeMemberData) ForEachReference(fn func(core.UntypedReference)) {
+}
+
+type TokenModeMemberImpl struct {
+	core.AstNodeBase
+	TokenModeMemberData
+}
+
+func (i *TokenModeMemberImpl) ForEachNode(fn func(core.AstNode)) {
+	i.TokenModeMemberData.ForEachNode(fn)
+}
+
+func (i *TokenModeMemberImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.TokenModeMemberData.ForEachReference(fn)
+}
+
+type TokenDeclUsage interface {
+	core.AstNode
+	TokenModeMember
+
+	IsTokenDeclUsage()
+	Type() string
+	TypeToken() *core.Token
+	SetType(value *core.Token)
+	Name() string
+	NameToken() *core.Token
+	SetName(value *core.Token)
+	Command() TokenCommand
+	SetCommand(value TokenCommand)
+}
+
+func NewTokenDeclUsage() TokenDeclUsage {
+	return &TokenDeclUsageImpl{
+		AstNodeBase:         core.NewAstNode(),
+		TokenModeMemberData: NewTokenModeMemberData(),
+		TokenDeclUsageData:  NewTokenDeclUsageData(),
+	}
+}
+
+type TokenDeclUsageData struct {
+	_Type   *core.Token
+	name    *core.Token
+	command TokenCommand
+}
+
+func NewTokenDeclUsageData() TokenDeclUsageData {
+	return TokenDeclUsageData{}
+}
+
+func (i *TokenDeclUsageData) IsTokenDeclUsage() {}
+
+func (i *TokenDeclUsageData) ForEachNode(fn func(core.AstNode)) {
+	if i.command != nil {
+		fn(i.command)
+	}
+}
+
+func (i *TokenDeclUsageData) ForEachReference(fn func(core.UntypedReference)) {
+}
+
+func (i *TokenDeclUsageData) Type() string {
+	if i != nil && i._Type != nil {
+		return i._Type.Image
+	} else {
+		return ""
+	}
+}
+
+func (i *TokenDeclUsageData) TypeToken() *core.Token {
+	return i._Type
+}
+
+func (i *TokenDeclUsageData) SetType(value *core.Token) {
+	i._Type = value
+}
+
+func (i *TokenDeclUsageData) Name() string {
+	if i != nil && i.name != nil {
+		return i.name.Image
+	} else {
+		return ""
+	}
+}
+
+func (i *TokenDeclUsageData) NameToken() *core.Token {
+	return i.name
+}
+
+func (i *TokenDeclUsageData) SetName(value *core.Token) {
+	i.name = value
+}
+
+func (i *TokenDeclUsageData) Command() TokenCommand {
+	if i != nil && i.command != nil {
+		return i.command
+	} else {
+		return nil
+	}
+}
+
+func (i *TokenDeclUsageData) SetCommand(value TokenCommand) {
+	i.command = value
+}
+
+type TokenDeclUsageImpl struct {
+	core.AstNodeBase
+	TokenModeMemberData
+	TokenDeclUsageData
+}
+
+func (i *TokenDeclUsageImpl) ForEachNode(fn func(core.AstNode)) {
+	i.TokenModeMemberData.ForEachNode(fn)
+	i.TokenDeclUsageData.ForEachNode(fn)
+}
+
+func (i *TokenDeclUsageImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.TokenModeMemberData.ForEachReference(fn)
+	i.TokenDeclUsageData.ForEachReference(fn)
+}
+
 type TokenUsage interface {
 	core.AstNode
+	TokenModeMember
 
 	IsTokenUsage()
 	Type() string
@@ -1402,8 +1506,9 @@ type TokenUsage interface {
 
 func NewTokenUsage() TokenUsage {
 	return &TokenUsageImpl{
-		AstNodeBase:    core.NewAstNode(),
-		TokenUsageData: NewTokenUsageData(),
+		AstNodeBase:         core.NewAstNode(),
+		TokenModeMemberData: NewTokenModeMemberData(),
+		TokenUsageData:      NewTokenUsageData(),
 	}
 }
 
@@ -1473,19 +1578,23 @@ func (i *TokenUsageData) SetCommand(value TokenCommand) {
 
 type TokenUsageImpl struct {
 	core.AstNodeBase
+	TokenModeMemberData
 	TokenUsageData
 }
 
 func (i *TokenUsageImpl) ForEachNode(fn func(core.AstNode)) {
+	i.TokenModeMemberData.ForEachNode(fn)
 	i.TokenUsageData.ForEachNode(fn)
 }
 
 func (i *TokenUsageImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.TokenModeMemberData.ForEachReference(fn)
 	i.TokenUsageData.ForEachReference(fn)
 }
 
 type KeywordUsage interface {
 	core.AstNode
+	TokenModeMember
 
 	IsKeywordUsage()
 	Type() string
@@ -1499,8 +1608,9 @@ type KeywordUsage interface {
 
 func NewKeywordUsage() KeywordUsage {
 	return &KeywordUsageImpl{
-		AstNodeBase:      core.NewAstNode(),
-		KeywordUsageData: NewKeywordUsageData(),
+		AstNodeBase:         core.NewAstNode(),
+		TokenModeMemberData: NewTokenModeMemberData(),
+		KeywordUsageData:    NewKeywordUsageData(),
 	}
 }
 
@@ -1570,15 +1680,84 @@ func (i *KeywordUsageData) SetCommand(value TokenCommand) {
 
 type KeywordUsageImpl struct {
 	core.AstNodeBase
+	TokenModeMemberData
 	KeywordUsageData
 }
 
 func (i *KeywordUsageImpl) ForEachNode(fn func(core.AstNode)) {
+	i.TokenModeMemberData.ForEachNode(fn)
 	i.KeywordUsageData.ForEachNode(fn)
 }
 
 func (i *KeywordUsageImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.TokenModeMemberData.ForEachReference(fn)
 	i.KeywordUsageData.ForEachReference(fn)
+}
+
+type KeywordSelector interface {
+	core.AstNode
+	TokenModeMember
+
+	IsKeywordSelector()
+	Selector() string
+	SelectorToken() *core.Token
+	SetSelector(value *core.Token)
+}
+
+func NewKeywordSelector() KeywordSelector {
+	return &KeywordSelectorImpl{
+		AstNodeBase:         core.NewAstNode(),
+		TokenModeMemberData: NewTokenModeMemberData(),
+		KeywordSelectorData: NewKeywordSelectorData(),
+	}
+}
+
+type KeywordSelectorData struct {
+	selector *core.Token
+}
+
+func NewKeywordSelectorData() KeywordSelectorData {
+	return KeywordSelectorData{}
+}
+
+func (i *KeywordSelectorData) IsKeywordSelector() {}
+
+func (i *KeywordSelectorData) ForEachNode(fn func(core.AstNode)) {
+}
+
+func (i *KeywordSelectorData) ForEachReference(fn func(core.UntypedReference)) {
+}
+
+func (i *KeywordSelectorData) Selector() string {
+	if i != nil && i.selector != nil {
+		return i.selector.Image
+	} else {
+		return ""
+	}
+}
+
+func (i *KeywordSelectorData) SelectorToken() *core.Token {
+	return i.selector
+}
+
+func (i *KeywordSelectorData) SetSelector(value *core.Token) {
+	i.selector = value
+}
+
+type KeywordSelectorImpl struct {
+	core.AstNodeBase
+	TokenModeMemberData
+	KeywordSelectorData
+}
+
+func (i *KeywordSelectorImpl) ForEachNode(fn func(core.AstNode)) {
+	i.TokenModeMemberData.ForEachNode(fn)
+	i.KeywordSelectorData.ForEachNode(fn)
+}
+
+func (i *KeywordSelectorImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.TokenModeMemberData.ForEachReference(fn)
+	i.KeywordSelectorData.ForEachReference(fn)
 }
 
 type Element interface {
@@ -2224,6 +2403,7 @@ var FastbeltSyntheticFactories = map[string]func() core.AstNode{
 	"Group":                func() core.AstNode { return NewGroup() },
 	"Interface":            func() core.AstNode { return NewInterface() },
 	"Keyword":              func() core.AstNode { return NewKeyword() },
+	"KeywordSelector":      func() core.AstNode { return NewKeywordSelector() },
 	"KeywordTokenElement":  func() core.AstNode { return NewKeywordTokenElement() },
 	"KeywordUsage":         func() core.AstNode { return NewKeywordUsage() },
 	"ParserRule":           func() core.AstNode { return NewParserRule() },
@@ -2234,8 +2414,10 @@ var FastbeltSyntheticFactories = map[string]func() core.AstNode{
 	"SimpleType":           func() core.AstNode { return NewSimpleType() },
 	"TokenCommand":         func() core.AstNode { return NewTokenCommand() },
 	"TokenDecl":            func() core.AstNode { return NewTokenDecl() },
+	"TokenDeclUsage":       func() core.AstNode { return NewTokenDeclUsage() },
 	"TokenElement":         func() core.AstNode { return NewTokenElement() },
 	"TokenGroup":           func() core.AstNode { return NewTokenGroup() },
 	"TokenMode":            func() core.AstNode { return NewTokenMode() },
+	"TokenModeMember":      func() core.AstNode { return NewTokenModeMember() },
 	"TokenUsage":           func() core.AstNode { return NewTokenUsage() },
 }

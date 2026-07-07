@@ -4,80 +4,15 @@ package grammar
 
 import (
 	"strings"
-	"unicode/utf8"
-
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
+	"unicode/utf8"
 )
 
-const Token_ARROW_Idx = 1
+const Keyword_Plus_Idx = 1
 
-var Token_ARROW = core.NewTokenType(
-	Token_ARROW_Idx,
-	"->",
-	"->",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "->") {
-			return 2
-		}
-		return 0
-	},
-	[]rune{'-'},
-)
-
-const Token_LEFTPAREN_Idx = 2
-
-var Token_LEFTPAREN = core.NewTokenType(
-	Token_LEFTPAREN_Idx,
-	"(",
-	"(",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "(") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'('},
-)
-
-const Token_RIGHTPAREN_Idx = 3
-
-var Token_RIGHTPAREN = core.NewTokenType(
-	Token_RIGHTPAREN_Idx,
-	")",
-	")",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], ")") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{')'},
-)
-
-const Token_ASTERISK_Idx = 4
-
-var Token_ASTERISK = core.NewTokenType(
-	Token_ASTERISK_Idx,
-	"*",
-	"*",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "*") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'*'},
-)
-
-const Token_PLUS_Idx = 5
-
-var Token_PLUS = core.NewTokenType(
-	Token_PLUS_Idx,
+var Keyword_Plus = core.NewTokenType(
+	Keyword_Plus_Idx,
 	"+",
 	"+",
 	core.TokenKindKeyword,
@@ -90,42 +25,10 @@ var Token_PLUS = core.NewTokenType(
 	[]rune{'+'},
 )
 
-const Token_PLUS_EQUALS_Idx = 6
+const Keyword_Dot_Idx = 2
 
-var Token_PLUS_EQUALS = core.NewTokenType(
-	Token_PLUS_EQUALS_Idx,
-	"+=",
-	"+=",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "+=") {
-			return 2
-		}
-		return 0
-	},
-	[]rune{'+'},
-)
-
-const Token_COMMA_Idx = 7
-
-var Token_COMMA = core.NewTokenType(
-	Token_COMMA_Idx,
-	",",
-	",",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], ",") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{','},
-)
-
-const Token_DOT_Idx = 8
-
-var Token_DOT = core.NewTokenType(
-	Token_DOT_Idx,
+var Keyword_Dot = core.NewTokenType(
+	Keyword_Dot_Idx,
 	".",
 	".",
 	core.TokenKindKeyword,
@@ -138,90 +41,10 @@ var Token_DOT = core.NewTokenType(
 	[]rune{'.'},
 )
 
-const Token_COLON_Idx = 9
+const Keyword_LeftBracket_Idx = 3
 
-var Token_COLON = core.NewTokenType(
-	Token_COLON_Idx,
-	":",
-	":",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], ":") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{':'},
-)
-
-const Token_SEMICOLON_Idx = 10
-
-var Token_SEMICOLON = core.NewTokenType(
-	Token_SEMICOLON_Idx,
-	";",
-	";",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], ";") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{';'},
-)
-
-const Token_EQUALS_Idx = 11
-
-var Token_EQUALS = core.NewTokenType(
-	Token_EQUALS_Idx,
-	"=",
-	"=",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "=") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'='},
-)
-
-const Token_QUESTION_Idx = 12
-
-var Token_QUESTION = core.NewTokenType(
-	Token_QUESTION_Idx,
-	"?",
-	"?",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "?") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'?'},
-)
-
-const Token_QUESTION_EQUALS_Idx = 13
-
-var Token_QUESTION_EQUALS = core.NewTokenType(
-	Token_QUESTION_EQUALS_Idx,
-	"?=",
-	"?=",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "?=") {
-			return 2
-		}
-		return 0
-	},
-	[]rune{'?'},
-)
-
-const Token_LEFTBRACKET_Idx = 14
-
-var Token_LEFTBRACKET = core.NewTokenType(
-	Token_LEFTBRACKET_Idx,
+var Keyword_LeftBracket = core.NewTokenType(
+	Keyword_LeftBracket_Idx,
 	"[",
 	"[",
 	core.TokenKindKeyword,
@@ -234,90 +57,10 @@ var Token_LEFTBRACKET = core.NewTokenType(
 	[]rune{'['},
 )
 
-const Token_RIGHTBRACKET_Idx = 15
+const Keyword_default_Idx = 4
 
-var Token_RIGHTBRACKET = core.NewTokenType(
-	Token_RIGHTBRACKET_Idx,
-	"]",
-	"]",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "]") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{']'},
-)
-
-const Token_BOOL_Idx = 16
-
-var Token_BOOL = core.NewTokenType(
-	Token_BOOL_Idx,
-	"bool",
-	"bool",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "bool") {
-			return 4
-		}
-		return 0
-	},
-	[]rune{'b'},
-)
-
-const Token_COMMENT_Idx = 17
-
-var Token_COMMENT = core.NewTokenType(
-	Token_COMMENT_Idx,
-	"comment",
-	"comment",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "comment") {
-			return 7
-		}
-		return 0
-	},
-	[]rune{'c'},
-)
-
-const Token_COMPOSITE_Idx = 18
-
-var Token_COMPOSITE = core.NewTokenType(
-	Token_COMPOSITE_Idx,
-	"composite",
-	"composite",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "composite") {
-			return 9
-		}
-		return 0
-	},
-	[]rune{'c'},
-)
-
-const Token_CURRENT_Idx = 19
-
-var Token_CURRENT = core.NewTokenType(
-	Token_CURRENT_Idx,
-	"current",
-	"current",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "current") {
-			return 7
-		}
-		return 0
-	},
-	[]rune{'c'},
-)
-
-const Token_DEFAULT_Idx = 20
-
-var Token_DEFAULT = core.NewTokenType(
-	Token_DEFAULT_Idx,
+var Keyword_default = core.NewTokenType(
+	Keyword_default_Idx,
 	"default",
 	"default",
 	core.TokenKindKeyword,
@@ -330,122 +73,10 @@ var Token_DEFAULT = core.NewTokenType(
 	[]rune{'d'},
 )
 
-const Token_ENTRY_Idx = 21
+const Keyword_mode_Idx = 5
 
-var Token_ENTRY = core.NewTokenType(
-	Token_ENTRY_Idx,
-	"entry",
-	"entry",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "entry") {
-			return 5
-		}
-		return 0
-	},
-	[]rune{'e'},
-)
-
-const Token_EXTENDS_Idx = 22
-
-var Token_EXTENDS = core.NewTokenType(
-	Token_EXTENDS_Idx,
-	"extends",
-	"extends",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "extends") {
-			return 7
-		}
-		return 0
-	},
-	[]rune{'e'},
-)
-
-const Token_GRAMMAR_Idx = 23
-
-var Token_GRAMMAR = core.NewTokenType(
-	Token_GRAMMAR_Idx,
-	"grammar",
-	"grammar",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "grammar") {
-			return 7
-		}
-		return 0
-	},
-	[]rune{'g'},
-)
-
-const Token_GROUP_Idx = 24
-
-var Token_GROUP = core.NewTokenType(
-	Token_GROUP_Idx,
-	"group",
-	"group",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "group") {
-			return 5
-		}
-		return 0
-	},
-	[]rune{'g'},
-)
-
-const Token_HIDDEN_Idx = 25
-
-var Token_HIDDEN = core.NewTokenType(
-	Token_HIDDEN_Idx,
-	"hidden",
-	"hidden",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "hidden") {
-			return 6
-		}
-		return 0
-	},
-	[]rune{'h'},
-)
-
-const Token_INTERFACE_Idx = 26
-
-var Token_INTERFACE = core.NewTokenType(
-	Token_INTERFACE_Idx,
-	"interface",
-	"interface",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "interface") {
-			return 9
-		}
-		return 0
-	},
-	[]rune{'i'},
-)
-
-const Token_KEYWORDS_Idx = 27
-
-var Token_KEYWORDS = core.NewTokenType(
-	Token_KEYWORDS_Idx,
-	"keywords",
-	"keywords",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "keywords") {
-			return 8
-		}
-		return 0
-	},
-	[]rune{'k'},
-)
-
-const Token_MODE_Idx = 28
-
-var Token_MODE = core.NewTokenType(
-	Token_MODE_Idx,
+var Keyword_mode = core.NewTokenType(
+	Keyword_mode_Idx,
 	"mode",
 	"mode",
 	core.TokenKindKeyword,
@@ -458,58 +89,138 @@ var Token_MODE = core.NewTokenType(
 	[]rune{'m'},
 )
 
-const Token_POP_Idx = 29
+const Keyword_PlusEquals_Idx = 6
 
-var Token_POP = core.NewTokenType(
-	Token_POP_Idx,
-	"pop",
-	"pop",
+var Keyword_PlusEquals = core.NewTokenType(
+	Keyword_PlusEquals_Idx,
+	"+=",
+	"+=",
 	core.TokenKindKeyword,
 	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "pop") {
-			return 3
+		if strings.HasPrefix(text[offset:], "+=") {
+			return 2
 		}
 		return 0
 	},
-	[]rune{'p'},
+	[]rune{'+'},
 )
 
-const Token_PUSH_Idx = 30
+const Keyword_Comma_Idx = 7
 
-var Token_PUSH = core.NewTokenType(
-	Token_PUSH_Idx,
-	"push",
-	"push",
+var Keyword_Comma = core.NewTokenType(
+	Keyword_Comma_Idx,
+	",",
+	",",
 	core.TokenKindKeyword,
 	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "push") {
-			return 4
+		if strings.HasPrefix(text[offset:], ",") {
+			return 1
 		}
 		return 0
 	},
-	[]rune{'p'},
+	[]rune{','},
 )
 
-const Token_RETURNS_Idx = 31
+const Keyword_Colon_Idx = 8
 
-var Token_RETURNS = core.NewTokenType(
-	Token_RETURNS_Idx,
-	"returns",
-	"returns",
+var Keyword_Colon = core.NewTokenType(
+	Keyword_Colon_Idx,
+	":",
+	":",
 	core.TokenKindKeyword,
 	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "returns") {
+		if strings.HasPrefix(text[offset:], ":") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{':'},
+)
+
+const Keyword_grammar_Idx = 9
+
+var Keyword_grammar = core.NewTokenType(
+	Keyword_grammar_Idx,
+	"grammar",
+	"grammar",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "grammar") {
 			return 7
 		}
 		return 0
 	},
-	[]rune{'r'},
+	[]rune{'g'},
 )
 
-const Token_STRING_Idx = 32
+const Keyword_bool_Idx = 10
 
-var Token_STRING = core.NewTokenType(
-	Token_STRING_Idx,
+var Keyword_bool = core.NewTokenType(
+	Keyword_bool_Idx,
+	"bool",
+	"bool",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "bool") {
+			return 4
+		}
+		return 0
+	},
+	[]rune{'b'},
+)
+
+const Keyword_composite_Idx = 11
+
+var Keyword_composite = core.NewTokenType(
+	Keyword_composite_Idx,
+	"composite",
+	"composite",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "composite") {
+			return 9
+		}
+		return 0
+	},
+	[]rune{'c'},
+)
+
+const Keyword_entry_Idx = 12
+
+var Keyword_entry = core.NewTokenType(
+	Keyword_entry_Idx,
+	"entry",
+	"entry",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "entry") {
+			return 5
+		}
+		return 0
+	},
+	[]rune{'e'},
+)
+
+const Keyword_keywords_Idx = 13
+
+var Keyword_keywords = core.NewTokenType(
+	Keyword_keywords_Idx,
+	"keywords",
+	"keywords",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "keywords") {
+			return 8
+		}
+		return 0
+	},
+	[]rune{'k'},
+)
+
+const Keyword_string_Idx = 14
+
+var Keyword_string = core.NewTokenType(
+	Keyword_string_Idx,
 	"string",
 	"string",
 	core.TokenKindKeyword,
@@ -522,26 +233,10 @@ var Token_STRING = core.NewTokenType(
 	[]rune{'s'},
 )
 
-const Token_TOKEN_Idx = 33
+const Keyword_LeftBrace_Idx = 15
 
-var Token_TOKEN = core.NewTokenType(
-	Token_TOKEN_Idx,
-	"token",
-	"token",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "token") {
-			return 5
-		}
-		return 0
-	},
-	[]rune{'t'},
-)
-
-const Token_LEFTBRACE_Idx = 34
-
-var Token_LEFTBRACE = core.NewTokenType(
-	Token_LEFTBRACE_Idx,
+var Keyword_LeftBrace = core.NewTokenType(
+	Keyword_LeftBrace_Idx,
 	"{",
 	"{",
 	core.TokenKindKeyword,
@@ -554,10 +249,154 @@ var Token_LEFTBRACE = core.NewTokenType(
 	[]rune{'{'},
 )
 
-const Token_PIPE_Idx = 35
+const Keyword_LeftParen_Idx = 16
 
-var Token_PIPE = core.NewTokenType(
-	Token_PIPE_Idx,
+var Keyword_LeftParen = core.NewTokenType(
+	Keyword_LeftParen_Idx,
+	"(",
+	"(",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "(") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'('},
+)
+
+const Keyword_RightParen_Idx = 17
+
+var Keyword_RightParen = core.NewTokenType(
+	Keyword_RightParen_Idx,
+	")",
+	")",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], ")") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{')'},
+)
+
+const Keyword_Question_Idx = 18
+
+var Keyword_Question = core.NewTokenType(
+	Keyword_Question_Idx,
+	"?",
+	"?",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "?") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'?'},
+)
+
+const Keyword_QuestionEquals_Idx = 19
+
+var Keyword_QuestionEquals = core.NewTokenType(
+	Keyword_QuestionEquals_Idx,
+	"?=",
+	"?=",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "?=") {
+			return 2
+		}
+		return 0
+	},
+	[]rune{'?'},
+)
+
+const Keyword_RightBracket_Idx = 20
+
+var Keyword_RightBracket = core.NewTokenType(
+	Keyword_RightBracket_Idx,
+	"]",
+	"]",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "]") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{']'},
+)
+
+const Keyword_interface_Idx = 21
+
+var Keyword_interface = core.NewTokenType(
+	Keyword_interface_Idx,
+	"interface",
+	"interface",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "interface") {
+			return 9
+		}
+		return 0
+	},
+	[]rune{'i'},
+)
+
+const Keyword_RightBrace_Idx = 22
+
+var Keyword_RightBrace = core.NewTokenType(
+	Keyword_RightBrace_Idx,
+	"}",
+	"}",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "}") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'}'},
+)
+
+const Keyword_Asterisk_Idx = 23
+
+var Keyword_Asterisk = core.NewTokenType(
+	Keyword_Asterisk_Idx,
+	"*",
+	"*",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "*") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'*'},
+)
+
+const Keyword_current_Idx = 24
+
+var Keyword_current = core.NewTokenType(
+	Keyword_current_Idx,
+	"current",
+	"current",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "current") {
+			return 7
+		}
+		return 0
+	},
+	[]rune{'c'},
+)
+
+const Keyword_Pipe_Idx = 25
+
+var Keyword_Pipe = core.NewTokenType(
+	Keyword_Pipe_Idx,
 	"|",
 	"|",
 	core.TokenKindKeyword,
@@ -570,21 +409,325 @@ var Token_PIPE = core.NewTokenType(
 	[]rune{'|'},
 )
 
-const Token_RIGHTBRACE_Idx = 36
+const Keyword_DashGreaterThan_Idx = 26
 
-var Token_RIGHTBRACE = core.NewTokenType(
-	Token_RIGHTBRACE_Idx,
-	"}",
-	"}",
+var Keyword_DashGreaterThan = core.NewTokenType(
+	Keyword_DashGreaterThan_Idx,
+	"->",
+	"->",
 	core.TokenKindKeyword,
 	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "}") {
+		if strings.HasPrefix(text[offset:], "->") {
+			return 2
+		}
+		return 0
+	},
+	[]rune{'-'},
+)
+
+const Keyword_extends_Idx = 27
+
+var Keyword_extends = core.NewTokenType(
+	Keyword_extends_Idx,
+	"extends",
+	"extends",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "extends") {
+			return 7
+		}
+		return 0
+	},
+	[]rune{'e'},
+)
+
+const Keyword_pop_Idx = 28
+
+var Keyword_pop = core.NewTokenType(
+	Keyword_pop_Idx,
+	"pop",
+	"pop",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "pop") {
+			return 3
+		}
+		return 0
+	},
+	[]rune{'p'},
+)
+
+const Keyword_Semicolon_Idx = 29
+
+var Keyword_Semicolon = core.NewTokenType(
+	Keyword_Semicolon_Idx,
+	";",
+	";",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], ";") {
 			return 1
 		}
 		return 0
 	},
-	[]rune{'}'},
+	[]rune{';'},
 )
+
+const Keyword_Equals_Idx = 30
+
+var Keyword_Equals = core.NewTokenType(
+	Keyword_Equals_Idx,
+	"=",
+	"=",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "=") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'='},
+)
+
+const Keyword_comment_Idx = 31
+
+var Keyword_comment = core.NewTokenType(
+	Keyword_comment_Idx,
+	"comment",
+	"comment",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "comment") {
+			return 7
+		}
+		return 0
+	},
+	[]rune{'c'},
+)
+
+const Keyword_group_Idx = 32
+
+var Keyword_group = core.NewTokenType(
+	Keyword_group_Idx,
+	"group",
+	"group",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "group") {
+			return 5
+		}
+		return 0
+	},
+	[]rune{'g'},
+)
+
+const Keyword_hidden_Idx = 33
+
+var Keyword_hidden = core.NewTokenType(
+	Keyword_hidden_Idx,
+	"hidden",
+	"hidden",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "hidden") {
+			return 6
+		}
+		return 0
+	},
+	[]rune{'h'},
+)
+
+const Keyword_push_Idx = 34
+
+var Keyword_push = core.NewTokenType(
+	Keyword_push_Idx,
+	"push",
+	"push",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "push") {
+			return 4
+		}
+		return 0
+	},
+	[]rune{'p'},
+)
+
+const Keyword_returns_Idx = 35
+
+var Keyword_returns = core.NewTokenType(
+	Keyword_returns_Idx,
+	"returns",
+	"returns",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "returns") {
+			return 7
+		}
+		return 0
+	},
+	[]rune{'r'},
+)
+
+const Keyword_token_Idx = 36
+
+var Keyword_token = core.NewTokenType(
+	Keyword_token_Idx,
+	"token",
+	"token",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "token") {
+			return 5
+		}
+		return 0
+	},
+	[]rune{'t'},
+)
+
+const Token_ARROW_Idx = Keyword_DashGreaterThan_Idx
+
+var Token_ARROW = Keyword_DashGreaterThan
+
+const Token_LEFTPAREN_Idx = Keyword_LeftParen_Idx
+
+var Token_LEFTPAREN = Keyword_LeftParen
+
+const Token_RIGHTPAREN_Idx = Keyword_RightParen_Idx
+
+var Token_RIGHTPAREN = Keyword_RightParen
+
+const Token_ASTERISK_Idx = Keyword_Asterisk_Idx
+
+var Token_ASTERISK = Keyword_Asterisk
+
+const Token_PLUS_Idx = Keyword_Plus_Idx
+
+var Token_PLUS = Keyword_Plus
+
+const Token_PLUS_EQUALS_Idx = Keyword_PlusEquals_Idx
+
+var Token_PLUS_EQUALS = Keyword_PlusEquals
+
+const Token_COMMA_Idx = Keyword_Comma_Idx
+
+var Token_COMMA = Keyword_Comma
+
+const Token_DOT_Idx = Keyword_Dot_Idx
+
+var Token_DOT = Keyword_Dot
+
+const Token_COLON_Idx = Keyword_Colon_Idx
+
+var Token_COLON = Keyword_Colon
+
+const Token_SEMICOLON_Idx = Keyword_Semicolon_Idx
+
+var Token_SEMICOLON = Keyword_Semicolon
+
+const Token_EQUALS_Idx = Keyword_Equals_Idx
+
+var Token_EQUALS = Keyword_Equals
+
+const Token_QUESTION_Idx = Keyword_Question_Idx
+
+var Token_QUESTION = Keyword_Question
+
+const Token_QUESTION_EQUALS_Idx = Keyword_QuestionEquals_Idx
+
+var Token_QUESTION_EQUALS = Keyword_QuestionEquals
+
+const Token_LEFTBRACKET_Idx = Keyword_LeftBracket_Idx
+
+var Token_LEFTBRACKET = Keyword_LeftBracket
+
+const Token_RIGHTBRACKET_Idx = Keyword_RightBracket_Idx
+
+var Token_RIGHTBRACKET = Keyword_RightBracket
+
+const Token_BOOL_Idx = Keyword_bool_Idx
+
+var Token_BOOL = Keyword_bool
+
+const Token_COMMENT_Idx = Keyword_comment_Idx
+
+var Token_COMMENT = Keyword_comment
+
+const Token_COMPOSITE_Idx = Keyword_composite_Idx
+
+var Token_COMPOSITE = Keyword_composite
+
+const Token_CURRENT_Idx = Keyword_current_Idx
+
+var Token_CURRENT = Keyword_current
+
+const Token_DEFAULT_Idx = Keyword_default_Idx
+
+var Token_DEFAULT = Keyword_default
+
+const Token_ENTRY_Idx = Keyword_entry_Idx
+
+var Token_ENTRY = Keyword_entry
+
+const Token_EXTENDS_Idx = Keyword_extends_Idx
+
+var Token_EXTENDS = Keyword_extends
+
+const Token_GRAMMAR_Idx = Keyword_grammar_Idx
+
+var Token_GRAMMAR = Keyword_grammar
+
+const Token_GROUP_Idx = Keyword_group_Idx
+
+var Token_GROUP = Keyword_group
+
+const Token_HIDDEN_Idx = Keyword_hidden_Idx
+
+var Token_HIDDEN = Keyword_hidden
+
+const Token_INTERFACE_Idx = Keyword_interface_Idx
+
+var Token_INTERFACE = Keyword_interface
+
+const Token_KEYWORDS_Idx = Keyword_keywords_Idx
+
+var Token_KEYWORDS = Keyword_keywords
+
+const Token_MODE_Idx = Keyword_mode_Idx
+
+var Token_MODE = Keyword_mode
+
+const Token_POP_Idx = Keyword_pop_Idx
+
+var Token_POP = Keyword_pop
+
+const Token_PUSH_Idx = Keyword_push_Idx
+
+var Token_PUSH = Keyword_push
+
+const Token_RETURNS_Idx = Keyword_returns_Idx
+
+var Token_RETURNS = Keyword_returns
+
+const Token_STRING_Idx = Keyword_string_Idx
+
+var Token_STRING = Keyword_string
+
+const Token_TOKEN_Idx = Keyword_token_Idx
+
+var Token_TOKEN = Keyword_token
+
+const Token_LEFTBRACE_Idx = Keyword_LeftBrace_Idx
+
+var Token_LEFTBRACE = Keyword_LeftBrace
+
+const Token_PIPE_Idx = Keyword_Pipe_Idx
+
+var Token_PIPE = Keyword_Pipe
+
+const Token_RIGHTBRACE_Idx = Keyword_RightBrace_Idx
+
+var Token_RIGHTBRACE = Keyword_RightBrace
 
 const Token_SL_COMMENT_Idx = 37
 

@@ -529,7 +529,7 @@ func (p *CompletionParser) ParseTokenMode() {
 	{
 		p.state.Consume(Token_MODE)
 	}
-	switch prediction, failure := p.lookahead.TokenModeAlternatives_0(p.state); prediction {
+	switch prediction, failure := p.lookahead.TokenModeAlternatives(p.state); prediction {
 	case 0:
 		{
 			p.cp.MarkAssignment("Name")
@@ -548,43 +548,89 @@ func (p *CompletionParser) ParseTokenMode() {
 	{
 		p.state.Consume(Token_LEFTBRACE)
 	}
-	p.cp.RecordSnapshot(StateNumber__TokenMode__LoopEntry)
-	p.state.Sync(StateNumber__TokenMode__LoopEntry)
-	for p.lookahead.TokenModeLoop(p.state) {
-		switch prediction, failure := p.lookahead.TokenModeAlternatives_1(p.state); prediction {
-		case 0:
-			{
-				p.cp.MarkAssignment("TokenRefs")
-				p.state.EnterRule(StateNumber__TokenMode__Basic_4)
-				p.ParseTokenUsage()
-				p.state.ExitRule()
-				p.cp.ClearAssignment()
-			}
-		case 1:
-			{
-				p.cp.MarkAssignment("Keywords")
-				p.state.EnterRule(StateNumber__TokenMode__Basic_6)
-				p.ParseKeywordUsage()
-				p.state.ExitRule()
-				p.cp.ClearAssignment()
-			}
-		case 2:
-			{
-				p.state.Consume(Token_KEYWORDS)
-			}
-			{
-				p.cp.MarkAssignment("KeywordSelectors")
-				p.state.Consume(Token_RegexLiteral)
-				p.cp.ClearAssignment()
-			}
-		default:
-			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
-		}
+	{
 		p.cp.RecordSnapshot(StateNumber__TokenMode__LoopEntry)
 		p.state.Sync(StateNumber__TokenMode__LoopEntry)
+		for p.lookahead.TokenModeMembersLoop(p.state) {
+			p.cp.MarkAssignment("Members")
+			p.state.EnterRule(StateNumber__TokenMode__Basic_4)
+			p.ParseTokenModeMember()
+			p.state.ExitRule()
+			p.cp.ClearAssignment()
+			p.cp.RecordSnapshot(StateNumber__TokenMode__LoopEntry)
+			p.state.Sync(StateNumber__TokenMode__LoopEntry)
+		}
 	}
 	{
 		p.state.Consume(Token_RIGHTBRACE)
+	}
+}
+
+func (p *CompletionParser) ParseTokenModeMember() {
+	p.cp.EnterRule("TokenModeMember", StateNumber__TokenModeMember__Start)
+	defer p.cp.ExitRule()
+	switch prediction, failure := p.lookahead.TokenModeMemberAlternatives(p.state); prediction {
+	case 0:
+		{
+			p.state.EnterRule(StateNumber__TokenModeMember__Basic_1)
+			p.ParseTokenDeclUsage()
+			p.state.ExitRule()
+		}
+	case 1:
+		{
+			p.state.EnterRule(StateNumber__TokenModeMember__Basic_3)
+			p.ParseTokenUsage()
+			p.state.ExitRule()
+		}
+	case 2:
+		{
+			p.state.EnterRule(StateNumber__TokenModeMember__Basic_5)
+			p.ParseKeywordUsage()
+			p.state.ExitRule()
+		}
+	case 3:
+		{
+			p.state.EnterRule(StateNumber__TokenModeMember__Basic_7)
+			p.ParseKeywordSelector()
+			p.state.ExitRule()
+		}
+	default:
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+	}
+}
+
+func (p *CompletionParser) ParseTokenDeclUsage() {
+	p.cp.EnterRule("TokenDeclUsage", StateNumber__TokenDeclUsage__Start)
+	defer p.cp.ExitRule()
+	{
+		p.cp.RecordSnapshot(StateNumber__TokenDeclUsage__Basic_2)
+		p.state.Sync(StateNumber__TokenDeclUsage__Basic_2)
+		if p.lookahead.TokenDeclUsageTypeOptional(p.state) {
+			p.cp.MarkAssignment("Type")
+			p.state.Consume(TokenGroup_GroupType)
+			p.cp.ClearAssignment()
+		}
+	}
+	{
+		p.cp.MarkAssignment("Name")
+		p.state.Consume(Token_ID)
+		p.cp.ClearAssignment()
+	}
+	{
+		p.cp.RecordSnapshot(StateNumber__TokenDeclUsage__Basic_5)
+		p.state.Sync(StateNumber__TokenDeclUsage__Basic_5)
+		if p.lookahead.TokenDeclUsageCommandOptional(p.state) {
+			p.cp.MarkAssignment("Command")
+			p.state.EnterRule(StateNumber__TokenDeclUsage__Basic_4)
+			p.ParseTokenCommand()
+			p.state.ExitRule()
+			p.cp.ClearAssignment()
+		}
+	}
+	{
+		if p.lookahead.TokenDeclUsageOptional(p.state) {
+			p.state.Consume(Token_SEMICOLON)
+		}
 	}
 }
 
@@ -655,6 +701,24 @@ func (p *CompletionParser) ParseKeywordUsage() {
 	}
 	{
 		if p.lookahead.KeywordUsageOptional(p.state) {
+			p.state.Consume(Token_SEMICOLON)
+		}
+	}
+}
+
+func (p *CompletionParser) ParseKeywordSelector() {
+	p.cp.EnterRule("KeywordSelector", StateNumber__KeywordSelector__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Token_KEYWORDS)
+	}
+	{
+		p.cp.MarkAssignment("Selector")
+		p.state.Consume(Token_RegexLiteral)
+		p.cp.ClearAssignment()
+	}
+	{
+		if p.lookahead.KeywordSelectorOptional(p.state) {
 			p.state.Consume(Token_SEMICOLON)
 		}
 	}

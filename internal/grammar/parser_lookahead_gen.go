@@ -8,83 +8,83 @@ import (
 )
 
 const (
-	DecisionCompositeGroupElementsLoop = 46
-	DecisionCompositeGroupOptional     = 47
-	DecisionElementAlternatives        = 33
-	DecisionGrammarAlternatives        = 1
-	DecisionGroupElementsLoop          = 31
-	DecisionGroupOptional              = 32
-	DecisionTokenModeAlternatives_1    = 21
+	DecisionCompositeGroupElementsLoop  = 50
+	DecisionCompositeGroupOptional      = 51
+	DecisionElementAlternatives         = 37
+	DecisionGrammarAlternatives         = 1
+	DecisionGroupElementsLoop           = 35
+	DecisionGroupOptional               = 36
+	DecisionTokenModeMemberAlternatives = 22
 )
 
 var ActionOperatorAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_PLUS_EQUALS, Token_EQUALS},
-	Lookup: []int{6: 1, 11: 2},
+	Lookup: []int{42: 1, 47: 2},
 }
 
 var AssignableAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_StringLiteral, Token_ID, Token_LEFTBRACKET, Token_LEFTPAREN},
-	Lookup: []int{2: 4, 14: 3, 39: 1, 40: 2},
+	Lookup: []int{38: 4, 50: 3, 75: 1, 76: 2},
 }
 
 var AssignableWithoutAltsAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_StringLiteral, Token_ID, Token_LEFTBRACKET},
-	Lookup: []int{14: 3, 39: 1, 40: 2},
+	Lookup: []int{50: 3, 75: 1, 76: 2},
 }
 
 var AssignmentOperatorAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_PLUS_EQUALS, Token_EQUALS, Token_QUESTION_EQUALS},
-	Lookup: []int{6: 1, 11: 2, 13: 3},
+	Lookup: []int{42: 1, 47: 2, 49: 3},
 }
 
 var CompositeElementAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_StringLiteral, Token_ID, Token_LEFTPAREN},
-	Lookup: []int{2: 3, 39: 1, 40: 2},
+	Lookup: []int{38: 3, 75: 1, 76: 2},
 }
 
 var FieldTypeAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_ASTERISK, Token_LEFTBRACKET, Token_BOOL, Token_COMPOSITE, Token_STRING},
-	Lookup: []int{4: 2, 14: 3, 16: 4, 18: 4, 32: 4, 40: 1},
+	Lookup: []int{40: 2, 50: 3, 52: 4, 54: 4, 68: 4, 76: 1},
 }
 
 var GrammarLoop = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_COMPOSITE, Token_ENTRY, Token_INTERFACE, Token_TOKEN, Token_ID, TokenGroup_GroupType},
-	Lookup: []int{17: 1, 18: 1, 21: 1, 25: 1, 26: 1, 33: 1, 40: 1},
+	Lookup: []int{53: 1, 54: 1, 57: 1, 61: 1, 62: 1, 69: 1, 76: 1},
 }
 
 var PrimitiveTypeTypeAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_STRING, Token_BOOL, Token_COMPOSITE},
-	Lookup: []int{16: 2, 18: 3, 32: 1},
+	Lookup: []int{52: 2, 54: 3, 68: 1},
 }
 
 var TokenCommandAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_DEFAULT},
-	Lookup: []int{20: 2, 40: 1},
+	Lookup: []int{56: 2, 76: 1},
 }
 
 var TokenCommandTypeAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_PUSH, Token_POP, Token_MODE},
-	Lookup: []int{28: 3, 29: 2, 30: 1},
+	Lookup: []int{64: 3, 65: 2, 66: 1},
 }
 
 var TokenElementAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_RegexLiteral, Token_StringLiteral},
-	Lookup: []int{39: 2, 41: 1},
+	Lookup: []int{75: 2, 77: 1},
 }
 
 var TokenGroupAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_StringLiteral, Token_KEYWORDS},
-	Lookup: []int{27: 3, 39: 2, 40: 1},
+	Lookup: []int{63: 3, 75: 2, 76: 1},
 }
 
-var TokenModeAlternatives_0 = parser.LL1Lookahead{
+var TokenModeAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_DEFAULT},
-	Lookup: []int{20: 2, 40: 1},
+	Lookup: []int{56: 2, 76: 1},
 }
 
-var TokenModeLoop = parser.LL1Lookahead{
+var TokenModeMembersLoop = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_KEYWORDS, Token_StringLiteral, Token_ID, TokenGroup_GroupType},
-	Lookup: []int{17: 1, 25: 1, 27: 1, 39: 1, 40: 1},
+	Lookup: []int{53: 1, 61: 1, 63: 1, 75: 1, 76: 1},
 }
 
 // FastbeltParserLookahead abstracts every lookahead/prediction decision performed by
@@ -122,6 +122,7 @@ type FastbeltParserLookahead interface {
 	InterfaceFieldsLoop(state *parser.ParserState) bool
 	InterfaceLoop(state *parser.ParserState) bool
 	InterfaceOptional(state *parser.ParserState) bool
+	KeywordSelectorOptional(state *parser.ParserState) bool
 	KeywordUsageCommandOptional(state *parser.ParserState) bool
 	KeywordUsageOptional(state *parser.ParserState) bool
 	KeywordUsageTypeOptional(state *parser.ParserState) bool
@@ -135,11 +136,14 @@ type FastbeltParserLookahead interface {
 	TokenDeclCommandOptional(state *parser.ParserState) bool
 	TokenDeclOptional(state *parser.ParserState) bool
 	TokenDeclTypeOptional(state *parser.ParserState) bool
+	TokenDeclUsageCommandOptional(state *parser.ParserState) bool
+	TokenDeclUsageOptional(state *parser.ParserState) bool
+	TokenDeclUsageTypeOptional(state *parser.ParserState) bool
 	TokenElementAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	TokenGroupAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
-	TokenModeAlternatives_0(state *parser.ParserState) (int, *parser.PredictionFailure)
-	TokenModeAlternatives_1(state *parser.ParserState) (int, *parser.PredictionFailure)
-	TokenModeLoop(state *parser.ParserState) bool
+	TokenModeAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
+	TokenModeMemberAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
+	TokenModeMembersLoop(state *parser.ParserState) bool
 	TokenUsageCommandOptional(state *parser.ParserState) bool
 	TokenUsageOptional(state *parser.ParserState) bool
 	TokenUsageTypeOptional(state *parser.ParserState) bool
@@ -272,6 +276,10 @@ func (l *DefaultFastbeltParserLookahead) InterfaceOptional(state *parser.ParserS
 	return state.LA(1).Type == Token_EXTENDS
 }
 
+func (l *DefaultFastbeltParserLookahead) KeywordSelectorOptional(state *parser.ParserState) bool {
+	return state.LA(1).Type == Token_SEMICOLON
+}
+
 func (l *DefaultFastbeltParserLookahead) KeywordUsageCommandOptional(state *parser.ParserState) bool {
 	return state.LA(1).Type == Token_ARROW
 }
@@ -324,6 +332,18 @@ func (l *DefaultFastbeltParserLookahead) TokenDeclTypeOptional(state *parser.Par
 	return TokenGroup_GroupType.Matches(state.LA(1).Type)
 }
 
+func (l *DefaultFastbeltParserLookahead) TokenDeclUsageCommandOptional(state *parser.ParserState) bool {
+	return state.LA(1).Type == Token_ARROW
+}
+
+func (l *DefaultFastbeltParserLookahead) TokenDeclUsageOptional(state *parser.ParserState) bool {
+	return state.LA(1).Type == Token_SEMICOLON
+}
+
+func (l *DefaultFastbeltParserLookahead) TokenDeclUsageTypeOptional(state *parser.ParserState) bool {
+	return TokenGroup_GroupType.Matches(state.LA(1).Type)
+}
+
 func (l *DefaultFastbeltParserLookahead) TokenElementAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
 	return state.Lookahead(TokenElementAlternatives)
 }
@@ -332,16 +352,16 @@ func (l *DefaultFastbeltParserLookahead) TokenGroupAlternatives(state *parser.Pa
 	return state.Lookahead(TokenGroupAlternatives)
 }
 
-func (l *DefaultFastbeltParserLookahead) TokenModeAlternatives_0(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.Lookahead(TokenModeAlternatives_0)
+func (l *DefaultFastbeltParserLookahead) TokenModeAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+	return state.Lookahead(TokenModeAlternatives)
 }
 
-func (l *DefaultFastbeltParserLookahead) TokenModeAlternatives_1(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.AdaptivePredict(DecisionTokenModeAlternatives_1, l.PredictionMode())
+func (l *DefaultFastbeltParserLookahead) TokenModeMemberAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+	return state.AdaptivePredict(DecisionTokenModeMemberAlternatives, l.PredictionMode())
 }
 
-func (l *DefaultFastbeltParserLookahead) TokenModeLoop(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(TokenModeLoop)
+func (l *DefaultFastbeltParserLookahead) TokenModeMembersLoop(state *parser.ParserState) bool {
+	prediction, _ := state.Lookahead(TokenModeMembersLoop)
 	return prediction == 0
 }
 
