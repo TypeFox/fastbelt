@@ -20,7 +20,6 @@ import (
 )
 
 type TokenType struct {
-	Index      int
 	TokenIndex int
 	VarName    string
 	Name       string
@@ -62,14 +61,6 @@ func (r GenerateTokenTypesResult) TokenTypeIds() map[string]int {
 	return tokenTypeIds
 }
 
-func (r GenerateTokenTypesResult) TokenTypeVarNames() []string {
-	tokenTypeNames := []string{}
-	for _, tokenType := range r.TokenTypes {
-		tokenTypeNames = append(tokenTypeNames, tokenType.VarName)
-	}
-	return tokenTypeNames
-}
-
 // TokenTypeVarNamesByTokenIndex returns a slice mapping runtime token id
 // (TokenIndex) to a token var name. Keyword-backed tokens alias their keyword
 // and share its id; later entries (token declarations, groups) override the
@@ -106,13 +97,12 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	tokenIndex := 1
 	// keywordTokenIndex records the runtime token id (TokenIndex) assigned to
 	// each keyword node, so keyword-backed tokens can alias to the correct id.
-	keywordTokenIndex := map[grammar.Keyword]int{}
-	for index, keyword := range keywords.Keywords {
+	keywordTokenIndex := map[string]int{}
+	for _, keyword := range keywords.Keywords {
 		code := generateKeywordTokenType(keyword, tokenIndex)
 		mergeImports(&result.Imports, code.Imports)
-		keywordTokenIndex[keyword] = tokenIndex
+		keywordTokenIndex[keyword.Value()] = tokenIndex
 		result.TokenTypes = append(result.TokenTypes, TokenType{
-			Index:      index,
 			TokenIndex: tokenIndex,
 			VarName:    GeneratedTokenName(keyword),
 			Name:       keyword.Value(),
@@ -132,9 +122,8 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 			code.AppendLine()
 			code.AppendLine("var ", varName, " = ", GeneratedTokenName(keyword))
 			mergeImports(&result.Imports, map[string]bool{})
-			keywordsTokenIndex := keywordTokenIndex[keyword]
+			keywordsTokenIndex := keywordTokenIndex[keyword.Value()]
 			result.TokenTypes = append(result.TokenTypes, TokenType{
-				Index:      index,
 				TokenIndex: keywordsTokenIndex,
 				VarName:    varName,
 				Name:       token.Name(),
@@ -144,7 +133,6 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 			lexerResult := generateRegexpTokenElement(token, element, tokenIndex)
 			mergeImports(&result.Imports, lexerResult.Imports)
 			result.TokenTypes = append(result.TokenTypes, TokenType{
-				Index:      index,
 				TokenIndex: tokenIndex,
 				VarName:    varName,
 				Name:       token.Name(),
@@ -170,7 +158,6 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		lexerResult := generateTokenGroupType(tokenGroup, tokenGroupMembers, tokenIndex)
 		mergeImports(&result.Imports, lexerResult.Imports)
 		result.TokenTypes = append(result.TokenTypes, TokenType{
-			Index:      index,
 			TokenIndex: tokenIndex,
 			VarName:    GeneratedTokenName(tokenGroup),
 			Name:       tokenGroup.Name(),
