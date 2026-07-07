@@ -57,9 +57,8 @@ func WriteSB(sb *strings.Builder, texts ...string) {
 }
 
 type GetAllKeywordsResult struct {
-	Keywords  []grammar.Keyword
-	ByValue   map[string]int
-	ByAstNode map[grammar.Keyword]int
+	Keywords []grammar.Keyword
+	ByValue  map[string]int
 }
 
 func GetAllKeywords(grammr grammar.Grammar) GetAllKeywordsResult {
@@ -86,15 +85,9 @@ func keysFromMap(m map[string]grammar.Keyword, allNodes []grammar.Keyword) GetAl
 	for i, k := range keywords {
 		byValue[k.Value()] = i
 	}
-	byAstNode := map[grammar.Keyword]int{}
-	for _, k := range allNodes {
-		index := byValue[k.Value()]
-		byAstNode[k] = index
-	}
 	return GetAllKeywordsResult{
-		Keywords:  keywords,
-		ByValue:   byValue,
-		ByAstNode: byAstNode,
+		Keywords: keywords,
+		ByValue:  byValue,
 	}
 }
 

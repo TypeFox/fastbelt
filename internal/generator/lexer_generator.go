@@ -41,8 +41,8 @@ type TokenMode struct {
 
 type GenerateTokenTypesResult struct {
 	Imports         map[string]bool
+	Keywords        GetAllKeywordsResult
 	Tokens          map[grammar.TokenDecl]int
-	Keywords        map[grammar.Keyword]int
 	TokenGroups     map[grammar.TokenGroup]int
 	TokenTypes      []TokenType
 	TokenTypeUsages map[int]TokenTypeUsage
@@ -94,8 +94,8 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	tokenGroups := grammr.TokenGroups()
 	result := GenerateTokenTypesResult{
 		Imports:         map[string]bool{},
+		Keywords:        keywords,
 		Tokens:          make(map[grammar.TokenDecl]int),
-		Keywords:        keywords.ByAstNode,
 		TokenGroups:     make(map[grammar.TokenGroup]int),
 		TokenTypes:      make([]TokenType, 0),
 		TokenTypeUsages: make(map[int]TokenTypeUsage),
@@ -107,7 +107,7 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	// keywordTokenIndex records the runtime token id (TokenIndex) assigned to
 	// each keyword node, so keyword-backed tokens can alias to the correct id.
 	keywordTokenIndex := map[grammar.Keyword]int{}
-	for keyword, index := range keywords.ByAstNode {
+	for index, keyword := range keywords.Keywords {
 		code := generateKeywordTokenType(keyword, tokenIndex)
 		mergeImports(&result.Imports, code.Imports)
 		keywordTokenIndex[keyword] = tokenIndex
