@@ -131,23 +131,28 @@ TokenGroup: TOKEN GROUP Name=ID LEFTBRACE
 RIGHTBRACE
 
 interface TokenMode {
-    Name             string
-    Default          bool
-    TokenDecls       []TokenDecl
-    TokenRefs        []TokenUsage
-    Keywords         []KeywordUsage
-    KeywordSelectors []string
+    Name    string
+    Default bool
+    Members []TokenModeMember
 }
 
 TokenMode: TOKEN MODE (Name=ID | Default?=DEFAULT) LEFTBRACE
-    (
-        TokenRefs+=TokenUsage
-        | Keywords+=KeywordUsage
-        | KEYWORDS KeywordSelectors+=RegexLiteral
-    )*
+    Members+=TokenModeMember*
 RIGHTBRACE
 
-interface TokenUsage {
+interface TokenModeMember {}
+
+TokenModeMember: TokenDeclUsage | TokenUsage | KeywordUsage | KeywordSelector
+
+interface TokenDeclUsage extends TokenModeMember {
+    Type    string
+    Name    string
+    Command TokenCommand
+}
+
+TokenDeclUsage: Type=GroupType? Name=ID Command=TokenCommand? SEMICOLON?
+
+interface TokenUsage extends TokenModeMember {
     Type     string
     TokenRef *AbstractTokenRule
     Command  TokenCommand
@@ -155,13 +160,19 @@ interface TokenUsage {
 
 TokenUsage: Type=GroupType? TokenRef=[AbstractTokenRule:ID] Command=TokenCommand? SEMICOLON?
 
-interface KeywordUsage {
+interface KeywordUsage extends TokenModeMember {
     Type    string
     Keyword Keyword
     Command TokenCommand  
 }
 
 KeywordUsage: Type=GroupType? Keyword=Keyword Command=TokenCommand? SEMICOLON?
+
+interface KeywordSelector extends TokenModeMember {
+    Selector string
+}
+
+KeywordSelector: KEYWORDS Selector=RegexLiteral SEMICOLON?
 
 interface Element {
     Cardinality string
