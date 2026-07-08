@@ -3,6 +3,9 @@
 package lookahead
 
 import (
+	"fmt"
+	"unique"
+
 	core "typefox.dev/fastbelt"
 )
 
@@ -36,13 +39,13 @@ func NewObjData() ObjData {
 
 func (i *ObjData) IsObj() {}
 
-func (i *ObjData) ForEachNode(fn func(core.AstNode)) {
+func (i *ObjData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.node != nil {
-		fn(i.node)
+		fn(i.node, fieldNameNode, -1)
 	}
 }
 
-func (i *ObjData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ObjData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *ObjData) Value() string {
@@ -82,12 +85,28 @@ type ObjImpl struct {
 	ObjData
 }
 
-func (i *ObjImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *ObjImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
 }
 
-func (i *ObjImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ObjImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
+}
+
+func (i *ObjImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameNode:
+		return nil, fmt.Errorf("ObjImpl.Resolve: field 'node' holds a primitive value instead of an ast node")
+	case fieldNameValue:
+		return nil, fmt.Errorf("ObjImpl.Resolve: field 'value' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("ObjImpl.Resolve: field '%s' does not exist in node '%s' of type 'Obj'", field.Value(), nodePath)
+	}
 }
 
 type Root interface {
@@ -115,13 +134,13 @@ func NewRootData() RootData {
 
 func (i *RootData) IsRoot() {}
 
-func (i *RootData) ForEachNode(fn func(core.AstNode)) {
+func (i *RootData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.item != nil {
-		fn(i.item)
+		fn(i.item, fieldNameItem, -1)
 	}
 }
 
-func (i *RootData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *RootData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *RootData) Item() Obj {
@@ -141,12 +160,31 @@ type RootImpl struct {
 	RootData
 }
 
-func (i *RootImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *RootImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.RootData.ForEachNode(fn)
 }
 
-func (i *RootImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *RootImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.RootData.ForEachReference(fn)
+}
+
+func (i *RootImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameItem:
+		if i.Item() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("RootImpl.Resolve: field 'item' is nil in node '%s'", nodePath)
+		}
+		child := i.Item()
+		return child.Resolve(path.Tail())
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("RootImpl.Resolve: field '%s' does not exist in node '%s' of type 'Root'", field.Value(), nodePath)
+	}
 }
 
 type B interface {
@@ -177,10 +215,10 @@ func NewBData() BData {
 
 func (i *BData) IsB() {}
 
-func (i *BData) ForEachNode(fn func(core.AstNode)) {
+func (i *BData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *BData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *BData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *BData) Post() string {
@@ -205,15 +243,40 @@ type BImpl struct {
 	BData
 }
 
-func (i *BImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *BImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
 	i.BData.ForEachNode(fn)
 }
 
-func (i *BImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *BImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
 	i.BData.ForEachReference(fn)
 }
+
+func (i *BImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameNode:
+		return nil, fmt.Errorf("BImpl.Resolve: field 'node' holds a primitive value instead of an ast node")
+	case fieldNamePost:
+		return nil, fmt.Errorf("BImpl.Resolve: field 'post' holds a primitive value instead of an ast node")
+	case fieldNameValue:
+		return nil, fmt.Errorf("BImpl.Resolve: field 'value' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("BImpl.Resolve: field '%s' does not exist in node '%s' of type 'B'", field.Value(), nodePath)
+	}
+}
+
+var (
+	fieldNameItem  = unique.Make("item")
+	fieldNameNode  = unique.Make("node")
+	fieldNamePost  = unique.Make("post")
+	fieldNameValue = unique.Make("value")
+)
 
 var LookaheadSyntheticFactories = map[string]func() core.AstNode{
 	"B":    func() core.AstNode { return NewB() },

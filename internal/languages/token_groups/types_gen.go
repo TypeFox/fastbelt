@@ -3,6 +3,9 @@
 package token_groups
 
 import (
+	"fmt"
+	"unique"
+
 	core "typefox.dev/fastbelt"
 )
 
@@ -31,13 +34,13 @@ func NewModelData() ModelData {
 
 func (i *ModelData) IsModel() {}
 
-func (i *ModelData) ForEachNode(fn func(core.AstNode)) {
+func (i *ModelData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.item != nil {
-		fn(i.item)
+		fn(i.item, fieldNameItem, -1)
 	}
 }
 
-func (i *ModelData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ModelData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *ModelData) Item() Item {
@@ -57,12 +60,31 @@ type ModelImpl struct {
 	ModelData
 }
 
-func (i *ModelImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *ModelImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ModelData.ForEachNode(fn)
 }
 
-func (i *ModelImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ModelImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ModelData.ForEachReference(fn)
+}
+
+func (i *ModelImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameItem:
+		if i.Item() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("ModelImpl.Resolve: field 'item' is nil in node '%s'", nodePath)
+		}
+		child := i.Item()
+		return child.Resolve(path.Tail())
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("ModelImpl.Resolve: field '%s' does not exist in node '%s' of type 'Model'", field.Value(), nodePath)
+	}
 }
 
 type Item interface {
@@ -91,10 +113,10 @@ func NewItemData() ItemData {
 
 func (i *ItemData) IsItem() {}
 
-func (i *ItemData) ForEachNode(fn func(core.AstNode)) {
+func (i *ItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *ItemData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *ItemData) Value() string {
@@ -118,12 +140,26 @@ type ItemImpl struct {
 	ItemData
 }
 
-func (i *ItemImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *ItemImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ItemData.ForEachNode(fn)
 }
 
-func (i *ItemImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ItemData.ForEachReference(fn)
+}
+
+func (i *ItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameValue:
+		return nil, fmt.Errorf("ItemImpl.Resolve: field 'value' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("ItemImpl.Resolve: field '%s' does not exist in node '%s' of type 'Item'", field.Value(), nodePath)
+	}
 }
 
 type Recovery interface {
@@ -158,10 +194,10 @@ func NewRecoveryData() RecoveryData {
 
 func (i *RecoveryData) IsRecovery() {}
 
-func (i *RecoveryData) ForEachNode(fn func(core.AstNode)) {
+func (i *RecoveryData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *RecoveryData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *RecoveryData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *RecoveryData) First() string {
@@ -202,15 +238,40 @@ type RecoveryImpl struct {
 	RecoveryData
 }
 
-func (i *RecoveryImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *RecoveryImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ItemData.ForEachNode(fn)
 	i.RecoveryData.ForEachNode(fn)
 }
 
-func (i *RecoveryImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *RecoveryImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ItemData.ForEachReference(fn)
 	i.RecoveryData.ForEachReference(fn)
 }
+
+func (i *RecoveryImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameFirst:
+		return nil, fmt.Errorf("RecoveryImpl.Resolve: field 'first' holds a primitive value instead of an ast node")
+	case fieldNameSecond:
+		return nil, fmt.Errorf("RecoveryImpl.Resolve: field 'second' holds a primitive value instead of an ast node")
+	case fieldNameValue:
+		return nil, fmt.Errorf("RecoveryImpl.Resolve: field 'value' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("RecoveryImpl.Resolve: field '%s' does not exist in node '%s' of type 'Recovery'", field.Value(), nodePath)
+	}
+}
+
+var (
+	fieldNameFirst  = unique.Make("first")
+	fieldNameItem   = unique.Make("item")
+	fieldNameSecond = unique.Make("second")
+	fieldNameValue  = unique.Make("value")
+)
 
 var TokenGroupsSyntheticFactories = map[string]func() core.AstNode{
 	"Item":     func() core.AstNode { return NewItem() },

@@ -3,6 +3,9 @@
 package arithmetics
 
 import (
+	"fmt"
+	"unique"
+
 	core "typefox.dev/fastbelt"
 )
 
@@ -37,13 +40,13 @@ func NewModuleData() ModuleData {
 
 func (i *ModuleData) IsModule() {}
 
-func (i *ModuleData) ForEachNode(fn func(core.AstNode)) {
-	for _, item := range i.statements {
-		fn(item)
+func (i *ModuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	for j, item := range i.statements {
+		fn(item, fieldNameStatements, j)
 	}
 }
 
-func (i *ModuleData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ModuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *ModuleData) Name() string {
@@ -75,12 +78,37 @@ type ModuleImpl struct {
 	ModuleData
 }
 
-func (i *ModuleImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *ModuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ModuleData.ForEachNode(fn)
 }
 
-func (i *ModuleImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ModuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ModuleData.ForEachReference(fn)
+}
+
+func (i *ModuleImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
+	switch field {
+	case fieldNameStatements:
+		if index >= len(i.Statements()) {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("ModuleImpl.Resolve: index %d exceeds length of slice in 'statements' (length=%d) in node '%s'", index, len(i.Statements()), nodePath)
+		}
+		child := i.Statements()[index]
+		if child == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("ModuleImpl.Resolve: item %d of slice in field 'statements' is nil in node '%s'", index, nodePath)
+		}
+		return child.Resolve(path.Tail())
+	case fieldNameName:
+		return nil, fmt.Errorf("ModuleImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("ModuleImpl.Resolve: field '%s' does not exist in node '%s' of type 'Module'", field.Value(), nodePath)
+	}
 }
 
 type Statement interface {
@@ -105,10 +133,10 @@ func NewStatementData() StatementData {
 
 func (i *StatementData) IsStatement() {}
 
-func (i *StatementData) ForEachNode(fn func(core.AstNode)) {
+func (i *StatementData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *StatementData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *StatementData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 type StatementImpl struct {
@@ -116,12 +144,21 @@ type StatementImpl struct {
 	StatementData
 }
 
-func (i *StatementImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *StatementImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.StatementData.ForEachNode(fn)
 }
 
-func (i *StatementImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *StatementImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.StatementData.ForEachReference(fn)
+}
+
+func (i *StatementImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	nodePath, _ := core.PathOf(i)
+	return nil, fmt.Errorf("StatementImpl.Resolve: field '%s' does not exist in node '%s' of type 'Statement'", field.Value(), nodePath)
 }
 
 type AbstractDefinition interface {
@@ -150,10 +187,10 @@ func NewAbstractDefinitionData() AbstractDefinitionData {
 
 func (i *AbstractDefinitionData) IsAbstractDefinition() {}
 
-func (i *AbstractDefinitionData) ForEachNode(fn func(core.AstNode)) {
+func (i *AbstractDefinitionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *AbstractDefinitionData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *AbstractDefinitionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *AbstractDefinitionData) Name() string {
@@ -177,12 +214,26 @@ type AbstractDefinitionImpl struct {
 	AbstractDefinitionData
 }
 
-func (i *AbstractDefinitionImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *AbstractDefinitionImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.AbstractDefinitionData.ForEachNode(fn)
 }
 
-func (i *AbstractDefinitionImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *AbstractDefinitionImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.AbstractDefinitionData.ForEachReference(fn)
+}
+
+func (i *AbstractDefinitionImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameName:
+		return nil, fmt.Errorf("AbstractDefinitionImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("AbstractDefinitionImpl.Resolve: field '%s' does not exist in node '%s' of type 'AbstractDefinition'", field.Value(), nodePath)
+	}
 }
 
 type Definition interface {
@@ -219,16 +270,16 @@ func NewDefinitionData() DefinitionData {
 
 func (i *DefinitionData) IsDefinition() {}
 
-func (i *DefinitionData) ForEachNode(fn func(core.AstNode)) {
-	for _, item := range i.args {
-		fn(item)
+func (i *DefinitionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	for j, item := range i.args {
+		fn(item, fieldNameArgs, j)
 	}
 	if i.expression != nil {
-		fn(i.expression)
+		fn(i.expression, fieldNameExpression, -1)
 	}
 }
 
-func (i *DefinitionData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *DefinitionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *DefinitionData) Args() []DeclaredParameter {
@@ -258,16 +309,48 @@ type DefinitionImpl struct {
 	DefinitionData
 }
 
-func (i *DefinitionImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *DefinitionImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.AbstractDefinitionData.ForEachNode(fn)
 	i.StatementData.ForEachNode(fn)
 	i.DefinitionData.ForEachNode(fn)
 }
 
-func (i *DefinitionImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *DefinitionImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.AbstractDefinitionData.ForEachReference(fn)
 	i.StatementData.ForEachReference(fn)
 	i.DefinitionData.ForEachReference(fn)
+}
+
+func (i *DefinitionImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
+	switch field {
+	case fieldNameArgs:
+		if index >= len(i.Args()) {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("DefinitionImpl.Resolve: index %d exceeds length of slice in 'args' (length=%d) in node '%s'", index, len(i.Args()), nodePath)
+		}
+		child := i.Args()[index]
+		if child == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("DefinitionImpl.Resolve: item %d of slice in field 'args' is nil in node '%s'", index, nodePath)
+		}
+		return child.Resolve(path.Tail())
+	case fieldNameExpression:
+		if i.Expression() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("DefinitionImpl.Resolve: field 'expression' is nil in node '%s'", nodePath)
+		}
+		child := i.Expression()
+		return child.Resolve(path.Tail())
+	case fieldNameName:
+		return nil, fmt.Errorf("DefinitionImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("DefinitionImpl.Resolve: field '%s' does not exist in node '%s' of type 'Definition'", field.Value(), nodePath)
+	}
 }
 
 type DeclaredParameter interface {
@@ -294,10 +377,10 @@ func NewDeclaredParameterData() DeclaredParameterData {
 
 func (i *DeclaredParameterData) IsDeclaredParameter() {}
 
-func (i *DeclaredParameterData) ForEachNode(fn func(core.AstNode)) {
+func (i *DeclaredParameterData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *DeclaredParameterData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *DeclaredParameterData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 type DeclaredParameterImpl struct {
@@ -306,14 +389,28 @@ type DeclaredParameterImpl struct {
 	DeclaredParameterData
 }
 
-func (i *DeclaredParameterImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *DeclaredParameterImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.AbstractDefinitionData.ForEachNode(fn)
 	i.DeclaredParameterData.ForEachNode(fn)
 }
 
-func (i *DeclaredParameterImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *DeclaredParameterImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.AbstractDefinitionData.ForEachReference(fn)
 	i.DeclaredParameterData.ForEachReference(fn)
+}
+
+func (i *DeclaredParameterImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameName:
+		return nil, fmt.Errorf("DeclaredParameterImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("DeclaredParameterImpl.Resolve: field '%s' does not exist in node '%s' of type 'DeclaredParameter'", field.Value(), nodePath)
+	}
 }
 
 type Evaluation interface {
@@ -343,13 +440,13 @@ func NewEvaluationData() EvaluationData {
 
 func (i *EvaluationData) IsEvaluation() {}
 
-func (i *EvaluationData) ForEachNode(fn func(core.AstNode)) {
+func (i *EvaluationData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.expression != nil {
-		fn(i.expression)
+		fn(i.expression, fieldNameExpression, -1)
 	}
 }
 
-func (i *EvaluationData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *EvaluationData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *EvaluationData) Expression() Expression {
@@ -370,14 +467,33 @@ type EvaluationImpl struct {
 	EvaluationData
 }
 
-func (i *EvaluationImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *EvaluationImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.StatementData.ForEachNode(fn)
 	i.EvaluationData.ForEachNode(fn)
 }
 
-func (i *EvaluationImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *EvaluationImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.StatementData.ForEachReference(fn)
 	i.EvaluationData.ForEachReference(fn)
+}
+
+func (i *EvaluationImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameExpression:
+		if i.Expression() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("EvaluationImpl.Resolve: field 'expression' is nil in node '%s'", nodePath)
+		}
+		child := i.Expression()
+		return child.Resolve(path.Tail())
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("EvaluationImpl.Resolve: field '%s' does not exist in node '%s' of type 'Evaluation'", field.Value(), nodePath)
+	}
 }
 
 type Expression interface {
@@ -402,10 +518,10 @@ func NewExpressionData() ExpressionData {
 
 func (i *ExpressionData) IsExpression() {}
 
-func (i *ExpressionData) ForEachNode(fn func(core.AstNode)) {
+func (i *ExpressionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *ExpressionData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ExpressionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 type ExpressionImpl struct {
@@ -413,12 +529,21 @@ type ExpressionImpl struct {
 	ExpressionData
 }
 
-func (i *ExpressionImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *ExpressionImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ExpressionData.ForEachNode(fn)
 }
 
-func (i *ExpressionImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ExpressionImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ExpressionData.ForEachReference(fn)
+}
+
+func (i *ExpressionImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	nodePath, _ := core.PathOf(i)
+	return nil, fmt.Errorf("ExpressionImpl.Resolve: field '%s' does not exist in node '%s' of type 'Expression'", field.Value(), nodePath)
 }
 
 type BinaryExpression interface {
@@ -455,16 +580,16 @@ func NewBinaryExpressionData() BinaryExpressionData {
 
 func (i *BinaryExpressionData) IsBinaryExpression() {}
 
-func (i *BinaryExpressionData) ForEachNode(fn func(core.AstNode)) {
+func (i *BinaryExpressionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.left != nil {
-		fn(i.left)
+		fn(i.left, fieldNameLeft, -1)
 	}
 	if i.right != nil {
-		fn(i.right)
+		fn(i.right, fieldNameRight, -1)
 	}
 }
 
-func (i *BinaryExpressionData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *BinaryExpressionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *BinaryExpressionData) Left() Expression {
@@ -513,14 +638,42 @@ type BinaryExpressionImpl struct {
 	BinaryExpressionData
 }
 
-func (i *BinaryExpressionImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *BinaryExpressionImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ExpressionData.ForEachNode(fn)
 	i.BinaryExpressionData.ForEachNode(fn)
 }
 
-func (i *BinaryExpressionImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *BinaryExpressionImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ExpressionData.ForEachReference(fn)
 	i.BinaryExpressionData.ForEachReference(fn)
+}
+
+func (i *BinaryExpressionImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameLeft:
+		if i.Left() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("BinaryExpressionImpl.Resolve: field 'left' is nil in node '%s'", nodePath)
+		}
+		child := i.Left()
+		return child.Resolve(path.Tail())
+	case fieldNameRight:
+		if i.Right() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("BinaryExpressionImpl.Resolve: field 'right' is nil in node '%s'", nodePath)
+		}
+		child := i.Right()
+		return child.Resolve(path.Tail())
+	case fieldNameOperator:
+		return nil, fmt.Errorf("BinaryExpressionImpl.Resolve: field 'operator' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("BinaryExpressionImpl.Resolve: field '%s' does not exist in node '%s' of type 'BinaryExpression'", field.Value(), nodePath)
+	}
 }
 
 type FunctionCall interface {
@@ -555,15 +708,15 @@ func NewFunctionCallData() FunctionCallData {
 
 func (i *FunctionCallData) IsFunctionCall() {}
 
-func (i *FunctionCallData) ForEachNode(fn func(core.AstNode)) {
-	for _, item := range i.args {
-		fn(item)
+func (i *FunctionCallData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	for j, item := range i.args {
+		fn(item, fieldNameArgs, j)
 	}
 }
 
-func (i *FunctionCallData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *FunctionCallData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.callable != nil {
-		fn(i.callable)
+		fn(i.callable, fieldNameCallable, -1)
 	}
 }
 
@@ -593,14 +746,39 @@ type FunctionCallImpl struct {
 	FunctionCallData
 }
 
-func (i *FunctionCallImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *FunctionCallImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ExpressionData.ForEachNode(fn)
 	i.FunctionCallData.ForEachNode(fn)
 }
 
-func (i *FunctionCallImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *FunctionCallImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ExpressionData.ForEachReference(fn)
 	i.FunctionCallData.ForEachReference(fn)
+}
+
+func (i *FunctionCallImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
+	switch field {
+	case fieldNameArgs:
+		if index >= len(i.Args()) {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("FunctionCallImpl.Resolve: index %d exceeds length of slice in 'args' (length=%d) in node '%s'", index, len(i.Args()), nodePath)
+		}
+		child := i.Args()[index]
+		if child == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("FunctionCallImpl.Resolve: item %d of slice in field 'args' is nil in node '%s'", index, nodePath)
+		}
+		return child.Resolve(path.Tail())
+	case fieldNameCallable:
+		return nil, fmt.Errorf("FunctionCallImpl.Resolve: field 'callable' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("FunctionCallImpl.Resolve: field '%s' does not exist in node '%s' of type 'FunctionCall'", field.Value(), nodePath)
+	}
 }
 
 type NumberLiteral interface {
@@ -631,10 +809,10 @@ func NewNumberLiteralData() NumberLiteralData {
 
 func (i *NumberLiteralData) IsNumberLiteral() {}
 
-func (i *NumberLiteralData) ForEachNode(fn func(core.AstNode)) {
+func (i *NumberLiteralData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *NumberLiteralData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *NumberLiteralData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *NumberLiteralData) Value() string {
@@ -659,15 +837,41 @@ type NumberLiteralImpl struct {
 	NumberLiteralData
 }
 
-func (i *NumberLiteralImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *NumberLiteralImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ExpressionData.ForEachNode(fn)
 	i.NumberLiteralData.ForEachNode(fn)
 }
 
-func (i *NumberLiteralImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *NumberLiteralImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ExpressionData.ForEachReference(fn)
 	i.NumberLiteralData.ForEachReference(fn)
 }
+
+func (i *NumberLiteralImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameValue:
+		return nil, fmt.Errorf("NumberLiteralImpl.Resolve: field 'value' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("NumberLiteralImpl.Resolve: field '%s' does not exist in node '%s' of type 'NumberLiteral'", field.Value(), nodePath)
+	}
+}
+
+var (
+	fieldNameArgs       = unique.Make("args")
+	fieldNameCallable   = unique.Make("callable")
+	fieldNameExpression = unique.Make("expression")
+	fieldNameLeft       = unique.Make("left")
+	fieldNameName       = unique.Make("name")
+	fieldNameOperator   = unique.Make("operator")
+	fieldNameRight      = unique.Make("right")
+	fieldNameStatements = unique.Make("statements")
+	fieldNameValue      = unique.Make("value")
+)
 
 var ArithmeticsSyntheticFactories = map[string]func() core.AstNode{
 	"AbstractDefinition": func() core.AstNode { return NewAbstractDefinition() },

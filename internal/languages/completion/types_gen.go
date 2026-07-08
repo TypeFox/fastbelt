@@ -3,6 +3,9 @@
 package completion
 
 import (
+	"fmt"
+	"unique"
+
 	core "typefox.dev/fastbelt"
 )
 
@@ -28,10 +31,10 @@ func NewObjData() ObjData {
 
 func (i *ObjData) IsObj() {}
 
-func (i *ObjData) ForEachNode(fn func(core.AstNode)) {
+func (i *ObjData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *ObjData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ObjData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 type ObjImpl struct {
@@ -39,12 +42,21 @@ type ObjImpl struct {
 	ObjData
 }
 
-func (i *ObjImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *ObjImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
 }
 
-func (i *ObjImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *ObjImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
+}
+
+func (i *ObjImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	nodePath, _ := core.PathOf(i)
+	return nil, fmt.Errorf("ObjImpl.Resolve: field '%s' does not exist in node '%s' of type 'Obj'", field.Value(), nodePath)
 }
 
 type Root interface {
@@ -74,13 +86,13 @@ func NewRootData() RootData {
 
 func (i *RootData) IsRoot() {}
 
-func (i *RootData) ForEachNode(fn func(core.AstNode)) {
-	for _, item := range i.objects {
-		fn(item)
+func (i *RootData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	for j, item := range i.objects {
+		fn(item, fieldNameObjects, j)
 	}
 }
 
-func (i *RootData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *RootData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *RootData) Objects() []Obj {
@@ -96,12 +108,35 @@ type RootImpl struct {
 	RootData
 }
 
-func (i *RootImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *RootImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.RootData.ForEachNode(fn)
 }
 
-func (i *RootImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *RootImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.RootData.ForEachReference(fn)
+}
+
+func (i *RootImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
+	switch field {
+	case fieldNameObjects:
+		if index >= len(i.Objects()) {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("RootImpl.Resolve: index %d exceeds length of slice in 'objects' (length=%d) in node '%s'", index, len(i.Objects()), nodePath)
+		}
+		child := i.Objects()[index]
+		if child == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("RootImpl.Resolve: item %d of slice in field 'objects' is nil in node '%s'", index, nodePath)
+		}
+		return child.Resolve(path.Tail())
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("RootImpl.Resolve: field '%s' does not exist in node '%s' of type 'Root'", field.Value(), nodePath)
+	}
 }
 
 type Declare interface {
@@ -137,16 +172,16 @@ func NewDeclareData() DeclareData {
 
 func (i *DeclareData) IsDeclare() {}
 
-func (i *DeclareData) ForEachNode(fn func(core.AstNode)) {
+func (i *DeclareData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.name != nil {
-		fn(i.name)
+		fn(i.name, fieldNameName, -1)
 	}
-	for _, item := range i.children {
-		fn(item)
+	for j, item := range i.children {
+		fn(item, fieldNameChildren, j)
 	}
 }
 
-func (i *DeclareData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *DeclareData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *DeclareData) Name() string {
@@ -179,14 +214,39 @@ type DeclareImpl struct {
 	DeclareData
 }
 
-func (i *DeclareImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *DeclareImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
 	i.DeclareData.ForEachNode(fn)
 }
 
-func (i *DeclareImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *DeclareImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
 	i.DeclareData.ForEachReference(fn)
+}
+
+func (i *DeclareImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
+	switch field {
+	case fieldNameChildren:
+		if index >= len(i.Children()) {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("DeclareImpl.Resolve: index %d exceeds length of slice in 'children' (length=%d) in node '%s'", index, len(i.Children()), nodePath)
+		}
+		child := i.Children()[index]
+		if child == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("DeclareImpl.Resolve: item %d of slice in field 'children' is nil in node '%s'", index, nodePath)
+		}
+		return child.Resolve(path.Tail())
+	case fieldNameName:
+		return nil, fmt.Errorf("DeclareImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("DeclareImpl.Resolve: field '%s' does not exist in node '%s' of type 'Declare'", field.Value(), nodePath)
+	}
 }
 
 type E interface {
@@ -216,12 +276,12 @@ func NewEData() EData {
 
 func (i *EData) IsE() {}
 
-func (i *EData) ForEachNode(fn func(core.AstNode)) {
+func (i *EData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *EData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *EData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
-		fn(i.ref)
+		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
@@ -243,14 +303,28 @@ type EImpl struct {
 	EData
 }
 
-func (i *EImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *EImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
 	i.EData.ForEachNode(fn)
 }
 
-func (i *EImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *EImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
 	i.EData.ForEachReference(fn)
+}
+
+func (i *EImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameRef:
+		return nil, fmt.Errorf("EImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("EImpl.Resolve: field '%s' does not exist in node '%s' of type 'E'", field.Value(), nodePath)
+	}
 }
 
 type F interface {
@@ -282,13 +356,13 @@ func NewFData() FData {
 
 func (i *FData) IsF() {}
 
-func (i *FData) ForEachNode(fn func(core.AstNode)) {
-	for _, item := range i.items {
-		fn(item)
+func (i *FData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	for j, item := range i.items {
+		fn(item, fieldNameItems, j)
 	}
 }
 
-func (i *FData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *FData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *FData) Items() []FItem {
@@ -305,14 +379,37 @@ type FImpl struct {
 	FData
 }
 
-func (i *FImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *FImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
 	i.FData.ForEachNode(fn)
 }
 
-func (i *FImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *FImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
 	i.FData.ForEachReference(fn)
+}
+
+func (i *FImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
+	switch field {
+	case fieldNameItems:
+		if index >= len(i.Items()) {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("FImpl.Resolve: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
+		}
+		child := i.Items()[index]
+		if child == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("FImpl.Resolve: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
+		}
+		return child.Resolve(path.Tail())
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("FImpl.Resolve: field '%s' does not exist in node '%s' of type 'F'", field.Value(), nodePath)
+	}
 }
 
 type FItem interface {
@@ -340,12 +437,12 @@ func NewFItemData() FItemData {
 
 func (i *FItemData) IsFItem() {}
 
-func (i *FItemData) ForEachNode(fn func(core.AstNode)) {
+func (i *FItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *FItemData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *FItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
-		fn(i.ref)
+		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
@@ -366,12 +463,26 @@ type FItemImpl struct {
 	FItemData
 }
 
-func (i *FItemImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *FItemImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.FItemData.ForEachNode(fn)
 }
 
-func (i *FItemImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *FItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.FItemData.ForEachReference(fn)
+}
+
+func (i *FItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameRef:
+		return nil, fmt.Errorf("FItemImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("FItemImpl.Resolve: field '%s' does not exist in node '%s' of type 'FItem'", field.Value(), nodePath)
+	}
 }
 
 type G interface {
@@ -401,12 +512,12 @@ func NewGData() GData {
 
 func (i *GData) IsG() {}
 
-func (i *GData) ForEachNode(fn func(core.AstNode)) {
+func (i *GData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *GData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *GData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
-		fn(i.ref)
+		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
@@ -428,14 +539,28 @@ type GImpl struct {
 	GData
 }
 
-func (i *GImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *GImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
 	i.GData.ForEachNode(fn)
 }
 
-func (i *GImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *GImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
 	i.GData.ForEachReference(fn)
+}
+
+func (i *GImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameRef:
+		return nil, fmt.Errorf("GImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("GImpl.Resolve: field '%s' does not exist in node '%s' of type 'G'", field.Value(), nodePath)
+	}
 }
 
 type H interface {
@@ -465,13 +590,13 @@ func NewHData() HData {
 
 func (i *HData) IsH() {}
 
-func (i *HData) ForEachNode(fn func(core.AstNode)) {
+func (i *HData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.member != nil {
-		fn(i.member)
+		fn(i.member, fieldNameMember, -1)
 	}
 }
 
-func (i *HData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *HData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *HData) Member() MemberCall {
@@ -492,14 +617,33 @@ type HImpl struct {
 	HData
 }
 
-func (i *HImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *HImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
 	i.HData.ForEachNode(fn)
 }
 
-func (i *HImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *HImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
 	i.HData.ForEachReference(fn)
+}
+
+func (i *HImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameMember:
+		if i.Member() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("HImpl.Resolve: field 'member' is nil in node '%s'", nodePath)
+		}
+		child := i.Member()
+		return child.Resolve(path.Tail())
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("HImpl.Resolve: field '%s' does not exist in node '%s' of type 'H'", field.Value(), nodePath)
+	}
 }
 
 type MemberCall interface {
@@ -530,15 +674,15 @@ func NewMemberCallData() MemberCallData {
 
 func (i *MemberCallData) IsMemberCall() {}
 
-func (i *MemberCallData) ForEachNode(fn func(core.AstNode)) {
+func (i *MemberCallData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.previous != nil {
-		fn(i.previous)
+		fn(i.previous, fieldNamePrevious, -1)
 	}
 }
 
-func (i *MemberCallData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *MemberCallData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
-		fn(i.ref)
+		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
@@ -571,12 +715,33 @@ type MemberCallImpl struct {
 	MemberCallData
 }
 
-func (i *MemberCallImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *MemberCallImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.MemberCallData.ForEachNode(fn)
 }
 
-func (i *MemberCallImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *MemberCallImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.MemberCallData.ForEachReference(fn)
+}
+
+func (i *MemberCallImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNamePrevious:
+		if i.Previous() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("MemberCallImpl.Resolve: field 'previous' is nil in node '%s'", nodePath)
+		}
+		child := i.Previous()
+		return child.Resolve(path.Tail())
+	case fieldNameRef:
+		return nil, fmt.Errorf("MemberCallImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("MemberCallImpl.Resolve: field '%s' does not exist in node '%s' of type 'MemberCall'", field.Value(), nodePath)
+	}
 }
 
 type J interface {
@@ -606,12 +771,12 @@ func NewJData() JData {
 
 func (i *JData) IsJ() {}
 
-func (i *JData) ForEachNode(fn func(core.AstNode)) {
+func (i *JData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *JData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *JData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
-		fn(i.ref)
+		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
@@ -633,14 +798,28 @@ type JImpl struct {
 	JData
 }
 
-func (i *JImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *JImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
 	i.JData.ForEachNode(fn)
 }
 
-func (i *JImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *JImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
 	i.JData.ForEachReference(fn)
+}
+
+func (i *JImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameRef:
+		return nil, fmt.Errorf("JImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("JImpl.Resolve: field '%s' does not exist in node '%s' of type 'J'", field.Value(), nodePath)
+	}
 }
 
 type K interface {
@@ -673,15 +852,15 @@ func NewKData() KData {
 
 func (i *KData) IsK() {}
 
-func (i *KData) ForEachNode(fn func(core.AstNode)) {
+func (i *KData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *KData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *KData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref1 != nil {
-		fn(i.ref1)
+		fn(i.ref1, fieldNameRef1, -1)
 	}
 	if i.ref2 != nil {
-		fn(i.ref2)
+		fn(i.ref2, fieldNameRef2, -1)
 	}
 }
 
@@ -715,14 +894,30 @@ type KImpl struct {
 	KData
 }
 
-func (i *KImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *KImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
 	i.KData.ForEachNode(fn)
 }
 
-func (i *KImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *KImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
 	i.KData.ForEachReference(fn)
+}
+
+func (i *KImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameRef1:
+		return nil, fmt.Errorf("KImpl.Resolve: field 'ref1' is a cross-reference instead of a container field")
+	case fieldNameRef2:
+		return nil, fmt.Errorf("KImpl.Resolve: field 'ref2' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("KImpl.Resolve: field '%s' does not exist in node '%s' of type 'K'", field.Value(), nodePath)
+	}
 }
 
 type N interface {
@@ -752,12 +947,12 @@ func NewNData() NData {
 
 func (i *NData) IsN() {}
 
-func (i *NData) ForEachNode(fn func(core.AstNode)) {
+func (i *NData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *NData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *NData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
-		fn(i.ref)
+		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
@@ -779,14 +974,28 @@ type NImpl struct {
 	NData
 }
 
-func (i *NImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *NImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
 	i.NData.ForEachNode(fn)
 }
 
-func (i *NImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *NImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
 	i.NData.ForEachReference(fn)
+}
+
+func (i *NImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameRef:
+		return nil, fmt.Errorf("NImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("NImpl.Resolve: field '%s' does not exist in node '%s' of type 'N'", field.Value(), nodePath)
+	}
 }
 
 type O interface {
@@ -816,12 +1025,12 @@ func NewOData() OData {
 
 func (i *OData) IsO() {}
 
-func (i *OData) ForEachNode(fn func(core.AstNode)) {
+func (i *OData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *OData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *OData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
-		fn(i.ref)
+		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
@@ -843,15 +1052,41 @@ type OImpl struct {
 	OData
 }
 
-func (i *OImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *OImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
 	i.OData.ForEachNode(fn)
 }
 
-func (i *OImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *OImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
 	i.OData.ForEachReference(fn)
 }
+
+func (i *OImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameRef:
+		return nil, fmt.Errorf("OImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("OImpl.Resolve: field '%s' does not exist in node '%s' of type 'O'", field.Value(), nodePath)
+	}
+}
+
+var (
+	fieldNameChildren = unique.Make("children")
+	fieldNameItems    = unique.Make("items")
+	fieldNameMember   = unique.Make("member")
+	fieldNameName     = unique.Make("name")
+	fieldNameObjects  = unique.Make("objects")
+	fieldNamePrevious = unique.Make("previous")
+	fieldNameRef      = unique.Make("ref")
+	fieldNameRef1     = unique.Make("ref1")
+	fieldNameRef2     = unique.Make("ref2")
+)
 
 var CompletionSyntheticFactories = map[string]func() core.AstNode{
 	"Declare":    func() core.AstNode { return NewDeclare() },

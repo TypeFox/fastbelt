@@ -44,11 +44,13 @@ const (
 var reservedFieldNames = map[string]string{
 	"Document":         "AstNode.Document",
 	"Container":        "AstNode.Container",
+	"ContainmentData":  "AstNode.ContainmentData",
 	"Tokens":           "AstNode.Tokens",
 	"Segment":          "AstNode.Segment",
 	"Text":             "AstNode.Text",
 	"ForEachNode":      "AstNode.ForEachNode",
 	"ForEachReference": "AstNode.ForEachReference",
+	"Resolve":          "AstNode.Resolve",
 }
 
 // GrammarImpl.Validate checks grammar-level constraints:

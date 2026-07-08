@@ -3,6 +3,9 @@
 package statemachine
 
 import (
+	"fmt"
+	"unique"
+
 	core "typefox.dev/fastbelt"
 )
 
@@ -48,21 +51,21 @@ func NewStatemachineData() StatemachineData {
 
 func (i *StatemachineData) IsStatemachine() {}
 
-func (i *StatemachineData) ForEachNode(fn func(core.AstNode)) {
-	for _, item := range i.events {
-		fn(item)
+func (i *StatemachineData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	for j, item := range i.events {
+		fn(item, fieldNameEvents, j)
 	}
-	for _, item := range i.commands {
-		fn(item)
+	for j, item := range i.commands {
+		fn(item, fieldNameCommands, j)
 	}
-	for _, item := range i.states {
-		fn(item)
+	for j, item := range i.states {
+		fn(item, fieldNameStates, j)
 	}
 }
 
-func (i *StatemachineData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *StatemachineData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.init != nil {
-		fn(i.init)
+		fn(i.init, fieldNameInit, -1)
 	}
 }
 
@@ -123,12 +126,61 @@ type StatemachineImpl struct {
 	StatemachineData
 }
 
-func (i *StatemachineImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *StatemachineImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.StatemachineData.ForEachNode(fn)
 }
 
-func (i *StatemachineImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *StatemachineImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.StatemachineData.ForEachReference(fn)
+}
+
+func (i *StatemachineImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
+	switch field {
+	case fieldNameCommands:
+		if index >= len(i.Commands()) {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StatemachineImpl.Resolve: index %d exceeds length of slice in 'commands' (length=%d) in node '%s'", index, len(i.Commands()), nodePath)
+		}
+		child := i.Commands()[index]
+		if child == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StatemachineImpl.Resolve: item %d of slice in field 'commands' is nil in node '%s'", index, nodePath)
+		}
+		return child.Resolve(path.Tail())
+	case fieldNameEvents:
+		if index >= len(i.Events()) {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StatemachineImpl.Resolve: index %d exceeds length of slice in 'events' (length=%d) in node '%s'", index, len(i.Events()), nodePath)
+		}
+		child := i.Events()[index]
+		if child == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StatemachineImpl.Resolve: item %d of slice in field 'events' is nil in node '%s'", index, nodePath)
+		}
+		return child.Resolve(path.Tail())
+	case fieldNameStates:
+		if index >= len(i.States()) {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StatemachineImpl.Resolve: index %d exceeds length of slice in 'states' (length=%d) in node '%s'", index, len(i.States()), nodePath)
+		}
+		child := i.States()[index]
+		if child == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StatemachineImpl.Resolve: item %d of slice in field 'states' is nil in node '%s'", index, nodePath)
+		}
+		return child.Resolve(path.Tail())
+	case fieldNameName:
+		return nil, fmt.Errorf("StatemachineImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	case fieldNameInit:
+		return nil, fmt.Errorf("StatemachineImpl.Resolve: field 'init' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("StatemachineImpl.Resolve: field '%s' does not exist in node '%s' of type 'Statemachine'", field.Value(), nodePath)
+	}
 }
 
 type Event interface {
@@ -157,10 +209,10 @@ func NewEventData() EventData {
 
 func (i *EventData) IsEvent() {}
 
-func (i *EventData) ForEachNode(fn func(core.AstNode)) {
+func (i *EventData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *EventData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *EventData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *EventData) Name() string {
@@ -184,12 +236,26 @@ type EventImpl struct {
 	EventData
 }
 
-func (i *EventImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *EventImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.EventData.ForEachNode(fn)
 }
 
-func (i *EventImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *EventImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.EventData.ForEachReference(fn)
+}
+
+func (i *EventImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameName:
+		return nil, fmt.Errorf("EventImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("EventImpl.Resolve: field '%s' does not exist in node '%s' of type 'Event'", field.Value(), nodePath)
+	}
 }
 
 type Command interface {
@@ -218,10 +284,10 @@ func NewCommandData() CommandData {
 
 func (i *CommandData) IsCommand() {}
 
-func (i *CommandData) ForEachNode(fn func(core.AstNode)) {
+func (i *CommandData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *CommandData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *CommandData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
 func (i *CommandData) Name() string {
@@ -245,12 +311,26 @@ type CommandImpl struct {
 	CommandData
 }
 
-func (i *CommandImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *CommandImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.CommandData.ForEachNode(fn)
 }
 
-func (i *CommandImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *CommandImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.CommandData.ForEachReference(fn)
+}
+
+func (i *CommandImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameName:
+		return nil, fmt.Errorf("CommandImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("CommandImpl.Resolve: field '%s' does not exist in node '%s' of type 'Command'", field.Value(), nodePath)
+	}
 }
 
 type State interface {
@@ -288,15 +368,15 @@ func NewStateData() StateData {
 
 func (i *StateData) IsState() {}
 
-func (i *StateData) ForEachNode(fn func(core.AstNode)) {
-	for _, item := range i.transitions {
-		fn(item)
+func (i *StateData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	for j, item := range i.transitions {
+		fn(item, fieldNameTransitions, j)
 	}
 }
 
-func (i *StateData) ForEachReference(fn func(core.UntypedReference)) {
-	for _, item := range i.actions {
-		fn(item)
+func (i *StateData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	for j, item := range i.actions {
+		fn(item, fieldNameActions, j)
 	}
 }
 
@@ -337,12 +417,39 @@ type StateImpl struct {
 	StateData
 }
 
-func (i *StateImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *StateImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.StateData.ForEachNode(fn)
 }
 
-func (i *StateImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *StateImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.StateData.ForEachReference(fn)
+}
+
+func (i *StateImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
+	switch field {
+	case fieldNameTransitions:
+		if index >= len(i.Transitions()) {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StateImpl.Resolve: index %d exceeds length of slice in 'transitions' (length=%d) in node '%s'", index, len(i.Transitions()), nodePath)
+		}
+		child := i.Transitions()[index]
+		if child == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("StateImpl.Resolve: item %d of slice in field 'transitions' is nil in node '%s'", index, nodePath)
+		}
+		return child.Resolve(path.Tail())
+	case fieldNameName:
+		return nil, fmt.Errorf("StateImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	case fieldNameActions:
+		return nil, fmt.Errorf("StateImpl.Resolve: field 'actions' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("StateImpl.Resolve: field '%s' does not exist in node '%s' of type 'State'", field.Value(), nodePath)
+	}
 }
 
 type Transition interface {
@@ -373,15 +480,15 @@ func NewTransitionData() TransitionData {
 
 func (i *TransitionData) IsTransition() {}
 
-func (i *TransitionData) ForEachNode(fn func(core.AstNode)) {
+func (i *TransitionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *TransitionData) ForEachReference(fn func(core.UntypedReference)) {
+func (i *TransitionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.event != nil {
-		fn(i.event)
+		fn(i.event, fieldNameEvent, -1)
 	}
 	if i.state != nil {
-		fn(i.state)
+		fn(i.state, fieldNameState, -1)
 	}
 }
 
@@ -414,13 +521,41 @@ type TransitionImpl struct {
 	TransitionData
 }
 
-func (i *TransitionImpl) ForEachNode(fn func(core.AstNode)) {
+func (i *TransitionImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.TransitionData.ForEachNode(fn)
 }
 
-func (i *TransitionImpl) ForEachReference(fn func(core.UntypedReference)) {
+func (i *TransitionImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.TransitionData.ForEachReference(fn)
 }
+
+func (i *TransitionImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameEvent:
+		return nil, fmt.Errorf("TransitionImpl.Resolve: field 'event' is a cross-reference instead of a container field")
+	case fieldNameState:
+		return nil, fmt.Errorf("TransitionImpl.Resolve: field 'state' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("TransitionImpl.Resolve: field '%s' does not exist in node '%s' of type 'Transition'", field.Value(), nodePath)
+	}
+}
+
+var (
+	fieldNameActions     = unique.Make("actions")
+	fieldNameCommands    = unique.Make("commands")
+	fieldNameEvent       = unique.Make("event")
+	fieldNameEvents      = unique.Make("events")
+	fieldNameInit        = unique.Make("init")
+	fieldNameName        = unique.Make("name")
+	fieldNameState       = unique.Make("state")
+	fieldNameStates      = unique.Make("states")
+	fieldNameTransitions = unique.Make("transitions")
+)
 
 var StatemachineModelSyntheticFactories = map[string]func() core.AstNode{
 	"Command":      func() core.AstNode { return NewCommand() },

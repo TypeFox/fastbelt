@@ -5,9 +5,11 @@
 package fastbelt
 
 import (
+	"errors"
 	"iter"
 	"strings"
 	"sync/atomic"
+	"unique"
 )
 
 // AstNode is the base interface for all AST nodes.
@@ -24,10 +26,14 @@ type AstNode interface {
 	// Container returns the direct parent node of the node in the AST.
 	// It returns nil if this is the root node.
 	Container() AstNode
+	// ContainmentData returns a [unique.Handle] denoting the containing property within it's [AstNode.Container],
+	// defaults to a [unique.Handle] of the empty string,
+	// and the element index within the containing property, defaults to -1 for single item fields
+	ContainmentData() (unique.Handle[string], int)
 	// SetContainer sets the direct parent node of the node.
 	//
 	// When constructing an AST programmatically, use [AssignContainers] to link the node in the AST.
-	SetContainer(container AstNode)
+	SetContainer(container AstNode, containerField unique.Handle[string], index int)
 	// Tokens returns the tokens associated with the node.
 	Tokens() []*Token
 	// SetToken appends token to the node's token list.
@@ -55,19 +61,25 @@ type AstNode interface {
 	// Note that this does not traverse the entire subtree. Use [AllNodes] or [AllChildren] for that.
 	//
 	// Calling this method directly is not recommended. Use [ChildNodes] instead for better readability.
-	ForEachNode(fn func(AstNode))
+	ForEachNode(fn func(AstNode, unique.Handle[string], int))
 	// ForEachReference calls fn for each reference field of node.
 	//
 	// Calling this method directly is not recommended. Use [References] instead for better readability.
-	ForEachReference(fn func(UntypedReference))
+	ForEachReference(fn func(UntypedReference, unique.Handle[string], int))
+	// Resolve returns a (nested) child node denoted by the given (relative) fragment path descriptor.
+	//
+	// Calling this method directly is not recommended. Use [Resolve] instead.
+	Resolve(path FragmentPath) (AstNode, error)
 }
 
 // AstNodeBase provides the default [AstNode] implementation used by generated AST node types.
 type AstNodeBase struct {
-	document  *Document
-	container AstNode
-	tokens    []*Token
-	segment   TextSegment
+	document       *Document
+	container      AstNode
+	containerField unique.Handle[string]
+	containerIndex int
+	tokens         []*Token
+	segment        TextSegment
 }
 
 // Document returns the owning document of the node.
@@ -96,6 +108,10 @@ func (node *AstNodeBase) Container() AstNode {
 	}
 }
 
+func (node *AstNodeBase) ContainmentData() (unique.Handle[string], int) {
+	return node.containerField, node.containerIndex
+}
+
 // TODO: If concrete methods gain access to generics, refactor this into a method
 // See https://github.com/golang/go/issues/77273
 
@@ -116,9 +132,11 @@ func ContainerOfType[T AstNode](node AstNode) T {
 }
 
 // SetContainer sets the direct parent node of the node.
-func (node *AstNodeBase) SetContainer(container AstNode) {
+func (node *AstNodeBase) SetContainer(container AstNode, field unique.Handle[string], index int) {
 	if node != nil {
 		node.container = container
+		node.containerField = field
+		node.containerIndex = index
 	}
 }
 
@@ -193,15 +211,21 @@ func (node *AstNodeBase) Text() string {
 // ForEachNode calls fn for each direct child node of node.
 //
 // ForEachNode on AstNodeBase is a no-op because the base type has no child fields.
-func (node *AstNodeBase) ForEachNode(fn func(AstNode)) {
+func (node *AstNodeBase) ForEachNode(fn func(AstNode, unique.Handle[string], int)) {
 	// This base implementation does not have any contained nodes.
 }
 
 // ForEachReference calls fn for each reference field of node.
 //
 // ForEachReference on AstNodeBase is a no-op because the base type has no reference fields.
-func (node *AstNodeBase) ForEachReference(fn func(UntypedReference)) {
+func (node *AstNodeBase) ForEachReference(fn func(UntypedReference, unique.Handle[string], int)) {
 	// This base implementation does not have any references.
+}
+
+// Base Implementation for instances of [AstNodeBase].
+// The generator produces specific override methods for each generated ...Impl type.
+func (node *AstNodeBase) Resolve(path FragmentPath) (AstNode, error) {
+	return nil, errors.New("AstNodeBase.Resolve: Cannot identify children of plain AstNodeBase instances")
 }
 
 // Performance note about traversal function:
@@ -219,7 +243,7 @@ func (node *AstNodeBase) ForEachReference(fn func(UntypedReference)) {
 //
 // Note that this function will traverse the entire subtree, without short-circuiting.
 func traverseContent(node AstNode, fn func(AstNode)) {
-	node.ForEachNode(func(child AstNode) {
+	node.ForEachNode(func(child AstNode, containerField unique.Handle[string], index int) {
 		fn(child)
 		traverseContent(child, fn)
 	})
@@ -263,7 +287,7 @@ func AllChildren(node AstNode) iter.Seq[AstNode] {
 func ChildNodes(node AstNode) iter.Seq[AstNode] {
 	return func(yield func(AstNode) bool) {
 		stopped := false
-		node.ForEachNode(func(child AstNode) {
+		node.ForEachNode(func(child AstNode, containerField unique.Handle[string], index int) {
 			if !stopped && !yield(child) {
 				stopped = true
 			}
@@ -278,7 +302,7 @@ func ChildNodes(node AstNode) iter.Seq[AstNode] {
 func References(node AstNode) iter.Seq[UntypedReference] {
 	return func(yield func(UntypedReference) bool) {
 		stopped := false
-		node.ForEachReference(func(ref UntypedReference) {
+		node.ForEachReference(func(ref UntypedReference, containerField unique.Handle[string], index int) {
 			if !stopped && !yield(ref) {
 				stopped = true
 			}
@@ -335,16 +359,16 @@ func MergeTokens(newNode AstNode, oldTokens []*Token) {
 // It also assigns document and container on composite reference units reachable via references.
 func AssignContainers(doc *Document, root AstNode) {
 	root.SetDocument(doc)
-	root.ForEachNode(func(child AstNode) {
+	root.ForEachNode(func(child AstNode, containerField unique.Handle[string], index int) {
 		child.SetDocument(doc)
-		child.SetContainer(root)
+		child.SetContainer(root, containerField, index)
 		AssignContainers(doc, child)
 	})
-	root.ForEachReference(func(ur UntypedReference) {
+	root.ForEachReference(func(ur UntypedReference, containerField unique.Handle[string], index int) {
 		unit := ur.Unit()
 		if stringNode, ok := unit.(CompositeNode); ok {
 			stringNode.SetDocument(doc)
-			stringNode.SetContainer(root)
+			stringNode.SetContainer(root, containerField, index)
 		}
 	})
 }

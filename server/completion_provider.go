@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"unique"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
@@ -454,7 +455,7 @@ func buildSyntheticOwnerChain(adapter parser.LanguageCompletionAdapter, doc *cor
 			continue
 		}
 		if parent != nil {
-			node.SetContainer(parent)
+			node.SetContainer(parent, unique.Make(""), 0)
 		}
 		node.SetDocument(doc)
 		parent = node
@@ -538,7 +539,7 @@ func applyPrecedingAction(adapter parser.LanguageCompletionAdapter, owner core.A
 	}
 	wrapper.SetDocument(owner.Document())
 	if container := owner.Container(); container != nil {
-		wrapper.SetContainer(container)
+		wrapper.SetContainer(container, unique.Make(""), 0)
 	}
 	return wrapper
 }
