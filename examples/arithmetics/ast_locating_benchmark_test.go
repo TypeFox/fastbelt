@@ -69,7 +69,7 @@ func BenchmarkResolve(b *testing.B) {
 	for _, tc := range cases {
 		b.Run(tc.name, func(b *testing.B) {
 			for b.Loop() {
-				_, _ = core.Resolve(tc.path, root)
+				_, _ = core.Resolve(root, tc.path)
 			}
 		})
 	}

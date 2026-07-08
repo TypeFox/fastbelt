@@ -102,8 +102,8 @@ func PathOf(node AstNode) (fragmentPath, error) {
 }
 
 // Resolve returns the (deeply) contained child of node denoted by path.
-// Leading slashes of path are ignored, the field names are evaluated child by child starting with node.
-func Resolve(path string, node AstNode) (AstNode, error) {
+// Leading slashes in path are ignored, the field names are evaluated child by child starting with node.
+func Resolve(node AstNode, path string) (AstNode, error) {
 	if path == "" {
 		return node, nil
 	}

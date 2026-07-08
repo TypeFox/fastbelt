@@ -264,9 +264,9 @@ func TestResolve(t *testing.T) {
 	stmts := module.Statements()
 	require.Len(t, stmts, 11)
 
-	mustResolve := func(path string, node core.AstNode) core.AstNode {
+	mustResolve := func(node core.AstNode, path string) core.AstNode {
 		t.Helper()
-		child, err := core.Resolve(path, node)
+		child, err := core.Resolve(node, path)
 		require.NoError(t, err)
 		return child
 	}
@@ -277,10 +277,10 @@ func TestResolve(t *testing.T) {
 		binExpr := mustConvert[BinaryExpression](t, def.Expression())
 		fc := mustConvert[FunctionCall](t, binExpr.Left())
 
-		left := mustResolve("/statements@3/expression/left", root)
+		left := mustResolve(root, "/statements@3/expression/left")
 		assert.Same(t, fc, left)
 
-		statement := mustResolve("/statements@0", root)
+		statement := mustResolve(root, "/statements@0")
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
@@ -289,10 +289,10 @@ func TestResolve(t *testing.T) {
 		binExpr := mustConvert[BinaryExpression](t, def.Expression())
 		fc := mustConvert[FunctionCall](t, binExpr.Right())
 
-		right := mustResolve("/statements@3/expression/right", root)
+		right := mustResolve(root, "/statements@3/expression/right")
 		assert.Same(t, fc, right)
 
-		statement := mustResolve("/statements@1", root)
+		statement := mustResolve(root, "/statements@1")
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
@@ -303,10 +303,10 @@ func TestResolve(t *testing.T) {
 		binExpr := mustConvert[BinaryExpression](t, def.Expression())
 		fc := mustConvert[FunctionCall](t, binExpr.Left())
 
-		left := mustResolve("/statements@4/expression/left", root)
+		left := mustResolve(root, "/statements@4/expression/left")
 		assert.Same(t, fc, left)
 
-		statement := mustResolve("/statements@2", root)
+		statement := mustResolve(root, "/statements@2")
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
@@ -315,10 +315,10 @@ func TestResolve(t *testing.T) {
 		binExpr := mustConvert[BinaryExpression](t, def.Expression())
 		fc := mustConvert[FunctionCall](t, binExpr.Right())
 
-		right := mustResolve("/statements@4/expression/right", root)
+		right := mustResolve(root, "/statements@4/expression/right")
 		assert.Same(t, fc, right)
 
-		statement := mustResolve("/statements@3", root)
+		statement := mustResolve(root, "/statements@3")
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
@@ -340,10 +340,10 @@ func TestResolve(t *testing.T) {
 		innerAdd := mustConvert[BinaryExpression](t, div.Left())
 		fc := mustConvert[FunctionCall](t, innerAdd.Left())
 
-		left := mustResolve("/statements@7/expression/left/left/left", root)
+		left := mustResolve(root, "/statements@7/expression/left/left/left")
 		assert.Same(t, fc, left)
 
-		statement := mustResolve("/statements@4", root)
+		statement := mustResolve(root, "/statements@4")
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
@@ -354,10 +354,10 @@ func TestResolve(t *testing.T) {
 		innerAdd := mustConvert[BinaryExpression](t, div.Left())
 		fc := mustConvert[FunctionCall](t, innerAdd.Right())
 
-		right := mustResolve("/statements@7/expression/left/left/right", root)
+		right := mustResolve(root, "/statements@7/expression/left/left/right")
 		assert.Same(t, fc, right)
 
-		statement := mustResolve("/statements@5", root)
+		statement := mustResolve(root, "/statements@5")
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
@@ -367,10 +367,10 @@ func TestResolve(t *testing.T) {
 		div := mustConvert[BinaryExpression](t, outerAdd.Left())
 		fc := mustConvert[FunctionCall](t, div.Right())
 
-		right := mustResolve("/statements@7/expression/left/right", root)
+		right := mustResolve(root, "/statements@7/expression/left/right")
 		assert.Same(t, fc, right)
 
-		statement := mustResolve("/statements@2", root)
+		statement := mustResolve(root, "/statements@2")
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
@@ -379,10 +379,10 @@ func TestResolve(t *testing.T) {
 		outerAdd := mustConvert[BinaryExpression](t, def.Expression())
 		fc := mustConvert[FunctionCall](t, outerAdd.Right())
 
-		right := mustResolve("/statements@7/expression/right", root)
+		right := mustResolve(root, "/statements@7/expression/right")
 		assert.Same(t, fc, right)
 
-		statement := mustResolve("/statements@6", root)
+		statement := mustResolve(root, "/statements@6")
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
@@ -400,10 +400,10 @@ func TestResolve(t *testing.T) {
 		div := mustConvert[BinaryExpression](t, def.Expression())
 		fc := mustConvert[FunctionCall](t, div.Left())
 
-		left := mustResolve("/statements@9/expression/left", root)
+		left := mustResolve(root, "/statements@9/expression/left")
 		assert.Same(t, fc, left)
 
-		arg := mustResolve("/statements@9/args@0", root)
+		arg := mustResolve(root, "/statements@9/args@0")
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), arg)
 	})
 
@@ -413,10 +413,10 @@ func TestResolve(t *testing.T) {
 		sub := mustConvert[BinaryExpression](t, div.Right())
 		fc := mustConvert[FunctionCall](t, sub.Right())
 
-		right := mustResolve("/statements@9/expression/right/right", root)
+		right := mustResolve(root, "/statements@9/expression/right/right")
 		assert.Same(t, fc, right)
 
-		arg := mustResolve("/statements@9/args@1", root)
+		arg := mustResolve(root, "/statements@9/args@1")
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), arg)
 	})
 
@@ -426,10 +426,10 @@ func TestResolve(t *testing.T) {
 		eval := mustConvert[Evaluation](t, stmts[10])
 		fc := mustConvert[FunctionCall](t, eval.Expression())
 
-		expression := mustResolve("/statements@10/expression", root)
+		expression := mustResolve(root, "/statements@10/expression")
 		assert.Same(t, fc, expression)
 
-		statement := mustResolve("/statements@9", root)
+		statement := mustResolve(root, "/statements@9")
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
@@ -439,10 +439,10 @@ func TestResolve(t *testing.T) {
 		require.Len(t, outerFC.Args(), 2)
 		fc := mustConvert[FunctionCall](t, outerFC.Args()[0])
 
-		arg := mustResolve("/statements@10/expression/args@0", root)
+		arg := mustResolve(root, "/statements@10/expression/args@0")
 		assert.Same(t, fc, arg)
 
-		statement := mustResolve("/statements@7", root)
+		statement := mustResolve(root, "/statements@7")
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
@@ -452,25 +452,25 @@ func TestResolve(t *testing.T) {
 		require.Len(t, outerFC.Args(), 2)
 		fc := mustConvert[FunctionCall](t, outerFC.Args()[1])
 
-		arg := mustResolve("/statements@10/expression/args@1", root)
+		arg := mustResolve(root, "/statements@10/expression/args@1")
 		assert.Same(t, fc, arg)
 
-		statement := mustResolve("/statements@8", root)
+		statement := mustResolve(root, "/statements@8")
 		assert.Same(t, fc.Callable().Ref(doc.Ctx()), statement)
 	})
 
 	t.Run("errorReporting/no-such-field", func(t *testing.T) {
-		_, err := core.Resolve("/statements@3/expressions/left", root)
+		_, err := core.Resolve(root, "/statements@3/expressions/left")
 		assert.ErrorContains(t, err, "DefinitionImpl.Resolve: field 'expressions' does not exist in node '/statements@3' of type 'Definition'")
 	})
 
 	t.Run("errorReporting/field-is-primitive", func(t *testing.T) {
-		_, err := core.Resolve("/statements@0/name", root)
+		_, err := core.Resolve(root, "/statements@0/name")
 		assert.ErrorContains(t, err, "DefinitionImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	})
 
 	t.Run("errorReporting/field-is-reference", func(t *testing.T) {
-		_, err := core.Resolve("/statements@10/expression/callable", root)
+		_, err := core.Resolve(root, "/statements@10/expression/callable")
 		assert.ErrorContains(t, err, "FunctionCallImpl.Resolve: field 'callable' is a cross-reference instead of a container field")
 	})
 
@@ -487,34 +487,34 @@ func TestResolve(t *testing.T) {
 		// set the tested field to 'nil'
 		def.expression = nil
 
-		_, err := core.Resolve("/statements@0/expression/left", &module)
+		_, err := core.Resolve(&module, "/statements@0/expression/left")
 		assert.ErrorContains(t, err, "DefinitionImpl.Resolve: field 'expression' is nil in node '/statements@0'")
 	})
 
 	t.Run("errorReporting/slice-index-out-of-bound-1", func(t *testing.T) {
-		_, err := core.Resolve("/statements@15/expression", root)
+		_, err := core.Resolve(root, "/statements@15/expression")
 		assert.ErrorContains(t, err, "ModuleImpl.Resolve: index 15 exceeds length of slice in 'statements' (length=11) in node ''")
 	})
 
 	t.Run("errorReporting/slice-index-out-of-bound-2", func(t *testing.T) {
-		_, err := core.Resolve("/statements@10/expression/args@7/expression", root)
+		_, err := core.Resolve(root, "/statements@10/expression/args@7/expression")
 		assert.ErrorContains(t, err, "FunctionCallImpl.Resolve: index 7 exceeds length of slice in 'args' (length=2) in node '/statements@10/expression'")
 	})
 
 	t.Run("errorReporting/slice-item-is-nil", func(t *testing.T) {
-		expr, err := core.Resolve("/statements@10/expression/", root)
+		expr, err := core.Resolve(root, "/statements@10/expression/")
 		require.NoError(t, err)
 		fc := mustConvert[FunctionCall](t, expr)
 
 		// shamelessly manipulate the shared ast and add a 'nil' item, don't want to copy everything right now; shouldn't hurt
 		fc.SetArgsItem(nil)
-		_, err = core.Resolve("/statements@10/expression/args@2/expression", root)
+		_, err = core.Resolve(root, "/statements@10/expression/args@2/expression")
 
 		assert.ErrorContains(t, err, "FunctionCallImpl.Resolve: item 2 of slice in field 'args' is nil in node '/statements@10/expression'")
 	})
 
 	t.Run("errorReporting/slice-index-typo", func(t *testing.T) {
-		_, err := core.Resolve("/statements@1a/expression", root)
+		_, err := core.Resolve(root, "/statements@1a/expression")
 		assert.ErrorContains(t, err, "parsePath: index '1a' is not a valid uint: strconv.Atoi: parsing \"1a\": invalid syntax")
 	})
 }
