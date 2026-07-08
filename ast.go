@@ -355,14 +355,22 @@ func MergeTokens(newNode AstNode, oldTokens []*Token) {
 // AssignContainers recursively assigns document and parent pointers for root and its subtree.
 //
 // It also assigns document and container on composite reference units reachable via references.
+// It will also fill the [Document.References] field with all references found in the subtree.
 func AssignContainers(doc *Document, root AstNode) {
+	references := []UntypedReference{}
+	doAssignContainers(doc, root, &references)
+	doc.References = references
+}
+
+func doAssignContainers(doc *Document, root AstNode, references *[]UntypedReference) {
 	root.SetDocument(doc)
 	root.ForEachNode(func(child AstNode, containerField unique.Handle[string], index int) {
 		child.SetDocument(doc)
 		child.SetContainer(root, containerField, index)
-		AssignContainers(doc, child)
+		doAssignContainers(doc, child, references)
 	})
 	root.ForEachReference(func(ur UntypedReference, containerField unique.Handle[string], index int) {
+		*references = append(*references, ur)
 		unit := ur.Unit()
 		if stringNode, ok := unit.(CompositeNode); ok {
 			stringNode.SetDocument(doc)

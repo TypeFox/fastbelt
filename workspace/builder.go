@@ -12,6 +12,7 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
+	"typefox.dev/fastbelt/util/extiter"
 	"typefox.dev/fastbelt/util/service"
 )
 
@@ -63,30 +64,26 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 	// PHASE 1: Parse, and compute exports (parallel per document).
 	parser := service.MustGet[DocumentParser](s.sc)
 	exporter := service.MustGet[linking.SymbolExporter](s.sc)
-	var phase1 sync.WaitGroup
-	for _, doc := range docs {
-		phase1.Go(func() {
-			if ctx.Err() != nil {
-				return
-			}
-			// STEP 1.1: Parse the document and create the AST.
-			if !doc.State.Has(core.DocStateParsed) {
-				parser.Parse(doc)
-				doc.State = doc.State.With(core.DocStateParsed)
-				s.notifyListeners(ctx, core.DocStateParsed, doc)
-			}
-			if ctx.Err() != nil {
-				return
-			}
-			// STEP 1.2: Compute the exported symbols for cross-document references.
-			if !doc.State.Has(core.DocStateExportedSymbols) {
-				exporter.ExportSymbols(ctx, doc)
-				doc.State = doc.State.With(core.DocStateExportedSymbols)
-				s.notifyListeners(ctx, core.DocStateExportedSymbols, doc)
-			}
-		})
-	}
-	phase1.Wait()
+	extiter.ForEachParallelWithSlice(docs, func(doc *core.Document, _ int) {
+		if ctx.Err() != nil {
+			return
+		}
+		// STEP 1.1: Parse the document and create the AST.
+		if !doc.State.Has(core.DocStateParsed) {
+			parser.Parse(doc)
+			doc.State = doc.State.With(core.DocStateParsed)
+			s.notifyListeners(ctx, core.DocStateParsed, doc)
+		}
+		if ctx.Err() != nil {
+			return
+		}
+		// STEP 1.2: Compute the exported symbols for cross-document references.
+		if !doc.State.Has(core.DocStateExportedSymbols) {
+			exporter.ExportSymbols(ctx, doc)
+			doc.State = doc.State.With(core.DocStateExportedSymbols)
+			s.notifyListeners(ctx, core.DocStateExportedSymbols, doc)
+		}
+	})
 
 	if err := ctx.Err(); err != nil {
 		return err
@@ -99,49 +96,45 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 	localSymbols := service.MustGet[linking.LocalSymbolsProvider](s.sc)
 	linker := service.MustGet[linking.Linker](s.sc)
 	referenceDescriptions := service.MustGet[linking.ReferenceDescriptionsProvider](s.sc)
-	var phase2 sync.WaitGroup
-	for _, doc := range docs {
-		phase2.Go(func() {
-			if ctx.Err() != nil {
-				return
-			}
-			// STEP 2.1: Collect imported symbols from all other documents.
-			if !doc.State.Has(core.DocStateImportedSymbols) {
-				allDocs := documentManager.All()
-				importer.ImportSymbols(ctx, doc, allDocs)
-				doc.State = doc.State.With(core.DocStateImportedSymbols)
-				s.notifyListeners(ctx, core.DocStateImportedSymbols, doc)
-			}
-			if ctx.Err() != nil {
-				return
-			}
-			// STEP 2.2: Compute the local symbols for intra-document references.
-			if !doc.State.Has(core.DocStateLocalSymbols) {
-				localSymbols.LocalSymbols(ctx, doc)
-				doc.State = doc.State.With(core.DocStateLocalSymbols)
-				s.notifyListeners(ctx, core.DocStateLocalSymbols, doc)
-			}
-			if ctx.Err() != nil {
-				return
-			}
-			// STEP 2.3: Link the document to resolve all references.
-			if !doc.State.Has(core.DocStateLinked) {
-				linker.Link(ctx, doc)
-				doc.State = doc.State.With(core.DocStateLinked)
-				s.notifyListeners(ctx, core.DocStateLinked, doc)
-			}
-			if ctx.Err() != nil {
-				return
-			}
-			// STEP 2.4: Provide reference descriptions for the document.
-			if !doc.State.Has(core.DocStateReferences) {
-				referenceDescriptions.ReferenceDescriptions(ctx, doc)
-				doc.State = doc.State.With(core.DocStateReferences)
-				s.notifyListeners(ctx, core.DocStateReferences, doc)
-			}
-		})
-	}
-	phase2.Wait()
+	extiter.ForEachParallelWithSlice(docs, func(doc *core.Document, _ int) {
+		if ctx.Err() != nil {
+			return
+		}
+		// STEP 2.1: Collect imported symbols from all other documents.
+		if !doc.State.Has(core.DocStateImportedSymbols) {
+			allDocs := documentManager.All()
+			importer.ImportSymbols(ctx, doc, allDocs)
+			doc.State = doc.State.With(core.DocStateImportedSymbols)
+			s.notifyListeners(ctx, core.DocStateImportedSymbols, doc)
+		}
+		if ctx.Err() != nil {
+			return
+		}
+		// STEP 2.2: Compute the local symbols for intra-document references.
+		if !doc.State.Has(core.DocStateLocalSymbols) {
+			localSymbols.LocalSymbols(ctx, doc)
+			doc.State = doc.State.With(core.DocStateLocalSymbols)
+			s.notifyListeners(ctx, core.DocStateLocalSymbols, doc)
+		}
+		if ctx.Err() != nil {
+			return
+		}
+		// STEP 2.3: Link the document to resolve all references.
+		if !doc.State.Has(core.DocStateLinked) {
+			linker.Link(ctx, doc)
+			doc.State = doc.State.With(core.DocStateLinked)
+			s.notifyListeners(ctx, core.DocStateLinked, doc)
+		}
+		if ctx.Err() != nil {
+			return
+		}
+		// STEP 2.4: Provide reference descriptions for the document.
+		if !doc.State.Has(core.DocStateReferences) {
+			referenceDescriptions.ReferenceDescriptions(ctx, doc)
+			doc.State = doc.State.With(core.DocStateReferences)
+			s.notifyListeners(ctx, core.DocStateReferences, doc)
+		}
+	})
 
 	if err := ctx.Err(); err != nil {
 		return err
@@ -155,34 +148,41 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 
 	// PHASE 3: Run custom validations (parallel per document).
 	validator := service.MustGet[DocumentValidator](s.sc)
-	var phase3 sync.WaitGroup
-	for _, doc := range docs {
-		phase3.Go(func() {
+	extiter.ForEachParallelWithSlice(docs, func(doc *core.Document, _ int) {
+		if ctx.Err() != nil {
+			return
+		}
+		if !doc.State.Has(core.DocStateValidated) {
+			diagnostics := validator.Validate(ctx, doc, "on-save")
 			if ctx.Err() != nil {
 				return
 			}
-			if !doc.State.Has(core.DocStateValidated) {
-				diagnostics := validator.Validate(ctx, doc, "on-save")
-				if ctx.Err() != nil {
-					return
-				}
-				doc.Diagnostics = diagnostics
-				doc.State = doc.State.With(core.DocStateValidated)
-				s.notifyListeners(ctx, core.DocStateValidated, doc)
-			}
-		})
-	}
-	phase3.Wait()
+			doc.Diagnostics = diagnostics
+			doc.State = doc.State.With(core.DocStateValidated)
+			s.notifyListeners(ctx, core.DocStateValidated, doc)
+		}
+	})
 
 	return ctx.Err()
 }
 
 func (s *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
+	if state.Has(core.DocStateParsed) && !state.Has(core.DocStateLinked) {
+		// Only run the reference reset if the document is supposed to stay parsed
+		// but not linked. In this case, we want to reset the references, so that
+		// they can be re-resolved when the document is built again.
+		for _, ref := range doc.References {
+			ref.Reset()
+		}
+		// If the document is supposed to be completely reset, we can let the next
+		// stage simply clear the reference slice.
+	}
 	if !state.Has(core.DocStateParsed) {
 		doc.Root = nil
 		doc.Tokens = core.TokenSlice{}
 		doc.ParserErrors = []*core.ParserError{}
 		doc.LexerErrors = []*core.LexerError{}
+		doc.References = []core.UntypedReference{}
 	}
 	if !state.Has(core.DocStateExportedSymbols) {
 		doc.ExportedSymbols = nil
@@ -192,12 +192,6 @@ func (s *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
 	}
 	if !state.Has(core.DocStateLocalSymbols) {
 		doc.LocalSymbols = nil
-	}
-	if !state.Has(core.DocStateLinked) {
-		for _, ref := range doc.References {
-			ref.Reset()
-		}
-		doc.References = []core.UntypedReference{}
 	}
 	if !state.Has(core.DocStateReferences) {
 		doc.ReferenceDescriptions = nil
