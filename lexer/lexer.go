@@ -120,6 +120,13 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 					offset, end,
 				))
 			}
+
+			if longestType.PopMode {
+				l.stack.Pop()
+			}
+			if longestType.PushMode > -1 {
+				l.stack.Push(l.tokenModes[longestType.PushMode])
+			}
 		} else {
 			errors = append(errors, core.NewLexerError(
 				"No matching token",
@@ -128,13 +135,6 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 			))
 		}
 		offset = end
-
-		if longestType.PopMode {
-			l.stack.Pop()
-		}
-		if longestType.PushMode > -1 {
-			l.stack.Push(l.tokenModes[longestType.PushMode])
-		}
 	}
 
 	if length > 0 {

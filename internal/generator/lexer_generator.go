@@ -109,13 +109,9 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	}
 	// Starting with 1 - prevent clash with EOF (index 0)
 	tokenIndex := 1
-	// keywordTokenIndex records the runtime token id (TokenIndex) assigned to
-	// each keyword node, so keyword-backed tokens can alias to the correct id.
-	keywordTokenIndex := map[string]int{}
 	for _, keyword := range keywords.Keywords {
 		code := generateKeywordTokenType(keyword, tokenIndex)
 		mergeImports(&result.Imports, code.Imports)
-		keywordTokenIndex[keyword.Value()] = tokenIndex
 		tokenType := TokenType{
 			TokenIndex: tokenIndex,
 			VarName:    GeneratedTokenName(keyword),
@@ -124,6 +120,7 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		}
 		result.TokenTypes.All = append(result.TokenTypes.All, tokenType)
 		result.TokenTypes.ByTokenIndex[tokenIndex] = &tokenType
+		result.TokenIndex.ByKeyword[keyword.Value()] = tokenIndex
 		tokenIndex++
 	}
 	for _, token := range tokens {
@@ -138,7 +135,7 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 			code.AppendLine()
 			code.AppendLine("var ", varName, " = ", GeneratedTokenName(keyword))
 			mergeImports(&result.Imports, map[string]bool{})
-			currentTokenIndex := keywordTokenIndex[keyword.Value()]
+			currentTokenIndex := result.TokenIndex.ByKeyword[keyword.Value()]
 			tokenType := TokenType{
 				TokenIndex: currentTokenIndex,
 				VarName:    varName,

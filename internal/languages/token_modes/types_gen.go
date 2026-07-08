@@ -229,9 +229,225 @@ func (i *ExpressionImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.ExpressionData.ForEachReference(fn)
 }
 
-type VariableRef interface {
+type BinaryExpression interface {
 	core.AstNode
 	Expression
+
+	IsBinaryExpression()
+	Left() Expression
+	SetLeft(value Expression)
+	Operator() string
+	OperatorToken() *core.Token
+	SetOperator(value *core.Token)
+	Right() Expression
+	SetRight(value Expression)
+}
+
+func NewBinaryExpression() BinaryExpression {
+	return &BinaryExpressionImpl{
+		AstNodeBase:          core.NewAstNode(),
+		ExpressionData:       NewExpressionData(),
+		BinaryExpressionData: NewBinaryExpressionData(),
+	}
+}
+
+type BinaryExpressionData struct {
+	left     Expression
+	operator *core.Token
+	right    Expression
+}
+
+func NewBinaryExpressionData() BinaryExpressionData {
+	return BinaryExpressionData{}
+}
+
+func (i *BinaryExpressionData) IsBinaryExpression() {}
+
+func (i *BinaryExpressionData) ForEachNode(fn func(core.AstNode)) {
+	if i.left != nil {
+		fn(i.left)
+	}
+	if i.right != nil {
+		fn(i.right)
+	}
+}
+
+func (i *BinaryExpressionData) ForEachReference(fn func(core.UntypedReference)) {
+}
+
+func (i *BinaryExpressionData) Left() Expression {
+	if i != nil && i.left != nil {
+		return i.left
+	} else {
+		return nil
+	}
+}
+
+func (i *BinaryExpressionData) SetLeft(value Expression) {
+	i.left = value
+}
+
+func (i *BinaryExpressionData) Operator() string {
+	if i != nil && i.operator != nil {
+		return i.operator.Image
+	} else {
+		return ""
+	}
+}
+
+func (i *BinaryExpressionData) OperatorToken() *core.Token {
+	return i.operator
+}
+
+func (i *BinaryExpressionData) SetOperator(value *core.Token) {
+	i.operator = value
+}
+
+func (i *BinaryExpressionData) Right() Expression {
+	if i != nil && i.right != nil {
+		return i.right
+	} else {
+		return nil
+	}
+}
+
+func (i *BinaryExpressionData) SetRight(value Expression) {
+	i.right = value
+}
+
+type BinaryExpressionImpl struct {
+	core.AstNodeBase
+	ExpressionData
+	BinaryExpressionData
+}
+
+func (i *BinaryExpressionImpl) ForEachNode(fn func(core.AstNode)) {
+	i.ExpressionData.ForEachNode(fn)
+	i.BinaryExpressionData.ForEachNode(fn)
+}
+
+func (i *BinaryExpressionImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.ExpressionData.ForEachReference(fn)
+	i.BinaryExpressionData.ForEachReference(fn)
+}
+
+type Primary interface {
+	core.AstNode
+	Expression
+
+	IsPrimary()
+}
+
+func NewPrimary() Primary {
+	return &PrimaryImpl{
+		AstNodeBase:    core.NewAstNode(),
+		ExpressionData: NewExpressionData(),
+		PrimaryData:    NewPrimaryData(),
+	}
+}
+
+type PrimaryData struct {
+}
+
+func NewPrimaryData() PrimaryData {
+	return PrimaryData{}
+}
+
+func (i *PrimaryData) IsPrimary() {}
+
+func (i *PrimaryData) ForEachNode(fn func(core.AstNode)) {
+}
+
+func (i *PrimaryData) ForEachReference(fn func(core.UntypedReference)) {
+}
+
+type PrimaryImpl struct {
+	core.AstNodeBase
+	ExpressionData
+	PrimaryData
+}
+
+func (i *PrimaryImpl) ForEachNode(fn func(core.AstNode)) {
+	i.ExpressionData.ForEachNode(fn)
+	i.PrimaryData.ForEachNode(fn)
+}
+
+func (i *PrimaryImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.ExpressionData.ForEachReference(fn)
+	i.PrimaryData.ForEachReference(fn)
+}
+
+type Parentheses interface {
+	core.AstNode
+	Primary
+
+	IsParentheses()
+	Expr() Expression
+	SetExpr(value Expression)
+}
+
+func NewParentheses() Parentheses {
+	return &ParenthesesImpl{
+		AstNodeBase:     core.NewAstNode(),
+		PrimaryData:     NewPrimaryData(),
+		ExpressionData:  NewExpressionData(),
+		ParenthesesData: NewParenthesesData(),
+	}
+}
+
+type ParenthesesData struct {
+	expr Expression
+}
+
+func NewParenthesesData() ParenthesesData {
+	return ParenthesesData{}
+}
+
+func (i *ParenthesesData) IsParentheses() {}
+
+func (i *ParenthesesData) ForEachNode(fn func(core.AstNode)) {
+	if i.expr != nil {
+		fn(i.expr)
+	}
+}
+
+func (i *ParenthesesData) ForEachReference(fn func(core.UntypedReference)) {
+}
+
+func (i *ParenthesesData) Expr() Expression {
+	if i != nil && i.expr != nil {
+		return i.expr
+	} else {
+		return nil
+	}
+}
+
+func (i *ParenthesesData) SetExpr(value Expression) {
+	i.expr = value
+}
+
+type ParenthesesImpl struct {
+	core.AstNodeBase
+	PrimaryData
+	ExpressionData
+	ParenthesesData
+}
+
+func (i *ParenthesesImpl) ForEachNode(fn func(core.AstNode)) {
+	i.PrimaryData.ForEachNode(fn)
+	i.ExpressionData.ForEachNode(fn)
+	i.ParenthesesData.ForEachNode(fn)
+}
+
+func (i *ParenthesesImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.PrimaryData.ForEachReference(fn)
+	i.ExpressionData.ForEachReference(fn)
+	i.ParenthesesData.ForEachReference(fn)
+}
+
+type VariableRef interface {
+	core.AstNode
+	Primary
 
 	IsVariableRef()
 	Name() *core.Reference[VariableDecl]
@@ -241,6 +457,7 @@ type VariableRef interface {
 func NewVariableRef() VariableRef {
 	return &VariableRefImpl{
 		AstNodeBase:     core.NewAstNode(),
+		PrimaryData:     NewPrimaryData(),
 		ExpressionData:  NewExpressionData(),
 		VariableRefData: NewVariableRefData(),
 	}
@@ -279,23 +496,26 @@ func (i *VariableRefData) SetName(value *core.Reference[VariableDecl]) {
 
 type VariableRefImpl struct {
 	core.AstNodeBase
+	PrimaryData
 	ExpressionData
 	VariableRefData
 }
 
 func (i *VariableRefImpl) ForEachNode(fn func(core.AstNode)) {
+	i.PrimaryData.ForEachNode(fn)
 	i.ExpressionData.ForEachNode(fn)
 	i.VariableRefData.ForEachNode(fn)
 }
 
 func (i *VariableRefImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.PrimaryData.ForEachReference(fn)
 	i.ExpressionData.ForEachReference(fn)
 	i.VariableRefData.ForEachReference(fn)
 }
 
 type NumericLiteral interface {
 	core.AstNode
-	Expression
+	Primary
 
 	IsNumericLiteral()
 	Value() string
@@ -306,6 +526,7 @@ type NumericLiteral interface {
 func NewNumericLiteral() NumericLiteral {
 	return &NumericLiteralImpl{
 		AstNodeBase:        core.NewAstNode(),
+		PrimaryData:        NewPrimaryData(),
 		ExpressionData:     NewExpressionData(),
 		NumericLiteralData: NewNumericLiteralData(),
 	}
@@ -345,23 +566,26 @@ func (i *NumericLiteralData) SetValue(value *core.Token) {
 
 type NumericLiteralImpl struct {
 	core.AstNodeBase
+	PrimaryData
 	ExpressionData
 	NumericLiteralData
 }
 
 func (i *NumericLiteralImpl) ForEachNode(fn func(core.AstNode)) {
+	i.PrimaryData.ForEachNode(fn)
 	i.ExpressionData.ForEachNode(fn)
 	i.NumericLiteralData.ForEachNode(fn)
 }
 
 func (i *NumericLiteralImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.PrimaryData.ForEachReference(fn)
 	i.ExpressionData.ForEachReference(fn)
 	i.NumericLiteralData.ForEachReference(fn)
 }
 
 type StringLiteral interface {
 	core.AstNode
-	Expression
+	Primary
 
 	IsStringLiteral()
 	Content() []StringContent
@@ -371,6 +595,7 @@ type StringLiteral interface {
 func NewStringLiteral() StringLiteral {
 	return &StringLiteralImpl{
 		AstNodeBase:       core.NewAstNode(),
+		PrimaryData:       NewPrimaryData(),
 		ExpressionData:    NewExpressionData(),
 		StringLiteralData: NewStringLiteralData(),
 	}
@@ -407,16 +632,19 @@ func (i *StringLiteralData) SetContentItem(item StringContent) {
 
 type StringLiteralImpl struct {
 	core.AstNodeBase
+	PrimaryData
 	ExpressionData
 	StringLiteralData
 }
 
 func (i *StringLiteralImpl) ForEachNode(fn func(core.AstNode)) {
+	i.PrimaryData.ForEachNode(fn)
 	i.ExpressionData.ForEachNode(fn)
 	i.StringLiteralData.ForEachNode(fn)
 }
 
 func (i *StringLiteralImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.PrimaryData.ForEachReference(fn)
 	i.ExpressionData.ForEachReference(fn)
 	i.StringLiteralData.ForEachReference(fn)
 }
@@ -593,14 +821,17 @@ func (i *InterpolationImpl) ForEachReference(fn func(core.UntypedReference)) {
 }
 
 var TokenModesSyntheticFactories = map[string]func() core.AstNode{
-	"Expression":     func() core.AstNode { return NewExpression() },
-	"Interpolation":  func() core.AstNode { return NewInterpolation() },
-	"Model":          func() core.AstNode { return NewModel() },
-	"NumericLiteral": func() core.AstNode { return NewNumericLiteral() },
-	"Statement":      func() core.AstNode { return NewStatement() },
-	"StringContent":  func() core.AstNode { return NewStringContent() },
-	"StringLiteral":  func() core.AstNode { return NewStringLiteral() },
-	"StringText":     func() core.AstNode { return NewStringText() },
-	"VariableDecl":   func() core.AstNode { return NewVariableDecl() },
-	"VariableRef":    func() core.AstNode { return NewVariableRef() },
+	"BinaryExpression": func() core.AstNode { return NewBinaryExpression() },
+	"Expression":       func() core.AstNode { return NewExpression() },
+	"Interpolation":    func() core.AstNode { return NewInterpolation() },
+	"Model":            func() core.AstNode { return NewModel() },
+	"NumericLiteral":   func() core.AstNode { return NewNumericLiteral() },
+	"Parentheses":      func() core.AstNode { return NewParentheses() },
+	"Primary":          func() core.AstNode { return NewPrimary() },
+	"Statement":        func() core.AstNode { return NewStatement() },
+	"StringContent":    func() core.AstNode { return NewStringContent() },
+	"StringLiteral":    func() core.AstNode { return NewStringLiteral() },
+	"StringText":       func() core.AstNode { return NewStringText() },
+	"VariableDecl":     func() core.AstNode { return NewVariableDecl() },
+	"VariableRef":      func() core.AstNode { return NewVariableRef() },
 }

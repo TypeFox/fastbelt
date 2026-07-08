@@ -7,19 +7,19 @@ import (
 	"typefox.dev/fastbelt/parser"
 )
 
-var ExpressionAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_ID, Token_INT, Token_STRING_STOP},
-	Lookup: []int{5: 3, 7: 1, 8: 2},
+var PrimaryAlternatives = parser.LL1Lookahead{
+	Types:  []*core.TokenType{Token_ID, Token_INT, Keyword_Backtick, Keyword_LeftParen},
+	Lookup: []int{2: 4, 6: 3, 8: 1, 9: 2},
 }
 
 var StringContentAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_STRING_CONTENT, Token_INTERPOLATION_START},
-	Lookup: []int{1: 2, 12: 1},
+	Types:  []*core.TokenType{Token_STRING_CONTENT, Keyword_HashLeftBrace},
+	Lookup: []int{1: 2, 13: 1},
 }
 
 var StringLiteralContentLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_INTERPOLATION_START, Token_STRING_CONTENT},
-	Lookup: []int{1: 1, 12: 1},
+	Types:  []*core.TokenType{Keyword_HashLeftBrace, Token_STRING_CONTENT},
+	Lookup: []int{1: 1, 13: 1},
 }
 
 // TokenModesParserLookahead abstracts every lookahead/prediction decision performed by
@@ -29,8 +29,9 @@ var StringLiteralContentLoop = parser.LL1Lookahead{
 type TokenModesParserLookahead interface {
 	parser.ParserLookahead
 
-	ExpressionAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
+	AdditiveLoop(state *parser.ParserState) bool
 	ModelStatementsLoop(state *parser.ParserState) bool
+	PrimaryAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	StringContentAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	StringLiteralContentLoop(state *parser.ParserState) bool
 }
@@ -45,12 +46,16 @@ func NewDefaultTokenModesParserLookahead() TokenModesParserLookahead {
 	return &DefaultTokenModesParserLookahead{}
 }
 
-func (l *DefaultTokenModesParserLookahead) ExpressionAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.Lookahead(ExpressionAlternatives)
+func (l *DefaultTokenModesParserLookahead) AdditiveLoop(state *parser.ParserState) bool {
+	return state.LA(1).Type == Keyword_Plus
 }
 
 func (l *DefaultTokenModesParserLookahead) ModelStatementsLoop(state *parser.ParserState) bool {
 	return state.LA(1).Type == Token_ID
+}
+
+func (l *DefaultTokenModesParserLookahead) PrimaryAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+	return state.Lookahead(PrimaryAlternatives)
 }
 
 func (l *DefaultTokenModesParserLookahead) StringContentAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {

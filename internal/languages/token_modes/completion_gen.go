@@ -92,8 +92,16 @@ func (a *TokenModesCompletionAdapter) HasAssignment(node core.AstNode, property 
 }
 
 func (a *TokenModesCompletionAdapter) ApplyAction(actionType, property string, value core.AstNode) core.AstNode {
-	_ = actionType
-	_ = property
-	_ = value
+	switch actionType {
+	case "BinaryExpression":
+		node := NewBinaryExpression()
+		switch property {
+		case "Left":
+			if v, ok := value.(Expression); ok {
+				node.SetLeft(v)
+			}
+		}
+		return node
+	}
 	return nil
 }

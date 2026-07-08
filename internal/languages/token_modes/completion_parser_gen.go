@@ -76,7 +76,7 @@ func (p *CompletionParser) ParseVariableDecl() {
 		p.cp.ClearAssignment()
 	}
 	{
-		p.state.Consume(Token_ASSIGN)
+		p.state.Consume(Keyword_ColonEquals)
 	}
 	{
 		p.cp.MarkAssignment("Value")
@@ -90,27 +90,89 @@ func (p *CompletionParser) ParseVariableDecl() {
 func (p *CompletionParser) ParseExpression() {
 	p.cp.EnterRule("Expression", StateNumber__Expression__Start)
 	defer p.cp.ExitRule()
-	switch prediction, failure := p.lookahead.ExpressionAlternatives(p.state); prediction {
+	{
+		p.state.EnterRule(StateNumber__Expression__Basic_1)
+		p.ParseAdditive()
+		p.state.ExitRule()
+	}
+}
+
+func (p *CompletionParser) ParseAdditive() {
+	p.cp.EnterRule("Additive", StateNumber__Additive__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.EnterRule(StateNumber__Additive__LoopEntry)
+		p.ParsePrimary()
+		p.state.ExitRule()
+	}
+	p.cp.RecordSnapshot(StateNumber__Additive__LoopEntry)
+	p.state.Sync(StateNumber__Additive__LoopEntry)
+	for p.lookahead.AdditiveLoop(p.state) {
+		{
+			p.cp.MarkAssignment("Operator")
+			p.state.Consume(Keyword_Plus)
+			p.cp.ClearAssignment()
+		}
+		{
+			p.cp.MarkAssignment("Right")
+			p.state.EnterRule(StateNumber__Additive__Basic_2)
+			p.ParsePrimary()
+			p.state.ExitRule()
+			p.cp.ClearAssignment()
+		}
+		p.cp.RecordSnapshot(StateNumber__Additive__LoopEntry)
+		p.state.Sync(StateNumber__Additive__LoopEntry)
+	}
+}
+
+func (p *CompletionParser) ParsePrimary() {
+	p.cp.EnterRule("Primary", StateNumber__Primary__Start)
+	defer p.cp.ExitRule()
+	switch prediction, failure := p.lookahead.PrimaryAlternatives(p.state); prediction {
 	case 0:
 		{
-			p.state.EnterRule(StateNumber__Expression__Basic_1)
+			p.state.EnterRule(StateNumber__Primary__Basic_1)
 			p.ParseVariableRef()
 			p.state.ExitRule()
 		}
 	case 1:
 		{
-			p.state.EnterRule(StateNumber__Expression__Basic_3)
+			p.state.EnterRule(StateNumber__Primary__Basic_3)
 			p.ParseNumericLiteral()
 			p.state.ExitRule()
 		}
 	case 2:
 		{
-			p.state.EnterRule(StateNumber__Expression__Basic_5)
+			p.state.EnterRule(StateNumber__Primary__Basic_5)
 			p.ParseStringLiteral()
+			p.state.ExitRule()
+		}
+	case 3:
+		{
+			p.state.EnterRule(StateNumber__Primary__Basic_7)
+			p.ParseParentheses()
 			p.state.ExitRule()
 		}
 	default:
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+	}
+}
+
+func (p *CompletionParser) ParseParentheses() {
+	p.cp.EnterRule("Parentheses", StateNumber__Parentheses__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_LeftParen)
+	}
+	{
+		p.cp.MarkAssignment("Expr")
+		p.state.EnterRule(StateNumber__Parentheses_RightParen)
+		p.ParseExpression()
+		p.state.ExitRule()
+		p.cp.ClearAssignment()
+	}
+	{
+		p.state.Consume(Keyword_RightParen)
 	}
 }
 
@@ -138,7 +200,7 @@ func (p *CompletionParser) ParseStringLiteral() {
 	p.cp.EnterRule("StringLiteral", StateNumber__StringLiteral__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_STRING_START)
+		p.state.Consume(Keyword_Backtick)
 	}
 	{
 		p.cp.RecordSnapshot(StateNumber__StringLiteral__LoopEntry)
@@ -154,7 +216,7 @@ func (p *CompletionParser) ParseStringLiteral() {
 		}
 	}
 	{
-		p.state.Consume(Token_STRING_STOP)
+		p.state.Consume(Keyword_Backtick)
 	}
 }
 
@@ -193,16 +255,16 @@ func (p *CompletionParser) ParseInterpolation() {
 	p.cp.EnterRule("Interpolation", StateNumber__Interpolation__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_INTERPOLATION_START)
+		p.state.Consume(Keyword_HashLeftBrace)
 	}
 	{
 		p.cp.MarkAssignment("Expression")
-		p.state.EnterRule(StateNumber__Interpolation_INTERPOLATION_END)
+		p.state.EnterRule(StateNumber__Interpolation_RightBrace)
 		p.ParseExpression()
 		p.state.ExitRule()
 		p.cp.ClearAssignment()
 	}
 	{
-		p.state.Consume(Token_INTERPOLATION_END)
+		p.state.Consume(Keyword_RightBrace)
 	}
 }

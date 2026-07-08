@@ -57,7 +57,23 @@ var Keyword_RightParen = core.NewTokenType(
 	[]rune{')'},
 )
 
-const Keyword_ColonEquals_Idx = 4
+const Keyword_Plus_Idx = 4
+
+var Keyword_Plus = core.NewTokenType(
+	Keyword_Plus_Idx,
+	"+",
+	"+",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "+") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'+'},
+)
+
+const Keyword_ColonEquals_Idx = 5
 
 var Keyword_ColonEquals = core.NewTokenType(
 	Keyword_ColonEquals_Idx,
@@ -73,7 +89,7 @@ var Keyword_ColonEquals = core.NewTokenType(
 	[]rune{':'},
 )
 
-const Keyword_Backtick_Idx = 5
+const Keyword_Backtick_Idx = 6
 
 var Keyword_Backtick = core.NewTokenType(
 	Keyword_Backtick_Idx,
@@ -89,7 +105,7 @@ var Keyword_Backtick = core.NewTokenType(
 	[]rune{'`'},
 )
 
-const Keyword_RightBrace_Idx = 6
+const Keyword_RightBrace_Idx = 7
 
 var Keyword_RightBrace = core.NewTokenType(
 	Keyword_RightBrace_Idx,
@@ -105,15 +121,7 @@ var Keyword_RightBrace = core.NewTokenType(
 	[]rune{'}'},
 )
 
-const Token_LPAREN_Idx = Keyword_LeftParen_Idx
-
-var Token_LPAREN = Keyword_LeftParen
-
-const Token_RPAREN_Idx = Keyword_RightParen_Idx
-
-var Token_RPAREN = Keyword_RightParen
-
-const Token_ID_Idx = 7
+const Token_ID_Idx = 8
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
@@ -184,7 +192,7 @@ var Token_ID_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_INT_Idx = 8
+const Token_INT_Idx = 9
 
 var Token_INT = core.NewTokenType(
 	Token_INT_Idx,
@@ -255,7 +263,7 @@ var Token_INT_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_WS_Idx = 9
+const Token_WS_Idx = 10
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
@@ -326,11 +334,7 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_ASSIGN_Idx = Keyword_ColonEquals_Idx
-
-var Token_ASSIGN = Keyword_ColonEquals
-
-const Token_SL_COMMENT_Idx = 10
+const Token_SL_COMMENT_Idx = 11
 
 var Token_SL_COMMENT = core.NewTokenType(
 	Token_SL_COMMENT_Idx,
@@ -418,7 +422,7 @@ var Token_SL_COMMENT_Accepting = [3]bool{
 	2: true,
 }
 
-const Token_ML_COMMENT_Idx = 11
+const Token_ML_COMMENT_Idx = 12
 
 var Token_ML_COMMENT = core.NewTokenType(
 	Token_ML_COMMENT_Idx,
@@ -540,15 +544,7 @@ var Token_ML_COMMENT_Accepting = [5]bool{
 	4: true,
 }
 
-const Token_STRING_START_Idx = Keyword_Backtick_Idx
-
-var Token_STRING_START = Keyword_Backtick
-
-const Token_STRING_STOP_Idx = Keyword_Backtick_Idx
-
-var Token_STRING_STOP = Keyword_Backtick
-
-const Token_STRING_CONTENT_Idx = 12
+const Token_STRING_CONTENT_Idx = 13
 
 var Token_STRING_CONTENT = core.NewTokenType(
 	Token_STRING_CONTENT_Idx,
@@ -637,14 +633,6 @@ var Token_STRING_CONTENT_Accepting = [3]bool{
 	2: true,
 }
 
-const Token_INTERPOLATION_START_Idx = Keyword_HashLeftBrace_Idx
-
-var Token_INTERPOLATION_START = Keyword_HashLeftBrace
-
-const Token_INTERPOLATION_END_Idx = Keyword_RightBrace_Idx
-
-var Token_INTERPOLATION_END = Keyword_RightBrace
-
 const (
 	TokenMode_default          = 0
 	TokenMode_IN_STRING        = 1
@@ -654,28 +642,30 @@ const (
 func NewLexer() lexer.Lexer {
 	modes := make([]*lexer.TokenMode, 3, 3)
 	modes[TokenMode_default] = lexer.NewTokenMode("default",
-		lexer.UseTokenType(Token_ASSIGN),
-		lexer.UseTokenType(Token_STRING_START).WithPushMode(TokenMode_IN_STRING),
+		lexer.UseTokenType(Keyword_ColonEquals),
+		lexer.UseTokenType(Keyword_Backtick).WithPushMode(TokenMode_IN_STRING),
 		lexer.UseTokenType(Token_ID),
 		lexer.UseTokenType(Token_INT),
-		lexer.UseTokenType(Token_LPAREN),
-		lexer.UseTokenType(Token_RPAREN),
+		lexer.UseTokenType(Keyword_Plus),
+		lexer.UseTokenType(Keyword_LeftParen),
+		lexer.UseTokenType(Keyword_RightParen),
 		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),
 		lexer.UseTokenType(Token_SL_COMMENT).WithGroup(core.CommentGroup),
 		lexer.UseTokenType(Token_ML_COMMENT).WithGroup(core.CommentGroup),
 	)
 	modes[TokenMode_IN_STRING] = lexer.NewTokenMode("IN_STRING",
-		lexer.UseTokenType(Token_STRING_STOP).WithPopMode(),
+		lexer.UseTokenType(Keyword_Backtick).WithPopMode(),
 		lexer.UseTokenType(Token_STRING_CONTENT),
-		lexer.UseTokenType(Token_INTERPOLATION_START).WithPushMode(TokenMode_IN_INTERPOLATION),
+		lexer.UseTokenType(Keyword_HashLeftBrace).WithPushMode(TokenMode_IN_INTERPOLATION),
 	)
 	modes[TokenMode_IN_INTERPOLATION] = lexer.NewTokenMode("IN_INTERPOLATION",
-		lexer.UseTokenType(Token_INTERPOLATION_END).WithPopMode(),
-		lexer.UseTokenType(Token_STRING_START).WithPushMode(TokenMode_IN_STRING),
+		lexer.UseTokenType(Keyword_RightBrace).WithPopMode(),
+		lexer.UseTokenType(Keyword_Backtick).WithPushMode(TokenMode_IN_STRING),
 		lexer.UseTokenType(Token_ID),
 		lexer.UseTokenType(Token_INT),
-		lexer.UseTokenType(Token_LPAREN),
-		lexer.UseTokenType(Token_RPAREN),
+		lexer.UseTokenType(Keyword_Plus),
+		lexer.UseTokenType(Keyword_LeftParen),
+		lexer.UseTokenType(Keyword_RightParen),
 		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),
 		lexer.UseTokenType(Token_SL_COMMENT).WithGroup(core.CommentGroup),
 		lexer.UseTokenType(Token_ML_COMMENT).WithGroup(core.CommentGroup),
