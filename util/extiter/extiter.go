@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"iter"
 	"reflect"
+	"runtime"
 	"slices"
 	"strings"
+	"sync"
 
 	"typefox.dev/fastbelt/util/collections"
 )
@@ -111,6 +113,44 @@ func ForEach[T any](seq iter.Seq[T], action func(T, int)) {
 		action(value, index)
 		index++
 	}
+}
+
+// ForEachParallel calls action once for each element in seq, distributing the
+// calls across at most [runtime.GOMAXPROCS](0) goroutines instead of one
+// goroutine per element.
+//
+// The second argument to action is the zero-based index of the element. seq
+// is fully consumed before any action call begins. This function blocks
+// until every action call has returned.
+func ForEachParallel[T any](seq iter.Seq[T], action func(T, int)) {
+	ForEachParallelWithSlice(slices.Collect(seq), action)
+}
+
+// ForEachParallelWithSlice calls action once for each element in the given slice,
+// distributing the calls across at most [runtime.GOMAXPROCS](0) goroutines
+// instead of one goroutine per element.
+//
+// The second argument to action is the zero-based index of the element.
+// This function blocks until every action call has returned.
+func ForEachParallelWithSlice[T any](elements []T, action func(T, int)) {
+	if len(elements) == 0 {
+		return
+	}
+	workers := min(runtime.GOMAXPROCS(0), len(elements))
+	var wg sync.WaitGroup
+	chunk := (len(elements) + workers - 1) / workers
+	for i := range workers {
+		start, end := i*chunk, min((i+1)*chunk, len(elements))
+		if start >= end {
+			continue
+		}
+		wg.Go(func() {
+			for index := start; index < end; index++ {
+				action(elements[index], index)
+			}
+		})
+	}
+	wg.Wait()
 }
 
 // Map returns a lazy sequence that applies fn to each element of seq.

@@ -6,9 +6,9 @@ package linking
 
 import (
 	"context"
-	"sync"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/extiter"
 	"typefox.dev/fastbelt/util/service"
 )
 
@@ -33,17 +33,10 @@ func NewDefaultLinker(sc *service.Container) Linker {
 }
 
 func (s *DefaultLinker) Link(ctx context.Context, document *core.Document) {
-	waitgroup := sync.WaitGroup{}
-	references := []core.UntypedReference{}
-	root := document.Root
-	for node := range core.AllNodes(root) {
-		for ref := range core.References(node) {
-			references = append(references, ref)
-			waitgroup.Go(func() {
-				ref.Resolve(ctx)
-			})
+	extiter.ForEachParallelWithSlice(document.References, func(ref core.UntypedReference, _ int) {
+		if ctx.Err() != nil {
+			return
 		}
-	}
-	waitgroup.Wait()
-	document.References = references
+		ref.Resolve(ctx)
+	})
 }
