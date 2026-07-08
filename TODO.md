@@ -4,6 +4,16 @@ Always write tests!!!
 
 ## Tasks
 
+### Current
+
+* pick a language with token modes
+* inline token declarations that have keywords only
+* list the keywords in the token mode declarations
+* test feature
+* implement feature
+
+### Backlog
+
 * [ ] collect keywords from entire grammar
 * [ ] handle implicit default token mode
   * [ ] local TokenDecls

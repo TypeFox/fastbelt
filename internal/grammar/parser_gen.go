@@ -783,6 +783,10 @@ func (p *Parser) ParseTokenDeclUsage() TokenDeclUsage {
 			}
 		}
 		{
+			token := p.state.Consume(Token_TOKEN)
+			core.AssignToken(current, token, StateNumber__TokenDeclUsage_TOKEN)
+		}
+		{
 			token := p.state.Consume(Token_ID)
 			core.AssignToken(current, token, StateNumber__TokenDeclUsage_Name_ID)
 			if token != nil {

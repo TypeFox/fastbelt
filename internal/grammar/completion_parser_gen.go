@@ -612,6 +612,9 @@ func (p *CompletionParser) ParseTokenDeclUsage() {
 		}
 	}
 	{
+		p.state.Consume(Token_TOKEN)
+	}
+	{
 		p.cp.MarkAssignment("Name")
 		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()

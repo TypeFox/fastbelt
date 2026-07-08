@@ -83,8 +83,8 @@ var TokenModeAlternatives = parser.LL1Lookahead{
 }
 
 var TokenModeMembersLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_KEYWORDS, Token_StringLiteral, Token_ID, TokenGroup_GroupType},
-	Lookup: []int{17: 1, 25: 1, 27: 1, 39: 1, 40: 1},
+	Types:  []*core.TokenType{Token_KEYWORDS, Token_TOKEN, Token_StringLiteral, Token_ID, TokenGroup_GroupType},
+	Lookup: []int{17: 1, 25: 1, 27: 1, 33: 1, 39: 1, 40: 1},
 }
 
 // FastbeltParserLookahead abstracts every lookahead/prediction decision performed by

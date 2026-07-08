@@ -17,29 +17,51 @@ interface VariableDecl extends Statement {
     Value Expression
 }
 
-VariableDecl: Name=ID ASSIGN Value=Expression
+VariableDecl: Name=ID ":=" Value=Expression
 
 interface Expression {}
 
-Expression: VariableRef | NumericLiteral | StringLiteral
+Expression: Additive;
 
-interface VariableRef extends Expression {
+interface BinaryExpression extends Expression {
+    Left Expression
+    Operator string
+    Right Expression
+}
+
+Additive returns Expression: Primary ({BinaryExpression.Left=current} Operator="+" Right=Primary)*
+
+interface Primary extends Expression {}
+
+Primary:
+    VariableRef
+    | NumericLiteral
+    | StringLiteral
+    | Parentheses
+
+interface Parentheses extends Primary {
+    Expr Expression
+}
+
+Parentheses: "(" Expr=Expression ")"
+
+interface VariableRef extends Primary {
     Name *VariableDecl
 }
 
 VariableRef: Name=[VariableDecl:ID]
 
-interface NumericLiteral extends Expression {
+interface NumericLiteral extends Primary {
     Value string
 }
 
 NumericLiteral: Value=INT
 
-interface StringLiteral extends Expression {
+interface StringLiteral extends Primary {
     Content []StringContent
 }
 
-StringLiteral: STRING_START Content+=StringContent* STRING_STOP
+StringLiteral: "`" Content+=StringContent* "`"
 
 interface StringContent {}
 
@@ -54,51 +76,45 @@ StringText: Value=STRING_CONTENT
 interface Interpolation extends StringContent {
     Expression Expression
 }
-Interpolation: INTERPOLATION_START Expression=Expression INTERPOLATION_END
+Interpolation: "#{" Expression=Expression "}"
 
-token LPAREN: "("
-token RPAREN: ")"
 token ID: /[a-zA-Z_][a-zA-Z0-9_]*/
 token INT: /[0-9]+/
 token WS: /\s+/
-token ASSIGN: ":="
 token SL_COMMENT: /\/\/[^\r\n]*/
 token ML_COMMENT: /\/\*[\s\S]*?\*\//
-token STRING_START: "`"
 
 token mode default {
-    ASSIGN
+    ":="
 
-    STRING_START -> push(IN_STRING)
+    "`" -> push(IN_STRING)
     ID
     INT
-    LPAREN
-    RPAREN
+    "+"
+    "("
+    ")"
     hidden WS
     comment SL_COMMENT
     comment ML_COMMENT
 }
 
-token STRING_STOP: "`"
 token STRING_CONTENT: /([^`#]|\\[`#tnr\\])+/
-token INTERPOLATION_START: "#{"
 
 token mode IN_STRING {
-    STRING_STOP -> pop
+    "`" -> pop
     STRING_CONTENT
-    INTERPOLATION_START -> push(IN_INTERPOLATION)
+    "#{" -> push(IN_INTERPOLATION)
 }
 
-token INTERPOLATION_END: "}"
-
 token mode IN_INTERPOLATION {
-    INTERPOLATION_END -> pop
+    "}" -> pop
 
-    STRING_START -> push(IN_STRING)
+    "`" -> push(IN_STRING)
     ID
     INT
-    LPAREN
-    RPAREN
+    "+"
+    "("
+    ")"
     hidden WS
     comment SL_COMMENT
     comment ML_COMMENT

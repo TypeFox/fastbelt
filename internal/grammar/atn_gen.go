@@ -253,6 +253,7 @@ const (
 	StateNumber__TokenDeclUsage__Basic_0
 	StateNumber__TokenDeclUsage__Basic_1
 	StateNumber__TokenDeclUsage__Basic_2
+	StateNumber__TokenDeclUsage_TOKEN
 	StateNumber__TokenDeclUsage_Name_ID
 	StateNumber__TokenDeclUsage_COLON
 	StateNumber__TokenDeclUsage__Basic_3
@@ -427,7 +428,7 @@ func ATN() *parser.RuntimeATN {
 	return atn
 }
 func BuildATN() *parser.RuntimeATN {
-	states := make([]*parser.RuntimeATNState, 407)
+	states := make([]*parser.RuntimeATNState, 408)
 	states[StateNumber__Grammar__Start] = parser.NewATNState(StateNumber__Grammar__Start, parser.ATNRuleStart, true)
 	states[StateNumber__Grammar__Stop] = parser.NewATNState(StateNumber__Grammar__Stop, parser.ATNRuleStop, false)
 	states[StateNumber__Interface__Start] = parser.NewATNState(StateNumber__Interface__Start, parser.ATNRuleStart, true)
@@ -673,6 +674,7 @@ func BuildATN() *parser.RuntimeATN {
 	states[StateNumber__TokenDeclUsage__Basic_0] = parser.NewATNState(StateNumber__TokenDeclUsage__Basic_0, parser.ATNBasic, false)
 	states[StateNumber__TokenDeclUsage__Basic_1] = parser.NewATNState(StateNumber__TokenDeclUsage__Basic_1, parser.ATNBasic, true)
 	states[StateNumber__TokenDeclUsage__Basic_2] = parser.NewATNState(StateNumber__TokenDeclUsage__Basic_2, parser.ATNBasic, true).SetDecision(23)
+	states[StateNumber__TokenDeclUsage_TOKEN] = parser.NewATNState(StateNumber__TokenDeclUsage_TOKEN, parser.ATNBasic, false)
 	states[StateNumber__TokenDeclUsage_Name_ID] = parser.NewATNState(StateNumber__TokenDeclUsage_Name_ID, parser.ATNBasic, false)
 	states[StateNumber__TokenDeclUsage_COLON] = parser.NewATNState(StateNumber__TokenDeclUsage_COLON, parser.ATNBasic, false)
 	states[StateNumber__TokenDeclUsage__Basic_3] = parser.NewATNState(StateNumber__TokenDeclUsage__Basic_3, parser.ATNBasic, true)
@@ -1491,11 +1493,14 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[StateNumber__TokenDeclUsage__Basic_1], TokenGroup_GroupType, nil),
 	)
 	states[StateNumber__TokenDeclUsage__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage_Name_ID]),
+		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage_TOKEN]),
 	)
 	states[StateNumber__TokenDeclUsage__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage__Basic_0]),
 		parser.NewEpsilonTransition(states[StateNumber__TokenDeclUsage__Basic_1]),
+	)
+	states[StateNumber__TokenDeclUsage_TOKEN].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__TokenDeclUsage_Name_ID], Token_TOKEN, nil),
 	)
 	states[StateNumber__TokenDeclUsage_Name_ID].AppendTransitions(
 		parser.NewAtomTransition(states[StateNumber__TokenDeclUsage_COLON], Token_ID, nil),
