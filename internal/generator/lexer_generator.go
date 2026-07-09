@@ -202,12 +202,14 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		}
 		result.TokenModes[modeName] = &current
 		for _, member := range tokenMode.Members() {
+			alreadyAdded := map[int]bool{}
 			switch member := member.(type) {
 			case grammar.TokenDeclUsage:
 				//TODO
 			case grammar.KeywordUsage:
 				tokenIndex := result.TokenIndex.ByKeyword[member.Keyword().Value()]
 				current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
+				alreadyAdded[tokenIndex] = true
 				if member.Type() != "" || member.Command() != nil {
 					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
 						GroupType: member.Type(),
@@ -221,6 +223,7 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 				case grammar.TokenDecl:
 					tokenIndex = result.TokenIndex.ByToken[rule]
 					current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
+					alreadyAdded[tokenIndex] = true
 					if rule.Type() != "" || rule.Command() != nil {
 						current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
 							GroupType: rule.Type(),
@@ -230,6 +233,7 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 				case grammar.TokenGroup:
 					tokenIndex = result.TokenIndex.ByTokenGroup[rule]
 					current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
+					alreadyAdded[tokenIndex] = true
 				}
 				if member.Type() != "" || member.Command() != nil {
 					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
@@ -238,7 +242,15 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 					}
 				}
 			case grammar.KeywordSelector:
-				//TODO
+				pattern := regexp.MustCompile(RegexpValue(member.Selector()))
+				for _, keyword := range keywords.Keywords {
+					tokenIndex := result.TokenIndex.ByKeyword[keyword.Value()]
+					value := KeywordValue(keyword)
+					if !alreadyAdded[tokenIndex] && pattern.MatchString(value) {
+						current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
+						alreadyAdded[tokenIndex] = true
+					}
+				}
 			}
 		}
 		result.TokenModeOrder = append(result.TokenModeOrder, modeName)

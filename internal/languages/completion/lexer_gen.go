@@ -489,74 +489,6 @@ var Keyword_RightBrace = core.NewTokenType(
 	[]rune{'}'},
 )
 
-const Token_LETTER_A_Idx = Keyword_a_Idx
-
-var Token_LETTER_A = Keyword_a
-
-const Token_LETTER_B_Idx = Keyword_b_Idx
-
-var Token_LETTER_B = Keyword_b
-
-const Token_LETTER_C_Idx = Keyword_c_Idx
-
-var Token_LETTER_C = Keyword_c
-
-const Token_LETTER_D_Idx = Keyword_d_Idx
-
-var Token_LETTER_D = Keyword_d
-
-const Token_LETTER_E_Idx = Keyword_e_Idx
-
-var Token_LETTER_E = Keyword_e
-
-const Token_LETTER_F_Idx = Keyword_f_Idx
-
-var Token_LETTER_F = Keyword_f
-
-const Token_LETTER_G_Idx = Keyword_g_Idx
-
-var Token_LETTER_G = Keyword_g
-
-const Token_LETTER_H_Idx = Keyword_h_Idx
-
-var Token_LETTER_H = Keyword_h
-
-const Token_LETTER_I_Idx = Keyword_i_Idx
-
-var Token_LETTER_I = Keyword_i
-
-const Token_LETTER_J_Idx = Keyword_j_Idx
-
-var Token_LETTER_J = Keyword_j
-
-const Token_LETTER_K_Idx = Keyword_k_Idx
-
-var Token_LETTER_K = Keyword_k
-
-const Token_LETTER_L_Idx = Keyword_l_Idx
-
-var Token_LETTER_L = Keyword_l
-
-const Token_LETTER_M_Idx = Keyword_m_Idx
-
-var Token_LETTER_M = Keyword_m
-
-const Token_LETTER_N_Idx = Keyword_n_Idx
-
-var Token_LETTER_N = Keyword_n
-
-const Token_LETTER_O_Idx = Keyword_o_Idx
-
-var Token_LETTER_O = Keyword_o
-
-const Token_LETTER_X_Idx = Keyword_x_Idx
-
-var Token_LETTER_X = Keyword_x
-
-const Token_LETTER_Y_Idx = Keyword_y_Idx
-
-var Token_LETTER_Y = Keyword_y
-
 const Token_DECLARE_Idx = Keyword_declare_Idx
 
 var Token_DECLARE = Keyword_declare
@@ -758,9 +690,9 @@ var TokenGroup_SomeTokenGroup = core.NewTokenGroup(
 	"SomeTokenGroup",
 	"SomeTokenGroup",
 	[]*core.TokenType{
+		Keyword_a,
+		Keyword_b,
 		Token_ID,
-		Token_LETTER_A,
-		Token_LETTER_B,
 	},
 )
 
@@ -771,23 +703,23 @@ const (
 func NewLexer() lexer.Lexer {
 	modes := make([]*lexer.TokenMode, 1, 1)
 	modes[TokenMode_default] = lexer.NewTokenMode("default",
-		lexer.UseTokenType(Token_LETTER_A),
-		lexer.UseTokenType(Token_LETTER_B),
-		lexer.UseTokenType(Token_LETTER_C),
-		lexer.UseTokenType(Token_LETTER_D),
-		lexer.UseTokenType(Token_LETTER_E),
-		lexer.UseTokenType(Token_LETTER_F),
-		lexer.UseTokenType(Token_LETTER_G),
-		lexer.UseTokenType(Token_LETTER_H),
-		lexer.UseTokenType(Token_LETTER_I),
-		lexer.UseTokenType(Token_LETTER_J),
-		lexer.UseTokenType(Token_LETTER_K),
-		lexer.UseTokenType(Token_LETTER_L),
-		lexer.UseTokenType(Token_LETTER_M),
-		lexer.UseTokenType(Token_LETTER_N),
-		lexer.UseTokenType(Token_LETTER_O),
-		lexer.UseTokenType(Token_LETTER_X),
-		lexer.UseTokenType(Token_LETTER_Y),
+		lexer.UseTokenType(Keyword_a),
+		lexer.UseTokenType(Keyword_b),
+		lexer.UseTokenType(Keyword_c),
+		lexer.UseTokenType(Keyword_d),
+		lexer.UseTokenType(Keyword_e),
+		lexer.UseTokenType(Keyword_f),
+		lexer.UseTokenType(Keyword_g),
+		lexer.UseTokenType(Keyword_h),
+		lexer.UseTokenType(Keyword_i),
+		lexer.UseTokenType(Keyword_j),
+		lexer.UseTokenType(Keyword_k),
+		lexer.UseTokenType(Keyword_l),
+		lexer.UseTokenType(Keyword_m),
+		lexer.UseTokenType(Keyword_n),
+		lexer.UseTokenType(Keyword_o),
+		lexer.UseTokenType(Keyword_x),
+		lexer.UseTokenType(Keyword_y),
 		lexer.UseTokenType(Token_DECLARE),
 		lexer.UseTokenType(Token_FIRST),
 		lexer.UseTokenType(Token_SECOND),

@@ -195,7 +195,7 @@ func (p *CompletionParser) ParseA() {
 	p.cp.EnterRule("A", StateNumber__A__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_LETTER_A)
+		p.state.Consume(Keyword_a)
 	}
 	{
 		p.state.Consume(Token_FIRST)
@@ -206,7 +206,7 @@ func (p *CompletionParser) ParseB() {
 	p.cp.EnterRule("B", StateNumber__B__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_LETTER_B)
+		p.state.Consume(Keyword_b)
 	}
 	switch prediction, failure := p.lookahead.BAlternatives(p.state); prediction {
 	case 0:
@@ -226,7 +226,7 @@ func (p *CompletionParser) ParseC() {
 	p.cp.EnterRule("C", StateNumber__C__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_LETTER_C)
+		p.state.Consume(Keyword_c)
 	}
 	switch prediction, failure := p.lookahead.CAlternatives(p.state); prediction {
 	case 0:
@@ -252,7 +252,7 @@ func (p *CompletionParser) ParseD() {
 	p.cp.EnterRule("D", StateNumber__D__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_LETTER_D)
+		p.state.Consume(Keyword_d)
 	}
 	switch prediction, failure := p.lookahead.DAlternatives(p.state); prediction {
 	case 0:
@@ -276,7 +276,7 @@ func (p *CompletionParser) ParseE() {
 	p.cp.EnterRule("E", StateNumber__E__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_LETTER_E)
+		p.state.Consume(Keyword_e)
 	}
 	{
 		p.cp.MarkAssignment("Ref")
@@ -313,7 +313,7 @@ func (p *CompletionParser) ParseF() {
 	p.cp.EnterRule("F", StateNumber__F__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_LETTER_F)
+		p.state.Consume(Keyword_f)
 	}
 	{
 		for ok := true; ok; ok = p.lookahead.FItemsLoop(p.state) {
@@ -344,7 +344,7 @@ func (p *CompletionParser) ParseG() {
 	p.cp.EnterRule("G", StateNumber__G__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_LETTER_G)
+		p.state.Consume(Keyword_g)
 	}
 	{
 		p.cp.MarkAssignment("Ref")
@@ -357,7 +357,7 @@ func (p *CompletionParser) ParseH() {
 	p.cp.EnterRule("H", StateNumber__H__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_LETTER_H)
+		p.state.Consume(Keyword_h)
 	}
 	{
 		p.cp.MarkAssignment("Member")
@@ -372,7 +372,7 @@ func (p *CompletionParser) ParseI() {
 	p.cp.EnterRule("I", StateNumber__I__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_LETTER_I)
+		p.state.Consume(Keyword_i)
 	}
 	{
 		p.cp.MarkAssignment("Member")
@@ -432,7 +432,7 @@ func (p *CompletionParser) ParseJ() {
 	p.cp.EnterRule("J", StateNumber__J__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_LETTER_J)
+		p.state.Consume(Keyword_j)
 	}
 	switch prediction, failure := p.lookahead.JAlternatives(p.state); prediction {
 	case 0:
@@ -454,7 +454,7 @@ func (p *CompletionParser) ParseK() {
 	p.cp.EnterRule("K", StateNumber__K__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_LETTER_K)
+		p.state.Consume(Keyword_k)
 	}
 	switch prediction, failure := p.lookahead.KAlternatives(p.state); prediction {
 	case 0:
@@ -464,7 +464,7 @@ func (p *CompletionParser) ParseK() {
 			p.cp.ClearAssignment()
 		}
 		{
-			p.state.Consume(Token_LETTER_X)
+			p.state.Consume(Keyword_x)
 		}
 	case 1:
 		{
@@ -473,7 +473,7 @@ func (p *CompletionParser) ParseK() {
 			p.cp.ClearAssignment()
 		}
 		{
-			p.state.Consume(Token_LETTER_Y)
+			p.state.Consume(Keyword_y)
 		}
 	default:
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
@@ -484,7 +484,7 @@ func (p *CompletionParser) ParseL() {
 	p.cp.EnterRule("L", StateNumber__L__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_LETTER_L)
+		p.state.Consume(Keyword_l)
 	}
 	p.cp.RecordSnapshot(StateNumber__L__Basic_1)
 	p.state.Sync(StateNumber__L__Basic_1)
@@ -508,7 +508,7 @@ func (p *CompletionParser) ParseM() {
 	p.cp.EnterRule("M", StateNumber__M__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_LETTER_M)
+		p.state.Consume(Keyword_m)
 	}
 	{
 		p.state.Consume(TokenGroup_SomeTokenGroup)
@@ -519,7 +519,7 @@ func (p *CompletionParser) ParseN() {
 	p.cp.EnterRule("N", StateNumber__N__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_LETTER_N)
+		p.state.Consume(Keyword_n)
 	}
 	{
 		p.cp.MarkAssignment("Ref")
@@ -532,7 +532,7 @@ func (p *CompletionParser) ParseO() {
 	p.cp.EnterRule("O", StateNumber__O__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_LETTER_O)
+		p.state.Consume(Keyword_o)
 	}
 	{
 		p.cp.MarkAssignment("Ref")

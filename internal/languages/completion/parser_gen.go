@@ -217,8 +217,8 @@ func (p *Parser) ParseA() Obj {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_A)
-			core.AssignToken(current, token, StateNumber__A_LETTER_A)
+			token := p.state.Consume(Keyword_a)
+			core.AssignToken(current, token, StateNumber__A_a)
 		}
 		{
 			token := p.state.Consume(Token_FIRST)
@@ -234,8 +234,8 @@ func (p *Parser) ParseB() Obj {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_B)
-			core.AssignToken(current, token, StateNumber__B_LETTER_B)
+			token := p.state.Consume(Keyword_b)
+			core.AssignToken(current, token, StateNumber__B_b)
 		}
 		switch prediction, failure := p.lookahead.BAlternatives(p.state); prediction {
 		case 0:
@@ -261,8 +261,8 @@ func (p *Parser) ParseC() Obj {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_C)
-			core.AssignToken(current, token, StateNumber__C_LETTER_C)
+			token := p.state.Consume(Keyword_c)
+			core.AssignToken(current, token, StateNumber__C_c)
 		}
 		switch prediction, failure := p.lookahead.CAlternatives(p.state); prediction {
 		case 0:
@@ -296,8 +296,8 @@ func (p *Parser) ParseD() Obj {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_D)
-			core.AssignToken(current, token, StateNumber__D_LETTER_D)
+			token := p.state.Consume(Keyword_d)
+			core.AssignToken(current, token, StateNumber__D_d)
 		}
 		switch prediction, failure := p.lookahead.DAlternatives(p.state); prediction {
 		case 0:
@@ -329,8 +329,8 @@ func (p *Parser) ParseE() E {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_E)
-			core.AssignToken(current, token, StateNumber__E_LETTER_E)
+			token := p.state.Consume(Keyword_e)
+			core.AssignToken(current, token, StateNumber__E_e)
 		}
 		{
 			result := core.NewCompositeNode()
@@ -387,8 +387,8 @@ func (p *Parser) ParseF() F {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_F)
-			core.AssignToken(current, token, StateNumber__F_LETTER_F)
+			token := p.state.Consume(Keyword_f)
+			core.AssignToken(current, token, StateNumber__F_f)
 		}
 		{
 			for ok := true; ok; ok = p.lookahead.FItemsLoop(p.state) {
@@ -431,8 +431,8 @@ func (p *Parser) ParseG() G {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_G)
-			core.AssignToken(current, token, StateNumber__G_LETTER_G)
+			token := p.state.Consume(Keyword_g)
+			core.AssignToken(current, token, StateNumber__G_g)
 		}
 		{
 			token := p.state.Consume(Token_ID)
@@ -451,8 +451,8 @@ func (p *Parser) ParseH() H {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_H)
-			core.AssignToken(current, token, StateNumber__H_LETTER_H)
+			token := p.state.Consume(Keyword_h)
+			core.AssignToken(current, token, StateNumber__H_h)
 		}
 		{
 			p.state.EnterRule(StateNumber__H__Basic_1)
@@ -472,8 +472,8 @@ func (p *Parser) ParseI() H {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_I)
-			core.AssignToken(current, token, StateNumber__I_LETTER_I)
+			token := p.state.Consume(Keyword_i)
+			core.AssignToken(current, token, StateNumber__I_i)
 		}
 		{
 			p.state.EnterRule(StateNumber__I__Basic_1)
@@ -567,8 +567,8 @@ func (p *Parser) ParseJ() J {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_J)
-			core.AssignToken(current, token, StateNumber__J_LETTER_J)
+			token := p.state.Consume(Keyword_j)
+			core.AssignToken(current, token, StateNumber__J_j)
 		}
 		switch prediction, failure := p.lookahead.JAlternatives(p.state); prediction {
 		case 0:
@@ -597,8 +597,8 @@ func (p *Parser) ParseK() K {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_K)
-			core.AssignToken(current, token, StateNumber__K_LETTER_K)
+			token := p.state.Consume(Keyword_k)
+			core.AssignToken(current, token, StateNumber__K_k)
 		}
 		switch prediction, failure := p.lookahead.KAlternatives(p.state); prediction {
 		case 0:
@@ -610,8 +610,8 @@ func (p *Parser) ParseK() K {
 				}
 			}
 			{
-				token := p.state.Consume(Token_LETTER_X)
-				core.AssignToken(current, token, StateNumber__K_LETTER_X)
+				token := p.state.Consume(Keyword_x)
+				core.AssignToken(current, token, StateNumber__K_x)
 			}
 		case 1:
 			{
@@ -622,8 +622,8 @@ func (p *Parser) ParseK() K {
 				}
 			}
 			{
-				token := p.state.Consume(Token_LETTER_Y)
-				core.AssignToken(current, token, StateNumber__K_LETTER_Y)
+				token := p.state.Consume(Keyword_y)
+				core.AssignToken(current, token, StateNumber__K_y)
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
@@ -638,8 +638,8 @@ func (p *Parser) ParseL() Obj {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_L)
-			core.AssignToken(current, token, StateNumber__L_LETTER_L)
+			token := p.state.Consume(Keyword_l)
+			core.AssignToken(current, token, StateNumber__L_l)
 		}
 		p.state.Sync(StateNumber__L__Basic_1)
 		if p.lookahead.LOptional(p.state) {
@@ -670,8 +670,8 @@ func (p *Parser) ParseM() Obj {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_M)
-			core.AssignToken(current, token, StateNumber__M_LETTER_M)
+			token := p.state.Consume(Keyword_m)
+			core.AssignToken(current, token, StateNumber__M_m)
 		}
 		{
 			token := p.state.Consume(TokenGroup_SomeTokenGroup)
@@ -687,8 +687,8 @@ func (p *Parser) ParseN() N {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			token := p.state.Consume(Token_LETTER_N)
-			core.AssignToken(current, token, StateNumber__N_LETTER_N)
+			token := p.state.Consume(Keyword_n)
+			core.AssignToken(current, token, StateNumber__N_n)
 		}
 		{
 			token := p.state.Consume(TokenGroup_SomeTokenGroup)
@@ -713,8 +713,8 @@ func (p *Parser) ParseO() Obj {
 		}
 		current := current.(O)
 		{
-			token := p.state.Consume(Token_LETTER_O)
-			core.AssignToken(current, token, StateNumber__O_LETTER_O)
+			token := p.state.Consume(Keyword_o)
+			core.AssignToken(current, token, StateNumber__O_o)
 		}
 		{
 			token := p.state.Consume(Token_ID)

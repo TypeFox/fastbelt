@@ -24,7 +24,7 @@ var JAlternatives = parser.LL1Lookahead{
 }
 
 var RootObjectsAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_DECLARE, Token_LETTER_A, Token_LETTER_B, Token_LETTER_C, Token_LETTER_D, Token_LETTER_E, Token_LETTER_F, Token_LETTER_G, Token_LETTER_H, Token_LETTER_I, Token_LETTER_J, Token_LETTER_K, Token_LETTER_L, Token_LETTER_M, Token_LETTER_N, Token_LETTER_O},
+	Types:  []*core.TokenType{Token_DECLARE, Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h, Keyword_i, Keyword_j, Keyword_k, Keyword_l, Keyword_m, Keyword_n, Keyword_o},
 	Lookup: []int{2: 2, 4: 3, 5: 4, 7: 5, 8: 1, 9: 6, 11: 7, 13: 8, 14: 9, 15: 10, 16: 11, 17: 12, 18: 13, 20: 14, 21: 15, 22: 16},
 }
 

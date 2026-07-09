@@ -14,13 +14,14 @@ Always write tests!!!
 
 ### Backlog
 
-* [ ] collect keywords from entire grammar
+* [ ] token groups with group and commands
+* [x] collect keywords from entire grammar
 * [ ] handle implicit default token mode
   * [ ] local TokenDecls
-  * [ ] TokenUsages / from global TokenDecls
-  * [ ] Keywords
+  * [x] TokenUsages / from global TokenDecls
+  * [x] Keywords
   * [ ] KeywordSelectors
-* [ ] resect this one: https://typefox.slack.com/archives/C0956H0EAUB/p1783583717827469?thread_ts=1783582041.497139&cid=C0956H0EAUB
+* [ ] respect this one: https://typefox.slack.com/archives/C0956H0EAUB/p1783583717827469?thread_ts=1783582041.497139&cid=C0956H0EAUB
 
 ## Validations
 
