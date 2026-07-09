@@ -218,6 +218,12 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 				case grammar.TokenDecl:
 					tokenIndex = result.TokenIndex.ByToken[rule]
 					current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
+					if rule.Type() != "" || rule.Command() != nil {
+						current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
+							GroupType: rule.Type(),
+							Command:   rule.Command(),
+						}
+					}
 				case grammar.TokenGroup:
 					tokenIndex = result.TokenIndex.ByTokenGroup[rule]
 					current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
@@ -236,13 +242,40 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	}
 	if result.TokenModes["default"] == nil {
 		//if token mode "default" is not defined, we need to create it
-		result.TokenModes["default"] = &TokenMode{
+		defaultMode := TokenMode{
 			Id:               len(result.TokenModes),
 			VarName:          "TokenMode_default",
 			TokenTypeIndices: make([]int, 0),
 			TokenTypeUsages:  make(map[int]TokenTypeUsage),
 		}
+		result.TokenModes["default"] = &defaultMode
 		result.TokenModeOrder = append(result.TokenModeOrder, "default")
+
+		for _, keyword := range keywords.Keywords {
+			tokenIndex := result.TokenIndex.ByKeyword[keyword.Value()]
+			defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
+			//keywords don't have type or command, so we don't need to add anything to TokenTypeUsages
+		}
+
+		for _, token := range tokens {
+			if _, ok := token.Content().(grammar.RegexpTokenElement); ok {
+				//non-keywords only, since keywords are already added above
+				tokenIndex := result.TokenIndex.ByToken[token]
+				defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
+				if token.Type() != "" || token.Command() != nil {
+					defaultMode.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
+						GroupType: token.Type(),
+						Command:   token.Command(),
+					}
+				}
+			}
+		}
+
+		for _, tokenGroup := range tokenGroups {
+			tokenIndex := result.TokenIndex.ByTokenGroup[tokenGroup]
+			defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
+			//token groups don't have type or command, so we don't need to add anything to TokenTypeUsages
+		}
 	}
 	return result
 }

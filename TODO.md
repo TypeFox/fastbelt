@@ -20,11 +20,10 @@ Always write tests!!!
   * [ ] TokenUsages / from global TokenDecls
   * [ ] Keywords
   * [ ] KeywordSelectors
+* [ ] resect this one: https://typefox.slack.com/archives/C0956H0EAUB/p1783583717827469?thread_ts=1783582041.497139&cid=C0956H0EAUB
 
 ## Validations
 
-* [ ] no duplicate token mode names
-  * [ ] maximal one default token mode
 * [ ] if there is a default token mode
   * [ ] ... and a KEYWORD is not listed in one of the token modes
     * [ ] then it is an error

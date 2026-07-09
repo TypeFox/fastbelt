@@ -413,6 +413,25 @@ const (
 
 func NewLexer() lexer.Lexer {
 	modes := make([]*lexer.TokenMode, 1, 1)
-	modes[TokenMode_default] = lexer.NewTokenMode("default")
+	modes[TokenMode_default] = lexer.NewTokenMode("default",
+		lexer.UseTokenType(Keyword_AsteriskAsterisk),
+		lexer.UseTokenType(Keyword_Dot),
+		lexer.UseTokenType(Keyword_Slash),
+		lexer.UseTokenType(Keyword_Colon),
+		lexer.UseTokenType(Keyword_ColonColon),
+		lexer.UseTokenType(Keyword_a),
+		lexer.UseTokenType(Keyword_b),
+		lexer.UseTokenType(Keyword_c),
+		lexer.UseTokenType(Keyword_d),
+		lexer.UseTokenType(Keyword_e),
+		lexer.UseTokenType(Keyword_f),
+		lexer.UseTokenType(Keyword_g),
+		lexer.UseTokenType(Keyword_h),
+		lexer.UseTokenType(Keyword_hello),
+		lexer.UseTokenType(Keyword_i),
+		lexer.UseTokenType(Keyword_world),
+		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),
+		lexer.UseTokenType(Token_ID),
+	)
 	return lexer.NewDefaultLexer(TokenMode_default, modes...)
 }
