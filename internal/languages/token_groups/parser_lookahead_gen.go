@@ -8,17 +8,17 @@ import (
 )
 
 const (
-	DecisionGAlternatives = 3
+	DecisionHAlternatives = 3
 )
 
 var BValueAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{TokenGroup_Identifier, Token_LETTER_B},
-	Lookup: []int{1: 1, 2: 2, 11: 1, 12: 1},
+	Types:  []*core.TokenType{TokenGroup_Identifier, Keyword_b},
+	Lookup: []int{1: 1, 2: 2, 12: 1, 13: 1},
 }
 
 var ModelItemAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_LETTER_A, Token_LETTER_B, Token_LETTER_C, Token_LETTER_D, Token_LETTER_E, Token_LETTER_F, Token_LETTER_G},
-	Lookup: []int{1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7},
+	Types:  []*core.TokenType{Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h},
+	Lookup: []int{1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8},
 }
 
 // TokenGroupsParserLookahead abstracts every lookahead/prediction decision performed by
@@ -30,7 +30,7 @@ type TokenGroupsParserLookahead interface {
 
 	BValueAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	DValueOptional(state *parser.ParserState) bool
-	GAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
+	HAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	ModelItemAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 }
 
@@ -52,8 +52,8 @@ func (l *DefaultTokenGroupsParserLookahead) DValueOptional(state *parser.ParserS
 	return TokenGroup_Identifier.Matches(state.LA(1).Type)
 }
 
-func (l *DefaultTokenGroupsParserLookahead) GAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.AdaptivePredict(DecisionGAlternatives, l.PredictionMode())
+func (l *DefaultTokenGroupsParserLookahead) HAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+	return state.AdaptivePredict(DecisionHAlternatives, l.PredictionMode())
 }
 
 func (l *DefaultTokenGroupsParserLookahead) ModelItemAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {

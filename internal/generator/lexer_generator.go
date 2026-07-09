@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -15,7 +16,7 @@ import (
 
 	"typefox.dev/fastbelt/internal/automatons"
 	"typefox.dev/fastbelt/internal/grammar"
-	"typefox.dev/fastbelt/internal/regexp"
+	fbRegexp "typefox.dev/fastbelt/internal/regexp"
 	"typefox.dev/fastbelt/util/codegen"
 )
 
@@ -50,6 +51,7 @@ type TokenTypeLookup struct {
 }
 
 type GenerateTokenTypesResult struct {
+	Keywords        GetAllKeywordsResult
 	Imports         map[string]bool
 	TokenIndex      TokenIndexLookup
 	TokenTypes      TokenTypeLookup
@@ -93,7 +95,8 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	tokens := grammr.Terminals()
 	tokenGroups := grammr.TokenGroups()
 	result := GenerateTokenTypesResult{
-		Imports: map[string]bool{},
+		Keywords: keywords,
+		Imports:  map[string]bool{},
 		TokenIndex: TokenIndexLookup{
 			ByKeyword:    make(map[string]int),
 			ByToken:      make(map[grammar.TokenDecl]int),
@@ -169,7 +172,7 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	}
 	tokenGroupMembers := map[string][]string{}
 	for _, tokenGroup := range tokenGroups {
-		tokenGroupMembers[tokenGroup.Name()] = getAllTokenGroupMembers(tokenGroup)
+		tokenGroupMembers[tokenGroup.Name()] = getAllTokenGroupMembers(tokenGroup, keywords)
 	}
 	// Token groups need to be topologically sorted, so that nested groups appear after their members
 	for _, tokenGroup := range sortTokenGroups(tokenGroups, tokenGroupMembers) {
@@ -251,6 +254,12 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		result.TokenModes["default"] = &defaultMode
 		result.TokenModeOrder = append(result.TokenModeOrder, "default")
 
+		for _, tokenGroup := range tokenGroups {
+			tokenIndex := result.TokenIndex.ByTokenGroup[tokenGroup]
+			defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
+			//token groups don't have type or command, so we don't need to add anything to TokenTypeUsages
+		}
+
 		for _, keyword := range keywords.Keywords {
 			tokenIndex := result.TokenIndex.ByKeyword[keyword.Value()]
 			defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
@@ -269,12 +278,6 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 					}
 				}
 			}
-		}
-
-		for _, tokenGroup := range tokenGroups {
-			tokenIndex := result.TokenIndex.ByTokenGroup[tokenGroup]
-			defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
-			//token groups don't have type or command, so we don't need to add anything to TokenTypeUsages
 		}
 	}
 	return result
@@ -466,7 +469,7 @@ func generateTokenGroupType(tokenGroup grammar.TokenGroup, tokenGroupMembers map
 	}
 }
 
-func getAllTokenGroupMembers(tokenGroup grammar.TokenGroup) []string {
+func getAllTokenGroupMembers(tokenGroup grammar.TokenGroup, keywords GetAllKeywordsResult) []string {
 	members := map[string]bool{}
 	for _, tokenRef := range tokenGroup.TokenRefs() {
 		tokenRule := tokenRef.Ref(context.Background())
@@ -475,18 +478,32 @@ func getAllTokenGroupMembers(tokenGroup grammar.TokenGroup) []string {
 			members[name] = true
 		}
 	}
+	for _, selector := range tokenGroup.KeywordSelectors() {
+		pattern := regexp.MustCompile(RegexpValue(selector.Image))
+		for _, keyword := range keywords.Keywords {
+			name := GeneratedTokenName(keyword)
+			value := KeywordValue(keyword)
+			if !members[name] && pattern.MatchString(value) {
+				members[name] = true
+			}
+		}
+	}
+	for _, keyword := range tokenGroup.Keywords() {
+		name := GeneratedTokenName(keyword)
+		members[name] = true
+	}
 	slice := slices.Collect(maps.Keys(members))
 	sort.Strings(slice)
 	return slice
 }
 
 func generateRegexpTokenElement(token grammar.TokenDecl, regexpTokenElement grammar.RegexpTokenElement, id int) GenerateLexerResult {
-	var result regexp.GenerateRegExpResult
+	var result fbRegexp.GenerateRegExpResult
 	imports := map[string]bool{}
 	code := codegen.NewNode()
 	regexPattern := regexpTokenElement.Regexp()
 	regexPattern = regexPattern[1 : len(regexPattern)-1] // remove leading and trailing backticks
-	regex, err := regexp.Compile(regexPattern)
+	regex, err := fbRegexp.Compile(regexPattern)
 	if err != nil {
 		panic(err)
 	}
@@ -497,7 +514,7 @@ func generateRegexpTokenElement(token grammar.TokenDecl, regexpTokenElement gram
 		n.AppendLine("\"", token.Name(), "\",")
 		n.AppendLine("\"", token.Name(), "\",")
 		n.AppendLine("core.TokenKindToken,")
-		impl := regex.(*regexp.RegexpImpl)
+		impl := regex.(*fbRegexp.RegexpImpl)
 		result = impl.GenerateRegExp("", GeneratedTokenName(token))
 		for imp := range result.Imports {
 			imports[imp] = true

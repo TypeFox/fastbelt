@@ -112,6 +112,10 @@ func KeywordValue(k grammar.Keyword) string {
 	return k.Value()[1 : len(k.Value())-1]
 }
 
+func RegexpValue(tokenImage string) string {
+	return tokenImage[1 : len(tokenImage)-1]
+}
+
 // topoSort returns uniqueTargets sorted so that child elements appear before
 // their parent element.
 func topoSort(uniqueTargets []string, parents map[string][]string, ascending bool) []string {

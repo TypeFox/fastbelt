@@ -121,7 +121,23 @@ var Keyword_g = core.NewTokenType(
 	[]rune{'g'},
 )
 
-const Keyword_nested_Idx = 8
+const Keyword_h_Idx = 8
+
+var Keyword_h = core.NewTokenType(
+	Keyword_h_Idx,
+	"h",
+	"h",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "h") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'h'},
+)
+
+const Keyword_nested_Idx = 9
 
 var Keyword_nested = core.NewTokenType(
 	Keyword_nested_Idx,
@@ -137,7 +153,7 @@ var Keyword_nested = core.NewTokenType(
 	[]rune{'n'},
 )
 
-const Keyword_one_Idx = 9
+const Keyword_one_Idx = 10
 
 var Keyword_one = core.NewTokenType(
 	Keyword_one_Idx,
@@ -153,7 +169,7 @@ var Keyword_one = core.NewTokenType(
 	[]rune{'o'},
 )
 
-const Keyword_two_Idx = 10
+const Keyword_two_Idx = 11
 
 var Keyword_two = core.NewTokenType(
 	Keyword_two_Idx,
@@ -169,47 +185,7 @@ var Keyword_two = core.NewTokenType(
 	[]rune{'t'},
 )
 
-const Token_ONE_Idx = Keyword_one_Idx
-
-var Token_ONE = Keyword_one
-
-const Token_TWO_Idx = Keyword_two_Idx
-
-var Token_TWO = Keyword_two
-
-const Token_NESTED_Idx = Keyword_nested_Idx
-
-var Token_NESTED = Keyword_nested
-
-const Token_LETTER_A_Idx = Keyword_a_Idx
-
-var Token_LETTER_A = Keyword_a
-
-const Token_LETTER_B_Idx = Keyword_b_Idx
-
-var Token_LETTER_B = Keyword_b
-
-const Token_LETTER_C_Idx = Keyword_c_Idx
-
-var Token_LETTER_C = Keyword_c
-
-const Token_LETTER_D_Idx = Keyword_d_Idx
-
-var Token_LETTER_D = Keyword_d
-
-const Token_LETTER_E_Idx = Keyword_e_Idx
-
-var Token_LETTER_E = Keyword_e
-
-const Token_LETTER_F_Idx = Keyword_f_Idx
-
-var Token_LETTER_F = Keyword_f
-
-const Token_LETTER_G_Idx = Keyword_g_Idx
-
-var Token_LETTER_G = Keyword_g
-
-const Token_ID_Idx = 11
+const Token_ID_Idx = 12
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
@@ -280,7 +256,7 @@ var Token_ID_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_INT_Idx = 12
+const Token_INT_Idx = 13
 
 var Token_INT = core.NewTokenType(
 	Token_INT_Idx,
@@ -351,7 +327,7 @@ var Token_INT_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_WS_Idx = 13
+const Token_WS_Idx = 14
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
@@ -422,40 +398,52 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
-const TokenGroup_Identifier_Idx = 14
+const TokenGroup_Identifier_Idx = 15
 
 var TokenGroup_Identifier = core.NewTokenGroup(
 	TokenGroup_Identifier_Idx,
 	"Identifier",
 	"Identifier",
 	[]*core.TokenType{
+		Keyword_a,
 		Token_ID,
 		Token_INT,
-		Token_LETTER_A,
 	},
 )
 
-const TokenGroup_KeywordGroup_Idx = 15
+const TokenGroup_KeywordGroup_Idx = 16
 
 var TokenGroup_KeywordGroup = core.NewTokenGroup(
 	TokenGroup_KeywordGroup_Idx,
 	"KeywordGroup",
 	"KeywordGroup",
 	[]*core.TokenType{
-		Token_ONE,
-		Token_TWO,
+		Keyword_one,
+		Keyword_two,
 	},
 )
 
-const TokenGroup_NestedIdentifier_Idx = 16
+const TokenGroup_NestedIdentifier_Idx = 17
 
 var TokenGroup_NestedIdentifier = core.NewTokenGroup(
 	TokenGroup_NestedIdentifier_Idx,
 	"NestedIdentifier",
 	"NestedIdentifier",
 	[]*core.TokenType{
+		Keyword_nested,
 		TokenGroup_Identifier,
-		Token_NESTED,
+	},
+)
+
+const TokenGroup_RegexGroup_Idx = 18
+
+var TokenGroup_RegexGroup = core.NewTokenGroup(
+	TokenGroup_RegexGroup_Idx,
+	"RegexGroup",
+	"RegexGroup",
+	[]*core.TokenType{
+		Keyword_one,
+		Keyword_two,
 	},
 )
 
@@ -466,20 +454,21 @@ const (
 func NewLexer() lexer.Lexer {
 	modes := make([]*lexer.TokenMode, 1, 1)
 	modes[TokenMode_default] = lexer.NewTokenMode("default",
-		lexer.UseTokenType(Token_ONE),
-		lexer.UseTokenType(Token_TWO),
-		lexer.UseTokenType(Token_NESTED),
 		lexer.UseTokenType(TokenGroup_Identifier),
 		lexer.UseTokenType(TokenGroup_NestedIdentifier),
 		lexer.UseTokenType(TokenGroup_KeywordGroup),
-		lexer.UseTokenType(Token_NESTED),
-		lexer.UseTokenType(Token_LETTER_A),
-		lexer.UseTokenType(Token_LETTER_B),
-		lexer.UseTokenType(Token_LETTER_C),
-		lexer.UseTokenType(Token_LETTER_D),
-		lexer.UseTokenType(Token_LETTER_E),
-		lexer.UseTokenType(Token_LETTER_F),
-		lexer.UseTokenType(Token_LETTER_G),
+		lexer.UseTokenType(TokenGroup_RegexGroup),
+		lexer.UseTokenType(Keyword_a),
+		lexer.UseTokenType(Keyword_b),
+		lexer.UseTokenType(Keyword_c),
+		lexer.UseTokenType(Keyword_d),
+		lexer.UseTokenType(Keyword_e),
+		lexer.UseTokenType(Keyword_f),
+		lexer.UseTokenType(Keyword_g),
+		lexer.UseTokenType(Keyword_h),
+		lexer.UseTokenType(Keyword_nested),
+		lexer.UseTokenType(Keyword_one),
+		lexer.UseTokenType(Keyword_two),
 		lexer.UseTokenType(Token_ID),
 		lexer.UseTokenType(Token_INT),
 		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),

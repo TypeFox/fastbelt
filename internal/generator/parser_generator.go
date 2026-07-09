@@ -317,7 +317,7 @@ func GenerateParserLookahead(grammr grammar.Grammar, packageName string, tokenTy
 
 	// Build the maps once; generateLL1Lookahead needs them per table.
 	varNameToId := buildVarNameToId(tokenTypes)
-	groupMembers := buildGroupVarNameToMembers(grammr)
+	groupMembers := buildGroupVarNameToMembers(grammr, tokenTypes.Keywords)
 
 	node := NewRootNode()
 	node.AppendLine("package ", packageName)
@@ -1550,11 +1550,11 @@ func buildVarNameToId(tokenTypes GenerateTokenTypesResult) map[string]int {
 	return varNameToId
 }
 
-func buildGroupVarNameToMembers(grammr grammar.Grammar) map[string][]string {
+func buildGroupVarNameToMembers(grammr grammar.Grammar, keywords GetAllKeywordsResult) map[string][]string {
 	groups := make(map[string][]string)
 	for _, tg := range grammr.TokenGroups() {
 		varName := GeneratedTokenName(tg)
-		groups[varName] = getAllTokenGroupMembers(tg)
+		groups[varName] = getAllTokenGroupMembers(tg, keywords)
 	}
 	return groups
 }
