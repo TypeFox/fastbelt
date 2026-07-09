@@ -54,15 +54,43 @@ func BenchmarkJsonRoundtrip(b *testing.B) {
 		{"Lookahead test language", "../languages/lookahead/lookahead.fb"},
 		{"TokenGroups test language", "../languages/token_groups/token_groups.fb"},
 	}
+	services1 := CreateServices()
+	f1 := test.New(b, services1)
 	for _, tt := range tests {
 		grammar, err := os.ReadFile(tt.path)
-		if err != nil {
-			b.Fatal(err)
-		}
-		b.Run(tt.name, func(b *testing.B) {
+		require.NoError(b, err)
+
+		doc1 := f1.Parse(string(grammar))
+		doc1.AssertNoParseErrors()
+		doc1.AssertNoLinkingErrors()
+		grammar1 := doc1.Root()
+		f1.Clear()
+		inJson, err := json.Marshal(grammar1)
+		require.NoError(b, err)
+
+		b.Run(tt.name+"/marshal", func(b *testing.B) {
+			b.ResetTimer()
 			for b.Loop() {
-				exported, imported := parseExportImportGrammar(b, grammar)
-				assertEqualAst(b, exported, imported)
+				if _, err := json.Marshal(grammar1); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+		b.Run(tt.name+"/unmarshal", func(b *testing.B) {
+			b.ResetTimer()
+			for b.Loop() {
+				grammar2 := NewGrammar()
+				if err := json.Unmarshal(inJson, grammar2); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+		b.Run(tt.name+"/unmarshal-self", func(b *testing.B) {
+			b.ResetTimer()
+			for b.Loop() {
+				if _, err := Unmarshal[Grammar](inJson); err != nil {
+					b.Fatal(err)
+				}
 			}
 		})
 	}
