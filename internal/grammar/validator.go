@@ -17,6 +17,7 @@ import (
 const (
 	ValidateUniqueRuleName          = "uniqueRuleName"
 	ValidateUniqueInterfaceName     = "uniqueInterfaceName"
+	ValidateUniqueTokenModeName     = "uniqueTokenModeName"
 	ValidateEmptyToken              = "emptyTerminalRule"
 	ValidateEmptyKeyword            = "emptyKeyword"
 	ValidateWhitespaceOnlyKeyword   = "whitespaceOnlyKeyword"
@@ -58,6 +59,39 @@ var reservedFieldNames = map[string]string{
 func (g *GrammarImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
 	checkUniqueRuleNames(g, accept)
 	checkUniqueInterfaceNames(g, accept)
+	checkUniqueTokenModeNames(g, accept)
+}
+
+func checkUniqueTokenModeNames(g Grammar, accept core.ValidationAcceptor) {
+	seen := map[string][]TokenMode{}
+	for _, mode := range g.TokenModes() {
+		var name string
+		if mode.IsDefault() {
+			name = "default"
+		} else {
+			name = mode.Name()
+		}
+		seen[name] = append(seen[name], mode)
+	}
+	for name, modes := range seen {
+		if len(modes) > 1 {
+			for _, mode := range modes {
+				var token *core.Token
+				if mode.IsDefault() {
+					token = mode.DefaultToken()
+				} else {
+					token = mode.NameToken()
+				}
+				accept(core.NewDiagnostic(
+					core.SeverityError,
+					fmt.Sprintf("A token mode's name has to be unique. '%s' is used multiple times.", name),
+					mode,
+					core.WithToken(token),
+					core.WithCode(ValidateUniqueTokenModeName),
+				))
+			}
+		}
+	}
 }
 
 func checkUniqueRuleNames(g Grammar, accept core.ValidationAcceptor) {

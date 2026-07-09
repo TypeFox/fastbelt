@@ -791,3 +791,21 @@ func TestCrossRefMissingTerminal(t *testing.T) {
 	diag.WithSeverity(core.SeverityError)
 	diag.WithCode(ValidateMissingCrossRefTerminal)
 }
+
+func TestDuplicateTokenModeNames(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting="hello";
+
+		token mode <|1:default|> { "hello" }
+		token mode <|2:default|> { }
+	`)
+	diag1 := doc.ExpectDiagnostic("1")
+	diag1.WithSeverity(core.SeverityError)
+	diag1.WithCode(ValidateUniqueTokenModeName)
+	diag2 := doc.ExpectDiagnostic("2")
+	diag2.WithSeverity(core.SeverityError)
+	diag2.WithCode(ValidateUniqueTokenModeName)
+}
