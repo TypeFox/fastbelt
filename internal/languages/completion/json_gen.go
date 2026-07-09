@@ -161,7 +161,7 @@ func (i *RootImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.objects = []Obj{}
+	i.objects = make([]Obj, 0, len(aux.Objects))
 	for _, item := range aux.Objects {
 		node, err := Unmarshal[Obj](item)
 		if err != nil {
@@ -185,7 +185,7 @@ func (i *DeclareImpl) UnmarshalJSON(data []byte) error {
 	cn = core.NewCompositeNode()
 	cn.SetToken(newToken(Token_ID, aux.Name))
 	i.SetName(cn)
-	i.children = []Declare{}
+	i.children = make([]Declare, 0, len(aux.Children))
 	for _, item := range aux.Children {
 		node, err := Unmarshal[Declare](item)
 		if err != nil {
@@ -222,7 +222,7 @@ func (i *FImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.items = []FItem{}
+	i.items = make([]FItem, 0, len(aux.Items))
 	for _, item := range aux.Items {
 		node, err := Unmarshal[FItem](item)
 		if err != nil {

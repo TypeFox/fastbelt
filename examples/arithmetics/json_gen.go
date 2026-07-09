@@ -133,7 +133,7 @@ func (i *ModuleImpl) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	i.SetName(newToken(Token_ID, aux.Name))
-	i.statements = []Statement{}
+	i.statements = make([]Statement, 0, len(aux.Statements))
 	for _, item := range aux.Statements {
 		node, err := Unmarshal[Statement](item)
 		if err != nil {
@@ -171,7 +171,7 @@ func (i *DefinitionImpl) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	i.SetName(newToken(Token_ID, aux.Name))
-	i.args = []DeclaredParameter{}
+	i.args = make([]DeclaredParameter, 0, len(aux.Args))
 	for _, item := range aux.Args {
 		node, err := Unmarshal[DeclaredParameter](item)
 		if err != nil {
@@ -260,7 +260,7 @@ func (i *FunctionCallImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.args = []Expression{}
+	i.args = make([]Expression, 0, len(aux.Args))
 	for _, item := range aux.Args {
 		node, err := Unmarshal[Expression](item)
 		if err != nil {

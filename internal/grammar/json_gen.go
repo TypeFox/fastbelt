@@ -331,7 +331,7 @@ func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	i.SetName(newToken(Token_ID, aux.Name))
-	i.rules = []ParserRule{}
+	i.rules = make([]ParserRule, 0, len(aux.Rules))
 	for _, item := range aux.Rules {
 		node, err := Unmarshal[ParserRule](item)
 		if err != nil {
@@ -339,7 +339,7 @@ func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetRulesItem(node)
 	}
-	i.composites = []CompositeRule{}
+	i.composites = make([]CompositeRule, 0, len(aux.Composites))
 	for _, item := range aux.Composites {
 		node, err := Unmarshal[CompositeRule](item)
 		if err != nil {
@@ -347,7 +347,7 @@ func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetCompositesItem(node)
 	}
-	i.terminals = []Token{}
+	i.terminals = make([]Token, 0, len(aux.Terminals))
 	for _, item := range aux.Terminals {
 		node, err := Unmarshal[Token](item)
 		if err != nil {
@@ -355,7 +355,7 @@ func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetTerminalsItem(node)
 	}
-	i.tokenGroups = []TokenGroup{}
+	i.tokenGroups = make([]TokenGroup, 0, len(aux.TokenGroups))
 	for _, item := range aux.TokenGroups {
 		node, err := Unmarshal[TokenGroup](item)
 		if err != nil {
@@ -363,7 +363,7 @@ func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetTokenGroupsItem(node)
 	}
-	i.interfaces = []Interface{}
+	i.interfaces = make([]Interface, 0, len(aux.Interfaces))
 	for _, item := range aux.Interfaces {
 		node, err := Unmarshal[Interface](item)
 		if err != nil {
@@ -385,7 +385,7 @@ func (i *InterfaceImpl) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	i.SetName(newToken(Token_ID, aux.Name))
-	i.extends = []*core.Reference[Interface]{}
+	i.extends = make([]*core.Reference[Interface], 0, len(aux.Extends))
 	for _, item := range aux.Extends {
 		node := core.NewReference[Interface](i, nil, nil)
 		if err := node.UnmarshalJSON(item); err != nil {
@@ -393,7 +393,7 @@ func (i *InterfaceImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetExtendsItem(node)
 	}
-	i.fields = []Field{}
+	i.fields = make([]Field, 0, len(aux.Fields))
 	for _, item := range aux.Fields {
 		node, err := Unmarshal[Field](item)
 		if err != nil {
@@ -598,7 +598,7 @@ func (i *TokenGroupImpl) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	i.SetName(newToken(Token_ID, aux.Name))
-	i.tokenRefs = []*core.Reference[AbstractTokenRule]{}
+	i.tokenRefs = make([]*core.Reference[AbstractTokenRule], 0, len(aux.TokenRefs))
 	for _, item := range aux.TokenRefs {
 		node := core.NewReference[AbstractTokenRule](i, nil, nil)
 		if err := node.UnmarshalJSON(item); err != nil {
@@ -606,11 +606,11 @@ func (i *TokenGroupImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetTokenRefsItem(node)
 	}
-	i.regexps = []*core.Token{}
+	i.regexps = make([]*core.Token, 0, len(aux.Regexps))
 	for _, item := range aux.Regexps {
 		i.SetRegexpsItem(newToken(Token_ID, item))
 	}
-	i.keywords = []Keyword{}
+	i.keywords = make([]Keyword, 0, len(aux.Keywords))
 	for _, item := range aux.Keywords {
 		node, err := Unmarshal[Keyword](item)
 		if err != nil {
@@ -643,7 +643,7 @@ func (i *AlternativesImpl) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
-	i.alts = []Element{}
+	i.alts = make([]Element, 0, len(aux.Alts))
 	for _, item := range aux.Alts {
 		node, err := Unmarshal[Element](item)
 		if err != nil {
@@ -664,7 +664,7 @@ func (i *GroupImpl) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
-	i.elements = []Element{}
+	i.elements = make([]Element, 0, len(aux.Elements))
 	for _, item := range aux.Elements {
 		node, err := Unmarshal[Element](item)
 		if err != nil {

@@ -158,7 +158,7 @@ func generateJSONUnmarshal(node codegen.Node, iface grammar.Interface) {
 		hasComposeNodeTempVar := false
 		for _, field := range fields {
 			if field.Array {
-				n.AppendLine("i.", field.PName, " = []", field.GType, "{}")
+				n.AppendLine("i.", field.PName, " = make([]", field.GType, ", 0, len(aux."+field.Name+"))")
 				n.AppendLine("for _, item := range aux.", field.Name, " {")
 				n.Indent(func(n2 codegen.Node) {
 					switch field.GType {

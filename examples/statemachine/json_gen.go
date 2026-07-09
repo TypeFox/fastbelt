@@ -92,7 +92,7 @@ func (i *StatemachineImpl) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	i.SetName(newToken(Token_ID, aux.Name))
-	i.events = []Event{}
+	i.events = make([]Event, 0, len(aux.Events))
 	for _, item := range aux.Events {
 		node, err := Unmarshal[Event](item)
 		if err != nil {
@@ -100,7 +100,7 @@ func (i *StatemachineImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetEventsItem(node)
 	}
-	i.commands = []Command{}
+	i.commands = make([]Command, 0, len(aux.Commands))
 	for _, item := range aux.Commands {
 		node, err := Unmarshal[Command](item)
 		if err != nil {
@@ -115,7 +115,7 @@ func (i *StatemachineImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetInit(init)
 	}
-	i.states = []State{}
+	i.states = make([]State, 0, len(aux.States))
 	for _, item := range aux.States {
 		node, err := Unmarshal[State](item)
 		if err != nil {
@@ -161,7 +161,7 @@ func (i *StateImpl) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	i.SetName(newToken(Token_ID, aux.Name))
-	i.actions = []*core.Reference[Command]{}
+	i.actions = make([]*core.Reference[Command], 0, len(aux.Actions))
 	for _, item := range aux.Actions {
 		node := core.NewReference[Command](i, nil, nil)
 		if err := node.UnmarshalJSON(item); err != nil {
@@ -169,7 +169,7 @@ func (i *StateImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetActionsItem(node)
 	}
-	i.transitions = []Transition{}
+	i.transitions = make([]Transition, 0, len(aux.Transitions))
 	for _, item := range aux.Transitions {
 		node, err := Unmarshal[Transition](item)
 		if err != nil {
