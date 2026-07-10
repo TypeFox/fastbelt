@@ -203,64 +203,42 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		result.TokenModes[modeName] = &current
 		for _, member := range tokenMode.Members() {
 			alreadyAdded := map[int]bool{}
+
+			pushTokenTypeUsage := func(tokenIndex int, groupType string, command grammar.TokenCommand) {
+				alreadyAdded[tokenIndex] = true
+				current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
+				if groupType != "" || command != nil {
+					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
+						GroupType: groupType,
+						Command:   command,
+					}
+				}
+			}
+
 			switch member := member.(type) {
 			case grammar.TokenDeclUsage:
 				token := member.Declaration()
 				tokenIndex = result.TokenIndex.ByToken[token]
-				current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
-				alreadyAdded[tokenIndex] = true
-				if token.Type() != "" || token.Command() != nil {
-					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-						GroupType: token.Type(),
-						Command:   token.Command(),
-					}
-				}
+				pushTokenTypeUsage(tokenIndex, token.Type(), token.Command())
 			case grammar.TokenGroupUsage:
 				tokenGroup := member.Group()
 				tokenIndex = result.TokenIndex.ByTokenGroup[tokenGroup]
-				current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
-				alreadyAdded[tokenIndex] = true
-				if tokenGroup.Type() != "" || tokenGroup.Command() != nil {
-					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-						GroupType: tokenGroup.Type(),
-						Command:   tokenGroup.Command(),
-					}
-				}
+				pushTokenTypeUsage(tokenIndex, tokenGroup.Type(), tokenGroup.Command())
 			case grammar.KeywordUsage:
 				tokenIndex := result.TokenIndex.ByKeyword[member.Keyword().Value()]
-				current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
-				alreadyAdded[tokenIndex] = true
-				if member.Type() != "" || member.Command() != nil {
-					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-						GroupType: member.Type(),
-						Command:   member.Command(),
-					}
-				}
+				pushTokenTypeUsage(tokenIndex, member.Type(), member.Command())
 			case grammar.TokenUsage:
 				token := member.TokenRef().Ref(context.Background())
 				var tokenIndex int
 				switch rule := token.(type) {
 				case grammar.TokenDecl:
 					tokenIndex = result.TokenIndex.ByToken[rule]
-					current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
-					alreadyAdded[tokenIndex] = true
-					if rule.Type() != "" || rule.Command() != nil {
-						current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-							GroupType: rule.Type(),
-							Command:   rule.Command(),
-						}
-					}
+					pushTokenTypeUsage(tokenIndex, rule.Type(), rule.Command())
 				case grammar.TokenGroup:
 					tokenIndex = result.TokenIndex.ByTokenGroup[rule]
-					current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
-					alreadyAdded[tokenIndex] = true
-					if rule.Type() != "" || rule.Command() != nil {
-						current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-							GroupType: rule.Type(),
-							Command:   rule.Command(),
-						}
-					}
+					pushTokenTypeUsage(tokenIndex, rule.Type(), rule.Command())
 				}
+				//overwrite usage if defined on token mode level
 				if member.Type() != "" || member.Command() != nil {
 					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
 						GroupType: member.Type(),
