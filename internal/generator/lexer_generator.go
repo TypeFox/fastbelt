@@ -92,7 +92,7 @@ func (r GenerateTokenTypesResult) TokenTypeVarNamesByTokenIndex() []string {
 
 func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	keywords := GetAllKeywords(grammr)
-	tokens := grammr.Terminals()
+	tokens := GetAllTokenDecls(grammr)
 	tokenGroups := grammr.TokenGroups()
 	result := GenerateTokenTypesResult{
 		Keywords: keywords,
@@ -126,7 +126,7 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		result.TokenIndex.ByKeyword[keyword.Value()] = tokenIndex
 		tokenIndex++
 	}
-	for _, token := range tokens {
+	for _, token := range tokens.All {
 		varName := GeneratedTokenName(token)
 		var currentTokenIndex int
 		switch element := token.Content().(type) {
@@ -205,7 +205,16 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 			alreadyAdded := map[int]bool{}
 			switch member := member.(type) {
 			case grammar.TokenDeclUsage:
-				//TODO
+				token := member.Declaration()
+				tokenIndex = result.TokenIndex.ByToken[token]
+				current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
+				alreadyAdded[tokenIndex] = true
+				if token.Type() != "" || token.Command() != nil {
+					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
+						GroupType: token.Type(),
+						Command:   token.Command(),
+					}
+				}
 			case grammar.KeywordUsage:
 				tokenIndex := result.TokenIndex.ByKeyword[member.Keyword().Value()]
 				current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
@@ -278,7 +287,7 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 			//keywords don't have type or command, so we don't need to add anything to TokenTypeUsages
 		}
 
-		for _, token := range tokens {
+		for _, token := range tokens.TopLevel {
 			if _, ok := token.Content().(grammar.RegexpTokenElement); ok {
 				//non-keywords only, since keywords are already added above
 				tokenIndex := result.TokenIndex.ByToken[token]

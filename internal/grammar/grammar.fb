@@ -145,13 +145,10 @@ interface TokenModeMember {}
 TokenModeMember: TokenDeclUsage | TokenUsage | KeywordUsage | KeywordSelector
 
 interface TokenDeclUsage extends TokenModeMember {
-    Type    string
-    Name    string
-    Content TokenElement
-    Command TokenCommand
+    Declaration TokenDecl
 }
 
-TokenDeclUsage: Type=GroupType? TOKEN Name=ID COLON Content=TokenElement Command=TokenCommand? SEMICOLON?
+TokenDeclUsage: Declaration=TokenDecl
 
 interface TokenUsage extends TokenModeMember {
     Type     string

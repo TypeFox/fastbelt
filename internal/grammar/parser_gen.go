@@ -773,53 +773,11 @@ func (p *Parser) ParseTokenDeclUsage() TokenDeclUsage {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
-			p.state.Sync(StateNumber__TokenDeclUsage__Basic_2)
-			if p.lookahead.TokenDeclUsageTypeOptional(p.state) {
-				token := p.state.Consume(TokenGroup_GroupType)
-				core.AssignToken(current, token, StateNumber__TokenDeclUsage__Basic_0)
-				if token != nil {
-					current.SetType(token)
-				}
-			}
-		}
-		{
-			token := p.state.Consume(Token_TOKEN)
-			core.AssignToken(current, token, StateNumber__TokenDeclUsage_TOKEN)
-		}
-		{
-			token := p.state.Consume(Token_ID)
-			core.AssignToken(current, token, StateNumber__TokenDeclUsage_Name_ID)
-			if token != nil {
-				current.SetName(token)
-			}
-		}
-		{
-			token := p.state.Consume(Token_COLON)
-			core.AssignToken(current, token, StateNumber__TokenDeclUsage_COLON)
-		}
-		{
-			p.state.EnterRule(StateNumber__TokenDeclUsage__Basic_6)
-			result := p.ParseTokenElement()
+			p.state.EnterRule(StateNumber__TokenDeclUsage__Basic_1)
+			result := p.ParseTokenDecl()
 			p.state.ExitRule()
 			if result != nil {
-				current.SetContent(result)
-			}
-		}
-		{
-			p.state.Sync(StateNumber__TokenDeclUsage__Basic_6)
-			if p.lookahead.TokenDeclUsageCommandOptional(p.state) {
-				p.state.EnterRule(StateNumber__TokenDeclUsage__Basic_5)
-				result := p.ParseTokenCommand()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetCommand(result)
-				}
-			}
-		}
-		{
-			if p.lookahead.TokenDeclUsageOptional(p.state) {
-				token := p.state.Consume(Token_SEMICOLON)
-				core.AssignToken(current, token, StateNumber__TokenDeclUsage_SEMICOLON)
+				current.SetDeclaration(result)
 			}
 		}
 	}

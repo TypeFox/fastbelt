@@ -603,47 +603,11 @@ func (p *CompletionParser) ParseTokenDeclUsage() {
 	p.cp.EnterRule("TokenDeclUsage", StateNumber__TokenDeclUsage__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.RecordSnapshot(StateNumber__TokenDeclUsage__Basic_2)
-		p.state.Sync(StateNumber__TokenDeclUsage__Basic_2)
-		if p.lookahead.TokenDeclUsageTypeOptional(p.state) {
-			p.cp.MarkAssignment("Type")
-			p.state.Consume(TokenGroup_GroupType)
-			p.cp.ClearAssignment()
-		}
-	}
-	{
-		p.state.Consume(Token_TOKEN)
-	}
-	{
-		p.cp.MarkAssignment("Name")
-		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
-	}
-	{
-		p.state.Consume(Token_COLON)
-	}
-	{
-		p.cp.MarkAssignment("Content")
-		p.state.EnterRule(StateNumber__TokenDeclUsage__Basic_6)
-		p.ParseTokenElement()
+		p.cp.MarkAssignment("Declaration")
+		p.state.EnterRule(StateNumber__TokenDeclUsage__Basic_1)
+		p.ParseTokenDecl()
 		p.state.ExitRule()
 		p.cp.ClearAssignment()
-	}
-	{
-		p.cp.RecordSnapshot(StateNumber__TokenDeclUsage__Basic_6)
-		p.state.Sync(StateNumber__TokenDeclUsage__Basic_6)
-		if p.lookahead.TokenDeclUsageCommandOptional(p.state) {
-			p.cp.MarkAssignment("Command")
-			p.state.EnterRule(StateNumber__TokenDeclUsage__Basic_5)
-			p.ParseTokenCommand()
-			p.state.ExitRule()
-			p.cp.ClearAssignment()
-		}
-	}
-	{
-		if p.lookahead.TokenDeclUsageOptional(p.state) {
-			p.state.Consume(Token_SEMICOLON)
-		}
 	}
 }
 

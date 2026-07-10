@@ -8,12 +8,12 @@ import (
 )
 
 const (
-	DecisionCompositeGroupElementsLoop  = 50
-	DecisionCompositeGroupOptional      = 51
-	DecisionElementAlternatives         = 37
+	DecisionCompositeGroupElementsLoop  = 47
+	DecisionCompositeGroupOptional      = 48
+	DecisionElementAlternatives         = 34
 	DecisionGrammarAlternatives         = 1
-	DecisionGroupElementsLoop           = 35
-	DecisionGroupOptional               = 36
+	DecisionGroupElementsLoop           = 32
+	DecisionGroupOptional               = 33
 	DecisionTokenModeMemberAlternatives = 22
 )
 
@@ -136,9 +136,6 @@ type FastbeltParserLookahead interface {
 	TokenDeclCommandOptional(state *parser.ParserState) bool
 	TokenDeclOptional(state *parser.ParserState) bool
 	TokenDeclTypeOptional(state *parser.ParserState) bool
-	TokenDeclUsageCommandOptional(state *parser.ParserState) bool
-	TokenDeclUsageOptional(state *parser.ParserState) bool
-	TokenDeclUsageTypeOptional(state *parser.ParserState) bool
 	TokenElementAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	TokenGroupAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	TokenModeAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
@@ -329,18 +326,6 @@ func (l *DefaultFastbeltParserLookahead) TokenDeclOptional(state *parser.ParserS
 }
 
 func (l *DefaultFastbeltParserLookahead) TokenDeclTypeOptional(state *parser.ParserState) bool {
-	return TokenGroup_GroupType.Matches(state.LA(1).Type)
-}
-
-func (l *DefaultFastbeltParserLookahead) TokenDeclUsageCommandOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Token_ARROW
-}
-
-func (l *DefaultFastbeltParserLookahead) TokenDeclUsageOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Token_SEMICOLON
-}
-
-func (l *DefaultFastbeltParserLookahead) TokenDeclUsageTypeOptional(state *parser.ParserState) bool {
 	return TokenGroup_GroupType.Matches(state.LA(1).Type)
 }
 

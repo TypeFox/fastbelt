@@ -1391,16 +1391,8 @@ type TokenDeclUsage interface {
 	TokenModeMember
 
 	IsTokenDeclUsage()
-	Type() string
-	TypeToken() *core.Token
-	SetType(value *core.Token)
-	Name() string
-	NameToken() *core.Token
-	SetName(value *core.Token)
-	Content() TokenElement
-	SetContent(value TokenElement)
-	Command() TokenCommand
-	SetCommand(value TokenCommand)
+	Declaration() TokenDecl
+	SetDeclaration(value TokenDecl)
 }
 
 func NewTokenDeclUsage() TokenDeclUsage {
@@ -1412,10 +1404,7 @@ func NewTokenDeclUsage() TokenDeclUsage {
 }
 
 type TokenDeclUsageData struct {
-	_Type   *core.Token
-	name    *core.Token
-	content TokenElement
-	command TokenCommand
+	declaration TokenDecl
 }
 
 func NewTokenDeclUsageData() TokenDeclUsageData {
@@ -1425,71 +1414,24 @@ func NewTokenDeclUsageData() TokenDeclUsageData {
 func (i *TokenDeclUsageData) IsTokenDeclUsage() {}
 
 func (i *TokenDeclUsageData) ForEachNode(fn func(core.AstNode)) {
-	if i.content != nil {
-		fn(i.content)
-	}
-	if i.command != nil {
-		fn(i.command)
+	if i.declaration != nil {
+		fn(i.declaration)
 	}
 }
 
 func (i *TokenDeclUsageData) ForEachReference(fn func(core.UntypedReference)) {
 }
 
-func (i *TokenDeclUsageData) Type() string {
-	if i != nil && i._Type != nil {
-		return i._Type.Image
-	} else {
-		return ""
-	}
-}
-
-func (i *TokenDeclUsageData) TypeToken() *core.Token {
-	return i._Type
-}
-
-func (i *TokenDeclUsageData) SetType(value *core.Token) {
-	i._Type = value
-}
-
-func (i *TokenDeclUsageData) Name() string {
-	if i != nil && i.name != nil {
-		return i.name.Image
-	} else {
-		return ""
-	}
-}
-
-func (i *TokenDeclUsageData) NameToken() *core.Token {
-	return i.name
-}
-
-func (i *TokenDeclUsageData) SetName(value *core.Token) {
-	i.name = value
-}
-
-func (i *TokenDeclUsageData) Content() TokenElement {
-	if i != nil && i.content != nil {
-		return i.content
+func (i *TokenDeclUsageData) Declaration() TokenDecl {
+	if i != nil && i.declaration != nil {
+		return i.declaration
 	} else {
 		return nil
 	}
 }
 
-func (i *TokenDeclUsageData) SetContent(value TokenElement) {
-	i.content = value
-}
-
-func (i *TokenDeclUsageData) Command() TokenCommand {
-	if i != nil && i.command != nil {
-		return i.command
-	} else {
-		return nil
-	}
-}
-
-func (i *TokenDeclUsageData) SetCommand(value TokenCommand) {
-	i.command = value
+func (i *TokenDeclUsageData) SetDeclaration(value TokenDecl) {
+	i.declaration = value
 }
 
 type TokenDeclUsageImpl struct {

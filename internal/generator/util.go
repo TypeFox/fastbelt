@@ -73,6 +73,35 @@ func GetAllKeywords(grammr grammar.Grammar) GetAllKeywordsResult {
 	return keysFromMap(keywords, allNodes)
 }
 
+type GetAllTokenDeclsResult struct {
+	TopLevel  []grammar.TokenDecl
+	ModeLevel []grammar.TokenDecl
+	All       []grammar.TokenDecl
+}
+
+func GetAllTokenDecls(grammr grammar.Grammar) GetAllTokenDeclsResult {
+	topLevel := []grammar.TokenDecl{}
+	modeLevel := []grammar.TokenDecl{}
+	for node := range core.AllChildren(grammr) {
+		if tokenDecl, ok := node.(grammar.TokenDecl); ok {
+			_, ok := tokenDecl.Container().(grammar.TokenDeclUsage)
+			if ok {
+				modeLevel = append(modeLevel, tokenDecl)
+			} else {
+				topLevel = append(topLevel, tokenDecl)
+			}
+		}
+	}
+	all := make([]grammar.TokenDecl, 0, len(topLevel)+len(modeLevel))
+	copy(all, topLevel)
+	copy(all[len(topLevel):], modeLevel)
+	return GetAllTokenDeclsResult{
+		All:       all,
+		TopLevel:  topLevel,
+		ModeLevel: modeLevel,
+	}
+}
+
 func keysFromMap(m map[string]grammar.Keyword, allNodes []grammar.Keyword) GetAllKeywordsResult {
 	keywords := []grammar.Keyword{}
 	for _, v := range m {

@@ -15,12 +15,13 @@ Always write tests!!!
 ### Backlog
 
 * [ ] token groups with group and commands
+* [ ] token group definition inside a token mode
 * [x] collect keywords from entire grammar
-* [ ] handle implicit default token mode
+* [ ] handle token mode
   * [ ] local TokenDecls
   * [x] TokenUsages / from global TokenDecls
   * [x] Keywords
-  * [ ] KeywordSelectors
+  * [x] KeywordSelectors
 * [ ] respect this one: https://typefox.slack.com/archives/C0956H0EAUB/p1783583717827469?thread_ts=1783582041.497139&cid=C0956H0EAUB
 
 ## Validations
