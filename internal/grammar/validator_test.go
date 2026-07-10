@@ -507,34 +507,56 @@ func TestUnassignedRuleCallReturnTypeMismatch(t *testing.T) {
 	diag.WithCode(ValidateRuleCallReturnType)
 }
 
-// TODO re-enable once checkRuleCallPosition is restored in RuleCallImpl.Validate.
-// func TestUnassignedRuleCallAfterAction(t *testing.T) {
-// 	f := test.New(t, CreateServices())
-// 	// Bar extends Foo, so {Bar.Items+=current} is type-valid; the only error is the position check.
-// 	doc := f.Parse(`
-// 		grammar Test;
-// 		interface Foo { Items []Foo }
-// 		interface Bar extends Foo {}
-// 		Bar: ({Bar.Items+=current} <|Bar|>);
-// 	` + commonTokens)
-// 	diag := doc.ExpectDiagnostic("Bar")
-// 	diag.WithSeverity(core.SeverityError)
-// 	diag.WithCode(ValidateRuleCallPosition)
-// }
+func TestUnassignedRuleCallToParserRuleAfterAction(t *testing.T) {
+	f := test.New(t, CreateServices())
+	// Bar extends Foo, so {Bar.Items+=current} is type-valid; the only error is the position check.
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Items []Foo }
+		interface Bar extends Foo {}
+		Bar: ({Bar.Items+=current} <|Bar|>);
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("Bar")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateRuleCallPosition)
+}
 
-// TODO re-enable once checkRuleCallPosition is restored in RuleCallImpl.Validate.
-// func TestUnassignedRuleCallAfterAssignment(t *testing.T) {
-// 	f := test.New(t, CreateServices())
-// 	doc := f.Parse(`
-// 		grammar Test;
-// 		interface Foo { Name string }
-// 		Foo: Name=ID <|SubRule|>;
-// 		SubRule returns Foo: Name=ID;
-// 	` + commonTokens)
-// 	diag := doc.ExpectDiagnostic("SubRule")
-// 	diag.WithSeverity(core.SeverityError)
-// 	diag.WithCode(ValidateRuleCallPosition)
-// }
+func TestUnassignedRuleCallToNonParserRuleAfterAction(t *testing.T) {
+	f := test.New(t, CreateServices())
+	// Bar extends Foo, so {Bar.Items+=current} is type-valid; the only error is the position check.
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Items []Foo }
+		interface Bar extends Foo {}
+		Bar: ({Bar.Items+=current} <|Car|>);
+		token Car: "car";
+	` + commonTokens)
+	doc.AssertNoDiagnostic("Car")
+}
+
+func TestUnassignedRuleCallToParserRuleAfterAssignment(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Name string }
+		Foo: Name=ID <|SubRule|>;
+		SubRule returns Foo: Name=ID;
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("SubRule")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateRuleCallPosition)
+}
+
+func TestUnassignedRuleCallToNonParserRuleAfterAssignment(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Name string }
+		Foo: Name=ID <|SubRule|>;
+		token SubRule: "subrule";
+	` + commonTokens)
+	doc.AssertNoDiagnostic("SubRule")
+}
 
 // --- Action type assignability ---
 
