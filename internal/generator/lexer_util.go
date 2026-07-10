@@ -46,6 +46,8 @@ type TokenTypeLookup struct {
 
 type GenerateTokenTypesResult struct {
 	Keywords        GetAllKeywordsResult
+	TokenDecls      GetAllTokenDeclsResult
+	TokenGroups     GetAllTokenGroupsResult
 	Imports         map[string]bool
 	TokenIndex      TokenIndexLookup
 	TokenTypes      TokenTypeLookup
@@ -86,14 +88,35 @@ func (r GenerateTokenTypesResult) TokenTypeVarNamesByTokenIndex() []string {
 
 func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	keywords := GetAllKeywords(grammr)
-	tokens := GetAllTokenDecls(grammr)
+	tokenDecls := GetAllTokenDecls(grammr)
 	tokenGroups := GetAllTokenGroups(grammr)
-	result := populateTokenTypes(keywords, tokens, tokenGroups)
-	populateTokenModes(result, grammr.TokenModes(), keywords, tokenGroups, tokens)
+	result := GenerateTokenTypesResult{
+		Keywords:    keywords,
+		TokenDecls:  tokenDecls,
+		TokenGroups: tokenGroups,
+		Imports:     map[string]bool{},
+		TokenIndex: TokenIndexLookup{
+			ByKeyword:    make(map[string]int),
+			ByToken:      make(map[grammar.TokenDecl]int),
+			ByTokenGroup: make(map[grammar.TokenGroup]int),
+		},
+		TokenTypes: TokenTypeLookup{
+			All:          make([]TokenType, 0),
+			ByTokenIndex: make(map[int]*TokenType),
+		},
+		TokenTypeUsages: make(map[int]TokenTypeUsage),
+		TokenModes:      make(map[string]*TokenMode),
+		TokenModeOrder:  []string{},
+	}
+	populateTokenTypes(result)
+	populateTokenModes(result, grammr.TokenModes())
 	return result
 }
 
-func populateTokenModes(result GenerateTokenTypesResult, tokenModes []grammar.TokenMode, keywords GetAllKeywordsResult, tokenGroups GetAllTokenGroupsResult, tokens GetAllTokenDeclsResult) {
+func populateTokenModes(result GenerateTokenTypesResult, tokenModes []grammar.TokenMode) {
+	keywords := result.Keywords
+	tokenGroups := result.TokenGroups
+	tokens := result.TokenDecls
 	for index, tokenMode := range tokenModes {
 		modeName := "default"
 		if !tokenMode.IsDefault() {
@@ -208,23 +231,10 @@ func populateTokenModes(result GenerateTokenTypesResult, tokenModes []grammar.To
 	}
 }
 
-func populateTokenTypes(keywords GetAllKeywordsResult, tokens GetAllTokenDeclsResult, tokenGroups GetAllTokenGroupsResult) GenerateTokenTypesResult {
-	result := GenerateTokenTypesResult{
-		Keywords: keywords,
-		Imports:  map[string]bool{},
-		TokenIndex: TokenIndexLookup{
-			ByKeyword:    make(map[string]int),
-			ByToken:      make(map[grammar.TokenDecl]int),
-			ByTokenGroup: make(map[grammar.TokenGroup]int),
-		},
-		TokenTypes: TokenTypeLookup{
-			All:          make([]TokenType, 0),
-			ByTokenIndex: make(map[int]*TokenType),
-		},
-		TokenTypeUsages: make(map[int]TokenTypeUsage),
-		TokenModes:      make(map[string]*TokenMode),
-		TokenModeOrder:  []string{},
-	}
+func populateTokenTypes(result GenerateTokenTypesResult) {
+	keywords := result.Keywords
+	tokens := result.TokenDecls
+	tokenGroups := result.TokenGroups
 
 	// Starting with 1 - prevent clash with EOF (index 0)
 	tokenIndex := 1
@@ -305,7 +315,6 @@ func populateTokenTypes(keywords GetAllKeywordsResult, tokens GetAllTokenDeclsRe
 		result.TokenIndex.ByTokenGroup[tokenGroup] = tokenIndex
 		tokenIndex++
 	}
-	return result
 }
 
 func mergeImports(target *map[string]bool, source map[string]bool) {
