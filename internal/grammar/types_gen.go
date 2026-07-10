@@ -684,6 +684,11 @@ type AbstractTokenRule interface {
 	AbstractRule
 
 	IsAbstractTokenRule()
+	Type() string
+	TypeToken() *core.Token
+	SetType(value *core.Token)
+	Command() TokenCommand
+	SetCommand(value TokenCommand)
 }
 
 func NewAbstractTokenRule() AbstractTokenRule {
@@ -691,14 +696,47 @@ func NewAbstractTokenRule() AbstractTokenRule {
 }
 
 type AbstractTokenRuleData struct {
+	_Type   *core.Token
+	command TokenCommand
 }
 
 func (i *AbstractTokenRuleData) IsAbstractTokenRule() {}
 
 func (i *AbstractTokenRuleData) ForEachNode(fn func(core.AstNode)) {
+	if i.command != nil {
+		fn(i.command)
+	}
 }
 
 func (i *AbstractTokenRuleData) ForEachReference(fn func(core.UntypedReference)) {
+}
+
+func (i *AbstractTokenRuleData) Type() string {
+	if i != nil && i._Type != nil {
+		return i._Type.Image
+	} else {
+		return ""
+	}
+}
+
+func (i *AbstractTokenRuleData) TypeToken() *core.Token {
+	return i._Type
+}
+
+func (i *AbstractTokenRuleData) SetType(value *core.Token) {
+	i._Type = value
+}
+
+func (i *AbstractTokenRuleData) Command() TokenCommand {
+	if i != nil && i.command != nil {
+		return i.command
+	} else {
+		return nil
+	}
+}
+
+func (i *AbstractTokenRuleData) SetCommand(value TokenCommand) {
+	i.command = value
 }
 
 type AbstractTokenRuleImpl struct {
@@ -797,13 +835,8 @@ type TokenDecl interface {
 	AbstractTokenRule
 
 	IsTokenDecl()
-	Type() string
-	TypeToken() *core.Token
-	SetType(value *core.Token)
 	Content() TokenElement
 	SetContent(value TokenElement)
-	Command() TokenCommand
-	SetCommand(value TokenCommand)
 }
 
 func NewTokenDecl() TokenDecl {
@@ -816,9 +849,7 @@ func NewTokenDecl() TokenDecl {
 }
 
 type TokenDeclData struct {
-	_Type   *core.Token
 	content TokenElement
-	command TokenCommand
 }
 
 func NewTokenDeclData() TokenDeclData {
@@ -831,28 +862,9 @@ func (i *TokenDeclData) ForEachNode(fn func(core.AstNode)) {
 	if i.content != nil {
 		fn(i.content)
 	}
-	if i.command != nil {
-		fn(i.command)
-	}
 }
 
 func (i *TokenDeclData) ForEachReference(fn func(core.UntypedReference)) {
-}
-
-func (i *TokenDeclData) Type() string {
-	if i != nil && i._Type != nil {
-		return i._Type.Image
-	} else {
-		return ""
-	}
-}
-
-func (i *TokenDeclData) TypeToken() *core.Token {
-	return i._Type
-}
-
-func (i *TokenDeclData) SetType(value *core.Token) {
-	i._Type = value
 }
 
 func (i *TokenDeclData) Content() TokenElement {
@@ -865,18 +877,6 @@ func (i *TokenDeclData) Content() TokenElement {
 
 func (i *TokenDeclData) SetContent(value TokenElement) {
 	i.content = value
-}
-
-func (i *TokenDeclData) Command() TokenCommand {
-	if i != nil && i.command != nil {
-		return i.command
-	} else {
-		return nil
-	}
-}
-
-func (i *TokenDeclData) SetCommand(value TokenCommand) {
-	i.command = value
 }
 
 type TokenDeclImpl struct {
@@ -1175,11 +1175,6 @@ type TokenGroup interface {
 	SetKeywordsItem(item Keyword)
 	KeywordSelectors() []*core.Token
 	SetKeywordSelectorsItem(item *core.Token)
-	Type() string
-	TypeToken() *core.Token
-	SetType(value *core.Token)
-	Command() TokenCommand
-	SetCommand(value TokenCommand)
 }
 
 func NewTokenGroup() TokenGroup {
@@ -1190,8 +1185,6 @@ type TokenGroupData struct {
 	tokenRefs        []*core.Reference[AbstractTokenRule]
 	keywords         []Keyword
 	keywordSelectors []*core.Token
-	_Type            *core.Token
-	command          TokenCommand
 }
 
 func NewTokenGroupData() TokenGroupData {
@@ -1207,9 +1200,6 @@ func (i *TokenGroupData) IsTokenGroup() {}
 func (i *TokenGroupData) ForEachNode(fn func(core.AstNode)) {
 	for _, item := range i.keywords {
 		fn(item)
-	}
-	if i.command != nil {
-		fn(i.command)
 	}
 }
 
@@ -1241,34 +1231,6 @@ func (i *TokenGroupData) KeywordSelectors() []*core.Token {
 
 func (i *TokenGroupData) SetKeywordSelectorsItem(item *core.Token) {
 	i.keywordSelectors = append(i.keywordSelectors, item)
-}
-
-func (i *TokenGroupData) Type() string {
-	if i != nil && i._Type != nil {
-		return i._Type.Image
-	} else {
-		return ""
-	}
-}
-
-func (i *TokenGroupData) TypeToken() *core.Token {
-	return i._Type
-}
-
-func (i *TokenGroupData) SetType(value *core.Token) {
-	i._Type = value
-}
-
-func (i *TokenGroupData) Command() TokenCommand {
-	if i != nil && i.command != nil {
-		return i.command
-	} else {
-		return nil
-	}
-}
-
-func (i *TokenGroupData) SetCommand(value TokenCommand) {
-	i.command = value
 }
 
 type TokenGroupImpl struct {

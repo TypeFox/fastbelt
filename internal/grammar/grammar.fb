@@ -75,7 +75,10 @@ interface AbstractRuleWithBody extends AbstractRule {
 }
 
 // Base type for TokenDecl and TokenGroup
-interface AbstractTokenRule extends AbstractRule{}
+interface AbstractTokenRule extends AbstractRule {
+    Type    string
+    Command TokenCommand
+}
 
 interface ParserRule extends AbstractRuleWithBody {
     Entry      bool
@@ -85,9 +88,7 @@ interface ParserRule extends AbstractRuleWithBody {
 ParserRule: (Entry?=ENTRY)? Name=ID (RETURNS ReturnType=[Interface:ID])? COLON Body=Alternatives SEMICOLON?
 
 interface TokenDecl extends AbstractTokenRule {
-    Type    string
     Content TokenElement
-    Command TokenCommand
 }
 
 TokenDecl: Type=GroupType? TOKEN Name=ID COLON Content=TokenElement Command=TokenCommand? SEMICOLON?
@@ -120,8 +121,6 @@ interface TokenGroup extends AbstractTokenRule {
     TokenRefs        []*AbstractTokenRule
     Keywords         []Keyword
     KeywordSelectors []string
-    Type             string
-    Command          TokenCommand
 }
 
 TokenGroup: Type=GroupType? TOKEN GROUP Name=ID LEFTBRACE

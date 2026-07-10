@@ -761,36 +761,32 @@ func TestTokenGroupRecursiveNegative(t *testing.T) {
 
 // --- Cross-references ---
 
-// TODO re-enable once checkCrossRefToken detects hidden/comment tokens via the new
-// TokenDecl.Type() (GroupType) model rather than only TokenUsage.
-// func TestCrossRefWithHiddenToken(t *testing.T) {
-// 	f := test.New(t, CreateServices())
-// 	doc := f.Parse(`
-// 		grammar Test;
-// 		interface Target { Name string }
-// 		interface Foo { Ref *Target }
-// 		Foo: Ref=[Target:<|WS|>];
-// 	` + commonTokens)
-// 	diag := doc.ExpectDiagnostic("WS")
-// 	diag.WithSeverity(core.SeverityError)
-// 	diag.WithCode(ValidateInvalidTokenInCrossRef)
-// }
+func TestCrossRefWithHiddenToken(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Target { Name string }
+		interface Foo { Ref *Target }
+		Foo: Ref=[Target:<|WS|>];
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("WS")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateInvalidTokenInCrossRef)
+}
 
-// TODO re-enable once checkCrossRefToken detects hidden/comment tokens via the new
-// TokenDecl.Type() (GroupType) model rather than only TokenUsage.
-// func TestCrossRefWithCommentToken(t *testing.T) {
-// 	f := test.New(t, CreateServices())
-// 	doc := f.Parse(`
-// 		grammar Test;
-// 		interface Target { Name string }
-// 		interface Foo { Ref *Target }
-// 		comment token SL_COMMENT: /\/\/[^\r\n]*/;
-// 		Foo: Ref=[Target:<|SL_COMMENT|>];
-// 	` + commonTokens)
-// 	diag := doc.ExpectDiagnostic("SL_COMMENT")
-// 	diag.WithSeverity(core.SeverityError)
-// 	diag.WithCode(ValidateInvalidTokenInCrossRef)
-// }
+func TestCrossRefWithCommentToken(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Target { Name string }
+		interface Foo { Ref *Target }
+		comment token SL_COMMENT: /\/\/[^\r\n]*/;
+		Foo: Ref=[Target:<|SL_COMMENT|>];
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("SL_COMMENT")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateInvalidTokenInCrossRef)
+}
 
 func TestCrossRefWithValidToken(t *testing.T) {
 	f := test.New(t, CreateServices())

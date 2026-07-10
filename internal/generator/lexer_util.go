@@ -108,12 +108,12 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		TokenModes:      make(map[string]*TokenMode),
 		TokenModeOrder:  []string{},
 	}
-	populateTokenTypes(result)
-	populateTokenModes(result, grammr.TokenModes())
+	populateTokenTypes(&result)
+	populateTokenModes(&result, grammr.TokenModes())
 	return result
 }
 
-func populateTokenModes(result GenerateTokenTypesResult, tokenModes []grammar.TokenMode) {
+func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.TokenMode) {
 	keywords := result.Keywords
 	tokenGroups := result.TokenGroups
 	tokens := result.TokenDecls
@@ -231,7 +231,7 @@ func populateTokenModes(result GenerateTokenTypesResult, tokenModes []grammar.To
 	}
 }
 
-func populateTokenTypes(result GenerateTokenTypesResult) {
+func populateTokenTypes(result *GenerateTokenTypesResult) {
 	keywords := result.Keywords
 	tokens := result.TokenDecls
 	tokenGroups := result.TokenGroups

@@ -845,8 +845,8 @@ func appearsInTokenGroup(target TokenGroup, current TokenGroup, ctx context.Cont
 	return false
 }
 
-func hiddenOrCommentTokenDescription(tokenUsage TokenUsage) (description string, ok bool) {
-	switch tokenUsage.Type() {
+func hiddenOrCommentTokenDescription(tokenDecl AbstractTokenRule) (description string, ok bool) {
+	switch tokenDecl.Type() {
 	case "hidden":
 		return "hidden", true
 	case "comment":
@@ -887,16 +887,16 @@ func checkCrossRefToken(cr CrossRef, ctx context.Context, accept core.Validation
 	if resolved == nil {
 		return
 	}
-	tokenUsage, ok := resolved.(TokenUsage)
+	tokenDecl, ok := resolved.(TokenDecl)
 	if !ok {
 		return
 	}
 	// Hidden/comment tokens are not allowed in cross-references because they
 	// are not stored in the token slice and cannot identify named elements.
-	if description, special := hiddenOrCommentTokenDescription(tokenUsage); special {
+	if description, special := hiddenOrCommentTokenDescription(tokenDecl); special {
 		accept(core.NewDiagnostic(
 			core.SeverityError,
-			fmt.Sprintf("The token '%s' cannot be used in a cross-reference because it is %s.", tokenUsage.TokenRef().Ref(ctx).Name(), description),
+			fmt.Sprintf("The token '%s' cannot be used in a cross-reference because it is %s.", tokenDecl.Name(), description),
 			cr,
 			core.WithReference(ruleCall.Rule()),
 			core.WithCode(ValidateInvalidTokenInCrossRef),
