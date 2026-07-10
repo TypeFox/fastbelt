@@ -191,10 +191,10 @@ func getAllTokenGroupMembers(tokenGroup grammar.TokenGroup, keywords GetAllKeywo
 		}
 	}
 	for _, selector := range tokenGroup.KeywordSelectors() {
-		pattern := regexp.MustCompile(RegexpValue(selector.Image))
+		pattern := regexp.MustCompile(grammar.RegexpValue(selector.Image))
 		for _, keyword := range keywords.Keywords {
 			name := GeneratedTokenName(keyword)
-			value := KeywordValue(keyword)
+			value := grammar.KeywordValue(keyword)
 			if !members[name] && pattern.MatchString(value) {
 				members[name] = true
 			}
@@ -214,7 +214,7 @@ func generateRegexpTokenElement(token grammar.TokenDecl, regexpTokenElement gram
 	imports := map[string]bool{}
 	code := codegen.NewNode()
 	regexPattern := regexpTokenElement.Regexp()
-	regexPattern = regexPattern[1 : len(regexPattern)-1] // remove leading and trailing backticks
+	regexPattern = grammar.RegexpValue(regexPattern)
 	regex, err := fbRegexp.Compile(regexPattern)
 	if err != nil {
 		panic(err)

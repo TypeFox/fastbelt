@@ -22,14 +22,14 @@ func TestGetAllKeywords_InRule(t *testing.T) {
 		}
 		Model: Greeting="hello" "world" | Greeting="hi" "there"
 	`).AssertNoErrors()
-	grammar, ok := doc.Document.Root.(grammar.Grammar)
+	grammr, ok := doc.Document.Root.(grammar.Grammar)
 	require.True(t, ok)
-	result := GetAllKeywords(grammar)
+	result := GetAllKeywords(grammr)
 	require.Len(t, result.Keywords, 4)
-	assert.Equal(t, "hello", KeywordValue(result.Keywords[0]))
-	assert.Equal(t, "hi", KeywordValue(result.Keywords[1]))
-	assert.Equal(t, "there", KeywordValue(result.Keywords[2]))
-	assert.Equal(t, "world", KeywordValue(result.Keywords[3]))
+	assert.Equal(t, "hello", grammar.KeywordValue(result.Keywords[0]))
+	assert.Equal(t, "hi", grammar.KeywordValue(result.Keywords[1]))
+	assert.Equal(t, "there", grammar.KeywordValue(result.Keywords[2]))
+	assert.Equal(t, "world", grammar.KeywordValue(result.Keywords[3]))
 }
 
 func TestGetAllKeywords_InTokenDeclaration(t *testing.T) {
@@ -42,12 +42,12 @@ func TestGetAllKeywords_InTokenDeclaration(t *testing.T) {
 		Model: Greeting=HELLO "world"
 		token HELLO: "hello"
 	`).AssertNoErrors()
-	grammar, ok := doc.Document.Root.(grammar.Grammar)
+	grammr, ok := doc.Document.Root.(grammar.Grammar)
 	require.True(t, ok)
-	result := GetAllKeywords(grammar)
+	result := GetAllKeywords(grammr)
 	require.Len(t, result.Keywords, 2)
-	assert.Equal(t, "hello", KeywordValue(result.Keywords[0]))
-	assert.Equal(t, "world", KeywordValue(result.Keywords[1]))
+	assert.Equal(t, "hello", grammar.KeywordValue(result.Keywords[0]))
+	assert.Equal(t, "world", grammar.KeywordValue(result.Keywords[1]))
 }
 
 func TestGetAllKeywords_InTokenGroup(t *testing.T) {
@@ -63,13 +63,13 @@ func TestGetAllKeywords_InTokenGroup(t *testing.T) {
 			"hi"
 		}
 	`).AssertNoErrors()
-	grammar, ok := doc.Document.Root.(grammar.Grammar)
+	grammr, ok := doc.Document.Root.(grammar.Grammar)
 	require.True(t, ok)
-	result := GetAllKeywords(grammar)
+	result := GetAllKeywords(grammr)
 	require.Len(t, result.Keywords, 3)
-	assert.Equal(t, "hello", KeywordValue(result.Keywords[0]))
-	assert.Equal(t, "hi", KeywordValue(result.Keywords[1]))
-	assert.Equal(t, "world", KeywordValue(result.Keywords[2]))
+	assert.Equal(t, "hello", grammar.KeywordValue(result.Keywords[0]))
+	assert.Equal(t, "hi", grammar.KeywordValue(result.Keywords[1]))
+	assert.Equal(t, "world", grammar.KeywordValue(result.Keywords[2]))
 }
 
 func TestGetAllKeywords_InTokenMode(t *testing.T) {
@@ -85,10 +85,10 @@ func TestGetAllKeywords_InTokenMode(t *testing.T) {
 			"world"
 		}
 	`).AssertNoErrors()
-	grammar, ok := doc.Document.Root.(grammar.Grammar)
+	grammr, ok := doc.Document.Root.(grammar.Grammar)
 	require.True(t, ok)
-	result := GetAllKeywords(grammar)
+	result := GetAllKeywords(grammr)
 	require.Len(t, result.Keywords, 2)
-	assert.Equal(t, "hello", KeywordValue(result.Keywords[0]))
-	assert.Equal(t, "world", KeywordValue(result.Keywords[1]))
+	assert.Equal(t, "hello", grammar.KeywordValue(result.Keywords[0]))
+	assert.Equal(t, "world", grammar.KeywordValue(result.Keywords[1]))
 }

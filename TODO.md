@@ -6,6 +6,7 @@ Always write tests!!!
 
 ### Backlog
 
+* [ ] delete this file
 * [ ] redo open TODOs
 * [x] split functions into smaller ones
 * [x] token groups with group and commands

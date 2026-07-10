@@ -6,6 +6,11 @@ package grammar
 
 import "strings"
 
+// Strip surrounding slashes from the regex literal
+func RegexpValue(tokenImage string) string {
+	return tokenImage[1 : len(tokenImage)-1]
+}
+
 // KeywordValue returns the string value of k stripped of its surrounding quotes.
 func KeywordValue(k Keyword) string {
 	return k.Value()[1 : len(k.Value())-1]

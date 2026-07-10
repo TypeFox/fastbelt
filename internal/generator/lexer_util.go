@@ -174,10 +174,10 @@ func populateTokenModes(result GenerateTokenTypesResult, tokenModes []grammar.To
 					}
 				}
 			case grammar.KeywordSelector:
-				pattern := regexp.MustCompile(RegexpValue(member.Selector()))
+				pattern := regexp.MustCompile(grammar.RegexpValue(member.Selector()))
 				for _, keyword := range keywords.Keywords {
 					tokenIndex := result.TokenIndex.ByKeyword[keyword.Value()]
-					value := KeywordValue(keyword)
+					value := grammar.KeywordValue(keyword)
 					if !alreadyAdded[tokenIndex] && pattern.MatchString(value) {
 						current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
 						alreadyAdded[tokenIndex] = true
@@ -454,12 +454,4 @@ func GeneratedTokenName(t core.AstNode) string {
 
 func GeneratedTokenIdxName(t core.AstNode) string {
 	return GeneratedTokenName(t) + "_Idx"
-}
-
-func KeywordValue(k grammar.Keyword) string {
-	return k.Value()[1 : len(k.Value())-1]
-}
-
-func RegexpValue(tokenImage string) string {
-	return tokenImage[1 : len(tokenImage)-1]
 }

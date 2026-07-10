@@ -397,20 +397,22 @@ func TestInheritedFieldNameDuplicateInDeepHierarchyNoErrorAtTopElement(t *testin
 
 // --- Terminal ---
 
-// TODO re-enable once checkEmptyTerminalRule is restored in TokenDeclImpl.Validate
-// (needs porting to the new TokenDecl.Content TokenElement shape).
-// func TestTerminalMatchesEmptyString(t *testing.T) {
-// 	f := test.New(t, CreateServices())
-// 	doc := f.Parse(`
-// 		grammar Test;
-// 		token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
-// 		token <|EMPTY|>: /a*/;
-// 		hidden token WS: /[ \n\r\t]+/;
-// 	`)
-// 	diag := doc.ExpectDiagnostic("EMPTY")
-// 	diag.WithSeverity(core.SeverityError)
-// 	diag.WithCode(ValidateEmptyToken)
-// }
+func TestTerminalMatchesEmptyString(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
+		token <|EMPTY|>: /a*/;
+		token <|EMPTY2|>: "";
+		hidden token WS: /[ \n\r\t]+/;
+	`)
+	diag := doc.ExpectDiagnostic("EMPTY")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateEmptyToken)
+	diag = doc.ExpectDiagnostic("EMPTY2")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateEmptyToken)
+}
 
 // --- Keywords ---
 
