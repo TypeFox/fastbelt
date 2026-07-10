@@ -747,17 +747,16 @@ func TestTokenGroupRecursiveNegative(t *testing.T) {
 	doc.AssertNoErrors()
 }
 
-// TODO re-enable once the ValidateInvalidTokenInGroup check is restored in TokenGroupImpl.Validate.
-// func TestTokenGroupWithInvalidToken(t *testing.T) {
-// 	f := test.New(t, CreateServices())
-// 	doc := f.Parse(`
-// 		grammar Test;
-// 		token group X { <|WS|> }
-// 	` + commonTokens)
-// 	diag := doc.ExpectDiagnostic("WS")
-// 	diag.WithSeverity(core.SeverityError)
-// 	diag.WithCode(ValidateInvalidTokenInGroup)
-// }
+func TestTokenGroupWithInvalidToken(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		token group X { <|WS|> }
+	` + commonTokens)
+	diag := doc.ExpectDiagnostic("WS")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateInvalidTokenInGroup)
+}
 
 // --- Cross-references ---
 

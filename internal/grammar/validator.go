@@ -814,6 +814,7 @@ func doInterfaceIsAssignableTo(source Interface, target Interface, visited colle
 
 func (tg *TokenGroupImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
 	checkRecursiveTokenGroup(tg, accept)
+	checkTokenGroupContainsOnlyValidTokens(tg, accept)
 }
 
 func checkRecursiveTokenGroup(tg TokenGroup, accept core.ValidationAcceptor) {
@@ -825,6 +826,24 @@ func checkRecursiveTokenGroup(tg TokenGroup, accept core.ValidationAcceptor) {
 			core.WithToken(tg.NameToken()),
 			core.WithCode(ValidateRecursiveTokenGroup),
 		))
+	}
+}
+
+func checkTokenGroupContainsOnlyValidTokens(tg TokenGroup, accept core.ValidationAcceptor) {
+	for _, tokenRef := range tg.TokenRefs() {
+		token := tokenRef.Ref(context.Background())
+		if token == nil {
+			continue
+		}
+		if description, special := hiddenOrCommentTokenDescription(token); special {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				fmt.Sprintf("The token '%s' cannot be used in a token group because it is %s.", token.Name(), description),
+				tg,
+				core.WithReference(tokenRef),
+				core.WithCode(ValidateInvalidTokenInGroup),
+			))
+		}
 	}
 }
 
