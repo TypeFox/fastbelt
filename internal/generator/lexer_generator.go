@@ -93,7 +93,7 @@ func (r GenerateTokenTypesResult) TokenTypeVarNamesByTokenIndex() []string {
 func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	keywords := GetAllKeywords(grammr)
 	tokens := GetAllTokenDecls(grammr)
-	tokenGroups := grammr.TokenGroups()
+	tokenGroups := GetAllTokenGroups(grammr)
 	result := GenerateTokenTypesResult{
 		Keywords: keywords,
 		Imports:  map[string]bool{},
@@ -171,11 +171,11 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		}
 	}
 	tokenGroupMembers := map[string][]string{}
-	for _, tokenGroup := range tokenGroups {
+	for _, tokenGroup := range tokenGroups.All {
 		tokenGroupMembers[tokenGroup.Name()] = getAllTokenGroupMembers(tokenGroup, keywords)
 	}
 	// Token groups need to be topologically sorted, so that nested groups appear after their members
-	for _, tokenGroup := range sortTokenGroups(tokenGroups, tokenGroupMembers) {
+	for _, tokenGroup := range sortTokenGroups(tokenGroups.All, tokenGroupMembers) {
 		lexerResult := generateTokenGroupType(tokenGroup, tokenGroupMembers, tokenIndex)
 		mergeImports(&result.Imports, lexerResult.Imports)
 		tokenType := TokenType{
@@ -215,6 +215,17 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 						Command:   token.Command(),
 					}
 				}
+			case grammar.TokenGroupUsage:
+				tokenGroup := member.Group()
+				tokenIndex = result.TokenIndex.ByTokenGroup[tokenGroup]
+				current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
+				alreadyAdded[tokenIndex] = true
+				if tokenGroup.Type() != "" || tokenGroup.Command() != nil {
+					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
+						GroupType: tokenGroup.Type(),
+						Command:   tokenGroup.Command(),
+					}
+				}
 			case grammar.KeywordUsage:
 				tokenIndex := result.TokenIndex.ByKeyword[member.Keyword().Value()]
 				current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
@@ -243,6 +254,12 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 					tokenIndex = result.TokenIndex.ByTokenGroup[rule]
 					current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
 					alreadyAdded[tokenIndex] = true
+					if rule.Type() != "" || rule.Command() != nil {
+						current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
+							GroupType: rule.Type(),
+							Command:   rule.Command(),
+						}
+					}
 				}
 				if member.Type() != "" || member.Command() != nil {
 					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
@@ -275,10 +292,15 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		result.TokenModes["default"] = &defaultMode
 		result.TokenModeOrder = append(result.TokenModeOrder, "default")
 
-		for _, tokenGroup := range tokenGroups {
+		for _, tokenGroup := range tokenGroups.TopLevel {
 			tokenIndex := result.TokenIndex.ByTokenGroup[tokenGroup]
 			defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
-			//token groups don't have type or command, so we don't need to add anything to TokenTypeUsages
+			if tokenGroup.Type() != "" || tokenGroup.Command() != nil {
+				defaultMode.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
+					GroupType: tokenGroup.Type(),
+					Command:   tokenGroup.Command(),
+				}
+			}
 		}
 
 		for _, keyword := range keywords.Keywords {

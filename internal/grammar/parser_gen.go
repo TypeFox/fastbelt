@@ -601,6 +601,16 @@ func (p *Parser) ParseTokenGroup() TokenGroup {
 	current.SetSegmentStartToken(p.state.LA(1))
 	{
 		{
+			p.state.Sync(StateNumber__TokenGroup__Basic_2)
+			if p.lookahead.TokenGroupTypeOptional(p.state) {
+				token := p.state.Consume(TokenGroup_GroupType)
+				core.AssignToken(current, token, StateNumber__TokenGroup__Basic_0)
+				if token != nil {
+					current.SetType(token)
+				}
+			}
+		}
+		{
 			token := p.state.Consume(Token_TOKEN)
 			core.AssignToken(current, token, StateNumber__TokenGroup_TOKEN)
 		}
@@ -633,7 +643,7 @@ func (p *Parser) ParseTokenGroup() TokenGroup {
 				}
 			case 1:
 				{
-					p.state.EnterRule(StateNumber__TokenGroup__Basic_2)
+					p.state.EnterRule(StateNumber__TokenGroup__Basic_5)
 					result := p.ParseKeyword()
 					p.state.ExitRule()
 					if result != nil {
@@ -660,6 +670,23 @@ func (p *Parser) ParseTokenGroup() TokenGroup {
 		{
 			token := p.state.Consume(Token_RIGHTBRACE)
 			core.AssignToken(current, token, StateNumber__TokenGroup_RIGHTBRACE)
+		}
+		{
+			p.state.Sync(StateNumber__TokenGroup__Basic_10)
+			if p.lookahead.TokenGroupCommandOptional(p.state) {
+				p.state.EnterRule(StateNumber__TokenGroup__Basic_9)
+				result := p.ParseTokenCommand()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetCommand(result)
+				}
+			}
+		}
+		{
+			if p.lookahead.TokenGroupOptional(p.state) {
+				token := p.state.Consume(Token_SEMICOLON)
+				core.AssignToken(current, token, StateNumber__TokenGroup_SEMICOLON)
+			}
 		}
 	}
 	current.SetSegmentEndToken(p.state.LA(0))
@@ -739,7 +766,7 @@ func (p *Parser) ParseTokenModeMember() TokenModeMember {
 		case 1:
 			{
 				p.state.EnterRule(StateNumber__TokenModeMember__Basic_3)
-				result := p.ParseTokenUsage()
+				result := p.ParseTokenGroupUsage()
 				p.state.ExitRule()
 				core.MergeTokens(result, current.Tokens())
 				current = result
@@ -747,7 +774,7 @@ func (p *Parser) ParseTokenModeMember() TokenModeMember {
 		case 2:
 			{
 				p.state.EnterRule(StateNumber__TokenModeMember__Basic_5)
-				result := p.ParseKeywordUsage()
+				result := p.ParseTokenUsage()
 				p.state.ExitRule()
 				core.MergeTokens(result, current.Tokens())
 				current = result
@@ -755,6 +782,14 @@ func (p *Parser) ParseTokenModeMember() TokenModeMember {
 		case 3:
 			{
 				p.state.EnterRule(StateNumber__TokenModeMember__Basic_7)
+				result := p.ParseKeywordUsage()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+		case 4:
+			{
+				p.state.EnterRule(StateNumber__TokenModeMember__Basic_9)
 				result := p.ParseKeywordSelector()
 				p.state.ExitRule()
 				core.MergeTokens(result, current.Tokens())
@@ -778,6 +813,23 @@ func (p *Parser) ParseTokenDeclUsage() TokenDeclUsage {
 			p.state.ExitRule()
 			if result != nil {
 				current.SetDeclaration(result)
+			}
+		}
+	}
+	current.SetSegmentEndToken(p.state.LA(0))
+	return current
+}
+
+func (p *Parser) ParseTokenGroupUsage() TokenGroupUsage {
+	current := NewTokenGroupUsage()
+	current.SetSegmentStartToken(p.state.LA(1))
+	{
+		{
+			p.state.EnterRule(StateNumber__TokenGroupUsage__Basic_1)
+			result := p.ParseTokenGroup()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetGroup(result)
 			}
 		}
 	}

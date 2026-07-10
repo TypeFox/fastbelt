@@ -468,6 +468,15 @@ func (p *CompletionParser) ParseTokenGroup() {
 	p.cp.EnterRule("TokenGroup", StateNumber__TokenGroup__Start)
 	defer p.cp.ExitRule()
 	{
+		p.cp.RecordSnapshot(StateNumber__TokenGroup__Basic_2)
+		p.state.Sync(StateNumber__TokenGroup__Basic_2)
+		if p.lookahead.TokenGroupTypeOptional(p.state) {
+			p.cp.MarkAssignment("Type")
+			p.state.Consume(TokenGroup_GroupType)
+			p.cp.ClearAssignment()
+		}
+	}
+	{
 		p.state.Consume(Token_TOKEN)
 	}
 	{
@@ -495,7 +504,7 @@ loop0:
 		case 1:
 			{
 				p.cp.MarkAssignment("Keywords")
-				p.state.EnterRule(StateNumber__TokenGroup__Basic_2)
+				p.state.EnterRule(StateNumber__TokenGroup__Basic_5)
 				p.ParseKeyword()
 				p.state.ExitRule()
 				p.cp.ClearAssignment()
@@ -517,6 +526,22 @@ loop0:
 	}
 	{
 		p.state.Consume(Token_RIGHTBRACE)
+	}
+	{
+		p.cp.RecordSnapshot(StateNumber__TokenGroup__Basic_10)
+		p.state.Sync(StateNumber__TokenGroup__Basic_10)
+		if p.lookahead.TokenGroupCommandOptional(p.state) {
+			p.cp.MarkAssignment("Command")
+			p.state.EnterRule(StateNumber__TokenGroup__Basic_9)
+			p.ParseTokenCommand()
+			p.state.ExitRule()
+			p.cp.ClearAssignment()
+		}
+	}
+	{
+		if p.lookahead.TokenGroupOptional(p.state) {
+			p.state.Consume(Token_SEMICOLON)
+		}
 	}
 }
 
@@ -579,18 +604,24 @@ func (p *CompletionParser) ParseTokenModeMember() {
 	case 1:
 		{
 			p.state.EnterRule(StateNumber__TokenModeMember__Basic_3)
-			p.ParseTokenUsage()
+			p.ParseTokenGroupUsage()
 			p.state.ExitRule()
 		}
 	case 2:
 		{
 			p.state.EnterRule(StateNumber__TokenModeMember__Basic_5)
-			p.ParseKeywordUsage()
+			p.ParseTokenUsage()
 			p.state.ExitRule()
 		}
 	case 3:
 		{
 			p.state.EnterRule(StateNumber__TokenModeMember__Basic_7)
+			p.ParseKeywordUsage()
+			p.state.ExitRule()
+		}
+	case 4:
+		{
+			p.state.EnterRule(StateNumber__TokenModeMember__Basic_9)
 			p.ParseKeywordSelector()
 			p.state.ExitRule()
 		}
@@ -606,6 +637,18 @@ func (p *CompletionParser) ParseTokenDeclUsage() {
 		p.cp.MarkAssignment("Declaration")
 		p.state.EnterRule(StateNumber__TokenDeclUsage__Basic_1)
 		p.ParseTokenDecl()
+		p.state.ExitRule()
+		p.cp.ClearAssignment()
+	}
+}
+
+func (p *CompletionParser) ParseTokenGroupUsage() {
+	p.cp.EnterRule("TokenGroupUsage", StateNumber__TokenGroupUsage__Start)
+	defer p.cp.ExitRule()
+	{
+		p.cp.MarkAssignment("Group")
+		p.state.EnterRule(StateNumber__TokenGroupUsage__Basic_1)
+		p.ParseTokenGroup()
 		p.state.ExitRule()
 		p.cp.ClearAssignment()
 	}

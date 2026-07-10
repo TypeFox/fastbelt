@@ -28,6 +28,9 @@ func (s *scopeProviderImpl) ScopeRuleCallRule(ctx context.Context, reference *co
 			if tokenDeclUsage, ok := member.(TokenDeclUsage); ok {
 				tokenDecl := tokenDeclUsage.Declaration()
 				symbols = append(symbols, core.NewSymbolDescription(tokenDecl, tokenDecl.NameToken()))
+			} else if tokenGroupUsage, ok := member.(TokenGroupUsage); ok {
+				tokenGroup := tokenGroupUsage.Group()
+				symbols = append(symbols, core.NewSymbolDescription(tokenGroup, tokenGroup.NameToken()))
 			}
 		}
 	}

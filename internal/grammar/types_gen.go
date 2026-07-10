@@ -1175,6 +1175,11 @@ type TokenGroup interface {
 	SetKeywordsItem(item Keyword)
 	KeywordSelectors() []*core.Token
 	SetKeywordSelectorsItem(item *core.Token)
+	Type() string
+	TypeToken() *core.Token
+	SetType(value *core.Token)
+	Command() TokenCommand
+	SetCommand(value TokenCommand)
 }
 
 func NewTokenGroup() TokenGroup {
@@ -1185,6 +1190,8 @@ type TokenGroupData struct {
 	tokenRefs        []*core.Reference[AbstractTokenRule]
 	keywords         []Keyword
 	keywordSelectors []*core.Token
+	_Type            *core.Token
+	command          TokenCommand
 }
 
 func NewTokenGroupData() TokenGroupData {
@@ -1200,6 +1207,9 @@ func (i *TokenGroupData) IsTokenGroup() {}
 func (i *TokenGroupData) ForEachNode(fn func(core.AstNode)) {
 	for _, item := range i.keywords {
 		fn(item)
+	}
+	if i.command != nil {
+		fn(i.command)
 	}
 }
 
@@ -1231,6 +1241,34 @@ func (i *TokenGroupData) KeywordSelectors() []*core.Token {
 
 func (i *TokenGroupData) SetKeywordSelectorsItem(item *core.Token) {
 	i.keywordSelectors = append(i.keywordSelectors, item)
+}
+
+func (i *TokenGroupData) Type() string {
+	if i != nil && i._Type != nil {
+		return i._Type.Image
+	} else {
+		return ""
+	}
+}
+
+func (i *TokenGroupData) TypeToken() *core.Token {
+	return i._Type
+}
+
+func (i *TokenGroupData) SetType(value *core.Token) {
+	i._Type = value
+}
+
+func (i *TokenGroupData) Command() TokenCommand {
+	if i != nil && i.command != nil {
+		return i.command
+	} else {
+		return nil
+	}
+}
+
+func (i *TokenGroupData) SetCommand(value TokenCommand) {
+	i.command = value
 }
 
 type TokenGroupImpl struct {
@@ -1448,6 +1486,70 @@ func (i *TokenDeclUsageImpl) ForEachNode(fn func(core.AstNode)) {
 func (i *TokenDeclUsageImpl) ForEachReference(fn func(core.UntypedReference)) {
 	i.TokenModeMemberData.ForEachReference(fn)
 	i.TokenDeclUsageData.ForEachReference(fn)
+}
+
+type TokenGroupUsage interface {
+	core.AstNode
+	TokenModeMember
+
+	IsTokenGroupUsage()
+	Group() TokenGroup
+	SetGroup(value TokenGroup)
+}
+
+func NewTokenGroupUsage() TokenGroupUsage {
+	return &TokenGroupUsageImpl{
+		AstNodeBase:         core.NewAstNode(),
+		TokenModeMemberData: NewTokenModeMemberData(),
+		TokenGroupUsageData: NewTokenGroupUsageData(),
+	}
+}
+
+type TokenGroupUsageData struct {
+	group TokenGroup
+}
+
+func NewTokenGroupUsageData() TokenGroupUsageData {
+	return TokenGroupUsageData{}
+}
+
+func (i *TokenGroupUsageData) IsTokenGroupUsage() {}
+
+func (i *TokenGroupUsageData) ForEachNode(fn func(core.AstNode)) {
+	if i.group != nil {
+		fn(i.group)
+	}
+}
+
+func (i *TokenGroupUsageData) ForEachReference(fn func(core.UntypedReference)) {
+}
+
+func (i *TokenGroupUsageData) Group() TokenGroup {
+	if i != nil && i.group != nil {
+		return i.group
+	} else {
+		return nil
+	}
+}
+
+func (i *TokenGroupUsageData) SetGroup(value TokenGroup) {
+	i.group = value
+}
+
+type TokenGroupUsageImpl struct {
+	core.AstNodeBase
+	TokenModeMemberData
+	TokenGroupUsageData
+}
+
+func (i *TokenGroupUsageImpl) ForEachNode(fn func(core.AstNode)) {
+	i.TokenModeMemberData.ForEachNode(fn)
+	i.TokenGroupUsageData.ForEachNode(fn)
+}
+
+func (i *TokenGroupUsageImpl) ForEachReference(fn func(core.UntypedReference)) {
+	i.TokenModeMemberData.ForEachReference(fn)
+	i.TokenGroupUsageData.ForEachReference(fn)
 }
 
 type TokenUsage interface {
@@ -2377,6 +2479,7 @@ var FastbeltSyntheticFactories = map[string]func() core.AstNode{
 	"TokenDeclUsage":       func() core.AstNode { return NewTokenDeclUsage() },
 	"TokenElement":         func() core.AstNode { return NewTokenElement() },
 	"TokenGroup":           func() core.AstNode { return NewTokenGroup() },
+	"TokenGroupUsage":      func() core.AstNode { return NewTokenGroupUsage() },
 	"TokenMode":            func() core.AstNode { return NewTokenMode() },
 	"TokenModeMember":      func() core.AstNode { return NewTokenModeMember() },
 	"TokenUsage":           func() core.AstNode { return NewTokenUsage() },

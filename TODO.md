@@ -4,18 +4,10 @@ Always write tests!!!
 
 ## Tasks
 
-### Current
-
-* pick a language with token modes
-* inline token declarations that have keywords only
-* list the keywords in the token mode declarations
-* test feature
-* implement feature
-
 ### Backlog
 
-* [ ] token groups with group and commands
-* [ ] token group definition inside a token mode
+* [x] token groups with group and commands
+* [x] token group definition inside a token mode
 * [x] collect keywords from entire grammar
 * [x] handle token mode
   * [x] local TokenDecls

@@ -117,18 +117,20 @@ interface TokenCommand {
 TokenCommand: ARROW Type=(PUSH|POP|MODE) (LEFTPAREN (Mode=[TokenMode:ID] | Default?=DEFAULT) RIGHTPAREN)?;
 
 interface TokenGroup extends AbstractTokenRule {
-    TokenRefs []*AbstractTokenRule
-    Keywords  []Keyword
-    KeywordSelectors   []string
+    TokenRefs        []*AbstractTokenRule
+    Keywords         []Keyword
+    KeywordSelectors []string
+    Type             string
+    Command          TokenCommand
 }
 
-TokenGroup: TOKEN GROUP Name=ID LEFTBRACE
+TokenGroup: Type=GroupType? TOKEN GROUP Name=ID LEFTBRACE
     (
         TokenRefs+=[AbstractTokenRule:ID]
         | Keywords+=Keyword
         | KEYWORDS KeywordSelectors+=RegexLiteral
     )*
-RIGHTBRACE
+RIGHTBRACE Command=TokenCommand? SEMICOLON?
 
 interface TokenMode {
     Name    string
@@ -142,13 +144,19 @@ RIGHTBRACE
 
 interface TokenModeMember {}
 
-TokenModeMember: TokenDeclUsage | TokenUsage | KeywordUsage | KeywordSelector
+TokenModeMember: TokenDeclUsage | TokenGroupUsage | TokenUsage | KeywordUsage | KeywordSelector
 
 interface TokenDeclUsage extends TokenModeMember {
     Declaration TokenDecl
 }
 
 TokenDeclUsage: Declaration=TokenDecl
+
+interface TokenGroupUsage extends TokenModeMember {
+    Group TokenGroup
+}
+
+TokenGroupUsage: Group=TokenGroup
 
 interface TokenUsage extends TokenModeMember {
     Type     string
