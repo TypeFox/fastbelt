@@ -88,6 +88,127 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	keywords := GetAllKeywords(grammr)
 	tokens := GetAllTokenDecls(grammr)
 	tokenGroups := GetAllTokenGroups(grammr)
+	result := populateTokenTypes(keywords, tokens, tokenGroups)
+	populateTokenModes(result, grammr.TokenModes(), keywords, tokenGroups, tokens)
+	return result
+}
+
+func populateTokenModes(result GenerateTokenTypesResult, tokenModes []grammar.TokenMode, keywords GetAllKeywordsResult, tokenGroups GetAllTokenGroupsResult, tokens GetAllTokenDeclsResult) {
+	for index, tokenMode := range tokenModes {
+		modeName := "default"
+		if !tokenMode.IsDefault() {
+			modeName = tokenMode.Name()
+		}
+		current := TokenMode{
+			Id:               index,
+			VarName:          "TokenMode_" + modeName,
+			TokenTypeIndices: make([]int, 0),
+			TokenTypeUsages:  make(map[int]TokenTypeUsage),
+		}
+		result.TokenModes[modeName] = &current
+		for _, member := range tokenMode.Members() {
+			alreadyAdded := map[int]bool{}
+
+			pushTokenTypeUsage := func(tokenIndex int, groupType string, command grammar.TokenCommand) {
+				alreadyAdded[tokenIndex] = true
+				current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
+				if groupType != "" || command != nil {
+					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
+						GroupType: groupType,
+						Command:   command,
+					}
+				}
+			}
+
+			switch member := member.(type) {
+			case grammar.TokenDeclUsage:
+				token := member.Declaration()
+				tokenIndex := result.TokenIndex.ByToken[token]
+				pushTokenTypeUsage(tokenIndex, token.Type(), token.Command())
+			case grammar.TokenGroupUsage:
+				tokenGroup := member.Group()
+				tokenIndex := result.TokenIndex.ByTokenGroup[tokenGroup]
+				pushTokenTypeUsage(tokenIndex, tokenGroup.Type(), tokenGroup.Command())
+			case grammar.KeywordUsage:
+				tokenIndex := result.TokenIndex.ByKeyword[member.Keyword().Value()]
+				pushTokenTypeUsage(tokenIndex, member.Type(), member.Command())
+			case grammar.TokenUsage:
+				token := member.TokenRef().Ref(context.Background())
+				var tokenIndex int
+				switch rule := token.(type) {
+				case grammar.TokenDecl:
+					tokenIndex = result.TokenIndex.ByToken[rule]
+					pushTokenTypeUsage(tokenIndex, rule.Type(), rule.Command())
+				case grammar.TokenGroup:
+					tokenIndex = result.TokenIndex.ByTokenGroup[rule]
+					pushTokenTypeUsage(tokenIndex, rule.Type(), rule.Command())
+				}
+				//overwrite usage if defined on token mode level
+				if member.Type() != "" || member.Command() != nil {
+					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
+						GroupType: member.Type(),
+						Command:   member.Command(),
+					}
+				}
+			case grammar.KeywordSelector:
+				pattern := regexp.MustCompile(RegexpValue(member.Selector()))
+				for _, keyword := range keywords.Keywords {
+					tokenIndex := result.TokenIndex.ByKeyword[keyword.Value()]
+					value := KeywordValue(keyword)
+					if !alreadyAdded[tokenIndex] && pattern.MatchString(value) {
+						current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
+						alreadyAdded[tokenIndex] = true
+					}
+				}
+			}
+		}
+		result.TokenModeOrder = append(result.TokenModeOrder, modeName)
+	}
+	if result.TokenModes["default"] == nil {
+		//if token mode "default" is not defined, we need to create it
+		defaultMode := TokenMode{
+			Id:               len(result.TokenModes),
+			VarName:          "TokenMode_default",
+			TokenTypeIndices: make([]int, 0),
+			TokenTypeUsages:  make(map[int]TokenTypeUsage),
+		}
+		result.TokenModes["default"] = &defaultMode
+		result.TokenModeOrder = append(result.TokenModeOrder, "default")
+
+		for _, tokenGroup := range tokenGroups.TopLevel {
+			tokenIndex := result.TokenIndex.ByTokenGroup[tokenGroup]
+			defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
+			if tokenGroup.Type() != "" || tokenGroup.Command() != nil {
+				defaultMode.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
+					GroupType: tokenGroup.Type(),
+					Command:   tokenGroup.Command(),
+				}
+			}
+		}
+
+		for _, keyword := range keywords.Keywords {
+			tokenIndex := result.TokenIndex.ByKeyword[keyword.Value()]
+			defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
+			//keywords don't have type or command, so we don't need to add anything to TokenTypeUsages
+		}
+
+		for _, token := range tokens.TopLevel {
+			if _, ok := token.Content().(grammar.RegexpTokenElement); ok {
+				//non-keywords only, since keywords are already added above
+				tokenIndex := result.TokenIndex.ByToken[token]
+				defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
+				if token.Type() != "" || token.Command() != nil {
+					defaultMode.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
+						GroupType: token.Type(),
+						Command:   token.Command(),
+					}
+				}
+			}
+		}
+	}
+}
+
+func populateTokenTypes(keywords GetAllKeywordsResult, tokens GetAllTokenDeclsResult, tokenGroups GetAllTokenGroupsResult) GenerateTokenTypesResult {
 	result := GenerateTokenTypesResult{
 		Keywords: keywords,
 		Imports:  map[string]bool{},
@@ -104,6 +225,7 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		TokenModes:      make(map[string]*TokenMode),
 		TokenModeOrder:  []string{},
 	}
+
 	// Starting with 1 - prevent clash with EOF (index 0)
 	tokenIndex := 1
 	for _, keyword := range keywords.Keywords {
@@ -182,118 +304,6 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		result.TokenTypes.ByTokenIndex[tokenIndex] = &tokenType
 		result.TokenIndex.ByTokenGroup[tokenGroup] = tokenIndex
 		tokenIndex++
-	}
-	for index, tokenMode := range grammr.TokenModes() {
-		modeName := "default"
-		if !tokenMode.IsDefault() {
-			modeName = tokenMode.Name()
-		}
-		current := TokenMode{
-			Id:               index,
-			VarName:          "TokenMode_" + modeName,
-			TokenTypeIndices: make([]int, 0),
-			TokenTypeUsages:  make(map[int]TokenTypeUsage),
-		}
-		result.TokenModes[modeName] = &current
-		for _, member := range tokenMode.Members() {
-			alreadyAdded := map[int]bool{}
-
-			pushTokenTypeUsage := func(tokenIndex int, groupType string, command grammar.TokenCommand) {
-				alreadyAdded[tokenIndex] = true
-				current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
-				if groupType != "" || command != nil {
-					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-						GroupType: groupType,
-						Command:   command,
-					}
-				}
-			}
-
-			switch member := member.(type) {
-			case grammar.TokenDeclUsage:
-				token := member.Declaration()
-				tokenIndex = result.TokenIndex.ByToken[token]
-				pushTokenTypeUsage(tokenIndex, token.Type(), token.Command())
-			case grammar.TokenGroupUsage:
-				tokenGroup := member.Group()
-				tokenIndex = result.TokenIndex.ByTokenGroup[tokenGroup]
-				pushTokenTypeUsage(tokenIndex, tokenGroup.Type(), tokenGroup.Command())
-			case grammar.KeywordUsage:
-				tokenIndex := result.TokenIndex.ByKeyword[member.Keyword().Value()]
-				pushTokenTypeUsage(tokenIndex, member.Type(), member.Command())
-			case grammar.TokenUsage:
-				token := member.TokenRef().Ref(context.Background())
-				var tokenIndex int
-				switch rule := token.(type) {
-				case grammar.TokenDecl:
-					tokenIndex = result.TokenIndex.ByToken[rule]
-					pushTokenTypeUsage(tokenIndex, rule.Type(), rule.Command())
-				case grammar.TokenGroup:
-					tokenIndex = result.TokenIndex.ByTokenGroup[rule]
-					pushTokenTypeUsage(tokenIndex, rule.Type(), rule.Command())
-				}
-				//overwrite usage if defined on token mode level
-				if member.Type() != "" || member.Command() != nil {
-					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-						GroupType: member.Type(),
-						Command:   member.Command(),
-					}
-				}
-			case grammar.KeywordSelector:
-				pattern := regexp.MustCompile(RegexpValue(member.Selector()))
-				for _, keyword := range keywords.Keywords {
-					tokenIndex := result.TokenIndex.ByKeyword[keyword.Value()]
-					value := KeywordValue(keyword)
-					if !alreadyAdded[tokenIndex] && pattern.MatchString(value) {
-						current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
-						alreadyAdded[tokenIndex] = true
-					}
-				}
-			}
-		}
-		result.TokenModeOrder = append(result.TokenModeOrder, modeName)
-	}
-	if result.TokenModes["default"] == nil {
-		//if token mode "default" is not defined, we need to create it
-		defaultMode := TokenMode{
-			Id:               len(result.TokenModes),
-			VarName:          "TokenMode_default",
-			TokenTypeIndices: make([]int, 0),
-			TokenTypeUsages:  make(map[int]TokenTypeUsage),
-		}
-		result.TokenModes["default"] = &defaultMode
-		result.TokenModeOrder = append(result.TokenModeOrder, "default")
-
-		for _, tokenGroup := range tokenGroups.TopLevel {
-			tokenIndex := result.TokenIndex.ByTokenGroup[tokenGroup]
-			defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
-			if tokenGroup.Type() != "" || tokenGroup.Command() != nil {
-				defaultMode.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-					GroupType: tokenGroup.Type(),
-					Command:   tokenGroup.Command(),
-				}
-			}
-		}
-
-		for _, keyword := range keywords.Keywords {
-			tokenIndex := result.TokenIndex.ByKeyword[keyword.Value()]
-			defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
-			//keywords don't have type or command, so we don't need to add anything to TokenTypeUsages
-		}
-
-		for _, token := range tokens.TopLevel {
-			if _, ok := token.Content().(grammar.RegexpTokenElement); ok {
-				//non-keywords only, since keywords are already added above
-				tokenIndex := result.TokenIndex.ByToken[token]
-				defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
-				if token.Type() != "" || token.Command() != nil {
-					defaultMode.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-						GroupType: token.Type(),
-						Command:   token.Command(),
-					}
-				}
-			}
-		}
 	}
 	return result
 }
