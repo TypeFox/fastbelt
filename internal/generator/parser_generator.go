@@ -867,12 +867,12 @@ func generateParseFunction(node codegen.Node, context *ParserGeneratorContext, r
 		node.AppendLine("func (p *", receiverType, ") Parse", rule.Name(), "() ", returnType.Name(), " {")
 		node.Indent(func(n codegen.Node) {
 			n.AppendLine("current := New", returnType.Name(), "()")
-			n.AppendLine("current.SetSegmentStartToken(p.state.LA(1))")
+			n.AppendLine("current.SetRangeStartToken(p.state.LA(1))")
 			// Generate new lexical scope for actions that immediately trigger on rule start
 			n.AppendLine("{")
 			generateAbstractElementParser(n, context, rule.Body())
 			n.AppendLine("}")
-			n.AppendLine("current.SetSegmentEndToken(p.state.LA(0))")
+			n.AppendLine("current.SetRangeEndToken(p.state.LA(0))")
 			n.AppendLine("return current")
 		})
 		node.AppendLine("}")
@@ -926,16 +926,16 @@ func generateAbstractElementParser(node codegen.Node, context *ParserGeneratorCo
 		node.AppendLine("{")
 		node.Indent(func(n codegen.Node) {
 			n.AppendLine("result := New", e.Type().Text(), "()")
-			// Inherit segment from previous node
-			n.AppendLine("result.SetSegment(current.Segment())")
+			// Inherit range from previous node
+			n.AppendLine("result.SetRange(current.Range())")
 			if e.Property() != nil {
 				if e.Operator() == "+=" {
 					n.AppendLine("result.Set", e.Property().Text(), "Item(current)")
 				} else {
 					n.AppendLine("result.Set", e.Property().Text(), "(current)")
 				}
-				// Ensure that the previous node has a valid segment ending
-				n.AppendLine("current.SetSegmentEndToken(p.state.LA(0))")
+				// Ensure that the previous node has a valid range ending
+				n.AppendLine("current.SetRangeEndToken(p.state.LA(0))")
 				n.AppendLine("current = result")
 			} else {
 				// If there is no property to assign, just merge tokens
@@ -1114,11 +1114,11 @@ func generateRuleCallParser(node codegen.Node, context *ParserGeneratorContext, 
 				n.AppendLine("p.state.ExitRule()")
 			} else {
 				n.AppendLine("result ", eq, " core.NewCompositeNode()")
-				n.AppendLine("result.SetSegmentStartToken(p.state.LA(1))")
+				n.AppendLine("result.SetRangeStartToken(p.state.LA(1))")
 				n.AppendLine("p.state.EnterRule(", followName, ")")
 				n.AppendLine("p.Parse", t.Name(), "(result)")
 				n.AppendLine("p.state.ExitRule()")
-				n.AppendLine("result.SetSegmentEndToken(p.state.LA(0))")
+				n.AppendLine("result.SetRangeEndToken(p.state.LA(0))")
 			}
 		}
 	}, func(n codegen.Node) { n.Append(guardCall(context, ruleCall)) }, "", ruleCall.Cardinality())

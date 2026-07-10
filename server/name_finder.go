@@ -77,7 +77,7 @@ func (nf *DefaultNameFinder) forToken(ctx context.Context, token *core.Token) Fo
 		}
 		return FoundName{Source: unit, Target: refDescription.Name}
 	} else {
-		// Not a reference, try to find the name segment that contains the given token
+		// Not a reference, try to find the name range that contains the given token
 		node := token.Owner()
 		if node == nil {
 			return FoundName{}
@@ -86,9 +86,9 @@ func (nf *DefaultNameFinder) forToken(ctx context.Context, token *core.Token) Fo
 		if nameUnit == nil {
 			return FoundName{}
 		}
-		segment := nameUnit.Segment()
-		if segment == nil || token.TextSegment.Indices.Start < segment.Indices.Start || token.TextSegment.Indices.End > segment.Indices.End {
-			return FoundName{} // The token is not within the name segment, i.e. not a name
+		rng := nameUnit.Range()
+		if token.TextRange.Start < rng.Start || token.TextRange.End > rng.End {
+			return FoundName{} // The token is not within the name range, i.e. not a name
 		}
 		// Source and target are the same
 		return FoundName{Source: nameUnit, Target: nameUnit}

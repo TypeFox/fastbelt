@@ -8,9 +8,6 @@ import (
 	"testing"
 
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/server"
-	"typefox.dev/fastbelt/util/service"
-	"typefox.dev/lsp"
 )
 
 // Doc wraps a built [core.Document] with assertion methods and marker positions.
@@ -202,67 +199,54 @@ func (d *Doc) AssertState(flag core.DocumentState) *Doc {
 	return d
 }
 
-func (d *Doc) MarkerRange(label string) (core.TextRange, error) {
+func (d *Doc) MarkerRange(label string) (core.Range, error) {
 	ranges := d.markerRanges(label)
 	if len(ranges) == 0 {
-		return core.TextRange{}, fmt.Errorf("no marker with label %q", label)
+		return core.Range{}, fmt.Errorf("no marker with label %q", label)
 	} else if len(ranges) > 1 {
-		return core.TextRange{}, fmt.Errorf("multiple markers with label %q found; expected exactly one", label)
+		return core.Range{}, fmt.Errorf("multiple markers with label %q found; expected exactly one", label)
 	}
 	return ranges[0], nil
 }
 
-func (d *Doc) markerRanges(label string) []core.TextRange {
-	var result []core.TextRange
+func (d *Doc) markerRanges(label string) []core.Range {
+	var result []core.Range
 	for _, r := range d.Ranges {
 		if r.Label == label {
-			start := d.Document.TextDoc.PositionAt(r.Start)
-			end := d.Document.TextDoc.PositionAt(r.End)
-			result = append(result, core.TextRange{Start: core.TextLocation{
-				Line:   core.TextLine(start.Line),
-				Column: core.TextColumn(start.Character),
-			}, End: core.TextLocation{
-				Line:   core.TextLine(end.Line),
-				Column: core.TextColumn(end.Character),
-			}})
+			result = append(result, core.Range{
+				Start: int32(r.Start),
+				End:   int32(r.End),
+			})
 		}
 	}
 	return result
 }
 
-// markerLocation returns the TextLocation of the named marker.
+// markerLocation returns the offset of the named marker.
 // For range markers it returns the start; for index markers the offset position.
-func (d *Doc) markerLocations(label string, includeRanges bool) []core.TextLocation {
-	var result []core.TextLocation
+func (d *Doc) markerLocations(label string, includeRanges bool) []int {
+	var result []int
 	for _, idx := range d.Indices {
 		if idx.Label == label {
-			position := d.Document.TextDoc.PositionAt(idx.Offset)
-			result = append(result, core.TextLocation{
-				Line:   core.TextLine(position.Line),
-				Column: core.TextColumn(position.Character),
-			})
+			result = append(result, idx.Offset)
 		}
 	}
 	if includeRanges {
 		for _, r := range d.Ranges {
 			if r.Label == label {
-				start := d.Document.TextDoc.PositionAt(r.Start)
-				result = append(result, core.TextLocation{
-					Line:   core.TextLine(start.Line),
-					Column: core.TextColumn(start.Character),
-				})
+				result = append(result, r.Start)
 			}
 		}
 	}
 	return result
 }
 
-func (d *Doc) markerLocation(label string, includeRanges bool) (core.TextLocation, error) {
+func (d *Doc) markerLocation(label string, includeRanges bool) (int, error) {
 	locations := d.markerLocations(label, includeRanges)
 	if len(locations) == 0 {
-		return core.TextLocation{}, fmt.Errorf("no marker with label %q", label)
+		return 0, fmt.Errorf("no marker with label %q", label)
 	} else if len(locations) > 1 {
-		return core.TextLocation{}, fmt.Errorf("multiple markers with label %q found; expected exactly one", label)
+		return 0, fmt.Errorf("multiple markers with label %q found; expected exactly one", label)
 	}
 	return locations[0], nil
 }
@@ -323,11 +307,8 @@ func FindNodeAtOffset[T core.AstNode](d *Doc, offset int) (T, bool) {
 		if !ok {
 			continue
 		}
-		seg := node.Segment()
-		if seg == nil {
-			continue
-		}
-		start, end := int(seg.Indices.Start), int(seg.Indices.End)
+		rng := node.Range()
+		start, end := int(rng.Start), int(rng.End)
 		if start <= offset && offset < end {
 			span := end - start
 			if !found || span < bestSpan {
@@ -349,8 +330,8 @@ func MustFindNodeAtOffset[T core.AstNode](d *Doc, offset int) T {
 }
 
 // FindNodeAtLocation returns the most specific (smallest span) node of type T whose
-// text range contains the given line/column position.
-func FindNodeAtLocation[T core.AstNode](d *Doc, location core.TextLocation) (T, bool) {
+// text range contains the given byte offset.
+func FindNodeAtLocation[T core.AstNode](d *Doc, location int) (T, bool) {
 	d.fixture.t.Helper()
 	var zero T
 	if d.Document.Root == nil {
@@ -364,12 +345,9 @@ func FindNodeAtLocation[T core.AstNode](d *Doc, location core.TextLocation) (T, 
 		if !ok {
 			continue
 		}
-		seg := node.Segment()
-		if seg == nil {
-			continue
-		}
-		if locationInRange(location, seg.Range) {
-			span := int(seg.Indices.End - seg.Indices.Start)
+		seg := node.Range()
+		if locationInRange(location, seg) {
+			span := int(seg.End - seg.Start)
 			if !found || span < bestSpan {
 				result, bestSpan, found = n, span, true
 			}
@@ -379,7 +357,7 @@ func FindNodeAtLocation[T core.AstNode](d *Doc, location core.TextLocation) (T, 
 }
 
 // MustFindNodeAtLocation fails the test if no node of type T contains the given location.
-func MustFindNodeAtLocation[T core.AstNode](d *Doc, location core.TextLocation) T {
+func MustFindNodeAtLocation[T core.AstNode](d *Doc, location int) T {
 	d.fixture.t.Helper()
 	n, ok := FindNodeAtLocation[T](d, location)
 	if !ok {
@@ -484,11 +462,8 @@ func FindReference[T core.AstNode](d *Doc, label string) (*core.Reference[T], bo
 		return nil, false
 	}
 	for _, ref := range d.Document.References {
-		segment := ref.Segment()
-		if segment == nil {
-			continue
-		}
-		if targetRange == segment.Range {
+		rng := ref.Range()
+		if targetRange == rng {
 			if typedRef, ok := ref.(*core.Reference[T]); ok {
 				return typedRef, true
 			}
@@ -505,93 +480,4 @@ func MustFindReference[T core.AstNode](d *Doc, label string) *core.Reference[T] 
 		d.fixture.t.Fatalf("fbtest: MustFindReference: no reference of the requested type at label %q", label)
 	}
 	return r
-}
-
-// FindSymbolAtLabel finds a document symbol at the given marker label.
-// Returns the symbol and true if found, or nil and false if not found.
-func (d *Doc) FindSymbolAtLabel(label string) (*lsp.DocumentSymbol, bool) {
-	d.fixture.t.Helper()
-
-	provider, err := service.Get[server.DocumentSymbolProvider](d.fixture.sc)
-	if err != nil {
-		return nil, false
-	}
-
-	params := &lsp.DocumentSymbolParams{
-		TextDocument: lsp.TextDocumentIdentifier{
-			URI: lsp.DocumentURI(d.Document.URI.DocumentURI()),
-		},
-	}
-
-	result, err := provider.HandleDocumentSymbolRequest(d.fixture.ctx, params)
-	if err != nil {
-		return nil, false
-	}
-
-	expectedRange, err := d.MarkerRange(label)
-	if err != nil {
-		return nil, false
-	}
-
-	sym := findSymbolAtRange(result, expectedRange)
-	if sym == nil {
-		return nil, false
-	}
-	return sym, true
-}
-
-// MustFindSymbolAtLabel finds a document symbol at the given marker label.
-// Fails the test if the symbol is not found.
-func (d *Doc) MustFindSymbolAtLabel(label string) *lsp.DocumentSymbol {
-	d.fixture.t.Helper()
-	sym, ok := d.FindSymbolAtLabel(label)
-	if !ok {
-		d.fixture.t.Fatalf("fbtest: MustFindSymbolAtLabel: no symbol found at label %q", label)
-	}
-	return sym
-}
-
-// AssertDocumentSymbol verifies that a document symbol exists with the given name at the marker label.
-// Returns the Doc for chaining.
-func (d *Doc) AssertDocumentSymbol(label string, expectedName string, expectedKind lsp.SymbolKind) *Doc {
-	d.fixture.t.Helper()
-
-	found := d.MustFindSymbolAtLabel(label)
-
-	if found.Name != expectedName {
-		d.fixture.t.Errorf("fbtest: symbol at %q has name %q, expected %q",
-			label, found.Name, expectedName)
-	}
-	if found.Kind != expectedKind {
-		d.fixture.t.Errorf("fbtest: symbol at %q has kind %v, expected %v",
-			label, found.Kind, expectedKind)
-	}
-
-	return d
-}
-
-// findSymbolAtRange is a helper function for recursive symbol search.
-func findSymbolAtRange(symbols []lsp.DocumentSymbol, targetRange core.TextRange) *lsp.DocumentSymbol {
-	for i := range symbols {
-		sym := &symbols[i]
-		symRange := core.TextRange{
-			Start: core.TextLocation{
-				Line:   core.TextLine(sym.Range.Start.Line),
-				Column: core.TextColumn(sym.Range.Start.Character),
-			},
-			End: core.TextLocation{
-				Line:   core.TextLine(sym.Range.End.Line),
-				Column: core.TextColumn(sym.Range.End.Character),
-			},
-		}
-
-		if symRange == targetRange {
-			return sym
-		}
-
-		if found := findSymbolAtRange(sym.Children, targetRange); found != nil {
-			return found
-		}
-	}
-	return nil
 }

@@ -4,61 +4,23 @@
 
 package fastbelt
 
-import "typefox.dev/lsp"
+import (
+	"typefox.dev/fastbelt/textdoc"
+	"typefox.dev/lsp"
+)
 
-// TextIndex is a zero-based byte offset in source text.
-type TextIndex int32
-
-// TextLine is a zero-based line number in source text.
-type TextLine int32
-
-// TextColumn is a zero-based UTF16 column within a line.
-type TextColumn int32
-
-// A TextIndexRange describes a half-open byte range [Start, End).
-type TextIndexRange struct {
-	// Start is the inclusive start byte offset.
-	Start TextIndex
-	// End is the exclusive end byte offset.
-	End TextIndex
+// Range represents a text range in a document. The indices are zero-based and represent byte offsets.
+// It is defined by a start and end offset, where the start is inclusive and the end is exclusive.
+type Range struct {
+	Start int32
+	End   int32
 }
 
-// A TextLocation identifies a position in source text.
-type TextLocation struct {
-	// Line is the zero-based line number.
-	Line TextLine
-	// Column is the zero-based byte column in Line.
-	Column TextColumn
-}
-
-// LspPosition returns l as an [lsp.Position] using the same coordinates.
-func (l TextLocation) LspPosition() lsp.Position {
-	return lsp.Position{
-		Line:      uint32(l.Line),
-		Character: uint32(l.Column),
-	}
-}
-
-// A TextRange describes a half-open range from Start to End.
-type TextRange struct {
-	// Start is the inclusive start location.
-	Start TextLocation
-	// End is the exclusive end location.
-	End TextLocation
-}
-
-// LspRange returns r as an [lsp.Range] using the same boundaries.
-func (r TextRange) LspRange() lsp.Range {
+// LspRange converts the Range to an LSP range using the provided text document handle.
+// The [lsp.Range] returned is suitable for use in LSP responses without further conversion.
+func (r Range) LspRange(doc textdoc.Handle) lsp.Range {
 	return lsp.Range{
-		Start: r.Start.LspPosition(),
-		End:   r.End.LspPosition(),
+		Start: doc.PositionAt(int(r.Start)),
+		End:   doc.PositionAt(int(r.End)),
 	}
-}
-
-// A TextSegment combines byte offsets and line/column locations for one span.
-type TextSegment struct {
-	// Indices stores the span as byte offsets.
-	Indices TextIndexRange
-	// Range stores the same span as line and column locations.
-	Range TextRange
 }

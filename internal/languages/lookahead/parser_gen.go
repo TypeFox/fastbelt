@@ -35,7 +35,7 @@ func NewParser(sc *service.Container) *Parser {
 
 func (p *Parser) ParseRoot() Root {
 	current := NewRoot()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			p.state.EnterRule(Root__Basic_1)
@@ -46,13 +46,13 @@ func (p *Parser) ParseRoot() Root {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseObj() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		switch prediction, failure := p.lookahead.ObjAlternatives(p.state); prediction {
 		case 0:
@@ -131,13 +131,13 @@ func (p *Parser) ParseObj() Obj {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseA() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			token := p.state.Consume(Keyword_a)
@@ -145,23 +145,23 @@ func (p *Parser) ParseA() Obj {
 		}
 		{
 			result := core.NewCompositeNode()
-			result.SetSegmentStartToken(p.state.LA(1))
+			result.SetRangeStartToken(p.state.LA(1))
 			p.state.EnterRule(A__Basic_1)
 			p.ParseQualifiedPath(result)
 			p.state.ExitRule()
-			result.SetSegmentEndToken(p.state.LA(0))
+			result.SetRangeEndToken(p.state.LA(0))
 			if result != nil {
 				current.SetNode(result)
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseB() B {
 	current := NewB()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			token := p.state.Consume(Keyword_b)
@@ -169,11 +169,11 @@ func (p *Parser) ParseB() B {
 		}
 		{
 			result := core.NewCompositeNode()
-			result.SetSegmentStartToken(p.state.LA(1))
+			result.SetRangeStartToken(p.state.LA(1))
 			p.state.EnterRule(B_Dot)
 			p.ParseQualifiedPath(result)
 			p.state.ExitRule()
-			result.SetSegmentEndToken(p.state.LA(0))
+			result.SetRangeEndToken(p.state.LA(0))
 			if result != nil {
 				current.SetNode(result)
 			}
@@ -190,13 +190,13 @@ func (p *Parser) ParseB() B {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseC() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			token := p.state.Consume(Keyword_c)
@@ -204,11 +204,11 @@ func (p *Parser) ParseC() Obj {
 		}
 		{
 			result := core.NewCompositeNode()
-			result.SetSegmentStartToken(p.state.LA(1))
+			result.SetRangeStartToken(p.state.LA(1))
 			p.state.EnterRule(C__Basic_2)
 			p.ParseCLoop(result)
 			p.state.ExitRule()
-			result.SetSegmentEndToken(p.state.LA(0))
+			result.SetRangeEndToken(p.state.LA(0))
 			if result != nil {
 				current.SetNode(result)
 			}
@@ -228,13 +228,13 @@ func (p *Parser) ParseC() Obj {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseD() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			token := p.state.Consume(Keyword_d)
@@ -242,11 +242,11 @@ func (p *Parser) ParseD() Obj {
 		}
 		{
 			result := core.NewCompositeNode()
-			result.SetSegmentStartToken(p.state.LA(1))
+			result.SetRangeStartToken(p.state.LA(1))
 			p.state.EnterRule(D__Basic_2)
 			p.ParseDOpt(result)
 			p.state.ExitRule()
-			result.SetSegmentEndToken(p.state.LA(0))
+			result.SetRangeEndToken(p.state.LA(0))
 			if result != nil {
 				current.SetNode(result)
 			}
@@ -266,13 +266,13 @@ func (p *Parser) ParseD() Obj {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseE() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			token := p.state.Consume(Keyword_e)
@@ -295,13 +295,13 @@ func (p *Parser) ParseE() Obj {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseF() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			token := p.state.Consume(Keyword_f)
@@ -340,13 +340,13 @@ func (p *Parser) ParseF() Obj {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseG() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			token := p.state.Consume(Keyword_g)
@@ -356,11 +356,11 @@ func (p *Parser) ParseG() Obj {
 		case 0:
 			{
 				result := core.NewCompositeNode()
-				result.SetSegmentStartToken(p.state.LA(1))
+				result.SetRangeStartToken(p.state.LA(1))
 				p.state.EnterRule(G_Value_hello)
 				p.ParseQualifiedName(result)
 				p.state.ExitRule()
-				result.SetSegmentEndToken(p.state.LA(0))
+				result.SetRangeEndToken(p.state.LA(0))
 				if result != nil {
 					current.SetNode(result)
 				}
@@ -375,11 +375,11 @@ func (p *Parser) ParseG() Obj {
 		case 1:
 			{
 				result := core.NewCompositeNode()
-				result.SetSegmentStartToken(p.state.LA(1))
+				result.SetRangeStartToken(p.state.LA(1))
 				p.state.EnterRule(G_Value_world)
 				p.ParseQualifiedName(result)
 				p.state.ExitRule()
-				result.SetSegmentEndToken(p.state.LA(0))
+				result.SetRangeEndToken(p.state.LA(0))
 				if result != nil {
 					current.SetNode(result)
 				}
@@ -395,13 +395,13 @@ func (p *Parser) ParseG() Obj {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseH() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			token := p.state.Consume(Keyword_h)
@@ -411,11 +411,11 @@ func (p *Parser) ParseH() Obj {
 		case 0:
 			{
 				result := core.NewCompositeNode()
-				result.SetSegmentStartToken(p.state.LA(1))
+				result.SetRangeStartToken(p.state.LA(1))
 				p.state.EnterRule(H_Value_hello)
 				p.ParseQualifiedNameRecursive(result)
 				p.state.ExitRule()
-				result.SetSegmentEndToken(p.state.LA(0))
+				result.SetRangeEndToken(p.state.LA(0))
 				if result != nil {
 					current.SetNode(result)
 				}
@@ -430,11 +430,11 @@ func (p *Parser) ParseH() Obj {
 		case 1:
 			{
 				result := core.NewCompositeNode()
-				result.SetSegmentStartToken(p.state.LA(1))
+				result.SetRangeStartToken(p.state.LA(1))
 				p.state.EnterRule(H_Value_world)
 				p.ParseQualifiedNameRecursive(result)
 				p.state.ExitRule()
-				result.SetSegmentEndToken(p.state.LA(0))
+				result.SetRangeEndToken(p.state.LA(0))
 				if result != nil {
 					current.SetNode(result)
 				}
@@ -450,13 +450,13 @@ func (p *Parser) ParseH() Obj {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseI() Obj {
 	current := NewObj()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			token := p.state.Consume(Keyword_i)
@@ -466,11 +466,11 @@ func (p *Parser) ParseI() Obj {
 		case 0:
 			{
 				result := core.NewCompositeNode()
-				result.SetSegmentStartToken(p.state.LA(1))
+				result.SetRangeStartToken(p.state.LA(1))
 				p.state.EnterRule(I_Value_ID_0)
 				p.ParseQualifiedNameRecursive(result)
 				p.state.ExitRule()
-				result.SetSegmentEndToken(p.state.LA(0))
+				result.SetRangeEndToken(p.state.LA(0))
 				if result != nil {
 					current.SetNode(result)
 				}
@@ -485,11 +485,11 @@ func (p *Parser) ParseI() Obj {
 		case 1:
 			{
 				result := core.NewCompositeNode()
-				result.SetSegmentStartToken(p.state.LA(1))
+				result.SetRangeStartToken(p.state.LA(1))
 				p.state.EnterRule(I_Value_ID_1)
 				p.ParseQualifiedNameRecursive(result)
 				p.state.ExitRule()
-				result.SetSegmentEndToken(p.state.LA(0))
+				result.SetRangeEndToken(p.state.LA(0))
 				if result != nil {
 					current.SetNode(result)
 				}
@@ -505,7 +505,7 @@ func (p *Parser) ParseI() Obj {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 

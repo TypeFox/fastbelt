@@ -6,6 +6,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 
 	core "typefox.dev/fastbelt"
@@ -73,9 +74,43 @@ func (d *DiagnosticsPublisher) OnServerInitialize(_ *lsp.ParamInitialize) {
 func (d *DiagnosticsPublisher) publishDocumentDiagnostics(ctx context.Context, doc *core.Document) {
 	lspDiags := make([]lsp.Diagnostic, 0, len(doc.Diagnostics))
 	for _, d := range doc.Diagnostics {
-		lspDiags = append(lspDiags, toLspDiagnostic(*d))
+		lspDiags = append(lspDiags, toLspDiagnostic(doc.TextDoc, *d))
 	}
 	d.publishDiagnostics(ctx, doc.TextDoc.URI(), lspDiags)
+}
+
+func toLspDiagnostic(textDoc textdoc.Handle, d core.Diagnostic) lsp.Diagnostic {
+	result := lsp.Diagnostic{
+		Range:    d.Range.LspRange(textDoc),
+		Severity: lsp.DiagnosticSeverity(d.Severity),
+		Message:  d.Message,
+	}
+	if d.Source != "" {
+		result.Source = d.Source
+	}
+	if d.Code != "" {
+		result.Code = d.Code
+	}
+	if d.CodeDescription != nil {
+		result.CodeDescription = &lsp.CodeDescription{
+			Href: d.CodeDescription.Href,
+		}
+	}
+	if len(d.Tags) > 0 {
+		tags := make([]lsp.DiagnosticTag, len(d.Tags))
+		for i, t := range d.Tags {
+			tags[i] = lsp.DiagnosticTag(t)
+		}
+		result.Tags = tags
+	}
+	if d.Data != nil {
+		raw, err := json.Marshal(d.Data)
+		if err == nil {
+			rawMsg := json.RawMessage(raw)
+			result.Data = &rawMsg
+		}
+	}
+	return result
 }
 
 func (d *DiagnosticsPublisher) publishDiagnostics(ctx context.Context, uri lsp.DocumentURI, diagnostics []lsp.Diagnostic) {

@@ -77,7 +77,7 @@ func (p *DefaultDocumentSymbolProvider) getSymbolsForNode(node core.AstNode) []l
 	// Check if this node should be included as a symbol
 	if p.filter.ShouldInclude(node) {
 		nameUnit := linking.Name(node)
-		if nameUnit != nil && node.Segment() != nil {
+		if nameUnit != nil {
 			symbol := p.createSymbol(node, nameUnit)
 			return []lsp.DocumentSymbol{symbol}
 		}
@@ -88,18 +88,16 @@ func (p *DefaultDocumentSymbolProvider) getSymbolsForNode(node core.AstNode) []l
 }
 
 func (p *DefaultDocumentSymbolProvider) createSymbol(node core.AstNode, nameUnit core.StringUnit) lsp.DocumentSymbol {
-	segment := node.Segment()
+	rng := node.Range()
+	doc := node.Document().TextDoc
 
 	name := nameUnit.String()
-	selectionRange := segment.Range.LspRange()
-	if nameSegment := nameUnit.Segment(); nameSegment != nil {
-		selectionRange = nameSegment.Range.LspRange()
-	}
+	selectionRange := nameUnit.Range().LspRange(doc)
 
 	symbol := lsp.DocumentSymbol{
 		Name:           name,
 		Kind:           SymbolKind(node),
-		Range:          segment.Range.LspRange(),
+		Range:          rng.LspRange(doc),
 		SelectionRange: selectionRange,
 	}
 

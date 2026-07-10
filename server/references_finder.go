@@ -73,7 +73,7 @@ func findSelfReference(target core.AstNode, options FindReferencesOptions) *core
 	}
 	nameUnit := linking.Name(target)
 	if nameUnit != nil {
-		selfDescription := core.NewReferenceDescription(target, target, nameUnit.Segment())
+		selfDescription := core.NewReferenceDescription(target, target, nameUnit.Range())
 		return selfDescription
 	}
 	return nil

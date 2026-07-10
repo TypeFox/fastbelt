@@ -35,7 +35,7 @@ func NewParser(sc *service.Container) *Parser {
 
 func (p *Parser) ParseModule() Module {
 	current := NewModule()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			token := p.state.Consume(Keyword_module)
@@ -61,13 +61,13 @@ func (p *Parser) ParseModule() Module {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseStatement() Statement {
 	current := NewStatement()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		switch prediction, failure := p.lookahead.StatementAlternatives(p.state); prediction {
 		case 0:
@@ -90,13 +90,13 @@ func (p *Parser) ParseStatement() Statement {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseDefinition() Definition {
 	current := NewDefinition()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			token := p.state.Consume(Keyword_def)
@@ -161,13 +161,13 @@ func (p *Parser) ParseDefinition() Definition {
 			core.AssignToken(current, token, Definition_Semicolon)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseDeclaredParameter() DeclaredParameter {
 	current := NewDeclaredParameter()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			token := p.state.Consume(Token_ID)
@@ -177,13 +177,13 @@ func (p *Parser) ParseDeclaredParameter() DeclaredParameter {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseEvaluation() Evaluation {
 	current := NewEvaluation()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			p.state.EnterRule(Evaluation_Semicolon)
@@ -198,13 +198,13 @@ func (p *Parser) ParseEvaluation() Evaluation {
 			core.AssignToken(current, token, Evaluation_Semicolon)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseExpression() Expression {
 	current := NewExpression()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			p.state.EnterRule(Expression__Basic_1)
@@ -214,13 +214,13 @@ func (p *Parser) ParseExpression() Expression {
 			current = result
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseAddition() Expression {
 	current := NewExpression()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			p.state.EnterRule(Addition__LoopEntry)
@@ -233,9 +233,9 @@ func (p *Parser) ParseAddition() Expression {
 		for p.lookahead.AdditionLoop(p.state) {
 			{
 				result := NewBinaryExpression()
-				result.SetSegment(current.Segment())
+				result.SetRange(current.Range())
 				result.SetLeft(current)
-				current.SetSegmentEndToken(p.state.LA(0))
+				current.SetRangeEndToken(p.state.LA(0))
 				current = result
 			}
 			current := current.(BinaryExpression)
@@ -266,13 +266,13 @@ func (p *Parser) ParseAddition() Expression {
 			p.state.Sync(Addition__LoopEntry)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseMultiplication() Expression {
 	current := NewExpression()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			p.state.EnterRule(Multiplication__LoopEntry)
@@ -285,9 +285,9 @@ func (p *Parser) ParseMultiplication() Expression {
 		for p.lookahead.MultiplicationLoop(p.state) {
 			{
 				result := NewBinaryExpression()
-				result.SetSegment(current.Segment())
+				result.SetRange(current.Range())
 				result.SetLeft(current)
-				current.SetSegmentEndToken(p.state.LA(0))
+				current.SetRangeEndToken(p.state.LA(0))
 				current = result
 			}
 			current := current.(BinaryExpression)
@@ -318,13 +318,13 @@ func (p *Parser) ParseMultiplication() Expression {
 			p.state.Sync(Multiplication__LoopEntry)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseExponentiation() Expression {
 	current := NewExpression()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			p.state.EnterRule(Exponentiation__LoopEntry)
@@ -337,9 +337,9 @@ func (p *Parser) ParseExponentiation() Expression {
 		for p.lookahead.ExponentiationLoop(p.state) {
 			{
 				result := NewBinaryExpression()
-				result.SetSegment(current.Segment())
+				result.SetRange(current.Range())
 				result.SetLeft(current)
-				current.SetSegmentEndToken(p.state.LA(0))
+				current.SetRangeEndToken(p.state.LA(0))
 				current = result
 			}
 			current := current.(BinaryExpression)
@@ -361,13 +361,13 @@ func (p *Parser) ParseExponentiation() Expression {
 			p.state.Sync(Exponentiation__LoopEntry)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParseModulo() Expression {
 	current := NewExpression()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		{
 			p.state.EnterRule(Modulo__LoopEntry)
@@ -380,9 +380,9 @@ func (p *Parser) ParseModulo() Expression {
 		for p.lookahead.ModuloLoop(p.state) {
 			{
 				result := NewBinaryExpression()
-				result.SetSegment(current.Segment())
+				result.SetRange(current.Range())
 				result.SetLeft(current)
-				current.SetSegmentEndToken(p.state.LA(0))
+				current.SetRangeEndToken(p.state.LA(0))
 				current = result
 			}
 			current := current.(BinaryExpression)
@@ -404,13 +404,13 @@ func (p *Parser) ParseModulo() Expression {
 			p.state.Sync(Modulo__LoopEntry)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }
 
 func (p *Parser) ParsePrimaryExpression() Expression {
 	current := NewExpression()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetRangeStartToken(p.state.LA(1))
 	{
 		switch prediction, failure := p.lookahead.PrimaryExpressionAlternatives(p.state); prediction {
 		case 0:
@@ -432,7 +432,7 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 		case 1:
 			{
 				result := NewNumberLiteral()
-				result.SetSegment(current.Segment())
+				result.SetRange(current.Range())
 				core.AssignTokens(result, current.Tokens())
 				current = result
 			}
@@ -447,7 +447,7 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 		case 2:
 			{
 				result := NewFunctionCall()
-				result.SetSegment(current.Segment())
+				result.SetRange(current.Range())
 				core.AssignTokens(result, current.Tokens())
 				current = result
 			}
@@ -498,6 +498,6 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetRangeEndToken(p.state.LA(0))
 	return current
 }

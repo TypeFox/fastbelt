@@ -7,7 +7,6 @@ package lexer
 import (
 	"math"
 	"sync/atomic"
-	"unicode/utf16"
 	"unicode/utf8"
 
 	core "typefox.dev/fastbelt"
@@ -60,9 +59,7 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 	errors := make([]*core.LexerError, 0)
 	var groups map[int][]core.Token
 
-	var offset, line, column int
-	line = 0
-	column = 0
+	var offset int
 	for offset < length {
 		r, size := utf8.DecodeRuneInString(input[offset:])
 		mapIndex := int(r) % maxChar
@@ -78,30 +75,11 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 		}
 
 		if longestMatch == 0 {
+			// No matching token, consume one rune to avoid infinite loop
 			longestMatch = size
 		}
 
 		end := offset + longestMatch
-		startLine := line
-		startColumn := column
-
-		for i := offset; i < end; {
-			b := input[i]
-			if b < utf8.RuneSelf {
-				// ASCII fast path: single byte, utf16.RuneLen == 1
-				if b == '\n' {
-					line++
-					column = 0
-				} else {
-					column++
-				}
-				i++
-			} else {
-				r, size := utf8.DecodeRuneInString(input[i:])
-				column += utf16.RuneLen(r)
-				i += size
-			}
-		}
 
 		if longestType != nil {
 			switch longestType.Group {
@@ -112,20 +90,12 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 					longestType,
 					input[offset:end],
 					offset, end,
-					startLine,
-					line,
-					startColumn,
-					column,
 				))
 			case 0:
 				tokens = append(tokens, core.NewToken(
 					longestType,
 					input[offset:end],
 					offset, end,
-					startLine,
-					line,
-					startColumn,
-					column,
 				))
 			default:
 				if groups == nil {
@@ -135,10 +105,6 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 					longestType,
 					input[offset:end],
 					offset, end,
-					startLine,
-					line,
-					startColumn,
-					column,
 				))
 			}
 		} else {
@@ -146,10 +112,6 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 				"No matching token",
 				offset,
 				end,
-				startLine,
-				line,
-				startColumn,
-				column,
 			))
 		}
 		offset = end
