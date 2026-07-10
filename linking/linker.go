@@ -8,7 +8,7 @@ import (
 	"context"
 
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/util/extiter"
+	"typefox.dev/fastbelt/util/parallel"
 	"typefox.dev/fastbelt/util/service"
 )
 
@@ -33,7 +33,7 @@ func NewDefaultLinker(sc *service.Container) Linker {
 }
 
 func (s *DefaultLinker) Link(ctx context.Context, document *core.Document) {
-	extiter.ForEachParallelWithSlice(document.References, func(ref core.UntypedReference, _ int) {
+	parallel.ForEach(document.References, func(ref core.UntypedReference, _ int) {
 		if ctx.Err() != nil {
 			return
 		}

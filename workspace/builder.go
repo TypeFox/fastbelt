@@ -12,7 +12,7 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
-	"typefox.dev/fastbelt/util/extiter"
+	"typefox.dev/fastbelt/util/parallel"
 	"typefox.dev/fastbelt/util/service"
 )
 
@@ -64,7 +64,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 	// PHASE 1: Parse, and compute exports (parallel per document).
 	parser := service.MustGet[DocumentParser](s.sc)
 	exporter := service.MustGet[linking.SymbolExporter](s.sc)
-	extiter.ForEachParallelWithSlice(docs, func(doc *core.Document, _ int) {
+	parallel.ForEach(docs, func(doc *core.Document, _ int) {
 		if ctx.Err() != nil {
 			return
 		}
@@ -96,7 +96,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 	localSymbols := service.MustGet[linking.LocalSymbolsProvider](s.sc)
 	linker := service.MustGet[linking.Linker](s.sc)
 	referenceDescriptions := service.MustGet[linking.ReferenceDescriptionsProvider](s.sc)
-	extiter.ForEachParallelWithSlice(docs, func(doc *core.Document, _ int) {
+	parallel.ForEach(docs, func(doc *core.Document, _ int) {
 		if ctx.Err() != nil {
 			return
 		}
@@ -137,6 +137,11 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 	})
 
 	if err := ctx.Err(); err != nil {
+		// Important note: Do not downgrade the lock here!
+		// If we downgrade the lock here, we would allow read access to
+		// the workspace while the documents are in an inconsistent state.
+		// In most cases, the error has been triggered by a new change,
+		// which will trigger a new build with a re-acquired read-lock.
 		return err
 	}
 
@@ -148,7 +153,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 
 	// PHASE 3: Run custom validations (parallel per document).
 	validator := service.MustGet[DocumentValidator](s.sc)
-	extiter.ForEachParallelWithSlice(docs, func(doc *core.Document, _ int) {
+	parallel.ForEach(docs, func(doc *core.Document, _ int) {
 		if ctx.Err() != nil {
 			return
 		}

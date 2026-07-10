@@ -8,7 +8,6 @@ import (
 	"iter"
 	"reflect"
 	"slices"
-	"sync/atomic"
 	"testing"
 )
 
@@ -197,35 +196,6 @@ func TestForEach(t *testing.T) {
 		}
 		if sumIndex != 3 {
 			t.Errorf("expected sumIndex 3, got %d", sumIndex)
-		}
-	})
-}
-
-func TestForEachParallel(t *testing.T) {
-	t.Run("visits every element exactly once with correct indices", func(t *testing.T) {
-		elements := make([]int, 500)
-		for i := range elements {
-			elements[i] = i
-		}
-		seen := make([]int32, len(elements))
-		ForEachParallel(slices.Values(elements), func(value int, index int) {
-			atomic.AddInt32(&seen[index], 1)
-			if value != index {
-				t.Errorf("expected value %d at index %d, got %d", index, index, value)
-			}
-		})
-		for i, count := range seen {
-			if count != 1 {
-				t.Errorf("expected index %d to be visited once, got %d", i, count)
-			}
-		}
-	})
-
-	t.Run("empty sequence", func(t *testing.T) {
-		called := false
-		ForEachParallel(Empty[int](), func(int, int) { called = true })
-		if called {
-			t.Error("expected action not to be called for empty sequence")
 		}
 	})
 }
