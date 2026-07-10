@@ -17,8 +17,8 @@ Always write tests!!!
 * [ ] token groups with group and commands
 * [ ] token group definition inside a token mode
 * [x] collect keywords from entire grammar
-* [ ] handle token mode
-  * [ ] local TokenDecls
+* [x] handle token mode
+  * [x] local TokenDecls
   * [x] TokenUsages / from global TokenDecls
   * [x] Keywords
   * [x] KeywordSelectors

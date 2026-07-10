@@ -8,6 +8,7 @@ import (
 	"context"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/util/service"
 )
 
@@ -17,6 +18,21 @@ type scopeProviderImpl struct {
 
 func newScopeProviderImpl(_ *service.Container) *scopeProviderImpl {
 	return &scopeProviderImpl{}
+}
+
+func (s *scopeProviderImpl) ScopeRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) core.Scope {
+	root, _ := reference.Owner().Document().Root.(Grammar)
+	symbols := []*core.SymbolDescription{}
+	for _, tokenMode := range root.TokenModes() {
+		for _, member := range tokenMode.Members() {
+			if tokenDeclUsage, ok := member.(TokenDeclUsage); ok {
+				tokenDecl := tokenDeclUsage.Declaration()
+				symbols = append(symbols, core.NewSymbolDescription(tokenDecl, tokenDecl.NameToken()))
+			}
+		}
+	}
+	outer := linking.DefaultScopeOfType[AbstractRule](reference.Owner())
+	return core.NewMapScopeFromSlice(symbols, outer)
 }
 
 func (s *scopeProviderImpl) ScopeActionProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope {

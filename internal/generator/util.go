@@ -92,7 +92,8 @@ func GetAllTokenDecls(grammr grammar.Grammar) GetAllTokenDeclsResult {
 			}
 		}
 	}
-	all := make([]grammar.TokenDecl, 0, len(topLevel)+len(modeLevel))
+	length := len(topLevel) + len(modeLevel)
+	all := make([]grammar.TokenDecl, length, length)
 	copy(all, topLevel)
 	copy(all[len(topLevel):], modeLevel)
 	return GetAllTokenDeclsResult{
