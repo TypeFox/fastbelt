@@ -7,11 +7,8 @@ package generator
 import (
 	"go/format"
 	"runtime"
-	"sort"
 	"strings"
 
-	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/util/codegen"
 )
 
@@ -54,128 +51,6 @@ func WriteSB(sb *strings.Builder, texts ...string) {
 	for _, text := range texts {
 		sb.WriteString(text)
 	}
-}
-
-type GetAllKeywordsResult struct {
-	Keywords []grammar.Keyword
-	ByValue  map[string]int
-}
-
-func GetAllKeywords(grammr grammar.Grammar) GetAllKeywordsResult {
-	keywords := map[string]grammar.Keyword{}
-	allNodes := []grammar.Keyword{}
-	for node := range core.AllChildren(grammr) {
-		if keyword, ok := node.(grammar.Keyword); ok {
-			keywords[keyword.Value()] = keyword
-			allNodes = append(allNodes, keyword)
-		}
-	}
-	return keysFromMap(keywords, allNodes)
-}
-
-type GetAllTokenDeclsResult struct {
-	TopLevel  []grammar.TokenDecl
-	ModeLevel []grammar.TokenDecl
-	All       []grammar.TokenDecl
-}
-
-func GetAllTokenDecls(grammr grammar.Grammar) GetAllTokenDeclsResult {
-	topLevel := []grammar.TokenDecl{}
-	modeLevel := []grammar.TokenDecl{}
-	for node := range core.AllChildren(grammr) {
-		if tokenDecl, ok := node.(grammar.TokenDecl); ok {
-			_, ok := tokenDecl.Container().(grammar.TokenDeclUsage)
-			if ok {
-				modeLevel = append(modeLevel, tokenDecl)
-			} else {
-				topLevel = append(topLevel, tokenDecl)
-			}
-		}
-	}
-	length := len(topLevel) + len(modeLevel)
-	all := make([]grammar.TokenDecl, length, length)
-	copy(all, topLevel)
-	copy(all[len(topLevel):], modeLevel)
-	return GetAllTokenDeclsResult{
-		All:       all,
-		TopLevel:  topLevel,
-		ModeLevel: modeLevel,
-	}
-}
-
-type GetAllTokenGroupsResult struct {
-	All       []grammar.TokenGroup
-	TopLevel  []grammar.TokenGroup
-	ModeLevel []grammar.TokenGroup
-}
-
-func GetAllTokenGroups(grammr grammar.Grammar) GetAllTokenGroupsResult {
-	topLevel := []grammar.TokenGroup{}
-	modeLevel := []grammar.TokenGroup{}
-
-	for node := range core.AllChildren(grammr) {
-		if tokenGroup, ok := node.(grammar.TokenGroup); ok {
-			_, ok := tokenGroup.Container().(grammar.TokenGroupUsage)
-			if ok {
-				modeLevel = append(modeLevel, tokenGroup)
-			} else {
-				topLevel = append(topLevel, tokenGroup)
-			}
-		}
-	}
-
-	length := len(topLevel) + len(modeLevel)
-	all := make([]grammar.TokenGroup, length, length)
-	copy(all, topLevel)
-	copy(all[len(topLevel):], modeLevel)
-	return GetAllTokenGroupsResult{
-		All:       all,
-		TopLevel:  topLevel,
-		ModeLevel: modeLevel,
-	}
-}
-
-func keysFromMap(m map[string]grammar.Keyword, allNodes []grammar.Keyword) GetAllKeywordsResult {
-	keywords := []grammar.Keyword{}
-	for _, v := range m {
-		keywords = append(keywords, v)
-	}
-	sort.Slice(keywords, func(i, j int) bool {
-		return keywords[i].Value() < keywords[j].Value()
-	})
-	byValue := map[string]int{}
-	for i, k := range keywords {
-		byValue[k.Value()] = i
-	}
-	return GetAllKeywordsResult{
-		Keywords: keywords,
-		ByValue:  byValue,
-	}
-}
-
-func GeneratedTokenName(t core.AstNode) string {
-	switch t := t.(type) {
-	case grammar.TokenDecl:
-		return "Token_" + t.Name()
-	case grammar.TokenGroup:
-		return "TokenGroup_" + t.Name()
-	case grammar.Keyword:
-		return "Keyword_" + grammar.KeywordName(t)
-	default:
-		panic("unexpected type")
-	}
-}
-
-func GeneratedTokenIdxName(t core.AstNode) string {
-	return GeneratedTokenName(t) + "_Idx"
-}
-
-func KeywordValue(k grammar.Keyword) string {
-	return k.Value()[1 : len(k.Value())-1]
-}
-
-func RegexpValue(tokenImage string) string {
-	return tokenImage[1 : len(tokenImage)-1]
 }
 
 // topoSort returns uniqueTargets sorted so that child elements appear before
