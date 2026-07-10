@@ -114,17 +114,14 @@ func (p *DefaultWorkspaceSymbolProvider) collectSymbolsFromDocument(doc *core.Do
 			continue
 		}
 
-		nameSegment := nameUnit.Segment()
-		if nameSegment == nil {
-			continue
-		}
+		rng := nameUnit.Range()
 
 		symbol := lsp.SymbolInformation{
 			Name: name,
 			Kind: SymbolKind(node),
 			Location: lsp.Location{
 				URI:   lsp.DocumentURI(doc.URI.DocumentURI()),
-				Range: nameSegment.Range.LspRange(),
+				Range: rng.LspRange(doc.TextDoc),
 			},
 		}
 

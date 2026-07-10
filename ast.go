@@ -43,21 +43,21 @@ type AstNode interface {
 	SetToken(token *Token)
 	// SetTokens replaces the node's token list with tokens.
 	SetTokens(tokens []*Token)
-	// Segment returns the text segment metadata of the node.
-	Segment() *TextSegment
-	// SetSegment sets the full text segment metadata of the node.
+	// Range returns the text range of the node.
+	Range() Range
+	// SetRange sets the full text range metadata of the node.
 	//
 	// It is primarily used by generated parsers while constructing nodes incrementally.
-	SetSegment(segment *TextSegment)
-	// SetSegmentStartToken sets the start of the node's segment from token.
+	SetRange(r Range)
+	// SetRangeStartToken sets the start of the node's range from token.
 	//
 	// It is primarily used by generated parsers while constructing nodes incrementally.
-	SetSegmentStartToken(token *Token)
-	// SetSegmentEndToken sets the end of the node's segment from token.
+	SetRangeStartToken(token *Token)
+	// SetRangeEndToken sets the end of the node's range from token.
 	//
 	// It is primarily used by generated parsers while constructing nodes incrementally.
-	SetSegmentEndToken(token *Token)
-	// Text returns the source substring covered by the node's segment.
+	SetRangeEndToken(token *Token)
+	// Text returns the source substring covered by the node's range.
 	Text() string
 	// ForEachNode calls fn for each direct child node of node.
 	//
@@ -82,7 +82,7 @@ type AstNodeBase struct {
 	containerField unique.Handle[string]
 	containerIndex int
 	tokens         []*Token
-	segment        TextSegment
+	rng            Range
 }
 
 // Document returns the owning document of the node.
@@ -152,35 +152,33 @@ func (node *AstNodeBase) Tokens() []*Token {
 	}
 }
 
-// SetSegmentStartToken sets the start of the node's segment from token.
-func (node *AstNodeBase) SetSegmentStartToken(token *Token) {
+// SetRangeStartToken sets the start of the node's range from token.
+func (node *AstNodeBase) SetRangeStartToken(token *Token) {
 	if node != nil && token != nil {
-		node.segment.Indices.Start = token.TextSegment.Indices.Start
-		node.segment.Range.Start = token.TextSegment.Range.Start
+		node.rng.Start = token.Range().Start
 	}
 }
 
-// SetSegmentEndToken sets the end of the node's segment from token.
-func (node *AstNodeBase) SetSegmentEndToken(token *Token) {
+// SetRangeEndToken sets the end of the node's range from token.
+func (node *AstNodeBase) SetRangeEndToken(token *Token) {
 	if node != nil && token != nil {
-		node.segment.Indices.End = token.TextSegment.Indices.End
-		node.segment.Range.End = token.TextSegment.Range.End
+		node.rng.End = token.Range().End
 	}
 }
 
-// SetSegment sets the full text segment metadata of the node.
-func (node *AstNodeBase) SetSegment(segment *TextSegment) {
+// SetRange sets the full text range of the node.
+func (node *AstNodeBase) SetRange(rng Range) {
 	if node != nil {
-		node.segment = *segment
+		node.rng = rng
 	}
 }
 
-// Segment returns the text segment metadata of the node.
-func (node *AstNodeBase) Segment() *TextSegment {
+// Range returns the text range of the node.
+func (node *AstNodeBase) Range() Range {
 	if node != nil {
-		return &node.segment
+		return node.rng
 	} else {
-		return nil
+		return Range{}
 	}
 }
 
@@ -201,13 +199,13 @@ func (node *AstNodeBase) SetTokens(tokens []*Token) {
 	}
 }
 
-// Text returns the source substring covered by the node's segment.
+// Text returns the source substring covered by the node's range.
 func (node *AstNodeBase) Text() string {
 	if node == nil || node.document == nil || node.document.TextDoc == nil {
 		return ""
 	} else {
 		fullText := node.document.TextDoc.Text(nil)
-		return fullText[node.segment.Indices.Start:node.segment.Indices.End]
+		return fullText[node.rng.Start:node.rng.End]
 	}
 }
 
@@ -437,8 +435,8 @@ type NamedCompositeNode interface {
 type StringUnit interface {
 	// Owner returns the AST node that owns this string unit.
 	Owner() AstNode
-	// Segment returns the text segment metadata of this string unit.
-	Segment() *TextSegment
+	// Range returns the text range of this string unit.
+	Range() Range
 	// String returns the string representation of this string unit.
 	String() string
 }

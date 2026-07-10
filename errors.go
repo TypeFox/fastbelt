@@ -37,29 +37,17 @@ func NewParserError(msg string, token *Token) *ParserError {
 type LexerError struct {
 	// Msg is the lexer diagnostic message.
 	Msg string
-	// StartOffset is the byte offset where the invalid segment starts.
-	StartOffset int
-	// EndOffset is the exclusive byte offset where the invalid segment ends.
-	EndOffset int
-	// StartLine is the zero-based line where the invalid segment starts.
-	StartLine int
-	// EndLine is the zero-based line where the invalid segment ends.
-	EndLine int
-	// StartColumn is the zero-based column where the invalid segment starts.
-	StartColumn int
-	// EndColumn is the zero-based column where the invalid segment ends.
-	EndColumn int
+	// Range is the byte-offset range of the invalid input in the source text.
+	Range Range
 }
 
 // NewLexerError returns a [LexerError] for msg and the offending text range.
-func NewLexerError(msg string, startOffset, endOffset, startLine, endLine, startColumn, endColumn int) *LexerError {
+func NewLexerError(msg string, startOffset, endOffset int) *LexerError {
 	return &LexerError{
-		Msg:         msg,
-		StartOffset: startOffset,
-		EndOffset:   endOffset,
-		StartLine:   startLine,
-		EndLine:     endLine,
-		StartColumn: startColumn,
-		EndColumn:   endColumn,
+		Msg: msg,
+		Range: Range{
+			Start: int32(startOffset),
+			End:   int32(endOffset),
+		},
 	}
 }

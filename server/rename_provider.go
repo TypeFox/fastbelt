@@ -39,8 +39,9 @@ func (rp *DefaultRenameProvider) HandleRenameRequest(ctx context.Context, params
 	for refDesc := range referencesFinder.Find(ctx, target, FindReferencesOptions{
 		IncludeDeclaration: true,
 	}) {
+		textDoc := refDesc.SourceNode.Document().TextDoc
 		edit := lsp.TextEdit{
-			Range:   refDesc.Segment.Range.LspRange(),
+			Range:   refDesc.Range.LspRange(textDoc),
 			NewText: params.NewName,
 		}
 		uri := refDesc.SourceURI().DocumentURI()
@@ -55,7 +56,8 @@ func (rp *DefaultRenameProvider) PrepareRenameRequest(ctx context.Context, param
 		return nil, nil // Could not find a name
 	}
 	target := foundName.Target
-	targetRange := target.Segment().Range.LspRange()
+	textDoc := target.Owner().Document().TextDoc
+	targetRange := target.Range().LspRange(textDoc)
 	return &lsp.PrepareRenameResult{
 		Range: targetRange,
 	}, nil

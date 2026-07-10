@@ -51,9 +51,10 @@ func (s *DefaultReferencesProvider) HandleReferencesRequest(ctx context.Context,
 	for refDesc := range referencesFinder.Find(ctx, target, FindReferencesOptions{
 		IncludeDeclaration: true,
 	}) {
+		textDoc := refDesc.SourceNode.Document().TextDoc
 		location := lsp.Location{
 			URI:   refDesc.SourceURI().DocumentURI(),
-			Range: refDesc.Segment.Range.LspRange(),
+			Range: refDesc.Range.LspRange(textDoc),
 		}
 		locations = append(locations, location)
 	}

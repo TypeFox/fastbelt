@@ -79,35 +79,37 @@ func (s *DefaultDocumentationProvider) Documentation(node core.AstNode) string {
 	if len(nodeTokens) == 0 {
 		return ""
 	}
-	nodeStart := int(nodeTokens[0].TextSegment.Indices.Start)
+	nodeStart := int(nodeTokens[0].TextRange.Start)
 
 	// Find the lower bound: end of the code token immediately before this node.
 	// doc.Tokens is sorted by offset; comments live in doc.Comments, not doc.Tokens.
 	lowerBound := 0
 	i := sort.Search(len(doc.Tokens), func(k int) bool {
-		return int(doc.Tokens[k].TextSegment.Indices.Start) >= nodeStart
+		return int(doc.Tokens[k].TextRange.Start) >= nodeStart
 	})
 	if i > 0 {
-		lowerBound = int(doc.Tokens[i-1].TextSegment.Indices.End)
+		lowerBound = int(doc.Tokens[i-1].TextRange.End)
 	}
 
 	// Collect comments in [lowerBound, nodeStart).
 	first := sort.Search(len(doc.Comments), func(j int) bool {
-		return int(doc.Comments[j].TextSegment.Indices.Start) >= lowerBound
+		return int(doc.Comments[j].TextRange.Start) >= lowerBound
 	})
 	last := sort.Search(len(doc.Comments), func(j int) bool {
-		return int(doc.Comments[j].TextSegment.Indices.Start) >= nodeStart
+		return int(doc.Comments[j].TextRange.Start) >= nodeStart
 	}) - 1
 	if last < first {
 		return ""
 	}
 
+	textDoc := doc.TextDoc
+
 	// Only include the last contiguous block — stop at any blank line between comments.
 	blockStart := last
 	for blockStart > first {
-		prev := doc.Comments[blockStart-1]
-		curr := doc.Comments[blockStart]
-		if int(curr.TextSegment.Range.Start.Line)-int(prev.TextSegment.Range.End.Line) > 1 {
+		prev := doc.Comments[blockStart-1].Range().LspRange(textDoc)
+		curr := doc.Comments[blockStart].Range().LspRange(textDoc)
+		if int(curr.Start.Line)-int(prev.End.Line) > 1 {
 			break
 		}
 		blockStart--

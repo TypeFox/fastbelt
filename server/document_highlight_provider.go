@@ -50,8 +50,9 @@ func (s *DefaultDocumentHighlightProvider) HandleDocumentHighlightRequest(ctx co
 		IncludeDeclaration: true,
 		TargetURI:          uri,
 	}) {
+		textDoc := refDesc.SourceNode.Document().TextDoc
 		highlight := lsp.DocumentHighlight{
-			Range: refDesc.Segment.Range.LspRange(),
+			Range: refDesc.Range.LspRange(textDoc),
 		}
 		highlights = append(highlights, highlight)
 	}

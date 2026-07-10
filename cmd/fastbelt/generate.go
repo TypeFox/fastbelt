@@ -75,25 +75,20 @@ func runGenerateCLI(opts generateOptions) error {
 	errCount := 0
 
 	sort.SliceStable(diagnostics, func(i, j int) bool {
-		iStartLine := diagnostics[i].Range.Start.Line
-		jStartLine := diagnostics[j].Range.Start.Line
-		if iStartLine == jStartLine {
-			return diagnostics[i].Range.Start.Column < diagnostics[j].Range.Start.Column
-		} else {
-			return iStartLine < jStartLine
-		}
+		return diagnostics[i].Range.Start < diagnostics[j].Range.Start
 	})
 
 	for _, diag := range diagnostics {
 		if diag.Severity == core.SeverityError {
 			errCount++
 		}
+		lspRange := diag.Range.LspRange(file)
 		fmt.Printf(
 			"%s - %d:%d %s\n",
 			diag.Severity.String(),
 			// For printing, convert to 1-based line and column numbers.
-			diag.Range.Start.Line+1,
-			diag.Range.Start.Column+1,
+			lspRange.Start.Line+1,
+			lspRange.Start.Character+1,
 			diag.Message,
 		)
 	}

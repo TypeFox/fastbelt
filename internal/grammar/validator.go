@@ -46,7 +46,7 @@ var reservedFieldNames = map[string]string{
 	"Container":        "AstNode.Container",
 	"ContainmentData":  "AstNode.ContainmentData",
 	"Tokens":           "AstNode.Tokens",
-	"Segment":          "AstNode.Segment",
+	"Range":            "AstNode.Range",
 	"Text":             "AstNode.Text",
 	"ForEachNode":      "AstNode.ForEachNode",
 	"ForEachReference": "AstNode.ForEachReference",

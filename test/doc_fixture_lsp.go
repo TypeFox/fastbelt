@@ -24,7 +24,7 @@ func (d *Doc) RunRename(label string, newName string) *Doc {
 	edits, err := renameProvider.HandleRenameRequest(d.fixture.ctx, &lsp.RenameParams{
 		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
 			TextDocument: lsp.TextDocumentIdentifier{URI: d.Document.URI.DocumentURI()},
-			Position:     location.LspPosition(),
+			Position:     d.Document.TextDoc.PositionAt(location),
 		},
 		NewName: newName,
 	})
@@ -78,7 +78,7 @@ func (d *Doc) AssertDefinition(label string) {
 	links, err := defProvider.HandleDefinitionRequest(d.fixture.ctx, &lsp.DefinitionParams{
 		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
 			TextDocument: lsp.TextDocumentIdentifier{URI: d.Document.URI.DocumentURI()},
-			Position:     location.LspPosition(),
+			Position:     d.Document.TextDoc.PositionAt(location),
 		},
 	})
 	if err != nil {
@@ -90,7 +90,7 @@ func (d *Doc) AssertDefinition(label string) {
 		for _, r := range ranges {
 			expectedLinks = append(expectedLinks, lsp.DefinitionLink{
 				TargetURI:   doc.Document.URI.DocumentURI(),
-				TargetRange: r.LspRange(),
+				TargetRange: r.LspRange(doc.Document.TextDoc),
 			})
 		}
 	}
@@ -124,7 +124,7 @@ func (d *Doc) AssertReferences(label string) {
 	locations, err := refsProvider.HandleReferencesRequest(d.fixture.ctx, &lsp.ReferenceParams{
 		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
 			TextDocument: lsp.TextDocumentIdentifier{URI: d.Document.URI.DocumentURI()},
-			Position:     location.LspPosition(),
+			Position:     d.Document.TextDoc.PositionAt(location),
 		},
 	})
 	if err != nil {
@@ -136,7 +136,7 @@ func (d *Doc) AssertReferences(label string) {
 		for _, r := range ranges {
 			expectedLocations = append(expectedLocations, lsp.Location{
 				URI:   doc.Document.URI.DocumentURI(),
-				Range: r.LspRange(),
+				Range: r.LspRange(doc.Document.TextDoc),
 			})
 		}
 	}
@@ -170,7 +170,7 @@ func (d *Doc) AssertHighlights(label string) {
 	highlights, err := highlightProvider.HandleDocumentHighlightRequest(d.fixture.ctx, &lsp.DocumentHighlightParams{
 		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
 			TextDocument: lsp.TextDocumentIdentifier{URI: d.Document.URI.DocumentURI()},
-			Position:     location.LspPosition(),
+			Position:     d.Document.TextDoc.PositionAt(location),
 		},
 	})
 	if err != nil {
@@ -181,7 +181,7 @@ func (d *Doc) AssertHighlights(label string) {
 		ranges := doc.markerRanges(label)
 		for _, r := range ranges {
 			expectedLocations = append(expectedLocations, lsp.DocumentHighlight{
-				Range: r.LspRange(),
+				Range: r.LspRange(doc.Document.TextDoc),
 			})
 		}
 	}
@@ -224,11 +224,12 @@ func (d *Doc) AssertFoldingRanges(labels ...string) *Doc {
 		if err != nil {
 			d.fixture.t.Fatalf("fbtest: %v", err)
 		}
+		lspRange := expectedRange.LspRange(d.Document.TextDoc)
 		found := false
 		for _, fr := range result {
 			if fr.StartLine != nil && fr.EndLine != nil {
-				if *fr.StartLine == uint32(expectedRange.Start.Line) &&
-					*fr.EndLine == uint32(expectedRange.End.Line) {
+				if *fr.StartLine == uint32(lspRange.Start.Line) &&
+					*fr.EndLine == uint32(lspRange.End.Line) {
 					// For comment ranges, also verify the kind
 					if label == "comment" && fr.Kind != "comment" {
 						continue
@@ -241,7 +242,7 @@ func (d *Doc) AssertFoldingRanges(labels ...string) *Doc {
 		if !found {
 			d.fixture.t.Errorf(
 				"fbtest: expected folding range at label %q (lines %d-%d) not found",
-				label, expectedRange.Start.Line, expectedRange.End.Line,
+				label, lspRange.Start.Line, lspRange.End.Line,
 			)
 		}
 	}
@@ -264,7 +265,7 @@ func (d *Doc) ExpectHoverAt(label, markup string) *Doc {
 	result, err := hoverProvider.HandleHoverRequest(d.fixture.ctx, &lsp.HoverParams{
 		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
 			TextDocument: lsp.TextDocumentIdentifier{URI: d.Document.URI.DocumentURI()},
-			Position:     location.LspPosition(),
+			Position:     d.Document.TextDoc.PositionAt(location),
 		},
 	})
 	if err != nil {
@@ -284,8 +285,9 @@ func (d *Doc) ExpectHoverAt(label, markup string) *Doc {
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: %v", err)
 	}
-	if result.Range != expectedRange.LspRange() {
-		d.fixture.t.Errorf("fbtest: expected hover range %v at %q, got %v", expectedRange.LspRange(), label, result.Range)
+	expectedLspRange := expectedRange.LspRange(d.Document.TextDoc)
+	if result.Range != expectedLspRange {
+		d.fixture.t.Errorf("fbtest: expected hover range %v at %q, got %v", expectedLspRange, label, result.Range)
 	}
 	return d
 }
@@ -306,7 +308,7 @@ func (d *Doc) ExpectNoHoverAt(label string) *Doc {
 	result, err := hoverProvider.HandleHoverRequest(d.fixture.ctx, &lsp.HoverParams{
 		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
 			TextDocument: lsp.TextDocumentIdentifier{URI: d.Document.URI.DocumentURI()},
-			Position:     location.LspPosition(),
+			Position:     d.Document.TextDoc.PositionAt(location),
 		},
 	})
 	if err != nil {
@@ -330,11 +332,91 @@ func (d *Doc) CompletionItems(label string) []lsp.CompletionItem {
 			TextDocument: lsp.TextDocumentIdentifier{
 				URI: d.Document.TextDoc.URI(),
 			},
-			Position: lsp.Position{Line: uint32(location.Line), Character: uint32(location.Column)},
+			Position: d.Document.TextDoc.PositionAt(location),
 		},
 	})
 	if err != nil {
 		d.fixture.t.Fatalf("HandleCompletionRequest returned error: %v", err)
 	}
 	return resp.Items
+}
+
+// FindSymbolAtLabel finds a document symbol at the given marker label.
+// Returns the symbol and true if found, or nil and false if not found.
+func (d *Doc) FindSymbolAtLabel(label string) (*lsp.DocumentSymbol, bool) {
+	d.fixture.t.Helper()
+
+	provider, err := service.Get[server.DocumentSymbolProvider](d.fixture.sc)
+	if err != nil {
+		return nil, false
+	}
+
+	params := &lsp.DocumentSymbolParams{
+		TextDocument: lsp.TextDocumentIdentifier{
+			URI: lsp.DocumentURI(d.Document.URI.DocumentURI()),
+		},
+	}
+
+	result, err := provider.HandleDocumentSymbolRequest(d.fixture.ctx, params)
+	if err != nil {
+		return nil, false
+	}
+
+	expectedRange, err := d.MarkerRange(label)
+	if err != nil {
+		return nil, false
+	}
+	lspExpectedRange := expectedRange.LspRange(d.Document.TextDoc)
+	sym := findSymbolAtRange(result, lspExpectedRange)
+	if sym == nil {
+		return nil, false
+	}
+	return sym, true
+}
+
+// MustFindSymbolAtLabel finds a document symbol at the given marker label.
+// Fails the test if the symbol is not found.
+func (d *Doc) MustFindSymbolAtLabel(label string) *lsp.DocumentSymbol {
+	d.fixture.t.Helper()
+	sym, ok := d.FindSymbolAtLabel(label)
+	if !ok {
+		d.fixture.t.Fatalf("fbtest: MustFindSymbolAtLabel: no symbol found at label %q", label)
+	}
+	return sym
+}
+
+// AssertDocumentSymbol verifies that a document symbol exists with the given name at the marker label.
+// Returns the Doc for chaining.
+func (d *Doc) AssertDocumentSymbol(label string, expectedName string, expectedKind lsp.SymbolKind) *Doc {
+	d.fixture.t.Helper()
+
+	found := d.MustFindSymbolAtLabel(label)
+
+	if found.Name != expectedName {
+		d.fixture.t.Errorf("fbtest: symbol at %q has name %q, expected %q",
+			label, found.Name, expectedName)
+	}
+	if found.Kind != expectedKind {
+		d.fixture.t.Errorf("fbtest: symbol at %q has kind %v, expected %v",
+			label, found.Kind, expectedKind)
+	}
+
+	return d
+}
+
+// findSymbolAtRange is a helper function for recursive symbol search.
+func findSymbolAtRange(symbols []lsp.DocumentSymbol, targetRange lsp.Range) *lsp.DocumentSymbol {
+	for i := range symbols {
+		sym := &symbols[i]
+		symRange := sym.Range
+
+		if symRange == targetRange {
+			return sym
+		}
+
+		if found := findSymbolAtRange(sym.Children, targetRange); found != nil {
+			return found
+		}
+	}
+	return nil
 }
