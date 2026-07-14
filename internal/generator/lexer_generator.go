@@ -83,33 +83,7 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, token
 			n.Indent(func(nn codegen.Node) {
 				for _, tokenIndex := range tokenMode.TokenTypeIndices {
 					tokenType := tokenTypes.TokenTypes.ByTokenIndex[tokenIndex]
-					nn.Append("lexer.UseTokenType(", tokenType.VarName, ")")
-					if usage, ok := tokenMode.TokenTypeUsages[tokenIndex]; ok {
-						if cmd := usage.Command; cmd != nil {
-							var cmdModeName string
-							if mode := cmd.Mode().Ref(context); cmd.IsDefault() || mode != nil {
-								if cmd.IsDefault() {
-									cmdModeName = "default"
-								} else {
-									cmdModeName = cmd.Mode().Ref(context).Name()
-								}
-							}
-							switch cmd.Type() {
-							case "push":
-								nn.Append(".WithPushMode(", tokenTypes.TokenModes[cmdModeName].VarName, ")")
-							case "pop":
-								nn.Append(".WithPopMode()")
-							default: //"mode"
-								nn.Append(".WithSetMode(", tokenTypes.TokenModes[cmdModeName].VarName, ")")
-							}
-						}
-						if usage.GroupType == "comment" {
-							nn.Append(".WithGroup(core.CommentGroup)")
-						} else if usage.GroupType == "hidden" {
-							nn.Append(".WithGroup(core.SkippedGroup)")
-						}
-					}
-					nn.AppendLine(",")
+					generateTokenTypeUsage(context, nn, tokenType, tokenMode, tokenIndex, tokenTypes)
 				}
 			})
 			n.AppendLine(")")
@@ -117,6 +91,36 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, token
 		n.AppendLine("return lexer.NewDefaultLexer(" + tokenTypes.TokenModes["default"].VarName + ", modes...)")
 	})
 	node.AppendLine("}")
+}
+
+func generateTokenTypeUsage(context context.Context, nn codegen.Node, tokenType *TokenType, tokenMode *TokenMode, tokenIndex int, tokenTypes GenerateTokenTypesResult) {
+	nn.Append("lexer.UseTokenType(", tokenType.VarName, ")")
+	if usage, ok := tokenMode.TokenTypeUsages[tokenIndex]; ok {
+		if cmd := usage.Command; cmd != nil {
+			var cmdModeName string
+			if mode := cmd.Mode().Ref(context); cmd.IsDefault() || mode != nil {
+				if cmd.IsDefault() {
+					cmdModeName = "default"
+				} else {
+					cmdModeName = cmd.Mode().Ref(context).Name()
+				}
+			}
+			switch cmd.Type() {
+			case "push":
+				nn.Append(".WithPushMode(", tokenTypes.TokenModes[cmdModeName].VarName, ")")
+			case "pop":
+				nn.Append(".WithPopMode()")
+			default: //"mode"
+				nn.Append(".WithSetMode(", tokenTypes.TokenModes[cmdModeName].VarName, ")")
+			}
+		}
+		if usage.GroupType == "comment" {
+			nn.Append(".WithGroup(core.CommentGroup)")
+		} else if usage.GroupType == "hidden" {
+			nn.Append(".WithGroup(core.SkippedGroup)")
+		}
+	}
+	nn.AppendLine(",")
 }
 
 func generateKeywordTokenType(keyword grammar.Keyword, id int) GenerateLexerResult {
