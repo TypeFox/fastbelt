@@ -503,11 +503,9 @@ func checkRuleCallReturnType(call RuleCall, ctx context.Context, accept core.Val
 
 func checkRuleCallPosition(call RuleCall, ctx context.Context, accept core.ValidationAcceptor) {
 	rule := call.Rule().Ref(ctx)
-	if rule != nil {
-		if _, ok := rule.(ParserRule); !ok {
-			// Only parser rules can cause information loss, so we only check those
-			return
-		}
+	if _, ok := rule.(ParserRule); !ok {
+		// Only parser rules can cause information loss, so we only check those
+		return
 	}
 	// An unassigned rule call cannot be preceded by an action or assignment
 	// This would lead to information loss, as the result of the rule call overrides the current AST node

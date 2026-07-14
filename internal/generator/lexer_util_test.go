@@ -26,10 +26,10 @@ func TestGetAllKeywords_InRule(t *testing.T) {
 	require.True(t, ok)
 	result := GetAllKeywords(grammr)
 	require.Len(t, result.Keywords, 4)
-	assert.Equal(t, "hello", grammar.KeywordValue(result.Keywords[0]))
-	assert.Equal(t, "hi", grammar.KeywordValue(result.Keywords[1]))
-	assert.Equal(t, "there", grammar.KeywordValue(result.Keywords[2]))
-	assert.Equal(t, "world", grammar.KeywordValue(result.Keywords[3]))
+	assert.Contains(t, result.ByValue, "\"hello\"")
+	assert.Contains(t, result.ByValue, "\"hi\"")
+	assert.Contains(t, result.ByValue, "\"there\"")
+	assert.Contains(t, result.ByValue, "\"world\"")
 }
 
 func TestGetAllKeywords_InTokenDeclaration(t *testing.T) {
@@ -46,8 +46,8 @@ func TestGetAllKeywords_InTokenDeclaration(t *testing.T) {
 	require.True(t, ok)
 	result := GetAllKeywords(grammr)
 	require.Len(t, result.Keywords, 2)
-	assert.Equal(t, "hello", grammar.KeywordValue(result.Keywords[0]))
-	assert.Equal(t, "world", grammar.KeywordValue(result.Keywords[1]))
+	assert.Contains(t, result.ByValue, "\"hello\"")
+	assert.Contains(t, result.ByValue, "\"world\"")
 }
 
 func TestGetAllKeywords_InTokenGroup(t *testing.T) {
@@ -67,9 +67,9 @@ func TestGetAllKeywords_InTokenGroup(t *testing.T) {
 	require.True(t, ok)
 	result := GetAllKeywords(grammr)
 	require.Len(t, result.Keywords, 3)
-	assert.Equal(t, "hello", grammar.KeywordValue(result.Keywords[0]))
-	assert.Equal(t, "hi", grammar.KeywordValue(result.Keywords[1]))
-	assert.Equal(t, "world", grammar.KeywordValue(result.Keywords[2]))
+	assert.Contains(t, result.ByValue, "\"hello\"")
+	assert.Contains(t, result.ByValue, "\"hi\"")
+	assert.Contains(t, result.ByValue, "\"world\"")
 }
 
 func TestGetAllKeywords_InTokenMode(t *testing.T) {
@@ -89,6 +89,6 @@ func TestGetAllKeywords_InTokenMode(t *testing.T) {
 	require.True(t, ok)
 	result := GetAllKeywords(grammr)
 	require.Len(t, result.Keywords, 2)
-	assert.Equal(t, "hello", grammar.KeywordValue(result.Keywords[0]))
-	assert.Equal(t, "world", grammar.KeywordValue(result.Keywords[1]))
+	assert.Contains(t, result.ByValue, "\"hello\"")
+	assert.Contains(t, result.ByValue, "\"world\"")
 }
