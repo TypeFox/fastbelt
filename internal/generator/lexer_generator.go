@@ -114,9 +114,10 @@ func generateTokenTypeUsage(context context.Context, nn codegen.Node, tokenType 
 				nn.Append(".WithSetMode(", tokenTypes.TokenModes[cmdModeName].VarName, ")")
 			}
 		}
-		if usage.GroupType == "comment" {
+		switch usage.GroupType {
+		case "comment":
 			nn.Append(".WithGroup(core.CommentGroup)")
-		} else if usage.GroupType == "hidden" {
+		case "hidden":
 			nn.Append(".WithGroup(core.SkippedGroup)")
 		}
 	}

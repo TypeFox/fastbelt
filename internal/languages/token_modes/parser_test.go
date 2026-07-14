@@ -60,7 +60,6 @@ func TestInterpolatingString(t *testing.T) {
 	content1, ok := content[1].(Interpolation)
 	require.True(t, ok)
 	require.Equal(t, "NUM", content1.Expression().(VariableRef).Name().Ref(context.Background()).Name())
-
 }
 
 func TestNestedString(t *testing.T) {

@@ -379,7 +379,7 @@ func GetAllTokenDecls(grammr grammar.Grammar) GetAllTokenDeclsResult {
 		}
 	}
 	length := len(topLevel) + len(modeLevel)
-	all := make([]grammar.TokenDecl, length, length)
+	all := make([]grammar.TokenDecl, length)
 	copy(all, topLevel)
 	copy(all[len(topLevel):], modeLevel)
 	return GetAllTokenDeclsResult{
@@ -411,7 +411,7 @@ func GetAllTokenGroups(grammr grammar.Grammar) GetAllTokenGroupsResult {
 	}
 
 	length := len(topLevel) + len(modeLevel)
-	all := make([]grammar.TokenGroup, length, length)
+	all := make([]grammar.TokenGroup, length)
 	copy(all, topLevel)
 	copy(all[len(topLevel):], modeLevel)
 	return GetAllTokenGroupsResult{
