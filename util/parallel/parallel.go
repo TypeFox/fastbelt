@@ -33,21 +33,20 @@ func ForEach[T any](elements []T, action func(T, int)) {
 		return
 	}
 	workers := min(runtime.GOMAXPROCS(0), len(elements))
+	// Note: we use a channel to distribute indices to workers
+	// This ensures that there is no idle worker while there are still elements to process
+	indices := make(chan int, workers)
 	var wg sync.WaitGroup
-	// Compute the amount of batches to process
-	// Note that this is not the same as the amount of workers,
-	// since the amount of workers may be larger than the amount of elements.
-	batchCount := (len(elements) + workers - 1) / workers
-	for i := range workers {
-		start, end := i*batchCount, min((i+1)*batchCount, len(elements))
-		if start >= end {
-			continue
-		}
+	for range workers {
 		wg.Go(func() {
-			for index := start; index < end; index++ {
+			for index := range indices {
 				action(elements[index], index)
 			}
 		})
 	}
+	for i := range elements {
+		indices <- i
+	}
+	close(indices)
 	wg.Wait()
 }
