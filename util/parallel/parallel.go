@@ -34,9 +34,12 @@ func ForEach[T any](elements []T, action func(T, int)) {
 	}
 	workers := min(runtime.GOMAXPROCS(0), len(elements))
 	var wg sync.WaitGroup
-	chunk := (len(elements) + workers - 1) / workers
+	// Compute the amount of batches to process
+	// Note that this is not the same as the amount of workers,
+	// since the amount of workers may be larger than the amount of elements.
+	batchCount := (len(elements) + workers - 1) / workers
 	for i := range workers {
-		start, end := i*chunk, min((i+1)*chunk, len(elements))
+		start, end := i*batchCount, min((i+1)*batchCount, len(elements))
 		if start >= end {
 			continue
 		}

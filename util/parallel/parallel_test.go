@@ -11,7 +11,10 @@ import (
 
 func TestParallelForEach(t *testing.T) {
 	t.Run("visits every element exactly once with correct indices", func(t *testing.T) {
-		elements := make([]int, 500)
+		// Note: 7919 is very likely to be more than the available amount of CPU cores
+		// So this test will exercise the chunking feature of ForEach.
+		// Also, it is a prime number, so it will not be divisible by any chunk size.
+		elements := make([]int, 7919)
 		for i := range elements {
 			elements[i] = i
 		}
@@ -26,6 +29,19 @@ func TestParallelForEach(t *testing.T) {
 			if count != 1 {
 				t.Errorf("expected index %d to be visited once, got %d", i, count)
 			}
+		}
+	})
+
+	t.Run("single element", func(t *testing.T) {
+		called := false
+		ForEach([]int{42}, func(value int, index int) {
+			called = true
+			if value != 42 || index != 0 {
+				t.Errorf("expected value 42 at index 0, got value %d at index %d", value, index)
+			}
+		})
+		if !called {
+			t.Error("expected action to be called for single element")
 		}
 	})
 
