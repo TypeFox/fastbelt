@@ -112,6 +112,17 @@ func checkUniqueRuleNames(g Grammar, accept core.ValidationAcceptor) {
 			seen[tokenGroup.Name()] = append(seen[tokenGroup.Name()], tokenGroup)
 		}
 	}
+	for _, tokenMode := range g.TokenModes() {
+		for _, member := range tokenMode.Members() {
+			if usage, ok := member.(TokenDeclUsage); ok {
+				decl := usage.Declaration()
+				seen[decl.Name()] = append(seen[decl.Name()], decl)
+			} else if group, ok := member.(TokenGroupUsage); ok {
+				decl := group.Group()
+				seen[decl.Name()] = append(seen[decl.Name()], decl)
+			}
+		}
+	}
 	for name, nodes := range seen {
 		if len(nodes) > 1 {
 			for _, node := range nodes {
