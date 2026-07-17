@@ -585,150 +585,6 @@ var Keyword_RightBrace = core.NewTokenType(
 	[]rune{'}'},
 )
 
-const Token_ARROW_Idx = Keyword_DashGreaterThan_Idx
-
-var Token_ARROW = Keyword_DashGreaterThan
-
-const Token_LEFTPAREN_Idx = Keyword_LeftParen_Idx
-
-var Token_LEFTPAREN = Keyword_LeftParen
-
-const Token_RIGHTPAREN_Idx = Keyword_RightParen_Idx
-
-var Token_RIGHTPAREN = Keyword_RightParen
-
-const Token_ASTERISK_Idx = Keyword_Asterisk_Idx
-
-var Token_ASTERISK = Keyword_Asterisk
-
-const Token_PLUS_Idx = Keyword_Plus_Idx
-
-var Token_PLUS = Keyword_Plus
-
-const Token_PLUS_EQUALS_Idx = Keyword_PlusEquals_Idx
-
-var Token_PLUS_EQUALS = Keyword_PlusEquals
-
-const Token_COMMA_Idx = Keyword_Comma_Idx
-
-var Token_COMMA = Keyword_Comma
-
-const Token_DOT_Idx = Keyword_Dot_Idx
-
-var Token_DOT = Keyword_Dot
-
-const Token_COLON_Idx = Keyword_Colon_Idx
-
-var Token_COLON = Keyword_Colon
-
-const Token_SEMICOLON_Idx = Keyword_Semicolon_Idx
-
-var Token_SEMICOLON = Keyword_Semicolon
-
-const Token_EQUALS_Idx = Keyword_Equals_Idx
-
-var Token_EQUALS = Keyword_Equals
-
-const Token_QUESTION_Idx = Keyword_Question_Idx
-
-var Token_QUESTION = Keyword_Question
-
-const Token_QUESTION_EQUALS_Idx = Keyword_QuestionEquals_Idx
-
-var Token_QUESTION_EQUALS = Keyword_QuestionEquals
-
-const Token_LEFTBRACKET_Idx = Keyword_LeftBracket_Idx
-
-var Token_LEFTBRACKET = Keyword_LeftBracket
-
-const Token_RIGHTBRACKET_Idx = Keyword_RightBracket_Idx
-
-var Token_RIGHTBRACKET = Keyword_RightBracket
-
-const Token_BOOL_Idx = Keyword_bool_Idx
-
-var Token_BOOL = Keyword_bool
-
-const Token_COMMENT_Idx = Keyword_comment_Idx
-
-var Token_COMMENT = Keyword_comment
-
-const Token_COMPOSITE_Idx = Keyword_composite_Idx
-
-var Token_COMPOSITE = Keyword_composite
-
-const Token_CURRENT_Idx = Keyword_current_Idx
-
-var Token_CURRENT = Keyword_current
-
-const Token_DEFAULT_Idx = Keyword_default_Idx
-
-var Token_DEFAULT = Keyword_default
-
-const Token_ENTRY_Idx = Keyword_entry_Idx
-
-var Token_ENTRY = Keyword_entry
-
-const Token_EXTENDS_Idx = Keyword_extends_Idx
-
-var Token_EXTENDS = Keyword_extends
-
-const Token_GRAMMAR_Idx = Keyword_grammar_Idx
-
-var Token_GRAMMAR = Keyword_grammar
-
-const Token_GROUP_Idx = Keyword_group_Idx
-
-var Token_GROUP = Keyword_group
-
-const Token_HIDDEN_Idx = Keyword_hidden_Idx
-
-var Token_HIDDEN = Keyword_hidden
-
-const Token_INTERFACE_Idx = Keyword_interface_Idx
-
-var Token_INTERFACE = Keyword_interface
-
-const Token_KEYWORDS_Idx = Keyword_keywords_Idx
-
-var Token_KEYWORDS = Keyword_keywords
-
-const Token_MODE_Idx = Keyword_mode_Idx
-
-var Token_MODE = Keyword_mode
-
-const Token_POP_Idx = Keyword_pop_Idx
-
-var Token_POP = Keyword_pop
-
-const Token_PUSH_Idx = Keyword_push_Idx
-
-var Token_PUSH = Keyword_push
-
-const Token_RETURNS_Idx = Keyword_returns_Idx
-
-var Token_RETURNS = Keyword_returns
-
-const Token_STRING_Idx = Keyword_string_Idx
-
-var Token_STRING = Keyword_string
-
-const Token_TOKEN_Idx = Keyword_token_Idx
-
-var Token_TOKEN = Keyword_token
-
-const Token_LEFTBRACE_Idx = Keyword_LeftBrace_Idx
-
-var Token_LEFTBRACE = Keyword_LeftBrace
-
-const Token_PIPE_Idx = Keyword_Pipe_Idx
-
-var Token_PIPE = Keyword_Pipe
-
-const Token_RIGHTBRACE_Idx = Keyword_RightBrace_Idx
-
-var Token_RIGHTBRACE = Keyword_RightBrace
-
 const Token_SL_COMMENT_Idx = 37
 
 var Token_SL_COMMENT = core.NewTokenType(
@@ -1332,9 +1188,9 @@ var TokenGroup_Cardinality = core.NewTokenGroup(
 	"Cardinality",
 	"Cardinality",
 	[]*core.TokenType{
-		Token_ASTERISK,
-		Token_PLUS,
-		Token_QUESTION,
+		Keyword_Asterisk,
+		Keyword_Plus,
+		Keyword_Question,
 	},
 )
 
@@ -1345,8 +1201,8 @@ var TokenGroup_GroupType = core.NewTokenGroup(
 	"GroupType",
 	"GroupType",
 	[]*core.TokenType{
-		Token_COMMENT,
-		Token_HIDDEN,
+		Keyword_comment,
+		Keyword_hidden,
 	},
 )
 
@@ -1357,44 +1213,44 @@ const (
 func NewLexer() lexer.Lexer {
 	modes := make([]*lexer.TokenMode, 1, 1)
 	modes[TokenMode_default] = lexer.NewTokenMode("default",
-		lexer.UseTokenType(TokenGroup_GroupType),
 		lexer.UseTokenType(TokenGroup_Cardinality),
-		lexer.UseTokenType(Token_ARROW),
-		lexer.UseTokenType(Token_LEFTPAREN),
-		lexer.UseTokenType(Token_RIGHTPAREN),
-		lexer.UseTokenType(Token_ASTERISK),
-		lexer.UseTokenType(Token_PLUS),
-		lexer.UseTokenType(Token_PLUS_EQUALS),
-		lexer.UseTokenType(Token_COMMA),
-		lexer.UseTokenType(Token_DOT),
-		lexer.UseTokenType(Token_COLON),
-		lexer.UseTokenType(Token_SEMICOLON),
-		lexer.UseTokenType(Token_EQUALS),
-		lexer.UseTokenType(Token_QUESTION),
-		lexer.UseTokenType(Token_QUESTION_EQUALS),
-		lexer.UseTokenType(Token_LEFTBRACKET),
-		lexer.UseTokenType(Token_RIGHTBRACKET),
-		lexer.UseTokenType(Token_BOOL),
-		lexer.UseTokenType(Token_COMMENT),
-		lexer.UseTokenType(Token_COMPOSITE),
-		lexer.UseTokenType(Token_CURRENT),
-		lexer.UseTokenType(Token_DEFAULT),
-		lexer.UseTokenType(Token_ENTRY),
-		lexer.UseTokenType(Token_EXTENDS),
-		lexer.UseTokenType(Token_GRAMMAR),
-		lexer.UseTokenType(Token_GROUP),
-		lexer.UseTokenType(Token_HIDDEN),
-		lexer.UseTokenType(Token_INTERFACE),
-		lexer.UseTokenType(Token_KEYWORDS),
-		lexer.UseTokenType(Token_MODE),
-		lexer.UseTokenType(Token_POP),
-		lexer.UseTokenType(Token_PUSH),
-		lexer.UseTokenType(Token_RETURNS),
-		lexer.UseTokenType(Token_STRING),
-		lexer.UseTokenType(Token_TOKEN),
-		lexer.UseTokenType(Token_LEFTBRACE),
-		lexer.UseTokenType(Token_PIPE),
-		lexer.UseTokenType(Token_RIGHTBRACE),
+		lexer.UseTokenType(TokenGroup_GroupType),
+		lexer.UseTokenType(Keyword_LeftParen),
+		lexer.UseTokenType(Keyword_RightParen),
+		lexer.UseTokenType(Keyword_Asterisk),
+		lexer.UseTokenType(Keyword_Plus),
+		lexer.UseTokenType(Keyword_PlusEquals),
+		lexer.UseTokenType(Keyword_Comma),
+		lexer.UseTokenType(Keyword_DashGreaterThan),
+		lexer.UseTokenType(Keyword_Dot),
+		lexer.UseTokenType(Keyword_Colon),
+		lexer.UseTokenType(Keyword_Semicolon),
+		lexer.UseTokenType(Keyword_Equals),
+		lexer.UseTokenType(Keyword_Question),
+		lexer.UseTokenType(Keyword_QuestionEquals),
+		lexer.UseTokenType(Keyword_LeftBracket),
+		lexer.UseTokenType(Keyword_RightBracket),
+		lexer.UseTokenType(Keyword_bool),
+		lexer.UseTokenType(Keyword_comment),
+		lexer.UseTokenType(Keyword_composite),
+		lexer.UseTokenType(Keyword_current),
+		lexer.UseTokenType(Keyword_default),
+		lexer.UseTokenType(Keyword_entry),
+		lexer.UseTokenType(Keyword_extends),
+		lexer.UseTokenType(Keyword_grammar),
+		lexer.UseTokenType(Keyword_group),
+		lexer.UseTokenType(Keyword_hidden),
+		lexer.UseTokenType(Keyword_interface),
+		lexer.UseTokenType(Keyword_keywords),
+		lexer.UseTokenType(Keyword_mode),
+		lexer.UseTokenType(Keyword_pop),
+		lexer.UseTokenType(Keyword_push),
+		lexer.UseTokenType(Keyword_returns),
+		lexer.UseTokenType(Keyword_string),
+		lexer.UseTokenType(Keyword_token),
+		lexer.UseTokenType(Keyword_LeftBrace),
+		lexer.UseTokenType(Keyword_Pipe),
+		lexer.UseTokenType(Keyword_RightBrace),
 		lexer.UseTokenType(Token_SL_COMMENT).WithGroup(core.CommentGroup),
 		lexer.UseTokenType(Token_ML_COMMENT).WithGroup(core.CommentGroup),
 		lexer.UseTokenType(Token_StringLiteral),
