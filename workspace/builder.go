@@ -188,6 +188,7 @@ func (s *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
 		fallthrough
 	case !state.Has(core.DocStateLocalSymbols):
 		doc.LocalSymbols = nil
+		fallthrough
 	case !state.Has(core.DocStateLinked):
 		// Note: NOOP if the document should be completely reset,
 		// because the references slice is already cleared above.
@@ -196,8 +197,10 @@ func (s *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
 		for _, ref := range doc.References {
 			ref.Reset()
 		}
+		fallthrough
 	case !state.Has(core.DocStateReferences):
 		doc.ReferenceDescriptions = nil
+		fallthrough
 	case !state.Has(core.DocStateValidated):
 		doc.Diagnostics = []*core.Diagnostic{}
 	}

@@ -42,6 +42,10 @@ func (r *RunningAverage) Update(sample float64) {
 
 // Capacity returns the ideal slice capacity for a new slice relative
 // to the given size, based on the current average ratio.
+//
+// The returned capacity is 10% larger than the expected average in an
+// attempt to prevent resizing of the slice in case the actual required
+// size is slightly above average.
 func (r *RunningAverage) Capacity(size int) int {
 	return int(float64(size) * r.Value() * 1.1)
 }

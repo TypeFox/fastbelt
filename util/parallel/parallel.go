@@ -30,17 +30,20 @@ func ForEachIter[T any](seq iter.Seq[T], action func(T, int)) {
 // The second argument to action is the zero-based index of the element.
 // This function blocks until every action call has returned.
 func ForEach[T any](elements []T, action func(T, int)) {
-	if len(elements) == 0 {
+	total := len(elements)
+	if total == 0 {
 		return
 	}
-	workers := min(runtime.GOMAXPROCS(0), len(elements))
+	workers := min(runtime.GOMAXPROCS(0), total)
 	var next atomic.Int64
+	// Store -1 so that the first Add(1) returns 0, the index of the first element.
+	next.Store(-1)
 	var wg sync.WaitGroup
 	for range workers {
 		wg.Go(func() {
 			for {
-				i := int(next.Add(1) - 1)
-				if i >= len(elements) {
+				i := int(next.Add(1))
+				if i >= total {
 					return
 				}
 				action(elements[i], i)

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"iter"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"unique"
 
@@ -360,14 +361,27 @@ func MergeTokens(newNode AstNode, oldTokens []*Token) {
 // This average is updated after each traversal to adapt to the actual language.
 const defaultReferenceRatio = 1.0 / 10.0
 
-// running exponential moving average of references-per-token
-var avgReferenceRatio = parallel.NewRunningAverage(defaultReferenceRatio)
+// running exponential moving average of references-per-token for each language ID
+// different languages may have different average reference ratios
+var avgReferenceRatioMap sync.Map
+
+func getAvgReferenceRatio(languageId string) *parallel.RunningAverage {
+	if avg, ok := avgReferenceRatioMap.Load(languageId); ok {
+		return avg.(*parallel.RunningAverage)
+	} else {
+		avg := parallel.NewRunningAverage(defaultReferenceRatio)
+		avgReferenceRatioMap.Store(languageId, avg)
+		return avg
+	}
+}
 
 // AssignContainers recursively assigns document and parent pointers for the root node and its subtree.
 //
 // It also assigns document and container on composite reference units reachable via references.
 // It will also fill the [Document.References] field with all references found in the subtree.
 func AssignContainers(doc *Document) {
+	languageId := doc.TextDoc.LanguageID()
+	avgReferenceRatio := getAvgReferenceRatio(languageId)
 	// Continually increasing the capacity of the references slice is expensive
 	// So we use a running average of references-per-token to preallocate the slice
 	references := make([]UntypedReference, 0, avgReferenceRatio.Capacity(len(doc.Tokens)))
