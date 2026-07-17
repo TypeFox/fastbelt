@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"slices"
 	"sync"
+	"sync/atomic"
 )
 
 // ForEachIter calls action once for each element in seq, distributing the
@@ -33,20 +34,18 @@ func ForEach[T any](elements []T, action func(T, int)) {
 		return
 	}
 	workers := min(runtime.GOMAXPROCS(0), len(elements))
-	// Note: we use a channel to distribute indices to workers
-	// This ensures that there is no idle worker while there are still elements to process
-	indices := make(chan int, workers)
+	var next atomic.Int64
 	var wg sync.WaitGroup
 	for range workers {
 		wg.Go(func() {
-			for index := range indices {
-				action(elements[index], index)
+			for {
+				i := int(next.Add(1) - 1)
+				if i >= len(elements) {
+					return
+				}
+				action(elements[i], i)
 			}
 		})
 	}
-	for i := range elements {
-		indices <- i
-	}
-	close(indices)
 	wg.Wait()
 }

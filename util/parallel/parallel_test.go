@@ -53,3 +53,20 @@ func TestParallelForEach(t *testing.T) {
 		}
 	})
 }
+
+func BenchmarkParallelForEach(b *testing.B) {
+	const elementCount = 1_000
+	elements := make([]int, elementCount)
+	for i := range elements {
+		elements[i] = i
+	}
+	b.ResetTimer()
+	for b.Loop() {
+		ForEach(elements, func(value int, index int) {
+			// Do some work to simulate a realistic workload
+			for j := range 1000 {
+				_ = value * j * j
+			}
+		})
+	}
+}

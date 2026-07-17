@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync/atomic"
 	"unique"
+
+	"typefox.dev/fastbelt/util/parallel"
 )
 
 // AstNode is the base interface for all AST nodes.
@@ -354,14 +356,27 @@ func MergeTokens(newNode AstNode, oldTokens []*Token) {
 	}
 }
 
-// AssignContainers recursively assigns document and parent pointers for root and its subtree.
+// Allocate a new reference slot for every ~10 tokens on average.
+// This average is updated after each traversal to adapt to the actual language.
+const defaultReferenceRatio = 1.0 / 10.0
+
+// running exponential moving average of references-per-token
+var avgReferenceRatio = parallel.NewRunningAverage(defaultReferenceRatio)
+
+// AssignContainers recursively assigns document and parent pointers for the root node and its subtree.
 //
 // It also assigns document and container on composite reference units reachable via references.
 // It will also fill the [Document.References] field with all references found in the subtree.
-func AssignContainers(doc *Document, root AstNode) {
-	references := []UntypedReference{}
-	doAssignContainers(doc, root, &references)
+func AssignContainers(doc *Document) {
+	// Continually increasing the capacity of the references slice is expensive
+	// So we use a running average of references-per-token to preallocate the slice
+	references := make([]UntypedReference, 0, avgReferenceRatio.Capacity(len(doc.Tokens)))
+	doAssignContainers(doc, doc.Root, &references)
 	doc.References = references
+
+	if len(doc.Tokens) > 0 {
+		avgReferenceRatio.Update(float64(len(references)) / float64(len(doc.Tokens)))
+	}
 }
 
 func doAssignContainers(doc *Document, root AstNode, references *[]UntypedReference) {

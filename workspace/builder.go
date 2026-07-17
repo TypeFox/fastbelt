@@ -172,36 +172,33 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 }
 
 func (s *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
-	if state.Has(core.DocStateParsed) && !state.Has(core.DocStateLinked) {
-		// Only run the reference reset if the document is supposed to stay parsed
-		// but not linked. In this case, we want to reset the references, so that
-		// they can be re-resolved when the document is built again.
-		for _, ref := range doc.References {
-			ref.Reset()
-		}
-		// If the document is supposed to be completely reset, we can let the next
-		// stage simply clear the reference slice.
-	}
-	if !state.Has(core.DocStateParsed) {
+	switch {
+	case !state.Has(core.DocStateParsed):
 		doc.Root = nil
 		doc.Tokens = core.TokenSlice{}
 		doc.ParserErrors = []*core.ParserError{}
 		doc.LexerErrors = []*core.LexerError{}
 		doc.References = []core.UntypedReference{}
-	}
-	if !state.Has(core.DocStateExportedSymbols) {
+		fallthrough
+	case !state.Has(core.DocStateExportedSymbols):
 		doc.ExportedSymbols = nil
-	}
-	if !state.Has(core.DocStateImportedSymbols) {
+		fallthrough
+	case !state.Has(core.DocStateImportedSymbols):
 		doc.ImportedSymbols = nil
-	}
-	if !state.Has(core.DocStateLocalSymbols) {
+		fallthrough
+	case !state.Has(core.DocStateLocalSymbols):
 		doc.LocalSymbols = nil
-	}
-	if !state.Has(core.DocStateReferences) {
+	case !state.Has(core.DocStateLinked):
+		// Note: NOOP if the document should be completely reset,
+		// because the references slice is already cleared above.
+		// If not cleared, the references are reset to allow re-resolution
+		// on the next build.
+		for _, ref := range doc.References {
+			ref.Reset()
+		}
+	case !state.Has(core.DocStateReferences):
 		doc.ReferenceDescriptions = nil
-	}
-	if !state.Has(core.DocStateValidated) {
+	case !state.Has(core.DocStateValidated):
 		doc.Diagnostics = []*core.Diagnostic{}
 	}
 	doc.State = doc.State & state

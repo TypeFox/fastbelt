@@ -5,12 +5,11 @@
 package lexer
 
 import (
-	"math"
-	"sync/atomic"
 	"unicode/utf16"
 	"unicode/utf8"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/parallel"
 )
 
 // Lexer tokenizes a complete source string in one shot.
@@ -43,19 +42,14 @@ type DefaultLexer struct {
 	tokenTypes []*core.TokenType
 	tokenMap   [][]*core.TokenType
 	// running exponential moving average of tokens-per-byte
-	// stores a float64 as uint64 bits for atomic access
-	avgRatio atomic.Uint64
+	avgRatio *parallel.RunningAverage
 }
 
 // Lex scans input from left to right using longest-match disambiguation among
 // token types registered at construction time.
 func (l *DefaultLexer) Lex(input string) *LexerResult {
 	length := len(input)
-	ratio := math.Float64frombits(l.avgRatio.Load())
-	if ratio == 0 {
-		ratio = defaultTokenRatio
-	}
-	tokens := make([]core.Token, 0, int(float64(length)*ratio*1.1))
+	tokens := make([]core.Token, 0, l.avgRatio.Capacity(length))
 	comments := make([]core.Token, 0)
 	errors := make([]*core.LexerError, 0)
 	var groups map[int][]core.Token
@@ -157,12 +151,7 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 
 	if length > 0 {
 		// Update the average tokens-per-byte
-		actual := float64(len(tokens)) / float64(length)
-		prev := math.Float64frombits(l.avgRatio.Load())
-		if prev == 0 {
-			prev = defaultTokenRatio
-		}
-		l.avgRatio.Store(math.Float64bits(prev*0.9 + actual*0.1))
+		l.avgRatio.Update(float64(len(tokens)) / float64(length))
 	}
 
 	return &LexerResult{
@@ -193,5 +182,6 @@ func NewDefaultLexer(tokenTypes ...*core.TokenType) *DefaultLexer {
 	return &DefaultLexer{
 		tokenTypes: tokenTypes,
 		tokenMap:   tokenMap,
+		avgRatio:   parallel.NewRunningAverage(defaultTokenRatio),
 	}
 }

@@ -42,4 +42,5 @@ func (s *DefaultDocumentParser) Parse(doc *core.Document) {
 	parserRes := parser.Parse(doc)
 	doc.ParserErrors = parserRes.Errors
 	doc.Root = parserRes.Node
+	core.AssignContainers(doc)
 }
