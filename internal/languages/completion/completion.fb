@@ -137,21 +137,11 @@ token WS: /[ \t\r\n]+/
 token ID: /\w[\w0-9]*/
 
 token mode default {
-    keywords /^[a-z]$/
-    DECLARE
-    FIRST
-    SECOND
-    LONG
-    SELF
-    COMMON
-    THEN
+    keywords /^[a-z]+$/
     LBRACE
     RBRACE
     DOT
-    OPTIONAL
-    AND
     ID
-    END
 
     hidden WS
 }
