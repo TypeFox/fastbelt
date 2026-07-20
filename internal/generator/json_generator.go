@@ -65,7 +65,7 @@ func generateJSONMarshal(node codegen.Node, iface grammar.Interface) {
 		var stringListFields = map[string]string{}
 		for _, field := range fields {
 			if field.Array && (field.GType == TOKEN_TYPE || field.GType == COMPOSITE_TYPE) {
-				varName := strings.ToLower(field.Name[:1]) + field.Name[1:]
+				varName := field.PName
 				stringListFields[field.Name] = varName
 
 				n.AppendLine(varName, " := make([]string, len(i.", field.Name, "()))")
@@ -80,14 +80,11 @@ func generateJSONMarshal(node codegen.Node, iface grammar.Interface) {
 		n.Indent(func(n2 codegen.Node) {
 			n2.AppendLine("T__", " ", "string", " `json:\"$type\"`")
 			for _, field := range fields {
-				jsonTag := strings.ToLower(field.Name[:1]) + field.Name[1:]
-				var typeStr string
+				typeStr := field.Type
 				if field.Array {
-					typeStr = "[]" + field.Type
-				} else {
-					typeStr = field.Type
+					typeStr = "[]" + typeStr
 				}
-				n2.AppendLine(field.Name, " ", typeStr, " `json:\"", jsonTag, ",omitempty\"`")
+				n2.AppendLine(field.Name, " ", typeStr, " `json:\"", field.JsonPropName, ",omitempty\"`")
 			}
 		})
 		n.AppendLine("}{")
@@ -147,8 +144,7 @@ func generateJSONUnmarshal(node codegen.Node, iface grammar.Interface) {
 		n.Indent(func(n2 codegen.Node) {
 			n2.AppendLine("T__", " ", "string", " `json:\"$type\"`")
 			for _, field := range fields {
-				jsonTag := strings.ToLower(field.Name[:1]) + field.Name[1:]
-				n2.AppendLine(field.Name, " ", getAuxFieldType(field), " `json:\"", jsonTag, "\"`")
+				n2.AppendLine(field.Name, " ", getAuxFieldType(field), " `json:\"", field.JsonPropName, "\"`")
 			}
 		})
 		n.AppendLine("}{}")
