@@ -23,7 +23,6 @@ func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
 	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
 	result := cp.ParseRoot()
 	cp.state.ExpectEndOfInput()
-	core.AssignContainers(document, result)
 	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
 }
 

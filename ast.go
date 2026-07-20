@@ -8,8 +8,11 @@ import (
 	"errors"
 	"iter"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"unique"
+
+	"typefox.dev/fastbelt/util/parallel"
 )
 
 // AstNode is the base interface for all AST nodes.
@@ -354,17 +357,51 @@ func MergeTokens(newNode AstNode, oldTokens []*Token) {
 	}
 }
 
-// AssignContainers recursively assigns document and parent pointers for root and its subtree.
+// Allocate a new reference slot for every ~10 tokens on average.
+// This average is updated after each traversal to adapt to the actual language.
+const defaultReferenceRatio = 1.0 / 10.0
+
+// running exponential moving average of references-per-token for each language ID
+// different languages may have different average reference ratios
+var avgReferenceRatioMap sync.Map
+
+func getAvgReferenceRatio(languageId string) *parallel.RunningAverage {
+	if avg, ok := avgReferenceRatioMap.Load(languageId); ok {
+		return avg.(*parallel.RunningAverage)
+	} else {
+		avg := parallel.NewRunningAverage(defaultReferenceRatio)
+		avgReferenceRatioMap.Store(languageId, avg)
+		return avg
+	}
+}
+
+// AssignContainers recursively assigns document and parent pointers for the root node and its subtree.
 //
 // It also assigns document and container on composite reference units reachable via references.
-func AssignContainers(doc *Document, root AstNode) {
+// It will also fill the [Document.References] field with all references found in the subtree.
+func AssignContainers(doc *Document) {
+	languageId := doc.TextDoc.LanguageID()
+	avgReferenceRatio := getAvgReferenceRatio(languageId)
+	// Continually increasing the capacity of the references slice is expensive
+	// So we use a running average of references-per-token to preallocate the slice
+	references := make([]UntypedReference, 0, avgReferenceRatio.Capacity(len(doc.Tokens)))
+	doAssignContainers(doc, doc.Root, &references)
+	doc.References = references
+
+	if len(doc.Tokens) > 0 {
+		avgReferenceRatio.Update(float64(len(references)) / float64(len(doc.Tokens)))
+	}
+}
+
+func doAssignContainers(doc *Document, root AstNode, references *[]UntypedReference) {
 	root.SetDocument(doc)
 	root.ForEachNode(func(child AstNode, containerField unique.Handle[string], index int) {
 		child.SetDocument(doc)
 		child.SetContainer(root, containerField, index)
-		AssignContainers(doc, child)
+		doAssignContainers(doc, child, references)
 	})
 	root.ForEachReference(func(ur UntypedReference, containerField unique.Handle[string], index int) {
+		*references = append(*references, ur)
 		unit := ur.Unit()
 		if stringNode, ok := unit.(CompositeNode); ok {
 			stringNode.SetDocument(doc)

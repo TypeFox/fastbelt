@@ -411,7 +411,6 @@ func GenerateParser(grammr grammar.Grammar, entryRule grammar.ParserRule, packag
 		n.AppendLine("cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}")
 		n.AppendLine("result := cp.Parse", entryRule.Name(), "()")
 		n.AppendLine("cp.state.ExpectEndOfInput()")
-		n.AppendLine("core.AssignContainers(document, result)")
 		n.AppendLine("return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}")
 	})
 	node.AppendLine("}")
