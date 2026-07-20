@@ -29,7 +29,7 @@ func UnmarshalAndBuildDocument[T core.AstNode](sc *service.Container, document *
 	if err := json.Unmarshal(data, rootNode); err != nil {
 		return err
 	}
-	core.AssignContainers(document, rootNode)
+	core.AssignContainers(document)
 	document.Root = rootNode
 	document.State = core.DocStateParsed
 	documents.Set(document)

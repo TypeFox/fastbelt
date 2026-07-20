@@ -99,7 +99,7 @@ func TestJsonExport(t *testing.T) {
 		require.NoError(t, err)
 		doc.Root = mod
 		doc.State = core.DocStateParsed
-		core.AssignContainers(doc, mod)
+		core.AssignContainers(doc)
 		documents.Set(doc)
 		f.NewDoc(doc, nil, nil)
 	}
