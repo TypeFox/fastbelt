@@ -72,5 +72,5 @@ func (s *DefaultReferenceDescriber) DescribeReference(ctx context.Context, ref c
 	if source == nil || target == nil {
 		return nil
 	}
-	return core.NewReferenceDescription(source, target, ref.Range())
+	return core.NewReferenceDescription(source, target, ref.TextRange())
 }

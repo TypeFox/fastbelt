@@ -286,7 +286,7 @@ func backtrackToToken(tokens core.TokenSlice, offset int) cursorTokenInfo {
 	lo, hi := 0, len(tokens)
 	for lo < hi {
 		mid := (lo + hi) / 2
-		if int(tokens[mid].TextRange.Start) < offset {
+		if int(tokens[mid].Range.Start) < offset {
 			lo = mid + 1
 		} else {
 			hi = mid
@@ -297,7 +297,7 @@ func backtrackToToken(tokens core.TokenSlice, offset int) cursorTokenInfo {
 	// NextIdx - check whether the cursor lies inside or at its end.
 	if lo > 0 {
 		prev := lo - 1
-		end := int(tokens[prev].TextRange.End)
+		end := int(tokens[prev].Range.End)
 		if offset < end {
 			info.CurrentIdx = prev
 		} else if offset == end {
@@ -324,11 +324,11 @@ func buildCompletionContexts(doc *core.Document, offset int) []CompletionContext
 	}
 
 	curToken := &doc.Tokens[info.CurrentIdx]
-	replace := curToken.TextRange.LspRange(doc.TextDoc)
+	replace := curToken.Range.LspRange(doc.TextDoc)
 	prefixLen := info.CurrentIdx
 	typed := curToken.Image
 	if !info.CurrentAtEnd {
-		typed = curToken.Image[:offset-int(curToken.TextRange.Start)]
+		typed = curToken.Image[:offset-int(curToken.Range.Start)]
 	}
 
 	// When the current token is part of a multi-token CompositeNode,
@@ -339,7 +339,7 @@ func buildCompletionContexts(doc *core.Document, offset int) []CompletionContext
 	if startIdx, ok := compositeStart(doc.Tokens, info.CurrentIdx); ok {
 		startToken := &doc.Tokens[startIdx]
 		// Replace start position with the start of the first token in the composite
-		replace.Start = startToken.TextRange.LspRange(doc.TextDoc).Start
+		replace.Start = startToken.Range.LspRange(doc.TextDoc).Start
 		// Regenerate the content of the composite up to the cursor position
 		var sb strings.Builder
 		for i := startIdx; i < info.CurrentIdx; i++ {

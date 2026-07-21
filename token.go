@@ -177,8 +177,8 @@ type Token struct {
 	Image string
 	// TypeId caches Type.Id for parser hot paths.
 	TypeId int
-	// TextRange is the byte-offset range of the token in the input string.
-	TextRange Range
+	// Range is the byte-offset range of the token in the input string.
+	Range TextRange
 	// Element points to the AST node this token was assigned to during parsing.
 	Element AstNode
 	// Kind stores the generated assignment slot identifier within Element.
@@ -188,12 +188,9 @@ type Token struct {
 // NewToken creates a token with image text and half-open source coordinates.
 func NewToken(tokenType *TokenType, image string, startOffset, endOffset int) Token {
 	return Token{
-		Type:  tokenType,
-		Image: image,
-		TextRange: Range{
-			Start: int32(startOffset),
-			End:   int32(endOffset),
-		},
+		Type:   tokenType,
+		Image:  image,
+		Range:  NewTextRange(startOffset, endOffset),
 		TypeId: tokenType.Id,
 		Kind:   0,
 	}
@@ -220,9 +217,9 @@ func (t *Token) String() string {
 	return t.Image
 }
 
-// Range returns the token text range.
-func (t *Token) Range() Range {
-	return t.TextRange
+// TextRange returns the token text range.
+func (t *Token) TextRange() TextRange {
+	return t.Range
 }
 
 // Owner returns the AST node that owns t as a string unit.
@@ -265,15 +262,15 @@ func (ts TokenSlice) SearchOffset2(offset int) (*Token, *Token) {
 	for low <= high {
 		mid := (low + high) / 2
 		token := &ts[mid]
-		if offset < int(token.TextRange.Start) {
+		if offset < int(token.Range.Start) {
 			high = mid - 1
-		} else if offset >= int(token.TextRange.End) {
+		} else if offset >= int(token.Range.End) {
 			low = mid + 1
 		} else {
 			// Offset sits exactly on the boundary between this token and the
 			// previous one (prev.End == offset == token.Start): return both.
-			if offset == int(token.TextRange.Start) && mid > 0 {
-				if prev := &ts[mid-1]; int(prev.TextRange.End) == offset {
+			if offset == int(token.Range.Start) && mid > 0 {
+				if prev := &ts[mid-1]; int(prev.Range.End) == offset {
 					return prev, token
 				}
 			}
@@ -284,7 +281,7 @@ func (ts TokenSlice) SearchOffset2(offset int) (*Token, *Token) {
 	// last token that ends at or before the offset. If it ends exactly at the
 	// offset (a trailing boundary with no token starting there - e.g. a gap or
 	// end of input), that token is the previous token.
-	if high >= 0 && offset == int(ts[high].TextRange.End) {
+	if high >= 0 && offset == int(ts[high].Range.End) {
 		return &ts[high], nil
 	}
 	return nil, nil

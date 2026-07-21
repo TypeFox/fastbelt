@@ -38,16 +38,13 @@ type LexerError struct {
 	// Msg is the lexer diagnostic message.
 	Msg string
 	// Range is the byte-offset range of the invalid input in the source text.
-	Range Range
+	Range TextRange
 }
 
 // NewLexerError returns a [LexerError] for msg and the offending text range.
 func NewLexerError(msg string, startOffset, endOffset int) *LexerError {
 	return &LexerError{
-		Msg: msg,
-		Range: Range{
-			Start: int32(startOffset),
-			End:   int32(endOffset),
-		},
+		Msg:   msg,
+		Range: NewTextRange(startOffset, endOffset),
 	}
 }

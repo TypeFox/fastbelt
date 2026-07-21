@@ -51,9 +51,9 @@ func (s *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context,
 	target := foundName.Target
 	targetNode := target.Owner()
 	targetDoc := targetNode.Document().TextDoc
-	sourceRange := foundName.Source.Range().LspRange(textDoc)
-	fullRange := targetNode.Range().LspRange(targetDoc)
-	targetRange := target.Range().LspRange(targetDoc)
+	sourceRange := foundName.Source.TextRange().LspRange(textDoc)
+	fullRange := targetNode.TextRange().LspRange(targetDoc)
+	targetRange := target.TextRange().LspRange(targetDoc)
 	link := lsp.DefinitionLink{
 		OriginSelectionRange: &sourceRange,
 		TargetURI:            targetDoc.URI(),

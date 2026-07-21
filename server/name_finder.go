@@ -86,8 +86,8 @@ func (nf *DefaultNameFinder) forToken(ctx context.Context, token *core.Token) Fo
 		if nameUnit == nil {
 			return FoundName{}
 		}
-		rng := nameUnit.Range()
-		if token.TextRange.Start < rng.Start || token.TextRange.End > rng.End {
+		nameRange := nameUnit.TextRange()
+		if token.Range.Start < nameRange.Start || token.Range.End > nameRange.End {
 			return FoundName{} // The token is not within the name range, i.e. not a name
 		}
 		// Source and target are the same

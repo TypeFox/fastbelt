@@ -199,21 +199,21 @@ func (d *Doc) AssertState(flag core.DocumentState) *Doc {
 	return d
 }
 
-func (d *Doc) MarkerRange(label string) (core.Range, error) {
+func (d *Doc) MarkerRange(label string) (core.TextRange, error) {
 	ranges := d.markerRanges(label)
 	if len(ranges) == 0 {
-		return core.Range{}, fmt.Errorf("no marker with label %q", label)
+		return core.TextRange{}, fmt.Errorf("no marker with label %q", label)
 	} else if len(ranges) > 1 {
-		return core.Range{}, fmt.Errorf("multiple markers with label %q found; expected exactly one", label)
+		return core.TextRange{}, fmt.Errorf("multiple markers with label %q found; expected exactly one", label)
 	}
 	return ranges[0], nil
 }
 
-func (d *Doc) markerRanges(label string) []core.Range {
-	var result []core.Range
+func (d *Doc) markerRanges(label string) []core.TextRange {
+	var result []core.TextRange
 	for _, r := range d.Ranges {
 		if r.Label == label {
-			result = append(result, core.Range{
+			result = append(result, core.TextRange{
 				Start: int32(r.Start),
 				End:   int32(r.End),
 			})
@@ -307,7 +307,7 @@ func FindNodeAtOffset[T core.AstNode](d *Doc, offset int) (T, bool) {
 		if !ok {
 			continue
 		}
-		rng := node.Range()
+		rng := node.TextRange()
 		start, end := int(rng.Start), int(rng.End)
 		if start <= offset && offset < end {
 			span := end - start
@@ -345,7 +345,7 @@ func FindNodeAtLocation[T core.AstNode](d *Doc, location int) (T, bool) {
 		if !ok {
 			continue
 		}
-		seg := node.Range()
+		seg := node.TextRange()
 		if locationInRange(location, seg) {
 			span := int(seg.End - seg.Start)
 			if !found || span < bestSpan {
@@ -462,7 +462,7 @@ func FindReference[T core.AstNode](d *Doc, label string) (*core.Reference[T], bo
 		return nil, false
 	}
 	for _, ref := range d.Document.References {
-		rng := ref.Range()
+		rng := ref.TextRange()
 		if targetRange == rng {
 			if typedRef, ok := ref.(*core.Reference[T]); ok {
 				return typedRef, true

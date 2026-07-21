@@ -88,11 +88,11 @@ func (p *DefaultDocumentSymbolProvider) getSymbolsForNode(node core.AstNode) []l
 }
 
 func (p *DefaultDocumentSymbolProvider) createSymbol(node core.AstNode, nameUnit core.StringUnit) lsp.DocumentSymbol {
-	rng := node.Range()
+	rng := node.TextRange()
 	doc := node.Document().TextDoc
 
 	name := nameUnit.String()
-	selectionRange := nameUnit.Range().LspRange(doc)
+	selectionRange := nameUnit.TextRange().LspRange(doc)
 
 	symbol := lsp.DocumentSymbol{
 		Name:           name,

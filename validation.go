@@ -46,7 +46,7 @@ const (
 // The struct mirrors lsp.Diagnostic so the core package stays free of that dependency.
 type Diagnostic struct {
 	// Range is the source range where the diagnostic applies.
-	Range Range
+	Range TextRange
 	// Severity is the diagnostic severity level; when unset, clients may use a default severity.
 	Severity DiagnosticSeverity
 	// Message is the primary human-readable diagnostic message.
@@ -87,7 +87,7 @@ type DiagnosticOption func(d *Diagnostic)
 // NewDiagnostic creates a [Diagnostic] anchored to the given node's text range.
 func NewDiagnostic(severity DiagnosticSeverity, message string, node AstNode, opts ...DiagnosticOption) *Diagnostic {
 	d := &Diagnostic{
-		Range:    node.Range(),
+		Range:    node.TextRange(),
 		Severity: severity,
 		Message:  message,
 	}
@@ -103,7 +103,7 @@ func NewDiagnostic(severity DiagnosticSeverity, message string, node AstNode, op
 func WithToken(token *Token) DiagnosticOption {
 	return func(d *Diagnostic) {
 		if token != nil {
-			d.Range = token.Range()
+			d.Range = token.Range
 		}
 	}
 }
@@ -112,7 +112,7 @@ func WithToken(token *Token) DiagnosticOption {
 func WithStringUnit(unit StringUnit) DiagnosticOption {
 	return func(d *Diagnostic) {
 		if unit != nil {
-			d.Range = unit.Range()
+			d.Range = unit.TextRange()
 		}
 	}
 }
@@ -121,13 +121,13 @@ func WithStringUnit(unit StringUnit) DiagnosticOption {
 func WithReference(ref UntypedReference) DiagnosticOption {
 	return func(d *Diagnostic) {
 		if ref != nil {
-			d.Range = ref.Range()
+			d.Range = ref.TextRange()
 		}
 	}
 }
 
-// WithRange sets an explicit range on the diagnostic, overriding any node or token range.
-func WithRange(r Range) DiagnosticOption {
+// WithTextRange sets an explicit text range on the diagnostic, overriding any node or token range.
+func WithTextRange(r TextRange) DiagnosticOption {
 	return func(d *Diagnostic) {
 		d.Range = r
 	}

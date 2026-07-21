@@ -57,7 +57,7 @@ func (rp *DefaultRenameProvider) PrepareRenameRequest(ctx context.Context, param
 	}
 	target := foundName.Target
 	textDoc := target.Owner().Document().TextDoc
-	targetRange := target.Range().LspRange(textDoc)
+	targetRange := target.TextRange().LspRange(textDoc)
 	return &lsp.PrepareRenameResult{
 		Range: targetRange,
 	}, nil

@@ -29,9 +29,9 @@ type AstNode interface {
 	// Container returns the direct parent node of the node in the AST.
 	// It returns nil if this is the root node.
 	Container() AstNode
-	// ContainmentData returns a [unique.Handle] denoting the containing property within it's [AstNode.Container],
+	// ContainmentData returns a [unique.Handle] denoting the containing property within its [AstNode.Container],
 	// defaults to a [unique.Handle] of the empty string,
-	// and the element index within the containing property, defaults to -1 for single item fields
+	// and the element index within the containing property, defaults to -1 for single item fields.
 	ContainmentData() (unique.Handle[string], int)
 	// SetContainer sets the direct parent node of the node.
 	//
@@ -43,20 +43,20 @@ type AstNode interface {
 	SetToken(token *Token)
 	// SetTokens replaces the node's token list with tokens.
 	SetTokens(tokens []*Token)
-	// Range returns the text range of the node.
-	Range() Range
-	// SetRange sets the full text range metadata of the node.
+	// TextRange returns the text range of the node.
+	TextRange() TextRange
+	// SetTextRange sets the full text range metadata of the node.
 	//
 	// It is primarily used by generated parsers while constructing nodes incrementally.
-	SetRange(r Range)
-	// SetRangeStartToken sets the start of the node's range from token.
+	SetTextRange(r TextRange)
+	// SetTextRangeStart sets the start of the node's range.
 	//
 	// It is primarily used by generated parsers while constructing nodes incrementally.
-	SetRangeStartToken(token *Token)
-	// SetRangeEndToken sets the end of the node's range from token.
+	SetTextRangeStart(start int32)
+	// SetTextRangeEnd sets the end of the node's range.
 	//
 	// It is primarily used by generated parsers while constructing nodes incrementally.
-	SetRangeEndToken(token *Token)
+	SetTextRangeEnd(end int32)
 	// Text returns the source substring covered by the node's range.
 	Text() string
 	// ForEachNode calls fn for each direct child node of node.
@@ -82,7 +82,7 @@ type AstNodeBase struct {
 	containerField unique.Handle[string]
 	containerIndex int
 	tokens         []*Token
-	rng            Range
+	rng            TextRange
 }
 
 // Document returns the owning document of the node.
@@ -153,32 +153,28 @@ func (node *AstNodeBase) Tokens() []*Token {
 }
 
 // SetRangeStartToken sets the start of the node's range from token.
-func (node *AstNodeBase) SetRangeStartToken(token *Token) {
-	if node != nil && token != nil {
-		node.rng.Start = token.Range().Start
-	}
+func (node *AstNodeBase) SetTextRangeStart(start int32) {
+	node.rng.Start = start
 }
 
 // SetRangeEndToken sets the end of the node's range from token.
-func (node *AstNodeBase) SetRangeEndToken(token *Token) {
-	if node != nil && token != nil {
-		node.rng.End = token.Range().End
-	}
+func (node *AstNodeBase) SetTextRangeEnd(end int32) {
+	node.rng.End = end
 }
 
 // SetRange sets the full text range of the node.
-func (node *AstNodeBase) SetRange(rng Range) {
+func (node *AstNodeBase) SetTextRange(rng TextRange) {
 	if node != nil {
 		node.rng = rng
 	}
 }
 
 // Range returns the text range of the node.
-func (node *AstNodeBase) Range() Range {
+func (node *AstNodeBase) TextRange() TextRange {
 	if node != nil {
 		return node.rng
 	} else {
-		return Range{}
+		return TextRange{}
 	}
 }
 
@@ -435,8 +431,8 @@ type NamedCompositeNode interface {
 type StringUnit interface {
 	// Owner returns the AST node that owns this string unit.
 	Owner() AstNode
-	// Range returns the text range of this string unit.
-	Range() Range
+	// TextRange returns the text range of this string unit.
+	TextRange() TextRange
 	// String returns the string representation of this string unit.
 	String() string
 }

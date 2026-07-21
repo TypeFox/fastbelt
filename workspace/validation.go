@@ -42,14 +42,14 @@ func CreateParserDiagnostics(doc *core.Document, source string) []*core.Diagnost
 		token := err.Token
 		if token == nil || token.Type == core.EOF {
 			diagnostics = append(diagnostics, &core.Diagnostic{
-				Range:    core.Range{Start: endIndex, End: endIndex},
+				Range:    core.TextRange{Start: endIndex, End: endIndex},
 				Severity: core.SeverityError,
 				Message:  err.Msg,
 				Source:   source,
 			})
 		} else {
 			diagnostics = append(diagnostics, &core.Diagnostic{
-				Range:    token.Range(),
+				Range:    token.TextRange(),
 				Severity: core.SeverityError,
 				Message:  err.Msg,
 				Source:   source,
@@ -66,7 +66,7 @@ func CreateLinkerDiagnostics(doc *core.Document, source string) []*core.Diagnost
 	diagnostics := []*core.Diagnostic{}
 	for _, ref := range doc.References {
 		err := ref.Error()
-		rng := ref.Range()
+		rng := ref.TextRange()
 		if err != nil {
 			diagnostics = append(diagnostics, &core.Diagnostic{
 				Range:    rng,

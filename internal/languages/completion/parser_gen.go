@@ -34,7 +34,7 @@ func NewParser(sc *service.Container) *Parser {
 
 func (p *Parser) ParseRoot() Root {
 	current := NewRoot()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			p.state.Sync(Root__LoopEntry)
@@ -160,13 +160,13 @@ func (p *Parser) ParseRoot() Root {
 			}
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseDeclare() Declare {
 	current := NewDeclare()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_declare)
@@ -174,11 +174,11 @@ func (p *Parser) ParseDeclare() Declare {
 		}
 		{
 			result := core.NewCompositeNode()
-			result.SetRangeStartToken(p.state.LA(1))
+			result.SetTextRangeStart(p.state.LA(1).Range.Start)
 			p.state.EnterRule(Declare__Basic_4)
 			p.ParseFQN(result)
 			p.state.ExitRule()
-			result.SetRangeEndToken(p.state.LA(0))
+			result.SetTextRangeEnd(p.state.LA(0).Range.End)
 			if result != nil {
 				current.SetName(result)
 			}
@@ -207,13 +207,13 @@ func (p *Parser) ParseDeclare() Declare {
 			}
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseA() Obj {
 	current := NewObj()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_a)
@@ -224,13 +224,13 @@ func (p *Parser) ParseA() Obj {
 			core.AssignToken(current, token, A_first)
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseB() Obj {
 	current := NewObj()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_b)
@@ -251,13 +251,13 @@ func (p *Parser) ParseB() Obj {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseC() Obj {
 	current := NewObj()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_c)
@@ -286,13 +286,13 @@ func (p *Parser) ParseC() Obj {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseD() Obj {
 	current := NewObj()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_d)
@@ -319,13 +319,13 @@ func (p *Parser) ParseD() Obj {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseE() E {
 	current := NewE()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_e)
@@ -333,23 +333,23 @@ func (p *Parser) ParseE() E {
 		}
 		{
 			result := core.NewCompositeNode()
-			result.SetRangeStartToken(p.state.LA(1))
+			result.SetTextRangeStart(p.state.LA(1).Range.Start)
 			p.state.EnterRule(0)
 			p.ParseFQN(result)
 			p.state.ExitRule()
-			result.SetRangeEndToken(p.state.LA(0))
+			result.SetTextRangeEnd(p.state.LA(0).Range.End)
 			if result != nil {
 				current.SetRef(p.referencesConstructor.ERef(current, result))
 			}
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseDLong() Obj {
 	current := NewObj()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_common)
@@ -364,26 +364,26 @@ func (p *Parser) ParseDLong() Obj {
 			core.AssignToken(current, token, DLong_long)
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseDShort() Obj {
 	current := NewObj()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_common)
 			core.AssignToken(current, token, DShort_common)
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseF() F {
 	current := NewF()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_f)
@@ -401,33 +401,33 @@ func (p *Parser) ParseF() F {
 			}
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseFItem() FItem {
 	current := NewFItem()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			result := core.NewCompositeNode()
-			result.SetRangeStartToken(p.state.LA(1))
+			result.SetTextRangeStart(p.state.LA(1).Range.Start)
 			p.state.EnterRule(0)
 			p.ParseFQN(result)
 			p.state.ExitRule()
-			result.SetRangeEndToken(p.state.LA(0))
+			result.SetTextRangeEnd(p.state.LA(0).Range.End)
 			if result != nil {
 				current.SetRef(p.referencesConstructor.FItemRef(current, result))
 			}
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseG() G {
 	current := NewG()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_g)
@@ -441,13 +441,13 @@ func (p *Parser) ParseG() G {
 			}
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseH() H {
 	current := NewH()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_h)
@@ -462,13 +462,13 @@ func (p *Parser) ParseH() H {
 			}
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseI() H {
 	current := NewH()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_i)
@@ -483,13 +483,13 @@ func (p *Parser) ParseI() H {
 			}
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseMemberCall() MemberCall {
 	current := NewMemberCall()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Token_ID)
@@ -502,9 +502,9 @@ func (p *Parser) ParseMemberCall() MemberCall {
 		for p.lookahead.MemberCallLoop(p.state) {
 			{
 				result := NewMemberCall()
-				result.SetRange(current.Range())
+				result.SetTextRange(current.TextRange())
 				result.SetPrevious(current)
-				current.SetRangeEndToken(p.state.LA(0))
+				current.SetTextRangeEnd(p.state.LA(0).Range.End)
 				current = result
 			}
 			current := current.(MemberCall)
@@ -522,13 +522,13 @@ func (p *Parser) ParseMemberCall() MemberCall {
 			p.state.Sync(MemberCall__LoopEntry)
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseMemberCallNoDot() MemberCall {
 	current := NewMemberCall()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Token_ID)
@@ -541,9 +541,9 @@ func (p *Parser) ParseMemberCallNoDot() MemberCall {
 		for p.lookahead.MemberCallNoDotLoop(p.state) {
 			{
 				result := NewMemberCall()
-				result.SetRange(current.Range())
+				result.SetTextRange(current.TextRange())
 				result.SetPrevious(current)
-				current.SetRangeEndToken(p.state.LA(0))
+				current.SetTextRangeEnd(p.state.LA(0).Range.End)
 				current = result
 			}
 			current := current.(MemberCall)
@@ -557,13 +557,13 @@ func (p *Parser) ParseMemberCallNoDot() MemberCall {
 			p.state.Sync(MemberCallNoDot__LoopEntry)
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseJ() J {
 	current := NewJ()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_j)
@@ -587,13 +587,13 @@ func (p *Parser) ParseJ() J {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseK() K {
 	current := NewK()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_k)
@@ -628,13 +628,13 @@ func (p *Parser) ParseK() K {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseL() Obj {
 	current := NewObj()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_l)
@@ -660,13 +660,13 @@ func (p *Parser) ParseL() Obj {
 			core.AssignToken(current, token, L_end)
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseM() Obj {
 	current := NewObj()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_m)
@@ -677,13 +677,13 @@ func (p *Parser) ParseM() Obj {
 			core.AssignToken(current, token, M__Basic_0)
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseN() N {
 	current := NewN()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_n)
@@ -697,17 +697,17 @@ func (p *Parser) ParseN() N {
 			}
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseO() Obj {
 	current := NewObj()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			result := NewO()
-			result.SetRange(current.Range())
+			result.SetTextRange(current.TextRange())
 			core.AssignTokens(result, current.Tokens())
 			current = result
 		}
@@ -724,7 +724,7 @@ func (p *Parser) ParseO() Obj {
 			}
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 

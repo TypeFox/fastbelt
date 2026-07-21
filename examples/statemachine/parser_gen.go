@@ -34,7 +34,7 @@ func NewParser(sc *service.Container) *Parser {
 
 func (p *Parser) ParseStatemachine() Statemachine {
 	current := NewStatemachine()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_statemachine)
@@ -107,13 +107,13 @@ func (p *Parser) ParseStatemachine() Statemachine {
 			}
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseEvent() Event {
 	current := NewEvent()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Token_ID)
@@ -123,13 +123,13 @@ func (p *Parser) ParseEvent() Event {
 			}
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseCommand() Command {
 	current := NewCommand()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Token_ID)
@@ -139,13 +139,13 @@ func (p *Parser) ParseCommand() Command {
 			}
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseState() State {
 	current := NewState()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_state)
@@ -200,13 +200,13 @@ func (p *Parser) ParseState() State {
 			core.AssignToken(current, token, State_end)
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseTransition() Transition {
 	current := NewTransition()
-	current.SetRangeStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Token_ID)
@@ -227,6 +227,6 @@ func (p *Parser) ParseTransition() Transition {
 			}
 		}
 	}
-	current.SetRangeEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }

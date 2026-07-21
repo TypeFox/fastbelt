@@ -293,7 +293,7 @@ func extractMarkers(content string, m *TestMarking) (cleanText string, ranges []
 // locationInRange reports whether loc falls within r.
 // For point ranges (start == end), loc must equal start exactly.
 // For non-empty ranges, the interval is [start, end).
-func locationInRange(loc int, r core.Range) bool {
+func locationInRange(loc int, r core.TextRange) bool {
 	return loc >= int(r.Start) && loc < int(r.End)
 }
 
