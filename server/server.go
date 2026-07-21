@@ -26,7 +26,14 @@ type InitializeParticipant interface {
 	OnServerInitialize(params *lsp.ParamInitialize)
 }
 
-// DefaultLanguageServer implements the [lsp.Server] interface
+// DefaultLanguageServer is the default implementation of the [lsp.Server]
+// interface. It contains no feature logic itself: each supported LSP method
+// is delegated to a dedicated service (such as [CompletionProvider] or
+// [DocumentSyncher]) looked up in the service container, and request-handling
+// methods acquire the [workspace.Lock] for reading before consulting the
+// service. The capabilities announced in the initialize response reflect
+// which services are registered in the container. LSP methods without a
+// corresponding service are implemented as no-ops.
 type DefaultLanguageServer struct {
 	sc *service.Container
 }
@@ -498,7 +505,10 @@ func (s *DefaultLanguageServer) WorkDoneProgressCancel(ctx context.Context, para
 }
 
 // StartLanguageServer starts a language server using the service container.
-// It sets up JSON-RPC communication over stdio and handles the essential LSP messages.
+// It dials a JSON-RPC connection through the [jsonrpc2.Dialer] and
+// [jsonrpc2.Binder] registered in the container (see [SetupStdioServices]
+// for the stdio transport) and blocks until the connection is closed, which
+// [DefaultLanguageServer] triggers on the LSP exit notification.
 func StartLanguageServer(ctx context.Context, sc *service.Container) error {
 	dialer, err := service.Get[jsonrpc2.Dialer](sc)
 	if err != nil {
@@ -565,7 +575,10 @@ func toLspDiagnostic(d core.Diagnostic) lsp.Diagnostic {
 	return result
 }
 
-// DefaultBinder implements the jsonrpc2.Binder interface
+// DefaultBinder is the default implementation of the [jsonrpc2.Binder]
+// interface. When the connection is established, it stores it in the
+// [Connection] service and attaches the [lsp.Server] from the service
+// container as the message handler.
 type DefaultBinder struct {
 	sc *service.Container
 }

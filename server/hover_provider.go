@@ -23,6 +23,7 @@ type DefaultHoverProvider struct {
 	sc *service.Container
 }
 
+// NewDefaultHoverProvider creates a new default hover provider.
 func NewDefaultHoverProvider(sc *service.Container) HoverProvider {
 	return &DefaultHoverProvider{sc: sc}
 }

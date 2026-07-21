@@ -13,6 +13,9 @@ import (
 	"typefox.dev/fastbelt/util/service"
 )
 
+// SetupStdioServices registers the transport services for JSON-RPC
+// communication over stdin/stdout. It should be called together with
+// [SetupDefaultServices]. If any service is already set, it's not overwritten.
 func SetupStdioServices(sc *service.Container) {
 	if !service.Has[jsonrpc2.Binder](sc) {
 		service.Put[jsonrpc2.Binder](sc, NewDefaultBinder(sc))
@@ -22,9 +25,10 @@ func SetupStdioServices(sc *service.Container) {
 	}
 }
 
-// StdioDialer implements jsonrpc2.Dialer for stdio communication
+// StdioDialer implements [jsonrpc2.Dialer] for communication over stdin/stdout.
 type StdioDialer struct{}
 
+// NewStdioDialer creates a dialer that communicates over stdin/stdout.
 func NewStdioDialer() *StdioDialer {
 	return &StdioDialer{}
 }

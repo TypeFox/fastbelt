@@ -12,6 +12,10 @@ import (
 	"typefox.dev/fastbelt/util/service"
 )
 
+// FoundName is the result of a [NameFinder.Find] call. Either field may be
+// nil if the search could not determine the corresponding unit. Source and
+// Target are the same unit when the search started on a symbol's declaration
+// name rather than on a reference to it.
 type FoundName struct {
 	// The unit that contains the token that was used to start the search.
 	Source core.StringUnit
@@ -31,10 +35,16 @@ type NameFinder interface {
 	Find(ctx context.Context, first, second *core.Token) FoundName
 }
 
+// DefaultNameFinder is the default implementation of [NameFinder].
+// If a given token belongs to a cross-reference, it resolves the reference
+// and returns the name unit of the target symbol; if the token lies within
+// the name of a declaration, it returns that name unit as both source and
+// target.
 type DefaultNameFinder struct {
 	sc *service.Container
 }
 
+// NewDefaultNameFinder creates a new default name finder.
 func NewDefaultNameFinder(sc *service.Container) NameFinder {
 	return &DefaultNameFinder{sc: sc}
 }
