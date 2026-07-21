@@ -23,6 +23,7 @@ type DefaultReferencesProvider struct {
 	sc *service.Container
 }
 
+// NewDefaultReferencesProvider creates a new default references provider.
 func NewDefaultReferencesProvider(sc *service.Container) ReferencesProvider {
 	return &DefaultReferencesProvider{sc: sc}
 }

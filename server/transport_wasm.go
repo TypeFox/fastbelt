@@ -15,6 +15,10 @@ import (
 	"typefox.dev/fastbelt/util/service"
 )
 
+// SetupWasmServices registers the transport services for JSON-RPC
+// communication with a JavaScript host in a js/wasm build. It should be
+// called together with [SetupDefaultServices]. If any service is already
+// set, it's not overwritten.
 func SetupWasmServices(sc *service.Container) {
 	if !service.Has[jsonrpc2.Binder](sc) {
 		service.Put[jsonrpc2.Binder](sc, NewWasmBinder(sc))

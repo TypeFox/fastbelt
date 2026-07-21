@@ -25,7 +25,8 @@ func NewSlogHandler(sc *service.Container) slog.Handler {
 	return &SlogHandler{sc: sc}
 }
 
-// Initializes the default slog handler to send log messages to the LSP client.
+// OnServerInitialize implements [InitializeParticipant] by installing this
+// handler as the default slog handler, so log messages are sent to the LSP client.
 func (h *SlogHandler) OnServerInitialize(_ *lsp.ParamInitialize) {
 	slog.SetDefault(slog.New(h))
 }
@@ -50,12 +51,12 @@ func (h *SlogHandler) Handle(ctx context.Context, record slog.Record) error {
 	return h.write(ctx, lspLevel, record.Message)
 }
 
-// No-op implementation. [SlogHandler] does not support attributes.
+// WithAttrs returns the handler unchanged. [SlogHandler] does not support attributes.
 func (h *SlogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return h
 }
 
-// No-op implementation. [SlogHandler] does not support groups.
+// WithGroup returns the handler unchanged. [SlogHandler] does not support groups.
 func (h *SlogHandler) WithGroup(name string) slog.Handler {
 	return h
 }
