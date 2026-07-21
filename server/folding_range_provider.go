@@ -60,11 +60,16 @@ func (f *DefaultFoldingRangeFilter) IncludeLastFoldingLineForComment() bool {
 	return true
 }
 
+// DefaultFoldingRangeProvider is the default implementation of [FoldingRangeProvider].
+// It derives folding ranges from multi-line AST nodes and comments, with the
+// details controlled by a [FoldingRangeFilter].
 type DefaultFoldingRangeProvider struct {
 	sc     *service.Container
 	filter FoldingRangeFilter
 }
 
+// NewDefaultFoldingRangeProvider creates a folding range provider with the
+// [DefaultFoldingRangeFilter].
 func NewDefaultFoldingRangeProvider(sc *service.Container) FoldingRangeProvider {
 	return &DefaultFoldingRangeProvider{
 		sc:     sc,
@@ -72,6 +77,8 @@ func NewDefaultFoldingRangeProvider(sc *service.Container) FoldingRangeProvider 
 	}
 }
 
+// NewFoldingRangeProviderWithFilter creates a folding range provider with a
+// custom [FoldingRangeFilter].
 func NewFoldingRangeProviderWithFilter(sc *service.Container, filter FoldingRangeFilter) FoldingRangeProvider {
 	return &DefaultFoldingRangeProvider{
 		sc:     sc,

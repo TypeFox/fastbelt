@@ -16,12 +16,14 @@ import (
 )
 
 // DiagnosticsPublisher is responsible for publishing diagnostics to the LSP client.
-// The default implementation publishes diagnostics in the following scenarios:
-// Document is opened (reuses diagnostics from build).
-// Document is closed (clears diagnostics).
-// Document is validated by the builder.
+// It publishes diagnostics in the following scenarios:
 //
-// When registered to a service container, it automatically hooks into the document lifecycle events.
+//   - A document is opened (reuses diagnostics from build).
+//   - A document is closed (clears diagnostics).
+//   - A document is validated by the builder.
+//
+// When registered to a service container, it automatically hooks into the
+// document lifecycle events during server initialization.
 type DiagnosticsPublisher struct {
 	sc *service.Container
 }
@@ -31,6 +33,8 @@ func NewDiagnosticsPublisher(sc *service.Container) *DiagnosticsPublisher {
 	return &DiagnosticsPublisher{sc: sc}
 }
 
+// OnServerInitialize implements [InitializeParticipant] by subscribing to the
+// document lifecycle events that trigger publishing diagnostics.
 func (d *DiagnosticsPublisher) OnServerInitialize(_ *lsp.ParamInitialize) {
 	store, err := service.Get[textdoc.Store](d.sc)
 	if err != nil {
