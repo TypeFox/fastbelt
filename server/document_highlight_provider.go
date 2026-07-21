@@ -13,6 +13,7 @@ import (
 	"typefox.dev/lsp"
 )
 
+// DocumentHighlightProvider is a service for handling LSP document highlight requests.
 type DocumentHighlightProvider interface {
 	HandleDocumentHighlightRequest(ctx context.Context, params *lsp.DocumentHighlightParams) ([]lsp.DocumentHighlight, error)
 }
@@ -21,10 +22,14 @@ type DocumentHighlightProvider interface {
 var _ DocumentHighlightProvider = (*DefaultDocumentHighlightProvider)(nil)
 var _ DocumentStateRequirements = (*DefaultDocumentHighlightProvider)(nil)
 
+// DefaultDocumentHighlightProvider is the default implementation of [DocumentHighlightProvider].
+// It highlights all references to the symbol at the cursor position that are
+// located in the same document, using [NameFinder] and [ReferencesFinder].
 type DefaultDocumentHighlightProvider struct {
 	sc *service.Container
 }
 
+// NewDefaultDocumentHighlightProvider creates a new default document highlight provider.
 func NewDefaultDocumentHighlightProvider(sc *service.Container) DocumentHighlightProvider {
 	return &DefaultDocumentHighlightProvider{sc: sc}
 }

@@ -72,6 +72,7 @@ type DefaultDocumentSynchronizer struct {
 	mu                        sync.RWMutex
 }
 
+// NewDefaultDocumentSynchronizer creates a new default document synchronizer.
 func NewDefaultDocumentSynchronizer(sc *service.Container) DocumentSynchronizer {
 	return &DefaultDocumentSynchronizer{sc: sc}
 }

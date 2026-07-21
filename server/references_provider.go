@@ -33,6 +33,7 @@ func (rf *DefaultReferencesProvider) RequiredState() (core.DocumentState, bool) 
 	return core.DocStateReferences, true
 }
 
+// NewDefaultReferencesProvider creates a new default references provider.
 func NewDefaultReferencesProvider(sc *service.Container) ReferencesProvider {
 	return &DefaultReferencesProvider{sc: sc}
 }

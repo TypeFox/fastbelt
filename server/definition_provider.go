@@ -29,6 +29,7 @@ type DefaultDefinitionProvider struct {
 var _ DefinitionProvider = (*DefaultDefinitionProvider)(nil)
 var _ DocumentStateRequirements = (*DefaultDefinitionProvider)(nil)
 
+// NewDefaultDefinitionProvider creates a new default definition provider.
 func NewDefaultDefinitionProvider(sc *service.Container) DefinitionProvider {
 	return &DefaultDefinitionProvider{sc: sc}
 }
