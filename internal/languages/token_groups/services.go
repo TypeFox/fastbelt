@@ -7,6 +7,7 @@ package token_groups
 //go:generate go run ../../../cmd/fastbelt generate ./token_groups.fb -v
 
 import (
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
@@ -15,8 +16,12 @@ import (
 )
 
 func SetupServices(sc *service.Container) {
-	service.Put[workspace.LanguageID](sc, "completion")
-	service.Put[workspace.FileExtensions](sc, []string{".cmpl"})
+	service.Put[core.LanguageSelector](
+		sc,
+		core.NewDefaultLanguageSelector(sc,
+			core.NewDocumentSelectorWithPatterns("token_groups", "**/*.tg"),
+		),
+	)
 	textdoc.SetupDefaultServices(sc)
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)

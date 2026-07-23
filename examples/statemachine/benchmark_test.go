@@ -45,10 +45,7 @@ func BenchmarkWorkspaceCycle(b *testing.B) {
 		docs := make([]*fastbelt.Document, resourceCount)
 		for i, content := range contents {
 			uri := fmt.Sprintf("file:///workspace/statemachine_%d.statemachine", i)
-			doc, err := fastbelt.NewDocumentFromString(uri, "statemachine", content)
-			if err != nil {
-				b.Fatal(err)
-			}
+			doc := fastbelt.NewDocumentFromString(uri, "statemachine", content)
 			docs[i] = doc
 			docManager.Set(doc)
 		}
@@ -72,10 +69,7 @@ func BenchmarkTraverseContentSeq(b *testing.B) {
 	content, _ := generateStatemachineContent(0)
 	srv := CreateServices()
 	documentParser := service.MustGet[workspace.DocumentParser](srv)
-	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
-	if err != nil {
-		b.Fatal(err)
-	}
+	doc := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	documentParser.Parse(doc)
 
 	for b.Loop() {
@@ -91,10 +85,7 @@ func TestAllNodesEquivalence(t *testing.T) {
 	content, elementCount := generateStatemachineContent(0)
 	srv := CreateServices()
 	documentParser := service.MustGet[workspace.DocumentParser](srv)
-	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
-	if err != nil {
-		t.Fatal(err)
-	}
+	doc := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	documentParser.Parse(doc)
 	nodeCount := 0
 	for range fastbelt.AllNodes(doc.Root) {
@@ -108,10 +99,7 @@ func TestAllChildrenEquivalence(t *testing.T) {
 	totalCount := elementCount - 1 // AllChildren does not include the root node, so we subtract 1 from the total count
 	srv := CreateServices()
 	documentParser := service.MustGet[workspace.DocumentParser](srv)
-	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
-	if err != nil {
-		t.Fatal(err)
-	}
+	doc := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	documentParser.Parse(doc)
 	childCount := 0
 	for range fastbelt.AllChildren(doc.Root) {
@@ -128,10 +116,7 @@ func BenchmarkParser(b *testing.B) {
 	lexerService := service.MustGet[lexer.Lexer](srv)
 	parserService := service.MustGet[parser.Parser](srv)
 	tokens := lexerService.Lex(content).Tokens
-	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
-	if err != nil {
-		b.Fatal(err)
-	}
+	doc := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	doc.Tokens = tokens
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
@@ -158,10 +143,7 @@ func BenchmarkLexerAndParser(b *testing.B) {
 	srv := CreateServices()
 	lexerService := service.MustGet[lexer.Lexer](srv)
 	parserService := service.MustGet[parser.Parser](srv)
-	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
-	if err != nil {
-		b.Fatal(err)
-	}
+	doc := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
@@ -174,10 +156,7 @@ func BenchmarkLexerAndParser(b *testing.B) {
 func BenchmarkLocalLinking(b *testing.B) {
 	content, _ := generateStatemachineContent(0)
 	srv := CreateServices()
-	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
-	if err != nil {
-		b.Fatal(err)
-	}
+	doc := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	docs := []*fastbelt.Document{doc}
 	builder := service.MustGet[workspace.Builder](srv)
 	// Prebuild the file - we will reset the references later

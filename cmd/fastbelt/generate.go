@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/internal/generator"
+	"typefox.dev/fastbelt/cmd"
 	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
@@ -55,7 +55,7 @@ func runGenerateCLI(opts generateOptions) error {
 	}
 
 	sc := grammar.CreateServices()
-	file, _ := textdoc.NewFile(lsp.URIFromPath(grammarPath), "fb", 0, string(grammarText))
+	file := textdoc.NewFile(lsp.URIFromPath(grammarPath), "fb", 0, string(grammarText))
 
 	document := core.NewDocument(file)
 	documents, err := service.Get[workspace.DocumentManager](sc)
@@ -102,71 +102,19 @@ func runGenerateCLI(opts generateOptions) error {
 		return fmt.Errorf("aborting code generation due to %d errors", errCount)
 	}
 
-	grammar, ok := document.Root.(grammar.Grammar)
+	g, ok := document.Root.(grammar.Grammar)
 	if !ok {
 		return fmt.Errorf("parser result is not a Grammar")
 	}
-	entryRule, err := validateEntryRule(grammar)
+	entryRule, err := validateEntryRule(g)
 	if err != nil {
 		return err
 	}
 
-	writeFile := func(name, path, content string) error {
-		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
-			return fmt.Errorf("failed to write %s: %w", name, err)
-		}
-		if verbose {
-			fmt.Printf("Written: %s\n", path)
-		}
-		return nil
-	}
-
-	if err := writeFile("linker", filepath.Join(outputPath, "linker_gen.go"),
-		generator.GenerateLinker(grammar, packageName)); err != nil {
-		return err
-	}
-	if err := writeFile("types", filepath.Join(outputPath, "types_gen.go"),
-		generator.GenerateTypes(grammar, packageName)); err != nil {
-		return err
-	}
-	tokenTypes := generator.GenerateTokenTypes(grammar)
-	atnData := generator.BuildParserATNData(grammar, tokenTypes)
-	if err := writeFile("parser", filepath.Join(outputPath, "parser_gen.go"),
-		generator.GenerateParser(grammar, entryRule, packageName, tokenTypes, atnData)); err != nil {
-		return err
-	}
-	if err := writeFile("completion-parser", filepath.Join(outputPath, "completion_parser_gen.go"),
-		generator.GenerateCompletionParser(grammar, entryRule, packageName, tokenTypes, atnData)); err != nil {
-		return err
-	}
-	if err := writeFile("parser-lookahead", filepath.Join(outputPath, "parser_lookahead_gen.go"),
-		generator.GenerateParserLookahead(grammar, packageName, tokenTypes, atnData)); err != nil {
-		return err
-	}
-	if err := writeFile("completion", filepath.Join(outputPath, "completion_gen.go"),
-		generator.GenerateCompletion(grammar, packageName)); err != nil {
-		return err
-	}
-	if err := writeFile("lexer", filepath.Join(outputPath, "lexer_gen.go"),
-		generator.GenerateLexer(grammar, packageName, tokenTypes)); err != nil {
-		return err
-	}
-	if err := writeFile("services", filepath.Join(outputPath, "services_gen.go"),
-		generator.GenerateServices(grammar, packageName)); err != nil {
-		return err
-	}
-	if err := writeFile("atn", filepath.Join(outputPath, "atn_gen.go"),
-		generator.GenerateATN(grammar, packageName, tokenTypes)); err != nil {
-		return err
-	}
-	if opts.atn {
-		if err := writeFile("atn-md", filepath.Join(outputPath, "atn.md"),
-			generator.GenerateATNMarkdown(grammar, packageName, tokenTypes)); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	// Delegate code generation to the shared build API. A single-language CLI
+	// build passes exactly one entry rule, so the generated parser keeps its
+	// direct (non-dispatching) Parse body.
+	return cmd.Generate(g, []grammar.ParserRule{entryRule}, nil, outputPath, packageName, opts.atn, verbose)
 }
 
 func validateEntryRule(g grammar.Grammar) (grammar.ParserRule, error) {
