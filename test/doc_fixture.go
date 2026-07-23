@@ -213,10 +213,7 @@ func (d *Doc) markerRanges(label string) []core.TextRange {
 	var result []core.TextRange
 	for _, r := range d.Ranges {
 		if r.Label == label {
-			result = append(result, core.TextRange{
-				Start: int32(r.Start),
-				End:   int32(r.End),
-			})
+			result = append(result, core.NewTextRange(r.Start, r.End))
 		}
 	}
 	return result
