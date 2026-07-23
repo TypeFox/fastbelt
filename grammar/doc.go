@@ -24,6 +24,26 @@
 // The name is used by Fastbelt when naming the generated package and
 // language server.
 //
+// # Multiple Grammar Files
+//
+// A grammar may be split across several .fb files. All .fb files in one
+// directory form a single grammar: they must declare the same grammar name,
+// and rules, tokens, token groups, token modes and interfaces declared in any
+// of them are visible from every other one. Names are unique across the
+// directory, token modes are shared (with exactly one default mode between all
+// files), and a rule's implicit return type may be an interface declared in a
+// sibling file. Validation treats the directory as a whole, so a problem that
+// spans two files, such as a duplicate name, is reported in both.
+//
+// Token rule order is significant for lexing (see Token Rules below), and the
+// grammar is only well defined if the order is independent of how the files
+// are loaded. Across files, token rules are ordered by file path (alphabetical,
+// as the files appear in the directory listing) and then by declaration order
+// within each file. There is no validation that catches two token rules in
+// different files that match the same text, so a grammar whose token rules
+// overlap across files should use token modes: the member order of a token
+// mode defines the precedence explicitly and is independent of file names.
+//
 // # Interface Declarations
 //
 // Every type that a parser rule creates must be declared explicitly as an
@@ -183,8 +203,11 @@
 // # Parser Rules
 //
 // Parser rules define what sequences of tokens are valid and how to populate
-// the fields of the AST nodes they create. The first parser rule in the file
-// is the entry rule: the starting point of the parse.
+// the fields of the AST nodes they create. The rule marked with the entry
+// keyword is the entry rule: the starting point of the parse. The fastbelt
+// generate command expects exactly one entry rule in the grammar, while a
+// programmatic build (see the cmd package) can select one entry rule per
+// language.
 //
 // A parser rule starts with its name, an optional returns clause naming the
 // interface type it creates, a colon, and the rule body:

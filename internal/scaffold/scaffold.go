@@ -325,7 +325,7 @@ func (s *Scaffolder) scaffoldTemplatedFiles(params templateParams) error {
 	jobs := []job{
 		{"README.md.tmpl", "README.md"},
 		{"gitignore.tmpl", ".gitignore"},
-		{"gen.go.tmpl", "gen.go"},
+		{"gen/main.go.tmpl", filepath.Join("gen", "main.go")},
 		{"services.go.tmpl", "services.go"},
 		{"grammar.fb.tmpl", params.GrammarFile},
 		{"cmd/main.go.tmpl", filepath.Join("cmd", params.LSPSlug, "main.go")},

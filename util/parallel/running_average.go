@@ -26,7 +26,11 @@ func NewRunningAverage(def float64) *RunningAverage {
 // Value returns the current average, or the default passed to
 // [NewRunningAverage] if no sample has been recorded yet.
 func (r *RunningAverage) Value() float64 {
-	bits := r.bits.Load()
+	return r.value(r.bits.Load())
+}
+
+// value decodes bits; zero (no sample recorded yet) means the default.
+func (r *RunningAverage) value(bits uint64) float64 {
 	if bits == 0 {
 		return r.def
 	}
@@ -36,8 +40,13 @@ func (r *RunningAverage) Value() float64 {
 // Update folds sample into the running average, weighting the existing
 // average at 90% and the new sample at 10%.
 func (r *RunningAverage) Update(sample float64) {
-	next := r.Value()*0.9 + sample*0.1
-	r.bits.Store(math.Float64bits(next))
+	for {
+		old := r.bits.Load()
+		next := r.value(old)*0.9 + sample*0.1
+		if r.bits.CompareAndSwap(old, math.Float64bits(next)) {
+			return
+		}
+	}
 }
 
 // Capacity returns the ideal slice capacity for a new slice relative
