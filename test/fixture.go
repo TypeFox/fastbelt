@@ -118,15 +118,10 @@ func (f *Fixture) WithMarking(m *TestMarking) *Fixture {
 }
 
 // Parse builds a single in-memory document from content. Markers are extracted before
-// parsing. The URI is "inmemory://test<ext>" where <ext> is the first entry in
-// WorkspaceSrv.FileExtensions (e.g. ".statemachine"), or "inmemory://test" if none
-// are configured.
+// parsing. The URI is "inmemory://test". Use [ParseURI] to specify a different URI.
 func (f *Fixture) Parse(content string) *Doc {
 	f.t.Helper()
 	uri := "inmemory://test"
-	if exts := service.MustGet[workspace.FileExtensions](f.sc); len(exts) > 0 {
-		uri = "inmemory://test" + exts[0]
-	}
 	return f.ParseURI(content, uri)
 }
 
@@ -135,11 +130,10 @@ func (f *Fixture) Parse(content string) *Doc {
 func (f *Fixture) ParseURI(content, uri string) *Doc {
 	f.t.Helper()
 	cleanText, ranges, indices := extractMarkers(content, f.marking)
-	languageID := service.MustGet[workspace.LanguageID](f.sc)
-	overlay, err := textdoc.NewOverlay(lsp.DocumentURI(uri), string(languageID), 0, cleanText)
-	if err != nil {
-		f.t.Fatalf("fbtest: failed to create document %q: %v", uri, err)
-	}
+	parsedUri := core.ParseURI(uri)
+	selector := service.MustGet[core.LanguageSelector](f.sc)
+	_, languageID := selector.Select(parsedUri)
+	overlay := textdoc.NewOverlay(parsedUri.DocumentURI(), languageID, 0, cleanText)
 	doc := core.NewDocument(overlay)
 	documents := service.MustGet[workspace.DocumentManager](f.sc)
 	documents.Set(doc)
@@ -159,17 +153,16 @@ func (f *Fixture) ParseAll(uriContentPairs ...string) []*Doc {
 	if len(uriContentPairs)%2 != 0 {
 		f.t.Fatalf("fbtest: ParseAll requires an even number of arguments (uri, content pairs)")
 	}
+	selector := service.MustGet[core.LanguageSelector](f.sc)
 	n := len(uriContentPairs) / 2
 	coreDocs := make([]*core.Document, 0, n)
 	results := make([]*Doc, 0, n)
 	for i := 0; i < len(uriContentPairs); i += 2 {
 		uri, content := uriContentPairs[i], uriContentPairs[i+1]
+		parsedURI := core.ParseURI(uri)
 		cleanText, ranges, indices := extractMarkers(content, f.marking)
-		languageID := service.MustGet[workspace.LanguageID](f.sc)
-		overlay, err := textdoc.NewOverlay(lsp.DocumentURI(uri), string(languageID), 0, cleanText)
-		if err != nil {
-			f.t.Fatalf("fbtest: failed to create document %q: %v", uri, err)
-		}
+		_, languageID := selector.Select(parsedURI)
+		overlay := textdoc.NewOverlay(parsedURI.DocumentURI(), languageID, 0, cleanText)
 		doc := core.NewDocument(overlay)
 		documents := service.MustGet[workspace.DocumentManager](f.sc)
 		documents.Set(doc)

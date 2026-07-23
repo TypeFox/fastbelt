@@ -99,13 +99,10 @@ func NewDocument(textDoc textdoc.Handle) *Document {
 //
 // It is useful in tests, benchmarks, and tooling code that needs a document instance
 // without going through the workspace file-loading pipeline.
-func NewDocumentFromString(uri, languageId, content string) (*Document, error) {
-	textDoc, err := textdoc.NewFile(lsp.DocumentURI(uri), languageId, 1, content)
-	if err != nil {
-		return nil, err
-	}
+func NewDocumentFromString(uri, languageId, content string) *Document {
+	textDoc := textdoc.NewFile(lsp.DocumentURI(uri), languageId, 1, content)
 	doc := NewDocument(textDoc)
-	return doc, nil
+	return doc
 }
 
 // DocumentState is a bitmask capturing the already completed build phases of a document.

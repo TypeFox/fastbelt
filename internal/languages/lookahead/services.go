@@ -7,6 +7,7 @@ package lookahead
 //go:generate go run ../../../cmd/fastbelt generate ./lookahead.fb -v
 
 import (
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/server"
@@ -17,8 +18,12 @@ import (
 
 // SetupServices sets up the base services for the lookahead test language.
 func SetupServices(sc *service.Container) {
-	service.Put[workspace.LanguageID](sc, "lookahead")
-	service.Put[workspace.FileExtensions](sc, []string{".la"})
+	service.Put[core.LanguageSelector](
+		sc,
+		core.NewDefaultLanguageSelector(sc,
+			core.NewDocumentSelectorWithPatterns("lookahead", "**/*.la"),
+		),
+	)
 	textdoc.SetupDefaultServices(sc)
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)

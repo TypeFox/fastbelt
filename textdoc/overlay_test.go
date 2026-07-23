@@ -12,10 +12,7 @@ import (
 )
 
 func TestUpdate(t *testing.T) {
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "hello world")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, "hello world")
 
 	// Test incremental change
 	changes := []lsp.TextDocumentContentChangeEvent{
@@ -28,7 +25,7 @@ func TestUpdate(t *testing.T) {
 		},
 	}
 
-	err = doc.Update(changes, 2)
+	err := doc.Update(changes, 2)
 	if err != nil {
 		t.Errorf("Update failed: %v", err)
 	}
@@ -43,10 +40,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestUpdateFullDocument(t *testing.T) {
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "hello world")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, "hello world")
 
 	// Test full document change
 	changes := []lsp.TextDocumentContentChangeEvent{
@@ -55,7 +49,7 @@ func TestUpdateFullDocument(t *testing.T) {
 		},
 	}
 
-	err = doc.Update(changes, 2)
+	err := doc.Update(changes, 2)
 	if err != nil {
 		t.Errorf("Update failed: %v", err)
 	}
@@ -66,10 +60,7 @@ func TestUpdateFullDocument(t *testing.T) {
 }
 
 func TestApplyEdits(t *testing.T) {
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "hello world")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, "hello world")
 
 	edits := []lsp.TextEdit{
 		{
@@ -101,12 +92,9 @@ func TestApplyEdits(t *testing.T) {
 
 func TestErrorHandling(t *testing.T) {
 	// Test version going backwards
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 5, "content")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 5, "content")
 
-	err = doc.Update([]lsp.TextDocumentContentChangeEvent{{Text: "new"}}, 3)
+	err := doc.Update([]lsp.TextDocumentContentChangeEvent{{Text: "new"}}, 3)
 	if err == nil {
 		t.Error("Expected error for version going backwards")
 	}
@@ -117,10 +105,7 @@ func TestErrorHandling(t *testing.T) {
 
 func TestUpdateErrorMessageFormat(t *testing.T) {
 	// Test that error messages are properly formatted with package prefix
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "hello")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, "hello")
 
 	// Test with invalid range to trigger an error
 	changes := []lsp.TextDocumentContentChangeEvent{
@@ -133,7 +118,7 @@ func TestUpdateErrorMessageFormat(t *testing.T) {
 		},
 	}
 
-	err = doc.Update(changes, 2)
+	err := doc.Update(changes, 2)
 	if err == nil {
 		t.Error("Expected error for invalid range")
 	}
@@ -145,10 +130,7 @@ func TestUpdateErrorMessageFormat(t *testing.T) {
 }
 
 func TestUpdateMultipleChanges(t *testing.T) {
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "hello world")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, "hello world")
 
 	// Apply multiple changes in one update.
 	// Important: Changes are applied sequentially, so each change's positions
@@ -173,7 +155,7 @@ func TestUpdateMultipleChanges(t *testing.T) {
 		},
 	}
 
-	err = doc.Update(changes, 2)
+	err := doc.Update(changes, 2)
 	if err != nil {
 		t.Errorf("Update with multiple changes failed: %v", err)
 	}
@@ -185,10 +167,7 @@ func TestUpdateMultipleChanges(t *testing.T) {
 }
 
 func TestUpdateInvalidLine(t *testing.T) {
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "hello")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, "hello")
 
 	// Try to change a line that doesn't exist
 	changes := []lsp.TextDocumentContentChangeEvent{
@@ -201,7 +180,7 @@ func TestUpdateInvalidLine(t *testing.T) {
 		},
 	}
 
-	err = doc.Update(changes, 2)
+	err := doc.Update(changes, 2)
 	if err == nil {
 		t.Error("Expected error for invalid line number")
 	}
@@ -211,10 +190,7 @@ func TestUpdateInvalidLine(t *testing.T) {
 }
 
 func TestUpdateEmptyRangeInsertion(t *testing.T) {
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "hello")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, "hello")
 
 	// Insert text without replacing anything (empty range)
 	changes := []lsp.TextDocumentContentChangeEvent{
@@ -227,7 +203,7 @@ func TestUpdateEmptyRangeInsertion(t *testing.T) {
 		},
 	}
 
-	err = doc.Update(changes, 2)
+	err := doc.Update(changes, 2)
 	if err != nil {
 		t.Errorf("Update with empty range insertion failed: %v", err)
 	}
@@ -239,10 +215,7 @@ func TestUpdateEmptyRangeInsertion(t *testing.T) {
 }
 
 func TestUpdateDeletion(t *testing.T) {
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "hello world")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, "hello world")
 
 	// Delete text (empty replacement)
 	changes := []lsp.TextDocumentContentChangeEvent{
@@ -255,7 +228,7 @@ func TestUpdateDeletion(t *testing.T) {
 		},
 	}
 
-	err = doc.Update(changes, 2)
+	err := doc.Update(changes, 2)
 	if err != nil {
 		t.Errorf("Update with deletion failed: %v", err)
 	}
@@ -267,10 +240,7 @@ func TestUpdateDeletion(t *testing.T) {
 }
 
 func TestUpdateMultiLine(t *testing.T) {
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "line1\nline2\nline3")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, "line1\nline2\nline3")
 
 	// Replace text spanning multiple lines
 	changes := []lsp.TextDocumentContentChangeEvent{
@@ -283,7 +253,7 @@ func TestUpdateMultiLine(t *testing.T) {
 		},
 	}
 
-	err = doc.Update(changes, 2)
+	err := doc.Update(changes, 2)
 	if err != nil {
 		t.Errorf("Update with multi-line range failed: %v", err)
 	}
@@ -295,10 +265,7 @@ func TestUpdateMultiLine(t *testing.T) {
 }
 
 func TestUpdateAtDocumentBoundaries(t *testing.T) {
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "hello")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, "hello")
 
 	// Insert at start
 	changes := []lsp.TextDocumentContentChangeEvent{
@@ -311,7 +278,7 @@ func TestUpdateAtDocumentBoundaries(t *testing.T) {
 		},
 	}
 
-	err = doc.Update(changes, 2)
+	err := doc.Update(changes, 2)
 	if err != nil {
 		t.Errorf("Update at document start failed: %v", err)
 	}
@@ -342,10 +309,7 @@ func TestUpdateAtDocumentBoundaries(t *testing.T) {
 }
 
 func TestUpdateWithWindowsLineEndings(t *testing.T) {
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "line1\r\nline2\r\nline3")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, "line1\r\nline2\r\nline3")
 
 	// Replace text on second line
 	changes := []lsp.TextDocumentContentChangeEvent{
@@ -358,7 +322,7 @@ func TestUpdateWithWindowsLineEndings(t *testing.T) {
 		},
 	}
 
-	err = doc.Update(changes, 2)
+	err := doc.Update(changes, 2)
 	if err != nil {
 		t.Errorf("Update with Windows line endings failed: %v", err)
 	}
@@ -375,10 +339,7 @@ func TestUpdateWithWindowsLineEndings(t *testing.T) {
 }
 
 func TestUpdatePositionAtEndOfLine(t *testing.T) {
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "hello\nworld")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, "hello\nworld")
 
 	// Insert at end of first line (at the newline position)
 	changes := []lsp.TextDocumentContentChangeEvent{
@@ -391,7 +352,7 @@ func TestUpdatePositionAtEndOfLine(t *testing.T) {
 		},
 	}
 
-	err = doc.Update(changes, 2)
+	err := doc.Update(changes, 2)
 	if err != nil {
 		t.Errorf("Update at end of line failed: %v", err)
 	}
@@ -403,10 +364,7 @@ func TestUpdatePositionAtEndOfLine(t *testing.T) {
 }
 
 func TestUpdateEmptyDocument(t *testing.T) {
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, "")
 
 	// Insert into empty document
 	changes := []lsp.TextDocumentContentChangeEvent{
@@ -419,7 +377,7 @@ func TestUpdateEmptyDocument(t *testing.T) {
 		},
 	}
 
-	err = doc.Update(changes, 2)
+	err := doc.Update(changes, 2)
 	if err != nil {
 		t.Errorf("Update on empty document failed: %v", err)
 	}
@@ -430,10 +388,7 @@ func TestUpdateEmptyDocument(t *testing.T) {
 }
 
 func TestUpdateBackwardsRange(t *testing.T) {
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "hello world")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, "hello world")
 
 	// Provide a backwards range (end before start) - should be normalized by getWellFormedRange
 	changes := []lsp.TextDocumentContentChangeEvent{
@@ -446,7 +401,7 @@ func TestUpdateBackwardsRange(t *testing.T) {
 		},
 	}
 
-	err = doc.Update(changes, 2)
+	err := doc.Update(changes, 2)
 	if err != nil {
 		t.Errorf("Update with backwards range failed: %v", err)
 	}
@@ -541,11 +496,8 @@ func TestUpdateUTF16(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			doc, err := NewOverlay("file:///test.txt", "plaintext", 1, tc.content)
-			if err != nil {
-				t.Fatalf("NewOverlay failed: %v", err)
-			}
-			err = doc.Update(tc.changes, 2)
+			doc := NewOverlay("file:///test.txt", "plaintext", 1, tc.content)
+			err := doc.Update(tc.changes, 2)
 			if err != nil {
 				t.Fatalf("Update failed: %v", err)
 			}
@@ -595,11 +547,8 @@ func TestUpdateUTF16Validation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			doc, err := NewOverlay("file:///test.txt", "plaintext", 1, tc.content)
-			if err != nil {
-				t.Fatalf("NewOverlay failed: %v", err)
-			}
-			err = doc.Update([]lsp.TextDocumentContentChangeEvent{
+			doc := NewOverlay("file:///test.txt", "plaintext", 1, tc.content)
+			err := doc.Update([]lsp.TextDocumentContentChangeEvent{
 				{
 					Range: &lsp.Range{
 						Start: lsp.Position{Line: 0, Character: tc.character},
@@ -677,10 +626,7 @@ func TestApplyEditsUTF16(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			doc, err := NewOverlay("file:///test.txt", "plaintext", 1, tc.content)
-			if err != nil {
-				t.Fatalf("NewOverlay failed: %v", err)
-			}
+			doc := NewOverlay("file:///test.txt", "plaintext", 1, tc.content)
 			result, err := doc.ApplyEdits(tc.edits)
 			if err != nil {
 				t.Fatalf("ApplyEdits failed: %v", err)
@@ -693,10 +639,7 @@ func TestApplyEditsUTF16(t *testing.T) {
 }
 
 func TestUpdateConsecutiveUpdates(t *testing.T) {
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, "a\nb\nc")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, "a\nb\nc")
 
 	// First update
 	changes := []lsp.TextDocumentContentChangeEvent{
@@ -709,7 +652,7 @@ func TestUpdateConsecutiveUpdates(t *testing.T) {
 		},
 	}
 
-	err = doc.Update(changes, 2)
+	err := doc.Update(changes, 2)
 	if err != nil {
 		t.Errorf("First update failed: %v", err)
 	}

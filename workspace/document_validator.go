@@ -35,7 +35,7 @@ func (s *DefaultDocumentValidator) Validate(ctx context.Context, doc *core.Docum
 		return nil
 	}
 
-	source := diagnosticSource(s.sc, doc)
+	source := diagnosticSource(doc)
 
 	lexerErrors := CreateLexerDiagnostics(doc, source)
 	parserErrors := CreateParserDiagnostics(doc, source)
@@ -64,14 +64,9 @@ func (s *DefaultDocumentValidator) Validate(ctx context.Context, doc *core.Docum
 	return diagnostics
 }
 
-func diagnosticSource(sc *service.Container, doc *core.Document) string {
+func diagnosticSource(doc *core.Document) string {
 	if doc.TextDoc != nil {
-		if source := doc.TextDoc.LanguageID(); source != "" {
-			return source
-		}
-	}
-	if languageID, err := service.Get[LanguageID](sc); err == nil {
-		return string(languageID)
+		return doc.TextDoc.LanguageID()
 	}
 	return ""
 }

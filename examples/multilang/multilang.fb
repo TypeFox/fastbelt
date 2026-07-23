@@ -1,0 +1,15 @@
+grammar MultilangModel
+
+interface Greeting {
+    Name string
+}
+
+interface Farewell {
+    Name string
+}
+
+entry Greeting returns Greeting: "hello" Name=ID
+entry Farewell returns Farewell: "goodbye" Name=ID
+
+token ID: /[_a-zA-Z][\w_]*/
+hidden token WS: /\s+/

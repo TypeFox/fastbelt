@@ -5,7 +5,6 @@
 package textdoc
 
 import (
-	"errors"
 	"unicode/utf16"
 	"unicode/utf8"
 	"unsafe"
@@ -25,13 +24,7 @@ type File struct {
 
 // NewFile creates a new text document file.
 // The content parameter is accepted as a string and stored internally as bytes.
-func NewFile(uri lsp.DocumentURI, languageID string, version int32, content string) (*File, error) {
-	if uri == "" {
-		return nil, errors.New("textdoc: uri cannot be empty")
-	}
-	if languageID == "" {
-		return nil, errors.New("textdoc: languageID cannot be empty")
-	}
+func NewFile(uri lsp.DocumentURI, languageID string, version int32, content string) *File {
 	f := &File{
 		uri:        uri,
 		languageID: languageID,
@@ -39,7 +32,7 @@ func NewFile(uri lsp.DocumentURI, languageID string, version int32, content stri
 		content:    []byte(content),
 	}
 	f.lineOffsets = computeLineOffsets(f.content, true, 0)
-	return f, nil
+	return f
 }
 
 // URI returns the document URI.
