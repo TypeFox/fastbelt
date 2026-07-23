@@ -192,8 +192,8 @@ func NewCompletionCompletionAdapter(sc *service.Container) *CompletionCompletion
 	return &CompletionCompletionAdapter{sc: sc}
 }
 
-func (a *CompletionCompletionAdapter) Parse(tokens []core.Token) *parser.CompletionParseResult {
-	return NewCompletionParser(a.sc).Parse(tokens)
+func (a *CompletionCompletionAdapter) Parse(document *core.Document, tokens []core.Token) *parser.CompletionParseResult {
+	return NewCompletionParser(a.sc).Parse(document, tokens)
 }
 
 func (a *CompletionCompletionAdapter) ATN() *parser.RuntimeATN {

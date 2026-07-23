@@ -28,7 +28,7 @@ func NewCompletionParser(sc *service.Container) *CompletionParser {
 // the document's tokens up to the cursor) and returns the recorded
 // snapshots and rule stack. The completion provider feeds that result into
 // the ATN simulator.
-func (p *CompletionParser) Parse(tokens []core.Token) *parser.CompletionParseResult {
+func (p *CompletionParser) Parse(_ *core.Document, tokens []core.Token) *parser.CompletionParseResult {
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
 	lookahead := service.MustGet[StatemachineModelParserLookahead](p.sc)

@@ -24,14 +24,11 @@ type Overlay struct {
 
 // NewOverlay creates a new text document overlay.
 // The content parameter is accepted as a string and stored internally as bytes.
-func NewOverlay(uri lsp.DocumentURI, languageID string, version int32, content string) (*Overlay, error) {
-	file, err := NewFile(uri, languageID, version, content)
-	if err != nil {
-		return nil, err
-	}
+func NewOverlay(uri lsp.DocumentURI, languageID string, version int32, content string) *Overlay {
+	file := NewFile(uri, languageID, version, content)
 	return &Overlay{
 		File: *file,
-	}, nil
+	}
 }
 
 // Update applies content changes to the overlay and updates its version.
