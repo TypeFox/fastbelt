@@ -35,6 +35,10 @@ func (s *GrammarTokenHighlightingStrategy) Highlight(ctx context.Context, token 
 		RuleCall_Rule_ID,
 		InfixRule_Name_ID,
 		TokenUsage_TokenRef_ID,
+		TokenMode_Name_ID,
+		TokenMode_Default_default,
+		TokenCommand_Mode_ID,
+		TokenCommand_Default_default,
 		TokenGroup_Name_ID,
 		TokenGroup_TokenRefs_ID:
 		accept(legendProvider.Function(), 0)
@@ -59,5 +63,21 @@ func (s *GrammarTokenHighlightingStrategy) Highlight(ctx context.Context, token 
 		PrecedenceGroup_Associativity_left,
 		PrecedenceGroup_Associativity_right:
 		accept(legendProvider.Modifier(), 0)
+	}
+	switch token.Type.Id {
+	case Keyword_Pipe_Idx,
+		Keyword_Asterisk_Idx,
+		Keyword_Colon_Idx,
+		Keyword_Comma_Idx,
+		Keyword_DashGreaterThan_Idx,
+		Keyword_Dot_Idx,
+		Keyword_Equals_Idx,
+		Keyword_GreaterThan_Idx,
+		Keyword_PlusEquals_Idx,
+		Keyword_Plus_Idx,
+		Keyword_QuestionEquals_Idx,
+		Keyword_Question_Idx,
+		Keyword_Semicolon_Idx:
+		accept(legendProvider.Operator(), 0)
 	}
 }

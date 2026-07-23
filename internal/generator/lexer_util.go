@@ -194,7 +194,6 @@ func (r GenerateTokenTypesResult) TokenTypeNamesByTokenIndex() []string {
 }
 
 func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
-	mustExpandInfixRules(grammr)
 	keywords := GetAllKeywords(grammr)
 	tokenDecls := GetAllTokenDecls(grammr)
 	tokenGroups := GetAllTokenGroups(grammr)

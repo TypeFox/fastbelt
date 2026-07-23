@@ -25,7 +25,7 @@ func SetupGeneratedServices(sc *service.Container) {
 		service.Put(sc, NewDefaultTokenGroupsParserLookahead())
 	}
 	if !service.Has[lexer.Lexer](sc) {
-		service.Put(sc, NewLexer())
+		service.Put(sc, NewLexer(sc))
 	}
 	if !service.Has[parser.Parser](sc) {
 		service.Put[parser.Parser](sc, NewParser(sc))

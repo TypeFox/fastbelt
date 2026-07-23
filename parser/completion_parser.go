@@ -20,8 +20,11 @@ import (
 // server-side types. The code generator emits the implementation.
 type LanguageCompletionAdapter interface {
 	// Parse runs the generated CompletionParser over the given prefix
-	// tokens (the document's tokens up to the cursor).
-	Parse(tokens []core.Token) *CompletionParseResult
+	// tokens (the document's tokens up to the cursor) and returns the
+	// snapshots + rule stack the completion provider needs. document is used
+	// to dispatch to the owning entry rule in a multi-language server;
+	// single-language adapters ignore it.
+	Parse(document *core.Document, tokens []core.Token) *CompletionParseResult
 	// ATN returns the RuntimeATN the simulator queries.
 	ATN() *RuntimeATN
 	// SyntheticOwnerFor returns a fresh, detached AST node of the given

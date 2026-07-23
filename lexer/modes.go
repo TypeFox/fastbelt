@@ -1,6 +1,10 @@
 package lexer
 
-import core "typefox.dev/fastbelt"
+import (
+	"fmt"
+
+	core "typefox.dev/fastbelt"
+)
 
 // TokenTypeUsage describes how a [core.TokenType] is used in a [TokenMode].
 // A token type can be used once per token mode, but can have different usages in different token modes.
@@ -24,7 +28,7 @@ func UseTokenType(tokenType *core.TokenType) *TokenTypeUsage {
 		TokenType: tokenType,
 		PushMode:  -1,
 		PopMode:   false,
-		Modifier:  0,
+		Modifier:  core.DefaultTokenModifier,
 	}
 }
 
@@ -44,9 +48,16 @@ func (ttu *TokenTypeUsage) WithSetMode(mode int) *TokenTypeUsage {
 	return ttu
 }
 
+// WithModifier routes the token to the stream selected by modifier: one of
+// [core.DefaultTokenModifier], [core.SkippedModifier] or [core.CommentModifier].
+// Any other value panics, since the lexer would silently drop such tokens.
 func (ttu *TokenTypeUsage) WithModifier(modifier int) *TokenTypeUsage {
-	ttu.Modifier = modifier
-	return ttu
+	switch modifier {
+	case core.DefaultTokenModifier, core.SkippedModifier, core.CommentModifier:
+		ttu.Modifier = modifier
+		return ttu
+	}
+	panic(fmt.Sprintf("lexer: unknown token modifier %d", modifier))
 }
 
 // IsSkipped reports whether t is routed to the skipped-token modifier.
@@ -108,8 +119,8 @@ func (s *TokenModeStack) Push(m *TokenMode) {
 }
 
 // Pop removes the active mode and returns it, making the mode below it active
-// again. Popping the bottom entry is a no-op that returns the start mode: input
-// with more pops than pushes stays in the start mode rather than failing.
+// again. Popping the bottom entry is a no-op that returns the entry mode: input
+// with more pops than pushes stays in the entry mode rather than failing.
 func (s *TokenModeStack) Pop() *TokenMode {
 	if len(s.modes) <= 1 {
 		return s.modes[0]

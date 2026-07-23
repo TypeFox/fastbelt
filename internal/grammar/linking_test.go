@@ -336,11 +336,11 @@ func TestCrossDocumentReferenceLinking(t *testing.T) {
 	f := test.New(t, CreateServices())
 	docs := f.ParseAll(
 		"inmemory://types.fb", `
-			grammar Types;
+			grammar Test;
 			interface Animal { Name string }
 		`,
 		"inmemory://rules.fb", `
-			grammar Rules;
+			grammar Test;
 			Animal returns <|Animal|>: Name=ID;
 		`+commonTokens,
 	)
@@ -560,50 +560,50 @@ func TestTokenModeNameMayEqualTokenName(t *testing.T) {
 
 func TestTokenModeReferenceAcrossDocuments(t *testing.T) {
 	f := test.New(t, CreateServices())
+	// All grammar files of a folder form one grammar with a single mode table,
+	// so a command may target a mode declared in a sibling file. The sibling
+	// holds the only default mode of the folder.
 	docs := f.ParseAll(
 		"inmemory://modes.fb", `
-			grammar Modes;
+			grammar Test;
 			interface Bar { Name string }
 			Bar: Name=NAME;
 			token NAME: /[A-Z]+/
 			token mode default {
 				NAME
+				ID -> push(Shared)
+				hidden WS
 			}
 			token mode Shared {
 				NAME -> pop
 			}
 		`,
 		"inmemory://main.fb", `
-			grammar Main;
+			grammar Test;
 			interface Foo { Greeting string }
 			Foo: Greeting=ID;
 			token ID: /[a-z]+/
 			hidden token WS: /\s+/
-			token mode default {
+			token mode Other {
 				ID -> push(<|target:Shared|>)
-				hidden WS
 			}
 		`,
 	)
 	mainDoc, modesDoc := docs[1], docs[0]
-	// Token modes are file-local: a command cannot target a mode declared in
-	// another document, even though both files form one package. The generated
-	// lexer has one mode table per grammar and a command's target is an index
-	// into that table, so a mode from elsewhere cannot be represented.
 	modeRef := test.MustFindReference[TokenMode](mainDoc, "target")
-	require.NotNil(t, modeRef.Error())
-	mainDoc.ExpectDiagnostic("target").
-		WithSeverity(core.SeverityError).
-		WithMessageContaining("Could not resolve reference to 'Shared'")
-	// Other named nodes are still visible across the package.
+	require.Nil(t, modeRef.Error())
+	assert.Same(t, test.MustFindNamedNode[TokenMode](modesDoc, "Shared"), modeRef.Ref(mainDoc.Ctx()))
+	mainDoc.AssertNoLinkingErrors()
 	modesDoc.AssertNoLinkingErrors()
 }
 
-func TestCrossRefsOnTokenModesAreInvalid(t *testing.T) {
+func TestCrossRefsOnTokensDeclaredInSiblingModes(t *testing.T) {
 	f := test.New(t, CreateServices())
+	// A token declared inside a token mode of a sibling file is callable from
+	// parser rules, just like one declared in a mode of the same file.
 	docs := f.ParseAll(
 		"inmemory://modes.fb", `
-			grammar Modes;
+			grammar Test;
 			interface Bar { Name string }
 			Bar: Name=NAME INNER;
 			token NAME: /[A-Z]+/
@@ -613,15 +613,16 @@ func TestCrossRefsOnTokenModesAreInvalid(t *testing.T) {
 			token mode Inner { token INNER: /[A-Z]+/ -> pop }
 		`,
 		"inmemory://main.fb", `
-			grammar Main;
+			grammar Test;
 			interface Foo { Greeting string }
 			Foo: Greeting=<|target:INNER|>;
 		`,
 	)
 	mainDoc, modesDoc := docs[1], docs[0]
-	mainDoc.ExpectDiagnostic("target").
-		WithSeverity(core.SeverityError).
-		WithMessageContaining("Could not resolve reference to 'INNER'")
+	ref := test.MustFindReference[AbstractRule](mainDoc, "target")
+	require.Nil(t, ref.Error())
+	assert.Same(t, test.MustFindNamedNode[TokenDecl](modesDoc, "INNER"), ref.Ref(mainDoc.Ctx()))
+	mainDoc.AssertNoLinkingErrors()
 	modesDoc.AssertNoLinkingErrors()
 }
 
@@ -631,7 +632,7 @@ func TestTokenModeReferenceResolvesWithinSameDocument(t *testing.T) {
 	// command resolves as usual.
 	docs := f.ParseAll(
 		"inmemory://other.fb", `
-			grammar Other;
+			grammar Test;
 			interface Bar { Name string }
 			Bar: Name=NAME;
 			token NAME: /[A-Z]+/
@@ -643,7 +644,7 @@ func TestTokenModeReferenceResolvesWithinSameDocument(t *testing.T) {
 			}
 		`,
 		"inmemory://own.fb", `
-			grammar Own;
+			grammar Test;
 			interface Foo { Greeting string }
 			Foo: Greeting=ID;
 			token ID: /[a-z]+/
