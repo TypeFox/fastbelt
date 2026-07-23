@@ -298,8 +298,8 @@ func Generate(g grammar.Grammar, entries []grammar.ParserRule, selectors []gener
 		{"completion-parser", "completion_parser_gen.go", generator.GenerateCompletionParser(g, entries, pkg, tokenTypes, atnData)},
 		{"parser-lookahead", "parser_lookahead_gen.go", generator.GenerateParserLookahead(g, pkg, tokenTypes, atnData)},
 		{"completion", "completion_gen.go", generator.GenerateCompletion(g, pkg)},
-		{"lexer", "lexer_gen.go", generator.GenerateLexer(g, pkg, tokenTypes)},
-		{"services", "services_gen.go", generator.GenerateServices(g, selectors, pkg)},
+		{"lexer", "lexer_gen.go", generator.GenerateLexer(g, pkg, tokenTypes, entries)},
+		{"services", "services_gen.go", generator.GenerateServices(g, selectors, entries, pkg)},
 		{"atn", "atn_gen.go", generator.GenerateATN(g, pkg, tokenTypes)},
 	}
 	for _, f := range files {

@@ -109,7 +109,13 @@ func sortTokenGroups(tokenGroups []grammar.TokenGroup, members map[string][]stri
 	return sortedGroups
 }
 
-func GenerateLexer(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult) string {
+// GenerateLexer emits lexer_gen.go for grammr. When entryRules has more than
+// one element, it additionally emits NewLexerFor<i>() factory functions — one
+// per entry rule — that each carry only the keywords reachable from that entry
+// point. A caller that selects the right per-language factory avoids tokenising
+// keywords from unrelated languages, eliminating cross-language keyword
+// pollution in merged grammars.
+func GenerateLexer(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult, entryRules []grammar.ParserRule) string {
 	nodes := []codegen.Node{}
 
 	imports := map[string]bool{}
@@ -143,7 +149,36 @@ func GenerateLexer(grammr grammar.Grammar, packageName string, tokenTypes Genera
 	}
 
 	generateMainLexerFunction(node, tokenTypes.Tokens, tokenTypes.Keywords)
+
+	if len(entryRules) > 1 {
+		for i, entry := range entryRules {
+			reachable := KeywordsReachableFrom(entry, grammr)
+			generateLexerForEntry(node, i, reachable, tokenTypes.Tokens)
+		}
+	}
+
 	return FormatIfPossible(node.String())
+}
+
+// generateLexerForEntry emits a NewLexerFor<index>() function that builds a
+// lexer containing only the keywords reachable from the entry rule at position
+// index, plus all terminal tokens (which are always language-agnostic).
+func generateLexerForEntry(node codegen.Node, index int, keywords []grammar.Keyword, tokens []grammar.Token) {
+	node.AppendLine()
+	node.AppendLine(fmt.Sprintf("func NewLexerFor%d() *lexer.DefaultLexer {", index))
+	node.Indent(func(n codegen.Node) {
+		n.AppendLine("return lexer.NewDefaultLexer(")
+		n.Indent(func(nn codegen.Node) {
+			for _, keyword := range keywords {
+				nn.AppendLine(GeneratedTokenName(keyword), ",")
+			}
+			for _, token := range tokens {
+				nn.AppendLine(GeneratedTokenName(token), ",")
+			}
+		})
+		n.AppendLine(")")
+	})
+	node.AppendLine("}")
 }
 
 func generateMainLexerFunction(node codegen.Node, tokens []grammar.Token, keywords []grammar.Keyword) {
