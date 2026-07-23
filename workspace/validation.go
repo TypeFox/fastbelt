@@ -19,16 +19,7 @@ func CreateLexerDiagnostics(doc *core.Document, source string) []*core.Diagnosti
 	diagnostics := make([]*core.Diagnostic, 0, len(doc.LexerErrors))
 	for _, lexErr := range doc.LexerErrors {
 		diagnostics = append(diagnostics, &core.Diagnostic{
-			Range: core.TextRange{
-				Start: core.TextLocation{
-					Line:   core.TextLine(lexErr.StartLine),
-					Column: core.TextColumn(lexErr.StartColumn),
-				},
-				End: core.TextLocation{
-					Line:   core.TextLine(lexErr.EndLine),
-					Column: core.TextColumn(lexErr.EndColumn),
-				},
-			},
+			Range:    lexErr.Range,
 			Severity: core.SeverityError,
 			Message:  lexErr.Msg,
 			Source:   source,
@@ -44,24 +35,21 @@ func CreateParserDiagnostics(doc *core.Document, source string) []*core.Diagnost
 	if len(doc.ParserErrors) == 0 {
 		return []*core.Diagnostic{}
 	}
-	lspEnd := doc.TextDoc.PositionAt(len(doc.TextDoc.Content()))
-	end := core.TextLocation{
-		Line:   core.TextLine(lspEnd.Line),
-		Column: core.TextColumn(lspEnd.Character),
-	}
+	textDoc := doc.TextDoc
+	endIndex := int32(len(textDoc.Content()))
 	diagnostics := make([]*core.Diagnostic, 0, len(doc.ParserErrors))
 	for _, err := range doc.ParserErrors {
 		token := err.Token
 		if token == nil || token.Type == core.EOF {
 			diagnostics = append(diagnostics, &core.Diagnostic{
-				Range:    core.TextRange{Start: end, End: end},
+				Range:    core.TextRange{Start: endIndex, End: endIndex},
 				Severity: core.SeverityError,
 				Message:  err.Msg,
 				Source:   source,
 			})
 		} else {
 			diagnostics = append(diagnostics, &core.Diagnostic{
-				Range:    token.TextSegment.Range,
+				Range:    token.TextRange(),
 				Severity: core.SeverityError,
 				Message:  err.Msg,
 				Source:   source,
@@ -73,16 +61,15 @@ func CreateParserDiagnostics(doc *core.Document, source string) []*core.Diagnost
 
 // CreateLinkerDiagnostics converts unresolved [core.Document.References] into
 // [core.Diagnostic] values. A reference contributes a diagnostic only when
-// [core.UntypedReference.Error] and [core.UntypedReference.Segment] are both
-// non-nil; severity comes from the reference error.
+// [core.UntypedReference.Error] is non-nil; severity comes from the reference error.
 func CreateLinkerDiagnostics(doc *core.Document, source string) []*core.Diagnostic {
 	diagnostics := []*core.Diagnostic{}
 	for _, ref := range doc.References {
 		err := ref.Error()
-		segment := ref.Segment()
-		if err != nil && segment != nil {
+		rng := ref.TextRange()
+		if err != nil {
 			diagnostics = append(diagnostics, &core.Diagnostic{
-				Range:    segment.Range,
+				Range:    rng,
 				Severity: core.DiagnosticSeverity(err.Severity),
 				Message:  err.Msg,
 				Source:   source,

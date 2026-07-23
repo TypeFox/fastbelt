@@ -102,12 +102,9 @@ func (r *Reference[T]) Error() *ReferenceError {
 	return r.err
 }
 
-// Segment returns the text segment of the reference in the source document.
-func (r *Reference[T]) Segment() *TextSegment {
-	if r == nil || r.unit == nil {
-		return nil
-	}
-	return r.unit.Segment()
+// Range returns the text range of the reference in the source document.
+func (r *Reference[T]) TextRange() TextRange {
+	return r.unit.TextRange()
 }
 
 // Resolve resolves the reference exactly once for this instance.
@@ -181,7 +178,7 @@ type UntypedReference interface {
 	Reset()
 	Error() *ReferenceError
 	Unit() StringUnit
-	Segment() *TextSegment
+	TextRange() TextRange
 	Text() string
 }
 
@@ -193,12 +190,12 @@ type ReferenceGetter[T AstNode] func(context.Context, *Reference[T]) (*SymbolDes
 // Returns nil if the token does not represent a reference.
 func ReferenceOfToken(token *Token) UntypedReference {
 	owner := token.Element
-	indices := token.TextSegment.Indices
+	rng := token.TextRange()
 	if composite, ok := owner.(CompositeNode); ok {
 		// If the token is part of a composite node,
 		// we first have to retrieve its parent node, which is the actual owner of the reference.
 		owner = composite.Container()
-		indices = composite.Segment().Indices
+		rng = composite.TextRange()
 	}
 	if owner == nil {
 		return nil
@@ -210,7 +207,7 @@ func ReferenceOfToken(token *Token) UntypedReference {
 	// Also, we only do this in select LSP requests, so the performance impact is negligible
 	for ur := range References(owner) {
 		// Simply compare the text indices to find the matching reference
-		if ur.Segment().Indices == indices {
+		if ur.TextRange() == rng {
 			ref = ur
 			break
 		}
@@ -224,16 +221,16 @@ type ReferenceDescription struct {
 	SourceNode AstNode
 	// TargetNode is the node that is being referenced.
 	TargetNode AstNode
-	// Segment is the text segment of the reference in the source document (usually the symbol name).
-	Segment *TextSegment
+	// Range is the text range of the reference in the source document (usually the symbol name).
+	Range TextRange
 }
 
 // NewReferenceDescription creates a [ReferenceDescription] for a source-to-target link.
-func NewReferenceDescription(source, target AstNode, segment *TextSegment) *ReferenceDescription {
+func NewReferenceDescription(source, target AstNode, rng TextRange) *ReferenceDescription {
 	return &ReferenceDescription{
 		SourceNode: source,
 		TargetNode: target,
-		Segment:    segment,
+		Range:      rng,
 	}
 }
 

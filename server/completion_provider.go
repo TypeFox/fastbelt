@@ -275,7 +275,7 @@ type cursorTokenInfo struct {
 // document's tokens, in terms the rest of the pipeline understands
 // (token indices, not byte offsets).
 //
-// Token boundaries: TextSegment.Indices.Start is inclusive, End is
+// Token boundaries: Range.Start is inclusive, End is
 // exclusive. So "cursor inside a token" means Start < offset < End, and
 // "cursor at the end of a token" means offset == End. A cursor at
 // Start (offset == Start) sits BEFORE the token (it could still be part
@@ -286,7 +286,7 @@ func backtrackToToken(tokens core.TokenSlice, offset int) cursorTokenInfo {
 	lo, hi := 0, len(tokens)
 	for lo < hi {
 		mid := (lo + hi) / 2
-		if int(tokens[mid].TextSegment.Indices.Start) < offset {
+		if int(tokens[mid].Range.Start) < offset {
 			lo = mid + 1
 		} else {
 			hi = mid
@@ -297,7 +297,7 @@ func backtrackToToken(tokens core.TokenSlice, offset int) cursorTokenInfo {
 	// NextIdx - check whether the cursor lies inside or at its end.
 	if lo > 0 {
 		prev := lo - 1
-		end := int(tokens[prev].TextSegment.Indices.End)
+		end := int(tokens[prev].Range.End)
 		if offset < end {
 			info.CurrentIdx = prev
 		} else if offset == end {
@@ -324,11 +324,11 @@ func buildCompletionContexts(doc *core.Document, offset int) []CompletionContext
 	}
 
 	curToken := &doc.Tokens[info.CurrentIdx]
-	replace := curToken.TextSegment.Range.LspRange()
+	replace := curToken.Range.LspRange(doc.TextDoc)
 	prefixLen := info.CurrentIdx
 	typed := curToken.Image
 	if !info.CurrentAtEnd {
-		typed = curToken.Image[:offset-int(curToken.TextSegment.Indices.Start)]
+		typed = curToken.Image[:offset-int(curToken.Range.Start)]
 	}
 
 	// When the current token is part of a multi-token CompositeNode,
@@ -339,7 +339,7 @@ func buildCompletionContexts(doc *core.Document, offset int) []CompletionContext
 	if startIdx, ok := compositeStart(doc.Tokens, info.CurrentIdx); ok {
 		startToken := &doc.Tokens[startIdx]
 		// Replace start position with the start of the first token in the composite
-		replace.Start = startToken.TextSegment.Range.LspRange().Start
+		replace.Start = startToken.Range.LspRange(doc.TextDoc).Start
 		// Regenerate the content of the composite up to the cursor position
 		var sb strings.Builder
 		for i := startIdx; i < info.CurrentIdx; i++ {

@@ -34,7 +34,7 @@ func NewParser(sc *service.Container) *Parser {
 
 func (p *Parser) ParseModel() Model {
 	current := NewModel()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			switch prediction, _ := p.lookahead.ModelItemAlternatives(p.state); prediction {
@@ -97,13 +97,13 @@ func (p *Parser) ParseModel() Model {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseA() Item {
 	current := NewItem()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_a)
@@ -117,13 +117,13 @@ func (p *Parser) ParseA() Item {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseB() Item {
 	current := NewItem()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_b)
@@ -146,13 +146,13 @@ func (p *Parser) ParseB() Item {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseC() Item {
 	current := NewItem()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_c)
@@ -166,13 +166,13 @@ func (p *Parser) ParseC() Item {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseD() Item {
 	current := NewItem()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_d)
@@ -189,13 +189,13 @@ func (p *Parser) ParseD() Item {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseE() Recovery {
 	current := NewRecovery()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_e)
@@ -216,13 +216,13 @@ func (p *Parser) ParseE() Recovery {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseF() Item {
 	current := NewItem()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_f)
@@ -236,13 +236,13 @@ func (p *Parser) ParseF() Item {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseG() Item {
 	current := NewItem()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_g)
@@ -256,13 +256,13 @@ func (p *Parser) ParseG() Item {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseH() Item {
 	current := NewItem()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_h)
@@ -297,6 +297,6 @@ func (p *Parser) ParseH() Item {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }

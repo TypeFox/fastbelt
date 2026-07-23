@@ -72,3 +72,24 @@ func TestReferencesBetweenReferenceAndKeyword(t *testing.T) {
 
 	doc.AssertReferences("flick")
 }
+
+func TestReferenceAtEndOfToken(t *testing.T) {
+	f := test.New(t, CreateLspServices(nil))
+	doc := f.Parse(`
+		statemachine Toggle
+
+		events <|flick|>
+
+		initialState a
+
+		state a
+		  <|flick|><|flick> => b
+		end
+
+		state b
+		  <|flick|> => a
+		end
+	`).AssertNoErrors()
+
+	doc.AssertReferences("flick")
+}

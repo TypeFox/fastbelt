@@ -61,7 +61,7 @@ type DefaultReferenceDescriber struct {
 }
 
 // NewDefaultReferenceDescriber returns a [ReferenceDescriber] that records
-// source node, target node, and text segment for each reference.
+// source node, target node, and text range for each reference.
 func NewDefaultReferenceDescriber(sc *service.Container) ReferenceDescriber {
 	return &DefaultReferenceDescriber{sc: sc}
 }
@@ -69,9 +69,8 @@ func NewDefaultReferenceDescriber(sc *service.Container) ReferenceDescriber {
 func (s *DefaultReferenceDescriber) DescribeReference(ctx context.Context, ref core.UntypedReference) *core.ReferenceDescription {
 	source := ref.Owner()
 	target := ref.RefNode(ctx)
-	segment := ref.Segment()
-	if source == nil || target == nil || segment == nil {
+	if source == nil || target == nil {
 		return nil
 	}
-	return core.NewReferenceDescription(source, target, segment)
+	return core.NewReferenceDescription(source, target, ref.TextRange())
 }

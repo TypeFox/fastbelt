@@ -167,7 +167,7 @@ var EOF = NewTokenType(
 )
 
 // EOFToken is the reusable sentinel token value for end of input.
-var EOFToken = NewToken(EOF, "", 0, 0, 0, 0, 0, 0)
+var EOFToken = NewToken(EOF, "", 0, 0)
 
 // Token represents one lexed source slice with positional metadata.
 type Token struct {
@@ -177,8 +177,8 @@ type Token struct {
 	Image string
 	// TypeId caches Type.Id for parser hot paths.
 	TypeId int
-	// TextSegment stores byte offsets and line/column ranges for this token.
-	TextSegment TextSegment
+	// Range is the byte-offset range of the token in the input string.
+	Range TextRange
 	// Element points to the AST node this token was assigned to during parsing.
 	Element AstNode
 	// Kind stores the generated assignment slot identifier within Element.
@@ -186,26 +186,11 @@ type Token struct {
 }
 
 // NewToken creates a token with image text and half-open source coordinates.
-func NewToken(tokenType *TokenType, image string, startOffset, endOffset, startLine, endLine, startColumn, endColumn int) Token {
+func NewToken(tokenType *TokenType, image string, startOffset, endOffset int) Token {
 	return Token{
-		Type:  tokenType,
-		Image: image,
-		TextSegment: TextSegment{
-			Indices: TextIndexRange{
-				Start: TextIndex(startOffset),
-				End:   TextIndex(endOffset),
-			},
-			Range: TextRange{
-				Start: TextLocation{
-					Line:   TextLine(startLine),
-					Column: TextColumn(startColumn),
-				},
-				End: TextLocation{
-					Line:   TextLine(endLine),
-					Column: TextColumn(endColumn),
-				},
-			},
-		},
+		Type:   tokenType,
+		Image:  image,
+		Range:  NewTextRange(startOffset, endOffset),
 		TypeId: tokenType.Id,
 		Kind:   0,
 	}
@@ -232,9 +217,9 @@ func (t *Token) String() string {
 	return t.Image
 }
 
-// Segment returns the token text segment.
-func (t *Token) Segment() *TextSegment {
-	return &t.TextSegment
+// TextRange returns the token text range.
+func (t *Token) TextRange() TextRange {
+	return t.Range
 }
 
 // Owner returns the AST node that owns t as a string unit.
@@ -277,20 +262,27 @@ func (ts TokenSlice) SearchOffset2(offset int) (*Token, *Token) {
 	for low <= high {
 		mid := (low + high) / 2
 		token := &ts[mid]
-		if offset < int(token.TextSegment.Indices.Start) {
+		if offset < int(token.Range.Start) {
 			high = mid - 1
-		} else if offset >= int(token.TextSegment.Indices.End) {
+		} else if offset >= int(token.Range.End) {
 			low = mid + 1
 		} else {
 			// Offset sits exactly on the boundary between this token and the
 			// previous one (prev.End == offset == token.Start): return both.
-			if offset == int(token.TextSegment.Indices.Start) && mid > 0 {
-				if prev := &ts[mid-1]; int(prev.TextSegment.Indices.End) == offset {
+			if offset == int(token.Range.Start) && mid > 0 {
+				if prev := &ts[mid-1]; int(prev.Range.End) == offset {
 					return prev, token
 				}
 			}
 			return token, nil
 		}
+	}
+	// No token contains the offset. The search leaves high pointing at the
+	// last token that ends at or before the offset. If it ends exactly at the
+	// offset (a trailing boundary with no token starting there - e.g. a gap or
+	// end of input), that token is the previous token.
+	if high >= 0 && offset == int(ts[high].Range.End) {
+		return &ts[high], nil
 	}
 	return nil, nil
 }

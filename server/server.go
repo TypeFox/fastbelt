@@ -6,11 +6,9 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 
 	"golang.org/x/exp/jsonrpc2"
-	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
@@ -527,40 +525,6 @@ func toAnySlice(symbols []lsp.DocumentSymbol) []any {
 	result := make([]any, len(symbols))
 	for i, sym := range symbols {
 		result[i] = sym
-	}
-	return result
-}
-
-func toLspDiagnostic(d core.Diagnostic) lsp.Diagnostic {
-	result := lsp.Diagnostic{
-		Range:    d.Range.LspRange(),
-		Severity: lsp.DiagnosticSeverity(d.Severity),
-		Message:  d.Message,
-	}
-	if d.Source != "" {
-		result.Source = d.Source
-	}
-	if d.Code != "" {
-		result.Code = d.Code
-	}
-	if d.CodeDescription != nil {
-		result.CodeDescription = &lsp.CodeDescription{
-			Href: d.CodeDescription.Href,
-		}
-	}
-	if len(d.Tags) > 0 {
-		tags := make([]lsp.DiagnosticTag, len(d.Tags))
-		for i, t := range d.Tags {
-			tags[i] = lsp.DiagnosticTag(t)
-		}
-		result.Tags = tags
-	}
-	if d.Data != nil {
-		raw, err := json.Marshal(d.Data)
-		if err == nil {
-			rawMsg := json.RawMessage(raw)
-			result.Data = &rawMsg
-		}
 	}
 	return result
 }

@@ -87,11 +87,9 @@ type DiagnosticOption func(d *Diagnostic)
 // NewDiagnostic creates a [Diagnostic] anchored to the given node's text range.
 func NewDiagnostic(severity DiagnosticSeverity, message string, node AstNode, opts ...DiagnosticOption) *Diagnostic {
 	d := &Diagnostic{
+		Range:    node.TextRange(),
 		Severity: severity,
 		Message:  message,
-	}
-	if seg := node.Segment(); seg != nil {
-		d.Range = seg.Range
 	}
 	for _, opt := range opts {
 		opt(d)
@@ -99,13 +97,13 @@ func NewDiagnostic(severity DiagnosticSeverity, message string, node AstNode, op
 	return d
 }
 
-// WithToken narrows the diagnostic range to the given token's text segment.
+// WithToken narrows the diagnostic range to the given token's text range.
 // NOTE: These options might clash with other options in this package. If that happens,
 // we can either rename them to DiagnosticToken etc. or move them to a separate package.
 func WithToken(token *Token) DiagnosticOption {
 	return func(d *Diagnostic) {
 		if token != nil {
-			d.Range = token.TextSegment.Range
+			d.Range = token.Range
 		}
 	}
 }
@@ -114,9 +112,7 @@ func WithToken(token *Token) DiagnosticOption {
 func WithStringUnit(unit StringUnit) DiagnosticOption {
 	return func(d *Diagnostic) {
 		if unit != nil {
-			if seg := unit.Segment(); seg != nil {
-				d.Range = seg.Range
-			}
+			d.Range = unit.TextRange()
 		}
 	}
 }
@@ -125,15 +121,13 @@ func WithStringUnit(unit StringUnit) DiagnosticOption {
 func WithReference(ref UntypedReference) DiagnosticOption {
 	return func(d *Diagnostic) {
 		if ref != nil {
-			if seg := ref.Segment(); seg != nil {
-				d.Range = seg.Range
-			}
+			d.Range = ref.TextRange()
 		}
 	}
 }
 
-// WithRange sets an explicit range on the diagnostic, overriding any node or token range.
-func WithRange(r TextRange) DiagnosticOption {
+// WithTextRange sets an explicit text range on the diagnostic, overriding any node or token range.
+func WithTextRange(r TextRange) DiagnosticOption {
 	return func(d *Diagnostic) {
 		d.Range = r
 	}

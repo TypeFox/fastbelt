@@ -36,7 +36,8 @@ func (s *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context,
 	if doc == nil {
 		return nil, nil // Document not found
 	}
-	offset := doc.TextDoc.OffsetAt(params.Position)
+	textDoc := doc.TextDoc
+	offset := textDoc.OffsetAt(params.Position)
 	tokens := doc.Tokens
 	first, second := tokens.SearchOffset2(offset)
 	if first == nil {
@@ -49,12 +50,13 @@ func (s *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context,
 	}
 	target := foundName.Target
 	targetNode := target.Owner()
-	sourceRange := foundName.Source.Segment().Range.LspRange()
-	fullRange := targetNode.Segment().Range.LspRange()
-	targetRange := target.Segment().Range.LspRange()
+	targetDoc := targetNode.Document().TextDoc
+	sourceRange := foundName.Source.TextRange().LspRange(textDoc)
+	fullRange := targetNode.TextRange().LspRange(targetDoc)
+	targetRange := target.TextRange().LspRange(targetDoc)
 	link := lsp.DefinitionLink{
 		OriginSelectionRange: &sourceRange,
-		TargetURI:            targetNode.Document().URI.DocumentURI(),
+		TargetURI:            targetDoc.URI(),
 		TargetRange:          fullRange,
 		TargetSelectionRange: targetRange,
 	}

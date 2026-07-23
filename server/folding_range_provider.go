@@ -8,6 +8,7 @@ import (
 	"context"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
@@ -99,7 +100,7 @@ func (p *DefaultFoldingRangeProvider) collectFolding(document *core.Document) []
 	for node := range core.AllChildren(document.Root) {
 		if p.filter.ShouldProcess(node) {
 			includeLastLine := p.filter.IncludeLastFoldingLine(node)
-			if foldingRange := p.toFoldingRange(node.Segment(), "", includeLastLine); foldingRange != nil {
+			if foldingRange := p.toFoldingRange(document.TextDoc, node.TextRange(), "", includeLastLine); foldingRange != nil {
 				foldings = append(foldings, *foldingRange)
 			}
 		}
@@ -113,23 +114,20 @@ func (p *DefaultFoldingRangeProvider) collectFolding(document *core.Document) []
 func (p *DefaultFoldingRangeProvider) collectCommentFolding(document *core.Document, foldings *[]lsp.FoldingRange) {
 	includeLastLine := p.filter.IncludeLastFoldingLineForComment()
 	for _, comment := range document.Comments {
-		if foldingRange := p.toFoldingRange(&comment.TextSegment, "comment", includeLastLine); foldingRange != nil {
+		if foldingRange := p.toFoldingRange(document.TextDoc, comment.Range, "comment", includeLastLine); foldingRange != nil {
 			*foldings = append(*foldings, *foldingRange)
 		}
 	}
 }
 
-func (p *DefaultFoldingRangeProvider) toFoldingRange(segment *core.TextSegment, kind string, includeLastLine bool) *lsp.FoldingRange {
-	if segment == nil {
-		return nil
-	}
+func (p *DefaultFoldingRangeProvider) toFoldingRange(handle textdoc.Handle, rng core.TextRange, kind string, includeLastLine bool) *lsp.FoldingRange {
+	lspRange := rng.LspRange(handle)
 
 	// Minimum 2-line difference required
-	if segment.Range.End.Line-segment.Range.Start.Line < 2 {
+	if lspRange.End.Line-lspRange.Start.Line < 2 {
 		return nil
 	}
 
-	lspRange := segment.Range.LspRange()
 	endLine := lspRange.End.Line
 	endChar := lspRange.End.Character
 

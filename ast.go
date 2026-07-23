@@ -29,9 +29,9 @@ type AstNode interface {
 	// Container returns the direct parent node of the node in the AST.
 	// It returns nil if this is the root node.
 	Container() AstNode
-	// ContainmentData returns a [unique.Handle] denoting the containing property within it's [AstNode.Container],
+	// ContainmentData returns a [unique.Handle] denoting the containing property within its [AstNode.Container],
 	// defaults to a [unique.Handle] of the empty string,
-	// and the element index within the containing property, defaults to -1 for single item fields
+	// and the element index within the containing property, defaults to -1 for single item fields.
 	ContainmentData() (unique.Handle[string], int)
 	// SetContainer sets the direct parent node of the node.
 	//
@@ -43,21 +43,21 @@ type AstNode interface {
 	SetToken(token *Token)
 	// SetTokens replaces the node's token list with tokens.
 	SetTokens(tokens []*Token)
-	// Segment returns the text segment metadata of the node.
-	Segment() *TextSegment
-	// SetSegment sets the full text segment metadata of the node.
+	// TextRange returns the text range of the node.
+	TextRange() TextRange
+	// SetTextRange sets the full text range metadata of the node.
 	//
 	// It is primarily used by generated parsers while constructing nodes incrementally.
-	SetSegment(segment *TextSegment)
-	// SetSegmentStartToken sets the start of the node's segment from token.
+	SetTextRange(r TextRange)
+	// SetTextRangeStart sets the start of the node's range.
 	//
 	// It is primarily used by generated parsers while constructing nodes incrementally.
-	SetSegmentStartToken(token *Token)
-	// SetSegmentEndToken sets the end of the node's segment from token.
+	SetTextRangeStart(start int32)
+	// SetTextRangeEnd sets the end of the node's range.
 	//
 	// It is primarily used by generated parsers while constructing nodes incrementally.
-	SetSegmentEndToken(token *Token)
-	// Text returns the source substring covered by the node's segment.
+	SetTextRangeEnd(end int32)
+	// Text returns the source substring covered by the node's range.
 	Text() string
 	// ForEachNode calls fn for each direct child node of node.
 	//
@@ -82,7 +82,7 @@ type AstNodeBase struct {
 	containerField unique.Handle[string]
 	containerIndex int
 	tokens         []*Token
-	segment        TextSegment
+	rng            TextRange
 }
 
 // Document returns the owning document of the node.
@@ -152,35 +152,29 @@ func (node *AstNodeBase) Tokens() []*Token {
 	}
 }
 
-// SetSegmentStartToken sets the start of the node's segment from token.
-func (node *AstNodeBase) SetSegmentStartToken(token *Token) {
-	if node != nil && token != nil {
-		node.segment.Indices.Start = token.TextSegment.Indices.Start
-		node.segment.Range.Start = token.TextSegment.Range.Start
-	}
+// SetRangeStartToken sets the start of the node's range from token.
+func (node *AstNodeBase) SetTextRangeStart(start int32) {
+	node.rng.Start = start
 }
 
-// SetSegmentEndToken sets the end of the node's segment from token.
-func (node *AstNodeBase) SetSegmentEndToken(token *Token) {
-	if node != nil && token != nil {
-		node.segment.Indices.End = token.TextSegment.Indices.End
-		node.segment.Range.End = token.TextSegment.Range.End
-	}
+// SetRangeEndToken sets the end of the node's range from token.
+func (node *AstNodeBase) SetTextRangeEnd(end int32) {
+	node.rng.End = end
 }
 
-// SetSegment sets the full text segment metadata of the node.
-func (node *AstNodeBase) SetSegment(segment *TextSegment) {
+// SetRange sets the full text range of the node.
+func (node *AstNodeBase) SetTextRange(rng TextRange) {
 	if node != nil {
-		node.segment = *segment
+		node.rng = rng
 	}
 }
 
-// Segment returns the text segment metadata of the node.
-func (node *AstNodeBase) Segment() *TextSegment {
+// Range returns the text range of the node.
+func (node *AstNodeBase) TextRange() TextRange {
 	if node != nil {
-		return &node.segment
+		return node.rng
 	} else {
-		return nil
+		return TextRange{}
 	}
 }
 
@@ -201,13 +195,13 @@ func (node *AstNodeBase) SetTokens(tokens []*Token) {
 	}
 }
 
-// Text returns the source substring covered by the node's segment.
+// Text returns the source substring covered by the node's range.
 func (node *AstNodeBase) Text() string {
 	if node == nil || node.document == nil || node.document.TextDoc == nil {
 		return ""
 	} else {
 		fullText := node.document.TextDoc.Text(nil)
-		return fullText[node.segment.Indices.Start:node.segment.Indices.End]
+		return fullText[node.rng.Start:node.rng.End]
 	}
 }
 
@@ -437,8 +431,8 @@ type NamedCompositeNode interface {
 type StringUnit interface {
 	// Owner returns the AST node that owns this string unit.
 	Owner() AstNode
-	// Segment returns the text segment metadata of this string unit.
-	Segment() *TextSegment
+	// TextRange returns the text range of this string unit.
+	TextRange() TextRange
 	// String returns the string representation of this string unit.
 	String() string
 }

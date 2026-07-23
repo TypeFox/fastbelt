@@ -57,7 +57,7 @@ func (s *DefaultHoverProvider) HandleHoverRequest(ctx context.Context, params *l
 		return nil, nil
 	}
 
-	sourceRange := foundName.Source.Segment().Range.LspRange()
+	sourceRange := foundName.Source.TextRange().LspRange(doc.TextDoc)
 	return &lsp.Hover{
 		Contents: lsp.MarkupContent{
 			Kind:  lsp.Markdown,
