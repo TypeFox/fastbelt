@@ -16,17 +16,10 @@ type Obj interface {
 }
 
 func NewObj() Obj {
-	return &ObjImpl{
-		AstNodeBase: core.NewAstNode(),
-		ObjData:     NewObjData(),
-	}
+	return &ObjImpl{}
 }
 
 type ObjData struct {
-}
-
-func NewObjData() ObjData {
-	return ObjData{}
 }
 
 func (i *ObjData) IsObj() {}
@@ -68,20 +61,11 @@ type Root interface {
 }
 
 func NewRoot() Root {
-	return &RootImpl{
-		AstNodeBase: core.NewAstNode(),
-		RootData:    NewRootData(),
-	}
+	return &RootImpl{}
 }
 
 type RootData struct {
 	objects []Obj
-}
-
-func NewRootData() RootData {
-	return RootData{
-		objects: []Obj{},
-	}
 }
 
 func (i *RootData) IsRoot() {}
@@ -152,22 +136,12 @@ type Declare interface {
 }
 
 func NewDeclare() Declare {
-	return &DeclareImpl{
-		AstNodeBase: core.NewAstNode(),
-		ObjData:     NewObjData(),
-		DeclareData: NewDeclareData(),
-	}
+	return &DeclareImpl{}
 }
 
 type DeclareData struct {
 	name     core.CompositeNode
 	children []Declare
-}
-
-func NewDeclareData() DeclareData {
-	return DeclareData{
-		children: []Declare{},
-	}
 }
 
 func (i *DeclareData) IsDeclare() {}
@@ -259,19 +233,11 @@ type E interface {
 }
 
 func NewE() E {
-	return &EImpl{
-		AstNodeBase: core.NewAstNode(),
-		ObjData:     NewObjData(),
-		EData:       NewEData(),
-	}
+	return &EImpl{}
 }
 
 type EData struct {
 	ref *core.Reference[Declare]
-}
-
-func NewEData() EData {
-	return EData{}
 }
 
 func (i *EData) IsE() {}
@@ -337,21 +303,11 @@ type F interface {
 }
 
 func NewF() F {
-	return &FImpl{
-		AstNodeBase: core.NewAstNode(),
-		ObjData:     NewObjData(),
-		FData:       NewFData(),
-	}
+	return &FImpl{}
 }
 
 type FData struct {
 	items []FItem
-}
-
-func NewFData() FData {
-	return FData{
-		items: []FItem{},
-	}
 }
 
 func (i *FData) IsF() {}
@@ -421,18 +377,11 @@ type FItem interface {
 }
 
 func NewFItem() FItem {
-	return &FItemImpl{
-		AstNodeBase: core.NewAstNode(),
-		FItemData:   NewFItemData(),
-	}
+	return &FItemImpl{}
 }
 
 type FItemData struct {
 	ref *core.Reference[Declare]
-}
-
-func NewFItemData() FItemData {
-	return FItemData{}
 }
 
 func (i *FItemData) IsFItem() {}
@@ -495,19 +444,11 @@ type G interface {
 }
 
 func NewG() G {
-	return &GImpl{
-		AstNodeBase: core.NewAstNode(),
-		ObjData:     NewObjData(),
-		GData:       NewGData(),
-	}
+	return &GImpl{}
 }
 
 type GData struct {
 	ref *core.Reference[Declare]
-}
-
-func NewGData() GData {
-	return GData{}
 }
 
 func (i *GData) IsG() {}
@@ -573,19 +514,11 @@ type H interface {
 }
 
 func NewH() H {
-	return &HImpl{
-		AstNodeBase: core.NewAstNode(),
-		ObjData:     NewObjData(),
-		HData:       NewHData(),
-	}
+	return &HImpl{}
 }
 
 type HData struct {
 	member MemberCall
-}
-
-func NewHData() HData {
-	return HData{}
 }
 
 func (i *HData) IsH() {}
@@ -657,19 +590,12 @@ type MemberCall interface {
 }
 
 func NewMemberCall() MemberCall {
-	return &MemberCallImpl{
-		AstNodeBase:    core.NewAstNode(),
-		MemberCallData: NewMemberCallData(),
-	}
+	return &MemberCallImpl{}
 }
 
 type MemberCallData struct {
 	ref      *core.Reference[Declare]
 	previous MemberCall
-}
-
-func NewMemberCallData() MemberCallData {
-	return MemberCallData{}
 }
 
 func (i *MemberCallData) IsMemberCall() {}
@@ -754,19 +680,11 @@ type J interface {
 }
 
 func NewJ() J {
-	return &JImpl{
-		AstNodeBase: core.NewAstNode(),
-		ObjData:     NewObjData(),
-		JData:       NewJData(),
-	}
+	return &JImpl{}
 }
 
 type JData struct {
 	ref *core.Reference[Declare]
-}
-
-func NewJData() JData {
-	return JData{}
 }
 
 func (i *JData) IsJ() {}
@@ -834,20 +752,12 @@ type K interface {
 }
 
 func NewK() K {
-	return &KImpl{
-		AstNodeBase: core.NewAstNode(),
-		ObjData:     NewObjData(),
-		KData:       NewKData(),
-	}
+	return &KImpl{}
 }
 
 type KData struct {
 	ref1 *core.Reference[Declare]
 	ref2 *core.Reference[Declare]
-}
-
-func NewKData() KData {
-	return KData{}
 }
 
 func (i *KData) IsK() {}
@@ -930,19 +840,11 @@ type N interface {
 }
 
 func NewN() N {
-	return &NImpl{
-		AstNodeBase: core.NewAstNode(),
-		ObjData:     NewObjData(),
-		NData:       NewNData(),
-	}
+	return &NImpl{}
 }
 
 type NData struct {
 	ref *core.Reference[Declare]
-}
-
-func NewNData() NData {
-	return NData{}
 }
 
 func (i *NData) IsN() {}
@@ -1008,19 +910,11 @@ type O interface {
 }
 
 func NewO() O {
-	return &OImpl{
-		AstNodeBase: core.NewAstNode(),
-		ObjData:     NewObjData(),
-		OData:       NewOData(),
-	}
+	return &OImpl{}
 }
 
 type OData struct {
 	ref *core.Reference[Declare]
-}
-
-func NewOData() OData {
-	return OData{}
 }
 
 func (i *OData) IsO() {}

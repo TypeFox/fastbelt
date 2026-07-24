@@ -29,7 +29,7 @@ func BenchmarkCompositeNodeSequential(b *testing.B) {
 }
 
 // BenchmarkCompositeNodeConcurrent benchmarks concurrent access to the
-// atomic-pointer string cache on CompositeNodeBase.
+// atomic-pointer string cache on compositeNode.
 //
 // The setup creates a large pool of nodes whose tokens have nil TokenType
 // (only Image is used by stringSlow). Each goroutine picks nodes pseudo-randomly
@@ -86,7 +86,7 @@ func generateRandomNodes(nodeCount, minTokensPerNode, maxTokensPerNode int) []Co
 		tokenCount := src.IntN(maxTokensPerNode-minTokensPerNode+1) + minTokensPerNode
 		for range tokenCount {
 			// String only reads Token.Image.
-			node.SetToken(&Token{Image: words[src.IntN(len(words))]})
+			node.AppendToken(&Token{Image: words[src.IntN(len(words))]})
 		}
 		nodes[i] = node
 	}

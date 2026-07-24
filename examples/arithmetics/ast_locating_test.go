@@ -208,10 +208,10 @@ func TestPathOf(t *testing.T) {
 		// in order to test the error logging across some levels of nesting an additional root object is created,
 		// which serves a container for the copied module,
 		// while module's 'containerField' is set to the interned value of "" --> error!
-		root := core.NewAstNode()
+		root := NewModule()
 
 		module := *module.(*ModuleImpl)
-		module.SetContainer(&root, unique.Make(""), 0)
+		module.SetContainer(root, unique.Make(""), 0)
 
 		def := *stmts[0].(*DefinitionImpl)
 		var field, index = def.ContainmentData()

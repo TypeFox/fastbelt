@@ -22,19 +22,12 @@ type Obj interface {
 }
 
 func NewObj() Obj {
-	return &ObjImpl{
-		AstNodeBase: core.NewAstNode(),
-		ObjData:     NewObjData(),
-	}
+	return &ObjImpl{}
 }
 
 type ObjData struct {
 	value *core.Token
 	node  core.CompositeNode
-}
-
-func NewObjData() ObjData {
-	return ObjData{}
 }
 
 func (i *ObjData) IsObj() {}
@@ -118,18 +111,11 @@ type Root interface {
 }
 
 func NewRoot() Root {
-	return &RootImpl{
-		AstNodeBase: core.NewAstNode(),
-		RootData:    NewRootData(),
-	}
+	return &RootImpl{}
 }
 
 type RootData struct {
 	item Obj
-}
-
-func NewRootData() RootData {
-	return RootData{}
 }
 
 func (i *RootData) IsRoot() {}
@@ -198,19 +184,11 @@ type B interface {
 }
 
 func NewB() B {
-	return &BImpl{
-		AstNodeBase: core.NewAstNode(),
-		ObjData:     NewObjData(),
-		BData:       NewBData(),
-	}
+	return &BImpl{}
 }
 
 type BData struct {
 	post *core.Token
-}
-
-func NewBData() BData {
-	return BData{}
 }
 
 func (i *BData) IsB() {}

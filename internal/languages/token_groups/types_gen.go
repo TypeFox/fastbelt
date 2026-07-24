@@ -18,18 +18,11 @@ type Model interface {
 }
 
 func NewModel() Model {
-	return &ModelImpl{
-		AstNodeBase: core.NewAstNode(),
-		ModelData:   NewModelData(),
-	}
+	return &ModelImpl{}
 }
 
 type ModelData struct {
 	item Item
-}
-
-func NewModelData() ModelData {
-	return ModelData{}
 }
 
 func (i *ModelData) IsModel() {}
@@ -97,18 +90,11 @@ type Item interface {
 }
 
 func NewItem() Item {
-	return &ItemImpl{
-		AstNodeBase: core.NewAstNode(),
-		ItemData:    NewItemData(),
-	}
+	return &ItemImpl{}
 }
 
 type ItemData struct {
 	value *core.Token
-}
-
-func NewItemData() ItemData {
-	return ItemData{}
 }
 
 func (i *ItemData) IsItem() {}
@@ -176,20 +162,12 @@ type Recovery interface {
 }
 
 func NewRecovery() Recovery {
-	return &RecoveryImpl{
-		AstNodeBase:  core.NewAstNode(),
-		ItemData:     NewItemData(),
-		RecoveryData: NewRecoveryData(),
-	}
+	return &RecoveryImpl{}
 }
 
 type RecoveryData struct {
 	first  *core.Token
 	second *core.Token
-}
-
-func NewRecoveryData() RecoveryData {
-	return RecoveryData{}
 }
 
 func (i *RecoveryData) IsRecovery() {}
