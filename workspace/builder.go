@@ -183,11 +183,11 @@ func (s *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
 	case !state.Has(core.DocStateExportedSymbols):
 		doc.ExportedSymbols = nil
 		fallthrough
-	case !state.Has(core.DocStateImportedSymbols):
-		doc.ImportedSymbols = nil
-		fallthrough
 	case !state.Has(core.DocStateLocalSymbols):
 		doc.LocalSymbols = nil
+		fallthrough
+	case !state.Has(core.DocStateImportedSymbols):
+		doc.ImportedSymbols = nil
 		fallthrough
 	case !state.Has(core.DocStateLinked):
 		// Note: NOOP if the document should be completely reset,
