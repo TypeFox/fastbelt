@@ -77,7 +77,7 @@ func (DefaultErrorRecovery) Recover(parserState *ParserState) {
 				// EOF reached, give up and let the parser unwind.
 				return
 			}
-			if followSet.At(la.TypeId) {
+			if followSet.At(la.Type.Id) {
 				break
 			}
 			parserState.Index++
@@ -103,17 +103,17 @@ func (DefaultErrorRecovery) Sync(parserState *ParserState, decisionStateIdx int)
 	// This is the expected case: LA(1) is in the set of valid tokens.
 	// We can immediately return, the parser is valid and ready to continue.
 	// This is the hot path for error-free parsing, so it's important that this check is fast.
-	if tok.Type == core.EOF || validTokens.At(tok.TypeId) {
+	if tok.Type == core.EOF || validTokens.At(tok.Type.Id) {
 		return
 	}
 	followTokens := parserState.FollowSet()
-	if followTokens.At(tok.TypeId) {
+	if followTokens.At(tok.Type.Id) {
 		return
 	}
 	// Single-token deletion: if the *next* token is in the valid set, treat
 	// the current token as extraneous and skip it.
 	la2 := parserState.LA(2)
-	if la2 != nil && validTokens.At(la2.TypeId) {
+	if la2 != nil && validTokens.At(la2.Type.Id) {
 		parserState.ReportError(parserState.messages.ExtraneousInput(tok), tok)
 		parserState.Index++
 		return
@@ -126,7 +126,7 @@ func (DefaultErrorRecovery) Sync(parserState *ParserState, decisionStateIdx int)
 	for {
 		parserState.Index++
 		la := parserState.LA(1)
-		if la.Type == core.EOF || validTokens.At(la.TypeId) || followTokens.At(la.TypeId) {
+		if la.Type == core.EOF || validTokens.At(la.Type.Id) || followTokens.At(la.Type.Id) {
 			return
 		}
 	}

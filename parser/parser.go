@@ -152,7 +152,9 @@ func (p *ParserState) Consume(tokenType *core.TokenType) *core.Token {
 		return nil
 	}
 	current := p.LA(1)
-	if !tokenType.Matches(current.Type) {
+	// Fast path for the common exact-type match; Matches is a closure call and
+	// only needed for token groups (real tokens never carry a group TypeId).
+	if current.Type.Id != tokenType.Id && !tokenType.Matches(current.Type) {
 		if current.Type == core.EOF {
 			p.AppendError(p.messages.UnexpectedEndOfInput(tokenType), current)
 			return nil
@@ -225,7 +227,7 @@ func (p *ParserState) Lookahead(value LL1Lookahead) (int, *PredictionFailure) {
 		return -1, &PredictionFailure{Token: p.LA(1)}
 	}
 	la := p.LA(1)
-	id := la.TypeId
+	id := la.Type.Id
 	if id < len(value.Lookup) {
 		// Note: generated lookup tables are 1-based to simplify code generation.
 		// That way, 0 (default value) can simply mean "no match"

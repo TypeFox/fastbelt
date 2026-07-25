@@ -12,7 +12,7 @@ import (
 
 // tok constructs a token of the given type for tests.
 func tok(tt *core.TokenType) core.Token {
-	return core.Token{Type: tt, TypeId: tt.Id, Image: tt.Name}
+	return core.Token{Type: tt, Image: tt.Name}
 }
 
 // linearATN builds an ATN with two basic states connected by a single atom

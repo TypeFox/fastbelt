@@ -175,8 +175,6 @@ type Token struct {
 	Type *TokenType
 	// Image is the exact text matched for this token.
 	Image string
-	// TypeId caches Type.Id for parser hot paths.
-	TypeId int
 	// Range is the byte-offset range of the token in the input string.
 	Range TextRange
 	// Element points to the AST node this token was assigned to during parsing.
@@ -188,11 +186,10 @@ type Token struct {
 // NewToken creates a token with image text and half-open source coordinates.
 func NewToken(tokenType *TokenType, image string, startOffset, endOffset int) Token {
 	return Token{
-		Type:   tokenType,
-		Image:  image,
-		Range:  NewTextRange(startOffset, endOffset),
-		TypeId: tokenType.Id,
-		Kind:   0,
+		Type:  tokenType,
+		Image: image,
+		Range: NewTextRange(startOffset, endOffset),
+		Kind:  0,
 	}
 }
 
