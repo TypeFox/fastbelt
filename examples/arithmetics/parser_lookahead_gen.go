@@ -7,29 +7,9 @@ import (
 	"typefox.dev/fastbelt/parser"
 )
 
-var AdditionLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_Plus, Keyword_Dash},
-	Lookup: []int{5: 1, 7: 1},
-}
-
-var AdditionOperatorAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_Plus, Keyword_Dash},
-	Lookup: []int{5: 1, 7: 2},
-}
-
 var ModuleStatementsLoop = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_LeftParen, Keyword_def, Token_ID, Token_NUMBER},
 	Lookup: []int{2: 1, 12: 1, 14: 1, 15: 1},
-}
-
-var MultiplicationLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_Asterisk, Keyword_Slash},
-	Lookup: []int{4: 1, 8: 1},
-}
-
-var MultiplicationOperatorAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_Asterisk, Keyword_Slash},
-	Lookup: []int{4: 1, 8: 2},
 }
 
 var PrimaryExpressionAlternatives = parser.LL1Lookahead{
@@ -49,15 +29,10 @@ var StatementAlternatives = parser.LL1Lookahead{
 type ArithmeticsParserLookahead interface {
 	parser.ParserLookahead
 
-	AdditionLoop(state *parser.ParserState) bool
-	AdditionOperatorAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
+	BinaryExpressionLoop(state *parser.ParserState) bool
 	DefinitionLoop(state *parser.ParserState) bool
 	DefinitionOptional(state *parser.ParserState) bool
-	ExponentiationLoop(state *parser.ParserState) bool
 	ModuleStatementsLoop(state *parser.ParserState) bool
-	ModuloLoop(state *parser.ParserState) bool
-	MultiplicationLoop(state *parser.ParserState) bool
-	MultiplicationOperatorAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	PrimaryExpressionAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	PrimaryExpressionLoop(state *parser.ParserState) bool
 	PrimaryExpressionOptional(state *parser.ParserState) bool
@@ -74,13 +49,8 @@ func NewDefaultArithmeticsParserLookahead() ArithmeticsParserLookahead {
 	return &DefaultArithmeticsParserLookahead{}
 }
 
-func (l *DefaultArithmeticsParserLookahead) AdditionLoop(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(AdditionLoop)
-	return prediction == 0
-}
-
-func (l *DefaultArithmeticsParserLookahead) AdditionOperatorAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.Lookahead(AdditionOperatorAlternatives)
+func (l *DefaultArithmeticsParserLookahead) BinaryExpressionLoop(state *parser.ParserState) bool {
+	return Token_BinaryExpressionOperator.Matches(state.LA(1).Type)
 }
 
 func (l *DefaultArithmeticsParserLookahead) DefinitionLoop(state *parser.ParserState) bool {
@@ -91,26 +61,9 @@ func (l *DefaultArithmeticsParserLookahead) DefinitionOptional(state *parser.Par
 	return state.LA(1).Type == Keyword_LeftParen
 }
 
-func (l *DefaultArithmeticsParserLookahead) ExponentiationLoop(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_Caret
-}
-
 func (l *DefaultArithmeticsParserLookahead) ModuleStatementsLoop(state *parser.ParserState) bool {
 	prediction, _ := state.Lookahead(ModuleStatementsLoop)
 	return prediction == 0
-}
-
-func (l *DefaultArithmeticsParserLookahead) ModuloLoop(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_Percent
-}
-
-func (l *DefaultArithmeticsParserLookahead) MultiplicationLoop(state *parser.ParserState) bool {
-	prediction, _ := state.Lookahead(MultiplicationLoop)
-	return prediction == 0
-}
-
-func (l *DefaultArithmeticsParserLookahead) MultiplicationOperatorAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.Lookahead(MultiplicationOperatorAlternatives)
 }
 
 func (l *DefaultArithmeticsParserLookahead) PrimaryExpressionAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {

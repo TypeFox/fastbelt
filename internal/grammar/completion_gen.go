@@ -24,6 +24,7 @@ type FastbeltCompletionFilter interface {
 	FilterRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterActionType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterActionProperty(ctx context.Context, reference *core.Reference[Field], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterInfixRuleReturnType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 }
 
 type DefaultFastbeltCompletionFilter struct{}
@@ -69,6 +70,10 @@ func (*DefaultFastbeltCompletionFilter) FilterActionType(_ context.Context, _ *c
 }
 
 func (*DefaultFastbeltCompletionFilter) FilterActionProperty(_ context.Context, _ *core.Reference[Field], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
+func (*DefaultFastbeltCompletionFilter) FilterInfixRuleReturnType(_ context.Context, _ *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	return in
 }
 
@@ -199,6 +204,18 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		candidates := scopes.ScopeActionProperty(ctx, ref).AllElements()
 		return filter.FilterActionProperty(ctx, ref, candidates)
 	},
+	"InfixRule.ReturnType": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(InfixRule)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[FastbeltReferencesConstructor](sc)
+		scopes := service.MustGet[FastbeltScopeProvider](sc)
+		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		ref := refs.InfixRuleReturnType(typedOwner, nil)
+		candidates := scopes.ScopeInfixRuleReturnType(ctx, ref).AllElements()
+		return filter.FilterInfixRuleReturnType(ctx, ref, candidates)
+	},
 }
 
 type FastbeltCompletionAdapter struct {
@@ -251,6 +268,11 @@ func (a *FastbeltCompletionAdapter) HasAssignment(node core.AstNode, property st
 		switch property {
 		case "Type":
 			return n.Type() != nil
+		}
+	case InfixRule:
+		switch property {
+		case "ReturnType":
+			return n.ReturnType() != nil
 		}
 	case Interface:
 		switch property {

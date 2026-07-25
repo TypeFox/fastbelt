@@ -358,6 +358,60 @@
 // becomes the current object. The operator += is also valid for tree-rewriting
 // actions on slice properties.
 //
+// # Infix Rules
+//
+// An infix rule parses binary expressions with operator precedence and
+// associativity in a single flat pass, replacing a cascade of tree-rewriting
+// action rules (one per precedence level) with one rule:
+//
+//	interface Expression {}
+//	interface BinaryExpression extends Expression {
+//	    Left Expression
+//	    Operator string
+//	    Right Expression
+//	}
+//
+//	Expression: BinaryExpression
+//
+//	infix BinaryExpression on PrimaryExpression:
+//	    "%"
+//	    > "^"
+//	    > "*" | "/"
+//	    > "+" | "-"
+//
+// The rule name must resolve to an interface declaring the fields Left,
+// Right (of an interface type both the rule's return type and node type are
+// assignable to), and Operator (of type string). The rule after "on" is the
+// operand rule, parsed between operators. Precedence groups are separated by
+// ">" and ordered tightest-binding first: in the example, "%" binds tightest
+// and "+" | "-" bind loosest, so "1 + 2 * 3" parses as "1 + (2 * 3)".
+//
+// Groups are left-associative by default; prefix a group with "right assoc"
+// (or explicitly "left assoc") to control associativity:
+//
+//	infix BinaryExpression on PrimaryExpression:
+//	    "+" | "-"
+//	    > right assoc "="
+//
+// Operators can be keywords, token references, or token group references:
+//
+//	token group MulOp { "*" "/" }
+//	infix BinaryExpression on PrimaryExpression:
+//	    MulOp
+//	    > "+" | "-"
+//
+// The return type of an infix rule defaults to the operand rule's return
+// type; "returns" overrides it. A lone operand is returned unchanged — no
+// binary node is wrapped around it.
+//
+// For parsing, all operators of an infix rule are unified into a generated
+// token group named "<RuleName>Operator" (that rule name must be unused),
+// so the parser consumes any operator with a single token-set check per
+// operator — considerably faster than the nested action-rule encoding.
+// Note that a token-referenced operator is matched by the lexer with the
+// usual longest-match rules: if its pattern also matches a keyword used
+// elsewhere in the grammar, the keyword wins at equal length.
+//
 // # Composite Rules
 //
 // A composite rule matches a structured token value such as a qualified name

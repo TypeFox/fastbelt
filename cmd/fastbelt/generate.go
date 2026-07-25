@@ -14,7 +14,7 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/internal/generator"
-	"typefox.dev/fastbelt/internal/grammar"
+	grammarPkg "typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
@@ -54,7 +54,7 @@ func runGenerateCLI(opts generateOptions) error {
 		return err
 	}
 
-	sc := grammar.CreateServices()
+	sc := grammarPkg.CreateServices()
 	file, _ := textdoc.NewFile(lsp.URIFromPath(grammarPath), "fb", 0, string(grammarText))
 
 	document := core.NewDocument(file)
@@ -97,12 +97,17 @@ func runGenerateCLI(opts generateOptions) error {
 		return fmt.Errorf("aborting code generation due to %d errors", errCount)
 	}
 
-	grammar, ok := document.Root.(grammar.Grammar)
+	grammar, ok := document.Root.(grammarPkg.Grammar)
 	if !ok {
 		return fmt.Errorf("parser result is not a Grammar")
 	}
 	entryRule, err := validateEntryRule(grammar)
 	if err != nil {
+		return err
+	}
+	// Desugar infix rules once, so every generator below sees the synthesized
+	// operator token groups and flat rule bodies.
+	if err := grammarPkg.ExpandInfixRules(grammar); err != nil {
 		return err
 	}
 
@@ -164,8 +169,8 @@ func runGenerateCLI(opts generateOptions) error {
 	return nil
 }
 
-func validateEntryRule(g grammar.Grammar) (grammar.ParserRule, error) {
-	var entries []grammar.ParserRule
+func validateEntryRule(g grammarPkg.Grammar) (grammarPkg.ParserRule, error) {
+	var entries []grammarPkg.ParserRule
 	for _, rule := range g.Rules() {
 		if rule.IsEntry() {
 			entries = append(entries, rule)

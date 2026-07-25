@@ -37,6 +37,7 @@ type parserATNData struct {
 // GenerateParser, GenerateCompletionParser, and GenerateParserLookahead.
 // Returns nil when the ATN cannot be built (invalid grammar).
 func BuildParserATNData(grammr grammar.Grammar, tokenTypes GenerateTokenTypesResult) *parserATNData {
+	mustExpandInfixRules(grammr)
 	builtATN, _ := internalATN.CreateATN(grammr, tokenTypes.TokenTypeIds)
 	if builtATN == nil {
 		return nil
@@ -287,6 +288,7 @@ func (ctx *ParserGeneratorContext) nextLoopLabel() string {
 // file shares a package with parser_gen.go, it reuses the lookahead tables and
 // ATN-decision indices defined there.
 func GenerateParserLookahead(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult, atnData *parserATNData) string {
+	mustExpandInfixRules(grammr)
 	context := &ParserGeneratorContext{
 		grammar:      grammr,
 		lookaheads:   make(map[core.AstNode]LookaheadValue),
@@ -504,6 +506,7 @@ func decisionConstName(methodName string) string {
 }
 
 func GenerateParser(grammr grammar.Grammar, entryRule grammar.ParserRule, packageName string, tokenTypes GenerateTokenTypesResult, atnData *parserATNData) string {
+	mustExpandInfixRules(grammr)
 	context := &ParserGeneratorContext{
 		grammar:      grammr,
 		lookaheads:   make(map[core.AstNode]LookaheadValue),
@@ -562,6 +565,10 @@ func GenerateParser(grammr grammar.Grammar, entryRule grammar.ParserRule, packag
 	for _, composite := range grammr.Composites() {
 		generateCompositeParseFunction(node, context, composite)
 	}
+	groupMembers := buildGroupVarNameToMembers(grammr)
+	for _, infix := range grammr.InfixRules() {
+		generateInfixParseFunction(node, context, infix, groupMembers)
+	}
 
 	return FormatIfPossible(node.String())
 }
@@ -574,6 +581,7 @@ func GenerateParser(grammr grammar.Grammar, entryRule grammar.ParserRule, packag
 // The generated file reuses the lookahead tables and ATN builder defined by
 // GenerateParser/EmitGoSource, so it must be emitted into the same package.
 func GenerateCompletionParser(grammr grammar.Grammar, entryRule grammar.ParserRule, packageName string, tokenTypes GenerateTokenTypesResult, atnData *parserATNData) string {
+	mustExpandInfixRules(grammr)
 	context := &ParserGeneratorContext{
 		grammar:      grammr,
 		lookaheads:   make(map[core.AstNode]LookaheadValue),
@@ -640,6 +648,9 @@ func GenerateCompletionParser(grammr grammar.Grammar, entryRule grammar.ParserRu
 	}
 	for _, composite := range grammr.Composites() {
 		generateCompositeParseFunction(node, context, composite)
+	}
+	for _, infix := range grammr.InfixRules() {
+		generateInfixParseFunction(node, context, infix, nil)
 	}
 
 	return FormatIfPossible(node.String())
@@ -899,6 +910,9 @@ func populateContext(context *ParserGeneratorContext) {
 	}
 	for _, composite := range context.grammar.Composites() {
 		decls = collectLookaheadDecls(context, decls, composite.Name(), composite.Body())
+	}
+	for _, infix := range context.grammar.InfixRules() {
+		decls = collectLookaheadDecls(context, decls, infix.Name(), infix.Body())
 	}
 
 	// Names are derived structurally from the rule/property path plus the kind of
@@ -1268,6 +1282,15 @@ func generateRuleCallParser(node codegen.Node, context *ParserGeneratorContext, 
 				n.AppendLine("core.AssignToken(current, token, ", context.atnData.elementStateName(ruleCall), ")")
 			}
 		case grammar.ParserRule:
+			followName := context.atnData.followState(ruleCall)
+			n.AppendLine("p.state.EnterRule(", followName, ")")
+			if context.completion {
+				n.AppendLine("p.Parse", t.Name(), "()")
+			} else {
+				n.AppendLine("result ", eq, " p.Parse", t.Name(), "()")
+			}
+			n.AppendLine("p.state.ExitRule()")
+		case grammar.InfixRule:
 			followName := context.atnData.followState(ruleCall)
 			n.AppendLine("p.state.EnterRule(", followName, ")")
 			if context.completion {

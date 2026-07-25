@@ -27,6 +27,9 @@ func BuildElementNames(grammr grammar.Grammar) map[grammar.Element]string {
 	for _, composite := range grammr.Composites() {
 		collectElementNames(result, composite.Name(), composite.Body())
 	}
+	for _, infix := range grammr.InfixRules() {
+		collectElementNames(result, infix.Name(), infix.Body())
+	}
 	return result
 }
 
@@ -53,7 +56,8 @@ func collectElementNames(names map[grammar.Element]string, prefix string, node f
 		collectElementNames(names, prefix, n.Rule())
 	case grammar.RuleCall:
 		ruleRef := n.Rule().Ref(context.Background())
-		if token, ok := ruleRef.(grammar.Token); ok {
+		if token, ok := ruleRef.(grammar.AbstractTokenRule); ok {
+			// Covers plain token rules and token groups alike.
 			names[n] = prefix + "_" + token.Name()
 		}
 	}

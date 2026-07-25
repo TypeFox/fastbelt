@@ -37,6 +37,13 @@ const (
 	ValidateFieldNameCapitalLetter  = "fieldNameCapitalLetter"
 	ValidateReservedFieldName       = "reservedFieldName"
 	ValidateNestedArrayType         = "nestedArrayType"
+	ValidateInfixNodeType           = "infixNodeType"
+	ValidateInfixOperandRule        = "infixOperandRule"
+	ValidateInfixReturnType         = "infixReturnType"
+	ValidateInfixProperty           = "infixProperty"
+	ValidateInfixOperator           = "infixOperator"
+	ValidateInfixDuplicateOperator  = "infixDuplicateOperator"
+	ValidateInfixOperatorGroupName  = "infixOperatorGroupName"
 )
 
 // reservedFieldNames lists field names that must not be used because they
@@ -76,6 +83,11 @@ func checkUniqueRuleNames(g Grammar, accept core.ValidationAcceptor) {
 	for _, tokenGroup := range g.TokenGroups() {
 		if tokenGroup.Name() != "" {
 			seen[tokenGroup.Name()] = append(seen[tokenGroup.Name()], tokenGroup)
+		}
+	}
+	for _, infix := range g.InfixRules() {
+		if infix.Name() != "" {
+			seen[infix.Name()] = append(seen[infix.Name()], infix)
 		}
 	}
 	for name, nodes := range seen {
@@ -451,19 +463,23 @@ func checkRuleCallReturnType(call RuleCall, ctx context.Context, accept core.Val
 	if targetRule == nil {
 		return
 	}
-	if parserRule, ok := targetRule.(ParserRule); ok {
-		targetType := FindReturnType(parserRule, ctx)
-		if targetType == nil {
-			return
-		}
-		if !interfaceIsAssignableTo(targetType, ownType) {
-			accept(core.NewDiagnostic(
-				core.SeverityError,
-				fmt.Sprintf("The return type '%s' of the called rule is not assignable to the return type '%s' of the current rule.", targetType.Name(), ownType.Name()),
-				call,
-				core.WithCode(ValidateRuleCallReturnType),
-			))
-		}
+	var targetType Interface
+	switch target := targetRule.(type) {
+	case ParserRule:
+		targetType = FindReturnType(target, ctx)
+	case InfixRule:
+		targetType = FindInfixReturnType(target, ctx)
+	}
+	if targetType == nil {
+		return
+	}
+	if !interfaceIsAssignableTo(targetType, ownType) {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			fmt.Sprintf("The return type '%s' of the called rule is not assignable to the return type '%s' of the current rule.", targetType.Name(), ownType.Name()),
+			call,
+			core.WithCode(ValidateRuleCallReturnType),
+		))
 	}
 }
 
@@ -711,6 +727,32 @@ func isAssignableTo(ctx context.Context, source Assignable, fieldType FieldType,
 					core.WithCode(ValidateAssignmentType),
 				))
 			}
+		case InfixRule:
+			if simpleType, ok := fieldType.(SimpleType); ok {
+				ruleType := FindInfixReturnType(rule, ctx)
+				if ruleType == nil {
+					return
+				}
+				targetType := simpleType.Type().Ref(ctx)
+				if targetType == nil {
+					return
+				}
+				if !interfaceIsAssignableTo(ruleType, targetType) {
+					accept(core.NewDiagnostic(
+						core.SeverityError,
+						fmt.Sprintf("The return type '%s' of the called rule is not assignable to the target field type '%s'.", ruleType.Name(), targetType.Name()),
+						v,
+						core.WithCode(ValidateAssignmentType),
+					))
+				}
+			} else {
+				accept(core.NewDiagnostic(
+					core.SeverityError,
+					"Cannot assign a parser rule to a non-interface field.",
+					v,
+					core.WithCode(ValidateAssignmentType),
+				))
+			}
 		case CompositeRule:
 			if primitiveType, ok := fieldType.(PrimitiveType); !ok || primitiveType.Type() != "composite" {
 				if primitiveType, ok := fieldType.(PrimitiveType); ok && primitiveType.Type() == "string" {
@@ -837,6 +879,287 @@ func checkInvalidTokensInGroup(tg TokenGroup, accept core.ValidationAcceptor) {
 			}
 		}
 	}
+}
+
+// InfixRuleImpl.Validate checks infix rule constraints:
+//   - The rule name must resolve to an interface (the binary node type)
+//     declaring Left/Right fields of a compatible interface type and an
+//     Operator field of type string.
+//   - The operand ("on") rule must be a parser rule whose return type is
+//     assignable to the infix rule's effective return type.
+//   - Operators must be keywords, tokens, or token groups (not hidden or
+//     comment tokens), and no operator may appear in two precedence groups.
+//   - The name of the generated operator token group must be available.
+func (rule *InfixRuleImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
+	checkInfixNodeType(rule, ctx, accept)
+	checkInfixOperandRule(rule, ctx, accept)
+	checkInfixOperators(rule, ctx, accept)
+	checkInfixOperatorGroupName(rule, accept)
+}
+
+func checkInfixNodeType(rule InfixRule, ctx context.Context, accept core.ValidationAcceptor) {
+	if rule.Name() == "" {
+		return
+	}
+	nodeType := FindInfixNodeType(rule)
+	if nodeType == nil {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			fmt.Sprintf("Unable to find the node type for infix rule '%s'. Define an interface with the same name as the rule.", rule.Name()),
+			rule,
+			core.WithToken(rule.NameToken()),
+			core.WithCode(ValidateInfixNodeType),
+		))
+		return
+	}
+	returnType := FindInfixReturnType(rule, ctx)
+	if returnType == nil {
+		return
+	}
+	if !interfaceIsAssignableTo(nodeType, returnType) {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			fmt.Sprintf("The node type '%s' is not assignable to the return type '%s' of the infix rule.", nodeType.Name(), returnType.Name()),
+			rule,
+			core.WithToken(rule.NameToken()),
+			core.WithCode(ValidateInfixReturnType),
+		))
+	}
+	for _, name := range []string{"Left", "Right"} {
+		field := findInterfaceField(nodeType, name, ctx)
+		if field == nil {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				fmt.Sprintf("The node type '%s' must declare a field '%s'.", nodeType.Name(), name),
+				rule,
+				core.WithToken(rule.NameToken()),
+				core.WithCode(ValidateInfixProperty),
+			))
+			continue
+		}
+		simpleType, ok := field.Type().(SimpleType)
+		if !ok {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				fmt.Sprintf("The field '%s' of node type '%s' must be of an interface type.", name, nodeType.Name()),
+				rule,
+				core.WithToken(rule.NameToken()),
+				core.WithCode(ValidateInfixProperty),
+			))
+			continue
+		}
+		fieldInterface := simpleType.Type().Ref(ctx)
+		if fieldInterface == nil {
+			continue
+		}
+		if !interfaceIsAssignableTo(returnType, fieldInterface) {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				fmt.Sprintf("The return type '%s' of the infix rule is not assignable to the type '%s' of the field '%s'.", returnType.Name(), fieldInterface.Name(), name),
+				rule,
+				core.WithToken(rule.NameToken()),
+				core.WithCode(ValidateInfixProperty),
+			))
+		}
+	}
+	if field := findInterfaceField(nodeType, "Operator", ctx); field == nil {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			fmt.Sprintf("The node type '%s' must declare a field 'Operator' of type string.", nodeType.Name()),
+			rule,
+			core.WithToken(rule.NameToken()),
+			core.WithCode(ValidateInfixProperty),
+		))
+	} else if primitiveType, ok := field.Type().(PrimitiveType); !ok || primitiveType.Type() != "string" {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			fmt.Sprintf("The field 'Operator' of node type '%s' must be of type string.", nodeType.Name()),
+			rule,
+			core.WithToken(rule.NameToken()),
+			core.WithCode(ValidateInfixProperty),
+		))
+	}
+}
+
+func checkInfixOperandRule(rule InfixRule, ctx context.Context, accept core.ValidationAcceptor) {
+	call := rule.Call()
+	if call == nil {
+		return
+	}
+	target := call.Rule().Ref(ctx)
+	if target == nil {
+		return
+	}
+	operand, ok := target.(ParserRule)
+	if !ok {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			"An infix rule must operate on a parser rule.",
+			call,
+			core.WithReference(call.Rule()),
+			core.WithCode(ValidateInfixOperandRule),
+		))
+		return
+	}
+	// Without an explicit return type the operand's return type is the
+	// effective return type, so there is nothing further to check.
+	if rule.ReturnType() == nil {
+		return
+	}
+	returnType := rule.ReturnType().Ref(ctx)
+	operandType := FindReturnType(operand, ctx)
+	if returnType == nil || operandType == nil {
+		return
+	}
+	if !interfaceIsAssignableTo(operandType, returnType) {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			fmt.Sprintf("The return type '%s' of the operand rule is not assignable to the return type '%s' of the infix rule.", operandType.Name(), returnType.Name()),
+			call,
+			core.WithReference(call.Rule()),
+			core.WithCode(ValidateInfixReturnType),
+		))
+	}
+}
+
+func checkInfixOperators(rule InfixRule, ctx context.Context, accept core.ValidationAcceptor) {
+	seen := collections.NewSet[string]()
+	for _, group := range rule.Groups() {
+		for _, operator := range group.Operators() {
+			if ruleCall, ok := operator.(RuleCall); ok {
+				target := ruleCall.Rule().Ref(ctx)
+				if target == nil {
+					continue
+				}
+				token, isToken := target.(AbstractTokenRule)
+				if !isToken {
+					accept(core.NewDiagnostic(
+						core.SeverityError,
+						"Infix operators must be keywords, tokens, or token groups.",
+						ruleCall,
+						core.WithReference(ruleCall.Rule()),
+						core.WithCode(ValidateInfixOperator),
+					))
+					continue
+				}
+				if plainToken, ok := token.(Token); ok {
+					if description, special := hiddenOrCommentTokenDescription(plainToken); special {
+						accept(core.NewDiagnostic(
+							core.SeverityError,
+							fmt.Sprintf("The token '%s' cannot be used as an infix operator because it is %s.", plainToken.Name(), description),
+							ruleCall,
+							core.WithReference(ruleCall.Rule()),
+							core.WithCode(ValidateInfixOperator),
+						))
+						continue
+					}
+				}
+			}
+			duplicate := false
+			for _, key := range infixOperatorLeafKeys(operator, ctx, collections.NewSet[string]()) {
+				if !seen.Add(key) {
+					duplicate = true
+				}
+			}
+			if duplicate {
+				diagnosticOptions := []core.DiagnosticOption{core.WithCode(ValidateInfixDuplicateOperator)}
+				switch op := operator.(type) {
+				case Keyword:
+					diagnosticOptions = append(diagnosticOptions, core.WithToken(op.ValueToken()))
+				case RuleCall:
+					diagnosticOptions = append(diagnosticOptions, core.WithReference(op.Rule()))
+				}
+				accept(core.NewDiagnostic(
+					core.SeverityError,
+					"Every operator of an infix rule must belong to exactly one precedence group.",
+					operator,
+					diagnosticOptions...,
+				))
+			}
+		}
+	}
+}
+
+// infixOperatorLeafKeys expands an infix operator to comparable leaf keys so
+// duplicate operators are detected across precedence groups, resolving token
+// groups to their members.
+func infixOperatorLeafKeys(operator Assignable, ctx context.Context, visited collections.Set[string]) []string {
+	switch op := operator.(type) {
+	case Keyword:
+		return []string{"kw:" + op.Value()}
+	case RuleCall:
+		switch target := op.Rule().Ref(ctx).(type) {
+		case TokenGroup:
+			return tokenGroupLeafKeys(target, ctx, visited)
+		case Token:
+			return []string{"token:" + target.Name()}
+		}
+	}
+	return nil
+}
+
+func tokenGroupLeafKeys(tg TokenGroup, ctx context.Context, visited collections.Set[string]) []string {
+	if !visited.Add("group:" + tg.Name()) {
+		return nil
+	}
+	var keys []string
+	for _, keyword := range tg.Keywords() {
+		keys = append(keys, "kw:"+keyword.Value())
+	}
+	for _, ref := range tg.TokenRefs() {
+		switch target := ref.Ref(ctx).(type) {
+		case TokenGroup:
+			keys = append(keys, tokenGroupLeafKeys(target, ctx, visited)...)
+		case Token:
+			keys = append(keys, "token:"+target.Name())
+		}
+	}
+	return keys
+}
+
+func checkInfixOperatorGroupName(rule InfixRule, accept core.ValidationAcceptor) {
+	if rule.Name() == "" {
+		return
+	}
+	grammar, ok := rule.Container().(Grammar)
+	if !ok || grammar == nil {
+		return
+	}
+	groupName := InfixOperatorGroupName(rule)
+	if findRuleByName(grammar, groupName) != nil {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			fmt.Sprintf("The infix rule '%s' reserves the name '%s' for its generated operator token group, but that name is already taken.", rule.Name(), groupName),
+			rule,
+			core.WithToken(rule.NameToken()),
+			core.WithCode(ValidateInfixOperatorGroupName),
+		))
+	}
+}
+
+// findInterfaceField returns the field with the given name declared on the
+// interface or any of its (transitive) super interfaces.
+func findInterfaceField(iface Interface, name string, ctx context.Context) Field {
+	return doFindInterfaceField(iface, name, ctx, collections.NewSet[string]())
+}
+
+func doFindInterfaceField(iface Interface, name string, ctx context.Context, visited collections.Set[string]) Field {
+	if !visited.Add(iface.Name()) {
+		return nil
+	}
+	for _, field := range iface.Fields() {
+		if field.Name() == name {
+			return field
+		}
+	}
+	for _, ext := range iface.Extends() {
+		if extType := ext.Ref(ctx); extType != nil {
+			if field := doFindInterfaceField(extType, name, ctx, visited); field != nil {
+				return field
+			}
+		}
+	}
+	return nil
 }
 
 func (cr *CrossRefImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {

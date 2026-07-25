@@ -133,8 +133,8 @@ func (p *CompletionParser) ParseD() {
 		p.state.Consume(Keyword_d)
 	}
 	{
-		p.cp.RecordSnapshot(D__Basic_2)
-		p.state.Sync(D__Basic_2)
+		p.cp.RecordSnapshot(D__Basic_1)
+		p.state.Sync(D__Basic_1)
 		if p.lookahead.DValueOptional(p.state) {
 			p.cp.MarkAssignment("Value")
 			p.state.Consume(Token_Identifier)

@@ -101,6 +101,15 @@ func (p *Parser) ParseGrammar() Grammar {
 						current.SetCompositesItem(result)
 					}
 				}
+			case 5:
+				{
+					p.state.EnterRule(Grammar__Basic_13)
+					result := p.ParseInfixRule()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetInfixRulesItem(result)
+					}
+				}
 			default:
 				p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 			}
@@ -1176,6 +1185,171 @@ func (p *Parser) ParseCompositeElement() Element {
 					current.SetCardinality(token)
 				}
 			}
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseInfixRule() InfixRule {
+	current := NewInfixRule()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Keyword_infix)
+			core.AssignToken(current, token, InfixRule_infix)
+		}
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, InfixRule_Name_ID)
+			if token != nil {
+				current.SetName(token)
+			}
+		}
+		{
+			token := p.state.Consume(Keyword_on)
+			core.AssignToken(current, token, InfixRule_on)
+		}
+		{
+			p.state.EnterRule(InfixRule__Basic_2)
+			result := p.ParseRuleCall()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetCall(result)
+			}
+		}
+		p.state.Sync(InfixRule__Basic_2)
+		if p.lookahead.InfixRuleOptional(p.state) {
+			{
+				token := p.state.Consume(Keyword_returns)
+				core.AssignToken(current, token, InfixRule_returns)
+			}
+			{
+				token := p.state.Consume(Token_ID)
+				core.AssignToken(current, token, InfixRule_ReturnType_ID)
+				if token != nil {
+					current.SetReturnType(p.referencesConstructor.InfixRuleReturnType(current, token))
+				}
+			}
+		}
+		{
+			token := p.state.Consume(Keyword_Colon)
+			core.AssignToken(current, token, InfixRule_Colon)
+		}
+		{
+			p.state.EnterRule(InfixRule__LoopEntry)
+			result := p.ParsePrecedenceGroup()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetGroupsItem(result)
+			}
+		}
+		p.state.Sync(InfixRule__LoopEntry)
+		for p.lookahead.InfixRuleLoop(p.state) {
+			{
+				token := p.state.Consume(Keyword_GreaterThan)
+				core.AssignToken(current, token, InfixRule_GreaterThan)
+			}
+			{
+				p.state.EnterRule(InfixRule__Basic_5)
+				result := p.ParsePrecedenceGroup()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetGroupsItem(result)
+				}
+			}
+			p.state.Sync(InfixRule__LoopEntry)
+		}
+		{
+			if p.lookahead.InfixRuleSemicolonOptional(p.state) {
+				token := p.state.Consume(Keyword_Semicolon)
+				core.AssignToken(current, token, InfixRule_Semicolon)
+			}
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParsePrecedenceGroup() PrecedenceGroup {
+	current := NewPrecedenceGroup()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		p.state.Sync(PrecedenceGroup__Basic_4)
+		if p.lookahead.PrecedenceGroupOptional(p.state) {
+			{
+				switch prediction, _ := p.lookahead.PrecedenceGroupAssociativityAlternatives(p.state); prediction {
+				case 0:
+					token := p.state.Consume(Keyword_left)
+					core.AssignToken(current, token, PrecedenceGroup_Associativity_left)
+					if token != nil {
+						current.SetAssociativity(token)
+					}
+				case 1:
+					token := p.state.Consume(Keyword_right)
+					core.AssignToken(current, token, PrecedenceGroup_Associativity_right)
+					if token != nil {
+						current.SetAssociativity(token)
+					}
+				}
+			}
+			{
+				token := p.state.Consume(Keyword_assoc)
+				core.AssignToken(current, token, PrecedenceGroup_assoc)
+			}
+		}
+		{
+			p.state.EnterRule(PrecedenceGroup__LoopEntry)
+			result := p.ParseInfixOperator()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetOperatorsItem(result)
+			}
+		}
+		p.state.Sync(PrecedenceGroup__LoopEntry)
+		for p.lookahead.PrecedenceGroupLoop(p.state) {
+			{
+				token := p.state.Consume(Keyword_Pipe)
+				core.AssignToken(current, token, PrecedenceGroup_Pipe)
+			}
+			{
+				p.state.EnterRule(PrecedenceGroup__Basic_7)
+				result := p.ParseInfixOperator()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetOperatorsItem(result)
+				}
+			}
+			p.state.Sync(PrecedenceGroup__LoopEntry)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseInfixOperator() Assignable {
+	current := NewAssignable()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		switch prediction, failure := p.lookahead.InfixOperatorAlternatives(p.state); prediction {
+		case 0:
+			{
+				p.state.EnterRule(InfixOperator__Basic_1)
+				result := p.ParseKeyword()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+		case 1:
+			{
+				p.state.EnterRule(InfixOperator__Basic_3)
+				result := p.ParseRuleCall()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+		default:
+			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)

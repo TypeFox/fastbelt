@@ -58,19 +58,24 @@ Evaluation:
     Expression=Expression ";"
 
 Expression:
-    Addition
+    BinaryExpression
 
-Addition returns Expression:
-    Multiplication ({BinaryExpression.Left=current} Operator=("+" | "-") Right=Multiplication)*
+infix BinaryExpression on PrimaryExpression:
+    "%"
+    > right assoc "^"
+    > Multiplication
+    > Addition
 
-Multiplication returns Expression:
-    Exponentiation ({BinaryExpression.Left=current} Operator=("*" | "/") Right=Exponentiation)*
+// Tests that Fastbelt can handle operators nested in token groups
+token group Multiplication {
+    "*"
+    "/"
+}
 
-Exponentiation returns Expression:
-    Modulo ({BinaryExpression.Left=current} Operator="^" Right=Modulo)*
-
-Modulo returns Expression:
-    PrimaryExpression ({BinaryExpression.Left=current} Operator="%" Right=PrimaryExpression)*
+token group Addition {
+    "+"
+    "-"
+}
 
 PrimaryExpression returns Expression:
     "(" Expression ")" |

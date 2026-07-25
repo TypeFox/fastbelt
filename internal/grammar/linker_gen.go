@@ -25,6 +25,7 @@ type FastbeltScopeProvider interface {
 	ScopeRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) core.Scope
 	ScopeActionType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeActionProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope
+	ScopeInfixRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 }
 
 type DefaultFastbeltScopeProvider struct {
@@ -75,6 +76,10 @@ func (s *DefaultFastbeltScopeProvider) ScopeActionProperty(ctx context.Context, 
 	return linking.DefaultScopeOfType[Field](reference.Owner())
 }
 
+func (s *DefaultFastbeltScopeProvider) ScopeInfixRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
+	return linking.DefaultScopeOfType[Interface](reference.Owner())
+}
+
 type FastbeltReferenceLinker interface {
 	LinkInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
@@ -86,6 +91,7 @@ type FastbeltReferenceLinker interface {
 	LinkRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkActionType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkActionProperty(ctx context.Context, reference *core.Reference[Field]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkInfixRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 }
 
 type DefaultFastbeltReferenceLinker struct {
@@ -152,6 +158,11 @@ func (s *DefaultFastbeltReferenceLinker) LinkActionProperty(ctx context.Context,
 	return core.DefaultLink(scope, reference.Text())
 }
 
+func (s *DefaultFastbeltReferenceLinker) LinkInfixRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeInfixRuleReturnType(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
+}
+
 type FastbeltReferencesConstructor interface {
 	InterfaceExtends(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	ReferenceTypeType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
@@ -163,6 +174,7 @@ type FastbeltReferencesConstructor interface {
 	RuleCallRule(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractRule]
 	ActionType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	ActionProperty(owner core.AstNode, unit core.StringUnit) *core.Reference[Field]
+	InfixRuleReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 }
 
 type DefaultFastbeltReferencesConstructor struct {
@@ -226,6 +238,11 @@ func (s *DefaultFastbeltReferencesConstructor) ActionType(owner core.AstNode, un
 
 func (s *DefaultFastbeltReferencesConstructor) ActionProperty(owner core.AstNode, unit core.StringUnit) *core.Reference[Field] {
 	fn := s.referenceLinker().LinkActionProperty
+	return core.NewReference(owner, unit, fn)
+}
+
+func (s *DefaultFastbeltReferencesConstructor) InfixRuleReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
+	fn := s.referenceLinker().LinkInfixRuleReturnType
 	return core.NewReference(owner, unit, fn)
 }
 

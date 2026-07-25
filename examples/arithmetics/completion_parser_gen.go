@@ -175,130 +175,8 @@ func (p *CompletionParser) ParseExpression() {
 	defer p.cp.ExitRule()
 	{
 		p.state.EnterRule(Expression__Basic_1)
-		p.ParseAddition()
+		p.ParseBinaryExpression()
 		p.state.ExitRule()
-	}
-}
-
-func (p *CompletionParser) ParseAddition() {
-	p.cp.EnterRule("Addition", Addition__Start)
-	defer p.cp.ExitRule()
-	{
-		p.state.EnterRule(Addition__LoopEntry)
-		p.ParseMultiplication()
-		p.state.ExitRule()
-	}
-	p.cp.RecordSnapshot(Addition__LoopEntry)
-	p.state.Sync(Addition__LoopEntry)
-	for p.lookahead.AdditionLoop(p.state) {
-		{
-			p.cp.MarkAssignment("Operator")
-			switch prediction, _ := p.lookahead.AdditionOperatorAlternatives(p.state); prediction {
-			case 0:
-				p.state.Consume(Keyword_Plus)
-			case 1:
-				p.state.Consume(Keyword_Dash)
-			}
-			p.cp.ClearAssignment()
-		}
-		{
-			p.cp.MarkAssignment("Right")
-			p.state.EnterRule(Addition__Basic_5)
-			p.ParseMultiplication()
-			p.state.ExitRule()
-			p.cp.ClearAssignment()
-		}
-		p.cp.RecordSnapshot(Addition__LoopEntry)
-		p.state.Sync(Addition__LoopEntry)
-	}
-}
-
-func (p *CompletionParser) ParseMultiplication() {
-	p.cp.EnterRule("Multiplication", Multiplication__Start)
-	defer p.cp.ExitRule()
-	{
-		p.state.EnterRule(Multiplication__LoopEntry)
-		p.ParseExponentiation()
-		p.state.ExitRule()
-	}
-	p.cp.RecordSnapshot(Multiplication__LoopEntry)
-	p.state.Sync(Multiplication__LoopEntry)
-	for p.lookahead.MultiplicationLoop(p.state) {
-		{
-			p.cp.MarkAssignment("Operator")
-			switch prediction, _ := p.lookahead.MultiplicationOperatorAlternatives(p.state); prediction {
-			case 0:
-				p.state.Consume(Keyword_Asterisk)
-			case 1:
-				p.state.Consume(Keyword_Slash)
-			}
-			p.cp.ClearAssignment()
-		}
-		{
-			p.cp.MarkAssignment("Right")
-			p.state.EnterRule(Multiplication__Basic_5)
-			p.ParseExponentiation()
-			p.state.ExitRule()
-			p.cp.ClearAssignment()
-		}
-		p.cp.RecordSnapshot(Multiplication__LoopEntry)
-		p.state.Sync(Multiplication__LoopEntry)
-	}
-}
-
-func (p *CompletionParser) ParseExponentiation() {
-	p.cp.EnterRule("Exponentiation", Exponentiation__Start)
-	defer p.cp.ExitRule()
-	{
-		p.state.EnterRule(Exponentiation__LoopEntry)
-		p.ParseModulo()
-		p.state.ExitRule()
-	}
-	p.cp.RecordSnapshot(Exponentiation__LoopEntry)
-	p.state.Sync(Exponentiation__LoopEntry)
-	for p.lookahead.ExponentiationLoop(p.state) {
-		{
-			p.cp.MarkAssignment("Operator")
-			p.state.Consume(Keyword_Caret)
-			p.cp.ClearAssignment()
-		}
-		{
-			p.cp.MarkAssignment("Right")
-			p.state.EnterRule(Exponentiation__Basic_2)
-			p.ParseModulo()
-			p.state.ExitRule()
-			p.cp.ClearAssignment()
-		}
-		p.cp.RecordSnapshot(Exponentiation__LoopEntry)
-		p.state.Sync(Exponentiation__LoopEntry)
-	}
-}
-
-func (p *CompletionParser) ParseModulo() {
-	p.cp.EnterRule("Modulo", Modulo__Start)
-	defer p.cp.ExitRule()
-	{
-		p.state.EnterRule(Modulo__LoopEntry)
-		p.ParsePrimaryExpression()
-		p.state.ExitRule()
-	}
-	p.cp.RecordSnapshot(Modulo__LoopEntry)
-	p.state.Sync(Modulo__LoopEntry)
-	for p.lookahead.ModuloLoop(p.state) {
-		{
-			p.cp.MarkAssignment("Operator")
-			p.state.Consume(Keyword_Percent)
-			p.cp.ClearAssignment()
-		}
-		{
-			p.cp.MarkAssignment("Right")
-			p.state.EnterRule(Modulo__Basic_2)
-			p.ParsePrimaryExpression()
-			p.state.ExitRule()
-			p.cp.ClearAssignment()
-		}
-		p.cp.RecordSnapshot(Modulo__LoopEntry)
-		p.state.Sync(Modulo__LoopEntry)
 	}
 }
 
@@ -365,5 +243,29 @@ func (p *CompletionParser) ParsePrimaryExpression() {
 		}
 	default:
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+	}
+}
+
+func (p *CompletionParser) ParseBinaryExpression() {
+	p.cp.EnterRule("BinaryExpression", BinaryExpression__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.EnterRule(BinaryExpression__LoopEntry)
+		p.ParsePrimaryExpression()
+		p.state.ExitRule()
+	}
+	p.cp.RecordSnapshot(BinaryExpression__LoopEntry)
+	p.state.Sync(BinaryExpression__LoopEntry)
+	for p.lookahead.BinaryExpressionLoop(p.state) {
+		{
+			p.state.Consume(Token_BinaryExpressionOperator)
+		}
+		{
+			p.state.EnterRule(BinaryExpression__Basic_2)
+			p.ParsePrimaryExpression()
+			p.state.ExitRule()
+		}
+		p.cp.RecordSnapshot(BinaryExpression__LoopEntry)
+		p.state.Sync(BinaryExpression__LoopEntry)
 	}
 }

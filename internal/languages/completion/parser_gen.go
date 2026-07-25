@@ -674,7 +674,7 @@ func (p *Parser) ParseM() Obj {
 		}
 		{
 			token := p.state.Consume(Token_SomeTokenGroup)
-			core.AssignToken(current, token, M__Basic_0)
+			core.AssignToken(current, token, M_SomeTokenGroup)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -691,7 +691,7 @@ func (p *Parser) ParseN() N {
 		}
 		{
 			token := p.state.Consume(Token_SomeTokenGroup)
-			core.AssignToken(current, token, N__Basic_0)
+			core.AssignToken(current, token, N_Ref_SomeTokenGroup)
 			if token != nil {
 				current.SetRef(p.referencesConstructor.NRef(current, token))
 			}
