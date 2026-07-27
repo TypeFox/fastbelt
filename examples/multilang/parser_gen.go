@@ -23,7 +23,7 @@ func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
 	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
 	selector := service.MustGet[core.LanguageSelector](p.sc)
 	var result core.AstNode
-	switch i, _ := selector.Select(core.ParseURI(string(document.TextDoc.URI()))); i {
+	switch i, _ := selector.Select(document.URI); i {
 	case 1:
 		result = cp.ParseFarewell()
 	default:
@@ -41,7 +41,7 @@ func NewParser(sc *service.Container) *Parser {
 
 func (p *Parser) ParseGreeting() Greeting {
 	current := NewGreeting()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_hello)
@@ -55,13 +55,13 @@ func (p *Parser) ParseGreeting() Greeting {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseFarewell() Farewell {
 	current := NewFarewell()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_goodbye)
@@ -75,6 +75,6 @@ func (p *Parser) ParseFarewell() Farewell {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }

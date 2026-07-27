@@ -19,7 +19,7 @@ import (
 // Access to the fields of Document should be synchronized using a [typefox.dev/fastbelt/workspace] Lock.
 // The document struct should never be copied after creation.
 type Document struct {
-	// URI identifies the document in the workspace.
+	// The URI of the document, usually a pointer to a file in the workspace.
 	URI URI
 	// State tracks which build phases already ran for this document.
 	State DocumentState
