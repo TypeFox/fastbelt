@@ -27,7 +27,7 @@ func mustExpandInfixRules(grammr grammar.Grammar) {
 // synthesized flat body. The real parser collects operands and operator
 // tokens in flat slices with a single token-group consume per operator (no
 // alternatives decision), then folds them into a binary tree with
-// core.BuildInfixTree.
+// parser.BuildInfixTree.
 func generateInfixParseFunction(node codegen.Node, context *ParserGeneratorContext, rule grammar.InfixRule, groupMembers map[string][]string) {
 	returnType := grammar.FindInfixReturnType(rule, ctx.Background())
 	if returnType == nil {
@@ -101,7 +101,7 @@ func generateInfixParseFunction(node codegen.Node, context *ParserGeneratorConte
 			in.AppendLine("return parts[0]")
 		})
 		n.AppendLine("}")
-		n.AppendLine("return core.BuildInfixTree(parts, operators, ", precedenceVar, ", func(left ", returnType.Name(), ", operator *core.Token, right ", returnType.Name(), ") ", returnType.Name(), " {")
+		n.AppendLine("return parser.BuildInfixTree(parts, operators, ", precedenceVar, ", func(left ", returnType.Name(), ", operator *core.Token, right ", returnType.Name(), ") ", returnType.Name(), " {")
 		n.Indent(func(in codegen.Node) {
 			in.AppendLine("result := New", rule.Name(), "()")
 			in.AppendLine("if left != nil {")
@@ -135,7 +135,7 @@ func generateInfixParseFunction(node codegen.Node, context *ParserGeneratorConte
 // keyed by leaf token type id. Token-group operators are expanded to their
 // leaf members so the runtime lookup is a single map access on Token.TypeId.
 func generateInfixPrecedenceVar(node codegen.Node, name string, rule grammar.InfixRule, groupMembers map[string][]string) {
-	node.AppendLine("var ", name, " = map[int]core.InfixPrecedence{")
+	node.AppendLine("var ", name, " = map[int]parser.InfixPrecedence{")
 	node.Indent(func(n codegen.Node) {
 		seen := map[string]bool{}
 		for level, group := range rule.Groups() {

@@ -375,7 +375,7 @@
 //
 //	infix BinaryExpression on PrimaryExpression:
 //	    "%"
-//	    > "^"
+//	    > right assoc "^"
 //	    > "*" | "/"
 //	    > "+" | "-"
 //
@@ -391,7 +391,7 @@
 //
 //	infix BinaryExpression on PrimaryExpression:
 //	    "+" | "-"
-//	    > right assoc "="
+//	    > right assoc "^"
 //
 // Operators can be keywords, token references, or token group references:
 //
@@ -405,12 +405,7 @@
 // binary node is wrapped around it.
 //
 // For parsing, all operators of an infix rule are unified into a generated
-// token group named "<RuleName>Operator" (that rule name must be unused),
-// so the parser consumes any operator with a single token-set check per
-// operator — considerably faster than the nested action-rule encoding.
-// Note that a token-referenced operator is matched by the lexer with the
-// usual longest-match rules: if its pattern also matches a keyword used
-// elsewhere in the grammar, the keyword wins at equal length.
+// token group named "<RuleName>Operator" for performance reasons.
 //
 // # Composite Rules
 //

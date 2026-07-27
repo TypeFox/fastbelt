@@ -2,17 +2,18 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package fastbelt
+package parser
 
 import (
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	core "typefox.dev/fastbelt"
 )
 
 type infixTestNode struct {
-	AstNodeBase
+	core.AstNodeBase
 	name        string
 	left, right *infixTestNode
 	op          string
@@ -30,18 +31,18 @@ func (n *infixTestNode) String() string {
 
 // parseInfixInput splits "1 + 2 * 3" into leaf nodes and operator tokens,
 // assigning each distinct operator symbol a stable token type id.
-func parseInfixInput(input string, typeIds map[string]int) (parts []*infixTestNode, operators []*Token) {
+func parseInfixInput(input string, typeIds map[string]int) (parts []*infixTestNode, operators []*core.Token) {
 	for i, field := range strings.Fields(input) {
 		if i%2 == 0 {
 			parts = append(parts, &infixTestNode{name: field})
 		} else {
-			operators = append(operators, &Token{Image: field, TypeId: typeIds[field]})
+			operators = append(operators, &core.Token{Image: field, Type: &core.TokenType{Id: typeIds[field], Name: field}})
 		}
 	}
 	return parts, operators
 }
 
-func buildInfixTestNode(left *infixTestNode, operator *Token, right *infixTestNode) *infixTestNode {
+func buildInfixTestNode(left *infixTestNode, operator *core.Token, right *infixTestNode) *infixTestNode {
 	op := "?"
 	if operator != nil {
 		op = operator.Image
@@ -98,9 +99,9 @@ func TestBuildInfixTreeDanglingOperator(t *testing.T) {
 
 	// "1 + 2 -" — the trailing operator has no right operand.
 	parts := []*infixTestNode{{name: "1"}, {name: "2"}}
-	operators := []*Token{
-		{Image: "+", TypeId: 1},
-		{Image: "-", TypeId: 2},
+	operators := []*core.Token{
+		{Image: "+", Type: &core.TokenType{Id: 1, Name: "+"}},
+		{Image: "-", Type: &core.TokenType{Id: 2, Name: "-"}},
 	}
 	tree := BuildInfixTree(parts, operators, precedence, buildInfixTestNode)
 	assert.Equal(t, "((1 + 2) - <nil>)", tree.String())
@@ -109,9 +110,9 @@ func TestBuildInfixTreeDanglingOperator(t *testing.T) {
 func TestBuildInfixTreeUnknownOperatorBindsLoosest(t *testing.T) {
 	precedence := map[int]InfixPrecedence{1: {Level: 0}}
 	parts := []*infixTestNode{{name: "1"}, {name: "2"}, {name: "3"}}
-	operators := []*Token{
-		{Image: "?", TypeId: 99},
-		{Image: "*", TypeId: 1},
+	operators := []*core.Token{
+		{Image: "?", Type: &core.TokenType{Id: 99, Name: "?"}},
+		{Image: "*", Type: &core.TokenType{Id: 1, Name: "*"}},
 	}
 	tree := BuildInfixTree(parts, operators, precedence, buildInfixTestNode)
 	assert.Equal(t, "(1 ? (2 * 3))", tree.String())
