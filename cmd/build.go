@@ -246,23 +246,39 @@ func findEntryRule(g grammar.Grammar, name string) (grammar.ParserRule, error) {
 // reportDiagnostics prints sorted diagnostics for the given documents and
 // returns an error when any are of error severity.
 func reportDiagnostics(docs []*core.Document) error {
-	var diagnostics []*core.Diagnostic
+	type located struct {
+		file string
+		pos  lsp.Position
+		diag *core.Diagnostic
+	}
+	var diagnostics []located
 	for _, doc := range docs {
-		diagnostics = append(diagnostics, doc.Diagnostics...)
+		for _, diag := range doc.Diagnostics {
+			diagnostics = append(diagnostics, located{
+				file: doc.URI.FilePath(),
+				pos:  doc.TextDoc.PositionAt(int(diag.Range.Start)),
+				diag: diag,
+			})
+		}
 	}
 	sort.SliceStable(diagnostics, func(i, j int) bool {
-		if diagnostics[i].Range.Start.Line == diagnostics[j].Range.Start.Line {
-			return diagnostics[i].Range.Start.Column < diagnostics[j].Range.Start.Column
+		a, b := diagnostics[i], diagnostics[j]
+		if a.file != b.file {
+			return a.file < b.file
 		}
-		return diagnostics[i].Range.Start.Line < diagnostics[j].Range.Start.Line
+		if a.pos.Line != b.pos.Line {
+			return a.pos.Line < b.pos.Line
+		}
+		return a.pos.Character < b.pos.Character
 	})
 	errCount := 0
-	for _, diag := range diagnostics {
-		if diag.Severity == core.SeverityError {
+	for _, d := range diagnostics {
+		if d.diag.Severity == core.SeverityError {
 			errCount++
 		}
-		fmt.Printf("%s - %d:%d %s\n", diag.Severity.String(),
-			diag.Range.Start.Line+1, diag.Range.Start.Column+1, diag.Message)
+		// For printing, convert to 1-based line and column numbers.
+		fmt.Printf("%s - %s:%d:%d %s\n", d.diag.Severity.String(),
+			d.file, d.pos.Line+1, d.pos.Character+1, d.diag.Message)
 	}
 	if errCount > 0 {
 		return fmt.Errorf("aborting code generation due to %d errors", errCount)
