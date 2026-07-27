@@ -14,14 +14,12 @@ import (
 
 // SetupServices sets up the base services for the {{.LanguageLabel}} language.
 func SetupServices(sc *service.Container) {
-	service.Put[workspace.LanguageID](sc, "{{.LanguageID}}")
-	service.Put[core.LanguageSelector](sc, core.NewDefaultLanguageSelector(sc,
-		[]core.DocumentSelector{
-			{
-				{LanguageID: "{{.LanguageID}}", Pattern: "**/*{{.FileDotExt}}"},
-			},
-		},
-	))
+	service.Put[core.LanguageSelector](
+		sc,
+		core.NewDefaultLanguageSelector(sc,
+			core.NewDocumentSelectorWithPatterns("{{.LanguageID}}", "**/*{{.FileDotExt}}"),
+		),
+	)
 	textdoc.SetupDefaultServices(sc)
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)
