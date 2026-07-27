@@ -13,22 +13,7 @@ import (
 
 // Lexer tokenizes a complete source string in one shot.
 type Lexer interface {
-	Exec(input string) *LexerResult
-}
-
-// LexerResult holds everything produced by a single [Lexer.Exec] pass over
-// source text.
-type LexerResult struct {
-	// Tokens is the main token stream passed to the parser.
-	Tokens []core.Token
-	// Comments holds tokens whose Type ([core.TokenType]) is marked with the modifier [core.CommentModifier] via the type [TokenTypeUsage].
-	// A [TokenMode] holds all relevant token types. Each [core.TokenType] can be put into a [TokenTypeUsage] containing a modifier and a Token command.
-	Comments []core.Token
-	// Errors lists recoverable lexing problems (unrecognized input).
-	Errors []*core.LexerError
-	// Modifiers collects tokens routed to custom [TokenTypeUsage.Modifier] values
-	// other than the default, skipped, or comment modifiers. Nil when empty.
-	Modifiers map[int][]core.Token
+	Exec(document *core.Document)
 }
 
 // Allocate a new token every ~5 characters on average
@@ -48,12 +33,12 @@ type DefaultLexer struct {
 
 // Exec scans input from left to right using longest-match disambiguation among
 // token types registered at construction time.
-func (l *DefaultLexer) Exec(input string) *LexerResult {
+func (l *DefaultLexer) Exec(document *core.Document) {
+	input := document.TextDoc.Text(nil)
 	length := len(input)
 	tokens := make([]core.Token, 0, l.avgRatio.Capacity(length))
 	comments := make([]core.Token, 0)
 	errors := make([]*core.LexerError, 0)
-	var modifiers map[int][]core.Token
 
 	// The mode stack is local to this call: a DefaultLexer is shared between
 	// documents and Exec may run concurrently, so input that ends inside a
@@ -100,15 +85,6 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 					input[offset:end],
 					offset, end,
 				))
-			default:
-				if modifiers == nil {
-					modifiers = make(map[int][]core.Token)
-				}
-				modifiers[longestType.Modifier] = append(modifiers[longestType.Modifier], core.NewToken(
-					longestType.TokenType,
-					input[offset:end],
-					offset, end,
-				))
 			}
 
 			switch {
@@ -141,12 +117,9 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 		l.avgRatio.Update(float64(len(tokens)) / float64(length))
 	}
 
-	return &LexerResult{
-		Tokens:    tokens,
-		Comments:  comments,
-		Errors:    errors,
-		Modifiers: modifiers,
-	}
+	document.Tokens = tokens
+	document.Comments = comments
+	document.LexerErrors = errors
 }
 
 const maxChar = 256
