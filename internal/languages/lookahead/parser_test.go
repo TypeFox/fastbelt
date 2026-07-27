@@ -22,9 +22,8 @@ func BenchmarkNestedQualifiedNameLookahead(b *testing.B) {
 	srv := CreateServices()
 	lexerService := service.MustGet[lexer.Lexer](srv)
 	parserService := service.MustGet[parser.Parser](srv)
-	tokens := lexerService.Lex(content).Tokens
 	doc := fastbelt.NewDocumentFromString("file:///workspace/test.la", "lookahead", content)
-	doc.Tokens = tokens
+	lexerService.Lex(doc)
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {

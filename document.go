@@ -109,20 +109,22 @@ func NewDocumentFromString(uri, languageId, content string) *Document {
 type DocumentState uint32
 
 const (
-	// DocStateParsed marks that lexing and parsing completed and produced AST and token data.
-	DocStateParsed DocumentState = 1 << iota // 0x0001
+	// DocStateLexed marks that lexing completed and produced token data.
+	DocStateLexed DocumentState = 1 << iota // 0x0001
+	// DocStateParsed marks that parsing completed and produced an AST.
+	DocStateParsed // 0x0002
 	// DocStateExportedSymbols marks that exported symbols were collected for cross-document linking.
-	DocStateExportedSymbols // 0x0002
+	DocStateExportedSymbols // 0x0004
 	// DocStateImportedSymbols marks that symbols from other documents were imported.
-	DocStateImportedSymbols // 0x0004
+	DocStateImportedSymbols // 0x0008
 	// DocStateLocalSymbols marks that local symbols for this document were collected.
-	DocStateLocalSymbols // 0x0008
+	DocStateLocalSymbols // 0x0010
 	// DocStateLinked marks that cross-references were linked.
-	DocStateLinked // 0x0010
+	DocStateLinked // 0x0020
 	// DocStateReferences marks that reference descriptions were collected.
-	DocStateReferences // 0x0020
+	DocStateReferences // 0x0040
 	// DocStateValidated marks that validators were executed and diagnostics were collected.
-	DocStateValidated // 0x0040
+	DocStateValidated // 0x0080
 )
 
 // String returns a readable representation of the set state flags.

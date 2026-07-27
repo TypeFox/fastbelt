@@ -13,21 +13,7 @@ import (
 
 // Lexer tokenizes a complete source string in one shot.
 type Lexer interface {
-	Lex(input string) *LexerResult
-}
-
-// LexerResult holds everything produced by a single [Lexer.Lex] pass over
-// source text.
-type LexerResult struct {
-	// Tokens is the main token stream passed to the parser.
-	Tokens []core.Token
-	// Comments holds tokens whose [core.TokenType] uses [core.CommentGroup].
-	Comments []core.Token
-	// Errors lists recoverable lexing problems (unrecognized input).
-	Errors []*core.LexerError
-	// Groups collects tokens routed to custom [core.TokenType.Group] values
-	// other than the default, skipped, or comment groups. Nil when empty.
-	Groups map[int][]core.Token
+	Lex(document *core.Document)
 }
 
 // Allocate a new token every ~5 characters on average
@@ -46,12 +32,12 @@ type DefaultLexer struct {
 
 // Lex scans input from left to right using longest-match disambiguation among
 // token types registered at construction time.
-func (l *DefaultLexer) Lex(input string) *LexerResult {
+func (l *DefaultLexer) Lex(document *core.Document) {
+	input := document.TextDoc.Text(nil)
 	length := len(input)
 	tokens := make([]core.Token, 0, l.avgRatio.Capacity(length))
 	comments := make([]core.Token, 0)
 	errors := make([]*core.LexerError, 0)
-	var groups map[int][]core.Token
 
 	var offset int
 	for offset < length {
@@ -91,15 +77,6 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 					input[offset:end],
 					offset, end,
 				))
-			default:
-				if groups == nil {
-					groups = make(map[int][]core.Token)
-				}
-				groups[longestType.Group] = append(groups[longestType.Group], core.NewToken(
-					longestType,
-					input[offset:end],
-					offset, end,
-				))
 			}
 		} else {
 			errors = append(errors, core.NewLexerError(
@@ -116,12 +93,9 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 		l.avgRatio.Update(float64(len(tokens)) / float64(length))
 	}
 
-	return &LexerResult{
-		Tokens:   tokens,
-		Comments: comments,
-		Errors:   errors,
-		Groups:   groups,
-	}
+	document.Tokens = tokens
+	document.Comments = comments
+	document.LexerErrors = errors
 }
 
 const maxChar = 256

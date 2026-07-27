@@ -402,7 +402,7 @@ func GenerateParser(grammr grammar.Grammar, entryRules []grammar.ParserRule, pac
 	node.AppendLine("}")
 	node.AppendLine()
 
-	node.AppendLine("func (p *Parser) Parse(document *core.Document) *parser.ParseResult {")
+	node.AppendLine("func (p *Parser) Parse(document *core.Document) {")
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)")
 		n.AppendLine("messages := service.MustGet[parser.ErrorMessageProvider](p.sc)")
@@ -411,7 +411,9 @@ func GenerateParser(grammr grammar.Grammar, entryRules []grammar.ParserRule, pac
 		n.AppendLine("cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}")
 		emitEntryDispatch(n, entryRules)
 		n.AppendLine("cp.state.ExpectEndOfInput()")
-		n.AppendLine("return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}")
+		n.AppendLine("document.ParserErrors = cp.state.Errors()")
+		n.AppendLine("document.Root = result")
+		n.AppendLine("core.AssignContainers(document)")
 	})
 	node.AppendLine("}")
 	node.AppendLine()

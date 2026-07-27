@@ -36,9 +36,6 @@ func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[Builder](sc) {
 		service.Put(sc, NewDefaultBuilder(sc))
 	}
-	if !service.Has[DocumentParser](sc) {
-		service.Put(sc, NewDefaultDocumentParser(sc))
-	}
 	if !service.Has[DocumentValidator](sc) {
 		service.Put(sc, NewDefaultDocumentValidator(sc))
 	}
