@@ -66,7 +66,7 @@ func GenerateServices(grammr grammar.Grammar, selectors []Selector, packageName 
 		n.AppendLine("    service.Put(sc, NewDefault", grammr.Name(), "ParserLookahead())")
 		n.AppendLine("}")
 		n.AppendLine("if !service.Has[lexer.Lexer](sc) {")
-		n.AppendLine("    service.Put(sc, NewLexer())")
+		n.AppendLine("    service.Put(sc, NewLexer(sc))")
 		n.AppendLine("}")
 		n.AppendLine("if !service.Has[parser.Parser](sc) {")
 		n.AppendLine("    service.Put[parser.Parser](sc, NewParser(sc))")

@@ -46,3 +46,38 @@ func TestLanguageDispatch(t *testing.T) {
 		t.Fatalf(".bye routed to %T, want Farewell", bye.Root)
 	}
 }
+
+func TestLanguageAwareLexing(t *testing.T) {
+	sc := CreateServices()
+
+	// "goodbye" is only a keyword in the Farewell language; in a .hello
+	// document it must lex as Token_ID and parse as a Greeting name.
+	hello := parse(t, sc, "/ws/c.hello", "hello goodbye")
+	greeting, ok := hello.Root.(Greeting)
+	if !ok {
+		t.Fatalf(".hello routed to %T, want Greeting", hello.Root)
+	}
+	if greeting.Name() != "goodbye" {
+		t.Fatalf("Greeting name = %q, want %q", greeting.Name(), "goodbye")
+	}
+	for _, token := range hello.Tokens {
+		if token.TypeId == Keyword_goodbye_Idx {
+			t.Fatalf("Keyword_goodbye lexed in a .hello document")
+		}
+	}
+
+	// Symmetric: "hello" is not a keyword in the Farewell language.
+	bye := parse(t, sc, "/ws/d.bye", "goodbye hello")
+	farewell, ok := bye.Root.(Farewell)
+	if !ok {
+		t.Fatalf(".bye routed to %T, want Farewell", bye.Root)
+	}
+	if farewell.Name() != "hello" {
+		t.Fatalf("Farewell name = %q, want %q", farewell.Name(), "hello")
+	}
+	for _, token := range bye.Tokens {
+		if token.TypeId == Keyword_hello_Idx {
+			t.Fatalf("Keyword_hello lexed in a .bye document")
+		}
+	}
+}

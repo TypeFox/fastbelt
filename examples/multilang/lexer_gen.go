@@ -6,6 +6,7 @@ import (
 	"strings"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
+	"typefox.dev/fastbelt/util/service"
 	"unicode/utf8"
 )
 
@@ -195,11 +196,18 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
-func NewLexer() lexer.Lexer {
-	return lexer.NewDefaultLexer(
-		Keyword_goodbye,
-		Keyword_hello,
-		Token_ID,
-		Token_WS,
+func NewLexer(sc *service.Container) lexer.Lexer {
+	return lexer.NewMultiLanguageLexer(
+		sc,
+		[]*core.TokenType{ // Greeting
+			Keyword_hello,
+			Token_ID,
+			Token_WS,
+		},
+		[]*core.TokenType{ // Farewell
+			Keyword_goodbye,
+			Token_ID,
+			Token_WS,
+		},
 	)
 }
