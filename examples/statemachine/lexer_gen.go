@@ -6,6 +6,7 @@ import (
 	"strings"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
+	"typefox.dev/fastbelt/util/service"
 	"unicode/utf8"
 )
 
@@ -563,8 +564,9 @@ var Token_SL_COMMENT_Accepting = [3]bool{
 	2: true,
 }
 
-func NewLexer() lexer.Lexer {
+func NewLexer(sc *service.Container) lexer.Lexer {
 	return lexer.NewDefaultLexer(
+		sc,
 		Keyword_EqualsGreaterThan,
 		Keyword_actions,
 		Keyword_commands,

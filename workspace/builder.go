@@ -77,6 +77,9 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 			doc.State = doc.State.With(core.DocStateLexed)
 			s.notifyListeners(ctx, core.DocStateLexed, doc)
 		}
+		if ctx.Err() != nil {
+			return
+		}
 		// STEP 1.2: Parse the document and create the AST.
 		if !doc.State.Has(core.DocStateParsed) {
 			parser.Parse(doc)

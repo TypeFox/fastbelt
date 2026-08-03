@@ -25,6 +25,10 @@
 //
 // The generated `NewLexer` function returns a [DefaultLexer] constructed via
 // [NewDefaultLexer] with every keyword and token type for that language.
+// Grammars with multiple configured languages use [NewMultiLanguageLexer]
+// instead, passing one token type list per language; at lex time the document
+// is routed to its language's token set via [core.LanguageSelector], mirroring
+// the generated parser's entry rule dispatch.
 // [typefox.dev/fastbelt/workspace.DefaultDocumentParser] obtains a [Lexer] from
 // the service container, calls [Lexer.Lex], and stores [LexerResult.Tokens],
 // [LexerResult.Comments], and [LexerResult.Errors] on the document before

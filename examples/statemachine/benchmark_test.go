@@ -130,12 +130,13 @@ func BenchmarkParser(b *testing.B) {
 // BenchmarkLexer benchmarks tokenizing a single generated statemachine document.
 func BenchmarkLexer(b *testing.B) {
 	content, _ := generateStatemachineContent(0)
-	l := NewLexer()
+	srv := CreateServices()
+	lexer := service.MustGet[lexer.Lexer](srv)
 	doc := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		l.Lex(doc)
+		lexer.Lex(doc)
 	}
 }
 

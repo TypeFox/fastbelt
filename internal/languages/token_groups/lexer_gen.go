@@ -6,6 +6,7 @@ import (
 	"strings"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
+	"typefox.dev/fastbelt/util/service"
 	"unicode/utf8"
 )
 
@@ -489,8 +490,9 @@ var Token_RegexGroup = core.NewTokenGroup(
 	},
 )
 
-func NewLexer() lexer.Lexer {
+func NewLexer(sc *service.Container) lexer.Lexer {
 	return lexer.NewDefaultLexer(
+		sc,
 		Keyword_a,
 		Keyword_b,
 		Keyword_c,
