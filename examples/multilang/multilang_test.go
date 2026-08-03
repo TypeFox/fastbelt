@@ -6,9 +6,11 @@ package multilang
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/test"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
@@ -79,5 +81,39 @@ func TestLanguageAwareLexing(t *testing.T) {
 		if token.TypeId == Keyword_hello_Idx {
 			t.Fatalf("Keyword_hello lexed in a .bye document")
 		}
+	}
+}
+
+// completionAt returns the completion labels at the "cursor" marker of a
+// document with the given URI, routed to its language by the selector.
+func completionAt(t *testing.T, sc *service.Container, uri, src string) []string {
+	t.Helper()
+	items := test.New(t, sc).ParseURI(src, uri).CompletionItems("cursor")
+	labels := make([]string, 0, len(items))
+	for _, item := range items {
+		labels = append(labels, item.Label)
+	}
+	return labels
+}
+
+func TestLanguageAwareCompletion(t *testing.T) {
+	sc := CreateLspServices(nil)
+
+	// At the entry of a .hello document only Greeting's keyword must surface.
+	hello := completionAt(t, sc, "file:///ws/a.hello", "<|cursor>")
+	if !slices.Contains(hello, "hello") {
+		t.Errorf("expected 'hello' at .hello entry; got %v", hello)
+	}
+	if slices.Contains(hello, "goodbye") {
+		t.Errorf("did not expect 'goodbye' at .hello entry; got %v", hello)
+	}
+
+	// Symmetric: only Farewell's keyword in a .bye document.
+	bye := completionAt(t, sc, "file:///ws/b.bye", "<|cursor>")
+	if !slices.Contains(bye, "goodbye") {
+		t.Errorf("expected 'goodbye' at .bye entry; got %v", bye)
+	}
+	if slices.Contains(bye, "hello") {
+		t.Errorf("did not expect 'hello' at .bye entry; got %v", bye)
 	}
 }
