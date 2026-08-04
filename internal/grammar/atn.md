@@ -297,7 +297,7 @@ flowchart TD
     q170{"StateNumber__TokenDecl__Basic_8 (170)<br/>Basic<br/><br/>dec=13"}
 
     q18 --> q160
-    q158 -->|"tok(TokenGroup_GroupType)"| q159
+    q158 -->|"tok(TokenGroup_TokenModifier)"| q159
     q159 --> q161
     q160 --> q158
     q160 --> q159
@@ -452,7 +452,7 @@ flowchart TD
     q225{"StateNumber__TokenGroup__Basic_12 (225)<br/>Basic<br/><br/>dec=22"}
 
     q28 --> q202
-    q200 -->|"tok(TokenGroup_GroupType)"| q201
+    q200 -->|"tok(TokenGroup_TokenModifier)"| q201
     q201 --> q203
     q202 --> q200
     q202 --> q201
@@ -614,7 +614,7 @@ flowchart TD
     q267{"StateNumber__TokenUsage__Basic_7 (267)<br/>Basic<br/><br/>dec=28"}
 
     q38 --> q260
-    q258 -->|"tok(TokenGroup_GroupType)"| q259
+    q258 -->|"tok(TokenGroup_TokenModifier)"| q259
     q259 --> q261
     q260 --> q258
     q260 --> q259
@@ -647,7 +647,7 @@ flowchart TD
     q277{"StateNumber__KeywordUsage__Basic_8 (277)<br/>Basic<br/><br/>dec=31"}
 
     q40 --> q270
-    q268 -->|"tok(TokenGroup_GroupType)"| q269
+    q268 -->|"tok(TokenGroup_TokenModifier)"| q269
     q269 --> q271
     q270 --> q268
     q270 --> q269

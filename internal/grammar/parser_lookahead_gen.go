@@ -48,7 +48,7 @@ var FieldTypeAlternatives = parser.LL1Lookahead{
 }
 
 var GrammarLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_composite, Keyword_entry, Keyword_interface, Keyword_token, Token_ID, TokenGroup_GroupType},
+	Types:  []*core.TokenType{Keyword_composite, Keyword_entry, Keyword_interface, Keyword_token, Token_ID, TokenGroup_TokenModifier},
 	Lookup: []int{17: 1, 18: 1, 21: 1, 25: 1, 26: 1, 33: 1, 40: 1},
 }
 
@@ -83,7 +83,7 @@ var TokenModeAlternatives = parser.LL1Lookahead{
 }
 
 var TokenModeMembersLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_keywords, Keyword_token, Token_StringLiteral, Token_ID, TokenGroup_GroupType},
+	Types:  []*core.TokenType{Keyword_keywords, Keyword_token, Token_StringLiteral, Token_ID, TokenGroup_TokenModifier},
 	Lookup: []int{17: 1, 25: 1, 27: 1, 33: 1, 39: 1, 40: 1},
 }
 
@@ -289,7 +289,7 @@ func (l *DefaultFastbeltParserLookahead) KeywordUsageSemicolonOptional(state *pa
 }
 
 func (l *DefaultFastbeltParserLookahead) KeywordUsageTypeOptional(state *parser.ParserState) bool {
-	return TokenGroup_GroupType.Matches(state.LA(1).Type)
+	return TokenGroup_TokenModifier.Matches(state.LA(1).Type)
 }
 
 func (l *DefaultFastbeltParserLookahead) ParserRuleEntryOptional(state *parser.ParserState) bool {
@@ -329,7 +329,7 @@ func (l *DefaultFastbeltParserLookahead) TokenDeclSemicolonOptional(state *parse
 }
 
 func (l *DefaultFastbeltParserLookahead) TokenDeclTypeOptional(state *parser.ParserState) bool {
-	return TokenGroup_GroupType.Matches(state.LA(1).Type)
+	return TokenGroup_TokenModifier.Matches(state.LA(1).Type)
 }
 
 func (l *DefaultFastbeltParserLookahead) TokenElementAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
@@ -349,7 +349,7 @@ func (l *DefaultFastbeltParserLookahead) TokenGroupSemicolonOptional(state *pars
 }
 
 func (l *DefaultFastbeltParserLookahead) TokenGroupTypeOptional(state *parser.ParserState) bool {
-	return TokenGroup_GroupType.Matches(state.LA(1).Type)
+	return TokenGroup_TokenModifier.Matches(state.LA(1).Type)
 }
 
 func (l *DefaultFastbeltParserLookahead) TokenModeAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
@@ -374,5 +374,5 @@ func (l *DefaultFastbeltParserLookahead) TokenUsageSemicolonOptional(state *pars
 }
 
 func (l *DefaultFastbeltParserLookahead) TokenUsageTypeOptional(state *parser.ParserState) bool {
-	return TokenGroup_GroupType.Matches(state.LA(1).Type)
+	return TokenGroup_TokenModifier.Matches(state.LA(1).Type)
 }

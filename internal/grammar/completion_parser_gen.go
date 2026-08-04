@@ -335,7 +335,7 @@ func (p *CompletionParser) ParseTokenDecl() {
 		p.state.Sync(StateNumber__TokenDecl__Basic_2)
 		if p.lookahead.TokenDeclTypeOptional(p.state) {
 			p.cp.MarkAssignment("Type")
-			p.state.Consume(TokenGroup_GroupType)
+			p.state.Consume(TokenGroup_TokenModifier)
 			p.cp.ClearAssignment()
 		}
 	}
@@ -472,7 +472,7 @@ func (p *CompletionParser) ParseTokenGroup() {
 		p.state.Sync(StateNumber__TokenGroup__Basic_2)
 		if p.lookahead.TokenGroupTypeOptional(p.state) {
 			p.cp.MarkAssignment("Type")
-			p.state.Consume(TokenGroup_GroupType)
+			p.state.Consume(TokenGroup_TokenModifier)
 			p.cp.ClearAssignment()
 		}
 	}
@@ -662,7 +662,7 @@ func (p *CompletionParser) ParseTokenUsage() {
 		p.state.Sync(StateNumber__TokenUsage__Basic_2)
 		if p.lookahead.TokenUsageTypeOptional(p.state) {
 			p.cp.MarkAssignment("Type")
-			p.state.Consume(TokenGroup_GroupType)
+			p.state.Consume(TokenGroup_TokenModifier)
 			p.cp.ClearAssignment()
 		}
 	}
@@ -697,7 +697,7 @@ func (p *CompletionParser) ParseKeywordUsage() {
 		p.state.Sync(StateNumber__KeywordUsage__Basic_2)
 		if p.lookahead.KeywordUsageTypeOptional(p.state) {
 			p.cp.MarkAssignment("Type")
-			p.state.Consume(TokenGroup_GroupType)
+			p.state.Consume(TokenGroup_TokenModifier)
 			p.cp.ClearAssignment()
 		}
 	}

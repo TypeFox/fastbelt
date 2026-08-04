@@ -1225,7 +1225,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[StateNumber__ParserRule__Basic_5]),
 	)
 	states[StateNumber__TokenDecl__Basic_0].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__TokenDecl__Basic_1], TokenGroup_GroupType, nil),
+		parser.NewAtomTransition(states[StateNumber__TokenDecl__Basic_1], TokenGroup_TokenModifier, nil),
 	)
 	states[StateNumber__TokenDecl__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__TokenDecl_token]),
@@ -1359,7 +1359,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[StateNumber__TokenCommand__Basic_7]),
 	)
 	states[StateNumber__TokenGroup__Basic_0].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__TokenGroup__Basic_1], TokenGroup_GroupType, nil),
+		parser.NewAtomTransition(states[StateNumber__TokenGroup__Basic_1], TokenGroup_TokenModifier, nil),
 	)
 	states[StateNumber__TokenGroup__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__TokenGroup_token]),
@@ -1545,7 +1545,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[StateNumber__TokenGroupUsage__Stop]),
 	)
 	states[StateNumber__TokenUsage__Basic_0].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__TokenUsage__Basic_1], TokenGroup_GroupType, nil),
+		parser.NewAtomTransition(states[StateNumber__TokenUsage__Basic_1], TokenGroup_TokenModifier, nil),
 	)
 	states[StateNumber__TokenUsage__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__TokenUsage_TokenRef_ID]),
@@ -1578,7 +1578,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[StateNumber__TokenUsage__Basic_6]),
 	)
 	states[StateNumber__KeywordUsage__Basic_0].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__KeywordUsage__Basic_1], TokenGroup_GroupType, nil),
+		parser.NewAtomTransition(states[StateNumber__KeywordUsage__Basic_1], TokenGroup_TokenModifier, nil),
 	)
 	states[StateNumber__KeywordUsage__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__KeywordUsage__Basic_3]),

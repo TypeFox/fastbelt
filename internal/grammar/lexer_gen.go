@@ -1194,12 +1194,12 @@ var TokenGroup_Cardinality = core.NewTokenGroup(
 	},
 )
 
-const TokenGroup_GroupType_Idx = 44
+const TokenGroup_TokenModifier_Idx = 44
 
-var TokenGroup_GroupType = core.NewTokenGroup(
-	TokenGroup_GroupType_Idx,
-	"GroupType",
-	"GroupType",
+var TokenGroup_TokenModifier = core.NewTokenGroup(
+	TokenGroup_TokenModifier_Idx,
+	"TokenModifier",
+	"TokenModifier",
 	[]*core.TokenType{
 		Keyword_comment,
 		Keyword_hidden,
@@ -1214,7 +1214,7 @@ func NewLexer() lexer.Lexer {
 	modes := make([]*lexer.TokenMode, 1, 1)
 	modes[TokenMode_default] = lexer.NewTokenMode("default",
 		lexer.UseTokenType(TokenGroup_Cardinality),
-		lexer.UseTokenType(TokenGroup_GroupType),
+		lexer.UseTokenType(TokenGroup_TokenModifier),
 		lexer.UseTokenType(Keyword_LeftParen),
 		lexer.UseTokenType(Keyword_RightParen),
 		lexer.UseTokenType(Keyword_Asterisk),

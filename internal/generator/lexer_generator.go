@@ -114,7 +114,7 @@ func generateTokenTypeUsage(context context.Context, nn codegen.Node, tokenType 
 				nn.Append(".WithSetMode(", tokenTypes.TokenModes[cmdModeName].VarName, ")")
 			}
 		}
-		switch usage.GroupType {
+		switch usage.TokenModifier {
 		case "comment":
 			nn.Append(".WithGroup(core.CommentGroup)")
 		case "hidden":

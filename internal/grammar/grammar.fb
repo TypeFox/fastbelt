@@ -91,7 +91,7 @@ interface TokenDecl extends AbstractTokenRule {
     Content TokenElement
 }
 
-TokenDecl: Type=GroupType? "token" Name=ID ":" Content=TokenElement Command=TokenCommand? ";"?
+TokenDecl: Type=TokenModifier? "token" Name=ID ":" Content=TokenElement Command=TokenCommand? ";"?
 
 interface TokenElement {}
 
@@ -123,7 +123,7 @@ interface TokenGroup extends AbstractTokenRule {
     KeywordSelectors []string
 }
 
-TokenGroup: Type=GroupType? "token" "group" Name=ID "{"
+TokenGroup: Type=TokenModifier? "token" "group" Name=ID "{"
     (
         TokenRefs+=[AbstractTokenRule:ID]
         | Keywords+=Keyword
@@ -163,7 +163,7 @@ interface TokenUsage extends TokenModeMember {
     Command  TokenCommand
 }
 
-TokenUsage: Type=GroupType? TokenRef=[AbstractTokenRule:ID] Command=TokenCommand? ";"?
+TokenUsage: Type=TokenModifier? TokenRef=[AbstractTokenRule:ID] Command=TokenCommand? ";"?
 
 interface KeywordUsage extends TokenModeMember {
     Type    string
@@ -171,7 +171,7 @@ interface KeywordUsage extends TokenModeMember {
     Command TokenCommand  
 }
 
-KeywordUsage: Type=GroupType? Keyword=Keyword Command=TokenCommand? ";"?
+KeywordUsage: Type=TokenModifier? Keyword=Keyword Command=TokenCommand? ";"?
 
 interface KeywordSelector extends TokenModeMember {
     Selector string
@@ -257,7 +257,7 @@ token group Cardinality {
     "?"
 }
 
-token group GroupType {
+token group TokenModifier {
     "hidden"
     "comment"
 } 

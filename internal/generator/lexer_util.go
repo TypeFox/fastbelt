@@ -22,8 +22,8 @@ type TokenType struct {
 }
 
 type TokenTypeUsage struct {
-	GroupType string
-	Command   grammar.TokenCommand
+	TokenModifier string
+	Command       grammar.TokenCommand
 }
 
 type TokenMode struct {
@@ -132,13 +132,13 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 		for _, member := range tokenMode.Members() {
 			alreadyAdded := map[int]bool{}
 
-			pushTokenTypeUsage := func(tokenIndex int, groupType string, command grammar.TokenCommand) {
+			pushTokenTypeUsage := func(tokenIndex int, tokenModifier string, command grammar.TokenCommand) {
 				alreadyAdded[tokenIndex] = true
 				current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
-				if groupType != "" || command != nil {
+				if tokenModifier != "" || command != nil {
 					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-						GroupType: groupType,
-						Command:   command,
+						TokenModifier: tokenModifier,
+						Command:       command,
 					}
 				}
 			}
@@ -169,8 +169,8 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 				//overwrite usage if defined on token mode level
 				if member.Type() != "" || member.Command() != nil {
 					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-						GroupType: member.Type(),
-						Command:   member.Command(),
+						TokenModifier: member.Type(),
+						Command:       member.Command(),
 					}
 				}
 			case grammar.KeywordSelector:
@@ -203,8 +203,8 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 			defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
 			if tokenGroup.Type() != "" || tokenGroup.Command() != nil {
 				defaultMode.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-					GroupType: tokenGroup.Type(),
-					Command:   tokenGroup.Command(),
+					TokenModifier: tokenGroup.Type(),
+					Command:       tokenGroup.Command(),
 				}
 			}
 		}
@@ -222,8 +222,8 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 				defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
 				if token.Type() != "" || token.Command() != nil {
 					defaultMode.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-						GroupType: token.Type(),
-						Command:   token.Command(),
+						TokenModifier: token.Type(),
+						Command:       token.Command(),
 					}
 				}
 			}
@@ -291,8 +291,8 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 		}
 		if token.Type() != "" || token.Command() != nil {
 			result.TokenTypeUsages[currentTokenIndex] = TokenTypeUsage{
-				GroupType: token.Type(),
-				Command:   token.Command(),
+				TokenModifier: token.Type(),
+				Command:       token.Command(),
 			}
 		}
 	}
