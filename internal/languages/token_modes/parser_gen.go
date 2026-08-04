@@ -23,7 +23,6 @@ func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
 	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
 	result := cp.ParseModel()
 	cp.state.ExpectEndOfInput()
-	core.AssignContainers(document, result)
 	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
 }
 
@@ -35,7 +34,7 @@ func NewParser(sc *service.Container) *Parser {
 
 func (p *Parser) ParseModel() Model {
 	current := NewModel()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			p.state.Sync(StateNumber__Model__LoopEntry)
@@ -50,13 +49,13 @@ func (p *Parser) ParseModel() Model {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseStatement() Statement {
 	current := NewStatement()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			p.state.EnterRule(StateNumber__Statement__Basic_1)
@@ -66,13 +65,13 @@ func (p *Parser) ParseStatement() Statement {
 			current = result
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseVariableDecl() VariableDecl {
 	current := NewVariableDecl()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Token_ID)
@@ -94,13 +93,13 @@ func (p *Parser) ParseVariableDecl() VariableDecl {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseExpression() Expression {
 	current := NewExpression()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			p.state.EnterRule(StateNumber__Expression__Basic_1)
@@ -110,13 +109,13 @@ func (p *Parser) ParseExpression() Expression {
 			current = result
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseAdditive() Expression {
 	current := NewExpression()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			p.state.EnterRule(StateNumber__Additive__LoopEntry)
@@ -129,9 +128,9 @@ func (p *Parser) ParseAdditive() Expression {
 		for p.lookahead.AdditiveLoop(p.state) {
 			{
 				result := NewBinaryExpression()
-				result.SetSegment(current.Segment())
+				result.SetTextRange(current.TextRange())
 				result.SetLeft(current)
-				current.SetSegmentEndToken(p.state.LA(0))
+				current.SetTextRangeEnd(p.state.LA(0).Range.End)
 				current = result
 			}
 			current := current.(BinaryExpression)
@@ -153,13 +152,13 @@ func (p *Parser) ParseAdditive() Expression {
 			p.state.Sync(StateNumber__Additive__LoopEntry)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParsePrimary() Primary {
 	current := NewPrimary()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		switch prediction, failure := p.lookahead.PrimaryAlternatives(p.state); prediction {
 		case 0:
@@ -198,13 +197,13 @@ func (p *Parser) ParsePrimary() Primary {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseParentheses() Parentheses {
 	current := NewParentheses()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_LeftParen)
@@ -223,13 +222,13 @@ func (p *Parser) ParseParentheses() Parentheses {
 			core.AssignToken(current, token, StateNumber__Parentheses_RightParen)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseVariableRef() VariableRef {
 	current := NewVariableRef()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Token_ID)
@@ -239,13 +238,13 @@ func (p *Parser) ParseVariableRef() VariableRef {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseNumericLiteral() NumericLiteral {
 	current := NewNumericLiteral()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Token_INT)
@@ -255,13 +254,13 @@ func (p *Parser) ParseNumericLiteral() NumericLiteral {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseStringLiteral() StringLiteral {
 	current := NewStringLiteral()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_Backtick)
@@ -284,13 +283,13 @@ func (p *Parser) ParseStringLiteral() StringLiteral {
 			core.AssignToken(current, token, StateNumber__StringLiteral_Backtick_1)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseStringContent() StringContent {
 	current := NewStringContent()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		switch prediction, failure := p.lookahead.StringContentAlternatives(p.state); prediction {
 		case 0:
@@ -313,13 +312,13 @@ func (p *Parser) ParseStringContent() StringContent {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseStringText() StringText {
 	current := NewStringText()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Token_STRING_CONTENT)
@@ -329,13 +328,13 @@ func (p *Parser) ParseStringText() StringText {
 			}
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseInterpolation() Interpolation {
 	current := NewInterpolation()
-	current.SetSegmentStartToken(p.state.LA(1))
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Keyword_HashLeftBrace)
@@ -354,6 +353,6 @@ func (p *Parser) ParseInterpolation() Interpolation {
 			core.AssignToken(current, token, StateNumber__Interpolation_RightBrace)
 		}
 	}
-	current.SetSegmentEndToken(p.state.LA(0))
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }

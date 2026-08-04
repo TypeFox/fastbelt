@@ -420,3 +420,29 @@ func findSymbolAtRange(symbols []lsp.DocumentSymbol, targetRange lsp.Range) *lsp
 	}
 	return nil
 }
+
+func (d *Doc) findAstNodeAtRange(targetRange core.TextRange) core.AstNode {
+	d.fixture.t.Helper()
+
+	offset := d.Document.TextDoc.OffsetAt(targetRange.LspRange(d.Document.TextDoc).Start)
+	token := d.Document.Tokens.SearchOffset(offset)
+	if token == nil {
+		return nil
+	}
+	return token.Element
+}
+
+func (d *Doc) FindAstNode(label string) (core.AstNode, bool) {
+	d.fixture.t.Helper()
+
+	expectedRange, err := d.MarkerRange(label)
+	if err != nil {
+		return nil, false
+	}
+
+	node := d.findAstNodeAtRange(expectedRange)
+	if node == nil {
+		return nil, false
+	}
+	return node, true
+}
