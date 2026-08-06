@@ -420,3 +420,74 @@ func findSymbolAtRange(symbols []lsp.DocumentSymbol, targetRange lsp.Range) *lsp
 	}
 	return nil
 }
+
+// AssertSemanticTokens verifies that every marker range with the given label
+// has a semantic token with the expected type and modifiers.
+// Returns the [Doc] for chaining.
+func (d *Doc) AssertSemanticTokens(label string, expectedType uint32, expectedModifiers uint32) *Doc {
+	d.fixture.t.Helper()
+
+	ranges := d.markerRanges(label)
+	if len(ranges) == 0 {
+		d.fixture.t.Fatalf("fbtest: no marker with label %q", label)
+	}
+
+	semanticTokensProvider := service.MustGet[server.SemanticTokensProvider](d.fixture.sc)
+	params := &lsp.SemanticTokensParams{
+		TextDocument: lsp.TextDocumentIdentifier{
+			URI: lsp.DocumentURI(d.Document.URI.DocumentURI()),
+		},
+	}
+	result, err := semanticTokensProvider.HandleSemanticTokensFullRequest(d.fixture.ctx, params)
+	if err != nil {
+		d.fixture.t.Fatalf("fbtest: HandleSemanticTokensFullRequest returned error: %v", err)
+	}
+
+	// Decode the semantic tokens data, which comes in chunks of 5 uint32 values:
+	// [lineDelta, startCharDelta, length, tokenType, tokenModifiers]
+	type semanticToken struct {
+		line, column, length, tokenType, tokenModifiers uint32
+	}
+	var tokens []semanticToken
+	var line, column uint32
+	for i := 0; i+4 < len(result.Data); i += 5 {
+		line += result.Data[i]
+		if result.Data[i] == 0 {
+			// Same line, column is relative to previous token
+			column += result.Data[i+1]
+		} else {
+			// New line, column is absolute
+			column = result.Data[i+1]
+		}
+		tokens = append(tokens, semanticToken{line, column, result.Data[i+2], result.Data[i+3], result.Data[i+4]})
+	}
+
+	for _, rng := range ranges {
+		startPosition := d.Document.TextDoc.PositionAt(int(rng.Start))
+		endPosition := d.Document.TextDoc.PositionAt(int(rng.End))
+		if startPosition.Line != endPosition.Line {
+			d.fixture.t.Fatalf("fbtest: AssertSemanticToken: marker %q spans multiple lines, which is not supported", label)
+		}
+		found := false
+		for _, token := range tokens {
+			if token.line == startPosition.Line && token.column == startPosition.Character {
+				found = true
+				expectedLength := uint32(endPosition.Character - startPosition.Character)
+				if token.length != expectedLength {
+					d.fixture.t.Errorf("fbtest: semantic token at %q (%d:%d) has length %d, expected %d", label, token.line, token.column, token.length, expectedLength)
+				}
+				if token.tokenType != expectedType {
+					d.fixture.t.Errorf("fbtest: semantic token at %q (%d:%d) has type %d, expected %d", label, token.line, token.column, token.tokenType, expectedType)
+				}
+				if token.tokenModifiers != expectedModifiers {
+					d.fixture.t.Errorf("fbtest: semantic token at %q (%d:%d) has modifiers %d, expected %d", label, token.line, token.column, token.tokenModifiers, expectedModifiers)
+				}
+				break
+			}
+		}
+		if !found {
+			d.fixture.t.Errorf("fbtest: no semantic token found at %q (%d:%d)", label, startPosition.Line, startPosition.Character)
+		}
+	}
+	return d
+}
