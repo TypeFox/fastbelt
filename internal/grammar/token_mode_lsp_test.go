@@ -379,3 +379,36 @@ token mode Inner {
 	// Hovering a reference shows the documentation of the mode it points to.
 	doc.ExpectHoverAt("usage", "The inner mode")
 }
+
+func TestCompletionDoesNotOfferTokenModesFromOtherDocuments(t *testing.T) {
+	f := lspFixture(t)
+	docs := f.ParseAll(
+		"file:///sibling.fb", `grammar Sibling;
+interface Bar { Name string }
+Bar: Name=NAME;
+token NAME: /[A-Z]+/
+token mode default {
+	NAME
+}
+token mode Sibling {
+	NAME -> pop
+}`,
+		"file:///own.fb", `grammar Own;
+interface Foo { Greeting string }
+Foo: Greeting=ID;
+token ID: /[a-z]+/
+hidden token WS: /\s+/
+token mode default {
+	ID -> push(<|cursor@>)
+	hidden WS
+}
+token mode Local {
+	ID -> pop
+}`,
+	)
+	labels := completionLabels(docs[1].CompletionItems("cursor"))
+	// Token modes are file-local, so only modes of this document are offered.
+	assert.Contains(t, labels, "Local")
+	assert.NotContains(t, labels, "Sibling",
+		"a mode from another document would not resolve, so it must not be offered")
+}

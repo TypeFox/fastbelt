@@ -585,11 +585,58 @@ func TestTokenModeReferenceAcrossDocuments(t *testing.T) {
 			}
 		`,
 	)
-	mainDoc := docs[1]
-	// Token modes are exported like any other named node, so a command can
-	// target a mode declared in another document.
-	mainDoc.AssertNoLinkingErrors()
+	mainDoc, modesDoc := docs[1], docs[0]
+	// Token modes are file-local: a command cannot target a mode declared in
+	// another document, even though both files form one package. The generated
+	// lexer has one mode table per grammar and a command's target is an index
+	// into that table, so a mode from elsewhere cannot be represented.
 	modeRef := test.MustFindReference[TokenMode](mainDoc, "target")
+	require.NotNil(t, modeRef.Error())
+	mainDoc.ExpectDiagnostic("target").
+		WithSeverity(core.SeverityError).
+		WithMessageContaining("Could not resolve reference to 'Shared'")
+	// Other named nodes are still visible across the package.
+	modesDoc.AssertNoLinkingErrors()
+}
+
+func TestTokenModeReferenceResolvesWithinSameDocument(t *testing.T) {
+	f := test.New(t, CreateServices())
+	// The counterpart to the cross-document case: a mode declared next to the
+	// command resolves as usual.
+	docs := f.ParseAll(
+		"inmemory://other.fb", `
+			grammar Other;
+			interface Bar { Name string }
+			Bar: Name=NAME;
+			token NAME: /[A-Z]+/
+			token mode default {
+				NAME
+			}
+			token mode Shared {
+				NAME -> pop
+			}
+		`,
+		"inmemory://own.fb", `
+			grammar Own;
+			interface Foo { Greeting string }
+			Foo: Greeting=ID;
+			token ID: /[a-z]+/
+			hidden token WS: /\s+/
+			token mode default {
+				ID -> push(<|target:Shared|>)
+				hidden WS
+			}
+			token mode Shared {
+				ID -> pop
+			}
+		`,
+	)
+	ownDoc := docs[1]
+	ownDoc.AssertNoLinkingErrors()
+	modeRef := test.MustFindReference[TokenMode](ownDoc, "target")
 	require.Nil(t, modeRef.Error())
-	assert.Equal(t, "Shared", modeRef.Ref(mainDoc.Ctx()).Name())
+	resolved := modeRef.Ref(ownDoc.Ctx())
+	assert.Equal(t, "Shared", resolved.Name())
+	// The local mode wins over the identically named one in the sibling file.
+	assert.Equal(t, ownDoc.Document.URI, resolved.Document().URI)
 }

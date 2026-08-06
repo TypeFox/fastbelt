@@ -37,8 +37,12 @@ Always write tests!!!
       (decided; mirrors ANTLR's `mode` - only `push` can be undone by `pop`)
 * [ ] mode-local `token`/`token group` declarations are visible to parser rules
       but not to a token usage in another mode. Should cross-mode reuse work?
-* [ ] a `push(X)` command resolves modes across documents. Should token modes be
-      file-local instead?
+* [x] token modes are file-local: a `push(X)` command only sees modes of its own
+      document (decided; the generated lexer has one mode table per grammar and a
+      command's target is an index into it)
+* [ ] `fastbelt generate` builds a single file while the language server builds
+      the whole folder, so any cross-file reference (interfaces and rules
+      included, not just token modes) links in the editor but aborts the build
 * [ ] `lexer.Mode`, `lexer.NewMode`, `lexer.NewDefaultMode` and
       `lexer.DefaultMode` are dead since `TokenMode` replaced them - remove?
 * [ ] `CompositeRule` has no `SymbolKind`, so it shows up as `lsp.Field` in the
