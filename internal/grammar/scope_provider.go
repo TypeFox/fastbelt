@@ -27,9 +27,15 @@ func (s *scopeProviderImpl) ScopeRuleCallRule(ctx context.Context, reference *co
 		for _, member := range tokenMode.Members() {
 			if tokenDeclUsage, ok := member.(TokenDeclUsage); ok {
 				tokenDecl := tokenDeclUsage.Declaration()
+				if tokenDecl.NameToken() == nil {
+					continue
+				}
 				symbols = append(symbols, core.NewSymbolDescription(tokenDecl, tokenDecl.NameToken()))
 			} else if tokenGroupUsage, ok := member.(TokenGroupUsage); ok {
 				tokenGroup := tokenGroupUsage.Group()
+				if tokenGroup.NameToken() == nil {
+					continue
+				}
 				symbols = append(symbols, core.NewSymbolDescription(tokenGroup, tokenGroup.NameToken()))
 			}
 		}
