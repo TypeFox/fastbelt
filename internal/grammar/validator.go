@@ -16,28 +16,29 @@ import (
 )
 
 const (
-	ValidateUniqueRuleName          = "uniqueRuleName"
-	ValidateUniqueInterfaceName     = "uniqueInterfaceName"
-	ValidateUniqueTokenModeName     = "uniqueTokenModeName"
-	ValidateEmptyToken              = "emptyTerminalRule"
-	ValidateEmptyKeyword            = "emptyKeyword"
-	ValidateWhitespaceOnlyKeyword   = "whitespaceOnlyKeyword"
-	ValidateKeywordWithWhitespace   = "keywordWithWhitespace"
-	ValidateRuleReturnType          = "ruleReturnType"
-	ValidateInterfaceExtends        = "interfaceExtends"
-	ValidateRuleCallReturnType      = "ruleCallReturnType"
-	ValidateRuleCallPosition        = "ruleCallPosition"
-	ValidateActionAssignmentType    = "actionAssignmentType"
-	ValidateActionPropertyType      = "actionPropertyType"
-	ValidateAssignmentType          = "assignmentType"
-	ValidateRecursiveTokenGroup     = "recursiveTokenGroup"
-	ValidateInvalidTokenInGroup     = "invalidTokenInGroup"
-	ValidateInvalidTokenInCrossRef  = "invalidTokenInCrossRef"
-	ValidateMissingCrossRefTerminal = "missingCrossRefTerminal"
-	ValidateUniqueFieldName         = "uniqueFieldName"
-	ValidateFieldNameCapitalLetter  = "fieldNameCapitalLetter"
-	ValidateReservedFieldName       = "reservedFieldName"
-	ValidateNestedArrayType         = "nestedArrayType"
+	ValidateUniqueRuleName           = "uniqueRuleName"
+	ValidateUniqueInterfaceName      = "uniqueInterfaceName"
+	ValidateUniqueTokenModeName      = "uniqueTokenModeName"
+	ValidateEmptyToken               = "emptyTerminalRule"
+	ValidateEmptyKeyword             = "emptyKeyword"
+	ValidateWhitespaceOnlyKeyword    = "whitespaceOnlyKeyword"
+	ValidateKeywordWithWhitespace    = "keywordWithWhitespace"
+	ValidateRuleReturnType           = "ruleReturnType"
+	ValidateInterfaceExtends         = "interfaceExtends"
+	ValidateRuleCallReturnType       = "ruleCallReturnType"
+	ValidateRuleCallPosition         = "ruleCallPosition"
+	ValidateActionAssignmentType     = "actionAssignmentType"
+	ValidateActionPropertyType       = "actionPropertyType"
+	ValidateAssignmentType           = "assignmentType"
+	ValidateRecursiveTokenGroup      = "recursiveTokenGroup"
+	ValidateInvalidTokenInGroup      = "invalidTokenInGroup"
+	ValidateInvalidTokenInCrossRef   = "invalidTokenInCrossRef"
+	ValidateMissingCrossRefTerminal  = "missingCrossRefTerminal"
+	ValidateUniqueFieldName          = "uniqueFieldName"
+	ValidateFieldNameCapitalLetter   = "fieldNameCapitalLetter"
+	ValidateReservedFieldName        = "reservedFieldName"
+	ValidateNestedArrayType          = "nestedArrayType"
+	ValidateDefaultTokenModeRequired = "defaultTokenModeRequired"
 )
 
 // reservedFieldNames lists field names that must not be used because they
@@ -54,13 +55,38 @@ var reservedFieldNames = map[string]string{
 	"Resolve":          "AstNode.Resolve",
 }
 
-// GrammarImpl.Validate checks grammar-level constraints:
-//   - Rule names must be unique within the grammar.
-//   - Interface names must be unique within the grammar.
+// GrammarImpl.Validate checks grammar-level constraints
 func (g *GrammarImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
 	checkUniqueRuleNames(g, accept)
 	checkUniqueInterfaceNames(g, accept)
 	checkUniqueTokenModeNames(g, accept)
+	checkIfDefaultTokenModeIsRequired(g, accept)
+}
+
+func checkIfDefaultTokenModeIsRequired(g Grammar, accept core.ValidationAcceptor) {
+	if len(g.TokenModes()) > 0 {
+		hasDefault := false
+		var nonDefaultTokenMode TokenMode = nil
+		for _, mode := range g.TokenModes() {
+			if mode.IsDefault() {
+				hasDefault = true
+				break
+			} else if nonDefaultTokenMode == nil {
+				//mark only the first non-default token mode
+				//one diagnostic is enough to indicate that a default token mode is required
+				nonDefaultTokenMode = mode
+			}
+		}
+		if !hasDefault {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				"At least one token mode must be marked as default.",
+				nonDefaultTokenMode,
+				core.WithToken(nonDefaultTokenMode.NameToken()),
+				core.WithCode(ValidateDefaultTokenModeRequired),
+			))
+		}
+	}
 }
 
 func checkUniqueTokenModeNames(g Grammar, accept core.ValidationAcceptor) {

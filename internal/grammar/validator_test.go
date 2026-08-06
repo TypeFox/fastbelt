@@ -854,3 +854,21 @@ func TestDuplicateTokenNamesAcrossDifferentTokenScopes(t *testing.T) {
 	diag3.WithSeverity(core.SeverityError)
 	diag3.WithCode(ValidateUniqueRuleName)
 }
+
+func TestNonTokenModeRequiresDefaultTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[A-Z_][A-Z0-9_]*/
+
+		token mode <|1:FirstMode|> {
+			ID
+		}
+	`)
+	diag1 := doc.ExpectDiagnostic("1")
+	diag1.WithSeverity(core.SeverityError)
+	diag1.WithCode(ValidateDefaultTokenModeRequired)
+}
