@@ -129,9 +129,10 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 			TokenTypeUsages:  make(map[int]TokenTypeUsage),
 		}
 		result.TokenModes[modeName] = &current
+		// Tracked across all members of the mode: a keyword selector must not
+		// register a keyword that an earlier member already added.
+		alreadyAdded := map[int]bool{}
 		for _, member := range tokenMode.Members() {
-			alreadyAdded := map[int]bool{}
-
 			pushTokenTypeUsage := func(tokenIndex int, tokenModifier string, command grammar.TokenCommand) {
 				alreadyAdded[tokenIndex] = true
 				current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)

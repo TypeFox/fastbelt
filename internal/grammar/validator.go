@@ -39,7 +39,16 @@ const (
 	ValidateReservedFieldName        = "reservedFieldName"
 	ValidateNestedArrayType          = "nestedArrayType"
 	ValidateDefaultTokenModeRequired = "defaultTokenModeRequired"
+	ValidateTokenCommandMode         = "tokenCommandMode"
+	ValidateEmptyTokenMode           = "emptyTokenMode"
+	ValidateUnreachableTokenMode     = "unreachableTokenMode"
+	ValidateKeywordNotInTokenMode    = "keywordNotInTokenMode"
+	ValidateTokenNotInTokenMode      = "tokenNotInTokenMode"
 )
+
+// defaultTokenModeName is the name under which the mode marked
+// `token mode default` is registered. It is the mode the lexer starts in.
+const defaultTokenModeName = "default"
 
 // reservedFieldNames lists field names that must not be used because they
 // conflict with [core.AstNode] methods. Keep in sync with ast.go.
@@ -56,11 +65,64 @@ var reservedFieldNames = map[string]string{
 }
 
 // GrammarImpl.Validate checks grammar-level constraints
-func (g *GrammarImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
+func (g *GrammarImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
 	checkUniqueRuleNames(g, accept)
 	checkUniqueInterfaceNames(g, accept)
 	checkUniqueTokenModeNames(g, accept)
 	checkIfDefaultTokenModeIsRequired(g, accept)
+	checkTokenModesAreReachable(g, ctx, accept)
+	checkTokenModesCoverParserTokens(g, ctx, accept)
+}
+
+// tokenModeName returns the name a token mode is registered under. The mode
+// marked `default` has no name of its own.
+func tokenModeName(mode TokenMode) string {
+	if mode.IsDefault() {
+		return defaultTokenModeName
+	}
+	return mode.Name()
+}
+
+// tokenModeNameToken returns the token to anchor diagnostics about mode itself
+// on, which is either its name or the `default` marker.
+func tokenModeNameToken(mode TokenMode) *core.Token {
+	if mode.IsDefault() {
+		return mode.DefaultToken()
+	}
+	return mode.NameToken()
+}
+
+// checkTokenModesAreReachable reports token modes that no command switches to.
+// The lexer starts in the default mode and can only leave it through a `push` or
+// `mode` command, so a mode nothing targets is dead weight.
+func checkTokenModesAreReachable(g Grammar, ctx context.Context, accept core.ValidationAcceptor) {
+	if len(g.TokenModes()) == 0 {
+		return
+	}
+	targeted := collections.NewSet[string]()
+	for node := range core.AllChildren(g) {
+		command, ok := node.(TokenCommand)
+		if !ok || command.Type() == tokenCommandPop {
+			continue
+		}
+		if command.IsDefault() {
+			targeted.Add(defaultTokenModeName)
+		} else if mode := command.Mode().Ref(ctx); mode != nil {
+			targeted.Add(tokenModeName(mode))
+		}
+	}
+	for _, mode := range g.TokenModes() {
+		if mode.IsDefault() || targeted.Has(tokenModeName(mode)) {
+			continue
+		}
+		accept(core.NewDiagnostic(
+			core.SeverityWarning,
+			fmt.Sprintf("The token mode '%s' is never entered. Add a 'push(%s)' or 'mode(%s)' command to a token.", mode.Name(), mode.Name(), mode.Name()),
+			mode,
+			core.WithToken(mode.NameToken()),
+			core.WithCode(ValidateUnreachableTokenMode),
+		))
+	}
 }
 
 func checkIfDefaultTokenModeIsRequired(g Grammar, accept core.ValidationAcceptor) {
@@ -92,23 +154,13 @@ func checkIfDefaultTokenModeIsRequired(g Grammar, accept core.ValidationAcceptor
 func checkUniqueTokenModeNames(g Grammar, accept core.ValidationAcceptor) {
 	seen := map[string][]TokenMode{}
 	for _, mode := range g.TokenModes() {
-		var name string
-		if mode.IsDefault() {
-			name = "default"
-		} else {
-			name = mode.Name()
-		}
+		name := tokenModeName(mode)
 		seen[name] = append(seen[name], mode)
 	}
 	for name, modes := range seen {
 		if len(modes) > 1 {
 			for _, mode := range modes {
-				var token *core.Token
-				if mode.IsDefault() {
-					token = mode.DefaultToken()
-				} else {
-					token = mode.NameToken()
-				}
+				token := tokenModeNameToken(mode)
 				accept(core.NewDiagnostic(
 					core.SeverityError,
 					fmt.Sprintf("A token mode's name has to be unique. '%s' is used multiple times.", name),
@@ -119,6 +171,265 @@ func checkUniqueTokenModeNames(g Grammar, accept core.ValidationAcceptor) {
 			}
 		}
 	}
+}
+
+// Token command types as they appear after the `->` arrow.
+const (
+	tokenCommandPush = "push"
+	tokenCommandPop  = "pop"
+	tokenCommandMode = "mode"
+)
+
+// TokenCommandImpl.Validate checks lexer mode switch constraints:
+//   - `push` and `mode` need a target mode, otherwise there is nothing to
+//     switch to and the command is dropped during code generation.
+//   - `pop` returns to the mode below the current one on the stack, so a target
+//     mode cannot be honored.
+func (c *TokenCommandImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
+	checkTokenCommandMode(c, accept)
+}
+
+func checkTokenCommandMode(c TokenCommand, accept core.ValidationAcceptor) {
+	// An unresolvable mode reference is still a target; the linker reports it.
+	hasMode := c.IsDefault() || c.Mode() != nil
+	switch c.Type() {
+	case tokenCommandPop:
+		if !hasMode {
+			return
+		}
+		options := []core.DiagnosticOption{core.WithCode(ValidateTokenCommandMode)}
+		if c.Mode() != nil {
+			options = append(options, core.WithReference(c.Mode()))
+		} else {
+			options = append(options, core.WithToken(c.DefaultToken()))
+		}
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			"The 'pop' command returns to the previous token mode and cannot take a target mode.",
+			c,
+			options...,
+		))
+	case tokenCommandPush, tokenCommandMode:
+		if hasMode {
+			return
+		}
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			fmt.Sprintf("The '%s' command requires a target token mode, for example '%s(default)'.", c.Type(), c.Type()),
+			c,
+			core.WithToken(c.TypeToken()),
+			core.WithCode(ValidateTokenCommandMode),
+		))
+	}
+}
+
+// TokenModeImpl.Validate checks token mode constraints:
+//   - A mode without members leaves the lexer with nothing to match.
+func (m *TokenModeImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
+	checkTokenModeNotEmpty(m, accept)
+}
+
+func checkTokenModeNotEmpty(mode TokenMode, accept core.ValidationAcceptor) {
+	if len(mode.Members()) > 0 {
+		return
+	}
+	accept(core.NewDiagnostic(
+		core.SeverityWarning,
+		fmt.Sprintf("The token mode '%s' does not declare any token, so the lexer cannot match anything while it is active.", tokenModeName(mode)),
+		mode,
+		core.WithToken(tokenModeNameToken(mode)),
+		core.WithCode(ValidateEmptyTokenMode),
+	))
+}
+
+// tokenModeCoverage records the keywords and token rules that the declared token
+// modes register with the lexer.
+type tokenModeCoverage struct {
+	keywords collections.Set[string]
+	rules    collections.Set[string]
+}
+
+// checkTokenModesCoverParserTokens reports keywords and tokens that the parser
+// can demand but that no token mode registers. Declaring token modes takes over
+// token registration from the grammar as a whole, so anything left out of every
+// mode can never be produced by the lexer and makes the rule using it dead.
+//
+// Only the first occurrence of each keyword or token is reported: the fix is a
+// single entry in a token mode, not one per use site.
+func checkTokenModesCoverParserTokens(g Grammar, ctx context.Context, accept core.ValidationAcceptor) {
+	if len(g.TokenModes()) == 0 {
+		// Without explicit token modes every keyword and token is registered
+		// automatically, so nothing can be missing.
+		return
+	}
+	coverage := collectTokenModeCoverage(g, ctx)
+	reported := collections.NewSet[string]()
+	for node := range core.AllChildren(g) {
+		switch node := node.(type) {
+		case Keyword:
+			value := node.Value()
+			if !insideParserRule(node) || coverage.keywords.Has(value) || !reported.Add(value) {
+				continue
+			}
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				fmt.Sprintf("The keyword %s is not registered in any token mode, so the lexer can never produce it. List it in a token mode or cover it with a 'keywords' selector.", value),
+				node,
+				core.WithToken(node.ValueToken()),
+				core.WithCode(ValidateKeywordNotInTokenMode),
+			))
+		case RuleCall:
+			rule, ok := node.Rule().Ref(ctx).(AbstractTokenRule)
+			if !ok || !insideParserRule(node) || coverage.covers(rule) || !reported.Add(rule.Name()) {
+				continue
+			}
+			// Reported as a warning rather than an error: unlike a keyword, a
+			// token rule may exist purely to be contributed to the lexer by
+			// hand-written code.
+			accept(core.NewDiagnostic(
+				core.SeverityWarning,
+				fmt.Sprintf("The token '%s' is not registered in any token mode, so the lexer can never produce it. List it in a token mode.", rule.Name()),
+				node,
+				core.WithReference(node.Rule()),
+				core.WithCode(ValidateTokenNotInTokenMode),
+			))
+		}
+	}
+}
+
+// insideParserRule reports whether node contributes to what the parser matches.
+// Keywords and rule calls nested in a token declaration, token group or token
+// mode describe the lexer instead and are therefore not parser input.
+func insideParserRule(node core.AstNode) bool {
+	for container := node.Container(); container != nil; container = container.Container() {
+		switch container.(type) {
+		case ParserRule, CompositeRule:
+			return true
+		case TokenDecl, TokenGroup, TokenMode:
+			return false
+		}
+	}
+	return false
+}
+
+func collectTokenModeCoverage(g Grammar, ctx context.Context) tokenModeCoverage {
+	coverage := tokenModeCoverage{
+		keywords: collections.NewSet[string](),
+		rules:    collections.NewSet[string](),
+	}
+	allKeywords := allGrammarKeywords(g)
+	// Shared across modes: coverage is grammar-wide, so a group already expanded
+	// for one mode needs no second pass, and the set breaks reference cycles.
+	visitedGroups := collections.NewSet[string]()
+	for _, mode := range g.TokenModes() {
+		for _, member := range mode.Members() {
+			switch member := member.(type) {
+			case TokenDeclUsage:
+				coverage.addTokenDecl(member.Declaration())
+			case TokenGroupUsage:
+				coverage.addTokenGroup(member.Group(), ctx, allKeywords, visitedGroups)
+			case TokenUsage:
+				coverage.addTokenRule(member.TokenRef().Ref(ctx), ctx, allKeywords, visitedGroups)
+			case KeywordUsage:
+				coverage.addKeyword(member.Keyword())
+			case KeywordSelector:
+				coverage.addKeywordsMatching(member.Selector(), allKeywords)
+			}
+		}
+	}
+	return coverage
+}
+
+// covers reports whether the lexer can produce a token for rule.
+func (c tokenModeCoverage) covers(rule AbstractTokenRule) bool {
+	if c.rules.Has(rule.Name()) {
+		return true
+	}
+	// A token declared as a single keyword shares that keyword's token id, so
+	// covering the keyword - through a 'keywords' selector, for instance -
+	// covers the token as well.
+	if decl, ok := rule.(TokenDecl); ok {
+		if content, ok := decl.Content().(KeywordTokenElement); ok && content.Keyword() != nil {
+			return c.keywords.Has(content.Keyword().Value())
+		}
+	}
+	return false
+}
+
+func (c tokenModeCoverage) addTokenRule(rule AbstractTokenRule, ctx context.Context, allKeywords []Keyword, visited collections.Set[string]) {
+	switch rule := rule.(type) {
+	case TokenDecl:
+		c.addTokenDecl(rule)
+	case TokenGroup:
+		c.addTokenGroup(rule, ctx, allKeywords, visited)
+	}
+}
+
+func (c tokenModeCoverage) addTokenDecl(decl TokenDecl) {
+	if decl == nil {
+		return
+	}
+	c.rules.Add(decl.Name())
+	// `token LBRACE: "{"` registers the keyword under the token's name, so
+	// listing the token covers the keyword as well.
+	if content, ok := decl.Content().(KeywordTokenElement); ok {
+		c.addKeyword(content.Keyword())
+	}
+}
+
+func (c tokenModeCoverage) addTokenGroup(group TokenGroup, ctx context.Context, allKeywords []Keyword, visited collections.Set[string]) {
+	if group == nil || !visited.Add(group.Name()) {
+		return
+	}
+	c.rules.Add(group.Name())
+	for _, keyword := range group.Keywords() {
+		c.addKeyword(keyword)
+	}
+	for _, selector := range group.KeywordSelectors() {
+		c.addKeywordsMatching(selector.Image, allKeywords)
+	}
+	for _, tokenRef := range group.TokenRefs() {
+		c.addTokenRule(tokenRef.Ref(ctx), ctx, allKeywords, visited)
+	}
+}
+
+func (c tokenModeCoverage) addKeyword(keyword Keyword) {
+	if keyword == nil || keyword.Value() == "" {
+		return
+	}
+	c.keywords.Add(keyword.Value())
+}
+
+func (c tokenModeCoverage) addKeywordsMatching(selector string, allKeywords []Keyword) {
+	if len(selector) < 2 {
+		return
+	}
+	pattern, err := regexp.Compile(RegexpValue(selector))
+	if err != nil {
+		return
+	}
+	for _, keyword := range allKeywords {
+		value, err := convertString(keyword)
+		if err != nil {
+			continue
+		}
+		if pattern.MatchString(value) {
+			c.keywords.Add(keyword.Value())
+		}
+	}
+}
+
+// allGrammarKeywords returns every distinct keyword of the grammar, wherever it
+// is declared. A `keywords` selector is matched against all of them.
+func allGrammarKeywords(g Grammar) []Keyword {
+	seen := collections.NewSet[string]()
+	keywords := []Keyword{}
+	for node := range core.AllChildren(g) {
+		if keyword, ok := node.(Keyword); ok && seen.Add(keyword.Value()) {
+			keywords = append(keywords, keyword)
+		}
+	}
+	return keywords
 }
 
 func checkUniqueRuleNames(g Grammar, accept core.ValidationAcceptor) {

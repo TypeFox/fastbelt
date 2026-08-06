@@ -105,13 +105,18 @@ func generateTokenTypeUsage(context context.Context, nn codegen.Node, tokenType 
 					cmdModeName = cmd.Mode().Ref(context).Name()
 				}
 			}
-			switch cmd.Type() {
-			case "push":
-				nn.Append(".WithPushMode(", tokenTypes.TokenModes[cmdModeName].VarName, ")")
-			case "pop":
+			// A push/mode command without a resolvable target mode is reported
+			// by validation; skip it here instead of emitting a broken lexer.
+			targetMode := tokenTypes.TokenModes[cmdModeName]
+			switch {
+			case cmd.Type() == "pop":
 				nn.Append(".WithPopMode()")
+			case targetMode == nil:
+				// no target mode to switch to
+			case cmd.Type() == "push":
+				nn.Append(".WithPushMode(", targetMode.VarName, ")")
 			default: //"mode"
-				nn.Append(".WithSetMode(", tokenTypes.TokenModes[cmdModeName].VarName, ")")
+				nn.Append(".WithSetMode(", targetMode.VarName, ")")
 			}
 		}
 		switch usage.TokenModifier {

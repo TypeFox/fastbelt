@@ -21,6 +21,10 @@ Always write tests!!!
 
 ## Validations
 
-* [ ] if there is a default token mode
-  * [ ] ... and a KEYWORD is not listed in one of the token modes
-    * [ ] then it is an error
+* [x] if there is a default token mode
+  * [x] ... and a KEYWORD is not listed in one of the token modes
+    * [x] then it is an error
+* [x] `push`/`mode` command without a target mode is an error
+* [x] `pop` command with a target mode is an error
+* [x] a token mode that nothing enters is a warning
+* [x] an empty token mode is a warning

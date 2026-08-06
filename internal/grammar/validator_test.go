@@ -872,3 +872,700 @@ func TestNonTokenModeRequiresDefaultTokenMode(t *testing.T) {
 	diag1.WithSeverity(core.SeverityError)
 	diag1.WithCode(ValidateDefaultTokenModeRequired)
 }
+
+// --- Token mode commands ---
+
+func TestPushCommandWithoutTargetMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID -> <|1:push|>
+			hidden WS
+		}
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateTokenCommandMode)
+	diag.WithMessageContaining("requires a target token mode")
+}
+
+func TestModeCommandWithoutTargetMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID -> <|1:mode|>
+			hidden WS
+		}
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateTokenCommandMode)
+}
+
+func TestPushCommandWithTargetModeIsValid(t *testing.T) {
+	f := test.New(t, CreateServices())
+	f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID -> push(Other)
+			hidden WS
+		}
+
+		token mode Other {
+			ID -> pop
+		}
+	`).AssertNoDiagnostics()
+}
+
+func TestPushCommandTargetingDefaultModeIsValid(t *testing.T) {
+	f := test.New(t, CreateServices())
+	f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID -> push(Other)
+			hidden WS
+		}
+
+		token mode Other {
+			ID -> mode(default)
+		}
+	`).AssertNoDiagnostics()
+}
+
+func TestPushCommandWithUnknownTargetMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID -> push(<|1:Missing|>)
+			hidden WS
+		}
+	`)
+	// The linker reports the dangling mode reference; the command itself has a
+	// target and must not additionally be flagged as incomplete.
+	doc.ExpectDiagnostic("1").WithSeverity(core.SeverityError)
+	for _, diag := range doc.Diagnostics() {
+		if diag.Code == ValidateTokenCommandMode {
+			t.Errorf("unexpected %s diagnostic: %s", ValidateTokenCommandMode, diag.Message)
+		}
+	}
+}
+
+func TestPopCommandWithTargetMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID -> push(Other)
+			hidden WS
+		}
+
+		token mode Other {
+			ID -> pop(<|1:default|>)
+		}
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateTokenCommandMode)
+	diag.WithMessageContaining("cannot take a target mode")
+}
+
+func TestPopCommandWithTargetModeReference(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID -> push(Other)
+			hidden WS
+		}
+
+		token mode Other {
+			ID -> pop(<|1:Other|>)
+		}
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateTokenCommandMode)
+}
+
+// --- Token mode reachability and emptiness ---
+
+func TestUnreachableTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			hidden WS
+		}
+
+		token mode <|1:Orphan|> {
+			ID
+		}
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityWarning)
+	diag.WithCode(ValidateUnreachableTokenMode)
+}
+
+func TestUnreachableTokenModeNotReportedForPopTarget(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			hidden WS
+		}
+
+		token mode <|1:Orphan|> {
+			ID -> pop
+		}
+	`)
+	// A 'pop' inside a mode does not make that mode reachable.
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityWarning)
+	diag.WithCode(ValidateUnreachableTokenMode)
+}
+
+func TestDefaultTokenModeIsAlwaysReachable(t *testing.T) {
+	f := test.New(t, CreateServices())
+	f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			hidden WS
+		}
+	`).AssertNoDiagnostics()
+}
+
+func TestUnreachableTokenModeReachedFromNestedMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID -> push(Middle)
+			hidden WS
+		}
+
+		token mode Middle {
+			ID -> push(Inner)
+		}
+
+		token mode Inner {
+			ID -> pop
+		}
+	`).AssertNoDiagnostics()
+}
+
+func TestEmptyTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode <|1:default|> { }
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityWarning)
+	diag.WithCode(ValidateEmptyTokenMode)
+}
+
+func TestEmptyNamedTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID -> push(Other)
+			hidden WS
+		}
+
+		token mode <|1:Other|> { }
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityWarning)
+	diag.WithCode(ValidateEmptyTokenMode)
+	diag.WithMessageContaining("'Other'")
+}
+
+// --- Token mode coverage of parser tokens ---
+
+func TestKeywordNotInAnyTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID <|1:"world"|>;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			hidden WS
+		}
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateKeywordNotInTokenMode)
+}
+
+func TestKeywordListedInTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID "world";
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			"world"
+			hidden WS
+		}
+	`).AssertNoDiagnostics()
+}
+
+func TestKeywordCoveredByKeywordSelector(t *testing.T) {
+	f := test.New(t, CreateServices())
+	f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID "world";
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			keywords /^[a-z]+$/
+			ID
+			hidden WS
+		}
+	`).AssertNoDiagnostics()
+}
+
+func TestKeywordNotMatchedByKeywordSelector(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID <|1:"!"|>;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			keywords /^[a-z]+$/
+			ID
+			hidden WS
+		}
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateKeywordNotInTokenMode)
+}
+
+func TestKeywordCoveredByKeywordBackedToken(t *testing.T) {
+	f := test.New(t, CreateServices())
+	f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID "world";
+
+		token WORLD: "world"
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			WORLD
+			hidden WS
+		}
+	`).AssertNoDiagnostics()
+}
+
+func TestKeywordCoveredByTokenGroupInMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID "world";
+
+		token group Greetings {
+			"world"
+		}
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			Greetings
+			hidden WS
+		}
+	`).AssertNoDiagnostics()
+}
+
+func TestKeywordCoveredByNestedTokenGroupInMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID "world";
+
+		token group Inner {
+			"world"
+		}
+		token group Outer {
+			Inner
+		}
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			Outer
+			hidden WS
+		}
+	`).AssertNoDiagnostics()
+}
+
+func TestKeywordCoveredByModeLocalTokenDeclaration(t *testing.T) {
+	f := test.New(t, CreateServices())
+	f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID "world";
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			token WORLD: "world"
+			hidden WS
+		}
+	`).AssertNoDiagnostics()
+}
+
+func TestKeywordCoveredByNonDefaultTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID "world";
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID -> push(Other)
+			hidden WS
+		}
+
+		token mode Other {
+			"world" -> pop
+		}
+	`).AssertNoDiagnostics()
+}
+
+func TestKeywordInTokenDeclarationNotReportedAsUncovered(t *testing.T) {
+	f := test.New(t, CreateServices())
+	// GREETING is never used by a parser rule, so its keyword does not have to
+	// be reachable through a token mode.
+	f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token GREETING: "hello"
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			hidden WS
+		}
+	`).AssertNoDiagnostics()
+}
+
+func TestKeywordUncoveredReportedOnlyOnce(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID "world" "world" "world";
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			hidden WS
+		}
+	`)
+	count := 0
+	for _, diag := range doc.Diagnostics() {
+		if diag.Code == ValidateKeywordNotInTokenMode {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Errorf("expected 1 %s diagnostic, got %d", ValidateKeywordNotInTokenMode, count)
+	}
+}
+
+func TestKeywordCoverageNotCheckedWithoutTokenModes(t *testing.T) {
+	f := test.New(t, CreateServices())
+	// Without token modes the generator registers every keyword automatically.
+	f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID "world";
+	` + commonTokens).AssertNoDiagnostics()
+}
+
+func TestTokenNotInAnyTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string Name string }
+		Foo: Greeting=<|1:NAME|> Name=ID;
+
+		token NAME: /[A-Z]+/
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			hidden WS
+		}
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityWarning)
+	diag.WithCode(ValidateTokenNotInTokenMode)
+	diag.WithMessageContaining("'NAME'")
+}
+
+func TestTokenGroupNotInAnyTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=<|1:Greetings|>;
+
+		token group Greetings {
+			ID
+		}
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			hidden WS
+		}
+	`)
+	// The group's members are registered, but the group has its own token id
+	// and is therefore still unreachable.
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityWarning)
+	diag.WithCode(ValidateTokenNotInTokenMode)
+}
+
+func TestKeywordBackedTokenCoveredByKeywordSelector(t *testing.T) {
+	f := test.New(t, CreateServices())
+	// WORLD shares the token id of the keyword "world", so a selector that
+	// covers the keyword covers the token too.
+	f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=WORLD;
+
+		token WORLD: "world"
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			keywords /^[a-z]+$/
+			ID
+			hidden WS
+		}
+	`).AssertNoDiagnostics()
+}
+
+func TestTokenInCrossRefNotInAnyTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Name string }
+		interface Bar { Ref *Foo }
+		Foo: Name=ID;
+		Bar: Ref=[Foo:<|1:NAME|>];
+
+		token NAME: /[A-Z]+/
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			hidden WS
+		}
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityWarning)
+	diag.WithCode(ValidateTokenNotInTokenMode)
+}
+
+func TestTokenInCompositeRuleNotInAnyTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Name composite }
+		Foo: Name=FQN;
+		composite FQN: ID (<|1:DOT|> ID)*;
+
+		token DOT: /\./
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			hidden WS
+		}
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityWarning)
+	diag.WithCode(ValidateTokenNotInTokenMode)
+}
+
+func TestTokenOnlyUsedInsideTokenGroupNotReported(t *testing.T) {
+	f := test.New(t, CreateServices())
+	// NAME is referenced from a token group, not from a parser rule, so it does
+	// not need its own entry in a token mode.
+	f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=Greetings;
+
+		token group Greetings {
+			ID
+			NAME
+		}
+		token NAME: /[A-Z]+/
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			Greetings
+			hidden WS
+		}
+	`).AssertNoDiagnostics()
+}
+
+func TestRecursiveTokenGroupCoverageTerminates(t *testing.T) {
+	f := test.New(t, CreateServices())
+	// The recursion is reported elsewhere; coverage collection must not hang.
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=Outer;
+
+		token group Outer {
+			Inner
+		}
+		token group Inner {
+			Outer
+			ID
+		}
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			Outer
+			hidden WS
+		}
+	`)
+	for _, diag := range doc.Diagnostics() {
+		if diag.Code == ValidateTokenNotInTokenMode {
+			t.Errorf("unexpected %s diagnostic: %s", ValidateTokenNotInTokenMode, diag.Message)
+		}
+	}
+}
