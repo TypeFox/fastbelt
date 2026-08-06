@@ -220,15 +220,62 @@ func TestEscapesInsideString(t *testing.T) {
 	assert.Equal(t, `esc\`+bt+` and \#{ ok`, content[0].(StringText).Value())
 }
 
-func TestTrailingBackslashSwallowsStringTerminator(t *testing.T) {
+func TestEscapedBackslashBeforeStringTerminator(t *testing.T) {
+	// STRING_CONTENT excludes the backslash from its literal alternative
+	// (/([^`#\\]|\\[`#tnr\\])+/), so a backslash can only ever start an escape.
+	// That keeps `\\` from consuming the closing backtick as `\` + `\` + "`",
+	// which would lose the terminator.
+	str := stringOf(t, "VAR := <|string:"+bt+`a\\`+bt+"|>")
+	content := str.Content()
+	require.Len(t, content, 1)
+	assert.Equal(t, `a\\`, content[0].(StringText).Value())
+}
+
+func TestEscapedBackslashFollowedByInterpolation(t *testing.T) {
+	// The same ambiguity would exist for "#{": `\\#{...}` must escape the
+	// backslash and then enter the interpolation mode.
+	str := stringOf(t, "NUM := 1\nVAR := <|string:"+bt+`a\\#{NUM}`+bt+"|>")
+	content := str.Content()
+	require.Len(t, content, 2)
+	assert.Equal(t, `a\\`, content[0].(StringText).Value())
+	interpolation, ok := content[1].(Interpolation)
+	require.True(t, ok)
+	assert.Equal(t, "NUM", interpolation.Expression().(VariableRef).Name().Ref(context.Background()).Name())
+}
+
+func TestAllEscapeSequencesInsideString(t *testing.T) {
+	str := stringOf(t, "VAR := <|string:"+bt+`\`+bt+`\#\t\n\r\\`+bt+"|>")
+	content := str.Content()
+	require.Len(t, content, 1)
+	assert.Equal(t, `\`+bt+`\#\t\n\r\\`, content[0].(StringText).Value())
+}
+
+func TestUnknownEscapeInsideStringIsUnrecognized(t *testing.T) {
 	fixture := test.New(t, CreateServices())
-	// STRING_CONTENT is /([^`#]|\\[`#tnr\\])+/, and a lone backslash also
-	// satisfies [^`#]. For the input `a\\` the longest match therefore treats
-	// the first backslash as literal text and the second one as escaping the
-	// closing backtick, so the string is never terminated. This is a property of
-	// the example grammar's regex, not of the mode switching.
-	doc := fixture.Parse("VAR := " + bt + `a\\` + bt)
+	// Now that a lone backslash is not literal text, an escape outside
+	// [`#tnr\] cannot be matched at all.
+	doc := fixture.Parse("VAR := " + bt + `a\xb` + bt)
+	require.NotEmpty(t, doc.Document.LexerErrors)
+	assert.Equal(t, "No matching token", doc.Document.LexerErrors[0].Msg)
+	// The lexer recovers by dropping the offending rune and stays in IN_STRING,
+	// so the closing backtick still terminates the string.
+	assert.Empty(t, doc.Document.ParserErrors)
+}
+
+func TestEscapedTerminatorLeavesStringUnterminated(t *testing.T) {
+	fixture := test.New(t, CreateServices())
+	// A single backslash before the closing backtick escapes it, so the whole
+	// input is one unterminated string rather than a lexer error.
+	doc := fixture.Parse("VAR := " + bt + `a\` + bt)
 	assert.Empty(t, doc.Document.LexerErrors)
-	assert.NotEmpty(t, doc.Document.ParserErrors,
-		"the escaped-backslash-before-terminator case is ambiguous and loses the terminator")
+	assert.NotEmpty(t, doc.Document.ParserErrors)
+
+	// Adding a real terminator closes the string, with the escape kept as text.
+	closed := test.New(t, CreateServices()).Parse("VAR := <|string:" + bt + `a\` + bt + bt + "|>")
+	closed.AssertNoErrors()
+	node, ok := closed.FindAstNode("string")
+	require.True(t, ok)
+	content := node.(StringLiteral).Content()
+	require.Len(t, content, 1)
+	assert.Equal(t, `a\`+bt, content[0].(StringText).Value())
 }

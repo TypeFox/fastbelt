@@ -28,3 +28,21 @@ Always write tests!!!
 * [x] `pop` command with a target mode is an error
 * [x] a token mode that nothing enters is a warning
 * [x] an empty token mode is a warning
+* [ ] decide whether a token that is not listed in any token mode should be an
+      error instead of a warning (`SomeTokenGroup` in completion.fb violates it)
+
+## Open decisions from the token mode test sweep
+
+* [ ] `mode(X)` replaces the active mode, so a following `pop` cannot undo it.
+      Confirm that is the intended semantics (matches ANTLR's `mode`).
+* [ ] mode-local `token`/`token group` declarations are visible to parser rules
+      but not to a token usage in another mode. Should cross-mode reuse work?
+* [ ] a `push(X)` command resolves modes across documents. Should token modes be
+      file-local instead?
+* [ ] `lexer.Mode`, `lexer.NewMode`, `lexer.NewDefaultMode` and
+      `lexer.DefaultMode` are dead since `TokenMode` replaced them - remove?
+* [ ] `CompositeRule` has no `SymbolKind`, so it shows up as `lsp.Field` in the
+      outline (`TokenMode`/`TokenGroup` were given proper kinds).
+* [x] in token_modes.fb, `STRING_CONTENT` treated a lone `\` as literal text, so
+      `` `a\\` `` lost its closing backtick to the longest match. Fixed by
+      excluding `\` from the literal alternative.
