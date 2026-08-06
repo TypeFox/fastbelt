@@ -57,7 +57,8 @@ const defaultTokenRatio = 1.0 / 5.0
 // grammar.
 type DefaultLexer struct {
 	tokenModes []*TokenMode
-	stack      TokenModeStack
+	// index into tokenModes of the mode every Exec starts in
+	defaultMode int
 	// running exponential moving average of tokens-per-byte
 	avgRatio *parallel.RunningAverage
 }
@@ -71,11 +72,16 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 	errors := make([]*core.LexerError, 0)
 	var groups map[int][]core.Token
 
+	// The mode stack is local to this call: a DefaultLexer is shared between
+	// documents and Exec may run concurrently, so input that ends inside a
+	// pushed mode must not leak into the next run.
+	stack := NewTokenModeStack(l.tokenModes[l.defaultMode])
+
 	var offset int
 	for offset < length {
 		r, size := utf8.DecodeRuneInString(input[offset:])
 		mapIndex := int(r) % maxChar
-		candidates := l.stack.Peek().TokenMap[mapIndex]
+		candidates := stack.Peek().TokenMap[mapIndex]
 		longestMatch := 0
 		var longestType *TokenTypeUsage
 		for _, tokenTypeUsage := range candidates {
@@ -121,11 +127,15 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 				))
 			}
 
-			if longestType.PopMode {
-				l.stack.Pop()
-			}
-			if longestType.PushMode > -1 {
-				l.stack.Push(l.tokenModes[longestType.PushMode])
+			switch {
+			case longestType.PopMode && longestType.PushMode > -1:
+				// `mode(X)` replaces the active mode instead of growing the
+				// stack, so the mode below the current one stays reachable.
+				stack.SetMode(l.tokenModes[longestType.PushMode])
+			case longestType.PopMode:
+				stack.Pop()
+			case longestType.PushMode > -1:
+				stack.Push(l.tokenModes[longestType.PushMode])
 			}
 		} else {
 			errors = append(errors, core.NewLexerError(
@@ -152,10 +162,15 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 
 const maxChar = 256
 
+// NewDefaultLexer returns a [DefaultLexer] that starts every [DefaultLexer.Exec]
+// in tokenModes[defaultMode]. The returned lexer is safe for concurrent use.
 func NewDefaultLexer(defaultMode int, tokenModes ...*TokenMode) *DefaultLexer {
+	if defaultMode < 0 || defaultMode >= len(tokenModes) {
+		panic("lexer: default token mode index out of range")
+	}
 	return &DefaultLexer{
-		tokenModes: tokenModes,
-		stack:      *NewTokenModeStack(tokenModes[defaultMode]),
-		avgRatio:   parallel.NewRunningAverage(defaultTokenRatio),
+		tokenModes:  tokenModes,
+		defaultMode: defaultMode,
+		avgRatio:    parallel.NewRunningAverage(defaultTokenRatio),
 	}
 }

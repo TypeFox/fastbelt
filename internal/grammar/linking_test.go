@@ -355,3 +355,241 @@ func TestCrossDocumentReferenceLinking(t *testing.T) {
 	assert.Equal(t, "Animal", resolvedIface.Name())
 	assert.Same(t, test.MustFindNamedNode[Interface](typesDoc, "Animal"), resolvedIface)
 }
+
+// --- Token mode linking and scoping ---
+
+func TestTokenCommandModeLinking(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID -> push(<|target:Other|>)
+			hidden WS
+		}
+
+		token mode Other {
+			ID -> pop
+		}
+	`)
+	doc.AssertNoLinkingErrors()
+	modeRef := test.MustFindReference[TokenMode](doc, "target")
+	require.Nil(t, modeRef.Error())
+	assert.Equal(t, "Other", modeRef.Ref(doc.Ctx()).Name())
+}
+
+func TestTokenCommandDefaultModeHasNoReference(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID -> push(Other)
+			hidden WS
+		}
+
+		token mode Other {
+			ID -> mode(default)
+		}
+	`)
+	doc.AssertNoLinkingErrors()
+	// `default` is a marker on the command, not a reference, because the
+	// default mode has no name of its own.
+	commands := test.FindAll[TokenCommand](doc)
+	var setMode TokenCommand
+	for _, command := range commands {
+		if command.Type() == "mode" {
+			setMode = command
+		}
+	}
+	require.NotNil(t, setMode)
+	assert.True(t, setMode.IsDefault())
+	assert.Nil(t, setMode.Mode())
+}
+
+func TestRuleCallToModeLocalTokenDeclaration(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string Content string }
+		Foo: Greeting=ID "(" Content=<|inner:INNER|> ")";
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			"(" -> push(Inner)
+			hidden WS
+		}
+
+		token mode Inner {
+			token INNER: /[A-Z]+/
+			")" -> pop
+		}
+	`)
+	// A token declared inside a mode is visible to parser rules.
+	doc.AssertNoLinkingErrors()
+	ref := test.MustFindReference[AbstractRule](doc, "inner")
+	require.Nil(t, ref.Error())
+	assert.Equal(t, "INNER", ref.Ref(doc.Ctx()).Name())
+}
+
+func TestRuleCallToModeLocalTokenGroup(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string Closer string }
+		Foo: Greeting=ID "(" Closer=<|closers:Closers|>;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			"(" -> push(Inner)
+			hidden WS
+		}
+
+		token mode Inner {
+			token group Closers { ")" "]" } -> pop
+		}
+	`)
+	doc.AssertNoLinkingErrors()
+	ref := test.MustFindReference[AbstractRule](doc, "closers")
+	require.Nil(t, ref.Error())
+	assert.Equal(t, "Closers", ref.Ref(doc.Ctx()).Name())
+}
+
+func TestModeLocalTokenIsNotVisibleToOtherModes(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string Content string }
+		Foo: Greeting=ID "(" Content=INNER ")";
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			"(" -> push(Inner)
+			hidden WS
+		}
+
+		token mode Inner {
+			token INNER: /[A-Z]+/
+			")" -> pop
+		}
+
+		token mode Other {
+			<|1:INNER|> -> pop
+		}
+	`)
+	// A mode-local declaration belongs to its own mode: parser rules can call
+	// it, but another mode cannot list it.
+	doc.ExpectDiagnostic("1").WithSeverity(core.SeverityError).
+		WithMessageContaining("Could not resolve reference to 'INNER'")
+}
+
+func TestModeLocalTokenShadowsTopLevelTokenOfSameName(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=<|ref:ID|>;
+
+		token <|1:ID|>: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			token <|2:ID|>: /[A-Z]+/
+			hidden WS
+		}
+	`)
+	// Both declarations are reported as duplicates; the reference resolves to
+	// the mode-local one because it is added in front of the outer scope.
+	doc.ExpectDiagnostic("1").WithCode(ValidateUniqueRuleName)
+	doc.ExpectDiagnostic("2").WithCode(ValidateUniqueRuleName)
+	ref := test.MustFindReference[AbstractRule](doc, "ref")
+	require.Nil(t, ref.Error())
+	resolved, ok := ref.Ref(doc.Ctx()).(TokenDecl)
+	require.True(t, ok)
+	_, isModeLocal := resolved.Container().(TokenDeclUsage)
+	assert.True(t, isModeLocal, "the mode-local declaration must win over the top-level one")
+}
+
+func TestTokenModeNameMayEqualTokenName(t *testing.T) {
+	f := test.New(t, CreateServices())
+	// Token modes live in their own namespace, so a mode may carry the name of
+	// a token without clashing.
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+		token STRING: /"[^"]*"/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			STRING -> push(<|target:STRING|>)
+			hidden WS
+		}
+
+		token mode STRING {
+			ID -> pop
+		}
+	`)
+	doc.AssertNoLinkingErrors()
+	modeRef := test.MustFindReference[TokenMode](doc, "target")
+	require.Nil(t, modeRef.Error())
+	assert.Equal(t, "STRING", modeRef.Ref(doc.Ctx()).Name())
+}
+
+func TestTokenModeReferenceAcrossDocuments(t *testing.T) {
+	f := test.New(t, CreateServices())
+	docs := f.ParseAll(
+		"inmemory://modes.fb", `
+			grammar Modes;
+			interface Bar { Name string }
+			Bar: Name=NAME;
+			token NAME: /[A-Z]+/
+			token mode default {
+				NAME
+			}
+			token mode Shared {
+				NAME -> pop
+			}
+		`,
+		"inmemory://main.fb", `
+			grammar Main;
+			interface Foo { Greeting string }
+			Foo: Greeting=ID;
+			token ID: /[a-z]+/
+			hidden token WS: /\s+/
+			token mode default {
+				ID -> push(<|target:Shared|>)
+				hidden WS
+			}
+		`,
+	)
+	mainDoc := docs[1]
+	// Token modes are exported like any other named node, so a command can
+	// target a mode declared in another document.
+	mainDoc.AssertNoLinkingErrors()
+	modeRef := test.MustFindReference[TokenMode](mainDoc, "target")
+	require.Nil(t, modeRef.Error())
+	assert.Equal(t, "Shared", modeRef.Ref(mainDoc.Ctx()).Name())
+}

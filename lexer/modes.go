@@ -76,20 +76,29 @@ func NewTokenMode(name string, tokenTypeUsages ...*TokenTypeUsage) *TokenMode {
 	}
 }
 
+// TokenModeStack tracks which [TokenMode] a lexer run is currently in. The
+// bottom entry is the mode the run started in and is never removed, so the stack
+// is never empty. TokenModeStack is not safe for concurrent use; each
+// [DefaultLexer.Exec] uses its own.
 type TokenModeStack struct {
 	modes []*TokenMode
 }
 
+// NewTokenModeStack returns a stack holding defaultMode as its only entry.
 func NewTokenModeStack(defaultMode *TokenMode) *TokenModeStack {
 	return &TokenModeStack{
 		modes: []*TokenMode{defaultMode},
 	}
 }
 
+// Push makes mode the active mode, keeping the previous one for a later [Pop].
 func (s *TokenModeStack) Push(mode *TokenMode) {
 	s.modes = append(s.modes, mode)
 }
 
+// Pop removes the active mode and returns it, making the mode below it active
+// again. Popping the bottom entry is a no-op that returns the start mode: input
+// with more pops than pushes stays in the start mode rather than failing.
 func (s *TokenModeStack) Pop() *TokenMode {
 	if len(s.modes) <= 1 {
 		return s.modes[0]
@@ -99,10 +108,14 @@ func (s *TokenModeStack) Pop() *TokenMode {
 	return mode
 }
 
+// Peek returns the active mode.
 func (s *TokenModeStack) Peek() *TokenMode {
 	return s.modes[len(s.modes)-1]
 }
 
+// SetMode replaces the active mode with mode, leaving the rest of the stack
+// untouched. This is what a `mode(X)` command does: unlike [Push] it does not
+// deepen the stack, so it cannot be undone by a later [Pop].
 func (s *TokenModeStack) SetMode(mode *TokenMode) {
 	s.modes[len(s.modes)-1] = mode
 }
