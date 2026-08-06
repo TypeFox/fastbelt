@@ -28,13 +28,13 @@ Always write tests!!!
 * [x] `pop` command with a target mode is an error
 * [x] a token mode that nothing enters is a warning
 * [x] an empty token mode is a warning
-* [ ] decide whether a token that is not listed in any token mode should be an
-      error instead of a warning (`SomeTokenGroup` in completion.fb violates it)
+* [x] a token that is not listed in any token mode is a warning, not an error
+      (decided; `SomeTokenGroup` in completion.fb relies on this)
 
 ## Open decisions from the token mode test sweep
 
-* [ ] `mode(X)` replaces the active mode, so a following `pop` cannot undo it.
-      Confirm that is the intended semantics (matches ANTLR's `mode`).
+* [x] `mode(X)` replaces the active mode, so a following `pop` cannot undo it
+      (decided; mirrors ANTLR's `mode` - only `push` can be undone by `pop`)
 * [ ] mode-local `token`/`token group` declarations are visible to parser rules
       but not to a token usage in another mode. Should cross-mode reuse work?
 * [ ] a `push(X)` command resolves modes across documents. Should token modes be

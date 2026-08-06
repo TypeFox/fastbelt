@@ -129,8 +129,10 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 
 			switch {
 			case longestType.PopMode && longestType.PushMode > -1:
-				// `mode(X)` replaces the active mode instead of growing the
-				// stack, so the mode below the current one stays reachable.
+				// `mode(X)` replaces the active mode without deepening the
+				// stack, so a later pop returns to whatever was below it rather
+				// than to the mode that was replaced. This mirrors ANTLR's
+				// `mode` and is intentional: only `push` can be undone by `pop`.
 				stack.SetMode(l.tokenModes[longestType.PushMode])
 			case longestType.PopMode:
 				stack.Pop()

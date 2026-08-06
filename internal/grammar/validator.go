@@ -283,9 +283,9 @@ func checkTokenModesCoverParserTokens(g Grammar, ctx context.Context, accept cor
 			if !ok || !insideParserRule(node) || coverage.covers(rule) || !reported.Add(rule.Name()) {
 				continue
 			}
-			// Reported as a warning rather than an error: unlike a keyword, a
-			// token rule may exist purely to be contributed to the lexer by
-			// hand-written code.
+			// Deliberately a warning, not an error: unlike a keyword, a token
+			// rule may be registered with the lexer by hand-written code, and a
+			// grammar that leaves one out still generates and builds.
 			accept(core.NewDiagnostic(
 				core.SeverityWarning,
 				fmt.Sprintf("The token '%s' is not registered in any token mode, so the lexer can never produce it. List it in a token mode.", rule.Name()),
