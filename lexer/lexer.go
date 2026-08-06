@@ -16,7 +16,7 @@ type Lexer interface {
 	Exec(input string) *LexerResult
 }
 
-// LexerResult holds everything produced by a single [Lexer.Lex] pass over
+// LexerResult holds everything produced by a single [Lexer.Exec] pass over
 // source text.
 type LexerResult struct {
 	// Tokens is the main token stream passed to the parser.
@@ -25,27 +25,9 @@ type LexerResult struct {
 	Comments []core.Token
 	// Errors lists recoverable lexing problems (unrecognized input).
 	Errors []*core.LexerError
-	// Groups collects tokens routed to custom [core.TokenType.Group] values
+	// Groups collects tokens routed to custom [TokenTypeUsage.Group] values
 	// other than the default, skipped, or comment groups. Nil when empty.
 	Groups map[int][]core.Token
-}
-
-const DefaultMode = "DefaultMode"
-
-type Mode struct {
-	Name       string
-	TokenTypes []*core.TokenType
-}
-
-func NewMode(name string, tokenTypes ...*core.TokenType) *Mode {
-	return &Mode{
-		Name:       name,
-		TokenTypes: tokenTypes,
-	}
-}
-
-func NewDefaultMode(tokenTypes ...*core.TokenType) *Mode {
-	return NewMode(DefaultMode, tokenTypes...)
 }
 
 // Allocate a new token every ~5 characters on average

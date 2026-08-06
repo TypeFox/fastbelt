@@ -43,8 +43,8 @@ Always write tests!!!
 * [ ] `fastbelt generate` builds a single file while the language server builds
       the whole folder, so any cross-file reference (interfaces and rules
       included, not just token modes) links in the editor but aborts the build
-* [ ] `lexer.Mode`, `lexer.NewMode`, `lexer.NewDefaultMode` and
-      `lexer.DefaultMode` are dead since `TokenMode` replaced them - remove?
+* [x] removed `lexer.Mode`, `lexer.NewMode`, `lexer.NewDefaultMode` and
+      `lexer.DefaultMode`, dead since `TokenMode` replaced them
 * [ ] `CompositeRule` has no `SymbolKind`, so it shows up as `lsp.Field` in the
       outline (`TokenMode`/`TokenGroup` were given proper kinds).
 * [x] in token_modes.fb, `STRING_CONTENT` treated a lone `\` as literal text, so
