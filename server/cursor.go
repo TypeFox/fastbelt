@@ -5,6 +5,8 @@
 package server
 
 import (
+	"iter"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/lsp"
 )
@@ -27,4 +29,24 @@ func NodeAtCursor(doc *core.Document, position lsp.Position) core.AstNode {
 		return second.Element
 	}
 	return nil
+}
+
+// NodesInRange iterates over every AST node in doc whose text range overlaps
+// the given LSP range. Nodes are yielded in the same order as core.AllNodes.
+func NodesInRange(doc *core.Document, r lsp.Range) iter.Seq[core.AstNode] {
+	startOffset := doc.TextDoc.OffsetAt(r.Start)
+	endOffset := doc.TextDoc.OffsetAt(r.End)
+	return func(yield func(core.AstNode) bool) {
+		for node := range core.AllNodes(doc.Root) {
+			rng := node.TextRange()
+			nodeStart := int(rng.Start)
+			nodeEnd := int(rng.End)
+			if nodeEnd <= startOffset || nodeStart >= endOffset {
+				continue
+			}
+			if !yield(node) {
+				return
+			}
+		}
+	}
 }

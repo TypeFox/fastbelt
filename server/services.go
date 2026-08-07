@@ -100,10 +100,4 @@ func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[SemanticTokensProvider](sc) {
 		service.Put(sc, NewDefaultSemanticTokensProvider(sc))
 	}
-	if !service.Has[InlayHintProvider](sc) {
-		service.Put(sc, NewDefaultInlayHintProvider(sc))
-	}
-	if !service.Has[SignatureHelpProvider](sc) {
-		service.Put(sc, NewDefaultSignatureHelpProvider(sc))
-	}
 }

@@ -74,7 +74,7 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 		documentLinkProvider = &lsp.DocumentLinkOptions{ResolveProvider: false}
 	}
 	var inlayHintProvider *lsp.InlayHintRegistrationOptions
-	if hasInlayHintComputer(s.sc) {
+	if service.Has[InlayHintProvider](s.sc) {
 		inlayHintProvider = &lsp.InlayHintRegistrationOptions{}
 	}
 	positionEncoding := lsp.UTF16
@@ -151,19 +151,6 @@ func buildSignatureHelpOptions(sc *service.Container) *lsp.SignatureHelpOptions 
 		TriggerCharacters:   triggerChars,
 		RetriggerCharacters: provider.RetriggerCharacters(),
 	}
-}
-
-func hasInlayHintComputer(sc *service.Container) bool {
-	provider, err := service.Get[InlayHintProvider](sc)
-	if err != nil {
-		return false
-	}
-	defaultProvider, ok := provider.(*DefaultInlayHintProvider)
-	if !ok {
-		// A fully custom provider implementation is assumed to be functional.
-		return true
-	}
-	return defaultProvider.computer != nil
 }
 
 func (s *DefaultLanguageServer) Initialized(ctx context.Context, params *lsp.InitializedParams) error {
