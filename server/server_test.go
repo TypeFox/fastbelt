@@ -6,6 +6,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"typefox.dev/fastbelt/textdoc"
@@ -34,6 +35,11 @@ func TestLanguageServerBasicLifecycle(t *testing.T) {
 	}
 	if initResult == nil {
 		t.Error("Initialize returned nil result")
+	}
+	// jsonrpc2 marshals the result independently *after* the handler returns,
+	// and a marshal failure there is reported via golang.org/x/exp/event
+	if _, err := json.Marshal(initResult); err != nil {
+		t.Errorf("Initialize result is not JSON-marshalable: %v", err)
 	}
 
 	// Test Initialized

@@ -14,6 +14,7 @@ import (
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/test"
 	"typefox.dev/fastbelt/util/service"
+	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
 
@@ -22,62 +23,17 @@ token ID: /[a-zA-Z_][a-zA-Z0-9_]*/;
 hidden token WS: /[ \n\r\t]+/;
 `
 
-func TestInlayHintProvider_Default(t *testing.T) {
-	sc := service.NewContainer()
-	server.SetupDefaultServices(sc)
-	sc.Seal()
-
-	provider := service.MustGet[server.InlayHintProvider](sc)
-	result, err := provider.HandleInlayHintRequest(context.Background(), &lsp.InlayHintParams{
-		TextDocument: lsp.TextDocumentIdentifier{URI: "file:///test.txt"},
-		Range:        lsp.Range{},
-	})
-
-	assert.NoError(t, err)
-	assert.Empty(t, result)
-}
-
-func TestInlayHintProvider_DefaultWithGrammar(t *testing.T) {
-	// Test that the default provider returns empty hints
-	sc := service.NewContainer()
-	grammar.SetupServices(sc)
-	server.SetupDefaultServices(sc)
-	sc.Seal()
-	
-	f := test.New(t, sc)
-	doc := f.Parse(`
-		grammar Test;
-		interface Person { Name string }
-		Person: Name=ID;
-	` + commonTokens)
-	doc.AssertNoErrors()
-
-	provider := service.MustGet[server.InlayHintProvider](f.Services())
-	result, err := provider.HandleInlayHintRequest(
-		context.Background(),
-		&lsp.InlayHintParams{
-			TextDocument: lsp.TextDocumentIdentifier{URI: doc.Document.URI.DocumentURI()},
-			Range: lsp.Range{
-				Start: lsp.Position{Line: 0, Character: 0},
-				End:   lsp.Position{Line: 10, Character: 0},
-			},
-		},
-	)
-
-	assert.NoError(t, err)
-	assert.Empty(t, result, "Default provider should return no hints")
-}
-
 func TestInlayHintProvider_CustomImplementation(t *testing.T) {
-	// Create services and register provider with custom computer before sealing
+	// Create services and register custom provider before sealing
 	sc := service.NewContainer()
 	grammar.SetupServices(sc)
 	server.SetupDefaultServices(sc)
-	
-	// Register provider with custom computer (lightweight filter-like pattern)
-	service.Override(sc, server.NewInlayHintProviderWithComputer(sc, &grammarInlayHintComputer{}))
+
+	// Register custom provider (provider-only pattern - full implementation).
+	// Use Put, not Override, since there is no default to override.
+	service.Put[server.InlayHintProvider](sc, &grammarInlayHintProvider{sc: sc})
 	sc.Seal()
-	
+
 	f := test.New(t, sc)
 	doc := f.Parse(`
 		grammar Test;
@@ -100,7 +56,7 @@ func TestInlayHintProvider_CustomImplementation(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, result, "Should find inlay hints for grammar rules")
-	
+
 	// Verify we have hints for both the rule and interface
 	var foundRuleTypeHint, foundInterfaceTypeHint bool
 	for _, hint := range result {
@@ -119,29 +75,74 @@ func TestInlayHintProvider_CustomImplementation(t *testing.T) {
 	assert.True(t, foundInterfaceTypeHint, "Should have type hint for interface")
 }
 
-// grammarInlayHintComputer provides custom inlay hints for grammar language nodes.
-// This is a lightweight filter-like interface, not a separate service.
-type grammarInlayHintComputer struct{}
+func TestInlayHintProvider_RangeFiltering(t *testing.T) {
+	sc := service.NewContainer()
+	grammar.SetupServices(sc)
+	server.SetupDefaultServices(sc)
+	service.Put[server.InlayHintProvider](sc, &grammarInlayHintProvider{sc: sc})
+	sc.Seal()
 
-func (c *grammarInlayHintComputer) ComputeInlayHint(ctx context.Context, node core.AstNode, accept func(lsp.InlayHint)) {
-	switch n := node.(type) {
-	case *grammar.ParserRuleImpl:
-		if n.Name() != "" {
-			end := n.TextRange().LspRange(n.Document().TextDoc).End
-			accept(lsp.InlayHint{
-				Position: end,
-				Label:    []lsp.InlayHintLabelPart{{Value: ": ParserRule"}},
-				Kind:     lsp.Type,
-			})
-		}
-	case *grammar.InterfaceImpl:
-		if n.Name() != "" {
-			end := n.TextRange().LspRange(n.Document().TextDoc).End
-			accept(lsp.InlayHint{
-				Position: end,
-				Label:    []lsp.InlayHintLabelPart{{Value: ": Interface"}},
-				Kind:     lsp.Type,
-			})
+	f := test.New(t, sc)
+	doc := f.Parse(`
+		grammar Test;
+		interface Person { Name string }
+		Person: Name=ID;
+	` + commonTokens)
+	doc.AssertNoErrors()
+
+	provider := service.MustGet[server.InlayHintProvider](f.Services())
+	result, err := provider.HandleInlayHintRequest(
+		context.Background(),
+		&lsp.InlayHintParams{
+			TextDocument: lsp.TextDocumentIdentifier{URI: doc.Document.URI.DocumentURI()},
+			// Only cover the first line, before any rule/interface declaration.
+			Range: lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 0},
+				End:   lsp.Position{Line: 1, Character: 0},
+			},
+		},
+	)
+
+	assert.NoError(t, err)
+	assert.Empty(t, result, "server.NodesInRange should exclude declarations outside the requested range")
+}
+
+// grammarInlayHintProvider provides custom inlay hints for grammar language nodes.
+// Provider-only pattern: adopter implements the full provider interface,
+// using the shared server.NodesInRange helper for range-filtered iteration.
+type grammarInlayHintProvider struct {
+	sc *service.Container
+}
+
+func (p *grammarInlayHintProvider) HandleInlayHintRequest(ctx context.Context, params *lsp.InlayHintParams) ([]lsp.InlayHint, error) {
+	documentManager := service.MustGet[workspace.DocumentManager](p.sc)
+	doc := documentManager.Get(core.ParseURI(string(params.TextDocument.URI)))
+	if doc == nil || doc.Root == nil {
+		return nil, nil
+	}
+
+	var hints []lsp.InlayHint
+	for node := range server.NodesInRange(doc, params.Range) {
+		switch n := node.(type) {
+		case *grammar.ParserRuleImpl:
+			if n.Name() != "" {
+				end := n.TextRange().LspRange(doc.TextDoc).End
+				hints = append(hints, lsp.InlayHint{
+					Position: end,
+					Label:    []lsp.InlayHintLabelPart{{Value: ": ParserRule"}},
+					Kind:     lsp.Type,
+				})
+			}
+		case *grammar.InterfaceImpl:
+			if n.Name() != "" {
+				end := n.TextRange().LspRange(doc.TextDoc).End
+				hints = append(hints, lsp.InlayHint{
+					Position: end,
+					Label:    []lsp.InlayHintLabelPart{{Value: ": Interface"}},
+					Kind:     lsp.Type,
+				})
+			}
 		}
 	}
+	return hints, nil
 }

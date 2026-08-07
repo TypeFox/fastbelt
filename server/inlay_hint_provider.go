@@ -7,99 +7,36 @@ package server
 import (
 	"context"
 
-	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/util/service"
-	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
 
-// InlayHintComputer provides per-node logic for computing inlay hints.
-// Language adopters implement this lightweight interface to emit hints for specific AST nodes.
+// InlayHintProvider is a service for handling LSP inlay hint requests.
 //
 // Usage:
 //
-//	type MyInlayHintComputer struct{}
+//	type MyInlayHintProvider struct{ sc *service.Container }
 //
-//	func (c *MyInlayHintComputer) ComputeInlayHint(ctx context.Context, node core.AstNode, accept func(lsp.InlayHint)) {
-//	    if funcCall, ok := node.(*ast.FunctionCall); ok {
-//	        textDoc := funcCall.Document().TextDoc
-//	        accept(lsp.InlayHint{
-//	            Position: funcCall.TextRange().LspRange(textDoc).End,
-//	            Label:    []lsp.InlayHintLabelPart{{Value: "paramName:"}},
-//	            Kind:     lsp.Parameter,
-//	        })
+//	func (p *MyInlayHintProvider) HandleInlayHintRequest(ctx context.Context, params *lsp.InlayHintParams) ([]lsp.InlayHint, error) {
+//	    documentManager := service.MustGet[workspace.DocumentManager](p.sc)
+//	    doc := documentManager.Get(core.ParseURI(string(params.TextDocument.URI)))
+//	    if doc == nil {
+//	        return nil, nil
 //	    }
+//	    var hints []lsp.InlayHint
+//	    for node := range server.NodesInRange(doc, params.Range) {
+//	        if funcCall, ok := node.(*ast.FunctionCall); ok {
+//	            hints = append(hints, lsp.InlayHint{
+//	                Position: funcCall.TextRange().LspRange(doc.TextDoc).End,
+//	                Label:    []lsp.InlayHintLabelPart{{Value: "paramName:"}},
+//	                Kind:     lsp.Parameter,
+//	            })
+//	        }
+//	    }
+//	    return hints, nil
 //	}
 //
-//	// Register provider with custom computer
-//	service.Put(sc, server.NewInlayHintProviderWithComputer(sc, &MyInlayHintComputer{}))
-type InlayHintComputer interface {
-	ComputeInlayHint(ctx context.Context, node core.AstNode, accept func(lsp.InlayHint))
-}
-
+//	// Register with the service container
+//	service.Put[server.InlayHintProvider](sc, &MyInlayHintProvider{sc: sc})
 type InlayHintProvider interface {
 	HandleInlayHintRequest(ctx context.Context, params *lsp.InlayHintParams) ([]lsp.InlayHint, error)
-}
-
-// DefaultInlayHintProvider iterates over all AST nodes in the requested
-// range and delegates to InlayHintComputer for per-node hint computation.
-type DefaultInlayHintProvider struct {
-	sc       *service.Container
-	computer InlayHintComputer
-}
-
-// NewDefaultInlayHintProvider creates an inlay hint provider without a computer.
-// The provider still performs its real framework work (iteration, bounds
-// checking), but emits no hints until a computer is supplied via
-// NewInlayHintProviderWithComputer.
-func NewDefaultInlayHintProvider(sc *service.Container) InlayHintProvider {
-	return &DefaultInlayHintProvider{sc: sc}
-}
-
-// NewInlayHintProviderWithComputer creates an inlay hint provider with a custom computer.
-// The computer determines which hints to emit for each AST node.
-func NewInlayHintProviderWithComputer(sc *service.Container, computer InlayHintComputer) InlayHintProvider {
-	return &DefaultInlayHintProvider{
-		sc:       sc,
-		computer: computer,
-	}
-}
-
-func (p *DefaultInlayHintProvider) HandleInlayHintRequest(ctx context.Context, params *lsp.InlayHintParams) ([]lsp.InlayHint, error) {
-	if p.computer == nil {
-		return []lsp.InlayHint{}, nil
-	}
-
-	documentManager, err := service.Get[workspace.DocumentManager](p.sc)
-	if err != nil {
-		return []lsp.InlayHint{}, nil
-	}
-
-	uri := core.ParseURI(string(params.TextDocument.URI))
-	doc := documentManager.Get(uri)
-	if doc == nil || doc.Root == nil {
-		return []lsp.InlayHint{}, nil
-	}
-
-	startOffset := doc.TextDoc.OffsetAt(params.Range.Start)
-	endOffset := doc.TextDoc.OffsetAt(params.Range.End)
-
-	var hints []lsp.InlayHint
-	acceptor := func(hint lsp.InlayHint) {
-		hints = append(hints, hint)
-	}
-
-	for node := range core.AllNodes(doc.Root) {
-		rng := node.TextRange()
-		nodeStart := int(rng.Start)
-		nodeEnd := int(rng.End)
-
-		if nodeEnd <= startOffset || nodeStart >= endOffset {
-			continue
-		}
-
-		p.computer.ComputeInlayHint(ctx, node, acceptor)
-	}
-
-	return hints, nil
 }
