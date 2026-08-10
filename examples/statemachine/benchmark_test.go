@@ -76,7 +76,7 @@ func BenchmarkTraverseContentSeq(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	documentParser.Parse(doc)
+	documentParser.Parse(b.Context(), doc)
 
 	for b.Loop() {
 		count := 0
@@ -98,7 +98,7 @@ func BenchmarkTraverseContentSeqHalf(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	documentParser.Parse(doc)
+	documentParser.Parse(b.Context(), doc)
 	half := elementCount / 2
 
 	for b.Loop() {
@@ -121,7 +121,7 @@ func TestAllNodesEquivalence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	documentParser.Parse(doc)
+	documentParser.Parse(t.Context(), doc)
 	nodeCount := 0
 	for range fastbelt.AllNodes(doc.Root) {
 		nodeCount++
@@ -138,7 +138,7 @@ func TestAllChildrenEquivalence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	documentParser.Parse(doc)
+	documentParser.Parse(t.Context(), doc)
 	childCount := 0
 	for range fastbelt.AllChildren(doc.Root) {
 		childCount++
@@ -162,7 +162,7 @@ func BenchmarkParser(b *testing.B) {
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		result := parserService.Parse(doc)
+		result := parserService.Parse(b.Context(), doc)
 		doc.Root = result.Node
 	}
 }
@@ -192,7 +192,7 @@ func BenchmarkLexerAndParser(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		doc.Tokens = lexerService.Exec(content).Tokens
-		result := parserService.Parse(doc)
+		result := parserService.Parse(b.Context(), doc)
 		doc.Root = result.Node
 	}
 }
@@ -278,7 +278,7 @@ func TestAllNodesEarlyExitShortCircuits(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	documentParser.Parse(doc)
+	documentParser.Parse(t.Context(), doc)
 	visited := 0
 	for range fastbelt.AllNodes(doc.Root) {
 		visited++
@@ -288,4 +288,19 @@ func TestAllNodesEarlyExitShortCircuits(t *testing.T) {
 	}
 	assert.Equal(t, 3, visited)
 	assert.Greater(t, elementCount, 3)
+}
+
+// TestParseCancelledContextTerminates guards against the parser spinning in
+// fail mode on a loop guard after cancellation.
+func TestParseCancelledContextTerminates(t *testing.T) {
+	content, _ := generateStatemachineContent(0)
+	srv := CreateServices()
+	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc.Tokens = service.MustGet[lexer.Lexer](srv).Exec(content).Tokens
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	service.MustGet[parser.Parser](srv).Parse(ctx, doc)
 }

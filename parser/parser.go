@@ -5,12 +5,14 @@
 package parser
 
 import (
+	"context"
+
 	core "typefox.dev/fastbelt"
 )
 
 // Parser defines the interface for parsing tokens (lexer output) into AST nodes.
 type Parser interface {
-	Parse(document *core.Document) *ParseResult
+	Parse(ctx context.Context, document *core.Document) *ParseResult
 }
 
 type ParseResult struct {
@@ -28,6 +30,7 @@ const (
 )
 
 type ParserState struct {
+	Context   context.Context
 	Tokens    []core.Token
 	Length    int
 	Index     int
@@ -121,11 +124,12 @@ type LL1Lookahead struct {
 	Lookup []int
 }
 
-func NewParserState(tokens []core.Token, atn *RuntimeATN, recovery ErrorRecoveryStrategy, messages ErrorMessageProvider) *ParserState {
+func NewParserState(ctx context.Context, tokens []core.Token, atn *RuntimeATN, recovery ErrorRecoveryStrategy, messages ErrorMessageProvider) *ParserState {
 	if atn == nil {
 		panic("atn must be provided")
 	}
 	return &ParserState{
+		Context:        ctx,
 		Tokens:         tokens,
 		Length:         len(tokens),
 		Index:          0,
@@ -250,6 +254,14 @@ func (p *ParserState) ExitRule() {
 	if len(p.followStates) > 0 {
 		p.followStates = p.followStates[:len(p.followStates)-1]
 	}
+	if p.Context.Err() != nil {
+		// Use ErrorMode as a proxy to abort parsing. Jumping to the end makes
+		// every lookahead see EOF, so loops terminate instead of spinning on
+		// a token that fail mode never consumes.
+		p.ErrorMode = ErrorModeFail
+		p.Index = p.Length
+		return
+	}
 	if p.ErrorMode == ErrorModeFail {
 		// Once we exit the rule where the error was detected, we can attempt recovery.
 		p.ErrorMode = ErrorModeRecover
@@ -260,7 +272,12 @@ func (p *ParserState) ExitRule() {
 // Sync delegates to the recovery strategy to discard unexpected tokens before
 // optional/loop guards.
 func (p *ParserState) Sync(decisionStateIdx int) {
-	p.recovery.Sync(p, decisionStateIdx)
+	if p.Context.Err() == nil {
+		// Only sync if the context is still valid.
+		// Otherwise, keep the parser state in an error state,
+		// which will cause the parser to bail
+		p.recovery.Sync(p, decisionStateIdx)
+	}
 }
 
 // FollowSetContains reports whether the token type id is in the follow set.
