@@ -5,6 +5,7 @@
 package parser
 
 import (
+	"context"
 	"testing"
 
 	core "typefox.dev/fastbelt"
@@ -21,7 +22,7 @@ func TestCompletionParserState_SnapshotsAndStack(t *testing.T) {
 	atn := NewRuntimeATN([]*RuntimeATNState{s0}, nil, nil)
 
 	tokens := []core.Token{tok(tA), tok(tA), tok(tA)}
-	state := NewParserState(tokens, atn, &BailErrorRecovery{}, &DefaultErrorMessageProvider{})
+	state := NewParserState(context.Background(), tokens, atn, &BailErrorRecovery{}, &DefaultErrorMessageProvider{})
 	cp := NewCompletionParserState(state)
 
 	// Outer rule enters at token 0, ATN start state 7.

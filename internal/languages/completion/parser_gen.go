@@ -3,6 +3,8 @@
 package completion
 
 import (
+	"context"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -16,17 +18,26 @@ type Parser struct {
 	binaryFold            parser.InfixFold[Expr]
 }
 
-func (p *Parser) Parse(document *core.Document) {
+func (p *Parser) Parse(ctx context.Context, document *core.Document) error {
 	recovery := p.sc.MustGet[parser.ErrorRecoveryStrategy]()
 	messages := p.sc.MustGet[parser.ErrorMessageProvider]()
 	referencesConstructor := p.sc.MustGet[CompletionReferencesConstructor]()
 	lookahead := p.sc.MustGet[CompletionParserLookahead]()
-	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
+	cp := &Parser{
+		sc:                    p.sc,
+		referencesConstructor: referencesConstructor,
+		lookahead:             lookahead,
+		state:                 parser.NewParserState(ctx, document.Tokens, ATN(), recovery, messages),
+	}
 	result := cp.ParseRoot()
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 	cp.state.ExpectEndOfInput()
 	document.ParserErrors = cp.state.Errors()
 	document.Root = result
 	core.AssignContainers(document)
+	return nil
 }
 
 func NewParser(sc *service.Container) *Parser {

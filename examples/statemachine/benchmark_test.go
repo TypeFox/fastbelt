@@ -11,11 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
 	"typefox.dev/fastbelt/parser"
-	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 )
 
@@ -93,73 +91,6 @@ func BenchmarkWorkspaceCycleSingleDocument(b *testing.B) {
 	}
 }
 
-func parseDocument(srv *service.Container, content string) *fastbelt.Document {
-	lexer := srv.MustGet[lexer.Lexer]()
-	parser := srv.MustGet[parser.Parser]()
-	doc := fastbelt.NewDocumentFromString("file:///workspace/test.statemachine", "statemachine", content)
-	lexer.Exec(doc)
-	parser.Parse(doc)
-	return doc
-}
-
-func BenchmarkTraverseContentSeq(b *testing.B) {
-	content, _ := generateStatemachineContent(0)
-	srv := CreateServices()
-	doc := parseDocument(srv, content)
-
-	for b.Loop() {
-		count := 0
-		for range fastbelt.AllChildren(doc.Root) {
-			count++
-		}
-		_ = count
-	}
-}
-
-// BenchmarkTraverseContentSeqHalf breaks out of the loop after visiting half of the
-// nodes. With short-circuiting traversal this should take roughly half the time of
-// BenchmarkTraverseContentSeq.
-func BenchmarkTraverseContentSeqHalf(b *testing.B) {
-	content, elementCount := generateStatemachineContent(0)
-	srv := CreateServices()
-	doc := parseDocument(srv, content)
-	half := elementCount / 2
-
-	for b.Loop() {
-		count := 0
-		for range fastbelt.AllChildren(doc.Root) {
-			count++
-			if count == half {
-				break
-			}
-		}
-		_ = count
-	}
-}
-
-func TestAllNodesEquivalence(t *testing.T) {
-	content, elementCount := generateStatemachineContent(0)
-	srv := CreateServices()
-	doc := parseDocument(srv, content)
-	nodeCount := 0
-	for range fastbelt.AllNodes(doc.Root) {
-		nodeCount++
-	}
-	assert.Equal(t, elementCount, nodeCount, "AllNodes should iterate all nodes in the document")
-}
-
-func TestAllChildrenEquivalence(t *testing.T) {
-	content, elementCount := generateStatemachineContent(0)
-	totalCount := elementCount - 1 // AllChildren does not include the root node, so we subtract 1 from the total count
-	srv := CreateServices()
-	doc := parseDocument(srv, content)
-	childCount := 0
-	for range fastbelt.AllChildren(doc.Root) {
-		childCount++
-	}
-	assert.Equal(t, totalCount, childCount, "AllChildren should iterate all child nodes in the document")
-}
-
 // BenchmarkParser benchmarks parsing a single generated statemachine document,
 // reusing the pre-lexed token slice every iteration.
 func BenchmarkParser(b *testing.B) {
@@ -168,11 +99,11 @@ func BenchmarkParser(b *testing.B) {
 	lexerService := srv.MustGet[lexer.Lexer]()
 	parserService := srv.MustGet[parser.Parser]()
 	doc := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
-	lexerService.Exec(doc)
+	lexerService.Exec(b.Context(), doc)
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		parserService.Parse(doc)
+		parserService.Parse(b.Context(), doc)
 	}
 }
 
@@ -185,7 +116,7 @@ func BenchmarkLexer(b *testing.B) {
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		lexer.Exec(doc)
+		lexer.Exec(b.Context(), doc)
 	}
 }
 
@@ -199,8 +130,8 @@ func BenchmarkLexerAndParser(b *testing.B) {
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		lexerService.Exec(doc)
-		parserService.Parse(doc)
+		lexerService.Exec(b.Context(), doc)
+		parserService.Parse(b.Context(), doc)
 	}
 }
 
@@ -230,9 +161,14 @@ func BenchmarkLocalLinking(b *testing.B) {
 //   - 3 commands
 //   - 50 states, each with transitions that cycle through events/states
 func generateStatemachineContent(index int) (string, int) {
+	return generateStatemachineContentWithStates(index, 50)
+}
+
+// generateStatemachineContentWithStates is like [generateStatemachineContent]
+// with a configurable number of states.
+func generateStatemachineContentWithStates(index, numStates int) (string, int) {
 	const numEvents = 4
 	const numCommands = 3
-	const numStates = 50
 	elementCount := 1
 
 	var sb strings.Builder
@@ -272,19 +208,4 @@ func generateStatemachineContent(index int) (string, int) {
 	}
 
 	return sb.String(), elementCount
-}
-
-func TestAllNodesEarlyExitShortCircuits(t *testing.T) {
-	content, elementCount := generateStatemachineContent(0)
-	srv := CreateServices()
-	doc := parseDocument(srv, content)
-	visited := 0
-	for range fastbelt.AllNodes(doc.Root) {
-		visited++
-		if visited == 3 {
-			break
-		}
-	}
-	assert.Equal(t, 3, visited)
-	assert.Greater(t, elementCount, 3)
 }

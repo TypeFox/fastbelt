@@ -5,6 +5,7 @@
 package lexer
 
 import (
+	"context"
 	"sync"
 	"testing"
 
@@ -363,11 +364,20 @@ func TestMultiLanguageLexerStartsInConfiguredMode(t *testing.T) {
 		NewTokenMode("Inner", UseTokenType(text)),
 	}
 	lexer := NewMultiLanguageLexer(nil, []int{0, 1}, modes...)
-	assert.Equal(t, []string{"ID"}, names(lexer.exec("abc", 0).Tokens))
-	assert.Equal(t, []string{"TEXT"}, names(lexer.exec("abc", 1).Tokens))
+	assert.Equal(t, []string{"ID"}, names(mustExec(lexer, "abc", 0).Tokens))
+	assert.Equal(t, []string{"TEXT"}, names(mustExec(lexer, "abc", 1).Tokens))
 }
 
 // Lex scans input with the token modes of the first language.
 func (l *DefaultLexer) Lex(input string) *lexerResult {
-	return l.exec(input, 0)
+	return mustExec(l, input, 0)
+}
+
+// mustExec scans input with the token modes of the given language.
+func mustExec(l *DefaultLexer, input string, language int) *lexerResult {
+	result, err := l.exec(context.Background(), input, language)
+	if err != nil {
+		panic(err)
+	}
+	return result
 }
