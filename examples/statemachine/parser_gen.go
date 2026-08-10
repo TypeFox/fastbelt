@@ -3,6 +3,8 @@
 package statemachine
 
 import (
+	"context"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -15,12 +17,17 @@ type Parser struct {
 	lookahead             StatemachineModelParserLookahead
 }
 
-func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
+func (p *Parser) Parse(ctx context.Context, document *core.Document) *parser.ParseResult {
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
 	referencesConstructor := service.MustGet[StatemachineModelReferencesConstructor](p.sc)
 	lookahead := service.MustGet[StatemachineModelParserLookahead](p.sc)
-	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
+	cp := &Parser{
+		sc:                    p.sc,
+		referencesConstructor: referencesConstructor,
+		lookahead:             lookahead,
+		state:                 parser.NewParserState(ctx, document.Tokens, ATN(), recovery, messages),
+	}
 	result := cp.ParseStatemachine()
 	cp.state.ExpectEndOfInput()
 	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}

@@ -195,8 +195,8 @@ func generateLspAdapter(ctx *LinkerGeneratorContext, actions []actionEntry) code
 	node.AppendLine("}")
 	node.AppendLine()
 
-	node.AppendLine("func (a *", name, "CompletionAdapter) Parse(tokens []core.Token) *parser.CompletionParseResult {")
-	node.AppendLine(" return NewCompletionParser(a.sc).Parse(tokens)")
+	node.AppendLine("func (a *", name, "CompletionAdapter) Parse(ctx context.Context, tokens []core.Token) *parser.CompletionParseResult {")
+	node.AppendLine(" return NewCompletionParser(a.sc).Parse(ctx, tokens)")
 	node.AppendLine("}")
 	node.AppendLine()
 

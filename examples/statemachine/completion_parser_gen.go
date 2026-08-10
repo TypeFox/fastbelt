@@ -3,6 +3,7 @@
 package statemachine
 
 import (
+	"context"
 	"sync"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
@@ -28,12 +29,12 @@ func NewCompletionParser(sc *service.Container) *CompletionParser {
 // the document's tokens up to the cursor) and returns the recorded
 // snapshots and rule stack. The completion provider feeds that result into
 // the ATN simulator.
-func (p *CompletionParser) Parse(tokens []core.Token) *parser.CompletionParseResult {
+func (p *CompletionParser) Parse(ctx context.Context, tokens []core.Token) *parser.CompletionParseResult {
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
 	lookahead := service.MustGet[StatemachineModelParserLookahead](p.sc)
 	cp := &CompletionParser{sc: p.sc, atn: p.atn, lookahead: lookahead}
-	cp.state = parser.NewParserState(tokens, p.atn(), recovery, messages)
+	cp.state = parser.NewParserState(ctx, tokens, p.atn(), recovery, messages)
 	cp.cp = parser.NewCompletionParserState(cp.state)
 	cp.ParseStatemachine()
 	return cp.cp.Result(tokens)

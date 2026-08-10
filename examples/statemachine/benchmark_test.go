@@ -76,7 +76,7 @@ func BenchmarkTraverseContentSeq(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	documentParser.Parse(doc)
+	documentParser.Parse(b.Context(), doc)
 
 	for b.Loop() {
 		count := 0
@@ -95,7 +95,7 @@ func TestAllNodesEquivalence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	documentParser.Parse(doc)
+	documentParser.Parse(t.Context(), doc)
 	nodeCount := 0
 	for range fastbelt.AllNodes(doc.Root) {
 		nodeCount++
@@ -112,7 +112,7 @@ func TestAllChildrenEquivalence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	documentParser.Parse(doc)
+	documentParser.Parse(t.Context(), doc)
 	childCount := 0
 	for range fastbelt.AllChildren(doc.Root) {
 		childCount++
@@ -136,7 +136,7 @@ func BenchmarkParser(b *testing.B) {
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		result := parserService.Parse(doc)
+		result := parserService.Parse(b.Context(), doc)
 		doc.Root = result.Node
 	}
 }
@@ -166,7 +166,7 @@ func BenchmarkLexerAndParser(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		doc.Tokens = lexerService.Lex(content).Tokens
-		result := parserService.Parse(doc)
+		result := parserService.Parse(b.Context(), doc)
 		doc.Root = result.Node
 	}
 }

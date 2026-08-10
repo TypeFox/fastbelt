@@ -5,6 +5,8 @@
 package workspace
 
 import (
+	"context"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
 	"typefox.dev/fastbelt/parser"
@@ -15,7 +17,7 @@ import (
 type DocumentParser interface {
 	// Parse tokenizes doc.TextDoc, builds doc.Root, and stores lexer and parser
 	// errors on doc. The caller must hold the workspace write [Lock].
-	Parse(doc *core.Document)
+	Parse(ctx context.Context, doc *core.Document)
 }
 
 // DefaultDocumentParser is the default implementation of [DocumentParser].
@@ -29,17 +31,23 @@ func NewDefaultDocumentParser(sc *service.Container) DocumentParser {
 	return &DefaultDocumentParser{sc: sc}
 }
 
-func (s *DefaultDocumentParser) Parse(doc *core.Document) {
+func (s *DefaultDocumentParser) Parse(ctx context.Context, doc *core.Document) {
 	text := doc.TextDoc.Text(nil)
 	// Run the lexer
 	lexer := service.MustGet[lexer.Lexer](s.sc)
 	lexerRes := lexer.Lex(text)
+	if ctx.Err() != nil {
+		return
+	}
 	doc.LexerErrors = lexerRes.Errors
 	doc.Tokens = lexerRes.Tokens
 	doc.Comments = lexerRes.Comments
 	// Run the parser
 	parser := service.MustGet[parser.Parser](s.sc)
-	parserRes := parser.Parse(doc)
+	parserRes := parser.Parse(ctx, doc)
+	if ctx.Err() != nil {
+		return
+	}
 	doc.ParserErrors = parserRes.Errors
 	doc.Root = parserRes.Node
 	core.AssignContainers(doc)

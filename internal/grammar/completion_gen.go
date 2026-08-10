@@ -209,8 +209,8 @@ func NewFastbeltCompletionAdapter(sc *service.Container) *FastbeltCompletionAdap
 	return &FastbeltCompletionAdapter{sc: sc}
 }
 
-func (a *FastbeltCompletionAdapter) Parse(tokens []core.Token) *parser.CompletionParseResult {
-	return NewCompletionParser(a.sc).Parse(tokens)
+func (a *FastbeltCompletionAdapter) Parse(ctx context.Context, tokens []core.Token) *parser.CompletionParseResult {
+	return NewCompletionParser(a.sc).Parse(ctx, tokens)
 }
 
 func (a *FastbeltCompletionAdapter) ATN() *parser.RuntimeATN {
