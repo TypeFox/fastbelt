@@ -71,9 +71,9 @@ func (p *Parser) ParseFarewell() Farewell {
 		}
 		{
 			token := p.state.Consume(Token_ID)
-			core.AssignToken(current, token, Farewell_Name_ID)
+			core.AssignToken(current, token, Farewell_To_ID)
 			if token != nil {
-				current.SetName(token)
+				current.SetTo(p.referencesConstructor.FarewellTo(current, token))
 			}
 		}
 	}

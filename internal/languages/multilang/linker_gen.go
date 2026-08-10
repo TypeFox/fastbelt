@@ -3,14 +3,19 @@
 package multilang
 
 import (
+	"context"
 	"reflect"
+	"slices"
 	"sync"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/linking"
+	"typefox.dev/fastbelt/util/extiter"
 	"typefox.dev/fastbelt/util/service"
 )
 
 type MultilangModelScopeProvider interface {
+	ScopeFarewellTo(ctx context.Context, reference *core.Reference[Greeting]) core.Scope
 }
 
 type DefaultMultilangModelScopeProvider struct {
@@ -21,7 +26,12 @@ func NewDefaultMultilangModelScopeProvider(sc *service.Container) MultilangModel
 	return &DefaultMultilangModelScopeProvider{sc: sc}
 }
 
+func (s *DefaultMultilangModelScopeProvider) ScopeFarewellTo(ctx context.Context, reference *core.Reference[Greeting]) core.Scope {
+	return linking.DefaultScopeOfType[Greeting](reference.Owner())
+}
+
 type MultilangModelReferenceLinker interface {
+	LinkFarewellTo(ctx context.Context, reference *core.Reference[Greeting]) (*core.SymbolDescription, *core.ReferenceError)
 }
 
 type DefaultMultilangModelReferenceLinker struct {
@@ -38,7 +48,13 @@ func NewDefaultMultilangModelReferenceLinker(sc *service.Container) MultilangMod
 	}
 }
 
+func (s *DefaultMultilangModelReferenceLinker) LinkFarewellTo(ctx context.Context, reference *core.Reference[Greeting]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeFarewellTo(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
+}
+
 type MultilangModelReferencesConstructor interface {
+	FarewellTo(owner core.AstNode, unit core.StringUnit) *core.Reference[Greeting]
 }
 
 type DefaultMultilangModelReferencesConstructor struct {
@@ -55,6 +71,11 @@ func NewDefaultMultilangModelReferencesConstructor(sc *service.Container) Multil
 	}
 }
 
+func (s *DefaultMultilangModelReferencesConstructor) FarewellTo(owner core.AstNode, unit core.StringUnit) *core.Reference[Greeting] {
+	fn := s.referenceLinker().LinkFarewellTo
+	return core.NewReference(owner, unit, fn)
+}
+
 type MultilangModelSymbolContainers struct{}
 
 func (c *MultilangModelSymbolContainers) New() core.SymbolContainer {
@@ -66,16 +87,30 @@ func NewSymbolContainers() *MultilangModelSymbolContainers {
 }
 
 type MultilangModelSymbolContainer struct {
+	Greetings []*core.SymbolDescription
 }
 
 func (sc *MultilangModelSymbolContainer) Put(desc *core.SymbolDescription) bool {
+	switch desc.Node.(type) {
+	case Greeting:
+		sc.Greetings = append(sc.Greetings, desc)
+		return true
+	}
 	return false
 }
 
 func (sc *MultilangModelSymbolContainer) All() core.SymbolSeq {
-	return core.EmptySymbolDescriptions
+	return extiter.Concat(
+		slices.Values(sc.Greetings),
+	)
 }
 
+var TypeFor_Greeting = reflect.TypeFor[Greeting]()
+
 func (sc *MultilangModelSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
+	switch t {
+	case TypeFor_Greeting:
+		return slices.Values(sc.Greetings)
+	}
 	return core.EmptySymbolDescriptions
 }

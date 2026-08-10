@@ -10,22 +10,26 @@ import (
 	"typefox.dev/fastbelt/util/service"
 )
 
+// DocumentMatcher is a function that returns true if the given document URI matches a
+// specific pattern. It is used by [DocumentSelector] to match documents by URI path.
 type DocumentMatcher func(uri URI) bool
 
-// DocumentFilter matches a document by LSP language id and/or a glob over the
-// document URI path. A filter matches when EITHER a non-empty LanguageID equals
-// the document's language id OR a non-empty Pattern matches the path (see
-// [DocumentSelector.Matches]) — so one filter per language (its id plus its
-// extension glob) is enough.
+// DocumentSelector matches a document by LSP language id and/or a glob over the
+// document URI path.
 type DocumentSelector struct {
 	LanguageID string
 	Matcher    DocumentMatcher
 }
 
+// NewDocumentSelector returns a [DocumentSelector] that matches documents by
+// language id and a custom matcher function.
 func NewDocumentSelector(languageID string, matcher DocumentMatcher) DocumentSelector {
 	return DocumentSelector{LanguageID: languageID, Matcher: matcher}
 }
 
+// NewDocumentSelectorWithPatterns returns a [DocumentSelector] that matches documents by
+// language id and a list of glob patterns over the document URI path. The patterns
+// are matched in order, and the first match wins.
 func NewDocumentSelectorWithPatterns(languageID string, patterns ...string) DocumentSelector {
 	return DocumentSelector{LanguageID: languageID, Matcher: func(uri URI) bool {
 		for _, pattern := range patterns {
@@ -66,9 +70,8 @@ type DefaultLanguageSelector struct {
 	selectors []DocumentSelector
 }
 
-// NewDefaultLanguageSelector returns a [LanguageSelector] that resolves the
-// [textdoc.Store] from sc and matches documents against the given per-language
-// selectors.
+// NewDefaultLanguageSelector returns a new [DefaultLanguageSelector]
+// that matches documents against the given selectors in order.
 func NewDefaultLanguageSelector(sc *service.Container, selectors ...DocumentSelector) *DefaultLanguageSelector {
 	return &DefaultLanguageSelector{sc: sc, selectors: selectors}
 }

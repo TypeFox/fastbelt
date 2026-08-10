@@ -5,7 +5,8 @@
 // Package cmd is the importable build API for Fastbelt. It generates a
 // parser/lexer/LSP server from one or more .fb grammar files and, when several
 // languages are configured, wires them for dispatch inside a single language
-// server. The fastbelt CLI (cmd/fastbelt) is a thin wrapper over this package.
+// server. The fastbelt CLI (cmd/fastbelt) is a thin wrapper over this package
+// for use cases that only need a single language.
 package cmd
 
 import (

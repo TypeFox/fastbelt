@@ -28,19 +28,17 @@ func TestBenchmarkContentParses(t *testing.T) {
 func BenchmarkParser(b *testing.B) {
 	content := generateArithmeticsContent()
 	srv := CreateServices()
+	doc := fastbelt.NewDocumentFromString("file:///workspace/benchmark.arithmetics", "arithmetics", content)
 	lexerService := service.MustGet[lexer.Lexer](srv)
 	parserService := service.MustGet[parser.Parser](srv)
-	tokens := lexerService.Exec(content).Tokens
-	doc, err := fastbelt.NewDocumentFromString("file:///workspace/bench.calc", "arithmetics", content)
-	if err != nil {
-		b.Fatal(err)
+	lexerService.Exec(doc)
+	if len(doc.LexerErrors) > 0 {
+		b.Fatalf("lexer errors: %v", doc.LexerErrors)
 	}
-	doc.Tokens = tokens
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		result := parserService.Parse(doc)
-		doc.Root = result.Node
+		parserService.Parse(doc)
 	}
 }
 
