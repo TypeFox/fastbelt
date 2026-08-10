@@ -5,11 +5,11 @@ interface Greeting {
 }
 
 interface Farewell {
-    Name string
+    To *Greeting
 }
 
-entry Greeting returns Greeting: "hello" Name=ID
-entry Farewell returns Farewell: "goodbye" Name=ID
+entry Greeting: "hello" Name=ID
+entry Farewell: "goodbye" To=[Greeting:ID]
 
 token ID: /[_a-zA-Z][\w_]*/
 hidden token WS: /\s+/

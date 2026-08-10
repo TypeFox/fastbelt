@@ -28,7 +28,6 @@
 //   - [DocumentManager] — concurrent in-memory store of all documents, keyed by URI
 //   - [DocumentUpdater] — entry point for edits; serializes mutations and triggers builds
 //   - [DocumentChangeImpact] — reports cross-document reference dependencies on changed files
-//   - [DocumentParser] — lexes and parses a single document into tokens and an AST
 //   - [DocumentValidator] — collects diagnostics for a single document
 //
 // # The build lifecycle
@@ -39,7 +38,7 @@
 // documents in three phases, running documents in parallel within each phase
 // and checking the context for cancellation between steps:
 //
-//   - Phase 1 (per document): parse into an AST ([DocumentParser]) and compute
+//   - Phase 1 (per document): parse into an AST and compute
 //     the symbols the document exports to others.
 //   - Phase 2 (per document): import symbols from other documents, compute
 //     local symbols, link all cross-references, and index reference

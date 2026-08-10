@@ -560,7 +560,7 @@ func emitCompletionEntryDispatch(node codegen.Node, entryRules []grammar.ParserR
 		return
 	}
 	node.AppendLine("selector := service.MustGet[core.LanguageSelector](cp.sc)")
-	node.AppendLine("switch i, _ := selector.Select(core.ParseURI(string(document.TextDoc.URI()))); i {")
+	node.AppendLine("switch i, _ := selector.Select(document.URI); i {")
 	for i := 1; i < len(entryRules); i++ {
 		node.AppendLine("case ", strconv.Itoa(i), ":")
 		node.Indent(func(in codegen.Node) {

@@ -118,10 +118,10 @@ func (f *Fixture) WithMarking(m *TestMarking) *Fixture {
 }
 
 // Parse builds a single in-memory document from content. Markers are extracted before
-// parsing. The URI is "inmemory://test". Use [ParseURI] to specify a different URI.
+// parsing. The URI is "inmemory:/test". Use [ParseURI] to specify a different URI.
 func (f *Fixture) Parse(content string) *Doc {
 	f.t.Helper()
-	uri := "inmemory://test"
+	uri := "inmemory:/test"
 	return f.ParseURI(content, uri)
 }
 

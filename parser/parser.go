@@ -14,11 +14,6 @@ type Parser interface {
 	Parse(document *core.Document)
 }
 
-type ParseResult struct {
-	Node   core.AstNode
-	Errors []*core.ParserError
-}
-
 const (
 	// Indicates that the parser is not currently in error mode.
 	ErrorModeNone = iota

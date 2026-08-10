@@ -12,8 +12,8 @@ import "strings"
 // non-separator characters and '?' matches a single one. The '**' segment
 // matches zero or more whole segments (crossing separators).
 //
-// ponytail: minimal glob covering the "**/*.ext" defaults + simple hand-written
-// patterns; swap for a glob lib if callers ever need {a,b} / [..] classes.
+// Note: This is a minimal implementation for internal use, does not support
+// most glob features, and is not intended to be a general-purpose glob matcher.
 func Match(pattern, path string) bool {
 	return matchSegments(strings.Split(pattern, "/"), strings.Split(path, "/"))
 }

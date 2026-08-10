@@ -36,7 +36,7 @@ func (p *CompletionParser) Parse(document *core.Document, tokens []core.Token) *
 	cp.state = parser.NewParserState(tokens, p.atn(), recovery, messages)
 	cp.cp = parser.NewCompletionParserState(cp.state)
 	selector := service.MustGet[core.LanguageSelector](cp.sc)
-	switch i, _ := selector.Select(core.ParseURI(string(document.TextDoc.URI()))); i {
+	switch i, _ := selector.Select(document.URI); i {
 	case 1:
 		cp.ParseFarewell()
 	default:
@@ -65,7 +65,7 @@ func (p *CompletionParser) ParseFarewell() {
 		p.state.Consume(Keyword_goodbye)
 	}
 	{
-		p.cp.MarkAssignment("Name")
+		p.cp.MarkAssignment("To")
 		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}
