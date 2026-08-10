@@ -57,8 +57,8 @@ func NewMultilangModelCompletionAdapter(sc *service.Container) *MultilangModelCo
 	return &MultilangModelCompletionAdapter{sc: sc}
 }
 
-func (a *MultilangModelCompletionAdapter) Parse(document *core.Document, tokens []core.Token) *parser.CompletionParseResult {
-	return NewCompletionParser(a.sc).Parse(document, tokens)
+func (a *MultilangModelCompletionAdapter) Parse(ctx context.Context, document *core.Document, tokens []core.Token) *parser.CompletionParseResult {
+	return NewCompletionParser(a.sc).Parse(ctx, document, tokens)
 }
 
 func (a *MultilangModelCompletionAdapter) ATN() *parser.RuntimeATN {

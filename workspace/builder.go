@@ -73,7 +73,9 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 		}
 		// STEP 1.1: Lex the document and produce tokens.
 		if !doc.State.Has(core.DocStateLexed) {
-			lexer.Exec(doc)
+			if err := lexer.Exec(ctx, doc); err != nil {
+				return
+			}
 			doc.State = doc.State.With(core.DocStateLexed)
 			s.notifyListeners(ctx, core.DocStateLexed, doc)
 		}
@@ -82,7 +84,9 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 		}
 		// STEP 1.2: Parse the document and create the AST.
 		if !doc.State.Has(core.DocStateParsed) {
-			parser.Parse(doc)
+			if err := parser.Parse(ctx, doc); err != nil {
+				return
+			}
 			doc.State = doc.State.With(core.DocStateParsed)
 			s.notifyListeners(ctx, core.DocStateParsed, doc)
 		}

@@ -3,6 +3,8 @@
 package multilang
 
 import (
+	"context"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -15,12 +17,17 @@ type Parser struct {
 	lookahead             MultilangModelParserLookahead
 }
 
-func (p *Parser) Parse(document *core.Document) {
+func (p *Parser) Parse(ctx context.Context, document *core.Document) error {
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
 	referencesConstructor := service.MustGet[MultilangModelReferencesConstructor](p.sc)
 	lookahead := service.MustGet[MultilangModelParserLookahead](p.sc)
-	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
+	cp := &Parser{
+		sc:                    p.sc,
+		referencesConstructor: referencesConstructor,
+		lookahead:             lookahead,
+		state:                 parser.NewParserState(ctx, document.Tokens, ATN(), recovery, messages),
+	}
 	var result core.AstNode
 	selector := service.MustGet[core.LanguageSelector](p.sc)
 	switch i, _ := selector.Select(document.URI); i {
@@ -29,10 +36,14 @@ func (p *Parser) Parse(document *core.Document) {
 	default:
 		result = cp.ParseGreeting()
 	}
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 	cp.state.ExpectEndOfInput()
 	document.ParserErrors = cp.state.Errors()
 	document.Root = result
 	core.AssignContainers(document)
+	return nil
 }
 
 func NewParser(sc *service.Container) *Parser {

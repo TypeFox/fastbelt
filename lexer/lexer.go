@@ -5,6 +5,7 @@
 package lexer
 
 import (
+	"context"
 	"unicode/utf8"
 
 	core "typefox.dev/fastbelt"
@@ -15,8 +16,9 @@ import (
 // Lexer tokenizes a document and stores the result on it.
 type Lexer interface {
 	// Exec tokenizes the document text and sets the Tokens, Comments
-	// and LexerErrors fields of the document.
-	Exec(document *core.Document)
+	// and LexerErrors fields of the document. If ctx is cancelled while
+	// lexing, the document is left untouched and ctx.Err() is returned.
+	Exec(ctx context.Context, document *core.Document) error
 }
 
 // lexerResult holds everything produced by a single lexer run over source text.
@@ -49,7 +51,7 @@ type DefaultLexer struct {
 
 // Exec tokenizes the document, starting in the entry token mode of its language.
 // With more than one language, the language is resolved via the [core.LanguageSelector].
-func (l *DefaultLexer) Exec(document *core.Document) {
+func (l *DefaultLexer) Exec(ctx context.Context, document *core.Document) error {
 	language := 0
 	if len(l.entryModes) > 1 {
 		selector := service.MustGet[core.LanguageSelector](l.sc)
@@ -57,15 +59,22 @@ func (l *DefaultLexer) Exec(document *core.Document) {
 			language = i
 		}
 	}
-	result := l.exec(document.TextDoc.Text(nil), language)
+	result, err := l.exec(ctx, document.TextDoc.Text(nil), language)
+	if err != nil {
+		return err
+	}
 	document.Tokens = result.Tokens
 	document.Comments = result.Comments
 	document.LexerErrors = result.Errors
+	return nil
 }
 
 // exec scans input from left to right using longest-match disambiguation among
 // the token types of the active mode, starting in the entry mode of the language.
-func (l *DefaultLexer) exec(input string, language int) *lexerResult {
+func (l *DefaultLexer) exec(ctx context.Context, input string, language int) (*lexerResult, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	tokenModes := l.modes
 	avgRatio := l.avgRatio[language]
 	length := len(input)
@@ -143,6 +152,11 @@ func (l *DefaultLexer) exec(input string, language int) *lexerResult {
 			))
 		}
 		offset = end
+
+		// Don't check the context on every token
+		if len(tokens)&1023 == 0 && ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
 	}
 
 	if length > 0 {
@@ -154,7 +168,7 @@ func (l *DefaultLexer) exec(input string, language int) *lexerResult {
 		Tokens:   tokens,
 		Comments: comments,
 		Errors:   errors,
-	}
+	}, nil
 }
 
 const maxChar = 256

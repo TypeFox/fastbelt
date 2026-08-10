@@ -57,8 +57,8 @@ func NewArithmeticsCompletionAdapter(sc *service.Container) *ArithmeticsCompleti
 	return &ArithmeticsCompletionAdapter{sc: sc}
 }
 
-func (a *ArithmeticsCompletionAdapter) Parse(document *core.Document, tokens []core.Token) *parser.CompletionParseResult {
-	return NewCompletionParser(a.sc).Parse(document, tokens)
+func (a *ArithmeticsCompletionAdapter) Parse(ctx context.Context, document *core.Document, tokens []core.Token) *parser.CompletionParseResult {
+	return NewCompletionParser(a.sc).Parse(ctx, document, tokens)
 }
 
 func (a *ArithmeticsCompletionAdapter) ATN() *parser.RuntimeATN {
