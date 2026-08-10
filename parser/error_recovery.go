@@ -67,17 +67,15 @@ func (DefaultErrorRecovery) Recover(parserState *ParserState) {
 	if parserState.ErrorMode != ErrorModeRecover {
 		return
 	}
-	// Compute the set of tokens that could legally come next at this point in the parse.
-	// Discards tokens until we find one that matches, or until we hit EOF.
-	followSet := parserState.FollowSet()
-	if !followSet.Empty() {
+	// Discards tokens until we find one that the current follow set, or until we hit EOF.
+	if !parserState.FollowSetEmpty() {
 		for {
 			la := parserState.LA(1)
 			if la.Type == core.EOF {
 				// EOF reached, give up and let the parser unwind.
 				return
 			}
-			if followSet.At(la.Type.Id) {
+			if parserState.FollowSetContains(la.Type.Id) {
 				break
 			}
 			parserState.Index++
@@ -106,8 +104,9 @@ func (DefaultErrorRecovery) Sync(parserState *ParserState, decisionStateIdx int)
 	if tok.Type == core.EOF || validTokens.At(tok.Type.Id) {
 		return
 	}
-	followTokens := parserState.FollowSet()
-	if followTokens.At(tok.Type.Id) {
+	// Next, if the current token is in the follow set of the parser stack,
+	// we can directly return and let the parser continue.
+	if parserState.FollowSetContains(tok.Type.Id) {
 		return
 	}
 	// Single-token deletion: if the *next* token is in the valid set, treat
@@ -126,7 +125,7 @@ func (DefaultErrorRecovery) Sync(parserState *ParserState, decisionStateIdx int)
 	for {
 		parserState.Index++
 		la := parserState.LA(1)
-		if la.Type == core.EOF || validTokens.At(la.Type.Id) || followTokens.At(la.Type.Id) {
+		if la.Type == core.EOF || validTokens.At(la.Type.Id) || parserState.FollowSetContains(la.Type.Id) {
 			return
 		}
 	}

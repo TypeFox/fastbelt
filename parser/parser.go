@@ -6,7 +6,6 @@ package parser
 
 import (
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/util/collections"
 )
 
 // Parser defines the interface for parsing tokens (lexer output) into AST nodes.
@@ -261,13 +260,24 @@ func (p *ParserState) Sync(decisionStateIdx int) {
 	p.recovery.Sync(p, decisionStateIdx)
 }
 
-// FollowSet returns the union of NextTokensAt for every frame on the follow-state stack.
-func (p *ParserState) FollowSet() *collections.BitSet {
-	sets := make([]*collections.BitSet, len(p.followStates))
-	for i, idx := range p.followStates {
-		sets[i] = p.atn.NextTokensAt(idx)
+// FollowSetContains reports whether the token type id is in the follow set.
+func (p *ParserState) FollowSetContains(id int) bool {
+	for _, idx := range p.followStates {
+		if p.atn.NextTokensAt(idx).At(id) {
+			return true
+		}
 	}
-	return collections.MergeBitSets(sets)
+	return false
+}
+
+// FollowSetEmpty reports whether the follow set is empty.
+func (p *ParserState) FollowSetEmpty() bool {
+	for _, idx := range p.followStates {
+		if !p.atn.NextTokensAt(idx).Empty() {
+			return false
+		}
+	}
+	return true
 }
 
 // Base interface for all generated parser lookahead services.
