@@ -88,9 +88,8 @@ type Farewell interface {
 	core.AstNode
 
 	IsFarewell()
-	Name() string
-	NameToken() *core.Token
-	SetName(value *core.Token)
+	To() *core.Reference[Greeting]
+	SetTo(value *core.Reference[Greeting])
 }
 
 func NewFarewell() Farewell {
@@ -101,7 +100,7 @@ func NewFarewell() Farewell {
 }
 
 type FarewellData struct {
-	name *core.Token
+	to *core.Reference[Greeting]
 }
 
 func NewFarewellData() FarewellData {
@@ -114,22 +113,21 @@ func (i *FarewellData) ForEachNode(fn func(core.AstNode, unique.Handle[string], 
 }
 
 func (i *FarewellData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-}
-
-func (i *FarewellData) Name() string {
-	if i != nil && i.name != nil {
-		return i.name.Image
-	} else {
-		return ""
+	if i.to != nil {
+		fn(i.to, fieldNameTo, -1)
 	}
 }
 
-func (i *FarewellData) NameToken() *core.Token {
-	return i.name
+func (i *FarewellData) To() *core.Reference[Greeting] {
+	if i != nil && i.to != nil {
+		return i.to
+	} else {
+		return nil
+	}
 }
 
-func (i *FarewellData) SetName(value *core.Token) {
-	i.name = value
+func (i *FarewellData) SetTo(value *core.Reference[Greeting]) {
+	i.to = value
 }
 
 type FarewellImpl struct {
@@ -151,8 +149,8 @@ func (i *FarewellImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	}
 	field, _ := path.Head()
 	switch field {
-	case fieldNameName:
-		return nil, fmt.Errorf("FarewellImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	case fieldNameTo:
+		return nil, fmt.Errorf("FarewellImpl.Resolve: field 'to' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("FarewellImpl.Resolve: field '%s' does not exist in node '%s' of type 'Farewell'", field.Value(), nodePath)
@@ -161,6 +159,7 @@ func (i *FarewellImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 
 var (
 	fieldNameName = unique.Make("name")
+	fieldNameTo   = unique.Make("to")
 )
 
 var MultilangModelSyntheticFactories = map[string]func() core.AstNode{

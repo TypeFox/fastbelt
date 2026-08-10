@@ -45,12 +45,14 @@ type Initializer interface {
 // to filter files and directories.
 type IncludeFilter interface {
 	// Include returns true if the given file system entry should be included.
+	// If the entry is a file, the returned string is the language ID to assign
+	// to the document.
 	Include(entry DirEntry) (bool, string)
 }
 
 // DefaultIncludeFilter is the default implementation of [IncludeFilter].
-// It includes files whose extension matches [FileExtensions] and skips hidden
-// directories (names starting with ".").
+// It includes files whose URI path has a match in the [core.LanguageSelector].
+// It skips hidden directories (names starting with ".").
 type DefaultIncludeFilter struct {
 	sc *service.Container
 }
@@ -113,8 +115,6 @@ func (s *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 	if err != nil {
 		return nil
 	}
-	// LanguageID is optional: multi-language workspaces have no single id, and
-	// disk files are routed by the LanguageSelector's path glob at parse time.
 	filter, err := service.Get[IncludeFilter](s.sc)
 	if err != nil {
 		log.Print("workspace IncludeFilter is not set")

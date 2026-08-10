@@ -130,6 +130,9 @@ const (
 // String returns a readable representation of the set state flags.
 func (s DocumentState) String() string {
 	var flags []string
+	if s.Has(DocStateLexed) {
+		flags = append(flags, "Lexed")
+	}
 	if s.Has(DocStateParsed) {
 		flags = append(flags, "Parsed")
 	}
@@ -166,8 +169,9 @@ func (s DocumentState) Without(flag DocumentState) DocumentState {
 	return s &^ flag
 }
 
-const docStateComplete = DocStateParsed | DocStateExportedSymbols | DocStateImportedSymbols |
-	DocStateLocalSymbols | DocStateLinked | DocStateReferences | DocStateValidated
+const docStateComplete = DocStateLexed | DocStateParsed | DocStateExportedSymbols |
+	DocStateImportedSymbols | DocStateLocalSymbols | DocStateLinked | DocStateReferences |
+	DocStateValidated
 
 // IsComplete reports whether all framework-defined build phases have completed,
 // i.e. every state bit from DocStateParsed through DocStateValidated is set.

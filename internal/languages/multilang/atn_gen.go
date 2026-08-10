@@ -16,7 +16,7 @@ const (
 	Greeting_Name_ID
 	Greeting__Basic
 	Farewell_goodbye
-	Farewell_Name_ID
+	Farewell_To_ID
 	Farewell__Basic
 )
 
@@ -39,7 +39,7 @@ func BuildATN() *parser.RuntimeATN {
 	states[Greeting_Name_ID] = parser.NewATNState(Greeting_Name_ID, parser.ATNBasic, false)
 	states[Greeting__Basic] = parser.NewATNState(Greeting__Basic, parser.ATNBasic, true)
 	states[Farewell_goodbye] = parser.NewATNState(Farewell_goodbye, parser.ATNBasic, false)
-	states[Farewell_Name_ID] = parser.NewATNState(Farewell_Name_ID, parser.ATNBasic, false)
+	states[Farewell_To_ID] = parser.NewATNState(Farewell_To_ID, parser.ATNBasic, false)
 	states[Farewell__Basic] = parser.NewATNState(Farewell__Basic, parser.ATNBasic, true)
 	states[Greeting__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Greeting_hello]),
@@ -57,10 +57,10 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[Greeting__Stop]),
 	)
 	states[Farewell_goodbye].AppendTransitions(
-		parser.NewAtomTransition(states[Farewell_Name_ID], Keyword_goodbye, nil),
+		parser.NewAtomTransition(states[Farewell_To_ID], Keyword_goodbye, nil),
 	)
-	states[Farewell_Name_ID].AppendTransitions(
-		parser.NewAtomTransition(states[Farewell__Basic], Token_ID, nil),
+	states[Farewell_To_ID].AppendTransitions(
+		parser.NewAtomTransition(states[Farewell__Basic], Token_ID, &parser.CompletionHint{Field: "Farewell.To"}),
 	)
 	states[Farewell__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[Farewell__Stop]),

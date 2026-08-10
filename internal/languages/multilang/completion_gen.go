@@ -14,6 +14,7 @@ import (
 // MultilangModelCompletionFilter lets adopters refine the candidates produced by
 // the existing MultilangModelScopeProvider when completing a cross-reference.
 type MultilangModelCompletionFilter interface {
+	FilterFarewellTo(ctx context.Context, reference *core.Reference[Greeting], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 }
 
 type DefaultMultilangModelCompletionFilter struct{}
@@ -22,9 +23,30 @@ func NewDefaultMultilangModelCompletionFilter() MultilangModelCompletionFilter {
 	return &DefaultMultilangModelCompletionFilter{}
 }
 
-var MultilangModelCompletionDispatch = map[string]MultilangModelCompletionDispatchFunc{}
+func (*DefaultMultilangModelCompletionFilter) FilterFarewellTo(_ context.Context, _ *core.Reference[Greeting], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
 
-type MultilangModelCompletionDispatchFunc func(ctx context.Context, sc *core.AstNode) iter.Seq[*core.SymbolDescription]
+type MultilangModelCompletionDispatchFunc func(
+	ctx context.Context,
+	sc *service.Container,
+	owner core.AstNode,
+) iter.Seq[*core.SymbolDescription]
+
+var MultilangModelCompletionDispatch = map[string]MultilangModelCompletionDispatchFunc{
+	"Farewell.To": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(Farewell)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[MultilangModelReferencesConstructor](sc)
+		scopes := service.MustGet[MultilangModelScopeProvider](sc)
+		filter := service.MustGet[MultilangModelCompletionFilter](sc)
+		ref := refs.FarewellTo(typedOwner, nil)
+		candidates := scopes.ScopeFarewellTo(ctx, ref).AllElements()
+		return filter.FilterFarewellTo(ctx, ref, candidates)
+	},
+}
 
 type MultilangModelCompletionAdapter struct {
 	sc *service.Container
@@ -51,15 +73,21 @@ func (a *MultilangModelCompletionAdapter) SyntheticOwnerFor(ruleKey string) (cor
 }
 
 func (a *MultilangModelCompletionAdapter) DispatchCompletion(ctx context.Context, field string, owner core.AstNode) (iter.Seq[*core.SymbolDescription], bool) {
-	_ = field
-	_ = owner
-	_ = ctx
-	return nil, false
+	dispatch, ok := MultilangModelCompletionDispatch[field]
+	if !ok {
+		return nil, false
+	}
+	return dispatch(ctx, a.sc, owner), true
 }
 
 func (a *MultilangModelCompletionAdapter) HasAssignment(node core.AstNode, property string) bool {
-	_ = node
-	_ = property
+	switch n := node.(type) {
+	case Farewell:
+		switch property {
+		case "To":
+			return n.To() != nil
+		}
+	}
 	return false
 }
 
