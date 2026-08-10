@@ -702,13 +702,12 @@ func (p *Parser) ParseN() N {
 }
 
 func (p *Parser) ParseO() Obj {
-	current := NewObj()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current Obj
 	{
 		{
 			result := NewO()
-			result.SetTextRange(current.TextRange())
-			core.AssignTokens(result, current.Tokens())
+			result.SetTextRangeStart(startPos)
 			current = result
 		}
 		current := current.(O)

@@ -205,8 +205,8 @@ func (p *Parser) ParseField() Field {
 }
 
 func (p *Parser) ParseFieldType() FieldType {
-	current := NewFieldType()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current FieldType
 	{
 		switch prediction, failure := p.lookahead.FieldTypeAlternatives(p.state); prediction {
 		case 0:
@@ -214,7 +214,6 @@ func (p *Parser) ParseFieldType() FieldType {
 				p.state.EnterRule(FieldType__Basic_1)
 				result := p.ParseSimpleType()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 1:
@@ -222,7 +221,6 @@ func (p *Parser) ParseFieldType() FieldType {
 				p.state.EnterRule(FieldType__Basic_3)
 				result := p.ParseReferenceType()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 2:
@@ -230,7 +228,6 @@ func (p *Parser) ParseFieldType() FieldType {
 				p.state.EnterRule(FieldType__Basic_5)
 				result := p.ParseArrayType()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 3:
@@ -238,11 +235,14 @@ func (p *Parser) ParseFieldType() FieldType {
 				p.state.EnterRule(FieldType__Basic_7)
 				result := p.ParsePrimitiveType()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewFieldType()
+			current.SetTextRangeStart(startPos)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -526,14 +526,12 @@ func (p *Parser) ParseTokenGroup() TokenGroup {
 }
 
 func (p *Parser) ParseAlternatives() Element {
-	current := NewElement()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	var current Element
 	{
 		{
 			p.state.EnterRule(Alternatives__Basic_3)
 			result := p.ParseGroup()
 			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
 		p.state.Sync(Alternatives__Basic_3)
@@ -568,14 +566,12 @@ func (p *Parser) ParseAlternatives() Element {
 }
 
 func (p *Parser) ParseGroup() Element {
-	current := NewElement()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	var current Element
 	{
 		{
 			p.state.EnterRule(Group__Basic_3)
 			result := p.ParseElement()
 			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
 		p.state.Sync(Group__Basic_3)
@@ -606,8 +602,8 @@ func (p *Parser) ParseGroup() Element {
 }
 
 func (p *Parser) ParseElement() Element {
-	current := NewElement()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current Element
 	{
 		switch prediction, failure := p.lookahead.ElementAlternatives(p.state); prediction {
 		case 0:
@@ -615,7 +611,6 @@ func (p *Parser) ParseElement() Element {
 				p.state.EnterRule(Element__Basic_1)
 				result := p.ParseKeyword()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 1:
@@ -623,7 +618,6 @@ func (p *Parser) ParseElement() Element {
 				p.state.EnterRule(Element__Basic_3)
 				result := p.ParseAssignment()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 2:
@@ -631,7 +625,6 @@ func (p *Parser) ParseElement() Element {
 				p.state.EnterRule(Element__Basic_5)
 				result := p.ParseRuleCall()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 3:
@@ -639,11 +632,12 @@ func (p *Parser) ParseElement() Element {
 				p.state.EnterRule(Element__Basic_7)
 				result := p.ParseAction()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 4:
 			{
+				current = NewElement()
+				current.SetTextRangeStart(startPos)
 				token := p.state.Consume(Keyword_LeftParen)
 				core.AssignToken(current, token, Element_LeftParen)
 			}
@@ -660,6 +654,10 @@ func (p *Parser) ParseElement() Element {
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewElement()
+			current.SetTextRangeStart(startPos)
 		}
 		{
 			p.state.Sync(Element__Basic_15)
@@ -752,8 +750,8 @@ func (p *Parser) ParseAssignment() Assignment {
 }
 
 func (p *Parser) ParseAssignable() Assignable {
-	current := NewAssignable()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current Assignable
 	{
 		switch prediction, failure := p.lookahead.AssignableAlternatives(p.state); prediction {
 		case 0:
@@ -761,7 +759,6 @@ func (p *Parser) ParseAssignable() Assignable {
 				p.state.EnterRule(Assignable__Basic_1)
 				result := p.ParseKeyword()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 1:
@@ -769,7 +766,6 @@ func (p *Parser) ParseAssignable() Assignable {
 				p.state.EnterRule(Assignable__Basic_3)
 				result := p.ParseRuleCall()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 2:
@@ -777,11 +773,12 @@ func (p *Parser) ParseAssignable() Assignable {
 				p.state.EnterRule(Assignable__Basic_5)
 				result := p.ParseCrossRef()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 3:
 			{
+				current = NewAssignable()
+				current.SetTextRangeStart(startPos)
 				token := p.state.Consume(Keyword_LeftParen)
 				core.AssignToken(current, token, Assignable_LeftParen)
 			}
@@ -799,14 +796,18 @@ func (p *Parser) ParseAssignable() Assignable {
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
+		if current == nil {
+			current = NewAssignable()
+			current.SetTextRangeStart(startPos)
+		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
 }
 
 func (p *Parser) ParseAssignableWithoutAlts() Assignable {
-	current := NewAssignable()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current Assignable
 	{
 		switch prediction, failure := p.lookahead.AssignableWithoutAltsAlternatives(p.state); prediction {
 		case 0:
@@ -814,7 +815,6 @@ func (p *Parser) ParseAssignableWithoutAlts() Assignable {
 				p.state.EnterRule(AssignableWithoutAlts__Basic_1)
 				result := p.ParseKeyword()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 1:
@@ -822,7 +822,6 @@ func (p *Parser) ParseAssignableWithoutAlts() Assignable {
 				p.state.EnterRule(AssignableWithoutAlts__Basic_3)
 				result := p.ParseRuleCall()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 2:
@@ -830,11 +829,14 @@ func (p *Parser) ParseAssignableWithoutAlts() Assignable {
 				p.state.EnterRule(AssignableWithoutAlts__Basic_5)
 				result := p.ParseCrossRef()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewAssignable()
+			current.SetTextRangeStart(startPos)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -842,14 +844,12 @@ func (p *Parser) ParseAssignableWithoutAlts() Assignable {
 }
 
 func (p *Parser) ParseAssignableAlternatives() Assignable {
-	current := NewAssignable()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	var current Assignable
 	{
 		{
 			p.state.EnterRule(AssignableAlternatives__Basic_3)
 			result := p.ParseAssignableWithoutAlts()
 			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
 		p.state.Sync(AssignableAlternatives__Basic_3)
@@ -1035,14 +1035,12 @@ func (p *Parser) ParseCompositeRule() CompositeRule {
 }
 
 func (p *Parser) ParseCompositeAlternatives() Element {
-	current := NewElement()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	var current Element
 	{
 		{
 			p.state.EnterRule(CompositeAlternatives__Basic_3)
 			result := p.ParseCompositeGroup()
 			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
 		p.state.Sync(CompositeAlternatives__Basic_3)
@@ -1077,14 +1075,12 @@ func (p *Parser) ParseCompositeAlternatives() Element {
 }
 
 func (p *Parser) ParseCompositeGroup() Element {
-	current := NewElement()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	var current Element
 	{
 		{
 			p.state.EnterRule(CompositeGroup__Basic_3)
 			result := p.ParseCompositeElement()
 			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
 		p.state.Sync(CompositeGroup__Basic_3)
@@ -1115,8 +1111,8 @@ func (p *Parser) ParseCompositeGroup() Element {
 }
 
 func (p *Parser) ParseCompositeElement() Element {
-	current := NewElement()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current Element
 	{
 		switch prediction, failure := p.lookahead.CompositeElementAlternatives(p.state); prediction {
 		case 0:
@@ -1124,7 +1120,6 @@ func (p *Parser) ParseCompositeElement() Element {
 				p.state.EnterRule(CompositeElement__Basic_1)
 				result := p.ParseKeyword()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 1:
@@ -1132,11 +1127,12 @@ func (p *Parser) ParseCompositeElement() Element {
 				p.state.EnterRule(CompositeElement__Basic_3)
 				result := p.ParseRuleCall()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 2:
 			{
+				current = NewElement()
+				current.SetTextRangeStart(startPos)
 				token := p.state.Consume(Keyword_LeftParen)
 				core.AssignToken(current, token, CompositeElement_LeftParen)
 			}
@@ -1153,6 +1149,10 @@ func (p *Parser) ParseCompositeElement() Element {
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewElement()
+			current.SetTextRangeStart(startPos)
 		}
 		{
 			p.state.Sync(CompositeElement__Basic_11)

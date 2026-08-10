@@ -107,6 +107,132 @@ type ParserGeneratorContext struct {
 	// counter for unique Go loop labels (loop0, loop1, ...)
 	// Only used when the generator can combine an Alternatives node with its loop
 	loopLabelSeq int
+	// lazyCurrent is active while generating a rule that allocates its `current`
+	// node on demand: at least one path replaces `current` before touching it,
+	// so the eager placeholder allocation would be pure garbage on that path.
+	// Rules without such a path keep the eager allocation and identical output.
+	lazyCurrent bool
+	// currentNil is true while `current` is statically known to be nil on the
+	// emission path of a lazyCurrent rule.
+	currentNil bool
+	// currentType is the rule return type used to materialize a lazy `current`.
+	currentType string
+}
+
+// ensureCurrent materializes a deferred `current` node right before emitted
+// code that reads or mutates it. No-op unless `current` is known to be nil.
+func (c *ParserGeneratorContext) ensureCurrent(node codegen.Node) {
+	if !c.lazyCurrent || !c.currentNil || c.completion {
+		return
+	}
+	node.AppendLine("current = New", c.currentType, "()")
+	node.AppendLine("current.SetTextRangeStart(startPos)")
+	c.currentNil = false
+}
+
+// materializeCurrentGuard emits a nil-guarded materialization for join points
+// where only some incoming paths allocated `current` (e.g. after a lazy
+// alternatives switch, whose no-viable-alternative arm allocates nothing).
+func (c *ParserGeneratorContext) materializeCurrentGuard(node codegen.Node) {
+	if !c.lazyCurrent || !c.currentNil || c.completion {
+		return
+	}
+	node.AppendLine("if current == nil {")
+	node.Indent(func(n codegen.Node) {
+		n.AppendLine("current = New", c.currentType, "()")
+		n.AppendLine("current.SetTextRangeStart(startPos)")
+	})
+	node.AppendLine("}")
+	c.currentNil = false
+}
+
+// currentTouch classifies how a grammar element first interacts with the
+// enclosing rule's `current` node in emission order.
+type currentTouch int
+
+const (
+	// touchNone: the element never touches current.
+	touchNone currentTouch = iota
+	// touchUse: the first touch reads or mutates current in place.
+	touchUse
+	// touchReplace: on at least one path the first touch replaces current
+	// wholesale (unassigned rule call or property-less action).
+	touchReplace
+)
+
+// ruleCallReplacesCurrent reports whether an unassigned call to the target rule
+// replaces `current` wholesale; token rule calls append to current instead.
+func ruleCallReplacesCurrent(ruleCall grammar.RuleCall) bool {
+	switch ruleCall.Rule().Ref(ctx.Background()).(type) {
+	case grammar.ParserRule, grammar.CompositeRule:
+		return true
+	}
+	return false
+}
+
+// firstCurrentTouch computes the currentTouch classification of element. A rule
+// qualifies for lazy `current` allocation iff its body classifies as
+// touchReplace. Optional/repeated elements always classify as touchUse: their
+// content may run zero or several times, so `current` must exist beforehand.
+func firstCurrentTouch(element grammar.Element) currentTouch {
+	if element.Cardinality() != CardinalityOne {
+		return touchUse
+	}
+	switch e := element.(type) {
+	case grammar.Action:
+		if e.Property() != nil {
+			return touchUse
+		}
+		return touchReplace
+	case grammar.RuleCall:
+		if ruleCallReplacesCurrent(e) {
+			return touchReplace
+		}
+		return touchUse
+	case grammar.Group:
+		for _, el := range e.Elements() {
+			if touch := firstCurrentTouch(el); touch != touchNone {
+				return touch
+			}
+		}
+		return touchNone
+	case grammar.Alternatives:
+		result := touchNone
+		for _, alt := range e.Alts() {
+			switch firstCurrentTouch(alt) {
+			case touchReplace:
+				return touchReplace
+			case touchUse:
+				result = touchUse
+			}
+		}
+		return result
+	default:
+		return touchUse
+	}
+}
+
+// delegatesWithoutStart reports whether the lazy emission of element replaces
+// `current` via a plain unassigned rule-call delegation on every path, in which
+// case the rule-entry start position is never needed (the callee records the
+// same start itself) and no `startPos` variable should be declared.
+func delegatesWithoutStart(element grammar.Element) bool {
+	if element.Cardinality() != CardinalityOne {
+		return false
+	}
+	switch e := element.(type) {
+	case grammar.RuleCall:
+		return ruleCallReplacesCurrent(e)
+	case grammar.Group:
+		for _, el := range e.Elements() {
+			if firstCurrentTouch(el) == touchNone {
+				continue
+			}
+			return delegatesWithoutStart(el)
+		}
+		return false
+	}
+	return false
 }
 
 type LookaheadValue struct {
@@ -865,12 +991,27 @@ func generateParseFunction(node codegen.Node, context *ParserGeneratorContext, r
 	} else {
 		node.AppendLine("func (p *", receiverType, ") Parse", rule.Name(), "() ", returnType.Name(), " {")
 		node.Indent(func(n codegen.Node) {
-			n.AppendLine("current := New", returnType.Name(), "()")
-			n.AppendLine("current.SetTextRangeStart(p.state.LA(1).Range.Start)")
+			lazy := firstCurrentTouch(rule.Body()) == touchReplace
+			context.lazyCurrent = lazy
+			context.currentNil = lazy
+			context.currentType = returnType.Name()
+			if lazy {
+				// At least one path replaces `current` before touching it, so
+				// the placeholder node is only allocated where actually needed.
+				if !delegatesWithoutStart(rule.Body()) {
+					n.AppendLine("startPos := p.state.LA(1).Range.Start")
+				}
+				n.AppendLine("var current ", returnType.Name())
+			} else {
+				n.AppendLine("current := New", returnType.Name(), "()")
+				n.AppendLine("current.SetTextRangeStart(p.state.LA(1).Range.Start)")
+			}
 			// Generate new lexical scope for actions that immediately trigger on rule start
 			n.AppendLine("{")
 			generateAbstractElementParser(n, context, rule.Body())
 			n.AppendLine("}")
+			context.materializeCurrentGuard(n)
+			context.lazyCurrent = false
 			n.AppendLine("current.SetTextRangeEnd(p.state.LA(0).Range.End)")
 			n.AppendLine("return current")
 		})
@@ -910,6 +1051,11 @@ func (c *ParserGeneratorContext) receiverType() string {
 }
 
 func generateAbstractElementParser(node codegen.Node, context *ParserGeneratorContext, element grammar.Element) {
+	if context.currentNil && element.Cardinality() != CardinalityOne {
+		// Optional/repeated content may run zero or several times, so a lazy
+		// `current` must be materialized before entering it.
+		context.ensureCurrent(node)
+	}
 	switch e := element.(type) {
 	case grammar.Alternatives:
 		generateAlternativesParser(node, context, e)
@@ -922,6 +1068,21 @@ func generateAbstractElementParser(node codegen.Node, context *ParserGeneratorCo
 			// emits nothing for them.
 			return
 		}
+		if context.currentNil && e.Property() == nil {
+			// `current` is still unallocated: the action node takes its place
+			// directly, with no tokens or range to inherit.
+			node.AppendLine("{")
+			node.Indent(func(n codegen.Node) {
+				n.AppendLine("result := New", e.Type().Text(), "()")
+				n.AppendLine("result.SetTextRangeStart(startPos)")
+				n.AppendLine("current = result")
+			})
+			node.AppendLine("}")
+			node.AppendLine("current := current.(", e.Type().Text(), ")")
+			context.currentNil = false
+			return
+		}
+		context.ensureCurrent(node)
 		node.AppendLine("{")
 		node.Indent(func(n codegen.Node) {
 			n.AppendLine("result := New", e.Type().Text(), "()")
@@ -947,26 +1108,38 @@ func generateAbstractElementParser(node codegen.Node, context *ParserGeneratorCo
 	case grammar.Keyword:
 		node.AppendLine("{")
 		node.Indent(func(indent codegen.Node) {
+			context.ensureCurrent(indent)
 			generateKeywordParser(indent, context, e)
 		})
 		node.AppendLine("}")
 	case grammar.RuleCall:
 		node.AppendLine("{")
 		node.Indent(func(indent codegen.Node) {
+			if !ruleCallReplacesCurrent(e) {
+				// Token rule calls append to current instead of replacing it.
+				context.ensureCurrent(indent)
+			}
 			resultName := generateRuleCallParser(indent, context, e)
 			if context.completion {
 				return
 			}
 			if resultName == "result" && !context.inCompositeRule {
-				// Unassigned rule call result — merge into current node
-				indent.AppendLine("core.MergeTokens(result, current.Tokens())")
-				indent.AppendLine("current = result")
+				if context.currentNil {
+					// `current` is still unallocated and carries no tokens.
+					indent.AppendLine("current = result")
+					context.currentNil = false
+				} else {
+					// Unassigned rule call result — merge into current node
+					indent.AppendLine("core.MergeTokens(result, current.Tokens())")
+					indent.AppendLine("current = result")
+				}
 			}
 		})
 		node.AppendLine("}")
 	case grammar.Assignment:
 		node.AppendLine("{")
 		node.Indent(func(indent codegen.Node) {
+			context.ensureCurrent(indent)
 			// Decision states in the ATN are keyed by the assignable value
 			// (RuleCall, Keyword, etc.), not by the Assignment wrapper itself.
 			syncCall := buildSyncCall(context, e.Value())
@@ -1130,11 +1303,18 @@ func generateAlternativesParser(node codegen.Node, context *ParserGeneratorConte
 		generateCombinedAlternativesParser(node, context, alts, syncCall)
 		return
 	}
+	// When `current` is still unallocated, each alternative starts from the
+	// unallocated state independently; the guard after the switch covers the
+	// branches (including the no-viable default) that did not allocate.
+	lazyBranches := context.currentNil
 	generateCardinality(node, func(n codegen.Node) {
 		n.AppendLine(orSwitchHead(context, alts))
 		for i, alt := range alts.Alts() {
 			n.AppendLine("case ", strconv.Itoa(i), ":")
 			n.Indent(func(in codegen.Node) {
+				if lazyBranches {
+					context.currentNil = true
+				}
 				generateAbstractElementParser(in, context, alt)
 			})
 		}
@@ -1143,6 +1323,10 @@ func generateAlternativesParser(node codegen.Node, context *ParserGeneratorConte
 			in.AppendLine("p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)")
 		})
 		n.AppendLine("}")
+		if lazyBranches {
+			context.currentNil = true
+			context.materializeCurrentGuard(n)
+		}
 	}, func(n codegen.Node) {
 		n.Append(guardCall(context, alts))
 	}, syncCall, alts.Cardinality())
