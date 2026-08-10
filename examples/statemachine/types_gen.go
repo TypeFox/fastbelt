@@ -27,10 +27,7 @@ type Statemachine interface {
 }
 
 func NewStatemachine() Statemachine {
-	return &StatemachineImpl{
-		AstNodeBase:      core.NewAstNode(),
-		StatemachineData: NewStatemachineData(),
-	}
+	return &StatemachineImpl{}
 }
 
 type StatemachineData struct {
@@ -39,14 +36,6 @@ type StatemachineData struct {
 	commands []Command
 	init     *core.Reference[State]
 	states   []State
-}
-
-func NewStatemachineData() StatemachineData {
-	return StatemachineData{
-		events:   []Event{},
-		commands: []Command{},
-		states:   []State{},
-	}
 }
 
 func (i *StatemachineData) IsStatemachine() {}
@@ -193,18 +182,11 @@ type Event interface {
 }
 
 func NewEvent() Event {
-	return &EventImpl{
-		AstNodeBase: core.NewAstNode(),
-		EventData:   NewEventData(),
-	}
+	return &EventImpl{}
 }
 
 type EventData struct {
 	name *core.Token
-}
-
-func NewEventData() EventData {
-	return EventData{}
 }
 
 func (i *EventData) IsEvent() {}
@@ -268,18 +250,11 @@ type Command interface {
 }
 
 func NewCommand() Command {
-	return &CommandImpl{
-		AstNodeBase: core.NewAstNode(),
-		CommandData: NewCommandData(),
-	}
+	return &CommandImpl{}
 }
 
 type CommandData struct {
 	name *core.Token
-}
-
-func NewCommandData() CommandData {
-	return CommandData{}
 }
 
 func (i *CommandData) IsCommand() {}
@@ -347,23 +322,13 @@ type State interface {
 }
 
 func NewState() State {
-	return &StateImpl{
-		AstNodeBase: core.NewAstNode(),
-		StateData:   NewStateData(),
-	}
+	return &StateImpl{}
 }
 
 type StateData struct {
 	name        *core.Token
 	actions     []*core.Reference[Command]
 	transitions []Transition
-}
-
-func NewStateData() StateData {
-	return StateData{
-		actions:     []*core.Reference[Command]{},
-		transitions: []Transition{},
-	}
 }
 
 func (i *StateData) IsState() {}
@@ -463,19 +428,12 @@ type Transition interface {
 }
 
 func NewTransition() Transition {
-	return &TransitionImpl{
-		AstNodeBase:    core.NewAstNode(),
-		TransitionData: NewTransitionData(),
-	}
+	return &TransitionImpl{}
 }
 
 type TransitionData struct {
 	event *core.Reference[Event]
 	state *core.Reference[State]
-}
-
-func NewTransitionData() TransitionData {
-	return TransitionData{}
 }
 
 func (i *TransitionData) IsTransition() {}

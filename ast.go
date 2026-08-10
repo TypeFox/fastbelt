@@ -39,9 +39,9 @@ type AstNode interface {
 	SetContainer(container AstNode, containerField unique.Handle[string], index int)
 	// Tokens returns the tokens associated with the node.
 	Tokens() []*Token
-	// SetToken appends token to the node's token list.
-	SetToken(token *Token)
-	// SetTokens replaces the node's token list with tokens.
+	// AppendToken appends token to the node's token list.
+	AppendToken(token *Token)
+	// SetTokens replaces the node's token list with another list of tokens.
 	SetTokens(tokens []*Token)
 	// TextRange returns the text range of the node.
 	TextRange() TextRange
@@ -178,10 +178,17 @@ func (node *AstNodeBase) TextRange() TextRange {
 	}
 }
 
-// SetToken appends token to the node's token list.
-func (node *AstNodeBase) SetToken(token *Token) {
+// AppendToken appends token to the node's token list.
+func (node *AstNodeBase) AppendToken(token *Token) {
 	if node != nil && token != nil {
-		node.tokens = append(node.tokens, token)
+		if node.tokens == nil {
+			// Most nodes end up with a handful of tokens; start with capacity 4
+			// to avoid the cap 1->2->4 growth reallocations of a bare append.
+			node.tokens = make([]*Token, 1, 4)
+			node.tokens[0] = token
+		} else {
+			node.tokens = append(node.tokens, token)
+		}
 	}
 }
 
@@ -307,23 +314,12 @@ func References(node AstNode) iter.Seq[UntypedReference] {
 	}
 }
 
-// NewAstNode creates an [AstNodeBase] with initialized token storage.
-//
-// It is intended for generated node implementations that embed AstNodeBase.
-// AstNodeBase carries framework metadata only and has no language-specific
-// semantic fields on its own.
-func NewAstNode() AstNodeBase {
-	return AstNodeBase{
-		tokens: []*Token{},
-	}
-}
-
 // AssignToken appends token to node and records node and kind on the token.
 //
 // It is primarily used by generated parsers while constructing nodes incrementally.
 func AssignToken(node AstNode, token *Token, kind int) {
 	if node != nil && token != nil {
-		node.SetToken(token)
+		node.AppendToken(token)
 		token.Element = node
 		token.Kind = kind
 	}
@@ -346,8 +342,9 @@ func AssignTokens(node AstNode, tokens []*Token) {
 // It is used when parser actions replace the current node while preserving already consumed text.
 func MergeTokens(newNode AstNode, oldTokens []*Token) {
 	if newNode != nil && len(oldTokens) > 0 {
-		// Prepend old tokens to the new node's tokens
-		AssignTokens(newNode, append(oldTokens, newNode.Tokens()...))
+		// Prepend old tokens to the new node's tokens. The full slice expression
+		// forces append to copy, so the caller's backing array is never mutated.
+		AssignTokens(newNode, append(oldTokens[:len(oldTokens):len(oldTokens)], newNode.Tokens()...))
 	}
 }
 
@@ -449,31 +446,28 @@ type CompositeNode interface {
 	IsCompositeNode()
 }
 
-// NewCompositeNode creates a [CompositeNode] backed by [CompositeNodeBase].
+// NewCompositeNode creates a [CompositeNode] backed by [compositeNode].
 func NewCompositeNode() CompositeNode {
-	return &CompositeNodeBase{
-		AstNodeBase: NewAstNode(),
-	}
+	return &compositeNode{}
 }
 
-// CompositeNodeBase provides the default [CompositeNode] implementation for generated composite rules.
-type CompositeNodeBase struct {
+// compositeNode is the default implementation of [CompositeNode].
+// It is private, no adopter code should use it directly.
+type compositeNode struct {
 	AstNodeBase
 	// We could use a sync.Once here, but that would add some overhead
 	// In benchmarks, using an atomic pointer here is much faster (roughly 2x)
 	cache atomic.Pointer[string]
 }
 
-// IsCompositeNode marks CompositeNodeBase as implementing [CompositeNode].
-func (node *CompositeNodeBase) IsCompositeNode() {}
+func (node *compositeNode) IsCompositeNode() {}
 
 // Owner returns the AST node that owns this string unit.
-func (node *CompositeNodeBase) Owner() AstNode {
+func (node *compositeNode) Owner() AstNode {
 	return node.container
 }
 
-// String returns the concatenated token images of node, caching the computed value.
-func (node *CompositeNodeBase) String() string {
+func (node *compositeNode) String() string {
 	// Cache the string value, as it is accessed frequently
 	// Since this operation can be done in parallel, we need an atomic pointer here
 	if p := node.cache.Load(); p != nil {
@@ -485,7 +479,7 @@ func (node *CompositeNodeBase) String() string {
 	}
 }
 
-func (node *CompositeNodeBase) stringSlow() string {
+func (node *compositeNode) stringSlow() string {
 	// Construct the string value by concatenating the text of all tokens of the node
 	// Only need to do this once, as the tokens are usually not modified after parsing
 	var sb strings.Builder

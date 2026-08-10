@@ -21,21 +21,12 @@ type Module interface {
 }
 
 func NewModule() Module {
-	return &ModuleImpl{
-		AstNodeBase: core.NewAstNode(),
-		ModuleData:  NewModuleData(),
-	}
+	return &ModuleImpl{}
 }
 
 type ModuleData struct {
 	name       *core.Token
 	statements []Statement
-}
-
-func NewModuleData() ModuleData {
-	return ModuleData{
-		statements: []Statement{},
-	}
 }
 
 func (i *ModuleData) IsModule() {}
@@ -118,17 +109,10 @@ type Statement interface {
 }
 
 func NewStatement() Statement {
-	return &StatementImpl{
-		AstNodeBase:   core.NewAstNode(),
-		StatementData: NewStatementData(),
-	}
+	return &StatementImpl{}
 }
 
 type StatementData struct {
-}
-
-func NewStatementData() StatementData {
-	return StatementData{}
 }
 
 func (i *StatementData) IsStatement() {}
@@ -171,18 +155,11 @@ type AbstractDefinition interface {
 }
 
 func NewAbstractDefinition() AbstractDefinition {
-	return &AbstractDefinitionImpl{
-		AstNodeBase:            core.NewAstNode(),
-		AbstractDefinitionData: NewAbstractDefinitionData(),
-	}
+	return &AbstractDefinitionImpl{}
 }
 
 type AbstractDefinitionData struct {
 	name *core.Token
-}
-
-func NewAbstractDefinitionData() AbstractDefinitionData {
-	return AbstractDefinitionData{}
 }
 
 func (i *AbstractDefinitionData) IsAbstractDefinition() {}
@@ -249,23 +226,12 @@ type Definition interface {
 }
 
 func NewDefinition() Definition {
-	return &DefinitionImpl{
-		AstNodeBase:            core.NewAstNode(),
-		AbstractDefinitionData: NewAbstractDefinitionData(),
-		StatementData:          NewStatementData(),
-		DefinitionData:         NewDefinitionData(),
-	}
+	return &DefinitionImpl{}
 }
 
 type DefinitionData struct {
 	args       []DeclaredParameter
 	expression Expression
-}
-
-func NewDefinitionData() DefinitionData {
-	return DefinitionData{
-		args: []DeclaredParameter{},
-	}
 }
 
 func (i *DefinitionData) IsDefinition() {}
@@ -361,18 +327,10 @@ type DeclaredParameter interface {
 }
 
 func NewDeclaredParameter() DeclaredParameter {
-	return &DeclaredParameterImpl{
-		AstNodeBase:            core.NewAstNode(),
-		AbstractDefinitionData: NewAbstractDefinitionData(),
-		DeclaredParameterData:  NewDeclaredParameterData(),
-	}
+	return &DeclaredParameterImpl{}
 }
 
 type DeclaredParameterData struct {
-}
-
-func NewDeclaredParameterData() DeclaredParameterData {
-	return DeclaredParameterData{}
 }
 
 func (i *DeclaredParameterData) IsDeclaredParameter() {}
@@ -423,19 +381,11 @@ type Evaluation interface {
 }
 
 func NewEvaluation() Evaluation {
-	return &EvaluationImpl{
-		AstNodeBase:    core.NewAstNode(),
-		StatementData:  NewStatementData(),
-		EvaluationData: NewEvaluationData(),
-	}
+	return &EvaluationImpl{}
 }
 
 type EvaluationData struct {
 	expression Expression
-}
-
-func NewEvaluationData() EvaluationData {
-	return EvaluationData{}
 }
 
 func (i *EvaluationData) IsEvaluation() {}
@@ -503,17 +453,10 @@ type Expression interface {
 }
 
 func NewExpression() Expression {
-	return &ExpressionImpl{
-		AstNodeBase:    core.NewAstNode(),
-		ExpressionData: NewExpressionData(),
-	}
+	return &ExpressionImpl{}
 }
 
 type ExpressionData struct {
-}
-
-func NewExpressionData() ExpressionData {
-	return ExpressionData{}
 }
 
 func (i *ExpressionData) IsExpression() {}
@@ -561,21 +504,13 @@ type BinaryExpression interface {
 }
 
 func NewBinaryExpression() BinaryExpression {
-	return &BinaryExpressionImpl{
-		AstNodeBase:          core.NewAstNode(),
-		ExpressionData:       NewExpressionData(),
-		BinaryExpressionData: NewBinaryExpressionData(),
-	}
+	return &BinaryExpressionImpl{}
 }
 
 type BinaryExpressionData struct {
 	left     Expression
 	operator *core.Token
 	right    Expression
-}
-
-func NewBinaryExpressionData() BinaryExpressionData {
-	return BinaryExpressionData{}
 }
 
 func (i *BinaryExpressionData) IsBinaryExpression() {}
@@ -688,22 +623,12 @@ type FunctionCall interface {
 }
 
 func NewFunctionCall() FunctionCall {
-	return &FunctionCallImpl{
-		AstNodeBase:      core.NewAstNode(),
-		ExpressionData:   NewExpressionData(),
-		FunctionCallData: NewFunctionCallData(),
-	}
+	return &FunctionCallImpl{}
 }
 
 type FunctionCallData struct {
 	args     []Expression
 	callable *core.Reference[AbstractDefinition]
-}
-
-func NewFunctionCallData() FunctionCallData {
-	return FunctionCallData{
-		args: []Expression{},
-	}
 }
 
 func (i *FunctionCallData) IsFunctionCall() {}
@@ -792,19 +717,11 @@ type NumberLiteral interface {
 }
 
 func NewNumberLiteral() NumberLiteral {
-	return &NumberLiteralImpl{
-		AstNodeBase:       core.NewAstNode(),
-		ExpressionData:    NewExpressionData(),
-		NumberLiteralData: NewNumberLiteralData(),
-	}
+	return &NumberLiteralImpl{}
 }
 
 type NumberLiteralData struct {
 	value *core.Token
-}
-
-func NewNumberLiteralData() NumberLiteralData {
-	return NumberLiteralData{}
 }
 
 func (i *NumberLiteralData) IsNumberLiteral() {}

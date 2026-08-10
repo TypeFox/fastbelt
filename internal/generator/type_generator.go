@@ -211,15 +211,7 @@ func generateInterface(node codegen.Node, grammr grammar.Grammar, iface grammar.
 	node.AppendLine()
 	node.AppendLine("func New", iface.Name(), "() ", iface.Name(), " {")
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("return &", iface.Name(), "Impl{")
-		n.Indent(func(n2 codegen.Node) {
-			n2.AppendLine("AstNodeBase: core.NewAstNode(),")
-			for _, extend := range getAllExtends(grammr, iface) {
-				n2.AppendLine(extend, "Data: New", extend, "Data(),")
-			}
-			n2.AppendLine(iface.Name(), "Data: New", iface.Name(), "Data(),")
-		})
-		n.AppendLine("}")
+		n.AppendLine("return &", iface.Name(), "Impl{}")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
@@ -272,20 +264,6 @@ func generateDataStruct(node codegen.Node, iface grammar.Interface, fields []Fie
 			}
 			n.AppendLine(field.PName + " " + typeStr)
 		}
-	})
-	node.AppendLine("}")
-	node.AppendLine()
-	node.AppendLine("func New", iface.Name(), "Data() ", iface.Name(), "Data {")
-	node.Indent(func(n codegen.Node) {
-		n.AppendLine("return ", iface.Name(), "Data{")
-		n.Indent(func(n2 codegen.Node) {
-			for _, field := range fields {
-				if field.Array {
-					n2.AppendLine(field.PName, ": []", field.GType, "{},")
-				}
-			}
-		})
-		n.AppendLine("}")
 	})
 	node.AppendLine("}")
 	node.AppendLine()

@@ -95,7 +95,7 @@ func NewTokenType(id int, name, label string, group int, kind TokenKind, pushMod
 
 // NewTokenGroup creates a token type that represents a named group of other token types.
 func NewTokenGroup(id int, name, label string, matchingTypes []*TokenType) *TokenType {
-	bitsets := make([]*collections.BitSet, len(matchingTypes))
+	bitsets := make([]*collections.BitSet, 0, len(matchingTypes))
 	for _, mt := range matchingTypes {
 		bitsets = append(bitsets, mt.bitset)
 	}
