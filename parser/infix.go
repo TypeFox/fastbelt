@@ -22,10 +22,11 @@ type InfixPrecedence struct {
 // BuildInfixTree folds the flat parts/operators lists collected by a generated
 // infix rule parser into a binary expression tree.
 //
-// The tree is built by recursively splitting at the loosest-binding operator
-// (the one with the largest level). Between operators of the same level, the
-// rightmost one becomes the split point for left-associative groups (yielding
-// a left-leaning tree) and the leftmost one for right-associative groups.
+// The fold is the standard operator-precedence stack reduction: tighter-binding
+// operators (smaller level) reduce before a looser incoming operator is pushed,
+// so the loosest operator ends up at the root. Operators of the same level
+// reduce eagerly when left-associative (yielding a left-leaning tree) and lazily
+// when right-associative. Runs in O(len(operators)).
 //
 // precedence is keyed by the leaf token type id; an operator
 // token missing from the map is treated as binding loosest. build constructs a
@@ -38,32 +39,40 @@ func BuildInfixTree[T core.AstNode](parts []T, operators []*core.Token,
 	if len(parts) == 0 {
 		return zero
 	}
-	// rec builds the tree for operators[lo:hi] and their surrounding parts.
-	var rec func(lo, hi int) T
-	rec = func(lo, hi int) T {
-		if lo == hi {
-			if lo < len(parts) {
-				return parts[lo]
-			}
-			return zero
+	operand := func(i int) T {
+		if i < len(parts) {
+			return parts[i]
 		}
-		pivot := lo
-		bestLevel := -1
-		for i := lo; i < hi; i++ {
-			level, right := math.MaxInt, false
-			if p, ok := precedence[operators[i].Type.Id]; ok {
-				level, right = p.Level, p.Right
-			}
-			if level > bestLevel {
-				bestLevel = level
-				pivot = i
-			} else if level == bestLevel && !right {
-				// Left-associative: the rightmost operator of the loosest
-				// level becomes the root. Right-associative: keep the leftmost.
-				pivot = i
-			}
-		}
-		return build(rec(lo, pivot), operators[pivot], rec(pivot+1, hi))
+		return zero
 	}
-	return rec(0, len(operators))
+	type stackedOp struct {
+		token *core.Token
+		level int
+	}
+	operands := make([]T, 1, len(operators)+1)
+	operands[0] = operand(0)
+	ops := make([]stackedOp, 0, len(operators))
+	reduce := func() {
+		op := ops[len(ops)-1]
+		ops = ops[:len(ops)-1]
+		right := operands[len(operands)-1]
+		operands = operands[:len(operands)-1]
+		operands[len(operands)-1] = build(operands[len(operands)-1], op.token, right)
+	}
+	for i, token := range operators {
+		level, rightAssoc := math.MaxInt, false
+		if p, ok := precedence[token.Type.Id]; ok {
+			level, rightAssoc = p.Level, p.Right
+		}
+		for len(ops) > 0 && (ops[len(ops)-1].level < level ||
+			(ops[len(ops)-1].level == level && !rightAssoc)) {
+			reduce()
+		}
+		ops = append(ops, stackedOp{token, level})
+		operands = append(operands, operand(i+1))
+	}
+	for len(ops) > 0 {
+		reduce()
+	}
+	return operands[0]
 }
