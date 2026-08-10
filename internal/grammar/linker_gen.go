@@ -18,14 +18,13 @@ type FastbeltScopeProvider interface {
 	ScopeInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
-	ScopeParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
+	ScopeAbstractRuleWithReturnTypeReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) core.Scope
 	ScopeAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope
 	ScopeCrossRefType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) core.Scope
 	ScopeActionType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeActionProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope
-	ScopeInfixRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 }
 
 type DefaultFastbeltScopeProvider struct {
@@ -48,7 +47,7 @@ func (s *DefaultFastbeltScopeProvider) ScopeSimpleTypeType(ctx context.Context, 
 	return linking.DefaultScopeOfType[Interface](reference.Owner())
 }
 
-func (s *DefaultFastbeltScopeProvider) ScopeParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
+func (s *DefaultFastbeltScopeProvider) ScopeAbstractRuleWithReturnTypeReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
 	return linking.DefaultScopeOfType[Interface](reference.Owner())
 }
 
@@ -76,22 +75,17 @@ func (s *DefaultFastbeltScopeProvider) ScopeActionProperty(ctx context.Context, 
 	return linking.DefaultScopeOfType[Field](reference.Owner())
 }
 
-func (s *DefaultFastbeltScopeProvider) ScopeInfixRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
-	return linking.DefaultScopeOfType[Interface](reference.Owner())
-}
-
 type FastbeltReferenceLinker interface {
 	LinkInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkAbstractRuleWithReturnTypeReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkCrossRefType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkActionType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkActionProperty(ctx context.Context, reference *core.Reference[Field]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkInfixRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 }
 
 type DefaultFastbeltReferenceLinker struct {
@@ -123,8 +117,8 @@ func (s *DefaultFastbeltReferenceLinker) LinkSimpleTypeType(ctx context.Context,
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultFastbeltReferenceLinker) LinkParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeParserRuleReturnType(ctx, reference)
+func (s *DefaultFastbeltReferenceLinker) LinkAbstractRuleWithReturnTypeReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeAbstractRuleWithReturnTypeReturnType(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
@@ -158,23 +152,17 @@ func (s *DefaultFastbeltReferenceLinker) LinkActionProperty(ctx context.Context,
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultFastbeltReferenceLinker) LinkInfixRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeInfixRuleReturnType(ctx, reference)
-	return core.DefaultLink(scope, reference.Text())
-}
-
 type FastbeltReferencesConstructor interface {
 	InterfaceExtends(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	ReferenceTypeType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	SimpleTypeType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
-	ParserRuleReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
+	AbstractRuleWithReturnTypeReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	TokenGroupTokenRefs(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractTokenRule]
 	AssignmentProperty(owner core.AstNode, unit core.StringUnit) *core.Reference[Field]
 	CrossRefType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	RuleCallRule(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractRule]
 	ActionType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	ActionProperty(owner core.AstNode, unit core.StringUnit) *core.Reference[Field]
-	InfixRuleReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 }
 
 type DefaultFastbeltReferencesConstructor struct {
@@ -206,8 +194,8 @@ func (s *DefaultFastbeltReferencesConstructor) SimpleTypeType(owner core.AstNode
 	return core.NewReference(owner, unit, fn)
 }
 
-func (s *DefaultFastbeltReferencesConstructor) ParserRuleReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
-	fn := s.referenceLinker().LinkParserRuleReturnType
+func (s *DefaultFastbeltReferencesConstructor) AbstractRuleWithReturnTypeReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
+	fn := s.referenceLinker().LinkAbstractRuleWithReturnTypeReturnType
 	return core.NewReference(owner, unit, fn)
 }
 
@@ -238,11 +226,6 @@ func (s *DefaultFastbeltReferencesConstructor) ActionType(owner core.AstNode, un
 
 func (s *DefaultFastbeltReferencesConstructor) ActionProperty(owner core.AstNode, unit core.StringUnit) *core.Reference[Field] {
 	fn := s.referenceLinker().LinkActionProperty
-	return core.NewReference(owner, unit, fn)
-}
-
-func (s *DefaultFastbeltReferencesConstructor) InfixRuleReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
-	fn := s.referenceLinker().LinkInfixRuleReturnType
 	return core.NewReference(owner, unit, fn)
 }
 

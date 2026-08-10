@@ -347,13 +347,11 @@ const (
 	PrecedenceGroup__Basic_1
 	PrecedenceGroup__Basic_2
 	PrecedenceGroup__BlockEnd
-	PrecedenceGroup_assoc
 	PrecedenceGroup__Basic_3
 	PrecedenceGroup__Basic_4
-	PrecedenceGroup__Basic_5
 	PrecedenceGroup_Pipe
+	PrecedenceGroup__Basic_5
 	PrecedenceGroup__Basic_6
-	PrecedenceGroup__Basic_7
 	PrecedenceGroup__LoopEntry
 	PrecedenceGroup__LoopEnd
 	PrecedenceGroup__LoopBack
@@ -375,7 +373,7 @@ func ATN() *parser.RuntimeATN {
 	return atn
 }
 func BuildATN() *parser.RuntimeATN {
-	states := make([]*parser.RuntimeATNState, 355)
+	states := make([]*parser.RuntimeATNState, 353)
 	states[Grammar__Start] = parser.NewATNState(Grammar__Start, parser.ATNRuleStart, true)
 	states[Grammar__Stop] = parser.NewATNState(Grammar__Stop, parser.ATNRuleStop, false)
 	states[Interface__Start] = parser.NewATNState(Interface__Start, parser.ATNRuleStart, true)
@@ -715,13 +713,11 @@ func BuildATN() *parser.RuntimeATN {
 	states[PrecedenceGroup__Basic_1] = parser.NewATNState(PrecedenceGroup__Basic_1, parser.ATNBasic, true)
 	states[PrecedenceGroup__Basic_2] = parser.NewATNState(PrecedenceGroup__Basic_2, parser.ATNBasic, true).SetDecision(42)
 	states[PrecedenceGroup__BlockEnd] = parser.NewATNState(PrecedenceGroup__BlockEnd, parser.ATNBlockEnd, true)
-	states[PrecedenceGroup_assoc] = parser.NewATNState(PrecedenceGroup_assoc, parser.ATNBasic, false)
-	states[PrecedenceGroup__Basic_3] = parser.NewATNState(PrecedenceGroup__Basic_3, parser.ATNBasic, true)
-	states[PrecedenceGroup__Basic_4] = parser.NewATNState(PrecedenceGroup__Basic_4, parser.ATNBasic, true).SetDecision(43)
-	states[PrecedenceGroup__Basic_5] = parser.NewATNState(PrecedenceGroup__Basic_5, parser.ATNBasic, true)
+	states[PrecedenceGroup__Basic_3] = parser.NewATNState(PrecedenceGroup__Basic_3, parser.ATNBasic, true).SetDecision(43)
+	states[PrecedenceGroup__Basic_4] = parser.NewATNState(PrecedenceGroup__Basic_4, parser.ATNBasic, true)
 	states[PrecedenceGroup_Pipe] = parser.NewATNState(PrecedenceGroup_Pipe, parser.ATNBasic, false)
+	states[PrecedenceGroup__Basic_5] = parser.NewATNState(PrecedenceGroup__Basic_5, parser.ATNBasic, true)
 	states[PrecedenceGroup__Basic_6] = parser.NewATNState(PrecedenceGroup__Basic_6, parser.ATNBasic, true)
-	states[PrecedenceGroup__Basic_7] = parser.NewATNState(PrecedenceGroup__Basic_7, parser.ATNBasic, true)
 	states[PrecedenceGroup__LoopEntry] = parser.NewATNState(PrecedenceGroup__LoopEntry, parser.ATNLoopEntry, true).SetDecision(44)
 	states[PrecedenceGroup__LoopEnd] = parser.NewATNState(PrecedenceGroup__LoopEnd, parser.ATNLoopEnd, true)
 	states[PrecedenceGroup__LoopBack] = parser.NewATNState(PrecedenceGroup__LoopBack, parser.ATNLoopBack, true)
@@ -813,7 +809,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[InfixRule_infix]),
 	)
 	states[PrecedenceGroup__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[PrecedenceGroup__Basic_4]),
+		parser.NewEpsilonTransition(states[PrecedenceGroup__Basic_3]),
 	)
 	states[InfixOperator__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[InfixOperator__Basic_4]),
@@ -1063,7 +1059,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[ParserRule_ReturnType_ID], Keyword_returns, nil),
 	)
 	states[ParserRule_ReturnType_ID].AppendTransitions(
-		parser.NewAtomTransition(states[ParserRule__Basic_2], Token_ID, &parser.CompletionHint{Field: "ParserRule.ReturnType"}),
+		parser.NewAtomTransition(states[ParserRule__Basic_2], Token_ID, &parser.CompletionHint{Field: "AbstractRuleWithReturnType.ReturnType"}),
 	)
 	states[ParserRule__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[ParserRule_Colon]),
@@ -1659,7 +1655,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[InfixRule_ReturnType_ID], Keyword_returns, nil),
 	)
 	states[InfixRule_ReturnType_ID].AppendTransitions(
-		parser.NewAtomTransition(states[InfixRule__Basic_1], Token_ID, &parser.CompletionHint{Field: "InfixRule.ReturnType"}),
+		parser.NewAtomTransition(states[InfixRule__Basic_1], Token_ID, &parser.CompletionHint{Field: "AbstractRuleWithReturnType.ReturnType"}),
 	)
 	states[InfixRule__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[InfixRule_Colon]),
@@ -1720,28 +1716,22 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[PrecedenceGroup_Associativity_right]),
 	)
 	states[PrecedenceGroup__BlockEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[PrecedenceGroup_assoc]),
-	)
-	states[PrecedenceGroup_assoc].AppendTransitions(
-		parser.NewAtomTransition(states[PrecedenceGroup__Basic_3], Keyword_assoc, nil),
+		parser.NewEpsilonTransition(states[PrecedenceGroup__Basic_4]),
 	)
 	states[PrecedenceGroup__Basic_3].AppendTransitions(
-		parser.NewEpsilonTransition(states[PrecedenceGroup__Basic_5]),
+		parser.NewEpsilonTransition(states[PrecedenceGroup__Basic_2]),
+		parser.NewEpsilonTransition(states[PrecedenceGroup__BlockEnd]),
 	)
 	states[PrecedenceGroup__Basic_4].AppendTransitions(
-		parser.NewEpsilonTransition(states[PrecedenceGroup__Basic_2]),
-		parser.NewEpsilonTransition(states[PrecedenceGroup__Basic_3]),
-	)
-	states[PrecedenceGroup__Basic_5].AppendTransitions(
 		parser.NewRuleTransition(states[InfixOperator__Start], states[PrecedenceGroup__LoopEntry], nil),
 	)
 	states[PrecedenceGroup_Pipe].AppendTransitions(
-		parser.NewAtomTransition(states[PrecedenceGroup__Basic_6], Keyword_Pipe, nil),
+		parser.NewAtomTransition(states[PrecedenceGroup__Basic_5], Keyword_Pipe, nil),
+	)
+	states[PrecedenceGroup__Basic_5].AppendTransitions(
+		parser.NewRuleTransition(states[InfixOperator__Start], states[PrecedenceGroup__Basic_6], nil),
 	)
 	states[PrecedenceGroup__Basic_6].AppendTransitions(
-		parser.NewRuleTransition(states[InfixOperator__Start], states[PrecedenceGroup__Basic_7], nil),
-	)
-	states[PrecedenceGroup__Basic_7].AppendTransitions(
 		parser.NewEpsilonTransition(states[PrecedenceGroup__LoopBack]),
 	)
 	states[PrecedenceGroup__LoopEntry].AppendTransitions(
@@ -1817,7 +1807,7 @@ func BuildATN() *parser.RuntimeATN {
 	decisionStates[40] = states[InfixRule__LoopEntry]
 	decisionStates[41] = states[InfixRule__Basic_7]
 	decisionStates[42] = states[PrecedenceGroup__Basic_2]
-	decisionStates[43] = states[PrecedenceGroup__Basic_4]
+	decisionStates[43] = states[PrecedenceGroup__Basic_3]
 	decisionStates[44] = states[PrecedenceGroup__LoopEntry]
 	decisionStates[45] = states[InfixOperator__Basic_4]
 	decisionMap := make([]*parser.RuntimeATNState, 46)
@@ -1864,7 +1854,7 @@ func BuildATN() *parser.RuntimeATN {
 	decisionMap[40] = states[InfixRule__LoopEntry]
 	decisionMap[41] = states[InfixRule__Basic_7]
 	decisionMap[42] = states[PrecedenceGroup__Basic_2]
-	decisionMap[43] = states[PrecedenceGroup__Basic_4]
+	decisionMap[43] = states[PrecedenceGroup__Basic_3]
 	decisionMap[44] = states[PrecedenceGroup__LoopEntry]
 	decisionMap[45] = states[InfixOperator__Basic_4]
 	return parser.NewRuntimeATN(states, decisionStates, decisionMap)

@@ -31,10 +31,7 @@ type Grammar interface {
 }
 
 func NewGrammar() Grammar {
-	return &GrammarImpl{
-		AstNodeBase: core.NewAstNode(),
-		GrammarData: NewGrammarData(),
-	}
+	return &GrammarImpl{}
 }
 
 type GrammarData struct {
@@ -45,17 +42,6 @@ type GrammarData struct {
 	terminals   []Token
 	tokenGroups []TokenGroup
 	interfaces  []Interface
-}
-
-func NewGrammarData() GrammarData {
-	return GrammarData{
-		rules:       []ParserRule{},
-		composites:  []CompositeRule{},
-		infixRules:  []InfixRule{},
-		terminals:   []Token{},
-		tokenGroups: []TokenGroup{},
-		interfaces:  []Interface{},
-	}
 }
 
 func (i *GrammarData) IsGrammar() {}
@@ -255,23 +241,13 @@ type Interface interface {
 }
 
 func NewInterface() Interface {
-	return &InterfaceImpl{
-		AstNodeBase:   core.NewAstNode(),
-		InterfaceData: NewInterfaceData(),
-	}
+	return &InterfaceImpl{}
 }
 
 type InterfaceData struct {
 	name    *core.Token
 	extends []*core.Reference[Interface]
 	fields  []Field
-}
-
-func NewInterfaceData() InterfaceData {
-	return InterfaceData{
-		extends: []*core.Reference[Interface]{},
-		fields:  []Field{},
-	}
 }
 
 func (i *InterfaceData) IsInterface() {}
@@ -372,19 +348,12 @@ type Field interface {
 }
 
 func NewField() Field {
-	return &FieldImpl{
-		AstNodeBase: core.NewAstNode(),
-		FieldData:   NewFieldData(),
-	}
+	return &FieldImpl{}
 }
 
 type FieldData struct {
 	name  *core.Token
 	_Type FieldType
-}
-
-func NewFieldData() FieldData {
-	return FieldData{}
 }
 
 func (i *FieldData) IsField() {}
@@ -467,17 +436,10 @@ type FieldType interface {
 }
 
 func NewFieldType() FieldType {
-	return &FieldTypeImpl{
-		AstNodeBase:   core.NewAstNode(),
-		FieldTypeData: NewFieldTypeData(),
-	}
+	return &FieldTypeImpl{}
 }
 
 type FieldTypeData struct {
-}
-
-func NewFieldTypeData() FieldTypeData {
-	return FieldTypeData{}
 }
 
 func (i *FieldTypeData) IsFieldType() {}
@@ -520,19 +482,11 @@ type ArrayType interface {
 }
 
 func NewArrayType() ArrayType {
-	return &ArrayTypeImpl{
-		AstNodeBase:   core.NewAstNode(),
-		FieldTypeData: NewFieldTypeData(),
-		ArrayTypeData: NewArrayTypeData(),
-	}
+	return &ArrayTypeImpl{}
 }
 
 type ArrayTypeData struct {
 	internalType FieldType
-}
-
-func NewArrayTypeData() ArrayTypeData {
-	return ArrayTypeData{}
 }
 
 func (i *ArrayTypeData) IsArrayType() {}
@@ -603,19 +557,11 @@ type ReferenceType interface {
 }
 
 func NewReferenceType() ReferenceType {
-	return &ReferenceTypeImpl{
-		AstNodeBase:       core.NewAstNode(),
-		FieldTypeData:     NewFieldTypeData(),
-		ReferenceTypeData: NewReferenceTypeData(),
-	}
+	return &ReferenceTypeImpl{}
 }
 
 type ReferenceTypeData struct {
 	_Type *core.Reference[Interface]
-}
-
-func NewReferenceTypeData() ReferenceTypeData {
-	return ReferenceTypeData{}
 }
 
 func (i *ReferenceTypeData) IsReferenceType() {}
@@ -681,19 +627,11 @@ type SimpleType interface {
 }
 
 func NewSimpleType() SimpleType {
-	return &SimpleTypeImpl{
-		AstNodeBase:    core.NewAstNode(),
-		FieldTypeData:  NewFieldTypeData(),
-		SimpleTypeData: NewSimpleTypeData(),
-	}
+	return &SimpleTypeImpl{}
 }
 
 type SimpleTypeData struct {
 	_Type *core.Reference[Interface]
-}
-
-func NewSimpleTypeData() SimpleTypeData {
-	return SimpleTypeData{}
 }
 
 func (i *SimpleTypeData) IsSimpleType() {}
@@ -760,19 +698,11 @@ type PrimitiveType interface {
 }
 
 func NewPrimitiveType() PrimitiveType {
-	return &PrimitiveTypeImpl{
-		AstNodeBase:       core.NewAstNode(),
-		FieldTypeData:     NewFieldTypeData(),
-		PrimitiveTypeData: NewPrimitiveTypeData(),
-	}
+	return &PrimitiveTypeImpl{}
 }
 
 type PrimitiveTypeData struct {
 	_Type *core.Token
-}
-
-func NewPrimitiveTypeData() PrimitiveTypeData {
-	return PrimitiveTypeData{}
 }
 
 func (i *PrimitiveTypeData) IsPrimitiveType() {}
@@ -839,18 +769,11 @@ type AbstractRule interface {
 }
 
 func NewAbstractRule() AbstractRule {
-	return &AbstractRuleImpl{
-		AstNodeBase:      core.NewAstNode(),
-		AbstractRuleData: NewAbstractRuleData(),
-	}
+	return &AbstractRuleImpl{}
 }
 
 type AbstractRuleData struct {
 	name *core.Token
-}
-
-func NewAbstractRuleData() AbstractRuleData {
-	return AbstractRuleData{}
 }
 
 func (i *AbstractRuleData) IsAbstractRule() {}
@@ -914,19 +837,11 @@ type AbstractRuleWithBody interface {
 }
 
 func NewAbstractRuleWithBody() AbstractRuleWithBody {
-	return &AbstractRuleWithBodyImpl{
-		AstNodeBase:              core.NewAstNode(),
-		AbstractRuleData:         NewAbstractRuleData(),
-		AbstractRuleWithBodyData: NewAbstractRuleWithBodyData(),
-	}
+	return &AbstractRuleWithBodyImpl{}
 }
 
 type AbstractRuleWithBodyData struct {
 	body Element
-}
-
-func NewAbstractRuleWithBodyData() AbstractRuleWithBodyData {
-	return AbstractRuleWithBodyData{}
 }
 
 func (i *AbstractRuleWithBodyData) IsAbstractRuleWithBody() {}
@@ -989,6 +904,88 @@ func (i *AbstractRuleWithBodyImpl) Resolve(path core.FragmentPath) (core.AstNode
 	}
 }
 
+type AbstractRuleWithReturnType interface {
+	core.AstNode
+	AbstractRuleWithBody
+
+	IsAbstractRuleWithReturnType()
+	ReturnType() *core.Reference[Interface]
+	SetReturnType(value *core.Reference[Interface])
+}
+
+func NewAbstractRuleWithReturnType() AbstractRuleWithReturnType {
+	return &AbstractRuleWithReturnTypeImpl{}
+}
+
+type AbstractRuleWithReturnTypeData struct {
+	returnType *core.Reference[Interface]
+}
+
+func (i *AbstractRuleWithReturnTypeData) IsAbstractRuleWithReturnType() {}
+
+func (i *AbstractRuleWithReturnTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+}
+
+func (i *AbstractRuleWithReturnTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	if i.returnType != nil {
+		fn(i.returnType, fieldNameReturnType, -1)
+	}
+}
+
+func (i *AbstractRuleWithReturnTypeData) ReturnType() *core.Reference[Interface] {
+	if i != nil && i.returnType != nil {
+		return i.returnType
+	} else {
+		return nil
+	}
+}
+
+func (i *AbstractRuleWithReturnTypeData) SetReturnType(value *core.Reference[Interface]) {
+	i.returnType = value
+}
+
+type AbstractRuleWithReturnTypeImpl struct {
+	core.AstNodeBase
+	AbstractRuleWithBodyData
+	AbstractRuleData
+	AbstractRuleWithReturnTypeData
+}
+
+func (i *AbstractRuleWithReturnTypeImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.AbstractRuleWithBodyData.ForEachNode(fn)
+	i.AbstractRuleData.ForEachNode(fn)
+	i.AbstractRuleWithReturnTypeData.ForEachNode(fn)
+}
+
+func (i *AbstractRuleWithReturnTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.AbstractRuleWithBodyData.ForEachReference(fn)
+	i.AbstractRuleData.ForEachReference(fn)
+	i.AbstractRuleWithReturnTypeData.ForEachReference(fn)
+}
+
+func (i *AbstractRuleWithReturnTypeImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameBody:
+		if i.Body() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("AbstractRuleWithReturnTypeImpl.Resolve: field 'body' is nil in node '%s'", nodePath)
+		}
+		child := i.Body()
+		return child.Resolve(path.Tail())
+	case fieldNameName:
+		return nil, fmt.Errorf("AbstractRuleWithReturnTypeImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	case fieldNameReturnType:
+		return nil, fmt.Errorf("AbstractRuleWithReturnTypeImpl.Resolve: field 'returnType' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("AbstractRuleWithReturnTypeImpl.Resolve: field '%s' does not exist in node '%s' of type 'AbstractRuleWithReturnType'", field.Value(), nodePath)
+	}
+}
+
 type AbstractTokenRule interface {
 	core.AstNode
 	AbstractRule
@@ -997,18 +994,10 @@ type AbstractTokenRule interface {
 }
 
 func NewAbstractTokenRule() AbstractTokenRule {
-	return &AbstractTokenRuleImpl{
-		AstNodeBase:           core.NewAstNode(),
-		AbstractRuleData:      NewAbstractRuleData(),
-		AbstractTokenRuleData: NewAbstractTokenRuleData(),
-	}
+	return &AbstractTokenRuleImpl{}
 }
 
 type AbstractTokenRuleData struct {
-}
-
-func NewAbstractTokenRuleData() AbstractTokenRuleData {
-	return AbstractTokenRuleData{}
 }
 
 func (i *AbstractTokenRuleData) IsAbstractTokenRule() {}
@@ -1051,32 +1040,20 @@ func (i *AbstractTokenRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, e
 
 type ParserRule interface {
 	core.AstNode
-	AbstractRuleWithBody
+	AbstractRuleWithReturnType
 
 	IsParserRule()
 	IsEntry() bool
 	EntryToken() *core.Token
 	SetEntry(value *core.Token)
-	ReturnType() *core.Reference[Interface]
-	SetReturnType(value *core.Reference[Interface])
 }
 
 func NewParserRule() ParserRule {
-	return &ParserRuleImpl{
-		AstNodeBase:              core.NewAstNode(),
-		AbstractRuleWithBodyData: NewAbstractRuleWithBodyData(),
-		AbstractRuleData:         NewAbstractRuleData(),
-		ParserRuleData:           NewParserRuleData(),
-	}
+	return &ParserRuleImpl{}
 }
 
 type ParserRuleData struct {
-	entry      *core.Token
-	returnType *core.Reference[Interface]
-}
-
-func NewParserRuleData() ParserRuleData {
-	return ParserRuleData{}
+	entry *core.Token
 }
 
 func (i *ParserRuleData) IsParserRule() {}
@@ -1085,9 +1062,6 @@ func (i *ParserRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string]
 }
 
 func (i *ParserRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	if i.returnType != nil {
-		fn(i.returnType, fieldNameReturnType, -1)
-	}
 }
 
 func (i *ParserRuleData) IsEntry() bool {
@@ -1102,32 +1076,23 @@ func (i *ParserRuleData) SetEntry(value *core.Token) {
 	i.entry = value
 }
 
-func (i *ParserRuleData) ReturnType() *core.Reference[Interface] {
-	if i != nil && i.returnType != nil {
-		return i.returnType
-	} else {
-		return nil
-	}
-}
-
-func (i *ParserRuleData) SetReturnType(value *core.Reference[Interface]) {
-	i.returnType = value
-}
-
 type ParserRuleImpl struct {
 	core.AstNodeBase
+	AbstractRuleWithReturnTypeData
 	AbstractRuleWithBodyData
 	AbstractRuleData
 	ParserRuleData
 }
 
 func (i *ParserRuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.AbstractRuleWithReturnTypeData.ForEachNode(fn)
 	i.AbstractRuleWithBodyData.ForEachNode(fn)
 	i.AbstractRuleData.ForEachNode(fn)
 	i.ParserRuleData.ForEachNode(fn)
 }
 
 func (i *ParserRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.AbstractRuleWithReturnTypeData.ForEachReference(fn)
 	i.AbstractRuleWithBodyData.ForEachReference(fn)
 	i.AbstractRuleData.ForEachReference(fn)
 	i.ParserRuleData.ForEachReference(fn)
@@ -1172,21 +1137,12 @@ type Token interface {
 }
 
 func NewToken() Token {
-	return &TokenImpl{
-		AstNodeBase:           core.NewAstNode(),
-		AbstractTokenRuleData: NewAbstractTokenRuleData(),
-		AbstractRuleData:      NewAbstractRuleData(),
-		TokenData:             NewTokenData(),
-	}
+	return &TokenImpl{}
 }
 
 type TokenData struct {
 	_Type  *core.Token
 	regexp *core.Token
-}
-
-func NewTokenData() TokenData {
-	return TokenData{}
 }
 
 func (i *TokenData) IsToken() {}
@@ -1280,26 +1236,13 @@ type TokenGroup interface {
 }
 
 func NewTokenGroup() TokenGroup {
-	return &TokenGroupImpl{
-		AstNodeBase:           core.NewAstNode(),
-		AbstractTokenRuleData: NewAbstractTokenRuleData(),
-		AbstractRuleData:      NewAbstractRuleData(),
-		TokenGroupData:        NewTokenGroupData(),
-	}
+	return &TokenGroupImpl{}
 }
 
 type TokenGroupData struct {
 	tokenRefs []*core.Reference[AbstractTokenRule]
 	regexps   []*core.Token
 	keywords  []Keyword
-}
-
-func NewTokenGroupData() TokenGroupData {
-	return TokenGroupData{
-		tokenRefs: []*core.Reference[AbstractTokenRule]{},
-		regexps:   []*core.Token{},
-		keywords:  []Keyword{},
-	}
 }
 
 func (i *TokenGroupData) IsTokenGroup() {}
@@ -1398,18 +1341,11 @@ type Element interface {
 }
 
 func NewElement() Element {
-	return &ElementImpl{
-		AstNodeBase: core.NewAstNode(),
-		ElementData: NewElementData(),
-	}
+	return &ElementImpl{}
 }
 
 type ElementData struct {
 	cardinality *core.Token
-}
-
-func NewElementData() ElementData {
-	return ElementData{}
 }
 
 func (i *ElementData) IsElement() {}
@@ -1473,22 +1409,11 @@ type Alternatives interface {
 }
 
 func NewAlternatives() Alternatives {
-	return &AlternativesImpl{
-		AstNodeBase:      core.NewAstNode(),
-		AssignableData:   NewAssignableData(),
-		ElementData:      NewElementData(),
-		AlternativesData: NewAlternativesData(),
-	}
+	return &AlternativesImpl{}
 }
 
 type AlternativesData struct {
 	alts []Element
-}
-
-func NewAlternativesData() AlternativesData {
-	return AlternativesData{
-		alts: []Element{},
-	}
 }
 
 func (i *AlternativesData) IsAlternatives() {}
@@ -1564,21 +1489,11 @@ type Group interface {
 }
 
 func NewGroup() Group {
-	return &GroupImpl{
-		AstNodeBase: core.NewAstNode(),
-		ElementData: NewElementData(),
-		GroupData:   NewGroupData(),
-	}
+	return &GroupImpl{}
 }
 
 type GroupData struct {
 	elements []Element
-}
-
-func NewGroupData() GroupData {
-	return GroupData{
-		elements: []Element{},
-	}
 }
 
 func (i *GroupData) IsGroup() {}
@@ -1652,20 +1567,11 @@ type Keyword interface {
 }
 
 func NewKeyword() Keyword {
-	return &KeywordImpl{
-		AstNodeBase:    core.NewAstNode(),
-		AssignableData: NewAssignableData(),
-		ElementData:    NewElementData(),
-		KeywordData:    NewKeywordData(),
-	}
+	return &KeywordImpl{}
 }
 
 type KeywordData struct {
 	value *core.Token
-}
-
-func NewKeywordData() KeywordData {
-	return KeywordData{}
 }
 
 func (i *KeywordData) IsKeyword() {}
@@ -1742,21 +1648,13 @@ type Assignment interface {
 }
 
 func NewAssignment() Assignment {
-	return &AssignmentImpl{
-		AstNodeBase:    core.NewAstNode(),
-		ElementData:    NewElementData(),
-		AssignmentData: NewAssignmentData(),
-	}
+	return &AssignmentImpl{}
 }
 
 type AssignmentData struct {
 	property *core.Reference[Field]
 	operator *core.Token
 	value    Assignable
-}
-
-func NewAssignmentData() AssignmentData {
-	return AssignmentData{}
 }
 
 func (i *AssignmentData) IsAssignment() {}
@@ -1862,18 +1760,10 @@ type Assignable interface {
 }
 
 func NewAssignable() Assignable {
-	return &AssignableImpl{
-		AstNodeBase:    core.NewAstNode(),
-		ElementData:    NewElementData(),
-		AssignableData: NewAssignableData(),
-	}
+	return &AssignableImpl{}
 }
 
 type AssignableData struct {
-}
-
-func NewAssignableData() AssignableData {
-	return AssignableData{}
 }
 
 func (i *AssignableData) IsAssignable() {}
@@ -1926,21 +1816,12 @@ type CrossRef interface {
 }
 
 func NewCrossRef() CrossRef {
-	return &CrossRefImpl{
-		AstNodeBase:    core.NewAstNode(),
-		AssignableData: NewAssignableData(),
-		ElementData:    NewElementData(),
-		CrossRefData:   NewCrossRefData(),
-	}
+	return &CrossRefImpl{}
 }
 
 type CrossRefData struct {
 	_Type *core.Reference[Interface]
 	rule  RuleCall
-}
-
-func NewCrossRefData() CrossRefData {
-	return CrossRefData{}
 }
 
 func (i *CrossRefData) IsCrossRef() {}
@@ -2033,20 +1914,11 @@ type RuleCall interface {
 }
 
 func NewRuleCall() RuleCall {
-	return &RuleCallImpl{
-		AstNodeBase:    core.NewAstNode(),
-		AssignableData: NewAssignableData(),
-		ElementData:    NewElementData(),
-		RuleCallData:   NewRuleCallData(),
-	}
+	return &RuleCallImpl{}
 }
 
 type RuleCallData struct {
 	rule *core.Reference[AbstractRule]
-}
-
-func NewRuleCallData() RuleCallData {
-	return RuleCallData{}
 }
 
 func (i *RuleCallData) IsRuleCall() {}
@@ -2122,21 +1994,13 @@ type Action interface {
 }
 
 func NewAction() Action {
-	return &ActionImpl{
-		AstNodeBase: core.NewAstNode(),
-		ElementData: NewElementData(),
-		ActionData:  NewActionData(),
-	}
+	return &ActionImpl{}
 }
 
 type ActionData struct {
 	_Type    *core.Reference[Interface]
 	operator *core.Token
 	property *core.Reference[Field]
-}
-
-func NewActionData() ActionData {
-	return ActionData{}
 }
 
 func (i *ActionData) IsAction() {}
@@ -2237,19 +2101,10 @@ type CompositeRule interface {
 }
 
 func NewCompositeRule() CompositeRule {
-	return &CompositeRuleImpl{
-		AstNodeBase:              core.NewAstNode(),
-		AbstractRuleWithBodyData: NewAbstractRuleWithBodyData(),
-		AbstractRuleData:         NewAbstractRuleData(),
-		CompositeRuleData:        NewCompositeRuleData(),
-	}
+	return &CompositeRuleImpl{}
 }
 
 type CompositeRuleData struct {
-}
-
-func NewCompositeRuleData() CompositeRuleData {
-	return CompositeRuleData{}
 }
 
 func (i *CompositeRuleData) IsCompositeRule() {}
@@ -2302,36 +2157,22 @@ func (i *CompositeRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, error
 
 type InfixRule interface {
 	core.AstNode
-	AbstractRuleWithBody
+	AbstractRuleWithReturnType
 
 	IsInfixRule()
 	Call() RuleCall
 	SetCall(value RuleCall)
-	ReturnType() *core.Reference[Interface]
-	SetReturnType(value *core.Reference[Interface])
 	Groups() []PrecedenceGroup
 	SetGroupsItem(item PrecedenceGroup)
 }
 
 func NewInfixRule() InfixRule {
-	return &InfixRuleImpl{
-		AstNodeBase:              core.NewAstNode(),
-		AbstractRuleWithBodyData: NewAbstractRuleWithBodyData(),
-		AbstractRuleData:         NewAbstractRuleData(),
-		InfixRuleData:            NewInfixRuleData(),
-	}
+	return &InfixRuleImpl{}
 }
 
 type InfixRuleData struct {
-	call       RuleCall
-	returnType *core.Reference[Interface]
-	groups     []PrecedenceGroup
-}
-
-func NewInfixRuleData() InfixRuleData {
-	return InfixRuleData{
-		groups: []PrecedenceGroup{},
-	}
+	call   RuleCall
+	groups []PrecedenceGroup
 }
 
 func (i *InfixRuleData) IsInfixRule() {}
@@ -2346,9 +2187,6 @@ func (i *InfixRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string],
 }
 
 func (i *InfixRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	if i.returnType != nil {
-		fn(i.returnType, fieldNameReturnType, -1)
-	}
 }
 
 func (i *InfixRuleData) Call() RuleCall {
@@ -2363,18 +2201,6 @@ func (i *InfixRuleData) SetCall(value RuleCall) {
 	i.call = value
 }
 
-func (i *InfixRuleData) ReturnType() *core.Reference[Interface] {
-	if i != nil && i.returnType != nil {
-		return i.returnType
-	} else {
-		return nil
-	}
-}
-
-func (i *InfixRuleData) SetReturnType(value *core.Reference[Interface]) {
-	i.returnType = value
-}
-
 func (i *InfixRuleData) Groups() []PrecedenceGroup {
 	return i.groups
 }
@@ -2385,18 +2211,21 @@ func (i *InfixRuleData) SetGroupsItem(item PrecedenceGroup) {
 
 type InfixRuleImpl struct {
 	core.AstNodeBase
+	AbstractRuleWithReturnTypeData
 	AbstractRuleWithBodyData
 	AbstractRuleData
 	InfixRuleData
 }
 
 func (i *InfixRuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.AbstractRuleWithReturnTypeData.ForEachNode(fn)
 	i.AbstractRuleWithBodyData.ForEachNode(fn)
 	i.AbstractRuleData.ForEachNode(fn)
 	i.InfixRuleData.ForEachNode(fn)
 }
 
 func (i *InfixRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.AbstractRuleWithReturnTypeData.ForEachReference(fn)
 	i.AbstractRuleWithBodyData.ForEachReference(fn)
 	i.AbstractRuleData.ForEachReference(fn)
 	i.InfixRuleData.ForEachReference(fn)
@@ -2455,21 +2284,12 @@ type PrecedenceGroup interface {
 }
 
 func NewPrecedenceGroup() PrecedenceGroup {
-	return &PrecedenceGroupImpl{
-		AstNodeBase:         core.NewAstNode(),
-		PrecedenceGroupData: NewPrecedenceGroupData(),
-	}
+	return &PrecedenceGroupImpl{}
 }
 
 type PrecedenceGroupData struct {
 	associativity *core.Token
 	operators     []Assignable
-}
-
-func NewPrecedenceGroupData() PrecedenceGroupData {
-	return PrecedenceGroupData{
-		operators: []Assignable{},
-	}
 }
 
 func (i *PrecedenceGroupData) IsPrecedenceGroup() {}
@@ -2578,30 +2398,31 @@ var (
 )
 
 var FastbeltSyntheticFactories = map[string]func() core.AstNode{
-	"AbstractRule":         func() core.AstNode { return NewAbstractRule() },
-	"AbstractRuleWithBody": func() core.AstNode { return NewAbstractRuleWithBody() },
-	"AbstractTokenRule":    func() core.AstNode { return NewAbstractTokenRule() },
-	"Action":               func() core.AstNode { return NewAction() },
-	"Alternatives":         func() core.AstNode { return NewAlternatives() },
-	"ArrayType":            func() core.AstNode { return NewArrayType() },
-	"Assignable":           func() core.AstNode { return NewAssignable() },
-	"Assignment":           func() core.AstNode { return NewAssignment() },
-	"CompositeRule":        func() core.AstNode { return NewCompositeRule() },
-	"CrossRef":             func() core.AstNode { return NewCrossRef() },
-	"Element":              func() core.AstNode { return NewElement() },
-	"Field":                func() core.AstNode { return NewField() },
-	"FieldType":            func() core.AstNode { return NewFieldType() },
-	"Grammar":              func() core.AstNode { return NewGrammar() },
-	"Group":                func() core.AstNode { return NewGroup() },
-	"InfixRule":            func() core.AstNode { return NewInfixRule() },
-	"Interface":            func() core.AstNode { return NewInterface() },
-	"Keyword":              func() core.AstNode { return NewKeyword() },
-	"ParserRule":           func() core.AstNode { return NewParserRule() },
-	"PrecedenceGroup":      func() core.AstNode { return NewPrecedenceGroup() },
-	"PrimitiveType":        func() core.AstNode { return NewPrimitiveType() },
-	"ReferenceType":        func() core.AstNode { return NewReferenceType() },
-	"RuleCall":             func() core.AstNode { return NewRuleCall() },
-	"SimpleType":           func() core.AstNode { return NewSimpleType() },
-	"Token":                func() core.AstNode { return NewToken() },
-	"TokenGroup":           func() core.AstNode { return NewTokenGroup() },
+	"AbstractRule":               func() core.AstNode { return NewAbstractRule() },
+	"AbstractRuleWithBody":       func() core.AstNode { return NewAbstractRuleWithBody() },
+	"AbstractRuleWithReturnType": func() core.AstNode { return NewAbstractRuleWithReturnType() },
+	"AbstractTokenRule":          func() core.AstNode { return NewAbstractTokenRule() },
+	"Action":                     func() core.AstNode { return NewAction() },
+	"Alternatives":               func() core.AstNode { return NewAlternatives() },
+	"ArrayType":                  func() core.AstNode { return NewArrayType() },
+	"Assignable":                 func() core.AstNode { return NewAssignable() },
+	"Assignment":                 func() core.AstNode { return NewAssignment() },
+	"CompositeRule":              func() core.AstNode { return NewCompositeRule() },
+	"CrossRef":                   func() core.AstNode { return NewCrossRef() },
+	"Element":                    func() core.AstNode { return NewElement() },
+	"Field":                      func() core.AstNode { return NewField() },
+	"FieldType":                  func() core.AstNode { return NewFieldType() },
+	"Grammar":                    func() core.AstNode { return NewGrammar() },
+	"Group":                      func() core.AstNode { return NewGroup() },
+	"InfixRule":                  func() core.AstNode { return NewInfixRule() },
+	"Interface":                  func() core.AstNode { return NewInterface() },
+	"Keyword":                    func() core.AstNode { return NewKeyword() },
+	"ParserRule":                 func() core.AstNode { return NewParserRule() },
+	"PrecedenceGroup":            func() core.AstNode { return NewPrecedenceGroup() },
+	"PrimitiveType":              func() core.AstNode { return NewPrimitiveType() },
+	"ReferenceType":              func() core.AstNode { return NewReferenceType() },
+	"RuleCall":                   func() core.AstNode { return NewRuleCall() },
+	"SimpleType":                 func() core.AstNode { return NewSimpleType() },
+	"Token":                      func() core.AstNode { return NewToken() },
+	"TokenGroup":                 func() core.AstNode { return NewTokenGroup() },
 }

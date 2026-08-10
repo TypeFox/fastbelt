@@ -57,7 +57,7 @@ func TestBinaryExpressionTokens(t *testing.T) {
 	}
 }
 
-// TestExponentiationRightAssociative verifies that the "right assoc" group of
+// TestExponentiationRightAssociative verifies that the "right" group of
 // the infix rule produces a right-leaning tree, while the left-associative
 // groups keep producing left-leaning trees.
 func TestExponentiationRightAssociative(t *testing.T) {

@@ -74,12 +74,15 @@ interface AbstractRuleWithBody extends AbstractRule {
     Body Element
 }
 
+interface AbstractRuleWithReturnType extends AbstractRuleWithBody {
+    ReturnType *Interface
+}
+
 // Base type for Token and TokenGroup
 interface AbstractTokenRule extends AbstractRule{}
 
-interface ParserRule extends AbstractRuleWithBody {
+interface ParserRule extends AbstractRuleWithReturnType {
     Entry      bool
-    ReturnType *Interface
 }
 
 ParserRule: (Entry?="entry")? Name=ID ("returns" ReturnType=[Interface:ID])? ":" Body=Alternatives ";"?
@@ -173,9 +176,8 @@ CompositeGroup returns Element: CompositeElement ({Group.Elements+=current} Elem
 
 CompositeElement returns Element: (Keyword | RuleCall | "(" CompositeAlternatives ")") Cardinality=("*" | "+" | "?")?
 
-interface InfixRule extends AbstractRuleWithBody {
+interface InfixRule extends AbstractRuleWithReturnType {
     Call       RuleCall
-    ReturnType *Interface
     Groups     []PrecedenceGroup
 }
 
@@ -188,7 +190,7 @@ interface PrecedenceGroup {
 }
 
 PrecedenceGroup:
-    (Associativity=("left" | "right") "assoc")?
+    Associativity=("left" | "right")?
     Operators+=InfixOperator ("|" Operators+=InfixOperator)*
 
 InfixOperator returns Assignable: Keyword | RuleCall

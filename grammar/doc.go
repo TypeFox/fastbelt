@@ -375,7 +375,7 @@
 //
 //	infix BinaryExpression on PrimaryExpression:
 //	    "%"
-//	    > right assoc "^"
+//	    > right "^"
 //	    > "*" | "/"
 //	    > "+" | "-"
 //
@@ -386,12 +386,12 @@
 // ">" and ordered tightest-binding first: in the example, "%" binds tightest
 // and "+" | "-" bind loosest, so "1 + 2 * 3" parses as "1 + (2 * 3)".
 //
-// Groups are left-associative by default; prefix a group with "right assoc"
-// (or explicitly "left assoc") to control associativity:
+// Groups are left-associative by default; prefix a group with "right"
+// (or explicitly "left") to control associativity:
 //
 //	infix BinaryExpression on PrimaryExpression:
 //	    "+" | "-"
-//	    > right assoc "^"
+//	    > right "^"
 //
 // Operators can be keywords, token references, or token group references:
 //

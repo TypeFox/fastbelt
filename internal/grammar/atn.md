@@ -892,37 +892,33 @@ flowchart TD
     q336["PrecedenceGroup__Basic_1 (336)<br/>Basic<br/>"]
     q337{"PrecedenceGroup__Basic_2 (337)<br/>Basic<br/><br/>dec=42"}
     q338["PrecedenceGroup__BlockEnd (338)<br/>BlockEnd<br/>"]
-    q339["PrecedenceGroup_assoc (339)<br/>Basic<br/>"]
-    q340["PrecedenceGroup__Basic_3 (340)<br/>Basic<br/>"]
-    q341{"PrecedenceGroup__Basic_4 (341)<br/>Basic<br/><br/>dec=43"}
+    q339{"PrecedenceGroup__Basic_3 (339)<br/>Basic<br/><br/>dec=43"}
+    q340["PrecedenceGroup__Basic_4 (340)<br/>Basic<br/>"]
+    q341["PrecedenceGroup_Pipe (341)<br/>Basic<br/>"]
     q342["PrecedenceGroup__Basic_5 (342)<br/>Basic<br/>"]
-    q343["PrecedenceGroup_Pipe (343)<br/>Basic<br/>"]
-    q344["PrecedenceGroup__Basic_6 (344)<br/>Basic<br/>"]
-    q345["PrecedenceGroup__Basic_7 (345)<br/>Basic<br/>"]
-    q346{"PrecedenceGroup__LoopEntry (346)<br/>LoopEntry<br/><br/>dec=44"}
-    q347["PrecedenceGroup__LoopEnd (347)<br/>LoopEnd<br/>"]
-    q348["PrecedenceGroup__LoopBack (348)<br/>LoopBack<br/>"]
+    q343["PrecedenceGroup__Basic_6 (343)<br/>Basic<br/>"]
+    q344{"PrecedenceGroup__LoopEntry (344)<br/>LoopEntry<br/><br/>dec=44"}
+    q345["PrecedenceGroup__LoopEnd (345)<br/>LoopEnd<br/>"]
+    q346["PrecedenceGroup__LoopBack (346)<br/>LoopBack<br/>"]
 
-    q54 --> q341
+    q54 --> q339
     q333 -->|"tok(&quot;left&quot;)"| q334
     q334 --> q338
     q335 -->|"tok(&quot;right&quot;)"| q336
     q336 --> q338
     q337 --> q333
     q337 --> q335
-    q338 --> q339
-    q339 -->|"tok(&quot;assoc&quot;)"| q340
-    q340 --> q342
-    q341 --> q337
-    q341 --> q340
-    q342 -.->|"[InfixOperator]"| q346
-    q343 -->|"tok(&quot;|&quot;)"| q344
-    q344 -.->|"[InfixOperator]"| q345
-    q345 --> q348
-    q346 --> q343
-    q346 --> q347
-    q347 --> q55
-    q348 --> q346
+    q338 --> q340
+    q339 --> q337
+    q339 --> q338
+    q340 -.->|"[InfixOperator]"| q344
+    q341 -->|"tok(&quot;|&quot;)"| q342
+    q342 -.->|"[InfixOperator]"| q343
+    q343 --> q346
+    q344 --> q341
+    q344 --> q345
+    q345 --> q55
+    q346 --> q344
 ```
 
 ## InfixOperator
@@ -931,20 +927,20 @@ flowchart TD
 flowchart TD
     q56(["InfixOperator__Start (56)<br/>RuleStart"])
     q57(["InfixOperator__Stop (57)<br/>RuleStop"])
-    q349["InfixOperator__Basic_0 (349)<br/>Basic<br/>"]
-    q350["InfixOperator__Basic_1 (350)<br/>Basic<br/>"]
-    q351["InfixOperator__Basic_2 (351)<br/>Basic<br/>"]
-    q352["InfixOperator__Basic_3 (352)<br/>Basic<br/>"]
-    q353{"InfixOperator__Basic_4 (353)<br/>Basic<br/><br/>dec=45"}
-    q354["InfixOperator__BlockEnd (354)<br/>BlockEnd<br/>"]
+    q347["InfixOperator__Basic_0 (347)<br/>Basic<br/>"]
+    q348["InfixOperator__Basic_1 (348)<br/>Basic<br/>"]
+    q349["InfixOperator__Basic_2 (349)<br/>Basic<br/>"]
+    q350["InfixOperator__Basic_3 (350)<br/>Basic<br/>"]
+    q351{"InfixOperator__Basic_4 (351)<br/>Basic<br/><br/>dec=45"}
+    q352["InfixOperator__BlockEnd (352)<br/>BlockEnd<br/>"]
 
-    q56 --> q353
-    q349 -.->|"[Keyword]"| q350
-    q350 --> q354
-    q351 -.->|"[RuleCall]"| q352
-    q352 --> q354
-    q353 --> q349
-    q353 --> q351
-    q354 --> q57
+    q56 --> q351
+    q347 -.->|"[Keyword]"| q348
+    q348 --> q352
+    q349 -.->|"[RuleCall]"| q350
+    q350 --> q352
+    q351 --> q347
+    q351 --> q349
+    q352 --> q57
 ```
 

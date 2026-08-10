@@ -464,11 +464,8 @@ func checkRuleCallReturnType(call RuleCall, ctx context.Context, accept core.Val
 		return
 	}
 	var targetType Interface
-	switch target := targetRule.(type) {
-	case ParserRule:
-		targetType = FindReturnType(target, ctx)
-	case InfixRule:
-		targetType = FindInfixReturnType(target, ctx)
+	if targetRule, ok := targetRule.(AbstractRuleWithReturnType); ok {
+		targetType = FindReturnType(targetRule, ctx)
 	}
 	if targetType == nil {
 		return
@@ -702,57 +699,9 @@ func isAssignableTo(ctx context.Context, source Assignable, fieldType FieldType,
 				))
 			}
 		case ParserRule:
-			if simpleType, ok := fieldType.(SimpleType); ok {
-				ruleType := FindReturnType(rule, ctx)
-				if ruleType == nil {
-					return
-				}
-				targetType := simpleType.Type().Ref(ctx)
-				if targetType == nil {
-					return
-				}
-				if !interfaceIsAssignableTo(ruleType, targetType) {
-					accept(core.NewDiagnostic(
-						core.SeverityError,
-						fmt.Sprintf("The return type '%s' of the called rule is not assignable to the target field type '%s'.", ruleType.Name(), targetType.Name()),
-						v,
-						core.WithCode(ValidateAssignmentType),
-					))
-				}
-			} else {
-				accept(core.NewDiagnostic(
-					core.SeverityError,
-					"Cannot assign a parser rule to a non-interface field.",
-					v,
-					core.WithCode(ValidateAssignmentType),
-				))
-			}
+			ruleAssignabilityCheck(fieldType, rule, ctx, v, accept)
 		case InfixRule:
-			if simpleType, ok := fieldType.(SimpleType); ok {
-				ruleType := FindInfixReturnType(rule, ctx)
-				if ruleType == nil {
-					return
-				}
-				targetType := simpleType.Type().Ref(ctx)
-				if targetType == nil {
-					return
-				}
-				if !interfaceIsAssignableTo(ruleType, targetType) {
-					accept(core.NewDiagnostic(
-						core.SeverityError,
-						fmt.Sprintf("The return type '%s' of the called rule is not assignable to the target field type '%s'.", ruleType.Name(), targetType.Name()),
-						v,
-						core.WithCode(ValidateAssignmentType),
-					))
-				}
-			} else {
-				accept(core.NewDiagnostic(
-					core.SeverityError,
-					"Cannot assign a parser rule to a non-interface field.",
-					v,
-					core.WithCode(ValidateAssignmentType),
-				))
-			}
+			ruleAssignabilityCheck(fieldType, rule, ctx, v, accept)
 		case CompositeRule:
 			if primitiveType, ok := fieldType.(PrimitiveType); !ok || primitiveType.Type() != "composite" {
 				if primitiveType, ok := fieldType.(PrimitiveType); ok && primitiveType.Type() == "string" {
@@ -787,6 +736,34 @@ func isAssignableTo(ctx context.Context, source Assignable, fieldType FieldType,
 				isAssignableTo(ctx, assignableOption, fieldType, accept)
 			}
 		}
+	}
+}
+
+func ruleAssignabilityCheck(fieldType FieldType, rule AbstractRuleWithReturnType, ctx context.Context, v RuleCall, accept core.ValidationAcceptor) {
+	if simpleType, ok := fieldType.(SimpleType); ok {
+		ruleType := FindReturnType(rule, ctx)
+		if ruleType == nil {
+			return
+		}
+		targetType := simpleType.Type().Ref(ctx)
+		if targetType == nil {
+			return
+		}
+		if !interfaceIsAssignableTo(ruleType, targetType) {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				fmt.Sprintf("The return type '%s' of the called rule is not assignable to the target field type '%s'.", ruleType.Name(), targetType.Name()),
+				v,
+				core.WithCode(ValidateAssignmentType),
+			))
+		}
+	} else {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			"Cannot assign a parser rule to a non-interface field.",
+			v,
+			core.WithCode(ValidateAssignmentType),
+		))
 	}
 }
 
@@ -912,7 +889,7 @@ func checkInfixNodeType(rule InfixRule, ctx context.Context, accept core.Validat
 		))
 		return
 	}
-	returnType := FindInfixReturnType(rule, ctx)
+	returnType := FindReturnType(rule, ctx)
 	if returnType == nil {
 		return
 	}

@@ -62,7 +62,7 @@ Expression:
 
 infix BinaryExpression on PrimaryExpression:
     "%"
-    > right assoc "^"
+    > right "^"
     > Multiplication
     > Addition
 

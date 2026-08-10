@@ -381,7 +381,7 @@ func (p *Parser) ParseParserRule() ParserRule {
 				token := p.state.Consume(Token_ID)
 				core.AssignToken(current, token, ParserRule_ReturnType_ID)
 				if token != nil {
-					current.SetReturnType(p.referencesConstructor.ParserRuleReturnType(current, token))
+					current.SetReturnType(p.referencesConstructor.AbstractRuleWithReturnTypeReturnType(current, token))
 				}
 			}
 		}
@@ -1228,7 +1228,7 @@ func (p *Parser) ParseInfixRule() InfixRule {
 				token := p.state.Consume(Token_ID)
 				core.AssignToken(current, token, InfixRule_ReturnType_ID)
 				if token != nil {
-					current.SetReturnType(p.referencesConstructor.InfixRuleReturnType(current, token))
+					current.SetReturnType(p.referencesConstructor.AbstractRuleWithReturnTypeReturnType(current, token))
 				}
 			}
 		}
@@ -1275,27 +1275,21 @@ func (p *Parser) ParsePrecedenceGroup() PrecedenceGroup {
 	current := NewPrecedenceGroup()
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
-		p.state.Sync(PrecedenceGroup__Basic_4)
-		if p.lookahead.PrecedenceGroupOptional(p.state) {
-			{
-				switch prediction, _ := p.lookahead.PrecedenceGroupAssociativityAlternatives(p.state); prediction {
-				case 0:
-					token := p.state.Consume(Keyword_left)
-					core.AssignToken(current, token, PrecedenceGroup_Associativity_left)
-					if token != nil {
-						current.SetAssociativity(token)
-					}
-				case 1:
-					token := p.state.Consume(Keyword_right)
-					core.AssignToken(current, token, PrecedenceGroup_Associativity_right)
-					if token != nil {
-						current.SetAssociativity(token)
-					}
+		{
+			p.state.Sync(PrecedenceGroup__Basic_3)
+			switch prediction, _ := p.lookahead.PrecedenceGroupAssociativityAlternatives(p.state); prediction {
+			case 0:
+				token := p.state.Consume(Keyword_left)
+				core.AssignToken(current, token, PrecedenceGroup_Associativity_left)
+				if token != nil {
+					current.SetAssociativity(token)
 				}
-			}
-			{
-				token := p.state.Consume(Keyword_assoc)
-				core.AssignToken(current, token, PrecedenceGroup_assoc)
+			case 1:
+				token := p.state.Consume(Keyword_right)
+				core.AssignToken(current, token, PrecedenceGroup_Associativity_right)
+				if token != nil {
+					current.SetAssociativity(token)
+				}
 			}
 		}
 		{
@@ -1313,7 +1307,7 @@ func (p *Parser) ParsePrecedenceGroup() PrecedenceGroup {
 				core.AssignToken(current, token, PrecedenceGroup_Pipe)
 			}
 			{
-				p.state.EnterRule(PrecedenceGroup__Basic_7)
+				p.state.EnterRule(PrecedenceGroup__Basic_6)
 				result := p.ParseInfixOperator()
 				p.state.ExitRule()
 				if result != nil {

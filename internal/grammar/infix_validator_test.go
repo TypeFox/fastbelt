@@ -19,7 +19,7 @@ func TestInfixRuleValid(t *testing.T) {
 		infix BinaryExpression on PrimaryExpression:
 			"*" | "/"
 			> "+" | "-"
-			> right assoc "="
+			> right "="
 	` + commonTokens)
 	doc.AssertNoDiagnostics()
 }

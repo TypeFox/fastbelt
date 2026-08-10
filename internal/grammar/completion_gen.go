@@ -17,14 +17,13 @@ type FastbeltCompletionFilter interface {
 	FilterInterfaceExtends(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterReferenceTypeType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterSimpleTypeType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
-	FilterParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterAbstractRuleWithReturnTypeReturnType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterAssignmentProperty(ctx context.Context, reference *core.Reference[Field], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterCrossRefType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterActionType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterActionProperty(ctx context.Context, reference *core.Reference[Field], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
-	FilterInfixRuleReturnType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 }
 
 type DefaultFastbeltCompletionFilter struct{}
@@ -45,7 +44,7 @@ func (*DefaultFastbeltCompletionFilter) FilterSimpleTypeType(_ context.Context, 
 	return in
 }
 
-func (*DefaultFastbeltCompletionFilter) FilterParserRuleReturnType(_ context.Context, _ *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+func (*DefaultFastbeltCompletionFilter) FilterAbstractRuleWithReturnTypeReturnType(_ context.Context, _ *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	return in
 }
 
@@ -70,10 +69,6 @@ func (*DefaultFastbeltCompletionFilter) FilterActionType(_ context.Context, _ *c
 }
 
 func (*DefaultFastbeltCompletionFilter) FilterActionProperty(_ context.Context, _ *core.Reference[Field], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
-	return in
-}
-
-func (*DefaultFastbeltCompletionFilter) FilterInfixRuleReturnType(_ context.Context, _ *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	return in
 }
 
@@ -120,17 +115,17 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		candidates := scopes.ScopeSimpleTypeType(ctx, ref).AllElements()
 		return filter.FilterSimpleTypeType(ctx, ref, candidates)
 	},
-	"ParserRule.ReturnType": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
-		typedOwner, ok := owner.(ParserRule)
+	"AbstractRuleWithReturnType.ReturnType": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(AbstractRuleWithReturnType)
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
 		refs := service.MustGet[FastbeltReferencesConstructor](sc)
 		scopes := service.MustGet[FastbeltScopeProvider](sc)
 		filter := service.MustGet[FastbeltCompletionFilter](sc)
-		ref := refs.ParserRuleReturnType(typedOwner, nil)
-		candidates := scopes.ScopeParserRuleReturnType(ctx, ref).AllElements()
-		return filter.FilterParserRuleReturnType(ctx, ref, candidates)
+		ref := refs.AbstractRuleWithReturnTypeReturnType(typedOwner, nil)
+		candidates := scopes.ScopeAbstractRuleWithReturnTypeReturnType(ctx, ref).AllElements()
+		return filter.FilterAbstractRuleWithReturnTypeReturnType(ctx, ref, candidates)
 	},
 	"TokenGroup.TokenRefs": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
 		typedOwner, ok := owner.(TokenGroup)
@@ -204,18 +199,6 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		candidates := scopes.ScopeActionProperty(ctx, ref).AllElements()
 		return filter.FilterActionProperty(ctx, ref, candidates)
 	},
-	"InfixRule.ReturnType": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
-		typedOwner, ok := owner.(InfixRule)
-		if !ok {
-			return func(yield func(*core.SymbolDescription) bool) {}
-		}
-		refs := service.MustGet[FastbeltReferencesConstructor](sc)
-		scopes := service.MustGet[FastbeltScopeProvider](sc)
-		filter := service.MustGet[FastbeltCompletionFilter](sc)
-		ref := refs.InfixRuleReturnType(typedOwner, nil)
-		candidates := scopes.ScopeInfixRuleReturnType(ctx, ref).AllElements()
-		return filter.FilterInfixRuleReturnType(ctx, ref, candidates)
-	},
 }
 
 type FastbeltCompletionAdapter struct {
@@ -252,6 +235,11 @@ func (a *FastbeltCompletionAdapter) DispatchCompletion(ctx context.Context, fiel
 
 func (a *FastbeltCompletionAdapter) HasAssignment(node core.AstNode, property string) bool {
 	switch n := node.(type) {
+	case AbstractRuleWithReturnType:
+		switch property {
+		case "ReturnType":
+			return n.ReturnType() != nil
+		}
 	case Action:
 		switch property {
 		case "Property":
@@ -269,20 +257,10 @@ func (a *FastbeltCompletionAdapter) HasAssignment(node core.AstNode, property st
 		case "Type":
 			return n.Type() != nil
 		}
-	case InfixRule:
-		switch property {
-		case "ReturnType":
-			return n.ReturnType() != nil
-		}
 	case Interface:
 		switch property {
 		case "Extends":
 			return n.Extends() != nil
-		}
-	case ParserRule:
-		switch property {
-		case "ReturnType":
-			return n.ReturnType() != nil
 		}
 	case ReferenceType:
 		switch property {

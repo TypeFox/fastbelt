@@ -91,13 +91,13 @@ func TestInfixRule(t *testing.T) {
 	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
-	`+infixInterfaces+`
+	` + infixInterfaces + `
 		infix BinaryExpression on PrimaryExpression:
 			"%"
 			> "^"
 			> "*" | "/"
 			> "+" | "-"
-	`+commonTokens)
+	` + commonTokens)
 	doc.AssertNoParseErrors()
 	g := doc.Document.Root.(Grammar)
 	require.Len(t, g.InfixRules(), 1)
@@ -116,12 +116,12 @@ func TestInfixRuleReturnsAndAssociativity(t *testing.T) {
 	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
-	`+infixInterfaces+`
+	` + infixInterfaces + `
 		infix BinaryExpression on PrimaryExpression returns Expression:
 			"*" | "/"
 			> "+" | "-"
-			> right assoc "="
-	`+commonTokens)
+			> right "="
+	` + commonTokens)
 	doc.AssertNoParseErrors()
 	g := doc.Document.Root.(Grammar)
 	require.Len(t, g.InfixRules(), 1)
@@ -138,14 +138,14 @@ func TestInfixRuleTokenOperators(t *testing.T) {
 	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
-	`+infixInterfaces+`
+	` + infixInterfaces + `
 		token group MulOp { "*" "/" }
 		token POW: /\^+/;
 		infix BinaryExpression on PrimaryExpression:
 			POW
 			> MulOp
-			> left assoc "+" | "-"
-	`+commonTokens)
+			> left "+" | "-"
+	` + commonTokens)
 	doc.AssertNoParseErrors()
 	doc.AssertNoLinkingErrors()
 	g := doc.Document.Root.(Grammar)

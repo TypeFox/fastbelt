@@ -29,7 +29,7 @@ func mustExpandInfixRules(grammr grammar.Grammar) {
 // alternatives decision), then folds them into a binary tree with
 // parser.BuildInfixTree.
 func generateInfixParseFunction(node codegen.Node, context *ParserGeneratorContext, rule grammar.InfixRule, groupMembers map[string][]string) {
-	returnType := grammar.FindInfixReturnType(rule, ctx.Background())
+	returnType := grammar.FindReturnType(rule, ctx.Background())
 	if returnType == nil {
 		panic("Unable to find return type for infix rule: " + rule.Name())
 	}

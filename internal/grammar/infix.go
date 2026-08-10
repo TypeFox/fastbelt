@@ -17,24 +17,6 @@ func InfixOperatorGroupName(rule InfixRule) string {
 	return rule.Name() + "Operator"
 }
 
-// FindInfixReturnType returns the effective return type of an infix rule:
-// the explicit "returns" type if present, otherwise the return type of the
-// operand rule (a lone operand is returned unchanged, so the static type must
-// cover both the operand and the binary node type).
-func FindInfixReturnType(rule InfixRule, ctx context.Context) Interface {
-	if rule == nil {
-		return nil
-	}
-	if typeRef := rule.ReturnType(); typeRef != nil {
-		return typeRef.Ref(ctx)
-	}
-	if rule.Call() == nil {
-		return nil
-	}
-	operand, _ := rule.Call().Rule().Ref(ctx).(ParserRule)
-	return FindReturnType(operand, ctx)
-}
-
 // FindInfixNodeType returns the interface the binary nodes of an infix rule
 // are instances of. It is always the interface named like the rule itself.
 func FindInfixNodeType(rule InfixRule) Interface {

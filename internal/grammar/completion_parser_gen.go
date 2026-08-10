@@ -956,21 +956,18 @@ func (p *CompletionParser) ParseInfixRule() {
 func (p *CompletionParser) ParsePrecedenceGroup() {
 	p.cp.EnterRule("PrecedenceGroup", PrecedenceGroup__Start)
 	defer p.cp.ExitRule()
-	p.cp.RecordSnapshot(PrecedenceGroup__Basic_4)
-	p.state.Sync(PrecedenceGroup__Basic_4)
-	if p.lookahead.PrecedenceGroupOptional(p.state) {
-		{
+	{
+		p.cp.RecordSnapshot(PrecedenceGroup__Basic_3)
+		p.state.Sync(PrecedenceGroup__Basic_3)
+		switch prediction, _ := p.lookahead.PrecedenceGroupAssociativityAlternatives(p.state); prediction {
+		case 0:
 			p.cp.MarkAssignment("Associativity")
-			switch prediction, _ := p.lookahead.PrecedenceGroupAssociativityAlternatives(p.state); prediction {
-			case 0:
-				p.state.Consume(Keyword_left)
-			case 1:
-				p.state.Consume(Keyword_right)
-			}
+			p.state.Consume(Keyword_left)
 			p.cp.ClearAssignment()
-		}
-		{
-			p.state.Consume(Keyword_assoc)
+		case 1:
+			p.cp.MarkAssignment("Associativity")
+			p.state.Consume(Keyword_right)
+			p.cp.ClearAssignment()
 		}
 	}
 	{
@@ -988,7 +985,7 @@ func (p *CompletionParser) ParsePrecedenceGroup() {
 		}
 		{
 			p.cp.MarkAssignment("Operators")
-			p.state.EnterRule(PrecedenceGroup__Basic_7)
+			p.state.EnterRule(PrecedenceGroup__Basic_6)
 			p.ParseInfixOperator()
 			p.state.ExitRule()
 			p.cp.ClearAssignment()
