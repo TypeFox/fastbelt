@@ -39,7 +39,7 @@ func BenchmarkParser(b *testing.B) {
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		result := parserService.Parse(doc)
+		result := parserService.Parse(b.Context(), doc)
 		doc.Root = result.Node
 	}
 }
@@ -58,7 +58,7 @@ func BenchmarkLexerAndParser(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		doc.Tokens = lexerService.Exec(content).Tokens
-		result := parserService.Parse(doc)
+		result := parserService.Parse(b.Context(), doc)
 		doc.Root = result.Node
 	}
 }
