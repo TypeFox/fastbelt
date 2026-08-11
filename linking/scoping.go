@@ -32,7 +32,6 @@ func GlobalScopeOfType[T core.AstNode](node core.AstNode) core.Scope {
 // LocalScopeOfType is the default way of creating a local scope for a reference in the given AST node.
 // It returns the scope of symbols visible from the given AST node or any of its containers.
 func LocalScopeOfType[T core.AstNode](node core.AstNode, globalScope core.Scope) core.Scope {
-	symbols := GetLocalSymbols[T](node)
 	var outer core.Scope
 	if container := node.Container(); container != nil {
 		// The container node (or one of its ancestors) defines the outer scope
@@ -41,6 +40,22 @@ func LocalScopeOfType[T core.AstNode](node core.AstNode, globalScope core.Scope)
 		// We're at the root node, use the given global scope
 		outer = globalScope
 	}
+	targetType := reflect.TypeFor[T]()
+	symbolContainer := node.Document().LocalSymbols.For(node)
+	if sliceContainer, ok := symbolContainer.(core.SymbolSliceContainer); ok {
+		if slice, ok := sliceContainer.ForTypeSlice(targetType); ok {
+			// Fast path: the container exposes its symbols as a plain slice,
+			// so emptiness is free to check and lookups don't allocate iterators.
+			if len(slice) == 0 {
+				if outer != nil {
+					return outer
+				}
+				return core.EmptyScope
+			}
+			return core.NewSliceScope(slice, outer)
+		}
+	}
+	symbols := symbolContainer.ForType(targetType)
 	if extiter.IsEmpty(symbols) {
 		// Shortcut to generate fewer scopes
 		if outer != nil {
