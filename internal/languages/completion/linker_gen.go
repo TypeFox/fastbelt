@@ -250,3 +250,11 @@ func (sc *CompletionSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 	}
 	return core.EmptySymbolDescriptions
 }
+
+func (sc *CompletionSymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {
+	switch t {
+	case TypeFor_Declare:
+		return sc.Declares, true
+	}
+	return nil, true
+}

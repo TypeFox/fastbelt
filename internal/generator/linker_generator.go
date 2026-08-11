@@ -291,6 +291,28 @@ func generateSymbolContainers(context *LinkerGeneratorContext) codegen.Node {
 	node.AppendLine("}")
 	node.AppendLine()
 
+	node.AppendLine("func (sc *", name, "SymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {")
+	node.Indent(func(n codegen.Node) {
+		if len(sortedTargets) > 0 {
+			n.AppendLine("switch t {")
+			for _, target := range sortedTargets {
+				subtypes := subtypesInTargets(target, sortedTargets, context.ifaceParents)
+				n.AppendLine("case TypeFor_", target, ":")
+				if len(subtypes) == 1 {
+					// No descendants in target set, the type maps to exactly one slice.
+					n.AppendLine("    return sc.", target, "s, true")
+				} else {
+					// Symbols span multiple slices, callers must fall back to ForType.
+					n.AppendLine("    return nil, false")
+				}
+			}
+			n.AppendLine("}")
+		}
+		n.AppendLine("return nil, true")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
 	return node
 }
 

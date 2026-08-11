@@ -79,3 +79,7 @@ func (sc *LookaheadSymbolContainer) All() core.SymbolSeq {
 func (sc *LookaheadSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 	return core.EmptySymbolDescriptions
 }
+
+func (sc *LookaheadSymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {
+	return nil, true
+}
