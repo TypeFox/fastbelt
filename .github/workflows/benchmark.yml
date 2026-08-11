@@ -53,11 +53,10 @@ jobs:
         external-data-json-path: ${{ env.CACHE_DIR }}/benchmark-data.json
         # GitHub API token to make a PR/commit comment
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        # Enable alert commit comment
-        comment-on-alert: true
+        # Disable comment on alert, PR summary covers it
+        # Unfortunately, too inconsistent
+        comment-on-alert: false
         # Enable Job Summary for PRs
         summary-always: true
-        # Alert if any benchmark regression is more than 1.5x
-        alert-threshold: "150%"
         # Only save if we are on main branch
         save-data-file: ${{ github.ref == 'refs/heads/main' }}
