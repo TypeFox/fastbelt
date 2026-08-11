@@ -114,3 +114,11 @@ func (sc *ArithmeticsSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 	}
 	return core.EmptySymbolDescriptions
 }
+
+func (sc *ArithmeticsSymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {
+	switch t {
+	case TypeFor_AbstractDefinition:
+		return sc.AbstractDefinitions, true
+	}
+	return nil, true
+}

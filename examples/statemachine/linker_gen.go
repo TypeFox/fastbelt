@@ -181,3 +181,15 @@ func (sc *StatemachineModelSymbolContainer) ForType(t reflect.Type) core.SymbolS
 	}
 	return core.EmptySymbolDescriptions
 }
+
+func (sc *StatemachineModelSymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {
+	switch t {
+	case TypeFor_State:
+		return sc.States, true
+	case TypeFor_Event:
+		return sc.Events, true
+	case TypeFor_Command:
+		return sc.Commands, true
+	}
+	return nil, true
+}

@@ -294,3 +294,17 @@ func (sc *FastbeltSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 	}
 	return core.EmptySymbolDescriptions
 }
+
+func (sc *FastbeltSymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {
+	switch t {
+	case TypeFor_Interface:
+		return sc.Interfaces, true
+	case TypeFor_Field:
+		return sc.Fields, true
+	case TypeFor_AbstractTokenRule:
+		return sc.AbstractTokenRules, true
+	case TypeFor_AbstractRule:
+		return nil, false
+	}
+	return nil, true
+}
