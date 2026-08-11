@@ -122,27 +122,33 @@ type ParserGeneratorContext struct {
 // ensureCurrent materializes a deferred `current` node right before emitted
 // code that reads or mutates it. No-op unless `current` is known to be nil.
 func (c *ParserGeneratorContext) ensureCurrent(node codegen.Node) {
-	if !c.lazyCurrent || !c.currentNil || c.completion {
-		return
-	}
-	node.AppendLine("current = New", c.currentType, "()")
-	node.AppendLine("current.SetTextRangeStart(startPos)")
-	c.currentNil = false
+	c.ensureCurrentGuard(node, false)
 }
 
 // materializeCurrentGuard emits a nil-guarded materialization for join points
 // where only some incoming paths allocated `current` (e.g. after a lazy
 // alternatives switch, whose no-viable-alternative arm allocates nothing).
 func (c *ParserGeneratorContext) materializeCurrentGuard(node codegen.Node) {
+	c.ensureCurrentGuard(node, true)
+}
+
+func (c *ParserGeneratorContext) ensureCurrentGuard(node codegen.Node, guard bool) {
 	if !c.lazyCurrent || !c.currentNil || c.completion {
 		return
 	}
-	node.AppendLine("if current == nil {")
-	node.Indent(func(n codegen.Node) {
+	write := func(n codegen.Node) {
 		n.AppendLine("current = New", c.currentType, "()")
 		n.AppendLine("current.SetTextRangeStart(startPos)")
-	})
-	node.AppendLine("}")
+	}
+	if guard {
+		node.AppendLine("if current == nil {")
+		node.Indent(func(n codegen.Node) {
+			write(n)
+		})
+		node.AppendLine("}")
+	} else {
+		write(node)
+	}
 	c.currentNil = false
 }
 
