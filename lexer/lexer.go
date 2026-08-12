@@ -9,25 +9,12 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/parallel"
+	"typefox.dev/fastbelt/util/service"
 )
 
 // Lexer tokenizes a complete source string in one shot.
 type Lexer interface {
-	Lex(input string) *LexerResult
-}
-
-// LexerResult holds everything produced by a single [Lexer.Lex] pass over
-// source text.
-type LexerResult struct {
-	// Tokens is the main token stream passed to the parser.
-	Tokens []core.Token
-	// Comments holds tokens whose [core.TokenType] uses [core.CommentGroup].
-	Comments []core.Token
-	// Errors lists recoverable lexing problems (unrecognized input).
-	Errors []*core.LexerError
-	// Groups collects tokens routed to custom [core.TokenType.Group] values
-	// other than the default, skipped, or comment groups. Nil when empty.
-	Groups map[int][]core.Token
+	Lex(document *core.Document)
 }
 
 // Allocate a new token every ~5 characters on average
@@ -38,26 +25,36 @@ const defaultTokenRatio = 1.0 / 5.0
 // functions build one from the [core.TokenType] descriptors emitted for a
 // grammar.
 type DefaultLexer struct {
-	tokenTypes []*core.TokenType
-	tokenMap   [][]*core.TokenType
-	// running exponential moving average of tokens-per-byte
-	avgRatio *parallel.RunningAverage
+	sc         *service.Container
+	tokenTypes [][]*core.TokenType
+	tokenMaps  [][][]*core.TokenType
+	// running exponential moving average of tokens-per-byte (for each language)
+	avgRatio []*parallel.RunningAverage
 }
 
 // Lex scans input from left to right using longest-match disambiguation among
-// token types registered at construction time.
-func (l *DefaultLexer) Lex(input string) *LexerResult {
+// the token types visible to the document's language.
+func (l *DefaultLexer) Lex(document *core.Document) {
+	tokenMap := l.tokenMaps[0]
+	avgRatio := l.avgRatio[0]
+	if len(l.tokenMaps) > 1 {
+		selector := service.MustGet[core.LanguageSelector](l.sc)
+		if i, _ := selector.Select(document.URI); i > 0 && i < len(l.tokenMaps) {
+			tokenMap = l.tokenMaps[i]
+			avgRatio = l.avgRatio[i]
+		}
+	}
+	input := document.TextDoc.Text(nil)
 	length := len(input)
-	tokens := make([]core.Token, 0, l.avgRatio.Capacity(length))
+	tokens := make([]core.Token, 0, avgRatio.Capacity(length))
 	comments := make([]core.Token, 0)
 	errors := make([]*core.LexerError, 0)
-	var groups map[int][]core.Token
 
 	var offset int
 	for offset < length {
 		r, size := utf8.DecodeRuneInString(input[offset:])
 		mapIndex := int(r) % maxChar
-		candidates := l.tokenMap[mapIndex]
+		candidates := tokenMap[mapIndex]
 		longestMatch := 0
 		var longestType *core.TokenType
 		for _, tokenType := range candidates {
@@ -91,15 +88,6 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 					input[offset:end],
 					offset, end,
 				))
-			default:
-				if groups == nil {
-					groups = make(map[int][]core.Token)
-				}
-				groups[longestType.Group] = append(groups[longestType.Group], core.NewToken(
-					longestType,
-					input[offset:end],
-					offset, end,
-				))
 			}
 		} else {
 			errors = append(errors, core.NewLexerError(
@@ -113,15 +101,12 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 
 	if length > 0 {
 		// Update the average tokens-per-byte
-		l.avgRatio.Update(float64(len(tokens)) / float64(length))
+		avgRatio.Update(float64(len(tokens)) / float64(length))
 	}
 
-	return &LexerResult{
-		Tokens:   tokens,
-		Comments: comments,
-		Errors:   errors,
-		Groups:   groups,
-	}
+	document.Tokens = tokens
+	document.Comments = comments
+	document.LexerErrors = errors
 }
 
 const maxChar = 256
@@ -129,21 +114,36 @@ const maxChar = 256
 // NewDefaultLexer returns a lexer that recognizes the given token types.
 // At each position the longest match wins; among equal-length matches, the
 // first argument wins.
-func NewDefaultLexer(tokenTypes ...*core.TokenType) *DefaultLexer {
-	tokenMap := make([][]*core.TokenType, maxChar)
-	for i := range maxChar {
-		tokenMap[i] = make([]*core.TokenType, 0)
-	}
-	for _, tokenType := range tokenTypes {
-		for _, r := range tokenType.StartChars {
-			index := int(r) % maxChar
-			tokenMap[index] = append(tokenMap[index], tokenType)
+func NewDefaultLexer(sc *service.Container, tokenTypes ...*core.TokenType) *DefaultLexer {
+	return NewMultiLanguageLexer(sc, tokenTypes)
+}
+
+// NewMultiLanguageLexer returns a lexer with one token type list per language.
+// The document's language is resolved via [core.LanguageSelector], mirroring
+// the generated parser's entry dispatch; index 0 is the fallback for documents
+// that match no language.
+func NewMultiLanguageLexer(sc *service.Container, languages ...[]*core.TokenType) *DefaultLexer {
+	tokenMaps := make([][][]*core.TokenType, len(languages))
+	avgRatios := make([]*parallel.RunningAverage, len(languages))
+	for li, tokenTypes := range languages {
+		tokenMap := make([][]*core.TokenType, maxChar)
+		for i := range maxChar {
+			tokenMap[i] = []*core.TokenType{}
 		}
+		for _, tokenType := range tokenTypes {
+			for _, r := range tokenType.StartChars {
+				index := int(r) % maxChar
+				tokenMap[index] = append(tokenMap[index], tokenType)
+			}
+		}
+		tokenMaps[li] = tokenMap
+		avgRatios[li] = parallel.NewRunningAverage(defaultTokenRatio)
 	}
 
 	return &DefaultLexer{
-		tokenTypes: tokenTypes,
-		tokenMap:   tokenMap,
-		avgRatio:   parallel.NewRunningAverage(defaultTokenRatio),
+		tokenTypes: languages,
+		tokenMaps:  tokenMaps,
+		avgRatio:   avgRatios,
+		sc:         sc,
 	}
 }

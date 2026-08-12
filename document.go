@@ -19,7 +19,7 @@ import (
 // Access to the fields of Document should be synchronized using a [typefox.dev/fastbelt/workspace] Lock.
 // The document struct should never be copied after creation.
 type Document struct {
-	// URI identifies the document in the workspace.
+	// The URI of the document, usually a pointer to a file in the workspace.
 	URI URI
 	// State tracks which build phases already ran for this document.
 	State DocumentState
@@ -99,38 +99,40 @@ func NewDocument(textDoc textdoc.Handle) *Document {
 //
 // It is useful in tests, benchmarks, and tooling code that needs a document instance
 // without going through the workspace file-loading pipeline.
-func NewDocumentFromString(uri, languageId, content string) (*Document, error) {
-	textDoc, err := textdoc.NewFile(lsp.DocumentURI(uri), languageId, 1, content)
-	if err != nil {
-		return nil, err
-	}
+func NewDocumentFromString(uri, languageId, content string) *Document {
+	textDoc := textdoc.NewFile(lsp.DocumentURI(uri), languageId, 1, content)
 	doc := NewDocument(textDoc)
-	return doc, nil
+	return doc
 }
 
 // DocumentState is a bitmask capturing the already completed build phases of a document.
 type DocumentState uint32
 
 const (
-	// DocStateParsed marks that lexing and parsing completed and produced AST and token data.
-	DocStateParsed DocumentState = 1 << iota // 0x0001
+	// DocStateLexed marks that lexing completed and produced token data.
+	DocStateLexed DocumentState = 1 << iota // 0x0001
+	// DocStateParsed marks that parsing completed and produced an AST.
+	DocStateParsed // 0x0002
 	// DocStateExportedSymbols marks that exported symbols were collected for cross-document linking.
-	DocStateExportedSymbols // 0x0002
+	DocStateExportedSymbols // 0x0004
 	// DocStateImportedSymbols marks that symbols from other documents were imported.
-	DocStateImportedSymbols // 0x0004
+	DocStateImportedSymbols // 0x0008
 	// DocStateLocalSymbols marks that local symbols for this document were collected.
-	DocStateLocalSymbols // 0x0008
+	DocStateLocalSymbols // 0x0010
 	// DocStateLinked marks that cross-references were linked.
-	DocStateLinked // 0x0010
+	DocStateLinked // 0x0020
 	// DocStateReferences marks that reference descriptions were collected.
-	DocStateReferences // 0x0020
+	DocStateReferences // 0x0040
 	// DocStateValidated marks that validators were executed and diagnostics were collected.
-	DocStateValidated // 0x0040
+	DocStateValidated // 0x0080
 )
 
 // String returns a readable representation of the set state flags.
 func (s DocumentState) String() string {
 	var flags []string
+	if s.Has(DocStateLexed) {
+		flags = append(flags, "Lexed")
+	}
 	if s.Has(DocStateParsed) {
 		flags = append(flags, "Parsed")
 	}
@@ -167,8 +169,9 @@ func (s DocumentState) Without(flag DocumentState) DocumentState {
 	return s &^ flag
 }
 
-const docStateComplete = DocStateParsed | DocStateExportedSymbols | DocStateImportedSymbols |
-	DocStateLocalSymbols | DocStateLinked | DocStateReferences | DocStateValidated
+const docStateComplete = DocStateLexed | DocStateParsed | DocStateExportedSymbols |
+	DocStateImportedSymbols | DocStateLocalSymbols | DocStateLinked | DocStateReferences |
+	DocStateValidated
 
 // IsComplete reports whether all framework-defined build phases have completed,
 // i.e. every state bit from DocStateParsed through DocStateValidated is set.

@@ -8,7 +8,6 @@ import (
 	"context"
 	"log"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	core "typefox.dev/fastbelt"
@@ -46,33 +45,37 @@ type Initializer interface {
 // to filter files and directories.
 type IncludeFilter interface {
 	// Include returns true if the given file system entry should be included.
-	Include(entry DirEntry) bool
+	// If the entry is a file, the returned string is the language ID to assign
+	// to the document.
+	Include(entry DirEntry) (bool, string)
 }
 
 // DefaultIncludeFilter is the default implementation of [IncludeFilter].
-// It includes files whose extension matches [FileExtensions] and skips hidden
-// directories (names starting with ".").
+// It includes files whose URI path has a match in the [core.LanguageSelector].
+// It skips hidden directories (names starting with ".").
 type DefaultIncludeFilter struct {
 	sc *service.Container
 }
 
 // Include returns true if the given file system entry should be included.
 // See [DefaultIncludeFilter] for more info.
-func (s *DefaultIncludeFilter) Include(entry DirEntry) bool {
+func (s *DefaultIncludeFilter) Include(entry DirEntry) (bool, string) {
 	if entry.IsDir {
 		name := filepath.Base(entry.URI.Path())
 		// Don't include hidden directories
-		return !strings.HasPrefix(name, ".")
+		return !strings.HasPrefix(name, "."), ""
 	}
-	extensions, err := service.Get[FileExtensions](s.sc)
-	ext := filepath.Ext(entry.URI.Path())
-	if err != nil {
-		// No file extensions are configured
-		// Only include files without an extension
-		return ext == ""
+	// Prefer the registered LanguageSelector: a file belongs to the workspace
+	// when it maps to one of the configured languages. During the walk the file
+	// is not yet in the text-document store, so the selector decides purely on
+	// the URI-path glob.
+	if selector, err := service.Get[core.LanguageSelector](s.sc); err == nil {
+		index, languageId := selector.Select(entry.URI)
+		if index >= 0 {
+			return true, languageId
+		}
 	}
-	// Include files whose extension matches the configured file extensions
-	return slices.Contains(extensions, ext)
+	return false, ""
 }
 
 // NewDefaultIncludeFilter returns a new instance of [DefaultIncludeFilter].
@@ -112,11 +115,6 @@ func (s *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 	if err != nil {
 		return nil
 	}
-	languageID, err := service.Get[LanguageID](s.sc)
-	if err != nil {
-		log.Print("workspace LanguageID is not set")
-		return nil
-	}
 	filter, err := service.Get[IncludeFilter](s.sc)
 	if err != nil {
 		log.Print("workspace IncludeFilter is not set")
@@ -125,7 +123,7 @@ func (s *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 	for _, folder := range folders {
 		root := core.ParseURI(folder.URI)
 		err := WalkFileSystem(ctx, fs, root, func(entry DirEntry) error {
-			included := filter.Include(entry)
+			included, languageID := filter.Include(entry)
 			if entry.IsDir {
 				if !included {
 					// Skip this directory and its contents
@@ -147,17 +145,13 @@ func (s *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 	return nil
 }
 
-func (s *DefaultInitializer) loadFile(ctx context.Context, uri core.URI, fs FileSystem, languageID LanguageID) {
+func (s *DefaultInitializer) loadFile(ctx context.Context, uri core.URI, fs FileSystem, languageID string) {
 	content, err := fs.ReadFile(ctx, uri)
 	if err != nil {
 		log.Printf("failed to read file %s: %v", uri.String(), err)
 		return
 	}
-	textDoc, err := textdoc.NewFile(uri.DocumentURI(), string(languageID), 0, string(content))
-	if err != nil {
-		log.Printf("failed to create text document for %s: %v", uri.String(), err)
-		return
-	}
+	textDoc := textdoc.NewFile(uri.DocumentURI(), languageID, 0, string(content))
 	doc := core.NewDocument(textDoc)
 	service.MustGet[DocumentManager](s.sc).Set(doc)
 }

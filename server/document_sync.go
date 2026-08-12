@@ -81,17 +81,12 @@ func (s *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *lsp.DidOpe
 	uri := core.NormalizeURI(params.TextDocument.URI)
 	existing := textdocStore.Get(uri)
 
-	doc, err := textdoc.NewOverlay(
+	doc := textdoc.NewOverlay(
 		uri,
 		string(params.TextDocument.LanguageID),
 		params.TextDocument.Version,
 		params.TextDocument.Text,
 	)
-	if err != nil {
-		// Log error but continue - this is a notification, not a request
-		log.Printf("failed to create document overlay: %v", err)
-		return
-	}
 
 	textdocStore.AddOverlay(doc)
 	s.mu.RLock()

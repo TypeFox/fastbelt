@@ -5,11 +5,18 @@
 package generator
 
 import (
+	"strings"
+
 	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/util/codegen"
 )
 
-func GenerateServices(grammr grammar.Grammar, packageName string) string {
+type Selector struct {
+	LanguageID string
+	Patterns   []string
+}
+
+func GenerateServices(grammr grammar.Grammar, selectors []Selector, packageName string) string {
 	node := NewRootNode()
 	node.AppendLine("package ", packageName)
 	node.AppendLine()
@@ -26,6 +33,26 @@ func GenerateServices(grammr grammar.Grammar, packageName string) string {
 	node.AppendLine("// If any service is already set, it's not overwritten.")
 	node.AppendLine("func SetupGeneratedServices(sc *service.Container) {")
 	node.Indent(func(n codegen.Node) {
+		if len(selectors) > 0 {
+			n.AppendLine("if !service.Has[core.LanguageSelector](sc) {")
+			n.Indent(func(n codegen.Node) {
+				n.AppendLine("service.Put[core.LanguageSelector](")
+				n.Indent(func(n codegen.Node) {
+					n.AppendLine("sc,")
+					n.AppendLine("core.NewDefaultLanguageSelector(")
+					n.Indent(func(n codegen.Node) {
+						n.AppendLine("sc,")
+						for _, s := range selectors {
+							patterns := strings.Join(s.Patterns, "\", \"")
+							n.AppendLine("core.NewDocumentSelectorWithPatterns(\"", s.LanguageID, "\", \"", patterns, "\"),")
+						}
+					})
+					n.AppendLine("),")
+				})
+				n.AppendLine(")")
+			})
+			n.AppendLine("}")
+		}
 		n.AppendLine("if !service.Has[", grammr.Name(), "ScopeProvider](sc) {")
 		n.AppendLine("    service.Put(sc, NewDefault", grammr.Name(), "ScopeProvider(sc))")
 		n.AppendLine("}")
@@ -39,7 +66,7 @@ func GenerateServices(grammr grammar.Grammar, packageName string) string {
 		n.AppendLine("    service.Put(sc, NewDefault", grammr.Name(), "ParserLookahead())")
 		n.AppendLine("}")
 		n.AppendLine("if !service.Has[lexer.Lexer](sc) {")
-		n.AppendLine("    service.Put(sc, NewLexer())")
+		n.AppendLine("    service.Put(sc, NewLexer(sc))")
 		n.AppendLine("}")
 		n.AppendLine("if !service.Has[parser.Parser](sc) {")
 		n.AppendLine("    service.Put[parser.Parser](sc, NewParser(sc))")

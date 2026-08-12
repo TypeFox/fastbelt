@@ -7,6 +7,7 @@ package grammar
 //go:generate go run ../../cmd/fastbelt generate ./grammar.fb -v --atn
 
 import (
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
@@ -15,9 +16,12 @@ import (
 
 // SetupServices sets up the base services for the grammar language.
 func SetupServices(sc *service.Container) {
-	service.Put[workspace.LanguageID](sc, "fastbelt")
-	service.Put[workspace.FileExtensions](sc, []string{".fb"})
-
+	service.Put[core.LanguageSelector](
+		sc,
+		core.NewDefaultLanguageSelector(sc,
+			core.NewDocumentSelectorWithPatterns("fastbelt", "**/*.fb"),
+		),
+	)
 	textdoc.SetupDefaultServices(sc)
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)

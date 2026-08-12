@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"unicode/utf8"
 
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/internal/automatons"
 	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/internal/regexp"
@@ -109,7 +110,7 @@ func sortTokenGroups(tokenGroups []grammar.TokenGroup, members map[string][]stri
 	return sortedGroups
 }
 
-func GenerateLexer(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult) string {
+func GenerateLexer(grammr grammar.Grammar, entryRules []grammar.ParserRule, packageName string, tokenTypes GenerateTokenTypesResult) string {
 	nodes := []codegen.Node{}
 
 	imports := map[string]bool{}
@@ -133,6 +134,7 @@ func GenerateLexer(grammr grammar.Grammar, packageName string, tokenTypes Genera
 		}
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
 		n.AppendLine("\"typefox.dev/fastbelt/lexer\"")
+		n.AppendLine("\"typefox.dev/fastbelt/util/service\"")
 	})
 	node.AppendLine(")")
 	node.AppendLine()
@@ -142,25 +144,129 @@ func GenerateLexer(grammr grammar.Grammar, packageName string, tokenTypes Genera
 		node.AppendLine()
 	}
 
-	generateMainLexerFunction(node, tokenTypes.Tokens, tokenTypes.Keywords)
+	generateMainLexerFunction(node, grammr, entryRules, tokenTypes.Tokens, tokenTypes.Keywords)
 	return FormatIfPossible(node.String())
 }
 
-func generateMainLexerFunction(node codegen.Node, tokens []grammar.Token, keywords []grammar.Keyword) {
-	node.AppendLine("func NewLexer() lexer.Lexer {")
+func generateMainLexerFunction(node codegen.Node, grammr grammar.Grammar, entryRules []grammar.ParserRule, tokens []grammar.Token, keywords []grammar.Keyword) {
+	node.AppendLine("func NewLexer(sc *service.Container) lexer.Lexer {")
+	if len(entryRules) <= 1 {
+		node.Indent(func(n codegen.Node) {
+			n.AppendLine("return lexer.NewDefaultLexer(")
+			n.Indent(func(nn codegen.Node) {
+				nn.AppendLine("sc,")
+				for _, keyword := range keywords {
+					nn.AppendLine(GeneratedTokenName(keyword), ",")
+				}
+				for _, token := range tokens {
+					nn.AppendLine(GeneratedTokenName(token), ",")
+				}
+			})
+			n.AppendLine(")")
+		})
+		node.AppendLine("}")
+		return
+	}
+	// One token type list per language, index-aligned with the parser's entry
+	// dispatch. Each list is an ordered subset of the global keywords-then-tokens
+	// order, so IDs and longest-match tie-breaking are unaffected.
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("return lexer.NewDefaultLexer(")
+		n.AppendLine("return lexer.NewMultiLanguageLexer(")
 		n.Indent(func(nn codegen.Node) {
-			for _, keyword := range keywords {
-				nn.AppendLine(GeneratedTokenName(keyword), ",")
-			}
-			for _, token := range tokens {
-				nn.AppendLine(GeneratedTokenName(token), ",")
+			nn.AppendLine("sc,")
+			for _, entry := range entryRules {
+				reachable := reachableTokenNames(grammr, keywords, entry)
+				nn.AppendLine("[]*core.TokenType{ // ", entry.Name())
+				nn.Indent(func(nnn codegen.Node) {
+					for _, keyword := range keywords {
+						if name := GeneratedTokenName(keyword); reachable[name] {
+							nnn.AppendLine(name, ",")
+						}
+					}
+					for _, token := range tokens {
+						if name := GeneratedTokenName(token); reachable[name] {
+							nnn.AppendLine(name, ",")
+						}
+					}
+				})
+				nn.AppendLine("},")
 			}
 		})
 		n.AppendLine(")")
 	})
 	node.AppendLine("}")
+}
+
+// reachableTokenNames returns the generated var names (Keyword_*/Token_*) of
+// all token types lexable in the language rooted at entry: every keyword and
+// terminal reachable through rule bodies, rule calls, cross-references and
+// token groups, plus every hidden/comment terminal (always lexed).
+func reachableTokenNames(grammr grammar.Grammar, keywords []grammar.Keyword, entry grammar.ParserRule) map[string]bool {
+	ctx := context.Background()
+	reachable := map[string]bool{}
+	visitedRules := map[string]bool{}
+	visitedGroups := map[string]bool{}
+
+	var visitGroup func(tokenGroup grammar.TokenGroup)
+	visitGroup = func(tokenGroup grammar.TokenGroup) {
+		if visitedGroups[tokenGroup.Name()] {
+			return
+		}
+		visitedGroups[tokenGroup.Name()] = true
+		for _, tokenRef := range tokenGroup.TokenRefs() {
+			switch target := tokenRef.Ref(ctx).(type) {
+			case grammar.TokenGroup:
+				visitGroup(target)
+			case grammar.Token:
+				reachable[GeneratedTokenName(target)] = true
+			}
+		}
+		for _, keyword := range tokenGroup.Keywords() {
+			reachable[GeneratedTokenName(keyword)] = true
+		}
+		for _, name := range regexpKeywordMembers(tokenGroup, keywords) {
+			reachable[name] = true
+		}
+	}
+
+	var visitRule func(rule core.AstNode)
+	visitRule = func(rule core.AstNode) {
+		for node := range core.AllChildren(rule) {
+			switch n := node.(type) {
+			case grammar.Keyword:
+				reachable[GeneratedTokenName(n)] = true
+			case grammar.RuleCall:
+				if n.Rule() == nil {
+					continue
+				}
+				switch target := n.Rule().Ref(ctx).(type) {
+				case grammar.ParserRule:
+					if !visitedRules[target.Name()] {
+						visitedRules[target.Name()] = true
+						visitRule(target)
+					}
+				case grammar.CompositeRule:
+					if !visitedRules[target.Name()] {
+						visitedRules[target.Name()] = true
+						visitRule(target)
+					}
+				case grammar.Token:
+					reachable[GeneratedTokenName(target)] = true
+				case grammar.TokenGroup:
+					visitGroup(target)
+				}
+			}
+		}
+	}
+	visitedRules[entry.Name()] = true
+	visitRule(entry)
+
+	for _, token := range grammr.Terminals() {
+		if token.Type() == "hidden" || token.Type() == "comment" {
+			reachable[GeneratedTokenName(token)] = true
+		}
+	}
+	return reachable
 }
 
 func generateKeywordTokenType(keyword grammar.Keyword, id int) codegen.Node {
@@ -233,6 +339,18 @@ func getAllTokenGroupMembers(tokenGroup grammar.TokenGroup, keywords []grammar.K
 		name := GeneratedTokenName(keyword)
 		members[name] = true
 	}
+	for _, name := range regexpKeywordMembers(tokenGroup, keywords) {
+		members[name] = true
+	}
+	slice := slices.Collect(maps.Keys(members))
+	sort.Strings(slice)
+	return slice
+}
+
+// regexpKeywordMembers returns the generated names of all keywords matched by
+// the token group's regexp members.
+func regexpKeywordMembers(tokenGroup grammar.TokenGroup, keywords []grammar.Keyword) []string {
+	names := []string{}
 	for _, regex := range tokenGroup.Regexps() {
 		pattern := regex.Image[1 : len(regex.Image)-1]
 		compiled, err := goregex.Compile(pattern)
@@ -240,17 +358,12 @@ func getAllTokenGroupMembers(tokenGroup grammar.TokenGroup, keywords []grammar.K
 			continue
 		}
 		for _, keyword := range keywords {
-			keywordValue := KeywordValue(keyword)
-			keywordName := GeneratedTokenName(keyword)
-			matches := compiled.MatchString(keywordValue)
-			if matches {
-				members[keywordName] = true
+			if compiled.MatchString(KeywordValue(keyword)) {
+				names = append(names, GeneratedTokenName(keyword))
 			}
 		}
 	}
-	slice := slices.Collect(maps.Keys(members))
-	sort.Strings(slice)
-	return slice
+	return names
 }
 
 func generateTokenType(token grammar.Token, id int) GenerateLexerResult {

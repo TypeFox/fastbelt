@@ -25,10 +25,10 @@
 //
 // The generated `NewLexer` function returns a [DefaultLexer] constructed via
 // [NewDefaultLexer] with every keyword and token type for that language.
-// [typefox.dev/fastbelt/workspace.DefaultDocumentParser] obtains a [Lexer] from
-// the service container, calls [Lexer.Lex], and stores [LexerResult.Tokens],
-// [LexerResult.Comments], and [LexerResult.Errors] on the document before
-// parsing.
+// Grammars with multiple configured languages use [NewMultiLanguageLexer]
+// instead, passing one token type list per language; at lex time the document
+// is routed to its language's token set via [core.LanguageSelector], mirroring
+// the generated parser's entry rule dispatch.
 //
 // # Lexing model
 //
@@ -42,9 +42,8 @@
 //     generated lexers list keywords before regex token rules, so keywords take
 //     precedence when both match the same span.
 //  3. Route the match by [core.TokenType.Group]: default tokens go to
-//     [LexerResult.Tokens], hidden tokens are dropped, comments go to
-//     [LexerResult.Comments], and other groups are collected in
-//     [LexerResult.Groups].
+//     [core.Document.Tokens], hidden tokens are dropped, comments go to
+//     [core.Document.Comments].
 //  4. If no token type matches, emit a [core.LexerError] and advance by one
 //     UTF-8 code point so lexing can continue.
 //

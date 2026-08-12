@@ -10,12 +10,7 @@ import (
 
 // Parser defines the interface for parsing tokens (lexer output) into AST nodes.
 type Parser interface {
-	Parse(document *core.Document) *ParseResult
-}
-
-type ParseResult struct {
-	Node   core.AstNode
-	Errors []*core.ParserError
+	Parse(document *core.Document)
 }
 
 const (

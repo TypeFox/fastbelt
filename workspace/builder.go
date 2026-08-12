@@ -11,7 +11,9 @@ import (
 	"sync"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/lexer"
 	"typefox.dev/fastbelt/linking"
+	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/parallel"
 	"typefox.dev/fastbelt/util/service"
 )
@@ -62,13 +64,23 @@ func NewDefaultBuilder(sc *service.Container) Builder {
 
 func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downgrade func()) error {
 	// PHASE 1: Parse, and compute exports (parallel per document).
-	parser := service.MustGet[DocumentParser](s.sc)
+	lexer := service.MustGet[lexer.Lexer](s.sc)
+	parser := service.MustGet[parser.Parser](s.sc)
 	exporter := service.MustGet[linking.SymbolExporter](s.sc)
 	parallel.ForEach(docs, func(doc *core.Document, _ int) {
 		if ctx.Err() != nil {
 			return
 		}
-		// STEP 1.1: Parse the document and create the AST.
+		// STEP 1.1: Lex the document and produce tokens.
+		if !doc.State.Has(core.DocStateLexed) {
+			lexer.Lex(doc)
+			doc.State = doc.State.With(core.DocStateLexed)
+			s.notifyListeners(ctx, core.DocStateLexed, doc)
+		}
+		if ctx.Err() != nil {
+			return
+		}
+		// STEP 1.2: Parse the document and create the AST.
 		if !doc.State.Has(core.DocStateParsed) {
 			parser.Parse(doc)
 			doc.State = doc.State.With(core.DocStateParsed)
@@ -77,7 +89,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 		if ctx.Err() != nil {
 			return
 		}
-		// STEP 1.2: Compute the exported symbols for cross-document references.
+		// STEP 1.3: Compute the exported symbols for cross-document references.
 		if !doc.State.Has(core.DocStateExportedSymbols) {
 			exporter.ExportSymbols(ctx, doc)
 			doc.State = doc.State.With(core.DocStateExportedSymbols)
@@ -173,11 +185,13 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 
 func (s *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
 	switch {
+	case !state.Has(core.DocStateLexed):
+		doc.Tokens = core.TokenSlice{}
+		doc.LexerErrors = []*core.LexerError{}
+		fallthrough
 	case !state.Has(core.DocStateParsed):
 		doc.Root = nil
-		doc.Tokens = core.TokenSlice{}
 		doc.ParserErrors = []*core.ParserError{}
-		doc.LexerErrors = []*core.LexerError{}
 		doc.References = []core.UntypedReference{}
 		fallthrough
 	case !state.Has(core.DocStateExportedSymbols):
