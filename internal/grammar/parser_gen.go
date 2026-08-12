@@ -1322,8 +1322,8 @@ func (p *Parser) ParsePrecedenceGroup() PrecedenceGroup {
 }
 
 func (p *Parser) ParseInfixOperator() Assignable {
-	current := NewAssignable()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current Assignable
 	{
 		switch prediction, failure := p.lookahead.InfixOperatorAlternatives(p.state); prediction {
 		case 0:
@@ -1331,7 +1331,6 @@ func (p *Parser) ParseInfixOperator() Assignable {
 				p.state.EnterRule(InfixOperator__Basic_1)
 				result := p.ParseKeyword()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 1:
@@ -1339,11 +1338,14 @@ func (p *Parser) ParseInfixOperator() Assignable {
 				p.state.EnterRule(InfixOperator__Basic_3)
 				result := p.ParseRuleCall()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewAssignable()
+			current.SetTextRangeStart(startPos)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)

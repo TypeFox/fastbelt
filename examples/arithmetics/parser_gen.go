@@ -204,195 +204,15 @@ func (p *Parser) ParseEvaluation() Evaluation {
 }
 
 func (p *Parser) ParseExpression() Expression {
-	var current Expression
+	current := NewExpression()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			p.state.EnterRule(Expression__Basic_1)
-			result := p.ParseAddition()
+			result := p.ParseBinaryExpression()
 			p.state.ExitRule()
+			core.MergeTokens(result, current.Tokens())
 			current = result
-		}
-	}
-	current.SetTextRangeEnd(p.state.LA(0).Range.End)
-	return current
-}
-
-func (p *Parser) ParseAddition() Expression {
-	var current Expression
-	{
-		{
-			p.state.EnterRule(Addition__LoopEntry)
-			result := p.ParseMultiplication()
-			p.state.ExitRule()
-			current = result
-		}
-		p.state.Sync(Addition__LoopEntry)
-		for p.lookahead.AdditionLoop(p.state) {
-			{
-				result := NewBinaryExpression()
-				result.SetTextRange(current.TextRange())
-				result.SetLeft(current)
-				current.SetTextRangeEnd(p.state.LA(0).Range.End)
-				current = result
-			}
-			current := current.(BinaryExpression)
-			{
-				switch prediction, _ := p.lookahead.AdditionOperatorAlternatives(p.state); prediction {
-				case 0:
-					token := p.state.Consume(Keyword_Plus)
-					core.AssignToken(current, token, Addition_Operator_Plus)
-					if token != nil {
-						current.SetOperator(token)
-					}
-				case 1:
-					token := p.state.Consume(Keyword_Dash)
-					core.AssignToken(current, token, Addition_Operator_Dash)
-					if token != nil {
-						current.SetOperator(token)
-					}
-				}
-			}
-			{
-				p.state.EnterRule(Addition__Basic_5)
-				result := p.ParseMultiplication()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetRight(result)
-				}
-			}
-			p.state.Sync(Addition__LoopEntry)
-		}
-	}
-	current.SetTextRangeEnd(p.state.LA(0).Range.End)
-	return current
-}
-
-func (p *Parser) ParseMultiplication() Expression {
-	var current Expression
-	{
-		{
-			p.state.EnterRule(Multiplication__LoopEntry)
-			result := p.ParseExponentiation()
-			p.state.ExitRule()
-			current = result
-		}
-		p.state.Sync(Multiplication__LoopEntry)
-		for p.lookahead.MultiplicationLoop(p.state) {
-			{
-				result := NewBinaryExpression()
-				result.SetTextRange(current.TextRange())
-				result.SetLeft(current)
-				current.SetTextRangeEnd(p.state.LA(0).Range.End)
-				current = result
-			}
-			current := current.(BinaryExpression)
-			{
-				switch prediction, _ := p.lookahead.MultiplicationOperatorAlternatives(p.state); prediction {
-				case 0:
-					token := p.state.Consume(Keyword_Asterisk)
-					core.AssignToken(current, token, Multiplication_Operator_Asterisk)
-					if token != nil {
-						current.SetOperator(token)
-					}
-				case 1:
-					token := p.state.Consume(Keyword_Slash)
-					core.AssignToken(current, token, Multiplication_Operator_Slash)
-					if token != nil {
-						current.SetOperator(token)
-					}
-				}
-			}
-			{
-				p.state.EnterRule(Multiplication__Basic_5)
-				result := p.ParseExponentiation()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetRight(result)
-				}
-			}
-			p.state.Sync(Multiplication__LoopEntry)
-		}
-	}
-	current.SetTextRangeEnd(p.state.LA(0).Range.End)
-	return current
-}
-
-func (p *Parser) ParseExponentiation() Expression {
-	var current Expression
-	{
-		{
-			p.state.EnterRule(Exponentiation__LoopEntry)
-			result := p.ParseModulo()
-			p.state.ExitRule()
-			current = result
-		}
-		p.state.Sync(Exponentiation__LoopEntry)
-		for p.lookahead.ExponentiationLoop(p.state) {
-			{
-				result := NewBinaryExpression()
-				result.SetTextRange(current.TextRange())
-				result.SetLeft(current)
-				current.SetTextRangeEnd(p.state.LA(0).Range.End)
-				current = result
-			}
-			current := current.(BinaryExpression)
-			{
-				token := p.state.Consume(Keyword_Caret)
-				core.AssignToken(current, token, Exponentiation_Operator_Caret)
-				if token != nil {
-					current.SetOperator(token)
-				}
-			}
-			{
-				p.state.EnterRule(Exponentiation__Basic_2)
-				result := p.ParseModulo()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetRight(result)
-				}
-			}
-			p.state.Sync(Exponentiation__LoopEntry)
-		}
-	}
-	current.SetTextRangeEnd(p.state.LA(0).Range.End)
-	return current
-}
-
-func (p *Parser) ParseModulo() Expression {
-	var current Expression
-	{
-		{
-			p.state.EnterRule(Modulo__LoopEntry)
-			result := p.ParsePrimaryExpression()
-			p.state.ExitRule()
-			current = result
-		}
-		p.state.Sync(Modulo__LoopEntry)
-		for p.lookahead.ModuloLoop(p.state) {
-			{
-				result := NewBinaryExpression()
-				result.SetTextRange(current.TextRange())
-				result.SetLeft(current)
-				current.SetTextRangeEnd(p.state.LA(0).Range.End)
-				current = result
-			}
-			current := current.(BinaryExpression)
-			{
-				token := p.state.Consume(Keyword_Percent)
-				core.AssignToken(current, token, Modulo_Operator_Percent)
-				if token != nil {
-					current.SetOperator(token)
-				}
-			}
-			{
-				p.state.EnterRule(Modulo__Basic_2)
-				result := p.ParsePrimaryExpression()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetRight(result)
-				}
-			}
-			p.state.Sync(Modulo__LoopEntry)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -495,4 +315,58 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
 	return current
+}
+
+var BinaryExpressionPrecedence = map[int]parser.InfixPrecedence{
+	Keyword_Percent_Idx:  {Level: 0},
+	Keyword_Caret_Idx:    {Level: 1, Right: true},
+	Keyword_Asterisk_Idx: {Level: 2},
+	Keyword_Slash_Idx:    {Level: 2},
+	Keyword_Dash_Idx:     {Level: 3},
+	Keyword_Plus_Idx:     {Level: 3},
+}
+
+func (p *Parser) ParseBinaryExpression() Expression {
+	var parts []Expression
+	var operators []*core.Token
+	{
+		p.state.EnterRule(BinaryExpression__LoopEntry)
+		result := p.ParsePrimaryExpression()
+		p.state.ExitRule()
+		parts = append(parts, result)
+	}
+	p.state.Sync(BinaryExpression__LoopEntry)
+	for p.lookahead.BinaryExpressionLoop(p.state) {
+		if token := p.state.Consume(Token_BinaryExpressionOperator); token != nil {
+			operators = append(operators, token)
+		}
+		{
+			p.state.EnterRule(BinaryExpression__Basic_2)
+			result := p.ParsePrimaryExpression()
+			p.state.ExitRule()
+			parts = append(parts, result)
+		}
+		p.state.Sync(BinaryExpression__LoopEntry)
+	}
+	if len(parts) == 1 {
+		// A lone operand is returned unchanged; no binary node is created.
+		return parts[0]
+	}
+	return parser.BuildInfixTree(parts, operators, BinaryExpressionPrecedence, func(left Expression, operator *core.Token, right Expression) Expression {
+		result := NewBinaryExpression()
+		if left != nil {
+			result.SetLeft(left)
+			result.SetTextRangeStart(left.TextRange().Start)
+		}
+		if operator != nil {
+			core.AssignToken(result, operator, BinaryExpression_BinaryExpressionOperator)
+			result.SetOperator(operator)
+			result.SetTextRangeEnd(operator.Range.End)
+		}
+		if right != nil {
+			result.SetRight(right)
+			result.SetTextRangeEnd(right.TextRange().End)
+		}
+		return result
+	})
 }
