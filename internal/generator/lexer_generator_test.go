@@ -178,8 +178,8 @@ func TestGenerateLexerImplicitDefaultModeRegistersEverything(t *testing.T) {
 	assert.Contains(t, code, "lexer.UseTokenType(Keyword_world)")
 	assert.Contains(t, code, "lexer.UseTokenType(Token_ID)")
 	assert.Contains(t, code, "lexer.UseTokenType(TokenGroup_Punct)")
-	assert.Contains(t, code, "lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup)")
-	assert.Contains(t, code, "lexer.UseTokenType(Token_SL_COMMENT).WithGroup(core.CommentGroup)")
+	assert.Contains(t, code, "lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier)")
+	assert.Contains(t, code, "lexer.UseTokenType(Token_SL_COMMENT).WithModifier(core.CommentModifier)")
 	assert.Contains(t, code, "lexer.NewDefaultLexer(TokenMode_default, modes...)")
 }
 
@@ -199,7 +199,7 @@ func TestGenerateLexerModeUsageInheritsGlobalModifier(t *testing.T) {
 			WS
 		}
 	`)
-	assert.Contains(t, code, "lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup)")
+	assert.Contains(t, code, "lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier)")
 }
 
 func TestGenerateLexerModeUsageOverridesGlobalModifier(t *testing.T) {
@@ -215,8 +215,8 @@ func TestGenerateLexerModeUsageOverridesGlobalModifier(t *testing.T) {
 			comment NOTE
 		}
 	`)
-	assert.Contains(t, code, "lexer.UseTokenType(Token_NOTE).WithGroup(core.CommentGroup)")
-	assert.NotContains(t, code, "Token_NOTE).WithGroup(core.SkippedGroup)")
+	assert.Contains(t, code, "lexer.UseTokenType(Token_NOTE).WithModifier(core.CommentModifier)")
+	assert.NotContains(t, code, "Token_NOTE).WithModifier(core.SkippedModifier)")
 }
 
 func TestGenerateLexerModeUsageAddsModifierToGlobalToken(t *testing.T) {
@@ -232,7 +232,7 @@ func TestGenerateLexerModeUsageAddsModifierToGlobalToken(t *testing.T) {
 			hidden WS
 		}
 	`)
-	assert.Contains(t, code, "lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup)")
+	assert.Contains(t, code, "lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier)")
 }
 
 func TestGenerateLexerModeUsageInheritsGlobalCommentModifier(t *testing.T) {
@@ -247,7 +247,7 @@ func TestGenerateLexerModeUsageInheritsGlobalCommentModifier(t *testing.T) {
 			SL_COMMENT
 		}
 	`)
-	assert.Contains(t, code, "lexer.UseTokenType(Token_SL_COMMENT).WithGroup(core.CommentGroup)")
+	assert.Contains(t, code, "lexer.UseTokenType(Token_SL_COMMENT).WithModifier(core.CommentModifier)")
 }
 
 // --- Mode-local declarations ---

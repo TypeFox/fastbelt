@@ -414,11 +414,11 @@ func (p *Parser) ParseTokenDecl() TokenDecl {
 	{
 		{
 			p.state.Sync(StateNumber__TokenDecl__Basic_2)
-			if p.lookahead.TokenDeclTypeOptional(p.state) {
+			if p.lookahead.TokenDeclModifierOptional(p.state) {
 				token := p.state.Consume(TokenGroup_TokenModifier)
 				core.AssignToken(current, token, StateNumber__TokenDecl__Basic_0)
 				if token != nil {
-					current.SetType(token)
+					current.SetModifier(token)
 				}
 			}
 		}
@@ -601,11 +601,11 @@ func (p *Parser) ParseTokenGroup() TokenGroup {
 	{
 		{
 			p.state.Sync(StateNumber__TokenGroup__Basic_2)
-			if p.lookahead.TokenGroupTypeOptional(p.state) {
+			if p.lookahead.TokenGroupModifierOptional(p.state) {
 				token := p.state.Consume(TokenGroup_TokenModifier)
 				core.AssignToken(current, token, StateNumber__TokenGroup__Basic_0)
 				if token != nil {
-					current.SetType(token)
+					current.SetModifier(token)
 				}
 			}
 		}
@@ -842,11 +842,11 @@ func (p *Parser) ParseTokenUsage() TokenUsage {
 	{
 		{
 			p.state.Sync(StateNumber__TokenUsage__Basic_2)
-			if p.lookahead.TokenUsageTypeOptional(p.state) {
+			if p.lookahead.TokenUsageModifierOptional(p.state) {
 				token := p.state.Consume(TokenGroup_TokenModifier)
 				core.AssignToken(current, token, StateNumber__TokenUsage__Basic_0)
 				if token != nil {
-					current.SetType(token)
+					current.SetModifier(token)
 				}
 			}
 		}
@@ -885,11 +885,11 @@ func (p *Parser) ParseKeywordUsage() KeywordUsage {
 	{
 		{
 			p.state.Sync(StateNumber__KeywordUsage__Basic_2)
-			if p.lookahead.KeywordUsageTypeOptional(p.state) {
+			if p.lookahead.KeywordUsageModifierOptional(p.state) {
 				token := p.state.Consume(TokenGroup_TokenModifier)
 				core.AssignToken(current, token, StateNumber__KeywordUsage__Basic_0)
 				if token != nil {
-					current.SetType(token)
+					current.SetModifier(token)
 				}
 			}
 		}

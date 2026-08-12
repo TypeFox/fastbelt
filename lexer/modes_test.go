@@ -119,7 +119,7 @@ func TestUseTokenTypeDefaults(t *testing.T) {
 	usage := UseTokenType(literal(1, "A", "a"))
 	assert.Equal(t, -1, usage.PushMode)
 	assert.False(t, usage.PopMode)
-	assert.Equal(t, 0, usage.Group)
+	assert.Equal(t, 0, usage.Modifier)
 	assert.False(t, usage.IsSkipped())
 	assert.False(t, usage.IsComment())
 }
@@ -139,9 +139,9 @@ func TestTokenTypeUsageBuilders(t *testing.T) {
 	assert.True(t, set.PopMode)
 	assert.Equal(t, 2, set.PushMode)
 
-	assert.True(t, UseTokenType(tokenType).WithGroup(core.SkippedGroup).IsSkipped())
-	assert.True(t, UseTokenType(tokenType).WithGroup(core.CommentGroup).IsComment())
-	assert.False(t, UseTokenType(tokenType).WithGroup(7).IsSkipped())
+	assert.True(t, UseTokenType(tokenType).WithModifier(core.SkippedModifier).IsSkipped())
+	assert.True(t, UseTokenType(tokenType).WithModifier(core.CommentModifier).IsComment())
+	assert.False(t, UseTokenType(tokenType).WithModifier(7).IsSkipped())
 }
 
 // --- TokenModeStack ---

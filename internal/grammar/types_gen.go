@@ -920,9 +920,9 @@ type AbstractTokenRule interface {
 	AbstractRule
 
 	IsAbstractTokenRule()
-	Type() string
-	TypeToken() *core.Token
-	SetType(value *core.Token)
+	Modifier() string
+	ModifierToken() *core.Token
+	SetModifier(value *core.Token)
 	Command() TokenCommand
 	SetCommand(value TokenCommand)
 }
@@ -932,8 +932,8 @@ func NewAbstractTokenRule() AbstractTokenRule {
 }
 
 type AbstractTokenRuleData struct {
-	_Type   *core.Token
-	command TokenCommand
+	modifier *core.Token
+	command  TokenCommand
 }
 
 func (i *AbstractTokenRuleData) IsAbstractTokenRule() {}
@@ -947,20 +947,20 @@ func (i *AbstractTokenRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[
 func (i *AbstractTokenRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *AbstractTokenRuleData) Type() string {
-	if i != nil && i._Type != nil {
-		return i._Type.Image
+func (i *AbstractTokenRuleData) Modifier() string {
+	if i != nil && i.modifier != nil {
+		return i.modifier.Image
 	} else {
 		return ""
 	}
 }
 
-func (i *AbstractTokenRuleData) TypeToken() *core.Token {
-	return i._Type
+func (i *AbstractTokenRuleData) ModifierToken() *core.Token {
+	return i.modifier
 }
 
-func (i *AbstractTokenRuleData) SetType(value *core.Token) {
-	i._Type = value
+func (i *AbstractTokenRuleData) SetModifier(value *core.Token) {
+	i.modifier = value
 }
 
 func (i *AbstractTokenRuleData) Command() TokenCommand {
@@ -1004,10 +1004,10 @@ func (i *AbstractTokenRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, e
 		}
 		child := i.Command()
 		return child.Resolve(path.Tail())
+	case fieldNameModifier:
+		return nil, fmt.Errorf("AbstractTokenRuleImpl.Resolve: field 'modifier' holds a primitive value instead of an ast node")
 	case fieldNameName:
 		return nil, fmt.Errorf("AbstractTokenRuleImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
-	case fieldNameType:
-		return nil, fmt.Errorf("AbstractTokenRuleImpl.Resolve: field '_Type' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("AbstractTokenRuleImpl.Resolve: field '%s' does not exist in node '%s' of type 'AbstractTokenRule'", field.Value(), nodePath)
@@ -1202,10 +1202,10 @@ func (i *TokenDeclImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 		}
 		child := i.Content()
 		return child.Resolve(path.Tail())
+	case fieldNameModifier:
+		return nil, fmt.Errorf("TokenDeclImpl.Resolve: field 'modifier' holds a primitive value instead of an ast node")
 	case fieldNameName:
 		return nil, fmt.Errorf("TokenDeclImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
-	case fieldNameType:
-		return nil, fmt.Errorf("TokenDeclImpl.Resolve: field '_Type' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("TokenDeclImpl.Resolve: field '%s' does not exist in node '%s' of type 'TokenDecl'", field.Value(), nodePath)
@@ -1652,10 +1652,10 @@ func (i *TokenGroupImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 		return child.Resolve(path.Tail())
 	case fieldNameKeywordSelectors:
 		return nil, fmt.Errorf("TokenGroupImpl.Resolve: field 'keywordSelectors' holds a primitive value instead of an ast node")
+	case fieldNameModifier:
+		return nil, fmt.Errorf("TokenGroupImpl.Resolve: field 'modifier' holds a primitive value instead of an ast node")
 	case fieldNameName:
 		return nil, fmt.Errorf("TokenGroupImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
-	case fieldNameType:
-		return nil, fmt.Errorf("TokenGroupImpl.Resolve: field '_Type' holds a primitive value instead of an ast node")
 	case fieldNameTokenRefs:
 		return nil, fmt.Errorf("TokenGroupImpl.Resolve: field 'tokenRefs' is a cross-reference instead of a container field")
 	default:
@@ -2005,9 +2005,9 @@ type TokenUsage interface {
 	TokenModeMember
 
 	IsTokenUsage()
-	Type() string
-	TypeToken() *core.Token
-	SetType(value *core.Token)
+	Modifier() string
+	ModifierToken() *core.Token
+	SetModifier(value *core.Token)
 	TokenRef() *core.Reference[AbstractTokenRule]
 	SetTokenRef(value *core.Reference[AbstractTokenRule])
 	Command() TokenCommand
@@ -2023,7 +2023,7 @@ func NewTokenUsage() TokenUsage {
 }
 
 type TokenUsageData struct {
-	_Type    *core.Token
+	modifier *core.Token
 	tokenRef *core.Reference[AbstractTokenRule]
 	command  TokenCommand
 }
@@ -2046,20 +2046,20 @@ func (i *TokenUsageData) ForEachReference(fn func(core.UntypedReference, unique.
 	}
 }
 
-func (i *TokenUsageData) Type() string {
-	if i != nil && i._Type != nil {
-		return i._Type.Image
+func (i *TokenUsageData) Modifier() string {
+	if i != nil && i.modifier != nil {
+		return i.modifier.Image
 	} else {
 		return ""
 	}
 }
 
-func (i *TokenUsageData) TypeToken() *core.Token {
-	return i._Type
+func (i *TokenUsageData) ModifierToken() *core.Token {
+	return i.modifier
 }
 
-func (i *TokenUsageData) SetType(value *core.Token) {
-	i._Type = value
+func (i *TokenUsageData) SetModifier(value *core.Token) {
+	i.modifier = value
 }
 
 func (i *TokenUsageData) TokenRef() *core.Reference[AbstractTokenRule] {
@@ -2115,8 +2115,8 @@ func (i *TokenUsageImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 		}
 		child := i.Command()
 		return child.Resolve(path.Tail())
-	case fieldNameType:
-		return nil, fmt.Errorf("TokenUsageImpl.Resolve: field '_Type' holds a primitive value instead of an ast node")
+	case fieldNameModifier:
+		return nil, fmt.Errorf("TokenUsageImpl.Resolve: field 'modifier' holds a primitive value instead of an ast node")
 	case fieldNameTokenRef:
 		return nil, fmt.Errorf("TokenUsageImpl.Resolve: field 'tokenRef' is a cross-reference instead of a container field")
 	default:
@@ -2130,9 +2130,9 @@ type KeywordUsage interface {
 	TokenModeMember
 
 	IsKeywordUsage()
-	Type() string
-	TypeToken() *core.Token
-	SetType(value *core.Token)
+	Modifier() string
+	ModifierToken() *core.Token
+	SetModifier(value *core.Token)
 	Keyword() Keyword
 	SetKeyword(value Keyword)
 	Command() TokenCommand
@@ -2148,9 +2148,9 @@ func NewKeywordUsage() KeywordUsage {
 }
 
 type KeywordUsageData struct {
-	_Type   *core.Token
-	keyword Keyword
-	command TokenCommand
+	modifier *core.Token
+	keyword  Keyword
+	command  TokenCommand
 }
 
 func NewKeywordUsageData() KeywordUsageData {
@@ -2171,20 +2171,20 @@ func (i *KeywordUsageData) ForEachNode(fn func(core.AstNode, unique.Handle[strin
 func (i *KeywordUsageData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *KeywordUsageData) Type() string {
-	if i != nil && i._Type != nil {
-		return i._Type.Image
+func (i *KeywordUsageData) Modifier() string {
+	if i != nil && i.modifier != nil {
+		return i.modifier.Image
 	} else {
 		return ""
 	}
 }
 
-func (i *KeywordUsageData) TypeToken() *core.Token {
-	return i._Type
+func (i *KeywordUsageData) ModifierToken() *core.Token {
+	return i.modifier
 }
 
-func (i *KeywordUsageData) SetType(value *core.Token) {
-	i._Type = value
+func (i *KeywordUsageData) SetModifier(value *core.Token) {
+	i.modifier = value
 }
 
 func (i *KeywordUsageData) Keyword() Keyword {
@@ -2247,8 +2247,8 @@ func (i *KeywordUsageImpl) Resolve(path core.FragmentPath) (core.AstNode, error)
 		}
 		child := i.Keyword()
 		return child.Resolve(path.Tail())
-	case fieldNameType:
-		return nil, fmt.Errorf("KeywordUsageImpl.Resolve: field '_Type' holds a primitive value instead of an ast node")
+	case fieldNameModifier:
+		return nil, fmt.Errorf("KeywordUsageImpl.Resolve: field 'modifier' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("KeywordUsageImpl.Resolve: field '%s' does not exist in node '%s' of type 'KeywordUsage'", field.Value(), nodePath)
@@ -3181,6 +3181,7 @@ var (
 	fieldNameKeywords         = unique.Make("keywords")
 	fieldNameMembers          = unique.Make("members")
 	fieldNameMode             = unique.Make("mode")
+	fieldNameModifier         = unique.Make("modifier")
 	fieldNameName             = unique.Make("name")
 	fieldNameOperator         = unique.Make("operator")
 	fieldNameProperty         = unique.Make("property")

@@ -648,9 +648,9 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Keyword_Plus),
 		lexer.UseTokenType(Keyword_LeftParen),
 		lexer.UseTokenType(Keyword_RightParen),
-		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),
-		lexer.UseTokenType(Token_SL_COMMENT).WithGroup(core.CommentGroup),
-		lexer.UseTokenType(Token_ML_COMMENT).WithGroup(core.CommentGroup),
+		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
+		lexer.UseTokenType(Token_SL_COMMENT).WithModifier(core.CommentModifier),
+		lexer.UseTokenType(Token_ML_COMMENT).WithModifier(core.CommentModifier),
 	)
 	modes[TokenMode_IN_STRING] = lexer.NewTokenMode("IN_STRING",
 		lexer.UseTokenType(Keyword_Backtick).WithPopMode(),
@@ -665,9 +665,9 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Keyword_Plus),
 		lexer.UseTokenType(Keyword_LeftParen),
 		lexer.UseTokenType(Keyword_RightParen),
-		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),
-		lexer.UseTokenType(Token_SL_COMMENT).WithGroup(core.CommentGroup),
-		lexer.UseTokenType(Token_ML_COMMENT).WithGroup(core.CommentGroup),
+		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
+		lexer.UseTokenType(Token_SL_COMMENT).WithModifier(core.CommentModifier),
+		lexer.UseTokenType(Token_ML_COMMENT).WithModifier(core.CommentModifier),
 	)
 	return lexer.NewDefaultLexer(TokenMode_default, modes...)
 }

@@ -76,8 +76,8 @@ interface AbstractRuleWithBody extends AbstractRule {
 
 // Base type for TokenDecl and TokenGroup
 interface AbstractTokenRule extends AbstractRule {
-    Type    string
-    Command TokenCommand
+    Modifier string
+    Command  TokenCommand
 }
 
 interface ParserRule extends AbstractRuleWithBody {
@@ -91,7 +91,7 @@ interface TokenDecl extends AbstractTokenRule {
     Content TokenElement
 }
 
-TokenDecl: Type=TokenModifier? "token" Name=ID ":" Content=TokenElement Command=TokenCommand? ";"?
+TokenDecl: Modifier=TokenModifier? "token" Name=ID ":" Content=TokenElement Command=TokenCommand? ";"?
 
 interface TokenElement {}
 
@@ -123,7 +123,7 @@ interface TokenGroup extends AbstractTokenRule {
     KeywordSelectors []string
 }
 
-TokenGroup: Type=TokenModifier? "token" "group" Name=ID "{"
+TokenGroup: Modifier=TokenModifier? "token" "group" Name=ID "{"
     (
         TokenRefs+=[AbstractTokenRule:ID]
         | Keywords+=Keyword
@@ -158,20 +158,20 @@ interface TokenGroupUsage extends TokenModeMember {
 TokenGroupUsage: Group=TokenGroup
 
 interface TokenUsage extends TokenModeMember {
-    Type     string
+    Modifier string
     TokenRef *AbstractTokenRule
     Command  TokenCommand
 }
 
-TokenUsage: Type=TokenModifier? TokenRef=[AbstractTokenRule:ID] Command=TokenCommand? ";"?
+TokenUsage: Modifier=TokenModifier? TokenRef=[AbstractTokenRule:ID] Command=TokenCommand? ";"?
 
 interface KeywordUsage extends TokenModeMember {
-    Type    string
-    Keyword Keyword
-    Command TokenCommand  
+    Modifier string
+    Keyword  Keyword
+    Command  TokenCommand  
 }
 
-KeywordUsage: Type=TokenModifier? Keyword=Keyword Command=TokenCommand? ";"?
+KeywordUsage: Modifier=TokenModifier? Keyword=Keyword Command=TokenCommand? ";"?
 
 interface KeywordSelector extends TokenModeMember {
     Selector string

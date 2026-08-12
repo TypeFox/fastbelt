@@ -333,8 +333,8 @@ func (p *CompletionParser) ParseTokenDecl() {
 	{
 		p.cp.RecordSnapshot(StateNumber__TokenDecl__Basic_2)
 		p.state.Sync(StateNumber__TokenDecl__Basic_2)
-		if p.lookahead.TokenDeclTypeOptional(p.state) {
-			p.cp.MarkAssignment("Type")
+		if p.lookahead.TokenDeclModifierOptional(p.state) {
+			p.cp.MarkAssignment("Modifier")
 			p.state.Consume(TokenGroup_TokenModifier)
 			p.cp.ClearAssignment()
 		}
@@ -470,8 +470,8 @@ func (p *CompletionParser) ParseTokenGroup() {
 	{
 		p.cp.RecordSnapshot(StateNumber__TokenGroup__Basic_2)
 		p.state.Sync(StateNumber__TokenGroup__Basic_2)
-		if p.lookahead.TokenGroupTypeOptional(p.state) {
-			p.cp.MarkAssignment("Type")
+		if p.lookahead.TokenGroupModifierOptional(p.state) {
+			p.cp.MarkAssignment("Modifier")
 			p.state.Consume(TokenGroup_TokenModifier)
 			p.cp.ClearAssignment()
 		}
@@ -660,8 +660,8 @@ func (p *CompletionParser) ParseTokenUsage() {
 	{
 		p.cp.RecordSnapshot(StateNumber__TokenUsage__Basic_2)
 		p.state.Sync(StateNumber__TokenUsage__Basic_2)
-		if p.lookahead.TokenUsageTypeOptional(p.state) {
-			p.cp.MarkAssignment("Type")
+		if p.lookahead.TokenUsageModifierOptional(p.state) {
+			p.cp.MarkAssignment("Modifier")
 			p.state.Consume(TokenGroup_TokenModifier)
 			p.cp.ClearAssignment()
 		}
@@ -695,8 +695,8 @@ func (p *CompletionParser) ParseKeywordUsage() {
 	{
 		p.cp.RecordSnapshot(StateNumber__KeywordUsage__Basic_2)
 		p.state.Sync(StateNumber__KeywordUsage__Basic_2)
-		if p.lookahead.KeywordUsageTypeOptional(p.state) {
-			p.cp.MarkAssignment("Type")
+		if p.lookahead.KeywordUsageModifierOptional(p.state) {
+			p.cp.MarkAssignment("Modifier")
 			p.state.Consume(TokenGroup_TokenModifier)
 			p.cp.ClearAssignment()
 		}

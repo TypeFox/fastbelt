@@ -471,7 +471,7 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Keyword_two),
 		lexer.UseTokenType(Token_ID),
 		lexer.UseTokenType(Token_INT),
-		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),
+		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
 	)
 	return lexer.NewDefaultLexer(TokenMode_default, modes...)
 }

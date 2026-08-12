@@ -6,7 +6,7 @@ type TokenTypeUsage struct {
 	TokenType *core.TokenType
 	PushMode  int
 	PopMode   bool
-	Group     int
+	Modifier  int
 }
 
 type TokenMode struct {
@@ -20,7 +20,7 @@ func UseTokenType(tokenType *core.TokenType) *TokenTypeUsage {
 		TokenType: tokenType,
 		PushMode:  -1,
 		PopMode:   false,
-		Group:     0,
+		Modifier:  0,
 	}
 }
 
@@ -40,19 +40,19 @@ func (ttu *TokenTypeUsage) WithSetMode(mode int) *TokenTypeUsage {
 	return ttu
 }
 
-func (ttu *TokenTypeUsage) WithGroup(group int) *TokenTypeUsage {
-	ttu.Group = group
+func (ttu *TokenTypeUsage) WithModifier(modifier int) *TokenTypeUsage {
+	ttu.Modifier = modifier
 	return ttu
 }
 
 // IsSkipped reports whether t is routed to the skipped-token group.
 func (t *TokenTypeUsage) IsSkipped() bool {
-	return t.Group == core.SkippedGroup
+	return t.Modifier == core.SkippedModifier
 }
 
 // IsComment reports whether t is routed to the comment-token group.
 func (t *TokenTypeUsage) IsComment() bool {
-	return t.Group == core.CommentGroup
+	return t.Modifier == core.CommentModifier
 }
 
 // NewTokenMode returns a token mode that recognizes the given token types.

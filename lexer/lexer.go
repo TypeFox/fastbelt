@@ -83,10 +83,10 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 		end := offset + longestMatch
 
 		if longestType != nil {
-			switch longestType.Group {
-			case core.SkippedGroup:
+			switch longestType.Modifier {
+			case core.SkippedModifier:
 				// do nothing
-			case core.CommentGroup:
+			case core.CommentModifier:
 				comments = append(comments, core.NewToken(
 					longestType.TokenType,
 					input[offset:end],
@@ -102,7 +102,7 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 				if groups == nil {
 					groups = make(map[int][]core.Token)
 				}
-				groups[longestType.Group] = append(groups[longestType.Group], core.NewToken(
+				groups[longestType.Modifier] = append(groups[longestType.Modifier], core.NewToken(
 					longestType.TokenType,
 					input[offset:end],
 					offset, end,

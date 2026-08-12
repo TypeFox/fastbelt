@@ -539,9 +539,9 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Keyword_LeftBrace),
 		lexer.UseTokenType(Keyword_RightBrace),
 		lexer.UseTokenType(Token_ID),
-		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),
-		lexer.UseTokenType(Token_ML_COMMENT).WithGroup(core.CommentGroup),
-		lexer.UseTokenType(Token_SL_COMMENT).WithGroup(core.CommentGroup),
+		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
+		lexer.UseTokenType(Token_ML_COMMENT).WithModifier(core.CommentModifier),
+		lexer.UseTokenType(Token_SL_COMMENT).WithModifier(core.CommentModifier),
 	)
 	return lexer.NewDefaultLexer(TokenMode_default, modes...)
 }

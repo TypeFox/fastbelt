@@ -1211,7 +1211,7 @@ func appearsInTokenGroup(target TokenGroup, current TokenGroup, ctx context.Cont
 }
 
 func hiddenOrCommentTokenDescription(tokenDecl AbstractTokenRule) (description string, ok bool) {
-	switch tokenDecl.Type() {
+	switch tokenDecl.Modifier() {
 	case "hidden":
 		return "hidden", true
 	case "comment":

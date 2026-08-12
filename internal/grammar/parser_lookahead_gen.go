@@ -124,8 +124,8 @@ type FastbeltParserLookahead interface {
 	InterfaceOptional(state *parser.ParserState) bool
 	KeywordSelectorSemicolonOptional(state *parser.ParserState) bool
 	KeywordUsageCommandOptional(state *parser.ParserState) bool
+	KeywordUsageModifierOptional(state *parser.ParserState) bool
 	KeywordUsageSemicolonOptional(state *parser.ParserState) bool
-	KeywordUsageTypeOptional(state *parser.ParserState) bool
 	ParserRuleEntryOptional(state *parser.ParserState) bool
 	ParserRuleOptional(state *parser.ParserState) bool
 	ParserRuleSemicolonOptional(state *parser.ParserState) bool
@@ -134,19 +134,19 @@ type FastbeltParserLookahead interface {
 	TokenCommandOptional(state *parser.ParserState) bool
 	TokenCommandTypeAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	TokenDeclCommandOptional(state *parser.ParserState) bool
+	TokenDeclModifierOptional(state *parser.ParserState) bool
 	TokenDeclSemicolonOptional(state *parser.ParserState) bool
-	TokenDeclTypeOptional(state *parser.ParserState) bool
 	TokenElementAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	TokenGroupAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	TokenGroupCommandOptional(state *parser.ParserState) bool
+	TokenGroupModifierOptional(state *parser.ParserState) bool
 	TokenGroupSemicolonOptional(state *parser.ParserState) bool
-	TokenGroupTypeOptional(state *parser.ParserState) bool
 	TokenModeAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	TokenModeMemberAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	TokenModeMembersLoop(state *parser.ParserState) bool
 	TokenUsageCommandOptional(state *parser.ParserState) bool
+	TokenUsageModifierOptional(state *parser.ParserState) bool
 	TokenUsageSemicolonOptional(state *parser.ParserState) bool
-	TokenUsageTypeOptional(state *parser.ParserState) bool
 }
 
 // DefaultFastbeltParserLookahead resolves every decision with the parser state's built-in
@@ -284,12 +284,12 @@ func (l *DefaultFastbeltParserLookahead) KeywordUsageCommandOptional(state *pars
 	return state.LA(1).Type == Keyword_DashGreaterThan
 }
 
-func (l *DefaultFastbeltParserLookahead) KeywordUsageSemicolonOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_Semicolon
+func (l *DefaultFastbeltParserLookahead) KeywordUsageModifierOptional(state *parser.ParserState) bool {
+	return TokenGroup_TokenModifier.Matches(state.LA(1).Type)
 }
 
-func (l *DefaultFastbeltParserLookahead) KeywordUsageTypeOptional(state *parser.ParserState) bool {
-	return TokenGroup_TokenModifier.Matches(state.LA(1).Type)
+func (l *DefaultFastbeltParserLookahead) KeywordUsageSemicolonOptional(state *parser.ParserState) bool {
+	return state.LA(1).Type == Keyword_Semicolon
 }
 
 func (l *DefaultFastbeltParserLookahead) ParserRuleEntryOptional(state *parser.ParserState) bool {
@@ -324,12 +324,12 @@ func (l *DefaultFastbeltParserLookahead) TokenDeclCommandOptional(state *parser.
 	return state.LA(1).Type == Keyword_DashGreaterThan
 }
 
-func (l *DefaultFastbeltParserLookahead) TokenDeclSemicolonOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_Semicolon
+func (l *DefaultFastbeltParserLookahead) TokenDeclModifierOptional(state *parser.ParserState) bool {
+	return TokenGroup_TokenModifier.Matches(state.LA(1).Type)
 }
 
-func (l *DefaultFastbeltParserLookahead) TokenDeclTypeOptional(state *parser.ParserState) bool {
-	return TokenGroup_TokenModifier.Matches(state.LA(1).Type)
+func (l *DefaultFastbeltParserLookahead) TokenDeclSemicolonOptional(state *parser.ParserState) bool {
+	return state.LA(1).Type == Keyword_Semicolon
 }
 
 func (l *DefaultFastbeltParserLookahead) TokenElementAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
@@ -344,12 +344,12 @@ func (l *DefaultFastbeltParserLookahead) TokenGroupCommandOptional(state *parser
 	return state.LA(1).Type == Keyword_DashGreaterThan
 }
 
-func (l *DefaultFastbeltParserLookahead) TokenGroupSemicolonOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_Semicolon
+func (l *DefaultFastbeltParserLookahead) TokenGroupModifierOptional(state *parser.ParserState) bool {
+	return TokenGroup_TokenModifier.Matches(state.LA(1).Type)
 }
 
-func (l *DefaultFastbeltParserLookahead) TokenGroupTypeOptional(state *parser.ParserState) bool {
-	return TokenGroup_TokenModifier.Matches(state.LA(1).Type)
+func (l *DefaultFastbeltParserLookahead) TokenGroupSemicolonOptional(state *parser.ParserState) bool {
+	return state.LA(1).Type == Keyword_Semicolon
 }
 
 func (l *DefaultFastbeltParserLookahead) TokenModeAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
@@ -369,10 +369,10 @@ func (l *DefaultFastbeltParserLookahead) TokenUsageCommandOptional(state *parser
 	return state.LA(1).Type == Keyword_DashGreaterThan
 }
 
-func (l *DefaultFastbeltParserLookahead) TokenUsageSemicolonOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_Semicolon
+func (l *DefaultFastbeltParserLookahead) TokenUsageModifierOptional(state *parser.ParserState) bool {
+	return TokenGroup_TokenModifier.Matches(state.LA(1).Type)
 }
 
-func (l *DefaultFastbeltParserLookahead) TokenUsageTypeOptional(state *parser.ParserState) bool {
-	return TokenGroup_TokenModifier.Matches(state.LA(1).Type)
+func (l *DefaultFastbeltParserLookahead) TokenUsageSemicolonOptional(state *parser.ParserState) bool {
+	return state.LA(1).Type == Keyword_Semicolon
 }

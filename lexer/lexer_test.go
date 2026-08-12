@@ -53,11 +53,11 @@ func stringLexer(customGroup int) *DefaultLexer {
 	modes[modeDefault] = NewTokenMode("default",
 		UseTokenType(quote).WithPushMode(modeString),
 		UseTokenType(id),
-		UseTokenType(ws).WithGroup(core.SkippedGroup),
+		UseTokenType(ws).WithModifier(core.SkippedModifier),
 	)
 	modes[modeString] = NewTokenMode("IN_STRING",
 		UseTokenType(quote).WithPopMode(),
-		UseTokenType(text).WithGroup(customGroup),
+		UseTokenType(text).WithModifier(customGroup),
 	)
 	return NewDefaultLexer(modeDefault, modes...)
 }
@@ -100,9 +100,9 @@ func TestExecRoutesTokensToGroups(t *testing.T) {
 	other := literal(4, "OTHER", "!")
 	lexer := NewDefaultLexer(0, NewTokenMode("default",
 		UseTokenType(word),
-		UseTokenType(ws).WithGroup(core.SkippedGroup),
-		UseTokenType(comment).WithGroup(core.CommentGroup),
-		UseTokenType(other).WithGroup(7),
+		UseTokenType(ws).WithModifier(core.SkippedModifier),
+		UseTokenType(comment).WithModifier(core.CommentModifier),
+		UseTokenType(other).WithModifier(7),
 	))
 
 	result := lexer.Exec("ab #ff!")
@@ -130,7 +130,7 @@ func TestExecCollectsCustomGroupFromNonDefaultMode(t *testing.T) {
 }
 
 func TestExecSkipsHiddenTokenFromNonDefaultMode(t *testing.T) {
-	lexer := stringLexer(core.SkippedGroup)
+	lexer := stringLexer(core.SkippedModifier)
 
 	result := lexer.Exec(`ab "inside" cd`)
 	assert.Equal(t, []string{"ab", `"`, `"`, "cd"}, images(result.Tokens))
@@ -138,7 +138,7 @@ func TestExecSkipsHiddenTokenFromNonDefaultMode(t *testing.T) {
 }
 
 func TestExecCollectsCommentFromNonDefaultMode(t *testing.T) {
-	lexer := stringLexer(core.CommentGroup)
+	lexer := stringLexer(core.CommentModifier)
 
 	result := lexer.Exec(`ab "inside" cd`)
 	assert.Equal(t, []string{"inside"}, images(result.Comments))
@@ -273,7 +273,7 @@ func TestExecPopAndGroupApplyTogether(t *testing.T) {
 		UseTokenType(outside),
 	)
 	modes[1] = NewTokenMode("inner",
-		UseTokenType(leave).WithPopMode().WithGroup(core.CommentGroup),
+		UseTokenType(leave).WithPopMode().WithModifier(core.CommentModifier),
 		UseTokenType(inside),
 	)
 	lexer := NewDefaultLexer(0, modes...)

@@ -121,9 +121,9 @@ func generateTokenTypeUsage(context context.Context, nn codegen.Node, tokenType 
 		}
 		switch usage.TokenModifier {
 		case "comment":
-			nn.Append(".WithGroup(core.CommentGroup)")
+			nn.Append(".WithModifier(core.CommentModifier)")
 		case "hidden":
-			nn.Append(".WithGroup(core.SkippedGroup)")
+			nn.Append(".WithModifier(core.SkippedModifier)")
 		}
 	}
 	nn.AppendLine(",")

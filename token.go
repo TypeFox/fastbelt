@@ -6,11 +6,11 @@ package fastbelt
 
 import "typefox.dev/fastbelt/util/collections"
 
-// SkippedGroup marks token types that the lexer should drop from all output streams.
-const SkippedGroup = -1
+// SkippedModifier marks token types that the lexer should drop from all output streams.
+const SkippedModifier = -1
 
-// CommentGroup marks token types that the lexer should collect in Document.Comments.
-const CommentGroup = -2
+// CommentModifier marks token types that the lexer should collect in Document.Comments.
+const CommentModifier = -2
 
 // TokenKind names the grammar construct that produced a TokenType. It is
 // distinct from Group: Group controls lexer-stream behaviour (skipped /

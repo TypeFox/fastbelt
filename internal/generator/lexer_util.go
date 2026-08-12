@@ -148,29 +148,29 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 			case grammar.TokenDeclUsage:
 				token := member.Declaration()
 				tokenIndex := result.TokenIndex.ByToken[token]
-				pushTokenTypeUsage(tokenIndex, token.Type(), token.Command())
+				pushTokenTypeUsage(tokenIndex, token.Modifier(), token.Command())
 			case grammar.TokenGroupUsage:
 				tokenGroup := member.Group()
 				tokenIndex := result.TokenIndex.ByTokenGroup[tokenGroup]
-				pushTokenTypeUsage(tokenIndex, tokenGroup.Type(), tokenGroup.Command())
+				pushTokenTypeUsage(tokenIndex, tokenGroup.Modifier(), tokenGroup.Command())
 			case grammar.KeywordUsage:
 				tokenIndex := result.TokenIndex.ByKeyword[member.Keyword().Value()]
-				pushTokenTypeUsage(tokenIndex, member.Type(), member.Command())
+				pushTokenTypeUsage(tokenIndex, member.Modifier(), member.Command())
 			case grammar.TokenUsage:
 				token := member.TokenRef().Ref(context.Background())
 				var tokenIndex int
 				switch rule := token.(type) {
 				case grammar.TokenDecl:
 					tokenIndex = result.TokenIndex.ByToken[rule]
-					pushTokenTypeUsage(tokenIndex, rule.Type(), rule.Command())
+					pushTokenTypeUsage(tokenIndex, rule.Modifier(), rule.Command())
 				case grammar.TokenGroup:
 					tokenIndex = result.TokenIndex.ByTokenGroup[rule]
-					pushTokenTypeUsage(tokenIndex, rule.Type(), rule.Command())
+					pushTokenTypeUsage(tokenIndex, rule.Modifier(), rule.Command())
 				}
 				//overwrite usage if defined on token mode level
-				if member.Type() != "" || member.Command() != nil {
+				if member.Modifier() != "" || member.Command() != nil {
 					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-						TokenModifier: member.Type(),
+						TokenModifier: member.Modifier(),
 						Command:       member.Command(),
 					}
 				}
@@ -202,9 +202,9 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 		for _, tokenGroup := range tokenGroups.TopLevel {
 			tokenIndex := result.TokenIndex.ByTokenGroup[tokenGroup]
 			defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
-			if tokenGroup.Type() != "" || tokenGroup.Command() != nil {
+			if tokenGroup.Modifier() != "" || tokenGroup.Command() != nil {
 				defaultMode.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-					TokenModifier: tokenGroup.Type(),
+					TokenModifier: tokenGroup.Modifier(),
 					Command:       tokenGroup.Command(),
 				}
 			}
@@ -221,9 +221,9 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 				//non-keywords only, since keywords are already added above
 				tokenIndex := result.TokenIndex.ByToken[token]
 				defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
-				if token.Type() != "" || token.Command() != nil {
+				if token.Modifier() != "" || token.Command() != nil {
 					defaultMode.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-						TokenModifier: token.Type(),
+						TokenModifier: token.Modifier(),
 						Command:       token.Command(),
 					}
 				}
@@ -290,9 +290,9 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 			result.TokenIndex.ByToken[token] = currentTokenIndex
 			tokenIndex++
 		}
-		if token.Type() != "" || token.Command() != nil {
+		if token.Modifier() != "" || token.Command() != nil {
 			result.TokenTypeUsages[currentTokenIndex] = TokenTypeUsage{
-				TokenModifier: token.Type(),
+				TokenModifier: token.Modifier(),
 				Command:       token.Command(),
 			}
 		}
