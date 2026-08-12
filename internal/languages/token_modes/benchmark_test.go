@@ -5,7 +5,6 @@ import (
 
 	"typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
-	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
 )
 
@@ -13,7 +12,6 @@ func BenchmarkNestedString(b *testing.B) {
 	content, _ := generateNestedString()
 	srv := CreateServices()
 	lexerService := service.MustGet[lexer.Lexer](srv)
-	parserService := service.MustGet[parser.Parser](srv)
 	doc, err := fastbelt.NewDocumentFromString("file:///workspace/nested_string.mode", "modes", content)
 	if err != nil {
 		b.Fatal(err)
@@ -23,8 +21,6 @@ func BenchmarkNestedString(b *testing.B) {
 	for b.Loop() {
 		lexerResult := lexerService.Exec(content)
 		doc.Tokens = lexerResult.Tokens
-		parserResult := parserService.Parse(doc)
-		doc.Root = parserResult.Node
 	}
 }
 

@@ -75,7 +75,7 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, token
 	node.AppendLine("func NewLexer() lexer.Lexer {")
 	node.Indent(func(n codegen.Node) {
 		count := strconv.Itoa(len(tokenTypes.TokenModes))
-		n.AppendLine("modes := make([]*lexer.TokenMode, " + count + ", " + count + ")")
+		n.AppendLine("modes := make([]*lexer.TokenMode, " + count + ")")
 		for _, modeName := range tokenTypes.TokenModeOrder {
 			tokenMode := tokenTypes.TokenModes[modeName]
 			varName := "modes[" + tokenTypes.TokenModes[modeName].VarName + "]"
