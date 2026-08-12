@@ -169,46 +169,6 @@ var Keyword_RightBrace = core.NewTokenType(
 	[]rune{'}'},
 )
 
-const Token_STATEMACHINE_Idx = Keyword_statemachine_Idx
-
-var Token_STATEMACHINE = Keyword_statemachine
-
-const Token_EVENTS_Idx = Keyword_events_Idx
-
-var Token_EVENTS = Keyword_events
-
-const Token_COMMANDS_Idx = Keyword_commands_Idx
-
-var Token_COMMANDS = Keyword_commands
-
-const Token_INITIALSTATE_Idx = Keyword_initialState_Idx
-
-var Token_INITIALSTATE = Keyword_initialState
-
-const Token_STATE_Idx = Keyword_state_Idx
-
-var Token_STATE = Keyword_state
-
-const Token_ACTIONS_Idx = Keyword_actions_Idx
-
-var Token_ACTIONS = Keyword_actions
-
-const Token_LBRACE_Idx = Keyword_LeftBrace_Idx
-
-var Token_LBRACE = Keyword_LeftBrace
-
-const Token_RBRACE_Idx = Keyword_RightBrace_Idx
-
-var Token_RBRACE = Keyword_RightBrace
-
-const Token_ARROW_Idx = Keyword_EqualsGreaterThan_Idx
-
-var Token_ARROW = Keyword_EqualsGreaterThan
-
-const Token_END_Idx = Keyword_end_Idx
-
-var Token_END = Keyword_end
-
 const Token_ID_Idx = 11
 
 var Token_ID = core.NewTokenType(
@@ -568,16 +528,16 @@ const (
 func NewLexer() lexer.Lexer {
 	modes := make([]*lexer.TokenMode, 1, 1)
 	modes[TokenMode_default] = lexer.NewTokenMode("default",
-		lexer.UseTokenType(Token_STATEMACHINE),
-		lexer.UseTokenType(Token_EVENTS),
-		lexer.UseTokenType(Token_COMMANDS),
-		lexer.UseTokenType(Token_INITIALSTATE),
-		lexer.UseTokenType(Token_STATE),
-		lexer.UseTokenType(Token_ACTIONS),
-		lexer.UseTokenType(Token_LBRACE),
-		lexer.UseTokenType(Token_RBRACE),
-		lexer.UseTokenType(Token_ARROW),
-		lexer.UseTokenType(Token_END),
+		lexer.UseTokenType(Keyword_EqualsGreaterThan),
+		lexer.UseTokenType(Keyword_actions),
+		lexer.UseTokenType(Keyword_commands),
+		lexer.UseTokenType(Keyword_end),
+		lexer.UseTokenType(Keyword_events),
+		lexer.UseTokenType(Keyword_initialState),
+		lexer.UseTokenType(Keyword_state),
+		lexer.UseTokenType(Keyword_statemachine),
+		lexer.UseTokenType(Keyword_LeftBrace),
+		lexer.UseTokenType(Keyword_RightBrace),
 		lexer.UseTokenType(Token_ID),
 		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),
 		lexer.UseTokenType(Token_ML_COMMENT).WithGroup(core.CommentGroup),

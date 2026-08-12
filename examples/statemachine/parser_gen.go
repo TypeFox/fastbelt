@@ -37,8 +37,8 @@ func (p *Parser) ParseStatemachine() Statemachine {
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
-			token := p.state.Consume(Token_STATEMACHINE)
-			core.AssignToken(current, token, StateNumber__Statemachine_STATEMACHINE)
+			token := p.state.Consume(Keyword_statemachine)
+			core.AssignToken(current, token, StateNumber__Statemachine_statemachine)
 		}
 		{
 			token := p.state.Consume(Token_ID)
@@ -50,8 +50,8 @@ func (p *Parser) ParseStatemachine() Statemachine {
 		p.state.Sync(StateNumber__Statemachine__Basic_2)
 		if p.lookahead.StatemachineOptional_0(p.state) {
 			{
-				token := p.state.Consume(Token_EVENTS)
-				core.AssignToken(current, token, StateNumber__Statemachine_EVENTS)
+				token := p.state.Consume(Keyword_events)
+				core.AssignToken(current, token, StateNumber__Statemachine_events)
 			}
 			{
 				for ok := true; ok; ok = p.lookahead.StatemachineEventsLoop(p.state) {
@@ -68,8 +68,8 @@ func (p *Parser) ParseStatemachine() Statemachine {
 		p.state.Sync(StateNumber__Statemachine__Basic_5)
 		if p.lookahead.StatemachineOptional_1(p.state) {
 			{
-				token := p.state.Consume(Token_COMMANDS)
-				core.AssignToken(current, token, StateNumber__Statemachine_COMMANDS)
+				token := p.state.Consume(Keyword_commands)
+				core.AssignToken(current, token, StateNumber__Statemachine_commands)
 			}
 			{
 				for ok := true; ok; ok = p.lookahead.StatemachineCommandsLoop(p.state) {
@@ -84,8 +84,8 @@ func (p *Parser) ParseStatemachine() Statemachine {
 			}
 		}
 		{
-			token := p.state.Consume(Token_INITIALSTATE)
-			core.AssignToken(current, token, StateNumber__Statemachine_INITIALSTATE)
+			token := p.state.Consume(Keyword_initialState)
+			core.AssignToken(current, token, StateNumber__Statemachine_initialState)
 		}
 		{
 			token := p.state.Consume(Token_ID)
@@ -148,8 +148,8 @@ func (p *Parser) ParseState() State {
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
-			token := p.state.Consume(Token_STATE)
-			core.AssignToken(current, token, StateNumber__State_STATE)
+			token := p.state.Consume(Keyword_state)
+			core.AssignToken(current, token, StateNumber__State_state)
 		}
 		{
 			token := p.state.Consume(Token_ID)
@@ -161,12 +161,12 @@ func (p *Parser) ParseState() State {
 		p.state.Sync(StateNumber__State__Basic_2)
 		if p.lookahead.StateOptional(p.state) {
 			{
-				token := p.state.Consume(Token_ACTIONS)
-				core.AssignToken(current, token, StateNumber__State_ACTIONS)
+				token := p.state.Consume(Keyword_actions)
+				core.AssignToken(current, token, StateNumber__State_actions)
 			}
 			{
-				token := p.state.Consume(Token_LBRACE)
-				core.AssignToken(current, token, StateNumber__State_LBRACE)
+				token := p.state.Consume(Keyword_LeftBrace)
+				core.AssignToken(current, token, StateNumber__State_LeftBrace)
 			}
 			{
 				for ok := true; ok; ok = p.lookahead.StateActionsLoop(p.state) {
@@ -179,8 +179,8 @@ func (p *Parser) ParseState() State {
 				}
 			}
 			{
-				token := p.state.Consume(Token_RBRACE)
-				core.AssignToken(current, token, StateNumber__State_RBRACE)
+				token := p.state.Consume(Keyword_RightBrace)
+				core.AssignToken(current, token, StateNumber__State_RightBrace)
 			}
 		}
 		{
@@ -196,8 +196,8 @@ func (p *Parser) ParseState() State {
 			}
 		}
 		{
-			token := p.state.Consume(Token_END)
-			core.AssignToken(current, token, StateNumber__State_END)
+			token := p.state.Consume(Keyword_end)
+			core.AssignToken(current, token, StateNumber__State_end)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -216,8 +216,8 @@ func (p *Parser) ParseTransition() Transition {
 			}
 		}
 		{
-			token := p.state.Consume(Token_ARROW)
-			core.AssignToken(current, token, StateNumber__Transition_ARROW)
+			token := p.state.Consume(Keyword_EqualsGreaterThan)
+			core.AssignToken(current, token, StateNumber__Transition_EqualsGreaterThan)
 		}
 		{
 			token := p.state.Consume(Token_ID)

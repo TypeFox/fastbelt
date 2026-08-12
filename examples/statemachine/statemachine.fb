@@ -9,13 +9,13 @@ interface Statemachine {
 }
 
 entry Statemachine returns Statemachine:
-    STATEMACHINE
+    "statemachine"
     Name=ID
-    (EVENTS
+    ("events"
         Events+=Event+)?
-    (COMMANDS
+    ("commands"
       Commands+=Command+)?
-    INITIALSTATE
+    "initialState"
     Init=[State:ID]
     States+=State*
 
@@ -40,10 +40,10 @@ interface State {
 }
 
 State returns State:
-    STATE Name=ID
-        (ACTIONS LBRACE Actions+=[Command:ID]+ RBRACE)?
+    "state" Name=ID
+        ("actions" "{" Actions+=[Command:ID]+ "}")?
         Transitions+=Transition*
-    END
+    "end"
 
 interface Transition {
     Event *Event
@@ -51,39 +51,11 @@ interface Transition {
 }
 
 Transition returns Transition:
-    Event=[Event:ID] ARROW
+    Event=[Event:ID] "=>"
     State=[State:ID]
 
-token STATEMACHINE: "statemachine"
-token EVENTS: "events"
-token COMMANDS: "commands"
-token INITIALSTATE: "initialState"
-token STATE: "state"
-token ACTIONS: "actions"
-token LBRACE: "{"
-token RBRACE: "}"
-token ARROW: "=>"
-token END: "end"
-
 token ID: /[_a-zA-Z][\w_]*/
-token WS: /\s+/
-token ML_COMMENT: /\/\*[\s\S]*?\*\//
-token SL_COMMENT: /\/\/[^\n\r]*/
 
-token mode default {
-    STATEMACHINE
-    EVENTS
-    COMMANDS
-    INITIALSTATE
-    STATE
-    ACTIONS
-    LBRACE
-    RBRACE
-    ARROW
-    END
-
-    ID
-    hidden WS
-    comment ML_COMMENT
-    comment SL_COMMENT
-}
+hidden token WS: /\s+/
+comment token ML_COMMENT: /\/\*[\s\S]*?\*\//
+comment token SL_COMMENT: /\/\/[^\n\r]*/

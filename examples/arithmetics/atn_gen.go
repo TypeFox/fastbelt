@@ -30,7 +30,7 @@ const (
 	StateNumber__Modulo__Stop
 	StateNumber__PrimaryExpression__Start
 	StateNumber__PrimaryExpression__Stop
-	StateNumber__Module_MODULE
+	StateNumber__Module_module
 	StateNumber__Module_Name_ID
 	StateNumber__Module__Basic_0
 	StateNumber__Module__Basic_1
@@ -43,34 +43,34 @@ const (
 	StateNumber__Statement__Basic_3
 	StateNumber__Statement__Basic_4
 	StateNumber__Statement__BlockEnd
-	StateNumber__Definition_DEF
+	StateNumber__Definition_def
 	StateNumber__Definition_Name_ID
-	StateNumber__Definition_LPAREN
+	StateNumber__Definition_LeftParen
 	StateNumber__Definition__Basic_0
-	StateNumber__Definition_COMMA
+	StateNumber__Definition_Comma
 	StateNumber__Definition__Basic_1
 	StateNumber__Definition__Basic_2
 	StateNumber__Definition__LoopEntry
 	StateNumber__Definition__LoopEnd
 	StateNumber__Definition__LoopBack
-	StateNumber__Definition_RPAREN
+	StateNumber__Definition_RightParen
 	StateNumber__Definition__Basic_3
 	StateNumber__Definition__Basic_4
-	StateNumber__Definition_COLON
+	StateNumber__Definition_Colon
 	StateNumber__Definition__Basic_5
-	StateNumber__Definition_SEMICOLON
+	StateNumber__Definition_Semicolon
 	StateNumber__Definition__Basic_6
 	StateNumber__DeclaredParameter_Name_ID
 	StateNumber__DeclaredParameter__Basic
 	StateNumber__Evaluation__Basic_0
-	StateNumber__Evaluation_SEMICOLON
+	StateNumber__Evaluation_Semicolon
 	StateNumber__Evaluation__Basic_1
 	StateNumber__Expression__Basic_0
 	StateNumber__Expression__Basic_1
 	StateNumber__Addition__Basic_0
-	StateNumber__Addition_Operator_PLUS
+	StateNumber__Addition_Operator_Plus
 	StateNumber__Addition__Basic_1
-	StateNumber__Addition_Operator_MINUS
+	StateNumber__Addition_Operator_Dash
 	StateNumber__Addition__Basic_2
 	StateNumber__Addition__Basic_3
 	StateNumber__Addition__BlockEnd
@@ -80,9 +80,9 @@ const (
 	StateNumber__Addition__LoopEnd
 	StateNumber__Addition__LoopBack
 	StateNumber__Multiplication__Basic_0
-	StateNumber__Multiplication_Operator_STAR
+	StateNumber__Multiplication_Operator_Asterisk
 	StateNumber__Multiplication__Basic_1
-	StateNumber__Multiplication_Operator_SLASH
+	StateNumber__Multiplication_Operator_Slash
 	StateNumber__Multiplication__Basic_2
 	StateNumber__Multiplication__Basic_3
 	StateNumber__Multiplication__BlockEnd
@@ -92,35 +92,35 @@ const (
 	StateNumber__Multiplication__LoopEnd
 	StateNumber__Multiplication__LoopBack
 	StateNumber__Exponentiation__Basic_0
-	StateNumber__Exponentiation_Operator_CARET
+	StateNumber__Exponentiation_Operator_Caret
 	StateNumber__Exponentiation__Basic_1
 	StateNumber__Exponentiation__Basic_2
 	StateNumber__Exponentiation__LoopEntry
 	StateNumber__Exponentiation__LoopEnd
 	StateNumber__Exponentiation__LoopBack
 	StateNumber__Modulo__Basic_0
-	StateNumber__Modulo_Operator_PERCENT
+	StateNumber__Modulo_Operator_Percent
 	StateNumber__Modulo__Basic_1
 	StateNumber__Modulo__Basic_2
 	StateNumber__Modulo__LoopEntry
 	StateNumber__Modulo__LoopEnd
 	StateNumber__Modulo__LoopBack
-	StateNumber__PrimaryExpression_LPAREN_0
+	StateNumber__PrimaryExpression_LeftParen_0
 	StateNumber__PrimaryExpression__Basic_0
-	StateNumber__PrimaryExpression_RPAREN_0
+	StateNumber__PrimaryExpression_RightParen_0
 	StateNumber__PrimaryExpression__Basic_1
 	StateNumber__PrimaryExpression_Value_NUMBER
 	StateNumber__PrimaryExpression__Basic_2
 	StateNumber__PrimaryExpression_Callable_ID
-	StateNumber__PrimaryExpression_LPAREN_1
+	StateNumber__PrimaryExpression_LeftParen_1
 	StateNumber__PrimaryExpression__Basic_3
-	StateNumber__PrimaryExpression_COMMA
+	StateNumber__PrimaryExpression_Comma
 	StateNumber__PrimaryExpression__Basic_4
 	StateNumber__PrimaryExpression__Basic_5
 	StateNumber__PrimaryExpression__LoopEntry
 	StateNumber__PrimaryExpression__LoopEnd
 	StateNumber__PrimaryExpression__LoopBack
-	StateNumber__PrimaryExpression_RPAREN_1
+	StateNumber__PrimaryExpression_RightParen_1
 	StateNumber__PrimaryExpression__Basic_6
 	StateNumber__PrimaryExpression__Basic_7
 	StateNumber__PrimaryExpression__Basic_8
@@ -160,7 +160,7 @@ func BuildATN() *parser.RuntimeATN {
 	states[StateNumber__Modulo__Stop] = parser.NewATNState(StateNumber__Modulo__Stop, parser.ATNRuleStop, false)
 	states[StateNumber__PrimaryExpression__Start] = parser.NewATNState(StateNumber__PrimaryExpression__Start, parser.ATNRuleStart, true)
 	states[StateNumber__PrimaryExpression__Stop] = parser.NewATNState(StateNumber__PrimaryExpression__Stop, parser.ATNRuleStop, false)
-	states[StateNumber__Module_MODULE] = parser.NewATNState(StateNumber__Module_MODULE, parser.ATNBasic, false)
+	states[StateNumber__Module_module] = parser.NewATNState(StateNumber__Module_module, parser.ATNBasic, false)
 	states[StateNumber__Module_Name_ID] = parser.NewATNState(StateNumber__Module_Name_ID, parser.ATNBasic, false)
 	states[StateNumber__Module__Basic_0] = parser.NewATNState(StateNumber__Module__Basic_0, parser.ATNBasic, true)
 	states[StateNumber__Module__Basic_1] = parser.NewATNState(StateNumber__Module__Basic_1, parser.ATNBasic, true)
@@ -173,34 +173,34 @@ func BuildATN() *parser.RuntimeATN {
 	states[StateNumber__Statement__Basic_3] = parser.NewATNState(StateNumber__Statement__Basic_3, parser.ATNBasic, true)
 	states[StateNumber__Statement__Basic_4] = parser.NewATNState(StateNumber__Statement__Basic_4, parser.ATNBasic, true).SetDecision(1)
 	states[StateNumber__Statement__BlockEnd] = parser.NewATNState(StateNumber__Statement__BlockEnd, parser.ATNBlockEnd, true)
-	states[StateNumber__Definition_DEF] = parser.NewATNState(StateNumber__Definition_DEF, parser.ATNBasic, false)
+	states[StateNumber__Definition_def] = parser.NewATNState(StateNumber__Definition_def, parser.ATNBasic, false)
 	states[StateNumber__Definition_Name_ID] = parser.NewATNState(StateNumber__Definition_Name_ID, parser.ATNBasic, false)
-	states[StateNumber__Definition_LPAREN] = parser.NewATNState(StateNumber__Definition_LPAREN, parser.ATNBasic, false)
+	states[StateNumber__Definition_LeftParen] = parser.NewATNState(StateNumber__Definition_LeftParen, parser.ATNBasic, false)
 	states[StateNumber__Definition__Basic_0] = parser.NewATNState(StateNumber__Definition__Basic_0, parser.ATNBasic, true)
-	states[StateNumber__Definition_COMMA] = parser.NewATNState(StateNumber__Definition_COMMA, parser.ATNBasic, false)
+	states[StateNumber__Definition_Comma] = parser.NewATNState(StateNumber__Definition_Comma, parser.ATNBasic, false)
 	states[StateNumber__Definition__Basic_1] = parser.NewATNState(StateNumber__Definition__Basic_1, parser.ATNBasic, true)
 	states[StateNumber__Definition__Basic_2] = parser.NewATNState(StateNumber__Definition__Basic_2, parser.ATNBasic, true)
 	states[StateNumber__Definition__LoopEntry] = parser.NewATNState(StateNumber__Definition__LoopEntry, parser.ATNLoopEntry, true).SetDecision(2)
 	states[StateNumber__Definition__LoopEnd] = parser.NewATNState(StateNumber__Definition__LoopEnd, parser.ATNLoopEnd, true)
 	states[StateNumber__Definition__LoopBack] = parser.NewATNState(StateNumber__Definition__LoopBack, parser.ATNLoopBack, true)
-	states[StateNumber__Definition_RPAREN] = parser.NewATNState(StateNumber__Definition_RPAREN, parser.ATNBasic, false)
+	states[StateNumber__Definition_RightParen] = parser.NewATNState(StateNumber__Definition_RightParen, parser.ATNBasic, false)
 	states[StateNumber__Definition__Basic_3] = parser.NewATNState(StateNumber__Definition__Basic_3, parser.ATNBasic, true)
 	states[StateNumber__Definition__Basic_4] = parser.NewATNState(StateNumber__Definition__Basic_4, parser.ATNBasic, true).SetDecision(3)
-	states[StateNumber__Definition_COLON] = parser.NewATNState(StateNumber__Definition_COLON, parser.ATNBasic, false)
+	states[StateNumber__Definition_Colon] = parser.NewATNState(StateNumber__Definition_Colon, parser.ATNBasic, false)
 	states[StateNumber__Definition__Basic_5] = parser.NewATNState(StateNumber__Definition__Basic_5, parser.ATNBasic, true)
-	states[StateNumber__Definition_SEMICOLON] = parser.NewATNState(StateNumber__Definition_SEMICOLON, parser.ATNBasic, false)
+	states[StateNumber__Definition_Semicolon] = parser.NewATNState(StateNumber__Definition_Semicolon, parser.ATNBasic, false)
 	states[StateNumber__Definition__Basic_6] = parser.NewATNState(StateNumber__Definition__Basic_6, parser.ATNBasic, true)
 	states[StateNumber__DeclaredParameter_Name_ID] = parser.NewATNState(StateNumber__DeclaredParameter_Name_ID, parser.ATNBasic, false)
 	states[StateNumber__DeclaredParameter__Basic] = parser.NewATNState(StateNumber__DeclaredParameter__Basic, parser.ATNBasic, true)
 	states[StateNumber__Evaluation__Basic_0] = parser.NewATNState(StateNumber__Evaluation__Basic_0, parser.ATNBasic, true)
-	states[StateNumber__Evaluation_SEMICOLON] = parser.NewATNState(StateNumber__Evaluation_SEMICOLON, parser.ATNBasic, false)
+	states[StateNumber__Evaluation_Semicolon] = parser.NewATNState(StateNumber__Evaluation_Semicolon, parser.ATNBasic, false)
 	states[StateNumber__Evaluation__Basic_1] = parser.NewATNState(StateNumber__Evaluation__Basic_1, parser.ATNBasic, true)
 	states[StateNumber__Expression__Basic_0] = parser.NewATNState(StateNumber__Expression__Basic_0, parser.ATNBasic, true)
 	states[StateNumber__Expression__Basic_1] = parser.NewATNState(StateNumber__Expression__Basic_1, parser.ATNBasic, true)
 	states[StateNumber__Addition__Basic_0] = parser.NewATNState(StateNumber__Addition__Basic_0, parser.ATNBasic, true)
-	states[StateNumber__Addition_Operator_PLUS] = parser.NewATNState(StateNumber__Addition_Operator_PLUS, parser.ATNBasic, false)
+	states[StateNumber__Addition_Operator_Plus] = parser.NewATNState(StateNumber__Addition_Operator_Plus, parser.ATNBasic, false)
 	states[StateNumber__Addition__Basic_1] = parser.NewATNState(StateNumber__Addition__Basic_1, parser.ATNBasic, true)
-	states[StateNumber__Addition_Operator_MINUS] = parser.NewATNState(StateNumber__Addition_Operator_MINUS, parser.ATNBasic, false)
+	states[StateNumber__Addition_Operator_Dash] = parser.NewATNState(StateNumber__Addition_Operator_Dash, parser.ATNBasic, false)
 	states[StateNumber__Addition__Basic_2] = parser.NewATNState(StateNumber__Addition__Basic_2, parser.ATNBasic, true)
 	states[StateNumber__Addition__Basic_3] = parser.NewATNState(StateNumber__Addition__Basic_3, parser.ATNBasic, true).SetDecision(4)
 	states[StateNumber__Addition__BlockEnd] = parser.NewATNState(StateNumber__Addition__BlockEnd, parser.ATNBlockEnd, true)
@@ -210,9 +210,9 @@ func BuildATN() *parser.RuntimeATN {
 	states[StateNumber__Addition__LoopEnd] = parser.NewATNState(StateNumber__Addition__LoopEnd, parser.ATNLoopEnd, true)
 	states[StateNumber__Addition__LoopBack] = parser.NewATNState(StateNumber__Addition__LoopBack, parser.ATNLoopBack, true)
 	states[StateNumber__Multiplication__Basic_0] = parser.NewATNState(StateNumber__Multiplication__Basic_0, parser.ATNBasic, true)
-	states[StateNumber__Multiplication_Operator_STAR] = parser.NewATNState(StateNumber__Multiplication_Operator_STAR, parser.ATNBasic, false)
+	states[StateNumber__Multiplication_Operator_Asterisk] = parser.NewATNState(StateNumber__Multiplication_Operator_Asterisk, parser.ATNBasic, false)
 	states[StateNumber__Multiplication__Basic_1] = parser.NewATNState(StateNumber__Multiplication__Basic_1, parser.ATNBasic, true)
-	states[StateNumber__Multiplication_Operator_SLASH] = parser.NewATNState(StateNumber__Multiplication_Operator_SLASH, parser.ATNBasic, false)
+	states[StateNumber__Multiplication_Operator_Slash] = parser.NewATNState(StateNumber__Multiplication_Operator_Slash, parser.ATNBasic, false)
 	states[StateNumber__Multiplication__Basic_2] = parser.NewATNState(StateNumber__Multiplication__Basic_2, parser.ATNBasic, true)
 	states[StateNumber__Multiplication__Basic_3] = parser.NewATNState(StateNumber__Multiplication__Basic_3, parser.ATNBasic, true).SetDecision(6)
 	states[StateNumber__Multiplication__BlockEnd] = parser.NewATNState(StateNumber__Multiplication__BlockEnd, parser.ATNBlockEnd, true)
@@ -222,47 +222,47 @@ func BuildATN() *parser.RuntimeATN {
 	states[StateNumber__Multiplication__LoopEnd] = parser.NewATNState(StateNumber__Multiplication__LoopEnd, parser.ATNLoopEnd, true)
 	states[StateNumber__Multiplication__LoopBack] = parser.NewATNState(StateNumber__Multiplication__LoopBack, parser.ATNLoopBack, true)
 	states[StateNumber__Exponentiation__Basic_0] = parser.NewATNState(StateNumber__Exponentiation__Basic_0, parser.ATNBasic, true)
-	states[StateNumber__Exponentiation_Operator_CARET] = parser.NewATNState(StateNumber__Exponentiation_Operator_CARET, parser.ATNBasic, false)
+	states[StateNumber__Exponentiation_Operator_Caret] = parser.NewATNState(StateNumber__Exponentiation_Operator_Caret, parser.ATNBasic, false)
 	states[StateNumber__Exponentiation__Basic_1] = parser.NewATNState(StateNumber__Exponentiation__Basic_1, parser.ATNBasic, true)
 	states[StateNumber__Exponentiation__Basic_2] = parser.NewATNState(StateNumber__Exponentiation__Basic_2, parser.ATNBasic, true)
 	states[StateNumber__Exponentiation__LoopEntry] = parser.NewATNState(StateNumber__Exponentiation__LoopEntry, parser.ATNLoopEntry, true).SetDecision(8)
 	states[StateNumber__Exponentiation__LoopEnd] = parser.NewATNState(StateNumber__Exponentiation__LoopEnd, parser.ATNLoopEnd, true)
 	states[StateNumber__Exponentiation__LoopBack] = parser.NewATNState(StateNumber__Exponentiation__LoopBack, parser.ATNLoopBack, true)
 	states[StateNumber__Modulo__Basic_0] = parser.NewATNState(StateNumber__Modulo__Basic_0, parser.ATNBasic, true)
-	states[StateNumber__Modulo_Operator_PERCENT] = parser.NewATNState(StateNumber__Modulo_Operator_PERCENT, parser.ATNBasic, false)
+	states[StateNumber__Modulo_Operator_Percent] = parser.NewATNState(StateNumber__Modulo_Operator_Percent, parser.ATNBasic, false)
 	states[StateNumber__Modulo__Basic_1] = parser.NewATNState(StateNumber__Modulo__Basic_1, parser.ATNBasic, true)
 	states[StateNumber__Modulo__Basic_2] = parser.NewATNState(StateNumber__Modulo__Basic_2, parser.ATNBasic, true)
 	states[StateNumber__Modulo__LoopEntry] = parser.NewATNState(StateNumber__Modulo__LoopEntry, parser.ATNLoopEntry, true).SetDecision(9)
 	states[StateNumber__Modulo__LoopEnd] = parser.NewATNState(StateNumber__Modulo__LoopEnd, parser.ATNLoopEnd, true)
 	states[StateNumber__Modulo__LoopBack] = parser.NewATNState(StateNumber__Modulo__LoopBack, parser.ATNLoopBack, true)
-	states[StateNumber__PrimaryExpression_LPAREN_0] = parser.NewATNState(StateNumber__PrimaryExpression_LPAREN_0, parser.ATNBasic, false)
+	states[StateNumber__PrimaryExpression_LeftParen_0] = parser.NewATNState(StateNumber__PrimaryExpression_LeftParen_0, parser.ATNBasic, false)
 	states[StateNumber__PrimaryExpression__Basic_0] = parser.NewATNState(StateNumber__PrimaryExpression__Basic_0, parser.ATNBasic, true)
-	states[StateNumber__PrimaryExpression_RPAREN_0] = parser.NewATNState(StateNumber__PrimaryExpression_RPAREN_0, parser.ATNBasic, false)
+	states[StateNumber__PrimaryExpression_RightParen_0] = parser.NewATNState(StateNumber__PrimaryExpression_RightParen_0, parser.ATNBasic, false)
 	states[StateNumber__PrimaryExpression__Basic_1] = parser.NewATNState(StateNumber__PrimaryExpression__Basic_1, parser.ATNBasic, true)
 	states[StateNumber__PrimaryExpression_Value_NUMBER] = parser.NewATNState(StateNumber__PrimaryExpression_Value_NUMBER, parser.ATNBasic, false)
 	states[StateNumber__PrimaryExpression__Basic_2] = parser.NewATNState(StateNumber__PrimaryExpression__Basic_2, parser.ATNBasic, true)
 	states[StateNumber__PrimaryExpression_Callable_ID] = parser.NewATNState(StateNumber__PrimaryExpression_Callable_ID, parser.ATNBasic, false)
-	states[StateNumber__PrimaryExpression_LPAREN_1] = parser.NewATNState(StateNumber__PrimaryExpression_LPAREN_1, parser.ATNBasic, false)
+	states[StateNumber__PrimaryExpression_LeftParen_1] = parser.NewATNState(StateNumber__PrimaryExpression_LeftParen_1, parser.ATNBasic, false)
 	states[StateNumber__PrimaryExpression__Basic_3] = parser.NewATNState(StateNumber__PrimaryExpression__Basic_3, parser.ATNBasic, true)
-	states[StateNumber__PrimaryExpression_COMMA] = parser.NewATNState(StateNumber__PrimaryExpression_COMMA, parser.ATNBasic, false)
+	states[StateNumber__PrimaryExpression_Comma] = parser.NewATNState(StateNumber__PrimaryExpression_Comma, parser.ATNBasic, false)
 	states[StateNumber__PrimaryExpression__Basic_4] = parser.NewATNState(StateNumber__PrimaryExpression__Basic_4, parser.ATNBasic, true)
 	states[StateNumber__PrimaryExpression__Basic_5] = parser.NewATNState(StateNumber__PrimaryExpression__Basic_5, parser.ATNBasic, true)
 	states[StateNumber__PrimaryExpression__LoopEntry] = parser.NewATNState(StateNumber__PrimaryExpression__LoopEntry, parser.ATNLoopEntry, true).SetDecision(10)
 	states[StateNumber__PrimaryExpression__LoopEnd] = parser.NewATNState(StateNumber__PrimaryExpression__LoopEnd, parser.ATNLoopEnd, true)
 	states[StateNumber__PrimaryExpression__LoopBack] = parser.NewATNState(StateNumber__PrimaryExpression__LoopBack, parser.ATNLoopBack, true)
-	states[StateNumber__PrimaryExpression_RPAREN_1] = parser.NewATNState(StateNumber__PrimaryExpression_RPAREN_1, parser.ATNBasic, false)
+	states[StateNumber__PrimaryExpression_RightParen_1] = parser.NewATNState(StateNumber__PrimaryExpression_RightParen_1, parser.ATNBasic, false)
 	states[StateNumber__PrimaryExpression__Basic_6] = parser.NewATNState(StateNumber__PrimaryExpression__Basic_6, parser.ATNBasic, true)
 	states[StateNumber__PrimaryExpression__Basic_7] = parser.NewATNState(StateNumber__PrimaryExpression__Basic_7, parser.ATNBasic, true).SetDecision(11)
 	states[StateNumber__PrimaryExpression__Basic_8] = parser.NewATNState(StateNumber__PrimaryExpression__Basic_8, parser.ATNBasic, true).SetDecision(12)
 	states[StateNumber__PrimaryExpression__BlockEnd] = parser.NewATNState(StateNumber__PrimaryExpression__BlockEnd, parser.ATNBlockEnd, true)
 	states[StateNumber__Module__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__Module_MODULE]),
+		parser.NewEpsilonTransition(states[StateNumber__Module_module]),
 	)
 	states[StateNumber__Statement__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__Statement__Basic_4]),
 	)
 	states[StateNumber__Definition__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__Definition_DEF]),
+		parser.NewEpsilonTransition(states[StateNumber__Definition_def]),
 	)
 	states[StateNumber__DeclaredParameter__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__DeclaredParameter_Name_ID]),
@@ -288,8 +288,8 @@ func BuildATN() *parser.RuntimeATN {
 	states[StateNumber__PrimaryExpression__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression__Basic_8]),
 	)
-	states[StateNumber__Module_MODULE].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__Module_Name_ID], Token_MODULE, nil),
+	states[StateNumber__Module_module].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Module_Name_ID], Keyword_module, nil),
 	)
 	states[StateNumber__Module_Name_ID].AppendTransitions(
 		parser.NewAtomTransition(states[StateNumber__Module__LoopEntry], Token_ID, nil),
@@ -329,20 +329,20 @@ func BuildATN() *parser.RuntimeATN {
 	states[StateNumber__Statement__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__Statement__Stop]),
 	)
-	states[StateNumber__Definition_DEF].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__Definition_Name_ID], Token_DEF, nil),
+	states[StateNumber__Definition_def].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Definition_Name_ID], Keyword_def, nil),
 	)
 	states[StateNumber__Definition_Name_ID].AppendTransitions(
 		parser.NewAtomTransition(states[StateNumber__Definition__Basic_4], Token_ID, nil),
 	)
-	states[StateNumber__Definition_LPAREN].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__Definition__Basic_0], Token_LPAREN, nil),
+	states[StateNumber__Definition_LeftParen].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Definition__Basic_0], Keyword_LeftParen, nil),
 	)
 	states[StateNumber__Definition__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[StateNumber__DeclaredParameter__Start], states[StateNumber__Definition__LoopEntry], nil),
 	)
-	states[StateNumber__Definition_COMMA].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__Definition__Basic_1], Token_COMMA, nil),
+	states[StateNumber__Definition_Comma].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Definition__Basic_1], Keyword_Comma, nil),
 	)
 	states[StateNumber__Definition__Basic_1].AppendTransitions(
 		parser.NewRuleTransition(states[StateNumber__DeclaredParameter__Start], states[StateNumber__Definition__Basic_2], nil),
@@ -351,33 +351,33 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[StateNumber__Definition__LoopBack]),
 	)
 	states[StateNumber__Definition__LoopEntry].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__Definition_COMMA]),
+		parser.NewEpsilonTransition(states[StateNumber__Definition_Comma]),
 		parser.NewEpsilonTransition(states[StateNumber__Definition__LoopEnd]),
 	)
 	states[StateNumber__Definition__LoopEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__Definition_RPAREN]),
+		parser.NewEpsilonTransition(states[StateNumber__Definition_RightParen]),
 	)
 	states[StateNumber__Definition__LoopBack].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__Definition__LoopEntry]),
 	)
-	states[StateNumber__Definition_RPAREN].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__Definition__Basic_3], Token_RPAREN, nil),
+	states[StateNumber__Definition_RightParen].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Definition__Basic_3], Keyword_RightParen, nil),
 	)
 	states[StateNumber__Definition__Basic_3].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__Definition_COLON]),
+		parser.NewEpsilonTransition(states[StateNumber__Definition_Colon]),
 	)
 	states[StateNumber__Definition__Basic_4].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__Definition_LPAREN]),
+		parser.NewEpsilonTransition(states[StateNumber__Definition_LeftParen]),
 		parser.NewEpsilonTransition(states[StateNumber__Definition__Basic_3]),
 	)
-	states[StateNumber__Definition_COLON].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__Definition__Basic_5], Token_COLON, nil),
+	states[StateNumber__Definition_Colon].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Definition__Basic_5], Keyword_Colon, nil),
 	)
 	states[StateNumber__Definition__Basic_5].AppendTransitions(
-		parser.NewRuleTransition(states[StateNumber__Expression__Start], states[StateNumber__Definition_SEMICOLON], nil),
+		parser.NewRuleTransition(states[StateNumber__Expression__Start], states[StateNumber__Definition_Semicolon], nil),
 	)
-	states[StateNumber__Definition_SEMICOLON].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__Definition__Basic_6], Token_SEMICOLON, nil),
+	states[StateNumber__Definition_Semicolon].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Definition__Basic_6], Keyword_Semicolon, nil),
 	)
 	states[StateNumber__Definition__Basic_6].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__Definition__Stop]),
@@ -389,10 +389,10 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[StateNumber__DeclaredParameter__Stop]),
 	)
 	states[StateNumber__Evaluation__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[StateNumber__Expression__Start], states[StateNumber__Evaluation_SEMICOLON], nil),
+		parser.NewRuleTransition(states[StateNumber__Expression__Start], states[StateNumber__Evaluation_Semicolon], nil),
 	)
-	states[StateNumber__Evaluation_SEMICOLON].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__Evaluation__Basic_1], Token_SEMICOLON, nil),
+	states[StateNumber__Evaluation_Semicolon].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Evaluation__Basic_1], Keyword_Semicolon, nil),
 	)
 	states[StateNumber__Evaluation__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__Evaluation__Stop]),
@@ -406,21 +406,21 @@ func BuildATN() *parser.RuntimeATN {
 	states[StateNumber__Addition__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[StateNumber__Multiplication__Start], states[StateNumber__Addition__LoopEntry], nil),
 	)
-	states[StateNumber__Addition_Operator_PLUS].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__Addition__Basic_1], Token_PLUS, nil),
+	states[StateNumber__Addition_Operator_Plus].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Addition__Basic_1], Keyword_Plus, nil),
 	)
 	states[StateNumber__Addition__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__Addition__BlockEnd]),
 	)
-	states[StateNumber__Addition_Operator_MINUS].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__Addition__Basic_2], Token_MINUS, nil),
+	states[StateNumber__Addition_Operator_Dash].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Addition__Basic_2], Keyword_Dash, nil),
 	)
 	states[StateNumber__Addition__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__Addition__BlockEnd]),
 	)
 	states[StateNumber__Addition__Basic_3].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__Addition_Operator_PLUS]),
-		parser.NewEpsilonTransition(states[StateNumber__Addition_Operator_MINUS]),
+		parser.NewEpsilonTransition(states[StateNumber__Addition_Operator_Plus]),
+		parser.NewEpsilonTransition(states[StateNumber__Addition_Operator_Dash]),
 	)
 	states[StateNumber__Addition__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__Addition__Basic_4]),
@@ -444,21 +444,21 @@ func BuildATN() *parser.RuntimeATN {
 	states[StateNumber__Multiplication__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[StateNumber__Exponentiation__Start], states[StateNumber__Multiplication__LoopEntry], nil),
 	)
-	states[StateNumber__Multiplication_Operator_STAR].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__Multiplication__Basic_1], Token_STAR, nil),
+	states[StateNumber__Multiplication_Operator_Asterisk].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Multiplication__Basic_1], Keyword_Asterisk, nil),
 	)
 	states[StateNumber__Multiplication__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__Multiplication__BlockEnd]),
 	)
-	states[StateNumber__Multiplication_Operator_SLASH].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__Multiplication__Basic_2], Token_SLASH, nil),
+	states[StateNumber__Multiplication_Operator_Slash].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Multiplication__Basic_2], Keyword_Slash, nil),
 	)
 	states[StateNumber__Multiplication__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__Multiplication__BlockEnd]),
 	)
 	states[StateNumber__Multiplication__Basic_3].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__Multiplication_Operator_STAR]),
-		parser.NewEpsilonTransition(states[StateNumber__Multiplication_Operator_SLASH]),
+		parser.NewEpsilonTransition(states[StateNumber__Multiplication_Operator_Asterisk]),
+		parser.NewEpsilonTransition(states[StateNumber__Multiplication_Operator_Slash]),
 	)
 	states[StateNumber__Multiplication__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__Multiplication__Basic_4]),
@@ -482,8 +482,8 @@ func BuildATN() *parser.RuntimeATN {
 	states[StateNumber__Exponentiation__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[StateNumber__Modulo__Start], states[StateNumber__Exponentiation__LoopEntry], nil),
 	)
-	states[StateNumber__Exponentiation_Operator_CARET].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__Exponentiation__Basic_1], Token_CARET, nil),
+	states[StateNumber__Exponentiation_Operator_Caret].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Exponentiation__Basic_1], Keyword_Caret, nil),
 	)
 	states[StateNumber__Exponentiation__Basic_1].AppendTransitions(
 		parser.NewRuleTransition(states[StateNumber__Modulo__Start], states[StateNumber__Exponentiation__Basic_2], nil),
@@ -492,7 +492,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[StateNumber__Exponentiation__LoopBack]),
 	)
 	states[StateNumber__Exponentiation__LoopEntry].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__Exponentiation_Operator_CARET]),
+		parser.NewEpsilonTransition(states[StateNumber__Exponentiation_Operator_Caret]),
 		parser.NewEpsilonTransition(states[StateNumber__Exponentiation__LoopEnd]),
 	)
 	states[StateNumber__Exponentiation__LoopEnd].AppendTransitions(
@@ -504,8 +504,8 @@ func BuildATN() *parser.RuntimeATN {
 	states[StateNumber__Modulo__Basic_0].AppendTransitions(
 		parser.NewRuleTransition(states[StateNumber__PrimaryExpression__Start], states[StateNumber__Modulo__LoopEntry], nil),
 	)
-	states[StateNumber__Modulo_Operator_PERCENT].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__Modulo__Basic_1], Token_PERCENT, nil),
+	states[StateNumber__Modulo_Operator_Percent].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__Modulo__Basic_1], Keyword_Percent, nil),
 	)
 	states[StateNumber__Modulo__Basic_1].AppendTransitions(
 		parser.NewRuleTransition(states[StateNumber__PrimaryExpression__Start], states[StateNumber__Modulo__Basic_2], nil),
@@ -514,7 +514,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[StateNumber__Modulo__LoopBack]),
 	)
 	states[StateNumber__Modulo__LoopEntry].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__Modulo_Operator_PERCENT]),
+		parser.NewEpsilonTransition(states[StateNumber__Modulo_Operator_Percent]),
 		parser.NewEpsilonTransition(states[StateNumber__Modulo__LoopEnd]),
 	)
 	states[StateNumber__Modulo__LoopEnd].AppendTransitions(
@@ -523,14 +523,14 @@ func BuildATN() *parser.RuntimeATN {
 	states[StateNumber__Modulo__LoopBack].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__Modulo__LoopEntry]),
 	)
-	states[StateNumber__PrimaryExpression_LPAREN_0].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__PrimaryExpression__Basic_0], Token_LPAREN, nil),
+	states[StateNumber__PrimaryExpression_LeftParen_0].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__PrimaryExpression__Basic_0], Keyword_LeftParen, nil),
 	)
 	states[StateNumber__PrimaryExpression__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[StateNumber__Expression__Start], states[StateNumber__PrimaryExpression_RPAREN_0], nil),
+		parser.NewRuleTransition(states[StateNumber__Expression__Start], states[StateNumber__PrimaryExpression_RightParen_0], nil),
 	)
-	states[StateNumber__PrimaryExpression_RPAREN_0].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__PrimaryExpression__Basic_1], Token_RPAREN, nil),
+	states[StateNumber__PrimaryExpression_RightParen_0].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__PrimaryExpression__Basic_1], Keyword_RightParen, nil),
 	)
 	states[StateNumber__PrimaryExpression__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression__BlockEnd]),
@@ -544,14 +544,14 @@ func BuildATN() *parser.RuntimeATN {
 	states[StateNumber__PrimaryExpression_Callable_ID].AppendTransitions(
 		parser.NewAtomTransition(states[StateNumber__PrimaryExpression__Basic_7], Token_ID, &parser.CompletionHint{Field: "FunctionCall.Callable", PrecedingAction: &parser.ActionInfo{TargetType: "FunctionCall", Property: ""}}),
 	)
-	states[StateNumber__PrimaryExpression_LPAREN_1].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__PrimaryExpression__Basic_3], Token_LPAREN, nil),
+	states[StateNumber__PrimaryExpression_LeftParen_1].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__PrimaryExpression__Basic_3], Keyword_LeftParen, nil),
 	)
 	states[StateNumber__PrimaryExpression__Basic_3].AppendTransitions(
 		parser.NewRuleTransition(states[StateNumber__Expression__Start], states[StateNumber__PrimaryExpression__LoopEntry], nil),
 	)
-	states[StateNumber__PrimaryExpression_COMMA].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__PrimaryExpression__Basic_4], Token_COMMA, nil),
+	states[StateNumber__PrimaryExpression_Comma].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__PrimaryExpression__Basic_4], Keyword_Comma, nil),
 	)
 	states[StateNumber__PrimaryExpression__Basic_4].AppendTransitions(
 		parser.NewRuleTransition(states[StateNumber__Expression__Start], states[StateNumber__PrimaryExpression__Basic_5], nil),
@@ -560,27 +560,27 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression__LoopBack]),
 	)
 	states[StateNumber__PrimaryExpression__LoopEntry].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression_COMMA]),
+		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression_Comma]),
 		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression__LoopEnd]),
 	)
 	states[StateNumber__PrimaryExpression__LoopEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression_RPAREN_1]),
+		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression_RightParen_1]),
 	)
 	states[StateNumber__PrimaryExpression__LoopBack].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression__LoopEntry]),
 	)
-	states[StateNumber__PrimaryExpression_RPAREN_1].AppendTransitions(
-		parser.NewAtomTransition(states[StateNumber__PrimaryExpression__Basic_6], Token_RPAREN, nil),
+	states[StateNumber__PrimaryExpression_RightParen_1].AppendTransitions(
+		parser.NewAtomTransition(states[StateNumber__PrimaryExpression__Basic_6], Keyword_RightParen, nil),
 	)
 	states[StateNumber__PrimaryExpression__Basic_6].AppendTransitions(
 		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression__BlockEnd]),
 	)
 	states[StateNumber__PrimaryExpression__Basic_7].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression_LPAREN_1]),
+		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression_LeftParen_1]),
 		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression__Basic_6]),
 	)
 	states[StateNumber__PrimaryExpression__Basic_8].AppendTransitions(
-		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression_LPAREN_0]),
+		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression_LeftParen_0]),
 		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression_Value_NUMBER]),
 		parser.NewEpsilonTransition(states[StateNumber__PrimaryExpression_Callable_ID]),
 	)

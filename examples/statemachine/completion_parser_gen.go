@@ -43,7 +43,7 @@ func (p *CompletionParser) ParseStatemachine() {
 	p.cp.EnterRule("Statemachine", StateNumber__Statemachine__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_STATEMACHINE)
+		p.state.Consume(Keyword_statemachine)
 	}
 	{
 		p.cp.MarkAssignment("Name")
@@ -54,7 +54,7 @@ func (p *CompletionParser) ParseStatemachine() {
 	p.state.Sync(StateNumber__Statemachine__Basic_2)
 	if p.lookahead.StatemachineOptional_0(p.state) {
 		{
-			p.state.Consume(Token_EVENTS)
+			p.state.Consume(Keyword_events)
 		}
 		{
 			for ok := true; ok; ok = p.lookahead.StatemachineEventsLoop(p.state) {
@@ -72,7 +72,7 @@ func (p *CompletionParser) ParseStatemachine() {
 	p.state.Sync(StateNumber__Statemachine__Basic_5)
 	if p.lookahead.StatemachineOptional_1(p.state) {
 		{
-			p.state.Consume(Token_COMMANDS)
+			p.state.Consume(Keyword_commands)
 		}
 		{
 			for ok := true; ok; ok = p.lookahead.StatemachineCommandsLoop(p.state) {
@@ -87,7 +87,7 @@ func (p *CompletionParser) ParseStatemachine() {
 		}
 	}
 	{
-		p.state.Consume(Token_INITIALSTATE)
+		p.state.Consume(Keyword_initialState)
 	}
 	{
 		p.cp.MarkAssignment("Init")
@@ -133,7 +133,7 @@ func (p *CompletionParser) ParseState() {
 	p.cp.EnterRule("State", StateNumber__State__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_STATE)
+		p.state.Consume(Keyword_state)
 	}
 	{
 		p.cp.MarkAssignment("Name")
@@ -144,10 +144,10 @@ func (p *CompletionParser) ParseState() {
 	p.state.Sync(StateNumber__State__Basic_2)
 	if p.lookahead.StateOptional(p.state) {
 		{
-			p.state.Consume(Token_ACTIONS)
+			p.state.Consume(Keyword_actions)
 		}
 		{
-			p.state.Consume(Token_LBRACE)
+			p.state.Consume(Keyword_LeftBrace)
 		}
 		{
 			for ok := true; ok; ok = p.lookahead.StateActionsLoop(p.state) {
@@ -159,7 +159,7 @@ func (p *CompletionParser) ParseState() {
 			}
 		}
 		{
-			p.state.Consume(Token_RBRACE)
+			p.state.Consume(Keyword_RightBrace)
 		}
 	}
 	{
@@ -176,7 +176,7 @@ func (p *CompletionParser) ParseState() {
 		}
 	}
 	{
-		p.state.Consume(Token_END)
+		p.state.Consume(Keyword_end)
 	}
 }
 
@@ -189,7 +189,7 @@ func (p *CompletionParser) ParseTransition() {
 		p.cp.ClearAssignment()
 	}
 	{
-		p.state.Consume(Token_ARROW)
+		p.state.Consume(Keyword_EqualsGreaterThan)
 	}
 	{
 		p.cp.MarkAssignment("State")

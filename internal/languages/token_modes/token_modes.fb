@@ -1,4 +1,4 @@
-grammar TokenModes;
+grammar TokenModes
 
 interface Model {
     Statements []Statement

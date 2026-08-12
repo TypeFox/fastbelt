@@ -41,81 +41,45 @@ interface NumberLiteral extends Expression {
 }
 
 entry Module returns Module:
-    MODULE Name=ID
+    "module" Name=ID
     Statements+=Statement*
 
 Statement returns Statement:
     Definition | Evaluation
 
 Definition:
-    DEF Name=ID (LPAREN Args+=DeclaredParameter (COMMA Args+=DeclaredParameter)* RPAREN)?
-    COLON Expression=Expression SEMICOLON
+    "def" Name=ID ("(" Args+=DeclaredParameter ("," Args+=DeclaredParameter)* ")")?
+    ":" Expression=Expression ";"
 
 DeclaredParameter:
     Name=ID
 
 Evaluation:
-    Expression=Expression SEMICOLON
+    Expression=Expression ";"
 
 Expression:
     Addition
 
 Addition returns Expression:
-    Multiplication ({BinaryExpression.Left=current} Operator=(PLUS | MINUS) Right=Multiplication)*
+    Multiplication ({BinaryExpression.Left=current} Operator=("+" | "-") Right=Multiplication)*
 
 Multiplication returns Expression:
-    Exponentiation ({BinaryExpression.Left=current} Operator=(STAR | SLASH) Right=Exponentiation)*
+    Exponentiation ({BinaryExpression.Left=current} Operator=("*" | "/") Right=Exponentiation)*
 
 Exponentiation returns Expression:
-    Modulo ({BinaryExpression.Left=current} Operator=CARET Right=Modulo)*
+    Modulo ({BinaryExpression.Left=current} Operator="^" Right=Modulo)*
 
 Modulo returns Expression:
-    PrimaryExpression ({BinaryExpression.Left=current} Operator=PERCENT Right=PrimaryExpression)*
+    PrimaryExpression ({BinaryExpression.Left=current} Operator="%" Right=PrimaryExpression)*
 
 PrimaryExpression returns Expression:
-    LPAREN Expression RPAREN |
+    "(" Expression ")" |
     {NumberLiteral} Value=NUMBER |
-    {FunctionCall} Callable=[AbstractDefinition:ID] (LPAREN Args+=Expression (COMMA Args+=Expression)* RPAREN)?
-
-token MODULE: "module"
-token DEF: "def"
-token LPAREN: "("
-token RPAREN: ")"
-token COMMA: ","
-token COLON: ":"
-token SEMICOLON: ";"
-token PLUS: "+"
-token MINUS: "-"
-token STAR: "*"
-token SLASH: "/"
-token CARET: "^"
-token PERCENT: "%"
+    {FunctionCall} Callable=[AbstractDefinition:ID] ("(" Args+=Expression ("," Args+=Expression)* ")")?
 
 token ID: /[_a-zA-Z][\w_]*/
 token NUMBER: /[0-9]+(\.[0-9]*)?/
 
-token WS: /\s+/
-token ML_COMMENT: /\/\*[\s\S]*?\*\//
-token SL_COMMENT: /\/\/[^\n\r]*/
-
-token mode default {
-    MODULE
-    DEF
-    LPAREN
-    RPAREN
-    COMMA
-    COLON
-    SEMICOLON
-    PLUS
-    MINUS
-    STAR
-    SLASH
-    CARET
-    PERCENT
-
-    ID
-    NUMBER
-    hidden WS
-    comment ML_COMMENT
-    comment SL_COMMENT
-}
+hidden token WS: /\s+/
+comment token ML_COMMENT: /\/\*[\s\S]*?\*\//
+hidden token SL_COMMENT: /\/\/[^\n\r]*/

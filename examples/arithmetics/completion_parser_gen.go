@@ -43,7 +43,7 @@ func (p *CompletionParser) ParseModule() {
 	p.cp.EnterRule("Module", StateNumber__Module__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_MODULE)
+		p.state.Consume(Keyword_module)
 	}
 	{
 		p.cp.MarkAssignment("Name")
@@ -90,7 +90,7 @@ func (p *CompletionParser) ParseDefinition() {
 	p.cp.EnterRule("Definition", StateNumber__Definition__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Token_DEF)
+		p.state.Consume(Keyword_def)
 	}
 	{
 		p.cp.MarkAssignment("Name")
@@ -101,7 +101,7 @@ func (p *CompletionParser) ParseDefinition() {
 	p.state.Sync(StateNumber__Definition__Basic_4)
 	if p.lookahead.DefinitionOptional(p.state) {
 		{
-			p.state.Consume(Token_LPAREN)
+			p.state.Consume(Keyword_LeftParen)
 		}
 		{
 			p.cp.MarkAssignment("Args")
@@ -114,7 +114,7 @@ func (p *CompletionParser) ParseDefinition() {
 		p.state.Sync(StateNumber__Definition__LoopEntry)
 		for p.lookahead.DefinitionLoop(p.state) {
 			{
-				p.state.Consume(Token_COMMA)
+				p.state.Consume(Keyword_Comma)
 			}
 			{
 				p.cp.MarkAssignment("Args")
@@ -127,21 +127,21 @@ func (p *CompletionParser) ParseDefinition() {
 			p.state.Sync(StateNumber__Definition__LoopEntry)
 		}
 		{
-			p.state.Consume(Token_RPAREN)
+			p.state.Consume(Keyword_RightParen)
 		}
 	}
 	{
-		p.state.Consume(Token_COLON)
+		p.state.Consume(Keyword_Colon)
 	}
 	{
 		p.cp.MarkAssignment("Expression")
-		p.state.EnterRule(StateNumber__Definition_SEMICOLON)
+		p.state.EnterRule(StateNumber__Definition_Semicolon)
 		p.ParseExpression()
 		p.state.ExitRule()
 		p.cp.ClearAssignment()
 	}
 	{
-		p.state.Consume(Token_SEMICOLON)
+		p.state.Consume(Keyword_Semicolon)
 	}
 }
 
@@ -160,13 +160,13 @@ func (p *CompletionParser) ParseEvaluation() {
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Expression")
-		p.state.EnterRule(StateNumber__Evaluation_SEMICOLON)
+		p.state.EnterRule(StateNumber__Evaluation_Semicolon)
 		p.ParseExpression()
 		p.state.ExitRule()
 		p.cp.ClearAssignment()
 	}
 	{
-		p.state.Consume(Token_SEMICOLON)
+		p.state.Consume(Keyword_Semicolon)
 	}
 }
 
@@ -195,9 +195,9 @@ func (p *CompletionParser) ParseAddition() {
 			p.cp.MarkAssignment("Operator")
 			switch prediction, _ := p.lookahead.AdditionOperatorAlternatives(p.state); prediction {
 			case 0:
-				p.state.Consume(Token_PLUS)
+				p.state.Consume(Keyword_Plus)
 			case 1:
-				p.state.Consume(Token_MINUS)
+				p.state.Consume(Keyword_Dash)
 			}
 			p.cp.ClearAssignment()
 		}
@@ -228,9 +228,9 @@ func (p *CompletionParser) ParseMultiplication() {
 			p.cp.MarkAssignment("Operator")
 			switch prediction, _ := p.lookahead.MultiplicationOperatorAlternatives(p.state); prediction {
 			case 0:
-				p.state.Consume(Token_STAR)
+				p.state.Consume(Keyword_Asterisk)
 			case 1:
-				p.state.Consume(Token_SLASH)
+				p.state.Consume(Keyword_Slash)
 			}
 			p.cp.ClearAssignment()
 		}
@@ -259,7 +259,7 @@ func (p *CompletionParser) ParseExponentiation() {
 	for p.lookahead.ExponentiationLoop(p.state) {
 		{
 			p.cp.MarkAssignment("Operator")
-			p.state.Consume(Token_CARET)
+			p.state.Consume(Keyword_Caret)
 			p.cp.ClearAssignment()
 		}
 		{
@@ -287,7 +287,7 @@ func (p *CompletionParser) ParseModulo() {
 	for p.lookahead.ModuloLoop(p.state) {
 		{
 			p.cp.MarkAssignment("Operator")
-			p.state.Consume(Token_PERCENT)
+			p.state.Consume(Keyword_Percent)
 			p.cp.ClearAssignment()
 		}
 		{
@@ -308,15 +308,15 @@ func (p *CompletionParser) ParsePrimaryExpression() {
 	switch prediction, failure := p.lookahead.PrimaryExpressionAlternatives(p.state); prediction {
 	case 0:
 		{
-			p.state.Consume(Token_LPAREN)
+			p.state.Consume(Keyword_LeftParen)
 		}
 		{
-			p.state.EnterRule(StateNumber__PrimaryExpression_RPAREN_0)
+			p.state.EnterRule(StateNumber__PrimaryExpression_RightParen_0)
 			p.ParseExpression()
 			p.state.ExitRule()
 		}
 		{
-			p.state.Consume(Token_RPAREN)
+			p.state.Consume(Keyword_RightParen)
 		}
 	case 1:
 		{
@@ -334,7 +334,7 @@ func (p *CompletionParser) ParsePrimaryExpression() {
 		p.state.Sync(StateNumber__PrimaryExpression__Basic_7)
 		if p.lookahead.PrimaryExpressionOptional(p.state) {
 			{
-				p.state.Consume(Token_LPAREN)
+				p.state.Consume(Keyword_LeftParen)
 			}
 			{
 				p.cp.MarkAssignment("Args")
@@ -347,7 +347,7 @@ func (p *CompletionParser) ParsePrimaryExpression() {
 			p.state.Sync(StateNumber__PrimaryExpression__LoopEntry)
 			for p.lookahead.PrimaryExpressionLoop(p.state) {
 				{
-					p.state.Consume(Token_COMMA)
+					p.state.Consume(Keyword_Comma)
 				}
 				{
 					p.cp.MarkAssignment("Args")
@@ -360,7 +360,7 @@ func (p *CompletionParser) ParsePrimaryExpression() {
 				p.state.Sync(StateNumber__PrimaryExpression__LoopEntry)
 			}
 			{
-				p.state.Consume(Token_RPAREN)
+				p.state.Consume(Keyword_RightParen)
 			}
 		}
 	default:

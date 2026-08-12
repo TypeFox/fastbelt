@@ -217,58 +217,6 @@ var Keyword_module = core.NewTokenType(
 	[]rune{'m'},
 )
 
-const Token_MODULE_Idx = Keyword_module_Idx
-
-var Token_MODULE = Keyword_module
-
-const Token_DEF_Idx = Keyword_def_Idx
-
-var Token_DEF = Keyword_def
-
-const Token_LPAREN_Idx = Keyword_LeftParen_Idx
-
-var Token_LPAREN = Keyword_LeftParen
-
-const Token_RPAREN_Idx = Keyword_RightParen_Idx
-
-var Token_RPAREN = Keyword_RightParen
-
-const Token_COMMA_Idx = Keyword_Comma_Idx
-
-var Token_COMMA = Keyword_Comma
-
-const Token_COLON_Idx = Keyword_Colon_Idx
-
-var Token_COLON = Keyword_Colon
-
-const Token_SEMICOLON_Idx = Keyword_Semicolon_Idx
-
-var Token_SEMICOLON = Keyword_Semicolon
-
-const Token_PLUS_Idx = Keyword_Plus_Idx
-
-var Token_PLUS = Keyword_Plus
-
-const Token_MINUS_Idx = Keyword_Dash_Idx
-
-var Token_MINUS = Keyword_Dash
-
-const Token_STAR_Idx = Keyword_Asterisk_Idx
-
-var Token_STAR = Keyword_Asterisk
-
-const Token_SLASH_Idx = Keyword_Slash_Idx
-
-var Token_SLASH = Keyword_Slash
-
-const Token_CARET_Idx = Keyword_Caret_Idx
-
-var Token_CARET = Keyword_Caret
-
-const Token_PERCENT_Idx = Keyword_Percent_Idx
-
-var Token_PERCENT = Keyword_Percent
-
 const Token_ID_Idx = 14
 
 var Token_ID = core.NewTokenType(
@@ -717,24 +665,24 @@ const (
 func NewLexer() lexer.Lexer {
 	modes := make([]*lexer.TokenMode, 1, 1)
 	modes[TokenMode_default] = lexer.NewTokenMode("default",
-		lexer.UseTokenType(Token_MODULE),
-		lexer.UseTokenType(Token_DEF),
-		lexer.UseTokenType(Token_LPAREN),
-		lexer.UseTokenType(Token_RPAREN),
-		lexer.UseTokenType(Token_COMMA),
-		lexer.UseTokenType(Token_COLON),
-		lexer.UseTokenType(Token_SEMICOLON),
-		lexer.UseTokenType(Token_PLUS),
-		lexer.UseTokenType(Token_MINUS),
-		lexer.UseTokenType(Token_STAR),
-		lexer.UseTokenType(Token_SLASH),
-		lexer.UseTokenType(Token_CARET),
-		lexer.UseTokenType(Token_PERCENT),
+		lexer.UseTokenType(Keyword_Percent),
+		lexer.UseTokenType(Keyword_LeftParen),
+		lexer.UseTokenType(Keyword_RightParen),
+		lexer.UseTokenType(Keyword_Asterisk),
+		lexer.UseTokenType(Keyword_Plus),
+		lexer.UseTokenType(Keyword_Comma),
+		lexer.UseTokenType(Keyword_Dash),
+		lexer.UseTokenType(Keyword_Slash),
+		lexer.UseTokenType(Keyword_Colon),
+		lexer.UseTokenType(Keyword_Semicolon),
+		lexer.UseTokenType(Keyword_Caret),
+		lexer.UseTokenType(Keyword_def),
+		lexer.UseTokenType(Keyword_module),
 		lexer.UseTokenType(Token_ID),
 		lexer.UseTokenType(Token_NUMBER),
 		lexer.UseTokenType(Token_WS).WithGroup(core.SkippedGroup),
 		lexer.UseTokenType(Token_ML_COMMENT).WithGroup(core.CommentGroup),
-		lexer.UseTokenType(Token_SL_COMMENT).WithGroup(core.CommentGroup),
+		lexer.UseTokenType(Token_SL_COMMENT).WithGroup(core.SkippedGroup),
 	)
 	return lexer.NewDefaultLexer(TokenMode_default, modes...)
 }
