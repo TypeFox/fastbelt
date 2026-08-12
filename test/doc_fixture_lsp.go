@@ -431,18 +431,3 @@ func (d *Doc) findAstNodeAtRange(targetRange core.TextRange) core.AstNode {
 	}
 	return token.Element
 }
-
-func (d *Doc) FindAstNode(label string) (core.AstNode, bool) {
-	d.fixture.t.Helper()
-
-	expectedRange, err := d.MarkerRange(label)
-	if err != nil {
-		return nil, false
-	}
-
-	node := d.findAstNodeAtRange(expectedRange)
-	if node == nil {
-		return nil, false
-	}
-	return node, true
-}

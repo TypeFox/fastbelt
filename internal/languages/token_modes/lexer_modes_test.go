@@ -19,11 +19,7 @@ func stringOf(t *testing.T, src string) StringLiteral {
 	fixture := test.New(t, CreateServices())
 	doc := fixture.Parse(src)
 	doc.AssertNoErrors()
-	node, ok := doc.FindAstNode("string")
-	require.True(t, ok)
-	str, ok := node.(StringLiteral)
-	require.True(t, ok)
-	return str
+	return test.MustFindNodeAtLabel[StringLiteral](doc, "string")
 }
 
 // --- String content shapes ---
@@ -273,9 +269,8 @@ func TestEscapedTerminatorLeavesStringUnterminated(t *testing.T) {
 	// Adding a real terminator closes the string, with the escape kept as text.
 	closed := test.New(t, CreateServices()).Parse("VAR := <|string:" + bt + `a\` + bt + bt + "|>")
 	closed.AssertNoErrors()
-	node, ok := closed.FindAstNode("string")
-	require.True(t, ok)
-	content := node.(StringLiteral).Content()
+	node := test.MustFindNodeAtLabel[StringLiteral](closed, "string")
+	content := node.Content()
 	require.Len(t, content, 1)
 	assert.Equal(t, `a\`+bt, content[0].(StringText).Value())
 }

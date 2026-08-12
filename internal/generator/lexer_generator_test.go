@@ -158,7 +158,7 @@ func TestGenerateLexerModeIdsFollowDeclarationOrder(t *testing.T) {
 	// still start in it.
 	assert.Contains(t, code, "TokenMode_First   = 0")
 	assert.Contains(t, code, "TokenMode_default = 1")
-	assert.Contains(t, code, "modes := make([]*lexer.TokenMode, 2, 2)")
+	assert.Contains(t, code, "modes := make([]*lexer.TokenMode, 2)")
 	assert.Contains(t, code, "lexer.NewDefaultLexer(TokenMode_default, modes...)")
 }
 
