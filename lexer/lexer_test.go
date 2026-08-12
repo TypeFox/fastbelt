@@ -384,12 +384,10 @@ func TestExecIsSafeForConcurrentUse(t *testing.T) {
 	var wg sync.WaitGroup
 	for round := range 50 {
 		for i, input := range inputs {
-			wg.Add(1)
-			go func(i int, input string) {
-				defer wg.Done()
+			wg.Go(func() {
 				assert.Equal(t, expected[i], names(lexer.Exec(input).Tokens),
 					"round %d, input %q", round, input)
-			}(i, input)
+			})
 		}
 	}
 	wg.Wait()
