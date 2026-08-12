@@ -50,8 +50,8 @@ func (p *Parser) ParseRoot() Root {
 }
 
 func (p *Parser) ParseObj() Obj {
-	current := NewObj()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current Obj
 	{
 		switch prediction, failure := p.lookahead.ObjAlternatives(p.state); prediction {
 		case 0:
@@ -59,7 +59,6 @@ func (p *Parser) ParseObj() Obj {
 				p.state.EnterRule(Obj__Basic_1)
 				result := p.ParseA()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 1:
@@ -67,7 +66,6 @@ func (p *Parser) ParseObj() Obj {
 				p.state.EnterRule(Obj__Basic_3)
 				result := p.ParseB()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 2:
@@ -75,7 +73,6 @@ func (p *Parser) ParseObj() Obj {
 				p.state.EnterRule(Obj__Basic_5)
 				result := p.ParseC()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 3:
@@ -83,7 +80,6 @@ func (p *Parser) ParseObj() Obj {
 				p.state.EnterRule(Obj__Basic_7)
 				result := p.ParseD()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 4:
@@ -91,7 +87,6 @@ func (p *Parser) ParseObj() Obj {
 				p.state.EnterRule(Obj__Basic_9)
 				result := p.ParseE()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 5:
@@ -99,7 +94,6 @@ func (p *Parser) ParseObj() Obj {
 				p.state.EnterRule(Obj__Basic_11)
 				result := p.ParseF()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 6:
@@ -107,7 +101,6 @@ func (p *Parser) ParseObj() Obj {
 				p.state.EnterRule(Obj__Basic_13)
 				result := p.ParseG()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 7:
@@ -115,7 +108,6 @@ func (p *Parser) ParseObj() Obj {
 				p.state.EnterRule(Obj__Basic_15)
 				result := p.ParseH()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 8:
@@ -123,11 +115,14 @@ func (p *Parser) ParseObj() Obj {
 				p.state.EnterRule(Obj__Basic_17)
 				result := p.ParseI()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewObj()
+			current.SetTextRangeStart(startPos)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)

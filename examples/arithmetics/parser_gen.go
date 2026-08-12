@@ -65,8 +65,8 @@ func (p *Parser) ParseModule() Module {
 }
 
 func (p *Parser) ParseStatement() Statement {
-	current := NewStatement()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current Statement
 	{
 		switch prediction, failure := p.lookahead.StatementAlternatives(p.state); prediction {
 		case 0:
@@ -74,7 +74,6 @@ func (p *Parser) ParseStatement() Statement {
 				p.state.EnterRule(Statement__Basic_1)
 				result := p.ParseDefinition()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 1:
@@ -82,11 +81,14 @@ func (p *Parser) ParseStatement() Statement {
 				p.state.EnterRule(Statement__Basic_3)
 				result := p.ParseEvaluation()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewStatement()
+			current.SetTextRangeStart(startPos)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -202,14 +204,12 @@ func (p *Parser) ParseEvaluation() Evaluation {
 }
 
 func (p *Parser) ParseExpression() Expression {
-	current := NewExpression()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	var current Expression
 	{
 		{
 			p.state.EnterRule(Expression__Basic_1)
 			result := p.ParseAddition()
 			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
 	}
@@ -218,14 +218,12 @@ func (p *Parser) ParseExpression() Expression {
 }
 
 func (p *Parser) ParseAddition() Expression {
-	current := NewExpression()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	var current Expression
 	{
 		{
 			p.state.EnterRule(Addition__LoopEntry)
 			result := p.ParseMultiplication()
 			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
 		p.state.Sync(Addition__LoopEntry)
@@ -270,14 +268,12 @@ func (p *Parser) ParseAddition() Expression {
 }
 
 func (p *Parser) ParseMultiplication() Expression {
-	current := NewExpression()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	var current Expression
 	{
 		{
 			p.state.EnterRule(Multiplication__LoopEntry)
 			result := p.ParseExponentiation()
 			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
 		p.state.Sync(Multiplication__LoopEntry)
@@ -322,14 +318,12 @@ func (p *Parser) ParseMultiplication() Expression {
 }
 
 func (p *Parser) ParseExponentiation() Expression {
-	current := NewExpression()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	var current Expression
 	{
 		{
 			p.state.EnterRule(Exponentiation__LoopEntry)
 			result := p.ParseModulo()
 			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
 		p.state.Sync(Exponentiation__LoopEntry)
@@ -365,14 +359,12 @@ func (p *Parser) ParseExponentiation() Expression {
 }
 
 func (p *Parser) ParseModulo() Expression {
-	current := NewExpression()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	var current Expression
 	{
 		{
 			p.state.EnterRule(Modulo__LoopEntry)
 			result := p.ParsePrimaryExpression()
 			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
 		p.state.Sync(Modulo__LoopEntry)
@@ -408,12 +400,14 @@ func (p *Parser) ParseModulo() Expression {
 }
 
 func (p *Parser) ParsePrimaryExpression() Expression {
-	current := NewExpression()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current Expression
 	{
 		switch prediction, failure := p.lookahead.PrimaryExpressionAlternatives(p.state); prediction {
 		case 0:
 			{
+				current = NewExpression()
+				current.SetTextRangeStart(startPos)
 				token := p.state.Consume(Keyword_LeftParen)
 				core.AssignToken(current, token, PrimaryExpression_LeftParen_0)
 			}
@@ -431,8 +425,7 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 		case 1:
 			{
 				result := NewNumberLiteral()
-				result.SetTextRange(current.TextRange())
-				core.AssignTokens(result, current.Tokens())
+				result.SetTextRangeStart(startPos)
 				current = result
 			}
 			current := current.(NumberLiteral)
@@ -446,8 +439,7 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 		case 2:
 			{
 				result := NewFunctionCall()
-				result.SetTextRange(current.TextRange())
-				core.AssignTokens(result, current.Tokens())
+				result.SetTextRangeStart(startPos)
 				current = result
 			}
 			current := current.(FunctionCall)
@@ -495,6 +487,10 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewExpression()
+			current.SetTextRangeStart(startPos)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
