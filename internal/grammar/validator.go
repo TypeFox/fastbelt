@@ -99,25 +99,56 @@ func checkTokenModesAreReachable(g Grammar, ctx context.Context, accept core.Val
 	if len(g.TokenModes()) == 0 {
 		return
 	}
-	targeted := collections.NewSet[string]()
-	for node := range core.AllChildren(g) {
-		command, ok := node.(TokenCommand)
-		if !ok || command.Type() == tokenCommandPop {
-			continue
+	var entryMode TokenMode = nil
+	transitions := map[TokenMode][]TokenMode{}
+	for _, mode := range g.TokenModes() {
+		if mode.IsDefault() {
+			entryMode = mode
 		}
-		if command.IsDefault() {
-			targeted.Add(defaultTokenModeName)
-		} else if mode := command.Mode().Ref(ctx); mode != nil {
-			targeted.Add(tokenModeName(mode))
+		for _, member := range mode.Members() {
+			var command TokenCommand = nil
+			switch casted := member.(type) {
+			case TokenDeclUsage:
+				command = casted.Declaration().Command()
+			case TokenGroupUsage:
+				command = casted.Group().Command()
+			case TokenUsage:
+				command = casted.Command()
+				if command == nil {
+					command = casted.TokenRef().Ref(ctx).Command()
+				}
+			case KeywordUsage:
+				command = casted.Command()
+			case KeywordSelector:
+				command = nil
+			}
+			if command != nil && command.Mode() != nil {
+				transitions[mode] = append(transitions[mode], command.Mode().Ref(ctx))
+			}
+		}
+	}
+	visited := collections.NewSet[TokenMode]()
+	queue := []TokenMode{}
+	if entryMode != nil {
+		queue = append(queue, entryMode)
+	}
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+		visited.Add(current)
+		for _, next := range transitions[current] {
+			if !visited.Has(next) {
+				queue = append(queue, next)
+			}
 		}
 	}
 	for _, mode := range g.TokenModes() {
-		if mode.IsDefault() || targeted.Has(tokenModeName(mode)) {
+		if visited.Has(mode) {
 			continue
 		}
 		accept(core.NewDiagnostic(
 			core.SeverityWarning,
-			fmt.Sprintf("The token mode '%s' is never entered. Add a 'push(%s)' or 'mode(%s)' command to a token.", mode.Name(), mode.Name(), mode.Name()),
+			fmt.Sprintf("The token mode '%s' is never entered from the default mode. Add a 'push(%s)' or 'mode(%s)' command to a token.", mode.Name(), mode.Name(), mode.Name()),
 			mode,
 			core.WithToken(mode.NameToken()),
 			core.WithCode(ValidateUnreachableTokenMode),
