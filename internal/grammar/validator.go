@@ -16,36 +16,38 @@ import (
 )
 
 const (
-	ValidateUniqueRuleName            = "uniqueRuleName"
-	ValidateUniqueRuleNameInTokenMode = "uniqueRuleNameInTokenMode"
-	ValidateUniqueInterfaceName       = "uniqueInterfaceName"
-	ValidateUniqueTokenModeName       = "uniqueTokenModeName"
-	ValidateEmptyToken                = "emptyTerminalRule"
-	ValidateEmptyKeyword              = "emptyKeyword"
-	ValidateWhitespaceOnlyKeyword     = "whitespaceOnlyKeyword"
-	ValidateKeywordWithWhitespace     = "keywordWithWhitespace"
-	ValidateRuleReturnType            = "ruleReturnType"
-	ValidateInterfaceExtends          = "interfaceExtends"
-	ValidateRuleCallReturnType        = "ruleCallReturnType"
-	ValidateRuleCallPosition          = "ruleCallPosition"
-	ValidateActionAssignmentType      = "actionAssignmentType"
-	ValidateActionPropertyType        = "actionPropertyType"
-	ValidateAssignmentType            = "assignmentType"
-	ValidateRecursiveTokenGroup       = "recursiveTokenGroup"
-	ValidateInvalidTokenInGroup       = "invalidTokenInGroup"
-	ValidateInvalidTokenInCrossRef    = "invalidTokenInCrossRef"
-	ValidateMissingCrossRefTerminal   = "missingCrossRefTerminal"
-	ValidateUniqueFieldName           = "uniqueFieldName"
-	ValidateFieldNameCapitalLetter    = "fieldNameCapitalLetter"
-	ValidateReservedFieldName         = "reservedFieldName"
-	ValidateNestedArrayType           = "nestedArrayType"
-	ValidateDefaultTokenModeRequired  = "defaultTokenModeRequired"
-	ValidateTokenCommandMode          = "tokenCommandMode"
-	ValidateEmptyTokenMode            = "emptyTokenMode"
-	ValidateUnreachableTokenMode      = "unreachableTokenMode"
-	ValidateKeywordNotInTokenMode     = "keywordNotInTokenMode"
-	ValidateTokenNotInTokenMode       = "tokenNotInTokenMode"
-	ValidateNonDefaultTokenModeNoPop  = "nonDefaultTokenModeNoPop"
+	ValidateUniqueRuleName                   = "uniqueRuleName"
+	ValidateUniqueRuleNameInTokenMode        = "uniqueRuleNameInTokenMode"
+	ValidateUniqueInterfaceName              = "uniqueInterfaceName"
+	ValidateUniqueTokenModeName              = "uniqueTokenModeName"
+	ValidateEmptyToken                       = "emptyTerminalRule"
+	ValidateEmptyKeyword                     = "emptyKeyword"
+	ValidateWhitespaceOnlyKeyword            = "whitespaceOnlyKeyword"
+	ValidateKeywordWithWhitespace            = "keywordWithWhitespace"
+	ValidateRuleReturnType                   = "ruleReturnType"
+	ValidateInterfaceExtends                 = "interfaceExtends"
+	ValidateRuleCallReturnType               = "ruleCallReturnType"
+	ValidateRuleCallPosition                 = "ruleCallPosition"
+	ValidateActionAssignmentType             = "actionAssignmentType"
+	ValidateActionPropertyType               = "actionPropertyType"
+	ValidateAssignmentType                   = "assignmentType"
+	ValidateRecursiveTokenGroup              = "recursiveTokenGroup"
+	ValidateInvalidTokenInGroup              = "invalidTokenInGroup"
+	ValidateInvalidTokenInCrossRef           = "invalidTokenInCrossRef"
+	ValidateMissingCrossRefTerminal          = "missingCrossRefTerminal"
+	ValidateUniqueFieldName                  = "uniqueFieldName"
+	ValidateFieldNameCapitalLetter           = "fieldNameCapitalLetter"
+	ValidateReservedFieldName                = "reservedFieldName"
+	ValidateNestedArrayType                  = "nestedArrayType"
+	ValidateDefaultTokenModeRequired         = "defaultTokenModeRequired"
+	ValidateTokenCommandMode                 = "tokenCommandMode"
+	ValidateEmptyTokenMode                   = "emptyTokenMode"
+	ValidateUnreachableTokenMode             = "unreachableTokenMode"
+	ValidateKeywordNotInTokenMode            = "keywordNotInTokenMode"
+	ValidateTokenNotInTokenMode              = "tokenNotInTokenMode"
+	ValidateNonDefaultTokenModeNoPop         = "nonDefaultTokenModeNoPop"
+	ValidateTerminalNotCoveredByParserRule   = "terminalNotCoveredByParserRule"
+	ValidateTokenGroupNotCoveredByParserRule = "tokenGroupNotCoveredByParserRule"
 )
 
 // defaultTokenModeName is the name under which the mode marked
@@ -314,11 +316,124 @@ func checkTokenModeNotEmpty(mode TokenMode, accept core.ValidationAcceptor) {
 }
 
 func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept core.ValidationAcceptor) {
-	//TODO
-	//We need the inverse of this as well; I.e. a keyword that is registered in a token mode as
-	//a non-hidden/non-comment token, but never referenced in a parser rule. This should always result
-	//in a diagnostic, since the lexer picks up the token, but it will always result in a parser error
-	//(unless this token is part of a token group!).
+	severity := core.SeverityWarning
+	seen := collections.NewSet[string]()
+	queue := []core.AstNode{}
+	for _, composite := range g.Composites() {
+		for node := range core.AllChildren(composite) {
+			queue = append(queue, node)
+		}
+	}
+	for _, rule := range g.Rules() {
+		for node := range core.AllChildren(rule) {
+			queue = append(queue, node)
+		}
+	}
+	for _, group := range g.TokenGroups() {
+		for node := range core.AllChildren(group) {
+			queue = append(queue, node)
+		}
+	}
+	for _, node := range queue {
+		switch casted := node.(type) {
+		case Keyword:
+			seen.Add(casted.Value())
+		case RuleCall:
+			rule, ok := casted.Rule().Ref(ctx).(AbstractTokenRule)
+			if ok {
+				seen.Add(rule.Name())
+			}
+		}
+	}
+
+	if len(g.TokenModes()) == 0 {
+		for _, terminal := range g.Terminals() {
+			if terminal.Modifier() != "" {
+				continue
+			}
+			if !seen.Has(terminal.Name()) {
+				accept(core.NewDiagnostic(
+					severity,
+					fmt.Sprintf("The token '%s' is never referenced in a parser rule, so the lexer can never produce it.", terminal.Name()),
+					terminal,
+					core.WithToken(terminal.NameToken()),
+					core.WithCode(ValidateTerminalNotCoveredByParserRule),
+				))
+			}
+		}
+		for _, group := range g.TokenGroups() {
+			if group.Modifier() != "" {
+				continue
+			}
+			if !seen.Has(group.Name()) {
+				accept(core.NewDiagnostic(
+					severity,
+					fmt.Sprintf("The token group '%s' is never referenced in a parser rule, so the lexer can never produce its tokens.", group.Name()),
+					group,
+					core.WithToken(group.NameToken()),
+					core.WithCode(ValidateTokenGroupNotCoveredByParserRule),
+				))
+			}
+		}
+	} else {
+		for _, mode := range g.TokenModes() {
+			for _, member := range mode.Members() {
+				switch member := member.(type) {
+				case KeywordUsage:
+					if !seen.Has(member.Keyword().Value()) {
+						accept(core.NewDiagnostic(
+							severity,
+							fmt.Sprintf("The keyword %s is never referenced in a parser rule, so the lexer can never produce it.", member.Keyword().Value()),
+							member.Keyword(),
+							core.WithToken(member.Keyword().ValueToken()),
+							core.WithCode(ValidateTerminalNotCoveredByParserRule),
+						))
+					}
+				case TokenUsage:
+					if tokenRef := member.TokenRef().Ref(context.Background()); tokenRef != nil {
+						if tokenRef.Modifier() != "" {
+							continue
+						}
+						if !seen.Has(tokenRef.Name()) {
+							accept(core.NewDiagnostic(
+								severity,
+								fmt.Sprintf("The token '%s' is never referenced in a parser rule, so the lexer can never produce it.", tokenRef.Name()),
+								member,
+								core.WithTextRange(member.TextRange()),
+								core.WithCode(ValidateTerminalNotCoveredByParserRule),
+							))
+						}
+					}
+				case TokenDeclUsage:
+					if member.Declaration().Modifier() != "" {
+						continue
+					}
+					if !seen.Has(member.Declaration().Name()) {
+						accept(core.NewDiagnostic(
+							severity,
+							fmt.Sprintf("The token '%s' is never referenced in a parser rule, so the lexer can never produce it.", member.Declaration().Name()),
+							member.Declaration(),
+							core.WithToken(member.Declaration().NameToken()),
+							core.WithCode(ValidateTerminalNotCoveredByParserRule),
+						))
+					}
+				case TokenGroupUsage:
+					if member.Group().Modifier() != "" {
+						continue
+					}
+					if !seen.Has(member.Group().Name()) {
+						accept(core.NewDiagnostic(
+							severity,
+							fmt.Sprintf("The token group '%s' is never referenced in a parser rule, so the lexer can never produce its tokens.", member.Group().Name()),
+							member.Group(),
+							core.WithToken(member.Group().NameToken()),
+							core.WithCode(ValidateTokenGroupNotCoveredByParserRule),
+						))
+					}
+				}
+			}
+		}
+	}
 }
 
 // tokenModeCoverage records the keywords and token rules that the declared token

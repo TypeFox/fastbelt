@@ -1263,7 +1263,7 @@ func TestKeywordCoveredByKeywordBackedToken(t *testing.T) {
 			WORLD
 			hidden WS
 		}
-	`).AssertNoDiagnostics()
+	`).AssertNoErrors()
 }
 
 func TestKeywordCoveredByTokenGroupInMode(t *testing.T) {
@@ -1284,7 +1284,7 @@ func TestKeywordCoveredByTokenGroupInMode(t *testing.T) {
 			Greetings
 			hidden WS
 		}
-	`).AssertNoDiagnostics()
+	`).AssertNoErrors()
 }
 
 func TestKeywordCoveredByNestedTokenGroupInMode(t *testing.T) {
@@ -1308,7 +1308,7 @@ func TestKeywordCoveredByNestedTokenGroupInMode(t *testing.T) {
 			Outer
 			hidden WS
 		}
-	`).AssertNoDiagnostics()
+	`).AssertNoErrors()
 }
 
 func TestKeywordCoveredByModeLocalTokenDeclaration(t *testing.T) {
@@ -1326,7 +1326,7 @@ func TestKeywordCoveredByModeLocalTokenDeclaration(t *testing.T) {
 			token WORLD: "world"
 			hidden WS
 		}
-	`).AssertNoDiagnostics()
+	`).AssertNoErrors()
 }
 
 func TestKeywordCoveredByNonDefaultTokenMode(t *testing.T) {
@@ -1367,7 +1367,7 @@ func TestKeywordInTokenDeclarationNotReportedAsUncovered(t *testing.T) {
 			ID
 			hidden WS
 		}
-	`).AssertNoDiagnostics()
+	`).AssertNoErrors()
 }
 
 func TestKeywordUncoveredReportedOnlyOnce(t *testing.T) {
@@ -1471,7 +1471,7 @@ func TestKeywordBackedTokenCoveredByKeywordSelector(t *testing.T) {
 			ID
 			hidden WS
 		}
-	`).AssertNoDiagnostics()
+	`).AssertNoErrors()
 }
 
 func TestTokenInCrossRefNotInAnyTokenMode(t *testing.T) {
@@ -1681,4 +1681,76 @@ func TestMembersUniqueInTokenMode(t *testing.T) {
 	diag4 := doc.ExpectDiagnostic("4")
 	diag4.WithSeverity(core.SeverityError)
 	diag4.WithCode(ValidateUniqueRuleName)
+}
+
+func TestNotCoveredByParserRuleUsingTokenModes(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting="x";
+
+		token NUM: /[0-9]+/
+
+		token mode default {
+			token <|1:ID|>: /[a-z]+/
+			<|2:NUM|>
+			token group <|3:Cardinality|> {
+				"?"
+				"*"
+				"+"
+			}
+			<|4:"unused"|>
+		}
+	`)
+	diag1 := doc.ExpectDiagnostic("1")
+	diag1.WithSeverity(core.SeverityWarning)
+	diag1.WithCode(ValidateTerminalNotCoveredByParserRule)
+	diag2 := doc.ExpectDiagnostic("2")
+	diag2.WithSeverity(core.SeverityWarning)
+	diag2.WithCode(ValidateTerminalNotCoveredByParserRule)
+	diag3 := doc.ExpectDiagnostic("3")
+	diag3.WithSeverity(core.SeverityWarning)
+	diag3.WithCode(ValidateTokenGroupNotCoveredByParserRule)
+	diag4 := doc.ExpectDiagnostic("4")
+	diag4.WithSeverity(core.SeverityWarning)
+	diag4.WithCode(ValidateTerminalNotCoveredByParserRule)
+}
+
+func TestNotCoveredByParserRuleUsingImplicitTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting="x";
+
+		token <|1:ID|>: /[a-z]+/
+		token group <|2:Cardinality|> {
+			"?"
+			"*"
+			"+"
+		}
+	`)
+	diag1 := doc.ExpectDiagnostic("1")
+	diag1.WithSeverity(core.SeverityWarning)
+	diag1.WithCode(ValidateTerminalNotCoveredByParserRule)
+	diag2 := doc.ExpectDiagnostic("2")
+	diag2.WithSeverity(core.SeverityWarning)
+	diag2.WithCode(ValidateTokenGroupNotCoveredByParserRule)
+}
+
+func TestInvisibleTokenDontNeedToBeCoveredByParserRule(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting="x";
+
+		hidden token WS: /\s+/
+		comment token group Comment {
+			"//comment"
+			"/*comment*/"
+		}
+	`)
+	doc.AssertNoDiagnostics()
 }
