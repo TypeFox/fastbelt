@@ -319,9 +319,6 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 	//a non-hidden/non-comment token, but never referenced in a parser rule. This should always result
 	//in a diagnostic, since the lexer picks up the token, but it will always result in a parser error
 	//(unless this token is part of a token group!).
-
-	//TODO Duplicate keyword/token definitions in the same token mode should result in an error.
-	//I.e. you can currently write token mode default { "x" "x" }.
 }
 
 // tokenModeCoverage records the keywords and token rules that the declared token

@@ -1102,7 +1102,7 @@ func TestDefaultTokenModeIsAlwaysReachable(t *testing.T) {
 
 func TestUnreachableTokenModeReachedFromNestedMode(t *testing.T) {
 	f := test.New(t, CreateServices())
-	f.Parse(`
+	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Greeting string }
 		Foo: Greeting=ID;
@@ -1115,14 +1115,17 @@ func TestUnreachableTokenModeReachedFromNestedMode(t *testing.T) {
 			hidden WS
 		}
 
-		token mode Middle {
+		token mode <|1:Middle|> {
 			ID -> push(Inner)
 		}
 
 		token mode Inner {
 			ID -> pop
 		}
-	`).AssertNoDiagnostics()
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityWarning)
+	diag.WithCode(ValidateNonDefaultTokenModeNoPop)
 }
 
 func TestEmptyTokenMode(t *testing.T) {
@@ -1408,9 +1411,9 @@ func TestTokenNotInAnyTokenMode(t *testing.T) {
 	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Greeting string Name string }
-		Foo: Greeting=<|1:NAME|> Name=ID;
+		Foo: Greeting=NAME Name=ID;
 
-		token NAME: /[A-Z]+/
+		token <|1:NAME|>: /[A-Z]+/
 		token ID: /[a-z]+/
 		hidden token WS: /\s+/
 
@@ -1420,7 +1423,7 @@ func TestTokenNotInAnyTokenMode(t *testing.T) {
 		}
 	`)
 	diag := doc.ExpectDiagnostic("1")
-	diag.WithSeverity(core.SeverityWarning)
+	diag.WithSeverity(core.SeverityError)
 	diag.WithCode(ValidateTokenNotInTokenMode)
 	diag.WithMessageContaining("'NAME'")
 }
@@ -1430,9 +1433,9 @@ func TestTokenGroupNotInAnyTokenMode(t *testing.T) {
 	doc := f.Parse(`
 		grammar Test;
 		interface Foo { Greeting string }
-		Foo: Greeting=<|1:Greetings|>;
+		Foo: Greeting=Greetings;
 
-		token group Greetings {
+		token group <|1:Greetings|> {
 			ID
 		}
 		token ID: /[a-z]+/
@@ -1446,7 +1449,7 @@ func TestTokenGroupNotInAnyTokenMode(t *testing.T) {
 	// The group's members are registered, but the group has its own token id
 	// and is therefore still unreachable.
 	diag := doc.ExpectDiagnostic("1")
-	diag.WithSeverity(core.SeverityWarning)
+	diag.WithSeverity(core.SeverityError)
 	diag.WithCode(ValidateTokenNotInTokenMode)
 }
 
@@ -1478,9 +1481,9 @@ func TestTokenInCrossRefNotInAnyTokenMode(t *testing.T) {
 		interface Foo { Name string }
 		interface Bar { Ref *Foo }
 		Foo: Name=ID;
-		Bar: Ref=[Foo:<|1:NAME|>];
+		Bar: Ref=[Foo:NAME];
 
-		token NAME: /[A-Z]+/
+		token <|1:NAME|>: /[A-Z]+/
 		token ID: /[a-z]+/
 		hidden token WS: /\s+/
 
@@ -1490,7 +1493,7 @@ func TestTokenInCrossRefNotInAnyTokenMode(t *testing.T) {
 		}
 	`)
 	diag := doc.ExpectDiagnostic("1")
-	diag.WithSeverity(core.SeverityWarning)
+	diag.WithSeverity(core.SeverityError)
 	diag.WithCode(ValidateTokenNotInTokenMode)
 }
 
@@ -1500,9 +1503,9 @@ func TestTokenInCompositeRuleNotInAnyTokenMode(t *testing.T) {
 		grammar Test;
 		interface Foo { Name composite }
 		Foo: Name=FQN;
-		composite FQN: ID (<|1:DOT|> ID)*;
+		composite FQN: ID (DOT ID)*;
 
-		token DOT: /\./
+		token <|1:DOT|>: /\./
 		token ID: /[a-z]+/
 		hidden token WS: /\s+/
 
@@ -1512,7 +1515,7 @@ func TestTokenInCompositeRuleNotInAnyTokenMode(t *testing.T) {
 		}
 	`)
 	diag := doc.ExpectDiagnostic("1")
-	diag.WithSeverity(core.SeverityWarning)
+	diag.WithSeverity(core.SeverityError)
 	diag.WithCode(ValidateTokenNotInTokenMode)
 }
 
