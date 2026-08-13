@@ -16,35 +16,36 @@ import (
 )
 
 const (
-	ValidateUniqueRuleName           = "uniqueRuleName"
-	ValidateUniqueInterfaceName      = "uniqueInterfaceName"
-	ValidateUniqueTokenModeName      = "uniqueTokenModeName"
-	ValidateEmptyToken               = "emptyTerminalRule"
-	ValidateEmptyKeyword             = "emptyKeyword"
-	ValidateWhitespaceOnlyKeyword    = "whitespaceOnlyKeyword"
-	ValidateKeywordWithWhitespace    = "keywordWithWhitespace"
-	ValidateRuleReturnType           = "ruleReturnType"
-	ValidateInterfaceExtends         = "interfaceExtends"
-	ValidateRuleCallReturnType       = "ruleCallReturnType"
-	ValidateRuleCallPosition         = "ruleCallPosition"
-	ValidateActionAssignmentType     = "actionAssignmentType"
-	ValidateActionPropertyType       = "actionPropertyType"
-	ValidateAssignmentType           = "assignmentType"
-	ValidateRecursiveTokenGroup      = "recursiveTokenGroup"
-	ValidateInvalidTokenInGroup      = "invalidTokenInGroup"
-	ValidateInvalidTokenInCrossRef   = "invalidTokenInCrossRef"
-	ValidateMissingCrossRefTerminal  = "missingCrossRefTerminal"
-	ValidateUniqueFieldName          = "uniqueFieldName"
-	ValidateFieldNameCapitalLetter   = "fieldNameCapitalLetter"
-	ValidateReservedFieldName        = "reservedFieldName"
-	ValidateNestedArrayType          = "nestedArrayType"
-	ValidateDefaultTokenModeRequired = "defaultTokenModeRequired"
-	ValidateTokenCommandMode         = "tokenCommandMode"
-	ValidateEmptyTokenMode           = "emptyTokenMode"
-	ValidateUnreachableTokenMode     = "unreachableTokenMode"
-	ValidateKeywordNotInTokenMode    = "keywordNotInTokenMode"
-	ValidateTokenNotInTokenMode      = "tokenNotInTokenMode"
-	ValidateNonDefaultTokenModeNoPop = "nonDefaultTokenModeNoPop"
+	ValidateUniqueRuleName            = "uniqueRuleName"
+	ValidateUniqueRuleNameInTokenMode = "uniqueRuleNameInTokenMode"
+	ValidateUniqueInterfaceName       = "uniqueInterfaceName"
+	ValidateUniqueTokenModeName       = "uniqueTokenModeName"
+	ValidateEmptyToken                = "emptyTerminalRule"
+	ValidateEmptyKeyword              = "emptyKeyword"
+	ValidateWhitespaceOnlyKeyword     = "whitespaceOnlyKeyword"
+	ValidateKeywordWithWhitespace     = "keywordWithWhitespace"
+	ValidateRuleReturnType            = "ruleReturnType"
+	ValidateInterfaceExtends          = "interfaceExtends"
+	ValidateRuleCallReturnType        = "ruleCallReturnType"
+	ValidateRuleCallPosition          = "ruleCallPosition"
+	ValidateActionAssignmentType      = "actionAssignmentType"
+	ValidateActionPropertyType        = "actionPropertyType"
+	ValidateAssignmentType            = "assignmentType"
+	ValidateRecursiveTokenGroup       = "recursiveTokenGroup"
+	ValidateInvalidTokenInGroup       = "invalidTokenInGroup"
+	ValidateInvalidTokenInCrossRef    = "invalidTokenInCrossRef"
+	ValidateMissingCrossRefTerminal   = "missingCrossRefTerminal"
+	ValidateUniqueFieldName           = "uniqueFieldName"
+	ValidateFieldNameCapitalLetter    = "fieldNameCapitalLetter"
+	ValidateReservedFieldName         = "reservedFieldName"
+	ValidateNestedArrayType           = "nestedArrayType"
+	ValidateDefaultTokenModeRequired  = "defaultTokenModeRequired"
+	ValidateTokenCommandMode          = "tokenCommandMode"
+	ValidateEmptyTokenMode            = "emptyTokenMode"
+	ValidateUnreachableTokenMode      = "unreachableTokenMode"
+	ValidateKeywordNotInTokenMode     = "keywordNotInTokenMode"
+	ValidateTokenNotInTokenMode       = "tokenNotInTokenMode"
+	ValidateNonDefaultTokenModeNoPop  = "nonDefaultTokenModeNoPop"
 )
 
 // defaultTokenModeName is the name under which the mode marked
@@ -296,6 +297,7 @@ func checkTokenCommandMode(c TokenCommand, accept core.ValidationAcceptor) {
 //   - A mode without members leaves the lexer with nothing to match.
 func (m *TokenModeImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
 	checkTokenModeNotEmpty(m, accept)
+	checkTokenModeMembersAreUnique(m, accept)
 }
 
 func checkTokenModeNotEmpty(mode TokenMode, accept core.ValidationAcceptor) {
@@ -320,10 +322,6 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 
 	//TODO Duplicate keyword/token definitions in the same token mode should result in an error.
 	//I.e. you can currently write token mode default { "x" "x" }.
-
-	//TODO Similarly Token references should be unique in the same token mode.
-	//Right know, you can write something like
-	//token mode default { hidden WS comment WS } without a validation error appearing.
 }
 
 // tokenModeCoverage records the keywords and token rules that the declared token
@@ -1350,5 +1348,44 @@ func checkCrossRefToken(cr CrossRef, ctx context.Context, accept core.Validation
 			core.WithReference(ruleCall.Rule()),
 			core.WithCode(ValidateInvalidTokenInCrossRef),
 		))
+	}
+}
+
+func checkTokenModeMembersAreUnique(tm TokenMode, accept core.ValidationAcceptor) {
+	seen := collections.NewSet[string]()
+	for _, member := range tm.Members() {
+		var name string
+		var textRange core.TextRange
+		var token *core.Token = nil
+		switch member := member.(type) {
+		case TokenDeclUsage:
+			continue // TokenDeclUsage is already checked in checkUniqueRuleNames
+		case TokenGroupUsage:
+			continue // TokenGroupUsage is already checked in checkUniqueRuleNames
+		case TokenUsage:
+			decl := member.TokenRef().Ref(context.Background())
+			textRange = member.TextRange()
+			if decl == nil {
+				continue
+			}
+			name = decl.Name()
+		case KeywordUsage:
+			name = member.Keyword().Value()
+			token = member.Keyword().ValueToken()
+		default:
+			continue
+		}
+		if token != nil {
+			textRange = token.TextRange()
+		}
+		if !seen.Add(name) {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				fmt.Sprintf("The token mode '%s' contains multiple members with the same name '%s'.", tm.Name(), name),
+				member,
+				core.WithTextRange(textRange),
+				core.WithCode(ValidateUniqueRuleNameInTokenMode),
+			))
+		}
 	}
 }

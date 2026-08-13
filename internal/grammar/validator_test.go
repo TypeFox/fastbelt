@@ -1638,3 +1638,44 @@ func TestTokenNotUsedInTokenMode(t *testing.T) {
 	diag1.WithSeverity(core.SeverityError)
 	diag1.WithCode(ValidateTokenNotInTokenMode)
 }
+
+func TestMembersUniqueInTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+
+		token mode default {
+			ID
+			<|1:ID|>
+			
+			"hello"
+			<|2:"hello"|>
+
+			token X: /lol/
+			token <|3:X|>: /lol2/
+
+			token group G {
+				ID
+			}
+			token group <|4:G|> {
+				ID
+			}
+		}
+	`)
+	diag1 := doc.ExpectDiagnostic("1")
+	diag1.WithSeverity(core.SeverityError)
+	diag1.WithCode(ValidateUniqueRuleNameInTokenMode)
+	diag2 := doc.ExpectDiagnostic("2")
+	diag2.WithSeverity(core.SeverityError)
+	diag2.WithCode(ValidateUniqueRuleNameInTokenMode)
+	diag3 := doc.ExpectDiagnostic("3")
+	diag3.WithSeverity(core.SeverityError)
+	diag3.WithCode(ValidateUniqueRuleName)
+	diag4 := doc.ExpectDiagnostic("4")
+	diag4.WithSeverity(core.SeverityError)
+	diag4.WithCode(ValidateUniqueRuleName)
+}
