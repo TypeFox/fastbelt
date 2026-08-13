@@ -452,7 +452,7 @@ const (
 )
 
 func NewLexer() lexer.Lexer {
-	modes := make([]*lexer.TokenMode, 1, 1)
+	modes := make([]*lexer.TokenMode, 1)
 	modes[TokenMode_default] = lexer.NewTokenMode("default",
 		lexer.UseTokenType(TokenGroup_Identifier),
 		lexer.UseTokenType(TokenGroup_NestedIdentifier),

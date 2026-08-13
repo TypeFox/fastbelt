@@ -40,41 +40,41 @@ func (p *CompletionParser) Parse(tokens []core.Token) *parser.CompletionParseRes
 }
 
 func (p *CompletionParser) ParseModel() {
-	p.cp.EnterRule("Model", StateNumber__Model__Start)
+	p.cp.EnterRule("Model", Model__Start)
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Item")
 		switch prediction, _ := p.lookahead.ModelItemAlternatives(p.state); prediction {
 		case 0:
-			p.state.EnterRule(StateNumber__Model__Basic_1)
+			p.state.EnterRule(Model__Basic_1)
 			p.ParseA()
 			p.state.ExitRule()
 		case 1:
-			p.state.EnterRule(StateNumber__Model__Basic_3)
+			p.state.EnterRule(Model__Basic_3)
 			p.ParseB()
 			p.state.ExitRule()
 		case 2:
-			p.state.EnterRule(StateNumber__Model__Basic_5)
+			p.state.EnterRule(Model__Basic_5)
 			p.ParseC()
 			p.state.ExitRule()
 		case 3:
-			p.state.EnterRule(StateNumber__Model__Basic_7)
+			p.state.EnterRule(Model__Basic_7)
 			p.ParseD()
 			p.state.ExitRule()
 		case 4:
-			p.state.EnterRule(StateNumber__Model__Basic_9)
+			p.state.EnterRule(Model__Basic_9)
 			p.ParseE()
 			p.state.ExitRule()
 		case 5:
-			p.state.EnterRule(StateNumber__Model__Basic_11)
+			p.state.EnterRule(Model__Basic_11)
 			p.ParseF()
 			p.state.ExitRule()
 		case 6:
-			p.state.EnterRule(StateNumber__Model__Basic_13)
+			p.state.EnterRule(Model__Basic_13)
 			p.ParseG()
 			p.state.ExitRule()
 		case 7:
-			p.state.EnterRule(StateNumber__Model__Basic_15)
+			p.state.EnterRule(Model__Basic_15)
 			p.ParseH()
 			p.state.ExitRule()
 		}
@@ -83,7 +83,7 @@ func (p *CompletionParser) ParseModel() {
 }
 
 func (p *CompletionParser) ParseA() {
-	p.cp.EnterRule("A", StateNumber__A__Start)
+	p.cp.EnterRule("A", A__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_a)
@@ -96,7 +96,7 @@ func (p *CompletionParser) ParseA() {
 }
 
 func (p *CompletionParser) ParseB() {
-	p.cp.EnterRule("B", StateNumber__B__Start)
+	p.cp.EnterRule("B", B__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_b)
@@ -114,7 +114,7 @@ func (p *CompletionParser) ParseB() {
 }
 
 func (p *CompletionParser) ParseC() {
-	p.cp.EnterRule("C", StateNumber__C__Start)
+	p.cp.EnterRule("C", C__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_c)
@@ -127,14 +127,14 @@ func (p *CompletionParser) ParseC() {
 }
 
 func (p *CompletionParser) ParseD() {
-	p.cp.EnterRule("D", StateNumber__D__Start)
+	p.cp.EnterRule("D", D__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_d)
 	}
 	{
-		p.cp.RecordSnapshot(StateNumber__D__Basic_2)
-		p.state.Sync(StateNumber__D__Basic_2)
+		p.cp.RecordSnapshot(D__Basic_2)
+		p.state.Sync(D__Basic_2)
 		if p.lookahead.DValueOptional(p.state) {
 			p.cp.MarkAssignment("Value")
 			p.state.Consume(TokenGroup_Identifier)
@@ -144,7 +144,7 @@ func (p *CompletionParser) ParseD() {
 }
 
 func (p *CompletionParser) ParseE() {
-	p.cp.EnterRule("E", StateNumber__E__Start)
+	p.cp.EnterRule("E", E__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_e)
@@ -162,7 +162,7 @@ func (p *CompletionParser) ParseE() {
 }
 
 func (p *CompletionParser) ParseF() {
-	p.cp.EnterRule("F", StateNumber__F__Start)
+	p.cp.EnterRule("F", F__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_f)
@@ -175,7 +175,7 @@ func (p *CompletionParser) ParseF() {
 }
 
 func (p *CompletionParser) ParseG() {
-	p.cp.EnterRule("G", StateNumber__G__Start)
+	p.cp.EnterRule("G", G__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_g)
@@ -188,7 +188,7 @@ func (p *CompletionParser) ParseG() {
 }
 
 func (p *CompletionParser) ParseH() {
-	p.cp.EnterRule("H", StateNumber__H__Start)
+	p.cp.EnterRule("H", H__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_h)

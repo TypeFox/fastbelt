@@ -639,7 +639,7 @@ const (
 )
 
 func NewLexer() lexer.Lexer {
-	modes := make([]*lexer.TokenMode, 3, 3)
+	modes := make([]*lexer.TokenMode, 3)
 	modes[TokenMode_default] = lexer.NewTokenMode("default",
 		lexer.UseTokenType(Keyword_ColonEquals),
 		lexer.UseTokenType(Keyword_Backtick).WithPushMode(TokenMode_IN_STRING),

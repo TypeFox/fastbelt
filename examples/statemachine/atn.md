@@ -4,29 +4,29 @@
 
 ```mermaid
 flowchart TD
-    q0(["StateNumber__Statemachine__Start (0)<br/>RuleStart"])
-    q1(["StateNumber__Statemachine__Stop (1)<br/>RuleStop"])
-    q10["StateNumber__Statemachine_statemachine (10)<br/>Basic<br/>"]
-    q11["StateNumber__Statemachine_Name_ID (11)<br/>Basic<br/>"]
-    q12["StateNumber__Statemachine_events (12)<br/>Basic<br/>"]
-    q13["StateNumber__Statemachine__Basic_0 (13)<br/>Basic<br/>"]
-    q14["StateNumber__Statemachine__Basic_1 (14)<br/>Basic<br/>"]
-    q15{"StateNumber__Statemachine__LoopBack_0 (15)<br/>LoopBack<br/><br/>dec=0"}
-    q16["StateNumber__Statemachine__LoopEnd_0 (16)<br/>LoopEnd<br/>"]
-    q17{"StateNumber__Statemachine__Basic_2 (17)<br/>Basic<br/><br/>dec=1"}
-    q18["StateNumber__Statemachine_commands (18)<br/>Basic<br/>"]
-    q19["StateNumber__Statemachine__Basic_3 (19)<br/>Basic<br/>"]
-    q20["StateNumber__Statemachine__Basic_4 (20)<br/>Basic<br/>"]
-    q21{"StateNumber__Statemachine__LoopBack_1 (21)<br/>LoopBack<br/><br/>dec=2"}
-    q22["StateNumber__Statemachine__LoopEnd_1 (22)<br/>LoopEnd<br/>"]
-    q23{"StateNumber__Statemachine__Basic_5 (23)<br/>Basic<br/><br/>dec=3"}
-    q24["StateNumber__Statemachine_initialState (24)<br/>Basic<br/>"]
-    q25["StateNumber__Statemachine_Init_ID (25)<br/>Basic<br/>"]
-    q26["StateNumber__Statemachine__Basic_6 (26)<br/>Basic<br/>"]
-    q27["StateNumber__Statemachine__Basic_7 (27)<br/>Basic<br/>"]
-    q28{"StateNumber__Statemachine__LoopEntry (28)<br/>LoopEntry<br/><br/>dec=4"}
-    q29["StateNumber__Statemachine__LoopEnd_2 (29)<br/>LoopEnd<br/>"]
-    q30["StateNumber__Statemachine__LoopBack_2 (30)<br/>LoopBack<br/>"]
+    q0(["Statemachine__Start (0)<br/>RuleStart"])
+    q1(["Statemachine__Stop (1)<br/>RuleStop"])
+    q10["Statemachine_statemachine (10)<br/>Basic<br/>"]
+    q11["Statemachine_Name_ID (11)<br/>Basic<br/>"]
+    q12["Statemachine_events (12)<br/>Basic<br/>"]
+    q13["Statemachine__Basic_0 (13)<br/>Basic<br/>"]
+    q14["Statemachine__Basic_1 (14)<br/>Basic<br/>"]
+    q15{"Statemachine__LoopBack_0 (15)<br/>LoopBack<br/><br/>dec=0"}
+    q16["Statemachine__LoopEnd_0 (16)<br/>LoopEnd<br/>"]
+    q17{"Statemachine__Basic_2 (17)<br/>Basic<br/><br/>dec=1"}
+    q18["Statemachine_commands (18)<br/>Basic<br/>"]
+    q19["Statemachine__Basic_3 (19)<br/>Basic<br/>"]
+    q20["Statemachine__Basic_4 (20)<br/>Basic<br/>"]
+    q21{"Statemachine__LoopBack_1 (21)<br/>LoopBack<br/><br/>dec=2"}
+    q22["Statemachine__LoopEnd_1 (22)<br/>LoopEnd<br/>"]
+    q23{"Statemachine__Basic_5 (23)<br/>Basic<br/><br/>dec=3"}
+    q24["Statemachine_initialState (24)<br/>Basic<br/>"]
+    q25["Statemachine_Init_ID (25)<br/>Basic<br/>"]
+    q26["Statemachine__Basic_6 (26)<br/>Basic<br/>"]
+    q27["Statemachine__Basic_7 (27)<br/>Basic<br/>"]
+    q28{"Statemachine__LoopEntry (28)<br/>LoopEntry<br/><br/>dec=4"}
+    q29["Statemachine__LoopEnd_2 (29)<br/>LoopEnd<br/>"]
+    q30["Statemachine__LoopBack_2 (30)<br/>LoopBack<br/>"]
 
     q0 --> q10
     q10 -->|"tok(Keyword_statemachine)"| q11
@@ -61,10 +61,10 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q2(["StateNumber__Event__Start (2)<br/>RuleStart"])
-    q3(["StateNumber__Event__Stop (3)<br/>RuleStop"])
-    q31["StateNumber__Event_Name_ID (31)<br/>Basic<br/>"]
-    q32["StateNumber__Event__Basic (32)<br/>Basic<br/>"]
+    q2(["Event__Start (2)<br/>RuleStart"])
+    q3(["Event__Stop (3)<br/>RuleStop"])
+    q31["Event_Name_ID (31)<br/>Basic<br/>"]
+    q32["Event__Basic (32)<br/>Basic<br/>"]
 
     q2 --> q31
     q31 -->|"tok(Token_ID)"| q32
@@ -75,10 +75,10 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q4(["StateNumber__Command__Start (4)<br/>RuleStart"])
-    q5(["StateNumber__Command__Stop (5)<br/>RuleStop"])
-    q33["StateNumber__Command_Name_ID (33)<br/>Basic<br/>"]
-    q34["StateNumber__Command__Basic (34)<br/>Basic<br/>"]
+    q4(["Command__Start (4)<br/>RuleStart"])
+    q5(["Command__Stop (5)<br/>RuleStop"])
+    q33["Command_Name_ID (33)<br/>Basic<br/>"]
+    q34["Command__Basic (34)<br/>Basic<br/>"]
 
     q4 --> q33
     q33 -->|"tok(Token_ID)"| q34
@@ -89,26 +89,26 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q6(["StateNumber__State__Start (6)<br/>RuleStart"])
-    q7(["StateNumber__State__Stop (7)<br/>RuleStop"])
-    q35["StateNumber__State_state (35)<br/>Basic<br/>"]
-    q36["StateNumber__State_Name_ID (36)<br/>Basic<br/>"]
-    q37["StateNumber__State_actions (37)<br/>Basic<br/>"]
-    q38["StateNumber__State_LeftBrace (38)<br/>Basic<br/>"]
-    q39["StateNumber__State_Actions_ID (39)<br/>Basic<br/>"]
-    q40["StateNumber__State__Basic_0 (40)<br/>Basic<br/>"]
-    q41{"StateNumber__State__LoopBack_0 (41)<br/>LoopBack<br/><br/>dec=5"}
-    q42["StateNumber__State__LoopEnd_0 (42)<br/>LoopEnd<br/>"]
-    q43["StateNumber__State_RightBrace (43)<br/>Basic<br/>"]
-    q44["StateNumber__State__Basic_1 (44)<br/>Basic<br/>"]
-    q45{"StateNumber__State__Basic_2 (45)<br/>Basic<br/><br/>dec=6"}
-    q46["StateNumber__State__Basic_3 (46)<br/>Basic<br/>"]
-    q47["StateNumber__State__Basic_4 (47)<br/>Basic<br/>"]
-    q48{"StateNumber__State__LoopEntry (48)<br/>LoopEntry<br/><br/>dec=7"}
-    q49["StateNumber__State__LoopEnd_1 (49)<br/>LoopEnd<br/>"]
-    q50["StateNumber__State__LoopBack_1 (50)<br/>LoopBack<br/>"]
-    q51["StateNumber__State_end (51)<br/>Basic<br/>"]
-    q52["StateNumber__State__Basic_5 (52)<br/>Basic<br/>"]
+    q6(["State__Start (6)<br/>RuleStart"])
+    q7(["State__Stop (7)<br/>RuleStop"])
+    q35["State_state (35)<br/>Basic<br/>"]
+    q36["State_Name_ID (36)<br/>Basic<br/>"]
+    q37["State_actions (37)<br/>Basic<br/>"]
+    q38["State_LeftBrace (38)<br/>Basic<br/>"]
+    q39["State_Actions_ID (39)<br/>Basic<br/>"]
+    q40["State__Basic_0 (40)<br/>Basic<br/>"]
+    q41{"State__LoopBack_0 (41)<br/>LoopBack<br/><br/>dec=5"}
+    q42["State__LoopEnd_0 (42)<br/>LoopEnd<br/>"]
+    q43["State_RightBrace (43)<br/>Basic<br/>"]
+    q44["State__Basic_1 (44)<br/>Basic<br/>"]
+    q45{"State__Basic_2 (45)<br/>Basic<br/><br/>dec=6"}
+    q46["State__Basic_3 (46)<br/>Basic<br/>"]
+    q47["State__Basic_4 (47)<br/>Basic<br/>"]
+    q48{"State__LoopEntry (48)<br/>LoopEntry<br/><br/>dec=7"}
+    q49["State__LoopEnd_1 (49)<br/>LoopEnd<br/>"]
+    q50["State__LoopBack_1 (50)<br/>LoopBack<br/>"]
+    q51["State_end (51)<br/>Basic<br/>"]
+    q52["State__Basic_5 (52)<br/>Basic<br/>"]
 
     q6 --> q35
     q35 -->|"tok(Keyword_state)"| q36
@@ -138,12 +138,12 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    q8(["StateNumber__Transition__Start (8)<br/>RuleStart"])
-    q9(["StateNumber__Transition__Stop (9)<br/>RuleStop"])
-    q53["StateNumber__Transition_Event_ID (53)<br/>Basic<br/>"]
-    q54["StateNumber__Transition_EqualsGreaterThan (54)<br/>Basic<br/>"]
-    q55["StateNumber__Transition_State_ID (55)<br/>Basic<br/>"]
-    q56["StateNumber__Transition__Basic (56)<br/>Basic<br/>"]
+    q8(["Transition__Start (8)<br/>RuleStart"])
+    q9(["Transition__Stop (9)<br/>RuleStop"])
+    q53["Transition_Event_ID (53)<br/>Basic<br/>"]
+    q54["Transition_EqualsGreaterThan (54)<br/>Basic<br/>"]
+    q55["Transition_State_ID (55)<br/>Basic<br/>"]
+    q56["Transition__Basic (56)<br/>Basic<br/>"]
 
     q8 --> q53
     q53 -->|"tok(Token_ID)"| q54

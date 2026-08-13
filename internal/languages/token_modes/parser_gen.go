@@ -37,15 +37,15 @@ func (p *Parser) ParseModel() Model {
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
-			p.state.Sync(StateNumber__Model__LoopEntry)
+			p.state.Sync(Model__LoopEntry)
 			for p.lookahead.ModelStatementsLoop(p.state) {
-				p.state.EnterRule(StateNumber__Model__Basic_1)
+				p.state.EnterRule(Model__Basic_1)
 				result := p.ParseStatement()
 				p.state.ExitRule()
 				if result != nil {
 					current.SetStatementsItem(result)
 				}
-				p.state.Sync(StateNumber__Model__LoopEntry)
+				p.state.Sync(Model__LoopEntry)
 			}
 		}
 	}
@@ -58,7 +58,7 @@ func (p *Parser) ParseStatement() Statement {
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
-			p.state.EnterRule(StateNumber__Statement__Basic_1)
+			p.state.EnterRule(Statement__Basic_1)
 			result := p.ParseVariableDecl()
 			p.state.ExitRule()
 			core.MergeTokens(result, current.Tokens())
@@ -75,17 +75,17 @@ func (p *Parser) ParseVariableDecl() VariableDecl {
 	{
 		{
 			token := p.state.Consume(Token_ID)
-			core.AssignToken(current, token, StateNumber__VariableDecl_Name_ID)
+			core.AssignToken(current, token, VariableDecl_Name_ID)
 			if token != nil {
 				current.SetName(token)
 			}
 		}
 		{
 			token := p.state.Consume(Keyword_ColonEquals)
-			core.AssignToken(current, token, StateNumber__VariableDecl_ColonEquals)
+			core.AssignToken(current, token, VariableDecl_ColonEquals)
 		}
 		{
-			p.state.EnterRule(StateNumber__VariableDecl__Basic_1)
+			p.state.EnterRule(VariableDecl__Basic_1)
 			result := p.ParseExpression()
 			p.state.ExitRule()
 			if result != nil {
@@ -102,7 +102,7 @@ func (p *Parser) ParseExpression() Expression {
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
-			p.state.EnterRule(StateNumber__Expression__Basic_1)
+			p.state.EnterRule(Expression__Basic_1)
 			result := p.ParseAdditive()
 			p.state.ExitRule()
 			core.MergeTokens(result, current.Tokens())
@@ -118,13 +118,13 @@ func (p *Parser) ParseAdditive() Expression {
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
-			p.state.EnterRule(StateNumber__Additive__LoopEntry)
+			p.state.EnterRule(Additive__LoopEntry)
 			result := p.ParsePrimary()
 			p.state.ExitRule()
 			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
-		p.state.Sync(StateNumber__Additive__LoopEntry)
+		p.state.Sync(Additive__LoopEntry)
 		for p.lookahead.AdditiveLoop(p.state) {
 			{
 				result := NewBinaryExpression()
@@ -136,20 +136,20 @@ func (p *Parser) ParseAdditive() Expression {
 			current := current.(BinaryExpression)
 			{
 				token := p.state.Consume(Keyword_Plus)
-				core.AssignToken(current, token, StateNumber__Additive_Operator_Plus)
+				core.AssignToken(current, token, Additive_Operator_Plus)
 				if token != nil {
 					current.SetOperator(token)
 				}
 			}
 			{
-				p.state.EnterRule(StateNumber__Additive__Basic_2)
+				p.state.EnterRule(Additive__Basic_2)
 				result := p.ParsePrimary()
 				p.state.ExitRule()
 				if result != nil {
 					current.SetRight(result)
 				}
 			}
-			p.state.Sync(StateNumber__Additive__LoopEntry)
+			p.state.Sync(Additive__LoopEntry)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -163,7 +163,7 @@ func (p *Parser) ParsePrimary() Primary {
 		switch prediction, failure := p.lookahead.PrimaryAlternatives(p.state); prediction {
 		case 0:
 			{
-				p.state.EnterRule(StateNumber__Primary__Basic_1)
+				p.state.EnterRule(Primary__Basic_1)
 				result := p.ParseVariableRef()
 				p.state.ExitRule()
 				core.MergeTokens(result, current.Tokens())
@@ -171,7 +171,7 @@ func (p *Parser) ParsePrimary() Primary {
 			}
 		case 1:
 			{
-				p.state.EnterRule(StateNumber__Primary__Basic_3)
+				p.state.EnterRule(Primary__Basic_3)
 				result := p.ParseNumericLiteral()
 				p.state.ExitRule()
 				core.MergeTokens(result, current.Tokens())
@@ -179,7 +179,7 @@ func (p *Parser) ParsePrimary() Primary {
 			}
 		case 2:
 			{
-				p.state.EnterRule(StateNumber__Primary__Basic_5)
+				p.state.EnterRule(Primary__Basic_5)
 				result := p.ParseStringLiteral()
 				p.state.ExitRule()
 				core.MergeTokens(result, current.Tokens())
@@ -187,7 +187,7 @@ func (p *Parser) ParsePrimary() Primary {
 			}
 		case 3:
 			{
-				p.state.EnterRule(StateNumber__Primary__Basic_7)
+				p.state.EnterRule(Primary__Basic_7)
 				result := p.ParseParentheses()
 				p.state.ExitRule()
 				core.MergeTokens(result, current.Tokens())
@@ -207,10 +207,10 @@ func (p *Parser) ParseParentheses() Parentheses {
 	{
 		{
 			token := p.state.Consume(Keyword_LeftParen)
-			core.AssignToken(current, token, StateNumber__Parentheses_LeftParen)
+			core.AssignToken(current, token, Parentheses_LeftParen)
 		}
 		{
-			p.state.EnterRule(StateNumber__Parentheses_RightParen)
+			p.state.EnterRule(Parentheses_RightParen)
 			result := p.ParseExpression()
 			p.state.ExitRule()
 			if result != nil {
@@ -219,7 +219,7 @@ func (p *Parser) ParseParentheses() Parentheses {
 		}
 		{
 			token := p.state.Consume(Keyword_RightParen)
-			core.AssignToken(current, token, StateNumber__Parentheses_RightParen)
+			core.AssignToken(current, token, Parentheses_RightParen)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -232,7 +232,7 @@ func (p *Parser) ParseVariableRef() VariableRef {
 	{
 		{
 			token := p.state.Consume(Token_ID)
-			core.AssignToken(current, token, StateNumber__VariableRef_Name_ID)
+			core.AssignToken(current, token, VariableRef_Name_ID)
 			if token != nil {
 				current.SetName(p.referencesConstructor.VariableRefName(current, token))
 			}
@@ -248,7 +248,7 @@ func (p *Parser) ParseNumericLiteral() NumericLiteral {
 	{
 		{
 			token := p.state.Consume(Token_INT)
-			core.AssignToken(current, token, StateNumber__NumericLiteral_Value_INT)
+			core.AssignToken(current, token, NumericLiteral_Value_INT)
 			if token != nil {
 				current.SetValue(token)
 			}
@@ -264,23 +264,23 @@ func (p *Parser) ParseStringLiteral() StringLiteral {
 	{
 		{
 			token := p.state.Consume(Keyword_Backtick)
-			core.AssignToken(current, token, StateNumber__StringLiteral_Backtick_0)
+			core.AssignToken(current, token, StringLiteral_Backtick_0)
 		}
 		{
-			p.state.Sync(StateNumber__StringLiteral__LoopEntry)
+			p.state.Sync(StringLiteral__LoopEntry)
 			for p.lookahead.StringLiteralContentLoop(p.state) {
-				p.state.EnterRule(StateNumber__StringLiteral__Basic_1)
+				p.state.EnterRule(StringLiteral__Basic_1)
 				result := p.ParseStringContent()
 				p.state.ExitRule()
 				if result != nil {
 					current.SetContentItem(result)
 				}
-				p.state.Sync(StateNumber__StringLiteral__LoopEntry)
+				p.state.Sync(StringLiteral__LoopEntry)
 			}
 		}
 		{
 			token := p.state.Consume(Keyword_Backtick)
-			core.AssignToken(current, token, StateNumber__StringLiteral_Backtick_1)
+			core.AssignToken(current, token, StringLiteral_Backtick_1)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -294,7 +294,7 @@ func (p *Parser) ParseStringContent() StringContent {
 		switch prediction, failure := p.lookahead.StringContentAlternatives(p.state); prediction {
 		case 0:
 			{
-				p.state.EnterRule(StateNumber__StringContent__Basic_1)
+				p.state.EnterRule(StringContent__Basic_1)
 				result := p.ParseStringText()
 				p.state.ExitRule()
 				core.MergeTokens(result, current.Tokens())
@@ -302,7 +302,7 @@ func (p *Parser) ParseStringContent() StringContent {
 			}
 		case 1:
 			{
-				p.state.EnterRule(StateNumber__StringContent__Basic_3)
+				p.state.EnterRule(StringContent__Basic_3)
 				result := p.ParseInterpolation()
 				p.state.ExitRule()
 				core.MergeTokens(result, current.Tokens())
@@ -322,7 +322,7 @@ func (p *Parser) ParseStringText() StringText {
 	{
 		{
 			token := p.state.Consume(Token_STRING_CONTENT)
-			core.AssignToken(current, token, StateNumber__StringText_Value_STRING_CONTENT)
+			core.AssignToken(current, token, StringText_Value_STRING_CONTENT)
 			if token != nil {
 				current.SetValue(token)
 			}
@@ -338,10 +338,10 @@ func (p *Parser) ParseInterpolation() Interpolation {
 	{
 		{
 			token := p.state.Consume(Keyword_HashLeftBrace)
-			core.AssignToken(current, token, StateNumber__Interpolation_HashLeftBrace)
+			core.AssignToken(current, token, Interpolation_HashLeftBrace)
 		}
 		{
-			p.state.EnterRule(StateNumber__Interpolation_RightBrace)
+			p.state.EnterRule(Interpolation_RightBrace)
 			result := p.ParseExpression()
 			p.state.ExitRule()
 			if result != nil {
@@ -350,7 +350,7 @@ func (p *Parser) ParseInterpolation() Interpolation {
 		}
 		{
 			token := p.state.Consume(Keyword_RightBrace)
-			core.AssignToken(current, token, StateNumber__Interpolation_RightBrace)
+			core.AssignToken(current, token, Interpolation_RightBrace)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
