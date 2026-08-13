@@ -44,6 +44,7 @@ const (
 	ValidateUnreachableTokenMode     = "unreachableTokenMode"
 	ValidateKeywordNotInTokenMode    = "keywordNotInTokenMode"
 	ValidateTokenNotInTokenMode      = "tokenNotInTokenMode"
+	ValidateNonDefaultTokenModeNoPop = "nonDefaultTokenModeNoPop"
 )
 
 // defaultTokenModeName is the name under which the mode marked
@@ -72,6 +73,8 @@ func (g *GrammarImpl) Validate(ctx context.Context, _ string, accept core.Valida
 	checkIfDefaultTokenModeIsRequired(g, accept)
 	checkTokenModesAreReachable(g, ctx, accept)
 	checkTokenModesCoverParserTokens(g, ctx, accept)
+	checkParserRulesCoverVisibleTokens(g, ctx, accept)
+	checkIfNonDefaultTokenModesHasNoExit(g, ctx, accept)
 }
 
 // tokenModeName returns the name a token mode is registered under. The mode
@@ -106,22 +109,7 @@ func checkTokenModesAreReachable(g Grammar, ctx context.Context, accept core.Val
 			entryMode = mode
 		}
 		for _, member := range mode.Members() {
-			var command TokenCommand = nil
-			switch casted := member.(type) {
-			case TokenDeclUsage:
-				command = casted.Declaration().Command()
-			case TokenGroupUsage:
-				command = casted.Group().Command()
-			case TokenUsage:
-				command = casted.Command()
-				if command == nil {
-					command = casted.TokenRef().Ref(ctx).Command()
-				}
-			case KeywordUsage:
-				command = casted.Command()
-			case KeywordSelector:
-				command = nil
-			}
+			command := getCommand(member)
 			if command != nil && command.Mode() != nil {
 				transitions[mode] = append(transitions[mode], command.Mode().Ref(ctx))
 			}
@@ -154,6 +142,56 @@ func checkTokenModesAreReachable(g Grammar, ctx context.Context, accept core.Val
 			core.WithCode(ValidateUnreachableTokenMode),
 		))
 	}
+}
+
+func checkIfNonDefaultTokenModesHasNoExit(g Grammar, ctx context.Context, accept core.ValidationAcceptor) {
+	if len(g.TokenModes()) == 0 {
+		return
+	}
+	for _, mode := range g.TokenModes() {
+		if mode.IsDefault() {
+			continue
+		}
+		found := false
+		for _, member := range mode.Members() {
+			command := getCommand(member)
+			if command != nil && command.Type() != tokenCommandPush {
+				found = true
+			}
+		}
+		if !found {
+			accept(core.NewDiagnostic(
+				core.SeverityWarning,
+				fmt.Sprintf("The non-default token mode '%s' has no exit command ('mode' or 'pop').", mode.Name()),
+				mode,
+				core.WithToken(mode.NameToken()),
+				core.WithCode(ValidateNonDefaultTokenModeNoPop),
+			))
+		}
+	}
+}
+
+func getCommand(member TokenModeMember) TokenCommand {
+	switch casted := member.(type) {
+	case TokenDeclUsage:
+		return casted.Declaration().Command()
+	case TokenGroupUsage:
+		return casted.Group().Command()
+	case TokenUsage:
+		command := casted.Command()
+		if command == nil {
+			ref := casted.TokenRef().Ref(context.Background())
+			if ref != nil {
+				command = ref.Command()
+			}
+		}
+		return command
+	case KeywordUsage:
+		return casted.Command()
+	case KeywordSelector:
+		return nil
+	}
+	return nil
 }
 
 func checkIfDefaultTokenModeIsRequired(g Grammar, accept core.ValidationAcceptor) {
@@ -273,6 +311,21 @@ func checkTokenModeNotEmpty(mode TokenMode, accept core.ValidationAcceptor) {
 	))
 }
 
+func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept core.ValidationAcceptor) {
+	//TODO
+	//We need the inverse of this as well; I.e. a keyword that is registered in a token mode as
+	//a non-hidden/non-comment token, but never referenced in a parser rule. This should always result
+	//in a diagnostic, since the lexer picks up the token, but it will always result in a parser error
+	//(unless this token is part of a token group!).
+
+	//TODO Duplicate keyword/token definitions in the same token mode should result in an error.
+	//I.e. you can currently write token mode default { "x" "x" }.
+
+	//TODO Similarly Token references should be unique in the same token mode.
+	//Right know, you can write something like
+	//token mode default { hidden WS comment WS } without a validation error appearing.
+}
+
 // tokenModeCoverage records the keywords and token rules that the declared token
 // modes register with the lexer.
 type tokenModeCoverage struct {
@@ -318,10 +371,10 @@ func checkTokenModesCoverParserTokens(g Grammar, ctx context.Context, accept cor
 			// rule may be registered with the lexer by hand-written code, and a
 			// grammar that leaves one out still generates and builds.
 			accept(core.NewDiagnostic(
-				core.SeverityWarning,
+				core.SeverityError,
 				fmt.Sprintf("The token '%s' is not registered in any token mode, so the lexer can never produce it. List it in a token mode.", rule.Name()),
-				node,
-				core.WithReference(node.Rule()),
+				rule,
+				core.WithToken(rule.NameToken()),
 				core.WithCode(ValidateTokenNotInTokenMode),
 			))
 		}

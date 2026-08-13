@@ -1598,3 +1598,43 @@ func TestUnreachableTokenModeCycle(t *testing.T) {
 	diag2.WithSeverity(core.SeverityWarning)
 	diag2.WithCode(ValidateUnreachableTokenMode)
 }
+
+func TestNonDefaultTokenModeWithNoExitCommand(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token ID: /[a-z]+/
+
+		token mode <|0:default|> {
+			ID -> push(LEFT)
+		}
+
+		token mode <|1:LEFT|> {
+			ID
+			"123"
+        }
+	`)
+	doc.AssertNoDiagnostic("0")
+	diag1 := doc.ExpectDiagnostic("1")
+	diag1.WithSeverity(core.SeverityWarning)
+	diag1.WithCode(ValidateNonDefaultTokenModeNoPop)
+}
+
+func TestTokenNotUsedInTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=ID;
+
+		token <|1:ID|>: /[a-z]+/
+
+		token mode default { "hello" }
+	`)
+	diag1 := doc.ExpectDiagnostic("1")
+	diag1.WithSeverity(core.SeverityError)
+	diag1.WithCode(ValidateTokenNotInTokenMode)
+}
