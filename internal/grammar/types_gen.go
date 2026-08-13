@@ -44,17 +44,6 @@ type GrammarData struct {
 	interfaces  []Interface
 }
 
-func NewGrammarData() GrammarData {
-	return GrammarData{
-		rules:       []ParserRule{},
-		composites:  []CompositeRule{},
-		terminals:   []TokenDecl{},
-		tokenGroups: []TokenGroup{},
-		tokenModes:  []TokenMode{},
-		interfaces:  []Interface{},
-	}
-}
-
 func (i *GrammarData) IsGrammar() {}
 
 func (i *GrammarData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
@@ -1124,20 +1113,11 @@ type TokenDecl interface {
 }
 
 func NewTokenDecl() TokenDecl {
-	return &TokenDeclImpl{
-		AstNodeBase:           core.NewAstNode(),
-		AbstractTokenRuleData: NewAbstractTokenRuleData(),
-		AbstractRuleData:      NewAbstractRuleData(),
-		TokenDeclData:         NewTokenDeclData(),
-	}
+	return &TokenDeclImpl{}
 }
 
 type TokenDeclData struct {
 	content TokenElement
-}
-
-func NewTokenDeclData() TokenDeclData {
-	return TokenDeclData{}
 }
 
 func (i *TokenDeclData) IsTokenDecl() {}
@@ -1219,17 +1199,10 @@ type TokenElement interface {
 }
 
 func NewTokenElement() TokenElement {
-	return &TokenElementImpl{
-		AstNodeBase:      core.NewAstNode(),
-		TokenElementData: NewTokenElementData(),
-	}
+	return &TokenElementImpl{}
 }
 
 type TokenElementData struct {
-}
-
-func NewTokenElementData() TokenElementData {
-	return TokenElementData{}
 }
 
 func (i *TokenElementData) IsTokenElement() {}
@@ -1273,19 +1246,11 @@ type RegexpTokenElement interface {
 }
 
 func NewRegexpTokenElement() RegexpTokenElement {
-	return &RegexpTokenElementImpl{
-		AstNodeBase:            core.NewAstNode(),
-		TokenElementData:       NewTokenElementData(),
-		RegexpTokenElementData: NewRegexpTokenElementData(),
-	}
+	return &RegexpTokenElementImpl{}
 }
 
 type RegexpTokenElementData struct {
 	regexp *core.Token
-}
-
-func NewRegexpTokenElementData() RegexpTokenElementData {
-	return RegexpTokenElementData{}
 }
 
 func (i *RegexpTokenElementData) IsRegexpTokenElement() {}
@@ -1352,19 +1317,11 @@ type KeywordTokenElement interface {
 }
 
 func NewKeywordTokenElement() KeywordTokenElement {
-	return &KeywordTokenElementImpl{
-		AstNodeBase:             core.NewAstNode(),
-		TokenElementData:        NewTokenElementData(),
-		KeywordTokenElementData: NewKeywordTokenElementData(),
-	}
+	return &KeywordTokenElementImpl{}
 }
 
 type KeywordTokenElementData struct {
 	keyword Keyword
-}
-
-func NewKeywordTokenElementData() KeywordTokenElementData {
-	return KeywordTokenElementData{}
 }
 
 func (i *KeywordTokenElementData) IsKeywordTokenElement() {}
@@ -1440,20 +1397,13 @@ type TokenCommand interface {
 }
 
 func NewTokenCommand() TokenCommand {
-	return &TokenCommandImpl{
-		AstNodeBase:      core.NewAstNode(),
-		TokenCommandData: NewTokenCommandData(),
-	}
+	return &TokenCommandImpl{}
 }
 
 type TokenCommandData struct {
 	_Type    *core.Token
 	mode     *core.Reference[TokenMode]
 	_Default *core.Token
-}
-
-func NewTokenCommandData() TokenCommandData {
-	return TokenCommandData{}
 }
 
 func (i *TokenCommandData) IsTokenCommand() {}
@@ -1559,14 +1509,6 @@ type TokenGroupData struct {
 	tokenRefs        []*core.Reference[AbstractTokenRule]
 	keywords         []Keyword
 	keywordSelectors []*core.Token
-}
-
-func NewTokenGroupData() TokenGroupData {
-	return TokenGroupData{
-		tokenRefs:        []*core.Reference[AbstractTokenRule]{},
-		keywords:         []Keyword{},
-		keywordSelectors: []*core.Token{},
-	}
 }
 
 func (i *TokenGroupData) IsTokenGroup() {}
@@ -1679,22 +1621,13 @@ type TokenMode interface {
 }
 
 func NewTokenMode() TokenMode {
-	return &TokenModeImpl{
-		AstNodeBase:   core.NewAstNode(),
-		TokenModeData: NewTokenModeData(),
-	}
+	return &TokenModeImpl{}
 }
 
 type TokenModeData struct {
 	name     *core.Token
 	_Default *core.Token
 	members  []TokenModeMember
-}
-
-func NewTokenModeData() TokenModeData {
-	return TokenModeData{
-		members: []TokenModeMember{},
-	}
 }
 
 func (i *TokenModeData) IsTokenMode() {}
@@ -1791,17 +1724,10 @@ type TokenModeMember interface {
 }
 
 func NewTokenModeMember() TokenModeMember {
-	return &TokenModeMemberImpl{
-		AstNodeBase:         core.NewAstNode(),
-		TokenModeMemberData: NewTokenModeMemberData(),
-	}
+	return &TokenModeMemberImpl{}
 }
 
 type TokenModeMemberData struct {
-}
-
-func NewTokenModeMemberData() TokenModeMemberData {
-	return TokenModeMemberData{}
 }
 
 func (i *TokenModeMemberData) IsTokenModeMember() {}
@@ -1844,19 +1770,11 @@ type TokenDeclUsage interface {
 }
 
 func NewTokenDeclUsage() TokenDeclUsage {
-	return &TokenDeclUsageImpl{
-		AstNodeBase:         core.NewAstNode(),
-		TokenModeMemberData: NewTokenModeMemberData(),
-		TokenDeclUsageData:  NewTokenDeclUsageData(),
-	}
+	return &TokenDeclUsageImpl{}
 }
 
 type TokenDeclUsageData struct {
 	declaration TokenDecl
-}
-
-func NewTokenDeclUsageData() TokenDeclUsageData {
-	return TokenDeclUsageData{}
 }
 
 func (i *TokenDeclUsageData) IsTokenDeclUsage() {}
@@ -1927,19 +1845,11 @@ type TokenGroupUsage interface {
 }
 
 func NewTokenGroupUsage() TokenGroupUsage {
-	return &TokenGroupUsageImpl{
-		AstNodeBase:         core.NewAstNode(),
-		TokenModeMemberData: NewTokenModeMemberData(),
-		TokenGroupUsageData: NewTokenGroupUsageData(),
-	}
+	return &TokenGroupUsageImpl{}
 }
 
 type TokenGroupUsageData struct {
 	group TokenGroup
-}
-
-func NewTokenGroupUsageData() TokenGroupUsageData {
-	return TokenGroupUsageData{}
 }
 
 func (i *TokenGroupUsageData) IsTokenGroupUsage() {}
@@ -2015,21 +1925,13 @@ type TokenUsage interface {
 }
 
 func NewTokenUsage() TokenUsage {
-	return &TokenUsageImpl{
-		AstNodeBase:         core.NewAstNode(),
-		TokenModeMemberData: NewTokenModeMemberData(),
-		TokenUsageData:      NewTokenUsageData(),
-	}
+	return &TokenUsageImpl{}
 }
 
 type TokenUsageData struct {
 	modifier *core.Token
 	tokenRef *core.Reference[AbstractTokenRule]
 	command  TokenCommand
-}
-
-func NewTokenUsageData() TokenUsageData {
-	return TokenUsageData{}
 }
 
 func (i *TokenUsageData) IsTokenUsage() {}
@@ -2140,21 +2042,13 @@ type KeywordUsage interface {
 }
 
 func NewKeywordUsage() KeywordUsage {
-	return &KeywordUsageImpl{
-		AstNodeBase:         core.NewAstNode(),
-		TokenModeMemberData: NewTokenModeMemberData(),
-		KeywordUsageData:    NewKeywordUsageData(),
-	}
+	return &KeywordUsageImpl{}
 }
 
 type KeywordUsageData struct {
 	modifier *core.Token
 	keyword  Keyword
 	command  TokenCommand
-}
-
-func NewKeywordUsageData() KeywordUsageData {
-	return KeywordUsageData{}
 }
 
 func (i *KeywordUsageData) IsKeywordUsage() {}
@@ -2266,19 +2160,11 @@ type KeywordSelector interface {
 }
 
 func NewKeywordSelector() KeywordSelector {
-	return &KeywordSelectorImpl{
-		AstNodeBase:         core.NewAstNode(),
-		TokenModeMemberData: NewTokenModeMemberData(),
-		KeywordSelectorData: NewKeywordSelectorData(),
-	}
+	return &KeywordSelectorImpl{}
 }
 
 type KeywordSelectorData struct {
 	selector *core.Token
-}
-
-func NewKeywordSelectorData() KeywordSelectorData {
-	return KeywordSelectorData{}
 }
 
 func (i *KeywordSelectorData) IsKeywordSelector() {}

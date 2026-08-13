@@ -468,8 +468,8 @@ func (p *Parser) ParseTokenDecl() TokenDecl {
 }
 
 func (p *Parser) ParseTokenElement() TokenElement {
-	current := NewTokenElement()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current TokenElement
 	{
 		switch prediction, failure := p.lookahead.TokenElementAlternatives(p.state); prediction {
 		case 0:
@@ -477,7 +477,6 @@ func (p *Parser) ParseTokenElement() TokenElement {
 				p.state.EnterRule(TokenElement__Basic_1)
 				result := p.ParseRegexpTokenElement()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 1:
@@ -485,11 +484,14 @@ func (p *Parser) ParseTokenElement() TokenElement {
 				p.state.EnterRule(TokenElement__Basic_3)
 				result := p.ParseKeywordTokenElement()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewTokenElement()
+			current.SetTextRangeStart(startPos)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -750,8 +752,8 @@ func (p *Parser) ParseTokenMode() TokenMode {
 }
 
 func (p *Parser) ParseTokenModeMember() TokenModeMember {
-	current := NewTokenModeMember()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current TokenModeMember
 	{
 		switch prediction, failure := p.lookahead.TokenModeMemberAlternatives(p.state); prediction {
 		case 0:
@@ -759,7 +761,6 @@ func (p *Parser) ParseTokenModeMember() TokenModeMember {
 				p.state.EnterRule(TokenModeMember__Basic_1)
 				result := p.ParseTokenDeclUsage()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 1:
@@ -767,7 +768,6 @@ func (p *Parser) ParseTokenModeMember() TokenModeMember {
 				p.state.EnterRule(TokenModeMember__Basic_3)
 				result := p.ParseTokenGroupUsage()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 2:
@@ -775,7 +775,6 @@ func (p *Parser) ParseTokenModeMember() TokenModeMember {
 				p.state.EnterRule(TokenModeMember__Basic_5)
 				result := p.ParseTokenUsage()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 3:
@@ -783,7 +782,6 @@ func (p *Parser) ParseTokenModeMember() TokenModeMember {
 				p.state.EnterRule(TokenModeMember__Basic_7)
 				result := p.ParseKeywordUsage()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 4:
@@ -791,11 +789,14 @@ func (p *Parser) ParseTokenModeMember() TokenModeMember {
 				p.state.EnterRule(TokenModeMember__Basic_9)
 				result := p.ParseKeywordSelector()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewTokenModeMember()
+			current.SetTextRangeStart(startPos)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)

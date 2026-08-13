@@ -54,14 +54,12 @@ func (p *Parser) ParseModel() Model {
 }
 
 func (p *Parser) ParseStatement() Statement {
-	current := NewStatement()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	var current Statement
 	{
 		{
 			p.state.EnterRule(Statement__Basic_1)
 			result := p.ParseVariableDecl()
 			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
 	}
@@ -98,14 +96,12 @@ func (p *Parser) ParseVariableDecl() VariableDecl {
 }
 
 func (p *Parser) ParseExpression() Expression {
-	current := NewExpression()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	var current Expression
 	{
 		{
 			p.state.EnterRule(Expression__Basic_1)
 			result := p.ParseAdditive()
 			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
 	}
@@ -114,14 +110,12 @@ func (p *Parser) ParseExpression() Expression {
 }
 
 func (p *Parser) ParseAdditive() Expression {
-	current := NewExpression()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	var current Expression
 	{
 		{
 			p.state.EnterRule(Additive__LoopEntry)
 			result := p.ParsePrimary()
 			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
 		p.state.Sync(Additive__LoopEntry)
@@ -157,8 +151,8 @@ func (p *Parser) ParseAdditive() Expression {
 }
 
 func (p *Parser) ParsePrimary() Primary {
-	current := NewPrimary()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current Primary
 	{
 		switch prediction, failure := p.lookahead.PrimaryAlternatives(p.state); prediction {
 		case 0:
@@ -166,7 +160,6 @@ func (p *Parser) ParsePrimary() Primary {
 				p.state.EnterRule(Primary__Basic_1)
 				result := p.ParseVariableRef()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 1:
@@ -174,7 +167,6 @@ func (p *Parser) ParsePrimary() Primary {
 				p.state.EnterRule(Primary__Basic_3)
 				result := p.ParseNumericLiteral()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 2:
@@ -182,7 +174,6 @@ func (p *Parser) ParsePrimary() Primary {
 				p.state.EnterRule(Primary__Basic_5)
 				result := p.ParseStringLiteral()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 3:
@@ -190,11 +181,14 @@ func (p *Parser) ParsePrimary() Primary {
 				p.state.EnterRule(Primary__Basic_7)
 				result := p.ParseParentheses()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewPrimary()
+			current.SetTextRangeStart(startPos)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -288,8 +282,8 @@ func (p *Parser) ParseStringLiteral() StringLiteral {
 }
 
 func (p *Parser) ParseStringContent() StringContent {
-	current := NewStringContent()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current StringContent
 	{
 		switch prediction, failure := p.lookahead.StringContentAlternatives(p.state); prediction {
 		case 0:
@@ -297,7 +291,6 @@ func (p *Parser) ParseStringContent() StringContent {
 				p.state.EnterRule(StringContent__Basic_1)
 				result := p.ParseStringText()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		case 1:
@@ -305,11 +298,14 @@ func (p *Parser) ParseStringContent() StringContent {
 				p.state.EnterRule(StringContent__Basic_3)
 				result := p.ParseInterpolation()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewStringContent()
+			current.SetTextRangeStart(startPos)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)

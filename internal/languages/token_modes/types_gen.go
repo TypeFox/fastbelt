@@ -18,20 +18,11 @@ type Model interface {
 }
 
 func NewModel() Model {
-	return &ModelImpl{
-		AstNodeBase: core.NewAstNode(),
-		ModelData:   NewModelData(),
-	}
+	return &ModelImpl{}
 }
 
 type ModelData struct {
 	statements []Statement
-}
-
-func NewModelData() ModelData {
-	return ModelData{
-		statements: []Statement{},
-	}
 }
 
 func (i *ModelData) IsModel() {}
@@ -96,17 +87,10 @@ type Statement interface {
 }
 
 func NewStatement() Statement {
-	return &StatementImpl{
-		AstNodeBase:   core.NewAstNode(),
-		StatementData: NewStatementData(),
-	}
+	return &StatementImpl{}
 }
 
 type StatementData struct {
-}
-
-func NewStatementData() StatementData {
-	return StatementData{}
 }
 
 func (i *StatementData) IsStatement() {}
@@ -152,20 +136,12 @@ type VariableDecl interface {
 }
 
 func NewVariableDecl() VariableDecl {
-	return &VariableDeclImpl{
-		AstNodeBase:      core.NewAstNode(),
-		StatementData:    NewStatementData(),
-		VariableDeclData: NewVariableDeclData(),
-	}
+	return &VariableDeclImpl{}
 }
 
 type VariableDeclData struct {
 	name  *core.Token
 	value Expression
-}
-
-func NewVariableDeclData() VariableDeclData {
-	return VariableDeclData{}
 }
 
 func (i *VariableDeclData) IsVariableDecl() {}
@@ -251,17 +227,10 @@ type Expression interface {
 }
 
 func NewExpression() Expression {
-	return &ExpressionImpl{
-		AstNodeBase:    core.NewAstNode(),
-		ExpressionData: NewExpressionData(),
-	}
+	return &ExpressionImpl{}
 }
 
 type ExpressionData struct {
-}
-
-func NewExpressionData() ExpressionData {
-	return ExpressionData{}
 }
 
 func (i *ExpressionData) IsExpression() {}
@@ -309,21 +278,13 @@ type BinaryExpression interface {
 }
 
 func NewBinaryExpression() BinaryExpression {
-	return &BinaryExpressionImpl{
-		AstNodeBase:          core.NewAstNode(),
-		ExpressionData:       NewExpressionData(),
-		BinaryExpressionData: NewBinaryExpressionData(),
-	}
+	return &BinaryExpressionImpl{}
 }
 
 type BinaryExpressionData struct {
 	left     Expression
 	operator *core.Token
 	right    Expression
-}
-
-func NewBinaryExpressionData() BinaryExpressionData {
-	return BinaryExpressionData{}
 }
 
 func (i *BinaryExpressionData) IsBinaryExpression() {}
@@ -432,18 +393,10 @@ type Primary interface {
 }
 
 func NewPrimary() Primary {
-	return &PrimaryImpl{
-		AstNodeBase:    core.NewAstNode(),
-		ExpressionData: NewExpressionData(),
-		PrimaryData:    NewPrimaryData(),
-	}
+	return &PrimaryImpl{}
 }
 
 type PrimaryData struct {
-}
-
-func NewPrimaryData() PrimaryData {
-	return PrimaryData{}
 }
 
 func (i *PrimaryData) IsPrimary() {}
@@ -489,20 +442,11 @@ type Parentheses interface {
 }
 
 func NewParentheses() Parentheses {
-	return &ParenthesesImpl{
-		AstNodeBase:     core.NewAstNode(),
-		PrimaryData:     NewPrimaryData(),
-		ExpressionData:  NewExpressionData(),
-		ParenthesesData: NewParenthesesData(),
-	}
+	return &ParenthesesImpl{}
 }
 
 type ParenthesesData struct {
 	expr Expression
-}
-
-func NewParenthesesData() ParenthesesData {
-	return ParenthesesData{}
 }
 
 func (i *ParenthesesData) IsParentheses() {}
@@ -576,20 +520,11 @@ type VariableRef interface {
 }
 
 func NewVariableRef() VariableRef {
-	return &VariableRefImpl{
-		AstNodeBase:     core.NewAstNode(),
-		PrimaryData:     NewPrimaryData(),
-		ExpressionData:  NewExpressionData(),
-		VariableRefData: NewVariableRefData(),
-	}
+	return &VariableRefImpl{}
 }
 
 type VariableRefData struct {
 	name *core.Reference[VariableDecl]
-}
-
-func NewVariableRefData() VariableRefData {
-	return VariableRefData{}
 }
 
 func (i *VariableRefData) IsVariableRef() {}
@@ -659,20 +594,11 @@ type NumericLiteral interface {
 }
 
 func NewNumericLiteral() NumericLiteral {
-	return &NumericLiteralImpl{
-		AstNodeBase:        core.NewAstNode(),
-		PrimaryData:        NewPrimaryData(),
-		ExpressionData:     NewExpressionData(),
-		NumericLiteralData: NewNumericLiteralData(),
-	}
+	return &NumericLiteralImpl{}
 }
 
 type NumericLiteralData struct {
 	value *core.Token
-}
-
-func NewNumericLiteralData() NumericLiteralData {
-	return NumericLiteralData{}
 }
 
 func (i *NumericLiteralData) IsNumericLiteral() {}
@@ -742,22 +668,11 @@ type StringLiteral interface {
 }
 
 func NewStringLiteral() StringLiteral {
-	return &StringLiteralImpl{
-		AstNodeBase:       core.NewAstNode(),
-		PrimaryData:       NewPrimaryData(),
-		ExpressionData:    NewExpressionData(),
-		StringLiteralData: NewStringLiteralData(),
-	}
+	return &StringLiteralImpl{}
 }
 
 type StringLiteralData struct {
 	content []StringContent
-}
-
-func NewStringLiteralData() StringLiteralData {
-	return StringLiteralData{
-		content: []StringContent{},
-	}
 }
 
 func (i *StringLiteralData) IsStringLiteral() {}
@@ -828,17 +743,10 @@ type StringContent interface {
 }
 
 func NewStringContent() StringContent {
-	return &StringContentImpl{
-		AstNodeBase:       core.NewAstNode(),
-		StringContentData: NewStringContentData(),
-	}
+	return &StringContentImpl{}
 }
 
 type StringContentData struct {
-}
-
-func NewStringContentData() StringContentData {
-	return StringContentData{}
 }
 
 func (i *StringContentData) IsStringContent() {}
@@ -882,19 +790,11 @@ type StringText interface {
 }
 
 func NewStringText() StringText {
-	return &StringTextImpl{
-		AstNodeBase:       core.NewAstNode(),
-		StringContentData: NewStringContentData(),
-		StringTextData:    NewStringTextData(),
-	}
+	return &StringTextImpl{}
 }
 
 type StringTextData struct {
 	value *core.Token
-}
-
-func NewStringTextData() StringTextData {
-	return StringTextData{}
 }
 
 func (i *StringTextData) IsStringText() {}
@@ -961,19 +861,11 @@ type Interpolation interface {
 }
 
 func NewInterpolation() Interpolation {
-	return &InterpolationImpl{
-		AstNodeBase:       core.NewAstNode(),
-		StringContentData: NewStringContentData(),
-		InterpolationData: NewInterpolationData(),
-	}
+	return &InterpolationImpl{}
 }
 
 type InterpolationData struct {
 	expression Expression
-}
-
-func NewInterpolationData() InterpolationData {
-	return InterpolationData{}
 }
 
 func (i *InterpolationData) IsInterpolation() {}

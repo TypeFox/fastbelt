@@ -35,7 +35,7 @@ func BenchmarkParser(b *testing.B) {
 	srv := CreateServices()
 	lexerService := service.MustGet[lexer.Lexer](srv)
 	parserService := service.MustGet[parser.Parser](srv)
-	lexed := lexerService.Lex(content)
+	lexed := lexerService.Exec(content)
 	if len(lexed.Errors) > 0 {
 		b.Fatalf("lexer errors: %v", lexed.Errors)
 	}
