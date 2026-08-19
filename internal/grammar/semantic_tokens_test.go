@@ -35,12 +35,14 @@ token <|function:ID|>: /[a-zA-Z_][a-zA-Z0-9_]*/;
 `
 
 	doc := fixture.ParseURI(grammarText, "file:///semantic.fb")
-	doc.AssertNoParseErrors().
-		AssertSemanticTokens("namespace", legendProvider.Namespace(), 0).
-		AssertSemanticTokens("interface", legendProvider.Interface(), 0).
-		AssertSemanticTokens("function", legendProvider.Function(), 0).
-		AssertSemanticTokens("property", legendProvider.Property(), 0).
-		AssertSemanticTokens("type", legendProvider.Type(), 0).
-		AssertSemanticTokens("modifier", legendProvider.Modifier(), 0).
-		AssertSemanticTokens("comment", legendProvider.Comment(), 0)
+	doc.AssertNoParseErrors()
+	semanticTokens := doc.ExpectSemanticTokens()
+	semanticTokens.
+		Assert("namespace", legendProvider.Namespace(), 0).
+		Assert("interface", legendProvider.Interface(), 0).
+		Assert("function", legendProvider.Function(), 0).
+		Assert("property", legendProvider.Property(), 0).
+		Assert("type", legendProvider.Type(), 0).
+		Assert("modifier", legendProvider.Modifier(), 0).
+		Assert("comment", legendProvider.Comment(), 0)
 }
