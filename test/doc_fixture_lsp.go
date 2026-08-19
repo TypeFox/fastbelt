@@ -421,17 +421,10 @@ func findSymbolAtRange(symbols []lsp.DocumentSymbol, targetRange lsp.Range) *lsp
 	return nil
 }
 
-// AssertSemanticTokens verifies that every marker range with the given label
-// has a semantic token with the expected type and modifiers.
-// Returns the [Doc] for chaining.
-func (d *Doc) AssertSemanticTokens(label string, expectedType uint32, expectedModifiers uint32) *Doc {
+// ExpectSemanticTokens retrieves the semantic tokens for the document
+// and returns a SemanticTokenExpectation for asserting on them.
+func (d *Doc) ExpectSemanticTokens() *SemanticTokenExpectation {
 	d.fixture.t.Helper()
-
-	ranges := d.markerRanges(label)
-	if len(ranges) == 0 {
-		d.fixture.t.Fatalf("fbtest: no marker with label %q", label)
-	}
-
 	semanticTokensProvider := service.MustGet[server.SemanticTokensProvider](d.fixture.sc)
 	params := &lsp.SemanticTokensParams{
 		TextDocument: lsp.TextDocumentIdentifier{
@@ -441,12 +434,6 @@ func (d *Doc) AssertSemanticTokens(label string, expectedType uint32, expectedMo
 	result, err := semanticTokensProvider.HandleSemanticTokensFullRequest(d.fixture.ctx, params)
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: HandleSemanticTokensFullRequest returned error: %v", err)
-	}
-
-	// Decode the semantic tokens data, which comes in chunks of 5 uint32 values:
-	// [lineDelta, startCharDelta, length, tokenType, tokenModifiers]
-	type semanticToken struct {
-		line, column, length, tokenType, tokenModifiers uint32
 	}
 	var tokens []semanticToken
 	var line, column uint32
@@ -461,7 +448,34 @@ func (d *Doc) AssertSemanticTokens(label string, expectedType uint32, expectedMo
 		}
 		tokens = append(tokens, semanticToken{line, column, result.Data[i+2], result.Data[i+3], result.Data[i+4]})
 	}
+	return &SemanticTokenExpectation{
+		doc:            d,
+		semanticTokens: tokens,
+	}
+}
 
+// Decode the semantic tokens data, which comes in chunks of 5 uint32 values:
+// [lineDelta, startCharDelta, length, tokenType, tokenModifiers]
+type semanticToken struct {
+	line, column, length, tokenType, tokenModifiers uint32
+}
+
+// SemanticTokenExpectation is a helper struct for asserting semantic tokens in tests.
+type SemanticTokenExpectation struct {
+	doc            *Doc
+	semanticTokens []semanticToken
+}
+
+// Assert verifies that every marker range with the given label
+// has a semantic token with the expected type and modifiers.
+// Returns the [SemanticTokenExpectation] for chaining.
+func (e *SemanticTokenExpectation) Assert(label string, expectedType uint32, expectedModifiers uint32) *SemanticTokenExpectation {
+	d := e.doc
+	d.fixture.t.Helper()
+	ranges := d.markerRanges(label)
+	if len(ranges) == 0 {
+		d.fixture.t.Fatalf("fbtest: no marker with label %q", label)
+	}
 	for _, rng := range ranges {
 		startPosition := d.Document.TextDoc.PositionAt(int(rng.Start))
 		endPosition := d.Document.TextDoc.PositionAt(int(rng.End))
@@ -469,7 +483,7 @@ func (d *Doc) AssertSemanticTokens(label string, expectedType uint32, expectedMo
 			d.fixture.t.Fatalf("fbtest: AssertSemanticToken: marker %q spans multiple lines, which is not supported", label)
 		}
 		found := false
-		for _, token := range tokens {
+		for _, token := range e.semanticTokens {
 			if token.line == startPosition.Line && token.column == startPosition.Character {
 				found = true
 				expectedLength := uint32(endPosition.Character - startPosition.Character)
@@ -489,5 +503,5 @@ func (d *Doc) AssertSemanticTokens(label string, expectedType uint32, expectedMo
 			d.fixture.t.Errorf("fbtest: no semantic token found at %q (%d:%d)", label, startPosition.Line, startPosition.Character)
 		}
 	}
-	return d
+	return e
 }
