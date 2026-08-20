@@ -194,7 +194,7 @@ func (s *DefaultCompletionProvider) completionsForContext(
 		hcCopy := hc
 		for d := range seq {
 			dCopy := d
-			if !matcher.Match(cc.ReplaceText, dCopy.Name.String()) {
+			if !matcher.Match(cc.ReplaceText, dCopy.NameText()) {
 				continue
 			}
 			accept := func(item lsp.CompletionItem) {
@@ -625,7 +625,7 @@ func EnrichReferenceCompletionItem(item lsp.CompletionItem, d *core.SymbolDescri
 	if d == nil {
 		return item
 	}
-	defaultLabel := d.Name.String()
+	defaultLabel := d.NameText()
 	if item.Label == "" {
 		item.Label = defaultLabel
 	}

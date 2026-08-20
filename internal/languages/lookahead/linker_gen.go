@@ -47,11 +47,12 @@ type DefaultLookaheadReferencesConstructor struct {
 }
 
 func NewDefaultLookaheadReferencesConstructor(sc *service.Container) LookaheadReferencesConstructor {
+	referenceLinker := sync.OnceValue(func() LookaheadReferenceLinker {
+		return service.MustGet[LookaheadReferenceLinker](sc)
+	})
 	return &DefaultLookaheadReferencesConstructor{
-		sc: sc,
-		referenceLinker: sync.OnceValue(func() LookaheadReferenceLinker {
-			return service.MustGet[LookaheadReferenceLinker](sc)
-		}),
+		sc:              sc,
+		referenceLinker: referenceLinker,
 	}
 }
 

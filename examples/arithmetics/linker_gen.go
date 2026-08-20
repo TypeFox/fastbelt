@@ -58,22 +58,26 @@ type ArithmeticsReferencesConstructor interface {
 }
 
 type DefaultArithmeticsReferencesConstructor struct {
-	sc              *service.Container
-	referenceLinker func() ArithmeticsReferenceLinker
+	sc                       *service.Container
+	referenceLinker          func() ArithmeticsReferenceLinker
+	linkFunctionCallCallable func() core.ReferenceGetter[AbstractDefinition]
 }
 
 func NewDefaultArithmeticsReferencesConstructor(sc *service.Container) ArithmeticsReferencesConstructor {
+	referenceLinker := sync.OnceValue(func() ArithmeticsReferenceLinker {
+		return service.MustGet[ArithmeticsReferenceLinker](sc)
+	})
 	return &DefaultArithmeticsReferencesConstructor{
-		sc: sc,
-		referenceLinker: sync.OnceValue(func() ArithmeticsReferenceLinker {
-			return service.MustGet[ArithmeticsReferenceLinker](sc)
+		sc:              sc,
+		referenceLinker: referenceLinker,
+		linkFunctionCallCallable: sync.OnceValue(func() core.ReferenceGetter[AbstractDefinition] {
+			return referenceLinker().LinkFunctionCallCallable
 		}),
 	}
 }
 
 func (s *DefaultArithmeticsReferencesConstructor) FunctionCallCallable(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractDefinition] {
-	fn := s.referenceLinker().LinkFunctionCallCallable
-	return core.NewReference(owner, unit, fn)
+	return core.NewReference(owner, unit, s.linkFunctionCallCallable())
 }
 
 type ArithmeticsSymbolContainers struct{}
