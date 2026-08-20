@@ -20,6 +20,20 @@ type SymbolDescription struct {
 	Node AstNode
 	// Name is the source unit that provides the symbol's textual name.
 	Name StringUnit
+	// name caches Name.String() so that scope lookups compare plain strings
+	// instead of dispatching through the StringUnit interface per candidate.
+	name string
+}
+
+// NameText returns the symbol's textual name.
+//
+// It is equivalent to Name.String() but avoids the interface dispatch for
+// descriptions created via [NewSymbolDescription].
+func (d *SymbolDescription) NameText() string {
+	if d.name == "" && d.Name != nil {
+		return d.Name.String()
+	}
+	return d.name
 }
 
 // NewSymbolDescription returns a [SymbolDescription] for node and name.
@@ -31,6 +45,7 @@ func NewSymbolDescription(node AstNode, name StringUnit) *SymbolDescription {
 		URI:  doc.URI,
 		Node: node,
 		Name: name,
+		name: name.String(),
 	}
 }
 

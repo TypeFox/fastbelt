@@ -248,10 +248,14 @@ func (node *AstNodeBase) Resolve(path FragmentPath) (AstNode, error) {
 //
 // Note that this function will traverse the entire subtree, without short-circuiting.
 func traverseContent(node AstNode, fn func(AstNode)) {
-	node.ForEachNode(func(child AstNode, containerField unique.Handle[string], index int) {
+	// The visitor closure is created once and recurses via itself; recursing
+	// through traverseContent would heap allocate a closure per visited node.
+	var visit func(child AstNode, containerField unique.Handle[string], index int)
+	visit = func(child AstNode, containerField unique.Handle[string], index int) {
 		fn(child)
-		traverseContent(child, fn)
-	})
+		child.ForEachNode(visit)
+	}
+	node.ForEachNode(visit)
 }
 
 // AllNodes creates an iterator over the given node and all its descendant nodes.
@@ -386,20 +390,32 @@ func AssignContainers(doc *Document) {
 }
 
 func doAssignContainers(doc *Document, root AstNode, references *[]UntypedReference) {
-	root.SetDocument(doc)
-	root.ForEachNode(func(child AstNode, containerField unique.Handle[string], index int) {
+	// Both closures are created once per document and track the current parent
+	// node mutably; capturing the parent per recursion level instead would heap
+	// allocate two closures per AST node.
+	current := root
+	var visitNode func(child AstNode, containerField unique.Handle[string], index int)
+	var visitReference func(ur UntypedReference, containerField unique.Handle[string], index int)
+	visitNode = func(child AstNode, containerField unique.Handle[string], index int) {
 		child.SetDocument(doc)
-		child.SetContainer(root, containerField, index)
-		doAssignContainers(doc, child, references)
-	})
-	root.ForEachReference(func(ur UntypedReference, containerField unique.Handle[string], index int) {
+		child.SetContainer(current, containerField, index)
+		prev := current
+		current = child
+		child.ForEachNode(visitNode)
+		child.ForEachReference(visitReference)
+		current = prev
+	}
+	visitReference = func(ur UntypedReference, containerField unique.Handle[string], index int) {
 		*references = append(*references, ur)
 		unit := ur.Unit()
 		if stringNode, ok := unit.(CompositeNode); ok {
 			stringNode.SetDocument(doc)
-			stringNode.SetContainer(root, containerField, index)
+			stringNode.SetContainer(current, containerField, index)
 		}
-	})
+	}
+	root.SetDocument(doc)
+	root.ForEachNode(visitNode)
+	root.ForEachReference(visitReference)
 }
 
 // NamedNode represents an [AstNode] whose name is accessible as a string in the Name field.
