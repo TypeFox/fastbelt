@@ -36,7 +36,8 @@ func NewFile(uri lsp.DocumentURI, languageID string, version int32, content stri
 		uri:        uri,
 		languageID: languageID,
 		version:    version,
-		content:    []byte(content),
+		// Convert in-place from string to []byte without copying.
+		content: unsafe.Slice(unsafe.StringData(content), len(content)),
 	}
 	f.lineOffsets = computeLineOffsets(f.content, true, 0)
 	return f, nil

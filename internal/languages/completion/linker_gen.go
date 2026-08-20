@@ -154,62 +154,90 @@ type CompletionReferencesConstructor interface {
 }
 
 type DefaultCompletionReferencesConstructor struct {
-	sc              *service.Container
-	referenceLinker func() CompletionReferenceLinker
+	sc                *service.Container
+	referenceLinker   func() CompletionReferenceLinker
+	linkERef          func() core.ReferenceGetter[Declare]
+	linkFItemRef      func() core.ReferenceGetter[Declare]
+	linkGRef          func() core.ReferenceGetter[Declare]
+	linkMemberCallRef func() core.ReferenceGetter[Declare]
+	linkJRef          func() core.ReferenceGetter[Declare]
+	linkKRef1         func() core.ReferenceGetter[Declare]
+	linkKRef2         func() core.ReferenceGetter[Declare]
+	linkNRef          func() core.ReferenceGetter[Declare]
+	linkORef          func() core.ReferenceGetter[Declare]
 }
 
 func NewDefaultCompletionReferencesConstructor(sc *service.Container) CompletionReferencesConstructor {
+	referenceLinker := sync.OnceValue(func() CompletionReferenceLinker {
+		return service.MustGet[CompletionReferenceLinker](sc)
+	})
 	return &DefaultCompletionReferencesConstructor{
-		sc: sc,
-		referenceLinker: sync.OnceValue(func() CompletionReferenceLinker {
-			return service.MustGet[CompletionReferenceLinker](sc)
+		sc:              sc,
+		referenceLinker: referenceLinker,
+		linkERef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkERef
+		}),
+		linkFItemRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkFItemRef
+		}),
+		linkGRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkGRef
+		}),
+		linkMemberCallRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkMemberCallRef
+		}),
+		linkJRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkJRef
+		}),
+		linkKRef1: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkKRef1
+		}),
+		linkKRef2: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkKRef2
+		}),
+		linkNRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkNRef
+		}),
+		linkORef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkORef
 		}),
 	}
 }
 
 func (s *DefaultCompletionReferencesConstructor) ERef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	fn := s.referenceLinker().LinkERef
-	return core.NewReference(owner, unit, fn)
+	return core.NewReference(owner, unit, s.linkERef())
 }
 
 func (s *DefaultCompletionReferencesConstructor) FItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	fn := s.referenceLinker().LinkFItemRef
-	return core.NewReference(owner, unit, fn)
+	return core.NewReference(owner, unit, s.linkFItemRef())
 }
 
 func (s *DefaultCompletionReferencesConstructor) GRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	fn := s.referenceLinker().LinkGRef
-	return core.NewReference(owner, unit, fn)
+	return core.NewReference(owner, unit, s.linkGRef())
 }
 
 func (s *DefaultCompletionReferencesConstructor) MemberCallRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	fn := s.referenceLinker().LinkMemberCallRef
-	return core.NewReference(owner, unit, fn)
+	return core.NewReference(owner, unit, s.linkMemberCallRef())
 }
 
 func (s *DefaultCompletionReferencesConstructor) JRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	fn := s.referenceLinker().LinkJRef
-	return core.NewReference(owner, unit, fn)
+	return core.NewReference(owner, unit, s.linkJRef())
 }
 
 func (s *DefaultCompletionReferencesConstructor) KRef1(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	fn := s.referenceLinker().LinkKRef1
-	return core.NewReference(owner, unit, fn)
+	return core.NewReference(owner, unit, s.linkKRef1())
 }
 
 func (s *DefaultCompletionReferencesConstructor) KRef2(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	fn := s.referenceLinker().LinkKRef2
-	return core.NewReference(owner, unit, fn)
+	return core.NewReference(owner, unit, s.linkKRef2())
 }
 
 func (s *DefaultCompletionReferencesConstructor) NRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	fn := s.referenceLinker().LinkNRef
-	return core.NewReference(owner, unit, fn)
+	return core.NewReference(owner, unit, s.linkNRef())
 }
 
 func (s *DefaultCompletionReferencesConstructor) ORef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	fn := s.referenceLinker().LinkORef
-	return core.NewReference(owner, unit, fn)
+	return core.NewReference(owner, unit, s.linkORef())
 }
 
 type CompletionSymbolContainers struct{}
