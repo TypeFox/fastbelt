@@ -362,7 +362,8 @@
 //
 // An infix rule parses binary expressions with operator precedence and
 // associativity in a single flat pass, replacing a cascade of tree-rewriting
-// action rules (one per precedence level) with one rule:
+// action rules (one per precedence level) with one rule, which speeds up parsing
+// and simplifies the grammar:
 //
 //	interface Expression {}
 //	interface BinaryExpression extends Expression {
@@ -386,8 +387,10 @@
 // ">" and ordered tightest-binding first: in the example, "%" binds tightest
 // and "+" | "-" bind loosest, so "1 + 2 * 3" parses as "1 + (2 * 3)".
 //
-// Groups are left-associative by default; prefix a group with "right"
-// (or explicitly "left") to control associativity:
+// Groups are left-associative by default. Meaning that an expression like
+// "1 + 2 + 3" gets parsed as "(1 + 2) + 3" by default. Prefix a group with "right"
+// (or explicitly "left") to control associativity. In this following example
+// the "^" operator is right-associative, so "1 ^ 2 ^ 3" parses as "1 ^ (2 ^ 3)":
 //
 //	infix BinaryExpression on PrimaryExpression:
 //	    "+" | "-"

@@ -712,12 +712,12 @@ var Token_SL_COMMENT_Accepting = [3]bool{
 	2: true,
 }
 
-const Token_Addition_Idx = 19
+const Token_AdditionOp_Idx = 19
 
-var Token_Addition = core.NewTokenGroup(
-	Token_Addition_Idx,
-	"Addition",
-	"Addition",
+var Token_AdditionOp = core.NewTokenGroup(
+	Token_AdditionOp_Idx,
+	"AdditionOp",
+	"AdditionOp",
 	[]*core.TokenType{
 		Keyword_Dash,
 		Keyword_Plus,
@@ -733,17 +733,17 @@ var Token_BinaryExpressionOperator = core.NewTokenGroup(
 	[]*core.TokenType{
 		Keyword_Caret,
 		Keyword_Percent,
-		Token_Addition,
-		Token_Multiplication,
+		Token_AdditionOp,
+		Token_MultiplicationOp,
 	},
 )
 
-const Token_Multiplication_Idx = 21
+const Token_MultiplicationOp_Idx = 21
 
-var Token_Multiplication = core.NewTokenGroup(
-	Token_Multiplication_Idx,
-	"Multiplication",
-	"Multiplication",
+var Token_MultiplicationOp = core.NewTokenGroup(
+	Token_MultiplicationOp_Idx,
+	"MultiplicationOp",
+	"MultiplicationOp",
 	[]*core.TokenType{
 		Keyword_Asterisk,
 		Keyword_Slash,

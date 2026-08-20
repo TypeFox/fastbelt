@@ -63,16 +63,16 @@ Expression:
 infix BinaryExpression on PrimaryExpression:
     "%"
     > right "^"
-    > Multiplication
-    > Addition
+    > MultiplicationOp
+    > AdditionOp
 
 // Tests that Fastbelt can handle operators nested in token groups
-token group Multiplication {
+token group MultiplicationOp {
     "*"
     "/"
 }
 
-token group Addition {
+token group AdditionOp {
     "+"
     "-"
 }
