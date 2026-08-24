@@ -162,3 +162,32 @@ func TestGetAllKeywords_InTokenMode(t *testing.T) {
 	assert.Contains(t, result.ByValue, "\"hello\"")
 	assert.Contains(t, result.ByValue, "\"world\"")
 }
+
+func TestPopulateTokenModes_ShouldAddModifiersOnTokenElements(t *testing.T) {
+	f := test.New(t, grammar.CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Model {
+			Greeting string
+		}
+		Model: Greeting=Hello
+		token Hello: "hello"
+		hidden token World: "world"
+		hidden token User: /user/
+	`).AssertNoErrors()
+	grammr, ok := doc.Document.Root.(grammar.Grammar)
+	require.True(t, ok)
+	tokenTypes := GenerateTokenTypes(grammr)
+	populateTokenTypes(&tokenTypes)
+	populateTokenModes(&tokenTypes, grammr.TokenModes())
+	tokenDecls := grammr.Terminals()
+	defaultMode := tokenTypes.TokenModes["default"]
+	indexHello := tokenTypes.TokenIndex.ByToken[tokenDecls[0]]
+	indexWorld := tokenTypes.TokenIndex.ByToken[tokenDecls[1]]
+	indexUser := tokenTypes.TokenIndex.ByToken[tokenDecls[2]]
+	assert.Equal(t, 3, len(defaultMode.TokenTypeIndices))
+	assert.Equal(t, "hidden", defaultMode.TokenTypeUsages[indexWorld].TokenModifier)
+	assert.Equal(t, "hidden", defaultMode.TokenTypeUsages[indexUser].TokenModifier)
+	_, ok = defaultMode.TokenTypeUsages[indexHello]
+	assert.False(t, ok)
+}

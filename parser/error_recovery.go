@@ -69,7 +69,7 @@ func (DefaultErrorRecovery) Recover(parserState *ParserState) {
 	}
 
 	//if we are stuck on the same token, consume it and try to move on
-	if parserState.lastErrorIndex == parserState.Index {
+	if parserState.lastErrorIndex == parserState.Index && parserState.Index < parserState.Length {
 		parserState.Index++
 	}
 	parserState.lastErrorIndex = parserState.Index

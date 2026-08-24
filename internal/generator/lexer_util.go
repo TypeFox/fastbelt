@@ -7,6 +7,7 @@ package generator
 import (
 	"context"
 	"regexp"
+	"slices"
 	"sort"
 
 	core "typefox.dev/fastbelt"
@@ -217,15 +218,14 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 		}
 
 		for _, token := range tokens.TopLevel {
-			if _, ok := token.Content().(grammar.RegexpTokenElement); ok {
-				//non-keywords only, since keywords are already added above
-				tokenIndex := result.TokenIndex.ByToken[token]
+			tokenIndex := result.TokenIndex.ByToken[token]
+			if !slices.Contains(defaultMode.TokenTypeIndices, tokenIndex) {
 				defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
-				if token.Modifier() != "" || token.Command() != nil {
-					defaultMode.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-						TokenModifier: token.Modifier(),
-						Command:       token.Command(),
-					}
+			}
+			if token.Modifier() != "" || token.Command() != nil {
+				defaultMode.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
+					TokenModifier: token.Modifier(),
+					Command:       token.Command(),
 				}
 			}
 		}
