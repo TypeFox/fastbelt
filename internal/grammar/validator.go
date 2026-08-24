@@ -543,7 +543,7 @@ func (c tokenModeCoverage) covers(rule AbstractTokenRule) bool {
 	// covering the keyword - through a 'keywords' selector, for instance -
 	// covers the token as well.
 	if decl, ok := rule.(TokenDecl); ok {
-		if content, ok := decl.Content().(KeywordTokenElement); ok && content.Keyword() != nil {
+		if content, ok := decl.Content().(KeywordTokenContent); ok && content.Keyword() != nil {
 			return c.keywords.Has(content.Keyword().Value())
 		}
 	}
@@ -566,7 +566,7 @@ func (c tokenModeCoverage) addTokenDecl(decl TokenDecl) {
 	c.rules.Add(decl.Name())
 	// `token LBRACE: "{"` registers the keyword under the token's name, so
 	// listing the token covers the keyword as well.
-	if content, ok := decl.Content().(KeywordTokenElement); ok {
+	if content, ok := decl.Content().(KeywordTokenContent); ok {
 		c.addKeyword(content.Keyword())
 	}
 }
@@ -700,10 +700,10 @@ func (t *TokenDeclImpl) Validate(_ context.Context, _ string, accept core.Valida
 func checkEmptyTerminalRule(t TokenDecl, accept core.ValidationAcceptor) {
 	var canBeEmpty bool
 	switch content := t.Content().(type) {
-	case KeywordTokenElement:
+	case KeywordTokenContent:
 		raw := KeywordValue(content.Keyword())
 		canBeEmpty = raw == ""
-	case RegexpTokenElement:
+	case RegexpTokenContent:
 		pattern := RegexpValue(content.Regexp())
 		re, err := regexp.Compile(pattern)
 		if err != nil {

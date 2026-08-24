@@ -219,7 +219,7 @@ func getAllTokenGroupMembers(tokenGroup grammar.TokenGroup, keywords GetAllKeywo
 	return slice
 }
 
-func generateRegexpTokenElement(token grammar.TokenDecl, regexpTokenElement grammar.RegexpTokenElement, id int) GenerateLexerResult {
+func generateRegexpTokenElement(token grammar.TokenDecl, regexpTokenElement grammar.RegexpTokenContent, id int) GenerateLexerResult {
 	var result fbRegexp.GenerateRegExpResult
 	imports := map[string]bool{}
 	code := codegen.NewNode()

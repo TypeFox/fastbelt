@@ -1108,8 +1108,8 @@ type TokenDecl interface {
 	AbstractTokenRule
 
 	IsTokenDecl()
-	Content() TokenElement
-	SetContent(value TokenElement)
+	Content() TokenContent
+	SetContent(value TokenContent)
 }
 
 func NewTokenDecl() TokenDecl {
@@ -1117,7 +1117,7 @@ func NewTokenDecl() TokenDecl {
 }
 
 type TokenDeclData struct {
-	content TokenElement
+	content TokenContent
 }
 
 func (i *TokenDeclData) IsTokenDecl() {}
@@ -1131,7 +1131,7 @@ func (i *TokenDeclData) ForEachNode(fn func(core.AstNode, unique.Handle[string],
 func (i *TokenDeclData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *TokenDeclData) Content() TokenElement {
+func (i *TokenDeclData) Content() TokenContent {
 	if i != nil && i.content != nil {
 		return i.content
 	} else {
@@ -1139,7 +1139,7 @@ func (i *TokenDeclData) Content() TokenElement {
 	}
 }
 
-func (i *TokenDeclData) SetContent(value TokenElement) {
+func (i *TokenDeclData) SetContent(value TokenContent) {
 	i.content = value
 }
 
@@ -1192,76 +1192,76 @@ func (i *TokenDeclImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	}
 }
 
-type TokenElement interface {
+type TokenContent interface {
 	core.AstNode
 
-	IsTokenElement()
+	IsTokenContent()
 }
 
-func NewTokenElement() TokenElement {
-	return &TokenElementImpl{}
+func NewTokenContent() TokenContent {
+	return &TokenContentImpl{}
 }
 
-type TokenElementData struct {
+type TokenContentData struct {
 }
 
-func (i *TokenElementData) IsTokenElement() {}
+func (i *TokenContentData) IsTokenContent() {}
 
-func (i *TokenElementData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *TokenContentData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *TokenElementData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *TokenContentData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-type TokenElementImpl struct {
+type TokenContentImpl struct {
 	core.AstNodeBase
-	TokenElementData
+	TokenContentData
 }
 
-func (i *TokenElementImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.TokenElementData.ForEachNode(fn)
+func (i *TokenContentImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.TokenContentData.ForEachNode(fn)
 }
 
-func (i *TokenElementImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.TokenElementData.ForEachReference(fn)
+func (i *TokenContentImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.TokenContentData.ForEachReference(fn)
 }
 
-func (i *TokenElementImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *TokenContentImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	nodePath, _ := core.PathOf(i)
-	return nil, fmt.Errorf("TokenElementImpl.Resolve: field '%s' does not exist in node '%s' of type 'TokenElement'", field.Value(), nodePath)
+	return nil, fmt.Errorf("TokenContentImpl.Resolve: field '%s' does not exist in node '%s' of type 'TokenContent'", field.Value(), nodePath)
 }
 
-type RegexpTokenElement interface {
+type RegexpTokenContent interface {
 	core.AstNode
-	TokenElement
+	TokenContent
 
-	IsRegexpTokenElement()
+	IsRegexpTokenContent()
 	Regexp() string
 	RegexpToken() *core.Token
 	SetRegexp(value *core.Token)
 }
 
-func NewRegexpTokenElement() RegexpTokenElement {
-	return &RegexpTokenElementImpl{}
+func NewRegexpTokenContent() RegexpTokenContent {
+	return &RegexpTokenContentImpl{}
 }
 
-type RegexpTokenElementData struct {
+type RegexpTokenContentData struct {
 	regexp *core.Token
 }
 
-func (i *RegexpTokenElementData) IsRegexpTokenElement() {}
+func (i *RegexpTokenContentData) IsRegexpTokenContent() {}
 
-func (i *RegexpTokenElementData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RegexpTokenContentData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *RegexpTokenElementData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RegexpTokenContentData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *RegexpTokenElementData) Regexp() string {
+func (i *RegexpTokenContentData) Regexp() string {
 	if i != nil && i.regexp != nil {
 		return i.regexp.Image
 	} else {
@@ -1269,73 +1269,73 @@ func (i *RegexpTokenElementData) Regexp() string {
 	}
 }
 
-func (i *RegexpTokenElementData) RegexpToken() *core.Token {
+func (i *RegexpTokenContentData) RegexpToken() *core.Token {
 	return i.regexp
 }
 
-func (i *RegexpTokenElementData) SetRegexp(value *core.Token) {
+func (i *RegexpTokenContentData) SetRegexp(value *core.Token) {
 	i.regexp = value
 }
 
-type RegexpTokenElementImpl struct {
+type RegexpTokenContentImpl struct {
 	core.AstNodeBase
-	TokenElementData
-	RegexpTokenElementData
+	TokenContentData
+	RegexpTokenContentData
 }
 
-func (i *RegexpTokenElementImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.TokenElementData.ForEachNode(fn)
-	i.RegexpTokenElementData.ForEachNode(fn)
+func (i *RegexpTokenContentImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.TokenContentData.ForEachNode(fn)
+	i.RegexpTokenContentData.ForEachNode(fn)
 }
 
-func (i *RegexpTokenElementImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.TokenElementData.ForEachReference(fn)
-	i.RegexpTokenElementData.ForEachReference(fn)
+func (i *RegexpTokenContentImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.TokenContentData.ForEachReference(fn)
+	i.RegexpTokenContentData.ForEachReference(fn)
 }
 
-func (i *RegexpTokenElementImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *RegexpTokenContentImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	switch field {
 	case fieldNameRegexp:
-		return nil, fmt.Errorf("RegexpTokenElementImpl.Resolve: field 'regexp' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("RegexpTokenContentImpl.Resolve: field 'regexp' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("RegexpTokenElementImpl.Resolve: field '%s' does not exist in node '%s' of type 'RegexpTokenElement'", field.Value(), nodePath)
+		return nil, fmt.Errorf("RegexpTokenContentImpl.Resolve: field '%s' does not exist in node '%s' of type 'RegexpTokenContent'", field.Value(), nodePath)
 	}
 }
 
-type KeywordTokenElement interface {
+type KeywordTokenContent interface {
 	core.AstNode
-	TokenElement
+	TokenContent
 
-	IsKeywordTokenElement()
+	IsKeywordTokenContent()
 	Keyword() Keyword
 	SetKeyword(value Keyword)
 }
 
-func NewKeywordTokenElement() KeywordTokenElement {
-	return &KeywordTokenElementImpl{}
+func NewKeywordTokenContent() KeywordTokenContent {
+	return &KeywordTokenContentImpl{}
 }
 
-type KeywordTokenElementData struct {
+type KeywordTokenContentData struct {
 	keyword Keyword
 }
 
-func (i *KeywordTokenElementData) IsKeywordTokenElement() {}
+func (i *KeywordTokenContentData) IsKeywordTokenContent() {}
 
-func (i *KeywordTokenElementData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *KeywordTokenContentData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.keyword != nil {
 		fn(i.keyword, fieldNameKeyword, -1)
 	}
 }
 
-func (i *KeywordTokenElementData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *KeywordTokenContentData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *KeywordTokenElementData) Keyword() Keyword {
+func (i *KeywordTokenContentData) Keyword() Keyword {
 	if i != nil && i.keyword != nil {
 		return i.keyword
 	} else {
@@ -1343,27 +1343,27 @@ func (i *KeywordTokenElementData) Keyword() Keyword {
 	}
 }
 
-func (i *KeywordTokenElementData) SetKeyword(value Keyword) {
+func (i *KeywordTokenContentData) SetKeyword(value Keyword) {
 	i.keyword = value
 }
 
-type KeywordTokenElementImpl struct {
+type KeywordTokenContentImpl struct {
 	core.AstNodeBase
-	TokenElementData
-	KeywordTokenElementData
+	TokenContentData
+	KeywordTokenContentData
 }
 
-func (i *KeywordTokenElementImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.TokenElementData.ForEachNode(fn)
-	i.KeywordTokenElementData.ForEachNode(fn)
+func (i *KeywordTokenContentImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.TokenContentData.ForEachNode(fn)
+	i.KeywordTokenContentData.ForEachNode(fn)
 }
 
-func (i *KeywordTokenElementImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.TokenElementData.ForEachReference(fn)
-	i.KeywordTokenElementData.ForEachReference(fn)
+func (i *KeywordTokenContentImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.TokenContentData.ForEachReference(fn)
+	i.KeywordTokenContentData.ForEachReference(fn)
 }
 
-func (i *KeywordTokenElementImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *KeywordTokenContentImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -1372,13 +1372,13 @@ func (i *KeywordTokenElementImpl) Resolve(path core.FragmentPath) (core.AstNode,
 	case fieldNameKeyword:
 		if i.Keyword() == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("KeywordTokenElementImpl.Resolve: field 'keyword' is nil in node '%s'", nodePath)
+			return nil, fmt.Errorf("KeywordTokenContentImpl.Resolve: field 'keyword' is nil in node '%s'", nodePath)
 		}
 		child := i.Keyword()
 		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("KeywordTokenElementImpl.Resolve: field '%s' does not exist in node '%s' of type 'KeywordTokenElement'", field.Value(), nodePath)
+		return nil, fmt.Errorf("KeywordTokenContentImpl.Resolve: field '%s' does not exist in node '%s' of type 'KeywordTokenContent'", field.Value(), nodePath)
 	}
 }
 
@@ -3103,18 +3103,18 @@ var FastbeltSyntheticFactories = map[string]func() core.AstNode{
 	"Interface":            func() core.AstNode { return NewInterface() },
 	"Keyword":              func() core.AstNode { return NewKeyword() },
 	"KeywordSelector":      func() core.AstNode { return NewKeywordSelector() },
-	"KeywordTokenElement":  func() core.AstNode { return NewKeywordTokenElement() },
+	"KeywordTokenContent":  func() core.AstNode { return NewKeywordTokenContent() },
 	"KeywordUsage":         func() core.AstNode { return NewKeywordUsage() },
 	"ParserRule":           func() core.AstNode { return NewParserRule() },
 	"PrimitiveType":        func() core.AstNode { return NewPrimitiveType() },
 	"ReferenceType":        func() core.AstNode { return NewReferenceType() },
-	"RegexpTokenElement":   func() core.AstNode { return NewRegexpTokenElement() },
+	"RegexpTokenContent":   func() core.AstNode { return NewRegexpTokenContent() },
 	"RuleCall":             func() core.AstNode { return NewRuleCall() },
 	"SimpleType":           func() core.AstNode { return NewSimpleType() },
 	"TokenCommand":         func() core.AstNode { return NewTokenCommand() },
+	"TokenContent":         func() core.AstNode { return NewTokenContent() },
 	"TokenDecl":            func() core.AstNode { return NewTokenDecl() },
 	"TokenDeclUsage":       func() core.AstNode { return NewTokenDeclUsage() },
-	"TokenElement":         func() core.AstNode { return NewTokenElement() },
 	"TokenGroup":           func() core.AstNode { return NewTokenGroup() },
 	"TokenGroupUsage":      func() core.AstNode { return NewTokenGroupUsage() },
 	"TokenMode":            func() core.AstNode { return NewTokenMode() },

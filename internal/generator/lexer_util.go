@@ -257,7 +257,7 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 		varName := GeneratedTokenName(token)
 		var currentTokenIndex int
 		switch element := token.Content().(type) {
-		case grammar.KeywordTokenElement:
+		case grammar.KeywordTokenContent:
 			keywordIndex := keywords.ByValue[element.Keyword().Value()]
 			keyword := keywords.Keywords[keywordIndex]
 			code := codegen.NewNode()
@@ -275,7 +275,7 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 			result.TokenTypes.All = append(result.TokenTypes.All, tokenType)
 			result.TokenTypes.ByTokenIndex[currentTokenIndex] = &tokenType
 			result.TokenIndex.ByToken[token] = currentTokenIndex
-		case grammar.RegexpTokenElement:
+		case grammar.RegexpTokenContent:
 			lexerResult := generateRegexpTokenElement(token, element, tokenIndex)
 			mergeImports(&result.Imports, lexerResult.Imports)
 			currentTokenIndex = tokenIndex

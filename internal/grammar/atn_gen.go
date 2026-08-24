@@ -28,12 +28,12 @@ const (
 	ParserRule__Stop
 	TokenDecl__Start
 	TokenDecl__Stop
-	TokenElement__Start
-	TokenElement__Stop
-	RegexpTokenElement__Start
-	RegexpTokenElement__Stop
-	KeywordTokenElement__Start
-	KeywordTokenElement__Stop
+	TokenContent__Start
+	TokenContent__Stop
+	RegexpTokenContent__Start
+	RegexpTokenContent__Stop
+	KeywordTokenContent__Start
+	KeywordTokenContent__Stop
 	TokenCommand__Start
 	TokenCommand__Stop
 	TokenGroup__Start
@@ -179,16 +179,16 @@ const (
 	TokenDecl_Semicolon
 	TokenDecl__Basic_7
 	TokenDecl__Basic_8
-	TokenElement__Basic_0
-	TokenElement__Basic_1
-	TokenElement__Basic_2
-	TokenElement__Basic_3
-	TokenElement__Basic_4
-	TokenElement__BlockEnd
-	RegexpTokenElement_Regexp_RegexLiteral
-	RegexpTokenElement__Basic
-	KeywordTokenElement__Basic_0
-	KeywordTokenElement__Basic_1
+	TokenContent__Basic_0
+	TokenContent__Basic_1
+	TokenContent__Basic_2
+	TokenContent__Basic_3
+	TokenContent__Basic_4
+	TokenContent__BlockEnd
+	RegexpTokenContent_Regexp_RegexLiteral
+	RegexpTokenContent__Basic
+	KeywordTokenContent__Basic_0
+	KeywordTokenContent__Basic_1
 	TokenCommand_DashGreaterThan
 	TokenCommand_Type_push
 	TokenCommand__Basic_0
@@ -452,12 +452,12 @@ func BuildATN() *parser.RuntimeATN {
 	states[ParserRule__Stop] = parser.NewATNState(ParserRule__Stop, parser.ATNRuleStop, false)
 	states[TokenDecl__Start] = parser.NewATNState(TokenDecl__Start, parser.ATNRuleStart, true)
 	states[TokenDecl__Stop] = parser.NewATNState(TokenDecl__Stop, parser.ATNRuleStop, false)
-	states[TokenElement__Start] = parser.NewATNState(TokenElement__Start, parser.ATNRuleStart, true)
-	states[TokenElement__Stop] = parser.NewATNState(TokenElement__Stop, parser.ATNRuleStop, false)
-	states[RegexpTokenElement__Start] = parser.NewATNState(RegexpTokenElement__Start, parser.ATNRuleStart, true)
-	states[RegexpTokenElement__Stop] = parser.NewATNState(RegexpTokenElement__Stop, parser.ATNRuleStop, false)
-	states[KeywordTokenElement__Start] = parser.NewATNState(KeywordTokenElement__Start, parser.ATNRuleStart, true)
-	states[KeywordTokenElement__Stop] = parser.NewATNState(KeywordTokenElement__Stop, parser.ATNRuleStop, false)
+	states[TokenContent__Start] = parser.NewATNState(TokenContent__Start, parser.ATNRuleStart, true)
+	states[TokenContent__Stop] = parser.NewATNState(TokenContent__Stop, parser.ATNRuleStop, false)
+	states[RegexpTokenContent__Start] = parser.NewATNState(RegexpTokenContent__Start, parser.ATNRuleStart, true)
+	states[RegexpTokenContent__Stop] = parser.NewATNState(RegexpTokenContent__Stop, parser.ATNRuleStop, false)
+	states[KeywordTokenContent__Start] = parser.NewATNState(KeywordTokenContent__Start, parser.ATNRuleStart, true)
+	states[KeywordTokenContent__Stop] = parser.NewATNState(KeywordTokenContent__Stop, parser.ATNRuleStop, false)
 	states[TokenCommand__Start] = parser.NewATNState(TokenCommand__Start, parser.ATNRuleStart, true)
 	states[TokenCommand__Stop] = parser.NewATNState(TokenCommand__Stop, parser.ATNRuleStop, false)
 	states[TokenGroup__Start] = parser.NewATNState(TokenGroup__Start, parser.ATNRuleStart, true)
@@ -603,16 +603,16 @@ func BuildATN() *parser.RuntimeATN {
 	states[TokenDecl_Semicolon] = parser.NewATNState(TokenDecl_Semicolon, parser.ATNBasic, false)
 	states[TokenDecl__Basic_7] = parser.NewATNState(TokenDecl__Basic_7, parser.ATNBasic, true)
 	states[TokenDecl__Basic_8] = parser.NewATNState(TokenDecl__Basic_8, parser.ATNBasic, true).SetDecision(13)
-	states[TokenElement__Basic_0] = parser.NewATNState(TokenElement__Basic_0, parser.ATNBasic, true)
-	states[TokenElement__Basic_1] = parser.NewATNState(TokenElement__Basic_1, parser.ATNBasic, true)
-	states[TokenElement__Basic_2] = parser.NewATNState(TokenElement__Basic_2, parser.ATNBasic, true)
-	states[TokenElement__Basic_3] = parser.NewATNState(TokenElement__Basic_3, parser.ATNBasic, true)
-	states[TokenElement__Basic_4] = parser.NewATNState(TokenElement__Basic_4, parser.ATNBasic, true).SetDecision(14)
-	states[TokenElement__BlockEnd] = parser.NewATNState(TokenElement__BlockEnd, parser.ATNBlockEnd, true)
-	states[RegexpTokenElement_Regexp_RegexLiteral] = parser.NewATNState(RegexpTokenElement_Regexp_RegexLiteral, parser.ATNBasic, false)
-	states[RegexpTokenElement__Basic] = parser.NewATNState(RegexpTokenElement__Basic, parser.ATNBasic, true)
-	states[KeywordTokenElement__Basic_0] = parser.NewATNState(KeywordTokenElement__Basic_0, parser.ATNBasic, true)
-	states[KeywordTokenElement__Basic_1] = parser.NewATNState(KeywordTokenElement__Basic_1, parser.ATNBasic, true)
+	states[TokenContent__Basic_0] = parser.NewATNState(TokenContent__Basic_0, parser.ATNBasic, true)
+	states[TokenContent__Basic_1] = parser.NewATNState(TokenContent__Basic_1, parser.ATNBasic, true)
+	states[TokenContent__Basic_2] = parser.NewATNState(TokenContent__Basic_2, parser.ATNBasic, true)
+	states[TokenContent__Basic_3] = parser.NewATNState(TokenContent__Basic_3, parser.ATNBasic, true)
+	states[TokenContent__Basic_4] = parser.NewATNState(TokenContent__Basic_4, parser.ATNBasic, true).SetDecision(14)
+	states[TokenContent__BlockEnd] = parser.NewATNState(TokenContent__BlockEnd, parser.ATNBlockEnd, true)
+	states[RegexpTokenContent_Regexp_RegexLiteral] = parser.NewATNState(RegexpTokenContent_Regexp_RegexLiteral, parser.ATNBasic, false)
+	states[RegexpTokenContent__Basic] = parser.NewATNState(RegexpTokenContent__Basic, parser.ATNBasic, true)
+	states[KeywordTokenContent__Basic_0] = parser.NewATNState(KeywordTokenContent__Basic_0, parser.ATNBasic, true)
+	states[KeywordTokenContent__Basic_1] = parser.NewATNState(KeywordTokenContent__Basic_1, parser.ATNBasic, true)
 	states[TokenCommand_DashGreaterThan] = parser.NewATNState(TokenCommand_DashGreaterThan, parser.ATNBasic, false)
 	states[TokenCommand_Type_push] = parser.NewATNState(TokenCommand_Type_push, parser.ATNBasic, false)
 	states[TokenCommand__Basic_0] = parser.NewATNState(TokenCommand__Basic_0, parser.ATNBasic, true)
@@ -873,14 +873,14 @@ func BuildATN() *parser.RuntimeATN {
 	states[TokenDecl__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[TokenDecl__Basic_2]),
 	)
-	states[TokenElement__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[TokenElement__Basic_4]),
+	states[TokenContent__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[TokenContent__Basic_4]),
 	)
-	states[RegexpTokenElement__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[RegexpTokenElement_Regexp_RegexLiteral]),
+	states[RegexpTokenContent__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[RegexpTokenContent_Regexp_RegexLiteral]),
 	)
-	states[KeywordTokenElement__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[KeywordTokenElement__Basic_0]),
+	states[KeywordTokenContent__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[KeywordTokenContent__Basic_0]),
 	)
 	states[TokenCommand__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[TokenCommand_DashGreaterThan]),
@@ -1244,7 +1244,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[TokenDecl__Basic_3], Keyword_Colon, nil),
 	)
 	states[TokenDecl__Basic_3].AppendTransitions(
-		parser.NewRuleTransition(states[TokenElement__Start], states[TokenDecl__Basic_6], nil),
+		parser.NewRuleTransition(states[TokenContent__Start], states[TokenDecl__Basic_6], nil),
 	)
 	states[TokenDecl__Basic_4].AppendTransitions(
 		parser.NewRuleTransition(states[TokenCommand__Start], states[TokenDecl__Basic_5], nil),
@@ -1266,36 +1266,36 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[TokenDecl_Semicolon]),
 		parser.NewEpsilonTransition(states[TokenDecl__Basic_7]),
 	)
-	states[TokenElement__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[RegexpTokenElement__Start], states[TokenElement__Basic_1], nil),
+	states[TokenContent__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[RegexpTokenContent__Start], states[TokenContent__Basic_1], nil),
 	)
-	states[TokenElement__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[TokenElement__BlockEnd]),
+	states[TokenContent__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[TokenContent__BlockEnd]),
 	)
-	states[TokenElement__Basic_2].AppendTransitions(
-		parser.NewRuleTransition(states[KeywordTokenElement__Start], states[TokenElement__Basic_3], nil),
+	states[TokenContent__Basic_2].AppendTransitions(
+		parser.NewRuleTransition(states[KeywordTokenContent__Start], states[TokenContent__Basic_3], nil),
 	)
-	states[TokenElement__Basic_3].AppendTransitions(
-		parser.NewEpsilonTransition(states[TokenElement__BlockEnd]),
+	states[TokenContent__Basic_3].AppendTransitions(
+		parser.NewEpsilonTransition(states[TokenContent__BlockEnd]),
 	)
-	states[TokenElement__Basic_4].AppendTransitions(
-		parser.NewEpsilonTransition(states[TokenElement__Basic_0]),
-		parser.NewEpsilonTransition(states[TokenElement__Basic_2]),
+	states[TokenContent__Basic_4].AppendTransitions(
+		parser.NewEpsilonTransition(states[TokenContent__Basic_0]),
+		parser.NewEpsilonTransition(states[TokenContent__Basic_2]),
 	)
-	states[TokenElement__BlockEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[TokenElement__Stop]),
+	states[TokenContent__BlockEnd].AppendTransitions(
+		parser.NewEpsilonTransition(states[TokenContent__Stop]),
 	)
-	states[RegexpTokenElement_Regexp_RegexLiteral].AppendTransitions(
-		parser.NewAtomTransition(states[RegexpTokenElement__Basic], Token_RegexLiteral, nil),
+	states[RegexpTokenContent_Regexp_RegexLiteral].AppendTransitions(
+		parser.NewAtomTransition(states[RegexpTokenContent__Basic], Token_RegexLiteral, nil),
 	)
-	states[RegexpTokenElement__Basic].AppendTransitions(
-		parser.NewEpsilonTransition(states[RegexpTokenElement__Stop]),
+	states[RegexpTokenContent__Basic].AppendTransitions(
+		parser.NewEpsilonTransition(states[RegexpTokenContent__Stop]),
 	)
-	states[KeywordTokenElement__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[Keyword__Start], states[KeywordTokenElement__Basic_1], nil),
+	states[KeywordTokenContent__Basic_0].AppendTransitions(
+		parser.NewRuleTransition(states[Keyword__Start], states[KeywordTokenContent__Basic_1], nil),
 	)
-	states[KeywordTokenElement__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[KeywordTokenElement__Stop]),
+	states[KeywordTokenContent__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[KeywordTokenContent__Stop]),
 	)
 	states[TokenCommand_DashGreaterThan].AppendTransitions(
 		parser.NewAtomTransition(states[TokenCommand__Basic_3], Keyword_DashGreaterThan, nil),
@@ -2054,7 +2054,7 @@ func BuildATN() *parser.RuntimeATN {
 	decisionStates[11] = states[TokenDecl__Basic_2]
 	decisionStates[12] = states[TokenDecl__Basic_6]
 	decisionStates[13] = states[TokenDecl__Basic_8]
-	decisionStates[14] = states[TokenElement__Basic_4]
+	decisionStates[14] = states[TokenContent__Basic_4]
 	decisionStates[15] = states[TokenCommand__Basic_3]
 	decisionStates[16] = states[TokenCommand__Basic_6]
 	decisionStates[17] = states[TokenCommand__Basic_8]
@@ -2109,7 +2109,7 @@ func BuildATN() *parser.RuntimeATN {
 	decisionMap[11] = states[TokenDecl__Basic_2]
 	decisionMap[12] = states[TokenDecl__Basic_6]
 	decisionMap[13] = states[TokenDecl__Basic_8]
-	decisionMap[14] = states[TokenElement__Basic_4]
+	decisionMap[14] = states[TokenContent__Basic_4]
 	decisionMap[15] = states[TokenCommand__Basic_3]
 	decisionMap[16] = states[TokenCommand__Basic_6]
 	decisionMap[17] = states[TokenCommand__Basic_8]

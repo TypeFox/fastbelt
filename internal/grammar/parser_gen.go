@@ -439,7 +439,7 @@ func (p *Parser) ParseTokenDecl() TokenDecl {
 		}
 		{
 			p.state.EnterRule(TokenDecl__Basic_6)
-			result := p.ParseTokenElement()
+			result := p.ParseTokenContent()
 			p.state.ExitRule()
 			if result != nil {
 				current.SetContent(result)
@@ -467,22 +467,22 @@ func (p *Parser) ParseTokenDecl() TokenDecl {
 	return current
 }
 
-func (p *Parser) ParseTokenElement() TokenElement {
+func (p *Parser) ParseTokenContent() TokenContent {
 	startPos := p.state.LA(1).Range.Start
-	var current TokenElement
+	var current TokenContent
 	{
-		switch prediction, failure := p.lookahead.TokenElementAlternatives(p.state); prediction {
+		switch prediction, failure := p.lookahead.TokenContentAlternatives(p.state); prediction {
 		case 0:
 			{
-				p.state.EnterRule(TokenElement__Basic_1)
-				result := p.ParseRegexpTokenElement()
+				p.state.EnterRule(TokenContent__Basic_1)
+				result := p.ParseRegexpTokenContent()
 				p.state.ExitRule()
 				current = result
 			}
 		case 1:
 			{
-				p.state.EnterRule(TokenElement__Basic_3)
-				result := p.ParseKeywordTokenElement()
+				p.state.EnterRule(TokenContent__Basic_3)
+				result := p.ParseKeywordTokenContent()
 				p.state.ExitRule()
 				current = result
 			}
@@ -490,7 +490,7 @@ func (p *Parser) ParseTokenElement() TokenElement {
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 		if current == nil {
-			current = NewTokenElement()
+			current = NewTokenContent()
 			current.SetTextRangeStart(startPos)
 		}
 	}
@@ -498,13 +498,13 @@ func (p *Parser) ParseTokenElement() TokenElement {
 	return current
 }
 
-func (p *Parser) ParseRegexpTokenElement() RegexpTokenElement {
-	current := NewRegexpTokenElement()
+func (p *Parser) ParseRegexpTokenContent() RegexpTokenContent {
+	current := NewRegexpTokenContent()
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
 			token := p.state.Consume(Token_RegexLiteral)
-			core.AssignToken(current, token, RegexpTokenElement_Regexp_RegexLiteral)
+			core.AssignToken(current, token, RegexpTokenContent_Regexp_RegexLiteral)
 			if token != nil {
 				current.SetRegexp(token)
 			}
@@ -514,12 +514,12 @@ func (p *Parser) ParseRegexpTokenElement() RegexpTokenElement {
 	return current
 }
 
-func (p *Parser) ParseKeywordTokenElement() KeywordTokenElement {
-	current := NewKeywordTokenElement()
+func (p *Parser) ParseKeywordTokenContent() KeywordTokenContent {
+	current := NewKeywordTokenContent()
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
-			p.state.EnterRule(KeywordTokenElement__Basic_1)
+			p.state.EnterRule(KeywordTokenContent__Basic_1)
 			result := p.ParseKeyword()
 			p.state.ExitRule()
 			if result != nil {

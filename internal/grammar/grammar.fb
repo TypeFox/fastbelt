@@ -88,26 +88,26 @@ interface ParserRule extends AbstractRuleWithBody {
 ParserRule: (Entry?="entry")? Name=ID ("returns" ReturnType=[Interface:ID])? ":" Body=Alternatives ";"?
 
 interface TokenDecl extends AbstractTokenRule {
-    Content TokenElement
+    Content TokenContent
 }
 
-TokenDecl: Modifier=TokenModifier? "token" Name=ID ":" Content=TokenElement Command=TokenCommand? ";"?
+TokenDecl: Modifier=TokenModifier? "token" Name=ID ":" Content=TokenContent Command=TokenCommand? ";"?
 
-interface TokenElement {}
+interface TokenContent {}
 
-TokenElement: RegexpTokenElement | KeywordTokenElement
+TokenContent: RegexpTokenContent | KeywordTokenContent
 
-interface RegexpTokenElement extends TokenElement {
+interface RegexpTokenContent extends TokenContent {
     Regexp string
 }
 
-RegexpTokenElement: Regexp=RegexLiteral
+RegexpTokenContent: Regexp=RegexLiteral
 
-interface KeywordTokenElement extends TokenElement {
+interface KeywordTokenContent extends TokenContent {
     Keyword Keyword
 }
 
-KeywordTokenElement: Keyword=Keyword
+KeywordTokenContent: Keyword=Keyword
 
 interface TokenCommand {
     Type    string

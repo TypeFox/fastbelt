@@ -304,7 +304,7 @@ flowchart TD
     q161 -->|"tok(Keyword_token)"| q162
     q162 -->|"tok(Token_ID)"| q163
     q163 -->|"tok(Keyword_Colon)"| q164
-    q164 -.->|"[TokenElement]"| q167
+    q164 -.->|"[TokenContent]"| q167
     q165 -.->|"[TokenCommand]"| q166
     q166 --> q170
     q167 --> q165
@@ -315,51 +315,51 @@ flowchart TD
     q170 --> q169
 ```
 
-## TokenElement
+## TokenContent
 
 ```mermaid
 flowchart TD
-    q20(["TokenElement__Start (20)<br/>RuleStart"])
-    q21(["TokenElement__Stop (21)<br/>RuleStop"])
-    q171["TokenElement__Basic_0 (171)<br/>Basic<br/>"]
-    q172["TokenElement__Basic_1 (172)<br/>Basic<br/>"]
-    q173["TokenElement__Basic_2 (173)<br/>Basic<br/>"]
-    q174["TokenElement__Basic_3 (174)<br/>Basic<br/>"]
-    q175{"TokenElement__Basic_4 (175)<br/>Basic<br/><br/>dec=14"}
-    q176["TokenElement__BlockEnd (176)<br/>BlockEnd<br/>"]
+    q20(["TokenContent__Start (20)<br/>RuleStart"])
+    q21(["TokenContent__Stop (21)<br/>RuleStop"])
+    q171["TokenContent__Basic_0 (171)<br/>Basic<br/>"]
+    q172["TokenContent__Basic_1 (172)<br/>Basic<br/>"]
+    q173["TokenContent__Basic_2 (173)<br/>Basic<br/>"]
+    q174["TokenContent__Basic_3 (174)<br/>Basic<br/>"]
+    q175{"TokenContent__Basic_4 (175)<br/>Basic<br/><br/>dec=14"}
+    q176["TokenContent__BlockEnd (176)<br/>BlockEnd<br/>"]
 
     q20 --> q175
-    q171 -.->|"[RegexpTokenElement]"| q172
+    q171 -.->|"[RegexpTokenContent]"| q172
     q172 --> q176
-    q173 -.->|"[KeywordTokenElement]"| q174
+    q173 -.->|"[KeywordTokenContent]"| q174
     q174 --> q176
     q175 --> q171
     q175 --> q173
     q176 --> q21
 ```
 
-## RegexpTokenElement
+## RegexpTokenContent
 
 ```mermaid
 flowchart TD
-    q22(["RegexpTokenElement__Start (22)<br/>RuleStart"])
-    q23(["RegexpTokenElement__Stop (23)<br/>RuleStop"])
-    q177["RegexpTokenElement_Regexp_RegexLiteral (177)<br/>Basic<br/>"]
-    q178["RegexpTokenElement__Basic (178)<br/>Basic<br/>"]
+    q22(["RegexpTokenContent__Start (22)<br/>RuleStart"])
+    q23(["RegexpTokenContent__Stop (23)<br/>RuleStop"])
+    q177["RegexpTokenContent_Regexp_RegexLiteral (177)<br/>Basic<br/>"]
+    q178["RegexpTokenContent__Basic (178)<br/>Basic<br/>"]
 
     q22 --> q177
     q177 -->|"tok(Token_RegexLiteral)"| q178
     q178 --> q23
 ```
 
-## KeywordTokenElement
+## KeywordTokenContent
 
 ```mermaid
 flowchart TD
-    q24(["KeywordTokenElement__Start (24)<br/>RuleStart"])
-    q25(["KeywordTokenElement__Stop (25)<br/>RuleStop"])
-    q179["KeywordTokenElement__Basic_0 (179)<br/>Basic<br/>"]
-    q180["KeywordTokenElement__Basic_1 (180)<br/>Basic<br/>"]
+    q24(["KeywordTokenContent__Start (24)<br/>RuleStart"])
+    q25(["KeywordTokenContent__Stop (25)<br/>RuleStop"])
+    q179["KeywordTokenContent__Basic_0 (179)<br/>Basic<br/>"]
+    q180["KeywordTokenContent__Basic_1 (180)<br/>Basic<br/>"]
 
     q24 --> q179
     q179 -.->|"[Keyword]"| q180

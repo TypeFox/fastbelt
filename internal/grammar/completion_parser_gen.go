@@ -353,7 +353,7 @@ func (p *CompletionParser) ParseTokenDecl() {
 	{
 		p.cp.MarkAssignment("Content")
 		p.state.EnterRule(TokenDecl__Basic_6)
-		p.ParseTokenElement()
+		p.ParseTokenContent()
 		p.state.ExitRule()
 		p.cp.ClearAssignment()
 	}
@@ -375,20 +375,20 @@ func (p *CompletionParser) ParseTokenDecl() {
 	}
 }
 
-func (p *CompletionParser) ParseTokenElement() {
-	p.cp.EnterRule("TokenElement", TokenElement__Start)
+func (p *CompletionParser) ParseTokenContent() {
+	p.cp.EnterRule("TokenContent", TokenContent__Start)
 	defer p.cp.ExitRule()
-	switch prediction, failure := p.lookahead.TokenElementAlternatives(p.state); prediction {
+	switch prediction, failure := p.lookahead.TokenContentAlternatives(p.state); prediction {
 	case 0:
 		{
-			p.state.EnterRule(TokenElement__Basic_1)
-			p.ParseRegexpTokenElement()
+			p.state.EnterRule(TokenContent__Basic_1)
+			p.ParseRegexpTokenContent()
 			p.state.ExitRule()
 		}
 	case 1:
 		{
-			p.state.EnterRule(TokenElement__Basic_3)
-			p.ParseKeywordTokenElement()
+			p.state.EnterRule(TokenContent__Basic_3)
+			p.ParseKeywordTokenContent()
 			p.state.ExitRule()
 		}
 	default:
@@ -396,8 +396,8 @@ func (p *CompletionParser) ParseTokenElement() {
 	}
 }
 
-func (p *CompletionParser) ParseRegexpTokenElement() {
-	p.cp.EnterRule("RegexpTokenElement", RegexpTokenElement__Start)
+func (p *CompletionParser) ParseRegexpTokenContent() {
+	p.cp.EnterRule("RegexpTokenContent", RegexpTokenContent__Start)
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Regexp")
@@ -406,12 +406,12 @@ func (p *CompletionParser) ParseRegexpTokenElement() {
 	}
 }
 
-func (p *CompletionParser) ParseKeywordTokenElement() {
-	p.cp.EnterRule("KeywordTokenElement", KeywordTokenElement__Start)
+func (p *CompletionParser) ParseKeywordTokenContent() {
+	p.cp.EnterRule("KeywordTokenContent", KeywordTokenContent__Start)
 	defer p.cp.ExitRule()
 	{
 		p.cp.MarkAssignment("Keyword")
-		p.state.EnterRule(KeywordTokenElement__Basic_1)
+		p.state.EnterRule(KeywordTokenContent__Basic_1)
 		p.ParseKeyword()
 		p.state.ExitRule()
 		p.cp.ClearAssignment()

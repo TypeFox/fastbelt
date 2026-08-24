@@ -67,7 +67,7 @@ var TokenCommandTypeAlternatives = parser.LL1Lookahead{
 	Lookup: []int{28: 3, 29: 2, 30: 1},
 }
 
-var TokenElementAlternatives = parser.LL1Lookahead{
+var TokenContentAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_RegexLiteral, Token_StringLiteral},
 	Lookup: []int{39: 2, 41: 1},
 }
@@ -133,10 +133,10 @@ type FastbeltParserLookahead interface {
 	TokenCommandAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	TokenCommandOptional(state *parser.ParserState) bool
 	TokenCommandTypeAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
+	TokenContentAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	TokenDeclCommandOptional(state *parser.ParserState) bool
 	TokenDeclModifierOptional(state *parser.ParserState) bool
 	TokenDeclSemicolonOptional(state *parser.ParserState) bool
-	TokenElementAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	TokenGroupAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	TokenGroupCommandOptional(state *parser.ParserState) bool
 	TokenGroupModifierOptional(state *parser.ParserState) bool
@@ -320,6 +320,10 @@ func (l *DefaultFastbeltParserLookahead) TokenCommandTypeAlternatives(state *par
 	return state.Lookahead(TokenCommandTypeAlternatives)
 }
 
+func (l *DefaultFastbeltParserLookahead) TokenContentAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+	return state.Lookahead(TokenContentAlternatives)
+}
+
 func (l *DefaultFastbeltParserLookahead) TokenDeclCommandOptional(state *parser.ParserState) bool {
 	return state.LA(1).Type == Keyword_DashGreaterThan
 }
@@ -330,10 +334,6 @@ func (l *DefaultFastbeltParserLookahead) TokenDeclModifierOptional(state *parser
 
 func (l *DefaultFastbeltParserLookahead) TokenDeclSemicolonOptional(state *parser.ParserState) bool {
 	return state.LA(1).Type == Keyword_Semicolon
-}
-
-func (l *DefaultFastbeltParserLookahead) TokenElementAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
-	return state.Lookahead(TokenElementAlternatives)
 }
 
 func (l *DefaultFastbeltParserLookahead) TokenGroupAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
