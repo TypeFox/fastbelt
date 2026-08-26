@@ -35,7 +35,7 @@ func setupLinkedStatemachine(b *testing.B) (*fastbelt.Document, *fastbelt.Refere
 		b.Fatal(err)
 	}
 	builder := service.MustGet[workspace.Builder](srv)
-	if err := builder.Build(b.Context(), []*fastbelt.Document{doc}, nil); err != nil {
+	if err := builder.Build(b.Context(), []*fastbelt.Document{doc}); err != nil {
 		b.Fatalf("build failed: %v", err)
 	}
 	for _, ref := range doc.References {

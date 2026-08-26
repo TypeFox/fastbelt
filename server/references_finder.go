@@ -33,6 +33,9 @@ type DefaultReferencesFinder struct {
 	sc *service.Container
 }
 
+// Ensure DefaultReferencesFinder implements the expected interfaces.
+var _ ReferencesFinder = (*DefaultReferencesFinder)(nil)
+
 func NewDefaultReferencesFinder(sc *service.Container) ReferencesFinder {
 	return &DefaultReferencesFinder{sc: sc}
 }
