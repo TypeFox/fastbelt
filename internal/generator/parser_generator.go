@@ -440,6 +440,13 @@ func generateLookaheadMethods(context *ParserGeneratorContext) []lookaheadMethod
 	for _, tg := range context.grammar.TokenGroups() {
 		groupNames[GeneratedTokenName(tg)] = true
 	}
+	for _, tm := range context.grammar.TokenModes() {
+		for _, member := range tm.Members() {
+			if tgu, ok := member.(grammar.TokenGroupUsage); ok {
+				groupNames[GeneratedTokenName(tgu.Group())] = true
+			}
+		}
+	}
 
 	for el, lv := range context.lookaheads {
 		// The adaptive decision map is keyed by the assignable value for
@@ -1555,6 +1562,15 @@ func buildGroupVarNameToMembers(grammr grammar.Grammar, keywords GetAllKeywordsR
 	for _, tg := range grammr.TokenGroups() {
 		varName := GeneratedTokenName(tg)
 		groups[varName] = getAllTokenGroupMembers(tg, keywords)
+	}
+	for _, tm := range grammr.TokenModes() {
+		for _, member := range tm.Members() {
+			if tgu, ok := member.(grammar.TokenGroupUsage); ok {
+				tg := tgu.Group()
+				varName := GeneratedTokenName(tg)
+				groups[varName] = getAllTokenGroupMembers(tg, keywords)
+			}
+		}
 	}
 	return groups
 }
