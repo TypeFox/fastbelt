@@ -477,6 +477,11 @@ func checkTokenModesCoverParserTokens(g Grammar, ctx context.Context, accept cor
 			if !ok || !insideParserRule(node) || coverage.covers(rule) || !reported.Add(rule.Name()) {
 				continue
 			}
+			if _, ok := rule.(TokenGroup); ok {
+				//ignore token groups FTM, since they are meant to be
+				//used as a grouped token type during parsing, not during lexing
+				continue
+			}
 			// Deliberately a warning, not an error: unlike a keyword, a token
 			// rule may be registered with the lexer by hand-written code, and a
 			// grammar that leaves one out still generates and builds.

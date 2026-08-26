@@ -8,8 +8,6 @@ import (
 	"context"
 	"fmt"
 	"maps"
-	"regexp"
-	"slices"
 	"sort"
 	"strconv"
 	"unicode/utf8"
@@ -81,7 +79,11 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, token
 			varName := "modes[" + tokenTypes.TokenModes[modeName].VarName + "]"
 			n.AppendLine(varName, " = lexer.NewTokenMode(\"", modeName, "\",")
 			n.Indent(func(nn codegen.Node) {
-				for _, tokenIndex := range tokenMode.TokenTypeIndices {
+				for _, tokenIndex := range tokenMode.TokenTypeIndices.Keywords {
+					tokenType := tokenTypes.TokenTypes.ByTokenIndex[tokenIndex]
+					generateTokenTypeUsage(context, nn, tokenType, tokenMode, tokenIndex, tokenTypes)
+				}
+				for _, tokenIndex := range tokenMode.TokenTypeIndices.Tokens {
 					tokenType := tokenTypes.TokenTypes.ByTokenIndex[tokenIndex]
 					generateTokenTypeUsage(context, nn, tokenType, tokenMode, tokenIndex, tokenTypes)
 				}
@@ -189,34 +191,6 @@ func generateTokenGroupType(tokenGroup grammar.TokenGroup, tokenGroupMembers map
 		Imports: map[string]bool{},
 		Code:    code,
 	}
-}
-
-func getAllTokenGroupMembers(tokenGroup grammar.TokenGroup, keywords GetAllKeywordsResult) []string {
-	members := map[string]bool{}
-	for _, tokenRef := range tokenGroup.TokenRefs() {
-		tokenRule := tokenRef.Ref(context.Background())
-		if tokenRule != nil {
-			name := GeneratedTokenName(tokenRule)
-			members[name] = true
-		}
-	}
-	for _, selector := range tokenGroup.KeywordSelectors() {
-		pattern := regexp.MustCompile(grammar.RegexpValue(selector.Image))
-		for _, keyword := range keywords.Keywords {
-			name := GeneratedTokenName(keyword)
-			value := grammar.KeywordValue(keyword)
-			if !members[name] && pattern.MatchString(value) {
-				members[name] = true
-			}
-		}
-	}
-	for _, keyword := range tokenGroup.Keywords() {
-		name := GeneratedTokenName(keyword)
-		members[name] = true
-	}
-	slice := slices.Collect(maps.Keys(members))
-	sort.Strings(slice)
-	return slice
 }
 
 func generateRegexpTokenElement(token grammar.TokenDecl, regexpTokenElement grammar.RegexpTokenContent, id int) GenerateLexerResult {

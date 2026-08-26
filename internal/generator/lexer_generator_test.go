@@ -177,7 +177,7 @@ func TestGenerateLexerImplicitDefaultModeRegistersEverything(t *testing.T) {
 	assert.Contains(t, code, "TokenMode_default = 0")
 	assert.Contains(t, code, "lexer.UseTokenType(Keyword_world)")
 	assert.Contains(t, code, "lexer.UseTokenType(Token_ID)")
-	assert.Contains(t, code, "lexer.UseTokenType(TokenGroup_Punct)")
+	assert.Contains(t, code, "lexer.UseTokenType(Keyword_Exclamation),")
 	assert.Contains(t, code, "lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier)")
 	assert.Contains(t, code, "lexer.UseTokenType(Token_SL_COMMENT).WithModifier(core.CommentModifier)")
 	assert.Contains(t, code, "lexer.NewDefaultLexer(TokenMode_default, modes...)")
@@ -327,7 +327,8 @@ func TestGenerateLexerModeLocalTokenGroupWithCommand(t *testing.T) {
 	`)
 	assert.Contains(t, code, "var TokenGroup_Closers =")
 	inner := code[strings.Index(code, `NewTokenMode("Inner"`):]
-	assert.Contains(t, inner, "lexer.UseTokenType(TokenGroup_Closers).WithPopMode()")
+	assert.Contains(t, inner, "lexer.UseTokenType(Keyword_RightParen).WithPopMode(),")
+	assert.Contains(t, inner, "lexer.UseTokenType(Keyword_RightBracket).WithPopMode(),")
 }
 
 func TestGenerateLexerTokenListedTwiceInSameMode(t *testing.T) {

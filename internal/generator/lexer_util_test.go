@@ -5,6 +5,7 @@
 package generator
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -190,4 +191,56 @@ func TestPopulateTokenModes_ShouldAddModifiersOnTokenElements(t *testing.T) {
 	assert.Equal(t, "hidden", defaultMode.TokenTypeUsages[indexUser].TokenModifier)
 	_, ok = defaultMode.TokenTypeUsages[indexHello]
 	assert.False(t, ok)
+}
+
+func TestPopulateTokenModes_ShouldHandleTopLevelTokenGroupProperlyInTokenMode(t *testing.T) {
+	f := test.New(t, grammar.CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+
+		interface Model {
+			Greeting string
+		}
+		entry Model: "x" Greeting=X
+
+		token group X {
+  			"x"
+		}
+
+		token mode default {
+  			"x" -> push(Y)
+		}
+
+		token mode Y {
+  			X -> pop
+		}
+	`).AssertNoErrors()
+	grammr, ok := doc.Document.Root.(grammar.Grammar)
+	require.True(t, ok)
+	tokenTypes := GenerateTokenTypes(grammr)
+	populateTokenTypes(&tokenTypes)
+	populateTokenModes(&tokenTypes, grammr.TokenModes())
+
+	topLevelTokenGroups := grammr.TokenGroups()
+	require.Len(t, topLevelTokenGroups, 1)
+	indexKeyword := tokenTypes.TokenIndex.ByKeyword["\"x\""]
+	indexGroup := tokenTypes.TokenIndex.ByTokenGroup[topLevelTokenGroups[0]]
+
+	defaultMode := tokenTypes.TokenModes["default"]
+	assert.Equal(t, 1, len(defaultMode.TokenTypeIndices))
+	assert.Equal(t, indexKeyword, defaultMode.TokenTypeIndices[0])
+	assert.Equal(t, 1, len(defaultMode.TokenTypeUsages))
+	keywordUsage, ok := defaultMode.TokenTypeUsages[indexKeyword]
+	assert.True(t, ok)
+	assert.Equal(t, "push", keywordUsage.Command.Type())
+	assert.Equal(t, "Y", keywordUsage.Command.Mode().Ref(context.Background()).Name())
+
+	yMode := tokenTypes.TokenModes["Y"]
+	assert.Equal(t, 1, len(yMode.TokenTypeIndices))
+	assert.Equal(t, indexGroup, yMode.TokenTypeIndices[0])
+	assert.Equal(t, 1, len(yMode.TokenTypeUsages))
+	groupUsage, ok := yMode.TokenTypeUsages[indexGroup]
+	assert.True(t, ok)
+	assert.Equal(t, "pop", groupUsage.Command.Type())
+	assert.Nil(t, groupUsage.Command.Mode())
 }

@@ -4,9 +4,10 @@ package grammar
 
 import (
 	"strings"
+	"unicode/utf8"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
-	"unicode/utf8"
 )
 
 const Keyword_LeftParen_Idx = 1
@@ -1213,12 +1214,13 @@ const (
 func NewLexer() lexer.Lexer {
 	modes := make([]*lexer.TokenMode, 1)
 	modes[TokenMode_default] = lexer.NewTokenMode("default",
-		lexer.UseTokenType(TokenGroup_Cardinality),
-		lexer.UseTokenType(TokenGroup_TokenModifier),
-		lexer.UseTokenType(Keyword_LeftParen),
-		lexer.UseTokenType(Keyword_RightParen),
 		lexer.UseTokenType(Keyword_Asterisk),
 		lexer.UseTokenType(Keyword_Plus),
+		lexer.UseTokenType(Keyword_Question),
+		lexer.UseTokenType(Keyword_hidden),
+		lexer.UseTokenType(Keyword_comment),
+		lexer.UseTokenType(Keyword_LeftParen),
+		lexer.UseTokenType(Keyword_RightParen),
 		lexer.UseTokenType(Keyword_PlusEquals),
 		lexer.UseTokenType(Keyword_Comma),
 		lexer.UseTokenType(Keyword_DashGreaterThan),
@@ -1226,12 +1228,10 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Keyword_Colon),
 		lexer.UseTokenType(Keyword_Semicolon),
 		lexer.UseTokenType(Keyword_Equals),
-		lexer.UseTokenType(Keyword_Question),
 		lexer.UseTokenType(Keyword_QuestionEquals),
 		lexer.UseTokenType(Keyword_LeftBracket),
 		lexer.UseTokenType(Keyword_RightBracket),
 		lexer.UseTokenType(Keyword_bool),
-		lexer.UseTokenType(Keyword_comment),
 		lexer.UseTokenType(Keyword_composite),
 		lexer.UseTokenType(Keyword_current),
 		lexer.UseTokenType(Keyword_default),
@@ -1239,7 +1239,6 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Keyword_extends),
 		lexer.UseTokenType(Keyword_grammar),
 		lexer.UseTokenType(Keyword_group),
-		lexer.UseTokenType(Keyword_hidden),
 		lexer.UseTokenType(Keyword_interface),
 		lexer.UseTokenType(Keyword_keywords),
 		lexer.UseTokenType(Keyword_mode),

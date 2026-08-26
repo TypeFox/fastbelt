@@ -6,6 +6,7 @@ package generator
 
 import (
 	"context"
+	"maps"
 	"regexp"
 	"slices"
 	"sort"
@@ -27,17 +28,33 @@ type TokenTypeUsage struct {
 	Command       grammar.TokenCommand
 }
 
+type TokenTypeIndices struct {
+	Keywords []int
+	Tokens   []int
+}
+
 type TokenMode struct {
 	Id               int
 	VarName          string
-	TokenTypeIndices []int
+	TokenTypeIndices TokenTypeIndices
 	TokenTypeUsages  map[int]TokenTypeUsage
 }
 
+type TokenIndexSource int
+
+// Use iota for sequential numbering
+const (
+	SourceRegExp TokenIndexSource = iota
+	SourceKeyword
+	SourceGroup
+)
+
 type TokenIndexLookup struct {
-	ByKeyword    map[string]int
-	ByToken      map[grammar.TokenDecl]int
-	ByTokenGroup map[grammar.TokenGroup]int
+	ByKeyword          map[string]int
+	ByToken            map[grammar.TokenDecl]int
+	ByTokenGroup       map[grammar.TokenGroup]int
+	ByTokenGroupParent map[grammar.TokenGroup][]int
+	SourceType         map[int]TokenIndexSource
 }
 
 type TokenTypeLookup struct {
@@ -97,9 +114,11 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 		TokenGroups: tokenGroups,
 		Imports:     map[string]bool{},
 		TokenIndex: TokenIndexLookup{
-			ByKeyword:    make(map[string]int),
-			ByToken:      make(map[grammar.TokenDecl]int),
-			ByTokenGroup: make(map[grammar.TokenGroup]int),
+			ByKeyword:          make(map[string]int),
+			ByToken:            make(map[grammar.TokenDecl]int),
+			ByTokenGroup:       make(map[grammar.TokenGroup]int),
+			ByTokenGroupParent: make(map[grammar.TokenGroup][]int),
+			SourceType:         make(map[int]TokenIndexSource),
 		},
 		TokenTypes: TokenTypeLookup{
 			All:          make([]TokenType, 0),
@@ -124,10 +143,13 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 			modeName = tokenMode.Name()
 		}
 		current := TokenMode{
-			Id:               index,
-			VarName:          "TokenMode_" + modeName,
-			TokenTypeIndices: make([]int, 0),
-			TokenTypeUsages:  make(map[int]TokenTypeUsage),
+			Id:      index,
+			VarName: "TokenMode_" + modeName,
+			TokenTypeIndices: TokenTypeIndices{
+				Keywords: make([]int, 0),
+				Tokens:   make([]int, 0),
+			},
+			TokenTypeUsages: make(map[int]TokenTypeUsage),
 		}
 		result.TokenModes[modeName] = &current
 		// Tracked across all members of the mode: a keyword selector must not
@@ -135,8 +157,19 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 		alreadyAdded := map[int]bool{}
 		for _, member := range tokenMode.Members() {
 			pushTokenTypeUsage := func(tokenIndex int, tokenModifier string, command grammar.TokenCommand) {
-				alreadyAdded[tokenIndex] = true
-				current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
+				if _, ok := alreadyAdded[tokenIndex]; ok {
+					return
+				}
+				if source, ok := result.TokenIndex.SourceType[tokenIndex]; ok && source != SourceGroup {
+					if source == SourceKeyword {
+						current.TokenTypeIndices.Keywords = append(current.TokenTypeIndices.Keywords, tokenIndex)
+					} else {
+						current.TokenTypeIndices.Tokens = append(current.TokenTypeIndices.Tokens, tokenIndex)
+					}
+					alreadyAdded[tokenIndex] = true
+				} else {
+					return
+				}
 				if tokenModifier != "" || command != nil {
 					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
 						TokenModifier: tokenModifier,
@@ -152,8 +185,9 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 				pushTokenTypeUsage(tokenIndex, token.Modifier(), token.Command())
 			case grammar.TokenGroupUsage:
 				tokenGroup := member.Group()
-				tokenIndex := result.TokenIndex.ByTokenGroup[tokenGroup]
-				pushTokenTypeUsage(tokenIndex, tokenGroup.Modifier(), tokenGroup.Command())
+				for _, tokenIndex := range result.TokenIndex.ByTokenGroupParent[tokenGroup] {
+					pushTokenTypeUsage(tokenIndex, tokenGroup.Modifier(), tokenGroup.Command())
+				}
 			case grammar.KeywordUsage:
 				tokenIndex := result.TokenIndex.ByKeyword[member.Keyword().Value()]
 				pushTokenTypeUsage(tokenIndex, member.Modifier(), member.Command())
@@ -166,7 +200,9 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 					pushTokenTypeUsage(tokenIndex, rule.Modifier(), rule.Command())
 				case grammar.TokenGroup:
 					tokenIndex = result.TokenIndex.ByTokenGroup[rule]
-					pushTokenTypeUsage(tokenIndex, rule.Modifier(), rule.Command())
+					for _, tokenIndex := range result.TokenIndex.ByTokenGroupParent[rule] {
+						pushTokenTypeUsage(tokenIndex, rule.Modifier(), rule.Command())
+					}
 				}
 				//overwrite usage if defined on token mode level
 				if member.Modifier() != "" || member.Command() != nil {
@@ -181,7 +217,7 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 					tokenIndex := result.TokenIndex.ByKeyword[keyword.Value()]
 					value := grammar.KeywordValue(keyword)
 					if !alreadyAdded[tokenIndex] && pattern.MatchString(value) {
-						current.TokenTypeIndices = append(current.TokenTypeIndices, tokenIndex)
+						current.TokenTypeIndices.Keywords = append(current.TokenTypeIndices.Keywords, tokenIndex)
 						alreadyAdded[tokenIndex] = true
 					}
 				}
@@ -192,35 +228,60 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 	if result.TokenModes["default"] == nil {
 		//if token mode "default" is not defined, we need to create it
 		defaultMode := TokenMode{
-			Id:               len(result.TokenModes),
-			VarName:          "TokenMode_default",
-			TokenTypeIndices: make([]int, 0),
-			TokenTypeUsages:  make(map[int]TokenTypeUsage),
+			Id:      len(result.TokenModes),
+			VarName: "TokenMode_default",
+			TokenTypeIndices: TokenTypeIndices{
+				Keywords: make([]int, 0),
+				Tokens:   make([]int, 0),
+			},
+			TokenTypeUsages: make(map[int]TokenTypeUsage),
 		}
 		result.TokenModes["default"] = &defaultMode
 		result.TokenModeOrder = append(result.TokenModeOrder, "default")
 
 		for _, tokenGroup := range tokenGroups.TopLevel {
-			tokenIndex := result.TokenIndex.ByTokenGroup[tokenGroup]
-			defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
-			if tokenGroup.Modifier() != "" || tokenGroup.Command() != nil {
-				defaultMode.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-					TokenModifier: tokenGroup.Modifier(),
-					Command:       tokenGroup.Command(),
+			for _, tokenIndex := range result.TokenIndex.ByTokenGroupParent[tokenGroup] {
+				if source, ok := result.TokenIndex.SourceType[tokenIndex]; ok && source != SourceGroup {
+					if source == SourceKeyword {
+						if slices.Contains(defaultMode.TokenTypeIndices.Keywords, tokenIndex) {
+							continue
+						}
+						defaultMode.TokenTypeIndices.Keywords = append(defaultMode.TokenTypeIndices.Keywords, tokenIndex)
+					} else {
+						if slices.Contains(defaultMode.TokenTypeIndices.Tokens, tokenIndex) {
+							continue
+						}
+						defaultMode.TokenTypeIndices.Tokens = append(defaultMode.TokenTypeIndices.Tokens, tokenIndex)
+					}
+					if tokenGroup.Modifier() != "" || tokenGroup.Command() != nil {
+						defaultMode.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
+							TokenModifier: tokenGroup.Modifier(),
+							Command:       tokenGroup.Command(),
+						}
+					}
 				}
 			}
 		}
 
 		for _, keyword := range keywords.Keywords {
 			tokenIndex := result.TokenIndex.ByKeyword[keyword.Value()]
-			defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
+			if slices.Contains(defaultMode.TokenTypeIndices.Keywords, tokenIndex) {
+				continue
+			}
+			defaultMode.TokenTypeIndices.Keywords = append(defaultMode.TokenTypeIndices.Keywords, tokenIndex)
 			//keywords don't have type or command, so we don't need to add anything to TokenTypeUsages
 		}
 
 		for _, token := range tokens.TopLevel {
 			tokenIndex := result.TokenIndex.ByToken[token]
-			if !slices.Contains(defaultMode.TokenTypeIndices, tokenIndex) {
-				defaultMode.TokenTypeIndices = append(defaultMode.TokenTypeIndices, tokenIndex)
+			if result.TokenIndex.SourceType[tokenIndex] != SourceRegExp {
+				continue
+			}
+			if !slices.Contains(defaultMode.TokenTypeIndices.Tokens, tokenIndex) {
+				if slices.Contains(defaultMode.TokenTypeIndices.Tokens, tokenIndex) {
+					continue
+				}
+				defaultMode.TokenTypeIndices.Tokens = append(defaultMode.TokenTypeIndices.Tokens, tokenIndex)
 			}
 			if token.Modifier() != "" || token.Command() != nil {
 				defaultMode.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
@@ -251,6 +312,7 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 		result.TokenTypes.All = append(result.TokenTypes.All, tokenType)
 		result.TokenTypes.ByTokenIndex[tokenIndex] = &tokenType
 		result.TokenIndex.ByKeyword[keyword.Value()] = tokenIndex
+		result.TokenIndex.SourceType[tokenIndex] = SourceKeyword
 		tokenIndex++
 	}
 	for _, token := range tokens.All {
@@ -265,7 +327,8 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 			code.AppendLine()
 			code.AppendLine("var ", varName, " = ", GeneratedTokenName(keyword))
 			mergeImports(&result.Imports, map[string]bool{})
-			currentTokenIndex := result.TokenIndex.ByKeyword[keyword.Value()]
+			currentTokenIndex = result.TokenIndex.ByKeyword[keyword.Value()]
+			result.TokenIndex.SourceType[currentTokenIndex] = SourceKeyword
 			tokenType := TokenType{
 				TokenIndex: currentTokenIndex,
 				VarName:    varName,
@@ -288,6 +351,7 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 			result.TokenTypes.All = append(result.TokenTypes.All, tokenType)
 			result.TokenTypes.ByTokenIndex[currentTokenIndex] = &tokenType
 			result.TokenIndex.ByToken[token] = currentTokenIndex
+			result.TokenIndex.SourceType[currentTokenIndex] = SourceRegExp
 			tokenIndex++
 		}
 		if token.Modifier() != "" || token.Command() != nil {
@@ -314,8 +378,10 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 		result.TokenTypes.All = append(result.TokenTypes.All, tokenType)
 		result.TokenTypes.ByTokenIndex[tokenIndex] = &tokenType
 		result.TokenIndex.ByTokenGroup[tokenGroup] = tokenIndex
+		result.TokenIndex.SourceType[tokenIndex] = SourceGroup
 		tokenIndex++
 	}
+	result.TokenIndex.ByTokenGroupParent = getAllTokenGroupMemberTokenIndices(tokenGroups.All, keywords, result.TokenIndex)
 }
 
 func mergeImports(target *map[string]bool, source map[string]bool) {
@@ -455,4 +521,69 @@ func GeneratedTokenName(t core.AstNode) string {
 
 func GeneratedTokenIdxName(t core.AstNode) string {
 	return GeneratedTokenName(t) + "_Idx"
+}
+
+func getAllTokenGroupMemberTokenIndices(tokenGroups []grammar.TokenGroup, keywords GetAllKeywordsResult, lookup TokenIndexLookup) map[grammar.TokenGroup][]int {
+	tokenGroupMembers := map[grammar.TokenGroup][]int{}
+	for _, tokenGroup := range tokenGroups {
+		tokenGroupMembers[tokenGroup] = []int{}
+	}
+	for _, tokenGroup := range tokenGroups {
+		for _, tokenRef := range tokenGroup.TokenRefs() {
+			tokenRule := tokenRef.Ref(context.Background())
+			if tokenRule != nil {
+				if subTokenGroup, ok := tokenRule.(grammar.TokenGroup); ok {
+					tokenGroupMembers[tokenGroup] = append(tokenGroupMembers[tokenGroup], tokenGroupMembers[subTokenGroup]...)
+				} else if tokenDecl, ok := tokenRule.(grammar.TokenDecl); ok {
+					if idx, ok := lookup.ByToken[tokenDecl]; ok {
+						tokenGroupMembers[tokenGroup] = append(tokenGroupMembers[tokenGroup], idx)
+					}
+				}
+			}
+		}
+		for _, selector := range tokenGroup.KeywordSelectors() {
+			pattern := regexp.MustCompile(grammar.RegexpValue(selector.Image))
+			for _, keyword := range keywords.Keywords {
+				if idx, ok := lookup.ByKeyword[keyword.Value()]; ok {
+					if pattern.MatchString(keyword.Value()) {
+						tokenGroupMembers[tokenGroup] = append(tokenGroupMembers[tokenGroup], idx)
+					}
+				}
+			}
+		}
+		for _, keyword := range tokenGroup.Keywords() {
+			if idx, ok := lookup.ByKeyword[keyword.Value()]; ok {
+				tokenGroupMembers[tokenGroup] = append(tokenGroupMembers[tokenGroup], idx)
+			}
+		}
+	}
+	return tokenGroupMembers
+}
+
+func getAllTokenGroupMembers(tokenGroup grammar.TokenGroup, keywords GetAllKeywordsResult) []string {
+	members := map[string]bool{}
+	for _, tokenRef := range tokenGroup.TokenRefs() {
+		tokenRule := tokenRef.Ref(context.Background())
+		if tokenRule != nil {
+			name := GeneratedTokenName(tokenRule)
+			members[name] = true
+		}
+	}
+	for _, selector := range tokenGroup.KeywordSelectors() {
+		pattern := regexp.MustCompile(grammar.RegexpValue(selector.Image))
+		for _, keyword := range keywords.Keywords {
+			name := GeneratedTokenName(keyword)
+			value := grammar.KeywordValue(keyword)
+			if !members[name] && pattern.MatchString(value) {
+				members[name] = true
+			}
+		}
+	}
+	for _, keyword := range tokenGroup.Keywords() {
+		name := GeneratedTokenName(keyword)
+		members[name] = true
+	}
+	slice := slices.Collect(maps.Keys(members))
+	sort.Strings(slice)
+	return slice
 }
