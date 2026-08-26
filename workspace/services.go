@@ -25,7 +25,7 @@ func SetupDefaultServices(sc *service.Container) {
 		sc.Put(NewDefaultIncludeFilter(sc))
 	}
 	if !sc.Has[Lock]() {
-		sc.Put(NewDefaultLock())
+		sc.Put(NewDefaultLock(sc))
 	}
 	if !sc.Has[DocumentUpdater]() {
 		sc.Put(NewDefaultDocumentUpdater(sc))

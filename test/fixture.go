@@ -139,7 +139,7 @@ func (f *Fixture) ParseURI(content, uri string) *Doc {
 	documents := f.sc.MustGet[workspace.DocumentManager]()
 	documents.Set(doc)
 	builder := f.sc.MustGet[workspace.Builder]()
-	if err := builder.Build(f.ctx, []*core.Document{doc}, nil); err != nil {
+	if err := builder.Build(f.ctx, []*core.Document{doc}); err != nil {
 		f.t.Fatalf("fbtest: build failed: %v", err)
 	}
 	return f.NewDoc(doc, ranges, indices)
@@ -171,7 +171,7 @@ func (f *Fixture) ParseAll(uriContentPairs ...string) []*Doc {
 		results = append(results, f.NewDoc(doc, ranges, indices))
 	}
 	builder := f.sc.MustGet[workspace.Builder]()
-	if err := builder.Build(f.ctx, coreDocs, nil); err != nil {
+	if err := builder.Build(f.ctx, coreDocs); err != nil {
 		f.t.Fatalf("fbtest: build failed: %v", err)
 	}
 	return results

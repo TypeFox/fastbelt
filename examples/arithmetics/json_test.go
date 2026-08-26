@@ -96,7 +96,7 @@ func TestJsonExport(t *testing.T) {
 		mod, err := UnmarshalValue[Module]([]byte(jsonInput))
 		require.NoError(t, err)
 		doc.Root = mod
-		doc.State = core.DocStateLexed | core.DocStateParsed
+		doc.SetState(core.DocStateLexed | core.DocStateParsed)
 		core.AssignContainers(doc)
 		documents.Set(doc)
 		f.NewDoc(doc, nil, nil)
@@ -119,7 +119,7 @@ func TestJsonExport(t *testing.T) {
 			builder.Reset(doc, core.DocStateLexed|core.DocStateParsed)
 		}
 		err := builder.Build(
-			f.Ctx(), slices.Collect(documents.All()), nil,
+			f.Ctx(), slices.Collect(documents.All()),
 		)
 		require.NoError(t, err)
 
@@ -157,7 +157,7 @@ func TestJsonExport(t *testing.T) {
 		loadJsonDoc("inmemory:///testB.json", circularBJsonAdj)
 
 		err := builder.Build(
-			f.Ctx(), slices.Collect(documents.All()), nil,
+			f.Ctx(), slices.Collect(documents.All()),
 		)
 		require.NoError(t, err)
 
