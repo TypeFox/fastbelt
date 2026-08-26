@@ -54,8 +54,8 @@ func BenchmarkWorkspaceCycle(b *testing.B) {
 		}
 
 		start := time.Now()
-		lock.Write(context.Background(), func(ctx context.Context, downgrade func()) {
-			if err := builder.Build(ctx, docs, downgrade); err != nil {
+		lock.Write(context.Background(), func(ctx context.Context) {
+			if err := builder.Build(ctx, docs); err != nil {
 				b.Errorf("build failed: %v", err)
 			}
 		})
@@ -181,7 +181,7 @@ func BenchmarkLocalLinking(b *testing.B) {
 	docs := []*fastbelt.Document{doc}
 	builder := service.MustGet[workspace.Builder](srv)
 	// Prebuild the file - we will reset the references later
-	if err := builder.Build(b.Context(), docs, nil); err != nil {
+	if err := builder.Build(b.Context(), docs); err != nil {
 		b.Errorf("build failed: %v", err)
 	}
 	b.SetBytes(int64(len(content)))

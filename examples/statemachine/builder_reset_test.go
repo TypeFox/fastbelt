@@ -48,7 +48,7 @@ func TestResetKeepsLocalSymbols(t *testing.T) {
 		t.Error("Reset kept ImportedSymbols although DocStateImportedSymbols was dropped")
 	}
 
-	if err := builder.Build(f.Ctx(), []*core.Document{doc.Document}, nil); err != nil {
+	if err := builder.Build(f.Ctx(), []*core.Document{doc.Document}); err != nil {
 		t.Fatalf("rebuild after reset failed: %v", err)
 	}
 	for _, ref := range doc.Document.References {

@@ -9,6 +9,7 @@ import (
 	"log"
 
 	"golang.org/x/exp/jsonrpc2"
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
@@ -22,6 +23,18 @@ import (
 // method called during the [lsp.Server.Initialize] request.
 type InitializeParticipant interface {
 	OnServerInitialize(params *lsp.ParamInitialize)
+}
+
+// DocumentStateRequirements is an interface for services that require certain a document state
+// to be reached before they can be used. If a service does not implement this interface,
+// the language server will assume that the service can only run after the workspace has been
+// fully built.
+type DocumentStateRequirements interface {
+	// RequiredState returns the document state that must be reached before
+	// the service can be used. The boolean value indicates whether the full
+	// workspace needs to be in this state (true) or only the document being
+	// processed (false).
+	RequiredState() (core.DocumentState, bool)
 }
 
 // DefaultLanguageServer implements the [lsp.Server] interface
@@ -147,6 +160,19 @@ func (s *DefaultLanguageServer) DidSave(ctx context.Context, params *lsp.DidSave
 	return nil
 }
 
+func read(ctx context.Context, lock workspace.Lock, uri core.URI, service any, do func(ctx context.Context)) error {
+	if req, ok := service.(DocumentStateRequirements); ok {
+		var uris []core.URI
+		state, full := req.RequiredState()
+		if !full && uri != nil {
+			uris = append(uris, uri)
+		}
+		return lock.ReadAt(ctx, state, uris, do)
+	} else {
+		return lock.Read(ctx, do)
+	}
+}
+
 func (s *DefaultLanguageServer) Completion(ctx context.Context, params *lsp.CompletionParams) (*lsp.CompletionList, error) {
 	var result *lsp.CompletionList
 	var providerErr error
@@ -158,7 +184,8 @@ func (s *DefaultLanguageServer) Completion(ctx context.Context, params *lsp.Comp
 	if err != nil {
 		return nil, err
 	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
+	uri := core.ParseURI(string(params.TextDocument.URI))
+	if err := read(ctx, lock, uri, completion, func(ctx context.Context) {
 		result, providerErr = completion.HandleCompletionRequest(ctx, params)
 	}); err != nil {
 		return nil, err
@@ -177,7 +204,8 @@ func (s *DefaultLanguageServer) Definition(ctx context.Context, params *lsp.Defi
 	if err != nil {
 		return nil, err
 	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
+	uri := core.ParseURI(string(params.TextDocument.URI))
+	if err := read(ctx, lock, uri, definition, func(ctx context.Context) {
 		result, providerErr = definition.HandleDefinitionRequest(ctx, params)
 	}); err != nil {
 		return nil, err
@@ -196,7 +224,8 @@ func (s *DefaultLanguageServer) References(ctx context.Context, params *lsp.Refe
 	if err != nil {
 		return nil, err
 	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
+	uri := core.ParseURI(string(params.TextDocument.URI))
+	if err := read(ctx, lock, uri, references, func(ctx context.Context) {
 		result, providerErr = references.HandleReferencesRequest(ctx, params)
 	}); err != nil {
 		return nil, err
@@ -274,7 +303,8 @@ func (s *DefaultLanguageServer) DocumentHighlight(ctx context.Context, params *l
 	if err != nil {
 		return nil, err
 	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
+	uri := core.ParseURI(string(params.TextDocument.URI))
+	if err := read(ctx, lock, uri, provider, func(ctx context.Context) {
 		result, providerErr = provider.HandleDocumentHighlightRequest(ctx, params)
 	}); err != nil {
 		return nil, err
@@ -295,7 +325,8 @@ func (s *DefaultLanguageServer) DocumentSymbol(ctx context.Context, params *lsp.
 	if err != nil {
 		return nil, err
 	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
+	uri := core.ParseURI(string(params.TextDocument.URI))
+	if err := read(ctx, lock, uri, provider, func(ctx context.Context) {
 		result, providerErr = provider.HandleDocumentSymbolRequest(ctx, params)
 	}); err != nil {
 		return nil, err
@@ -313,7 +344,8 @@ func (s *DefaultLanguageServer) FoldingRange(ctx context.Context, params *lsp.Fo
 	if err != nil {
 		return nil, err
 	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
+	uri := core.ParseURI(string(params.TextDocument.URI))
+	if err := read(ctx, lock, uri, provider, func(ctx context.Context) {
 		result, providerErr = provider.HandleFoldingRangeRequest(ctx, params)
 	}); err != nil {
 		return nil, err
@@ -334,7 +366,8 @@ func (s *DefaultLanguageServer) Hover(ctx context.Context, params *lsp.HoverPara
 	if err != nil {
 		return nil, err
 	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
+	uri := core.ParseURI(string(params.TextDocument.URI))
+	if err := read(ctx, lock, uri, provider, func(ctx context.Context) {
 		result, providerErr = provider.HandleHoverRequest(ctx, params)
 	}); err != nil {
 		return nil, err
@@ -391,7 +424,7 @@ func (s *DefaultLanguageServer) Symbol(ctx context.Context, params *lsp.Workspac
 	if err != nil {
 		return nil, nil // No provider registered, return empty
 	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
+	if err := read(ctx, lock, nil, provider, func(ctx context.Context) {
 		result, providerErr = provider.HandleWorkspaceSymbolRequest(ctx, params)
 	}); err != nil {
 		return nil, err
@@ -433,7 +466,8 @@ func (s *DefaultLanguageServer) PrepareRename(ctx context.Context, params *lsp.P
 	}
 	var result *lsp.PrepareRenameResult
 	var providerErr error
-	if err := lock.Read(ctx, func(ctx context.Context) {
+	uri := core.ParseURI(string(params.TextDocument.URI))
+	if err := read(ctx, lock, uri, renameProvider, func(ctx context.Context) {
 		result, providerErr = renameProvider.PrepareRenameRequest(ctx, params)
 	}); err != nil {
 		return nil, err
@@ -460,7 +494,8 @@ func (s *DefaultLanguageServer) Rename(ctx context.Context, params *lsp.RenamePa
 	}
 	var result *lsp.WorkspaceEdit
 	var providerErr error
-	if err := lock.Read(ctx, func(ctx context.Context) {
+	uri := core.ParseURI(string(params.TextDocument.URI))
+	if err := read(ctx, lock, uri, renameProvider, func(ctx context.Context) {
 		result, providerErr = renameProvider.HandleRenameRequest(ctx, params)
 	}); err != nil {
 		return nil, err

@@ -59,7 +59,7 @@ func (d *Doc) RunRename(label string, newName string) *Doc {
 		// Fully reset each document
 		builder.Reset(doc, 0)
 	}
-	if err := builder.Build(d.fixture.ctx, toUpdate, nil); err != nil {
+	if err := builder.Build(d.fixture.ctx, toUpdate); err != nil {
 		d.fixture.t.Fatalf("fbtest: build failed after rename: %v", err)
 	}
 	return d

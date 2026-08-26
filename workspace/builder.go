@@ -20,14 +20,20 @@ import (
 // linking, reference indexing, and validation.
 type Builder interface {
 	// Build processes the provided documents through all build phases (parse, compute
-	// symbol table, link, validate). It should regularly check ctx for cancellation
-	// between phases. downgrade must be called by the implementation once phases 1 and 2
-	// (the write phase) are complete; this transitions the workspace lock to readable so
-	// that read requests can proceed while phase 3 (validation) runs.
-	Build(ctx context.Context, docs []*core.Document, downgrade func()) error
+	// symbol table, link, validate). It must be called under [Lock.Write] and should
+	// regularly check ctx for cancellation between phases. Calling Build marks the
+	// transition from the write's mutation phase to its build phase (see [Lock.Write]):
+	// implementations signal [Lock.StateChanged] as document states advance so that
+	// [Lock.ReadAt] requests are admitted as soon as the states they need are reached,
+	// and report the workspace-wide floor after each phase barrier. The floor relies
+	// on every document outside docs already being complete, which the caller must
+	// ensure (the updater collects every incomplete document into the build set).
+	Build(ctx context.Context, docs []*core.Document) error
 	// Reset selectively clears build results of a document. The state parameter is a
 	// bitmask of states to keep; for every bit that is not set, the corresponding document
 	// fields are reset to their initial values and the bit is cleared from doc.State.
+	// Reset must be called under [Lock.Write], during the mutation phase - that is,
+	// before Build starts advancing document states.
 	Reset(doc *core.Document, state core.DocumentState)
 	// AddBuildStepListener registers a listener to be called after documents complete the
 	// specified build steps. The states parameter is a bitmask, so multiple steps can be
@@ -60,7 +66,19 @@ func NewDefaultBuilder(sc *service.Container) Builder {
 	return &DefaultBuilder{sc: sc}
 }
 
-func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downgrade func()) error {
+func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error {
+	lock := service.MustGet[Lock](s.sc)
+	// Build has started, signal the lock to be ready to admit readers after
+	// advancing document states.
+	lock.StateChanged(0)
+	// Wakes up any ReadAt calls to make sure they can see the new document state.
+	// Documents might reach the requested state before the full workspace does.
+	advance := func(doc *core.Document, state core.DocumentState) {
+		doc.SetState(doc.State().With(state))
+		lock.StateChanged(0)
+		s.notifyListeners(ctx, state, doc)
+	}
+
 	// PHASE 1: Parse, and compute exports (parallel per document).
 	parser := service.MustGet[DocumentParser](s.sc)
 	exporter := service.MustGet[linking.SymbolExporter](s.sc)
@@ -69,25 +87,28 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 			return
 		}
 		// STEP 1.1: Parse the document and create the AST.
-		if !doc.State.Has(core.DocStateParsed) {
+		if !doc.State().Has(core.DocStateParsed) {
 			parser.Parse(doc)
-			doc.State = doc.State.With(core.DocStateParsed)
-			s.notifyListeners(ctx, core.DocStateParsed, doc)
+			advance(doc, core.DocStateParsed)
 		}
 		if ctx.Err() != nil {
 			return
 		}
 		// STEP 1.2: Compute the exported symbols for cross-document references.
-		if !doc.State.Has(core.DocStateExportedSymbols) {
+		if !doc.State().Has(core.DocStateExportedSymbols) {
 			exporter.ExportSymbols(ctx, doc)
-			doc.State = doc.State.With(core.DocStateExportedSymbols)
-			s.notifyListeners(ctx, core.DocStateExportedSymbols, doc)
+			advance(doc, core.DocStateExportedSymbols)
 		}
 	})
 
 	if err := ctx.Err(); err != nil {
 		return err
 	}
+	// Phase 1 barrier: every document in docs is now parsed with exports
+	// computed, and documents outside docs were already complete when the
+	// updater collected the build set. Report the workspace floor so
+	// workspace-wide ReadAt calls are admitted.
+	lock.StateChanged(core.DocStateParsed | core.DocStateExportedSymbols)
 
 	// PHASE 2: Compute imported/local symbols and link (parallel per document).
 	// This requires the exported symbols of all documents to be available.
@@ -101,55 +122,43 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 			return
 		}
 		// STEP 2.1: Collect imported symbols from all other documents.
-		if !doc.State.Has(core.DocStateImportedSymbols) {
+		if !doc.State().Has(core.DocStateImportedSymbols) {
 			allDocs := documentManager.All()
 			importer.ImportSymbols(ctx, doc, allDocs)
-			doc.State = doc.State.With(core.DocStateImportedSymbols)
-			s.notifyListeners(ctx, core.DocStateImportedSymbols, doc)
+			advance(doc, core.DocStateImportedSymbols)
 		}
 		if ctx.Err() != nil {
 			return
 		}
 		// STEP 2.2: Compute the local symbols for intra-document references.
-		if !doc.State.Has(core.DocStateLocalSymbols) {
+		if !doc.State().Has(core.DocStateLocalSymbols) {
 			localSymbols.LocalSymbols(ctx, doc)
-			doc.State = doc.State.With(core.DocStateLocalSymbols)
-			s.notifyListeners(ctx, core.DocStateLocalSymbols, doc)
+			advance(doc, core.DocStateLocalSymbols)
 		}
 		if ctx.Err() != nil {
 			return
 		}
 		// STEP 2.3: Link the document to resolve all references.
-		if !doc.State.Has(core.DocStateLinked) {
+		if !doc.State().Has(core.DocStateLinked) {
 			linker.Link(ctx, doc)
-			doc.State = doc.State.With(core.DocStateLinked)
-			s.notifyListeners(ctx, core.DocStateLinked, doc)
+			advance(doc, core.DocStateLinked)
 		}
 		if ctx.Err() != nil {
 			return
 		}
 		// STEP 2.4: Provide reference descriptions for the document.
-		if !doc.State.Has(core.DocStateReferences) {
+		if !doc.State().Has(core.DocStateReferences) {
 			referenceDescriptions.ReferenceDescriptions(ctx, doc)
-			doc.State = doc.State.With(core.DocStateReferences)
-			s.notifyListeners(ctx, core.DocStateReferences, doc)
+			advance(doc, core.DocStateReferences)
 		}
 	})
 
 	if err := ctx.Err(); err != nil {
-		// Important note: Do not downgrade the lock here!
-		// If we downgrade the lock here, we would allow read access to
-		// the workspace while the documents are in an inconsistent state.
-		// In most cases, the error has been triggered by a new change,
-		// which will trigger a new build with a re-acquired read-lock.
 		return err
 	}
-
-	// Transition from write phase to readable: releases the exclusive lock so
-	// read requests can proceed while validation (phase 3) runs concurrently.
-	if downgrade != nil {
-		downgrade()
-	}
+	// Phase 2 barrier: the whole workspace is now linked and indexed.
+	lock.StateChanged(core.DocStateImportedSymbols | core.DocStateLocalSymbols |
+		core.DocStateLinked | core.DocStateReferences)
 
 	// PHASE 3: Run custom validations (parallel per document).
 	validator := service.MustGet[DocumentValidator](s.sc)
@@ -157,18 +166,22 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 		if ctx.Err() != nil {
 			return
 		}
-		if !doc.State.Has(core.DocStateValidated) {
+		if !doc.State().Has(core.DocStateValidated) {
 			diagnostics := validator.Validate(ctx, doc, "on-save")
 			if ctx.Err() != nil {
 				return
 			}
 			doc.Diagnostics = diagnostics
-			doc.State = doc.State.With(core.DocStateValidated)
-			s.notifyListeners(ctx, core.DocStateValidated, doc)
+			advance(doc, core.DocStateValidated)
 		}
 	})
 
-	return ctx.Err()
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	// Phase 3 barrier: the whole workspace is validated.
+	lock.StateChanged(core.DocStateValidated)
+	return nil
 }
 
 func (s *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
@@ -204,7 +217,7 @@ func (s *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
 	case !state.Has(core.DocStateValidated):
 		doc.Diagnostics = []*core.Diagnostic{}
 	}
-	doc.State = doc.State & state
+	doc.SetState(doc.State() & state)
 }
 
 func (s *DefaultBuilder) AddBuildStepListener(states core.DocumentState, listener BuildStepListener) {
