@@ -315,6 +315,10 @@ func checkTokenModeNotEmpty(mode TokenMode, accept core.ValidationAcceptor) {
 	))
 }
 
+func getTokenNeverReferencedMessage(tokenTypeName string, tokenValue string) string {
+	return fmt.Sprintf("The %s '%s' is never referenced in a parser rule, so the lexer can never produce it.", tokenTypeName, tokenValue)
+}
+
 func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept core.ValidationAcceptor) {
 	severity := core.SeverityWarning
 	seen := collections.NewSet[string]()
@@ -354,7 +358,7 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 			if !seen.Has(terminal.Name()) {
 				accept(core.NewDiagnostic(
 					severity,
-					fmt.Sprintf("The token '%s' is never referenced in a parser rule, so the lexer can never produce it.", terminal.Name()),
+					getTokenNeverReferencedMessage("token", terminal.Name()),
 					terminal,
 					core.WithToken(terminal.NameToken()),
 					core.WithCode(ValidateTerminalNotCoveredByParserRule),
@@ -368,7 +372,7 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 			if !seen.Has(group.Name()) {
 				accept(core.NewDiagnostic(
 					severity,
-					fmt.Sprintf("The token group '%s' is never referenced in a parser rule, so the lexer can never produce its tokens.", group.Name()),
+					getTokenNeverReferencedMessage("token group", group.Name()),
 					group,
 					core.WithToken(group.NameToken()),
 					core.WithCode(ValidateTokenGroupNotCoveredByParserRule),
@@ -383,7 +387,7 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 					if !seen.Has(member.Keyword().Value()) {
 						accept(core.NewDiagnostic(
 							severity,
-							fmt.Sprintf("The keyword %s is never referenced in a parser rule, so the lexer can never produce it.", member.Keyword().Value()),
+							getTokenNeverReferencedMessage("keyword", member.Keyword().Value()),
 							member.Keyword(),
 							core.WithToken(member.Keyword().ValueToken()),
 							core.WithCode(ValidateTerminalNotCoveredByParserRule),
@@ -397,9 +401,8 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 						if !seen.Has(tokenRef.Name()) {
 							accept(core.NewDiagnostic(
 								severity,
-								fmt.Sprintf("The token '%s' is never referenced in a parser rule, so the lexer can never produce it.", tokenRef.Name()),
+								getTokenNeverReferencedMessage("token", tokenRef.Name()),
 								member,
-								core.WithTextRange(member.TextRange()),
 								core.WithCode(ValidateTerminalNotCoveredByParserRule),
 							))
 						}
@@ -411,7 +414,7 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 					if !seen.Has(member.Declaration().Name()) {
 						accept(core.NewDiagnostic(
 							severity,
-							fmt.Sprintf("The token '%s' is never referenced in a parser rule, so the lexer can never produce it.", member.Declaration().Name()),
+							getTokenNeverReferencedMessage("token", member.Declaration().Name()),
 							member.Declaration(),
 							core.WithToken(member.Declaration().NameToken()),
 							core.WithCode(ValidateTerminalNotCoveredByParserRule),
@@ -424,7 +427,7 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 					if !seen.Has(member.Group().Name()) {
 						accept(core.NewDiagnostic(
 							severity,
-							fmt.Sprintf("The token group '%s' is never referenced in a parser rule, so the lexer can never produce its tokens.", member.Group().Name()),
+							getTokenNeverReferencedMessage("token group", member.Group().Name()),
 							member.Group(),
 							core.WithToken(member.Group().NameToken()),
 							core.WithCode(ValidateTokenGroupNotCoveredByParserRule),
