@@ -1548,8 +1548,8 @@ func (d *parserATNData) firstSetOption(state *internalATN.ATNState) []string {
 }
 
 func buildVarNameToId(tokenTypes GenerateTokenTypesResult) map[string]int {
-	varNameToId := make(map[string]int, len(tokenTypes.TokenTypes.ByTokenIndex))
-	for _, tokenType := range tokenTypes.TokenTypes.ByTokenIndex {
+	varNameToId := make(map[string]int, len(tokenTypes.TokenTypes.All))
+	for _, tokenType := range tokenTypes.TokenTypes.All {
 		// Use the runtime token id (TokenIndex), matching la.TypeId at runtime.
 		// Keyword-backed tokens alias their keyword and share its id.
 		varNameToId[tokenType.VarName] = tokenType.TokenIndex
