@@ -48,6 +48,7 @@ const (
 	ValidateNonDefaultTokenModeNoPop         = "nonDefaultTokenModeNoPop"
 	ValidateTerminalNotCoveredByParserRule   = "terminalNotCoveredByParserRule"
 	ValidateTokenGroupNotCoveredByParserRule = "tokenGroupNotCoveredByParserRule"
+	ValidateInvalidRegExpLiteral             = "invalidRegExpLiteral"
 )
 
 // defaultTokenModeName is the name under which the mode marked
@@ -498,7 +499,11 @@ outerLoop:
 					}
 				}
 				for _, member := range tokenGroup.KeywordSelectors() {
-					pattern := regexp.MustCompile(RegexpValue(member.Image))
+					pattern, err := regexp.Compile(RegexpValue(member.Image))
+					if err != nil {
+						//error is already reported by the grammar validator, so ignore it here
+						continue
+					}
 					for _, keyword := range allGrammarKeywords(g) {
 						value := KeywordValue(keyword)
 						if pattern.MatchString(value) && coverage.keywords.Has(value) {
@@ -1385,6 +1390,9 @@ func doInterfaceIsAssignableTo(source Interface, target Interface, visited colle
 func (tg *TokenGroupImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
 	checkRecursiveTokenGroup(tg, accept)
 	checkTokenGroupContainsOnlyValidTokens(tg, accept)
+	for _, selector := range tg.KeywordSelectors() {
+		checkRegExpIsValid(selector, accept)
+	}
 }
 
 func checkRecursiveTokenGroup(tg TokenGroup, accept core.ValidationAcceptor) {
@@ -1529,5 +1537,26 @@ func checkTokenModeMembersAreUnique(tm TokenMode, accept core.ValidationAcceptor
 				core.WithCode(ValidateUniqueRuleNameInTokenMode),
 			))
 		}
+	}
+}
+
+func (m *KeywordSelectorImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
+	checkRegExpIsValid(m.SelectorToken(), accept)
+}
+
+func (m *RegexpTokenContentImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
+	checkRegExpIsValid(m.RegexpToken(), accept)
+}
+
+func checkRegExpIsValid(patternToken *core.Token, accept core.ValidationAcceptor) {
+	_, err := regexp.Compile(patternToken.Image)
+	if err != nil {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			fmt.Sprintf("The keyword selector '%s' is not a valid regular expression: %s", patternToken.Image, err.Error()),
+			patternToken.Element,
+			core.WithToken(patternToken),
+			core.WithCode(ValidateInvalidRegExpLiteral),
+		))
 	}
 }

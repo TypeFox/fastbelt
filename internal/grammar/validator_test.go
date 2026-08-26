@@ -7,6 +7,7 @@ package grammar
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/test"
 )
@@ -1777,4 +1778,56 @@ func TestInvisibleTokenDontNeedToBeCoveredByParserRule(t *testing.T) {
 		}
 	`)
 	doc.AssertNoDiagnostics()
+}
+
+func TestInvalidKeywordSelectorInTokenGroup(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=XX X;
+
+		token XX: "x"
+
+		token group X {
+		    //BROKEN REGEXP!!!
+			keywords <|1:/(/|>
+		}
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateInvalidRegExpLiteral)
+}
+
+func TestInvalidKeywordSelectorInTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting="x";
+
+		token mode default {
+		    //BROKEN REGEXP!!!
+			keywords <|1:/(/|>
+			"x"
+		}
+	`)
+	assert.Len(t, doc.Document.Diagnostics, 1)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateInvalidRegExpLiteral)
+}
+
+func TestInvalidRegExpInTokenContent(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=Y;
+ 		token Y: <|1:/(/|>
+	`)
+	assert.Len(t, doc.Document.Diagnostics, 1)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithSeverity(core.SeverityError)
+	diag.WithCode(ValidateInvalidRegExpLiteral)
 }
