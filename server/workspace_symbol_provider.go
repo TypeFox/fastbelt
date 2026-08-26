@@ -42,10 +42,19 @@ func (f *DefaultWorkspaceSymbolFilter) MaxSymbolCount() int {
 	return 1000
 }
 
+// Ensure DefaultWorkspaceSymbolProvider implements the expected interfaces.
+var _ WorkspaceSymbolProvider = (*DefaultWorkspaceSymbolProvider)(nil)
+var _ DocumentStateRequirements = (*DefaultWorkspaceSymbolProvider)(nil)
+
 // DefaultWorkspaceSymbolProvider implements WorkspaceSymbolProvider.
 type DefaultWorkspaceSymbolProvider struct {
 	sc     *service.Container
 	filter WorkspaceSymbolFilter
+}
+
+// RequiredState indicates that the default workspace symbol provider requires the workspace to be parsed.
+func (f *DefaultWorkspaceSymbolProvider) RequiredState() (core.DocumentState, bool) {
+	return core.DocStateParsed, true
 }
 
 // NewDefaultWorkspaceSymbolProvider creates a provider using services from the container.
