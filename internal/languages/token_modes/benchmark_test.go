@@ -1,6 +1,7 @@
 package token_modes
 
 import (
+	"strings"
 	"testing"
 
 	"typefox.dev/fastbelt"
@@ -25,20 +26,20 @@ func BenchmarkNestedString(b *testing.B) {
 }
 
 func generateNestedString() (string, error) {
-	content := ""
+	content := strings.Builder{}
 
 	var recursion func(depth int)
 	recursion = func(depth int) {
 		if depth == 0 {
-			content += "`EXIT!!!`"
+			content.WriteString("`EXIT!!!`")
 			return
 		}
-		content += "`Hello, World! #{"
+		content.WriteString("`Hello, World! #{")
 		recursion(depth - 1)
-		content += "} How are you?`"
+		content.WriteString("} How are you?`")
 	}
 
 	recursion(10000)
 
-	return "VAR := " + content, nil
+	return "VAR := " + content.String(), nil
 }

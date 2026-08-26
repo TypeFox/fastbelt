@@ -42,7 +42,10 @@ func (s *scopeProviderImpl) ScopeTokenCommandMode(_ context.Context, reference *
 }
 
 func (s *scopeProviderImpl) ScopeRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) core.Scope {
-	root, _ := reference.Owner().Document().Root.(Grammar)
+	root, ok := reference.Owner().Document().Root.(Grammar)
+	if !ok {
+		return core.EmptyScope
+	}
 	symbols := []*core.SymbolDescription{}
 	for _, tokenMode := range root.TokenModes() {
 		for _, member := range tokenMode.Members() {
