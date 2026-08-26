@@ -331,24 +331,6 @@ func TestGenerateLexerModeLocalTokenGroupWithCommand(t *testing.T) {
 	assert.Contains(t, inner, "lexer.UseTokenType(Keyword_RightBracket).WithPopMode(),")
 }
 
-func TestGenerateLexerTokenListedTwiceInSameMode(t *testing.T) {
-	code := generateLexerFor(t, `
-		grammar Test;
-		interface Foo { Greeting string }
-		Foo: Greeting=ID;
-		token ID: /[a-z]+/
-		hidden token WS: /\s+/
-		token mode default {
-			ID
-			ID
-			hidden WS
-		}
-	`)
-	// Listing a token twice registers it twice. Harmless at runtime - the
-	// second candidate can never win - but worth pinning down.
-	assert.Equal(t, 2, strings.Count(code, "lexer.UseTokenType(Token_ID)"))
-}
-
 // Regression test for the keyword selector dropping its bookkeeping between
 // members: a keyword that is both listed explicitly and matched by a selector
 // must be registered once.

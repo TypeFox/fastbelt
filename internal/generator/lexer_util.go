@@ -44,7 +44,7 @@ type TokenIndexSource int
 
 // Use iota for sequential numbering
 const (
-	SourceRegExp TokenIndexSource = iota
+	SourceTokenDecl TokenIndexSource = iota
 	SourceKeyword
 	SourceGroup
 )
@@ -157,18 +157,17 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 		alreadyAdded := map[int]bool{}
 		for _, member := range tokenMode.Members() {
 			pushTokenTypeUsage := func(tokenIndex int, tokenModifier string, command grammar.TokenCommand) {
-				if _, ok := alreadyAdded[tokenIndex]; ok {
-					return
-				}
-				if source, ok := result.TokenIndex.SourceType[tokenIndex]; ok && source != SourceGroup {
-					if source == SourceKeyword {
-						current.TokenTypeIndices.Keywords = append(current.TokenTypeIndices.Keywords, tokenIndex)
+				if _, ok := alreadyAdded[tokenIndex]; !ok {
+					if source, ok := result.TokenIndex.SourceType[tokenIndex]; ok && source != SourceGroup {
+						if source == SourceKeyword {
+							current.TokenTypeIndices.Keywords = append(current.TokenTypeIndices.Keywords, tokenIndex)
+						} else {
+							current.TokenTypeIndices.Tokens = append(current.TokenTypeIndices.Tokens, tokenIndex)
+						}
+						alreadyAdded[tokenIndex] = true
 					} else {
-						current.TokenTypeIndices.Tokens = append(current.TokenTypeIndices.Tokens, tokenIndex)
+						return
 					}
-					alreadyAdded[tokenIndex] = true
-				} else {
-					return
 				}
 				if tokenModifier != "" || command != nil {
 					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
@@ -193,22 +192,27 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 				pushTokenTypeUsage(tokenIndex, member.Modifier(), member.Command())
 			case grammar.TokenUsage:
 				token := member.TokenRef().Ref(context.Background())
+
+				overrideUsage := func(tokenIndex int) {
+					if member.Modifier() != "" || member.Command() != nil {
+						current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
+							TokenModifier: member.Modifier(),
+							Command:       member.Command(),
+						}
+					}
+				}
+
 				var tokenIndex int
 				switch rule := token.(type) {
 				case grammar.TokenDecl:
 					tokenIndex = result.TokenIndex.ByToken[rule]
 					pushTokenTypeUsage(tokenIndex, rule.Modifier(), rule.Command())
+					overrideUsage(tokenIndex)
 				case grammar.TokenGroup:
 					tokenIndex = result.TokenIndex.ByTokenGroup[rule]
 					for _, tokenIndex := range result.TokenIndex.ByTokenGroupParent[rule] {
 						pushTokenTypeUsage(tokenIndex, rule.Modifier(), rule.Command())
-					}
-				}
-				//overwrite usage if defined on token mode level
-				if member.Modifier() != "" || member.Command() != nil {
-					current.TokenTypeUsages[tokenIndex] = TokenTypeUsage{
-						TokenModifier: member.Modifier(),
-						Command:       member.Command(),
+						overrideUsage(tokenIndex)
 					}
 				}
 			case grammar.KeywordSelector:
@@ -274,13 +278,10 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 
 		for _, token := range tokens.TopLevel {
 			tokenIndex := result.TokenIndex.ByToken[token]
-			if result.TokenIndex.SourceType[tokenIndex] != SourceRegExp {
+			if result.TokenIndex.SourceType[tokenIndex] != SourceTokenDecl {
 				continue
 			}
 			if !slices.Contains(defaultMode.TokenTypeIndices.Tokens, tokenIndex) {
-				if slices.Contains(defaultMode.TokenTypeIndices.Tokens, tokenIndex) {
-					continue
-				}
 				defaultMode.TokenTypeIndices.Tokens = append(defaultMode.TokenTypeIndices.Tokens, tokenIndex)
 			}
 			if token.Modifier() != "" || token.Command() != nil {
@@ -328,7 +329,7 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 			code.AppendLine("var ", varName, " = ", GeneratedTokenName(keyword))
 			mergeImports(&result.Imports, map[string]bool{})
 			currentTokenIndex = result.TokenIndex.ByKeyword[keyword.Value()]
-			result.TokenIndex.SourceType[currentTokenIndex] = SourceKeyword
+			result.TokenIndex.SourceType[currentTokenIndex] = SourceTokenDecl
 			tokenType := TokenType{
 				TokenIndex: currentTokenIndex,
 				VarName:    varName,
@@ -351,7 +352,7 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 			result.TokenTypes.All = append(result.TokenTypes.All, tokenType)
 			result.TokenTypes.ByTokenIndex[currentTokenIndex] = &tokenType
 			result.TokenIndex.ByToken[token] = currentTokenIndex
-			result.TokenIndex.SourceType[currentTokenIndex] = SourceRegExp
+			result.TokenIndex.SourceType[currentTokenIndex] = SourceTokenDecl
 			tokenIndex++
 		}
 		if token.Modifier() != "" || token.Command() != nil {

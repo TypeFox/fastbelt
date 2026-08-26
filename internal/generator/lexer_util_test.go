@@ -186,7 +186,7 @@ func TestPopulateTokenModes_ShouldAddModifiersOnTokenElements(t *testing.T) {
 	indexHello := tokenTypes.TokenIndex.ByToken[tokenDecls[0]]
 	indexWorld := tokenTypes.TokenIndex.ByToken[tokenDecls[1]]
 	indexUser := tokenTypes.TokenIndex.ByToken[tokenDecls[2]]
-	assert.Equal(t, 3, len(defaultMode.TokenTypeIndices))
+	assert.Equal(t, 2, len(defaultMode.TokenTypeIndices.Keywords))
 	assert.Equal(t, "hidden", defaultMode.TokenTypeUsages[indexWorld].TokenModifier)
 	assert.Equal(t, "hidden", defaultMode.TokenTypeUsages[indexUser].TokenModifier)
 	_, ok = defaultMode.TokenTypeUsages[indexHello]
@@ -224,11 +224,10 @@ func TestPopulateTokenModes_ShouldHandleTopLevelTokenGroupProperlyInTokenMode(t 
 	topLevelTokenGroups := grammr.TokenGroups()
 	require.Len(t, topLevelTokenGroups, 1)
 	indexKeyword := tokenTypes.TokenIndex.ByKeyword["\"x\""]
-	indexGroup := tokenTypes.TokenIndex.ByTokenGroup[topLevelTokenGroups[0]]
 
 	defaultMode := tokenTypes.TokenModes["default"]
-	assert.Equal(t, 1, len(defaultMode.TokenTypeIndices))
-	assert.Equal(t, indexKeyword, defaultMode.TokenTypeIndices[0])
+	assert.Equal(t, 1, len(defaultMode.TokenTypeIndices.Keywords))
+	assert.Equal(t, indexKeyword, defaultMode.TokenTypeIndices.Keywords[0])
 	assert.Equal(t, 1, len(defaultMode.TokenTypeUsages))
 	keywordUsage, ok := defaultMode.TokenTypeUsages[indexKeyword]
 	assert.True(t, ok)
@@ -236,11 +235,11 @@ func TestPopulateTokenModes_ShouldHandleTopLevelTokenGroupProperlyInTokenMode(t 
 	assert.Equal(t, "Y", keywordUsage.Command.Mode().Ref(context.Background()).Name())
 
 	yMode := tokenTypes.TokenModes["Y"]
-	assert.Equal(t, 1, len(yMode.TokenTypeIndices))
-	assert.Equal(t, indexGroup, yMode.TokenTypeIndices[0])
+	assert.Equal(t, 1, len(yMode.TokenTypeIndices.Keywords))
+	assert.Equal(t, indexKeyword, yMode.TokenTypeIndices.Keywords[0])
 	assert.Equal(t, 1, len(yMode.TokenTypeUsages))
-	groupUsage, ok := yMode.TokenTypeUsages[indexGroup]
+	keywordUsage2, ok := yMode.TokenTypeUsages[indexKeyword]
 	assert.True(t, ok)
-	assert.Equal(t, "pop", groupUsage.Command.Type())
-	assert.Nil(t, groupUsage.Command.Mode())
+	assert.Equal(t, "pop", keywordUsage2.Command.Type())
+	assert.Nil(t, keywordUsage2.Command.Mode())
 }
