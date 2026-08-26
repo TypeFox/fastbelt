@@ -1428,7 +1428,7 @@ func TestTokenNotInAnyTokenMode(t *testing.T) {
 	diag.WithMessageContaining("'NAME'")
 }
 
-func TestTokenGroupNotInAnyTokenMode(t *testing.T) {
+func TestTokenGroupNotInAnyTokenModeButMembersWereConsumed(t *testing.T) {
 	f := test.New(t, CreateServices())
 	doc := f.Parse(`
 		grammar Test;
@@ -1446,8 +1446,32 @@ func TestTokenGroupNotInAnyTokenMode(t *testing.T) {
 			hidden WS
 		}
 	`)
-	// The group's members are registered, but the group has its own token id
-	// and is therefore still unreachable.
+	// The group's members are registered, the group has its own token id.
+	// But it is reachable because one of its members is used in a parser rule.
+	doc.AssertNoDiagnostic("1")
+}
+
+func TestTokenGroupNotInAnyTokenModeAndMembersWereNotConsumed(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Greeting string }
+		Foo: Greeting=Greetings;
+
+		token group <|1:Greetings|> {
+			"any"
+			"thing"
+		}
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default {
+			ID
+			hidden WS
+		}
+	`)
+	// The group's members are registered, the group has its own token id.
+	// It is also not reachable because none of its members is used in a parser rule.
 	diag := doc.ExpectDiagnostic("1")
 	diag.WithSeverity(core.SeverityError)
 	diag.WithCode(ValidateTokenNotInTokenMode)

@@ -46,7 +46,7 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Keyword_x).WithPushMode(TokenMode_Y),
 	)
 	modes[TokenMode_Y] = lexer.NewTokenMode("Y",
-		lexer.UseTokenType(Keyword_x),
+		lexer.UseTokenType(Keyword_x).WithPopMode(),
 	)
 	return lexer.NewDefaultLexer(TokenMode_default, modes...)
 }
