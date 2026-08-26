@@ -209,7 +209,6 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 					pushTokenTypeUsage(tokenIndex, rule.Modifier(), rule.Command())
 					overrideUsage(tokenIndex)
 				case grammar.TokenGroup:
-					tokenIndex = result.TokenIndex.ByTokenGroup[rule]
 					for _, tokenIndex := range result.TokenIndex.ByTokenGroupParent[rule] {
 						pushTokenTypeUsage(tokenIndex, rule.Modifier(), rule.Command())
 						overrideUsage(tokenIndex)
@@ -303,7 +302,7 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 	tokenIndex := 1
 	for _, keyword := range keywords.Keywords {
 		code := generateKeywordTokenType(keyword, tokenIndex)
-		mergeImports(&result.Imports, code.Imports)
+		mergeImports(result.Imports, code.Imports)
 		tokenType := TokenType{
 			TokenIndex: tokenIndex,
 			VarName:    GeneratedTokenName(keyword),
@@ -327,7 +326,7 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 			code.AppendLine("const ", GeneratedTokenIdxName(token), " = ", GeneratedTokenIdxName(keyword))
 			code.AppendLine()
 			code.AppendLine("var ", varName, " = ", GeneratedTokenName(keyword))
-			mergeImports(&result.Imports, map[string]bool{})
+			mergeImports(result.Imports, map[string]bool{})
 			currentTokenIndex = result.TokenIndex.ByKeyword[keyword.Value()]
 			result.TokenIndex.SourceType[currentTokenIndex] = SourceTokenDecl
 			tokenType := TokenType{
@@ -341,7 +340,7 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 			result.TokenIndex.ByToken[token] = currentTokenIndex
 		case grammar.RegexpTokenContent:
 			lexerResult := generateRegexpTokenElement(token, element, tokenIndex)
-			mergeImports(&result.Imports, lexerResult.Imports)
+			mergeImports(result.Imports, lexerResult.Imports)
 			currentTokenIndex = tokenIndex
 			tokenType := TokenType{
 				TokenIndex: currentTokenIndex,
@@ -369,7 +368,7 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 	// Token groups need to be topologically sorted, so that nested groups appear after their members
 	for _, tokenGroup := range sortTokenGroups(tokenGroups.All, tokenGroupMembers) {
 		lexerResult := generateTokenGroupType(tokenGroup, tokenGroupMembers, tokenIndex)
-		mergeImports(&result.Imports, lexerResult.Imports)
+		mergeImports(result.Imports, lexerResult.Imports)
 		tokenType := TokenType{
 			TokenIndex: tokenIndex,
 			VarName:    GeneratedTokenName(tokenGroup),
@@ -385,10 +384,8 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 	result.TokenIndex.ByTokenGroupParent = getAllTokenGroupMemberTokenIndices(tokenGroups.All, keywords, result.TokenIndex)
 }
 
-func mergeImports(target *map[string]bool, source map[string]bool) {
-	for imp := range source {
-		(*target)[imp] = true
-	}
+func mergeImports(target map[string]bool, source map[string]bool) {
+	maps.Copy(target, source)
 }
 
 func sortTokenGroups(tokenGroups []grammar.TokenGroup, members map[string][]string) []grammar.TokenGroup {
