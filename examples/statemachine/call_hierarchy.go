@@ -23,11 +23,8 @@ import (
 //   - HandleIncomingCallsRequest scans every other state's transitions for
 //     ones that target this state - "callers of this function".
 //
-// CallHierarchyProvider has no default implementation to embed or delegate
-// to (see server.CallHierarchyProvider's doc comment), so this implements
-// the full interface directly. The shared server.NodeAtCursor helper covers
-// the one piece of generic boilerplate: finding the AST node under the
-// cursor in HandlePrepareCallHierarchyRequest.
+// HandlePrepareCallHierarchyRequest uses the shared server.NameFinder service
+// to resolve the cursor to a state.
 type stateMachineCallHierarchyProvider struct {
 	sc *service.Container
 }
@@ -45,7 +42,19 @@ func (p *stateMachineCallHierarchyProvider) HandlePrepareCallHierarchyRequest(ct
 		return nil, nil
 	}
 
-	state, ok := server.NodeAtCursor(doc, params.Position).(State)
+	offset := doc.TextDoc.OffsetAt(params.Position)
+	first, second := doc.Tokens.SearchOffset2(offset)
+	if first == nil {
+		return nil, nil
+	}
+
+	nameFinder := service.MustGet[server.NameFinder](p.sc)
+	foundName := nameFinder.Find(ctx, first, second)
+	if foundName.Target == nil {
+		return nil, nil
+	}
+
+	state, ok := foundName.Target.Owner().(State)
 	if !ok {
 		return nil, nil
 	}

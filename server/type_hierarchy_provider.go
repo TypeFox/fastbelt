@@ -22,8 +22,14 @@ import (
 //	    if doc == nil {
 //	        return nil, nil
 //	    }
-//	    node := server.NodeAtCursor(doc, params.Position)
-//	    if classDecl, ok := node.(*ast.ClassDeclaration); ok {
+//	    offset := doc.TextDoc.OffsetAt(params.Position)
+//	    first, second := doc.Tokens.SearchOffset2(offset)
+//	    nameFinder := service.MustGet[server.NameFinder](p.sc)
+//	    foundName := nameFinder.Find(ctx, first, second)
+//	    if foundName.Target == nil {
+//	        return nil, nil
+//	    }
+//	    if classDecl, ok := foundName.Target.Owner().(*ast.ClassDeclaration); ok {
 //	        return []lsp.TypeHierarchyItem{{
 //	            Name:  classDecl.Name,
 //	            Kind:  lsp.Class,

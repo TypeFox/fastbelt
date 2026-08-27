@@ -23,9 +23,12 @@ func TestSignatureHelpProvider_CustomImplementation(t *testing.T) {
 	grammar.SetupServices(sc)
 	server.SetupDefaultServices(sc)
 
-	// Register custom provider (provider-only pattern - full implementation).
+	// Register custom provider:
 	// Use Put, not Override, since there is no default to override.
 	service.Put[server.SignatureHelpProvider](sc, &grammarSignatureHelpProvider{sc: sc})
+	// Trigger characters are a separate concern;
+	// override the no-op default to declare grammar-specific ones.
+	service.Override[server.SignatureHelpTriggers](sc, &grammarSignatureHelpTriggers{})
 	sc.Seal()
 
 	f := test.New(t, sc)
@@ -37,9 +40,10 @@ func TestSignatureHelpProvider_CustomImplementation(t *testing.T) {
 	doc.AssertNoErrors()
 
 	provider := service.MustGet[server.SignatureHelpProvider](f.Services())
+	triggers := service.MustGet[server.SignatureHelpTriggers](f.Services())
 
-	assert.Equal(t, []string{"("}, provider.TriggerCharacters())
-	assert.Equal(t, []string{","}, provider.RetriggerCharacters())
+	assert.Equal(t, []string{"("}, triggers.TriggerCharacters())
+	assert.Equal(t, []string{","}, triggers.RetriggerCharacters())
 
 	// "Person" appears twice: once as the interface name, once as the rule
 	// name ("Person: Name=ID;"). Find the rule occurrence specifically by
@@ -72,18 +76,20 @@ func TestSignatureHelpProvider_CustomImplementation(t *testing.T) {
 }
 
 // grammarSignatureHelpProvider provides custom signature help for grammar
-// language nodes. Provider-only pattern: adopter implements the full
-// provider interface, using the shared server.NodeAtCursor helper for
-// cursor-to-node resolution.
+// language nodes.
 type grammarSignatureHelpProvider struct {
 	sc *service.Container
 }
 
-func (p *grammarSignatureHelpProvider) TriggerCharacters() []string {
+// grammarSignatureHelpTriggers declares grammar-specific trigger characters,
+// overriding the no-op DefaultSignatureHelpTriggers.
+type grammarSignatureHelpTriggers struct{}
+
+func (grammarSignatureHelpTriggers) TriggerCharacters() []string {
 	return []string{"("}
 }
 
-func (p *grammarSignatureHelpProvider) RetriggerCharacters() []string {
+func (grammarSignatureHelpTriggers) RetriggerCharacters() []string {
 	return []string{","}
 }
 

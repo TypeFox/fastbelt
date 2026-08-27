@@ -88,7 +88,6 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			TypeDefinitionProvider: &lsp.Or_ServerCapabilities_typeDefinitionProvider{
 				Value: service.Has[TypeDefinitionProvider](s.sc),
 			},
-			SemanticTokensProvider: buildSemanticTokensOptions(s.sc),
 			CallHierarchyProvider: &lsp.Or_ServerCapabilities_callHierarchyProvider{
 				Value: service.Has[CallHierarchyProvider](s.sc),
 			},
@@ -103,16 +102,20 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			}(),
 			SignatureHelpProvider: buildSignatureHelpOptions(s.sc),
 			CodeActionProvider: func() *lsp.CodeActionOptions {
-				if service.Has[CodeActionProvider](s.sc) {
-					return &lsp.CodeActionOptions{}
+				provider, err := service.Get[CodeActionProvider](s.sc)
+				if err != nil {
+					return nil
 				}
-				return nil
+				_, resolving := provider.(ResolvingCodeActionProvider)
+				return &lsp.CodeActionOptions{ResolveProvider: resolving}
 			}(),
 			CodeLensProvider: func() *lsp.CodeLensOptions {
-				if service.Has[CodeLensProvider](s.sc) {
-					return &lsp.CodeLensOptions{ResolveProvider: false}
+				provider, err := service.Get[CodeLensProvider](s.sc)
+				if err != nil {
+					return nil
 				}
-				return nil
+				_, resolving := provider.(ResolvingCodeLensProvider)
+				return &lsp.CodeLensOptions{ResolveProvider: resolving}
 			}(),
 			DocumentLinkProvider: func() *lsp.DocumentLinkOptions {
 				if service.Has[DocumentLinkProvider](s.sc) {
@@ -130,36 +133,21 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 	}, nil
 }
 
-func buildSemanticTokensOptions(sc *service.Container) *lsp.SemanticTokensOptions {
-	if !service.Has[SemanticTokensProvider](sc) {
-		return nil
-	}
-	contributor, err := service.Get[SemanticTokensContributor](sc)
-	if err != nil || len(contributor.TokenTypes()) == 0 {
-		return nil
-	}
-	return &lsp.SemanticTokensOptions{
-		Legend: lsp.SemanticTokensLegend{
-			TokenTypes:     contributor.TokenTypes(),
-			TokenModifiers: contributor.TokenModifiers(),
-		},
-		Full:  &lsp.Or_SemanticTokensOptions_full{Value: true},
-		Range: &lsp.Or_SemanticTokensOptions_range{Value: true},
-	}
-}
-
 func buildSignatureHelpOptions(sc *service.Container) *lsp.SignatureHelpOptions {
-	provider, err := service.Get[SignatureHelpProvider](sc)
+	if !service.Has[SignatureHelpProvider](sc) {
+		return nil
+	}
+	triggers, err := service.Get[SignatureHelpTriggers](sc)
 	if err != nil {
 		return nil
 	}
-	triggerChars := provider.TriggerCharacters()
+	triggerChars := triggers.TriggerCharacters()
 	if len(triggerChars) == 0 {
 		return nil
 	}
 	return &lsp.SignatureHelpOptions{
 		TriggerCharacters:   triggerChars,
-		RetriggerCharacters: provider.RetriggerCharacters(),
+		RetriggerCharacters: triggers.RetriggerCharacters(),
 	}
 }
 
@@ -329,10 +317,48 @@ func (s *DefaultLanguageServer) OutgoingCalls(ctx context.Context, params *lsp.C
 	return result, providerErr
 }
 func (s *DefaultLanguageServer) ResolveCodeAction(ctx context.Context, params *lsp.CodeAction) (*lsp.CodeAction, error) {
-	return nil, nil
+	provider, err := service.Get[CodeActionProvider](s.sc)
+	if err != nil {
+		return params, nil
+	}
+	resolving, ok := provider.(ResolvingCodeActionProvider)
+	if !ok {
+		return params, nil
+	}
+	var result *lsp.CodeAction
+	var providerErr error
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	if err := lock.Read(ctx, func(ctx context.Context) {
+		result, providerErr = resolving.HandleCodeActionResolveRequest(ctx, params)
+	}); err != nil {
+		return nil, err
+	}
+	return result, providerErr
 }
 func (s *DefaultLanguageServer) ResolveCodeLens(ctx context.Context, params *lsp.CodeLens) (*lsp.CodeLens, error) {
-	return nil, nil
+	provider, err := service.Get[CodeLensProvider](s.sc)
+	if err != nil {
+		return params, nil
+	}
+	resolving, ok := provider.(ResolvingCodeLensProvider)
+	if !ok {
+		return params, nil
+	}
+	var result *lsp.CodeLens
+	var providerErr error
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	if err := lock.Read(ctx, func(ctx context.Context) {
+		result, providerErr = resolving.HandleCodeLensResolveRequest(ctx, params)
+	}); err != nil {
+		return nil, err
+	}
+	return result, providerErr
 }
 func (s *DefaultLanguageServer) ResolveCompletionItem(ctx context.Context, params *lsp.CompletionItem) (*lsp.CompletionItem, error) {
 	return nil, nil
@@ -705,58 +731,13 @@ func (s *DefaultLanguageServer) SelectionRange(ctx context.Context, params *lsp.
 	return nil, nil
 }
 func (s *DefaultLanguageServer) SemanticTokensFull(ctx context.Context, params *lsp.SemanticTokensParams) (*lsp.SemanticTokens, error) {
-	var result *lsp.SemanticTokens
-	var providerErr error
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	provider, err := service.Get[SemanticTokensProvider](s.sc)
-	if err != nil {
-		return nil, nil
-	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = provider.HandleSemanticTokensFullRequest(ctx, params)
-	}); err != nil {
-		return nil, err
-	}
-	return result, providerErr
+	return nil, nil
 }
 func (s *DefaultLanguageServer) SemanticTokensFullDelta(ctx context.Context, params *lsp.SemanticTokensDeltaParams) (any, error) {
-	var result any
-	var providerErr error
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	provider, err := service.Get[SemanticTokensProvider](s.sc)
-	if err != nil {
-		return nil, nil
-	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = provider.HandleSemanticTokensFullDeltaRequest(ctx, params)
-	}); err != nil {
-		return nil, err
-	}
-	return result, providerErr
+	return nil, nil
 }
 func (s *DefaultLanguageServer) SemanticTokensRange(ctx context.Context, params *lsp.SemanticTokensRangeParams) (*lsp.SemanticTokens, error) {
-	var result *lsp.SemanticTokens
-	var providerErr error
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	provider, err := service.Get[SemanticTokensProvider](s.sc)
-	if err != nil {
-		return nil, nil
-	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = provider.HandleSemanticTokensRangeRequest(ctx, params)
-	}); err != nil {
-		return nil, err
-	}
-	return result, providerErr
+	return nil, nil
 }
 func (s *DefaultLanguageServer) SignatureHelp(ctx context.Context, params *lsp.SignatureHelpParams) (*lsp.SignatureHelp, error) {
 	var result *lsp.SignatureHelp

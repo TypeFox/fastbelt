@@ -11,18 +11,12 @@ import (
 )
 
 // SignatureHelpProvider is a service for handling LSP signature help requests.
+// Trigger and retrigger characters are declared separately via
+// [SignatureHelpTriggers].
 //
 // Usage:
 //
 //	type MySignatureHelpProvider struct{ sc *service.Container }
-//
-//	func (p *MySignatureHelpProvider) TriggerCharacters() []string {
-//	    return []string{"(", ","}
-//	}
-//
-//	func (p *MySignatureHelpProvider) RetriggerCharacters() []string {
-//	    return []string{","}
-//	}
 //
 //	func (p *MySignatureHelpProvider) HandleSignatureHelpRequest(ctx context.Context, params *lsp.SignatureHelpParams) (*lsp.SignatureHelp, error) {
 //	    documentManager := service.MustGet[workspace.DocumentManager](p.sc)
@@ -50,12 +44,5 @@ import (
 //	// Register with the service container
 //	service.Put[server.SignatureHelpProvider](sc, &MySignatureHelpProvider{sc: sc})
 type SignatureHelpProvider interface {
-	// TriggerCharacters returns the characters that should trigger signature help.
-	TriggerCharacters() []string
-
-	// RetriggerCharacters returns the characters that should re-trigger signature help
-	// when it's already active.
-	RetriggerCharacters() []string
-
 	HandleSignatureHelpRequest(ctx context.Context, params *lsp.SignatureHelpParams) (*lsp.SignatureHelp, error)
 }

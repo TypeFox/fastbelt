@@ -29,7 +29,7 @@ func TestInlayHintProvider_CustomImplementation(t *testing.T) {
 	grammar.SetupServices(sc)
 	server.SetupDefaultServices(sc)
 
-	// Register custom provider (provider-only pattern - full implementation).
+	// Register custom provider:
 	// Use Put, not Override, since there is no default to override.
 	service.Put[server.InlayHintProvider](sc, &grammarInlayHintProvider{sc: sc})
 	sc.Seal()
@@ -108,8 +108,6 @@ func TestInlayHintProvider_RangeFiltering(t *testing.T) {
 }
 
 // grammarInlayHintProvider provides custom inlay hints for grammar language nodes.
-// Provider-only pattern: adopter implements the full provider interface,
-// using the shared server.NodesInRange helper for range-filtered iteration.
 type grammarInlayHintProvider struct {
 	sc *service.Container
 }
