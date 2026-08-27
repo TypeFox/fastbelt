@@ -23,6 +23,8 @@ type TokenType struct {
 	Code       codegen.Node
 }
 
+// Describes how a [TokenType] is used in a [TokenMode].
+// Mind the same naming in the modes package: [modes.TokenTypeUsage]. The concept is the same. Implementation is slightly different.
 type TokenTypeUsage struct {
 	TokenModifier string
 	Command       grammar.TokenCommand

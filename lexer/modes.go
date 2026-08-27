@@ -2,6 +2,9 @@ package lexer
 
 import core "typefox.dev/fastbelt"
 
+// TokenTypeUsage describes how a [core.TokenType] is used in a [TokenMode].
+// A token type can be used once per token mode, but can have different usages in different token modes.
+// One mode can push a mode on a token type and pop on the same token type while being defined in another mode.
 type TokenTypeUsage struct {
 	TokenType *core.TokenType
 	PushMode  int
