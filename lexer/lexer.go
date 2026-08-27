@@ -21,13 +21,13 @@ type Lexer interface {
 type LexerResult struct {
 	// Tokens is the main token stream passed to the parser.
 	Tokens []core.Token
-	// Comments holds tokens whose [core.TokenType] uses [core.CommentGroup].
+	// Comments holds tokens whose [core.TokenType] uses [core.CommentModifier].
 	Comments []core.Token
 	// Errors lists recoverable lexing problems (unrecognized input).
 	Errors []*core.LexerError
-	// Groups collects tokens routed to custom [TokenTypeUsage.Group] values
-	// other than the default, skipped, or comment groups. Nil when empty.
-	Groups map[int][]core.Token
+	// Modifiers collects tokens routed to custom [TokenTypeUsage.Modifier] values
+	// other than the default, skipped, or comment modifiers. Nil when empty.
+	Modifiers map[int][]core.Token
 }
 
 // Allocate a new token every ~5 characters on average
@@ -52,7 +52,7 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 	tokens := make([]core.Token, 0, l.avgRatio.Capacity(length))
 	comments := make([]core.Token, 0)
 	errors := make([]*core.LexerError, 0)
-	var groups map[int][]core.Token
+	var modifiers map[int][]core.Token
 
 	// The mode stack is local to this call: a DefaultLexer is shared between
 	// documents and Exec may run concurrently, so input that ends inside a
@@ -99,10 +99,10 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 					offset, end,
 				))
 			default:
-				if groups == nil {
-					groups = make(map[int][]core.Token)
+				if modifiers == nil {
+					modifiers = make(map[int][]core.Token)
 				}
-				groups[longestType.Modifier] = append(groups[longestType.Modifier], core.NewToken(
+				modifiers[longestType.Modifier] = append(modifiers[longestType.Modifier], core.NewToken(
 					longestType.TokenType,
 					input[offset:end],
 					offset, end,
@@ -137,10 +137,10 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 	}
 
 	return &LexerResult{
-		Tokens:   tokens,
-		Comments: comments,
-		Errors:   errors,
-		Groups:   groups,
+		Tokens:    tokens,
+		Comments:  comments,
+		Errors:    errors,
+		Modifiers: modifiers,
 	}
 }
 

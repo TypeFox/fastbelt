@@ -93,7 +93,7 @@ func TestExecFirstRegisteredWinsEqualLengthMatch(t *testing.T) {
 
 // --- Groups ---
 
-func TestExecRoutesTokensToGroups(t *testing.T) {
+func TestExecRoutesTokensToModifiers(t *testing.T) {
 	word := matchRunes(1, "WORD", lowercase)
 	ws := matchRunes(2, "WS", spaces)
 	comment := literal(3, "COMMENT", "#")
@@ -108,25 +108,25 @@ func TestExecRoutesTokensToGroups(t *testing.T) {
 	result := lexer.Exec("ab #ff!")
 	assert.Equal(t, []string{"ab", "ff"}, images(result.Tokens))
 	assert.Equal(t, []string{"#"}, images(result.Comments))
-	require.Contains(t, result.Groups, 7)
-	assert.Equal(t, []string{"!"}, images(result.Groups[7]))
+	require.Contains(t, result.Modifiers, 7)
+	assert.Equal(t, []string{"!"}, images(result.Modifiers[7]))
 	assert.Empty(t, result.Errors)
 }
 
-func TestExecGroupsIsNilWithoutCustomGroups(t *testing.T) {
+func TestExecModifiersIsNilWithoutCustomModifiers(t *testing.T) {
 	word := matchRunes(1, "WORD", lowercase)
 	lexer := NewDefaultLexer(0, NewTokenMode("default", UseTokenType(word)))
 
-	assert.Nil(t, lexer.Exec("ab").Groups)
+	assert.Nil(t, lexer.Exec("ab").Modifiers)
 }
 
-func TestExecCollectsCustomGroupFromNonDefaultMode(t *testing.T) {
+func TestExecCollectsCustomModifierFromNonDefaultMode(t *testing.T) {
 	lexer := stringLexer(7)
 
 	result := lexer.Exec(`ab "inside" cd`)
 	assert.Equal(t, []string{"ab", `"`, `"`, "cd"}, images(result.Tokens))
-	require.Contains(t, result.Groups, 7)
-	assert.Equal(t, []string{"inside"}, images(result.Groups[7]))
+	require.Contains(t, result.Modifiers, 7)
+	assert.Equal(t, []string{"inside"}, images(result.Modifiers[7]))
 }
 
 func TestExecSkipsHiddenTokenFromNonDefaultMode(t *testing.T) {
@@ -134,7 +134,7 @@ func TestExecSkipsHiddenTokenFromNonDefaultMode(t *testing.T) {
 
 	result := lexer.Exec(`ab "inside" cd`)
 	assert.Equal(t, []string{"ab", `"`, `"`, "cd"}, images(result.Tokens))
-	assert.Nil(t, result.Groups)
+	assert.Nil(t, result.Modifiers)
 }
 
 func TestExecCollectsCommentFromNonDefaultMode(t *testing.T) {
@@ -338,7 +338,7 @@ func TestExecEmptyInput(t *testing.T) {
 	assert.Empty(t, result.Tokens)
 	assert.Empty(t, result.Comments)
 	assert.Empty(t, result.Errors)
-	assert.Nil(t, result.Groups)
+	assert.Nil(t, result.Modifiers)
 }
 
 // --- Reuse of a single lexer instance ---

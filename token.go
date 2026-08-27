@@ -13,7 +13,7 @@ const SkippedModifier = -1
 const CommentModifier = -2
 
 // TokenKind names the grammar construct that produced a TokenType. It is
-// distinct from Group: Group controls lexer-stream behaviour (skipped /
+// distinct from Modifier: Modifier controls lexer-stream behaviour (skipped /
 // comment), while Kind describes the grammar origin and is consumed by
 // downstream features such as the completion engine, which by default
 // only surfaces keyword-kind tokens as completion candidates.
@@ -23,7 +23,7 @@ const (
 	// TokenKindToken is the default - a TokenType produced by a named
 	// `token` rule in the .fb grammar (regex-matched). Hidden and comment
 	// tokens are also TokenKindToken; their stream behaviour is encoded
-	// separately in Group.
+	// separately in Modifier.
 	TokenKindToken TokenKind = 0
 	// TokenKindKeyword is a TokenType produced by a literal string in a
 	// parser rule (e.g. `"statemachine"`). Matched by a string prefix.

@@ -682,10 +682,14 @@ func checkUniqueRuleNames(g Grammar, accept core.ValidationAcceptor) {
 		for _, member := range tokenMode.Members() {
 			if usage, ok := member.(TokenDeclUsage); ok {
 				decl := usage.Declaration()
-				seen[decl.Name()] = append(seen[decl.Name()], decl)
+				if decl.Name() != "" {
+					seen[decl.Name()] = append(seen[decl.Name()], decl)
+				}
 			} else if group, ok := member.(TokenGroupUsage); ok {
 				decl := group.Group()
-				seen[decl.Name()] = append(seen[decl.Name()], decl)
+				if decl.Name() != "" {
+					seen[decl.Name()] = append(seen[decl.Name()], decl)
+				}
 			}
 		}
 	}
