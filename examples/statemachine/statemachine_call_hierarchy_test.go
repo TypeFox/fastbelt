@@ -70,6 +70,40 @@ func TestCallHierarchy_PrepareOnStateName(t *testing.T) {
 	assert.Equal(t, lsp.Class, item.Kind)
 }
 
+func TestCallHierarchy_PrepareOnStateKeyword(t *testing.T) {
+	f := test.New(t, CreateLspServices(nil))
+	doc := f.Parse(callHierarchySource).AssertNoErrors()
+
+	provider := service.MustGet[server.CallHierarchyProvider](f.Services())
+
+	// Line 5: "state off" - cursor inside the "state" keyword, not the name.
+	// NameFinder should reject this: the cursor isn't within the name range.
+	items, err := provider.HandlePrepareCallHierarchyRequest(
+		context.Background(),
+		&lsp.CallHierarchyPrepareParams{
+			TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+				TextDocument: lsp.TextDocumentIdentifier{URI: doc.Document.URI.DocumentURI()},
+				Position:     lsp.Position{Line: 5, Character: 2},
+			},
+		},
+	)
+	assert.NoError(t, err)
+	assert.Empty(t, items, "cursor on the 'state' keyword should not prepare a call hierarchy item")
+}
+
+func TestCallHierarchy_PrepareOnStateReference(t *testing.T) {
+	f := test.New(t, CreateLspServices(nil))
+	doc := f.Parse(callHierarchySource).AssertNoErrors()
+
+	provider := service.MustGet[server.CallHierarchyProvider](f.Services())
+
+	// Line 6: "  flick => on" - cursor on the "on" reference, not on state
+	// on's own declaration. NameFinder resolves this to the referenced state.
+	item := prepareStateItem(t, provider, doc.Document.URI.DocumentURI(), 6, 11)
+	assert.Equal(t, "on", item.Name)
+	assert.Equal(t, lsp.Class, item.Kind)
+}
+
 func TestCallHierarchy_PrepareOnNonState(t *testing.T) {
 	f := test.New(t, CreateLspServices(nil))
 	doc := f.Parse(callHierarchySource).AssertNoErrors()

@@ -9,11 +9,29 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/test"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/lsp"
 )
+
+// resolveAll simulates the client: request lenses, then resolve every one of
+// them (as if all were visible in the viewport), returning the resolved titles.
+func resolveAll(t *testing.T, provider server.CodeLensProvider, lenses []lsp.CodeLens) []string {
+	t.Helper()
+	resolving, ok := provider.(server.ResolvingCodeLensProvider)
+	require.True(t, ok, "stateMachineCodeLensProvider should implement ResolvingCodeLensProvider")
+
+	var titles []string
+	for _, lens := range lenses {
+		resolved, err := resolving.HandleCodeLensResolveRequest(context.Background(), &lens)
+		require.NoError(t, err)
+		require.NotNil(t, resolved.Command, "resolved lens should have a Command")
+		titles = append(titles, resolved.Command.Title)
+	}
+	return titles
+}
 
 func TestCodeLens_ReferenceCounts(t *testing.T) {
 	f := test.New(t, CreateLspServices(nil))
@@ -44,10 +62,16 @@ end
 	assert.NoError(t, err)
 	assert.NotEmpty(t, result)
 
-	titles := map[string]int{}
+	// HandleCodeLensRequest defers counting - lenses carry Data, not a
+	// Command, until HandleCodeLensResolveRequest is called for them.
 	for _, lens := range result {
-		assert.NotNil(t, lens.Command)
-		titles[lens.Command.Title]++
+		assert.Nil(t, lens.Command)
+		assert.NotNil(t, lens.Data)
+	}
+
+	titles := map[string]int{}
+	for _, title := range resolveAll(t, provider, result) {
+		titles[title]++
 	}
 
 	// States get no lens here: their transition count is already shown
@@ -83,6 +107,8 @@ end
 		},
 	)
 	assert.NoError(t, err)
-	assert.Len(t, result, 1, "the unused event still gets a lens, just with a zero count")
-	assert.Equal(t, "0 reference(s)", result[0].Command.Title)
+	require.Len(t, result, 1, "the unused event still gets a lens, just with a zero count once resolved")
+
+	titles := resolveAll(t, provider, result)
+	assert.Equal(t, "0 reference(s)", titles[0])
 }

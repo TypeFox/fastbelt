@@ -37,7 +37,6 @@ func CreateLspServices(setup func(*service.Container)) *service.Container {
 	sc := service.NewContainer()
 	SetupServices(sc)
 	SetupGeneratedServerServices(sc)
-	service.Put[server.SemanticTokensContributor](sc, &stateMachineSemanticTokensContributor{})
 	service.Put[server.CodeLensProvider](sc, &stateMachineCodeLensProvider{sc: sc})
 	service.Put[server.CallHierarchyProvider](sc, &stateMachineCallHierarchyProvider{sc: sc})
 	service.Put[server.InlayHintProvider](sc, &stateMachineInlayHintProvider{sc: sc})
