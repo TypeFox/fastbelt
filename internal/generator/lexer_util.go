@@ -104,6 +104,24 @@ func (r GenerateTokenTypesResult) TokenTypeVarNamesByTokenIndex() []string {
 	return names
 }
 
+// TokenTypeNamesByTokenIndex returns a slice mapping runtime token id
+// (TokenIndex) to a token name. Keyword-backed tokens alias their keyword
+// and share its id; later entries (token declarations, groups) override the
+// earlier keyword entry so the referenced token name wins.
+func (r GenerateTokenTypesResult) TokenTypeNamesByTokenIndex() []string {
+	maxId := 0
+	for _, tokenType := range r.TokenTypes.All {
+		if tokenType.TokenIndex > maxId {
+			maxId = tokenType.TokenIndex
+		}
+	}
+	names := make([]string, maxId+1)
+	for _, tokenType := range r.TokenTypes.All {
+		names[tokenType.TokenIndex] = tokenType.Name
+	}
+	return names
+}
+
 func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 	keywords := GetAllKeywords(grammr)
 	tokenDecls := GetAllTokenDecls(grammr)

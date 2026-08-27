@@ -29,9 +29,9 @@ flowchart TD
     q30["Statemachine__LoopBack_2 (30)<br/>LoopBack<br/>"]
 
     q0 --> q10
-    q10 -->|"tok(Keyword_statemachine)"| q11
-    q11 -->|"tok(Token_ID)"| q17
-    q12 -->|"tok(Keyword_events)"| q13
+    q10 -->|"tok(&quot;statemachine&quot;)"| q11
+    q11 -->|"tok(ID)"| q17
+    q12 -->|"tok(&quot;events&quot;)"| q13
     q13 -.->|"[Event]"| q14
     q14 --> q15
     q15 --> q13
@@ -39,7 +39,7 @@ flowchart TD
     q16 --> q23
     q17 --> q12
     q17 --> q16
-    q18 -->|"tok(Keyword_commands)"| q19
+    q18 -->|"tok(&quot;commands&quot;)"| q19
     q19 -.->|"[Command]"| q20
     q20 --> q21
     q21 --> q19
@@ -47,8 +47,8 @@ flowchart TD
     q22 --> q24
     q23 --> q18
     q23 --> q22
-    q24 -->|"tok(Keyword_initialState)"| q25
-    q25 -->|"tok(Token_ID)"| q28
+    q24 -->|"tok(&quot;initialState&quot;)"| q25
+    q25 -->|"tok(ID)"| q28
     q26 -.->|"[State]"| q27
     q27 --> q30
     q28 --> q26
@@ -67,7 +67,7 @@ flowchart TD
     q32["Event__Basic (32)<br/>Basic<br/>"]
 
     q2 --> q31
-    q31 -->|"tok(Token_ID)"| q32
+    q31 -->|"tok(ID)"| q32
     q32 --> q3
 ```
 
@@ -81,7 +81,7 @@ flowchart TD
     q34["Command__Basic (34)<br/>Basic<br/>"]
 
     q4 --> q33
-    q33 -->|"tok(Token_ID)"| q34
+    q33 -->|"tok(ID)"| q34
     q34 --> q5
 ```
 
@@ -111,16 +111,16 @@ flowchart TD
     q52["State__Basic_5 (52)<br/>Basic<br/>"]
 
     q6 --> q35
-    q35 -->|"tok(Keyword_state)"| q36
-    q36 -->|"tok(Token_ID)"| q45
-    q37 -->|"tok(Keyword_actions)"| q38
-    q38 -->|"tok(Keyword_LeftBrace)"| q39
-    q39 -->|"tok(Token_ID)"| q40
+    q35 -->|"tok(&quot;state&quot;)"| q36
+    q36 -->|"tok(ID)"| q45
+    q37 -->|"tok(&quot;actions&quot;)"| q38
+    q38 -->|"tok(&quot;{&quot;)"| q39
+    q39 -->|"tok(ID)"| q40
     q40 --> q41
     q41 --> q39
     q41 --> q42
     q42 --> q43
-    q43 -->|"tok(Keyword_RightBrace)"| q44
+    q43 -->|"tok(&quot;}&quot;)"| q44
     q44 --> q48
     q45 --> q37
     q45 --> q44
@@ -130,7 +130,7 @@ flowchart TD
     q48 --> q49
     q49 --> q51
     q50 --> q48
-    q51 -->|"tok(Keyword_end)"| q52
+    q51 -->|"tok(&quot;end&quot;)"| q52
     q52 --> q7
 ```
 
@@ -146,9 +146,9 @@ flowchart TD
     q56["Transition__Basic (56)<br/>Basic<br/>"]
 
     q8 --> q53
-    q53 -->|"tok(Token_ID)"| q54
-    q54 -->|"tok(Keyword_EqualsGreaterThan)"| q55
-    q55 -->|"tok(Token_ID)"| q56
+    q53 -->|"tok(ID)"| q54
+    q54 -->|"tok(&quot;=>&quot;)"| q55
+    q55 -->|"tok(ID)"| q56
     q56 --> q9
 ```
 

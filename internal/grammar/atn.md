@@ -30,9 +30,9 @@ flowchart TD
     q95["Grammar__LoopBack (95)<br/>LoopBack<br/>"]
 
     q0 --> q74
-    q74 -->|"tok(Keyword_grammar)"| q75
-    q75 -->|"tok(Token_ID)"| q78
-    q76 -->|"tok(Keyword_Semicolon)"| q77
+    q74 -->|"tok(&quot;grammar&quot;)"| q75
+    q75 -->|"tok(ID)"| q78
+    q76 -->|"tok(&quot;;&quot;)"| q77
     q77 --> q93
     q78 --> q76
     q78 --> q77
@@ -88,12 +88,12 @@ flowchart TD
     q114["Interface__Basic_4 (114)<br/>Basic<br/>"]
 
     q2 --> q96
-    q96 -->|"tok(Keyword_interface)"| q97
-    q97 -->|"tok(Token_ID)"| q106
-    q98 -->|"tok(Keyword_extends)"| q99
-    q99 -->|"tok(Token_ID)"| q103
-    q100 -->|"tok(Keyword_Comma)"| q101
-    q101 -->|"tok(Token_ID)"| q102
+    q96 -->|"tok(&quot;interface&quot;)"| q97
+    q97 -->|"tok(ID)"| q106
+    q98 -->|"tok(&quot;extends&quot;)"| q99
+    q99 -->|"tok(ID)"| q103
+    q100 -->|"tok(&quot;,&quot;)"| q101
+    q101 -->|"tok(ID)"| q102
     q102 --> q105
     q103 --> q100
     q103 --> q104
@@ -101,14 +101,14 @@ flowchart TD
     q105 --> q103
     q106 --> q98
     q106 --> q104
-    q107 -->|"tok(Keyword_LeftBrace)"| q110
+    q107 -->|"tok(&quot;{&quot;)"| q110
     q108 -.->|"[Field]"| q109
     q109 --> q112
     q110 --> q108
     q110 --> q111
     q111 --> q113
     q112 --> q110
-    q113 -->|"tok(Keyword_RightBrace)"| q114
+    q113 -->|"tok(&quot;}&quot;)"| q114
     q114 --> q3
 ```
 
@@ -123,7 +123,7 @@ flowchart TD
     q117["Field__Basic_1 (117)<br/>Basic<br/>"]
 
     q4 --> q115
-    q115 -->|"tok(Token_ID)"| q116
+    q115 -->|"tok(ID)"| q116
     q116 -.->|"[FieldType]"| q117
     q117 --> q5
 ```
@@ -173,8 +173,8 @@ flowchart TD
     q131["ArrayType__Basic_1 (131)<br/>Basic<br/>"]
 
     q8 --> q128
-    q128 -->|"tok(Keyword_LeftBracket)"| q129
-    q129 -->|"tok(Keyword_RightBracket)"| q130
+    q128 -->|"tok(&quot;[&quot;)"| q129
+    q129 -->|"tok(&quot;]&quot;)"| q130
     q130 -.->|"[FieldType]"| q131
     q131 --> q9
 ```
@@ -190,8 +190,8 @@ flowchart TD
     q134["ReferenceType__Basic (134)<br/>Basic<br/>"]
 
     q10 --> q132
-    q132 -->|"tok(Keyword_Asterisk)"| q133
-    q133 -->|"tok(Token_ID)"| q134
+    q132 -->|"tok(&quot;*&quot;)"| q133
+    q133 -->|"tok(ID)"| q134
     q134 --> q11
 ```
 
@@ -205,7 +205,7 @@ flowchart TD
     q136["SimpleType__Basic (136)<br/>Basic<br/>"]
 
     q12 --> q135
-    q135 -->|"tok(Token_ID)"| q136
+    q135 -->|"tok(ID)"| q136
     q136 --> q13
 ```
 
@@ -225,11 +225,11 @@ flowchart TD
     q144["PrimitiveType__BlockEnd (144)<br/>BlockEnd<br/>"]
 
     q14 --> q143
-    q137 -->|"tok(Keyword_string)"| q138
+    q137 -->|"tok(&quot;string&quot;)"| q138
     q138 --> q144
-    q139 -->|"tok(Keyword_bool)"| q140
+    q139 -->|"tok(&quot;bool&quot;)"| q140
     q140 --> q144
-    q141 -->|"tok(Keyword_composite)"| q142
+    q141 -->|"tok(&quot;composite&quot;)"| q142
     q142 --> q144
     q143 --> q137
     q143 --> q139
@@ -258,19 +258,19 @@ flowchart TD
     q157{"ParserRule__Basic_6 (157)<br/>Basic<br/><br/>dec=10"}
 
     q16 --> q147
-    q145 -->|"tok(Keyword_entry)"| q146
+    q145 -->|"tok(&quot;entry&quot;)"| q146
     q146 --> q148
     q147 --> q145
     q147 --> q146
-    q148 -->|"tok(Token_ID)"| q152
-    q149 -->|"tok(Keyword_returns)"| q150
-    q150 -->|"tok(Token_ID)"| q151
+    q148 -->|"tok(ID)"| q152
+    q149 -->|"tok(&quot;returns&quot;)"| q150
+    q150 -->|"tok(ID)"| q151
     q151 --> q153
     q152 --> q149
     q152 --> q151
-    q153 -->|"tok(Keyword_Colon)"| q154
+    q153 -->|"tok(&quot;:&quot;)"| q154
     q154 -.->|"[Alternatives]"| q157
-    q155 -->|"tok(Keyword_Semicolon)"| q156
+    q155 -->|"tok(&quot;;&quot;)"| q156
     q156 --> q17
     q157 --> q155
     q157 --> q156
@@ -297,19 +297,19 @@ flowchart TD
     q170{"TokenDecl__Basic_8 (170)<br/>Basic<br/><br/>dec=13"}
 
     q18 --> q160
-    q158 -->|"tok(TokenGroup_TokenModifier)"| q159
+    q158 -->|"tok(TokenModifier)"| q159
     q159 --> q161
     q160 --> q158
     q160 --> q159
-    q161 -->|"tok(Keyword_token)"| q162
-    q162 -->|"tok(Token_ID)"| q163
-    q163 -->|"tok(Keyword_Colon)"| q164
+    q161 -->|"tok(&quot;token&quot;)"| q162
+    q162 -->|"tok(ID)"| q163
+    q163 -->|"tok(&quot;:&quot;)"| q164
     q164 -.->|"[TokenContent]"| q167
     q165 -.->|"[TokenCommand]"| q166
     q166 --> q170
     q167 --> q165
     q167 --> q166
-    q168 -->|"tok(Keyword_Semicolon)"| q169
+    q168 -->|"tok(&quot;;&quot;)"| q169
     q169 --> q19
     q170 --> q168
     q170 --> q169
@@ -348,7 +348,7 @@ flowchart TD
     q178["RegexpTokenContent__Basic (178)<br/>Basic<br/>"]
 
     q22 --> q177
-    q177 -->|"tok(Token_RegexLiteral)"| q178
+    q177 -->|"tok(RegexLiteral)"| q178
     q178 --> q23
 ```
 
@@ -393,26 +393,26 @@ flowchart TD
     q199{"TokenCommand__Basic_8 (199)<br/>Basic<br/><br/>dec=17"}
 
     q26 --> q181
-    q181 -->|"tok(Keyword_DashGreaterThan)"| q188
-    q182 -->|"tok(Keyword_push)"| q183
+    q181 -->|"tok(&quot;->&quot;)"| q188
+    q182 -->|"tok(&quot;push&quot;)"| q183
     q183 --> q189
-    q184 -->|"tok(Keyword_pop)"| q185
+    q184 -->|"tok(&quot;pop&quot;)"| q185
     q185 --> q189
-    q186 -->|"tok(Keyword_mode)"| q187
+    q186 -->|"tok(&quot;mode&quot;)"| q187
     q187 --> q189
     q188 --> q182
     q188 --> q184
     q188 --> q186
     q189 --> q199
-    q190 -->|"tok(Keyword_LeftParen)"| q195
-    q191 -->|"tok(Token_ID)"| q192
+    q190 -->|"tok(&quot;(&quot;)"| q195
+    q191 -->|"tok(ID)"| q192
     q192 --> q196
-    q193 -->|"tok(Keyword_default)"| q194
+    q193 -->|"tok(&quot;default&quot;)"| q194
     q194 --> q196
     q195 --> q191
     q195 --> q193
     q196 --> q197
-    q197 -->|"tok(Keyword_RightParen)"| q198
+    q197 -->|"tok(&quot;)&quot;)"| q198
     q198 --> q27
     q199 --> q190
     q199 --> q198
@@ -452,20 +452,20 @@ flowchart TD
     q225{"TokenGroup__Basic_12 (225)<br/>Basic<br/><br/>dec=22"}
 
     q28 --> q202
-    q200 -->|"tok(TokenGroup_TokenModifier)"| q201
+    q200 -->|"tok(TokenModifier)"| q201
     q201 --> q203
     q202 --> q200
     q202 --> q201
-    q203 -->|"tok(Keyword_token)"| q204
-    q204 -->|"tok(Keyword_group)"| q205
-    q205 -->|"tok(Token_ID)"| q206
-    q206 -->|"tok(Keyword_LeftBrace)"| q216
-    q207 -->|"tok(Token_ID)"| q208
+    q203 -->|"tok(&quot;token&quot;)"| q204
+    q204 -->|"tok(&quot;group&quot;)"| q205
+    q205 -->|"tok(ID)"| q206
+    q206 -->|"tok(&quot;{&quot;)"| q216
+    q207 -->|"tok(ID)"| q208
     q208 --> q215
     q209 -.->|"[Keyword]"| q210
     q210 --> q215
-    q211 -->|"tok(Keyword_keywords)"| q212
-    q212 -->|"tok(Token_RegexLiteral)"| q213
+    q211 -->|"tok(&quot;keywords&quot;)"| q212
+    q212 -->|"tok(RegexLiteral)"| q213
     q213 --> q215
     q214 --> q207
     q214 --> q209
@@ -475,12 +475,12 @@ flowchart TD
     q216 --> q217
     q217 --> q219
     q218 --> q216
-    q219 -->|"tok(Keyword_RightBrace)"| q222
+    q219 -->|"tok(&quot;}&quot;)"| q222
     q220 -.->|"[TokenCommand]"| q221
     q221 --> q225
     q222 --> q220
     q222 --> q221
-    q223 -->|"tok(Keyword_Semicolon)"| q224
+    q223 -->|"tok(&quot;;&quot;)"| q224
     q224 --> q29
     q225 --> q223
     q225 --> q224
@@ -510,23 +510,23 @@ flowchart TD
     q241["TokenMode__Basic_5 (241)<br/>Basic<br/>"]
 
     q30 --> q226
-    q226 -->|"tok(Keyword_token)"| q227
-    q227 -->|"tok(Keyword_mode)"| q232
-    q228 -->|"tok(Token_ID)"| q229
+    q226 -->|"tok(&quot;token&quot;)"| q227
+    q227 -->|"tok(&quot;mode&quot;)"| q232
+    q228 -->|"tok(ID)"| q229
     q229 --> q233
-    q230 -->|"tok(Keyword_default)"| q231
+    q230 -->|"tok(&quot;default&quot;)"| q231
     q231 --> q233
     q232 --> q228
     q232 --> q230
     q233 --> q234
-    q234 -->|"tok(Keyword_LeftBrace)"| q237
+    q234 -->|"tok(&quot;{&quot;)"| q237
     q235 -.->|"[TokenModeMember]"| q236
     q236 --> q239
     q237 --> q235
     q237 --> q238
     q238 --> q240
     q239 --> q237
-    q240 -->|"tok(Keyword_RightBrace)"| q241
+    q240 -->|"tok(&quot;}&quot;)"| q241
     q241 --> q31
 ```
 
@@ -614,16 +614,16 @@ flowchart TD
     q267{"TokenUsage__Basic_7 (267)<br/>Basic<br/><br/>dec=28"}
 
     q38 --> q260
-    q258 -->|"tok(TokenGroup_TokenModifier)"| q259
+    q258 -->|"tok(TokenModifier)"| q259
     q259 --> q261
     q260 --> q258
     q260 --> q259
-    q261 -->|"tok(Token_ID)"| q264
+    q261 -->|"tok(ID)"| q264
     q262 -.->|"[TokenCommand]"| q263
     q263 --> q267
     q264 --> q262
     q264 --> q263
-    q265 -->|"tok(Keyword_Semicolon)"| q266
+    q265 -->|"tok(&quot;;&quot;)"| q266
     q266 --> q39
     q267 --> q265
     q267 --> q266
@@ -647,7 +647,7 @@ flowchart TD
     q277{"KeywordUsage__Basic_8 (277)<br/>Basic<br/><br/>dec=31"}
 
     q40 --> q270
-    q268 -->|"tok(TokenGroup_TokenModifier)"| q269
+    q268 -->|"tok(TokenModifier)"| q269
     q269 --> q271
     q270 --> q268
     q270 --> q269
@@ -656,7 +656,7 @@ flowchart TD
     q273 --> q277
     q274 --> q272
     q274 --> q273
-    q275 -->|"tok(Keyword_Semicolon)"| q276
+    q275 -->|"tok(&quot;;&quot;)"| q276
     q276 --> q41
     q277 --> q275
     q277 --> q276
@@ -675,9 +675,9 @@ flowchart TD
     q282{"KeywordSelector__Basic_1 (282)<br/>Basic<br/><br/>dec=32"}
 
     q42 --> q278
-    q278 -->|"tok(Keyword_keywords)"| q279
-    q279 -->|"tok(Token_RegexLiteral)"| q282
-    q280 -->|"tok(Keyword_Semicolon)"| q281
+    q278 -->|"tok(&quot;keywords&quot;)"| q279
+    q279 -->|"tok(RegexLiteral)"| q282
+    q280 -->|"tok(&quot;;&quot;)"| q281
     q281 --> q43
     q282 --> q280
     q282 --> q281
@@ -699,7 +699,7 @@ flowchart TD
 
     q44 --> q283
     q283 -.->|"[Group]"| q289
-    q284 -->|"tok(Keyword_Pipe)"| q285
+    q284 -->|"tok(&quot;|&quot;)"| q285
     q285 -.->|"[Group]"| q286
     q286 --> q287
     q287 --> q284
@@ -766,9 +766,9 @@ flowchart TD
     q301 --> q309
     q302 -.->|"[Action]"| q303
     q303 --> q309
-    q304 -->|"tok(Keyword_LeftParen)"| q305
+    q304 -->|"tok(&quot;(&quot;)"| q305
     q305 -.->|"[Alternatives]"| q306
-    q306 -->|"tok(Keyword_RightParen)"| q307
+    q306 -->|"tok(&quot;)&quot;)"| q307
     q307 --> q309
     q308 --> q296
     q308 --> q298
@@ -776,7 +776,7 @@ flowchart TD
     q308 --> q302
     q308 --> q304
     q309 --> q312
-    q310 -->|"tok(TokenGroup_Cardinality)"| q311
+    q310 -->|"tok(Cardinality)"| q311
     q311 --> q49
     q312 --> q310
     q312 --> q311
@@ -792,7 +792,7 @@ flowchart TD
     q314["Keyword__Basic (314)<br/>Basic<br/>"]
 
     q50 --> q313
-    q313 -->|"tok(Token_StringLiteral)"| q314
+    q313 -->|"tok(StringLiteral)"| q314
     q314 --> q51
 ```
 
@@ -815,12 +815,12 @@ flowchart TD
     q325["Assignment__Basic_5 (325)<br/>Basic<br/>"]
 
     q52 --> q315
-    q315 -->|"tok(Token_ID)"| q322
-    q316 -->|"tok(Keyword_PlusEquals)"| q317
+    q315 -->|"tok(ID)"| q322
+    q316 -->|"tok(&quot;+=&quot;)"| q317
     q317 --> q323
-    q318 -->|"tok(Keyword_Equals)"| q319
+    q318 -->|"tok(&quot;=&quot;)"| q319
     q319 --> q323
-    q320 -->|"tok(Keyword_QuestionEquals)"| q321
+    q320 -->|"tok(&quot;?=&quot;)"| q321
     q321 --> q323
     q322 --> q316
     q322 --> q318
@@ -856,9 +856,9 @@ flowchart TD
     q329 --> q337
     q330 -.->|"[CrossRef]"| q331
     q331 --> q337
-    q332 -->|"tok(Keyword_LeftParen)"| q333
+    q332 -->|"tok(&quot;(&quot;)"| q333
     q333 -.->|"[AssignableAlternatives]"| q334
-    q334 -->|"tok(Keyword_RightParen)"| q335
+    q334 -->|"tok(&quot;)&quot;)"| q335
     q335 --> q337
     q336 --> q326
     q336 --> q328
@@ -911,7 +911,7 @@ flowchart TD
 
     q58 --> q346
     q346 -.->|"[AssignableWithoutAlts]"| q352
-    q347 -->|"tok(Keyword_Pipe)"| q348
+    q347 -->|"tok(&quot;|&quot;)"| q348
     q348 -.->|"[AssignableWithoutAlts]"| q349
     q349 --> q350
     q350 --> q347
@@ -937,14 +937,14 @@ flowchart TD
     q360["CrossRef__Basic_3 (360)<br/>Basic<br/>"]
 
     q60 --> q353
-    q353 -->|"tok(Keyword_LeftBracket)"| q354
-    q354 -->|"tok(Token_ID)"| q358
-    q355 -->|"tok(Keyword_Colon)"| q356
+    q353 -->|"tok(&quot;[&quot;)"| q354
+    q354 -->|"tok(ID)"| q358
+    q355 -->|"tok(&quot;:&quot;)"| q356
     q356 -.->|"[RuleCall]"| q357
     q357 --> q359
     q358 --> q355
     q358 --> q357
-    q359 -->|"tok(Keyword_RightBracket)"| q360
+    q359 -->|"tok(&quot;]&quot;)"| q360
     q360 --> q61
 ```
 
@@ -958,7 +958,7 @@ flowchart TD
     q362["RuleCall__Basic (362)<br/>Basic<br/>"]
 
     q62 --> q361
-    q361 -->|"tok(Token_ID)"| q362
+    q361 -->|"tok(ID)"| q362
     q362 --> q63
 ```
 
@@ -985,22 +985,22 @@ flowchart TD
     q377["Action__Basic_5 (377)<br/>Basic<br/>"]
 
     q64 --> q363
-    q363 -->|"tok(Keyword_LeftBrace)"| q364
-    q364 -->|"tok(Token_ID)"| q375
-    q365 -->|"tok(Keyword_Dot)"| q366
-    q366 -->|"tok(Token_ID)"| q371
-    q367 -->|"tok(Keyword_PlusEquals)"| q368
+    q363 -->|"tok(&quot;{&quot;)"| q364
+    q364 -->|"tok(ID)"| q375
+    q365 -->|"tok(&quot;.&quot;)"| q366
+    q366 -->|"tok(ID)"| q371
+    q367 -->|"tok(&quot;+=&quot;)"| q368
     q368 --> q372
-    q369 -->|"tok(Keyword_Equals)"| q370
+    q369 -->|"tok(&quot;=&quot;)"| q370
     q370 --> q372
     q371 --> q367
     q371 --> q369
     q372 --> q373
-    q373 -->|"tok(Keyword_current)"| q374
+    q373 -->|"tok(&quot;current&quot;)"| q374
     q374 --> q376
     q375 --> q365
     q375 --> q374
-    q376 -->|"tok(Keyword_RightBrace)"| q377
+    q376 -->|"tok(&quot;}&quot;)"| q377
     q377 --> q65
 ```
 
@@ -1019,11 +1019,11 @@ flowchart TD
     q384{"CompositeRule__Basic_2 (384)<br/>Basic<br/><br/>dec=47"}
 
     q66 --> q378
-    q378 -->|"tok(Keyword_composite)"| q379
-    q379 -->|"tok(Token_ID)"| q380
-    q380 -->|"tok(Keyword_Colon)"| q381
+    q378 -->|"tok(&quot;composite&quot;)"| q379
+    q379 -->|"tok(ID)"| q380
+    q380 -->|"tok(&quot;:&quot;)"| q381
     q381 -.->|"[CompositeAlternatives]"| q384
-    q382 -->|"tok(Keyword_Semicolon)"| q383
+    q382 -->|"tok(&quot;;&quot;)"| q383
     q383 --> q67
     q384 --> q382
     q384 --> q383
@@ -1045,7 +1045,7 @@ flowchart TD
 
     q68 --> q385
     q385 -.->|"[CompositeGroup]"| q391
-    q386 -->|"tok(Keyword_Pipe)"| q387
+    q386 -->|"tok(&quot;|&quot;)"| q387
     q387 -.->|"[CompositeGroup]"| q388
     q388 --> q389
     q389 --> q386
@@ -1104,15 +1104,15 @@ flowchart TD
     q399 --> q407
     q400 -.->|"[RuleCall]"| q401
     q401 --> q407
-    q402 -->|"tok(Keyword_LeftParen)"| q403
+    q402 -->|"tok(&quot;(&quot;)"| q403
     q403 -.->|"[CompositeAlternatives]"| q404
-    q404 -->|"tok(Keyword_RightParen)"| q405
+    q404 -->|"tok(&quot;)&quot;)"| q405
     q405 --> q407
     q406 --> q398
     q406 --> q400
     q406 --> q402
     q407 --> q410
-    q408 -->|"tok(TokenGroup_Cardinality)"| q409
+    q408 -->|"tok(Cardinality)"| q409
     q409 --> q73
     q410 --> q408
     q410 --> q409
