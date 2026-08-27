@@ -45,6 +45,11 @@ func matchRunes(id int, name string, runes string) *core.TokenType {
 
 // --- NewTokenMode: start character bucketing ---
 
+// Start characters are bucketed by rune value modulo maxChar (256),
+// so that the lexer can quickly find candidate token types.
+// Each mode has its own bucket map (depends on the used token types and
+// their registration order). We test the candidate lookup here.
+
 func TestNewTokenModeBucketsByStartChar(t *testing.T) {
 	a := literal(1, "A", "a")
 	b := literal(2, "B", "b")
