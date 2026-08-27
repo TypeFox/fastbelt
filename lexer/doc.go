@@ -41,10 +41,10 @@
 //     (maximal munch). Among equal-length matches, the first registered token
 //     type wins; generated lexers list keywords before regex token rules, so
 //     keywords take precedence when both match the same span.
-//  3. Route the match by [TokenTypeUsage.Group]: default tokens go to
+//  3. Route the match by [TokenTypeUsage.Modifier]: default tokens go to
 //     [LexerResult.Tokens], hidden tokens are dropped, comments go to
-//     [LexerResult.Comments], and other groups are collected in
-//     [LexerResult.Groups].
+//     [LexerResult.Comments], and other modifiers are collected in
+//     [LexerResult.Modifiers].
 //  4. Apply the match's mode command, if any (see below).
 //  5. If no token type matches, emit a [core.LexerError] and advance by one
 //     UTF-8 code point so lexing can continue. The active mode is unchanged.
