@@ -1549,7 +1549,7 @@ func (m *RegexpTokenContentImpl) Validate(_ context.Context, _ string, accept co
 }
 
 func checkRegExpIsValid(patternToken *core.Token, accept core.ValidationAcceptor) {
-	_, err := regexp.Compile(patternToken.Image)
+	_, err := regexp.Compile(RegexpValue(patternToken.Image))
 	if err != nil {
 		accept(core.NewDiagnostic(
 			core.SeverityError,

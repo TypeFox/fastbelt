@@ -599,6 +599,32 @@ func TestTokenModeReferenceAcrossDocuments(t *testing.T) {
 	modesDoc.AssertNoLinkingErrors()
 }
 
+func TestCrossRefsOnTokenModesAreInvalid(t *testing.T) {
+	f := test.New(t, CreateServices())
+	docs := f.ParseAll(
+		"inmemory://modes.fb", `
+			grammar Modes;
+			interface Bar { Name string }
+			Bar: Name=NAME INNER;
+			token NAME: /[A-Z]+/
+			token mode default {
+				NAME -> push(Inner)
+			}
+			token mode Inner { token INNER: /[A-Z]+/ -> pop }
+		`,
+		"inmemory://main.fb", `
+			grammar Main;
+			interface Foo { Greeting string }
+			Foo: Greeting=<|target:INNER|>;
+		`,
+	)
+	mainDoc, modesDoc := docs[1], docs[0]
+	mainDoc.ExpectDiagnostic("target").
+		WithSeverity(core.SeverityError).
+		WithMessageContaining("Could not resolve reference to 'INNER'")
+	modesDoc.AssertNoLinkingErrors()
+}
+
 func TestTokenModeReferenceResolvesWithinSameDocument(t *testing.T) {
 	f := test.New(t, CreateServices())
 	// The counterpart to the cross-document case: a mode declared next to the
