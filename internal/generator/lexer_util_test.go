@@ -243,3 +243,26 @@ func TestPopulateTokenModes_ShouldHandleTopLevelTokenGroupProperlyInTokenMode(t 
 	assert.Equal(t, "pop", keywordUsage2.Command.Type())
 	assert.Nil(t, keywordUsage2.Command.Mode())
 }
+
+func TestPopulateTokenTypes_ShouldWorkThanksToTopologicalSort(t *testing.T) {
+	f := test.New(t, grammar.CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Model {
+			Greeting string	
+		}
+		Model: Greeting=Outer
+		token group Outer { Inner }
+		token group Inner { "word" }
+	`).AssertNoErrors()
+	grammr, ok := doc.Document.Root.(grammar.Grammar)
+	require.True(t, ok)
+	tokenTypes := GenerateTokenTypes(grammr)
+	populateTokenTypes(&tokenTypes)
+	topLevelTokenGroups := grammr.TokenGroups()
+	outerGroup := topLevelTokenGroups[0]
+	innerGroup := topLevelTokenGroups[1]
+
+	assert.EqualValues(t, []int{1}, tokenTypes.TokenIndex.ByTokenGroupParent[outerGroup])
+	assert.EqualValues(t, []int{1}, tokenTypes.TokenIndex.ByTokenGroupParent[innerGroup])
+}

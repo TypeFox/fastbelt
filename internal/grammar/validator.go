@@ -516,7 +516,7 @@ outerLoop:
 			// rule may be registered with the lexer by hand-written code, and a
 			// grammar that leaves one out still generates and builds.
 			accept(core.NewDiagnostic(
-				core.SeverityError,
+				core.SeverityWarning,
 				fmt.Sprintf("The token '%s' is not registered in any token mode, so the lexer can never produce it. List it in a token mode.", rule.Name()),
 				rule,
 				core.WithToken(rule.NameToken()),

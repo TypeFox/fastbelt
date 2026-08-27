@@ -1424,7 +1424,7 @@ func TestTokenNotInAnyTokenMode(t *testing.T) {
 		}
 	`)
 	diag := doc.ExpectDiagnostic("1")
-	diag.WithSeverity(core.SeverityError)
+	diag.WithSeverity(core.SeverityWarning)
 	diag.WithCode(ValidateTokenNotInTokenMode)
 	diag.WithMessageContaining("'NAME'")
 }
@@ -1474,7 +1474,7 @@ func TestTokenGroupNotInAnyTokenModeAndMembersWereNotConsumed(t *testing.T) {
 	// The group's members are registered, the group has its own token id.
 	// It is also not reachable because none of its members is used in a parser rule.
 	diag := doc.ExpectDiagnostic("1")
-	diag.WithSeverity(core.SeverityError)
+	diag.WithSeverity(core.SeverityWarning)
 	diag.WithCode(ValidateTokenNotInTokenMode)
 }
 
@@ -1518,7 +1518,7 @@ func TestTokenInCrossRefNotInAnyTokenMode(t *testing.T) {
 		}
 	`)
 	diag := doc.ExpectDiagnostic("1")
-	diag.WithSeverity(core.SeverityError)
+	diag.WithSeverity(core.SeverityWarning)
 	diag.WithCode(ValidateTokenNotInTokenMode)
 }
 
@@ -1540,7 +1540,7 @@ func TestTokenInCompositeRuleNotInAnyTokenMode(t *testing.T) {
 		}
 	`)
 	diag := doc.ExpectDiagnostic("1")
-	diag.WithSeverity(core.SeverityError)
+	diag.WithSeverity(core.SeverityWarning)
 	diag.WithCode(ValidateTokenNotInTokenMode)
 }
 
@@ -1663,7 +1663,7 @@ func TestTokenNotUsedInTokenMode(t *testing.T) {
 		token mode default { "hello" }
 	`)
 	diag1 := doc.ExpectDiagnostic("1")
-	diag1.WithSeverity(core.SeverityError)
+	diag1.WithSeverity(core.SeverityWarning)
 	diag1.WithCode(ValidateTokenNotInTokenMode)
 }
 

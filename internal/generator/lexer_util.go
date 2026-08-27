@@ -366,7 +366,8 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 		tokenGroupMembers[tokenGroup.Name()] = getAllTokenGroupMembers(tokenGroup, keywords)
 	}
 	// Token groups need to be topologically sorted, so that nested groups appear after their members
-	for _, tokenGroup := range sortTokenGroups(tokenGroups.All, tokenGroupMembers) {
+	sortedTokenGroups := sortTokenGroups(tokenGroups.All, tokenGroupMembers)
+	for _, tokenGroup := range sortedTokenGroups {
 		lexerResult := generateTokenGroupType(tokenGroup, tokenGroupMembers, tokenIndex)
 		mergeImports(result.Imports, lexerResult.Imports)
 		tokenType := TokenType{
@@ -381,7 +382,7 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 		result.TokenIndex.SourceType[tokenIndex] = SourceGroup
 		tokenIndex++
 	}
-	result.TokenIndex.ByTokenGroupParent = getAllTokenGroupMemberTokenIndices(tokenGroups.All, keywords, result.TokenIndex)
+	result.TokenIndex.ByTokenGroupParent = getAllTokenGroupMemberTokenIndices(sortedTokenGroups, keywords, result.TokenIndex)
 }
 
 func mergeImports(target map[string]bool, source map[string]bool) {
