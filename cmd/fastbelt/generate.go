@@ -14,7 +14,7 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/internal/generator"
-	"typefox.dev/fastbelt/internal/grammar"
+	grammarPkg "typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
@@ -54,7 +54,7 @@ func runGenerateCLI(opts generateOptions) error {
 		return err
 	}
 
-	sc := grammar.CreateServices()
+	sc := grammarPkg.CreateServices()
 	file, _ := textdoc.NewFile(lsp.URIFromPath(grammarPath), "fb", 0, string(grammarText))
 
 	document := core.NewDocument(file)
@@ -97,17 +97,17 @@ func runGenerateCLI(opts generateOptions) error {
 		return fmt.Errorf("aborting code generation due to %d errors", errCount)
 	}
 
-	gram, ok := document.Root.(grammar.Grammar)
+	grammar, ok := document.Root.(grammarPkg.Grammar)
 	if !ok {
 		return fmt.Errorf("parser result is not a Grammar")
 	}
-	entryRule, err := validateEntryRule(gram)
+	entryRule, err := validateEntryRule(grammar)
 	if err != nil {
 		return err
 	}
 	// Desugar infix rules once, so every generator below sees the synthesized
 	// operator token groups and flat rule bodies.
-	if err := grammar.ExpandInfixRules(gram); err != nil {
+	if err := grammarPkg.ExpandInfixRules(grammar); err != nil {
 		return err
 	}
 
@@ -122,46 +122,46 @@ func runGenerateCLI(opts generateOptions) error {
 	}
 
 	if err := writeFile("linker", filepath.Join(outputPath, "linker_gen.go"),
-		generator.GenerateLinker(gram, packageName)); err != nil {
+		generator.GenerateLinker(grammar, packageName)); err != nil {
 		return err
 	}
 	if err := writeFile("types", filepath.Join(outputPath, "types_gen.go"),
-		generator.GenerateTypes(gram, packageName)); err != nil {
+		generator.GenerateTypes(grammar, packageName)); err != nil {
 		return err
 	}
-	tokenTypes := generator.GenerateTokenTypes(gram)
-	atnData := generator.BuildParserATNData(gram, tokenTypes)
+	tokenTypes := generator.GenerateTokenTypes(grammar)
+	atnData := generator.BuildParserATNData(grammar, tokenTypes)
 	if err := writeFile("parser", filepath.Join(outputPath, "parser_gen.go"),
-		generator.GenerateParser(gram, entryRule, packageName, tokenTypes, atnData)); err != nil {
+		generator.GenerateParser(grammar, entryRule, packageName, tokenTypes, atnData)); err != nil {
 		return err
 	}
 	if err := writeFile("completion-parser", filepath.Join(outputPath, "completion_parser_gen.go"),
-		generator.GenerateCompletionParser(gram, entryRule, packageName, tokenTypes, atnData)); err != nil {
+		generator.GenerateCompletionParser(grammar, entryRule, packageName, tokenTypes, atnData)); err != nil {
 		return err
 	}
 	if err := writeFile("parser-lookahead", filepath.Join(outputPath, "parser_lookahead_gen.go"),
-		generator.GenerateParserLookahead(gram, packageName, tokenTypes, atnData)); err != nil {
+		generator.GenerateParserLookahead(grammar, packageName, tokenTypes, atnData)); err != nil {
 		return err
 	}
 	if err := writeFile("completion", filepath.Join(outputPath, "completion_gen.go"),
-		generator.GenerateCompletion(gram, packageName)); err != nil {
+		generator.GenerateCompletion(grammar, packageName)); err != nil {
 		return err
 	}
 	if err := writeFile("lexer", filepath.Join(outputPath, "lexer_gen.go"),
-		generator.GenerateLexer(gram, packageName, tokenTypes)); err != nil {
+		generator.GenerateLexer(grammar, packageName, tokenTypes)); err != nil {
 		return err
 	}
 	if err := writeFile("services", filepath.Join(outputPath, "services_gen.go"),
-		generator.GenerateServices(gram, packageName)); err != nil {
+		generator.GenerateServices(grammar, packageName)); err != nil {
 		return err
 	}
 	if err := writeFile("atn", filepath.Join(outputPath, "atn_gen.go"),
-		generator.GenerateATN(gram, packageName, tokenTypes)); err != nil {
+		generator.GenerateATN(grammar, packageName, tokenTypes)); err != nil {
 		return err
 	}
 	if opts.atn {
 		if err := writeFile("atn-md", filepath.Join(outputPath, "atn.md"),
-			generator.GenerateATNMarkdown(gram, packageName, tokenTypes)); err != nil {
+			generator.GenerateATNMarkdown(grammar, packageName, tokenTypes)); err != nil {
 			return err
 		}
 	}
@@ -169,8 +169,8 @@ func runGenerateCLI(opts generateOptions) error {
 	return nil
 }
 
-func validateEntryRule(g grammar.Grammar) (grammar.ParserRule, error) {
-	var entries []grammar.ParserRule
+func validateEntryRule(g grammarPkg.Grammar) (grammarPkg.ParserRule, error) {
+	var entries []grammarPkg.ParserRule
 	for _, rule := range g.Rules() {
 		if rule.IsEntry() {
 			entries = append(entries, rule)

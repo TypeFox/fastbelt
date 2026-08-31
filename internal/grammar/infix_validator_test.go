@@ -90,9 +90,7 @@ func TestInfixRuleIncompatibleReturnType(t *testing.T) {
 		PrimaryExpression returns Expression: Value=ID
 		infix <|1:BinaryExpression|> on PrimaryExpression returns Other: "+"
 	` + commonTokens)
-	diag := doc.ExpectDiagnostic("1")
-	diag.WithSeverity(core.SeverityError)
-	diag.WithCode(ValidateInfixReturnType)
+	doc.ExpectDiagnostic("1").WithSeverity(core.SeverityError).WithCode(ValidateInfixReturnType)
 }
 
 func TestInfixRuleDuplicateOperator(t *testing.T) {

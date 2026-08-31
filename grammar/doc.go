@@ -368,23 +368,24 @@
 //	          | Expression "*" Expression
 //	          | PrimaryExpression
 //
-// In this example, the "*" operator binds tighter than "+", so "a + b * c" parses
-// as "a + (b * c)". This however, only works in parser generators that support left
-// recursion. Since Fastbelt does not support left recursion, the grammar would have
+// In this example, the "*" operator is supposed to bind tighter than "+", so "a + b * c"
+// parses as "a + (b * c)". This however, only works in parser generators that support
+// left recursion. Since Fastbelt does not support left recursion, the grammar would have
 // to be rewritten to avoid it:
 //
 //	Expression: Addition
 //	Addition: Multiplication ("+" Multiplication)*
 //	Multiplication: PrimaryExpression ("*" PrimaryExpression)*
+//	PrimaryExpression: INT | "(" Expression ")"
 //
 // This approach works, but it is verbose and requires a separate rule for each precedence
 // level. Fastbelt offers a more concise and efficient solution via infix rules:
 //
 //	interface Expression {}
 //	interface BinaryExpression extends Expression {
-//	    Left Expression
-//	    Operator string
-//	    Right Expression
+//		Left Expression
+//		Operator string
+//		Right Expression
 //	}
 //
 //	Expression: BinaryExpression
@@ -396,10 +397,10 @@
 //	    > "+" | "-"
 //
 // The rule name must resolve to an interface declaring the fields Left,
-// Right (of an interface type both the rule's return type and node type are
-// assignable to), and Operator (of type string). The rule after "on" is the
-// operand rule, parsed between operators. Precedence groups are separated by
-// ">" and ordered tightest-binding first: in the example, "%" binds tightest
+// Right (of an interface type both the rule's return type and operand rule's
+// type are assignable to), and Operator (of type string). The rule after "on"
+// is the operand rule, parsed between operators. Precedence groups are separated
+// by ">" and ordered tightest-binding first: in the example, "%" binds tightest
 // and "+" | "-" bind loosest, so "1 + 2 * 3" parses as "1 + (2 * 3)".
 //
 // Groups are left-associative by default. Meaning that an expression like
@@ -415,8 +416,8 @@
 //	    > "+" | "-"
 //
 // The return type of an infix rule defaults to the operand rule's return
-// type; "returns" overrides it. A lone operand is returned unchanged - no
-// binary node is wrapped around it.
+// type; an additional "returns" clause overrides it. A lone operand is returned
+// unchanged - no binary node is wrapped around it.
 //
 // For parsing, all operators of an infix rule are unified into a generated
 // token group named "<RuleName>Operator" for performance reasons.
