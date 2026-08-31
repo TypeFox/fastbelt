@@ -97,6 +97,9 @@ func NewDefaultCompletionContributor() CompletionContributor {
 	return &DefaultCompletionContributor{}
 }
 
+// Ensure DefaultCompletionContributor implements CompletionContributor.
+var _ CompletionContributor = (*DefaultCompletionContributor)(nil)
+
 // CompletionForToken emits a default item only for keyword tokens that contains a letter or digit.
 // This prevents trivial punctuation tokens from appearing in the default completion list.
 func (*DefaultCompletionContributor) CompletionForToken(_ context.Context, tt *core.TokenType, _ int, _ ContributorContext, accept CompletionAcceptor) {

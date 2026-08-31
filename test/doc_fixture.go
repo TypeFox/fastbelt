@@ -193,8 +193,8 @@ func (d *Doc) AssertNoDiagnostics() *Doc {
 // AssertState fails the test unless the document state includes the given flag.
 func (d *Doc) AssertState(flag core.DocumentState) *Doc {
 	d.fixture.t.Helper()
-	if !d.Document.State.Has(flag) {
-		d.fixture.t.Errorf("fbtest: document state does not include %v (actual: %v)", flag, d.Document.State)
+	if !d.Document.State().Has(flag) {
+		d.fixture.t.Errorf("fbtest: document state does not include %v (actual: %v)", flag, d.Document.State())
 	}
 	return d
 }

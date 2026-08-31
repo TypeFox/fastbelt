@@ -66,6 +66,15 @@ type DefaultFoldingRangeProvider struct {
 	filter FoldingRangeFilter
 }
 
+// Ensure DefaultFoldingRangeProvider implements the expected interfaces.
+var _ FoldingRangeProvider = (*DefaultFoldingRangeProvider)(nil)
+var _ DocumentStateRequirements = (*DefaultFoldingRangeProvider)(nil)
+
+// RequiredState indicates that the default folding range provider requires the document to be parsed.
+func (p *DefaultFoldingRangeProvider) RequiredState() (core.DocumentState, bool) {
+	return core.DocStateParsed, false
+}
+
 func NewDefaultFoldingRangeProvider(sc *service.Container) FoldingRangeProvider {
 	return &DefaultFoldingRangeProvider{
 		sc:     sc,

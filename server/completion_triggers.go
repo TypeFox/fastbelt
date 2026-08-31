@@ -18,6 +18,9 @@ type CompletionTriggers interface {
 // DefaultCompletionTriggers returns nil - no auto-open characters.
 type DefaultCompletionTriggers struct{}
 
+// Ensure DefaultCompletionTriggers implements CompletionTriggers.
+var _ CompletionTriggers = (*DefaultCompletionTriggers)(nil)
+
 // NewDefaultCompletionTriggers returns the no-op trigger set.
 func NewDefaultCompletionTriggers() CompletionTriggers {
 	return &DefaultCompletionTriggers{}

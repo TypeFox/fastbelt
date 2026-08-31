@@ -22,6 +22,16 @@ type DefaultRenameProvider struct {
 	sc *service.Container
 }
 
+// Ensure DefaultRenameProvider implements the expected interfaces.
+var _ RenameProvider = (*DefaultRenameProvider)(nil)
+var _ DocumentStateRequirements = (*DefaultRenameProvider)(nil)
+
+// RequiredState indicates that the default rename provider requires the workspace
+// to have reference information collected.
+func (rp *DefaultRenameProvider) RequiredState() (core.DocumentState, bool) {
+	return core.DocStateReferences, true
+}
+
 func NewDefaultRenameProvider(sc *service.Container) RenameProvider {
 	return &DefaultRenameProvider{sc: sc}
 }
