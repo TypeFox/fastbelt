@@ -28,6 +28,17 @@ func (f *FieldImpl) SymbolKind() lsp.SymbolKind {
 	return lsp.Property
 }
 
-func (t *TokenImpl) SymbolKind() lsp.SymbolKind {
+func (t *TokenDeclImpl) SymbolKind() lsp.SymbolKind {
 	return lsp.Constant
+}
+
+// A token group is a named set of token constants.
+func (t *TokenGroupImpl) SymbolKind() lsp.SymbolKind {
+	return lsp.Enum
+}
+
+// A token mode is a named scope holding the tokens the lexer recognizes while
+// the mode is active.
+func (t *TokenModeImpl) SymbolKind() lsp.SymbolKind {
+	return lsp.Namespace
 }

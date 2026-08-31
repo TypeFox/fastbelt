@@ -29,7 +29,7 @@ type parserATNData struct {
 	loopAdaptive      map[core.AstNode]int                      // grammar.Element -> ALL(*) decision index
 	orDecision        map[grammar.Element]*internalATN.ATNState // grammar.Alternatives -> alternative-choice state
 	loopDecision      map[grammar.Element]*internalATN.ATNState // grammar.Element -> cardinality-guard state
-	tokenVarNames     []string                                  // ATN token id (0-based) -> generated token var name
+	tokenVarNames     []string                                  // ATN token id (TokenIndex) -> generated token var name
 }
 
 // BuildParserATNData builds the ATN and all derived name/decision maps used by
@@ -37,7 +37,7 @@ type parserATNData struct {
 // GenerateParser, GenerateCompletionParser, and GenerateParserLookahead.
 // Returns nil when the ATN cannot be built (invalid grammar).
 func BuildParserATNData(grammr grammar.Grammar, tokenTypes GenerateTokenTypesResult) *parserATNData {
-	builtATN, _ := internalATN.CreateATN(grammr, tokenTypes.TokenTypeIds)
+	builtATN, _ := internalATN.CreateATN(grammr, tokenTypes.TokenTypeIds())
 	if builtATN == nil {
 		return nil
 	}
@@ -54,7 +54,7 @@ func BuildParserATNData(grammr grammar.Grammar, tokenTypes GenerateTokenTypesRes
 		loopAdaptive:      loopAdaptive,
 		orDecision:        builtATN.OrDecision,
 		loopDecision:      builtATN.LoopDecision,
-		tokenVarNames:     tokenTypes.TokenTypeVarNames,
+		tokenVarNames:     tokenTypes.TokenTypeVarNamesByTokenIndex(),
 	}
 }
 
@@ -317,7 +317,7 @@ func GenerateParserLookahead(grammr grammar.Grammar, packageName string, tokenTy
 
 	// Build the maps once; generateLL1Lookahead needs them per table.
 	varNameToId := buildVarNameToId(tokenTypes)
-	groupMembers := buildGroupVarNameToMembers(grammr)
+	groupMembers := buildGroupVarNameToMembers(grammr, tokenTypes.Keywords)
 
 	node := NewRootNode()
 	node.AppendLine("package ", packageName)
@@ -439,6 +439,13 @@ func generateLookaheadMethods(context *ParserGeneratorContext) []lookaheadMethod
 	groupNames := make(map[string]bool)
 	for _, tg := range context.grammar.TokenGroups() {
 		groupNames[GeneratedTokenName(tg)] = true
+	}
+	for _, tm := range context.grammar.TokenModes() {
+		for _, member := range tm.Members() {
+			if tgu, ok := member.(grammar.TokenGroupUsage); ok {
+				groupNames[GeneratedTokenName(tgu.Group())] = true
+			}
+		}
 	}
 
 	for el, lv := range context.lookaheads {
@@ -1541,19 +1548,29 @@ func (d *parserATNData) firstSetOption(state *internalATN.ATNState) []string {
 }
 
 func buildVarNameToId(tokenTypes GenerateTokenTypesResult) map[string]int {
-	varNameToId := make(map[string]int, len(tokenTypes.TokenTypeVarNames))
-	for i, varName := range tokenTypes.TokenTypeVarNames {
-		varNameToId[varName] = i + 1 // token IDs start at 1
+	varNameToId := make(map[string]int, len(tokenTypes.TokenTypes.All))
+	for _, tokenType := range tokenTypes.TokenTypes.All {
+		// Use the runtime token id (TokenIndex), matching la.TypeId at runtime.
+		// Keyword-backed tokens alias their keyword and share its id.
+		varNameToId[tokenType.VarName] = tokenType.TokenIndex
 	}
 	return varNameToId
 }
 
-func buildGroupVarNameToMembers(grammr grammar.Grammar) map[string][]string {
-	keywords := GetAllKeywords(grammr)
+func buildGroupVarNameToMembers(grammr grammar.Grammar, keywords GetAllKeywordsResult) map[string][]string {
 	groups := make(map[string][]string)
 	for _, tg := range grammr.TokenGroups() {
 		varName := GeneratedTokenName(tg)
 		groups[varName] = getAllTokenGroupMembers(tg, keywords)
+	}
+	for _, tm := range grammr.TokenModes() {
+		for _, member := range tm.Members() {
+			if tgu, ok := member.(grammar.TokenGroupUsage); ok {
+				tg := tgu.Group()
+				varName := GeneratedTokenName(tg)
+				groups[varName] = getAllTokenGroupMembers(tg, keywords)
+			}
+		}
 	}
 	return groups
 }
@@ -1579,7 +1596,14 @@ func getLeafIdsForVarName(varName string, varNameToId map[string]int, groupMembe
 }
 
 func generateLL1Lookahead(node codegen.Node, name string, lookahead LL1Decision, varNameToId map[string]int, groupMembers map[string][]string) {
-	maxId := len(varNameToId) // IDs are 1..N
+	// Token ids may be sparse (keyword-backed tokens alias their keyword), so
+	// size the lookup by the largest id rather than the number of var names.
+	maxId := 0
+	for _, id := range varNameToId {
+		if id > maxId {
+			maxId = id
+		}
+	}
 	lookup := make([]int, maxId+1)
 	for i := range lookup {
 		lookup[i] = -1

@@ -4,16 +4,18 @@ interface Grammar {
     Name        string
     Rules       []ParserRule
     Composites  []CompositeRule
-    Terminals   []Token
+    Terminals   []TokenDecl
     TokenGroups []TokenGroup
+    TokenModes  []TokenMode
     Interfaces  []Interface
 }
 
 entry Grammar: "grammar" Name=ID ";"?
     (
         Rules+=ParserRule
-        | Terminals+=Token
+        | Terminals+=TokenDecl
         | TokenGroups+=TokenGroup
+        | TokenModes+=TokenMode
         | Interfaces+=Interface
         | Composites+=CompositeRule
     )*
@@ -72,8 +74,11 @@ interface AbstractRuleWithBody extends AbstractRule {
     Body Element
 }
 
-// Base type for Token and TokenGroup
-interface AbstractTokenRule extends AbstractRule{}
+// Base type for TokenDecl and TokenGroup
+interface AbstractTokenRule extends AbstractRule {
+    Modifier string
+    Command  TokenCommand
+}
 
 interface ParserRule extends AbstractRuleWithBody {
     Entry      bool
@@ -82,22 +87,97 @@ interface ParserRule extends AbstractRuleWithBody {
 
 ParserRule: (Entry?="entry")? Name=ID ("returns" ReturnType=[Interface:ID])? ":" Body=Alternatives ";"?
 
-interface Token extends AbstractTokenRule {
-    Type   string
+interface TokenDecl extends AbstractTokenRule {
+    Content TokenContent
+}
+
+TokenDecl: Modifier=TokenModifier? "token" Name=ID ":" Content=TokenContent Command=TokenCommand? ";"?
+
+interface TokenContent {}
+
+TokenContent: RegexpTokenContent | KeywordTokenContent
+
+interface RegexpTokenContent extends TokenContent {
     Regexp string
 }
 
-Token: (Type="hidden" | Type="comment")? "token" Name=ID ":" Regexp=RegexLiteral ";"?
+RegexpTokenContent: Regexp=RegexLiteral
 
-interface TokenGroup extends AbstractTokenRule {
-    TokenRefs []*AbstractTokenRule
-    Regexps   []string
-    Keywords  []Keyword
+interface KeywordTokenContent extends TokenContent {
+    Keyword Keyword
 }
 
-TokenGroup: "token" "group" Name=ID "{"
-    (TokenRefs+=[AbstractTokenRule:ID] | "keywords" Regexps+=RegexLiteral | Keywords+=Keyword)*
+KeywordTokenContent: Keyword=Keyword
+
+interface TokenCommand {
+    Type    string
+    Mode    *TokenMode
+    Default bool
+}
+
+TokenCommand:  "->" Type=("push"|"pop"|"mode") ("(" (Mode=[TokenMode:ID] | Default?="default") ")")?;
+
+interface TokenGroup extends AbstractTokenRule {
+    TokenRefs        []*AbstractTokenRule
+    Keywords         []Keyword
+    KeywordSelectors []string
+}
+
+TokenGroup: Modifier=TokenModifier? "token" "group" Name=ID "{"
+    (
+        TokenRefs+=[AbstractTokenRule:ID]
+        | Keywords+=Keyword
+        | "keywords" KeywordSelectors+=RegexLiteral
+    )*
+"}" Command=TokenCommand? ";"?
+
+interface TokenMode {
+    Name    string
+    Default bool
+    Members []TokenModeMember
+}
+
+TokenMode: "token" "mode" (Name=ID | Default?="default") "{"
+    Members+=TokenModeMember*
 "}"
+
+interface TokenModeMember {}
+
+TokenModeMember: TokenDeclUsage | TokenGroupUsage | TokenUsage | KeywordUsage | KeywordSelector
+
+interface TokenDeclUsage extends TokenModeMember {
+    Declaration TokenDecl
+}
+
+TokenDeclUsage: Declaration=TokenDecl
+
+interface TokenGroupUsage extends TokenModeMember {
+    Group TokenGroup
+}
+
+TokenGroupUsage: Group=TokenGroup
+
+interface TokenUsage extends TokenModeMember {
+    Modifier string
+    TokenRef *AbstractTokenRule
+    Command  TokenCommand
+}
+
+TokenUsage: Modifier=TokenModifier? TokenRef=[AbstractTokenRule:ID] Command=TokenCommand? ";"?
+
+interface KeywordUsage extends TokenModeMember {
+    Modifier string
+    Keyword  Keyword
+    Command  TokenCommand  
+}
+
+KeywordUsage: Modifier=TokenModifier? Keyword=Keyword Command=TokenCommand? ";"?
+
+interface KeywordSelector extends TokenModeMember {
+    Selector string
+}
+
+KeywordSelector: "keywords" Selector=RegexLiteral ";"?
 
 interface Element {
     Cardinality string
@@ -115,7 +195,7 @@ interface Group extends Element {
 
 Group returns Element: Element ({Group.Elements+=current} Elements+=Element+)?
 
-Element: (Keyword | Assignment | RuleCall | Action | "(" Alternatives ")") Cardinality=("*" | "+" | "?")?
+Element: (Keyword | Assignment | RuleCall | Action | "(" Alternatives ")") Cardinality=Cardinality?
 
 interface Keyword extends Assignable {
     Value string
@@ -169,7 +249,18 @@ CompositeAlternatives returns Element: CompositeGroup ({Alternatives.Alts+=curre
 
 CompositeGroup returns Element: CompositeElement ({Group.Elements+=current} Elements+=CompositeElement+)?
 
-CompositeElement returns Element: (Keyword | RuleCall | "(" CompositeAlternatives ")") Cardinality=("*" | "+" | "?")?
+CompositeElement returns Element: (Keyword | RuleCall | "(" CompositeAlternatives ")") Cardinality=Cardinality?
+
+token group Cardinality {
+    "*"
+    "+"
+    "?"
+}
+
+token group TokenModifier {
+    "hidden"
+    "comment"
+} 
 
 // Move comments in front of RegexLiteral
 comment token SL_COMMENT: /\/\/[^\r\n]*/

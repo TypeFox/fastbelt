@@ -53,7 +53,7 @@ func collectElementNames(names map[grammar.Element]string, prefix string, node f
 		collectElementNames(names, prefix, n.Rule())
 	case grammar.RuleCall:
 		ruleRef := n.Rule().Ref(context.Background())
-		if token, ok := ruleRef.(grammar.Token); ok {
+		if token, ok := ruleRef.(grammar.TokenDecl); ok {
 			names[n] = prefix + "_" + token.Name()
 		}
 	}

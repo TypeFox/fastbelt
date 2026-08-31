@@ -90,7 +90,7 @@ func (p *CompletionParser) ParseA() {
 	}
 	{
 		p.cp.MarkAssignment("Value")
-		p.state.Consume(Token_Identifier)
+		p.state.Consume(TokenGroup_Identifier)
 		p.cp.ClearAssignment()
 	}
 }
@@ -105,7 +105,7 @@ func (p *CompletionParser) ParseB() {
 		p.cp.MarkAssignment("Value")
 		switch prediction, _ := p.lookahead.BValueAlternatives(p.state); prediction {
 		case 0:
-			p.state.Consume(Token_Identifier)
+			p.state.Consume(TokenGroup_Identifier)
 		case 1:
 			p.state.Consume(Keyword_b)
 		}
@@ -121,7 +121,7 @@ func (p *CompletionParser) ParseC() {
 	}
 	{
 		p.cp.MarkAssignment("Value")
-		p.state.Consume(Token_NestedIdentifier)
+		p.state.Consume(TokenGroup_NestedIdentifier)
 		p.cp.ClearAssignment()
 	}
 }
@@ -137,7 +137,7 @@ func (p *CompletionParser) ParseD() {
 		p.state.Sync(D__Basic_2)
 		if p.lookahead.DValueOptional(p.state) {
 			p.cp.MarkAssignment("Value")
-			p.state.Consume(Token_Identifier)
+			p.state.Consume(TokenGroup_Identifier)
 			p.cp.ClearAssignment()
 		}
 	}
@@ -151,12 +151,12 @@ func (p *CompletionParser) ParseE() {
 	}
 	{
 		p.cp.MarkAssignment("First")
-		p.state.Consume(Token_Identifier)
+		p.state.Consume(TokenGroup_Identifier)
 		p.cp.ClearAssignment()
 	}
 	{
 		p.cp.MarkAssignment("Second")
-		p.state.Consume(Token_NestedIdentifier)
+		p.state.Consume(TokenGroup_NestedIdentifier)
 		p.cp.ClearAssignment()
 	}
 }
@@ -169,7 +169,7 @@ func (p *CompletionParser) ParseF() {
 	}
 	{
 		p.cp.MarkAssignment("Value")
-		p.state.Consume(Token_KeywordGroup)
+		p.state.Consume(TokenGroup_KeywordGroup)
 		p.cp.ClearAssignment()
 	}
 }
@@ -182,7 +182,7 @@ func (p *CompletionParser) ParseG() {
 	}
 	{
 		p.cp.MarkAssignment("Value")
-		p.state.Consume(Token_RegexGroup)
+		p.state.Consume(TokenGroup_RegexGroup)
 		p.cp.ClearAssignment()
 	}
 }
@@ -196,7 +196,7 @@ func (p *CompletionParser) ParseH() {
 	switch prediction, failure := p.lookahead.HAlternatives(p.state); prediction {
 	case 0:
 		{
-			p.state.Consume(Token_Identifier)
+			p.state.Consume(TokenGroup_Identifier)
 		}
 		{
 			p.cp.MarkAssignment("Value")
@@ -205,7 +205,7 @@ func (p *CompletionParser) ParseH() {
 		}
 	case 1:
 		{
-			p.state.Consume(Token_Identifier)
+			p.state.Consume(TokenGroup_Identifier)
 		}
 		{
 			p.cp.MarkAssignment("Value")

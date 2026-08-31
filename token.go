@@ -6,14 +6,14 @@ package fastbelt
 
 import "typefox.dev/fastbelt/util/collections"
 
-// SkippedGroup marks token types that the lexer should drop from all output streams.
-const SkippedGroup = -1
+// SkippedModifier marks token types that the lexer should drop from all output streams.
+const SkippedModifier = -1
 
-// CommentGroup marks token types that the lexer should collect in Document.Comments.
-const CommentGroup = -2
+// CommentModifier marks token types that the lexer should collect in Document.Comments.
+const CommentModifier = -2
 
 // TokenKind names the grammar construct that produced a TokenType. It is
-// distinct from Group: Group controls lexer-stream behaviour (skipped /
+// distinct from Modifier: Modifier controls lexer-stream behaviour (skipped /
 // comment), while Kind describes the grammar origin and is consumed by
 // downstream features such as the completion engine, which by default
 // only surfaces keyword-kind tokens as completion candidates.
@@ -23,7 +23,7 @@ const (
 	// TokenKindToken is the default - a TokenType produced by a named
 	// `token` rule in the .fb grammar (regex-matched). Hidden and comment
 	// tokens are also TokenKindToken; their stream behaviour is encoded
-	// separately in Group.
+	// separately in Modifier.
 	TokenKindToken TokenKind = 0
 	// TokenKindKeyword is a TokenType produced by a literal string in a
 	// parser rule (e.g. `"statemachine"`). Matched by a string prefix.
@@ -53,14 +53,8 @@ type TokenType struct {
 	Label string
 	// StartChars contains candidate start runes used for lexer preselection.
 	StartChars []rune
-	// Group controls lexer output routing (default stream, skipped, comments, or custom groups).
-	Group int
 	// Kind records whether the token comes from a keyword literal or a token rule.
 	Kind TokenKind
-	// PushMode selects the next lexer mode after this token is matched.
-	PushMode int
-	// PopMode reports whether matching this token pops one lexer mode.
-	PopMode bool
 	// Match performs the actual token match at a given input offset.
 	Match TokenMatcher
 	// Matches returns whether the token type matches another, given type
@@ -71,22 +65,19 @@ type TokenType struct {
 }
 
 // NewTokenType creates a token type descriptor used by generated lexers and parsers.
-func NewTokenType(id int, name, label string, group int, kind TokenKind, pushMode int, popMode bool, match TokenMatcher, startChars []rune) *TokenType {
+func NewTokenType(id int, name, label string, kind TokenKind, match TokenMatcher, startChars []rune) *TokenType {
 	matching := collections.NewBitset()
 	matching.Insert(id)
 	tt := &TokenType{
 		Id:    id,
 		Name:  name,
 		Label: label,
-		Group: group,
 		Kind:  kind,
 		Match: match,
 		Matches: func(other *TokenType) bool {
 			return other.Id == id
 		},
 		bitset:     matching,
-		PushMode:   pushMode,
-		PopMode:    popMode,
 		StartChars: startChars,
 	}
 	tt.MatchingTokens = []*TokenType{tt}
@@ -133,16 +124,6 @@ func unrollMatchingTokens(matchingTypes []*TokenType) []*TokenType {
 	return unrolled
 }
 
-// IsSkipped reports whether t is routed to the skipped-token group.
-func (t *TokenType) IsSkipped() bool {
-	return t.Group == SkippedGroup
-}
-
-// IsComment reports whether t is routed to the comment-token group.
-func (t *TokenType) IsComment() bool {
-	return t.Group == CommentGroup
-}
-
 // IsKeyword reports whether t originates from a grammar keyword literal.
 func (t *TokenType) IsKeyword() bool {
 	return t.Kind == TokenKindKeyword
@@ -158,10 +139,7 @@ var EOF = NewTokenType(
 	0,
 	"EOF",
 	"EOF",
-	0,
 	TokenKindToken,
-	0,
-	false,
 	nil,
 	nil,
 )
@@ -191,11 +169,6 @@ func NewToken(tokenType *TokenType, image string, startOffset, endOffset int) To
 		Range: NewTextRange(startOffset, endOffset),
 		Kind:  0,
 	}
-}
-
-// IsSkipped reports whether t belongs to the skipped lexer group.
-func (t *Token) IsSkipped() bool {
-	return t.Type != nil && t.Type.Group == SkippedGroup
 }
 
 // IsEOF reports whether t uses the end-of-input token type.

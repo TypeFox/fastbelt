@@ -110,7 +110,7 @@ func (p *Parser) ParseA() Item {
 			core.AssignToken(current, token, A_a)
 		}
 		{
-			token := p.state.Consume(Token_Identifier)
+			token := p.state.Consume(TokenGroup_Identifier)
 			core.AssignToken(current, token, A__Basic_0)
 			if token != nil {
 				current.SetValue(token)
@@ -132,7 +132,7 @@ func (p *Parser) ParseB() Item {
 		{
 			switch prediction, _ := p.lookahead.BValueAlternatives(p.state); prediction {
 			case 0:
-				token := p.state.Consume(Token_Identifier)
+				token := p.state.Consume(TokenGroup_Identifier)
 				core.AssignToken(current, token, B__Basic_0)
 				if token != nil {
 					current.SetValue(token)
@@ -159,7 +159,7 @@ func (p *Parser) ParseC() Item {
 			core.AssignToken(current, token, C_c)
 		}
 		{
-			token := p.state.Consume(Token_NestedIdentifier)
+			token := p.state.Consume(TokenGroup_NestedIdentifier)
 			core.AssignToken(current, token, C__Basic_0)
 			if token != nil {
 				current.SetValue(token)
@@ -181,7 +181,7 @@ func (p *Parser) ParseD() Item {
 		{
 			p.state.Sync(D__Basic_2)
 			if p.lookahead.DValueOptional(p.state) {
-				token := p.state.Consume(Token_Identifier)
+				token := p.state.Consume(TokenGroup_Identifier)
 				core.AssignToken(current, token, D__Basic_0)
 				if token != nil {
 					current.SetValue(token)
@@ -202,14 +202,14 @@ func (p *Parser) ParseE() Recovery {
 			core.AssignToken(current, token, E_e)
 		}
 		{
-			token := p.state.Consume(Token_Identifier)
+			token := p.state.Consume(TokenGroup_Identifier)
 			core.AssignToken(current, token, E__Basic_0)
 			if token != nil {
 				current.SetFirst(token)
 			}
 		}
 		{
-			token := p.state.Consume(Token_NestedIdentifier)
+			token := p.state.Consume(TokenGroup_NestedIdentifier)
 			core.AssignToken(current, token, E__Basic_1)
 			if token != nil {
 				current.SetSecond(token)
@@ -229,7 +229,7 @@ func (p *Parser) ParseF() Item {
 			core.AssignToken(current, token, F_f)
 		}
 		{
-			token := p.state.Consume(Token_KeywordGroup)
+			token := p.state.Consume(TokenGroup_KeywordGroup)
 			core.AssignToken(current, token, F__Basic_0)
 			if token != nil {
 				current.SetValue(token)
@@ -249,7 +249,7 @@ func (p *Parser) ParseG() Item {
 			core.AssignToken(current, token, G_g)
 		}
 		{
-			token := p.state.Consume(Token_RegexGroup)
+			token := p.state.Consume(TokenGroup_RegexGroup)
 			core.AssignToken(current, token, G__Basic_0)
 			if token != nil {
 				current.SetValue(token)
@@ -271,7 +271,7 @@ func (p *Parser) ParseH() Item {
 		switch prediction, failure := p.lookahead.HAlternatives(p.state); prediction {
 		case 0:
 			{
-				token := p.state.Consume(Token_Identifier)
+				token := p.state.Consume(TokenGroup_Identifier)
 				core.AssignToken(current, token, H__Basic_0)
 			}
 			{
@@ -283,7 +283,7 @@ func (p *Parser) ParseH() Item {
 			}
 		case 1:
 			{
-				token := p.state.Consume(Token_Identifier)
+				token := p.state.Consume(TokenGroup_Identifier)
 				core.AssignToken(current, token, H__Basic_2)
 			}
 			{

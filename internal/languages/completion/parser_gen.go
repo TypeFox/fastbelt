@@ -169,8 +169,8 @@ func (p *Parser) ParseDeclare() Declare {
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
-			token := p.state.Consume(Keyword_declare)
-			core.AssignToken(current, token, Declare_declare)
+			token := p.state.Consume(Token_DECLARE)
+			core.AssignToken(current, token, Declare_DECLARE)
 		}
 		{
 			result := core.NewCompositeNode()
@@ -186,8 +186,8 @@ func (p *Parser) ParseDeclare() Declare {
 		p.state.Sync(Declare__Basic_4)
 		if p.lookahead.DeclareOptional(p.state) {
 			{
-				token := p.state.Consume(Keyword_LeftBrace)
-				core.AssignToken(current, token, Declare_LeftBrace)
+				token := p.state.Consume(Token_LBRACE)
+				core.AssignToken(current, token, Declare_LBRACE)
 			}
 			{
 				p.state.Sync(Declare__LoopEntry)
@@ -202,8 +202,8 @@ func (p *Parser) ParseDeclare() Declare {
 				}
 			}
 			{
-				token := p.state.Consume(Keyword_RightBrace)
-				core.AssignToken(current, token, Declare_RightBrace)
+				token := p.state.Consume(Token_RBRACE)
+				core.AssignToken(current, token, Declare_RBRACE)
 			}
 		}
 	}
@@ -220,8 +220,8 @@ func (p *Parser) ParseA() Obj {
 			core.AssignToken(current, token, A_a)
 		}
 		{
-			token := p.state.Consume(Keyword_first)
-			core.AssignToken(current, token, A_first)
+			token := p.state.Consume(Token_FIRST)
+			core.AssignToken(current, token, A_FIRST)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -239,13 +239,13 @@ func (p *Parser) ParseB() Obj {
 		switch prediction, failure := p.lookahead.BAlternatives(p.state); prediction {
 		case 0:
 			{
-				token := p.state.Consume(Keyword_first)
-				core.AssignToken(current, token, B_first)
+				token := p.state.Consume(Token_FIRST)
+				core.AssignToken(current, token, B_FIRST)
 			}
 		case 1:
 			{
-				token := p.state.Consume(Keyword_second)
-				core.AssignToken(current, token, B_second)
+				token := p.state.Consume(Token_SECOND)
+				core.AssignToken(current, token, B_SECOND)
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
@@ -266,21 +266,21 @@ func (p *Parser) ParseC() Obj {
 		switch prediction, failure := p.lookahead.CAlternatives(p.state); prediction {
 		case 0:
 			{
-				token := p.state.Consume(Keyword_common)
-				core.AssignToken(current, token, C_common_0)
+				token := p.state.Consume(Token_COMMON)
+				core.AssignToken(current, token, C_COMMON_0)
 			}
 			{
-				token := p.state.Consume(Keyword_first)
-				core.AssignToken(current, token, C_first)
+				token := p.state.Consume(Token_FIRST)
+				core.AssignToken(current, token, C_FIRST)
 			}
 		case 1:
 			{
-				token := p.state.Consume(Keyword_common)
-				core.AssignToken(current, token, C_common_1)
+				token := p.state.Consume(Token_COMMON)
+				core.AssignToken(current, token, C_COMMON_1)
 			}
 			{
-				token := p.state.Consume(Keyword_second)
-				core.AssignToken(current, token, C_second)
+				token := p.state.Consume(Token_SECOND)
+				core.AssignToken(current, token, C_SECOND)
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
@@ -352,16 +352,16 @@ func (p *Parser) ParseDLong() Obj {
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
-			token := p.state.Consume(Keyword_common)
-			core.AssignToken(current, token, DLong_common)
+			token := p.state.Consume(Token_COMMON)
+			core.AssignToken(current, token, DLong_COMMON)
 		}
 		{
-			token := p.state.Consume(Keyword_then)
-			core.AssignToken(current, token, DLong_then)
+			token := p.state.Consume(Token_THEN)
+			core.AssignToken(current, token, DLong_THEN)
 		}
 		{
-			token := p.state.Consume(Keyword_long)
-			core.AssignToken(current, token, DLong_long)
+			token := p.state.Consume(Token_LONG)
+			core.AssignToken(current, token, DLong_LONG)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -373,8 +373,8 @@ func (p *Parser) ParseDShort() Obj {
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
-			token := p.state.Consume(Keyword_common)
-			core.AssignToken(current, token, DShort_common)
+			token := p.state.Consume(Token_COMMON)
+			core.AssignToken(current, token, DShort_COMMON)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -509,8 +509,8 @@ func (p *Parser) ParseMemberCall() MemberCall {
 			}
 			current := current.(MemberCall)
 			{
-				token := p.state.Consume(Keyword_Dot)
-				core.AssignToken(current, token, MemberCall_Dot)
+				token := p.state.Consume(Token_DOT)
+				core.AssignToken(current, token, MemberCall_DOT)
 			}
 			{
 				token := p.state.Consume(Token_ID)
@@ -580,8 +580,8 @@ func (p *Parser) ParseJ() J {
 			}
 		case 1:
 			{
-				token := p.state.Consume(Keyword_self)
-				core.AssignToken(current, token, J_self)
+				token := p.state.Consume(Token_SELF)
+				core.AssignToken(current, token, J_SELF)
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
@@ -643,21 +643,21 @@ func (p *Parser) ParseL() Obj {
 		p.state.Sync(L__Basic_1)
 		if p.lookahead.LOptional(p.state) {
 			{
-				token := p.state.Consume(Keyword_optional)
-				core.AssignToken(current, token, L_optional)
+				token := p.state.Consume(Token_OPTIONAL)
+				core.AssignToken(current, token, L_OPTIONAL)
 			}
 			{
-				token := p.state.Consume(Keyword_and)
-				core.AssignToken(current, token, L_and)
+				token := p.state.Consume(Token_AND)
+				core.AssignToken(current, token, L_AND)
 			}
 		}
 		{
-			token := p.state.Consume(Keyword_then)
-			core.AssignToken(current, token, L_then)
+			token := p.state.Consume(Token_THEN)
+			core.AssignToken(current, token, L_THEN)
 		}
 		{
-			token := p.state.Consume(Keyword_end)
-			core.AssignToken(current, token, L_end)
+			token := p.state.Consume(Token_END)
+			core.AssignToken(current, token, L_END)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -673,7 +673,7 @@ func (p *Parser) ParseM() Obj {
 			core.AssignToken(current, token, M_m)
 		}
 		{
-			token := p.state.Consume(Token_SomeTokenGroup)
+			token := p.state.Consume(TokenGroup_SomeTokenGroup)
 			core.AssignToken(current, token, M__Basic_0)
 		}
 	}
@@ -690,7 +690,7 @@ func (p *Parser) ParseN() N {
 			core.AssignToken(current, token, N_n)
 		}
 		{
-			token := p.state.Consume(Token_SomeTokenGroup)
+			token := p.state.Consume(TokenGroup_SomeTokenGroup)
 			core.AssignToken(current, token, N__Basic_0)
 			if token != nil {
 				current.SetRef(p.referencesConstructor.NRef(current, token))
@@ -735,8 +735,8 @@ func (p *Parser) ParseFQN(current core.CompositeNode) {
 	p.state.Sync(FQN__LoopEntry)
 	for p.lookahead.FQNLoop(p.state) {
 		{
-			token := p.state.Consume(Keyword_Dot)
-			core.AssignToken(current, token, FQN_Dot)
+			token := p.state.Consume(Token_DOT)
+			core.AssignToken(current, token, FQN_DOT)
 		}
 		{
 			token := p.state.Consume(Token_ID)

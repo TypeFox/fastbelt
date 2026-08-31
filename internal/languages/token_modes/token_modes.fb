@@ -1,0 +1,119 @@
+grammar TokenModes
+
+interface Model {
+    Statements []Statement
+}
+
+entry Model:
+    Statements+=Statement*
+
+
+interface Statement {}
+
+Statement: VariableDecl
+
+interface VariableDecl extends Statement {
+    Name string
+    Value Expression
+}
+
+VariableDecl: Name=ID ":=" Value=Expression
+
+interface Expression {}
+
+Expression: Additive;
+
+interface BinaryExpression extends Expression {
+    Left Expression
+    Operator string
+    Right Expression
+}
+
+Additive returns Expression: Primary ({BinaryExpression.Left=current} Operator="+" Right=Primary)*
+
+interface Primary extends Expression {}
+
+Primary:
+    VariableRef
+    | NumericLiteral
+    | StringLiteral
+    | Parentheses
+
+interface Parentheses extends Primary {
+    Expr Expression
+}
+
+Parentheses: "(" Expr=Expression ")"
+
+interface VariableRef extends Primary {
+    Name *VariableDecl
+}
+
+VariableRef: Name=[VariableDecl:ID]
+
+interface NumericLiteral extends Primary {
+    Value string
+}
+
+NumericLiteral: Value=INT
+
+interface StringLiteral extends Primary {
+    Content []StringContent
+}
+
+StringLiteral: "`" Content+=StringContent* "`"
+
+interface StringContent {}
+
+StringContent: StringText | Interpolation
+
+interface StringText extends StringContent {
+    Value string
+}
+
+StringText: Value=STRING_CONTENT
+
+interface Interpolation extends StringContent {
+    Expression Expression
+}
+Interpolation: "#{" Expression=Expression "}"
+
+token ID: /[a-zA-Z_][a-zA-Z0-9_]*/
+token INT: /[0-9]+/
+token WS: /\s+/
+token SL_COMMENT: /\/\/[^\r\n]*/
+token ML_COMMENT: /\/\*[\s\S]*?\*\//
+
+token mode default {
+    ":="
+
+    "`" -> push(IN_STRING)
+    ID
+    INT
+    "+"
+    "("
+    ")"
+    hidden WS
+    comment SL_COMMENT
+    comment ML_COMMENT
+}
+
+token mode IN_STRING {
+    "`" -> pop
+    token STRING_CONTENT: /([^`#\\]|\\[`#tnr\\])+/
+    "#{" -> push(IN_INTERPOLATION)
+}
+
+token mode IN_INTERPOLATION {
+    "}" -> pop
+
+    "`" -> push(IN_STRING)
+    ID
+    INT
+    "+"
+    "("
+    ")"
+    hidden WS
+    comment SL_COMMENT
+    comment ML_COMMENT
+}

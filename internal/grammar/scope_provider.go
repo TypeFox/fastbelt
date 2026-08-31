@@ -8,6 +8,7 @@ import (
 	"context"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/util/service"
 )
 
@@ -17,6 +18,54 @@ type scopeProviderImpl struct {
 
 func newScopeProviderImpl(_ *service.Container) *scopeProviderImpl {
 	return &scopeProviderImpl{}
+}
+
+// ScopeTokenCommandMode limits the target of a `push` or `mode` command to the
+// token modes declared in the same document. Other named nodes are visible
+// across every grammar file of a folder, but token modes are not: the generated
+// lexer holds one mode table per grammar and a command's target is an index into
+// that table, so a mode declared elsewhere cannot be represented.
+func (s *scopeProviderImpl) ScopeTokenCommandMode(_ context.Context, reference *core.Reference[TokenMode]) core.Scope {
+	root, ok := reference.Owner().Document().Root.(Grammar)
+	if !ok {
+		return core.EmptyScope
+	}
+	symbols := []*core.SymbolDescription{}
+	for _, tokenMode := range root.TokenModes() {
+		// The default mode is targeted as `push(default)` rather than by name.
+		if tokenMode.NameToken() == nil {
+			continue
+		}
+		symbols = append(symbols, core.NewSymbolDescription(tokenMode, tokenMode.NameToken()))
+	}
+	return core.NewMapScopeFromSlice(symbols, nil)
+}
+
+func (s *scopeProviderImpl) ScopeRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) core.Scope {
+	root, ok := reference.Owner().Document().Root.(Grammar)
+	if !ok {
+		return core.EmptyScope
+	}
+	symbols := []*core.SymbolDescription{}
+	for _, tokenMode := range root.TokenModes() {
+		for _, member := range tokenMode.Members() {
+			if tokenDeclUsage, ok := member.(TokenDeclUsage); ok {
+				tokenDecl := tokenDeclUsage.Declaration()
+				if tokenDecl.NameToken() == nil {
+					continue
+				}
+				symbols = append(symbols, core.NewSymbolDescription(tokenDecl, tokenDecl.NameToken()))
+			} else if tokenGroupUsage, ok := member.(TokenGroupUsage); ok {
+				tokenGroup := tokenGroupUsage.Group()
+				if tokenGroup.NameToken() == nil {
+					continue
+				}
+				symbols = append(symbols, core.NewSymbolDescription(tokenGroup, tokenGroup.NameToken()))
+			}
+		}
+	}
+	outer := linking.DefaultScopeOfType[AbstractRule](reference.Owner())
+	return core.NewMapScopeFromSlice(symbols, outer)
 }
 
 func (s *scopeProviderImpl) ScopeActionProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope {

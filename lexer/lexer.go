@@ -13,21 +13,21 @@ import (
 
 // Lexer tokenizes a complete source string in one shot.
 type Lexer interface {
-	Lex(input string) *LexerResult
+	Exec(input string) *LexerResult
 }
 
-// LexerResult holds everything produced by a single [Lexer.Lex] pass over
+// LexerResult holds everything produced by a single [Lexer.Exec] pass over
 // source text.
 type LexerResult struct {
 	// Tokens is the main token stream passed to the parser.
 	Tokens []core.Token
-	// Comments holds tokens whose [core.TokenType] uses [core.CommentGroup].
+	// Comments holds tokens whose [core.TokenType] uses [core.CommentModifier].
 	Comments []core.Token
 	// Errors lists recoverable lexing problems (unrecognized input).
 	Errors []*core.LexerError
-	// Groups collects tokens routed to custom [core.TokenType.Group] values
-	// other than the default, skipped, or comment groups. Nil when empty.
-	Groups map[int][]core.Token
+	// Modifiers collects tokens routed to custom [TokenTypeUsage.Modifier] values
+	// other than the default, skipped, or comment modifiers. Nil when empty.
+	Modifiers map[int][]core.Token
 }
 
 // Allocate a new token every ~5 characters on average
@@ -38,33 +38,41 @@ const defaultTokenRatio = 1.0 / 5.0
 // functions build one from the [core.TokenType] descriptors emitted for a
 // grammar.
 type DefaultLexer struct {
-	tokenTypes []*core.TokenType
-	tokenMap   [][]*core.TokenType
+	tokenModes []*TokenMode
+	// index into tokenModes of the mode every Exec starts in
+	defaultMode int
 	// running exponential moving average of tokens-per-byte
 	avgRatio *parallel.RunningAverage
 }
 
-// Lex scans input from left to right using longest-match disambiguation among
+// Exec scans input from left to right using longest-match disambiguation among
 // token types registered at construction time.
-func (l *DefaultLexer) Lex(input string) *LexerResult {
+func (l *DefaultLexer) Exec(input string) *LexerResult {
 	length := len(input)
 	tokens := make([]core.Token, 0, l.avgRatio.Capacity(length))
 	comments := make([]core.Token, 0)
 	errors := make([]*core.LexerError, 0)
-	var groups map[int][]core.Token
+	var modifiers map[int][]core.Token
+
+	// The mode stack is local to this call: a DefaultLexer is shared between
+	// documents and Exec may run concurrently, so input that ends inside a
+	// pushed mode must not leak into the next run.
+	stack := NewTokenModeStack(l.tokenModes[l.defaultMode])
+	currentTokenMode := stack.Peek()
 
 	var offset int
-	for offset < length {
+	for offset < length && currentTokenMode != nil {
 		r, size := utf8.DecodeRuneInString(input[offset:])
 		mapIndex := int(r) % maxChar
-		candidates := l.tokenMap[mapIndex]
+		candidates := currentTokenMode.TokenMap[mapIndex]
 		longestMatch := 0
-		var longestType *core.TokenType
-		for _, tokenType := range candidates {
+		var longestType *TokenTypeUsage
+		for _, tokenTypeUsage := range candidates {
+			tokenType := tokenTypeUsage.TokenType
 			tokenMatch := tokenType.Match(input, offset)
 			if tokenMatch > longestMatch {
 				longestMatch = tokenMatch
-				longestType = tokenType
+				longestType = tokenTypeUsage
 			}
 		}
 
@@ -76,30 +84,46 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 		end := offset + longestMatch
 
 		if longestType != nil {
-			switch longestType.Group {
-			case core.SkippedGroup:
+			switch longestType.Modifier {
+			case core.SkippedModifier:
 				// do nothing
-			case core.CommentGroup:
+			case core.CommentModifier:
 				comments = append(comments, core.NewToken(
-					longestType,
+					longestType.TokenType,
 					input[offset:end],
 					offset, end,
 				))
 			case 0:
 				tokens = append(tokens, core.NewToken(
-					longestType,
+					longestType.TokenType,
 					input[offset:end],
 					offset, end,
 				))
 			default:
-				if groups == nil {
-					groups = make(map[int][]core.Token)
+				if modifiers == nil {
+					modifiers = make(map[int][]core.Token)
 				}
-				groups[longestType.Group] = append(groups[longestType.Group], core.NewToken(
-					longestType,
+				modifiers[longestType.Modifier] = append(modifiers[longestType.Modifier], core.NewToken(
+					longestType.TokenType,
 					input[offset:end],
 					offset, end,
 				))
+			}
+
+			switch {
+			case longestType.PopMode && longestType.PushMode > -1:
+				// `mode(X)` replaces the active mode without deepening the
+				// stack, so a later pop returns to whatever was below it rather
+				// than to the mode that was replaced. This mirrors ANTLR's
+				// `mode` and is intentional: only `push` can be undone by `pop`.
+				stack.SetMode(l.tokenModes[longestType.PushMode])
+				currentTokenMode = stack.Peek()
+			case longestType.PopMode:
+				stack.Pop()
+				currentTokenMode = stack.Peek()
+			case longestType.PushMode > -1:
+				stack.Push(l.tokenModes[longestType.PushMode])
+				currentTokenMode = stack.Peek()
 			}
 		} else {
 			errors = append(errors, core.NewLexerError(
@@ -117,33 +141,24 @@ func (l *DefaultLexer) Lex(input string) *LexerResult {
 	}
 
 	return &LexerResult{
-		Tokens:   tokens,
-		Comments: comments,
-		Errors:   errors,
-		Groups:   groups,
+		Tokens:    tokens,
+		Comments:  comments,
+		Errors:    errors,
+		Modifiers: modifiers,
 	}
 }
 
 const maxChar = 256
 
-// NewDefaultLexer returns a lexer that recognizes the given token types.
-// At each position the longest match wins; among equal-length matches, the
-// first argument wins.
-func NewDefaultLexer(tokenTypes ...*core.TokenType) *DefaultLexer {
-	tokenMap := make([][]*core.TokenType, maxChar)
-	for i := range maxChar {
-		tokenMap[i] = make([]*core.TokenType, 0)
+// NewDefaultLexer returns a [DefaultLexer] that starts every [DefaultLexer.Exec]
+// in tokenModes[defaultMode]. The returned lexer is safe for concurrent use.
+func NewDefaultLexer(defaultMode int, tokenModes ...*TokenMode) *DefaultLexer {
+	if defaultMode < 0 || defaultMode >= len(tokenModes) {
+		panic("lexer: default token mode index out of range")
 	}
-	for _, tokenType := range tokenTypes {
-		for _, r := range tokenType.StartChars {
-			index := int(r) % maxChar
-			tokenMap[index] = append(tokenMap[index], tokenType)
-		}
-	}
-
 	return &DefaultLexer{
-		tokenTypes: tokenTypes,
-		tokenMap:   tokenMap,
-		avgRatio:   parallel.NewRunningAverage(defaultTokenRatio),
+		tokenModes:  tokenModes,
+		defaultMode: defaultMode,
+		avgRatio:    parallel.NewRunningAverage(defaultTokenRatio),
 	}
 }

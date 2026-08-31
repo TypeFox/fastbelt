@@ -15,10 +15,7 @@ var Keyword_a = core.NewTokenType(
 	Keyword_a_Idx,
 	"a",
 	"a",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "a") {
 			return 1
@@ -34,10 +31,7 @@ var Keyword_b = core.NewTokenType(
 	Keyword_b_Idx,
 	"b",
 	"b",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "b") {
 			return 1
@@ -53,10 +47,7 @@ var Keyword_c = core.NewTokenType(
 	Keyword_c_Idx,
 	"c",
 	"c",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "c") {
 			return 1
@@ -72,10 +63,7 @@ var Keyword_d = core.NewTokenType(
 	Keyword_d_Idx,
 	"d",
 	"d",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "d") {
 			return 1
@@ -91,10 +79,7 @@ var Keyword_e = core.NewTokenType(
 	Keyword_e_Idx,
 	"e",
 	"e",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "e") {
 			return 1
@@ -110,10 +95,7 @@ var Keyword_f = core.NewTokenType(
 	Keyword_f_Idx,
 	"f",
 	"f",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "f") {
 			return 1
@@ -129,10 +111,7 @@ var Keyword_g = core.NewTokenType(
 	Keyword_g_Idx,
 	"g",
 	"g",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "g") {
 			return 1
@@ -148,10 +127,7 @@ var Keyword_h = core.NewTokenType(
 	Keyword_h_Idx,
 	"h",
 	"h",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "h") {
 			return 1
@@ -167,10 +143,7 @@ var Keyword_nested = core.NewTokenType(
 	Keyword_nested_Idx,
 	"nested",
 	"nested",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "nested") {
 			return 6
@@ -186,10 +159,7 @@ var Keyword_one = core.NewTokenType(
 	Keyword_one_Idx,
 	"one",
 	"one",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "one") {
 			return 3
@@ -205,10 +175,7 @@ var Keyword_two = core.NewTokenType(
 	Keyword_two_Idx,
 	"two",
 	"two",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "two") {
 			return 3
@@ -224,10 +191,7 @@ var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
 	"ID",
 	"ID",
-	0,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -298,10 +262,7 @@ var Token_INT = core.NewTokenType(
 	Token_INT_Idx,
 	"INT",
 	"INT",
-	0,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -372,10 +333,7 @@ var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
 	"WS",
 	"WS",
-	core.SkippedGroup,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -440,10 +398,10 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_Identifier_Idx = 15
+const TokenGroup_Identifier_Idx = 15
 
-var Token_Identifier = core.NewTokenGroup(
-	Token_Identifier_Idx,
+var TokenGroup_Identifier = core.NewTokenGroup(
+	TokenGroup_Identifier_Idx,
 	"Identifier",
 	"Identifier",
 	[]*core.TokenType{
@@ -453,10 +411,10 @@ var Token_Identifier = core.NewTokenGroup(
 	},
 )
 
-const Token_KeywordGroup_Idx = 16
+const TokenGroup_KeywordGroup_Idx = 16
 
-var Token_KeywordGroup = core.NewTokenGroup(
-	Token_KeywordGroup_Idx,
+var TokenGroup_KeywordGroup = core.NewTokenGroup(
+	TokenGroup_KeywordGroup_Idx,
 	"KeywordGroup",
 	"KeywordGroup",
 	[]*core.TokenType{
@@ -465,45 +423,51 @@ var Token_KeywordGroup = core.NewTokenGroup(
 	},
 )
 
-const Token_NestedIdentifier_Idx = 17
+const TokenGroup_NestedIdentifier_Idx = 17
 
-var Token_NestedIdentifier = core.NewTokenGroup(
-	Token_NestedIdentifier_Idx,
+var TokenGroup_NestedIdentifier = core.NewTokenGroup(
+	TokenGroup_NestedIdentifier_Idx,
 	"NestedIdentifier",
 	"NestedIdentifier",
 	[]*core.TokenType{
 		Keyword_nested,
-		Token_Identifier,
+		TokenGroup_Identifier,
 	},
 )
 
-const Token_RegexGroup_Idx = 18
+const TokenGroup_RegexGroup_Idx = 18
 
-var Token_RegexGroup = core.NewTokenGroup(
-	Token_RegexGroup_Idx,
+var TokenGroup_RegexGroup = core.NewTokenGroup(
+	TokenGroup_RegexGroup_Idx,
 	"RegexGroup",
 	"RegexGroup",
 	[]*core.TokenType{
 		Keyword_one,
 		Keyword_two,
 	},
+)
+
+const (
+	TokenMode_default = 0
 )
 
 func NewLexer() lexer.Lexer {
-	return lexer.NewDefaultLexer(
-		Keyword_a,
-		Keyword_b,
-		Keyword_c,
-		Keyword_d,
-		Keyword_e,
-		Keyword_f,
-		Keyword_g,
-		Keyword_h,
-		Keyword_nested,
-		Keyword_one,
-		Keyword_two,
-		Token_ID,
-		Token_INT,
-		Token_WS,
+	modes := make([]*lexer.TokenMode, 1)
+	modes[TokenMode_default] = lexer.NewTokenMode("default",
+		lexer.UseTokenType(Keyword_a),
+		lexer.UseTokenType(Keyword_nested),
+		lexer.UseTokenType(Keyword_one),
+		lexer.UseTokenType(Keyword_two),
+		lexer.UseTokenType(Keyword_b),
+		lexer.UseTokenType(Keyword_c),
+		lexer.UseTokenType(Keyword_d),
+		lexer.UseTokenType(Keyword_e),
+		lexer.UseTokenType(Keyword_f),
+		lexer.UseTokenType(Keyword_g),
+		lexer.UseTokenType(Keyword_h),
+		lexer.UseTokenType(Token_ID),
+		lexer.UseTokenType(Token_INT),
+		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
 	)
+	return lexer.NewDefaultLexer(TokenMode_default, modes...)
 }

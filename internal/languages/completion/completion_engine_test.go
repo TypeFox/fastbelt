@@ -241,6 +241,7 @@ func TestCompletion_PartialKeyword(t *testing.T) {
 	declare := itemWithLabel(items, "declare")
 	if declare == nil {
 		t.Fatalf("expected 'declare'; got %v", itemLabels(items))
+		return
 	}
 	if declare.TextEdit == nil {
 		t.Errorf("expected REPLACE TextEdit on partial-keyword item; got nil")
@@ -253,6 +254,7 @@ func TestCompletion_InsideKeyword(t *testing.T) {
 	declare := itemWithLabel(items, "declare")
 	if declare == nil {
 		t.Fatalf("expected 'declare'; got %v", itemLabels(items))
+		return
 	}
 	if declare.TextEdit == nil {
 		t.Errorf("expected REPLACE TextEdit on full-keyword item; got nil")
@@ -389,10 +391,10 @@ func TestCompletion_AfterH_MemberCall(t *testing.T) {
 	if dot == nil || gamma == nil {
 		t.Fatalf("expected '.' and 'gamma'; got %v", itemLabels(items))
 	}
-	if dot.TextEdit == nil {
+	if dot != nil && dot.TextEdit == nil {
 		t.Errorf("expected '.' to carry a REPLACE TextEdit")
 	}
-	if gamma.TextEdit != nil {
+	if gamma != nil && gamma.TextEdit != nil {
 		t.Errorf("expected 'gamma' to be INSERT-shaped (no TextEdit); got %+v", gamma.TextEdit)
 	}
 }
@@ -658,6 +660,7 @@ func TestCompletion_ContributorTokenDocs(t *testing.T) {
 	declare := itemWithLabel(items, "declare")
 	if declare == nil {
 		t.Fatalf("expected 'declare'; got %v", itemLabels(items))
+		return
 	}
 	if declare.Documentation == nil {
 		t.Errorf("expected Documentation set; got nil")
@@ -788,6 +791,7 @@ func TestCompletion_ContributorPostProcess(t *testing.T) {
 	c := itemWithLabel(items, "c")
 	if c == nil {
 		t.Fatalf("expected 'c' keyword; got %v", itemLabels(items))
+		return
 	}
 	if !strings.HasPrefix(c.SortText, "zzz-") {
 		t.Errorf("expected rewritten SortText; got %q", c.SortText)
