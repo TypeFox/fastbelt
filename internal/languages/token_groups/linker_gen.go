@@ -47,11 +47,12 @@ type DefaultTokenGroupsReferencesConstructor struct {
 }
 
 func NewDefaultTokenGroupsReferencesConstructor(sc *service.Container) TokenGroupsReferencesConstructor {
+	referenceLinker := sync.OnceValue(func() TokenGroupsReferenceLinker {
+		return service.MustGet[TokenGroupsReferenceLinker](sc)
+	})
 	return &DefaultTokenGroupsReferencesConstructor{
-		sc: sc,
-		referenceLinker: sync.OnceValue(func() TokenGroupsReferenceLinker {
-			return service.MustGet[TokenGroupsReferenceLinker](sc)
-		}),
+		sc:              sc,
+		referenceLinker: referenceLinker,
 	}
 }
 
@@ -78,4 +79,8 @@ func (sc *TokenGroupsSymbolContainer) All() core.SymbolSeq {
 
 func (sc *TokenGroupsSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 	return core.EmptySymbolDescriptions
+}
+
+func (sc *TokenGroupsSymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {
+	return nil, true
 }

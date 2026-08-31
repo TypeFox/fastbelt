@@ -94,37 +94,50 @@ type StatemachineModelReferencesConstructor interface {
 }
 
 type DefaultStatemachineModelReferencesConstructor struct {
-	sc              *service.Container
-	referenceLinker func() StatemachineModelReferenceLinker
+	sc                   *service.Container
+	referenceLinker      func() StatemachineModelReferenceLinker
+	linkStatemachineInit func() core.ReferenceGetter[State]
+	linkStateActions     func() core.ReferenceGetter[Command]
+	linkTransitionEvent  func() core.ReferenceGetter[Event]
+	linkTransitionState  func() core.ReferenceGetter[State]
 }
 
 func NewDefaultStatemachineModelReferencesConstructor(sc *service.Container) StatemachineModelReferencesConstructor {
+	referenceLinker := sync.OnceValue(func() StatemachineModelReferenceLinker {
+		return service.MustGet[StatemachineModelReferenceLinker](sc)
+	})
 	return &DefaultStatemachineModelReferencesConstructor{
-		sc: sc,
-		referenceLinker: sync.OnceValue(func() StatemachineModelReferenceLinker {
-			return service.MustGet[StatemachineModelReferenceLinker](sc)
+		sc:              sc,
+		referenceLinker: referenceLinker,
+		linkStatemachineInit: sync.OnceValue(func() core.ReferenceGetter[State] {
+			return referenceLinker().LinkStatemachineInit
+		}),
+		linkStateActions: sync.OnceValue(func() core.ReferenceGetter[Command] {
+			return referenceLinker().LinkStateActions
+		}),
+		linkTransitionEvent: sync.OnceValue(func() core.ReferenceGetter[Event] {
+			return referenceLinker().LinkTransitionEvent
+		}),
+		linkTransitionState: sync.OnceValue(func() core.ReferenceGetter[State] {
+			return referenceLinker().LinkTransitionState
 		}),
 	}
 }
 
 func (s *DefaultStatemachineModelReferencesConstructor) StatemachineInit(owner core.AstNode, unit core.StringUnit) *core.Reference[State] {
-	fn := s.referenceLinker().LinkStatemachineInit
-	return core.NewReference(owner, unit, fn)
+	return core.NewReference(owner, unit, s.linkStatemachineInit())
 }
 
 func (s *DefaultStatemachineModelReferencesConstructor) StateActions(owner core.AstNode, unit core.StringUnit) *core.Reference[Command] {
-	fn := s.referenceLinker().LinkStateActions
-	return core.NewReference(owner, unit, fn)
+	return core.NewReference(owner, unit, s.linkStateActions())
 }
 
 func (s *DefaultStatemachineModelReferencesConstructor) TransitionEvent(owner core.AstNode, unit core.StringUnit) *core.Reference[Event] {
-	fn := s.referenceLinker().LinkTransitionEvent
-	return core.NewReference(owner, unit, fn)
+	return core.NewReference(owner, unit, s.linkTransitionEvent())
 }
 
 func (s *DefaultStatemachineModelReferencesConstructor) TransitionState(owner core.AstNode, unit core.StringUnit) *core.Reference[State] {
-	fn := s.referenceLinker().LinkTransitionState
-	return core.NewReference(owner, unit, fn)
+	return core.NewReference(owner, unit, s.linkTransitionState())
 }
 
 type StatemachineModelSymbolContainers struct{}
@@ -180,4 +193,16 @@ func (sc *StatemachineModelSymbolContainer) ForType(t reflect.Type) core.SymbolS
 		return slices.Values(sc.Commands)
 	}
 	return core.EmptySymbolDescriptions
+}
+
+func (sc *StatemachineModelSymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {
+	switch t {
+	case TypeFor_State:
+		return sc.States, true
+	case TypeFor_Event:
+		return sc.Events, true
+	case TypeFor_Command:
+		return sc.Commands, true
+	}
+	return nil, true
 }

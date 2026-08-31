@@ -96,7 +96,7 @@ func NewSeqScope(elements iter.Seq[*SymbolDescription], outer Scope) *SeqScope {
 // ElementByName returns the first local symbol named name, then checks outer.
 func (s *SeqScope) ElementByName(name string) *SymbolDescription {
 	for desc := range s.elements {
-		if desc.Name.String() == name {
+		if desc.NameText() == name {
 			return desc
 		}
 	}
@@ -109,7 +109,7 @@ func (s *SeqScope) ElementByName(name string) *SymbolDescription {
 // ElementsByName returns all local symbols named name followed by outer matches.
 func (s *SeqScope) ElementsByName(name string) iter.Seq[*SymbolDescription] {
 	matching := extiter.Filter(s.elements, func(desc *SymbolDescription) bool {
-		return desc.Name.String() == name
+		return desc.NameText() == name
 	})
 	if s.outer != nil {
 		return extiter.Concat(matching, s.outer.ElementsByName(name))
@@ -123,6 +123,59 @@ func (s *SeqScope) AllElements() iter.Seq[*SymbolDescription] {
 		return extiter.Concat(s.elements, s.outer.AllElements())
 	}
 	return s.elements
+}
+
+// SliceScope is a scope backed by a plain slice of symbol descriptions.
+//
+// Unlike [SeqScope], lookups scan the slice directly without allocating
+// iterator closures, which makes it the preferred scope type for the
+// performance-sensitive linking phase.
+type SliceScope struct {
+	elements []*SymbolDescription
+	outer    Scope
+}
+
+// NewSliceScope creates a [SliceScope] from local elements and an optional outer scope.
+//
+// Local elements are searched before the outer scope. The slice is not copied;
+// callers must not modify it afterwards.
+func NewSliceScope(elements []*SymbolDescription, outer Scope) *SliceScope {
+	return &SliceScope{
+		elements: elements,
+		outer:    outer,
+	}
+}
+
+// ElementByName returns the first local symbol named name, then checks outer.
+func (s *SliceScope) ElementByName(name string) *SymbolDescription {
+	for _, desc := range s.elements {
+		if desc.NameText() == name {
+			return desc
+		}
+	}
+	if s.outer != nil {
+		return s.outer.ElementByName(name)
+	}
+	return nil
+}
+
+// ElementsByName returns all local symbols named name followed by outer matches.
+func (s *SliceScope) ElementsByName(name string) iter.Seq[*SymbolDescription] {
+	matching := extiter.Filter(slices.Values(s.elements), func(desc *SymbolDescription) bool {
+		return desc.NameText() == name
+	})
+	if s.outer != nil {
+		return extiter.Concat(matching, s.outer.ElementsByName(name))
+	}
+	return matching
+}
+
+// AllElements returns local elements followed by all outer elements.
+func (s *SliceScope) AllElements() iter.Seq[*SymbolDescription] {
+	if s.outer != nil {
+		return extiter.Concat(slices.Values(s.elements), s.outer.AllElements())
+	}
+	return slices.Values(s.elements)
 }
 
 // MapScope is a scope backed by a name-indexed multimap.
@@ -155,7 +208,7 @@ func NewMapScopeFromSlice(elements []*SymbolDescription, outer Scope) *MapScope 
 func NewMapScopeFromSeq(elements iter.Seq[*SymbolDescription], outer Scope) *MapScope {
 	elemMap := collections.NewMultiMap[string, *SymbolDescription]()
 	for desc := range elements {
-		elemMap.Put(desc.Name.String(), desc)
+		elemMap.Put(desc.NameText(), desc)
 	}
 	return NewMapScope(elemMap, outer)
 }

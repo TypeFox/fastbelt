@@ -291,6 +291,28 @@ func generateSymbolContainers(context *LinkerGeneratorContext) codegen.Node {
 	node.AppendLine("}")
 	node.AppendLine()
 
+	node.AppendLine("func (sc *", name, "SymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {")
+	node.Indent(func(n codegen.Node) {
+		if len(sortedTargets) > 0 {
+			n.AppendLine("switch t {")
+			for _, target := range sortedTargets {
+				subtypes := subtypesInTargets(target, sortedTargets, context.ifaceParents)
+				n.AppendLine("case TypeFor_", target, ":")
+				if len(subtypes) == 1 {
+					// No descendants in target set, the type maps to exactly one slice.
+					n.AppendLine("    return sc.", target, "s, true")
+				} else {
+					// Symbols span multiple slices, callers must fall back to ForType.
+					n.AppendLine("    return nil, false")
+				}
+			}
+			n.AppendLine("}")
+		}
+		n.AppendLine("return nil, true")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
 	return node
 }
 
@@ -308,22 +330,32 @@ func generateReferenceConstructor(context *LinkerGeneratorContext) codegen.Node 
 	node.AppendLine("type Default", context.grammar.Name(), "ReferencesConstructor struct {")
 	node.AppendLine("	sc              *service.Container")
 	node.AppendLine("	referenceLinker func() ", context.grammar.Name(), "ReferenceLinker")
+	for _, field := range context.fields {
+		node.AppendLine("	link", field.typeName, field.name, " func() core.ReferenceGetter[", field.target, "]")
+	}
 	node.AppendLine("}")
 	node.AppendLine()
 
 	node.AppendLine("func NewDefault", context.grammar.Name(), "ReferencesConstructor(sc *service.Container) ", context.grammar.Name(), "ReferencesConstructor {")
+	node.AppendLine("	referenceLinker := sync.OnceValue(func() ", context.grammar.Name(), "ReferenceLinker {")
+	node.AppendLine("		return service.MustGet[", context.grammar.Name(), "ReferenceLinker](sc)")
+	node.AppendLine("	})")
 	node.AppendLine("	return &Default", context.grammar.Name(), "ReferencesConstructor{")
-	node.AppendLine("		sc: sc,")
-	node.AppendLine("		referenceLinker: sync.OnceValue(func() ", context.grammar.Name(), "ReferenceLinker {")
-	node.AppendLine("			return service.MustGet[", context.grammar.Name(), "ReferenceLinker](sc)")
-	node.AppendLine("		}),")
+	node.AppendLine("		sc:              sc,")
+	node.AppendLine("		referenceLinker: referenceLinker,")
+	// Generate a dedicated link function for each reference
+	// This reduces the amount of closure allocations
+	for _, field := range context.fields {
+		node.AppendLine("		link", field.typeName, field.name, ": sync.OnceValue(func() core.ReferenceGetter[", field.target, "] {")
+		node.AppendLine("			return referenceLinker().Link", field.typeName, field.name)
+		node.AppendLine("		}),")
+	}
 	node.AppendLine("	}")
 	node.AppendLine("}")
 	node.AppendLine()
 	for _, field := range context.fields {
 		node.AppendLine("func (s *Default", context.grammar.Name(), "ReferencesConstructor) ", field.typeName, field.name, "(owner core.AstNode, unit core.StringUnit) *core.Reference[", field.target, "] {")
-		node.AppendLine("    fn := s.referenceLinker().Link", field.typeName, field.name)
-		node.AppendLine("    return core.NewReference(owner, unit, fn)")
+		node.AppendLine("    return core.NewReference(owner, unit, s.link", field.typeName, field.name, "())")
 		node.AppendLine("}").AppendLine()
 	}
 	return node

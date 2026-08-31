@@ -7,6 +7,7 @@ package fastbelt
 import (
 	"iter"
 	"reflect"
+	"sync"
 
 	"typefox.dev/fastbelt/util/extiter"
 )
@@ -19,6 +20,20 @@ type SymbolDescription struct {
 	Node AstNode
 	// Name is the source unit that provides the symbol's textual name.
 	Name StringUnit
+	// name caches Name.String() so that scope lookups compare plain strings
+	// instead of dispatching through the StringUnit interface per candidate.
+	name string
+}
+
+// NameText returns the symbol's textual name.
+//
+// It is equivalent to Name.String() but avoids the interface dispatch for
+// descriptions created via [NewSymbolDescription].
+func (d *SymbolDescription) NameText() string {
+	if d.name == "" && d.Name != nil {
+		return d.Name.String()
+	}
+	return d.name
 }
 
 // NewSymbolDescription returns a [SymbolDescription] for node and name.
@@ -30,6 +45,7 @@ func NewSymbolDescription(node AstNode, name StringUnit) *SymbolDescription {
 		URI:  doc.URI,
 		Node: node,
 		Name: name,
+		name: name.String(),
 	}
 }
 
@@ -67,6 +83,9 @@ type SymbolSeq = iter.Seq[*SymbolDescription]
 // A SymbolContainer is an efficient data structure for storing and querying symbol descriptions.
 // References usually need to query symbols for specific AST types.
 // Language specific implementations optimize for this by indexing descriptions by the type of their AST node.
+//
+// If the container uses a plain slice to store its symbols, it should implement [SymbolSliceContainer] to
+// allow fast lookups without allocating iterators.
 type SymbolContainer interface {
 	// Put attempts to put the given description into the container.
 	// Returns true if the description was added.
@@ -79,6 +98,20 @@ type SymbolContainer interface {
 	ForType(targetType reflect.Type) SymbolSeq
 }
 
+// SymbolSliceContainer is an optional extension of [SymbolContainer] for containers
+// that store their descriptions in plain slices.
+//
+// It allows scope implementations to look up symbols without allocating iterators.
+// Generated symbol containers implement this interface.
+type SymbolSliceContainer interface {
+	SymbolContainer
+	// ForTypeSlice returns the descriptions of the given type as a plain slice.
+	// The second return value is false when the result cannot be represented as a
+	// single slice (e.g. the type's symbols span multiple internal slices);
+	// callers must then fall back to [SymbolContainer.ForType].
+	ForTypeSlice(targetType reflect.Type) ([]*SymbolDescription, bool)
+}
+
 // EmptySymbolContainer is an immutable [SymbolContainer] with no symbols.
 var EmptySymbolContainer SymbolContainer = &emptySymbolContainer{}
 
@@ -87,6 +120,10 @@ type emptySymbolContainer struct{}
 func (c *emptySymbolContainer) Put(desc *SymbolDescription) bool {
 	// This container is immutable, don't accept any descriptions.
 	return false
+}
+
+func (c *emptySymbolContainer) ForTypeSlice(targetType reflect.Type) ([]*SymbolDescription, bool) {
+	return nil, true
 }
 
 func (c *emptySymbolContainer) All() SymbolSeq {
@@ -110,6 +147,10 @@ func MergeSymbolContainers(containers iter.Seq[SymbolContainer]) SymbolContainer
 
 type mergedSymbolContainer struct {
 	containers iter.Seq[SymbolContainer]
+	// forTypeCache memoizes the sequences returned by ForType, keyed by reflect.Type.
+	// The merged container is immutable, so the lazy sequences can be shared between
+	// callers; this avoids rebuilding the same closures for every reference resolution.
+	forTypeCache sync.Map
 }
 
 func (c *mergedSymbolContainer) Put(desc *SymbolDescription) bool {
@@ -124,9 +165,14 @@ func (c *mergedSymbolContainer) All() SymbolSeq {
 }
 
 func (c *mergedSymbolContainer) ForType(targetType reflect.Type) SymbolSeq {
-	return extiter.FlatMap(c.containers, func(container SymbolContainer) SymbolSeq {
+	if cached, ok := c.forTypeCache.Load(targetType); ok {
+		return cached.(SymbolSeq)
+	}
+	seq := extiter.FlatMap(c.containers, func(container SymbolContainer) SymbolSeq {
 		return container.ForType(targetType)
 	})
+	c.forTypeCache.Store(targetType, seq)
+	return seq
 }
 
 // LocalSymbols are used for lexical scoping within a document.
