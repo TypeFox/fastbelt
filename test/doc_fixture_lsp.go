@@ -434,6 +434,8 @@ func (d *Doc) ExpectSemanticTokens() *SemanticTokenExpectation {
 	result, err := semanticTokensProvider.HandleSemanticTokensFullRequest(d.fixture.ctx, params)
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: HandleSemanticTokensFullRequest returned error: %v", err)
+	} else if result == nil {
+		d.fixture.t.Fatalf("fbtest: HandleSemanticTokensFullRequest returned nil result")
 	}
 	var tokens []semanticToken
 	var line, column uint32

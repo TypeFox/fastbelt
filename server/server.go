@@ -6,6 +6,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	"golang.org/x/exp/jsonrpc2"
@@ -60,6 +61,9 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			Full: &lsp.Or_SemanticTokensOptions_full{
 				Value: true,
 			},
+		}
+		if !service.Has[SemanticTokensProvider](s.sc) {
+			return nil, errors.New("SemanticTokensLegendProvider is registered without a SemanticTokensProvider")
 		}
 	}
 	positionEncoding := lsp.UTF16

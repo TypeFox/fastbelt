@@ -6,6 +6,7 @@ package server
 
 import (
 	"slices"
+	"sync"
 
 	"typefox.dev/lsp"
 )
@@ -84,30 +85,32 @@ type ExtendableSemanticTokensLegendProvider interface {
 	// Namespace returns the index of the "namespace" token type within the legend.
 	Namespace() uint32
 
-	// Declaration returns the bit value of the "declaration" token modifier within the legend.
-	Declaration() uint32
-	// Definition returns the bit value of the "definition" token modifier within the legend.
-	Definition() uint32
-	// Readonly returns the bit value of the "readonly" token modifier within the legend.
-	Readonly() uint32
-	// Static returns the bit value of the "static" token modifier within the legend.
-	Static() uint32
-	// Deprecated returns the bit value of the "deprecated" token modifier within the legend.
-	Deprecated() uint32
-	// Abstract returns the bit value of the "abstract" token modifier within the legend.
-	Abstract() uint32
-	// Async returns the bit value of the "async" token modifier within the legend.
-	Async() uint32
-	// Modification returns the bit value of the "modification" token modifier within the legend.
-	Modification() uint32
-	// Documentation returns the bit value of the "documentation" token modifier within the legend.
-	Documentation() uint32
-	// DefaultLibrary returns the bit value of the "defaultLibrary" token modifier within the legend.
-	DefaultLibrary() uint32
+	// ModDeclaration returns the bit value of the "declaration" token modifier within the legend.
+	ModDeclaration() uint32
+	// ModDefinition returns the bit value of the "definition" token modifier within the legend.
+	ModDefinition() uint32
+	// ModReadonly returns the bit value of the "readonly" token modifier within the legend.
+	ModReadonly() uint32
+	// ModStatic returns the bit value of the "static" token modifier within the legend.
+	ModStatic() uint32
+	// ModDeprecated returns the bit value of the "deprecated" token modifier within the legend.
+	ModDeprecated() uint32
+	// ModAbstract returns the bit value of the "abstract" token modifier within the legend.
+	ModAbstract() uint32
+	// ModAsync returns the bit value of the "async" token modifier within the legend.
+	ModAsync() uint32
+	// ModModification returns the bit value of the "modification" token modifier within the legend.
+	ModModification() uint32
+	// ModDocumentation returns the bit value of the "documentation" token modifier within the legend.
+	ModDocumentation() uint32
+	// ModDefaultLibrary returns the bit value of the "defaultLibrary" token modifier within the legend.
+	ModDefaultLibrary() uint32
 
 	// AddType adds a new token type to the legend and returns its index.
 	AddType(name string) uint32
 	// AddModifier adds a new token modifier to the legend and returns its bit value.
+	// Note that the legend can only have a maximum of 32 token modifiers, so adding a new modifier
+	// when the legend already has 32 modifiers will result in a panic.
 	AddModifier(name string) uint32
 }
 
@@ -124,47 +127,48 @@ func add(name string, existing *[]string) uint32 {
 
 var defaultTokenTypes []string
 
-var _type = add("type", &defaultTokenTypes)
-var _class = add("class", &defaultTokenTypes)
-var _enum = add("enum", &defaultTokenTypes)
-var _interface = add("interface", &defaultTokenTypes)
-var _struct = add("struct", &defaultTokenTypes)
-var _typeParameter = add("typeParameter", &defaultTokenTypes)
-var _parameter = add("parameter", &defaultTokenTypes)
-var _variable = add("variable", &defaultTokenTypes)
-var _property = add("property", &defaultTokenTypes)
-var _enumMember = add("enumMember", &defaultTokenTypes)
-var _event = add("event", &defaultTokenTypes)
-var _function = add("function", &defaultTokenTypes)
-var _method = add("method", &defaultTokenTypes)
-var _macro = add("macro", &defaultTokenTypes)
-var _keyword = add("keyword", &defaultTokenTypes)
-var _modifier = add("modifier", &defaultTokenTypes)
-var _comment = add("comment", &defaultTokenTypes)
-var _string = add("string", &defaultTokenTypes)
-var _number = add("number", &defaultTokenTypes)
-var _regexp = add("regexp", &defaultTokenTypes)
-var _operator = add("operator", &defaultTokenTypes)
-var _decorator = add("decorator", &defaultTokenTypes)
-var _label = add("label", &defaultTokenTypes)
-var _namespace = add("namespace", &defaultTokenTypes)
+var _type = add(string(lsp.TypeType), &defaultTokenTypes)
+var _class = add(string(lsp.ClassType), &defaultTokenTypes)
+var _enum = add(string(lsp.EnumType), &defaultTokenTypes)
+var _interface = add(string(lsp.InterfaceType), &defaultTokenTypes)
+var _struct = add(string(lsp.StructType), &defaultTokenTypes)
+var _typeParameter = add(string(lsp.TypeParameterType), &defaultTokenTypes)
+var _parameter = add(string(lsp.ParameterType), &defaultTokenTypes)
+var _variable = add(string(lsp.VariableType), &defaultTokenTypes)
+var _property = add(string(lsp.PropertyType), &defaultTokenTypes)
+var _enumMember = add(string(lsp.EnumMemberType), &defaultTokenTypes)
+var _event = add(string(lsp.EventType), &defaultTokenTypes)
+var _function = add(string(lsp.FunctionType), &defaultTokenTypes)
+var _method = add(string(lsp.MethodType), &defaultTokenTypes)
+var _macro = add(string(lsp.MacroType), &defaultTokenTypes)
+var _keyword = add(string(lsp.KeywordType), &defaultTokenTypes)
+var _modifier = add(string(lsp.ModifierType), &defaultTokenTypes)
+var _comment = add(string(lsp.CommentType), &defaultTokenTypes)
+var _string = add(string(lsp.StringType), &defaultTokenTypes)
+var _number = add(string(lsp.NumberType), &defaultTokenTypes)
+var _regexp = add(string(lsp.RegexpType), &defaultTokenTypes)
+var _operator = add(string(lsp.OperatorType), &defaultTokenTypes)
+var _decorator = add(string(lsp.DecoratorType), &defaultTokenTypes)
+var _label = add(string(lsp.LabelType), &defaultTokenTypes)
+var _namespace = add(string(lsp.NamespaceType), &defaultTokenTypes)
 
 var defaultTokenModifiers []string
 
-var _declaration uint32 = 1 << add("declaration", &defaultTokenModifiers)
-var _definition uint32 = 1 << add("definition", &defaultTokenModifiers)
-var _readonly uint32 = 1 << add("readonly", &defaultTokenModifiers)
-var _static uint32 = 1 << add("static", &defaultTokenModifiers)
-var _deprecated uint32 = 1 << add("deprecated", &defaultTokenModifiers)
-var _abstract uint32 = 1 << add("abstract", &defaultTokenModifiers)
-var _async uint32 = 1 << add("async", &defaultTokenModifiers)
-var _modification uint32 = 1 << add("modification", &defaultTokenModifiers)
-var _documentation uint32 = 1 << add("documentation", &defaultTokenModifiers)
-var _defaultLibrary uint32 = 1 << add("defaultLibrary", &defaultTokenModifiers)
+var _modDeclaration uint32 = 1 << add(string(lsp.ModDeclaration), &defaultTokenModifiers)
+var _modDefinition uint32 = 1 << add(string(lsp.ModDefinition), &defaultTokenModifiers)
+var _modReadonly uint32 = 1 << add(string(lsp.ModReadonly), &defaultTokenModifiers)
+var _modStatic uint32 = 1 << add(string(lsp.ModStatic), &defaultTokenModifiers)
+var _modDeprecated uint32 = 1 << add(string(lsp.ModDeprecated), &defaultTokenModifiers)
+var _modAbstract uint32 = 1 << add(string(lsp.ModAbstract), &defaultTokenModifiers)
+var _modAsync uint32 = 1 << add(string(lsp.ModAsync), &defaultTokenModifiers)
+var _modModification uint32 = 1 << add(string(lsp.ModModification), &defaultTokenModifiers)
+var _modDocumentation uint32 = 1 << add(string(lsp.ModDocumentation), &defaultTokenModifiers)
+var _modDefaultLibrary uint32 = 1 << add(string(lsp.ModDefaultLibrary), &defaultTokenModifiers)
 
 type extendableSemanticTokensLegendProvider struct {
 	types     []string
 	modifiers []string
+	mutex     sync.Mutex
 }
 
 func (d *extendableSemanticTokensLegendProvider) Type() uint32          { return _type }
@@ -192,18 +196,22 @@ func (d *extendableSemanticTokensLegendProvider) Decorator() uint32     { return
 func (d *extendableSemanticTokensLegendProvider) Label() uint32         { return _label }
 func (d *extendableSemanticTokensLegendProvider) Namespace() uint32     { return _namespace }
 
-func (d *extendableSemanticTokensLegendProvider) Declaration() uint32    { return _declaration }
-func (d *extendableSemanticTokensLegendProvider) Definition() uint32     { return _definition }
-func (d *extendableSemanticTokensLegendProvider) Readonly() uint32       { return _readonly }
-func (d *extendableSemanticTokensLegendProvider) Static() uint32         { return _static }
-func (d *extendableSemanticTokensLegendProvider) Deprecated() uint32     { return _deprecated }
-func (d *extendableSemanticTokensLegendProvider) Abstract() uint32       { return _abstract }
-func (d *extendableSemanticTokensLegendProvider) Async() uint32          { return _async }
-func (d *extendableSemanticTokensLegendProvider) Modification() uint32   { return _modification }
-func (d *extendableSemanticTokensLegendProvider) Documentation() uint32  { return _documentation }
-func (d *extendableSemanticTokensLegendProvider) DefaultLibrary() uint32 { return _defaultLibrary }
+func (d *extendableSemanticTokensLegendProvider) ModDeclaration() uint32   { return _modDeclaration }
+func (d *extendableSemanticTokensLegendProvider) ModDefinition() uint32    { return _modDefinition }
+func (d *extendableSemanticTokensLegendProvider) ModReadonly() uint32      { return _modReadonly }
+func (d *extendableSemanticTokensLegendProvider) ModStatic() uint32        { return _modStatic }
+func (d *extendableSemanticTokensLegendProvider) ModDeprecated() uint32    { return _modDeprecated }
+func (d *extendableSemanticTokensLegendProvider) ModAbstract() uint32      { return _modAbstract }
+func (d *extendableSemanticTokensLegendProvider) ModAsync() uint32         { return _modAsync }
+func (d *extendableSemanticTokensLegendProvider) ModModification() uint32  { return _modModification }
+func (d *extendableSemanticTokensLegendProvider) ModDocumentation() uint32 { return _modDocumentation }
+func (d *extendableSemanticTokensLegendProvider) ModDefaultLibrary() uint32 {
+	return _modDefaultLibrary
+}
 
 func (d *extendableSemanticTokensLegendProvider) AddType(name string) uint32 {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 	if slices.Contains(defaultTokenTypes, name) {
 		panic("Cannot add a token type that already exists in the default legend: " + name)
 	} else if slices.Contains(d.types, name) {
@@ -213,6 +221,8 @@ func (d *extendableSemanticTokensLegendProvider) AddType(name string) uint32 {
 }
 
 func (d *extendableSemanticTokensLegendProvider) AddModifier(name string) uint32 {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 	if slices.Contains(defaultTokenModifiers, name) {
 		panic("Cannot add a token modifier that already exists in the default legend: " + name)
 	} else if slices.Contains(d.modifiers, name) {
@@ -224,6 +234,8 @@ func (d *extendableSemanticTokensLegendProvider) AddModifier(name string) uint32
 }
 
 func (d *extendableSemanticTokensLegendProvider) Legend() lsp.SemanticTokensLegend {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 	tokenTypes := make([]string, len(defaultTokenTypes)+len(d.types))
 	copy(tokenTypes, defaultTokenTypes)
 	copy(tokenTypes[len(defaultTokenTypes):], d.types)
