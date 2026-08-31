@@ -11,15 +11,33 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
+// SemanticTokensBuilder defines the interface for building semantic tokens data in the LSP format.
+// It provides methods to push individual tokens and retrieve the final data slice.
+//
+// It is recommended to build the semantic tokens data by using the [TokenBasedSemanticTokensProvider] and its
+// associated [TokenHighlightingStrategy] implementations.
 type SemanticTokensBuilder interface {
+	// Data returns the final semantic tokens data slice in the LSP format.
+	// The LSP data slice is a flat array of uint32 values, where each token is represented by five consecutive values:
+	// (1) deltaLine: token line number, relative to the previous token,
+	// (2) deltaStart: token start character, relative to the previous token,
+	// (3) length: the length of the token,
+	// (4) tokenType: the token type index in the legend, and
+	// (5) tokenModifiers: the token modifiers bitset in the legend.
 	Data() []uint32
+	// Push adds a new token to the semantic tokens data.
+	// Tokens should be pushed in the order they appear in the document, as the LSP
+	// data is based on the offset of the previous token.
+	// Due to this, this method is not thread-safe.
 	Push(textRange core.TextRange, tokenType, tokenModifiers uint32)
 }
 
+// NewSemanticTokensBuilder creates a new instance of [SemanticTokensBuilder].
 func NewSemanticTokensBuilder(text string, tokenCount int) SemanticTokensBuilder {
 	return &semanticTokensBuilder{
-		// Preallocate the data with the maximum possible length
+		// Preallocate the data with a reasonable length
 		// Each token potentially contributes 5 uint32 values
+		// Multiline tokens can contribute more, but we can resize the slice if needed
 		data: make([]uint32, 0, tokenCount*5),
 		text: text,
 	}
