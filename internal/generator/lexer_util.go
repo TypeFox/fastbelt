@@ -16,64 +16,118 @@ import (
 	"typefox.dev/fastbelt/util/codegen"
 )
 
+// A helper type to manage generator-related information about token types.
+// A token type is either originated from
+// - a keyword (standalone keyword or token type with keyword content)
+// - a token declaration (token type with regexp content)
+// - a token group (token type that groups other token types)
 type TokenType struct {
+	// Token index is the unique ID at runtime, used as a constant in
+	// the generated lexer and parser code. It is also used as the index
+	// into the token type lookup table.
 	TokenIndex int
-	VarName    string
-	Name       string
-	Code       codegen.Node
+	// Name of the token type, used to reflect usage of grammar rules.
+	// No extra prefix!
+	Name string
+	// VarName is the name of the generated variable containing the token type.
+	VarName string
+	// Generated code to declare the token type variable.
+	Code codegen.Node
 }
 
 // Describes how a [TokenType] is used in a [TokenMode].
 // Mind the same naming in the modes package: [modes.TokenTypeUsage]. The concept is the same. Implementation is slightly different.
 type TokenTypeUsage struct {
+	// comment or hidden, look at it like public, protected, private in object-oriented programming.
 	TokenModifier string
-	Command       grammar.TokenCommand
+	// Command to manipulate the mode stack when this token type is matched. Can be nil.
+	// Distinguishes between:
+	// - push(mmode): adds a new mode onto the stack
+	// - set(mode): replace the current mode with a new one
+	// - pop: pops the current mode from the stack
+	Command grammar.TokenCommand
 }
 
+// Belongs to a [TokenMode] and describes how a [TokenType] is used in that mode.
+// Actually it would be sufficient to store one array of token type indices, but
+// we split this set by category: keywords and regexp tokens. Keywords are matched first,
+// so they have priority over regexp tokens.
 type TokenTypeIndices struct {
+	// token indices of keywords that are part of this mode
 	Keywords []int
-	Tokens   []int
+	// token indices of regexp tokens that are part of this mode
+	Tokens []int
 }
 
+// A token mode ist an ordered set of token types that are active in a given mode.
 type TokenMode struct {
-	Id               int
-	VarName          string
+	// Unique ID of the token mode, used as a constant.
+	Id int
+	// Variable name of the generated token mode constant.
+	VarName string
+	// Holds the token indices of the token types that are part of this mode.
 	TokenTypeIndices TokenTypeIndices
-	TokenTypeUsages  map[int]TokenTypeUsage
+	// Holds the token type usage information (modifier and command) for each
+	// token type in this mode. The key is the token index.
+	TokenTypeUsages map[int]TokenTypeUsage
 }
 
+// TokenIndexSource is an enum and describes for one token index, from
+// which source it was generated.
 type TokenIndexSource int
 
-// Use iota for sequential numbering
 const (
+	// was created by a token declaration (regexp or keyword)
 	SourceTokenDecl TokenIndexSource = iota
+	// was created by a keyword (standalone and no token declaration with keyword content)
 	SourceKeyword
+	// was created by a token group (so it has members!)
 	SourceGroup
 )
 
+// TokenIndexLookup is a helper type to manage the mapping between token
+// indices and their sources (keyword, token, token group, keyword).
 type TokenIndexLookup struct {
-	ByKeyword          map[string]int
-	ByToken            map[grammar.TokenDecl]int
-	ByTokenGroup       map[grammar.TokenGroup]int
+	// Keyword value to token index mapping.
+	ByKeyword map[string]int
+	// Token declaration to token index mapping.
+	ByToken map[grammar.TokenDecl]int
+	// Token group to token index mapping.
+	ByTokenGroup map[grammar.TokenGroup]int
+	// Token group indices of the members of a token group. The key is the parent token group.
 	ByTokenGroupParent map[grammar.TokenGroup][]int
-	SourceType         map[int]TokenIndexSource
+	// Token index to source type mapping. So that you can find out from which source a token index was generated (keyword, token, token group).
+	SourceType map[int]TokenIndexSource
 }
 
+// TokenTypeLookup is a helper type to manage the mapping between token types and their token indices.
 type TokenTypeLookup struct {
-	All          []TokenType
+	// Get all token types that were created (it can happen that multiple
+	// token types share the same token index, for example when a keyword
+	// was declared standalone and in a token declaration).
+	All []TokenType
+	// Token index to token type mapping. So that you can find out which token type was generated for a given token index.
 	ByTokenIndex map[int]*TokenType
 }
 
+// Result of GenerateTokenTypes. It contains all the information about the generated token types, token modes, and their usage in the grammar.
 type GenerateTokenTypesResult struct {
-	Keywords        GetAllKeywordsResult
-	TokenDecls      GetAllTokenDeclsResult
-	TokenGroups     GetAllTokenGroupsResult
-	Imports         map[string]bool
-	TokenIndex      TokenIndexLookup
-	TokenTypes      TokenTypeLookup
-	TokenTypeUsages map[int]TokenTypeUsage
-	TokenModes      map[string]*TokenMode
-	TokenModeOrder  []string
+	// All keywords that were found in the grammar. This includes standalone keywords and keywords that are part of token declarations.
+	Keywords GetAllKeywordsResult
+	// All token declarations that were found in the grammar. This includes top-level and mode-level token declarations.
+	TokenDecls GetAllTokenDeclsResult
+	// All token groups that were found in the grammar. This includes top-level and mode-level token groups.
+	TokenGroups GetAllTokenGroupsResult
+	// All imports that are required for the generated code. Each entry is a package path.
+	Imports map[string]bool
+	// Lookup tables for token indices: What token index has X? Where X is a keyword, a token declaration, or a token group.
+	TokenIndex TokenIndexLookup
+	// Lookup tables for token types: What token type has X? Where X is a token index.
+	TokenTypes TokenTypeLookup
+	// Lookup tables for token modes: What token mode has X? Where X is a mode name (always contains "default").
+	TokenModes map[string]*TokenMode
+	// The order of token modes inside the grammar. Used mostly to keep the order of the generated code stable.
+	TokenModeOrder []string
 }
 
 func (r GenerateTokenTypesResult) TokenTypeIds() map[string]int {
@@ -144,9 +198,8 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 			All:          make([]TokenType, 0),
 			ByTokenIndex: make(map[int]*TokenType),
 		},
-		TokenTypeUsages: make(map[int]TokenTypeUsage),
-		TokenModes:      make(map[string]*TokenMode),
-		TokenModeOrder:  []string{},
+		TokenModes:     make(map[string]*TokenMode),
+		TokenModeOrder: []string{},
 	}
 	populateTokenTypes(&result)
 	populateTokenModes(&result, grammr.TokenModes())
@@ -373,12 +426,6 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 			result.TokenIndex.ByToken[token] = currentTokenIndex
 			result.TokenIndex.SourceType[currentTokenIndex] = SourceTokenDecl
 			tokenIndex++
-		}
-		if token.Modifier() != "" || token.Command() != nil {
-			result.TokenTypeUsages[currentTokenIndex] = TokenTypeUsage{
-				TokenModifier: token.Modifier(),
-				Command:       token.Command(),
-			}
 		}
 	}
 	tokenGroupMembers := map[string][]string{}
