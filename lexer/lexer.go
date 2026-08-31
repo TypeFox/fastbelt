@@ -58,12 +58,13 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 	// documents and Exec may run concurrently, so input that ends inside a
 	// pushed mode must not leak into the next run.
 	stack := NewTokenModeStack(l.tokenModes[l.defaultMode])
+	currentTokenMode := stack.Peek()
 
 	var offset int
-	for offset < length {
+	for offset < length && currentTokenMode != nil {
 		r, size := utf8.DecodeRuneInString(input[offset:])
 		mapIndex := int(r) % maxChar
-		candidates := stack.Peek().TokenMap[mapIndex]
+		candidates := currentTokenMode.TokenMap[mapIndex]
 		longestMatch := 0
 		var longestType *TokenTypeUsage
 		for _, tokenTypeUsage := range candidates {
@@ -116,10 +117,13 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 				// than to the mode that was replaced. This mirrors ANTLR's
 				// `mode` and is intentional: only `push` can be undone by `pop`.
 				stack.SetMode(l.tokenModes[longestType.PushMode])
+				currentTokenMode = stack.Peek()
 			case longestType.PopMode:
 				stack.Pop()
+				currentTokenMode = stack.Peek()
 			case longestType.PushMode > -1:
 				stack.Push(l.tokenModes[longestType.PushMode])
+				currentTokenMode = stack.Peek()
 			}
 		} else {
 			errors = append(errors, core.NewLexerError(

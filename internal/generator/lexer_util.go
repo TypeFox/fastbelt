@@ -542,12 +542,12 @@ func GeneratedTokenIdxName(t core.AstNode) string {
 	return GeneratedTokenName(t) + "_Idx"
 }
 
-func getAllTokenGroupMemberTokenIndices(tokenGroups []grammar.TokenGroup, keywords GetAllKeywordsResult, lookup TokenIndexLookup) map[grammar.TokenGroup][]int {
+func getAllTokenGroupMemberTokenIndices(sortedTokenGroups []grammar.TokenGroup, keywords GetAllKeywordsResult, lookup TokenIndexLookup) map[grammar.TokenGroup][]int {
 	tokenGroupMembers := map[grammar.TokenGroup][]int{}
-	for _, tokenGroup := range tokenGroups {
+	for _, tokenGroup := range sortedTokenGroups {
 		tokenGroupMembers[tokenGroup] = []int{}
 	}
-	for _, tokenGroup := range tokenGroups {
+	for _, tokenGroup := range sortedTokenGroups {
 		for _, tokenRef := range tokenGroup.TokenRefs() {
 			tokenRule := tokenRef.Ref(context.Background())
 			if tokenRule != nil {
