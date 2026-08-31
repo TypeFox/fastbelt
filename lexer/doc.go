@@ -56,7 +56,7 @@
 //
 // A [TokenMode] is a named set of token types. Only the active mode's tokens are
 // candidates at a given offset, which is how a language can lex, say, string
-// interpolation without an ambiguous grammar. Each [Lexer.Exec] starts in the
+// interpolation or nested comments. Each [Lexer.Exec] starts in the
 // mode passed to [NewDefaultLexer] and tracks the active one in its own
 // [TokenModeStack], so a single [DefaultLexer] is safe for concurrent use and
 // input that ends inside a pushed mode cannot affect the next call.
