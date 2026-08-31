@@ -134,9 +134,11 @@ func (r GenerateTokenTypesResult) TokenTypeIds() map[string]int {
 	tokenTypeIds := map[string]int{}
 	for _, tokenType := range r.TokenTypes.All {
 		// TokenIndex is the runtime token id emitted by the lexer (the _Idx
-		// constant). Keyword-backed tokens alias their keyword, so several
-		// token types can share a TokenIndex. This must match la.TypeId at
-		// runtime, so the ATN and lookahead tables agree with the lexer.
+		// constant). Stores the token index for each token type name
+		// (which is something like the token rule name). Especially for
+		// keywords which can be standalone or part of a token declaration,
+		// this is important to know which token index is used at runtime
+		// (so: two entries can have the same token index).
 		tokenTypeIds[tokenType.Name] = tokenType.TokenIndex
 	}
 	return tokenTypeIds
