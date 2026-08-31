@@ -712,6 +712,44 @@ var Token_SL_COMMENT_Accepting = [3]bool{
 	2: true,
 }
 
+const Token_AdditionOp_Idx = 19
+
+var Token_AdditionOp = core.NewTokenGroup(
+	Token_AdditionOp_Idx,
+	"AdditionOp",
+	"AdditionOp",
+	[]*core.TokenType{
+		Keyword_Dash,
+		Keyword_Plus,
+	},
+)
+
+const Token_BinaryExpressionOperator_Idx = 20
+
+var Token_BinaryExpressionOperator = core.NewTokenGroup(
+	Token_BinaryExpressionOperator_Idx,
+	"BinaryExpressionOperator",
+	"BinaryExpressionOperator",
+	[]*core.TokenType{
+		Keyword_Caret,
+		Keyword_Percent,
+		Token_AdditionOp,
+		Token_MultiplicationOp,
+	},
+)
+
+const Token_MultiplicationOp_Idx = 21
+
+var Token_MultiplicationOp = core.NewTokenGroup(
+	Token_MultiplicationOp_Idx,
+	"MultiplicationOp",
+	"MultiplicationOp",
+	[]*core.TokenType{
+		Keyword_Asterisk,
+		Keyword_Slash,
+	},
+)
+
 func NewLexer() lexer.Lexer {
 	return lexer.NewDefaultLexer(
 		Keyword_Percent,

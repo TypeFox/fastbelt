@@ -191,11 +191,11 @@ const (
 	L_end
 	L__Basic_2
 	M_m
-	M__Basic_0
-	M__Basic_1
+	M_SomeTokenGroup
+	M__Basic
 	N_n
-	N__Basic_0
-	N__Basic_1
+	N_Ref_SomeTokenGroup
+	N__Basic
 	O_o
 	O_Ref_ID
 	O__Basic
@@ -402,11 +402,11 @@ func BuildATN() *parser.RuntimeATN {
 	states[L_end] = parser.NewATNState(L_end, parser.ATNBasic, false)
 	states[L__Basic_2] = parser.NewATNState(L__Basic_2, parser.ATNBasic, true)
 	states[M_m] = parser.NewATNState(M_m, parser.ATNBasic, false)
-	states[M__Basic_0] = parser.NewATNState(M__Basic_0, parser.ATNBasic, false)
-	states[M__Basic_1] = parser.NewATNState(M__Basic_1, parser.ATNBasic, true)
+	states[M_SomeTokenGroup] = parser.NewATNState(M_SomeTokenGroup, parser.ATNBasic, false)
+	states[M__Basic] = parser.NewATNState(M__Basic, parser.ATNBasic, true)
 	states[N_n] = parser.NewATNState(N_n, parser.ATNBasic, false)
-	states[N__Basic_0] = parser.NewATNState(N__Basic_0, parser.ATNBasic, false)
-	states[N__Basic_1] = parser.NewATNState(N__Basic_1, parser.ATNBasic, true)
+	states[N_Ref_SomeTokenGroup] = parser.NewATNState(N_Ref_SomeTokenGroup, parser.ATNBasic, false)
+	states[N__Basic] = parser.NewATNState(N__Basic, parser.ATNBasic, true)
 	states[O_o] = parser.NewATNState(O_o, parser.ATNBasic, false)
 	states[O_Ref_ID] = parser.NewATNState(O_Ref_ID, parser.ATNBasic, false)
 	states[O__Basic] = parser.NewATNState(O__Basic, parser.ATNBasic, true)
@@ -922,21 +922,21 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[L__Stop]),
 	)
 	states[M_m].AppendTransitions(
-		parser.NewAtomTransition(states[M__Basic_0], Keyword_m, nil),
+		parser.NewAtomTransition(states[M_SomeTokenGroup], Keyword_m, nil),
 	)
-	states[M__Basic_0].AppendTransitions(
-		parser.NewAtomTransition(states[M__Basic_1], Token_SomeTokenGroup, nil),
+	states[M_SomeTokenGroup].AppendTransitions(
+		parser.NewAtomTransition(states[M__Basic], Token_SomeTokenGroup, nil),
 	)
-	states[M__Basic_1].AppendTransitions(
+	states[M__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[M__Stop]),
 	)
 	states[N_n].AppendTransitions(
-		parser.NewAtomTransition(states[N__Basic_0], Keyword_n, nil),
+		parser.NewAtomTransition(states[N_Ref_SomeTokenGroup], Keyword_n, nil),
 	)
-	states[N__Basic_0].AppendTransitions(
-		parser.NewAtomTransition(states[N__Basic_1], Token_SomeTokenGroup, &parser.CompletionHint{Field: "N.Ref"}),
+	states[N_Ref_SomeTokenGroup].AppendTransitions(
+		parser.NewAtomTransition(states[N__Basic], Token_SomeTokenGroup, &parser.CompletionHint{Field: "N.Ref"}),
 	)
-	states[N__Basic_1].AppendTransitions(
+	states[N__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[N__Stop]),
 	)
 	states[O_o].AppendTransitions(

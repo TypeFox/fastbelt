@@ -77,6 +77,89 @@ func TestOptionalSemicolonAfterStarBeforeReturnsRule(t *testing.T) {
 	assert.Equal(t, "Multiplication", g.Rules()[1].Name())
 }
 
+const infixInterfaces = `
+	interface Expression { Value string }
+	interface BinaryExpression extends Expression {
+		Left Expression
+		Operator string
+		Right Expression
+	}
+	PrimaryExpression returns Expression: Value=ID
+`
+
+func TestInfixRule(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+	` + infixInterfaces + `
+		infix BinaryExpression on PrimaryExpression:
+			"%"
+			> "^"
+			> "*" | "/"
+			> "+" | "-"
+	` + commonTokens)
+	doc.AssertNoParseErrors()
+	g := doc.Document.Root.(Grammar)
+	require.Len(t, g.InfixRules(), 1)
+	rule := g.InfixRules()[0]
+	assert.Equal(t, "BinaryExpression", rule.Name())
+	assert.Equal(t, "PrimaryExpression", rule.Call().Rule().Ref(doc.Ctx()).Name())
+	assert.Nil(t, rule.ReturnType())
+	require.Len(t, rule.Groups(), 4)
+	require.Len(t, rule.Groups()[2].Operators(), 2)
+	assert.Equal(t, "", rule.Groups()[2].Associativity())
+	assert.Equal(t, `"*"`, rule.Groups()[2].Operators()[0].(Keyword).Value())
+	assert.Equal(t, `"/"`, rule.Groups()[2].Operators()[1].(Keyword).Value())
+}
+
+func TestInfixRuleReturnsAndAssociativity(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+	` + infixInterfaces + `
+		infix BinaryExpression on PrimaryExpression returns Expression:
+			"*" | "/"
+			> "+" | "-"
+			> right "="
+	` + commonTokens)
+	doc.AssertNoParseErrors()
+	g := doc.Document.Root.(Grammar)
+	require.Len(t, g.InfixRules(), 1)
+	rule := g.InfixRules()[0]
+	assert.Equal(t, "Expression", rule.ReturnType().Ref(doc.Ctx()).Name())
+	require.Len(t, rule.Groups(), 3)
+	assert.Equal(t, "", rule.Groups()[0].Associativity())
+	assert.Equal(t, "right", rule.Groups()[2].Associativity())
+	require.Len(t, rule.Groups()[2].Operators(), 1)
+	assert.Equal(t, `"="`, rule.Groups()[2].Operators()[0].(Keyword).Value())
+}
+
+func TestInfixRuleTokenOperators(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+	` + infixInterfaces + `
+		token group MulOp { "*" "/" }
+		token POW: /\^+/;
+		infix BinaryExpression on PrimaryExpression:
+			POW
+			> MulOp
+			> left "+" | "-"
+	` + commonTokens)
+	doc.AssertNoParseErrors()
+	doc.AssertNoLinkingErrors()
+	g := doc.Document.Root.(Grammar)
+	require.Len(t, g.InfixRules(), 1)
+	rule := g.InfixRules()[0]
+	require.Len(t, rule.Groups(), 3)
+	pow := rule.Groups()[0].Operators()[0].(RuleCall)
+	assert.Equal(t, "POW", pow.Rule().Ref(doc.Ctx()).Name())
+	mul := rule.Groups()[1].Operators()[0].(RuleCall)
+	assert.Equal(t, "MulOp", mul.Rule().Ref(doc.Ctx()).Name())
+	assert.Equal(t, "left", rule.Groups()[2].Associativity())
+	require.Len(t, rule.Groups()[2].Operators(), 2)
+}
+
 func TestOptionalSemicolonStarRuleBeforePlainRule(t *testing.T) {
 	f := test.New(t, CreateServices())
 	doc := f.Parse(`

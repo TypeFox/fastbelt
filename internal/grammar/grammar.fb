@@ -4,6 +4,7 @@ interface Grammar {
     Name        string
     Rules       []ParserRule
     Composites  []CompositeRule
+    InfixRules  []InfixRule
     Terminals   []Token
     TokenGroups []TokenGroup
     Interfaces  []Interface
@@ -16,6 +17,7 @@ entry Grammar: "grammar" Name=ID ";"?
         | TokenGroups+=TokenGroup
         | Interfaces+=Interface
         | Composites+=CompositeRule
+        | InfixRules+=InfixRule
     )*
 
 interface Interface {
@@ -72,12 +74,15 @@ interface AbstractRuleWithBody extends AbstractRule {
     Body Element
 }
 
+interface AbstractRuleWithReturnType extends AbstractRuleWithBody {
+    ReturnType *Interface
+}
+
 // Base type for Token and TokenGroup
 interface AbstractTokenRule extends AbstractRule{}
 
-interface ParserRule extends AbstractRuleWithBody {
+interface ParserRule extends AbstractRuleWithReturnType {
     Entry      bool
-    ReturnType *Interface
 }
 
 ParserRule: (Entry?="entry")? Name=ID ("returns" ReturnType=[Interface:ID])? ":" Body=Alternatives ";"?
@@ -170,6 +175,25 @@ CompositeAlternatives returns Element: CompositeGroup ({Alternatives.Alts+=curre
 CompositeGroup returns Element: CompositeElement ({Group.Elements+=current} Elements+=CompositeElement+)?
 
 CompositeElement returns Element: (Keyword | RuleCall | "(" CompositeAlternatives ")") Cardinality=("*" | "+" | "?")?
+
+interface InfixRule extends AbstractRuleWithReturnType {
+    Call       RuleCall
+    Groups     []PrecedenceGroup
+}
+
+InfixRule: "infix" Name=ID "on" Call=RuleCall ("returns" ReturnType=[Interface:ID])? ":"
+    Groups+=PrecedenceGroup (">" Groups+=PrecedenceGroup)* ";"?
+
+interface PrecedenceGroup {
+    Associativity string
+    Operators     []Assignable
+}
+
+PrecedenceGroup:
+    Associativity=("left" | "right")?
+    Operators+=InfixOperator ("|" Operators+=InfixOperator)*
+
+InfixOperator returns Assignable: Keyword | RuleCall
 
 // Move comments in front of RegexLiteral
 comment token SL_COMMENT: /\/\/[^\r\n]*/

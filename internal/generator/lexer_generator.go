@@ -33,6 +33,7 @@ type GenerateTokenTypesResult struct {
 }
 
 func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
+	mustExpandInfixRules(grammr)
 	tokens := grammr.Terminals()
 	tokenGroups := grammr.TokenGroups()
 	keywords := GetAllKeywords(grammr)

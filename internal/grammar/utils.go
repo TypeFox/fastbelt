@@ -28,13 +28,21 @@ func convertString(keyword Keyword) (string, error) {
 	return value, nil
 }
 
-func FindReturnType(rule ParserRule, ctx context.Context) Interface {
+func FindReturnType(rule AbstractRuleWithReturnType, ctx context.Context) Interface {
 	if rule == nil {
 		return nil
 	}
 	typeRef := rule.ReturnType()
 	if typeRef != nil {
 		return typeRef.Ref(ctx)
+	}
+	if infixRule, ok := rule.(InfixRule); ok {
+		// The return type of an infix rule is the return type of its operand rule.
+		if operand, ok := infixRule.Call().Rule().Ref(ctx).(ParserRule); ok {
+			return FindReturnType(operand, ctx)
+		}
+		// Indicates malformed input, no return type
+		return nil
 	}
 	grammar, ok := rule.Container().(Grammar)
 	if !ok || grammar == nil {

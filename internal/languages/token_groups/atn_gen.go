@@ -45,40 +45,40 @@ const (
 	Model__Basic_16
 	Model__BlockEnd
 	A_a
-	A__Basic_0
-	A__Basic_1
+	A_Value_Identifier
+	A__Basic
 	B_b
+	B_Value_Identifier
 	B__Basic_0
-	B__Basic_1
 	B_Value_b
+	B__Basic_1
 	B__Basic_2
-	B__Basic_3
 	B__BlockEnd
 	C_c
-	C__Basic_0
-	C__Basic_1
+	C_Value_NestedIdentifier
+	C__Basic
 	D_d
+	D_Value_Identifier
 	D__Basic_0
 	D__Basic_1
-	D__Basic_2
 	E_e
-	E__Basic_0
-	E__Basic_1
-	E__Basic_2
+	E_First_Identifier
+	E_Second_NestedIdentifier
+	E__Basic
 	F_f
-	F__Basic_0
-	F__Basic_1
+	F_Value_KeywordGroup
+	F__Basic
 	G_g
-	G__Basic_0
-	G__Basic_1
+	G_Value_RegexGroup
+	G__Basic
 	H_h
-	H__Basic_0
+	H_Identifier_0
 	H_Value_a
+	H__Basic_0
+	H_Identifier_1
+	H_Value_b
 	H__Basic_1
 	H__Basic_2
-	H_Value_b
-	H__Basic_3
-	H__Basic_4
 	H__BlockEnd
 )
 
@@ -130,40 +130,40 @@ func BuildATN() *parser.RuntimeATN {
 	states[Model__Basic_16] = parser.NewATNState(Model__Basic_16, parser.ATNBasic, true).SetDecision(0)
 	states[Model__BlockEnd] = parser.NewATNState(Model__BlockEnd, parser.ATNBlockEnd, true)
 	states[A_a] = parser.NewATNState(A_a, parser.ATNBasic, false)
-	states[A__Basic_0] = parser.NewATNState(A__Basic_0, parser.ATNBasic, false)
-	states[A__Basic_1] = parser.NewATNState(A__Basic_1, parser.ATNBasic, true)
+	states[A_Value_Identifier] = parser.NewATNState(A_Value_Identifier, parser.ATNBasic, false)
+	states[A__Basic] = parser.NewATNState(A__Basic, parser.ATNBasic, true)
 	states[B_b] = parser.NewATNState(B_b, parser.ATNBasic, false)
-	states[B__Basic_0] = parser.NewATNState(B__Basic_0, parser.ATNBasic, false)
-	states[B__Basic_1] = parser.NewATNState(B__Basic_1, parser.ATNBasic, true)
+	states[B_Value_Identifier] = parser.NewATNState(B_Value_Identifier, parser.ATNBasic, false)
+	states[B__Basic_0] = parser.NewATNState(B__Basic_0, parser.ATNBasic, true)
 	states[B_Value_b] = parser.NewATNState(B_Value_b, parser.ATNBasic, false)
-	states[B__Basic_2] = parser.NewATNState(B__Basic_2, parser.ATNBasic, true)
-	states[B__Basic_3] = parser.NewATNState(B__Basic_3, parser.ATNBasic, true).SetDecision(1)
+	states[B__Basic_1] = parser.NewATNState(B__Basic_1, parser.ATNBasic, true)
+	states[B__Basic_2] = parser.NewATNState(B__Basic_2, parser.ATNBasic, true).SetDecision(1)
 	states[B__BlockEnd] = parser.NewATNState(B__BlockEnd, parser.ATNBlockEnd, true)
 	states[C_c] = parser.NewATNState(C_c, parser.ATNBasic, false)
-	states[C__Basic_0] = parser.NewATNState(C__Basic_0, parser.ATNBasic, false)
-	states[C__Basic_1] = parser.NewATNState(C__Basic_1, parser.ATNBasic, true)
+	states[C_Value_NestedIdentifier] = parser.NewATNState(C_Value_NestedIdentifier, parser.ATNBasic, false)
+	states[C__Basic] = parser.NewATNState(C__Basic, parser.ATNBasic, true)
 	states[D_d] = parser.NewATNState(D_d, parser.ATNBasic, false)
-	states[D__Basic_0] = parser.NewATNState(D__Basic_0, parser.ATNBasic, false)
-	states[D__Basic_1] = parser.NewATNState(D__Basic_1, parser.ATNBasic, true)
-	states[D__Basic_2] = parser.NewATNState(D__Basic_2, parser.ATNBasic, true).SetDecision(2)
+	states[D_Value_Identifier] = parser.NewATNState(D_Value_Identifier, parser.ATNBasic, false)
+	states[D__Basic_0] = parser.NewATNState(D__Basic_0, parser.ATNBasic, true)
+	states[D__Basic_1] = parser.NewATNState(D__Basic_1, parser.ATNBasic, true).SetDecision(2)
 	states[E_e] = parser.NewATNState(E_e, parser.ATNBasic, false)
-	states[E__Basic_0] = parser.NewATNState(E__Basic_0, parser.ATNBasic, false)
-	states[E__Basic_1] = parser.NewATNState(E__Basic_1, parser.ATNBasic, false)
-	states[E__Basic_2] = parser.NewATNState(E__Basic_2, parser.ATNBasic, true)
+	states[E_First_Identifier] = parser.NewATNState(E_First_Identifier, parser.ATNBasic, false)
+	states[E_Second_NestedIdentifier] = parser.NewATNState(E_Second_NestedIdentifier, parser.ATNBasic, false)
+	states[E__Basic] = parser.NewATNState(E__Basic, parser.ATNBasic, true)
 	states[F_f] = parser.NewATNState(F_f, parser.ATNBasic, false)
-	states[F__Basic_0] = parser.NewATNState(F__Basic_0, parser.ATNBasic, false)
-	states[F__Basic_1] = parser.NewATNState(F__Basic_1, parser.ATNBasic, true)
+	states[F_Value_KeywordGroup] = parser.NewATNState(F_Value_KeywordGroup, parser.ATNBasic, false)
+	states[F__Basic] = parser.NewATNState(F__Basic, parser.ATNBasic, true)
 	states[G_g] = parser.NewATNState(G_g, parser.ATNBasic, false)
-	states[G__Basic_0] = parser.NewATNState(G__Basic_0, parser.ATNBasic, false)
-	states[G__Basic_1] = parser.NewATNState(G__Basic_1, parser.ATNBasic, true)
+	states[G_Value_RegexGroup] = parser.NewATNState(G_Value_RegexGroup, parser.ATNBasic, false)
+	states[G__Basic] = parser.NewATNState(G__Basic, parser.ATNBasic, true)
 	states[H_h] = parser.NewATNState(H_h, parser.ATNBasic, false)
-	states[H__Basic_0] = parser.NewATNState(H__Basic_0, parser.ATNBasic, false)
+	states[H_Identifier_0] = parser.NewATNState(H_Identifier_0, parser.ATNBasic, false)
 	states[H_Value_a] = parser.NewATNState(H_Value_a, parser.ATNBasic, false)
-	states[H__Basic_1] = parser.NewATNState(H__Basic_1, parser.ATNBasic, true)
-	states[H__Basic_2] = parser.NewATNState(H__Basic_2, parser.ATNBasic, false)
+	states[H__Basic_0] = parser.NewATNState(H__Basic_0, parser.ATNBasic, true)
+	states[H_Identifier_1] = parser.NewATNState(H_Identifier_1, parser.ATNBasic, false)
 	states[H_Value_b] = parser.NewATNState(H_Value_b, parser.ATNBasic, false)
-	states[H__Basic_3] = parser.NewATNState(H__Basic_3, parser.ATNBasic, true)
-	states[H__Basic_4] = parser.NewATNState(H__Basic_4, parser.ATNBasic, true).SetDecision(3)
+	states[H__Basic_1] = parser.NewATNState(H__Basic_1, parser.ATNBasic, true)
+	states[H__Basic_2] = parser.NewATNState(H__Basic_2, parser.ATNBasic, true).SetDecision(3)
 	states[H__BlockEnd] = parser.NewATNState(H__BlockEnd, parser.ATNBlockEnd, true)
 	states[Model__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Model__Basic_16]),
@@ -254,125 +254,125 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[Model__Stop]),
 	)
 	states[A_a].AppendTransitions(
-		parser.NewAtomTransition(states[A__Basic_0], Keyword_a, nil),
+		parser.NewAtomTransition(states[A_Value_Identifier], Keyword_a, nil),
 	)
-	states[A__Basic_0].AppendTransitions(
-		parser.NewAtomTransition(states[A__Basic_1], Token_Identifier, nil),
+	states[A_Value_Identifier].AppendTransitions(
+		parser.NewAtomTransition(states[A__Basic], Token_Identifier, nil),
 	)
-	states[A__Basic_1].AppendTransitions(
+	states[A__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[A__Stop]),
 	)
 	states[B_b].AppendTransitions(
-		parser.NewAtomTransition(states[B__Basic_3], Keyword_b, nil),
+		parser.NewAtomTransition(states[B__Basic_2], Keyword_b, nil),
+	)
+	states[B_Value_Identifier].AppendTransitions(
+		parser.NewAtomTransition(states[B__Basic_0], Token_Identifier, nil),
 	)
 	states[B__Basic_0].AppendTransitions(
-		parser.NewAtomTransition(states[B__Basic_1], Token_Identifier, nil),
+		parser.NewEpsilonTransition(states[B__BlockEnd]),
+	)
+	states[B_Value_b].AppendTransitions(
+		parser.NewAtomTransition(states[B__Basic_1], Keyword_b, nil),
 	)
 	states[B__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[B__BlockEnd]),
 	)
-	states[B_Value_b].AppendTransitions(
-		parser.NewAtomTransition(states[B__Basic_2], Keyword_b, nil),
-	)
 	states[B__Basic_2].AppendTransitions(
-		parser.NewEpsilonTransition(states[B__BlockEnd]),
-	)
-	states[B__Basic_3].AppendTransitions(
-		parser.NewEpsilonTransition(states[B__Basic_0]),
+		parser.NewEpsilonTransition(states[B_Value_Identifier]),
 		parser.NewEpsilonTransition(states[B_Value_b]),
 	)
 	states[B__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[B__Stop]),
 	)
 	states[C_c].AppendTransitions(
-		parser.NewAtomTransition(states[C__Basic_0], Keyword_c, nil),
+		parser.NewAtomTransition(states[C_Value_NestedIdentifier], Keyword_c, nil),
 	)
-	states[C__Basic_0].AppendTransitions(
-		parser.NewAtomTransition(states[C__Basic_1], Token_NestedIdentifier, nil),
+	states[C_Value_NestedIdentifier].AppendTransitions(
+		parser.NewAtomTransition(states[C__Basic], Token_NestedIdentifier, nil),
 	)
-	states[C__Basic_1].AppendTransitions(
+	states[C__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[C__Stop]),
 	)
 	states[D_d].AppendTransitions(
-		parser.NewAtomTransition(states[D__Basic_2], Keyword_d, nil),
+		parser.NewAtomTransition(states[D__Basic_1], Keyword_d, nil),
+	)
+	states[D_Value_Identifier].AppendTransitions(
+		parser.NewAtomTransition(states[D__Basic_0], Token_Identifier, nil),
 	)
 	states[D__Basic_0].AppendTransitions(
-		parser.NewAtomTransition(states[D__Basic_1], Token_Identifier, nil),
-	)
-	states[D__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[D__Stop]),
 	)
-	states[D__Basic_2].AppendTransitions(
+	states[D__Basic_1].AppendTransitions(
+		parser.NewEpsilonTransition(states[D_Value_Identifier]),
 		parser.NewEpsilonTransition(states[D__Basic_0]),
-		parser.NewEpsilonTransition(states[D__Basic_1]),
 	)
 	states[E_e].AppendTransitions(
-		parser.NewAtomTransition(states[E__Basic_0], Keyword_e, nil),
+		parser.NewAtomTransition(states[E_First_Identifier], Keyword_e, nil),
 	)
-	states[E__Basic_0].AppendTransitions(
-		parser.NewAtomTransition(states[E__Basic_1], Token_Identifier, nil),
+	states[E_First_Identifier].AppendTransitions(
+		parser.NewAtomTransition(states[E_Second_NestedIdentifier], Token_Identifier, nil),
 	)
-	states[E__Basic_1].AppendTransitions(
-		parser.NewAtomTransition(states[E__Basic_2], Token_NestedIdentifier, nil),
+	states[E_Second_NestedIdentifier].AppendTransitions(
+		parser.NewAtomTransition(states[E__Basic], Token_NestedIdentifier, nil),
 	)
-	states[E__Basic_2].AppendTransitions(
+	states[E__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[E__Stop]),
 	)
 	states[F_f].AppendTransitions(
-		parser.NewAtomTransition(states[F__Basic_0], Keyword_f, nil),
+		parser.NewAtomTransition(states[F_Value_KeywordGroup], Keyword_f, nil),
 	)
-	states[F__Basic_0].AppendTransitions(
-		parser.NewAtomTransition(states[F__Basic_1], Token_KeywordGroup, nil),
+	states[F_Value_KeywordGroup].AppendTransitions(
+		parser.NewAtomTransition(states[F__Basic], Token_KeywordGroup, nil),
 	)
-	states[F__Basic_1].AppendTransitions(
+	states[F__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[F__Stop]),
 	)
 	states[G_g].AppendTransitions(
-		parser.NewAtomTransition(states[G__Basic_0], Keyword_g, nil),
+		parser.NewAtomTransition(states[G_Value_RegexGroup], Keyword_g, nil),
 	)
-	states[G__Basic_0].AppendTransitions(
-		parser.NewAtomTransition(states[G__Basic_1], Token_RegexGroup, nil),
+	states[G_Value_RegexGroup].AppendTransitions(
+		parser.NewAtomTransition(states[G__Basic], Token_RegexGroup, nil),
 	)
-	states[G__Basic_1].AppendTransitions(
+	states[G__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[G__Stop]),
 	)
 	states[H_h].AppendTransitions(
-		parser.NewAtomTransition(states[H__Basic_4], Keyword_h, nil),
+		parser.NewAtomTransition(states[H__Basic_2], Keyword_h, nil),
 	)
-	states[H__Basic_0].AppendTransitions(
+	states[H_Identifier_0].AppendTransitions(
 		parser.NewAtomTransition(states[H_Value_a], Token_Identifier, nil),
 	)
 	states[H_Value_a].AppendTransitions(
-		parser.NewAtomTransition(states[H__Basic_1], Keyword_a, nil),
+		parser.NewAtomTransition(states[H__Basic_0], Keyword_a, nil),
+	)
+	states[H__Basic_0].AppendTransitions(
+		parser.NewEpsilonTransition(states[H__BlockEnd]),
+	)
+	states[H_Identifier_1].AppendTransitions(
+		parser.NewAtomTransition(states[H_Value_b], Token_Identifier, nil),
+	)
+	states[H_Value_b].AppendTransitions(
+		parser.NewAtomTransition(states[H__Basic_1], Keyword_b, nil),
 	)
 	states[H__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[H__BlockEnd]),
 	)
 	states[H__Basic_2].AppendTransitions(
-		parser.NewAtomTransition(states[H_Value_b], Token_Identifier, nil),
-	)
-	states[H_Value_b].AppendTransitions(
-		parser.NewAtomTransition(states[H__Basic_3], Keyword_b, nil),
-	)
-	states[H__Basic_3].AppendTransitions(
-		parser.NewEpsilonTransition(states[H__BlockEnd]),
-	)
-	states[H__Basic_4].AppendTransitions(
-		parser.NewEpsilonTransition(states[H__Basic_0]),
-		parser.NewEpsilonTransition(states[H__Basic_2]),
+		parser.NewEpsilonTransition(states[H_Identifier_0]),
+		parser.NewEpsilonTransition(states[H_Identifier_1]),
 	)
 	states[H__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[H__Stop]),
 	)
 	decisionStates := make([]*parser.RuntimeATNState, 4)
 	decisionStates[0] = states[Model__Basic_16]
-	decisionStates[1] = states[B__Basic_3]
-	decisionStates[2] = states[D__Basic_2]
-	decisionStates[3] = states[H__Basic_4]
+	decisionStates[1] = states[B__Basic_2]
+	decisionStates[2] = states[D__Basic_1]
+	decisionStates[3] = states[H__Basic_2]
 	decisionMap := make([]*parser.RuntimeATNState, 4)
 	decisionMap[0] = states[Model__Basic_16]
-	decisionMap[1] = states[B__Basic_3]
-	decisionMap[2] = states[D__Basic_2]
-	decisionMap[3] = states[H__Basic_4]
+	decisionMap[1] = states[B__Basic_2]
+	decisionMap[2] = states[D__Basic_1]
+	decisionMap[3] = states[H__Basic_2]
 	return parser.NewRuntimeATN(states, decisionStates, decisionMap)
 }

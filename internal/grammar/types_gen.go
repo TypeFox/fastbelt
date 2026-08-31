@@ -20,6 +20,8 @@ type Grammar interface {
 	SetRulesItem(item ParserRule)
 	Composites() []CompositeRule
 	SetCompositesItem(item CompositeRule)
+	InfixRules() []InfixRule
+	SetInfixRulesItem(item InfixRule)
 	Terminals() []Token
 	SetTerminalsItem(item Token)
 	TokenGroups() []TokenGroup
@@ -36,6 +38,7 @@ type GrammarData struct {
 	name        *core.Token
 	rules       []ParserRule
 	composites  []CompositeRule
+	infixRules  []InfixRule
 	terminals   []Token
 	tokenGroups []TokenGroup
 	interfaces  []Interface
@@ -49,6 +52,9 @@ func (i *GrammarData) ForEachNode(fn func(core.AstNode, unique.Handle[string], i
 	}
 	for j, item := range i.composites {
 		fn(item, fieldNameComposites, j)
+	}
+	for j, item := range i.infixRules {
+		fn(item, fieldNameInfixRules, j)
 	}
 	for j, item := range i.terminals {
 		fn(item, fieldNameTerminals, j)
@@ -94,6 +100,14 @@ func (i *GrammarData) Composites() []CompositeRule {
 
 func (i *GrammarData) SetCompositesItem(item CompositeRule) {
 	i.composites = append(i.composites, item)
+}
+
+func (i *GrammarData) InfixRules() []InfixRule {
+	return i.infixRules
+}
+
+func (i *GrammarData) SetInfixRulesItem(item InfixRule) {
+	i.infixRules = append(i.infixRules, item)
 }
 
 func (i *GrammarData) Terminals() []Token {
@@ -148,6 +162,17 @@ func (i *GrammarImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 		if child == nil {
 			nodePath, _ := core.PathOf(i)
 			return nil, fmt.Errorf("GrammarImpl.Resolve: item %d of slice in field 'composites' is nil in node '%s'", index, nodePath)
+		}
+		return child.Resolve(path.Tail())
+	case fieldNameInfixRules:
+		if index >= len(i.InfixRules()) {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("GrammarImpl.Resolve: index %d exceeds length of slice in 'infixRules' (length=%d) in node '%s'", index, len(i.InfixRules()), nodePath)
+		}
+		child := i.InfixRules()[index]
+		if child == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("GrammarImpl.Resolve: item %d of slice in field 'infixRules' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
 	case fieldNameInterfaces:
@@ -879,6 +904,88 @@ func (i *AbstractRuleWithBodyImpl) Resolve(path core.FragmentPath) (core.AstNode
 	}
 }
 
+type AbstractRuleWithReturnType interface {
+	core.AstNode
+	AbstractRuleWithBody
+
+	IsAbstractRuleWithReturnType()
+	ReturnType() *core.Reference[Interface]
+	SetReturnType(value *core.Reference[Interface])
+}
+
+func NewAbstractRuleWithReturnType() AbstractRuleWithReturnType {
+	return &AbstractRuleWithReturnTypeImpl{}
+}
+
+type AbstractRuleWithReturnTypeData struct {
+	returnType *core.Reference[Interface]
+}
+
+func (i *AbstractRuleWithReturnTypeData) IsAbstractRuleWithReturnType() {}
+
+func (i *AbstractRuleWithReturnTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+}
+
+func (i *AbstractRuleWithReturnTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	if i.returnType != nil {
+		fn(i.returnType, fieldNameReturnType, -1)
+	}
+}
+
+func (i *AbstractRuleWithReturnTypeData) ReturnType() *core.Reference[Interface] {
+	if i != nil && i.returnType != nil {
+		return i.returnType
+	} else {
+		return nil
+	}
+}
+
+func (i *AbstractRuleWithReturnTypeData) SetReturnType(value *core.Reference[Interface]) {
+	i.returnType = value
+}
+
+type AbstractRuleWithReturnTypeImpl struct {
+	core.AstNodeBase
+	AbstractRuleWithBodyData
+	AbstractRuleData
+	AbstractRuleWithReturnTypeData
+}
+
+func (i *AbstractRuleWithReturnTypeImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.AbstractRuleWithBodyData.ForEachNode(fn)
+	i.AbstractRuleData.ForEachNode(fn)
+	i.AbstractRuleWithReturnTypeData.ForEachNode(fn)
+}
+
+func (i *AbstractRuleWithReturnTypeImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.AbstractRuleWithBodyData.ForEachReference(fn)
+	i.AbstractRuleData.ForEachReference(fn)
+	i.AbstractRuleWithReturnTypeData.ForEachReference(fn)
+}
+
+func (i *AbstractRuleWithReturnTypeImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameBody:
+		if i.Body() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("AbstractRuleWithReturnTypeImpl.Resolve: field 'body' is nil in node '%s'", nodePath)
+		}
+		child := i.Body()
+		return child.Resolve(path.Tail())
+	case fieldNameName:
+		return nil, fmt.Errorf("AbstractRuleWithReturnTypeImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	case fieldNameReturnType:
+		return nil, fmt.Errorf("AbstractRuleWithReturnTypeImpl.Resolve: field 'returnType' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("AbstractRuleWithReturnTypeImpl.Resolve: field '%s' does not exist in node '%s' of type 'AbstractRuleWithReturnType'", field.Value(), nodePath)
+	}
+}
+
 type AbstractTokenRule interface {
 	core.AstNode
 	AbstractRule
@@ -933,14 +1040,12 @@ func (i *AbstractTokenRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, e
 
 type ParserRule interface {
 	core.AstNode
-	AbstractRuleWithBody
+	AbstractRuleWithReturnType
 
 	IsParserRule()
 	IsEntry() bool
 	EntryToken() *core.Token
 	SetEntry(value *core.Token)
-	ReturnType() *core.Reference[Interface]
-	SetReturnType(value *core.Reference[Interface])
 }
 
 func NewParserRule() ParserRule {
@@ -948,8 +1053,7 @@ func NewParserRule() ParserRule {
 }
 
 type ParserRuleData struct {
-	entry      *core.Token
-	returnType *core.Reference[Interface]
+	entry *core.Token
 }
 
 func (i *ParserRuleData) IsParserRule() {}
@@ -958,9 +1062,6 @@ func (i *ParserRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string]
 }
 
 func (i *ParserRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	if i.returnType != nil {
-		fn(i.returnType, fieldNameReturnType, -1)
-	}
 }
 
 func (i *ParserRuleData) IsEntry() bool {
@@ -975,32 +1076,23 @@ func (i *ParserRuleData) SetEntry(value *core.Token) {
 	i.entry = value
 }
 
-func (i *ParserRuleData) ReturnType() *core.Reference[Interface] {
-	if i != nil && i.returnType != nil {
-		return i.returnType
-	} else {
-		return nil
-	}
-}
-
-func (i *ParserRuleData) SetReturnType(value *core.Reference[Interface]) {
-	i.returnType = value
-}
-
 type ParserRuleImpl struct {
 	core.AstNodeBase
+	AbstractRuleWithReturnTypeData
 	AbstractRuleWithBodyData
 	AbstractRuleData
 	ParserRuleData
 }
 
 func (i *ParserRuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.AbstractRuleWithReturnTypeData.ForEachNode(fn)
 	i.AbstractRuleWithBodyData.ForEachNode(fn)
 	i.AbstractRuleData.ForEachNode(fn)
 	i.ParserRuleData.ForEachNode(fn)
 }
 
 func (i *ParserRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.AbstractRuleWithReturnTypeData.ForEachReference(fn)
 	i.AbstractRuleWithBodyData.ForEachReference(fn)
 	i.AbstractRuleData.ForEachReference(fn)
 	i.ParserRuleData.ForEachReference(fn)
@@ -2063,56 +2155,274 @@ func (i *CompositeRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, error
 	}
 }
 
+type InfixRule interface {
+	core.AstNode
+	AbstractRuleWithReturnType
+
+	IsInfixRule()
+	Call() RuleCall
+	SetCall(value RuleCall)
+	Groups() []PrecedenceGroup
+	SetGroupsItem(item PrecedenceGroup)
+}
+
+func NewInfixRule() InfixRule {
+	return &InfixRuleImpl{}
+}
+
+type InfixRuleData struct {
+	call   RuleCall
+	groups []PrecedenceGroup
+}
+
+func (i *InfixRuleData) IsInfixRule() {}
+
+func (i *InfixRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	if i.call != nil {
+		fn(i.call, fieldNameCall, -1)
+	}
+	for j, item := range i.groups {
+		fn(item, fieldNameGroups, j)
+	}
+}
+
+func (i *InfixRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+}
+
+func (i *InfixRuleData) Call() RuleCall {
+	if i != nil && i.call != nil {
+		return i.call
+	} else {
+		return nil
+	}
+}
+
+func (i *InfixRuleData) SetCall(value RuleCall) {
+	i.call = value
+}
+
+func (i *InfixRuleData) Groups() []PrecedenceGroup {
+	return i.groups
+}
+
+func (i *InfixRuleData) SetGroupsItem(item PrecedenceGroup) {
+	i.groups = append(i.groups, item)
+}
+
+type InfixRuleImpl struct {
+	core.AstNodeBase
+	AbstractRuleWithReturnTypeData
+	AbstractRuleWithBodyData
+	AbstractRuleData
+	InfixRuleData
+}
+
+func (i *InfixRuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.AbstractRuleWithReturnTypeData.ForEachNode(fn)
+	i.AbstractRuleWithBodyData.ForEachNode(fn)
+	i.AbstractRuleData.ForEachNode(fn)
+	i.InfixRuleData.ForEachNode(fn)
+}
+
+func (i *InfixRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.AbstractRuleWithReturnTypeData.ForEachReference(fn)
+	i.AbstractRuleWithBodyData.ForEachReference(fn)
+	i.AbstractRuleData.ForEachReference(fn)
+	i.InfixRuleData.ForEachReference(fn)
+}
+
+func (i *InfixRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
+	switch field {
+	case fieldNameBody:
+		if i.Body() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("InfixRuleImpl.Resolve: field 'body' is nil in node '%s'", nodePath)
+		}
+		child := i.Body()
+		return child.Resolve(path.Tail())
+	case fieldNameCall:
+		if i.Call() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("InfixRuleImpl.Resolve: field 'call' is nil in node '%s'", nodePath)
+		}
+		child := i.Call()
+		return child.Resolve(path.Tail())
+	case fieldNameGroups:
+		if index >= len(i.Groups()) {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("InfixRuleImpl.Resolve: index %d exceeds length of slice in 'groups' (length=%d) in node '%s'", index, len(i.Groups()), nodePath)
+		}
+		child := i.Groups()[index]
+		if child == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("InfixRuleImpl.Resolve: item %d of slice in field 'groups' is nil in node '%s'", index, nodePath)
+		}
+		return child.Resolve(path.Tail())
+	case fieldNameName:
+		return nil, fmt.Errorf("InfixRuleImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	case fieldNameReturnType:
+		return nil, fmt.Errorf("InfixRuleImpl.Resolve: field 'returnType' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("InfixRuleImpl.Resolve: field '%s' does not exist in node '%s' of type 'InfixRule'", field.Value(), nodePath)
+	}
+}
+
+type PrecedenceGroup interface {
+	core.AstNode
+
+	IsPrecedenceGroup()
+	Associativity() string
+	AssociativityToken() *core.Token
+	SetAssociativity(value *core.Token)
+	Operators() []Assignable
+	SetOperatorsItem(item Assignable)
+}
+
+func NewPrecedenceGroup() PrecedenceGroup {
+	return &PrecedenceGroupImpl{}
+}
+
+type PrecedenceGroupData struct {
+	associativity *core.Token
+	operators     []Assignable
+}
+
+func (i *PrecedenceGroupData) IsPrecedenceGroup() {}
+
+func (i *PrecedenceGroupData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	for j, item := range i.operators {
+		fn(item, fieldNameOperators, j)
+	}
+}
+
+func (i *PrecedenceGroupData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+}
+
+func (i *PrecedenceGroupData) Associativity() string {
+	if i != nil && i.associativity != nil {
+		return i.associativity.Image
+	} else {
+		return ""
+	}
+}
+
+func (i *PrecedenceGroupData) AssociativityToken() *core.Token {
+	return i.associativity
+}
+
+func (i *PrecedenceGroupData) SetAssociativity(value *core.Token) {
+	i.associativity = value
+}
+
+func (i *PrecedenceGroupData) Operators() []Assignable {
+	return i.operators
+}
+
+func (i *PrecedenceGroupData) SetOperatorsItem(item Assignable) {
+	i.operators = append(i.operators, item)
+}
+
+type PrecedenceGroupImpl struct {
+	core.AstNodeBase
+	PrecedenceGroupData
+}
+
+func (i *PrecedenceGroupImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.PrecedenceGroupData.ForEachNode(fn)
+}
+
+func (i *PrecedenceGroupImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.PrecedenceGroupData.ForEachReference(fn)
+}
+
+func (i *PrecedenceGroupImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, index := path.Head()
+	switch field {
+	case fieldNameOperators:
+		if index >= len(i.Operators()) {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("PrecedenceGroupImpl.Resolve: index %d exceeds length of slice in 'operators' (length=%d) in node '%s'", index, len(i.Operators()), nodePath)
+		}
+		child := i.Operators()[index]
+		if child == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("PrecedenceGroupImpl.Resolve: item %d of slice in field 'operators' is nil in node '%s'", index, nodePath)
+		}
+		return child.Resolve(path.Tail())
+	case fieldNameAssociativity:
+		return nil, fmt.Errorf("PrecedenceGroupImpl.Resolve: field 'associativity' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("PrecedenceGroupImpl.Resolve: field '%s' does not exist in node '%s' of type 'PrecedenceGroup'", field.Value(), nodePath)
+	}
+}
+
 var (
-	fieldNameType         = unique.Make("_Type")
-	fieldNameAlts         = unique.Make("alts")
-	fieldNameBody         = unique.Make("body")
-	fieldNameCardinality  = unique.Make("cardinality")
-	fieldNameComposites   = unique.Make("composites")
-	fieldNameElements     = unique.Make("elements")
-	fieldNameEntry        = unique.Make("entry")
-	fieldNameExtends      = unique.Make("extends")
-	fieldNameFields       = unique.Make("fields")
-	fieldNameInterfaces   = unique.Make("interfaces")
-	fieldNameInternalType = unique.Make("internalType")
-	fieldNameKeywords     = unique.Make("keywords")
-	fieldNameName         = unique.Make("name")
-	fieldNameOperator     = unique.Make("operator")
-	fieldNameProperty     = unique.Make("property")
-	fieldNameRegexp       = unique.Make("regexp")
-	fieldNameRegexps      = unique.Make("regexps")
-	fieldNameReturnType   = unique.Make("returnType")
-	fieldNameRule         = unique.Make("rule")
-	fieldNameRules        = unique.Make("rules")
-	fieldNameTerminals    = unique.Make("terminals")
-	fieldNameTokenGroups  = unique.Make("tokenGroups")
-	fieldNameTokenRefs    = unique.Make("tokenRefs")
-	fieldNameValue        = unique.Make("value")
+	fieldNameType          = unique.Make("_Type")
+	fieldNameAlts          = unique.Make("alts")
+	fieldNameAssociativity = unique.Make("associativity")
+	fieldNameBody          = unique.Make("body")
+	fieldNameCall          = unique.Make("call")
+	fieldNameCardinality   = unique.Make("cardinality")
+	fieldNameComposites    = unique.Make("composites")
+	fieldNameElements      = unique.Make("elements")
+	fieldNameEntry         = unique.Make("entry")
+	fieldNameExtends       = unique.Make("extends")
+	fieldNameFields        = unique.Make("fields")
+	fieldNameGroups        = unique.Make("groups")
+	fieldNameInfixRules    = unique.Make("infixRules")
+	fieldNameInterfaces    = unique.Make("interfaces")
+	fieldNameInternalType  = unique.Make("internalType")
+	fieldNameKeywords      = unique.Make("keywords")
+	fieldNameName          = unique.Make("name")
+	fieldNameOperator      = unique.Make("operator")
+	fieldNameOperators     = unique.Make("operators")
+	fieldNameProperty      = unique.Make("property")
+	fieldNameRegexp        = unique.Make("regexp")
+	fieldNameRegexps       = unique.Make("regexps")
+	fieldNameReturnType    = unique.Make("returnType")
+	fieldNameRule          = unique.Make("rule")
+	fieldNameRules         = unique.Make("rules")
+	fieldNameTerminals     = unique.Make("terminals")
+	fieldNameTokenGroups   = unique.Make("tokenGroups")
+	fieldNameTokenRefs     = unique.Make("tokenRefs")
+	fieldNameValue         = unique.Make("value")
 )
 
 var FastbeltSyntheticFactories = map[string]func() core.AstNode{
-	"AbstractRule":         func() core.AstNode { return NewAbstractRule() },
-	"AbstractRuleWithBody": func() core.AstNode { return NewAbstractRuleWithBody() },
-	"AbstractTokenRule":    func() core.AstNode { return NewAbstractTokenRule() },
-	"Action":               func() core.AstNode { return NewAction() },
-	"Alternatives":         func() core.AstNode { return NewAlternatives() },
-	"ArrayType":            func() core.AstNode { return NewArrayType() },
-	"Assignable":           func() core.AstNode { return NewAssignable() },
-	"Assignment":           func() core.AstNode { return NewAssignment() },
-	"CompositeRule":        func() core.AstNode { return NewCompositeRule() },
-	"CrossRef":             func() core.AstNode { return NewCrossRef() },
-	"Element":              func() core.AstNode { return NewElement() },
-	"Field":                func() core.AstNode { return NewField() },
-	"FieldType":            func() core.AstNode { return NewFieldType() },
-	"Grammar":              func() core.AstNode { return NewGrammar() },
-	"Group":                func() core.AstNode { return NewGroup() },
-	"Interface":            func() core.AstNode { return NewInterface() },
-	"Keyword":              func() core.AstNode { return NewKeyword() },
-	"ParserRule":           func() core.AstNode { return NewParserRule() },
-	"PrimitiveType":        func() core.AstNode { return NewPrimitiveType() },
-	"ReferenceType":        func() core.AstNode { return NewReferenceType() },
-	"RuleCall":             func() core.AstNode { return NewRuleCall() },
-	"SimpleType":           func() core.AstNode { return NewSimpleType() },
-	"Token":                func() core.AstNode { return NewToken() },
-	"TokenGroup":           func() core.AstNode { return NewTokenGroup() },
+	"AbstractRule":               func() core.AstNode { return NewAbstractRule() },
+	"AbstractRuleWithBody":       func() core.AstNode { return NewAbstractRuleWithBody() },
+	"AbstractRuleWithReturnType": func() core.AstNode { return NewAbstractRuleWithReturnType() },
+	"AbstractTokenRule":          func() core.AstNode { return NewAbstractTokenRule() },
+	"Action":                     func() core.AstNode { return NewAction() },
+	"Alternatives":               func() core.AstNode { return NewAlternatives() },
+	"ArrayType":                  func() core.AstNode { return NewArrayType() },
+	"Assignable":                 func() core.AstNode { return NewAssignable() },
+	"Assignment":                 func() core.AstNode { return NewAssignment() },
+	"CompositeRule":              func() core.AstNode { return NewCompositeRule() },
+	"CrossRef":                   func() core.AstNode { return NewCrossRef() },
+	"Element":                    func() core.AstNode { return NewElement() },
+	"Field":                      func() core.AstNode { return NewField() },
+	"FieldType":                  func() core.AstNode { return NewFieldType() },
+	"Grammar":                    func() core.AstNode { return NewGrammar() },
+	"Group":                      func() core.AstNode { return NewGroup() },
+	"InfixRule":                  func() core.AstNode { return NewInfixRule() },
+	"Interface":                  func() core.AstNode { return NewInterface() },
+	"Keyword":                    func() core.AstNode { return NewKeyword() },
+	"ParserRule":                 func() core.AstNode { return NewParserRule() },
+	"PrecedenceGroup":            func() core.AstNode { return NewPrecedenceGroup() },
+	"PrimitiveType":              func() core.AstNode { return NewPrimitiveType() },
+	"ReferenceType":              func() core.AstNode { return NewReferenceType() },
+	"RuleCall":                   func() core.AstNode { return NewRuleCall() },
+	"SimpleType":                 func() core.AstNode { return NewSimpleType() },
+	"Token":                      func() core.AstNode { return NewToken() },
+	"TokenGroup":                 func() core.AstNode { return NewTokenGroup() },
 }

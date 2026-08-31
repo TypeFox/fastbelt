@@ -110,6 +110,9 @@ func CreateATN(grammr grammar.Grammar, tokenTypeIds map[string]int) (*ATN, map[s
 	for _, gr := range grammr.Rules() {
 		byName[gr.Name()] = gr
 	}
+	for _, gr := range grammr.InfixRules() {
+		byName[gr.Name()] = gr
+	}
 	builder := NewATNBuilder(lookaheadNames, tokenTypeIds, byName)
 
 	entries := map[grammar.AbstractRuleWithBody]ATNRuleBuilder{}
@@ -118,6 +121,9 @@ func CreateATN(grammr grammar.Grammar, tokenTypeIds map[string]int) (*ATN, map[s
 		allRules = append(allRules, gr)
 	}
 	for _, gr := range grammr.Composites() {
+		allRules = append(allRules, gr)
+	}
+	for _, gr := range grammr.InfixRules() {
 		allRules = append(allRules, gr)
 	}
 	for _, gr := range allRules {
@@ -159,6 +165,9 @@ func ComputeLookaheadNames(grammr grammar.Grammar) map[grammar.Element]string {
 	for node := range fastbelt.AllNodes(grammr) {
 		switch e := node.(type) {
 		case grammar.ParserRule:
+			counters = make(map[reflect.Type]int)
+			ruleName = e.Name()
+		case grammar.InfixRule:
 			counters = make(map[reflect.Type]int)
 			ruleName = e.Name()
 		case grammar.Keyword, grammar.RuleCall, grammar.CrossRef, grammar.Alternatives, grammar.Group:

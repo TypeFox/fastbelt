@@ -111,7 +111,7 @@ func (p *Parser) ParseA() Item {
 		}
 		{
 			token := p.state.Consume(Token_Identifier)
-			core.AssignToken(current, token, A__Basic_0)
+			core.AssignToken(current, token, A_Value_Identifier)
 			if token != nil {
 				current.SetValue(token)
 			}
@@ -133,7 +133,7 @@ func (p *Parser) ParseB() Item {
 			switch prediction, _ := p.lookahead.BValueAlternatives(p.state); prediction {
 			case 0:
 				token := p.state.Consume(Token_Identifier)
-				core.AssignToken(current, token, B__Basic_0)
+				core.AssignToken(current, token, B_Value_Identifier)
 				if token != nil {
 					current.SetValue(token)
 				}
@@ -160,7 +160,7 @@ func (p *Parser) ParseC() Item {
 		}
 		{
 			token := p.state.Consume(Token_NestedIdentifier)
-			core.AssignToken(current, token, C__Basic_0)
+			core.AssignToken(current, token, C_Value_NestedIdentifier)
 			if token != nil {
 				current.SetValue(token)
 			}
@@ -179,10 +179,10 @@ func (p *Parser) ParseD() Item {
 			core.AssignToken(current, token, D_d)
 		}
 		{
-			p.state.Sync(D__Basic_2)
+			p.state.Sync(D__Basic_1)
 			if p.lookahead.DValueOptional(p.state) {
 				token := p.state.Consume(Token_Identifier)
-				core.AssignToken(current, token, D__Basic_0)
+				core.AssignToken(current, token, D_Value_Identifier)
 				if token != nil {
 					current.SetValue(token)
 				}
@@ -203,14 +203,14 @@ func (p *Parser) ParseE() Recovery {
 		}
 		{
 			token := p.state.Consume(Token_Identifier)
-			core.AssignToken(current, token, E__Basic_0)
+			core.AssignToken(current, token, E_First_Identifier)
 			if token != nil {
 				current.SetFirst(token)
 			}
 		}
 		{
 			token := p.state.Consume(Token_NestedIdentifier)
-			core.AssignToken(current, token, E__Basic_1)
+			core.AssignToken(current, token, E_Second_NestedIdentifier)
 			if token != nil {
 				current.SetSecond(token)
 			}
@@ -230,7 +230,7 @@ func (p *Parser) ParseF() Item {
 		}
 		{
 			token := p.state.Consume(Token_KeywordGroup)
-			core.AssignToken(current, token, F__Basic_0)
+			core.AssignToken(current, token, F_Value_KeywordGroup)
 			if token != nil {
 				current.SetValue(token)
 			}
@@ -250,7 +250,7 @@ func (p *Parser) ParseG() Item {
 		}
 		{
 			token := p.state.Consume(Token_RegexGroup)
-			core.AssignToken(current, token, G__Basic_0)
+			core.AssignToken(current, token, G_Value_RegexGroup)
 			if token != nil {
 				current.SetValue(token)
 			}
@@ -272,7 +272,7 @@ func (p *Parser) ParseH() Item {
 		case 0:
 			{
 				token := p.state.Consume(Token_Identifier)
-				core.AssignToken(current, token, H__Basic_0)
+				core.AssignToken(current, token, H_Identifier_0)
 			}
 			{
 				token := p.state.Consume(Keyword_a)
@@ -284,7 +284,7 @@ func (p *Parser) ParseH() Item {
 		case 1:
 			{
 				token := p.state.Consume(Token_Identifier)
-				core.AssignToken(current, token, H__Basic_2)
+				core.AssignToken(current, token, H_Identifier_1)
 			}
 			{
 				token := p.state.Consume(Keyword_b)

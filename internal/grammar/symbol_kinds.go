@@ -31,3 +31,7 @@ func (f *FieldImpl) SymbolKind() lsp.SymbolKind {
 func (t *TokenImpl) SymbolKind() lsp.SymbolKind {
 	return lsp.Constant
 }
+
+func (r *InfixRuleImpl) SymbolKind() lsp.SymbolKind {
+	return lsp.Function
+}

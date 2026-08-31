@@ -350,13 +350,77 @@
 // structures that would require left recursion if written directly. The
 // current object is referred to by the keyword current:
 //
-//	Addition returns Expression:
-//	    SimpleExpr ({Addition.Left=current} "+" Right=SimpleExpr)*
+//	Member returns Expression:
+//	    Expression ({Member.Previous=current} "." Value=[Var:ID])*
 //
-// When the "+" keyword is found, a new Addition object is created, the
-// object parsed so far is stored in its Left property, and that new Addition
+// When the "." keyword is found, a new "Member" object is created, the
+// object parsed so far is stored in its "Previous" property, and that new "Member"
 // becomes the current object. The operator += is also valid for tree-rewriting
 // actions on slice properties.
+//
+// # Infix Rules
+//
+// Parsing infix expressions (i.e. "a + b * c") is a common problem in language
+// design. Some parser generators solve this by writing a list of alternatives for
+// each precedence level, like this:
+//
+//	Expression: Expression "+" Expression
+//	          | Expression "*" Expression
+//	          | PrimaryExpression
+//
+// In this example, the "*" operator is supposed to bind tighter than "+", so "a + b * c"
+// parses as "a + (b * c)". This however, only works in parser generators that support
+// left recursion. Since Fastbelt does not support left recursion, the grammar would have
+// to be rewritten to avoid it:
+//
+//	Expression: Addition
+//	Addition: Multiplication ("+" Multiplication)*
+//	Multiplication: PrimaryExpression ("*" PrimaryExpression)*
+//	PrimaryExpression: INT | "(" Expression ")"
+//
+// This approach works, but it is verbose and requires a separate rule for each precedence
+// level. Fastbelt offers a more concise and efficient solution via infix rules:
+//
+//	interface Expression {}
+//	interface BinaryExpression extends Expression {
+//		Left Expression
+//		Operator string
+//		Right Expression
+//	}
+//
+//	Expression: BinaryExpression
+//
+//	infix BinaryExpression on PrimaryExpression:
+//	    "%"
+//	    > right "^"
+//	    > "*" | "/"
+//	    > "+" | "-"
+//
+// The rule name must resolve to an interface declaring the fields Left,
+// Right (of an interface type both the rule's return type and operand rule's
+// type are assignable to), and Operator (of type string). The rule after "on"
+// is the operand rule, parsed between operators. Precedence groups are separated
+// by ">" and ordered tightest-binding first: in the example, "%" binds tightest
+// and "+" | "-" bind loosest, so "1 + 2 * 3" parses as "1 + (2 * 3)".
+//
+// Groups are left-associative by default. Meaning that an expression like
+// "1 + 2 + 3" gets parsed as "(1 + 2) + 3" by default. Prefix a group with "right"
+// (or explicitly "left") to control associativity. In the example above
+// the "^" operator is right-associative, so "1 ^ 2 ^ 3" parses as "1 ^ (2 ^ 3)".
+//
+// Operators can be keywords, token references, or token group references:
+//
+//	token group MulOp { "*" "/" }
+//	infix BinaryExpression on PrimaryExpression:
+//	    MulOp
+//	    > "+" | "-"
+//
+// The return type of an infix rule defaults to the operand rule's return
+// type; an additional "returns" clause overrides it. A lone operand is returned
+// unchanged - no binary node is wrapped around it.
+//
+// For parsing, all operators of an infix rule are unified into a generated
+// token group named "<RuleName>Operator" for performance reasons.
 //
 // # Composite Rules
 //

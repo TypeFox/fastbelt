@@ -99,6 +99,14 @@ func (p *CompletionParser) ParseGrammar() {
 				p.state.ExitRule()
 				p.cp.ClearAssignment()
 			}
+		case 5:
+			{
+				p.cp.MarkAssignment("InfixRules")
+				p.state.EnterRule(Grammar__Basic_13)
+				p.ParseInfixRule()
+				p.state.ExitRule()
+				p.cp.ClearAssignment()
+			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
@@ -876,5 +884,134 @@ func (p *CompletionParser) ParseCompositeElement() {
 			p.state.Consume(Keyword_Question)
 			p.cp.ClearAssignment()
 		}
+	}
+}
+
+func (p *CompletionParser) ParseInfixRule() {
+	p.cp.EnterRule("InfixRule", InfixRule__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_infix)
+	}
+	{
+		p.cp.MarkAssignment("Name")
+		p.state.Consume(Token_ID)
+		p.cp.ClearAssignment()
+	}
+	{
+		p.state.Consume(Keyword_on)
+	}
+	{
+		p.cp.MarkAssignment("Call")
+		p.state.EnterRule(InfixRule__Basic_2)
+		p.ParseRuleCall()
+		p.state.ExitRule()
+		p.cp.ClearAssignment()
+	}
+	p.cp.RecordSnapshot(InfixRule__Basic_2)
+	p.state.Sync(InfixRule__Basic_2)
+	if p.lookahead.InfixRuleOptional(p.state) {
+		{
+			p.state.Consume(Keyword_returns)
+		}
+		{
+			p.cp.MarkAssignment("ReturnType")
+			p.state.Consume(Token_ID)
+			p.cp.ClearAssignment()
+		}
+	}
+	{
+		p.state.Consume(Keyword_Colon)
+	}
+	{
+		p.cp.MarkAssignment("Groups")
+		p.state.EnterRule(InfixRule__LoopEntry)
+		p.ParsePrecedenceGroup()
+		p.state.ExitRule()
+		p.cp.ClearAssignment()
+	}
+	p.cp.RecordSnapshot(InfixRule__LoopEntry)
+	p.state.Sync(InfixRule__LoopEntry)
+	for p.lookahead.InfixRuleLoop(p.state) {
+		{
+			p.state.Consume(Keyword_GreaterThan)
+		}
+		{
+			p.cp.MarkAssignment("Groups")
+			p.state.EnterRule(InfixRule__Basic_5)
+			p.ParsePrecedenceGroup()
+			p.state.ExitRule()
+			p.cp.ClearAssignment()
+		}
+		p.cp.RecordSnapshot(InfixRule__LoopEntry)
+		p.state.Sync(InfixRule__LoopEntry)
+	}
+	{
+		if p.lookahead.InfixRuleSemicolonOptional(p.state) {
+			p.state.Consume(Keyword_Semicolon)
+		}
+	}
+}
+
+func (p *CompletionParser) ParsePrecedenceGroup() {
+	p.cp.EnterRule("PrecedenceGroup", PrecedenceGroup__Start)
+	defer p.cp.ExitRule()
+	{
+		p.cp.RecordSnapshot(PrecedenceGroup__Basic_3)
+		p.state.Sync(PrecedenceGroup__Basic_3)
+		switch prediction, _ := p.lookahead.PrecedenceGroupAssociativityAlternatives(p.state); prediction {
+		case 0:
+			p.cp.MarkAssignment("Associativity")
+			p.state.Consume(Keyword_left)
+			p.cp.ClearAssignment()
+		case 1:
+			p.cp.MarkAssignment("Associativity")
+			p.state.Consume(Keyword_right)
+			p.cp.ClearAssignment()
+		}
+	}
+	{
+		p.cp.MarkAssignment("Operators")
+		p.state.EnterRule(PrecedenceGroup__LoopEntry)
+		p.ParseInfixOperator()
+		p.state.ExitRule()
+		p.cp.ClearAssignment()
+	}
+	p.cp.RecordSnapshot(PrecedenceGroup__LoopEntry)
+	p.state.Sync(PrecedenceGroup__LoopEntry)
+	for p.lookahead.PrecedenceGroupLoop(p.state) {
+		{
+			p.state.Consume(Keyword_Pipe)
+		}
+		{
+			p.cp.MarkAssignment("Operators")
+			p.state.EnterRule(PrecedenceGroup__Basic_6)
+			p.ParseInfixOperator()
+			p.state.ExitRule()
+			p.cp.ClearAssignment()
+		}
+		p.cp.RecordSnapshot(PrecedenceGroup__LoopEntry)
+		p.state.Sync(PrecedenceGroup__LoopEntry)
+	}
+}
+
+func (p *CompletionParser) ParseInfixOperator() {
+	p.cp.EnterRule("InfixOperator", InfixOperator__Start)
+	defer p.cp.ExitRule()
+	switch prediction, failure := p.lookahead.InfixOperatorAlternatives(p.state); prediction {
+	case 0:
+		{
+			p.state.EnterRule(InfixOperator__Basic_1)
+			p.ParseKeyword()
+			p.state.ExitRule()
+		}
+	case 1:
+		{
+			p.state.EnterRule(InfixOperator__Basic_3)
+			p.ParseRuleCall()
+			p.state.ExitRule()
+		}
+	default:
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 }
