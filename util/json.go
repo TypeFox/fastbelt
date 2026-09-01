@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package fastbelt
+package util
 
 import (
 	"context"
@@ -52,10 +52,10 @@ type defaultJsonLinkingHelper struct {
 	documentManager workspace.DocumentManager
 }
 
-func NewJsonLinkingHelper(docs workspace.DocumentManager) core.JsonLinkingHelper {
-	return defaultJsonLinkingHelper{docs}
-}
-
 func (h defaultJsonLinkingHelper) GetDocument(uri core.URI) *core.Document {
 	return h.documentManager.Get(uri)
+}
+
+func NewJsonLinkingHelper(docs workspace.DocumentManager) core.JsonLinkingHelper {
+	return defaultJsonLinkingHelper{docs}
 }

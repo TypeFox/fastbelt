@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/test"
-	utilJson "typefox.dev/fastbelt/util/json"
+	"typefox.dev/fastbelt/util"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 )
@@ -24,7 +24,7 @@ import (
 func TestJsonExport(t *testing.T) {
 	services := CreateServices()
 	f := test.NewWithContext(t, services, context.WithValue(
-		context.Background(), core.JsonLinkingHelperKey(), utilJson.NewJsonLinkingHelper(
+		context.Background(), core.JsonLinkingHelperKey(), util.NewJsonLinkingHelper(
 			service.MustGet[workspace.DocumentManager](services),
 		),
 	))

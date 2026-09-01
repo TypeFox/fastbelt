@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/test"
-	utilJson "typefox.dev/fastbelt/util/json"
+	"typefox.dev/fastbelt/util"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 )
@@ -108,7 +108,7 @@ func parseExportImportGrammar(t testing.TB, grammar []byte) (core.AstNode, core.
 	// Step 3: Second container — independent services instance
 	services2 := CreateServices()
 	f2 := test.NewWithContext(t, services2, context.WithValue(
-		context.Background(), core.JsonLinkingHelperKey(), utilJson.NewJsonLinkingHelper(
+		context.Background(), core.JsonLinkingHelperKey(), util.NewJsonLinkingHelper(
 			service.MustGet[workspace.DocumentManager](services2),
 		),
 	))
