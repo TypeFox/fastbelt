@@ -83,13 +83,13 @@ func toLspDiagnostic(textDoc textdoc.Handle, d core.Diagnostic) lsp.Diagnostic {
 	result := lsp.Diagnostic{
 		Range:    d.Range.LspRange(textDoc),
 		Severity: lsp.DiagnosticSeverity(d.Severity),
-		Message:  d.Message,
+		Message:  lsp.DiagnosticMessage{String: &d.Message},
 	}
 	if d.Source != "" {
 		result.Source = d.Source
 	}
 	if d.Code != "" {
-		result.Code = d.Code
+		result.Code = lsp.DiagnosticCode{String: &d.Code}
 	}
 	if d.CodeDescription != nil {
 		result.CodeDescription = &lsp.CodeDescription{

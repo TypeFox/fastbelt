@@ -292,7 +292,7 @@ e foo.<|cursor>`)
 		return
 	}
 	edit := item.TextEdit
-	textEdit := edit.Value.(lsp.TextEdit)
+	textEdit := *edit.TextEdit
 	// The edit should replace the full "foo." segment
 	if textEdit.NewText != "foo.bar" {
 		t.Errorf("expected replacement text 'foo.bar'; got %q", textEdit.NewText)
@@ -648,7 +648,8 @@ func TestCompletion_ContributorTokenDocs(t *testing.T) {
 			}
 			item := lsp.CompletionItem{}
 			if tt.Name == "declare" {
-				item.Documentation = &lsp.Or_CompletionItem_documentation{Value: "Declares a named symbol."}
+				docs := "Declares a named symbol."
+				item.Documentation = &lsp.CompletionItemDocumentation{String: &docs}
 			}
 			accept(item)
 		},
