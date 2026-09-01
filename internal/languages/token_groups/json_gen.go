@@ -11,7 +11,7 @@ import (
 )
 
 func newToken(tokenType *core.TokenType, view string) *core.Token {
-	token := core.NewToken(tokenType, view, 0, 0, 0, 0, 0, 0)
+	token := core.NewToken(tokenType, view, 0, 0)
 	return &token
 }
 
@@ -75,7 +75,7 @@ func (i *ItemImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetValue(newToken(Token_ID, aux.Value))
+	i.SetValue(newToken(nil, aux.Value))
 	return nil
 }
 
@@ -89,9 +89,9 @@ func (i *RecoveryImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetValue(newToken(Token_ID, aux.Value))
-	i.SetFirst(newToken(Token_ID, aux.First))
-	i.SetSecond(newToken(Token_ID, aux.Second))
+	i.SetValue(newToken(nil, aux.Value))
+	i.SetFirst(newToken(nil, aux.First))
+	i.SetSecond(newToken(nil, aux.Second))
 	return nil
 }
 

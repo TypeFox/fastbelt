@@ -37,7 +37,7 @@ func GenerateJSON(grammar grammar.Grammar, packageName string) string {
 func generateFunctions(grammar grammar.Grammar, node codegen.Node) {
 	node.AppendLine(("func newToken(tokenType *core.TokenType, view string) *core.Token {"))
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("token := core.NewToken(tokenType, view, 0, 0, 0, 0, 0, 0)")
+		n.AppendLine("token := core.NewToken(tokenType, view, 0, 0)")
 		n.AppendLine("return &token")
 	})
 	node.AppendLine("}")
@@ -159,10 +159,10 @@ func generateJSONUnmarshal(node codegen.Node, iface grammar.Interface) {
 				n.Indent(func(n2 codegen.Node) {
 					switch field.GType {
 					case TOKEN_TYPE:
-						n2.AppendLine("i.Set", field.Name, "Item(newToken(Token_ID, item))")
+						n2.AppendLine("i.Set", field.Name, "Item(newToken(nil, item))")
 					case COMPOSITE_TYPE:
 						n2.AppendLine("cn := core.NewCompositeNode()")
-						n2.AppendLine("cn.SetToken(newToken(Token_ID, item))")
+						n2.AppendLine("cn.AppendToken(newToken(nil, aux.Node))")
 						n2.AppendLine("i.Set", field.Name, "Item(cn)")
 					default:
 						if field.Reference {
@@ -176,17 +176,17 @@ func generateJSONUnmarshal(node codegen.Node, iface grammar.Interface) {
 			} else if field.Boolean {
 				n.AppendLine("if aux.", field.Name, "{")
 				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine("i.Set", field.Name, "(newToken(Token_ID, \"\"))")
+					n2.AppendLine("i.Set", field.Name, "(newToken(nil, \"\"))")
 				})
 				n.AppendLine("}")
 			} else if field.GType == TOKEN_TYPE {
-				n.AppendLine("i.Set", field.Name, "(newToken(Token_ID, aux.", field.Name, "))")
+				n.AppendLine("i.Set", field.Name, "(newToken(nil, aux.", field.Name, "))")
 			} else if field.GType == COMPOSITE_TYPE {
 				if !hasComposeNodeTempVar {
 					n.AppendLine("var cn core.CompositeNode")
 				}
 				n.AppendLine("cn = core.NewCompositeNode()")
-				n.AppendLine("cn.SetToken(newToken(Token_ID, aux.", field.Name, "))")
+				n.AppendLine("cn.AppendToken(newToken(nil, aux.", field.Name, "))")
 				n.AppendLine("i.Set", field.Name, "(cn)")
 			} else if field.Reference {
 				genUnmarshalReference(n, field, "aux."+field.Name, field.PName, false)

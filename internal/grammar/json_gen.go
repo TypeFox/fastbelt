@@ -11,7 +11,7 @@ import (
 )
 
 func newToken(tokenType *core.TokenType, view string) *core.Token {
-	token := core.NewToken(tokenType, view, 0, 0, 0, 0, 0, 0)
+	token := core.NewToken(tokenType, view, 0, 0)
 	return &token
 }
 
@@ -21,6 +21,7 @@ func (i *GrammarImpl) MarshalJSON() ([]byte, error) {
 		Name        string          `json:"name,omitempty"`
 		Rules       []ParserRule    `json:"rules,omitempty"`
 		Composites  []CompositeRule `json:"composites,omitempty"`
+		InfixRules  []InfixRule     `json:"infixRules,omitempty"`
 		Terminals   []Token         `json:"terminals,omitempty"`
 		TokenGroups []TokenGroup    `json:"tokenGroups,omitempty"`
 		Interfaces  []Interface     `json:"interfaces,omitempty"`
@@ -29,6 +30,7 @@ func (i *GrammarImpl) MarshalJSON() ([]byte, error) {
 		Name:        i.Name(),
 		Rules:       i.Rules(),
 		Composites:  i.Composites(),
+		InfixRules:  i.InfixRules(),
 		Terminals:   i.Terminals(),
 		TokenGroups: i.TokenGroups(),
 		Interfaces:  i.Interfaces(),
@@ -131,6 +133,20 @@ func (i *AbstractRuleWithBodyImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
+func (i *AbstractRuleWithReturnTypeImpl) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T__        string                     `json:"$type"`
+		Name       string                     `json:"name,omitempty"`
+		Body       Element                    `json:"body,omitempty"`
+		ReturnType *core.Reference[Interface] `json:"returnType,omitempty"`
+	}{
+		T__:        "AbstractRuleWithReturnType",
+		Name:       i.Name(),
+		Body:       i.Body(),
+		ReturnType: i.ReturnType(),
+	})
+}
+
 func (i *AbstractTokenRuleImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__  string `json:"$type"`
@@ -146,14 +162,14 @@ func (i *ParserRuleImpl) MarshalJSON() ([]byte, error) {
 		T__        string                     `json:"$type"`
 		Name       string                     `json:"name,omitempty"`
 		Body       Element                    `json:"body,omitempty"`
-		Entry      bool                       `json:"entry,omitempty"`
 		ReturnType *core.Reference[Interface] `json:"returnType,omitempty"`
+		Entry      bool                       `json:"entry,omitempty"`
 	}{
 		T__:        "ParserRule",
 		Name:       i.Name(),
 		Body:       i.Body(),
-		Entry:      i.IsEntry(),
 		ReturnType: i.ReturnType(),
+		Entry:      i.IsEntry(),
 	})
 }
 
@@ -317,6 +333,36 @@ func (i *CompositeRuleImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
+func (i *InfixRuleImpl) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T__        string                     `json:"$type"`
+		Name       string                     `json:"name,omitempty"`
+		Body       Element                    `json:"body,omitempty"`
+		ReturnType *core.Reference[Interface] `json:"returnType,omitempty"`
+		Call       RuleCall                   `json:"call,omitempty"`
+		Groups     []PrecedenceGroup          `json:"groups,omitempty"`
+	}{
+		T__:        "InfixRule",
+		Name:       i.Name(),
+		Body:       i.Body(),
+		ReturnType: i.ReturnType(),
+		Call:       i.Call(),
+		Groups:     i.Groups(),
+	})
+}
+
+func (i *PrecedenceGroupImpl) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T__           string       `json:"$type"`
+		Associativity string       `json:"associativity,omitempty"`
+		Operators     []Assignable `json:"operators,omitempty"`
+	}{
+		T__:           "PrecedenceGroup",
+		Associativity: i.Associativity(),
+		Operators:     i.Operators(),
+	})
+}
+
 func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__         string            `json:"$type"`
@@ -330,7 +376,7 @@ func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(Token_ID, aux.Name))
+	i.SetName(newToken(nil, aux.Name))
 	i.rules = make([]ParserRule, 0, len(aux.Rules))
 	for _, item := range aux.Rules {
 		node, err := Unmarshal[ParserRule](item)
@@ -384,7 +430,7 @@ func (i *InterfaceImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(Token_ID, aux.Name))
+	i.SetName(newToken(nil, aux.Name))
 	i.extends = make([]*core.Reference[Interface], 0, len(aux.Extends))
 	for _, item := range aux.Extends {
 		node := core.NewReference[Interface](i, nil, nil)
@@ -413,7 +459,7 @@ func (i *FieldImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(Token_ID, aux.Name))
+	i.SetName(newToken(nil, aux.Name))
 	if aux.Type != nil {
 		_Type, err := Unmarshal[FieldType](aux.Type)
 		if err != nil {
@@ -490,7 +536,7 @@ func (i *PrimitiveTypeImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetType(newToken(Token_ID, aux.Type))
+	i.SetType(newToken(nil, aux.Type))
 	return nil
 }
 
@@ -502,7 +548,7 @@ func (i *AbstractRuleImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(Token_ID, aux.Name))
+	i.SetName(newToken(nil, aux.Name))
 	return nil
 }
 
@@ -515,7 +561,7 @@ func (i *AbstractRuleWithBodyImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(Token_ID, aux.Name))
+	i.SetName(newToken(nil, aux.Name))
 	if aux.Body != nil {
 		body, err := Unmarshal[Element](aux.Body)
 		if err != nil {
@@ -523,6 +569,18 @@ func (i *AbstractRuleWithBodyImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetBody(body)
 	}
+	return nil
+}
+
+func (i *AbstractRuleWithReturnTypeImpl) UnmarshalJSON(data []byte) error {
+	aux := &struct {
+		T__        string         `json:"$type"`
+		Name       string         `json:"name"`
+	}{}
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+	i.SetName(newToken(nil, aux.Name))
 	return nil
 }
 
@@ -534,7 +592,7 @@ func (i *AbstractTokenRuleImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(Token_ID, aux.Name))
+	i.SetName(newToken(nil, aux.Name))
 	return nil
 }
 
@@ -549,7 +607,7 @@ func (i *ParserRuleImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(Token_ID, aux.Name))
+	i.SetName(newToken(nil, aux.Name))
 	if aux.Body != nil {
 		body, err := Unmarshal[Element](aux.Body)
 		if err != nil {
@@ -557,15 +615,15 @@ func (i *ParserRuleImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetBody(body)
 	}
-	if aux.Entry {
-		i.SetEntry(newToken(Token_ID, ""))
-	}
 	if aux.ReturnType != nil {
 		returnType := core.NewReference[Interface](i, nil, nil)
 		if err := returnType.UnmarshalJSON(aux.ReturnType); err != nil {
 			return err
 		}
 		i.SetReturnType(returnType)
+	}
+	if aux.Entry {
+		i.SetEntry(newToken(nil, ""))
 	}
 	return nil
 }
@@ -580,9 +638,9 @@ func (i *TokenImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(Token_ID, aux.Name))
-	i.SetType(newToken(Token_ID, aux.Type))
-	i.SetRegexp(newToken(Token_ID, aux.Regexp))
+	i.SetName(newToken(nil, aux.Name))
+	i.SetType(newToken(nil, aux.Type))
+	i.SetRegexp(newToken(nil, aux.Regexp))
 	return nil
 }
 
@@ -597,7 +655,7 @@ func (i *TokenGroupImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(Token_ID, aux.Name))
+	i.SetName(newToken(nil, aux.Name))
 	i.tokenRefs = make([]*core.Reference[AbstractTokenRule], 0, len(aux.TokenRefs))
 	for _, item := range aux.TokenRefs {
 		node := core.NewReference[AbstractTokenRule](i, nil, nil)
@@ -608,7 +666,7 @@ func (i *TokenGroupImpl) UnmarshalJSON(data []byte) error {
 	}
 	i.regexps = make([]*core.Token, 0, len(aux.Regexps))
 	for _, item := range aux.Regexps {
-		i.SetRegexpsItem(newToken(Token_ID, item))
+		i.SetRegexpsItem(newToken(nil, item))
 	}
 	i.keywords = make([]Keyword, 0, len(aux.Keywords))
 	for _, item := range aux.Keywords {
@@ -629,7 +687,7 @@ func (i *ElementImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
+	i.SetCardinality(newToken(nil, aux.Cardinality))
 	return nil
 }
 
@@ -642,7 +700,7 @@ func (i *AlternativesImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
+	i.SetCardinality(newToken(nil, aux.Cardinality))
 	i.alts = make([]Element, 0, len(aux.Alts))
 	for _, item := range aux.Alts {
 		node, err := Unmarshal[Element](item)
@@ -663,7 +721,7 @@ func (i *GroupImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
+	i.SetCardinality(newToken(nil, aux.Cardinality))
 	i.elements = make([]Element, 0, len(aux.Elements))
 	for _, item := range aux.Elements {
 		node, err := Unmarshal[Element](item)
@@ -684,8 +742,8 @@ func (i *KeywordImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
-	i.SetValue(newToken(Token_ID, aux.Value))
+	i.SetCardinality(newToken(nil, aux.Cardinality))
+	i.SetValue(newToken(nil, aux.Value))
 	return nil
 }
 
@@ -700,7 +758,7 @@ func (i *AssignmentImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
+	i.SetCardinality(newToken(nil, aux.Cardinality))
 	if aux.Property != nil {
 		property := core.NewReference[Field](i, nil, nil)
 		if err := property.UnmarshalJSON(aux.Property); err != nil {
@@ -708,7 +766,7 @@ func (i *AssignmentImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetProperty(property)
 	}
-	i.SetOperator(newToken(Token_ID, aux.Operator))
+	i.SetOperator(newToken(nil, aux.Operator))
 	if aux.Value != nil {
 		value, err := Unmarshal[Assignable](aux.Value)
 		if err != nil {
@@ -727,7 +785,7 @@ func (i *AssignableImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
+	i.SetCardinality(newToken(nil, aux.Cardinality))
 	return nil
 }
 
@@ -741,7 +799,7 @@ func (i *CrossRefImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
+	i.SetCardinality(newToken(nil, aux.Cardinality))
 	if aux.Type != nil {
 		_Type := core.NewReference[Interface](i, nil, nil)
 		if err := _Type.UnmarshalJSON(aux.Type); err != nil {
@@ -768,7 +826,7 @@ func (i *RuleCallImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
+	i.SetCardinality(newToken(nil, aux.Cardinality))
 	if aux.Rule != nil {
 		rule := core.NewReference[AbstractRule](i, nil, nil)
 		if err := rule.UnmarshalJSON(aux.Rule); err != nil {
@@ -790,7 +848,7 @@ func (i *ActionImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetCardinality(newToken(Token_ID, aux.Cardinality))
+	i.SetCardinality(newToken(nil, aux.Cardinality))
 	if aux.Type != nil {
 		_Type := core.NewReference[Interface](i, nil, nil)
 		if err := _Type.UnmarshalJSON(aux.Type); err != nil {
@@ -798,7 +856,7 @@ func (i *ActionImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetType(_Type)
 	}
-	i.SetOperator(newToken(Token_ID, aux.Operator))
+	i.SetOperator(newToken(nil, aux.Operator))
 	if aux.Property != nil {
 		property := core.NewReference[Field](i, nil, nil)
 		if err := property.UnmarshalJSON(aux.Property); err != nil {
@@ -818,7 +876,7 @@ func (i *CompositeRuleImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(Token_ID, aux.Name))
+	i.SetName(newToken(nil, aux.Name))
 	if aux.Body != nil {
 		body, err := Unmarshal[Element](aux.Body)
 		if err != nil {
@@ -826,6 +884,18 @@ func (i *CompositeRuleImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetBody(body)
 	}
+	return nil
+}
+
+func (i *PrecedenceGroupImpl) UnmarshalJSON(data []byte) error {
+	aux := &struct {
+		T__           string           `json:"$type"`
+		Associativity string           `json:"associativity"`
+	}{}
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+	i.SetAssociativity(newToken(nil, aux.Associativity))
 	return nil
 }
 

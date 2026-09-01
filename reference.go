@@ -394,8 +394,11 @@ func (r *JsonRefText) Owner() AstNode {
 	return r.owner
 }
 
-func (r *JsonRefText) Segment() *TextSegment {
-	return nil
+func (r *JsonRefText) TextRange() TextRange {
+	return TextRange{
+		Start: -1,
+		End:   -1,
+	}
 }
 
 func NewJsonReferenceGetter[T AstNode](uriString string) ReferenceGetter[T] {

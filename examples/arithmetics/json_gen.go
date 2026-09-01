@@ -11,7 +11,7 @@ import (
 )
 
 func newToken(tokenType *core.TokenType, view string) *core.Token {
-	token := core.NewToken(tokenType, view, 0, 0, 0, 0, 0, 0)
+	token := core.NewToken(tokenType, view, 0, 0)
 	return &token
 }
 
@@ -132,7 +132,7 @@ func (i *ModuleImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(Token_ID, aux.Name))
+	i.SetName(newToken(nil, aux.Name))
 	i.statements = make([]Statement, 0, len(aux.Statements))
 	for _, item := range aux.Statements {
 		node, err := Unmarshal[Statement](item)
@@ -156,7 +156,7 @@ func (i *AbstractDefinitionImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(Token_ID, aux.Name))
+	i.SetName(newToken(nil, aux.Name))
 	return nil
 }
 
@@ -170,7 +170,7 @@ func (i *DefinitionImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(Token_ID, aux.Name))
+	i.SetName(newToken(nil, aux.Name))
 	i.args = make([]DeclaredParameter, 0, len(aux.Args))
 	for _, item := range aux.Args {
 		node, err := Unmarshal[DeclaredParameter](item)
@@ -197,7 +197,7 @@ func (i *DeclaredParameterImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(Token_ID, aux.Name))
+	i.SetName(newToken(nil, aux.Name))
 	return nil
 }
 
@@ -240,7 +240,7 @@ func (i *BinaryExpressionImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetLeft(left)
 	}
-	i.SetOperator(newToken(Token_ID, aux.Operator))
+	i.SetOperator(newToken(nil, aux.Operator))
 	if aux.Right != nil {
 		right, err := Unmarshal[Expression](aux.Right)
 		if err != nil {
@@ -286,7 +286,7 @@ func (i *NumberLiteralImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetValue(newToken(Token_ID, aux.Value))
+	i.SetValue(newToken(nil, aux.Value))
 	return nil
 }
 

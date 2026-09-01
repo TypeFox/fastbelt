@@ -11,7 +11,7 @@ import (
 )
 
 func newToken(tokenType *core.TokenType, view string) *core.Token {
-	token := core.NewToken(tokenType, view, 0, 0, 0, 0, 0, 0)
+	token := core.NewToken(tokenType, view, 0, 0)
 	return &token
 }
 
@@ -183,7 +183,7 @@ func (i *DeclareImpl) UnmarshalJSON(data []byte) error {
 	}
 	var cn core.CompositeNode
 	cn = core.NewCompositeNode()
-	cn.SetToken(newToken(Token_ID, aux.Name))
+	cn.AppendToken(newToken(nil, aux.Name))
 	i.SetName(cn)
 	i.children = make([]Declare, 0, len(aux.Children))
 	for _, item := range aux.Children {

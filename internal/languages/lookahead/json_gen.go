@@ -11,7 +11,7 @@ import (
 )
 
 func newToken(tokenType *core.TokenType, view string) *core.Token {
-	token := core.NewToken(tokenType, view, 0, 0, 0, 0, 0, 0)
+	token := core.NewToken(tokenType, view, 0, 0)
 	return &token
 }
 
@@ -60,10 +60,10 @@ func (i *ObjImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetValue(newToken(Token_ID, aux.Value))
+	i.SetValue(newToken(nil, aux.Value))
 	var cn core.CompositeNode
 	cn = core.NewCompositeNode()
-	cn.SetToken(newToken(Token_ID, aux.Node))
+	cn.AppendToken(newToken(nil, aux.Node))
 	i.SetNode(cn)
 	return nil
 }
@@ -96,12 +96,12 @@ func (i *BImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetValue(newToken(Token_ID, aux.Value))
+	i.SetValue(newToken(nil, aux.Value))
 	var cn core.CompositeNode
 	cn = core.NewCompositeNode()
-	cn.SetToken(newToken(Token_ID, aux.Node))
+	cn.AppendToken(newToken(nil, aux.Node))
 	i.SetNode(cn)
-	i.SetPost(newToken(Token_ID, aux.Post))
+	i.SetPost(newToken(nil, aux.Post))
 	return nil
 }
 
