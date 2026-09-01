@@ -12,9 +12,10 @@ const SkippedModifier = -1
 // CommentModifier marks token types that the lexer should collect in Document.Comments.
 const CommentModifier = -2
 
-// TokenKind names the grammar construct that produced a TokenType. It is
-// distinct from Modifier: Modifier controls lexer-stream behaviour (skipped /
-// comment), while Kind describes the grammar origin and is consumed by
+// TokenKind denotes the grammar construct that produced a TokenType:
+// 'Keyword', 'Terminal', or 'Group'. It is distinct from Modifier:
+// Modifier controls lexer-stream behaviour (skipped / comment), while
+// Kind describes the grammar origin and is consumed by
 // downstream features such as the completion engine, which by default
 // only surfaces keyword-kind tokens as completion candidates.
 type TokenKind int

@@ -131,7 +131,7 @@ type GenerateTokenTypesResult struct {
 }
 
 func (r GenerateTokenTypesResult) TokenTypeIds() map[string]int {
-	tokenTypeIds := map[string]int{}
+	tokenTypeIds := make(map[string]int, len(r.TokenTypes.All))
 	for _, tokenType := range r.TokenTypes.All {
 		// TokenIndex is the runtime token id emitted by the lexer (the _Idx
 		// constant). Stores the token index for each token type name
@@ -139,6 +139,17 @@ func (r GenerateTokenTypesResult) TokenTypeIds() map[string]int {
 		// keywords which can be standalone or part of a token declaration,
 		// this is important to know which token index is used at runtime
 		// (so: two entries can have the same token index).
+		// Example why this is important:
+		//
+		// grammar XY
+		// entry Start: "a" A;
+		// token A: "a"
+		//
+		// There are two token types: one for the keyword "a" and one
+		// for the token declaration A. But since the content is the same,
+		// they share the same token index. So the generated code will
+		// have two token types (Keyword_a and Token_A) with the same token
+		// index, but only one of them will be used as default.
 		tokenTypeIds[tokenType.Name] = tokenType.TokenIndex
 	}
 	return tokenTypeIds
