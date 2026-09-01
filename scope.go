@@ -61,11 +61,11 @@ func (s *emptyScope) ElementByName(name string) *SymbolDescription {
 }
 
 func (s *emptyScope) ElementsByName(name string) iter.Seq[*SymbolDescription] {
-	return EmptySymbolDescriptions
+	return EmptySymbolSeq
 }
 
 func (s *emptyScope) AllElements() iter.Seq[*SymbolDescription] {
-	return EmptySymbolDescriptions
+	return EmptySymbolSeq
 }
 
 // EmptyScope is a scope with no symbols.
@@ -181,7 +181,7 @@ func (s *MapScope) ElementsByName(name string) iter.Seq[*SymbolDescription] {
 			return s.outer.ElementsByName(name)
 		} else {
 			// No elements found and no outer scope
-			return EmptySymbolDescriptions
+			return EmptySymbolSeq
 		}
 	} else {
 		seq := slices.Values(elems)
@@ -203,7 +203,7 @@ func (s *MapScope) AllElements() iter.Seq[*SymbolDescription] {
 			// Delegate directly to outer scope
 			return s.outer.AllElements()
 		} else {
-			return EmptySymbolDescriptions
+			return EmptySymbolSeq
 		}
 	} else {
 		seq := s.elements.Values()
