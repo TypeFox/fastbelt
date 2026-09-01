@@ -10,7 +10,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/service"
@@ -19,9 +18,10 @@ import (
 )
 
 // SemanticTokensProvider defines the interface for handling semantic tokens requests in the LSP.
-// Must be registered together with a [SemanticTokensLegendProvider] in the service container
-// to enable semantic tokens support for the language server.
+// Also provides the token legend that is sent to the language client.
 type SemanticTokensProvider interface {
+	SemanticTokensLegendProvider
+
 	HandleSemanticTokensFullRequest(ctx context.Context, params *lsp.SemanticTokensParams) (*lsp.SemanticTokens, error)
 }
 
@@ -50,18 +50,25 @@ type CommentTokenHighlightingStrategy interface {
 // for each individual token in the document, using a provided [TokenHighlightingStrategy] to determine the highlighting for each token.
 // It also generates semantic tokens for comments in the document, if the "comment" token type is present in the legend.
 type TokenBasedSemanticTokensProvider struct {
-	sc                   *service.Container
-	strategy             TokenHighlightingStrategy
-	commentTypeIndexFunc func() int // Lazily initialized index of the comment token type in the legend
+	sc               *service.Container
+	legendProvider   SemanticTokensLegendProvider
+	strategy         TokenHighlightingStrategy
+	commentTypeIndex int // Index of the "comment" token type
 }
 
-// NewTokenBasedSemanticTokensProvider creates a new instance of [TokenBasedSemanticTokensProvider] with the given [TokenHighlightingStrategy].
-func NewTokenBasedSemanticTokensProvider(sc *service.Container, strategy TokenHighlightingStrategy) SemanticTokensProvider {
-	return &TokenBasedSemanticTokensProvider{sc: sc, strategy: strategy, commentTypeIndexFunc: sync.OnceValue(func() int {
-		tokenTypes := service.MustGet[SemanticTokensLegendProvider](sc).Legend().TokenTypes
-		commentTypeIndex := slices.Index(tokenTypes, string(lsp.CommentType))
-		return commentTypeIndex
-	})}
+// NewTokenBasedSemanticTokensProvider creates a new instance of [TokenBasedSemanticTokensProvider] with the given [SemanticTokensLegendProvider] and [TokenHighlightingStrategy].
+func NewTokenBasedSemanticTokensProvider(sc *service.Container, legendProvider SemanticTokensLegendProvider, strategy TokenHighlightingStrategy) SemanticTokensProvider {
+	commentTypeIndex := slices.Index(legendProvider.Legend().TokenTypes, string(lsp.CommentType))
+	return &TokenBasedSemanticTokensProvider{
+		sc:               sc,
+		legendProvider:   legendProvider,
+		strategy:         strategy,
+		commentTypeIndex: commentTypeIndex,
+	}
+}
+
+func (p *TokenBasedSemanticTokensProvider) Legend() lsp.SemanticTokensLegend {
+	return p.legendProvider.Legend()
 }
 
 func (p *TokenBasedSemanticTokensProvider) HandleSemanticTokensFullRequest(ctx context.Context, params *lsp.SemanticTokensParams) (*lsp.SemanticTokens, error) {
@@ -77,7 +84,7 @@ func (p *TokenBasedSemanticTokensProvider) HandleSemanticTokensFullRequest(ctx c
 	if totalLen == 0 {
 		return nil, nil // Document is empty, no tokens found
 	}
-	commentTypeIndex := p.commentTypeIndexFunc()
+	commentTypeIndex := p.commentTypeIndex
 	tokenBuilder := NewSemanticTokensBuilder(doc.TextDoc.Text(nil), totalLen)
 	highlightComment := func(commentToken core.Token) {}
 	if commentStrategy, ok := p.strategy.(CommentTokenHighlightingStrategy); ok {

@@ -12,8 +12,6 @@ import (
 )
 
 // SemanticTokensLegendProvider provides the legend for semantic tokens LSP requests.
-// Must be registered together with a [SemanticTokensProvider] in the service container
-// to enable semantic tokens support for the language server.
 type SemanticTokensLegendProvider interface {
 	Legend() lsp.SemanticTokensLegend
 }
