@@ -5,7 +5,8 @@
 package main
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"os"
 	"path"
@@ -60,7 +61,7 @@ func runScaffoldCLI(opts scaffoldOptions) error {
 
 	err = scaffolder.Run()
 	if err != nil {
-		debug, _ := json.MarshalIndent(scaffolder, "", "  ")
+		debug, _ := json.Marshal(scaffolder, jsontext.WithIndent("  "))
 		return fmt.Errorf("scaffold: %w; scaffolder: %s", err, string(debug))
 	}
 	return nil

@@ -3,7 +3,8 @@
 package arithmetics
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"reflect"
 
@@ -125,9 +126,9 @@ func (i *NumberLiteralImpl) MarshalJSON() ([]byte, error) {
 
 func (i *ModuleImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__        string            `json:"$type"`
-		Name       string            `json:"name"`
-		Statements []json.RawMessage `json:"statements"`
+		T__        string           `json:"$type"`
+		Name       string           `json:"name"`
+		Statements []jsontext.Value `json:"statements"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -162,10 +163,10 @@ func (i *AbstractDefinitionImpl) UnmarshalJSON(data []byte) error {
 
 func (i *DefinitionImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__        string            `json:"$type"`
-		Name       string            `json:"name"`
-		Args       []json.RawMessage `json:"args"`
-		Expression json.RawMessage   `json:"expression"`
+		T__        string           `json:"$type"`
+		Name       string           `json:"name"`
+		Args       []jsontext.Value `json:"args"`
+		Expression jsontext.Value   `json:"expression"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -203,8 +204,8 @@ func (i *DeclaredParameterImpl) UnmarshalJSON(data []byte) error {
 
 func (i *EvaluationImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__        string          `json:"$type"`
-		Expression json.RawMessage `json:"expression"`
+		T__        string         `json:"$type"`
+		Expression jsontext.Value `json:"expression"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -225,10 +226,10 @@ func (i *ExpressionImpl) UnmarshalJSON(data []byte) error {
 
 func (i *BinaryExpressionImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__      string          `json:"$type"`
-		Left     json.RawMessage `json:"left"`
-		Operator string          `json:"operator"`
-		Right    json.RawMessage `json:"right"`
+		T__      string         `json:"$type"`
+		Left     jsontext.Value `json:"left"`
+		Operator string         `json:"operator"`
+		Right    jsontext.Value `json:"right"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -253,9 +254,9 @@ func (i *BinaryExpressionImpl) UnmarshalJSON(data []byte) error {
 
 func (i *FunctionCallImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__      string            `json:"$type"`
-		Args     []json.RawMessage `json:"args"`
-		Callable json.RawMessage   `json:"callable"`
+		T__      string           `json:"$type"`
+		Args     []jsontext.Value `json:"args"`
+		Callable jsontext.Value   `json:"callable"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err

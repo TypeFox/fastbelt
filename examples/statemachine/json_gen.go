@@ -3,7 +3,8 @@
 package statemachine
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"reflect"
 
@@ -81,12 +82,12 @@ func (i *TransitionImpl) MarshalJSON() ([]byte, error) {
 
 func (i *StatemachineImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__      string            `json:"$type"`
-		Name     string            `json:"name"`
-		Events   []json.RawMessage `json:"events"`
-		Commands []json.RawMessage `json:"commands"`
-		Init     json.RawMessage   `json:"init"`
-		States   []json.RawMessage `json:"states"`
+		T__      string           `json:"$type"`
+		Name     string           `json:"name"`
+		Events   []jsontext.Value `json:"events"`
+		Commands []jsontext.Value `json:"commands"`
+		Init     jsontext.Value   `json:"init"`
+		States   []jsontext.Value `json:"states"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -152,10 +153,10 @@ func (i *CommandImpl) UnmarshalJSON(data []byte) error {
 
 func (i *StateImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__         string            `json:"$type"`
-		Name        string            `json:"name"`
-		Actions     []json.RawMessage `json:"actions"`
-		Transitions []json.RawMessage `json:"transitions"`
+		T__         string           `json:"$type"`
+		Name        string           `json:"name"`
+		Actions     []jsontext.Value `json:"actions"`
+		Transitions []jsontext.Value `json:"transitions"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -182,9 +183,9 @@ func (i *StateImpl) UnmarshalJSON(data []byte) error {
 
 func (i *TransitionImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__   string          `json:"$type"`
-		Event json.RawMessage `json:"event"`
-		State json.RawMessage `json:"state"`
+		T__   string         `json:"$type"`
+		Event jsontext.Value `json:"event"`
+		State jsontext.Value `json:"state"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err

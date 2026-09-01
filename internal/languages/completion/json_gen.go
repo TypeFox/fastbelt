@@ -3,7 +3,8 @@
 package completion
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"reflect"
 
@@ -155,8 +156,8 @@ func (i *ObjImpl) UnmarshalJSON(data []byte) error {
 
 func (i *RootImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__     string            `json:"$type"`
-		Objects []json.RawMessage `json:"objects"`
+		T__     string           `json:"$type"`
+		Objects []jsontext.Value `json:"objects"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -174,9 +175,9 @@ func (i *RootImpl) UnmarshalJSON(data []byte) error {
 
 func (i *DeclareImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__      string            `json:"$type"`
-		Name     string            `json:"name"`
-		Children []json.RawMessage `json:"children"`
+		T__      string           `json:"$type"`
+		Name     string           `json:"name"`
+		Children []jsontext.Value `json:"children"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -198,8 +199,8 @@ func (i *DeclareImpl) UnmarshalJSON(data []byte) error {
 
 func (i *EImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__ string          `json:"$type"`
-		Ref json.RawMessage `json:"ref"`
+		T__ string         `json:"$type"`
+		Ref jsontext.Value `json:"ref"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -216,8 +217,8 @@ func (i *EImpl) UnmarshalJSON(data []byte) error {
 
 func (i *FImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__   string            `json:"$type"`
-		Items []json.RawMessage `json:"items"`
+		T__   string           `json:"$type"`
+		Items []jsontext.Value `json:"items"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -235,8 +236,8 @@ func (i *FImpl) UnmarshalJSON(data []byte) error {
 
 func (i *FItemImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__ string          `json:"$type"`
-		Ref json.RawMessage `json:"ref"`
+		T__ string         `json:"$type"`
+		Ref jsontext.Value `json:"ref"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -253,8 +254,8 @@ func (i *FItemImpl) UnmarshalJSON(data []byte) error {
 
 func (i *GImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__ string          `json:"$type"`
-		Ref json.RawMessage `json:"ref"`
+		T__ string         `json:"$type"`
+		Ref jsontext.Value `json:"ref"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -271,8 +272,8 @@ func (i *GImpl) UnmarshalJSON(data []byte) error {
 
 func (i *HImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__    string          `json:"$type"`
-		Member json.RawMessage `json:"member"`
+		T__    string         `json:"$type"`
+		Member jsontext.Value `json:"member"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -289,9 +290,9 @@ func (i *HImpl) UnmarshalJSON(data []byte) error {
 
 func (i *MemberCallImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__      string          `json:"$type"`
-		Ref      json.RawMessage `json:"ref"`
-		Previous json.RawMessage `json:"previous"`
+		T__      string         `json:"$type"`
+		Ref      jsontext.Value `json:"ref"`
+		Previous jsontext.Value `json:"previous"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -315,8 +316,8 @@ func (i *MemberCallImpl) UnmarshalJSON(data []byte) error {
 
 func (i *JImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__ string          `json:"$type"`
-		Ref json.RawMessage `json:"ref"`
+		T__ string         `json:"$type"`
+		Ref jsontext.Value `json:"ref"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -333,9 +334,9 @@ func (i *JImpl) UnmarshalJSON(data []byte) error {
 
 func (i *KImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__  string          `json:"$type"`
-		Ref1 json.RawMessage `json:"ref1"`
-		Ref2 json.RawMessage `json:"ref2"`
+		T__  string         `json:"$type"`
+		Ref1 jsontext.Value `json:"ref1"`
+		Ref2 jsontext.Value `json:"ref2"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -359,8 +360,8 @@ func (i *KImpl) UnmarshalJSON(data []byte) error {
 
 func (i *NImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__ string          `json:"$type"`
-		Ref json.RawMessage `json:"ref"`
+		T__ string         `json:"$type"`
+		Ref jsontext.Value `json:"ref"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -377,8 +378,8 @@ func (i *NImpl) UnmarshalJSON(data []byte) error {
 
 func (i *OImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__ string          `json:"$type"`
-		Ref json.RawMessage `json:"ref"`
+		T__ string         `json:"$type"`
+		Ref jsontext.Value `json:"ref"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err

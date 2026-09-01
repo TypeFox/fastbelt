@@ -6,7 +6,7 @@ package grammar
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"os"
 	"slices"
 	"testing"

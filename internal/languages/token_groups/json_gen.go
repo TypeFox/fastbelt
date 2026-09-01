@@ -3,7 +3,8 @@
 package token_groups
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"reflect"
 
@@ -51,8 +52,8 @@ func (i *RecoveryImpl) MarshalJSON() ([]byte, error) {
 
 func (i *ModelImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__  string          `json:"$type"`
-		Item json.RawMessage `json:"item"`
+		T__  string         `json:"$type"`
+		Item jsontext.Value `json:"item"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err

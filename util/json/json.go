@@ -6,14 +6,14 @@ package fastbelt
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 )
 
-// UnmarshalAndBuildDocument uses the "encoding/json" entry point to unmarshal rootNode based on the given data string and builds the document.
+// UnmarshalAndBuildDocument uses the "encoding/json/v2" entry point to unmarshal rootNode based on the given data string and builds the document.
 // Similar to parsing-based document loading the ast build up first including the reference, while the resolution of the references is done during the linking phase of the building process.
 // For properly linking references to other documents, a helper object is attached to the context given to builder providing access to other documents.
 func UnmarshalAndBuildDocument[T core.AstNode](sc *service.Container, document *core.Document, rootNode T, data []byte, ctx context.Context) error {

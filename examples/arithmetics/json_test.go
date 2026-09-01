@@ -6,7 +6,8 @@ package arithmetics
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"slices"
 	"strings"
 	"testing"
@@ -50,7 +51,7 @@ func TestJsonExport(t *testing.T) {
 		doc.AssertNoParseErrors()
 		doc.AssertNoLinkingErrors()
 
-		res, err := json.MarshalIndent(doc.Root(), "", "	")
+		res, err := json.Marshal(doc.Root(), jsontext.WithIndent("	"))
 		require.NoError(t, err)
 
 		assert.Equal(t, selfContainedJson, string(res))
@@ -78,7 +79,7 @@ func TestJsonExport(t *testing.T) {
 		}
 
 		for _, doc := range docs {
-			res, err := json.MarshalIndent(doc.Root(), "", "	")
+			res, err := json.Marshal(doc.Root(), jsontext.WithIndent("	"))
 			require.NoError(t, err)
 
 			switch path := doc.Document.URI.Path(); path {
@@ -135,7 +136,7 @@ func TestJsonExport(t *testing.T) {
 		}
 
 		for doc := range documents.All() {
-			res, err := json.MarshalIndent(doc.Root, "", "	")
+			res, err := json.Marshal(doc.Root, jsontext.WithIndent("	"))
 			require.NoError(t, err)
 
 			switch path := doc.URI.Path(); path {
@@ -173,7 +174,7 @@ func TestJsonExport(t *testing.T) {
 		}
 
 		for doc := range documents.All() {
-			res, err := json.MarshalIndent(doc.Root, "", "	")
+			res, err := json.Marshal(doc.Root, jsontext.WithIndent("	"))
 			require.NoError(t, err)
 
 			switch path := doc.URI.Path(); path {

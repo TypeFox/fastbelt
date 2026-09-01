@@ -3,7 +3,8 @@
 package grammar
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"reflect"
 
@@ -365,13 +366,14 @@ func (i *PrecedenceGroupImpl) MarshalJSON() ([]byte, error) {
 
 func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__         string            `json:"$type"`
-		Name        string            `json:"name"`
-		Rules       []json.RawMessage `json:"rules"`
-		Composites  []json.RawMessage `json:"composites"`
-		Terminals   []json.RawMessage `json:"terminals"`
-		TokenGroups []json.RawMessage `json:"tokenGroups"`
-		Interfaces  []json.RawMessage `json:"interfaces"`
+		T__         string           `json:"$type"`
+		Name        string           `json:"name"`
+		Rules       []jsontext.Value `json:"rules"`
+		Composites  []jsontext.Value `json:"composites"`
+		InfixRules  []jsontext.Value `json:"infixRules"`
+		Terminals   []jsontext.Value `json:"terminals"`
+		TokenGroups []jsontext.Value `json:"tokenGroups"`
+		Interfaces  []jsontext.Value `json:"interfaces"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -392,6 +394,14 @@ func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 			return err
 		}
 		i.SetCompositesItem(node)
+	}
+	i.infixRules = make([]InfixRule, 0, len(aux.InfixRules))
+	for _, item := range aux.InfixRules {
+		node, err := Unmarshal[InfixRule](item)
+		if err != nil {
+			return err
+		}
+		i.SetInfixRulesItem(node)
 	}
 	i.terminals = make([]Token, 0, len(aux.Terminals))
 	for _, item := range aux.Terminals {
@@ -422,10 +432,10 @@ func (i *GrammarImpl) UnmarshalJSON(data []byte) error {
 
 func (i *InterfaceImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__     string            `json:"$type"`
-		Name    string            `json:"name"`
-		Extends []json.RawMessage `json:"extends"`
-		Fields  []json.RawMessage `json:"fields"`
+		T__     string           `json:"$type"`
+		Name    string           `json:"name"`
+		Extends []jsontext.Value `json:"extends"`
+		Fields  []jsontext.Value `json:"fields"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -452,9 +462,9 @@ func (i *InterfaceImpl) UnmarshalJSON(data []byte) error {
 
 func (i *FieldImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__  string          `json:"$type"`
-		Name string          `json:"name"`
-		Type json.RawMessage `json:"type"`
+		T__  string         `json:"$type"`
+		Name string         `json:"name"`
+		Type jsontext.Value `json:"type"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -476,8 +486,8 @@ func (i *FieldTypeImpl) UnmarshalJSON(data []byte) error {
 
 func (i *ArrayTypeImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__          string          `json:"$type"`
-		InternalType json.RawMessage `json:"internalType"`
+		T__          string         `json:"$type"`
+		InternalType jsontext.Value `json:"internalType"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -494,8 +504,8 @@ func (i *ArrayTypeImpl) UnmarshalJSON(data []byte) error {
 
 func (i *ReferenceTypeImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__  string          `json:"$type"`
-		Type json.RawMessage `json:"type"`
+		T__  string         `json:"$type"`
+		Type jsontext.Value `json:"type"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -512,8 +522,8 @@ func (i *ReferenceTypeImpl) UnmarshalJSON(data []byte) error {
 
 func (i *SimpleTypeImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__  string          `json:"$type"`
-		Type json.RawMessage `json:"type"`
+		T__  string         `json:"$type"`
+		Type jsontext.Value `json:"type"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -554,9 +564,9 @@ func (i *AbstractRuleImpl) UnmarshalJSON(data []byte) error {
 
 func (i *AbstractRuleWithBodyImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__  string          `json:"$type"`
-		Name string          `json:"name"`
-		Body json.RawMessage `json:"body"`
+		T__  string         `json:"$type"`
+		Name string         `json:"name"`
+		Body jsontext.Value `json:"body"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -576,11 +586,27 @@ func (i *AbstractRuleWithReturnTypeImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__        string         `json:"$type"`
 		Name       string         `json:"name"`
+		Body       jsontext.Value `json:"body"`
+		ReturnType jsontext.Value `json:"returnType"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
 	i.SetName(newToken(nil, aux.Name))
+	if aux.Body != nil {
+		body, err := Unmarshal[Element](aux.Body)
+		if err != nil {
+			return err
+		}
+		i.SetBody(body)
+	}
+	if aux.ReturnType != nil {
+		returnType := core.NewReference[Interface](i, nil, nil)
+		if err := returnType.UnmarshalJSON(aux.ReturnType); err != nil {
+			return err
+		}
+		i.SetReturnType(returnType)
+	}
 	return nil
 }
 
@@ -598,11 +624,11 @@ func (i *AbstractTokenRuleImpl) UnmarshalJSON(data []byte) error {
 
 func (i *ParserRuleImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__        string          `json:"$type"`
-		Name       string          `json:"name"`
-		Body       json.RawMessage `json:"body"`
-		Entry      bool            `json:"entry"`
-		ReturnType json.RawMessage `json:"returnType"`
+		T__        string         `json:"$type"`
+		Name       string         `json:"name"`
+		Body       jsontext.Value `json:"body"`
+		ReturnType jsontext.Value `json:"returnType"`
+		Entry      bool           `json:"entry"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -646,11 +672,11 @@ func (i *TokenImpl) UnmarshalJSON(data []byte) error {
 
 func (i *TokenGroupImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__       string            `json:"$type"`
-		Name      string            `json:"name"`
-		TokenRefs []json.RawMessage `json:"tokenRefs"`
-		Regexps   []string          `json:"regexps"`
-		Keywords  []json.RawMessage `json:"keywords"`
+		T__       string           `json:"$type"`
+		Name      string           `json:"name"`
+		TokenRefs []jsontext.Value `json:"tokenRefs"`
+		Regexps   []string         `json:"regexps"`
+		Keywords  []jsontext.Value `json:"keywords"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -693,9 +719,9 @@ func (i *ElementImpl) UnmarshalJSON(data []byte) error {
 
 func (i *AlternativesImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__         string            `json:"$type"`
-		Cardinality string            `json:"cardinality"`
-		Alts        []json.RawMessage `json:"alts"`
+		T__         string           `json:"$type"`
+		Cardinality string           `json:"cardinality"`
+		Alts        []jsontext.Value `json:"alts"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -714,9 +740,9 @@ func (i *AlternativesImpl) UnmarshalJSON(data []byte) error {
 
 func (i *GroupImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__         string            `json:"$type"`
-		Cardinality string            `json:"cardinality"`
-		Elements    []json.RawMessage `json:"elements"`
+		T__         string           `json:"$type"`
+		Cardinality string           `json:"cardinality"`
+		Elements    []jsontext.Value `json:"elements"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -749,11 +775,11 @@ func (i *KeywordImpl) UnmarshalJSON(data []byte) error {
 
 func (i *AssignmentImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__         string          `json:"$type"`
-		Cardinality string          `json:"cardinality"`
-		Property    json.RawMessage `json:"property"`
-		Operator    string          `json:"operator"`
-		Value       json.RawMessage `json:"value"`
+		T__         string         `json:"$type"`
+		Cardinality string         `json:"cardinality"`
+		Property    jsontext.Value `json:"property"`
+		Operator    string         `json:"operator"`
+		Value       jsontext.Value `json:"value"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -791,10 +817,10 @@ func (i *AssignableImpl) UnmarshalJSON(data []byte) error {
 
 func (i *CrossRefImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__         string          `json:"$type"`
-		Cardinality string          `json:"cardinality"`
-		Type        json.RawMessage `json:"type"`
-		Rule        json.RawMessage `json:"rule"`
+		T__         string         `json:"$type"`
+		Cardinality string         `json:"cardinality"`
+		Type        jsontext.Value `json:"type"`
+		Rule        jsontext.Value `json:"rule"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -819,9 +845,9 @@ func (i *CrossRefImpl) UnmarshalJSON(data []byte) error {
 
 func (i *RuleCallImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__         string          `json:"$type"`
-		Cardinality string          `json:"cardinality"`
-		Rule        json.RawMessage `json:"rule"`
+		T__         string         `json:"$type"`
+		Cardinality string         `json:"cardinality"`
+		Rule        jsontext.Value `json:"rule"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -839,11 +865,11 @@ func (i *RuleCallImpl) UnmarshalJSON(data []byte) error {
 
 func (i *ActionImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__         string          `json:"$type"`
-		Cardinality string          `json:"cardinality"`
-		Type        json.RawMessage `json:"type"`
-		Operator    string          `json:"operator"`
-		Property    json.RawMessage `json:"property"`
+		T__         string         `json:"$type"`
+		Cardinality string         `json:"cardinality"`
+		Type        jsontext.Value `json:"type"`
+		Operator    string         `json:"operator"`
+		Property    jsontext.Value `json:"property"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -869,9 +895,9 @@ func (i *ActionImpl) UnmarshalJSON(data []byte) error {
 
 func (i *CompositeRuleImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
-		T__  string          `json:"$type"`
-		Name string          `json:"name"`
-		Body json.RawMessage `json:"body"`
+		T__  string         `json:"$type"`
+		Name string         `json:"name"`
+		Body jsontext.Value `json:"body"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -887,15 +913,69 @@ func (i *CompositeRuleImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (i *InfixRuleImpl) UnmarshalJSON(data []byte) error {
+	aux := &struct {
+		T__        string           `json:"$type"`
+		Name       string           `json:"name"`
+		Body       jsontext.Value   `json:"body"`
+		ReturnType jsontext.Value   `json:"returnType"`
+		Call       jsontext.Value   `json:"call"`
+		Groups     []jsontext.Value `json:"groups"`
+	}{}
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+	i.SetName(newToken(nil, aux.Name))
+	if aux.Body != nil {
+		body, err := Unmarshal[Element](aux.Body)
+		if err != nil {
+			return err
+		}
+		i.SetBody(body)
+	}
+	if aux.ReturnType != nil {
+		returnType := core.NewReference[Interface](i, nil, nil)
+		if err := returnType.UnmarshalJSON(aux.ReturnType); err != nil {
+			return err
+		}
+		i.SetReturnType(returnType)
+	}
+	if aux.Call != nil {
+		call, err := Unmarshal[RuleCall](aux.Call)
+		if err != nil {
+			return err
+		}
+		i.SetCall(call)
+	}
+	i.groups = make([]PrecedenceGroup, 0, len(aux.Groups))
+	for _, item := range aux.Groups {
+		node, err := Unmarshal[PrecedenceGroup](item)
+		if err != nil {
+			return err
+		}
+		i.SetGroupsItem(node)
+	}
+	return nil
+}
+
 func (i *PrecedenceGroupImpl) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		T__           string           `json:"$type"`
 		Associativity string           `json:"associativity"`
+		Operators     []jsontext.Value `json:"operators"`
 	}{}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
 	i.SetAssociativity(newToken(nil, aux.Associativity))
+	i.operators = make([]Assignable, 0, len(aux.Operators))
+	for _, item := range aux.Operators {
+		node, err := Unmarshal[Assignable](item)
+		if err != nil {
+			return err
+		}
+		i.SetOperatorsItem(node)
+	}
 	return nil
 }
 

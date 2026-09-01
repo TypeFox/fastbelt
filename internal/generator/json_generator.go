@@ -18,9 +18,19 @@ func GenerateJSON(grammar grammar.Grammar, packageName string) string {
 	node.AppendLine("package ", packageName)
 	node.AppendLine()
 
+	// in order to (A) avoid unused import errors due to "encoding/json/jsontext",
+	// e.g. in the initial project state as created by the scaffolding tool,
+	// and (B) polluting the generator code with code tracking the production of refs of "jsontext.Value",
+	// we pre-render the string of the generated functions and check for the presence of "jsontext.Value"
+	content := generateFunctions(grammar, codegen.NewNode()).String()
+	importJsontext := strings.Contains(content, "jsontext.Value")
+
 	node.AppendLine("import (")
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("\"encoding/json\"")
+		if importJsontext {
+			n.AppendLine("\"encoding/json/jsontext\"")
+		}
+		n.AppendLine("\"encoding/json/v2\"")
 		n.AppendLine("\"fmt\"")
 		n.AppendLine("\"reflect\"")
 		n.AppendLine()
@@ -28,13 +38,12 @@ func GenerateJSON(grammar grammar.Grammar, packageName string) string {
 	})
 	node.AppendLine(")")
 	node.AppendLine()
-
-	generateFunctions(grammar, node)
+	node.Append(content)
 
 	return FormatIfPossible(node.String())
 }
 
-func generateFunctions(grammar grammar.Grammar, node codegen.Node) {
+func generateFunctions(grammar grammar.Grammar, node codegen.Node) codegen.Node {
 	node.AppendLine(("func newToken(tokenType *core.TokenType, view string) *core.Token {"))
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("token := core.NewToken(tokenType, view, 0, 0)")
@@ -52,6 +61,8 @@ func generateFunctions(grammar grammar.Grammar, node codegen.Node) {
 	}
 
 	generateDispatchingUnmarshalFunc(node, grammar)
+
+	return node
 }
 
 func generateJSONMarshal(node codegen.Node, iface grammar.Interface) {
@@ -115,7 +126,7 @@ func getAuxFieldType(field FieldInfo) string {
 	} else if field.GType == TOKEN_TYPE || field.GType == COMPOSITE_TYPE {
 		typ = "string"
 	} else {
-		typ = "json.RawMessage"
+		typ = "jsontext.Value"
 	}
 
 	if field.Array {
