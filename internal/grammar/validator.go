@@ -49,6 +49,7 @@ const (
 	ValidateTerminalNotCoveredByParserRule   = "terminalNotCoveredByParserRule"
 	ValidateTokenGroupNotCoveredByParserRule = "tokenGroupNotCoveredByParserRule"
 	ValidateInvalidRegExpLiteral             = "invalidRegExpLiteral"
+	ValidateKeywordPureStandaloneOrTokenDecl = "keywordPureStandaloneOrTokenDecl"
 )
 
 // defaultTokenModeName is the name under which the mode marked
@@ -79,6 +80,7 @@ func (g *GrammarImpl) Validate(ctx context.Context, _ string, accept core.Valida
 	checkTokenModesCoverParserTokens(g, ctx, accept)
 	checkParserRulesCoverVisibleTokens(g, ctx, accept)
 	checkIfNonDefaultTokenModesHasNoExit(g, ctx, accept)
+	checkIfKeywordPureStandaloneOrTokenDecl(g, ctx, accept)
 }
 
 // tokenModeName returns the name a token mode is registered under. The mode
@@ -1562,5 +1564,44 @@ func checkRegExpIsValid(patternToken *core.Token, accept core.ValidationAcceptor
 			core.WithToken(patternToken),
 			core.WithCode(ValidateInvalidRegExpLiteral),
 		))
+	}
+}
+
+func checkIfKeywordPureStandaloneOrTokenDecl(g Grammar, ctx context.Context, accept core.ValidationAcceptor) {
+	//value => Keyword => isTokenDeclaration
+	keywords := map[string]map[Keyword]bool{}
+	for node := range core.AllChildren(g) {
+		if kw, ok := node.(Keyword); ok {
+			value := kw.Value()
+			if _, exists := keywords[value]; !exists {
+				keywords[value] = map[Keyword]bool{}
+			}
+			_, ok := kw.Container().(KeywordTokenContent)
+			keywords[value][kw] = ok
+		}
+	}
+
+	for _, kws := range keywords {
+		foundInDecl := false
+		foundStandalone := false
+		for _, isTokenDecl := range kws {
+			if isTokenDecl {
+				foundInDecl = true
+			} else {
+				foundStandalone = true
+			}
+		}
+		if !foundInDecl || !foundStandalone {
+			continue
+		}
+		for kw, _ := range kws {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				fmt.Sprintf("The keyword '%s' is used both as a standalone keyword and as a token declaration. A unique keyword value must be either pure standalone or pure token declarations.", kw.Value()),
+				kw,
+				core.WithToken(kw.ValueToken()),
+				core.WithCode(ValidateKeywordPureStandaloneOrTokenDecl),
+			))
+		}
 	}
 }

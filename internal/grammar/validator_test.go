@@ -1253,7 +1253,7 @@ func TestKeywordCoveredByKeywordBackedToken(t *testing.T) {
 	f.Parse(`
 		grammar Test;
 		interface Foo { Greeting string }
-		Foo: Greeting=ID "world";
+		Foo: Greeting=ID WORLD;
 
 		token WORLD: "world"
 		token ID: /[a-z]+/
@@ -1317,7 +1317,7 @@ func TestKeywordCoveredByModeLocalTokenDeclaration(t *testing.T) {
 	f.Parse(`
 		grammar Test;
 		interface Foo { Greeting string }
-		Foo: Greeting=ID "world";
+		Foo: Greeting=ID WORLD;
 
 		token ID: /[a-z]+/
 		hidden token WS: /\s+/
@@ -1830,4 +1830,21 @@ func TestInvalidRegExpInTokenContent(t *testing.T) {
 	diag := doc.ExpectDiagnostic("1")
 	diag.WithSeverity(core.SeverityError)
 	diag.WithCode(ValidateInvalidRegExpLiteral)
+}
+
+func TestSameKeywordsAsStandaloneAndTokenDeclaration(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Foo { Bar string }
+		Foo: Bar=Y <|1:"y"|>;
+ 		token Y: <|2:"y"|>
+	`)
+	assert.Len(t, doc.Document.Diagnostics, 2)
+	diag1 := doc.ExpectDiagnostic("1")
+	diag1.WithSeverity(core.SeverityError)
+	diag1.WithCode(ValidateKeywordPureStandaloneOrTokenDecl)
+	diag2 := doc.ExpectDiagnostic("2")
+	diag2.WithSeverity(core.SeverityError)
+	diag2.WithCode(ValidateKeywordPureStandaloneOrTokenDecl)
 }
