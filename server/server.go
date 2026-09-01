@@ -24,6 +24,15 @@ type InitializeParticipant interface {
 	OnServerInitialize(params *lsp.ParamInitialize)
 }
 
+// optionsIf returns a fresh *O if a service of type S is registered, nil otherwise.
+// Used to advertise a server capability only when a provider service exists.
+func optionsIf[S, O any](sc *service.Container) *O {
+	if service.Has[S](sc) {
+		return new(O)
+	}
+	return nil
+}
+
 // DefaultLanguageServer implements the [lsp.Server] interface
 type DefaultLanguageServer struct {
 	sc *service.Container
@@ -48,37 +57,33 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 	if triggers, err := service.Get[CompletionTriggers](s.sc); err == nil && triggers != nil {
 		triggerChars = triggers.TriggerCharacters()
 	}
+	var renameProvider *lsp.RenameOptions
+	if service.Has[RenameProvider](s.sc) {
+		renameProvider = &lsp.RenameOptions{PrepareProvider: true}
+	}
 	positionEncoding := lsp.UTF16
 	return &lsp.InitializeResult{
 		Capabilities: lsp.ServerCapabilities{
 			PositionEncoding: &positionEncoding,
-			TextDocumentSync: lsp.Incremental,
+			TextDocumentSync: &lsp.TextDocumentSyncOptions{
+				OpenClose:         true,
+				WillSave:          true,
+				WillSaveWaitUntil: true,
+				Save:              &lsp.SaveOptions{IncludeText: true},
+				Change:            lsp.Incremental,
+			},
 			CompletionProvider: &lsp.CompletionOptions{
 				ResolveProvider:   false,
 				TriggerCharacters: triggerChars,
 			},
-			DefinitionProvider: &lsp.Or_ServerCapabilities_definitionProvider{
-				Value: service.Has[DefinitionProvider](s.sc),
-			},
-			DocumentSymbolProvider: &lsp.Or_ServerCapabilities_documentSymbolProvider{
-				Value: service.Has[DocumentSymbolProvider](s.sc),
-			},
-			FoldingRangeProvider: &lsp.Or_ServerCapabilities_foldingRangeProvider{
-				Value: service.Has[FoldingRangeProvider](s.sc),
-			},
-			DocumentHighlightProvider: &lsp.Or_ServerCapabilities_documentHighlightProvider{
-				Value: service.Has[DocumentHighlightProvider](s.sc),
-			},
-			WorkspaceSymbolProvider: &lsp.Or_ServerCapabilities_workspaceSymbolProvider{
-				Value: service.Has[WorkspaceSymbolProvider](s.sc),
-			},
-			HoverProvider: &lsp.Or_ServerCapabilities_hoverProvider{
-				Value: service.Has[HoverProvider](s.sc),
-			},
-			ReferencesProvider: &lsp.Or_ServerCapabilities_referencesProvider{
-				Value: service.Has[ReferencesProvider](s.sc),
-			},
-			RenameProvider: service.Has[RenameProvider](s.sc),
+			DefinitionProvider:        optionsIf[DefinitionProvider, lsp.DefinitionOptions](s.sc),
+			DocumentSymbolProvider:    optionsIf[DocumentSymbolProvider, lsp.DocumentSymbolOptions](s.sc),
+			FoldingRangeProvider:      optionsIf[FoldingRangeProvider, lsp.FoldingRangeRegistrationOptions](s.sc),
+			DocumentHighlightProvider: optionsIf[DocumentHighlightProvider, lsp.DocumentHighlightOptions](s.sc),
+			WorkspaceSymbolProvider:   optionsIf[WorkspaceSymbolProvider, lsp.WorkspaceSymbolOptions](s.sc),
+			HoverProvider:             optionsIf[HoverProvider, lsp.HoverOptions](s.sc),
+			ReferencesProvider:        optionsIf[ReferencesProvider, lsp.ReferenceOptions](s.sc),
+			RenameProvider:            renameProvider,
 		},
 	}, nil
 }
@@ -347,7 +352,7 @@ func (s *DefaultLanguageServer) Implementation(ctx context.Context, params *lsp.
 func (s *DefaultLanguageServer) InlayHint(ctx context.Context, params *lsp.InlayHintParams) ([]lsp.InlayHint, error) {
 	return nil, nil
 }
-func (s *DefaultLanguageServer) InlineCompletion(ctx context.Context, params *lsp.InlineCompletionParams) (*lsp.Or_Result_textDocument_inlineCompletion, error) {
+func (s *DefaultLanguageServer) InlineCompletion(ctx context.Context, params *lsp.InlineCompletionParams) (*lsp.ResultTextDocumentInlineCompletion, error) {
 	return nil, nil
 }
 func (s *DefaultLanguageServer) InlineValue(ctx context.Context, params *lsp.InlineValueParams) ([]lsp.InlineValue, error) {

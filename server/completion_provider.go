@@ -683,8 +683,8 @@ func fillInsertion(item *lsp.CompletionItem, replace *lsp.Range) {
 // every client that supports completion.
 func applyInsertion(item *lsp.CompletionItem, text string, replace *lsp.Range, insertFormat *lsp.InsertTextFormat) {
 	if replace != nil {
-		item.TextEdit = &lsp.Or_CompletionItem_textEdit{
-			Value: lsp.TextEdit{Range: *replace, NewText: text},
+		item.TextEdit = &lsp.CompletionItemTextEdit{
+			TextEdit: &lsp.TextEdit{Range: *replace, NewText: text},
 		}
 		// InsertText is ignored by the client when TextEdit is present,
 		// but we set it anyway for clients that fall back to it.
