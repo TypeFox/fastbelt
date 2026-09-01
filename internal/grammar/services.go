@@ -32,8 +32,11 @@ func SetupServices(sc *service.Container) {
 	service.Override(sc, newImportedSymbolsProviderImpl(sc))
 
 	// Set a semantic token highlighting strategy
-	service.Put[server.SemanticTokensLegendProvider](sc, legendProvider)
-	service.Put(sc, server.NewTokenBasedSemanticTokensProvider(sc, NewGrammarTokenHighlightingStrategy()))
+	service.Put(sc, server.NewTokenBasedSemanticTokensProvider(
+		sc,
+		legendProvider,
+		NewGrammarTokenHighlightingStrategy(),
+	))
 }
 
 // CreateServices creates a service container for the grammar language to be used in the CLI and tests.
