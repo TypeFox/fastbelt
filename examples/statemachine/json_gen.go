@@ -11,11 +11,6 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
-func newToken(tokenType *core.TokenType, view string) *core.Token {
-	token := core.NewToken(tokenType, view, 0, 0)
-	return &token
-}
-
 func (i *StatemachineImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__      string                 `json:"$type"`
@@ -92,7 +87,10 @@ func (i *StatemachineImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(nil, aux.Name))
+	{
+		token := core.NewToken(nil, aux.Name, -1, -1)
+		i.SetName(&token)
+	}
 	i.events = make([]Event, 0, len(aux.Events))
 	for _, item := range aux.Events {
 		node, err := Unmarshal[Event](item)
@@ -135,7 +133,10 @@ func (i *EventImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(nil, aux.Name))
+	{
+		token := core.NewToken(nil, aux.Name, -1, -1)
+		i.SetName(&token)
+	}
 	return nil
 }
 
@@ -147,7 +148,10 @@ func (i *CommandImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(nil, aux.Name))
+	{
+		token := core.NewToken(nil, aux.Name, -1, -1)
+		i.SetName(&token)
+	}
 	return nil
 }
 
@@ -161,7 +165,10 @@ func (i *StateImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(nil, aux.Name))
+	{
+		token := core.NewToken(nil, aux.Name, -1, -1)
+		i.SetName(&token)
+	}
 	i.actions = make([]*core.Reference[Command], 0, len(aux.Actions))
 	for _, item := range aux.Actions {
 		node := core.NewReference[Command](i, nil, nil)

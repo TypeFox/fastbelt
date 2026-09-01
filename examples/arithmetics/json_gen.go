@@ -11,11 +11,6 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
-func newToken(tokenType *core.TokenType, view string) *core.Token {
-	token := core.NewToken(tokenType, view, 0, 0)
-	return &token
-}
-
 func (i *ModuleImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__        string      `json:"$type"`
@@ -133,7 +128,10 @@ func (i *ModuleImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(nil, aux.Name))
+	{
+		token := core.NewToken(nil, aux.Name, -1, -1)
+		i.SetName(&token)
+	}
 	i.statements = make([]Statement, 0, len(aux.Statements))
 	for _, item := range aux.Statements {
 		node, err := Unmarshal[Statement](item)
@@ -157,7 +155,10 @@ func (i *AbstractDefinitionImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(nil, aux.Name))
+	{
+		token := core.NewToken(nil, aux.Name, -1, -1)
+		i.SetName(&token)
+	}
 	return nil
 }
 
@@ -171,7 +172,10 @@ func (i *DefinitionImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(nil, aux.Name))
+	{
+		token := core.NewToken(nil, aux.Name, -1, -1)
+		i.SetName(&token)
+	}
 	i.args = make([]DeclaredParameter, 0, len(aux.Args))
 	for _, item := range aux.Args {
 		node, err := Unmarshal[DeclaredParameter](item)
@@ -198,7 +202,10 @@ func (i *DeclaredParameterImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetName(newToken(nil, aux.Name))
+	{
+		token := core.NewToken(nil, aux.Name, -1, -1)
+		i.SetName(&token)
+	}
 	return nil
 }
 
@@ -241,7 +248,10 @@ func (i *BinaryExpressionImpl) UnmarshalJSON(data []byte) error {
 		}
 		i.SetLeft(left)
 	}
-	i.SetOperator(newToken(nil, aux.Operator))
+	{
+		token := core.NewToken(nil, aux.Operator, -1, -1)
+		i.SetOperator(&token)
+	}
 	if aux.Right != nil {
 		right, err := Unmarshal[Expression](aux.Right)
 		if err != nil {
@@ -287,7 +297,10 @@ func (i *NumberLiteralImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetValue(newToken(nil, aux.Value))
+	{
+		token := core.NewToken(nil, aux.Value, -1, -1)
+		i.SetValue(&token)
+	}
 	return nil
 }
 

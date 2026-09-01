@@ -11,11 +11,6 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
-func newToken(tokenType *core.TokenType, view string) *core.Token {
-	token := core.NewToken(tokenType, view, 0, 0)
-	return &token
-}
-
 func (i *ObjImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__   string `json:"$type"`
@@ -61,11 +56,16 @@ func (i *ObjImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetValue(newToken(nil, aux.Value))
-	var cn core.CompositeNode
-	cn = core.NewCompositeNode()
-	cn.AppendToken(newToken(nil, aux.Node))
-	i.SetNode(cn)
+	{
+		token := core.NewToken(nil, aux.Value, -1, -1)
+		i.SetValue(&token)
+	}
+	{
+		token := core.NewToken(nil, aux.Node, -1, -1)
+		cn := core.NewCompositeNode()
+		cn.AppendToken(&token)
+		i.SetNode(cn)
+	}
 	return nil
 }
 
@@ -97,12 +97,20 @@ func (i *BImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetValue(newToken(nil, aux.Value))
-	var cn core.CompositeNode
-	cn = core.NewCompositeNode()
-	cn.AppendToken(newToken(nil, aux.Node))
-	i.SetNode(cn)
-	i.SetPost(newToken(nil, aux.Post))
+	{
+		token := core.NewToken(nil, aux.Value, -1, -1)
+		i.SetValue(&token)
+	}
+	{
+		token := core.NewToken(nil, aux.Node, -1, -1)
+		cn := core.NewCompositeNode()
+		cn.AppendToken(&token)
+		i.SetNode(cn)
+	}
+	{
+		token := core.NewToken(nil, aux.Post, -1, -1)
+		i.SetPost(&token)
+	}
 	return nil
 }
 

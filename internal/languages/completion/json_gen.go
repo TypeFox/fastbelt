@@ -11,11 +11,6 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
-func newToken(tokenType *core.TokenType, view string) *core.Token {
-	token := core.NewToken(tokenType, view, 0, 0)
-	return &token
-}
-
 func (i *ObjImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__ string `json:"$type"`
@@ -182,10 +177,12 @@ func (i *DeclareImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	var cn core.CompositeNode
-	cn = core.NewCompositeNode()
-	cn.AppendToken(newToken(nil, aux.Name))
-	i.SetName(cn)
+	{
+		token := core.NewToken(nil, aux.Name, -1, -1)
+		cn := core.NewCompositeNode()
+		cn.AppendToken(&token)
+		i.SetName(cn)
+	}
 	i.children = make([]Declare, 0, len(aux.Children))
 	for _, item := range aux.Children {
 		node, err := Unmarshal[Declare](item)

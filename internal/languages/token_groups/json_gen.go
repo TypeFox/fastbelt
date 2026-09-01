@@ -11,11 +11,6 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
-func newToken(tokenType *core.TokenType, view string) *core.Token {
-	token := core.NewToken(tokenType, view, 0, 0)
-	return &token
-}
-
 func (i *ModelImpl) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T__  string `json:"$type"`
@@ -76,7 +71,10 @@ func (i *ItemImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetValue(newToken(nil, aux.Value))
+	{
+		token := core.NewToken(nil, aux.Value, -1, -1)
+		i.SetValue(&token)
+	}
 	return nil
 }
 
@@ -90,9 +88,18 @@ func (i *RecoveryImpl) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	i.SetValue(newToken(nil, aux.Value))
-	i.SetFirst(newToken(nil, aux.First))
-	i.SetSecond(newToken(nil, aux.Second))
+	{
+		token := core.NewToken(nil, aux.Value, -1, -1)
+		i.SetValue(&token)
+	}
+	{
+		token := core.NewToken(nil, aux.First, -1, -1)
+		i.SetFirst(&token)
+	}
+	{
+		token := core.NewToken(nil, aux.Second, -1, -1)
+		i.SetSecond(&token)
+	}
 	return nil
 }
 
