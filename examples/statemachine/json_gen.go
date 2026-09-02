@@ -3,7 +3,6 @@
 package statemachine
 
 import (
-	"bytes"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
 
@@ -11,7 +10,7 @@ import (
 	"typefox.dev/fastbelt/util"
 )
 
-func (i *StatemachineImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *StatemachineImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__      string                 `json:"$type"`
 		Name     string                 `json:"name,omitempty"`
@@ -21,35 +20,35 @@ func (i *StatemachineImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		States   []State                `json:"states,omitempty"`
 	}{
 		T__:      "Statemachine",
-		Name:     i.Name(),
-		Events:   i.Events(),
-		Commands: i.Commands(),
-		Init:     i.Init(),
-		States:   i.States(),
+		Name:     _this.Name(),
+		Events:   _this.Events(),
+		Commands: _this.Commands(),
+		Init:     _this.Init(),
+		States:   _this.States(),
 	})
 }
 
-func (i *EventImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *EventImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__  string `json:"$type"`
 		Name string `json:"name,omitempty"`
 	}{
 		T__:  "Event",
-		Name: i.Name(),
+		Name: _this.Name(),
 	})
 }
 
-func (i *CommandImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *CommandImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__  string `json:"$type"`
 		Name string `json:"name,omitempty"`
 	}{
 		T__:  "Command",
-		Name: i.Name(),
+		Name: _this.Name(),
 	})
 }
 
-func (i *StateImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *StateImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__         string                     `json:"$type"`
 		Name        string                     `json:"name,omitempty"`
@@ -57,166 +56,161 @@ func (i *StateImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Transitions []Transition               `json:"transitions,omitempty"`
 	}{
 		T__:         "State",
-		Name:        i.Name(),
-		Actions:     i.Actions(),
-		Transitions: i.Transitions(),
+		Name:        _this.Name(),
+		Actions:     _this.Actions(),
+		Transitions: _this.Transitions(),
 	})
 }
 
-func (i *TransitionImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *TransitionImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__   string                 `json:"$type"`
 		Event *core.Reference[Event] `json:"event,omitempty"`
 		State *core.Reference[State] `json:"state,omitempty"`
 	}{
 		T__:   "Transition",
-		Event: i.Event(),
-		State: i.State(),
+		Event: _this.Event(),
+		State: _this.State(),
 	})
 }
 
-func (i *StatemachineImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *StatemachineImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__      string           `json:"$type"`
 		Name     string           `json:"name"`
 		Events   []jsontext.Value `json:"events"`
 		Commands []jsontext.Value `json:"commands"`
 		Init     jsontext.Value   `json:"init"`
 		States   []jsontext.Value `json:"states"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
-	i.events = make([]Event, 0, len(aux.Events))
+	_this.events = make([]Event, 0, len(aux.Events))
 	for _, item := range aux.Events {
-		node, err := UnmarshalValue[Event](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[Event](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetEventsItem(node)
+		_this.SetEventsItem(node)
 	}
-	i.commands = make([]Command, 0, len(aux.Commands))
+	_this.commands = make([]Command, 0, len(aux.Commands))
 	for _, item := range aux.Commands {
-		node, err := UnmarshalValue[Command](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[Command](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetCommandsItem(node)
+		_this.SetCommandsItem(node)
 	}
 	if aux.Init != nil {
-		init := core.NewReference[State](i, nil, nil)
-		if err := init.UnmarshalJSON(aux.Init); err != nil {
-			return err
+		init, _err := util.UnmarshalReference[State](_this, aux.Init)
+		if _err != nil {
+			return _err
 		}
-		i.SetInit(init)
+		_this.SetInit(init)
 	}
-	i.states = make([]State, 0, len(aux.States))
+	_this.states = make([]State, 0, len(aux.States))
 	for _, item := range aux.States {
-		node, err := UnmarshalValue[State](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[State](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetStatesItem(node)
+		_this.SetStatesItem(node)
 	}
 	return nil
 }
 
-func (i *EventImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *EventImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__  string `json:"$type"`
 		Name string `json:"name"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
 	return nil
 }
 
-func (i *CommandImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *CommandImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__  string `json:"$type"`
 		Name string `json:"name"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
 	return nil
 }
 
-func (i *StateImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *StateImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__         string           `json:"$type"`
 		Name        string           `json:"name"`
 		Actions     []jsontext.Value `json:"actions"`
 		Transitions []jsontext.Value `json:"transitions"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
-	i.actions = make([]*core.Reference[Command], 0, len(aux.Actions))
+	_this.actions = make([]*core.Reference[Command], 0, len(aux.Actions))
 	for _, item := range aux.Actions {
-		node := core.NewReference[Command](i, nil, nil)
-		if err := node.UnmarshalJSON(item); err != nil {
-			return err
+		reference, _err := util.UnmarshalReference[Command](_this, item)
+		if _err != nil {
+			return _err
 		}
-		i.SetActionsItem(node)
+		_this.SetActionsItem(reference)
 	}
-	i.transitions = make([]Transition, 0, len(aux.Transitions))
+	_this.transitions = make([]Transition, 0, len(aux.Transitions))
 	for _, item := range aux.Transitions {
-		node, err := UnmarshalValue[Transition](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[Transition](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetTransitionsItem(node)
+		_this.SetTransitionsItem(node)
 	}
 	return nil
 }
 
-func (i *TransitionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *TransitionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__   string         `json:"$type"`
 		Event jsontext.Value `json:"event"`
 		State jsontext.Value `json:"state"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	if aux.Event != nil {
-		event := core.NewReference[Event](i, nil, nil)
-		if err := event.UnmarshalJSON(aux.Event); err != nil {
-			return err
+		event, _err := util.UnmarshalReference[Event](_this, aux.Event)
+		if _err != nil {
+			return _err
 		}
-		i.SetEvent(event)
+		_this.SetEvent(event)
 	}
 	if aux.State != nil {
-		state := core.NewReference[State](i, nil, nil)
-		if err := state.UnmarshalJSON(aux.State); err != nil {
-			return err
+		state, _err := util.UnmarshalReference[State](_this, aux.State)
+		if _err != nil {
+			return _err
 		}
-		i.SetState(state)
+		_this.SetState(state)
 	}
 	return nil
 }
 
-// UnmarshalValue is a sugar method delegating to [util.UnmarshalDecode]
+// UnmarshalValue is a sugar method delegating to [util.UnmarshalValue]
 // that decodes 'value' into an instance of type 'T' by reading the "$type" field,
 // selecting a corresponding factory, creating an instance, and unmarshaling its content.
 func UnmarshalValue[T core.AstNode](value jsontext.Value) (T, error) {
-	return util.UnmarshalDecode[T](jsontext.NewDecoder(bytes.NewReader(value)), StatemachineModelSyntheticFactories)
+	return util.UnmarshalValue[T](value, StatemachineModelSyntheticFactories)
 }

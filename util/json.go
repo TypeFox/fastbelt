@@ -18,38 +18,58 @@ import (
 	"typefox.dev/fastbelt/workspace"
 )
 
-// UnmarshalDecode reads the next JSON value from decoder into an instance of type T by
+// Unmarshal reads the first JSON value from reader into an instance of type T by
 // reading the "$type" field, selecting a corresponding factory, creating an instance, and
 // unmarshaling its content via the decoder API of package "encoding/json/v2".
-func UnmarshalDecode[T core.AstNode](decoder *jsontext.Decoder, factories map[string]func() core.AstNode) (T, error) {
+func Unmarshal[T core.AstNode](reader io.Reader, factories map[string]func() core.AstNode) (T, error) {
 	var zero T
-	raw, err := decoder.ReadValue()
-	if err != nil {
-		return zero, fmt.Errorf("unmarshalDecode: %w", err)
+	if value, err := jsontext.NewDecoder(reader).ReadValue(); err != nil {
+		return zero, fmt.Errorf("util.Unmarshal: %w", err)
+	} else {
+		return UnmarshalValue[T](value, factories)
 	}
+}
+
+// UnmarshalValue reads the given JSON value into an instance of type T by
+// reading the "$type" field, selecting a corresponding factory, creating an instance, and
+// unmarshaling its content via the decoder API of package "encoding/json/v2".
+//
+// Returns an error if the "$type" field is missing or unknown, or if the instance cannot be converted to type T.
+func UnmarshalValue[T core.AstNode](value jsontext.Value, factories map[string]func() core.AstNode) (T, error) {
+	var zero T
 	node := &struct {
 		Type string `json:"$type"`
 	}{}
-	if err := json.Unmarshal(raw, node); err != nil {
-		return zero, fmt.Errorf("unmarshalDecode: %w", err)
+	if err := json.Unmarshal(value, node); err != nil {
+		return zero, fmt.Errorf("util.UnmarshalValue: %w", err)
 	}
 	factory, ok := factories[node.Type]
 	if !ok {
-		return zero, fmt.Errorf("unmarshalDecode: unknown type %q", node.Type)
+		return zero, fmt.Errorf("util.UnmarshalValue: unknown type %q", node.Type)
 	}
 	instance := factory()
 	asT, ok := instance.(T)
 	if !ok {
-		return zero, fmt.Errorf("unmarshalDecode: %T is not convertible to type %s", instance, reflect.TypeFor[T]())
+		return zero, fmt.Errorf("util.UnmarshalValue: %T is not convertible to type %s", instance, reflect.TypeFor[T]())
 	}
 	if unmarshaler, ok := instance.(json.UnmarshalerFrom); ok {
-		if err := unmarshaler.UnmarshalJSONFrom(jsontext.NewDecoder(bytes.NewReader(raw))); err != nil {
-			return zero, fmt.Errorf("unmarshalDecode %s: %w", node.Type, err)
+		if err := unmarshaler.UnmarshalJSONFrom(jsontext.NewDecoder(bytes.NewReader(value))); err != nil {
+			return zero, fmt.Errorf("util.UnmarshalValue %s: %w", node.Type, err)
 		}
 	} else {
-		return zero, fmt.Errorf("unmarshalDecode: %T is not convertible to type json.UnmarshalerFrom", instance)
+		return zero, fmt.Errorf("util.UnmarshalValue: %T is not convertible to type json.UnmarshalerFrom", instance)
 	}
 	return asT, nil
+}
+
+// UnmarshalReference is a utility method used by the generated type-specific implementations of [json.UnmarshalerFrom].UnmarshalJSONFrom(*jsontext.Decoder).
+// Not intended to be used by client directly.
+func UnmarshalReference[T core.AstNode](owner core.AstNode, value jsontext.Value) (*core.Reference[T], error) {
+	ref := core.NewReference[T](owner, nil, nil)
+	if err := ref.UnmarshalJSON(value); err != nil {
+		return nil, err
+	}
+	return ref, nil
 }
 
 // UnmarshalAndBuildDocument uses the "encoding/json/v2" entry point to unmarshal rootNode based on the given data string and builds the document.
@@ -65,7 +85,7 @@ func UnmarshalAndBuildDocument(ctx context.Context, sc *service.Container, docum
 		return err
 	}
 
-	if document.Root, err = UnmarshalDecode[core.AstNode](jsontext.NewDecoder(input), factories); err != nil {
+	if document.Root, err = Unmarshal[core.AstNode](input, factories); err != nil {
 		return err
 	}
 

@@ -1,0 +1,4 @@
+*.go
+!doc.go
+!json_gen.go
+!types_gen.go

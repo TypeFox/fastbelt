@@ -3,7 +3,6 @@
 package lookahead
 
 import (
-	"bytes"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
 
@@ -11,29 +10,29 @@ import (
 	"typefox.dev/fastbelt/util"
 )
 
-func (i *ObjImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *ObjImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__   string `json:"$type"`
 		Value string `json:"value,omitempty"`
 		Node  string `json:"node,omitempty"`
 	}{
 		T__:   "Obj",
-		Value: i.Value(),
-		Node:  i.Node(),
+		Value: _this.Value(),
+		Node:  _this.Node(),
 	})
 }
 
-func (i *RootImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *RootImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__  string `json:"$type"`
 		Item Obj    `json:"item,omitempty"`
 	}{
 		T__:  "Root",
-		Item: i.Item(),
+		Item: _this.Item(),
 	})
 }
 
-func (i *BImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *BImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__   string `json:"$type"`
 		Value string `json:"value,omitempty"`
@@ -41,82 +40,79 @@ func (i *BImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Post  string `json:"post,omitempty"`
 	}{
 		T__:   "B",
-		Value: i.Value(),
-		Node:  i.Node(),
-		Post:  i.Post(),
+		Value: _this.Value(),
+		Node:  _this.Node(),
+		Post:  _this.Post(),
 	})
 }
 
-func (i *ObjImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *ObjImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__   string `json:"$type"`
 		Value string `json:"value"`
 		Node  string `json:"node"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Value, -1, -1)
-		i.SetValue(&token)
+		_this.SetValue(&token)
 	}
 	{
 		token := core.NewToken(nil, aux.Node, -1, -1)
 		cn := core.NewCompositeNode()
 		cn.AppendToken(&token)
-		i.SetNode(cn)
+		_this.SetNode(cn)
 	}
 	return nil
 }
 
-func (i *RootImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *RootImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__  string         `json:"$type"`
 		Item jsontext.Value `json:"item"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	if aux.Item != nil {
-		item, err := UnmarshalValue[Obj](aux.Item)
-		if err != nil {
-			return err
+		item, _err := UnmarshalValue[Obj](aux.Item)
+		if _err != nil {
+			return _err
 		}
-		i.SetItem(item)
+		_this.SetItem(item)
 	}
 	return nil
 }
 
-func (i *BImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *BImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__   string `json:"$type"`
 		Value string `json:"value"`
 		Node  string `json:"node"`
 		Post  string `json:"post"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Value, -1, -1)
-		i.SetValue(&token)
+		_this.SetValue(&token)
 	}
 	{
 		token := core.NewToken(nil, aux.Node, -1, -1)
 		cn := core.NewCompositeNode()
 		cn.AppendToken(&token)
-		i.SetNode(cn)
+		_this.SetNode(cn)
 	}
 	{
 		token := core.NewToken(nil, aux.Post, -1, -1)
-		i.SetPost(&token)
+		_this.SetPost(&token)
 	}
 	return nil
 }
 
-// UnmarshalValue is a sugar method delegating to [util.UnmarshalDecode]
+// UnmarshalValue is a sugar method delegating to [util.UnmarshalValue]
 // that decodes 'value' into an instance of type 'T' by reading the "$type" field,
 // selecting a corresponding factory, creating an instance, and unmarshaling its content.
 func UnmarshalValue[T core.AstNode](value jsontext.Value) (T, error) {
-	return util.UnmarshalDecode[T](jsontext.NewDecoder(bytes.NewReader(value)), LookaheadSyntheticFactories)
+	return util.UnmarshalValue[T](value, LookaheadSyntheticFactories)
 }

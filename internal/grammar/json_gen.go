@@ -3,7 +3,6 @@
 package grammar
 
 import (
-	"bytes"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
 
@@ -11,7 +10,7 @@ import (
 	"typefox.dev/fastbelt/util"
 )
 
-func (i *GrammarImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *GrammarImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__         string          `json:"$type"`
 		Name        string          `json:"name,omitempty"`
@@ -23,17 +22,17 @@ func (i *GrammarImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Interfaces  []Interface     `json:"interfaces,omitempty"`
 	}{
 		T__:         "Grammar",
-		Name:        i.Name(),
-		Rules:       i.Rules(),
-		Composites:  i.Composites(),
-		InfixRules:  i.InfixRules(),
-		Terminals:   i.Terminals(),
-		TokenGroups: i.TokenGroups(),
-		Interfaces:  i.Interfaces(),
+		Name:        _this.Name(),
+		Rules:       _this.Rules(),
+		Composites:  _this.Composites(),
+		InfixRules:  _this.InfixRules(),
+		Terminals:   _this.Terminals(),
+		TokenGroups: _this.TokenGroups(),
+		Interfaces:  _this.Interfaces(),
 	})
 }
 
-func (i *InterfaceImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *InterfaceImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__     string                       `json:"$type"`
 		Name    string                       `json:"name,omitempty"`
@@ -41,25 +40,25 @@ func (i *InterfaceImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Fields  []Field                      `json:"fields,omitempty"`
 	}{
 		T__:     "Interface",
-		Name:    i.Name(),
-		Extends: i.Extends(),
-		Fields:  i.Fields(),
+		Name:    _this.Name(),
+		Extends: _this.Extends(),
+		Fields:  _this.Fields(),
 	})
 }
 
-func (i *FieldImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *FieldImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__  string    `json:"$type"`
 		Name string    `json:"name,omitempty"`
 		Type FieldType `json:"type,omitempty"`
 	}{
 		T__:  "Field",
-		Name: i.Name(),
-		Type: i.Type(),
+		Name: _this.Name(),
+		Type: _this.Type(),
 	})
 }
 
-func (i *FieldTypeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *FieldTypeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__ string `json:"$type"`
 	}{
@@ -67,69 +66,69 @@ func (i *FieldTypeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	})
 }
 
-func (i *ArrayTypeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *ArrayTypeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__          string    `json:"$type"`
 		InternalType FieldType `json:"internalType,omitempty"`
 	}{
 		T__:          "ArrayType",
-		InternalType: i.InternalType(),
+		InternalType: _this.InternalType(),
 	})
 }
 
-func (i *ReferenceTypeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *ReferenceTypeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__  string                     `json:"$type"`
 		Type *core.Reference[Interface] `json:"type,omitempty"`
 	}{
 		T__:  "ReferenceType",
-		Type: i.Type(),
+		Type: _this.Type(),
 	})
 }
 
-func (i *SimpleTypeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *SimpleTypeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__  string                     `json:"$type"`
 		Type *core.Reference[Interface] `json:"type,omitempty"`
 	}{
 		T__:  "SimpleType",
-		Type: i.Type(),
+		Type: _this.Type(),
 	})
 }
 
-func (i *PrimitiveTypeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *PrimitiveTypeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__  string `json:"$type"`
 		Type string `json:"type,omitempty"`
 	}{
 		T__:  "PrimitiveType",
-		Type: i.Type(),
+		Type: _this.Type(),
 	})
 }
 
-func (i *AbstractRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *AbstractRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__  string `json:"$type"`
 		Name string `json:"name,omitempty"`
 	}{
 		T__:  "AbstractRule",
-		Name: i.Name(),
+		Name: _this.Name(),
 	})
 }
 
-func (i *AbstractRuleWithBodyImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *AbstractRuleWithBodyImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__  string  `json:"$type"`
 		Name string  `json:"name,omitempty"`
 		Body Element `json:"body,omitempty"`
 	}{
 		T__:  "AbstractRuleWithBody",
-		Name: i.Name(),
-		Body: i.Body(),
+		Name: _this.Name(),
+		Body: _this.Body(),
 	})
 }
 
-func (i *AbstractRuleWithReturnTypeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *AbstractRuleWithReturnTypeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__        string                     `json:"$type"`
 		Name       string                     `json:"name,omitempty"`
@@ -137,23 +136,23 @@ func (i *AbstractRuleWithReturnTypeImpl) MarshalJSONTo(_encoder *jsontext.Encode
 		ReturnType *core.Reference[Interface] `json:"returnType,omitempty"`
 	}{
 		T__:        "AbstractRuleWithReturnType",
-		Name:       i.Name(),
-		Body:       i.Body(),
-		ReturnType: i.ReturnType(),
+		Name:       _this.Name(),
+		Body:       _this.Body(),
+		ReturnType: _this.ReturnType(),
 	})
 }
 
-func (i *AbstractTokenRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *AbstractTokenRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__  string `json:"$type"`
 		Name string `json:"name,omitempty"`
 	}{
 		T__:  "AbstractTokenRule",
-		Name: i.Name(),
+		Name: _this.Name(),
 	})
 }
 
-func (i *ParserRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *ParserRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__        string                     `json:"$type"`
 		Name       string                     `json:"name,omitempty"`
@@ -162,14 +161,14 @@ func (i *ParserRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Entry      bool                       `json:"entry,omitempty"`
 	}{
 		T__:        "ParserRule",
-		Name:       i.Name(),
-		Body:       i.Body(),
-		ReturnType: i.ReturnType(),
-		Entry:      i.IsEntry(),
+		Name:       _this.Name(),
+		Body:       _this.Body(),
+		ReturnType: _this.ReturnType(),
+		Entry:      _this.IsEntry(),
 	})
 }
 
-func (i *TokenImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *TokenImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__    string `json:"$type"`
 		Name   string `json:"name,omitempty"`
@@ -177,15 +176,15 @@ func (i *TokenImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Regexp string `json:"regexp,omitempty"`
 	}{
 		T__:    "Token",
-		Name:   i.Name(),
-		Type:   i.Type(),
-		Regexp: i.Regexp(),
+		Name:   _this.Name(),
+		Type:   _this.Type(),
+		Regexp: _this.Regexp(),
 	})
 }
 
-func (i *TokenGroupImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
-	regexps := make([]string, len(i.Regexps()))
-	for j, item := range i.Regexps() {
+func (_this *TokenGroupImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	regexps := make([]string, len(_this.Regexps()))
+	for j, item := range _this.Regexps() {
 		regexps[j] = item.String()
 	}
 	return json.MarshalEncode(_encoder, struct {
@@ -196,60 +195,60 @@ func (i *TokenGroupImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Keywords  []Keyword                            `json:"keywords,omitempty"`
 	}{
 		T__:       "TokenGroup",
-		Name:      i.Name(),
-		TokenRefs: i.TokenRefs(),
+		Name:      _this.Name(),
+		TokenRefs: _this.TokenRefs(),
 		Regexps:   regexps,
-		Keywords:  i.Keywords(),
+		Keywords:  _this.Keywords(),
 	})
 }
 
-func (i *ElementImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *ElementImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__         string `json:"$type"`
 		Cardinality string `json:"cardinality,omitempty"`
 	}{
 		T__:         "Element",
-		Cardinality: i.Cardinality(),
+		Cardinality: _this.Cardinality(),
 	})
 }
 
-func (i *AlternativesImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *AlternativesImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__         string    `json:"$type"`
 		Cardinality string    `json:"cardinality,omitempty"`
 		Alts        []Element `json:"alts,omitempty"`
 	}{
 		T__:         "Alternatives",
-		Cardinality: i.Cardinality(),
-		Alts:        i.Alts(),
+		Cardinality: _this.Cardinality(),
+		Alts:        _this.Alts(),
 	})
 }
 
-func (i *GroupImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *GroupImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__         string    `json:"$type"`
 		Cardinality string    `json:"cardinality,omitempty"`
 		Elements    []Element `json:"elements,omitempty"`
 	}{
 		T__:         "Group",
-		Cardinality: i.Cardinality(),
-		Elements:    i.Elements(),
+		Cardinality: _this.Cardinality(),
+		Elements:    _this.Elements(),
 	})
 }
 
-func (i *KeywordImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *KeywordImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__         string `json:"$type"`
 		Cardinality string `json:"cardinality,omitempty"`
 		Value       string `json:"value,omitempty"`
 	}{
 		T__:         "Keyword",
-		Cardinality: i.Cardinality(),
-		Value:       i.Value(),
+		Cardinality: _this.Cardinality(),
+		Value:       _this.Value(),
 	})
 }
 
-func (i *AssignmentImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *AssignmentImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__         string                 `json:"$type"`
 		Cardinality string                 `json:"cardinality,omitempty"`
@@ -258,24 +257,24 @@ func (i *AssignmentImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Value       Assignable             `json:"value,omitempty"`
 	}{
 		T__:         "Assignment",
-		Cardinality: i.Cardinality(),
-		Property:    i.Property(),
-		Operator:    i.Operator(),
-		Value:       i.Value(),
+		Cardinality: _this.Cardinality(),
+		Property:    _this.Property(),
+		Operator:    _this.Operator(),
+		Value:       _this.Value(),
 	})
 }
 
-func (i *AssignableImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *AssignableImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__         string `json:"$type"`
 		Cardinality string `json:"cardinality,omitempty"`
 	}{
 		T__:         "Assignable",
-		Cardinality: i.Cardinality(),
+		Cardinality: _this.Cardinality(),
 	})
 }
 
-func (i *CrossRefImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *CrossRefImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__         string                     `json:"$type"`
 		Cardinality string                     `json:"cardinality,omitempty"`
@@ -283,25 +282,25 @@ func (i *CrossRefImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Rule        RuleCall                   `json:"rule,omitempty"`
 	}{
 		T__:         "CrossRef",
-		Cardinality: i.Cardinality(),
-		Type:        i.Type(),
-		Rule:        i.Rule(),
+		Cardinality: _this.Cardinality(),
+		Type:        _this.Type(),
+		Rule:        _this.Rule(),
 	})
 }
 
-func (i *RuleCallImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *RuleCallImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__         string                        `json:"$type"`
 		Cardinality string                        `json:"cardinality,omitempty"`
 		Rule        *core.Reference[AbstractRule] `json:"rule,omitempty"`
 	}{
 		T__:         "RuleCall",
-		Cardinality: i.Cardinality(),
-		Rule:        i.Rule(),
+		Cardinality: _this.Cardinality(),
+		Rule:        _this.Rule(),
 	})
 }
 
-func (i *ActionImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *ActionImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__         string                     `json:"$type"`
 		Cardinality string                     `json:"cardinality,omitempty"`
@@ -310,26 +309,26 @@ func (i *ActionImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Property    *core.Reference[Field]     `json:"property,omitempty"`
 	}{
 		T__:         "Action",
-		Cardinality: i.Cardinality(),
-		Type:        i.Type(),
-		Operator:    i.Operator(),
-		Property:    i.Property(),
+		Cardinality: _this.Cardinality(),
+		Type:        _this.Type(),
+		Operator:    _this.Operator(),
+		Property:    _this.Property(),
 	})
 }
 
-func (i *CompositeRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *CompositeRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__  string  `json:"$type"`
 		Name string  `json:"name,omitempty"`
 		Body Element `json:"body,omitempty"`
 	}{
 		T__:  "CompositeRule",
-		Name: i.Name(),
-		Body: i.Body(),
+		Name: _this.Name(),
+		Body: _this.Body(),
 	})
 }
 
-func (i *InfixRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *InfixRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__        string                     `json:"$type"`
 		Name       string                     `json:"name,omitempty"`
@@ -339,29 +338,28 @@ func (i *InfixRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Groups     []PrecedenceGroup          `json:"groups,omitempty"`
 	}{
 		T__:        "InfixRule",
-		Name:       i.Name(),
-		Body:       i.Body(),
-		ReturnType: i.ReturnType(),
-		Call:       i.Call(),
-		Groups:     i.Groups(),
+		Name:       _this.Name(),
+		Body:       _this.Body(),
+		ReturnType: _this.ReturnType(),
+		Call:       _this.Call(),
+		Groups:     _this.Groups(),
 	})
 }
 
-func (i *PrecedenceGroupImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *PrecedenceGroupImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__           string       `json:"$type"`
 		Associativity string       `json:"associativity,omitempty"`
 		Operators     []Assignable `json:"operators,omitempty"`
 	}{
 		T__:           "PrecedenceGroup",
-		Associativity: i.Associativity(),
-		Operators:     i.Operators(),
+		Associativity: _this.Associativity(),
+		Operators:     _this.Operators(),
 	})
 }
 
-func (i *GrammarImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *GrammarImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__         string           `json:"$type"`
 		Name        string           `json:"name"`
 		Rules       []jsontext.Value `json:"rules"`
 		Composites  []jsontext.Value `json:"composites"`
@@ -370,701 +368,676 @@ func (i *GrammarImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		TokenGroups []jsontext.Value `json:"tokenGroups"`
 		Interfaces  []jsontext.Value `json:"interfaces"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
-	i.rules = make([]ParserRule, 0, len(aux.Rules))
+	_this.rules = make([]ParserRule, 0, len(aux.Rules))
 	for _, item := range aux.Rules {
-		node, err := UnmarshalValue[ParserRule](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[ParserRule](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetRulesItem(node)
+		_this.SetRulesItem(node)
 	}
-	i.composites = make([]CompositeRule, 0, len(aux.Composites))
+	_this.composites = make([]CompositeRule, 0, len(aux.Composites))
 	for _, item := range aux.Composites {
-		node, err := UnmarshalValue[CompositeRule](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[CompositeRule](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetCompositesItem(node)
+		_this.SetCompositesItem(node)
 	}
-	i.infixRules = make([]InfixRule, 0, len(aux.InfixRules))
+	_this.infixRules = make([]InfixRule, 0, len(aux.InfixRules))
 	for _, item := range aux.InfixRules {
-		node, err := UnmarshalValue[InfixRule](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[InfixRule](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetInfixRulesItem(node)
+		_this.SetInfixRulesItem(node)
 	}
-	i.terminals = make([]Token, 0, len(aux.Terminals))
+	_this.terminals = make([]Token, 0, len(aux.Terminals))
 	for _, item := range aux.Terminals {
-		node, err := UnmarshalValue[Token](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[Token](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetTerminalsItem(node)
+		_this.SetTerminalsItem(node)
 	}
-	i.tokenGroups = make([]TokenGroup, 0, len(aux.TokenGroups))
+	_this.tokenGroups = make([]TokenGroup, 0, len(aux.TokenGroups))
 	for _, item := range aux.TokenGroups {
-		node, err := UnmarshalValue[TokenGroup](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[TokenGroup](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetTokenGroupsItem(node)
+		_this.SetTokenGroupsItem(node)
 	}
-	i.interfaces = make([]Interface, 0, len(aux.Interfaces))
+	_this.interfaces = make([]Interface, 0, len(aux.Interfaces))
 	for _, item := range aux.Interfaces {
-		node, err := UnmarshalValue[Interface](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[Interface](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetInterfacesItem(node)
+		_this.SetInterfacesItem(node)
 	}
 	return nil
 }
 
-func (i *InterfaceImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *InterfaceImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__     string           `json:"$type"`
 		Name    string           `json:"name"`
 		Extends []jsontext.Value `json:"extends"`
 		Fields  []jsontext.Value `json:"fields"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
-	i.extends = make([]*core.Reference[Interface], 0, len(aux.Extends))
+	_this.extends = make([]*core.Reference[Interface], 0, len(aux.Extends))
 	for _, item := range aux.Extends {
-		node := core.NewReference[Interface](i, nil, nil)
-		if err := node.UnmarshalJSON(item); err != nil {
-			return err
+		reference, _err := util.UnmarshalReference[Interface](_this, item)
+		if _err != nil {
+			return _err
 		}
-		i.SetExtendsItem(node)
+		_this.SetExtendsItem(reference)
 	}
-	i.fields = make([]Field, 0, len(aux.Fields))
+	_this.fields = make([]Field, 0, len(aux.Fields))
 	for _, item := range aux.Fields {
-		node, err := UnmarshalValue[Field](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[Field](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetFieldsItem(node)
+		_this.SetFieldsItem(node)
 	}
 	return nil
 }
 
-func (i *FieldImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *FieldImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__  string         `json:"$type"`
 		Name string         `json:"name"`
 		Type jsontext.Value `json:"type"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
 	if aux.Type != nil {
-		_Type, err := UnmarshalValue[FieldType](aux.Type)
-		if err != nil {
-			return err
+		_Type, _err := UnmarshalValue[FieldType](aux.Type)
+		if _err != nil {
+			return _err
 		}
-		i.SetType(_Type)
+		_this.SetType(_Type)
 	}
 	return nil
 }
 
-func (i *FieldTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *FieldTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	return nil
 }
 
-func (i *ArrayTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *ArrayTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__          string         `json:"$type"`
 		InternalType jsontext.Value `json:"internalType"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	if aux.InternalType != nil {
-		internalType, err := UnmarshalValue[FieldType](aux.InternalType)
-		if err != nil {
-			return err
+		internalType, _err := UnmarshalValue[FieldType](aux.InternalType)
+		if _err != nil {
+			return _err
 		}
-		i.SetInternalType(internalType)
+		_this.SetInternalType(internalType)
 	}
 	return nil
 }
 
-func (i *ReferenceTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *ReferenceTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__  string         `json:"$type"`
 		Type jsontext.Value `json:"type"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	if aux.Type != nil {
-		_Type := core.NewReference[Interface](i, nil, nil)
-		if err := _Type.UnmarshalJSON(aux.Type); err != nil {
-			return err
+		_Type, _err := util.UnmarshalReference[Interface](_this, aux.Type)
+		if _err != nil {
+			return _err
 		}
-		i.SetType(_Type)
+		_this.SetType(_Type)
 	}
 	return nil
 }
 
-func (i *SimpleTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *SimpleTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__  string         `json:"$type"`
 		Type jsontext.Value `json:"type"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	if aux.Type != nil {
-		_Type := core.NewReference[Interface](i, nil, nil)
-		if err := _Type.UnmarshalJSON(aux.Type); err != nil {
-			return err
+		_Type, _err := util.UnmarshalReference[Interface](_this, aux.Type)
+		if _err != nil {
+			return _err
 		}
-		i.SetType(_Type)
+		_this.SetType(_Type)
 	}
 	return nil
 }
 
-func (i *PrimitiveTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *PrimitiveTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__  string `json:"$type"`
 		Type string `json:"type"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Type, -1, -1)
-		i.SetType(&token)
+		_this.SetType(&token)
 	}
 	return nil
 }
 
-func (i *AbstractRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *AbstractRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__  string `json:"$type"`
 		Name string `json:"name"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
 	return nil
 }
 
-func (i *AbstractRuleWithBodyImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *AbstractRuleWithBodyImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__  string         `json:"$type"`
 		Name string         `json:"name"`
 		Body jsontext.Value `json:"body"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
 	if aux.Body != nil {
-		body, err := UnmarshalValue[Element](aux.Body)
-		if err != nil {
-			return err
+		body, _err := UnmarshalValue[Element](aux.Body)
+		if _err != nil {
+			return _err
 		}
-		i.SetBody(body)
+		_this.SetBody(body)
 	}
 	return nil
 }
 
-func (i *AbstractRuleWithReturnTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *AbstractRuleWithReturnTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__        string         `json:"$type"`
 		Name       string         `json:"name"`
 		Body       jsontext.Value `json:"body"`
 		ReturnType jsontext.Value `json:"returnType"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
 	if aux.Body != nil {
-		body, err := UnmarshalValue[Element](aux.Body)
-		if err != nil {
-			return err
+		body, _err := UnmarshalValue[Element](aux.Body)
+		if _err != nil {
+			return _err
 		}
-		i.SetBody(body)
+		_this.SetBody(body)
 	}
 	if aux.ReturnType != nil {
-		returnType := core.NewReference[Interface](i, nil, nil)
-		if err := returnType.UnmarshalJSON(aux.ReturnType); err != nil {
-			return err
+		returnType, _err := util.UnmarshalReference[Interface](_this, aux.ReturnType)
+		if _err != nil {
+			return _err
 		}
-		i.SetReturnType(returnType)
+		_this.SetReturnType(returnType)
 	}
 	return nil
 }
 
-func (i *AbstractTokenRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *AbstractTokenRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__  string `json:"$type"`
 		Name string `json:"name"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
 	return nil
 }
 
-func (i *ParserRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *ParserRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__        string         `json:"$type"`
 		Name       string         `json:"name"`
 		Body       jsontext.Value `json:"body"`
 		ReturnType jsontext.Value `json:"returnType"`
 		Entry      bool           `json:"entry"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
 	if aux.Body != nil {
-		body, err := UnmarshalValue[Element](aux.Body)
-		if err != nil {
-			return err
+		body, _err := UnmarshalValue[Element](aux.Body)
+		if _err != nil {
+			return _err
 		}
-		i.SetBody(body)
+		_this.SetBody(body)
 	}
 	if aux.ReturnType != nil {
-		returnType := core.NewReference[Interface](i, nil, nil)
-		if err := returnType.UnmarshalJSON(aux.ReturnType); err != nil {
-			return err
+		returnType, _err := util.UnmarshalReference[Interface](_this, aux.ReturnType)
+		if _err != nil {
+			return _err
 		}
-		i.SetReturnType(returnType)
+		_this.SetReturnType(returnType)
 	}
 	if aux.Entry {
 		token := core.NewToken(nil, "", -1, -1)
-		i.SetEntry(&token)
+		_this.SetEntry(&token)
 	}
 	return nil
 }
 
-func (i *TokenImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *TokenImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__    string `json:"$type"`
 		Name   string `json:"name"`
 		Type   string `json:"type"`
 		Regexp string `json:"regexp"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
 	{
 		token := core.NewToken(nil, aux.Type, -1, -1)
-		i.SetType(&token)
+		_this.SetType(&token)
 	}
 	{
 		token := core.NewToken(nil, aux.Regexp, -1, -1)
-		i.SetRegexp(&token)
+		_this.SetRegexp(&token)
 	}
 	return nil
 }
 
-func (i *TokenGroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *TokenGroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__       string           `json:"$type"`
 		Name      string           `json:"name"`
 		TokenRefs []jsontext.Value `json:"tokenRefs"`
 		Regexps   []string         `json:"regexps"`
 		Keywords  []jsontext.Value `json:"keywords"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
-	i.tokenRefs = make([]*core.Reference[AbstractTokenRule], 0, len(aux.TokenRefs))
+	_this.tokenRefs = make([]*core.Reference[AbstractTokenRule], 0, len(aux.TokenRefs))
 	for _, item := range aux.TokenRefs {
-		node := core.NewReference[AbstractTokenRule](i, nil, nil)
-		if err := node.UnmarshalJSON(item); err != nil {
-			return err
+		reference, _err := util.UnmarshalReference[AbstractTokenRule](_this, item)
+		if _err != nil {
+			return _err
 		}
-		i.SetTokenRefsItem(node)
+		_this.SetTokenRefsItem(reference)
 	}
-	i.regexps = make([]*core.Token, 0, len(aux.Regexps))
+	_this.regexps = make([]*core.Token, 0, len(aux.Regexps))
 	for _, item := range aux.Regexps {
 		{
 			token := core.NewToken(nil, item, -1, -1)
-			i.SetRegexpsItem(&token)
+			_this.SetRegexpsItem(&token)
 		}
 	}
-	i.keywords = make([]Keyword, 0, len(aux.Keywords))
+	_this.keywords = make([]Keyword, 0, len(aux.Keywords))
 	for _, item := range aux.Keywords {
-		node, err := UnmarshalValue[Keyword](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[Keyword](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetKeywordsItem(node)
+		_this.SetKeywordsItem(node)
 	}
 	return nil
 }
 
-func (i *ElementImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *ElementImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__         string `json:"$type"`
 		Cardinality string `json:"cardinality"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Cardinality, -1, -1)
-		i.SetCardinality(&token)
+		_this.SetCardinality(&token)
 	}
 	return nil
 }
 
-func (i *AlternativesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *AlternativesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__         string           `json:"$type"`
 		Cardinality string           `json:"cardinality"`
 		Alts        []jsontext.Value `json:"alts"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Cardinality, -1, -1)
-		i.SetCardinality(&token)
+		_this.SetCardinality(&token)
 	}
-	i.alts = make([]Element, 0, len(aux.Alts))
+	_this.alts = make([]Element, 0, len(aux.Alts))
 	for _, item := range aux.Alts {
-		node, err := UnmarshalValue[Element](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[Element](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetAltsItem(node)
+		_this.SetAltsItem(node)
 	}
 	return nil
 }
 
-func (i *GroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *GroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__         string           `json:"$type"`
 		Cardinality string           `json:"cardinality"`
 		Elements    []jsontext.Value `json:"elements"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Cardinality, -1, -1)
-		i.SetCardinality(&token)
+		_this.SetCardinality(&token)
 	}
-	i.elements = make([]Element, 0, len(aux.Elements))
+	_this.elements = make([]Element, 0, len(aux.Elements))
 	for _, item := range aux.Elements {
-		node, err := UnmarshalValue[Element](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[Element](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetElementsItem(node)
+		_this.SetElementsItem(node)
 	}
 	return nil
 }
 
-func (i *KeywordImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *KeywordImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__         string `json:"$type"`
 		Cardinality string `json:"cardinality"`
 		Value       string `json:"value"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Cardinality, -1, -1)
-		i.SetCardinality(&token)
+		_this.SetCardinality(&token)
 	}
 	{
 		token := core.NewToken(nil, aux.Value, -1, -1)
-		i.SetValue(&token)
+		_this.SetValue(&token)
 	}
 	return nil
 }
 
-func (i *AssignmentImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *AssignmentImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__         string         `json:"$type"`
 		Cardinality string         `json:"cardinality"`
 		Property    jsontext.Value `json:"property"`
 		Operator    string         `json:"operator"`
 		Value       jsontext.Value `json:"value"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Cardinality, -1, -1)
-		i.SetCardinality(&token)
+		_this.SetCardinality(&token)
 	}
 	if aux.Property != nil {
-		property := core.NewReference[Field](i, nil, nil)
-		if err := property.UnmarshalJSON(aux.Property); err != nil {
-			return err
+		property, _err := util.UnmarshalReference[Field](_this, aux.Property)
+		if _err != nil {
+			return _err
 		}
-		i.SetProperty(property)
+		_this.SetProperty(property)
 	}
 	{
 		token := core.NewToken(nil, aux.Operator, -1, -1)
-		i.SetOperator(&token)
+		_this.SetOperator(&token)
 	}
 	if aux.Value != nil {
-		value, err := UnmarshalValue[Assignable](aux.Value)
-		if err != nil {
-			return err
+		value, _err := UnmarshalValue[Assignable](aux.Value)
+		if _err != nil {
+			return _err
 		}
-		i.SetValue(value)
+		_this.SetValue(value)
 	}
 	return nil
 }
 
-func (i *AssignableImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *AssignableImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__         string `json:"$type"`
 		Cardinality string `json:"cardinality"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Cardinality, -1, -1)
-		i.SetCardinality(&token)
+		_this.SetCardinality(&token)
 	}
 	return nil
 }
 
-func (i *CrossRefImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *CrossRefImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__         string         `json:"$type"`
 		Cardinality string         `json:"cardinality"`
 		Type        jsontext.Value `json:"type"`
 		Rule        jsontext.Value `json:"rule"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Cardinality, -1, -1)
-		i.SetCardinality(&token)
+		_this.SetCardinality(&token)
 	}
 	if aux.Type != nil {
-		_Type := core.NewReference[Interface](i, nil, nil)
-		if err := _Type.UnmarshalJSON(aux.Type); err != nil {
-			return err
+		_Type, _err := util.UnmarshalReference[Interface](_this, aux.Type)
+		if _err != nil {
+			return _err
 		}
-		i.SetType(_Type)
+		_this.SetType(_Type)
 	}
 	if aux.Rule != nil {
-		rule, err := UnmarshalValue[RuleCall](aux.Rule)
-		if err != nil {
-			return err
+		rule, _err := UnmarshalValue[RuleCall](aux.Rule)
+		if _err != nil {
+			return _err
 		}
-		i.SetRule(rule)
+		_this.SetRule(rule)
 	}
 	return nil
 }
 
-func (i *RuleCallImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *RuleCallImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__         string         `json:"$type"`
 		Cardinality string         `json:"cardinality"`
 		Rule        jsontext.Value `json:"rule"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Cardinality, -1, -1)
-		i.SetCardinality(&token)
+		_this.SetCardinality(&token)
 	}
 	if aux.Rule != nil {
-		rule := core.NewReference[AbstractRule](i, nil, nil)
-		if err := rule.UnmarshalJSON(aux.Rule); err != nil {
-			return err
+		rule, _err := util.UnmarshalReference[AbstractRule](_this, aux.Rule)
+		if _err != nil {
+			return _err
 		}
-		i.SetRule(rule)
+		_this.SetRule(rule)
 	}
 	return nil
 }
 
-func (i *ActionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *ActionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__         string         `json:"$type"`
 		Cardinality string         `json:"cardinality"`
 		Type        jsontext.Value `json:"type"`
 		Operator    string         `json:"operator"`
 		Property    jsontext.Value `json:"property"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Cardinality, -1, -1)
-		i.SetCardinality(&token)
+		_this.SetCardinality(&token)
 	}
 	if aux.Type != nil {
-		_Type := core.NewReference[Interface](i, nil, nil)
-		if err := _Type.UnmarshalJSON(aux.Type); err != nil {
-			return err
+		_Type, _err := util.UnmarshalReference[Interface](_this, aux.Type)
+		if _err != nil {
+			return _err
 		}
-		i.SetType(_Type)
+		_this.SetType(_Type)
 	}
 	{
 		token := core.NewToken(nil, aux.Operator, -1, -1)
-		i.SetOperator(&token)
+		_this.SetOperator(&token)
 	}
 	if aux.Property != nil {
-		property := core.NewReference[Field](i, nil, nil)
-		if err := property.UnmarshalJSON(aux.Property); err != nil {
-			return err
+		property, _err := util.UnmarshalReference[Field](_this, aux.Property)
+		if _err != nil {
+			return _err
 		}
-		i.SetProperty(property)
+		_this.SetProperty(property)
 	}
 	return nil
 }
 
-func (i *CompositeRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *CompositeRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__  string         `json:"$type"`
 		Name string         `json:"name"`
 		Body jsontext.Value `json:"body"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
 	if aux.Body != nil {
-		body, err := UnmarshalValue[Element](aux.Body)
-		if err != nil {
-			return err
+		body, _err := UnmarshalValue[Element](aux.Body)
+		if _err != nil {
+			return _err
 		}
-		i.SetBody(body)
+		_this.SetBody(body)
 	}
 	return nil
 }
 
-func (i *InfixRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *InfixRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__        string           `json:"$type"`
 		Name       string           `json:"name"`
 		Body       jsontext.Value   `json:"body"`
 		ReturnType jsontext.Value   `json:"returnType"`
 		Call       jsontext.Value   `json:"call"`
 		Groups     []jsontext.Value `json:"groups"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Name, -1, -1)
-		i.SetName(&token)
+		_this.SetName(&token)
 	}
 	if aux.Body != nil {
-		body, err := UnmarshalValue[Element](aux.Body)
-		if err != nil {
-			return err
+		body, _err := UnmarshalValue[Element](aux.Body)
+		if _err != nil {
+			return _err
 		}
-		i.SetBody(body)
+		_this.SetBody(body)
 	}
 	if aux.ReturnType != nil {
-		returnType := core.NewReference[Interface](i, nil, nil)
-		if err := returnType.UnmarshalJSON(aux.ReturnType); err != nil {
-			return err
+		returnType, _err := util.UnmarshalReference[Interface](_this, aux.ReturnType)
+		if _err != nil {
+			return _err
 		}
-		i.SetReturnType(returnType)
+		_this.SetReturnType(returnType)
 	}
 	if aux.Call != nil {
-		call, err := UnmarshalValue[RuleCall](aux.Call)
-		if err != nil {
-			return err
+		call, _err := UnmarshalValue[RuleCall](aux.Call)
+		if _err != nil {
+			return _err
 		}
-		i.SetCall(call)
+		_this.SetCall(call)
 	}
-	i.groups = make([]PrecedenceGroup, 0, len(aux.Groups))
+	_this.groups = make([]PrecedenceGroup, 0, len(aux.Groups))
 	for _, item := range aux.Groups {
-		node, err := UnmarshalValue[PrecedenceGroup](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[PrecedenceGroup](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetGroupsItem(node)
+		_this.SetGroupsItem(node)
 	}
 	return nil
 }
 
-func (i *PrecedenceGroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *PrecedenceGroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__           string           `json:"$type"`
 		Associativity string           `json:"associativity"`
 		Operators     []jsontext.Value `json:"operators"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Associativity, -1, -1)
-		i.SetAssociativity(&token)
+		_this.SetAssociativity(&token)
 	}
-	i.operators = make([]Assignable, 0, len(aux.Operators))
+	_this.operators = make([]Assignable, 0, len(aux.Operators))
 	for _, item := range aux.Operators {
-		node, err := UnmarshalValue[Assignable](item)
-		if err != nil {
-			return err
+		node, _err := UnmarshalValue[Assignable](item)
+		if _err != nil {
+			return _err
 		}
-		i.SetOperatorsItem(node)
+		_this.SetOperatorsItem(node)
 	}
 	return nil
 }
 
-// UnmarshalValue is a sugar method delegating to [util.UnmarshalDecode]
+// UnmarshalValue is a sugar method delegating to [util.UnmarshalValue]
 // that decodes 'value' into an instance of type 'T' by reading the "$type" field,
 // selecting a corresponding factory, creating an instance, and unmarshaling its content.
 func UnmarshalValue[T core.AstNode](value jsontext.Value) (T, error) {
-	return util.UnmarshalDecode[T](jsontext.NewDecoder(bytes.NewReader(value)), FastbeltSyntheticFactories)
+	return util.UnmarshalValue[T](value, FastbeltSyntheticFactories)
 }

@@ -3,7 +3,6 @@
 package token_groups
 
 import (
-	"bytes"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
 
@@ -11,27 +10,27 @@ import (
 	"typefox.dev/fastbelt/util"
 )
 
-func (i *ModelImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *ModelImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__  string `json:"$type"`
 		Item Item   `json:"item,omitempty"`
 	}{
 		T__:  "Model",
-		Item: i.Item(),
+		Item: _this.Item(),
 	})
 }
 
-func (i *ItemImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *ItemImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__   string `json:"$type"`
 		Value string `json:"value,omitempty"`
 	}{
 		T__:   "Item",
-		Value: i.Value(),
+		Value: _this.Value(),
 	})
 }
 
-func (i *RecoveryImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *RecoveryImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__    string `json:"$type"`
 		Value  string `json:"value,omitempty"`
@@ -39,73 +38,70 @@ func (i *RecoveryImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Second string `json:"second,omitempty"`
 	}{
 		T__:    "Recovery",
-		Value:  i.Value(),
-		First:  i.First(),
-		Second: i.Second(),
+		Value:  _this.Value(),
+		First:  _this.First(),
+		Second: _this.Second(),
 	})
 }
 
-func (i *ModelImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *ModelImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__  string         `json:"$type"`
 		Item jsontext.Value `json:"item"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	if aux.Item != nil {
-		item, err := UnmarshalValue[Item](aux.Item)
-		if err != nil {
-			return err
+		item, _err := UnmarshalValue[Item](aux.Item)
+		if _err != nil {
+			return _err
 		}
-		i.SetItem(item)
+		_this.SetItem(item)
 	}
 	return nil
 }
 
-func (i *ItemImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *ItemImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__   string `json:"$type"`
 		Value string `json:"value"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Value, -1, -1)
-		i.SetValue(&token)
+		_this.SetValue(&token)
 	}
 	return nil
 }
 
-func (i *RecoveryImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *RecoveryImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		T__    string `json:"$type"`
 		Value  string `json:"value"`
 		First  string `json:"first"`
 		Second string `json:"second"`
 	}{}
-	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
-		return err
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	{
 		token := core.NewToken(nil, aux.Value, -1, -1)
-		i.SetValue(&token)
+		_this.SetValue(&token)
 	}
 	{
 		token := core.NewToken(nil, aux.First, -1, -1)
-		i.SetFirst(&token)
+		_this.SetFirst(&token)
 	}
 	{
 		token := core.NewToken(nil, aux.Second, -1, -1)
-		i.SetSecond(&token)
+		_this.SetSecond(&token)
 	}
 	return nil
 }
 
-// UnmarshalValue is a sugar method delegating to [util.UnmarshalDecode]
+// UnmarshalValue is a sugar method delegating to [util.UnmarshalValue]
 // that decodes 'value' into an instance of type 'T' by reading the "$type" field,
 // selecting a corresponding factory, creating an instance, and unmarshaling its content.
 func UnmarshalValue[T core.AstNode](value jsontext.Value) (T, error) {
-	return util.UnmarshalDecode[T](jsontext.NewDecoder(bytes.NewReader(value)), TokenGroupsSyntheticFactories)
+	return util.UnmarshalValue[T](value, TokenGroupsSyntheticFactories)
 }
