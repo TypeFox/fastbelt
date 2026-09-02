@@ -5,6 +5,7 @@
 package arithmetics
 
 import (
+	"bytes"
 	"context"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
@@ -96,7 +97,10 @@ func TestJsonExport(t *testing.T) {
 	loadJsonDoc := func(uri string, jsonInput string) {
 		doc, err := core.NewDocumentFromString(uri, string(language), "")
 		require.NoError(t, err)
-		mod, err := Unmarshal[Module]([]byte(jsonInput))
+		mod, err := util.UnmarshalDecode[Module](
+			jsontext.NewDecoder(bytes.NewReader([]byte(jsonInput))),
+			ArithmeticsSyntheticFactories,
+		)
 		require.NoError(t, err)
 		doc.Root = mod
 		doc.State = core.DocStateParsed

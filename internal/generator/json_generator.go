@@ -12,41 +12,33 @@ import (
 )
 
 func GenerateJSON(grammar grammar.Grammar, packageName string) string {
-	// in order to (A) avoid unused import errors due to "encoding/json/jsontext",
-	// e.g. in the initial project state as created by the scaffolding tool,
-	// and (B) polluting the generator code with code tracking the production of refs of "jsontext.Value",
-	// we pre-render the string of the generated functions and check for the presence of "jsontext.Value"
-	content := generateFunctions(grammar, codegen.NewNode()).String()
-	importJsontext := strings.Contains(content, "jsontext.Value")
-
 	node := NewRootNode()
 	node.AppendLine("package ", packageName)
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n codegen.Node) {
-		if importJsontext {
-			n.AppendLine("\"encoding/json/jsontext\"")
-		}
+		n.AppendLine("\"bytes\"")
+		n.AppendLine("\"encoding/json/jsontext\"")
 		n.AppendLine("\"encoding/json/v2\"")
-		n.AppendLine("\"fmt\"")
-		n.AppendLine("\"reflect\"")
 		n.AppendLine()
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
+		n.AppendLine("\"typefox.dev/fastbelt/util\"")
 	})
 	node.AppendLine(")")
 	node.AppendLine()
-	node.Append(content)
+
+	generateFunctions(grammar, node)
 
 	return FormatIfPossible(node.String())
 }
 
 func generateFunctions(grammar grammar.Grammar, node codegen.Node) codegen.Node {
 	for _, iface := range grammar.Interfaces() {
-		generateJSONMarshal(node, iface)
+		generateJSONMarshalTo(node, iface)
 	}
 
 	for _, iface := range grammar.Interfaces() {
-		generateJSONUnmarshal(node, iface)
+		generateJSONUnmarshalFrom(node, iface)
 	}
 
 	generateDispatchingUnmarshalFunc(node, grammar)
@@ -54,10 +46,10 @@ func generateFunctions(grammar grammar.Grammar, node codegen.Node) codegen.Node 
 	return node
 }
 
-func generateJSONMarshal(node codegen.Node, iface grammar.Interface) {
+func generateJSONMarshalTo(node codegen.Node, iface grammar.Interface) {
 	fields := collectAllFields(iface, map[string]struct{}{})
 
-	node.AppendLine("func (i *", iface.Name(), "Impl) MarshalJSON() ([]byte, error) {")
+	node.AppendLine("func (i *", iface.Name(), "Impl) MarshalJSONTo(_encoder *jsontext.Encoder) error {")
 	node.Indent(func(n codegen.Node) {
 		// preprocess []string fields: they are stored as []*core.Token internally but shall be serialized as plain strings;
 		// instead of implementing 'MarshalJSON()' for *core.Token, a preprocessing loop calling '.String()' for each item
@@ -76,7 +68,7 @@ func generateJSONMarshal(node codegen.Node, iface grammar.Interface) {
 				n.AppendLine("}")
 			}
 		}
-		n.AppendLine("return json.Marshal(struct {")
+		n.AppendLine("return json.MarshalEncode(_encoder, struct {")
 		n.Indent(func(n2 codegen.Node) {
 			n2.AppendLine("T__", " ", "string", " `json:\"$type\"`")
 			for _, field := range fields {
@@ -125,14 +117,14 @@ func getAuxFieldType(field FieldInfo) string {
 	}
 }
 
-func generateJSONUnmarshal(node codegen.Node, iface grammar.Interface) {
+func generateJSONUnmarshalFrom(node codegen.Node, iface grammar.Interface) {
 	genCreateNewToken := func(valueRef string) string {
 		return "token := core.NewToken(nil, " + valueRef + ", -1, -1)"
 	}
 
 	fields := collectAllFields(iface, map[string]struct{}{})
 
-	node.AppendLine("func (i *", iface.Name(), "Impl) UnmarshalJSON(data []byte) error {")
+	node.AppendLine("func (i *", iface.Name(), "Impl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {")
 
 	if len(fields) == 0 {
 		node.Indent(func(n2 codegen.Node) {
@@ -152,7 +144,7 @@ func generateJSONUnmarshal(node codegen.Node, iface grammar.Interface) {
 			}
 		})
 		n.AppendLine("}{}")
-		n.AppendLine("if err := json.Unmarshal(data, aux); err != nil {")
+		n.AppendLine("if err := json.UnmarshalDecode(_decoder, aux); err != nil {")
 		genReturnErr(n)
 
 		for _, field := range fields {
@@ -164,7 +156,11 @@ func generateJSONUnmarshal(node codegen.Node, iface grammar.Interface) {
 					case TOKEN_TYPE:
 						n2.AppendLine("{")
 						n2.Indent(func(n3 codegen.Node) {
-							n3.AppendLine(genCreateNewToken("item"))
+							if field.Boolean {
+								n3.AppendLine(genCreateNewToken("\"\""))
+							} else {
+								n3.AppendLine(genCreateNewToken("item"))
+							}
 							n3.AppendLine("i.Set", field.Name, "Item(&token)")
 						})
 						n2.AppendLine("}")
@@ -235,7 +231,7 @@ func genUnmarshalReference(node codegen.Node, field FieldInfo, srcName string, t
 
 func genUnmarshalChild(node codegen.Node, field FieldInfo, srcName string, targetName string, loopItem bool) {
 	genUnmarshalFieldContent(node, field, srcName, targetName, loopItem, func(body codegen.Node) {
-		body.AppendLine(targetName, ", err := Unmarshal[", field.Type, "](", srcName, ")")
+		body.AppendLine(targetName, ", err := UnmarshalValue[", field.Type, "](", srcName, ")")
 		body.AppendLine("if err != nil {")
 		genReturnErr(body)
 	})
@@ -263,54 +259,12 @@ func genReturnErr(node codegen.Node) {
 }
 
 func generateDispatchingUnmarshalFunc(node codegen.Node, g grammar.Grammar) {
-	node.AppendLine(`// Unmarshal decodes data into an instance of type T by reading the "$type" field,`)
+	node.AppendLine(`// UnmarshalValue is a sugar method delegating to [util.UnmarshalDecode]`)
+	node.AppendLine(`// that decodes 'value' into an instance of type 'T' by reading the "$type" field,`)
 	node.AppendLine(`// selecting a corresponding factory, creating an instance, and unmarshaling its content.`)
-	node.AppendLine("func Unmarshal[T core.AstNode](data []byte) (T, error) {")
+	node.AppendLine("func UnmarshalValue[T core.AstNode](value jsontext.Value) (T, error) {")
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("node := &struct {")
-		n.Indent(func(n2 codegen.Node) {
-			n2.AppendLine("Type string `json:\"$type\"`")
-		})
-		n.AppendLine("}{}")
-		n.AppendLine("if err := json.Unmarshal(data, node); err != nil {")
-		n.Indent(func(n2 codegen.Node) {
-			n2.AppendLine("var zero T")
-			n2.AppendLine(`return zero, fmt.Errorf("unmarshal: %w", err)`)
-		})
-		n.AppendLine("}")
-		n.AppendLine("factory, ok := ", g.Name()+"SyntheticFactories", "[node.Type]")
-		n.AppendLine("if !ok {")
-		n.Indent(func(n2 codegen.Node) {
-			n2.AppendLine("var zero T")
-			n2.AppendLine(`return zero, fmt.Errorf("unmarshal: unknown type %q", node.Type)`)
-		})
-		n.AppendLine("}")
-		n.AppendLine("instance := factory()")
-		n.AppendLine("asT, ok := instance.(T);")
-		n.AppendLine("if !ok {")
-		n.Indent(func(n2 codegen.Node) {
-			n2.AppendLine("var zero T")
-			n2.AppendLine(`return zero, fmt.Errorf("unmarshal: %T is not convertible to type %s", instance, reflect.TypeFor[T]())`)
-		})
-		n.AppendLine("}")
-		// below we assume that all ast node types implement json.Unmarshaler,
-		// so we can directly call UnmarshalJSON(data) instead of taking the generic route via json.Unmarshal(data, node)
-		n.AppendLine("if unmarshaler, ok := instance.(json.Unmarshaler); ok {")
-		n.Indent(func(n2 codegen.Node) {
-			n2.AppendLine("if err := unmarshaler.UnmarshalJSON(data); err != nil {")
-			n2.Indent(func(n3 codegen.Node) {
-				n3.AppendLine("var zero T")
-				n3.AppendLine(`return zero, fmt.Errorf("unmarshal %s: %w", node.Type, err)`)
-			})
-			n2.AppendLine("}")
-		})
-		n.AppendLine("} else {")
-		n.Indent(func(n2 codegen.Node) {
-			n2.AppendLine("var zero T")
-			n2.AppendLine(`return zero, fmt.Errorf("unmarshal: %T is not convertible to type json.Unmarshaler", instance)`)
-		})
-		n.AppendLine("}")
-		n.AppendLine("return asT, nil")
+		n.AppendLine("return util.UnmarshalDecode[T](jsontext.NewDecoder(bytes.NewReader(value)), ", g.Name(), "SyntheticFactories)")
 	})
 	node.AppendLine("}")
 	node.AppendLine()

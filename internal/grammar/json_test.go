@@ -6,6 +6,7 @@ package grammar
 
 import (
 	"context"
+	"encoding/json/jsontext"
 	"encoding/json/v2"
 	"os"
 	"slices"
@@ -61,7 +62,9 @@ func BenchmarkJsonRoundtrip(b *testing.B) {
 		doc1.AssertNoLinkingErrors()
 		grammar1 := doc1.Root()
 		f1.Clear()
-		inJson, err := json.Marshal(grammar1)
+
+		var inJson jsontext.Value
+		inJson, err = json.Marshal(grammar1)
 		require.NoError(b, err)
 
 		b.Run(tt.name+"/marshal", func(b *testing.B) {
@@ -84,7 +87,7 @@ func BenchmarkJsonRoundtrip(b *testing.B) {
 		b.Run(tt.name+"/unmarshal-self", func(b *testing.B) {
 			b.ResetTimer()
 			for b.Loop() {
-				if _, err := Unmarshal[Grammar](inJson); err != nil {
+				if _, err := UnmarshalValue[Grammar](&inJson); err != nil {
 					b.Fatal(err)
 				}
 			}

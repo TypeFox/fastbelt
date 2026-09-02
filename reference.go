@@ -6,6 +6,7 @@ package fastbelt
 
 import (
 	"context"
+	"encoding/json/jsontext"
 	"encoding/json/v2"
 	"errors"
 	"fmt"
@@ -293,21 +294,21 @@ func NewReferenceDescriptionsFromMap(descriptions collections.MultiMap[AstNode, 
 	}
 }
 
-// MarshalJSON serializes the reference as a JSON object containing the URI of the resolved target ast node,
+// MarshalJSONTo serializes the reference as a JSON object containing the URI of the resolved target ast node,
 // the cross ref text, as well as the err msg if the reference is unresolvable.
 // Returns an error if the reference has not been attempted to resolve (r.resolved == false).
-// With this function Reference[T] implements json.Marshaler.MarshalJSON() and the method is called by `json.Marshal()` and `json.MarshalIndent()`.
-func (r *Reference[T]) MarshalJSON() ([]byte, error) {
+// With this function Reference[T] implements [json.MarshalerTo] and the method is called by `json.Marshal()`.
+func (r *Reference[T]) MarshalJSONTo(encoder *jsontext.Encoder) error {
 	// A nil reference marshals as JSON null.
 	if r == nil {
-		return []byte("null"), nil
+		return encoder.WriteToken(jsontext.Null)
 	}
 	// We expect at this point that all references have been attempted to resolve.
 	if !r.resolved.Load() {
 		if path, err := PathOf(r.Owner()); err == nil {
-			return nil, errors.New("Reference.MarshalJSON(): reference not resolved in node '" + path.String() + "'")
+			return errors.New("Reference.MarshalJSONTo(): reference not resolved in node '" + path.String() + "'")
 		}
-		return nil, errors.New("Reference.MarshalJSON(): reference not resolved")
+		return errors.New("Reference.MarshalJSONTo(): reference not resolved")
 	}
 
 	var uri, errMsg string
@@ -317,13 +318,13 @@ func (r *Reference[T]) MarshalJSON() ([]byte, error) {
 		refPath, err := PathOf(referenced)
 		if err != nil {
 			referencerPath, _ := PathOf(r.Owner())
-			return nil, fmt.Errorf("Reference.MarshalJSON(): failed to compute path fragment of node of type %T referenced by '%s'", referenced, referencerPath)
+			return fmt.Errorf("Reference.MarshalJSONTo(): failed to compute path fragment of node of type %T referenced by '%s'", referenced, referencerPath)
 		}
 
 		refDoc := referenced.Document()
 		if refDoc == nil {
 			referencerPath, _ := PathOf(r.Owner())
-			return nil, fmt.Errorf("Reference.MarshalJSON(): node of type %T referenced by '%s' is not contained in any document", referenced, referencerPath)
+			return fmt.Errorf("Reference.MarshalJSONTo(): node of type %T referenced by '%s' is not contained in any document", referenced, referencerPath)
 		}
 
 		if r.Owner() != nil && r.Owner().Document() == refDoc {
@@ -332,10 +333,10 @@ func (r *Reference[T]) MarshalJSON() ([]byte, error) {
 			uri = refDoc.URI.WithFragment(refPath.String()).StringUnencoded()
 		}
 	} else {
-		return nil, errors.New("Reference.MarshalJSON(): unexpected state")
+		return errors.New("Reference.MarshalJSONTo(): unexpected state")
 	}
 
-	return json.Marshal(struct {
+	return json.MarshalEncode(encoder, struct {
 		RefText string `json:"$refText"`
 		Ref     string `json:"$ref,omitempty"`
 		Err     string `json:"$error,omitempty"`
@@ -350,14 +351,18 @@ func (r *Reference[T]) MarshalJSON() ([]byte, error) {
 // 'ref' is expected to contain a URI string denoting the target node within the same or another document, may be absent if the reference was unresolvable before serializing.
 // 'refText' denotes the cross reference string.
 // 'err' contains the error msg if the reference was unresolvable before serializing
-// With this function Reference[T] implements json.Unmarshaler.UnmarshalJSON() and the method is called by `json.Unmarshal()`.
-func (r *Reference[T]) UnmarshalJSON(data []byte) error {
+// With this function Reference[T] implements [json.Unmarshaler].UnmarshalJSON() and the method is called by [json.Unmarshal()].
+//
+// Note: Since we're calling this method directly within the unmarshaling implementations of the AST nodes based on a raw [jsontext.Value],
+// implementing [json.UnmarshalerFrom].UnmarshalJSONFrom(*jsontext.Decoder) doesn't bring any benefit here, since the value chunks ([]byte) are rather small.
+// Therefore, we stick to implementing the plain [json.Unmarshaler] interface here.
+func (r *Reference[T]) UnmarshalJSON(value []byte) error {
 	aux := &struct {
 		RefText string `json:"$refText"`
 		Ref     string `json:"$ref"`
 		Err     string `json:"$error"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.Unmarshal(value, aux); err != nil {
 		return err
 	}
 	r.unit = &JsonRefText{

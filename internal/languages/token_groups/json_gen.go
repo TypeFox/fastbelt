@@ -3,16 +3,16 @@
 package token_groups
 
 import (
+	"bytes"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
-	"fmt"
-	"reflect"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util"
 )
 
-func (i *ModelImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *ModelImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__  string `json:"$type"`
 		Item Item   `json:"item,omitempty"`
 	}{
@@ -21,8 +21,8 @@ func (i *ModelImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *ItemImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *ItemImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__   string `json:"$type"`
 		Value string `json:"value,omitempty"`
 	}{
@@ -31,8 +31,8 @@ func (i *ItemImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *RecoveryImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *RecoveryImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__    string `json:"$type"`
 		Value  string `json:"value,omitempty"`
 		First  string `json:"first,omitempty"`
@@ -45,16 +45,16 @@ func (i *RecoveryImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *ModelImpl) UnmarshalJSON(data []byte) error {
+func (i *ModelImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		T__  string         `json:"$type"`
 		Item jsontext.Value `json:"item"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
 		return err
 	}
 	if aux.Item != nil {
-		item, err := Unmarshal[Item](aux.Item)
+		item, err := UnmarshalValue[Item](aux.Item)
 		if err != nil {
 			return err
 		}
@@ -63,12 +63,12 @@ func (i *ModelImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *ItemImpl) UnmarshalJSON(data []byte) error {
+func (i *ItemImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		T__   string `json:"$type"`
 		Value string `json:"value"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
 		return err
 	}
 	{
@@ -78,14 +78,14 @@ func (i *ItemImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *RecoveryImpl) UnmarshalJSON(data []byte) error {
+func (i *RecoveryImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		T__    string `json:"$type"`
 		Value  string `json:"value"`
 		First  string `json:"first"`
 		Second string `json:"second"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
 		return err
 	}
 	{
@@ -103,35 +103,9 @@ func (i *RecoveryImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Unmarshal decodes data into an instance of type T by reading the "$type" field,
+// UnmarshalValue is a sugar method delegating to [util.UnmarshalDecode]
+// that decodes 'value' into an instance of type 'T' by reading the "$type" field,
 // selecting a corresponding factory, creating an instance, and unmarshaling its content.
-func Unmarshal[T core.AstNode](data []byte) (T, error) {
-	node := &struct {
-		Type string `json:"$type"`
-	}{}
-	if err := json.Unmarshal(data, node); err != nil {
-		var zero T
-		return zero, fmt.Errorf("unmarshal: %w", err)
-	}
-	factory, ok := TokenGroupsSyntheticFactories[node.Type]
-	if !ok {
-		var zero T
-		return zero, fmt.Errorf("unmarshal: unknown type %q", node.Type)
-	}
-	instance := factory()
-	asT, ok := instance.(T)
-	if !ok {
-		var zero T
-		return zero, fmt.Errorf("unmarshal: %T is not convertible to type %s", instance, reflect.TypeFor[T]())
-	}
-	if unmarshaler, ok := instance.(json.Unmarshaler); ok {
-		if err := unmarshaler.UnmarshalJSON(data); err != nil {
-			var zero T
-			return zero, fmt.Errorf("unmarshal %s: %w", node.Type, err)
-		}
-	} else {
-		var zero T
-		return zero, fmt.Errorf("unmarshal: %T is not convertible to type json.Unmarshaler", instance)
-	}
-	return asT, nil
+func UnmarshalValue[T core.AstNode](value jsontext.Value) (T, error) {
+	return util.UnmarshalDecode[T](jsontext.NewDecoder(bytes.NewReader(value)), TokenGroupsSyntheticFactories)
 }

@@ -3,24 +3,24 @@
 package completion
 
 import (
+	"bytes"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
-	"fmt"
-	"reflect"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util"
 )
 
-func (i *ObjImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *ObjImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__ string `json:"$type"`
 	}{
 		T__: "Obj",
 	})
 }
 
-func (i *RootImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *RootImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__     string `json:"$type"`
 		Objects []Obj  `json:"objects,omitempty"`
 	}{
@@ -29,8 +29,8 @@ func (i *RootImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *DeclareImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *DeclareImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__      string    `json:"$type"`
 		Name     string    `json:"name,omitempty"`
 		Children []Declare `json:"children,omitempty"`
@@ -41,8 +41,8 @@ func (i *DeclareImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *EImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *EImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__ string                   `json:"$type"`
 		Ref *core.Reference[Declare] `json:"ref,omitempty"`
 	}{
@@ -51,8 +51,8 @@ func (i *EImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *FImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *FImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__   string  `json:"$type"`
 		Items []FItem `json:"items,omitempty"`
 	}{
@@ -61,8 +61,8 @@ func (i *FImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *FItemImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *FItemImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__ string                   `json:"$type"`
 		Ref *core.Reference[Declare] `json:"ref,omitempty"`
 	}{
@@ -71,8 +71,8 @@ func (i *FItemImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *GImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *GImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__ string                   `json:"$type"`
 		Ref *core.Reference[Declare] `json:"ref,omitempty"`
 	}{
@@ -81,8 +81,8 @@ func (i *GImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *HImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *HImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__    string     `json:"$type"`
 		Member MemberCall `json:"member,omitempty"`
 	}{
@@ -91,8 +91,8 @@ func (i *HImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *MemberCallImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *MemberCallImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__      string                   `json:"$type"`
 		Ref      *core.Reference[Declare] `json:"ref,omitempty"`
 		Previous MemberCall               `json:"previous,omitempty"`
@@ -103,8 +103,8 @@ func (i *MemberCallImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *JImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *JImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__ string                   `json:"$type"`
 		Ref *core.Reference[Declare] `json:"ref,omitempty"`
 	}{
@@ -113,8 +113,8 @@ func (i *JImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *KImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *KImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__  string                   `json:"$type"`
 		Ref1 *core.Reference[Declare] `json:"ref1,omitempty"`
 		Ref2 *core.Reference[Declare] `json:"ref2,omitempty"`
@@ -125,8 +125,8 @@ func (i *KImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *NImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *NImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__ string                   `json:"$type"`
 		Ref *core.Reference[Declare] `json:"ref,omitempty"`
 	}{
@@ -135,8 +135,8 @@ func (i *NImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *OImpl) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+func (i *OImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
 		T__ string                   `json:"$type"`
 		Ref *core.Reference[Declare] `json:"ref,omitempty"`
 	}{
@@ -145,21 +145,21 @@ func (i *OImpl) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i *ObjImpl) UnmarshalJSON(data []byte) error {
+func (i *ObjImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	return nil
 }
 
-func (i *RootImpl) UnmarshalJSON(data []byte) error {
+func (i *RootImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		T__     string           `json:"$type"`
 		Objects []jsontext.Value `json:"objects"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
 		return err
 	}
 	i.objects = make([]Obj, 0, len(aux.Objects))
 	for _, item := range aux.Objects {
-		node, err := Unmarshal[Obj](item)
+		node, err := UnmarshalValue[Obj](item)
 		if err != nil {
 			return err
 		}
@@ -168,13 +168,13 @@ func (i *RootImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *DeclareImpl) UnmarshalJSON(data []byte) error {
+func (i *DeclareImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		T__      string           `json:"$type"`
 		Name     string           `json:"name"`
 		Children []jsontext.Value `json:"children"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
 		return err
 	}
 	{
@@ -185,7 +185,7 @@ func (i *DeclareImpl) UnmarshalJSON(data []byte) error {
 	}
 	i.children = make([]Declare, 0, len(aux.Children))
 	for _, item := range aux.Children {
-		node, err := Unmarshal[Declare](item)
+		node, err := UnmarshalValue[Declare](item)
 		if err != nil {
 			return err
 		}
@@ -194,12 +194,12 @@ func (i *DeclareImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *EImpl) UnmarshalJSON(data []byte) error {
+func (i *EImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		T__ string         `json:"$type"`
 		Ref jsontext.Value `json:"ref"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
 		return err
 	}
 	if aux.Ref != nil {
@@ -212,17 +212,17 @@ func (i *EImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *FImpl) UnmarshalJSON(data []byte) error {
+func (i *FImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		T__   string           `json:"$type"`
 		Items []jsontext.Value `json:"items"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
 		return err
 	}
 	i.items = make([]FItem, 0, len(aux.Items))
 	for _, item := range aux.Items {
-		node, err := Unmarshal[FItem](item)
+		node, err := UnmarshalValue[FItem](item)
 		if err != nil {
 			return err
 		}
@@ -231,12 +231,12 @@ func (i *FImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *FItemImpl) UnmarshalJSON(data []byte) error {
+func (i *FItemImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		T__ string         `json:"$type"`
 		Ref jsontext.Value `json:"ref"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
 		return err
 	}
 	if aux.Ref != nil {
@@ -249,12 +249,12 @@ func (i *FItemImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *GImpl) UnmarshalJSON(data []byte) error {
+func (i *GImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		T__ string         `json:"$type"`
 		Ref jsontext.Value `json:"ref"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
 		return err
 	}
 	if aux.Ref != nil {
@@ -267,16 +267,16 @@ func (i *GImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *HImpl) UnmarshalJSON(data []byte) error {
+func (i *HImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		T__    string         `json:"$type"`
 		Member jsontext.Value `json:"member"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
 		return err
 	}
 	if aux.Member != nil {
-		member, err := Unmarshal[MemberCall](aux.Member)
+		member, err := UnmarshalValue[MemberCall](aux.Member)
 		if err != nil {
 			return err
 		}
@@ -285,13 +285,13 @@ func (i *HImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *MemberCallImpl) UnmarshalJSON(data []byte) error {
+func (i *MemberCallImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		T__      string         `json:"$type"`
 		Ref      jsontext.Value `json:"ref"`
 		Previous jsontext.Value `json:"previous"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
 		return err
 	}
 	if aux.Ref != nil {
@@ -302,7 +302,7 @@ func (i *MemberCallImpl) UnmarshalJSON(data []byte) error {
 		i.SetRef(ref)
 	}
 	if aux.Previous != nil {
-		previous, err := Unmarshal[MemberCall](aux.Previous)
+		previous, err := UnmarshalValue[MemberCall](aux.Previous)
 		if err != nil {
 			return err
 		}
@@ -311,12 +311,12 @@ func (i *MemberCallImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *JImpl) UnmarshalJSON(data []byte) error {
+func (i *JImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		T__ string         `json:"$type"`
 		Ref jsontext.Value `json:"ref"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
 		return err
 	}
 	if aux.Ref != nil {
@@ -329,13 +329,13 @@ func (i *JImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *KImpl) UnmarshalJSON(data []byte) error {
+func (i *KImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		T__  string         `json:"$type"`
 		Ref1 jsontext.Value `json:"ref1"`
 		Ref2 jsontext.Value `json:"ref2"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
 		return err
 	}
 	if aux.Ref1 != nil {
@@ -355,12 +355,12 @@ func (i *KImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *NImpl) UnmarshalJSON(data []byte) error {
+func (i *NImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		T__ string         `json:"$type"`
 		Ref jsontext.Value `json:"ref"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
 		return err
 	}
 	if aux.Ref != nil {
@@ -373,12 +373,12 @@ func (i *NImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *OImpl) UnmarshalJSON(data []byte) error {
+func (i *OImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		T__ string         `json:"$type"`
 		Ref jsontext.Value `json:"ref"`
 	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
+	if err := json.UnmarshalDecode(_decoder, aux); err != nil {
 		return err
 	}
 	if aux.Ref != nil {
@@ -391,35 +391,9 @@ func (i *OImpl) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Unmarshal decodes data into an instance of type T by reading the "$type" field,
+// UnmarshalValue is a sugar method delegating to [util.UnmarshalDecode]
+// that decodes 'value' into an instance of type 'T' by reading the "$type" field,
 // selecting a corresponding factory, creating an instance, and unmarshaling its content.
-func Unmarshal[T core.AstNode](data []byte) (T, error) {
-	node := &struct {
-		Type string `json:"$type"`
-	}{}
-	if err := json.Unmarshal(data, node); err != nil {
-		var zero T
-		return zero, fmt.Errorf("unmarshal: %w", err)
-	}
-	factory, ok := CompletionSyntheticFactories[node.Type]
-	if !ok {
-		var zero T
-		return zero, fmt.Errorf("unmarshal: unknown type %q", node.Type)
-	}
-	instance := factory()
-	asT, ok := instance.(T)
-	if !ok {
-		var zero T
-		return zero, fmt.Errorf("unmarshal: %T is not convertible to type %s", instance, reflect.TypeFor[T]())
-	}
-	if unmarshaler, ok := instance.(json.Unmarshaler); ok {
-		if err := unmarshaler.UnmarshalJSON(data); err != nil {
-			var zero T
-			return zero, fmt.Errorf("unmarshal %s: %w", node.Type, err)
-		}
-	} else {
-		var zero T
-		return zero, fmt.Errorf("unmarshal: %T is not convertible to type json.Unmarshaler", instance)
-	}
-	return asT, nil
+func UnmarshalValue[T core.AstNode](value jsontext.Value) (T, error) {
+	return util.UnmarshalDecode[T](jsontext.NewDecoder(bytes.NewReader(value)), CompletionSyntheticFactories)
 }
