@@ -155,10 +155,17 @@ type defaultJsonLinkingHelper struct {
 	documentManager workspace.DocumentManager
 }
 
+// GetDocument implements [core.JsonLinkingHelper.GetDocument]([core.URI])
 func (h defaultJsonLinkingHelper) GetDocument(uri core.URI) *core.Document {
 	return h.documentManager.Get(uri)
 }
 
+// NewJsonLinkingHelper returns an instance of [core.JsonLinkingHelper],
+// which wraps a reference to the given [workspace.DocumentManager].
+// See [core.JsonLinkingHelper] for more information.
 func NewJsonLinkingHelper(docs workspace.DocumentManager) core.JsonLinkingHelper {
+	if docs == nil {
+		panic("NewJsonLinkingHelper: docs must not be 'nil'.")
+	}
 	return defaultJsonLinkingHelper{docs}
 }

@@ -375,12 +375,32 @@ func (r *Reference[T]) UnmarshalJSON(value []byte) error {
 	return nil
 }
 
+// JsonLinkingHelper instances are required for properly linking cross references in ASTs
+// being created by unmarshaling JSON data via the [json.Unmarshal] API.
+// A default implementation is provided by [typefox.dev/fastbelt/util/NewJsonLinkingHelper]().
+//
+// It is to be provided as part of the context argument of typefox.dev/fastbelt/workspace.Builder.Build](Context, ...), like
+//
+//	documents, err := service.Get[workspace.DocumentManager](sc)
+//	err = builder.Build(
+//	    context.WithValue(
+//	        ctx,
+//	        fastbelt.JsonLinkingHelperKey(),
+//	        util.NewJsonLinkingHelper(documents),
+//	    ),
+//	    ...,
+//	    ...,
+//	);
 type JsonLinkingHelper interface {
 	GetDocument(uri URI) *Document
 }
 
 var jsonLinkingHelperKey = reflect.TypeFor[JsonLinkingHelper]()
 
+// JsonLinkingHelperKey returns a singleton identifier key for registering a [JsonLinkingHelper] instance
+// in the [context.Context] object used by [typefox.dev/fastbelt/workspace.Builder.Build](Context, ...),
+// which is required for linking references in ASTs obtained by unmarshaling JSON data.
+// See also [JsonLinkingHelper].
 func JsonLinkingHelperKey() any {
 	return jsonLinkingHelperKey
 }
