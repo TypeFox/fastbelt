@@ -37,6 +37,10 @@ func Unmarshal[T core.AstNode](reader io.Reader, factories map[string]func() cor
 // Returns an error if the "$type" field is missing or unknown, or if the instance cannot be converted to type T.
 func UnmarshalValue[T core.AstNode](value jsontext.Value, factories map[string]func() core.AstNode) (T, error) {
 	var zero T
+	// first check for an explicit "null" value
+	if bytes.Equal(value[0:4], []byte("null")) {
+		return zero, nil
+	}
 	nodeType, err := peekType(value)
 	if err != nil {
 		return zero, fmt.Errorf("util.UnmarshalValue: %w", err)
@@ -109,6 +113,10 @@ func peekTypeSlow(value jsontext.Value) (string, error) {
 // UnmarshalReference is a utility method used by the generated type-specific implementations of [json.UnmarshalerFrom].UnmarshalJSONFrom(*jsontext.Decoder).
 // Not intended to be used by client directly.
 func UnmarshalReference[T core.AstNode](owner core.AstNode, value jsontext.Value) (*core.Reference[T], error) {
+	// first check for an explicit "null" value
+	if bytes.Equal(value[0:4], []byte("null")) {
+		return nil, nil
+	}
 	ref := core.NewReference[T](owner, nil, nil)
 	if err := ref.UnmarshalJSON(value); err != nil {
 		return nil, err
