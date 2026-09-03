@@ -365,11 +365,10 @@ func (r *Reference[T]) UnmarshalJSON(value []byte) error {
 	if err := json.Unmarshal(value, aux); err != nil {
 		return err
 	}
-	r.unit = &JsonRefText{
-		refText: aux.RefText,
-		owner:   r.owner,
-	}
-	r.getter = NewJsonReferenceGetter[T](aux.Ref)
+
+	// requirement: r.owner is initialized
+	r.unit = NewSyntheticToken(aux.RefText, r.owner)
+	r.getter = newJsonReferenceGetter[T](aux.Ref)
 	if aux.Err != "" {
 		r.err = NewReferenceError(aux.Err)
 	}
@@ -386,27 +385,7 @@ func JsonLinkingHelperKey() any {
 	return jsonLinkingHelperKey
 }
 
-type JsonRefText struct {
-	owner   AstNode
-	refText string
-}
-
-func (r *JsonRefText) String() string {
-	return r.refText
-}
-
-func (r *JsonRefText) Owner() AstNode {
-	return r.owner
-}
-
-func (r *JsonRefText) TextRange() TextRange {
-	return TextRange{
-		Start: -1,
-		End:   -1,
-	}
-}
-
-func NewJsonReferenceGetter[T AstNode](uriString string) ReferenceGetter[T] {
+func newJsonReferenceGetter[T AstNode](uriString string) ReferenceGetter[T] {
 	return func(ctx context.Context, ref *Reference[T]) (*SymbolDescription, *ReferenceError) {
 		if ref.err != nil {
 			return nil, ref.err

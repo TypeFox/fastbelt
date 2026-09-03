@@ -127,8 +127,7 @@ func (_this *ModuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	_this.statements = make([]Statement, 0, len(aux.Statements))
 	for _, item := range aux.Statements {
@@ -153,8 +152,7 @@ func (_this *AbstractDefinitionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decode
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	return nil
 }
@@ -169,8 +167,7 @@ func (_this *DefinitionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	_this.args = make([]DeclaredParameter, 0, len(aux.Args))
 	for _, item := range aux.Args {
@@ -198,8 +195,7 @@ func (_this *DeclaredParameterImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	return nil
 }
@@ -242,8 +238,7 @@ func (_this *BinaryExpressionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder)
 		_this.SetLeft(left)
 	}
 	{
-		token := core.NewSyntheticToken(aux.Operator)
-		_this.SetOperator(&token)
+		_this.SetOperator(core.NewSyntheticToken(aux.Operator, _this))
 	}
 	if aux.Right != nil {
 		right, _err := UnmarshalValue[Expression](aux.Right)
@@ -289,8 +284,7 @@ func (_this *NumberLiteralImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) er
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Value)
-		_this.SetValue(&token)
+		_this.SetValue(core.NewSyntheticToken(aux.Value, _this))
 	}
 	return nil
 }

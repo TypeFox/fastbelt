@@ -372,8 +372,7 @@ func (_this *GrammarImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	_this.rules = make([]ParserRule, 0, len(aux.Rules))
 	for _, item := range aux.Rules {
@@ -436,8 +435,7 @@ func (_this *InterfaceImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error 
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	_this.extends = make([]*core.Reference[Interface], 0, len(aux.Extends))
 	for _, item := range aux.Extends {
@@ -467,8 +465,7 @@ func (_this *FieldImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	if aux.Type != nil {
 		_Type, _err := UnmarshalValue[FieldType](aux.Type)
@@ -543,8 +540,7 @@ func (_this *PrimitiveTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) er
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Type)
-		_this.SetType(&token)
+		_this.SetType(core.NewSyntheticToken(aux.Type, _this))
 	}
 	return nil
 }
@@ -557,8 +553,7 @@ func (_this *AbstractRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) err
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	return nil
 }
@@ -572,8 +567,7 @@ func (_this *AbstractRuleWithBodyImpl) UnmarshalJSONFrom(_decoder *jsontext.Deco
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	if aux.Body != nil {
 		body, _err := UnmarshalValue[Element](aux.Body)
@@ -595,8 +589,7 @@ func (_this *AbstractRuleWithReturnTypeImpl) UnmarshalJSONFrom(_decoder *jsontex
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	if aux.Body != nil {
 		body, _err := UnmarshalValue[Element](aux.Body)
@@ -623,8 +616,7 @@ func (_this *AbstractTokenRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	return nil
 }
@@ -640,8 +632,7 @@ func (_this *ParserRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	if aux.Body != nil {
 		body, _err := UnmarshalValue[Element](aux.Body)
@@ -658,8 +649,7 @@ func (_this *ParserRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		_this.SetReturnType(returnType)
 	}
 	if aux.Entry {
-		token := core.NewSyntheticToken("")
-		_this.SetEntry(&token)
+		_this.SetEntry(core.NewSyntheticToken("", _this))
 	}
 	return nil
 }
@@ -674,16 +664,13 @@ func (_this *TokenImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	{
-		token := core.NewSyntheticToken(aux.Type)
-		_this.SetType(&token)
+		_this.SetType(core.NewSyntheticToken(aux.Type, _this))
 	}
 	{
-		token := core.NewSyntheticToken(aux.Regexp)
-		_this.SetRegexp(&token)
+		_this.SetRegexp(core.NewSyntheticToken(aux.Regexp, _this))
 	}
 	return nil
 }
@@ -699,8 +686,7 @@ func (_this *TokenGroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	_this.tokenRefs = make([]*core.Reference[AbstractTokenRule], 0, len(aux.TokenRefs))
 	for _, item := range aux.TokenRefs {
@@ -713,8 +699,7 @@ func (_this *TokenGroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 	_this.regexps = make([]*core.Token, 0, len(aux.Regexps))
 	for _, item := range aux.Regexps {
 		{
-			token := core.NewSyntheticToken(item)
-			_this.SetRegexpsItem(&token)
+			_this.SetRegexpsItem(core.NewSyntheticToken(item, _this))
 		}
 	}
 	_this.keywords = make([]Keyword, 0, len(aux.Keywords))
@@ -736,8 +721,7 @@ func (_this *ElementImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Cardinality)
-		_this.SetCardinality(&token)
+		_this.SetCardinality(core.NewSyntheticToken(aux.Cardinality, _this))
 	}
 	return nil
 }
@@ -751,8 +735,7 @@ func (_this *AlternativesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) err
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Cardinality)
-		_this.SetCardinality(&token)
+		_this.SetCardinality(core.NewSyntheticToken(aux.Cardinality, _this))
 	}
 	_this.alts = make([]Element, 0, len(aux.Alts))
 	for _, item := range aux.Alts {
@@ -774,8 +757,7 @@ func (_this *GroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Cardinality)
-		_this.SetCardinality(&token)
+		_this.SetCardinality(core.NewSyntheticToken(aux.Cardinality, _this))
 	}
 	_this.elements = make([]Element, 0, len(aux.Elements))
 	for _, item := range aux.Elements {
@@ -797,12 +779,10 @@ func (_this *KeywordImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Cardinality)
-		_this.SetCardinality(&token)
+		_this.SetCardinality(core.NewSyntheticToken(aux.Cardinality, _this))
 	}
 	{
-		token := core.NewSyntheticToken(aux.Value)
-		_this.SetValue(&token)
+		_this.SetValue(core.NewSyntheticToken(aux.Value, _this))
 	}
 	return nil
 }
@@ -818,8 +798,7 @@ func (_this *AssignmentImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Cardinality)
-		_this.SetCardinality(&token)
+		_this.SetCardinality(core.NewSyntheticToken(aux.Cardinality, _this))
 	}
 	if aux.Property != nil {
 		property, _err := util.UnmarshalReference[Field](_this, aux.Property)
@@ -829,8 +808,7 @@ func (_this *AssignmentImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		_this.SetProperty(property)
 	}
 	{
-		token := core.NewSyntheticToken(aux.Operator)
-		_this.SetOperator(&token)
+		_this.SetOperator(core.NewSyntheticToken(aux.Operator, _this))
 	}
 	if aux.Value != nil {
 		value, _err := UnmarshalValue[Assignable](aux.Value)
@@ -850,8 +828,7 @@ func (_this *AssignableImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Cardinality)
-		_this.SetCardinality(&token)
+		_this.SetCardinality(core.NewSyntheticToken(aux.Cardinality, _this))
 	}
 	return nil
 }
@@ -866,8 +843,7 @@ func (_this *CrossRefImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Cardinality)
-		_this.SetCardinality(&token)
+		_this.SetCardinality(core.NewSyntheticToken(aux.Cardinality, _this))
 	}
 	if aux.Type != nil {
 		_Type, _err := util.UnmarshalReference[Interface](_this, aux.Type)
@@ -895,8 +871,7 @@ func (_this *RuleCallImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Cardinality)
-		_this.SetCardinality(&token)
+		_this.SetCardinality(core.NewSyntheticToken(aux.Cardinality, _this))
 	}
 	if aux.Rule != nil {
 		rule, _err := util.UnmarshalReference[AbstractRule](_this, aux.Rule)
@@ -919,8 +894,7 @@ func (_this *ActionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Cardinality)
-		_this.SetCardinality(&token)
+		_this.SetCardinality(core.NewSyntheticToken(aux.Cardinality, _this))
 	}
 	if aux.Type != nil {
 		_Type, _err := util.UnmarshalReference[Interface](_this, aux.Type)
@@ -930,8 +904,7 @@ func (_this *ActionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		_this.SetType(_Type)
 	}
 	{
-		token := core.NewSyntheticToken(aux.Operator)
-		_this.SetOperator(&token)
+		_this.SetOperator(core.NewSyntheticToken(aux.Operator, _this))
 	}
 	if aux.Property != nil {
 		property, _err := util.UnmarshalReference[Field](_this, aux.Property)
@@ -952,8 +925,7 @@ func (_this *CompositeRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) er
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	if aux.Body != nil {
 		body, _err := UnmarshalValue[Element](aux.Body)
@@ -977,8 +949,7 @@ func (_this *InfixRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error 
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	if aux.Body != nil {
 		body, _err := UnmarshalValue[Element](aux.Body)
@@ -1021,8 +992,7 @@ func (_this *PrecedenceGroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) 
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Associativity)
-		_this.SetAssociativity(&token)
+		_this.SetAssociativity(core.NewSyntheticToken(aux.Associativity, _this))
 	}
 	_this.operators = make([]Assignable, 0, len(aux.Operators))
 	for _, item := range aux.Operators {

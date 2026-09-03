@@ -170,40 +170,31 @@ func (_this *BoolsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	if aux.Bool {
-		token := core.NewSyntheticToken("")
-		_this.SetBool(&token)
+		_this.SetBool(core.NewSyntheticToken("", _this))
 	}
 	if aux.Token {
-		token := core.NewSyntheticToken("")
-		_this.SetToken(&token)
+		_this.SetToken(core.NewSyntheticToken("", _this))
 	}
 	if aux.Aux {
-		token := core.NewSyntheticToken("")
-		_this.SetAux(&token)
+		_this.SetAux(core.NewSyntheticToken("", _this))
 	}
 	if aux.Core {
-		token := core.NewSyntheticToken("")
-		_this.SetCore(&token)
+		_this.SetCore(core.NewSyntheticToken("", _this))
 	}
 	if aux.Err {
-		token := core.NewSyntheticToken("")
-		_this.SetErr(&token)
+		_this.SetErr(core.NewSyntheticToken("", _this))
 	}
 	if aux.Node {
-		token := core.NewSyntheticToken("")
-		_this.SetNode(&token)
+		_this.SetNode(core.NewSyntheticToken("", _this))
 	}
 	if aux.This {
-		token := core.NewSyntheticToken("")
-		_this.SetThis(&token)
+		_this.SetThis(core.NewSyntheticToken("", _this))
 	}
 	if aux.Util {
-		token := core.NewSyntheticToken("")
-		_this.SetUtil(&token)
+		_this.SetUtil(core.NewSyntheticToken("", _this))
 	}
 	if aux.Type {
-		token := core.NewSyntheticToken("")
-		_this.SetType(&token)
+		_this.SetType(core.NewSyntheticToken("", _this))
 	}
 	return nil
 }
@@ -225,47 +216,37 @@ func (_this *StringsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.String)
-		_this.SetString(&token)
+		_this.SetString(core.NewSyntheticToken(aux.String, _this))
 	}
 	{
-		token := core.NewSyntheticToken(aux.Token)
-		_this.SetToken(&token)
+		_this.SetToken(core.NewSyntheticToken(aux.Token, _this))
 	}
 	_this.stringList = make([]*core.Token, 0, len(aux.StringList))
 	for _, item := range aux.StringList {
 		{
-			token := core.NewSyntheticToken(item)
-			_this.SetStringListItem(&token)
+			_this.SetStringListItem(core.NewSyntheticToken(item, _this))
 		}
 	}
 	{
-		token := core.NewSyntheticToken(aux.Aux)
-		_this.SetAux(&token)
+		_this.SetAux(core.NewSyntheticToken(aux.Aux, _this))
 	}
 	{
-		token := core.NewSyntheticToken(aux.Core)
-		_this.SetCore(&token)
+		_this.SetCore(core.NewSyntheticToken(aux.Core, _this))
 	}
 	{
-		token := core.NewSyntheticToken(aux.Err)
-		_this.SetErr(&token)
+		_this.SetErr(core.NewSyntheticToken(aux.Err, _this))
 	}
 	{
-		token := core.NewSyntheticToken(aux.Node)
-		_this.SetNode(&token)
+		_this.SetNode(core.NewSyntheticToken(aux.Node, _this))
 	}
 	{
-		token := core.NewSyntheticToken(aux.This)
-		_this.SetThis(&token)
+		_this.SetThis(core.NewSyntheticToken(aux.This, _this))
 	}
 	{
-		token := core.NewSyntheticToken(aux.Util)
-		_this.SetUtil(&token)
+		_this.SetUtil(core.NewSyntheticToken(aux.Util, _this))
 	}
 	{
-		token := core.NewSyntheticToken(aux.Type)
-		_this.SetType(&token)
+		_this.SetType(core.NewSyntheticToken(aux.Type, _this))
 	}
 	return nil
 }
@@ -287,66 +268,56 @@ func (_this *CompositesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Composite)
 		cn := core.NewCompositeNode()
-		cn.AppendToken(&token)
+		cn.AppendToken(core.NewSyntheticToken(aux.Composite, _this))
 		_this.SetComposite(cn)
 	}
 	{
-		token := core.NewSyntheticToken(aux.Token)
 		cn := core.NewCompositeNode()
-		cn.AppendToken(&token)
+		cn.AppendToken(core.NewSyntheticToken(aux.Token, _this))
 		_this.SetToken(cn)
 	}
 	_this.compositeList = make([]core.CompositeNode, 0, len(aux.CompositeList))
 	for _, item := range aux.CompositeList {
 		{
-			token := core.NewSyntheticToken(item)
 			cn := core.NewCompositeNode()
-			cn.AppendToken(&token)
+			cn.AppendToken(core.NewSyntheticToken(item, _this))
 			_this.SetCompositeListItem(cn)
 		}
 	}
 	{
-		token := core.NewSyntheticToken(aux.Aux)
 		cn := core.NewCompositeNode()
-		cn.AppendToken(&token)
+		cn.AppendToken(core.NewSyntheticToken(aux.Aux, _this))
 		_this.SetAux(cn)
 	}
 	{
-		token := core.NewSyntheticToken(aux.Core)
 		cn := core.NewCompositeNode()
-		cn.AppendToken(&token)
+		cn.AppendToken(core.NewSyntheticToken(aux.Core, _this))
 		_this.SetCore(cn)
 	}
 	{
-		token := core.NewSyntheticToken(aux.Err)
 		cn := core.NewCompositeNode()
-		cn.AppendToken(&token)
+		cn.AppendToken(core.NewSyntheticToken(aux.Err, _this))
 		_this.SetErr(cn)
 	}
 	{
-		token := core.NewSyntheticToken(aux.Node)
 		cn := core.NewCompositeNode()
-		cn.AppendToken(&token)
+		cn.AppendToken(core.NewSyntheticToken(aux.Node, _this))
 		_this.SetNode(cn)
 	}
 	{
-		token := core.NewSyntheticToken(aux.This)
 		cn := core.NewCompositeNode()
-		cn.AppendToken(&token)
+		cn.AppendToken(core.NewSyntheticToken(aux.This, _this))
 		_this.SetThis(cn)
 	}
 	{
-		token := core.NewSyntheticToken(aux.Util)
 		cn := core.NewCompositeNode()
-		cn.AppendToken(&token)
+		cn.AppendToken(core.NewSyntheticToken(aux.Util, _this))
 		_this.SetUtil(cn)
 	}
 	{
-		token := core.NewSyntheticToken(aux.Type)
 		cn := core.NewCompositeNode()
-		cn.AppendToken(&token)
+		cn.AppendToken(core.NewSyntheticToken(aux.Type, _this))
 		_this.SetType(cn)
 	}
 	return nil

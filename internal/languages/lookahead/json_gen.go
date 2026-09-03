@@ -55,13 +55,11 @@ func (_this *ObjImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Value)
-		_this.SetValue(&token)
+		_this.SetValue(core.NewSyntheticToken(aux.Value, _this))
 	}
 	{
-		token := core.NewSyntheticToken(aux.Node)
 		cn := core.NewCompositeNode()
-		cn.AppendToken(&token)
+		cn.AppendToken(core.NewSyntheticToken(aux.Node, _this))
 		_this.SetNode(cn)
 	}
 	return nil
@@ -94,18 +92,15 @@ func (_this *BImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Value)
-		_this.SetValue(&token)
+		_this.SetValue(core.NewSyntheticToken(aux.Value, _this))
 	}
 	{
-		token := core.NewSyntheticToken(aux.Node)
 		cn := core.NewCompositeNode()
-		cn.AppendToken(&token)
+		cn.AppendToken(core.NewSyntheticToken(aux.Node, _this))
 		_this.SetNode(cn)
 	}
 	{
-		token := core.NewSyntheticToken(aux.Post)
-		_this.SetPost(&token)
+		_this.SetPost(core.NewSyntheticToken(aux.Post, _this))
 	}
 	return nil
 }

@@ -86,8 +86,7 @@ func (_this *StatemachineImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) err
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	_this.events = make([]Event, 0, len(aux.Events))
 	for _, item := range aux.Events {
@@ -131,8 +130,7 @@ func (_this *EventImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	return nil
 }
@@ -145,8 +143,7 @@ func (_this *CommandImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	return nil
 }
@@ -161,8 +158,7 @@ func (_this *StateImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
-		_this.SetName(&token)
+		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	}
 	_this.actions = make([]*core.Reference[Command], 0, len(aux.Actions))
 	for _, item := range aux.Actions {

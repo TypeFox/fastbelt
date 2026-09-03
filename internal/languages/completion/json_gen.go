@@ -175,9 +175,8 @@ func (_this *DeclareImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewSyntheticToken(aux.Name)
 		cn := core.NewCompositeNode()
-		cn.AppendToken(&token)
+		cn.AppendToken(core.NewSyntheticToken(aux.Name, _this))
 		_this.SetName(cn)
 	}
 	_this.children = make([]Declare, 0, len(aux.Children))

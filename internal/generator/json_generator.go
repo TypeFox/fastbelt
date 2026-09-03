@@ -119,16 +119,15 @@ func getAuxFieldType(field FieldInfo) string {
 }
 
 func generateJSONUnmarshalFrom(node codegen.Node, iface grammar.Interface) {
-	genCreateNewToken := func(valueRef string) string {
-		return "token := core.NewSyntheticToken(" + valueRef + ")"
-	}
-
 	fields := collectAllFields(iface, map[string]struct{}{})
 
 	node.AppendLine("func (_this *", iface.Name(), "Impl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {")
 	thisRef := "_this"
 	thisDotSet := thisRef + ".Set"
 	errRef := "_err"
+	genCreateNewToken := func(valueRef string) string {
+		return "core.NewSyntheticToken(" + valueRef + ", " + thisRef + ")"
+	}
 
 	if len(fields) == 0 {
 		node.Indent(func(n2 codegen.Node) {
@@ -162,16 +161,14 @@ func generateJSONUnmarshalFrom(node codegen.Node, iface grammar.Interface) {
 							// Note: 'if field.Boolean' will never be true here, since we cannot parse lists of present test results ('?=')
 							//  and there're no other ways of creating pure boolean values in the grammar, although '[]bool' is a valid type
 							// all other primitive values are of type 'string' or 'composite'
-							n3.AppendLine(genCreateNewToken("item"))
-							n3.AppendLine(thisDotSet, field.Name, "Item(&token)")
+							n3.AppendLine(thisDotSet, field.Name, "Item(", genCreateNewToken("item"), ")")
 						})
 						n2.AppendLine("}")
 					case COMPOSITE_TYPE:
 						n2.AppendLine("{")
 						n2.Indent(func(n3 codegen.Node) {
-							n3.AppendLine(genCreateNewToken("item"))
 							n3.AppendLine("cn := core.NewCompositeNode()")
-							n3.AppendLine("cn.AppendToken(&token)")
+							n3.AppendLine("cn.AppendToken(", genCreateNewToken("item"), ")")
 							n3.AppendLine(thisDotSet, field.Name, "Item(cn)")
 						})
 						n2.AppendLine("}")
@@ -188,23 +185,20 @@ func generateJSONUnmarshalFrom(node codegen.Node, iface grammar.Interface) {
 			} else if field.Boolean {
 				n.AppendLine("if aux.", field.Name, "{")
 				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine(genCreateNewToken("\"\""))
-					n2.AppendLine(thisDotSet, field.Name, "(&token)")
+					n2.AppendLine(thisDotSet, field.Name, "(", genCreateNewToken("\"\""), ")")
 				})
 				n.AppendLine("}")
 			} else if field.GType == TOKEN_TYPE {
 				n.AppendLine("{")
 				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine(genCreateNewToken("aux." + field.Name))
-					n2.AppendLine(thisDotSet, field.Name, "(&token)")
+					n2.AppendLine(thisDotSet, field.Name, "(", genCreateNewToken("aux."+field.Name), ")")
 				})
 				n.AppendLine("}")
 			} else if field.GType == COMPOSITE_TYPE {
 				n.AppendLine("{")
 				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine(genCreateNewToken("aux." + field.Name))
 					n2.AppendLine("cn := core.NewCompositeNode()")
-					n2.AppendLine("cn.AppendToken(&token)")
+					n2.AppendLine("cn.AppendToken(", genCreateNewToken("aux."+field.Name), ")")
 					n2.AppendLine(thisDotSet, field.Name, "(cn)")
 				})
 				n.AppendLine("}")
