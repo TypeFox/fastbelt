@@ -37,15 +37,13 @@ func Unmarshal[T core.AstNode](reader io.Reader, factories map[string]func() cor
 // Returns an error if the "$type" field is missing or unknown, or if the instance cannot be converted to type T.
 func UnmarshalValue[T core.AstNode](value jsontext.Value, factories map[string]func() core.AstNode) (T, error) {
 	var zero T
-	node := &struct {
-		Type string `json:"$type"`
-	}{}
-	if err := json.Unmarshal(value, node); err != nil {
+	nodeType, err := peekType(value)
+	if err != nil {
 		return zero, fmt.Errorf("util.UnmarshalValue: %w", err)
 	}
-	factory, ok := factories[node.Type]
+	factory, ok := factories[nodeType]
 	if !ok {
-		return zero, fmt.Errorf("util.UnmarshalValue: unknown type %q", node.Type)
+		return zero, fmt.Errorf("util.UnmarshalValue: unknown type %q", nodeType)
 	}
 	instance := factory()
 	asT, ok := instance.(T)
@@ -54,12 +52,58 @@ func UnmarshalValue[T core.AstNode](value jsontext.Value, factories map[string]f
 	}
 	if unmarshaler, ok := instance.(json.UnmarshalerFrom); ok {
 		if err := unmarshaler.UnmarshalJSONFrom(jsontext.NewDecoder(bytes.NewReader(value))); err != nil {
-			return zero, fmt.Errorf("util.UnmarshalValue %s: %w", node.Type, err)
+			return zero, fmt.Errorf("util.UnmarshalValue %s: %w", nodeType, err)
 		}
 	} else {
 		return zero, fmt.Errorf("util.UnmarshalValue: %T is not convertible to type json.UnmarshalerFrom", instance)
 	}
 	return asT, nil
+}
+
+// peekType reads the "$type" discriminator from a JSON object.
+//
+// Every generated MarshalJSONTo implementation emits "$type" as the object's first member, which allows
+// peekTypeFast to read it via a 3-token scan (object-open, name, value) in constant time instead of
+// unmarshaling the entire (possibly large) subtree just to extract one field. That layout isn't codified
+// anywhere though, so for any value where "$type" isn't the first member (hand-written JSON, a differently
+// ordered marshaler, ...), peekType falls back to peekTypeSlow, which finds "$type" regardless of position.
+func peekType(value jsontext.Value) (string, error) {
+	if typ, ok := peekTypeFast(value); ok {
+		return typ, nil
+	}
+	return peekTypeSlow(value)
+}
+
+// peekTypeFast is the constant-time path for peekType: it reads "$type" as the very first object member.
+// It reports ok=false whenever that assumption doesn't hold (a different first member, malformed start, a
+// non-string value, ...), leaving error reporting for that case to peekTypeSlow.
+func peekTypeFast(value jsontext.Value) (string, bool) {
+	dec := jsontext.NewDecoder(bytes.NewReader(value))
+	begin, err := dec.ReadToken()
+	if err != nil || begin.Kind() != jsontext.KindBeginObject {
+		return "", false
+	}
+	name, err := dec.ReadToken()
+	if err != nil || name.String() != "$type" {
+		return "", false
+	}
+	typeTok, err := dec.ReadToken()
+	if err != nil || typeTok.Kind() != jsontext.KindString {
+		return "", false
+	}
+	return typeTok.String(), true
+}
+
+// peekTypeSlow unmarshals the entire value to locate "$type" irrespective of its position among the
+// object's members.
+func peekTypeSlow(value jsontext.Value) (string, error) {
+	node := &struct {
+		Type string `json:"$type"`
+	}{}
+	if err := json.Unmarshal(value, node); err != nil {
+		return "", err
+	}
+	return node.Type, nil
 }
 
 // UnmarshalReference is a utility method used by the generated type-specific implementations of [json.UnmarshalerFrom].UnmarshalJSONFrom(*jsontext.Decoder).
