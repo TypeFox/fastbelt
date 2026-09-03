@@ -126,9 +126,7 @@ func (_this *ModuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	{
-		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
-	}
+	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	_this.statements = make([]Statement, 0, len(aux.Statements))
 	for _, item := range aux.Statements {
 		node, _err := UnmarshalValue[Statement](item)
@@ -151,9 +149,7 @@ func (_this *AbstractDefinitionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decode
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	{
-		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
-	}
+	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	return nil
 }
 
@@ -166,9 +162,7 @@ func (_this *DefinitionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	{
-		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
-	}
+	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	_this.args = make([]DeclaredParameter, 0, len(aux.Args))
 	for _, item := range aux.Args {
 		node, _err := UnmarshalValue[DeclaredParameter](item)
@@ -194,9 +188,7 @@ func (_this *DeclaredParameterImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	{
-		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
-	}
+	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	return nil
 }
 
@@ -237,9 +229,7 @@ func (_this *BinaryExpressionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder)
 		}
 		_this.SetLeft(left)
 	}
-	{
-		_this.SetOperator(core.NewSyntheticToken(aux.Operator, _this))
-	}
+	_this.SetOperator(core.NewSyntheticToken(aux.Operator, _this))
 	if aux.Right != nil {
 		right, _err := UnmarshalValue[Expression](aux.Right)
 		if _err != nil {
@@ -283,9 +273,7 @@ func (_this *NumberLiteralImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) er
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	{
-		_this.SetValue(core.NewSyntheticToken(aux.Value, _this))
-	}
+	_this.SetValue(core.NewSyntheticToken(aux.Value, _this))
 	return nil
 }
 

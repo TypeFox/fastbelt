@@ -156,23 +156,14 @@ func generateJSONUnmarshalFrom(node codegen.Node, iface grammar.Interface) {
 				n.Indent(func(n2 codegen.Node) {
 					switch field.GType {
 					case TOKEN_TYPE:
-						n2.AppendLine("{")
-						n2.Indent(func(n3 codegen.Node) {
-							// Note: 'if field.Boolean' will never be true here, since we cannot parse lists of present test results ('?=')
-							//  and there're no other ways of creating pure boolean values in the grammar, although '[]bool' is a valid type
-							// all other primitive values are of type 'string' or 'composite'
-							n3.AppendLine(thisDotSet, field.Name, "Item(", genCreateNewToken("item"), ")")
-						})
-						n2.AppendLine("}")
+						// Note: 'if field.Boolean' will never be true here, since we cannot parse lists of present test results ('?=')
+						//  and there're no other ways of creating pure boolean values in the grammar, although '[]bool' is a valid type
+						// all other primitive values are of type 'string' or 'composite'
+						n2.AppendLine(thisDotSet, field.Name, "Item(", genCreateNewToken("item"), ")")
 					case COMPOSITE_TYPE:
-						n2.AppendLine("{")
-						n2.Indent(func(n3 codegen.Node) {
-							n3.AppendLine("cn := core.NewCompositeNode()")
-							n3.AppendLine("cn.AppendToken(", genCreateNewToken("item"), ")")
-							n3.AppendLine(thisDotSet, field.Name, "Item(cn)")
-						})
-						n2.AppendLine("}")
-
+						n2.AppendLine("cn := core.NewCompositeNode()")
+						n2.AppendLine("cn.AppendToken(", genCreateNewToken("item"), ")")
+						n2.AppendLine(thisDotSet, field.Name, "Item(cn)")
 					default:
 						if field.Reference {
 							genUnmarshalReference(n2, field, "item", "reference", thisRef, thisDotSet, errRef, true)
@@ -189,11 +180,7 @@ func generateJSONUnmarshalFrom(node codegen.Node, iface grammar.Interface) {
 				})
 				n.AppendLine("}")
 			} else if field.GType == TOKEN_TYPE {
-				n.AppendLine("{")
-				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine(thisDotSet, field.Name, "(", genCreateNewToken("aux."+field.Name), ")")
-				})
-				n.AppendLine("}")
+				n.AppendLine(thisDotSet, field.Name, "(", genCreateNewToken("aux."+field.Name), ")")
 			} else if field.GType == COMPOSITE_TYPE {
 				n.AppendLine("{")
 				n.Indent(func(n2 codegen.Node) {

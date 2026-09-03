@@ -68,9 +68,7 @@ func (_this *ItemImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	{
-		_this.SetValue(core.NewSyntheticToken(aux.Value, _this))
-	}
+	_this.SetValue(core.NewSyntheticToken(aux.Value, _this))
 	return nil
 }
 
@@ -83,15 +81,9 @@ func (_this *RecoveryImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	{
-		_this.SetValue(core.NewSyntheticToken(aux.Value, _this))
-	}
-	{
-		_this.SetFirst(core.NewSyntheticToken(aux.First, _this))
-	}
-	{
-		_this.SetSecond(core.NewSyntheticToken(aux.Second, _this))
-	}
+	_this.SetValue(core.NewSyntheticToken(aux.Value, _this))
+	_this.SetFirst(core.NewSyntheticToken(aux.First, _this))
+	_this.SetSecond(core.NewSyntheticToken(aux.Second, _this))
 	return nil
 }
 

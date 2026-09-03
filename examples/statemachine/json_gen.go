@@ -85,9 +85,7 @@ func (_this *StatemachineImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) err
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	{
-		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
-	}
+	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	_this.events = make([]Event, 0, len(aux.Events))
 	for _, item := range aux.Events {
 		node, _err := UnmarshalValue[Event](item)
@@ -129,9 +127,7 @@ func (_this *EventImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	{
-		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
-	}
+	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	return nil
 }
 
@@ -142,9 +138,7 @@ func (_this *CommandImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	{
-		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
-	}
+	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	return nil
 }
 
@@ -157,9 +151,7 @@ func (_this *StateImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	{
-		_this.SetName(core.NewSyntheticToken(aux.Name, _this))
-	}
+	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
 	_this.actions = make([]*core.Reference[Command], 0, len(aux.Actions))
 	for _, item := range aux.Actions {
 		reference, _err := util.UnmarshalReference[Command](_this, item)

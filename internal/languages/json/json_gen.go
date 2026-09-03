@@ -215,39 +215,19 @@ func (_this *StringsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	{
-		_this.SetString(core.NewSyntheticToken(aux.String, _this))
-	}
-	{
-		_this.SetToken(core.NewSyntheticToken(aux.Token, _this))
-	}
+	_this.SetString(core.NewSyntheticToken(aux.String, _this))
+	_this.SetToken(core.NewSyntheticToken(aux.Token, _this))
 	_this.stringList = make([]*core.Token, 0, len(aux.StringList))
 	for _, item := range aux.StringList {
-		{
-			_this.SetStringListItem(core.NewSyntheticToken(item, _this))
-		}
+		_this.SetStringListItem(core.NewSyntheticToken(item, _this))
 	}
-	{
-		_this.SetAux(core.NewSyntheticToken(aux.Aux, _this))
-	}
-	{
-		_this.SetCore(core.NewSyntheticToken(aux.Core, _this))
-	}
-	{
-		_this.SetErr(core.NewSyntheticToken(aux.Err, _this))
-	}
-	{
-		_this.SetNode(core.NewSyntheticToken(aux.Node, _this))
-	}
-	{
-		_this.SetThis(core.NewSyntheticToken(aux.This, _this))
-	}
-	{
-		_this.SetUtil(core.NewSyntheticToken(aux.Util, _this))
-	}
-	{
-		_this.SetType(core.NewSyntheticToken(aux.Type, _this))
-	}
+	_this.SetAux(core.NewSyntheticToken(aux.Aux, _this))
+	_this.SetCore(core.NewSyntheticToken(aux.Core, _this))
+	_this.SetErr(core.NewSyntheticToken(aux.Err, _this))
+	_this.SetNode(core.NewSyntheticToken(aux.Node, _this))
+	_this.SetThis(core.NewSyntheticToken(aux.This, _this))
+	_this.SetUtil(core.NewSyntheticToken(aux.Util, _this))
+	_this.SetType(core.NewSyntheticToken(aux.Type, _this))
 	return nil
 }
 
@@ -279,11 +259,9 @@ func (_this *CompositesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 	}
 	_this.compositeList = make([]core.CompositeNode, 0, len(aux.CompositeList))
 	for _, item := range aux.CompositeList {
-		{
-			cn := core.NewCompositeNode()
-			cn.AppendToken(core.NewSyntheticToken(item, _this))
-			_this.SetCompositeListItem(cn)
-		}
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetCompositeListItem(cn)
 	}
 	{
 		cn := core.NewCompositeNode()
