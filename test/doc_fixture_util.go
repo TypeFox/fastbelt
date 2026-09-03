@@ -21,13 +21,13 @@ var REF_TOKEN_TYPE = reflect.TypeFor[*core.Token]()
 // reported via t.Errorf with the node's document path from core.PathOf.
 // Will early exit and return false if concrete types of expected and actual mismatch.
 // Will return true otherwise.
-func AssertEqualAst(t testing.TB, expected, actual core.AstNode) bool {
+func AssertEqualAst(t *testing.T, expected, actual core.AstNode) bool {
 	t.Helper()
+	pExpected, _ := core.PathOf(expected)
 
 	// 1. Concrete type must match.
 	if reflect.TypeOf(expected) != reflect.TypeOf(actual) {
-		p, _ := core.PathOf(expected)
-		t.Errorf("at %q: type mismatch: expected %T, got %T", p, expected, actual)
+		t.Errorf("at %q: type mismatch: expected %T, got %T", pExpected, expected, actual)
 		return false
 	}
 
@@ -36,48 +36,73 @@ func AssertEqualAst(t testing.TB, expected, actual core.AstNode) bool {
 	expectedNamed, expectedIsNamed := expected.(named)
 	actualNamed, actualIsNamed := actual.(named)
 	if expectedIsNamed && actualIsNamed && expectedNamed.Name() != actualNamed.Name() {
-		p, _ := core.PathOf(expected)
-		t.Errorf("at %q: Name mismatch: expected %s, got %s", p, expectedNamed.Name(), actualNamed.Name())
+		t.Errorf("at %q: Name mismatch: expected %s, got %s", pExpected, expectedNamed.Name(), actualNamed.Name())
 	}
 
 	// 3. Primitive field values must match
-	//  create a reflect.Value of the AstNode:
-	//   * fetch child (1) that is the specific '...Data' struct, child (0) is the 'AstNodeBase' struct
-	//   * then derive a reference value via '.Addr()', and
-	//   * wrap it into an array being used as argument while calling the getters, they're defined with pointer receivers
-	expectedValue := reflect.ValueOf(expected).Elem().FieldByIndex([]int{1})
-	expectedMethodArg := []reflect.Value{expectedValue.Addr()}
+	//  Recall that the actual AstNode is composed of at least to other structs, maybe further ones:
+	//    * AstNodeBase
+	//    * ...Data
+	//   [* ...Data ]
+	// Hence, iterate the components (fields) of 'expected', start at field '1' since we need to ignore 'AstNodeBase' here,
+	//  for each component then iterate its declared fields;
+	// Note: We do _not_ iterate the methods as client code might contribute arbitrary additional methods
 
-	actualValue := reflect.ValueOf(actual).Elem().FieldByIndex([]int{1})
-	actualMethodArg := []reflect.Value{actualValue.Addr()}
+	// First, prepare some data required under way:
+	expectedValueRef := reflect.ValueOf(expected)
+	expectedValueRefType := expectedValueRef.Type()
+	expectedValue := expectedValueRef.Elem() // description of the dereferenced value struct
+	expectedValueType := expectedValue.Type()
 
-	// * iterate the '...Data' type fields and consider those of the types 'bool' and '*core.Token'
+	// Wrap expectedValueRef into an array for being used as argument while calling the corresponding field getters,
+	// they're defined with pointer receivers (see `types_gen.go`), so we use the ...Ref here.
+	// We can't rely on the fields directly as we wanna compare string and bool values instead of pure tokens.
+	// Note that we call the getter on the composed type of 'expectedValue', not the particular component types.
+	// That makes a difference if a getter is overridden in client code, and the generated getter is not promoted to the combined type.
+	expectedGetterArg := []reflect.Value{expectedValueRef}
 
-	for _, field := range slices.Collect(expectedValue.Type().Fields()) {
-		kind := field.Type.Kind()
-		switch {
-		case kind == reflect.Bool:
-			p, _ := core.PathOf(expected)
-			getter, exists := expectedValue.Addr().Type().MethodByName(strings.ToUpper(field.Name[0:1]) + field.Name[1:])
-			if !exists {
-				t.Errorf("at %q, type %T: string value getter for field %s missing", p, expectedValue, field.Name)
+	actualValueRef := reflect.ValueOf(actual)
+	actualGetterArg := []reflect.Value{actualValueRef}
+
+	for subStructIndex := 1; subStructIndex != expectedValue.NumField(); subStructIndex++ {
+		fields := expectedValue.FieldByIndex([]int{subStructIndex}).Type().Fields()
+
+		for field := range fields {
+			isToken := field.Type.Kind() == reflect.Pointer && field.Type == REF_TOKEN_TYPE
+			if !(isToken) {
+				continue
 			}
-			exp := getter.Func.Call(expectedMethodArg)[0].Bool()
-			act := getter.Func.Call(actualMethodArg)[0].Bool()
-			if exp != act {
-				t.Errorf("at %q: primitive bool field '%s' mismatch\n  expected: %t\n  actual: %t", p, field.Name, exp, act)
-			}
-		case kind == reflect.Pointer && field.Type == REF_TOKEN_TYPE:
-			p, _ := core.PathOf(expected)
-			getter, exists := expectedValue.Addr().Type().MethodByName(strings.ToUpper(field.Name[0:1]) + field.Name[1:])
-			if !exists {
-				t.Errorf("at %q, type %T: string value getter for field %s missing", p, expectedValue, field.Name)
-			}
-			exp := getter.Func.Call(expectedMethodArg)[0].String()
-			act := getter.Func.Call(actualMethodArg)[0].String()
-			if exp != act {
-				t.Errorf("at %q: primitive string field '%s' mismatch\n  expected: %s\n  actual: %s", p, field.Name, exp, act)
-			}
+
+			// for each field create a sub test, use the composed type's name instead of the component type's name
+			// to allow us seeing immediately that the all fields of the composed types are hit
+			t.Run(expectedValueType.Name()+"."+field.Name, func(t *testing.T) {
+				stringGetterName := strings.ToUpper(field.Name[0:1]) + field.Name[1:]
+				if stringGetterName[0] == '_' {
+					stringGetterName = stringGetterName[1:]
+				}
+
+				getter, exists := expectedValueRefType.MethodByName(stringGetterName)
+				if !exists {
+					// if no 'string' getter exists, look for a 'bool' getter,
+					//  we can't distinguish this on the struct field decls
+					getter, exists = expectedValueRefType.MethodByName("Is" + stringGetterName)
+					if !exists {
+						t.Errorf("at %q, type %T: value getter for field %s missing", pExpected, expected, field.Name)
+					}
+				}
+				expRet := getter.Func.Call(expectedGetterArg)[0]
+				actRet := getter.Func.Call(actualGetterArg)[0]
+
+				if expRet.Kind() == reflect.Bool {
+					if exp, act := expRet.Bool(), actRet.Bool(); exp != act {
+						t.Errorf("at %q: primitive bool field '%s' mismatch\n  expected: %v\n  actual: %v", pExpected, field.Name, exp, act)
+					}
+				} else {
+					if exp, act := expRet.String(), actRet.String(); exp != act {
+						t.Errorf("at %q: primitive string field '%s' mismatch\n  expected: %v\n  actual: %v", pExpected, field.Name, exp, act)
+					}
+				}
+			})
 		}
 	}
 
@@ -120,12 +145,10 @@ func AssertEqualAst(t testing.TB, expected, actual core.AstNode) bool {
 				t.Errorf("at %q: child element mismatch\n  no counter part for %s of expected (field: %s, index: %d) in actual ", pActual, pChild, itemE.feature.Value(), itemE.index)
 			} else {
 				pChild, _ := core.PathOf(itemA.node)
-				pExpected, _ := core.PathOf(expected)
 				t.Errorf("at %q: child element mismatch\n  no counter part for %s of actual (field: %s, index: %d) in expected ", pExpected, pChild, itemA.feature.Value(), itemA.index)
 			}
 		} else if itemE.feature != itemA.feature {
-			p, _ := core.PathOf(expected)
-			t.Errorf("at %q: child feature mismatch\n  child contained in %s (expected, index: %d) vs %s (actual, index: %d)", p, itemE.feature.Value(), itemE.index, itemA.feature.Value(), itemA.index)
+			t.Errorf("at %q: child feature mismatch\n  child contained in %s (expected, index: %d) vs %s (actual, index: %d)", pExpected, itemE.feature.Value(), itemE.index, itemA.feature.Value(), itemA.index)
 
 			// no need to check for index diff/equality, as position mismatches will cause other diffs being checked above or below, like container feature diffs or child type/primitive field value diffs
 			// therefore, continue with comparing the individual children
