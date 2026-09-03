@@ -193,6 +193,18 @@ func NewToken(tokenType *TokenType, image string, startOffset, endOffset int) To
 	}
 }
 
+// NewSyntheticToken creates a token for representing a string or Boolean `true` value,
+// which is not stated in some parsable text document but part of programmatically
+// composed data or obtained from an alternative input source.
+func NewSyntheticToken(image string) Token {
+	return Token{
+		Type:  nil,
+		Image: image,
+		Range: NewTextRange(-1, -1),
+		Kind:  -1,
+	}
+}
+
 // IsSkipped reports whether t belongs to the skipped lexer group.
 func (t *Token) IsSkipped() bool {
 	return t.Type != nil && t.Type.Group == SkippedGroup

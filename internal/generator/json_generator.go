@@ -120,7 +120,7 @@ func getAuxFieldType(field FieldInfo) string {
 
 func generateJSONUnmarshalFrom(node codegen.Node, iface grammar.Interface) {
 	genCreateNewToken := func(valueRef string) string {
-		return "token := core.NewToken(nil, " + valueRef + ", -1, -1)"
+		return "token := core.NewSyntheticToken(" + valueRef + ")"
 	}
 
 	fields := collectAllFields(iface, map[string]struct{}{})

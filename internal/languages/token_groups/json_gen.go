@@ -69,7 +69,7 @@ func (_this *ItemImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewToken(nil, aux.Value, -1, -1)
+		token := core.NewSyntheticToken(aux.Value)
 		_this.SetValue(&token)
 	}
 	return nil
@@ -85,15 +85,15 @@ func (_this *RecoveryImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		return _err
 	}
 	{
-		token := core.NewToken(nil, aux.Value, -1, -1)
+		token := core.NewSyntheticToken(aux.Value)
 		_this.SetValue(&token)
 	}
 	{
-		token := core.NewToken(nil, aux.First, -1, -1)
+		token := core.NewSyntheticToken(aux.First)
 		_this.SetFirst(&token)
 	}
 	{
-		token := core.NewToken(nil, aux.Second, -1, -1)
+		token := core.NewSyntheticToken(aux.Second)
 		_this.SetSecond(&token)
 	}
 	return nil
