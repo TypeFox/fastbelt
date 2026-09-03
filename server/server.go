@@ -95,10 +95,12 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 				Value: service.Has[TypeHierarchyProvider](s.sc),
 			},
 			InlayHintProvider: func() *lsp.Or_ServerCapabilities_inlayHintProvider {
-				if service.Has[InlayHintProvider](s.sc) {
-					return &lsp.Or_ServerCapabilities_inlayHintProvider{Value: lsp.InlayHintOptions{}}
+				provider, err := service.Get[InlayHintProvider](s.sc)
+				if err != nil {
+					return nil
 				}
-				return nil
+				_, resolving := provider.(ResolvingInlayHintProvider)
+				return &lsp.Or_ServerCapabilities_inlayHintProvider{Value: lsp.InlayHintOptions{ResolveProvider: resolving}}
 			}(),
 			SignatureHelpProvider: buildSignatureHelpOptions(s.sc),
 			CodeActionProvider: func() *lsp.CodeActionOptions {
@@ -118,10 +120,12 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 				return &lsp.CodeLensOptions{ResolveProvider: resolving}
 			}(),
 			DocumentLinkProvider: func() *lsp.DocumentLinkOptions {
-				if service.Has[DocumentLinkProvider](s.sc) {
-					return &lsp.DocumentLinkOptions{ResolveProvider: false}
+				provider, err := service.Get[DocumentLinkProvider](s.sc)
+				if err != nil {
+					return nil
 				}
-				return nil
+				_, resolving := provider.(ResolvingDocumentLinkProvider)
+				return &lsp.DocumentLinkOptions{ResolveProvider: resolving}
 			}(),
 			ExecuteCommandProvider: func() *lsp.ExecuteCommandOptions {
 				if service.Has[CommandProvider](s.sc) {
@@ -364,10 +368,48 @@ func (s *DefaultLanguageServer) ResolveCompletionItem(ctx context.Context, param
 	return nil, nil
 }
 func (s *DefaultLanguageServer) ResolveDocumentLink(ctx context.Context, params *lsp.DocumentLink) (*lsp.DocumentLink, error) {
-	return nil, nil
+	provider, err := service.Get[DocumentLinkProvider](s.sc)
+	if err != nil {
+		return params, nil
+	}
+	resolving, ok := provider.(ResolvingDocumentLinkProvider)
+	if !ok {
+		return params, nil
+	}
+	var result *lsp.DocumentLink
+	var providerErr error
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	if err := lock.Read(ctx, func(ctx context.Context) {
+		result, providerErr = resolving.HandleDocumentLinkResolveRequest(ctx, params)
+	}); err != nil {
+		return nil, err
+	}
+	return result, providerErr
 }
 func (s *DefaultLanguageServer) Resolve(ctx context.Context, params *lsp.InlayHint) (*lsp.InlayHint, error) {
-	return nil, nil
+	provider, err := service.Get[InlayHintProvider](s.sc)
+	if err != nil {
+		return params, nil
+	}
+	resolving, ok := provider.(ResolvingInlayHintProvider)
+	if !ok {
+		return params, nil
+	}
+	var result *lsp.InlayHint
+	var providerErr error
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	if err := lock.Read(ctx, func(ctx context.Context) {
+		result, providerErr = resolving.HandleInlayHintResolveRequest(ctx, params)
+	}); err != nil {
+		return nil, err
+	}
+	return result, providerErr
 }
 func (s *DefaultLanguageServer) DidChangeNotebookDocument(ctx context.Context, params *lsp.DidChangeNotebookDocumentParams) error {
 	return nil

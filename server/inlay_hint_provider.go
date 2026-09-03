@@ -40,3 +40,25 @@ import (
 type InlayHintProvider interface {
 	HandleInlayHintRequest(ctx context.Context, params *lsp.InlayHintParams) ([]lsp.InlayHint, error)
 }
+
+// ResolvingInlayHintProvider is an optional extension of [InlayHintProvider]
+// for providers that defer work until an inlay hint actually becomes
+// visible, via the LSP inlayHint/resolve request.
+//
+// If a registered InlayHintProvider also implements this interface, the
+// server advertises resolve support and routes inlayHint/resolve requests to
+// HandleInlayHintResolveRequest. Providers that don't need lazy resolution
+// can simply not implement it.
+//
+// Usage:
+//
+//	func (p *MyInlayHintProvider) HandleInlayHintResolveRequest(ctx context.Context, hint *lsp.InlayHint) (*lsp.InlayHint, error) {
+//	    // Use hint.Data (set in HandleInlayHintRequest) to compute the
+//	    // deferred TextEdits now that the hint is actually visible.
+//	    hint.TextEdits = []lsp.TextEdit{...}
+//	    return hint, nil
+//	}
+type ResolvingInlayHintProvider interface {
+	InlayHintProvider
+	HandleInlayHintResolveRequest(ctx context.Context, hint *lsp.InlayHint) (*lsp.InlayHint, error)
+}
