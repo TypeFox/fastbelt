@@ -129,6 +129,10 @@ func runGenerateCLI(opts generateOptions) error {
 		generator.GenerateTypes(grammar, packageName)); err != nil {
 		return err
 	}
+	if err := writeFile("json", filepath.Join(outputPath, "json_gen.go"),
+		generator.GenerateJSON(grammar, packageName)); err != nil {
+		return err
+	}
 	tokenTypes := generator.GenerateTokenTypes(grammar)
 	atnData := generator.BuildParserATNData(grammar, tokenTypes)
 	if err := writeFile("parser", filepath.Join(outputPath, "parser_gen.go"),

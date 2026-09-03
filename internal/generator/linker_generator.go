@@ -241,7 +241,7 @@ func generateSymbolContainers(context *LinkerGeneratorContext) codegen.Node {
 
 	node.AppendLine("func (sc *", name, "SymbolContainer) All() core.SymbolSeq {")
 	if len(sortedTargets) == 0 {
-		node.AppendLine("return core.EmptySymbolDescriptions")
+		node.AppendLine("return core.EmptySymbolSeq")
 	} else {
 		node.Indent(func(n codegen.Node) {
 			n.AppendLine("return extiter.Concat(")
@@ -286,7 +286,7 @@ func generateSymbolContainers(context *LinkerGeneratorContext) codegen.Node {
 			n.AppendLine("}")
 		}
 
-		n.AppendLine("return core.EmptySymbolDescriptions")
+		n.AppendLine("return core.EmptySymbolSeq")
 	})
 	node.AppendLine("}")
 	node.AppendLine()

@@ -72,7 +72,10 @@ var reservedKeywords = map[string]bool{
 
 type FieldInfo struct {
 	Name string
+	// variant of Name with first char in lower case
+	JsonPropName string
 	// Private name, used to avoid conflicts with reserved keywords
+	// mostly equal to 'JsonTagName' except for reserved keywords
 	PName string
 
 	Array          bool
@@ -88,7 +91,8 @@ type FieldInfo struct {
 
 func getFieldInfo(field grammar.Field) FieldInfo {
 	name := field.Name()
-	pname := strings.ToLower(name[0:1]) + name[1:]
+	jsonPropName := strings.ToLower(name[0:1]) + name[1:]
+	pname := jsonPropName
 	if reservedKeywords[pname] {
 		pname = "_" + name
 	}
@@ -114,6 +118,7 @@ func getFieldInfo(field grammar.Field) FieldInfo {
 	return FieldInfo{
 		Name:           name,
 		PName:          pname,
+		JsonPropName:   jsonPropName,
 		Array:          array,
 		Reference:      ref,
 		Type:           typ,

@@ -1,0 +1,90 @@
+// Copyright 2026 TypeFox GmbH
+// This program and the accompanying materials are made available under the
+// terms of the MIT License, which is available in the project root.
+
+grammar Json;
+
+// this grammar with its interface definitions aims at checking the absence of any naming conflicts
+//  between generated property inspired names and names hard-coded in generator of `json_gen.go` files
+
+interface Bools {
+    Bool bool
+    Token bool
+
+    // we cannot parse a list of boolean values directly, and we cannot represent `false` values in pure bools in the AST;
+    // only absent clauses/items can yield `false` prop values in AST nodes;
+    // hence, no `boolList` field is defined here in the AST interface definition
+
+    Aux bool
+    Core bool
+    Err bool
+    Node bool
+    This bool
+    Util bool
+
+    Type bool
+}
+
+interface Strings {
+    String string
+    Token string
+
+    StringList []string
+
+    Aux string
+    Core string
+    Err string
+    Node string
+    This string
+    Util string
+
+    Type string
+}
+
+interface Composites {
+    Composite composite
+    Token composite
+
+    CompositeList []composite
+
+    Aux composite
+    Core composite
+    Err composite
+    Node composite
+    This composite
+    Util composite
+
+    Type composite
+}
+
+interface Objects {
+    Object Objects
+    ObjectList []Objects
+
+    Aux Objects
+    Core Objects
+    Err Objects
+    Node Objects
+    This Objects
+    Util Objects
+
+    Type Objects
+}
+
+interface References {
+    Reference *References
+    Token References
+    ReferenceList []*References
+
+    Aux *References
+    Core *References
+    Err *References
+    Node *References
+    This *References
+    Util *References
+
+    Type *References
+}
+
+entry Bools: Bool?="bool";
+
