@@ -1,0 +1,229 @@
+{
+  "$type": "Module",
+  "name": "priceCalculator",
+  "statements": [
+    {
+      "$type": "Definition",
+      "name": "materialPerUnit",
+      "args": [],
+      "expression": {
+        "$type": "NumberLiteral",
+        "value": "100"
+      }
+    },
+    {
+      "$type": "Definition",
+      "name": "laborPerUnit",
+      "args": [],
+      "expression": {
+        "$type": "NumberLiteral",
+        "value": "200"
+      }
+    },
+    {
+      "$type": "Definition",
+      "name": "expectedNoOfSales",
+      "args": [],
+      "expression": {
+        "$type": "NumberLiteral",
+        "value": "200"
+      }
+    },
+    {
+      "$type": "Definition",
+      "name": "costPerUnit",
+      "args": [],
+      "expression": {
+        "$type": "BinaryExpression",
+        "left": {
+          "$type": "FunctionCall",
+          "args": [],
+          "callable": {
+            "$refText": "materialPerUnit",
+            "$ref": "#/statements@0"
+          }
+        },
+        "operator": "+",
+        "right": {
+          "$type": "FunctionCall",
+          "args": [],
+          "callable": {
+            "$refText": "laborPerUnit",
+            "$ref": "#/statements@1"
+          }
+        }
+      }
+    },
+    {
+      "$type": "Definition",
+      "name": "costOfGoodsSold",
+      "args": [],
+      "expression": {
+        "$type": "BinaryExpression",
+        "left": {
+          "$type": "FunctionCall",
+          "args": [],
+          "callable": {
+            "$refText": "expectedNoOfSales",
+            "$ref": "#/statements@2"
+          }
+        },
+        "operator": "*",
+        "right": {
+          "$type": "FunctionCall",
+          "args": [],
+          "callable": {
+            "$refText": "costPerUnit",
+            "$ref": "#/statements@3"
+          }
+        }
+      }
+    },
+    {
+      "$type": "Definition",
+      "name": "generalExpensesAndSales",
+      "args": [],
+      "expression": {
+        "$type": "NumberLiteral",
+        "value": "10000"
+      }
+    },
+    {
+      "$type": "Definition",
+      "name": "desiredProfitPerUnit",
+      "args": [],
+      "expression": {
+        "$type": "NumberLiteral",
+        "value": "50"
+      }
+    },
+    {
+      "$type": "Definition",
+      "name": "netPrice",
+      "args": [],
+      "expression": {
+        "$type": "BinaryExpression",
+        "left": {
+          "$type": "BinaryExpression",
+          "left": {
+            "$type": "BinaryExpression",
+            "left": {
+              "$type": "FunctionCall",
+              "args": [],
+              "callable": {
+                "$refText": "costOfGoodsSold",
+                "$ref": "#/statements@4"
+              }
+            },
+            "operator": "+",
+            "right": {
+              "$type": "FunctionCall",
+              "args": [],
+              "callable": {
+                "$refText": "generalExpensesAndSales",
+                "$ref": "#/statements@5"
+              }
+            }
+          },
+          "operator": "/",
+          "right": {
+            "$type": "FunctionCall",
+            "args": [],
+            "callable": {
+              "$refText": "expectedNoOfSales",
+              "$ref": "#/statements@2"
+            }
+          }
+        },
+        "operator": "+",
+        "right": {
+          "$type": "FunctionCall",
+          "args": [],
+          "callable": {
+            "$refText": "desiredProfitPerUnit",
+            "$ref": "#/statements@6"
+          }
+        }
+      }
+    },
+    {
+      "$type": "Definition",
+      "name": "vat",
+      "args": [],
+      "expression": {
+        "$type": "NumberLiteral",
+        "value": "0.15"
+      }
+    },
+    {
+      "$type": "Definition",
+      "name": "calcGrossListPrice",
+      "args": [
+        {
+          "$type": "DeclaredParameter",
+          "name": "net"
+        },
+        {
+          "$type": "DeclaredParameter",
+          "name": "tax"
+        }
+      ],
+      "expression": {
+        "$type": "BinaryExpression",
+        "left": {
+          "$type": "FunctionCall",
+          "args": [],
+          "callable": {
+            "$refText": "net",
+            "$ref": "#/statements@9/args@0"
+          }
+        },
+        "operator": "/",
+        "right": {
+          "$type": "BinaryExpression",
+          "left": {
+            "$type": "NumberLiteral",
+            "value": "1"
+          },
+          "operator": "-",
+          "right": {
+            "$type": "FunctionCall",
+            "args": [],
+            "callable": {
+              "$refText": "tax",
+              "$ref": "#/statements@9/args@1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "$type": "Evaluation",
+      "expression": {
+        "$type": "FunctionCall",
+        "args": [
+          {
+            "$type": "FunctionCall",
+            "args": [],
+            "callable": {
+              "$refText": "netPrice",
+              "$ref": "#/statements@7"
+            }
+          },
+          {
+            "$type": "FunctionCall",
+            "args": [],
+            "callable": {
+              "$refText": "vat",
+              "$ref": "#/statements@8"
+            }
+          }
+        ],
+        "callable": {
+          "$refText": "calcGrossListPrice",
+          "$ref": "#/statements@9"
+        }
+      }
+    }
+  ]
+}
