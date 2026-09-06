@@ -1,6 +1,9 @@
 package test
 
 import (
+	"strings"
+	"testing"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
@@ -419,4 +422,92 @@ func findSymbolAtRange(symbols []lsp.DocumentSymbol, targetRange lsp.Range) *lsp
 		}
 	}
 	return nil
+}
+
+
+// CompletionExpectation provides chainable assertions on completion items.
+type CompletionExpectation struct {
+	t     testing.TB
+	items []lsp.CompletionItem
+}
+
+// Has asserts that a completion item with the given label exists.
+// Returns the receiver for further chaining.
+func (c *CompletionExpectation) Has(label string) *CompletionExpectation {
+	c.t.Helper()
+	for _, item := range c.items {
+		if item.Label == label {
+			return c
+		}
+	}
+	labels := make([]string, len(c.items))
+	for i, item := range c.items {
+		labels[i] = item.Label
+	}
+	c.t.Fatalf("fbtest: expected completion item with label %q, got: %v", label, labels)
+	return nil
+}
+
+// HasKind asserts that a completion item with the given label exists and has the
+// given LSP CompletionItemKind. Returns the receiver for further chaining.
+func (c *CompletionExpectation) HasKind(label string, kind lsp.CompletionItemKind) *CompletionExpectation {
+	c.t.Helper()
+	for _, item := range c.items {
+		if item.Label == label {
+			if item.Kind != kind {
+				c.t.Errorf("fbtest: completion item %q has kind %v, expected %v", label, item.Kind, kind)
+			}
+			return c
+		}
+	}
+	labels := make([]string, len(c.items))
+	for i, item := range c.items {
+		labels[i] = item.Label
+	}
+	c.t.Fatalf("fbtest: expected completion item with label %q for kind check, got: %v", label, labels)
+	return nil
+}
+
+// HasCount asserts that exactly n completion items are present.
+// Returns the receiver for further chaining.
+func (c *CompletionExpectation) HasCount(n int) *CompletionExpectation {
+	c.t.Helper()
+	if len(c.items) != n {
+		c.t.Fatalf("fbtest: expected %d completion items, got %d: %v", n, len(c.items), itemLabels(c.items))
+	}
+	return c
+}
+
+// WithLabelPrefix asserts that all completion items have labels starting with the given prefix.
+// Returns the receiver for further chaining.
+func (c *CompletionExpectation) WithLabelPrefix(prefix string) *CompletionExpectation {
+	c.t.Helper()
+	for _, item := range c.items {
+		if !strings.HasPrefix(item.Label, prefix) {
+			c.t.Errorf("fbtest: completion item %q does not start with prefix %q", item.Label, prefix)
+		}
+	}
+	return c
+}
+
+// ExpectCompletion asserts completion items exist at the labeled marker and returns
+// a [CompletionExpectation] for chainable filtering and assertions.
+// Unlike [Doc.CompletionItems], this method fails the test immediately if no items
+// are found at the marker.
+func (d *Doc) ExpectCompletion(label string) *CompletionExpectation {
+	d.fixture.t.Helper()
+	items := d.CompletionItems(label)
+	if len(items) == 0 {
+		d.fixture.t.Fatalf("fbtest: no completion items at label %q", label)
+	}
+	return &CompletionExpectation{t: d.fixture.t, items: items}
+}
+
+// itemLabels extracts the label strings from a slice of CompletionItems.
+func itemLabels(items []lsp.CompletionItem) []string {
+	labels := make([]string, len(items))
+	for i, item := range items {
+		labels[i] = item.Label
+	}
+	return labels
 }
