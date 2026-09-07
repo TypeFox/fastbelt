@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/linking"
 )
 
 // InfixOperatorGroupName returns the name of the token group synthesized by
@@ -189,7 +190,7 @@ func synthesizeInfixBody(rule InfixRule, operand ParserRule, operatorGroup Token
 func resolvedReference[T core.AstNode](owner core.AstNode, unit core.StringUnit, target T) *core.Reference[T] {
 	description := &core.SymbolDescription{
 		Node: target,
-		Name: any(target).(core.NamedTokenNode).NameToken(),
+		Unit: linking.Name(target),
 	}
 	if doc := target.Document(); doc != nil {
 		description.URI = doc.URI
