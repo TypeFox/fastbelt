@@ -18,9 +18,8 @@ type FastbeltScopeProvider interface {
 	ScopeInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
 	ScopeSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
-	ScopeParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
-	ScopeTokenCommandMode(ctx context.Context, reference *core.Reference[TokenMode]) core.Scope
 	ScopeAbstractRuleWithReturnTypeReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope
+	ScopeTokenCommandMode(ctx context.Context, reference *core.Reference[TokenMode]) core.Scope
 	ScopeTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) core.Scope
 	ScopeTokenUsageTokenRef(ctx context.Context, reference *core.Reference[AbstractTokenRule]) core.Scope
 	ScopeAssignmentProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope
@@ -36,10 +35,6 @@ type DefaultFastbeltScopeProvider struct {
 
 func NewDefaultFastbeltScopeProvider(sc *service.Container) FastbeltScopeProvider {
 	return &DefaultFastbeltScopeProvider{sc: sc}
-}
-
-func (s *DefaultFastbeltScopeProvider) ScopeParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
-	return linking.DefaultScopeOfType[Interface](reference.Owner())
 }
 
 func (s *DefaultFastbeltScopeProvider) ScopeInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
@@ -95,7 +90,6 @@ type FastbeltReferenceLinker interface {
 	LinkReferenceTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkSimpleTypeType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkAbstractRuleWithReturnTypeReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkTokenCommandMode(ctx context.Context, reference *core.Reference[TokenMode]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkTokenUsageTokenRef(ctx context.Context, reference *core.Reference[AbstractTokenRule]) (*core.SymbolDescription, *core.ReferenceError)
@@ -118,11 +112,6 @@ func NewDefaultFastbeltReferenceLinker(sc *service.Container) FastbeltReferenceL
 			return service.MustGet[FastbeltScopeProvider](sc)
 		}),
 	}
-}
-
-func (s *DefaultFastbeltReferenceLinker) LinkParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeInterfaceExtends(ctx, reference)
-	return core.DefaultLink(scope, reference.Text())
 }
 
 func (s *DefaultFastbeltReferenceLinker) LinkInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
@@ -190,7 +179,6 @@ type FastbeltReferencesConstructor interface {
 	ReferenceTypeType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	SimpleTypeType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	AbstractRuleWithReturnTypeReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
-	ParserRuleReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface]
 	TokenCommandMode(owner core.AstNode, unit core.StringUnit) *core.Reference[TokenMode]
 	TokenGroupTokenRefs(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractTokenRule]
 	TokenUsageTokenRef(owner core.AstNode, unit core.StringUnit) *core.Reference[AbstractTokenRule]
@@ -213,11 +201,6 @@ func NewDefaultFastbeltReferencesConstructor(sc *service.Container) FastbeltRefe
 			return service.MustGet[FastbeltReferenceLinker](sc)
 		}),
 	}
-}
-
-func (s *DefaultFastbeltReferencesConstructor) ParserRuleReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
-	fn := s.referenceLinker().LinkInterfaceExtends
-	return core.NewReference(owner, unit, fn)
 }
 
 func (s *DefaultFastbeltReferencesConstructor) InterfaceExtends(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {

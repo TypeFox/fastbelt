@@ -17,9 +17,8 @@ type FastbeltCompletionFilter interface {
 	FilterInterfaceExtends(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterReferenceTypeType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterSimpleTypeType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
-	FilterParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
-	FilterTokenCommandMode(ctx context.Context, reference *core.Reference[TokenMode], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterAbstractRuleWithReturnTypeReturnType(ctx context.Context, reference *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterTokenCommandMode(ctx context.Context, reference *core.Reference[TokenMode], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterTokenUsageTokenRef(ctx context.Context, reference *core.Reference[AbstractTokenRule], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterAssignmentProperty(ctx context.Context, reference *core.Reference[Field], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
@@ -33,10 +32,6 @@ type DefaultFastbeltCompletionFilter struct{}
 
 func NewDefaultFastbeltCompletionFilter() FastbeltCompletionFilter {
 	return &DefaultFastbeltCompletionFilter{}
-}
-
-func (*DefaultFastbeltCompletionFilter) FilterParserRuleReturnType(_ context.Context, _ *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
-	return in
 }
 
 func (*DefaultFastbeltCompletionFilter) FilterInterfaceExtends(_ context.Context, _ *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {

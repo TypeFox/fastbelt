@@ -24,92 +24,77 @@ var ActionOperatorAlternatives = parser.LL1Lookahead{
 
 var AssignableAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_StringLiteral, Token_ID, Keyword_LeftBracket, Keyword_LeftParen},
-	Lookup: []int{1: 4, 14: 3, 39: 1, 40: 2},
+	Lookup: []int{1: 4, 15: 3, 44: 1, 45: 2},
 }
 
 var AssignableWithoutAltsAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_StringLiteral, Token_ID, Keyword_LeftBracket},
-	Lookup: []int{14: 3, 39: 1, 40: 2},
+	Lookup: []int{15: 3, 44: 1, 45: 2},
 }
 
 var AssignmentOperatorAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_PlusEquals, Keyword_Equals, Keyword_QuestionEquals},
-	Lookup: []int{5: 1, 11: 2, 13: 3},
+	Lookup: []int{5: 1, 11: 2, 14: 3},
 }
 
 var CompositeElementAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_StringLiteral, Token_ID, Keyword_LeftParen},
-	Lookup: []int{1: 3, 39: 1, 40: 2},
-}
-
-var CompositeElementCardinalityAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_Asterisk, Keyword_Plus, Keyword_Question},
-	Lookup: []int{3: 1, 4: 2, 12: 3},
-}
-
-var ElementCardinalityAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_Asterisk, Keyword_Plus, Keyword_Question},
-	Lookup: []int{3: 1, 4: 2, 12: 3},
+	Lookup: []int{1: 3, 44: 1, 45: 2},
 }
 
 var FieldTypeAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Keyword_Asterisk, Keyword_LeftBracket, Keyword_bool, Keyword_composite, Keyword_string},
-	Lookup: []int{3: 2, 14: 3, 16: 4, 18: 4, 32: 4, 40: 1},
+	Lookup: []int{3: 2, 15: 3, 17: 4, 19: 4, 37: 4, 45: 1},
 }
 
 var GrammarLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_infix, Keyword_comment, Keyword_hidden, Keyword_composite, Keyword_entry, Keyword_interface, Keyword_token, Token_ID, TokenGroup_TokenModifier},
-	Lookup: []int{17: 1, 18: 1, 21: 1, 25: 1, 26: 1, 33: 1, 40: 1, 101: 1},
+	Types:  []*core.TokenType{Keyword_composite, Keyword_entry, Keyword_infix, Keyword_interface, Keyword_token, Token_ID, TokenGroup_TokenModifier},
+	Lookup: []int{18: 1, 19: 1, 22: 1, 26: 1, 27: 1, 28: 1, 38: 1, 45: 1},
 }
 
 var InfixOperatorAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_StringLiteral, Token_ID},
-	Lookup: []int{39: 1, 40: 2},
+	Lookup: []int{44: 1, 45: 2},
 }
 
 var PrecedenceGroupAssociativityAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_left, Keyword_right},
-	Lookup: []int{28: 1, 31: 2},
+	Lookup: []int{30: 1, 36: 2},
 }
 
 var PrimitiveTypeTypeAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_string, Keyword_bool, Keyword_composite},
-	Lookup: []int{16: 2, 18: 3, 32: 1},
+	Lookup: []int{17: 2, 19: 3, 37: 1},
 }
 
 var TokenCommandAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Keyword_default},
-	Lookup: []int{20: 2, 40: 1},
+	Lookup: []int{21: 2, 45: 1},
 }
 
 var TokenCommandTypeAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_push, Keyword_pop, Keyword_mode},
-	Lookup: []int{28: 3, 29: 2, 30: 1},
+	Lookup: []int{31: 3, 33: 2, 34: 1},
 }
 
 var TokenContentAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_RegexLiteral, Token_StringLiteral},
-	Lookup: []int{39: 2, 41: 1},
+	Lookup: []int{44: 2, 46: 1},
 }
 
 var TokenGroupAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_StringLiteral, Keyword_keywords},
-	Lookup: []int{27: 3, 39: 2, 40: 1},
+	Lookup: []int{29: 3, 44: 2, 45: 1},
 }
 
 var TokenModeAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Keyword_default},
-	Lookup: []int{20: 2, 40: 1},
+	Lookup: []int{21: 2, 45: 1},
 }
 
 var TokenModeMembersLoop = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_keywords, Keyword_token, Token_StringLiteral, Token_ID, TokenGroup_TokenModifier},
-	Lookup: []int{17: 1, 25: 1, 27: 1, 33: 1, 39: 1, 40: 1},
-}
-
-var TokenAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_hidden, Keyword_comment},
-	Lookup: []int{17: 2, 25: 1},
+	Lookup: []int{18: 1, 26: 1, 29: 1, 38: 1, 44: 1, 45: 1},
 }
 
 // FastbeltParserLookahead abstracts every lookahead/prediction decision performed by

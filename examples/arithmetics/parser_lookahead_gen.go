@@ -50,7 +50,7 @@ func NewDefaultArithmeticsParserLookahead() ArithmeticsParserLookahead {
 }
 
 func (l *DefaultArithmeticsParserLookahead) BinaryExpressionLoop(state *parser.ParserState) bool {
-	return Token_BinaryExpressionOperator.Matches(state.LA(1).Type)
+	return TokenGroup_BinaryExpressionOperator.Matches(state.LA(1).Type)
 }
 
 func (l *DefaultArithmeticsParserLookahead) DefinitionLoop(state *parser.ParserState) bool {

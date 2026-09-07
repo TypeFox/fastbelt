@@ -388,7 +388,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewRuleTransition(states[PrimaryExpression__Start], states[BinaryExpression__LoopEntry], nil),
 	)
 	states[BinaryExpression_BinaryExpressionOperator].AppendTransitions(
-		parser.NewAtomTransition(states[BinaryExpression__Basic_1], Token_BinaryExpressionOperator, nil),
+		parser.NewAtomTransition(states[BinaryExpression__Basic_1], TokenGroup_BinaryExpressionOperator, nil),
 	)
 	states[BinaryExpression__Basic_1].AppendTransitions(
 		parser.NewRuleTransition(states[PrimaryExpression__Start], states[BinaryExpression__Basic_2], nil),

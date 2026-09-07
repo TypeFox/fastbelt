@@ -110,6 +110,15 @@ func (p *Parser) ParseGrammar() Grammar {
 						current.SetCompositesItem(result)
 					}
 				}
+			case 6:
+				{
+					p.state.EnterRule(Grammar__Basic_15)
+					result := p.ParseInfixRule()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetInfixRulesItem(result)
+					}
+				}
 			default:
 				p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 			}
@@ -413,10 +422,10 @@ func (p *Parser) ParseTokenDecl() TokenDecl {
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
-			p.state.Sync(TokenDecl__Basic_2)
+			p.state.Sync(TokenDecl__Basic_1)
 			if p.lookahead.TokenDeclModifierOptional(p.state) {
 				token := p.state.Consume(TokenGroup_TokenModifier)
-				core.AssignToken(current, token, TokenDecl__Basic_0)
+				core.AssignToken(current, token, TokenDecl_Modifier_TokenModifier)
 				if token != nil {
 					current.SetModifier(token)
 				}
@@ -438,7 +447,7 @@ func (p *Parser) ParseTokenDecl() TokenDecl {
 			core.AssignToken(current, token, TokenDecl_Colon)
 		}
 		{
-			p.state.EnterRule(TokenDecl__Basic_6)
+			p.state.EnterRule(TokenDecl__Basic_5)
 			result := p.ParseTokenContent()
 			p.state.ExitRule()
 			if result != nil {
@@ -446,9 +455,9 @@ func (p *Parser) ParseTokenDecl() TokenDecl {
 			}
 		}
 		{
-			p.state.Sync(TokenDecl__Basic_6)
+			p.state.Sync(TokenDecl__Basic_5)
 			if p.lookahead.TokenDeclCommandOptional(p.state) {
-				p.state.EnterRule(TokenDecl__Basic_5)
+				p.state.EnterRule(TokenDecl__Basic_4)
 				result := p.ParseTokenCommand()
 				p.state.ExitRule()
 				if result != nil {
@@ -602,10 +611,10 @@ func (p *Parser) ParseTokenGroup() TokenGroup {
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
-			p.state.Sync(TokenGroup__Basic_2)
+			p.state.Sync(TokenGroup__Basic_1)
 			if p.lookahead.TokenGroupModifierOptional(p.state) {
 				token := p.state.Consume(TokenGroup_TokenModifier)
-				core.AssignToken(current, token, TokenGroup__Basic_0)
+				core.AssignToken(current, token, TokenGroup_Modifier_TokenModifier)
 				if token != nil {
 					current.SetModifier(token)
 				}
@@ -644,7 +653,7 @@ func (p *Parser) ParseTokenGroup() TokenGroup {
 				}
 			case 1:
 				{
-					p.state.EnterRule(TokenGroup__Basic_5)
+					p.state.EnterRule(TokenGroup__Basic_4)
 					result := p.ParseKeyword()
 					p.state.ExitRule()
 					if result != nil {
@@ -673,9 +682,9 @@ func (p *Parser) ParseTokenGroup() TokenGroup {
 			core.AssignToken(current, token, TokenGroup_RightBrace)
 		}
 		{
-			p.state.Sync(TokenGroup__Basic_10)
+			p.state.Sync(TokenGroup__Basic_9)
 			if p.lookahead.TokenGroupCommandOptional(p.state) {
-				p.state.EnterRule(TokenGroup__Basic_9)
+				p.state.EnterRule(TokenGroup__Basic_8)
 				result := p.ParseTokenCommand()
 				p.state.ExitRule()
 				if result != nil {
@@ -842,10 +851,10 @@ func (p *Parser) ParseTokenUsage() TokenUsage {
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
-			p.state.Sync(TokenUsage__Basic_2)
+			p.state.Sync(TokenUsage__Basic_1)
 			if p.lookahead.TokenUsageModifierOptional(p.state) {
 				token := p.state.Consume(TokenGroup_TokenModifier)
-				core.AssignToken(current, token, TokenUsage__Basic_0)
+				core.AssignToken(current, token, TokenUsage_Modifier_TokenModifier)
 				if token != nil {
 					current.SetModifier(token)
 				}
@@ -859,9 +868,9 @@ func (p *Parser) ParseTokenUsage() TokenUsage {
 			}
 		}
 		{
-			p.state.Sync(TokenUsage__Basic_5)
+			p.state.Sync(TokenUsage__Basic_4)
 			if p.lookahead.TokenUsageCommandOptional(p.state) {
-				p.state.EnterRule(TokenUsage__Basic_4)
+				p.state.EnterRule(TokenUsage__Basic_3)
 				result := p.ParseTokenCommand()
 				p.state.ExitRule()
 				if result != nil {
@@ -885,17 +894,17 @@ func (p *Parser) ParseKeywordUsage() KeywordUsage {
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
-			p.state.Sync(KeywordUsage__Basic_2)
+			p.state.Sync(KeywordUsage__Basic_1)
 			if p.lookahead.KeywordUsageModifierOptional(p.state) {
 				token := p.state.Consume(TokenGroup_TokenModifier)
-				core.AssignToken(current, token, KeywordUsage__Basic_0)
+				core.AssignToken(current, token, KeywordUsage_Modifier_TokenModifier)
 				if token != nil {
 					current.SetModifier(token)
 				}
 			}
 		}
 		{
-			p.state.EnterRule(KeywordUsage__Basic_6)
+			p.state.EnterRule(KeywordUsage__Basic_5)
 			result := p.ParseKeyword()
 			p.state.ExitRule()
 			if result != nil {
@@ -903,9 +912,9 @@ func (p *Parser) ParseKeywordUsage() KeywordUsage {
 			}
 		}
 		{
-			p.state.Sync(KeywordUsage__Basic_6)
+			p.state.Sync(KeywordUsage__Basic_5)
 			if p.lookahead.KeywordUsageCommandOptional(p.state) {
-				p.state.EnterRule(KeywordUsage__Basic_5)
+				p.state.EnterRule(KeywordUsage__Basic_4)
 				result := p.ParseTokenCommand()
 				p.state.ExitRule()
 				if result != nil {
@@ -1085,10 +1094,10 @@ func (p *Parser) ParseElement() Element {
 			current.SetTextRangeStart(startPos)
 		}
 		{
-			p.state.Sync(Element__Basic_13)
+			p.state.Sync(Element__Basic_12)
 			if p.lookahead.ElementCardinalityOptional(p.state) {
 				token := p.state.Consume(TokenGroup_Cardinality)
-				core.AssignToken(current, token, Element__Basic_11)
+				core.AssignToken(current, token, Element_Cardinality_Cardinality)
 				if token != nil {
 					current.SetCardinality(token)
 				}
@@ -1567,10 +1576,10 @@ func (p *Parser) ParseCompositeElement() Element {
 			current.SetTextRangeStart(startPos)
 		}
 		{
-			p.state.Sync(CompositeElement__Basic_9)
+			p.state.Sync(CompositeElement__Basic_8)
 			if p.lookahead.CompositeElementCardinalityOptional(p.state) {
 				token := p.state.Consume(TokenGroup_Cardinality)
-				core.AssignToken(current, token, CompositeElement__Basic_7)
+				core.AssignToken(current, token, CompositeElement_Cardinality_Cardinality)
 				if token != nil {
 					current.SetCardinality(token)
 				}
