@@ -11,8 +11,8 @@ const (
 	Model__Start = iota
 	Model__Stop
 	Model_x
-	Model__Basic_0
-	Model__Basic_1
+	Model_Greeting_X
+	Model__Basic
 )
 
 var once sync.Once
@@ -29,18 +29,18 @@ func BuildATN() *parser.RuntimeATN {
 	states[Model__Start] = parser.NewATNState(Model__Start, parser.ATNRuleStart, true)
 	states[Model__Stop] = parser.NewATNState(Model__Stop, parser.ATNRuleStop, false)
 	states[Model_x] = parser.NewATNState(Model_x, parser.ATNBasic, false)
-	states[Model__Basic_0] = parser.NewATNState(Model__Basic_0, parser.ATNBasic, false)
-	states[Model__Basic_1] = parser.NewATNState(Model__Basic_1, parser.ATNBasic, true)
+	states[Model_Greeting_X] = parser.NewATNState(Model_Greeting_X, parser.ATNBasic, false)
+	states[Model__Basic] = parser.NewATNState(Model__Basic, parser.ATNBasic, true)
 	states[Model__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Model_x]),
 	)
 	states[Model_x].AppendTransitions(
-		parser.NewAtomTransition(states[Model__Basic_0], Keyword_x, nil),
+		parser.NewAtomTransition(states[Model_Greeting_X], Keyword_x, nil),
 	)
-	states[Model__Basic_0].AppendTransitions(
-		parser.NewAtomTransition(states[Model__Basic_1], TokenGroup_X, nil),
+	states[Model_Greeting_X].AppendTransitions(
+		parser.NewAtomTransition(states[Model__Basic], TokenGroup_X, nil),
 	)
-	states[Model__Basic_1].AppendTransitions(
+	states[Model__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[Model__Stop]),
 	)
 	decisionStates := make([]*parser.RuntimeATNState, 0)

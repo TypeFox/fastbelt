@@ -4,7 +4,6 @@ package grammar
 
 import (
 	"sync"
-
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -105,6 +104,14 @@ func (p *CompletionParser) ParseGrammar() {
 				p.cp.MarkAssignment("Composites")
 				p.state.EnterRule(Grammar__Basic_13)
 				p.ParseCompositeRule()
+				p.state.ExitRule()
+				p.cp.ClearAssignment()
+			}
+		case 6:
+			{
+				p.cp.MarkAssignment("InfixRules")
+				p.state.EnterRule(Grammar__Basic_15)
+				p.ParseInfixRule()
 				p.state.ExitRule()
 				p.cp.ClearAssignment()
 			}
@@ -332,8 +339,8 @@ func (p *CompletionParser) ParseTokenDecl() {
 	p.cp.EnterRule("TokenDecl", TokenDecl__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.RecordSnapshot(TokenDecl__Basic_2)
-		p.state.Sync(TokenDecl__Basic_2)
+		p.cp.RecordSnapshot(TokenDecl__Basic_1)
+		p.state.Sync(TokenDecl__Basic_1)
 		if p.lookahead.TokenDeclModifierOptional(p.state) {
 			p.cp.MarkAssignment("Modifier")
 			p.state.Consume(TokenGroup_TokenModifier)
@@ -353,17 +360,17 @@ func (p *CompletionParser) ParseTokenDecl() {
 	}
 	{
 		p.cp.MarkAssignment("Content")
-		p.state.EnterRule(TokenDecl__Basic_6)
+		p.state.EnterRule(TokenDecl__Basic_5)
 		p.ParseTokenContent()
 		p.state.ExitRule()
 		p.cp.ClearAssignment()
 	}
 	{
-		p.cp.RecordSnapshot(TokenDecl__Basic_6)
-		p.state.Sync(TokenDecl__Basic_6)
+		p.cp.RecordSnapshot(TokenDecl__Basic_5)
+		p.state.Sync(TokenDecl__Basic_5)
 		if p.lookahead.TokenDeclCommandOptional(p.state) {
 			p.cp.MarkAssignment("Command")
-			p.state.EnterRule(TokenDecl__Basic_5)
+			p.state.EnterRule(TokenDecl__Basic_4)
 			p.ParseTokenCommand()
 			p.state.ExitRule()
 			p.cp.ClearAssignment()
@@ -469,8 +476,8 @@ func (p *CompletionParser) ParseTokenGroup() {
 	p.cp.EnterRule("TokenGroup", TokenGroup__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.RecordSnapshot(TokenGroup__Basic_2)
-		p.state.Sync(TokenGroup__Basic_2)
+		p.cp.RecordSnapshot(TokenGroup__Basic_1)
+		p.state.Sync(TokenGroup__Basic_1)
 		if p.lookahead.TokenGroupModifierOptional(p.state) {
 			p.cp.MarkAssignment("Modifier")
 			p.state.Consume(TokenGroup_TokenModifier)
@@ -505,7 +512,7 @@ loop0:
 		case 1:
 			{
 				p.cp.MarkAssignment("Keywords")
-				p.state.EnterRule(TokenGroup__Basic_5)
+				p.state.EnterRule(TokenGroup__Basic_4)
 				p.ParseKeyword()
 				p.state.ExitRule()
 				p.cp.ClearAssignment()
@@ -529,11 +536,11 @@ loop0:
 		p.state.Consume(Keyword_RightBrace)
 	}
 	{
-		p.cp.RecordSnapshot(TokenGroup__Basic_10)
-		p.state.Sync(TokenGroup__Basic_10)
+		p.cp.RecordSnapshot(TokenGroup__Basic_9)
+		p.state.Sync(TokenGroup__Basic_9)
 		if p.lookahead.TokenGroupCommandOptional(p.state) {
 			p.cp.MarkAssignment("Command")
-			p.state.EnterRule(TokenGroup__Basic_9)
+			p.state.EnterRule(TokenGroup__Basic_8)
 			p.ParseTokenCommand()
 			p.state.ExitRule()
 			p.cp.ClearAssignment()
@@ -659,8 +666,8 @@ func (p *CompletionParser) ParseTokenUsage() {
 	p.cp.EnterRule("TokenUsage", TokenUsage__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.RecordSnapshot(TokenUsage__Basic_2)
-		p.state.Sync(TokenUsage__Basic_2)
+		p.cp.RecordSnapshot(TokenUsage__Basic_1)
+		p.state.Sync(TokenUsage__Basic_1)
 		if p.lookahead.TokenUsageModifierOptional(p.state) {
 			p.cp.MarkAssignment("Modifier")
 			p.state.Consume(TokenGroup_TokenModifier)
@@ -673,11 +680,11 @@ func (p *CompletionParser) ParseTokenUsage() {
 		p.cp.ClearAssignment()
 	}
 	{
-		p.cp.RecordSnapshot(TokenUsage__Basic_5)
-		p.state.Sync(TokenUsage__Basic_5)
+		p.cp.RecordSnapshot(TokenUsage__Basic_4)
+		p.state.Sync(TokenUsage__Basic_4)
 		if p.lookahead.TokenUsageCommandOptional(p.state) {
 			p.cp.MarkAssignment("Command")
-			p.state.EnterRule(TokenUsage__Basic_4)
+			p.state.EnterRule(TokenUsage__Basic_3)
 			p.ParseTokenCommand()
 			p.state.ExitRule()
 			p.cp.ClearAssignment()
@@ -694,8 +701,8 @@ func (p *CompletionParser) ParseKeywordUsage() {
 	p.cp.EnterRule("KeywordUsage", KeywordUsage__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.RecordSnapshot(KeywordUsage__Basic_2)
-		p.state.Sync(KeywordUsage__Basic_2)
+		p.cp.RecordSnapshot(KeywordUsage__Basic_1)
+		p.state.Sync(KeywordUsage__Basic_1)
 		if p.lookahead.KeywordUsageModifierOptional(p.state) {
 			p.cp.MarkAssignment("Modifier")
 			p.state.Consume(TokenGroup_TokenModifier)
@@ -704,17 +711,17 @@ func (p *CompletionParser) ParseKeywordUsage() {
 	}
 	{
 		p.cp.MarkAssignment("Keyword")
-		p.state.EnterRule(KeywordUsage__Basic_6)
+		p.state.EnterRule(KeywordUsage__Basic_5)
 		p.ParseKeyword()
 		p.state.ExitRule()
 		p.cp.ClearAssignment()
 	}
 	{
-		p.cp.RecordSnapshot(KeywordUsage__Basic_6)
-		p.state.Sync(KeywordUsage__Basic_6)
+		p.cp.RecordSnapshot(KeywordUsage__Basic_5)
+		p.state.Sync(KeywordUsage__Basic_5)
 		if p.lookahead.KeywordUsageCommandOptional(p.state) {
 			p.cp.MarkAssignment("Command")
-			p.state.EnterRule(KeywordUsage__Basic_5)
+			p.state.EnterRule(KeywordUsage__Basic_4)
 			p.ParseTokenCommand()
 			p.state.ExitRule()
 			p.cp.ClearAssignment()
@@ -842,8 +849,8 @@ func (p *CompletionParser) ParseElement() {
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 	{
-		p.cp.RecordSnapshot(Element__Basic_13)
-		p.state.Sync(Element__Basic_13)
+		p.cp.RecordSnapshot(Element__Basic_12)
+		p.state.Sync(Element__Basic_12)
 		if p.lookahead.ElementCardinalityOptional(p.state) {
 			p.cp.MarkAssignment("Cardinality")
 			p.state.Consume(TokenGroup_Cardinality)
@@ -1179,8 +1186,8 @@ func (p *CompletionParser) ParseCompositeElement() {
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 	{
-		p.cp.RecordSnapshot(CompositeElement__Basic_9)
-		p.state.Sync(CompositeElement__Basic_9)
+		p.cp.RecordSnapshot(CompositeElement__Basic_8)
+		p.state.Sync(CompositeElement__Basic_8)
 		if p.lookahead.CompositeElementCardinalityOptional(p.state) {
 			p.cp.MarkAssignment("Cardinality")
 			p.state.Consume(TokenGroup_Cardinality)

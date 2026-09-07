@@ -42,7 +42,7 @@ func (p *Parser) ParseModel() Model {
 		}
 		{
 			token := p.state.Consume(TokenGroup_X)
-			core.AssignToken(current, token, Model__Basic_0)
+			core.AssignToken(current, token, Model_Greeting_X)
 			if token != nil {
 				current.SetGreeting(token)
 			}
