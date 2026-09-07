@@ -18,34 +18,37 @@ type SymbolDescription struct {
 	URI URI
 	// Node is the AST node that declares the symbol.
 	Node AstNode
-	// Name is the source unit that provides the symbol's textual name.
-	Name StringUnit
-	// name caches Name.String() so that scope lookups compare plain strings
-	// instead of dispatching through the StringUnit interface per candidate.
-	name string
+	// Unit is the source unit that provides the symbol's position in the text.
+	Unit StringUnit
+	// Name is the canonical name of this symbol. It is allowed to differ
+	// from the [SymbolDescription.Unit]'s text content.
+	Name string
 }
 
-// NameText returns the symbol's textual name.
-//
-// It is equivalent to Name.String() but avoids the interface dispatch for
-// descriptions created via [NewSymbolDescription].
-func (d *SymbolDescription) NameText() string {
-	if d.name == "" && d.Name != nil {
-		return d.Name.String()
-	}
-	return d.name
-}
-
-// NewSymbolDescription returns a [SymbolDescription] for node and name.
+// NewSymbolDescription returns a [SymbolDescription] for node and its name unit.
+// The symbol name value is dervived from the specified name unit.
 //
 // The description URI is derived from node's document.
-func NewSymbolDescription(node AstNode, name StringUnit) *SymbolDescription {
+func NewSymbolDescription(node AstNode, nameUnit StringUnit) *SymbolDescription {
 	doc := node.Document()
 	return &SymbolDescription{
 		URI:  doc.URI,
 		Node: node,
+		Unit: nameUnit,
+		Name: nameUnit.String(),
+	}
+}
+
+// NewNamedSymbolDescription returns a [SymbolDescription] for node and its name unit
+// using a specific canonical name. Useful to specify a name this symbol can be resolved as
+// which can differ from the name unit's text content.
+func NewNamedSymbolDescription(node AstNode, nameUnit StringUnit, name string) *SymbolDescription {
+	doc := node.Document()
+	return &SymbolDescription{
+		URI:  doc.URI,
+		Node: node,
+		Unit: nameUnit,
 		Name: name,
-		name: name.String(),
 	}
 }
 
