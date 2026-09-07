@@ -1484,7 +1484,7 @@ func checkInvalidTokensInGroup(tg TokenGroup, accept core.ValidationAcceptor) {
 		if abstractToken == nil {
 			continue
 		}
-		if token, ok := abstractToken.(Token); ok {
+		if token, ok := abstractToken.(TokenDecl); ok {
 			// Hidden/comment tokens are not allowed in token groups.
 			// They are not meant to be consumed in parser rules,
 			// and do not appear in the token slice.
@@ -1662,7 +1662,7 @@ func checkInfixOperators(rule InfixRule, ctx context.Context, accept core.Valida
 					))
 					continue
 				}
-				if plainToken, ok := token.(Token); ok {
+				if plainToken, ok := token.(TokenDecl); ok {
 					if description, special := hiddenOrCommentTokenDescription(plainToken); special {
 						accept(core.NewDiagnostic(
 							core.SeverityError,
@@ -1711,7 +1711,7 @@ func infixOperatorLeafKeys(operator Assignable, ctx context.Context, visited col
 		switch target := op.Rule().Ref(ctx).(type) {
 		case TokenGroup:
 			return tokenGroupLeafKeys(target, ctx, visited)
-		case Token:
+		case TokenDecl:
 			return []string{"token:" + target.Name()}
 		}
 	}
@@ -1730,7 +1730,7 @@ func tokenGroupLeafKeys(tg TokenGroup, ctx context.Context, visited collections.
 		switch target := ref.Ref(ctx).(type) {
 		case TokenGroup:
 			keys = append(keys, tokenGroupLeafKeys(target, ctx, visited)...)
-		case Token:
+		case TokenDecl:
 			keys = append(keys, "token:"+target.Name())
 		}
 	}

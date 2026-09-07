@@ -110,15 +110,6 @@ func (p *Parser) ParseGrammar() Grammar {
 						current.SetCompositesItem(result)
 					}
 				}
-			case 5:
-				{
-					p.state.EnterRule(Grammar__Basic_13)
-					result := p.ParseInfixRule()
-					p.state.ExitRule()
-					if result != nil {
-						current.SetInfixRulesItem(result)
-					}
-				}
 			default:
 				p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 			}

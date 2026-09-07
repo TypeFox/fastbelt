@@ -35,6 +35,10 @@ func NewDefaultFastbeltCompletionFilter() FastbeltCompletionFilter {
 	return &DefaultFastbeltCompletionFilter{}
 }
 
+func (*DefaultFastbeltCompletionFilter) FilterParserRuleReturnType(_ context.Context, _ *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
 func (*DefaultFastbeltCompletionFilter) FilterInterfaceExtends(_ context.Context, _ *core.Reference[Interface], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	return in
 }

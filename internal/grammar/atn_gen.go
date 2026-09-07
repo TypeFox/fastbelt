@@ -4,6 +4,7 @@ package grammar
 
 import (
 	"sync"
+
 	"typefox.dev/fastbelt/parser"
 )
 
@@ -164,24 +165,7 @@ const (
 	Token_Semicolon
 	Token__Basic_4
 	Token__Basic_5
-	TokenGroup_token
-	TokenGroup_group
-	TokenGroup_Name_ID
-	TokenGroup_LeftBrace
-	TokenGroup_TokenRefs_ID
-	TokenGroup__Basic_0
-	TokenGroup_keywords
 	TokenGroup_Regexps_RegexLiteral
-	TokenGroup__Basic_1
-	TokenGroup__Basic_2
-	TokenGroup__Basic_3
-	TokenGroup__Basic_4
-	TokenGroup__BlockEnd
-	TokenGroup__LoopEntry
-	TokenGroup__LoopEnd
-	TokenGroup__LoopBack
-	TokenGroup_RightBrace
-	TokenGroup__Basic_5
 	Alternatives__Basic_0
 	Alternatives_Pipe
 	Alternatives__Basic_1
@@ -361,6 +345,158 @@ const (
 	InfixOperator__Basic_3
 	InfixOperator__Basic_4
 	InfixOperator__BlockEnd
+
+	TokenDecl__Start
+	TokenDecl__Stop
+	TokenContent__Start
+	TokenContent__Stop
+	RegexpTokenContent__Start
+	RegexpTokenContent__Stop
+	KeywordTokenContent__Start
+	KeywordTokenContent__Stop
+	TokenCommand__Start
+	TokenCommand__Stop
+	TokenMode__Start
+	TokenMode__Stop
+	TokenModeMember__Start
+	TokenModeMember__Stop
+	TokenDeclUsage__Start
+	TokenDeclUsage__Stop
+	TokenGroupUsage__Start
+	TokenGroupUsage__Stop
+	TokenUsage__Start
+	TokenUsage__Stop
+	KeywordUsage__Start
+	KeywordUsage__Stop
+	KeywordSelector__Start
+	KeywordSelector__Stop
+	TokenDecl__Basic_0
+	TokenDecl__Basic_1
+	TokenDecl__Basic_2
+	TokenDecl_token
+	TokenDecl_Name_ID
+	TokenDecl_Colon
+	TokenDecl__Basic_3
+	TokenDecl__Basic_4
+	TokenDecl__Basic_5
+	TokenDecl__Basic_6
+	TokenDecl_Semicolon
+	TokenDecl__Basic_7
+	TokenDecl__Basic_8
+	TokenContent__Basic_0
+	TokenContent__Basic_1
+	TokenContent__Basic_2
+	TokenContent__Basic_3
+	TokenContent__Basic_4
+	TokenContent__BlockEnd
+	RegexpTokenContent_Regexp_RegexLiteral
+	RegexpTokenContent__Basic
+	KeywordTokenContent__Basic_0
+	KeywordTokenContent__Basic_1
+	TokenCommand_DashGreaterThan
+	TokenCommand_Type_push
+	TokenCommand__Basic_0
+	TokenCommand_Type_pop
+	TokenCommand__Basic_1
+	TokenCommand_Type_mode
+	TokenCommand__Basic_2
+	TokenCommand__Basic_3
+	TokenCommand__BlockEnd_0
+	TokenCommand_LeftParen
+	TokenCommand_Mode_ID
+	TokenCommand__Basic_4
+	TokenCommand_Default_default
+	TokenCommand__Basic_5
+	TokenCommand__Basic_6
+	TokenCommand__BlockEnd_1
+	TokenCommand_RightParen
+	TokenCommand__Basic_7
+	TokenCommand__Basic_8
+	TokenGroup__Basic_0
+	TokenGroup__Basic_1
+	TokenGroup__Basic_2
+	TokenGroup_token
+	TokenGroup_group
+	TokenGroup_Name_ID
+	TokenGroup_LeftBrace
+	TokenGroup_TokenRefs_ID
+	TokenGroup__Basic_3
+	TokenGroup__Basic_4
+	TokenGroup__Basic_5
+	TokenGroup_keywords
+	TokenGroup_KeywordSelectors_RegexLiteral
+	TokenGroup__Basic_6
+	TokenGroup__Basic_7
+	TokenGroup__BlockEnd
+	TokenGroup__LoopEntry
+	TokenGroup__LoopEnd
+	TokenGroup__LoopBack
+	TokenGroup_RightBrace
+	TokenGroup__Basic_8
+	TokenGroup__Basic_9
+	TokenGroup__Basic_10
+	TokenGroup_Semicolon
+	TokenGroup__Basic_11
+	TokenGroup__Basic_12
+	TokenMode_token
+	TokenMode_mode
+	TokenMode_Name_ID
+	TokenMode__Basic_0
+	TokenMode_Default_default
+	TokenMode__Basic_1
+	TokenMode__Basic_2
+	TokenMode__BlockEnd
+	TokenMode_LeftBrace
+	TokenMode__Basic_3
+	TokenMode__Basic_4
+	TokenMode__LoopEntry
+	TokenMode__LoopEnd
+	TokenMode__LoopBack
+	TokenMode_RightBrace
+	TokenMode__Basic_5
+	TokenModeMember__Basic_0
+	TokenModeMember__Basic_1
+	TokenModeMember__Basic_2
+	TokenModeMember__Basic_3
+	TokenModeMember__Basic_4
+	TokenModeMember__Basic_5
+	TokenModeMember__Basic_6
+	TokenModeMember__Basic_7
+	TokenModeMember__Basic_8
+	TokenModeMember__Basic_9
+	TokenModeMember__Basic_10
+	TokenModeMember__BlockEnd
+	TokenDeclUsage__Basic_0
+	TokenDeclUsage__Basic_1
+	TokenGroupUsage__Basic_0
+	TokenGroupUsage__Basic_1
+	TokenUsage__Basic_0
+	TokenUsage__Basic_1
+	TokenUsage__Basic_2
+	TokenUsage_TokenRef_ID
+	TokenUsage__Basic_3
+	TokenUsage__Basic_4
+	TokenUsage__Basic_5
+	TokenUsage_Semicolon
+	TokenUsage__Basic_6
+	TokenUsage__Basic_7
+	KeywordUsage__Basic_0
+	KeywordUsage__Basic_1
+	KeywordUsage__Basic_2
+	KeywordUsage__Basic_3
+	KeywordUsage__Basic_4
+	KeywordUsage__Basic_5
+	KeywordUsage__Basic_6
+	KeywordUsage_Semicolon
+	KeywordUsage__Basic_7
+	KeywordUsage__Basic_8
+	KeywordSelector_keywords
+	KeywordSelector_Selector_RegexLiteral
+	KeywordSelector_Semicolon
+	KeywordSelector__Basic_0
+	KeywordSelector__Basic_1
+	Element__BlockEnd
+	CompositeElement__BlockEnd
 )
 
 var once sync.Once
