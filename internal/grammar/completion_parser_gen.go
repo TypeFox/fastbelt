@@ -4,6 +4,7 @@ package grammar
 
 import (
 	"sync"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -104,14 +105,6 @@ func (p *CompletionParser) ParseGrammar() {
 				p.cp.MarkAssignment("Composites")
 				p.state.EnterRule(Grammar__Basic_13)
 				p.ParseCompositeRule()
-				p.state.ExitRule()
-				p.cp.ClearAssignment()
-			}
-		case 5:
-			{
-				p.cp.MarkAssignment("InfixRules")
-				p.state.EnterRule(Grammar__Basic_13)
-				p.ParseInfixRule()
 				p.state.ExitRule()
 				p.cp.ClearAssignment()
 			}

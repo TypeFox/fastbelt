@@ -38,6 +38,10 @@ func NewDefaultFastbeltScopeProvider(sc *service.Container) FastbeltScopeProvide
 	return &DefaultFastbeltScopeProvider{sc: sc}
 }
 
+func (s *DefaultFastbeltScopeProvider) ScopeParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
+	return linking.DefaultScopeOfType[Interface](reference.Owner())
+}
+
 func (s *DefaultFastbeltScopeProvider) ScopeInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) core.Scope {
 	return linking.DefaultScopeOfType[Interface](reference.Owner())
 }
@@ -114,6 +118,11 @@ func NewDefaultFastbeltReferenceLinker(sc *service.Container) FastbeltReferenceL
 			return service.MustGet[FastbeltScopeProvider](sc)
 		}),
 	}
+}
+
+func (s *DefaultFastbeltReferenceLinker) LinkParserRuleReturnType(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeInterfaceExtends(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
 }
 
 func (s *DefaultFastbeltReferenceLinker) LinkInterfaceExtends(ctx context.Context, reference *core.Reference[Interface]) (*core.SymbolDescription, *core.ReferenceError) {
@@ -204,6 +213,11 @@ func NewDefaultFastbeltReferencesConstructor(sc *service.Container) FastbeltRefe
 			return service.MustGet[FastbeltReferenceLinker](sc)
 		}),
 	}
+}
+
+func (s *DefaultFastbeltReferencesConstructor) ParserRuleReturnType(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {
+	fn := s.referenceLinker().LinkInterfaceExtends
+	return core.NewReference(owner, unit, fn)
 }
 
 func (s *DefaultFastbeltReferencesConstructor) InterfaceExtends(owner core.AstNode, unit core.StringUnit) *core.Reference[Interface] {

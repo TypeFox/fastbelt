@@ -1030,6 +1030,7 @@ func (i *AbstractTokenRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, e
 
 type ParserRule interface {
 	core.AstNode
+	AbstractRuleWithReturnType
 
 	IsParserRule()
 	IsEntry() bool
@@ -1067,6 +1068,7 @@ func (i *ParserRuleData) SetEntry(value *core.Token) {
 
 type ParserRuleImpl struct {
 	core.AstNodeBase
+	AbstractRuleWithReturnTypeData
 	AbstractRuleWithBodyData
 	AbstractRuleData
 	ParserRuleData

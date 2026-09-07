@@ -38,7 +38,7 @@ type parserATNData struct {
 // Returns nil when the ATN cannot be built (invalid grammar).
 func BuildParserATNData(grammr grammar.Grammar, tokenTypes GenerateTokenTypesResult) *parserATNData {
 	mustExpandInfixRules(grammr)
-	builtATN, _ := internalATN.CreateATN(grammr, tokenTypes.TokenTypeIds)
+	builtATN, _ := internalATN.CreateATN(grammr, tokenTypes.TokenTypeIds())
 	if builtATN == nil {
 		return nil
 	}
@@ -572,7 +572,7 @@ func GenerateParser(grammr grammar.Grammar, entryRule grammar.ParserRule, packag
 	for _, composite := range grammr.Composites() {
 		generateCompositeParseFunction(node, context, composite)
 	}
-	groupMembers := buildGroupVarNameToMembers(grammr)
+	groupMembers := buildGroupVarNameToMembers(grammr, tokenTypes.Keywords)
 	for _, infix := range grammr.InfixRules() {
 		generateInfixParseFunction(node, context, infix, groupMembers)
 	}
