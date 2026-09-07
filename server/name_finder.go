@@ -75,7 +75,7 @@ func (nf *DefaultNameFinder) forToken(ctx context.Context, token *core.Token) Fo
 			// Reference could not be resolved, but return the source unit
 			return FoundName{Source: unit}
 		}
-		return FoundName{Source: unit, Target: refDescription.Name}
+		return FoundName{Source: unit, Target: refDescription.Unit}
 	} else {
 		// Not a reference, try to find the name range that contains the given token
 		node := token.Owner()

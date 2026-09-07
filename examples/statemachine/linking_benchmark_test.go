@@ -183,6 +183,6 @@ func BenchmarkSymbolDescriptionName(b *testing.B) {
 	}
 	b.ResetTimer()
 	for b.Loop() {
-		_ = desc.Name.String()
+		_ = desc.Unit.String()
 	}
 }
