@@ -1478,29 +1478,6 @@ func hiddenOrCommentTokenDescription(tokenDecl AbstractTokenRule) (description s
 	}
 }
 
-func checkInvalidTokensInGroup(tg TokenGroup, accept core.ValidationAcceptor) {
-	for _, ext := range tg.TokenRefs() {
-		abstractToken := ext.Ref(context.Background())
-		if abstractToken == nil {
-			continue
-		}
-		if token, ok := abstractToken.(TokenDecl); ok {
-			// Hidden/comment tokens are not allowed in token groups.
-			// They are not meant to be consumed in parser rules,
-			// and do not appear in the token slice.
-			if description, special := hiddenOrCommentTokenDescription(token); special {
-				accept(core.NewDiagnostic(
-					core.SeverityError,
-					fmt.Sprintf("The token '%s' cannot be used in a token group because it is %s.", token.Name(), description),
-					tg,
-					core.WithReference(ext),
-					core.WithCode(ValidateInvalidTokenInGroup),
-				))
-			}
-		}
-	}
-}
-
 // InfixRuleImpl.Validate checks infix rule constraints:
 //   - The rule name must resolve to an interface (the binary node type)
 //     declaring Left/Right fields of a compatible interface type and an
@@ -1917,7 +1894,7 @@ func checkIfKeywordPureStandaloneOrTokenDecl(g Grammar, ctx context.Context, acc
 		if !foundInDecl || !foundStandalone {
 			continue
 		}
-		for kw, _ := range kws {
+		for kw := range kws {
 			accept(core.NewDiagnostic(
 				core.SeverityError,
 				fmt.Sprintf("The keyword '%s' is used both as a standalone keyword and as a token declaration. A unique keyword value must be either pure standalone or pure token declarations.", kw.Value()),
