@@ -6,7 +6,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/exp/jsonrpc2 v0.0.0-20260312153236-7ab1446f8b90
-	typefox.dev/lsp v0.0.4
+	typefox.dev/lsp v0.1.0
 )
 
 require (
