@@ -62,12 +62,16 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			completionOptions.TriggerCharacters = triggers.TriggerCharacters()
 		}
 	}
-	var semanticTokensOptions *lsp.SemanticTokensOptions
+	var semanticTokensRegistrationOptions *lsp.SemanticTokensRegistrationOptions
 	if tokenProvider, err := service.Get[SemanticTokensProvider](s.sc); err == nil && tokenProvider != nil {
-		semanticTokensOptions = &lsp.SemanticTokensOptions{
-			Legend: tokenProvider.Legend(),
-			Full: &lsp.Or_SemanticTokensOptions_full{
-				Value: true,
+		semanticTokensRegistrationOptions = &lsp.SemanticTokensRegistrationOptions{
+			SemanticTokensOptions: lsp.SemanticTokensOptions{
+				Legend: tokenProvider.Legend(),
+				Full: &lsp.SemanticTokensOptionsFull{
+					SemanticTokensFullDelta: &lsp.SemanticTokensFullDelta{
+						Delta: false,
+					},
+				},
 			},
 		}
 	}
@@ -95,7 +99,7 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			HoverProvider:             optionsIf[HoverProvider, lsp.HoverOptions](s.sc),
 			ReferencesProvider:        optionsIf[ReferencesProvider, lsp.ReferenceOptions](s.sc),
 			RenameProvider:            renameProvider,
-            SemanticTokensProvider:    semanticTokensOptions,
+			SemanticTokensProvider:    semanticTokensRegistrationOptions,
 		},
 	}, nil
 }
