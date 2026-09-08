@@ -62,12 +62,16 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			completionOptions.TriggerCharacters = triggers.TriggerCharacters()
 		}
 	}
-	var semanticTokensOptions *lsp.SemanticTokensOptions
+	var semanticTokensRegistrationOptions *lsp.SemanticTokensRegistrationOptions
 	if tokenProvider, err := service.Get[SemanticTokensProvider](s.sc); err == nil && tokenProvider != nil {
-		semanticTokensOptions = &lsp.SemanticTokensOptions{
-			Legend: tokenProvider.Legend(),
-			Full: &lsp.Or_SemanticTokensOptions_full{
-				Value: true,
+		semanticTokensRegistrationOptions = &lsp.SemanticTokensRegistrationOptions{
+			SemanticTokensOptions: lsp.SemanticTokensOptions{
+				Legend: tokenProvider.Legend(),
+				Full: &lsp.SemanticTokensOptionsFull{
+					SemanticTokensFullDelta: &lsp.SemanticTokensFullDelta{
+						Delta: false,
+					},
+				},
 			},
 		}
 	}
@@ -95,7 +99,7 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			HoverProvider:             optionsIf[HoverProvider, lsp.HoverOptions](s.sc),
 			ReferencesProvider:        optionsIf[ReferencesProvider, lsp.ReferenceOptions](s.sc),
 			RenameProvider:            renameProvider,
-            SemanticTokensProvider:    semanticTokensOptions,
+			SemanticTokensProvider:    semanticTokensRegistrationOptions,
 			DeclarationProvider:       optionsIf[DeclarationProvider, lsp.DeclarationRegistrationOptions](s.sc),
 			ImplementationProvider:    optionsIf[ImplementationProvider, lsp.ImplementationRegistrationOptions](s.sc),
 			TypeDefinitionProvider:    optionsIf[TypeDefinitionProvider, lsp.TypeDefinitionRegistrationOptions](s.sc),

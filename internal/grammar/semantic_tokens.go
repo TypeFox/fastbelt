@@ -23,6 +23,8 @@ func (s *GrammarTokenHighlightingStrategy) Highlight(ctx context.Context, token 
 	switch token.Kind {
 	case Grammar_Name_ID:
 		accept(legendProvider.Namespace(), 0)
+	case Keyword_Value_StringLiteral:
+		accept(legendProvider.String(), 0)
 	case Interface_Name_ID,
 		Interface_Extends_ID_0,
 		Interface_Extends_ID_1:
@@ -31,6 +33,7 @@ func (s *GrammarTokenHighlightingStrategy) Highlight(ctx context.Context, token 
 		Token_Name_ID,
 		CompositeRule_Name_ID,
 		RuleCall_Rule_ID,
+		InfixRule_Name_ID,
 		TokenGroup_Name_ID,
 		TokenGroup_TokenRefs_ID:
 		accept(legendProvider.Function(), 0)
