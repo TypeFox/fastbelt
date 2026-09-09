@@ -479,8 +479,8 @@ func (e *SemanticTokenExpectation) Assert(label string, expectedType uint32, exp
 		d.fixture.t.Fatalf("fbtest: no marker with label %q", label)
 	}
 	for _, rng := range ranges {
-		startPosition := d.Document.TextDoc.PositionAt(int(rng.Start))
-		endPosition := d.Document.TextDoc.PositionAt(int(rng.End))
+		lspRange := rng.LspRange(d.Document.TextDoc)
+		startPosition, endPosition := lspRange.Start, lspRange.End
 		if startPosition.Line != endPosition.Line {
 			d.fixture.t.Fatalf("fbtest: AssertSemanticToken: marker %q spans multiple lines, which is not supported", label)
 		}

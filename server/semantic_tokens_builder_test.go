@@ -6,6 +6,7 @@ package server
 
 import (
 	"slices"
+	"strings"
 	"testing"
 
 	core "typefox.dev/fastbelt"
@@ -77,6 +78,43 @@ func TestLspTokenDataPush(t *testing.T) {
 			ranges:   []core.TextRange{core.NewTextRange(0, 10)},
 			expected: []uint32{0, 0, 2, 1, 2},
 		},
+		{
+			name:   "CRLF line breaks are not counted as columns",
+			text:   "/* x\r\n y */\r\nab",
+			ranges: []core.TextRange{core.NewTextRange(0, 11), core.NewTextRange(13, 15)},
+			expected: []uint32{
+				0, 0, 4, 1, 2,
+				1, 0, 5, 1, 2,
+				1, 0, 2, 1, 2,
+			},
+		},
+		{
+			name:   "Lone CR is a line break",
+			text:   "ab\rcd",
+			ranges: []core.TextRange{core.NewTextRange(0, 2), core.NewTextRange(3, 5)},
+			expected: []uint32{
+				0, 0, 2, 1, 2,
+				1, 0, 2, 1, 2,
+			},
+		},
+		{
+			name:   "Empty lines inside a token emit no segments",
+			text:   "/*\n\n*/\nx",
+			ranges: []core.TextRange{core.NewTextRange(0, 7), core.NewTextRange(7, 8)},
+			expected: []uint32{
+				0, 0, 2, 1, 2,
+				2, 0, 2, 1, 2,
+				1, 0, 1, 1, 2,
+			},
+		},
+		{
+			name:   "Out-of-order push degrades to current position",
+			text:   "a\n\nfoo",
+			ranges: []core.TextRange{core.NewTextRange(3, 6), core.NewTextRange(3, 6)},
+			expected: []uint32{
+				2, 0, 3, 1, 2,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -95,14 +133,13 @@ func TestLspTokenDataPush(t *testing.T) {
 func BenchmarkLspTokenDataPush(b *testing.B) {
 	// Build a document of 1000 lines with 4 tokens each
 	line := "foo bar baz qux\n"
-	text := ""
+	text := strings.Repeat(line, 1000)
 	ranges := []core.TextRange{}
-	for range 1000 {
-		offset := len(text)
+	for i := range 1000 {
+		offset := i * len(line)
 		for start := 0; start < 15; start += 4 {
 			ranges = append(ranges, core.NewTextRange(offset+start, offset+start+3))
 		}
-		text += line
 	}
 
 	for b.Loop() {

@@ -51,97 +51,74 @@ type semanticTokensBuilder struct {
 	// - length, the length of the token,
 	// - tokenType, the token type index,
 	// - tokenModifiers, the token modifiers bitset.
-	data        []uint32
-	text        string
-	cursor      int
-	prevLine    int
-	prevChar    int
-	currentLine int
-	currentChar int
-	// lineBreaks is reused across push calls to avoid per-token allocations
-	lineBreaks []int
+	data []uint32
+	text string
+	// cursor is the byte offset in text, line/char the corresponding LSP (line, UTF-16 column) position
+	cursor, line, char int
+	// prevLine/prevChar is the start position of the last emitted segment
+	prevLine, prevChar int
 }
 
-func (tokenData *semanticTokensBuilder) Data() []uint32 {
-	return tokenData.data
+func (b *semanticTokensBuilder) Data() []uint32 {
+	return b.data
 }
 
-func (tokenData *semanticTokensBuilder) Push(textRange core.TextRange, typeIndex, modifierIndex uint32) {
-	textLen := len(tokenData.text)
-	tokenStart := int(textRange.Start)
-	tokenEnd := int(textRange.End)
-	cursor := tokenData.cursor
-	currentLine := tokenData.currentLine
-	currentChar := tokenData.currentChar
-	startLine, startChar := 0, 0
-	// Count line breaks within the token range as necessary
-	// We need to emit multiple tokens if the token spans multiple lines
-	lineBreaks := tokenData.lineBreaks[:0]
-	// Advance the cursor up to the end of the token
-	for tokenEnd > cursor {
-		if cursor >= textLen {
-			break
-		} else if cursor == tokenStart {
-			startLine = currentLine
-			startChar = currentChar
-		}
-		if c := tokenData.text[cursor]; c < utf8.RuneSelf {
-			// ASCII fast path: one byte, one UTF-16 code unit
-			if c == '\n' {
-				// Record the line break character position
-				if cursor >= tokenStart {
-					lineBreaks = append(lineBreaks, currentChar)
-				}
-				// New line, reset currentChar and increment currentLine
-				currentLine++
-				currentChar = 0
-			} else {
-				currentChar++
-			}
-			cursor++
-			continue
-		}
-		rune, size := utf8.DecodeRuneInString(tokenData.text[cursor:])
-		// Advance column by the number of UTF-16 code units for the rune
-		// (newlines are ASCII, so this rune can never be one)
-		currentChar += utf16.RuneLen(rune)
-		// Advance cursor by the byte size of the rune
-		cursor += size
+func (b *semanticTokensBuilder) Push(textRange core.TextRange, typeIndex, modifierIndex uint32) {
+	// Out-of-order or out-of-range pushes violate the contract; clamp them instead of wrapping deltas
+	tokenStart := min(max(int(textRange.Start), b.cursor), len(b.text))
+	tokenEnd := min(max(int(textRange.End), tokenStart), len(b.text))
+	for b.cursor < tokenStart {
+		b.step()
 	}
-	tokenData.lineBreaks = lineBreaks
-	lineDelta := uint32(startLine - tokenData.prevLine)
-	charDelta := uint32(startChar)
-	if lineDelta == 0 {
-		// If the token is on the same line as the previous token, calculate the character delta
-		charDelta -= uint32(tokenData.prevChar)
-	}
-	if len(lineBreaks) == 0 {
-		// Token is on a single line, emit it directly
-		length := uint32(currentChar - startChar)
-		tokenData.data = append(tokenData.data, lineDelta, charDelta, length, typeIndex, modifierIndex)
-		// Update the previous character position for the next token
-		tokenData.prevChar = startChar
-	} else {
-		// Token spans multiple lines, emit a token for each line segment
-		// First segment: from startChar to the first line break
-		length := uint32(lineBreaks[0] - startChar)
-		tokenData.data = append(tokenData.data, lineDelta, charDelta, length, typeIndex, modifierIndex)
-		// Subsequent segments: from each line break to the next line break
-		for i := 1; i < len(lineBreaks); i++ {
-			// always use the full length of the line
-			length = uint32(lineBreaks[i])
-			// Note: lineDelta is always 1, since each segment is on a new line
-			// charDelta is always 0, since we are starting at the beginning of the line
-			tokenData.data = append(tokenData.data, 1, 0, length, typeIndex, modifierIndex)
+	segLine, segStart := b.line, b.char
+	for b.cursor < tokenEnd {
+		lineEnd := b.char
+		if b.step() {
+			// Token spans multiple lines, emit one segment per line
+			b.emit(segLine, segStart, lineEnd, typeIndex, modifierIndex)
+			segLine, segStart = b.line, 0
 		}
-		// Last segment: from the start of the last line to the end of the token
-		length = uint32(currentChar)
-		tokenData.data = append(tokenData.data, 1, 0, length, typeIndex, modifierIndex)
-		tokenData.prevChar = 0
 	}
-	// Update the data for the next token
-	tokenData.cursor = cursor
-	tokenData.prevLine = currentLine
-	tokenData.currentLine = currentLine
-	tokenData.currentChar = currentChar
+	b.emit(segLine, segStart, b.char, typeIndex, modifierIndex)
+}
+
+// emit appends a single-line segment [start, end) on the given line, skipping empty segments.
+func (b *semanticTokensBuilder) emit(line, start, end int, typeIndex, modifierIndex uint32) {
+	if end <= start {
+		return
+	}
+	charDelta := start
+	if line == b.prevLine {
+		charDelta -= b.prevChar
+	}
+	b.data = append(b.data, uint32(line-b.prevLine), uint32(charDelta), uint32(end-start), typeIndex, modifierIndex)
+	b.prevLine, b.prevChar = line, start
+}
+
+// step advances the cursor by one character and reports whether it crossed a line break.
+// Line breaks follow the same rules as [textdoc]: "\r\n", "\r" and "\n".
+func (b *semanticTokensBuilder) step() bool {
+	c := b.text[b.cursor]
+	switch {
+	case c == '\r':
+		b.cursor++
+		if b.cursor < len(b.text) && b.text[b.cursor] == '\n' {
+			b.cursor++
+		}
+	case c == '\n':
+		b.cursor++
+	case c < utf8.RuneSelf:
+		// ASCII fast path: one byte, one UTF-16 code unit
+		b.cursor++
+		b.char++
+		return false
+	default:
+		r, size := utf8.DecodeRuneInString(b.text[b.cursor:])
+		b.cursor += size
+		b.char += utf16.RuneLen(r)
+		return false
+	}
+	b.line++
+	b.char = 0
+	return true
 }

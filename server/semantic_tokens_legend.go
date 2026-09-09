@@ -29,8 +29,8 @@ type SemanticTokensLegendProvider interface {
 //	var extraType = legendProvider.AddType("extraTokenType")
 //	// Returns the bit value of the new token modifier within the legend
 //	var extraModifier = legendProvider.AddModifier("extraTokenModifier")
-//	// Register within the service container
-//	service.Put[server.SemanticTokensLegendProvider](sc, legendProvider)
+//	// Pass it to the semantic tokens provider, which sends the legend to the client
+//	service.Put(sc, server.NewTokenBasedSemanticTokensProvider(sc, legendProvider, strategy))
 type ExtendableSemanticTokensLegendProvider interface {
 	SemanticTokensLegendProvider
 
