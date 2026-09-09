@@ -6,10 +6,8 @@ package server
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"slices"
-	"strconv"
-	"strings"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/service"
@@ -84,23 +82,31 @@ func (p *TokenBasedSemanticTokensProvider) HandleSemanticTokensFullRequest(ctx c
 	if totalLen == 0 {
 		return nil, nil // Document is empty, no tokens found
 	}
-	commentTypeIndex := p.commentTypeIndex
 	tokenBuilder := NewSemanticTokensBuilder(doc.TextDoc.Text(nil), totalLen)
-	highlightComment := func(commentToken core.Token) {}
-	if commentStrategy, ok := p.strategy.(CommentTokenHighlightingStrategy); ok {
-		// Adopter has supplied a comment highlighting strategy, use that one
-		highlightComment = func(commentToken core.Token) {
-			commentStrategy.HighlightComment(ctx, commentToken, func(tokenType uint32, tokenModifier uint32) {
-				tokenBuilder.Push(commentToken.Range, tokenType, tokenModifier)
-			})
+	// A single acceptor is shared by all tokens and comments to avoid a closure allocation per token.
+	// It accepts only the first call per token; further calls are collected as errors.
+	var current core.Token
+	var errorRanges []core.TextRange
+	added := false
+	accept := func(tokenType uint32, tokenModifier uint32) {
+		if added {
+			errorRanges = append(errorRanges, current.Range)
+			return
 		}
-	} else if commentTypeIndex >= 0 {
-		// Highlight comments using the comment token type from the legend with no modifiers
-		highlightComment = func(commentToken core.Token) {
-			tokenBuilder.Push(commentToken.Range, uint32(commentTypeIndex), 0)
+		tokenBuilder.Push(current.Range, tokenType, tokenModifier)
+		added = true
+	}
+	commentStrategy, _ := p.strategy.(CommentTokenHighlightingStrategy)
+	highlightComment := func(commentToken core.Token) {
+		if commentStrategy != nil {
+			// Adopter has supplied a comment highlighting strategy, use that one
+			current, added = commentToken, false
+			commentStrategy.HighlightComment(ctx, commentToken, accept)
+		} else if p.commentTypeIndex >= 0 {
+			// Highlight comments using the comment token type from the legend with no modifiers
+			tokenBuilder.Push(commentToken.Range, uint32(p.commentTypeIndex), 0)
 		}
 	}
-	var errorRanges []core.TextRange
 	commentIndex := 0
 	for _, token := range tokens {
 		for commentIndex < len(comments) &&
@@ -109,34 +115,17 @@ func (p *TokenBasedSemanticTokensProvider) HandleSemanticTokensFullRequest(ctx c
 			highlightComment(comments[commentIndex])
 			commentIndex++
 		}
-		added := false
-		p.strategy.Highlight(ctx, token, func(tokenType uint32, tokenModifier uint32) {
-			if !added {
-				tokenBuilder.Push(token.Range, tokenType, tokenModifier)
-				added = true
-			} else {
-				errorRanges = append(errorRanges, token.Range)
-			}
-		})
-	}
-	// Report any tokens that were highlighted multiple times for the same range
-	if len(errorRanges) > 0 {
-		sb := strings.Builder{}
-		sb.WriteString("Multiple semantic tokens returned for the same token ranges: ")
-		for i, rng := range errorRanges {
-			if i > 0 {
-				sb.WriteString(", ")
-			}
-			sb.WriteString(strconv.Itoa(int(rng.Start)))
-			sb.WriteString("-")
-			sb.WriteString(strconv.Itoa(int(rng.End)))
-		}
-		return nil, errors.New(sb.String())
+		current, added = token, false
+		p.strategy.Highlight(ctx, token, accept)
 	}
 	for commentIndex < len(comments) {
 		// Add remaining comments after the last token
 		highlightComment(comments[commentIndex])
 		commentIndex++
+	}
+	// Report any tokens that were highlighted multiple times for the same range
+	if len(errorRanges) > 0 {
+		return nil, fmt.Errorf("multiple semantic tokens returned for the same token ranges: %v", errorRanges)
 	}
 	return &lsp.SemanticTokens{
 		Data: tokenBuilder.Data(),

@@ -48,11 +48,14 @@ func (s *GrammarTokenHighlightingStrategy) Highlight(ctx context.Context, token 
 		ReferenceType_Type_ID,
 		CrossRef_Type_ID,
 		ParserRule_ReturnType_ID,
+		InfixRule_ReturnType_ID,
 		Action_Type_ID,
 		Action_current:
 		accept(legendProvider.Type(), 0)
 	case Token_Type_comment,
-		Token_Type_hidden:
+		Token_Type_hidden,
+		PrecedenceGroup_Associativity_left,
+		PrecedenceGroup_Associativity_right:
 		accept(legendProvider.Modifier(), 0)
 	}
 }

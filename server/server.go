@@ -53,25 +53,19 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 		return nil, err
 	}
 	workspaceFolders.Value = params.WorkspaceFolders
-	var completionOptions *lsp.CompletionOptions
-	if completionProvider, err := service.Get[CompletionProvider](s.sc); err == nil && completionProvider != nil {
-		completionOptions = &lsp.CompletionOptions{
-			ResolveProvider: false,
-		}
+	completionOptions := optionsIf[CompletionProvider, lsp.CompletionOptions](s.sc)
+	if completionOptions != nil {
 		if triggers, err := service.Get[CompletionTriggers](s.sc); err == nil && triggers != nil {
 			completionOptions.TriggerCharacters = triggers.TriggerCharacters()
 		}
 	}
 	var semanticTokensRegistrationOptions *lsp.SemanticTokensRegistrationOptions
 	if tokenProvider, err := service.Get[SemanticTokensProvider](s.sc); err == nil && tokenProvider != nil {
+		full := lsp.SemanticTokensOptionsFullFromBool(true)
 		semanticTokensRegistrationOptions = &lsp.SemanticTokensRegistrationOptions{
 			SemanticTokensOptions: lsp.SemanticTokensOptions{
 				Legend: tokenProvider.Legend(),
-				Full: &lsp.SemanticTokensOptionsFull{
-					SemanticTokensFullDelta: &lsp.SemanticTokensFullDelta{
-						Delta: false,
-					},
-				},
+				Full:   &full,
 			},
 		}
 	}

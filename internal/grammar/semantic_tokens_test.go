@@ -29,6 +29,9 @@ interface <|interface:BinaryExpression|> extends <|interface:Expression|> {
 		<|property:Operator|>=("+" | "-") <|property:Right|>=<|function:Primary|>)*
 <|function:Primary|> returns <|type:Expression|>:
 	<|property:Operator|>=<|function:ID|>
+infix <|function:Binary|> on <|function:Primary|> returns <|type:Expression|>:
+	<|modifier:left|> "*" | "/"
+	> <|modifier:right|> "+" | "-";
 
 token <|function:ID|>: /[a-zA-Z_][a-zA-Z0-9_]*/;
 <|modifier:hidden|> token <|function:WS|>: /[ \n\r\t]+/;
