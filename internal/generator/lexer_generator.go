@@ -197,8 +197,7 @@ func generateRegexpTokenElement(token grammar.TokenDecl, regexpTokenElement gram
 	var result fbRegexp.GenerateRegExpResult
 	imports := map[string]bool{}
 	code := codegen.NewNode()
-	regexPattern := regexpTokenElement.Regexp()
-	regexPattern = grammar.RegexpValue(regexPattern)
+	regexPattern := grammar.RegexpValue(regexpTokenElement.Regexp())
 	regex, err := fbRegexp.Compile(regexPattern)
 	if err != nil {
 		panic(err)

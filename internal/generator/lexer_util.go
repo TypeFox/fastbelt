@@ -91,7 +91,7 @@ const (
 // tokenIndexLookup is a helper type to manage the mapping between token
 // indices and their sources (keyword, token, token group, keyword).
 type tokenIndexLookup struct {
-	// Keyword value to token index mapping.
+	// Keyword value to token index mapping. Always use keyword.Value() as index here
 	ByKeyword map[string]int
 	// Token declaration to token index mapping.
 	ByToken map[grammar.TokenDecl]int
@@ -504,7 +504,7 @@ func GetAllKeywords(grammr grammar.Grammar) GetAllKeywordsResult {
 			allNodes = append(allNodes, keyword)
 		}
 	}
-	return keysFromMap(keywords, allNodes)
+	return keysFromMap(keywords)
 }
 
 type GetAllTokenDeclsResult struct {
@@ -569,7 +569,7 @@ func GetAllTokenGroups(grammr grammar.Grammar) GetAllTokenGroupsResult {
 	}
 }
 
-func keysFromMap(m map[string]grammar.Keyword, allNodes []grammar.Keyword) GetAllKeywordsResult {
+func keysFromMap(m map[string]grammar.Keyword) GetAllKeywordsResult {
 	keywords := []grammar.Keyword{}
 	for _, v := range m {
 		keywords = append(keywords, v)
@@ -626,7 +626,8 @@ func getAllTokenGroupMemberTokenIndices(sortedTokenGroups []grammar.TokenGroup, 
 			pattern := regexp.MustCompile(grammar.RegexpValue(selector.Image))
 			for _, keyword := range keywords.Keywords {
 				if idx, ok := lookup.ByKeyword[keyword.Value()]; ok {
-					if pattern.MatchString(keyword.Value()) {
+					content := grammar.KeywordValue(keyword)
+					if pattern.MatchString(content) {
 						tokenGroupMembers[tokenGroup] = append(tokenGroupMembers[tokenGroup], idx)
 					}
 				}
