@@ -157,7 +157,7 @@ func checkTokenModesAreReachable(g Grammar, ctx context.Context, accept core.Val
 	}
 }
 
-func checkIfNonDefaultTokenModesHasNoExit(g Grammar, ctx context.Context, accept core.ValidationAcceptor) {
+func checkIfNonDefaultTokenModesHasNoExit(g Grammar, _ context.Context, accept core.ValidationAcceptor) {
 	if len(g.TokenModes()) == 0 {
 		return
 	}
@@ -758,7 +758,7 @@ func checkEmptyTerminalRule(t TokenDecl, accept core.ValidationAcceptor) {
 		canBeEmpty = raw == ""
 	case RegexpTokenContent:
 		pattern := RegexpValue(content.Regexp())
-		re, err := regexp.Compile(pattern)
+		re, err := regexp.Compile(RegexpValue(pattern))
 		if err != nil {
 			return
 		}
@@ -1867,7 +1867,7 @@ func checkRegExpIsValid(patternToken *core.Token, accept core.ValidationAcceptor
 	}
 }
 
-func checkIfKeywordPureStandaloneOrTokenDecl(g Grammar, ctx context.Context, accept core.ValidationAcceptor) {
+func checkIfKeywordPureStandaloneOrTokenDecl(g Grammar, _ context.Context, accept core.ValidationAcceptor) {
 	//value => Keyword => isTokenDeclaration
 	keywords := map[string]map[Keyword]bool{}
 	for node := range core.AllChildren(g) {
