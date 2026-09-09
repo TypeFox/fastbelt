@@ -53,9 +53,21 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 		return nil, err
 	}
 	workspaceFolders.Value = params.WorkspaceFolders
-	var triggerChars []string
-	if triggers, err := service.Get[CompletionTriggers](s.sc); err == nil && triggers != nil {
-		triggerChars = triggers.TriggerCharacters()
+	completionOptions := optionsIf[CompletionProvider, lsp.CompletionOptions](s.sc)
+	if completionOptions != nil {
+		if triggers, err := service.Get[CompletionTriggers](s.sc); err == nil && triggers != nil {
+			completionOptions.TriggerCharacters = triggers.TriggerCharacters()
+		}
+	}
+	var semanticTokensRegistrationOptions *lsp.SemanticTokensRegistrationOptions
+	if tokenProvider, err := service.Get[SemanticTokensProvider](s.sc); err == nil && tokenProvider != nil {
+		full := lsp.SemanticTokensOptionsFullFromBool(true)
+		semanticTokensRegistrationOptions = &lsp.SemanticTokensRegistrationOptions{
+			SemanticTokensOptions: lsp.SemanticTokensOptions{
+				Legend: tokenProvider.Legend(),
+				Full:   &full,
+			},
+		}
 	}
 	var renameProvider *lsp.RenameOptions
 	if service.Has[RenameProvider](s.sc) {
@@ -72,10 +84,7 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 				Save:              &lsp.SaveOptions{IncludeText: true},
 				Change:            lsp.Incremental,
 			},
-			CompletionProvider: &lsp.CompletionOptions{
-				ResolveProvider:   false,
-				TriggerCharacters: triggerChars,
-			},
+			CompletionProvider:        completionOptions,
 			DefinitionProvider:        optionsIf[DefinitionProvider, lsp.DefinitionOptions](s.sc),
 			DocumentSymbolProvider:    optionsIf[DocumentSymbolProvider, lsp.DocumentSymbolOptions](s.sc),
 			FoldingRangeProvider:      optionsIf[FoldingRangeProvider, lsp.FoldingRangeRegistrationOptions](s.sc),
@@ -84,6 +93,7 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			HoverProvider:             optionsIf[HoverProvider, lsp.HoverOptions](s.sc),
 			ReferencesProvider:        optionsIf[ReferencesProvider, lsp.ReferenceOptions](s.sc),
 			RenameProvider:            renameProvider,
+			SemanticTokensProvider:    semanticTokensRegistrationOptions,
 		},
 	}, nil
 }
@@ -476,7 +486,22 @@ func (s *DefaultLanguageServer) SelectionRange(ctx context.Context, params *lsp.
 	return nil, nil
 }
 func (s *DefaultLanguageServer) SemanticTokensFull(ctx context.Context, params *lsp.SemanticTokensParams) (*lsp.SemanticTokens, error) {
-	return nil, nil
+	lock, err := service.Get[workspace.Lock](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	tokensProvider, err := service.Get[SemanticTokensProvider](s.sc)
+	if err != nil {
+		return nil, err
+	}
+	var result *lsp.SemanticTokens
+	var providerErr error
+	if err := lock.Read(ctx, func(ctx context.Context) {
+		result, providerErr = tokensProvider.HandleSemanticTokensFullRequest(ctx, params)
+	}); err != nil {
+		return nil, err
+	}
+	return result, providerErr
 }
 func (s *DefaultLanguageServer) SemanticTokensFullDelta(ctx context.Context, params *lsp.SemanticTokensDeltaParams) (any, error) {
 	return nil, nil
