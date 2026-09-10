@@ -161,21 +161,12 @@ func (s *SliceScope) ElementByName(name string) *SymbolDescription {
 
 // ElementsByName returns all local symbols named name followed by outer matches.
 func (s *SliceScope) ElementsByName(name string) iter.Seq[*SymbolDescription] {
-	matching := extiter.Filter(slices.Values(s.elements), func(desc *SymbolDescription) bool {
-		return desc.Name == name
-	})
-	if s.outer != nil {
-		return extiter.Concat(matching, s.outer.ElementsByName(name))
-	}
-	return matching
+	return NewSeqScope(slices.Values(s.elements), s.outer).ElementsByName(name)
 }
 
 // AllElements returns local elements followed by all outer elements.
 func (s *SliceScope) AllElements() iter.Seq[*SymbolDescription] {
-	if s.outer != nil {
-		return extiter.Concat(slices.Values(s.elements), s.outer.AllElements())
-	}
-	return slices.Values(s.elements)
+	return NewSeqScope(slices.Values(s.elements), s.outer).AllElements()
 }
 
 // MapScope is a scope backed by a name-indexed multimap.

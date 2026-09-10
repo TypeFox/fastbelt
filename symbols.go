@@ -26,17 +26,11 @@ type SymbolDescription struct {
 }
 
 // NewSymbolDescription returns a [SymbolDescription] for node and its name unit.
-// The symbol name value is dervived from the specified name unit.
+// The symbol name value is derived from the specified name unit.
 //
 // The description URI is derived from node's document.
 func NewSymbolDescription(node AstNode, nameUnit StringUnit) *SymbolDescription {
-	doc := node.Document()
-	return &SymbolDescription{
-		URI:  doc.URI,
-		Node: node,
-		Unit: nameUnit,
-		Name: nameUnit.String(),
-	}
+	return NewNamedSymbolDescription(node, nameUnit, nameUnit.String())
 }
 
 // NewNamedSymbolDescription returns a [SymbolDescription] for node and its name unit

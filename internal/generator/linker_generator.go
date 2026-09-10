@@ -328,8 +328,6 @@ func generateReferenceConstructor(context *LinkerGeneratorContext) codegen.Node 
 	node.AppendLine()
 
 	node.AppendLine("type Default", context.grammar.Name(), "ReferencesConstructor struct {")
-	node.AppendLine("	sc              *service.Container")
-	node.AppendLine("	referenceLinker func() ", context.grammar.Name(), "ReferenceLinker")
 	for _, field := range context.fields {
 		node.AppendLine("	link", field.typeName, field.name, " func() core.ReferenceGetter[", field.target, "]")
 	}
@@ -337,12 +335,12 @@ func generateReferenceConstructor(context *LinkerGeneratorContext) codegen.Node 
 	node.AppendLine()
 
 	node.AppendLine("func NewDefault", context.grammar.Name(), "ReferencesConstructor(sc *service.Container) ", context.grammar.Name(), "ReferencesConstructor {")
-	node.AppendLine("	referenceLinker := sync.OnceValue(func() ", context.grammar.Name(), "ReferenceLinker {")
-	node.AppendLine("		return service.MustGet[", context.grammar.Name(), "ReferenceLinker](sc)")
-	node.AppendLine("	})")
+	if len(context.fields) > 0 {
+		node.AppendLine("	referenceLinker := sync.OnceValue(func() ", context.grammar.Name(), "ReferenceLinker {")
+		node.AppendLine("		return service.MustGet[", context.grammar.Name(), "ReferenceLinker](sc)")
+		node.AppendLine("	})")
+	}
 	node.AppendLine("	return &Default", context.grammar.Name(), "ReferencesConstructor{")
-	node.AppendLine("		sc:              sc,")
-	node.AppendLine("		referenceLinker: referenceLinker,")
 	// Generate a dedicated link function for each reference
 	// This reduces the amount of closure allocations
 	for _, field := range context.fields {

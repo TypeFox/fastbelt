@@ -42,18 +42,10 @@ type TokenGroupsReferencesConstructor interface {
 }
 
 type DefaultTokenGroupsReferencesConstructor struct {
-	sc              *service.Container
-	referenceLinker func() TokenGroupsReferenceLinker
 }
 
 func NewDefaultTokenGroupsReferencesConstructor(sc *service.Container) TokenGroupsReferencesConstructor {
-	referenceLinker := sync.OnceValue(func() TokenGroupsReferenceLinker {
-		return service.MustGet[TokenGroupsReferenceLinker](sc)
-	})
-	return &DefaultTokenGroupsReferencesConstructor{
-		sc:              sc,
-		referenceLinker: referenceLinker,
-	}
+	return &DefaultTokenGroupsReferencesConstructor{}
 }
 
 type TokenGroupsSymbolContainers struct{}
