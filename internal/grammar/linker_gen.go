@@ -166,8 +166,6 @@ type FastbeltReferencesConstructor interface {
 }
 
 type DefaultFastbeltReferencesConstructor struct {
-	sc                                       *service.Container
-	referenceLinker                          func() FastbeltReferenceLinker
 	linkInterfaceExtends                     func() core.ReferenceGetter[Interface]
 	linkReferenceTypeType                    func() core.ReferenceGetter[Interface]
 	linkSimpleTypeType                       func() core.ReferenceGetter[Interface]
@@ -185,8 +183,6 @@ func NewDefaultFastbeltReferencesConstructor(sc *service.Container) FastbeltRefe
 		return service.MustGet[FastbeltReferenceLinker](sc)
 	})
 	return &DefaultFastbeltReferencesConstructor{
-		sc:              sc,
-		referenceLinker: referenceLinker,
 		linkInterfaceExtends: sync.OnceValue(func() core.ReferenceGetter[Interface] {
 			return referenceLinker().LinkInterfaceExtends
 		}),

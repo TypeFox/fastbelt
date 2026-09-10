@@ -146,11 +146,7 @@ func (r *Reference[T]) Resolve(ctx context.Context) {
 func (r *Reference[T]) resolveSlow(ctx context.Context) {
 	// Cyclic resolution attempts are detected via the resolution chain
 	chain := getResolveChain(ctx)
-	cyclic := false
-	if chain != nil {
-		cyclic = slices.Contains(chain.refs, UntypedReference(r))
-	}
-	if cyclic {
+	if chain != nil && slices.Contains(chain.refs, UntypedReference(r)) {
 		// Note that we write directly to r.err without locking here
 		// This is safe, because the reference is already locked by the caller
 		// Attempting to lock it again would cause a deadlock anyway
@@ -164,17 +160,17 @@ func (r *Reference[T]) resolveSlow(ctx context.Context) {
 		// Another goroutine might have resolved it while we were waiting for the lock
 		return
 	}
-	if chain != nil {
-		// Append the current reference to the chain for cycle detection
-		chain.refs = append(chain.refs, r)
-		defer func() {
-			// Pop the reference from the chain after resolution
-			chain.refs = chain.refs[:len(chain.refs)-1]
-		}()
-	} else {
+	if chain == nil {
 		// No chain provided, so create a context with a new chain
-		ctx = WithResolutionChain(ctx)
+		chain = &resolutionChain{}
+		ctx = context.WithValue(ctx, resolutionChainKey{}, chain)
 	}
+	// Append the current reference to the chain for cycle detection
+	chain.refs = append(chain.refs, r)
+	defer func() {
+		// Pop the reference from the chain after resolution
+		chain.refs = chain.refs[:len(chain.refs)-1]
+	}()
 	desc, e := r.getter(ctx, r)
 	r.description = desc
 	if r.err == nil {

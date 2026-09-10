@@ -47,24 +47,24 @@ func LocalScopeOfType[T core.AstNode](node core.AstNode, globalScope core.Scope)
 			// Fast path: the container exposes its symbols as a plain slice,
 			// so emptiness is free to check and lookups don't allocate iterators.
 			if len(slice) == 0 {
-				if outer != nil {
-					return outer
-				}
-				return core.EmptyScope
+				return outerOrEmpty(outer)
 			}
 			return core.NewSliceScope(slice, outer)
 		}
 	}
 	symbols := symbolContainer.ForType(targetType)
 	if extiter.IsEmpty(symbols) {
-		// Shortcut to generate fewer scopes
-		if outer != nil {
-			return outer
-		} else {
-			return core.EmptyScope
-		}
+		return outerOrEmpty(outer)
 	}
 	return core.NewSeqScope(symbols, outer)
+}
+
+// outerOrEmpty is the shortcut for nodes without local symbols: no new scope is created.
+func outerOrEmpty(outer core.Scope) core.Scope {
+	if outer != nil {
+		return outer
+	}
+	return core.EmptyScope
 }
 
 // GetLocalSymbols retrieves the local symbols for the given AST node and type.
