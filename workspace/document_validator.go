@@ -58,7 +58,7 @@ func (s *DefaultDocumentValidator) Validate(ctx context.Context, doc *core.Docum
 			break
 		}
 		if validator, ok := node.(core.Validator); ok {
-			validator.Validate(ctx, level, accept)
+			validator.Validate(ctx, s.sc, level, accept)
 		}
 	}
 	return diagnostics
