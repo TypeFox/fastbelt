@@ -123,10 +123,11 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 				return &lsp.DocumentLinkOptions{ResolveProvider: resolving}
 			}(),
 			ExecuteCommandProvider: func() *lsp.ExecuteCommandOptions {
-				if service.Has[CommandProvider](s.sc) {
-					return &lsp.ExecuteCommandOptions{Commands: []string{}}
+				provider, err := service.Get[CommandProvider](s.sc)
+				if err != nil {
+					return nil
 				}
-				return nil
+				return &lsp.ExecuteCommandOptions{Commands: provider.Commands()}
 			}(),
 		},
 	}, nil
@@ -277,96 +278,58 @@ func (s *DefaultLanguageServer) OutgoingCalls(ctx context.Context, params *lsp.C
 		return p.HandleOutgoingCallsRequest(ctx, params)
 	})
 }
-func (s *DefaultLanguageServer) ResolveCodeAction(ctx context.Context, params *lsp.CodeAction) (*lsp.CodeAction, error) {
-	provider, err := service.Get[CodeActionProvider](s.sc)
+
+// dispatchResolveRead resolves a provider service of type P and, if it also
+// implements the resolving sub-interface RP, invokes handle with it inside a
+// workspace read lock to produce the resolved value. If no provider of type P
+// is registered, or the registered one doesn't implement RP, params is
+// returned unchanged.
+func dispatchResolveRead[P, RP, T any](sc *service.Container, ctx context.Context, params T, handle func(context.Context, RP, T) (T, error)) (T, error) {
+	provider, err := service.Get[P](sc)
 	if err != nil {
 		return params, nil
 	}
-	resolving, ok := provider.(ResolvingCodeActionProvider)
+	resolving, ok := any(provider).(RP)
 	if !ok {
 		return params, nil
 	}
-	var result *lsp.CodeAction
-	var providerErr error
-	lock, err := service.Get[workspace.Lock](s.sc)
+	var zero T
+	lock, err := service.Get[workspace.Lock](sc)
 	if err != nil {
-		return nil, err
+		return zero, err
 	}
+	var result T
+	var providerErr error
 	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = resolving.HandleCodeActionResolveRequest(ctx, params)
+		result, providerErr = handle(ctx, resolving, params)
 	}); err != nil {
-		return nil, err
+		return zero, err
 	}
 	return result, providerErr
 }
+
+func (s *DefaultLanguageServer) ResolveCodeAction(ctx context.Context, params *lsp.CodeAction) (*lsp.CodeAction, error) {
+	return dispatchResolveRead[CodeActionProvider, ResolvingCodeActionProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingCodeActionProvider, params *lsp.CodeAction) (*lsp.CodeAction, error) {
+		return p.HandleCodeActionResolveRequest(ctx, params)
+	})
+}
 func (s *DefaultLanguageServer) ResolveCodeLens(ctx context.Context, params *lsp.CodeLens) (*lsp.CodeLens, error) {
-	provider, err := service.Get[CodeLensProvider](s.sc)
-	if err != nil {
-		return params, nil
-	}
-	resolving, ok := provider.(ResolvingCodeLensProvider)
-	if !ok {
-		return params, nil
-	}
-	var result *lsp.CodeLens
-	var providerErr error
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = resolving.HandleCodeLensResolveRequest(ctx, params)
-	}); err != nil {
-		return nil, err
-	}
-	return result, providerErr
+	return dispatchResolveRead[CodeLensProvider, ResolvingCodeLensProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingCodeLensProvider, params *lsp.CodeLens) (*lsp.CodeLens, error) {
+		return p.HandleCodeLensResolveRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) ResolveCompletionItem(ctx context.Context, params *lsp.CompletionItem) (*lsp.CompletionItem, error) {
 	return nil, nil
 }
 func (s *DefaultLanguageServer) ResolveDocumentLink(ctx context.Context, params *lsp.DocumentLink) (*lsp.DocumentLink, error) {
-	provider, err := service.Get[DocumentLinkProvider](s.sc)
-	if err != nil {
-		return params, nil
-	}
-	resolving, ok := provider.(ResolvingDocumentLinkProvider)
-	if !ok {
-		return params, nil
-	}
-	var result *lsp.DocumentLink
-	var providerErr error
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = resolving.HandleDocumentLinkResolveRequest(ctx, params)
-	}); err != nil {
-		return nil, err
-	}
-	return result, providerErr
+	return dispatchResolveRead[DocumentLinkProvider, ResolvingDocumentLinkProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingDocumentLinkProvider, params *lsp.DocumentLink) (*lsp.DocumentLink, error) {
+		return p.HandleDocumentLinkResolveRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) Resolve(ctx context.Context, params *lsp.InlayHint) (*lsp.InlayHint, error) {
-	provider, err := service.Get[InlayHintProvider](s.sc)
-	if err != nil {
-		return params, nil
-	}
-	resolving, ok := provider.(ResolvingInlayHintProvider)
-	if !ok {
-		return params, nil
-	}
-	var result *lsp.InlayHint
-	var providerErr error
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = resolving.HandleInlayHintResolveRequest(ctx, params)
-	}); err != nil {
-		return nil, err
-	}
-	return result, providerErr
+	return dispatchResolveRead[InlayHintProvider, ResolvingInlayHintProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingInlayHintProvider, params *lsp.InlayHint) (*lsp.InlayHint, error) {
+		return p.HandleInlayHintResolveRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) DidChangeNotebookDocument(ctx context.Context, params *lsp.DidChangeNotebookDocumentParams) error {
 	return nil

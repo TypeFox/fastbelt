@@ -16,6 +16,10 @@ import (
 //
 //	type MyCommandProvider struct{ sc *service.Container }
 //
+//	func (p *MyCommandProvider) Commands() []string {
+//	    return []string{"myLanguage.refactor"}
+//	}
+//
 //	func (p *MyCommandProvider) HandleExecuteCommandRequest(ctx context.Context, params *lsp.ExecuteCommandParams) (any, error) {
 //	    switch params.Command {
 //	    case "myLanguage.refactor":
@@ -26,5 +30,8 @@ import (
 //	    }
 //	}
 type CommandProvider interface {
+	// Commands returns the names of the commands this provider handles, to be
+	// advertised in the server's executeCommandProvider capability.
+	Commands() []string
 	HandleExecuteCommandRequest(ctx context.Context, params *lsp.ExecuteCommandParams) (any, error)
 }

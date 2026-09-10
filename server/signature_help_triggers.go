@@ -11,18 +11,27 @@ type SignatureHelpTriggers interface {
 	RetriggerCharacters() []string
 }
 
-// DefaultSignatureHelpTriggers returns nil for both trigger character sets.
-type DefaultSignatureHelpTriggers struct{}
-
 // NewDefaultSignatureHelpTriggers returns the no-op trigger set.
 func NewDefaultSignatureHelpTriggers() SignatureHelpTriggers {
-	return &DefaultSignatureHelpTriggers{}
+	return NewSignatureHelpTriggers(nil, nil)
 }
 
-func (*DefaultSignatureHelpTriggers) TriggerCharacters() []string {
-	return nil
+// signatureHelpTriggers is a fixed set of trigger and retrigger characters.
+type signatureHelpTriggers struct {
+	trigger, retrigger []string
 }
 
-func (*DefaultSignatureHelpTriggers) RetriggerCharacters() []string {
-	return nil
+// NewSignatureHelpTriggers returns a SignatureHelpTriggers that reports the
+// given trigger and retrigger characters, e.g.
+// NewSignatureHelpTriggers([]string{"("}, []string{","}).
+func NewSignatureHelpTriggers(trigger, retrigger []string) SignatureHelpTriggers {
+	return signatureHelpTriggers{trigger: trigger, retrigger: retrigger}
+}
+
+func (t signatureHelpTriggers) TriggerCharacters() []string {
+	return t.trigger
+}
+
+func (t signatureHelpTriggers) RetriggerCharacters() []string {
+	return t.retrigger
 }
