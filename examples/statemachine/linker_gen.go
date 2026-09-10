@@ -94,8 +94,6 @@ type StatemachineModelReferencesConstructor interface {
 }
 
 type DefaultStatemachineModelReferencesConstructor struct {
-	sc                   *service.Container
-	referenceLinker      func() StatemachineModelReferenceLinker
 	linkStatemachineInit func() core.ReferenceGetter[State]
 	linkStateActions     func() core.ReferenceGetter[Command]
 	linkTransitionEvent  func() core.ReferenceGetter[Event]
@@ -107,8 +105,6 @@ func NewDefaultStatemachineModelReferencesConstructor(sc *service.Container) Sta
 		return service.MustGet[StatemachineModelReferenceLinker](sc)
 	})
 	return &DefaultStatemachineModelReferencesConstructor{
-		sc:              sc,
-		referenceLinker: referenceLinker,
 		linkStatemachineInit: sync.OnceValue(func() core.ReferenceGetter[State] {
 			return referenceLinker().LinkStatemachineInit
 		}),

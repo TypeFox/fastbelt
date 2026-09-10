@@ -58,8 +58,6 @@ type ArithmeticsReferencesConstructor interface {
 }
 
 type DefaultArithmeticsReferencesConstructor struct {
-	sc                       *service.Container
-	referenceLinker          func() ArithmeticsReferenceLinker
 	linkFunctionCallCallable func() core.ReferenceGetter[AbstractDefinition]
 }
 
@@ -68,8 +66,6 @@ func NewDefaultArithmeticsReferencesConstructor(sc *service.Container) Arithmeti
 		return service.MustGet[ArithmeticsReferenceLinker](sc)
 	})
 	return &DefaultArithmeticsReferencesConstructor{
-		sc:              sc,
-		referenceLinker: referenceLinker,
 		linkFunctionCallCallable: sync.OnceValue(func() core.ReferenceGetter[AbstractDefinition] {
 			return referenceLinker().LinkFunctionCallCallable
 		}),

@@ -48,7 +48,7 @@ func setupLinkedStatemachine(b *testing.B) (*fastbelt.Document, *fastbelt.Refere
 }
 
 // BenchmarkRefResolveMachinery measures the Reference[T] resolution machinery
-// alone: atomic fast path check, mutex, context.WithValue cycle guard, and the
+// alone: atomic fast path check, mutex, resolution chain cycle guard, and the
 // desc.Node type assertion. The getter is a constant, so scope construction and
 // lookup are excluded.
 func BenchmarkRefResolveMachinery(b *testing.B) {

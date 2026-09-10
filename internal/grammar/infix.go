@@ -190,7 +190,10 @@ func synthesizeInfixBody(rule InfixRule, operand ParserRule, operatorGroup Token
 func resolvedReference[T core.AstNode](owner core.AstNode, unit core.StringUnit, target T) *core.Reference[T] {
 	description := &core.SymbolDescription{
 		Node: target,
-		Unit: linking.Name(target),
+	}
+	if nameUnit := linking.Name(target); nameUnit != nil {
+		description.Unit = nameUnit
+		description.Name = nameUnit.String()
 	}
 	if doc := target.Document(); doc != nil {
 		description.URI = doc.URI

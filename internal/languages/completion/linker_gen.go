@@ -154,8 +154,6 @@ type CompletionReferencesConstructor interface {
 }
 
 type DefaultCompletionReferencesConstructor struct {
-	sc                *service.Container
-	referenceLinker   func() CompletionReferenceLinker
 	linkERef          func() core.ReferenceGetter[Declare]
 	linkFItemRef      func() core.ReferenceGetter[Declare]
 	linkGRef          func() core.ReferenceGetter[Declare]
@@ -172,8 +170,6 @@ func NewDefaultCompletionReferencesConstructor(sc *service.Container) Completion
 		return service.MustGet[CompletionReferenceLinker](sc)
 	})
 	return &DefaultCompletionReferencesConstructor{
-		sc:              sc,
-		referenceLinker: referenceLinker,
 		linkERef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
 			return referenceLinker().LinkERef
 		}),
