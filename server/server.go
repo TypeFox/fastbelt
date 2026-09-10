@@ -61,10 +61,6 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 	if service.Has[RenameProvider](s.sc) {
 		renameProvider = &lsp.RenameOptions{PrepareProvider: true}
 	}
-	var executeCommandProvider *lsp.ExecuteCommandOptions
-	if service.Has[CommandProvider](s.sc) {
-		executeCommandProvider = &lsp.ExecuteCommandOptions{Commands: []string{}}
-	}
 	positionEncoding := lsp.UTF16
 	return &lsp.InitializeResult{
 		Capabilities: lsp.ServerCapabilities{
@@ -126,7 +122,12 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 				_, resolving := provider.(ResolvingDocumentLinkProvider)
 				return &lsp.DocumentLinkOptions{ResolveProvider: resolving}
 			}(),
-			ExecuteCommandProvider: executeCommandProvider,
+			ExecuteCommandProvider: func() *lsp.ExecuteCommandOptions {
+				if service.Has[CommandProvider](s.sc) {
+					return &lsp.ExecuteCommandOptions{Commands: []string{}}
+				}
+				return nil
+			}(),
 		},
 	}, nil
 }
