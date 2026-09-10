@@ -272,7 +272,7 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 			case grammar.TokenGroupUsage:
 				tokenGroup := member.Group()
 				for _, tokenIndex := range result.TokenIndex.ByTokenGroupParent[tokenGroup] {
-					pushTokenTypeUsage(tokenIndex, tokenGroup.Modifier(), tokenGroup.Command())
+					pushTokenTypeUsage(tokenIndex, "", nil)
 				}
 			case grammar.KeywordUsage:
 				tokenIndex := result.TokenIndex.ByKeyword[member.Keyword().Value()]
@@ -291,15 +291,15 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 
 				var tokenIndex int
 				switch rule := token.(type) {
+				case grammar.TokenGroup:
+					tokenIndices := result.TokenIndex.ByTokenGroupParent[rule]
+					for _, tokenIndex := range tokenIndices {
+						pushTokenTypeUsage(tokenIndex, "", nil)
+					}
 				case grammar.TokenDecl:
 					tokenIndex = result.TokenIndex.ByToken[rule]
 					pushTokenTypeUsage(tokenIndex, rule.Modifier(), rule.Command())
 					overrideUsage(tokenIndex)
-				case grammar.TokenGroup:
-					for _, tokenIndex := range result.TokenIndex.ByTokenGroupParent[rule] {
-						pushTokenTypeUsage(tokenIndex, rule.Modifier(), rule.Command())
-						overrideUsage(tokenIndex)
-					}
 				}
 			case grammar.KeywordSelector:
 				pattern := regexp.MustCompile(grammar.RegexpValue(member.Selector()))
@@ -439,7 +439,7 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 		result.TokenIndex.SourceType[tokenIndex] = SourceGroup
 		tokenIndex++
 	}
-	result.TokenIndex.ByTokenGroupParent = getAllTokenGroupMemberTokenIndices(sortedTokenGroups, keywords, result.TokenIndex)
+	result.TokenIndex.ByTokenGroupParent = getAllTokenGroupMemberTokenIndices(sortedTokenGroups, keywords, &result.TokenIndex)
 }
 
 func mergeImports(target map[string]bool, source map[string]bool) {
@@ -576,7 +576,7 @@ func GeneratedTokenIdxName(t core.AstNode) string {
 	return GeneratedTokenName(t) + "_Idx"
 }
 
-func getAllTokenGroupMemberTokenIndices(sortedTokenGroups []grammar.TokenGroup, keywords GetAllKeywordsResult, lookup tokenIndexLookup) map[grammar.TokenGroup][]int {
+func getAllTokenGroupMemberTokenIndices(sortedTokenGroups []grammar.TokenGroup, keywords GetAllKeywordsResult, lookup *tokenIndexLookup) map[grammar.TokenGroup][]int {
 	tokenGroupMembers := map[grammar.TokenGroup][]int{}
 	for _, tokenGroup := range sortedTokenGroups {
 		tokenGroupMembers[tokenGroup] = []int{}
@@ -590,6 +590,7 @@ func getAllTokenGroupMemberTokenIndices(sortedTokenGroups []grammar.TokenGroup, 
 				} else if tokenDecl, ok := tokenRule.(grammar.TokenDecl); ok {
 					if idx, ok := lookup.ByToken[tokenDecl]; ok {
 						tokenGroupMembers[tokenGroup] = append(tokenGroupMembers[tokenGroup], idx)
+						lookup.SourceType[idx] = SourceTokenDecl
 					}
 				}
 			}
@@ -599,6 +600,7 @@ func getAllTokenGroupMemberTokenIndices(sortedTokenGroups []grammar.TokenGroup, 
 			for _, keyword := range keywords.Keywords {
 				if idx, ok := lookup.ByKeyword[keyword.Value()]; ok {
 					content := grammar.KeywordValue(keyword)
+					lookup.SourceType[idx] = SourceKeyword
 					if pattern.MatchString(content) {
 						tokenGroupMembers[tokenGroup] = append(tokenGroupMembers[tokenGroup], idx)
 					}
@@ -608,6 +610,7 @@ func getAllTokenGroupMemberTokenIndices(sortedTokenGroups []grammar.TokenGroup, 
 		for _, keyword := range tokenGroup.Keywords() {
 			if idx, ok := lookup.ByKeyword[keyword.Value()]; ok {
 				tokenGroupMembers[tokenGroup] = append(tokenGroupMembers[tokenGroup], idx)
+				lookup.SourceType[idx] = SourceKeyword
 			}
 		}
 	}

@@ -80,20 +80,18 @@ interface AbstractRuleWithReturnType extends AbstractRuleWithBody {
     ReturnType *Interface
 }
 
-// Base type for TokenDecl and TokenGroup
-interface AbstractTokenRule extends AbstractRule {
-    Modifier string
-    Command  TokenCommand
-}
-
 interface ParserRule extends AbstractRuleWithReturnType {
     Entry      bool
 }
 
 ParserRule: (Entry?="entry")? Name=ID ("returns" ReturnType=[Interface:ID])? ":" Body=Alternatives ";"?
 
+interface AbstractTokenRule extends AbstractRule {}
+
 interface TokenDecl extends AbstractTokenRule {
     Content TokenContent
+    Modifier string
+    Command  TokenCommand
 }
 
 TokenDecl: Modifier=TokenModifier? "token" Name=ID ":" Content=TokenContent Command=TokenCommand? ";"?
@@ -128,13 +126,13 @@ interface TokenGroup extends AbstractTokenRule {
     KeywordSelectors []string
 }
 
-TokenGroup: Modifier=TokenModifier? "token" "group" Name=ID "{"
+TokenGroup: "token" "group" Name=ID "{"
     (
         TokenRefs+=[AbstractTokenRule:ID]
         | Keywords+=Keyword
         | "keywords" KeywordSelectors+=RegexLiteral
     )*
-"}" Command=TokenCommand? ";"?
+"}" ";"?
 
 interface TokenMode {
     Name    string
@@ -148,7 +146,12 @@ TokenMode: "token" "mode" (Name=ID | Default?="default") "{"
 
 interface TokenModeMember {}
 
-TokenModeMember: TokenDeclUsage | TokenGroupUsage | TokenUsage | KeywordUsage | KeywordSelector
+TokenModeMember:
+    TokenDeclUsage
+    | TokenGroupUsage    //token group G { ... }
+    | TokenUsage         //hidden TokenRule -> push(mode) or TokenGroupRule 
+    | KeywordUsage       //hidden "keyword" -> pop
+    | KeywordSelector    //keywords /regex/
 
 interface TokenDeclUsage extends TokenModeMember {
     Declaration TokenDecl
@@ -164,6 +167,7 @@ TokenGroupUsage: Group=TokenGroup
 
 interface TokenUsage extends TokenModeMember {
     Modifier string
+    //only TokenGroup and TokenDecl!
     TokenRef *AbstractTokenRule
     Command  TokenCommand
 }

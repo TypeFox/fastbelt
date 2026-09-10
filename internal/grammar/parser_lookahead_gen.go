@@ -8,48 +8,48 @@ import (
 )
 
 const (
-	DecisionCompositeGroupElementsLoop  = 50
-	DecisionCompositeGroupOptional      = 51
-	DecisionElementAlternatives         = 37
+	DecisionCompositeGroupElementsLoop  = 48
+	DecisionCompositeGroupOptional      = 49
+	DecisionElementAlternatives         = 35
 	DecisionGrammarAlternatives         = 1
-	DecisionGroupElementsLoop           = 35
-	DecisionGroupOptional               = 36
-	DecisionTokenModeMemberAlternatives = 25
+	DecisionGroupElementsLoop           = 33
+	DecisionGroupOptional               = 34
+	DecisionTokenModeMemberAlternatives = 23
 )
 
 var ActionOperatorAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_PlusEquals, Keyword_Equals},
-	Lookup: []int{5: 1, 11: 2},
+	Lookup: []int{9: 1, 16: 2},
 }
 
 var AssignableAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_StringLiteral, Token_ID, Keyword_LeftBracket, Keyword_LeftParen},
-	Lookup: []int{1: 4, 15: 3, 44: 1, 45: 2},
+	Lookup: []int{14: 4, 19: 3, 44: 1, 45: 2},
 }
 
 var AssignableWithoutAltsAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_StringLiteral, Token_ID, Keyword_LeftBracket},
-	Lookup: []int{15: 3, 44: 1, 45: 2},
+	Lookup: []int{19: 3, 44: 1, 45: 2},
 }
 
 var AssignmentOperatorAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_PlusEquals, Keyword_Equals, Keyword_QuestionEquals},
-	Lookup: []int{5: 1, 11: 2, 14: 3},
+	Lookup: []int{3: 3, 9: 1, 16: 2},
 }
 
 var CompositeElementAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_StringLiteral, Token_ID, Keyword_LeftParen},
-	Lookup: []int{1: 3, 44: 1, 45: 2},
+	Lookup: []int{14: 3, 44: 1, 45: 2},
 }
 
 var FieldTypeAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Keyword_Asterisk, Keyword_LeftBracket, Keyword_bool, Keyword_composite, Keyword_string},
-	Lookup: []int{3: 2, 15: 3, 17: 4, 19: 4, 37: 4, 45: 1},
+	Lookup: []int{12: 2, 13: 4, 19: 3, 24: 4, 27: 4, 45: 1},
 }
 
 var GrammarLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_composite, Keyword_entry, Keyword_infix, Keyword_interface, Keyword_token, Token_ID, TokenGroup_TokenModifier},
-	Lookup: []int{18: 1, 19: 1, 22: 1, 26: 1, 27: 1, 28: 1, 38: 1, 45: 1},
+	Types:  []*core.TokenType{Keyword_infix, Keyword_composite, Keyword_token, Keyword_interface, Keyword_entry, Token_ID, TokenGroup_TokenModifier},
+	Lookup: []int{5: 1, 18: 1, 21: 1, 24: 1, 29: 1, 33: 1, 34: 1, 45: 1},
 }
 
 var InfixOperatorAlternatives = parser.LL1Lookahead{
@@ -59,22 +59,22 @@ var InfixOperatorAlternatives = parser.LL1Lookahead{
 
 var PrecedenceGroupAssociativityAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_left, Keyword_right},
-	Lookup: []int{30: 1, 36: 2},
+	Lookup: []int{17: 1, 40: 2},
 }
 
 var PrimitiveTypeTypeAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_string, Keyword_bool, Keyword_composite},
-	Lookup: []int{17: 2, 19: 3, 37: 1},
+	Lookup: []int{13: 2, 24: 3, 27: 1},
 }
 
 var TokenCommandAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Keyword_default},
-	Lookup: []int{21: 2, 45: 1},
+	Lookup: []int{39: 2, 45: 1},
 }
 
 var TokenCommandTypeAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_push, Keyword_pop, Keyword_mode},
-	Lookup: []int{31: 3, 33: 2, 34: 1},
+	Lookup: []int{2: 2, 8: 1, 25: 3},
 }
 
 var TokenContentAlternatives = parser.LL1Lookahead{
@@ -84,17 +84,17 @@ var TokenContentAlternatives = parser.LL1Lookahead{
 
 var TokenGroupAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_StringLiteral, Keyword_keywords},
-	Lookup: []int{29: 3, 44: 2, 45: 1},
+	Lookup: []int{26: 3, 44: 2, 45: 1},
 }
 
 var TokenModeAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Keyword_default},
-	Lookup: []int{21: 2, 45: 1},
+	Lookup: []int{39: 2, 45: 1},
 }
 
 var TokenModeMembersLoop = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_keywords, Keyword_token, Token_StringLiteral, Token_ID, TokenGroup_TokenModifier},
-	Lookup: []int{18: 1, 26: 1, 29: 1, 38: 1, 44: 1, 45: 1},
+	Lookup: []int{5: 1, 18: 1, 26: 1, 29: 1, 44: 1, 45: 1},
 }
 
 // FastbeltParserLookahead abstracts every lookahead/prediction decision performed by
@@ -154,8 +154,6 @@ type FastbeltParserLookahead interface {
 	TokenDeclModifierOptional(state *parser.ParserState) bool
 	TokenDeclSemicolonOptional(state *parser.ParserState) bool
 	TokenGroupAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
-	TokenGroupCommandOptional(state *parser.ParserState) bool
-	TokenGroupModifierOptional(state *parser.ParserState) bool
 	TokenGroupSemicolonOptional(state *parser.ParserState) bool
 	TokenModeAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	TokenModeMemberAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
@@ -378,14 +376,6 @@ func (l *DefaultFastbeltParserLookahead) TokenDeclSemicolonOptional(state *parse
 
 func (l *DefaultFastbeltParserLookahead) TokenGroupAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
 	return state.Lookahead(TokenGroupAlternatives)
-}
-
-func (l *DefaultFastbeltParserLookahead) TokenGroupCommandOptional(state *parser.ParserState) bool {
-	return state.LA(1).Type == Keyword_DashGreaterThan
-}
-
-func (l *DefaultFastbeltParserLookahead) TokenGroupModifierOptional(state *parser.ParserState) bool {
-	return TokenGroup_TokenModifier.Matches(state.LA(1).Type)
 }
 
 func (l *DefaultFastbeltParserLookahead) TokenGroupSemicolonOptional(state *parser.ParserState) bool {

@@ -611,16 +611,6 @@ func (p *Parser) ParseTokenGroup() TokenGroup {
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
 	{
 		{
-			p.state.Sync(TokenGroup__Basic_1)
-			if p.lookahead.TokenGroupModifierOptional(p.state) {
-				token := p.state.Consume(TokenGroup_TokenModifier)
-				core.AssignToken(current, token, TokenGroup_Modifier_TokenModifier)
-				if token != nil {
-					current.SetModifier(token)
-				}
-			}
-		}
-		{
 			token := p.state.Consume(Keyword_token)
 			core.AssignToken(current, token, TokenGroup_token)
 		}
@@ -653,7 +643,7 @@ func (p *Parser) ParseTokenGroup() TokenGroup {
 				}
 			case 1:
 				{
-					p.state.EnterRule(TokenGroup__Basic_4)
+					p.state.EnterRule(TokenGroup__Basic_2)
 					result := p.ParseKeyword()
 					p.state.ExitRule()
 					if result != nil {
@@ -680,17 +670,6 @@ func (p *Parser) ParseTokenGroup() TokenGroup {
 		{
 			token := p.state.Consume(Keyword_RightBrace)
 			core.AssignToken(current, token, TokenGroup_RightBrace)
-		}
-		{
-			p.state.Sync(TokenGroup__Basic_9)
-			if p.lookahead.TokenGroupCommandOptional(p.state) {
-				p.state.EnterRule(TokenGroup__Basic_8)
-				result := p.ParseTokenCommand()
-				p.state.ExitRule()
-				if result != nil {
-					current.SetCommand(result)
-				}
-			}
 		}
 		{
 			if p.lookahead.TokenGroupSemicolonOptional(p.state) {

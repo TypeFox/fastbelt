@@ -57,6 +57,8 @@ const (
 	ValidateInfixOperator                    = "infixOperator"
 	ValidateInfixDuplicateOperator           = "infixDuplicateOperator"
 	ValidateInfixOperatorGroupName           = "infixOperatorGroupName"
+	ValidateModifierNotAllowedOnGroups       = "modifierNotAllowedOnGroups"
+	ValidateCommandNotAllowedOnGroups        = "commandNotAllowedOnGroups"
 )
 
 // defaultTokenModeName is the name under which the mode marked
@@ -189,13 +191,15 @@ func getCommand(member TokenModeMember) TokenCommand {
 	case TokenDeclUsage:
 		return casted.Declaration().Command()
 	case TokenGroupUsage:
-		return casted.Group().Command()
+		return nil
 	case TokenUsage:
 		command := casted.Command()
 		if command == nil {
 			ref := casted.TokenRef().Ref(context.Background())
 			if ref != nil {
-				command = ref.Command()
+				if decl, ok := ref.(TokenDecl); ok {
+					command = decl.Command()
+				}
 			}
 		}
 		return command
@@ -376,9 +380,6 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 			}
 		}
 		for _, group := range g.TokenGroups() {
-			if group.Modifier() != "" {
-				continue
-			}
 			if !seen.Has(group.Name()) {
 				accept(core.NewDiagnostic(
 					severity,
@@ -405,8 +406,10 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 					}
 				case TokenUsage:
 					if tokenRef := member.TokenRef().Ref(context.Background()); tokenRef != nil {
-						if tokenRef.Modifier() != "" {
-							continue
+						if decl, ok := tokenRef.(TokenDecl); ok {
+							if decl.Modifier() != "" {
+								continue
+							}
 						}
 						if !seen.Has(tokenRef.Name()) {
 							accept(core.NewDiagnostic(
@@ -431,9 +434,6 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 						))
 					}
 				case TokenGroupUsage:
-					if member.Group().Modifier() != "" {
-						continue
-					}
 					if !seen.Has(member.Group().Name()) {
 						accept(core.NewDiagnostic(
 							severity,
@@ -758,7 +758,7 @@ func checkEmptyTerminalRule(t TokenDecl, accept core.ValidationAcceptor) {
 		canBeEmpty = raw == ""
 	case RegexpTokenContent:
 		pattern := RegexpValue(content.Regexp())
-		re, err := regexp.Compile(RegexpValue(pattern))
+		re, err := regexp.Compile(pattern)
 		if err != nil {
 			return
 		}
@@ -1467,14 +1467,18 @@ func appearsInTokenGroup(target TokenGroup, current TokenGroup, ctx context.Cont
 	return false
 }
 
-func hiddenOrCommentTokenDescription(tokenDecl AbstractTokenRule) (description string, ok bool) {
-	switch tokenDecl.Modifier() {
-	case "hidden":
-		return "hidden", true
-	case "comment":
-		return "a comment", true
-	default:
+func hiddenOrCommentTokenDescription(rule AbstractTokenRule) (description string, ok bool) {
+	if decl, ok := rule.(TokenDecl); !ok {
 		return "", false
+	} else {
+		switch decl.Modifier() {
+		case "hidden":
+			return "hidden", true
+		case "comment":
+			return "a comment", true
+		default:
+			return "", false
+		}
 	}
 }
 
@@ -1901,6 +1905,36 @@ func checkIfKeywordPureStandaloneOrTokenDecl(g Grammar, _ context.Context, accep
 				kw,
 				core.WithToken(kw.ValueToken()),
 				core.WithCode(ValidateKeywordPureStandaloneOrTokenDecl),
+			))
+		}
+	}
+}
+
+func (tu *TokenUsageImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
+	checkIfTokenUsageHasCommandOrModifierOnlyIfNotAGroup(tu, ctx, accept)
+}
+
+func checkIfTokenUsageHasCommandOrModifierOnlyIfNotAGroup(usage TokenUsage, _ context.Context, accept core.ValidationAcceptor) {
+	if usage.Modifier() == "" && usage.Command() == nil {
+		return
+	}
+	if group, ok := usage.TokenRef().Ref(context.Background()).(TokenGroup); ok {
+		if usage.Modifier() != "" {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				fmt.Sprintf("Setting a modifier on token group '%s' is not allowed.", group.Name()),
+				usage,
+				core.WithToken(usage.ModifierToken()),
+				core.WithCode(ValidateModifierNotAllowedOnGroups),
+			))
+		}
+		if usage.Command() != nil {
+			accept(core.NewDiagnostic(
+				core.SeverityError,
+				fmt.Sprintf("Setting a command on token group '%s' is not allowed.", group.Name()),
+				usage,
+				core.WithToken(usage.ModifierToken()),
+				core.WithCode(ValidateCommandNotAllowedOnGroups),
 			))
 		}
 	}
