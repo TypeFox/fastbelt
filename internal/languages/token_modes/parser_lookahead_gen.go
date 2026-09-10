@@ -9,17 +9,17 @@ import (
 
 var PrimaryAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_INT, Keyword_Backtick, Keyword_LeftParen},
-	Lookup: []int{2: 4, 6: 3, 8: 1, 9: 2},
+	Lookup: []int{3: 4, 5: 3, 8: 1, 9: 2},
 }
 
 var StringContentAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_STRING_CONTENT, Keyword_HashLeftBrace},
-	Lookup: []int{1: 2, 13: 1},
+	Lookup: []int{6: 2, 13: 1},
 }
 
 var StringLiteralContentLoop = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_HashLeftBrace, Token_STRING_CONTENT},
-	Lookup: []int{1: 1, 13: 1},
+	Lookup: []int{6: 1, 13: 1},
 }
 
 // TokenModesParserLookahead abstracts every lookahead/prediction decision performed by

@@ -9,71 +9,7 @@ import (
 	"unicode/utf8"
 )
 
-const Keyword_HashLeftBrace_Idx = 1
-
-var Keyword_HashLeftBrace = core.NewTokenType(
-	Keyword_HashLeftBrace_Idx,
-	"#{",
-	"#{",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "#{") {
-			return 2
-		}
-		return 0
-	},
-	[]rune{'#'},
-)
-
-const Keyword_LeftParen_Idx = 2
-
-var Keyword_LeftParen = core.NewTokenType(
-	Keyword_LeftParen_Idx,
-	"(",
-	"(",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "(") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'('},
-)
-
-const Keyword_RightParen_Idx = 3
-
-var Keyword_RightParen = core.NewTokenType(
-	Keyword_RightParen_Idx,
-	")",
-	")",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], ")") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{')'},
-)
-
-const Keyword_Plus_Idx = 4
-
-var Keyword_Plus = core.NewTokenType(
-	Keyword_Plus_Idx,
-	"+",
-	"+",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "+") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'+'},
-)
-
-const Keyword_ColonEquals_Idx = 5
+const Keyword_ColonEquals_Idx = 1
 
 var Keyword_ColonEquals = core.NewTokenType(
 	Keyword_ColonEquals_Idx,
@@ -89,7 +25,55 @@ var Keyword_ColonEquals = core.NewTokenType(
 	[]rune{':'},
 )
 
-const Keyword_Backtick_Idx = 6
+const Keyword_Plus_Idx = 2
+
+var Keyword_Plus = core.NewTokenType(
+	Keyword_Plus_Idx,
+	"+",
+	"+",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "+") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'+'},
+)
+
+const Keyword_LeftParen_Idx = 3
+
+var Keyword_LeftParen = core.NewTokenType(
+	Keyword_LeftParen_Idx,
+	"(",
+	"(",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "(") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'('},
+)
+
+const Keyword_RightParen_Idx = 4
+
+var Keyword_RightParen = core.NewTokenType(
+	Keyword_RightParen_Idx,
+	")",
+	")",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], ")") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{')'},
+)
+
+const Keyword_Backtick_Idx = 5
 
 var Keyword_Backtick = core.NewTokenType(
 	Keyword_Backtick_Idx,
@@ -103,6 +87,22 @@ var Keyword_Backtick = core.NewTokenType(
 		return 0
 	},
 	[]rune{'`'},
+)
+
+const Keyword_HashLeftBrace_Idx = 6
+
+var Keyword_HashLeftBrace = core.NewTokenType(
+	Keyword_HashLeftBrace_Idx,
+	"#{",
+	"#{",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "#{") {
+			return 2
+		}
+		return 0
+	},
+	[]rune{'#'},
 )
 
 const Keyword_RightBrace_Idx = 7

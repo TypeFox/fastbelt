@@ -475,7 +475,7 @@ outerLoop:
 	for node := range core.AllChildren(g) {
 		switch node := node.(type) {
 		case Keyword:
-			value := node.Value()
+			value := KeywordValue(node)
 			if !insideParserRule(node) || coverage.keywords.Has(value) || !reported.Add(value) {
 				continue
 			}
@@ -588,7 +588,7 @@ func (c tokenModeCoverage) covers(rule AbstractTokenRule) bool {
 	// covers the token as well.
 	if decl, ok := rule.(TokenDecl); ok {
 		if content, ok := decl.Content().(KeywordTokenContent); ok && content.Keyword() != nil {
-			return c.keywords.Has(content.Keyword().Value())
+			return c.keywords.Has(KeywordValue(content.Keyword()))
 		}
 	}
 	return false
@@ -635,7 +635,7 @@ func (c tokenModeCoverage) addKeyword(keyword Keyword) {
 	if keyword == nil || keyword.Value() == "" {
 		return
 	}
-	c.keywords.Add(keyword.Value())
+	c.keywords.Add(KeywordValue(keyword))
 }
 
 func (c tokenModeCoverage) addKeywordsMatching(selector string, allKeywords []Keyword) {
@@ -652,7 +652,7 @@ func (c tokenModeCoverage) addKeywordsMatching(selector string, allKeywords []Ke
 			continue
 		}
 		if pattern.MatchString(value) {
-			c.keywords.Add(keyword.Value())
+			c.keywords.Add(KeywordValue(keyword))
 		}
 	}
 }

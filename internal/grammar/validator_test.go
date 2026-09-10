@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/test"
 )
@@ -1843,4 +1844,19 @@ func TestSameKeywordsAsStandaloneAndTokenDeclaration(t *testing.T) {
 	diag2 := doc.ExpectDiagnostic("2")
 	diag2.WithSeverity(core.SeverityError)
 	diag2.WithCode(ValidateKeywordPureStandaloneOrTokenDecl)
+}
+
+func TestTokenGroupDoesNotNeedToBeListedInTokenModeWhenAtLeastOneMemberIsUsed(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Start {
+			Card string
+		}
+		entry Start: Card
+		token group Card { "*" "+" "?" }
+		token mode default { "*" "+" "?" }
+	`)
+	require.Equal(t, 0, len(doc.Document.Diagnostics))
+	doc.AssertNoDiagnostics()
 }
