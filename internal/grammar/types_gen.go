@@ -1011,105 +1011,6 @@ func (i *AbstractRuleWithReturnTypeImpl) Resolve(path core.FragmentPath) (core.A
 	}
 }
 
-type AbstractTokenRule interface {
-	core.AstNode
-	AbstractRule
-
-	IsAbstractTokenRule()
-	Modifier() string
-	ModifierToken() *core.Token
-	SetModifier(value *core.Token)
-	Command() TokenCommand
-	SetCommand(value TokenCommand)
-}
-
-func NewAbstractTokenRule() AbstractTokenRule {
-	return &AbstractTokenRuleImpl{}
-}
-
-type AbstractTokenRuleData struct {
-	modifier *core.Token
-	command  TokenCommand
-}
-
-func (i *AbstractTokenRuleData) IsAbstractTokenRule() {}
-
-func (i *AbstractTokenRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	if i.command != nil {
-		fn(i.command, fieldNameCommand, -1)
-	}
-}
-
-func (i *AbstractTokenRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-}
-
-func (i *AbstractTokenRuleData) Modifier() string {
-	if i != nil && i.modifier != nil {
-		return i.modifier.Image
-	} else {
-		return ""
-	}
-}
-
-func (i *AbstractTokenRuleData) ModifierToken() *core.Token {
-	return i.modifier
-}
-
-func (i *AbstractTokenRuleData) SetModifier(value *core.Token) {
-	i.modifier = value
-}
-
-func (i *AbstractTokenRuleData) Command() TokenCommand {
-	if i != nil && i.command != nil {
-		return i.command
-	} else {
-		return nil
-	}
-}
-
-func (i *AbstractTokenRuleData) SetCommand(value TokenCommand) {
-	i.command = value
-}
-
-type AbstractTokenRuleImpl struct {
-	core.AstNodeBase
-	AbstractRuleData
-	AbstractTokenRuleData
-}
-
-func (i *AbstractTokenRuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.AbstractRuleData.ForEachNode(fn)
-	i.AbstractTokenRuleData.ForEachNode(fn)
-}
-
-func (i *AbstractTokenRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.AbstractRuleData.ForEachReference(fn)
-	i.AbstractTokenRuleData.ForEachReference(fn)
-}
-
-func (i *AbstractTokenRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	if path.Empty() {
-		return i, nil
-	}
-	field, _ := path.Head()
-	switch field {
-	case fieldNameCommand:
-		if i.Command() == nil {
-			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("AbstractTokenRuleImpl.Resolve: field 'command' is nil in node '%s'", nodePath)
-		}
-		child := i.Command()
-		return child.Resolve(path.Tail())
-	case fieldNameModifier:
-		return nil, fmt.Errorf("AbstractTokenRuleImpl.Resolve: field 'modifier' holds a primitive value instead of an ast node")
-	case fieldNameName:
-		return nil, fmt.Errorf("AbstractTokenRuleImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
-	default:
-		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("AbstractTokenRuleImpl.Resolve: field '%s' does not exist in node '%s' of type 'AbstractTokenRule'", field.Value(), nodePath)
-	}
-}
-
 type ParserRule interface {
 	core.AstNode
 	AbstractRuleWithReturnType
@@ -1195,6 +1096,58 @@ func (i *ParserRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	}
 }
 
+type AbstractTokenRule interface {
+	core.AstNode
+	AbstractRule
+
+	IsAbstractTokenRule()
+}
+
+func NewAbstractTokenRule() AbstractTokenRule {
+	return &AbstractTokenRuleImpl{}
+}
+
+type AbstractTokenRuleData struct {
+}
+
+func (i *AbstractTokenRuleData) IsAbstractTokenRule() {}
+
+func (i *AbstractTokenRuleData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+}
+
+func (i *AbstractTokenRuleData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+}
+
+type AbstractTokenRuleImpl struct {
+	core.AstNodeBase
+	AbstractRuleData
+	AbstractTokenRuleData
+}
+
+func (i *AbstractTokenRuleImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.AbstractRuleData.ForEachNode(fn)
+	i.AbstractTokenRuleData.ForEachNode(fn)
+}
+
+func (i *AbstractTokenRuleImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.AbstractRuleData.ForEachReference(fn)
+	i.AbstractTokenRuleData.ForEachReference(fn)
+}
+
+func (i *AbstractTokenRuleImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameName:
+		return nil, fmt.Errorf("AbstractTokenRuleImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("AbstractTokenRuleImpl.Resolve: field '%s' does not exist in node '%s' of type 'AbstractTokenRule'", field.Value(), nodePath)
+	}
+}
+
 type TokenDecl interface {
 	core.AstNode
 	AbstractTokenRule
@@ -1202,6 +1155,11 @@ type TokenDecl interface {
 	IsTokenDecl()
 	Content() TokenContent
 	SetContent(value TokenContent)
+	Modifier() string
+	ModifierToken() *core.Token
+	SetModifier(value *core.Token)
+	Command() TokenCommand
+	SetCommand(value TokenCommand)
 }
 
 func NewTokenDecl() TokenDecl {
@@ -1209,7 +1167,9 @@ func NewTokenDecl() TokenDecl {
 }
 
 type TokenDeclData struct {
-	content TokenContent
+	content  TokenContent
+	modifier *core.Token
+	command  TokenCommand
 }
 
 func (i *TokenDeclData) IsTokenDecl() {}
@@ -1217,6 +1177,9 @@ func (i *TokenDeclData) IsTokenDecl() {}
 func (i *TokenDeclData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.content != nil {
 		fn(i.content, fieldNameContent, -1)
+	}
+	if i.command != nil {
+		fn(i.command, fieldNameCommand, -1)
 	}
 }
 
@@ -1233,6 +1196,34 @@ func (i *TokenDeclData) Content() TokenContent {
 
 func (i *TokenDeclData) SetContent(value TokenContent) {
 	i.content = value
+}
+
+func (i *TokenDeclData) Modifier() string {
+	if i != nil && i.modifier != nil {
+		return i.modifier.Image
+	} else {
+		return ""
+	}
+}
+
+func (i *TokenDeclData) ModifierToken() *core.Token {
+	return i.modifier
+}
+
+func (i *TokenDeclData) SetModifier(value *core.Token) {
+	i.modifier = value
+}
+
+func (i *TokenDeclData) Command() TokenCommand {
+	if i != nil && i.command != nil {
+		return i.command
+	} else {
+		return nil
+	}
+}
+
+func (i *TokenDeclData) SetCommand(value TokenCommand) {
+	i.command = value
 }
 
 type TokenDeclImpl struct {
@@ -1666,13 +1657,6 @@ func (i *TokenGroupImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	}
 	field, index := path.Head()
 	switch field {
-	case fieldNameCommand:
-		if i.Command() == nil {
-			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("TokenGroupImpl.Resolve: field 'command' is nil in node '%s'", nodePath)
-		}
-		child := i.Command()
-		return child.Resolve(path.Tail())
 	case fieldNameKeywords:
 		if index >= len(i.Keywords()) {
 			nodePath, _ := core.PathOf(i)
@@ -1686,8 +1670,6 @@ func (i *TokenGroupImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 		return child.Resolve(path.Tail())
 	case fieldNameKeywordSelectors:
 		return nil, fmt.Errorf("TokenGroupImpl.Resolve: field 'keywordSelectors' holds a primitive value instead of an ast node")
-	case fieldNameModifier:
-		return nil, fmt.Errorf("TokenGroupImpl.Resolve: field 'modifier' holds a primitive value instead of an ast node")
 	case fieldNameName:
 		return nil, fmt.Errorf("TokenGroupImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	case fieldNameTokenRefs:

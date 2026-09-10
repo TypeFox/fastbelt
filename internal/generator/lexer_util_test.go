@@ -212,7 +212,7 @@ func TestPopulateTokenModes_ShouldHandleTopLevelTokenGroupProperlyInTokenMode(t 
 		}
 
 		token mode Y {
-  			X -> pop
+  			X
 		}
 	`).AssertNoErrors()
 	grammr, ok := doc.Document.Root.(grammar.Grammar)
@@ -237,11 +237,7 @@ func TestPopulateTokenModes_ShouldHandleTopLevelTokenGroupProperlyInTokenMode(t 
 	yMode := tokenTypes.TokenModes["Y"]
 	assert.Equal(t, 1, len(yMode.ModeTokenTypes.Keywords))
 	assert.Equal(t, indexKeyword, yMode.ModeTokenTypes.Keywords[0])
-	assert.Equal(t, 1, len(yMode.TokenTypeUsages))
-	keywordUsage2, ok := yMode.TokenTypeUsages[indexKeyword]
-	assert.True(t, ok)
-	assert.Equal(t, "pop", keywordUsage2.Command.Type())
-	assert.Nil(t, keywordUsage2.Command.Mode())
+	assert.Equal(t, 0, len(yMode.TokenTypeUsages))
 }
 
 func TestPopulateTokenTypes_ShouldWorkThanksToTopologicalSort(t *testing.T) {
@@ -303,8 +299,7 @@ func TestPopulateTokenModes_ShouldListTokenTypesInCorrectOrder(t *testing.T) {
 	require.EqualValues(t, []int{idxID, idxUP, idxWS}, tokenMode.ModeTokenTypes.Tokens)
 }
 
-// TODO better name...
-func TestPopulateTokenModes_2(t *testing.T) {
+func TestPopulateTokenModes_ShouldListTokenTypesInCorrectOrder2(t *testing.T) {
 	f := test.New(t, grammar.CreateServices())
 	doc := f.Parse(`
 		grammar Ord;

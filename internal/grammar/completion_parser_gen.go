@@ -476,15 +476,6 @@ func (p *CompletionParser) ParseTokenGroup() {
 	p.cp.EnterRule("TokenGroup", TokenGroup__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.RecordSnapshot(TokenGroup__Basic_1)
-		p.state.Sync(TokenGroup__Basic_1)
-		if p.lookahead.TokenGroupModifierOptional(p.state) {
-			p.cp.MarkAssignment("Modifier")
-			p.state.Consume(TokenGroup_TokenModifier)
-			p.cp.ClearAssignment()
-		}
-	}
-	{
 		p.state.Consume(Keyword_token)
 	}
 	{
@@ -512,7 +503,7 @@ loop0:
 		case 1:
 			{
 				p.cp.MarkAssignment("Keywords")
-				p.state.EnterRule(TokenGroup__Basic_4)
+				p.state.EnterRule(TokenGroup__Basic_2)
 				p.ParseKeyword()
 				p.state.ExitRule()
 				p.cp.ClearAssignment()
@@ -534,17 +525,6 @@ loop0:
 	}
 	{
 		p.state.Consume(Keyword_RightBrace)
-	}
-	{
-		p.cp.RecordSnapshot(TokenGroup__Basic_9)
-		p.state.Sync(TokenGroup__Basic_9)
-		if p.lookahead.TokenGroupCommandOptional(p.state) {
-			p.cp.MarkAssignment("Command")
-			p.state.EnterRule(TokenGroup__Basic_8)
-			p.ParseTokenCommand()
-			p.state.ExitRule()
-			p.cp.ClearAssignment()
-		}
 	}
 	{
 		if p.lookahead.TokenGroupSemicolonOptional(p.state) {

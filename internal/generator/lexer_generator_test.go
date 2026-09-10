@@ -319,10 +319,12 @@ func TestGenerateLexerModeLocalTokenGroupWithCommand(t *testing.T) {
 			hidden WS
 		}
 		token mode Inner {
+			")" -> pop
+			"]" -> pop
 			token group Closers {
 				")"
 				"]"
-			} -> pop
+			}
 		}
 	`)
 	assert.Contains(t, code, "var TokenGroup_Closers =")

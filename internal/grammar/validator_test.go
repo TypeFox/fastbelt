@@ -1772,10 +1772,6 @@ func TestInvisibleTokenDontNeedToBeCoveredByParserRule(t *testing.T) {
 		Foo: Greeting="x";
 
 		hidden token WS: /\s+/
-		comment token group Comment {
-			"//comment"
-			"/*comment*/"
-		}
 	`)
 	doc.AssertNoDiagnostics()
 }
