@@ -42,17 +42,10 @@ type LookaheadReferencesConstructor interface {
 }
 
 type DefaultLookaheadReferencesConstructor struct {
-	sc              *service.Container
-	referenceLinker func() LookaheadReferenceLinker
 }
 
 func NewDefaultLookaheadReferencesConstructor(sc *service.Container) LookaheadReferencesConstructor {
-	return &DefaultLookaheadReferencesConstructor{
-		sc: sc,
-		referenceLinker: sync.OnceValue(func() LookaheadReferenceLinker {
-			return service.MustGet[LookaheadReferenceLinker](sc)
-		}),
-	}
+	return &DefaultLookaheadReferencesConstructor{}
 }
 
 type LookaheadSymbolContainers struct{}
@@ -78,4 +71,8 @@ func (sc *LookaheadSymbolContainer) All() core.SymbolSeq {
 
 func (sc *LookaheadSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 	return core.EmptySymbolDescriptions
+}
+
+func (sc *LookaheadSymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {
+	return nil, true
 }

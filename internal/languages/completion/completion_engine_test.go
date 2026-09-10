@@ -581,7 +581,7 @@ type hidingCompletionFilter struct {
 func (h *hidingCompletionFilter) FilterERef(ctx context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	return func(yield func(*core.SymbolDescription) bool) {
 		for d := range in {
-			if d.Name.String() == h.hide {
+			if d.Unit.String() == h.hide {
 				continue
 			}
 			if !yield(d) {
@@ -704,7 +704,7 @@ func TestCompletion_ContributorReferenceBranching(t *testing.T) {
 	contrib := &recordingContributor{
 		onReference: func(d *core.SymbolDescription, hint *parser.CompletionHint, atnState int, cc server.ContributorContext, accept server.CompletionAcceptor) {
 			observations = append(observations, seen{
-				name:     d.Name.String(),
+				name:     d.Unit.String(),
 				field:    hint.Field,
 				atnState: atnState,
 				node:     cc.Node,
