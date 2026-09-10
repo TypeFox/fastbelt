@@ -1,0 +1,37 @@
+// Copyright 2026 TypeFox GmbH
+// This program and the accompanying materials are made available under the
+// terms of the MIT License, which is available in the project root.
+
+package server
+
+import (
+	"context"
+
+	"typefox.dev/lsp"
+)
+
+// CommandProvider is a service for handling LSP execute command requests.
+//
+// Usage:
+//
+//	type MyCommandProvider struct{ sc *service.Container }
+//
+//	func (p *MyCommandProvider) Commands() []string {
+//	    return []string{"myLanguage.refactor"}
+//	}
+//
+//	func (p *MyCommandProvider) HandleExecuteCommandRequest(ctx context.Context, params *lsp.ExecuteCommandParams) (any, error) {
+//	    switch params.Command {
+//	    case "myLanguage.refactor":
+//	        // Execute refactoring with params.Arguments
+//	        return "Refactoring completed", nil
+//	    default:
+//	        return nil, fmt.Errorf("unknown command: %s", params.Command)
+//	    }
+//	}
+type CommandProvider interface {
+	// Commands returns the names of the commands this provider handles, to be
+	// advertised in the server's executeCommandProvider capability.
+	Commands() []string
+	HandleExecuteCommandRequest(ctx context.Context, params *lsp.ExecuteCommandParams) (any, error)
+}

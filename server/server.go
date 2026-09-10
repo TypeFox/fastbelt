@@ -84,8 +84,71 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			HoverProvider:             optionsIf[HoverProvider, lsp.HoverOptions](s.sc),
 			ReferencesProvider:        optionsIf[ReferencesProvider, lsp.ReferenceOptions](s.sc),
 			RenameProvider:            renameProvider,
+			DeclarationProvider:       optionsIf[DeclarationProvider, lsp.DeclarationRegistrationOptions](s.sc),
+			ImplementationProvider:    optionsIf[ImplementationProvider, lsp.ImplementationRegistrationOptions](s.sc),
+			TypeDefinitionProvider:    optionsIf[TypeDefinitionProvider, lsp.TypeDefinitionRegistrationOptions](s.sc),
+			CallHierarchyProvider:     optionsIf[CallHierarchyProvider, lsp.CallHierarchyRegistrationOptions](s.sc),
+			TypeHierarchyProvider:     optionsIf[TypeHierarchyProvider, lsp.TypeHierarchyRegistrationOptions](s.sc),
+			InlayHintProvider: func() *lsp.InlayHintRegistrationOptions {
+				provider, err := service.Get[InlayHintProvider](s.sc)
+				if err != nil {
+					return nil
+				}
+				_, resolving := provider.(ResolvingInlayHintProvider)
+				return &lsp.InlayHintRegistrationOptions{InlayHintOptions: lsp.InlayHintOptions{ResolveProvider: resolving}}
+			}(),
+			SignatureHelpProvider: buildSignatureHelpOptions(s.sc),
+			CodeActionProvider: func() *lsp.CodeActionOptions {
+				provider, err := service.Get[CodeActionProvider](s.sc)
+				if err != nil {
+					return nil
+				}
+				_, resolving := provider.(ResolvingCodeActionProvider)
+				return &lsp.CodeActionOptions{ResolveProvider: resolving}
+			}(),
+			CodeLensProvider: func() *lsp.CodeLensOptions {
+				provider, err := service.Get[CodeLensProvider](s.sc)
+				if err != nil {
+					return nil
+				}
+				_, resolving := provider.(ResolvingCodeLensProvider)
+				return &lsp.CodeLensOptions{ResolveProvider: resolving}
+			}(),
+			DocumentLinkProvider: func() *lsp.DocumentLinkOptions {
+				provider, err := service.Get[DocumentLinkProvider](s.sc)
+				if err != nil {
+					return nil
+				}
+				_, resolving := provider.(ResolvingDocumentLinkProvider)
+				return &lsp.DocumentLinkOptions{ResolveProvider: resolving}
+			}(),
+			ExecuteCommandProvider: func() *lsp.ExecuteCommandOptions {
+				provider, err := service.Get[CommandProvider](s.sc)
+				if err != nil {
+					return nil
+				}
+				return &lsp.ExecuteCommandOptions{Commands: provider.Commands()}
+			}(),
 		},
 	}, nil
+}
+
+func buildSignatureHelpOptions(sc *service.Container) *lsp.SignatureHelpOptions {
+	if !service.Has[SignatureHelpProvider](sc) {
+		return nil
+	}
+	triggers, err := service.Get[SignatureHelpTriggers](sc)
+	if err != nil {
+		return nil
+	}
+	triggerChars := triggers.TriggerCharacters()
+	if len(triggerChars) == 0 {
+		return nil
+	}
+	return &lsp.SignatureHelpOptions{
+		TriggerCharacters:   triggerChars,
+		RetriggerCharacters: triggers.RetriggerCharacters(),
+	}
 }
 
 func (s *DefaultLanguageServer) Initialized(ctx context.Context, params *lsp.InitializedParams) error {
@@ -152,61 +215,49 @@ func (s *DefaultLanguageServer) DidSave(ctx context.Context, params *lsp.DidSave
 	return nil
 }
 
-func (s *DefaultLanguageServer) Completion(ctx context.Context, params *lsp.CompletionParams) (*lsp.CompletionList, error) {
-	var result *lsp.CompletionList
+// dispatchRead resolves a provider service of type P and, inside a workspace
+// read lock, invokes handle with it to produce the response. If no provider of
+// type P is registered, required determines whether that's reported as an
+// error or treated as an empty result.
+func dispatchRead[P, R any](sc *service.Container, ctx context.Context, required bool, handle func(context.Context, P) (R, error)) (R, error) {
+	var zero R
+	provider, err := service.Get[P](sc)
+	if err != nil {
+		if required {
+			return zero, err
+		}
+		return zero, nil
+	}
+	lock, err := service.Get[workspace.Lock](sc)
+	if err != nil {
+		return zero, err
+	}
+	var result R
 	var providerErr error
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	completion, err := service.Get[CompletionProvider](s.sc)
-	if err != nil {
-		return nil, err
-	}
 	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = completion.HandleCompletionRequest(ctx, params)
+		result, providerErr = handle(ctx, provider)
 	}); err != nil {
-		return nil, err
+		return zero, err
 	}
 	return result, providerErr
+}
+
+func (s *DefaultLanguageServer) Completion(ctx context.Context, params *lsp.CompletionParams) (*lsp.CompletionList, error) {
+	return dispatchRead[CompletionProvider](s.sc, ctx, true, func(ctx context.Context, p CompletionProvider) (*lsp.CompletionList, error) {
+		return p.HandleCompletionRequest(ctx, params)
+	})
 }
 
 func (s *DefaultLanguageServer) Definition(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.DefinitionLink, error) {
-	var result []lsp.DefinitionLink
-	var providerErr error
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	definition, err := service.Get[DefinitionProvider](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = definition.HandleDefinitionRequest(ctx, params)
-	}); err != nil {
-		return nil, err
-	}
-	return result, providerErr
+	return dispatchRead[DefinitionProvider](s.sc, ctx, true, func(ctx context.Context, p DefinitionProvider) ([]lsp.DefinitionLink, error) {
+		return p.HandleDefinitionRequest(ctx, params)
+	})
 }
 
 func (s *DefaultLanguageServer) References(ctx context.Context, params *lsp.ReferenceParams) ([]lsp.Location, error) {
-	var result []lsp.Location
-	var providerErr error
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	references, err := service.Get[ReferencesProvider](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = references.HandleReferencesRequest(ctx, params)
-	}); err != nil {
-		return nil, err
-	}
-	return result, providerErr
+	return dispatchRead[ReferencesProvider](s.sc, ctx, true, func(ctx context.Context, p ReferencesProvider) ([]lsp.Location, error) {
+		return p.HandleReferencesRequest(ctx, params)
+	})
 }
 
 // Implement other required Server interface methods with no-op implementations
@@ -218,25 +269,67 @@ func (s *DefaultLanguageServer) SetTrace(ctx context.Context, params *lsp.SetTra
 	return nil
 }
 func (s *DefaultLanguageServer) IncomingCalls(ctx context.Context, params *lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error) {
-	return nil, nil
+	return dispatchRead[CallHierarchyProvider](s.sc, ctx, false, func(ctx context.Context, p CallHierarchyProvider) ([]lsp.CallHierarchyIncomingCall, error) {
+		return p.HandleIncomingCallsRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) OutgoingCalls(ctx context.Context, params *lsp.CallHierarchyOutgoingCallsParams) ([]lsp.CallHierarchyOutgoingCall, error) {
-	return nil, nil
+	return dispatchRead[CallHierarchyProvider](s.sc, ctx, false, func(ctx context.Context, p CallHierarchyProvider) ([]lsp.CallHierarchyOutgoingCall, error) {
+		return p.HandleOutgoingCallsRequest(ctx, params)
+	})
 }
+
+// dispatchResolveRead resolves a provider service of type P and, if it also
+// implements the resolving sub-interface RP, invokes handle with it inside a
+// workspace read lock to produce the resolved value. If no provider of type P
+// is registered, or the registered one doesn't implement RP, params is
+// returned unchanged.
+func dispatchResolveRead[P, RP, T any](sc *service.Container, ctx context.Context, params T, handle func(context.Context, RP, T) (T, error)) (T, error) {
+	provider, err := service.Get[P](sc)
+	if err != nil {
+		return params, nil
+	}
+	resolving, ok := any(provider).(RP)
+	if !ok {
+		return params, nil
+	}
+	var zero T
+	lock, err := service.Get[workspace.Lock](sc)
+	if err != nil {
+		return zero, err
+	}
+	var result T
+	var providerErr error
+	if err := lock.Read(ctx, func(ctx context.Context) {
+		result, providerErr = handle(ctx, resolving, params)
+	}); err != nil {
+		return zero, err
+	}
+	return result, providerErr
+}
+
 func (s *DefaultLanguageServer) ResolveCodeAction(ctx context.Context, params *lsp.CodeAction) (*lsp.CodeAction, error) {
-	return nil, nil
+	return dispatchResolveRead[CodeActionProvider, ResolvingCodeActionProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingCodeActionProvider, params *lsp.CodeAction) (*lsp.CodeAction, error) {
+		return p.HandleCodeActionResolveRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) ResolveCodeLens(ctx context.Context, params *lsp.CodeLens) (*lsp.CodeLens, error) {
-	return nil, nil
+	return dispatchResolveRead[CodeLensProvider, ResolvingCodeLensProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingCodeLensProvider, params *lsp.CodeLens) (*lsp.CodeLens, error) {
+		return p.HandleCodeLensResolveRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) ResolveCompletionItem(ctx context.Context, params *lsp.CompletionItem) (*lsp.CompletionItem, error) {
 	return nil, nil
 }
 func (s *DefaultLanguageServer) ResolveDocumentLink(ctx context.Context, params *lsp.DocumentLink) (*lsp.DocumentLink, error) {
-	return nil, nil
+	return dispatchResolveRead[DocumentLinkProvider, ResolvingDocumentLinkProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingDocumentLinkProvider, params *lsp.DocumentLink) (*lsp.DocumentLink, error) {
+		return p.HandleDocumentLinkResolveRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) Resolve(ctx context.Context, params *lsp.InlayHint) (*lsp.InlayHint, error) {
-	return nil, nil
+	return dispatchResolveRead[InlayHintProvider, ResolvingInlayHintProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingInlayHintProvider, params *lsp.InlayHint) (*lsp.InlayHint, error) {
+		return p.HandleInlayHintResolveRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) DidChangeNotebookDocument(ctx context.Context, params *lsp.DidChangeNotebookDocumentParams) error {
 	return nil
@@ -251,16 +344,22 @@ func (s *DefaultLanguageServer) DidSaveNotebookDocument(ctx context.Context, par
 	return nil
 }
 func (s *DefaultLanguageServer) CodeAction(ctx context.Context, params *lsp.CodeActionParams) ([]lsp.CodeAction, error) {
-	return nil, nil
+	return dispatchRead[CodeActionProvider](s.sc, ctx, false, func(ctx context.Context, p CodeActionProvider) ([]lsp.CodeAction, error) {
+		return p.HandleCodeActionRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) CodeLens(ctx context.Context, params *lsp.CodeLensParams) ([]lsp.CodeLens, error) {
-	return nil, nil
+	return dispatchRead[CodeLensProvider](s.sc, ctx, false, func(ctx context.Context, p CodeLensProvider) ([]lsp.CodeLens, error) {
+		return p.HandleCodeLensRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) ColorPresentation(ctx context.Context, params *lsp.ColorPresentationParams) ([]lsp.ColorPresentation, error) {
 	return nil, nil
 }
 func (s *DefaultLanguageServer) Declaration(ctx context.Context, params *lsp.DeclarationParams) ([]lsp.DefinitionLink, error) {
-	return nil, nil
+	return dispatchRead[DeclarationProvider](s.sc, ctx, false, func(ctx context.Context, p DeclarationProvider) ([]lsp.DefinitionLink, error) {
+		return p.HandleDeclarationRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) Diagnostic(ctx context.Context, params *lsp.DocumentDiagnosticParams) (*lsp.DocumentDiagnosticReport, error) {
 	return nil, nil
@@ -269,88 +368,43 @@ func (s *DefaultLanguageServer) DocumentColor(ctx context.Context, params *lsp.D
 	return nil, nil
 }
 func (s *DefaultLanguageServer) DocumentHighlight(ctx context.Context, params *lsp.DocumentHighlightParams) ([]lsp.DocumentHighlight, error) {
-	var result []lsp.DocumentHighlight
-	var providerErr error
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	provider, err := service.Get[DocumentHighlightProvider](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = provider.HandleDocumentHighlightRequest(ctx, params)
-	}); err != nil {
-		return nil, err
-	}
-	return result, providerErr
+	return dispatchRead[DocumentHighlightProvider](s.sc, ctx, true, func(ctx context.Context, p DocumentHighlightProvider) ([]lsp.DocumentHighlight, error) {
+		return p.HandleDocumentHighlightRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) DocumentLink(ctx context.Context, params *lsp.DocumentLinkParams) ([]lsp.DocumentLink, error) {
-	return nil, nil
+	return dispatchRead[DocumentLinkProvider](s.sc, ctx, false, func(ctx context.Context, p DocumentLinkProvider) ([]lsp.DocumentLink, error) {
+		return p.HandleDocumentLinkRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) DocumentSymbol(ctx context.Context, params *lsp.DocumentSymbolParams) ([]any, error) {
-	var result []lsp.DocumentSymbol
-	var providerErr error
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	provider, err := service.Get[DocumentSymbolProvider](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = provider.HandleDocumentSymbolRequest(ctx, params)
-	}); err != nil {
-		return nil, err
-	}
-	return toAnySlice(result), providerErr
+	symbols, err := dispatchRead[DocumentSymbolProvider](s.sc, ctx, true, func(ctx context.Context, p DocumentSymbolProvider) ([]lsp.DocumentSymbol, error) {
+		return p.HandleDocumentSymbolRequest(ctx, params)
+	})
+	return toAnySlice(symbols), err
 }
 func (s *DefaultLanguageServer) FoldingRange(ctx context.Context, params *lsp.FoldingRangeParams) ([]lsp.FoldingRange, error) {
-	var result []lsp.FoldingRange
-	var providerErr error
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	provider, err := service.Get[FoldingRangeProvider](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = provider.HandleFoldingRangeRequest(ctx, params)
-	}); err != nil {
-		return nil, err
-	}
-	return result, providerErr
+	return dispatchRead[FoldingRangeProvider](s.sc, ctx, true, func(ctx context.Context, p FoldingRangeProvider) ([]lsp.FoldingRange, error) {
+		return p.HandleFoldingRangeRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) Formatting(ctx context.Context, params *lsp.DocumentFormattingParams) ([]lsp.TextEdit, error) {
 	return nil, nil
 }
 func (s *DefaultLanguageServer) Hover(ctx context.Context, params *lsp.HoverParams) (*lsp.Hover, error) {
-	var result *lsp.Hover
-	var providerErr error
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	provider, err := service.Get[HoverProvider](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = provider.HandleHoverRequest(ctx, params)
-	}); err != nil {
-		return nil, err
-	}
-	return result, providerErr
+	return dispatchRead[HoverProvider](s.sc, ctx, true, func(ctx context.Context, p HoverProvider) (*lsp.Hover, error) {
+		return p.HandleHoverRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) Implementation(ctx context.Context, params *lsp.ImplementationParams) ([]lsp.DefinitionLink, error) {
-	return nil, nil
+	return dispatchRead[ImplementationProvider](s.sc, ctx, false, func(ctx context.Context, p ImplementationProvider) ([]lsp.DefinitionLink, error) {
+		return p.HandleImplementationRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) InlayHint(ctx context.Context, params *lsp.InlayHintParams) ([]lsp.InlayHint, error) {
-	return nil, nil
+	return dispatchRead[InlayHintProvider](s.sc, ctx, false, func(ctx context.Context, p InlayHintProvider) ([]lsp.InlayHint, error) {
+		return p.HandleInlayHintRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) InlineCompletion(ctx context.Context, params *lsp.InlineCompletionParams) (*lsp.ResultTextDocumentInlineCompletion, error) {
 	return nil, nil
@@ -383,25 +437,17 @@ func (s *DefaultLanguageServer) DidRenameFiles(ctx context.Context, params *lsp.
 	return nil
 }
 func (s *DefaultLanguageServer) ExecuteCommand(ctx context.Context, params *lsp.ExecuteCommandParams) (any, error) {
-	return nil, nil
+	provider, err := service.Get[CommandProvider](s.sc)
+	if err != nil {
+		return nil, nil
+	}
+	return provider.HandleExecuteCommandRequest(ctx, params)
 }
 func (s *DefaultLanguageServer) Symbol(ctx context.Context, params *lsp.WorkspaceSymbolParams) ([]lsp.SymbolInformation, error) {
-	var result []lsp.SymbolInformation
-	var providerErr error
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	provider, err := service.Get[WorkspaceSymbolProvider](s.sc)
-	if err != nil {
-		return nil, nil // No provider registered, return empty
-	}
-	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = provider.HandleWorkspaceSymbolRequest(ctx, params)
-	}); err != nil {
-		return nil, err
-	}
-	return result, providerErr
+	// No provider registered, return empty
+	return dispatchRead[WorkspaceSymbolProvider](s.sc, ctx, false, func(ctx context.Context, p WorkspaceSymbolProvider) ([]lsp.SymbolInformation, error) {
+		return p.HandleWorkspaceSymbolRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) TextDocumentContent(ctx context.Context, params *lsp.TextDocumentContentParams) (*lsp.TextDocumentContentResult, error) {
 	return nil, nil
@@ -425,28 +471,19 @@ func (s *DefaultLanguageServer) OnTypeFormatting(ctx context.Context, params *ls
 	return nil, nil
 }
 func (s *DefaultLanguageServer) PrepareCallHierarchy(ctx context.Context, params *lsp.CallHierarchyPrepareParams) ([]lsp.CallHierarchyItem, error) {
-	return nil, nil
+	return dispatchRead[CallHierarchyProvider](s.sc, ctx, false, func(ctx context.Context, p CallHierarchyProvider) ([]lsp.CallHierarchyItem, error) {
+		return p.HandlePrepareCallHierarchyRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) PrepareRename(ctx context.Context, params *lsp.PrepareRenameParams) (*lsp.PrepareRenameResult, error) {
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	renameProvider, err := service.Get[RenameProvider](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	var result *lsp.PrepareRenameResult
-	var providerErr error
-	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = renameProvider.PrepareRenameRequest(ctx, params)
-	}); err != nil {
-		return nil, err
-	}
-	return result, providerErr
+	return dispatchRead[RenameProvider](s.sc, ctx, true, func(ctx context.Context, p RenameProvider) (*lsp.PrepareRenameResult, error) {
+		return p.PrepareRenameRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) PrepareTypeHierarchy(ctx context.Context, params *lsp.TypeHierarchyPrepareParams) ([]lsp.TypeHierarchyItem, error) {
-	return nil, nil
+	return dispatchRead[TypeHierarchyProvider](s.sc, ctx, false, func(ctx context.Context, p TypeHierarchyProvider) ([]lsp.TypeHierarchyItem, error) {
+		return p.HandlePrepareTypeHierarchyRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) RangeFormatting(ctx context.Context, params *lsp.DocumentRangeFormattingParams) ([]lsp.TextEdit, error) {
 	return nil, nil
@@ -455,22 +492,9 @@ func (s *DefaultLanguageServer) RangesFormatting(ctx context.Context, params *ls
 	return nil, nil
 }
 func (s *DefaultLanguageServer) Rename(ctx context.Context, params *lsp.RenameParams) (*lsp.WorkspaceEdit, error) {
-	lock, err := service.Get[workspace.Lock](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	renameProvider, err := service.Get[RenameProvider](s.sc)
-	if err != nil {
-		return nil, err
-	}
-	var result *lsp.WorkspaceEdit
-	var providerErr error
-	if err := lock.Read(ctx, func(ctx context.Context) {
-		result, providerErr = renameProvider.HandleRenameRequest(ctx, params)
-	}); err != nil {
-		return nil, err
-	}
-	return result, providerErr
+	return dispatchRead[RenameProvider](s.sc, ctx, true, func(ctx context.Context, p RenameProvider) (*lsp.WorkspaceEdit, error) {
+		return p.HandleRenameRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) SelectionRange(ctx context.Context, params *lsp.SelectionRangeParams) ([]lsp.SelectionRange, error) {
 	return nil, nil
@@ -485,16 +509,24 @@ func (s *DefaultLanguageServer) SemanticTokensRange(ctx context.Context, params 
 	return nil, nil
 }
 func (s *DefaultLanguageServer) SignatureHelp(ctx context.Context, params *lsp.SignatureHelpParams) (*lsp.SignatureHelp, error) {
-	return nil, nil
+	return dispatchRead[SignatureHelpProvider](s.sc, ctx, false, func(ctx context.Context, p SignatureHelpProvider) (*lsp.SignatureHelp, error) {
+		return p.HandleSignatureHelpRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) TypeDefinition(ctx context.Context, params *lsp.TypeDefinitionParams) ([]lsp.DefinitionLink, error) {
-	return nil, nil
+	return dispatchRead[TypeDefinitionProvider](s.sc, ctx, false, func(ctx context.Context, p TypeDefinitionProvider) ([]lsp.DefinitionLink, error) {
+		return p.HandleTypeDefinitionRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) Subtypes(ctx context.Context, params *lsp.TypeHierarchySubtypesParams) ([]lsp.TypeHierarchyItem, error) {
-	return nil, nil
+	return dispatchRead[TypeHierarchyProvider](s.sc, ctx, false, func(ctx context.Context, p TypeHierarchyProvider) ([]lsp.TypeHierarchyItem, error) {
+		return p.HandleSubtypesRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) Supertypes(ctx context.Context, params *lsp.TypeHierarchySupertypesParams) ([]lsp.TypeHierarchyItem, error) {
-	return nil, nil
+	return dispatchRead[TypeHierarchyProvider](s.sc, ctx, false, func(ctx context.Context, p TypeHierarchyProvider) ([]lsp.TypeHierarchyItem, error) {
+		return p.HandleSupertypesRequest(ctx, params)
+	})
 }
 func (s *DefaultLanguageServer) WorkDoneProgressCancel(ctx context.Context, params *lsp.WorkDoneProgressCancelParams) error {
 	return nil

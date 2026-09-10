@@ -76,16 +76,19 @@ func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[CompletionContributor](sc) {
 		service.Put(sc, NewDefaultCompletionContributor())
 	}
+	if !service.Has[SignatureHelpTriggers](sc) {
+		service.Put(sc, NewDefaultSignatureHelpTriggers())
+	}
 	if !service.Has[DocumentHighlightProvider](sc) {
 		service.Put(sc, NewDefaultDocumentHighlightProvider(sc))
 	}
 	if !service.Has[WorkspaceSymbolProvider](sc) {
 		service.Put(sc, NewDefaultWorkspaceSymbolProvider(sc))
-		if !service.Has[DocumentationProvider](sc) {
-			service.Put(sc, NewDefaultDocumentationProvider())
-		}
-		if !service.Has[HoverProvider](sc) {
-			service.Put(sc, NewDefaultHoverProvider(sc))
-		}
+	}
+	if !service.Has[DocumentationProvider](sc) {
+		service.Put(sc, NewDefaultDocumentationProvider())
+	}
+	if !service.Has[HoverProvider](sc) {
+		service.Put(sc, NewDefaultHoverProvider(sc))
 	}
 }
