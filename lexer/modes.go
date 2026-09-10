@@ -85,19 +85,26 @@ func NewTokenMode(name string, tokenTypeUsages ...*TokenTypeUsage) *TokenMode {
 // is never empty. TokenModeStack is not safe for concurrent use; each
 // [DefaultLexer.Exec] uses its own.
 type TokenModeStack struct {
-	modes []*TokenMode
+	modesBuffer [8]*TokenMode
+	modes       []*TokenMode
 }
 
 // NewTokenModeStack returns a stack holding defaultMode as its only entry.
 func NewTokenModeStack(defaultMode *TokenMode) *TokenModeStack {
-	return &TokenModeStack{
-		modes: []*TokenMode{defaultMode},
-	}
+	s := &TokenModeStack{}
+	s.modes = s.modesBuffer[:1]
+	s.modes[0] = defaultMode
+	return s
 }
 
 // Push makes mode the active mode, keeping the previous one for a later [Pop].
-func (s *TokenModeStack) Push(mode *TokenMode) {
-	s.modes = append(s.modes, mode)
+func (s *TokenModeStack) Push(m *TokenMode) {
+	if len(s.modes) == cap(s.modes) {
+		newModes := make([]*TokenMode, len(s.modes), len(s.modes)*2)
+		copy(newModes, s.modes)
+		s.modes = newModes
+	}
+	s.modes = append(s.modes, m)
 }
 
 // Pop removes the active mode and returns it, making the mode below it active
