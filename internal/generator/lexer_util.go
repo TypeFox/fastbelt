@@ -479,7 +479,7 @@ func GetAllKeywords(grammr grammar.Grammar) GetAllKeywordsResult {
 			allNodes = append(allNodes, keyword)
 		}
 	}
-	return keysFromMap(keywords)
+	return organizeKeywords(allNodes)
 }
 
 type GetAllTokenDeclsResult struct {
@@ -544,14 +544,17 @@ func GetAllTokenGroups(grammr grammar.Grammar) GetAllTokenGroupsResult {
 	}
 }
 
-func keysFromMap(m map[string]grammar.Keyword) GetAllKeywordsResult {
+func organizeKeywords(order []grammar.Keyword) GetAllKeywordsResult {
+	alreadyUsed := map[string]bool{}
 	keywords := []grammar.Keyword{}
-	for _, v := range m {
-		keywords = append(keywords, v)
-	}
 	byValue := map[string]int{}
-	for i, k := range keywords {
-		byValue[k.Value()] = i
+	for i, k := range order {
+		value := k.Value()
+		if _, ok := alreadyUsed[value]; !ok {
+			byValue[value] = i
+			keywords = append(keywords, k)
+			alreadyUsed[value] = true
+		}
 	}
 	return GetAllKeywordsResult{
 		Keywords: keywords,

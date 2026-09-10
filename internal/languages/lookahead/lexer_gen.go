@@ -9,23 +9,39 @@ import (
 	"unicode/utf8"
 )
 
-const Keyword_AsteriskAsterisk_Idx = 1
+const Keyword_a_Idx = 1
 
-var Keyword_AsteriskAsterisk = core.NewTokenType(
-	Keyword_AsteriskAsterisk_Idx,
-	"**",
-	"**",
+var Keyword_a = core.NewTokenType(
+	Keyword_a_Idx,
+	"a",
+	"a",
 	core.TokenKindKeyword,
 	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "**") {
-			return 2
+		if strings.HasPrefix(text[offset:], "a") {
+			return 1
 		}
 		return 0
 	},
-	[]rune{'*'},
+	[]rune{'a'},
 )
 
-const Keyword_Dot_Idx = 2
+const Keyword_b_Idx = 2
+
+var Keyword_b = core.NewTokenType(
+	Keyword_b_Idx,
+	"b",
+	"b",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "b") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'b'},
+)
+
+const Keyword_Dot_Idx = 3
 
 var Keyword_Dot = core.NewTokenType(
 	Keyword_Dot_Idx,
@@ -41,36 +57,20 @@ var Keyword_Dot = core.NewTokenType(
 	[]rune{'.'},
 )
 
-const Keyword_Slash_Idx = 3
+const Keyword_c_Idx = 4
 
-var Keyword_Slash = core.NewTokenType(
-	Keyword_Slash_Idx,
-	"/",
-	"/",
+var Keyword_c = core.NewTokenType(
+	Keyword_c_Idx,
+	"c",
+	"c",
 	core.TokenKindKeyword,
 	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "/") {
+		if strings.HasPrefix(text[offset:], "c") {
 			return 1
 		}
 		return 0
 	},
-	[]rune{'/'},
-)
-
-const Keyword_Colon_Idx = 4
-
-var Keyword_Colon = core.NewTokenType(
-	Keyword_Colon_Idx,
-	":",
-	":",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], ":") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{':'},
+	[]rune{'c'},
 )
 
 const Keyword_ColonColon_Idx = 5
@@ -89,55 +89,23 @@ var Keyword_ColonColon = core.NewTokenType(
 	[]rune{':'},
 )
 
-const Keyword_a_Idx = 6
+const Keyword_AsteriskAsterisk_Idx = 6
 
-var Keyword_a = core.NewTokenType(
-	Keyword_a_Idx,
-	"a",
-	"a",
+var Keyword_AsteriskAsterisk = core.NewTokenType(
+	Keyword_AsteriskAsterisk_Idx,
+	"**",
+	"**",
 	core.TokenKindKeyword,
 	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "a") {
-			return 1
+		if strings.HasPrefix(text[offset:], "**") {
+			return 2
 		}
 		return 0
 	},
-	[]rune{'a'},
+	[]rune{'*'},
 )
 
-const Keyword_b_Idx = 7
-
-var Keyword_b = core.NewTokenType(
-	Keyword_b_Idx,
-	"b",
-	"b",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "b") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'b'},
-)
-
-const Keyword_c_Idx = 8
-
-var Keyword_c = core.NewTokenType(
-	Keyword_c_Idx,
-	"c",
-	"c",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "c") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'c'},
-)
-
-const Keyword_d_Idx = 9
+const Keyword_d_Idx = 7
 
 var Keyword_d = core.NewTokenType(
 	Keyword_d_Idx,
@@ -153,7 +121,7 @@ var Keyword_d = core.NewTokenType(
 	[]rune{'d'},
 )
 
-const Keyword_e_Idx = 10
+const Keyword_e_Idx = 8
 
 var Keyword_e = core.NewTokenType(
 	Keyword_e_Idx,
@@ -167,6 +135,38 @@ var Keyword_e = core.NewTokenType(
 		return 0
 	},
 	[]rune{'e'},
+)
+
+const Keyword_hello_Idx = 9
+
+var Keyword_hello = core.NewTokenType(
+	Keyword_hello_Idx,
+	"hello",
+	"hello",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "hello") {
+			return 5
+		}
+		return 0
+	},
+	[]rune{'h'},
+)
+
+const Keyword_world_Idx = 10
+
+var Keyword_world = core.NewTokenType(
+	Keyword_world_Idx,
+	"world",
+	"world",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "world") {
+			return 5
+		}
+		return 0
+	},
+	[]rune{'w'},
 )
 
 const Keyword_f_Idx = 11
@@ -217,23 +217,7 @@ var Keyword_h = core.NewTokenType(
 	[]rune{'h'},
 )
 
-const Keyword_hello_Idx = 14
-
-var Keyword_hello = core.NewTokenType(
-	Keyword_hello_Idx,
-	"hello",
-	"hello",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "hello") {
-			return 5
-		}
-		return 0
-	},
-	[]rune{'h'},
-)
-
-const Keyword_i_Idx = 15
+const Keyword_i_Idx = 14
 
 var Keyword_i = core.NewTokenType(
 	Keyword_i_Idx,
@@ -249,20 +233,36 @@ var Keyword_i = core.NewTokenType(
 	[]rune{'i'},
 )
 
-const Keyword_world_Idx = 16
+const Keyword_Slash_Idx = 15
 
-var Keyword_world = core.NewTokenType(
-	Keyword_world_Idx,
-	"world",
-	"world",
+var Keyword_Slash = core.NewTokenType(
+	Keyword_Slash_Idx,
+	"/",
+	"/",
 	core.TokenKindKeyword,
 	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "world") {
-			return 5
+		if strings.HasPrefix(text[offset:], "/") {
+			return 1
 		}
 		return 0
 	},
-	[]rune{'w'},
+	[]rune{'/'},
+)
+
+const Keyword_Colon_Idx = 16
+
+var Keyword_Colon = core.NewTokenType(
+	Keyword_Colon_Idx,
+	":",
+	":",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], ":") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{':'},
 )
 
 const Token_WS_Idx = 17
@@ -414,22 +414,22 @@ const (
 func NewLexer() lexer.Lexer {
 	modes := make([]*lexer.TokenMode, 1)
 	modes[TokenMode_default] = lexer.NewTokenMode("default",
-		lexer.UseTokenType(Keyword_AsteriskAsterisk),
-		lexer.UseTokenType(Keyword_Dot),
-		lexer.UseTokenType(Keyword_Slash),
-		lexer.UseTokenType(Keyword_Colon),
-		lexer.UseTokenType(Keyword_ColonColon),
 		lexer.UseTokenType(Keyword_a),
 		lexer.UseTokenType(Keyword_b),
+		lexer.UseTokenType(Keyword_Dot),
 		lexer.UseTokenType(Keyword_c),
+		lexer.UseTokenType(Keyword_ColonColon),
+		lexer.UseTokenType(Keyword_AsteriskAsterisk),
 		lexer.UseTokenType(Keyword_d),
 		lexer.UseTokenType(Keyword_e),
+		lexer.UseTokenType(Keyword_hello),
+		lexer.UseTokenType(Keyword_world),
 		lexer.UseTokenType(Keyword_f),
 		lexer.UseTokenType(Keyword_g),
 		lexer.UseTokenType(Keyword_h),
-		lexer.UseTokenType(Keyword_hello),
 		lexer.UseTokenType(Keyword_i),
-		lexer.UseTokenType(Keyword_world),
+		lexer.UseTokenType(Keyword_Slash),
+		lexer.UseTokenType(Keyword_Colon),
 		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
 		lexer.UseTokenType(Token_ID),
 	)

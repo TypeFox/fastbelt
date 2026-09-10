@@ -9,36 +9,36 @@ import (
 	"unicode/utf8"
 )
 
-const Keyword_EqualsGreaterThan_Idx = 1
+const Keyword_statemachine_Idx = 1
 
-var Keyword_EqualsGreaterThan = core.NewTokenType(
-	Keyword_EqualsGreaterThan_Idx,
-	"=>",
-	"=>",
+var Keyword_statemachine = core.NewTokenType(
+	Keyword_statemachine_Idx,
+	"statemachine",
+	"statemachine",
 	core.TokenKindKeyword,
 	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "=>") {
-			return 2
+		if strings.HasPrefix(text[offset:], "statemachine") {
+			return 12
 		}
 		return 0
 	},
-	[]rune{'='},
+	[]rune{'s'},
 )
 
-const Keyword_actions_Idx = 2
+const Keyword_events_Idx = 2
 
-var Keyword_actions = core.NewTokenType(
-	Keyword_actions_Idx,
-	"actions",
-	"actions",
+var Keyword_events = core.NewTokenType(
+	Keyword_events_Idx,
+	"events",
+	"events",
 	core.TokenKindKeyword,
 	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "actions") {
-			return 7
+		if strings.HasPrefix(text[offset:], "events") {
+			return 6
 		}
 		return 0
 	},
-	[]rune{'a'},
+	[]rune{'e'},
 )
 
 const Keyword_commands_Idx = 3
@@ -57,39 +57,7 @@ var Keyword_commands = core.NewTokenType(
 	[]rune{'c'},
 )
 
-const Keyword_end_Idx = 4
-
-var Keyword_end = core.NewTokenType(
-	Keyword_end_Idx,
-	"end",
-	"end",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "end") {
-			return 3
-		}
-		return 0
-	},
-	[]rune{'e'},
-)
-
-const Keyword_events_Idx = 5
-
-var Keyword_events = core.NewTokenType(
-	Keyword_events_Idx,
-	"events",
-	"events",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "events") {
-			return 6
-		}
-		return 0
-	},
-	[]rune{'e'},
-)
-
-const Keyword_initialState_Idx = 6
+const Keyword_initialState_Idx = 4
 
 var Keyword_initialState = core.NewTokenType(
 	Keyword_initialState_Idx,
@@ -105,7 +73,7 @@ var Keyword_initialState = core.NewTokenType(
 	[]rune{'i'},
 )
 
-const Keyword_state_Idx = 7
+const Keyword_state_Idx = 5
 
 var Keyword_state = core.NewTokenType(
 	Keyword_state_Idx,
@@ -121,23 +89,23 @@ var Keyword_state = core.NewTokenType(
 	[]rune{'s'},
 )
 
-const Keyword_statemachine_Idx = 8
+const Keyword_actions_Idx = 6
 
-var Keyword_statemachine = core.NewTokenType(
-	Keyword_statemachine_Idx,
-	"statemachine",
-	"statemachine",
+var Keyword_actions = core.NewTokenType(
+	Keyword_actions_Idx,
+	"actions",
+	"actions",
 	core.TokenKindKeyword,
 	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "statemachine") {
-			return 12
+		if strings.HasPrefix(text[offset:], "actions") {
+			return 7
 		}
 		return 0
 	},
-	[]rune{'s'},
+	[]rune{'a'},
 )
 
-const Keyword_LeftBrace_Idx = 9
+const Keyword_LeftBrace_Idx = 7
 
 var Keyword_LeftBrace = core.NewTokenType(
 	Keyword_LeftBrace_Idx,
@@ -153,7 +121,7 @@ var Keyword_LeftBrace = core.NewTokenType(
 	[]rune{'{'},
 )
 
-const Keyword_RightBrace_Idx = 10
+const Keyword_RightBrace_Idx = 8
 
 var Keyword_RightBrace = core.NewTokenType(
 	Keyword_RightBrace_Idx,
@@ -167,6 +135,38 @@ var Keyword_RightBrace = core.NewTokenType(
 		return 0
 	},
 	[]rune{'}'},
+)
+
+const Keyword_end_Idx = 9
+
+var Keyword_end = core.NewTokenType(
+	Keyword_end_Idx,
+	"end",
+	"end",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "end") {
+			return 3
+		}
+		return 0
+	},
+	[]rune{'e'},
+)
+
+const Keyword_EqualsGreaterThan_Idx = 10
+
+var Keyword_EqualsGreaterThan = core.NewTokenType(
+	Keyword_EqualsGreaterThan_Idx,
+	"=>",
+	"=>",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "=>") {
+			return 2
+		}
+		return 0
+	},
+	[]rune{'='},
 )
 
 const Token_ID_Idx = 11
@@ -528,16 +528,16 @@ const (
 func NewLexer() lexer.Lexer {
 	modes := make([]*lexer.TokenMode, 1)
 	modes[TokenMode_default] = lexer.NewTokenMode("default",
-		lexer.UseTokenType(Keyword_EqualsGreaterThan),
-		lexer.UseTokenType(Keyword_actions),
-		lexer.UseTokenType(Keyword_commands),
-		lexer.UseTokenType(Keyword_end),
+		lexer.UseTokenType(Keyword_statemachine),
 		lexer.UseTokenType(Keyword_events),
+		lexer.UseTokenType(Keyword_commands),
 		lexer.UseTokenType(Keyword_initialState),
 		lexer.UseTokenType(Keyword_state),
-		lexer.UseTokenType(Keyword_statemachine),
+		lexer.UseTokenType(Keyword_actions),
 		lexer.UseTokenType(Keyword_LeftBrace),
 		lexer.UseTokenType(Keyword_RightBrace),
+		lexer.UseTokenType(Keyword_end),
+		lexer.UseTokenType(Keyword_EqualsGreaterThan),
 		lexer.UseTokenType(Token_ID),
 		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
 		lexer.UseTokenType(Token_ML_COMMENT).WithModifier(core.CommentModifier),

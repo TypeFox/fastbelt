@@ -4,6 +4,7 @@ package token_modes
 
 import (
 	"sync"
+
 	"typefox.dev/fastbelt/parser"
 )
 

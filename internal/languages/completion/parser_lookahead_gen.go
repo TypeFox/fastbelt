@@ -15,17 +15,17 @@ const (
 
 var BAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_FIRST, Token_SECOND},
-	Lookup: []int{12: 1, 24: 2},
+	Lookup: []int{19: 1, 20: 2},
 }
 
 var JAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_SELF},
-	Lookup: []int{25: 2, 32: 1},
+	Lookup: []int{22: 2, 32: 1},
 }
 
 var RootObjectsAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_DECLARE, Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h, Keyword_i, Keyword_j, Keyword_k, Keyword_l, Keyword_m, Keyword_n, Keyword_o},
-	Lookup: []int{2: 2, 4: 3, 5: 4, 7: 5, 8: 1, 9: 6, 11: 7, 13: 8, 14: 9, 15: 10, 16: 11, 17: 12, 18: 13, 20: 14, 21: 15, 22: 16},
+	Lookup: []int{1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 11, 11: 12, 14: 13, 15: 14, 16: 15, 17: 16, 18: 1},
 }
 
 // CompletionParserLookahead abstracts every lookahead/prediction decision performed by

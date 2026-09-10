@@ -8,18 +8,18 @@ import (
 )
 
 var ModuleStatementsLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_LeftParen, Keyword_def, Token_ID, Token_NUMBER},
-	Lookup: []int{2: 1, 12: 1, 14: 1, 15: 1},
+	Types:  []*core.TokenType{Keyword_def, Keyword_LeftParen, Token_ID, Token_NUMBER},
+	Lookup: []int{2: 1, 3: 1, 14: 1, 15: 1},
 }
 
 var PrimaryExpressionAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_LeftParen, Token_NUMBER, Token_ID},
-	Lookup: []int{2: 1, 14: 3, 15: 2},
+	Lookup: []int{3: 1, 14: 3, 15: 2},
 }
 
 var StatementAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_def, Keyword_LeftParen, Token_ID, Token_NUMBER},
-	Lookup: []int{2: 2, 12: 1, 14: 2, 15: 2},
+	Lookup: []int{2: 1, 3: 2, 14: 2, 15: 2},
 }
 
 // ArithmeticsParserLookahead abstracts every lookahead/prediction decision performed by
