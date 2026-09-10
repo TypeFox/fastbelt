@@ -13,6 +13,7 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/collections"
+	"typefox.dev/fastbelt/util/service"
 )
 
 const (
@@ -63,7 +64,7 @@ var reservedFieldNames = map[string]string{
 // GrammarImpl.Validate checks grammar-level constraints:
 //   - Rule names must be unique within the grammar.
 //   - Interface names must be unique within the grammar.
-func (g *GrammarImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
+func (g *GrammarImpl) Validate(_ context.Context, _ *service.Container, _ string, accept core.ValidationAcceptor) {
 	checkUniqueRuleNames(g, accept)
 	checkUniqueInterfaceNames(g, accept)
 }
@@ -129,7 +130,7 @@ func checkUniqueInterfaceNames(g Grammar, accept core.ValidationAcceptor) {
 
 // TokenImpl.Validate checks terminal rule constraints:
 //   - The regular expression should not match the empty string.
-func (t *TokenImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
+func (t *TokenImpl) Validate(_ context.Context, _ *service.Container, _ string, accept core.ValidationAcceptor) {
 	checkEmptyTerminalRule(t, accept)
 }
 
@@ -162,7 +163,7 @@ func checkEmptyTerminalRule(t Token, accept core.ValidationAcceptor) {
 //   - Keywords cannot be empty.
 //   - Keywords cannot consist only of whitespace.
 //   - Keywords should not contain whitespace characters (warning).
-func (k *KeywordImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
+func (k *KeywordImpl) Validate(_ context.Context, _ *service.Container, _ string, accept core.ValidationAcceptor) {
 	checkKeyword(k, accept)
 }
 
@@ -198,7 +199,7 @@ func checkKeyword(k Keyword, accept core.ValidationAcceptor) {
 	}
 }
 
-func (rule *ParserRuleImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
+func (rule *ParserRuleImpl) Validate(ctx context.Context, _ *service.Container, _ string, accept core.ValidationAcceptor) {
 	checkRuleReturnType(rule, ctx, accept)
 }
 
@@ -224,7 +225,7 @@ func checkRuleReturnType(rule ParserRule, _ context.Context, accept core.Validat
 	}
 }
 
-func (i *InterfaceImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
+func (i *InterfaceImpl) Validate(ctx context.Context, _ *service.Container, _ string, accept core.ValidationAcceptor) {
 	checkInterfaceExtends(i, ctx, accept)
 	checkInterfaceFieldNames(i, ctx, accept)
 	checkInterfaceFieldTypes(i, accept)
@@ -443,7 +444,7 @@ func appearsInExtends(target Interface, current Interface, ctx context.Context, 
 	return false
 }
 
-func (r *RuleCallImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
+func (r *RuleCallImpl) Validate(ctx context.Context, _ *service.Container, _ string, accept core.ValidationAcceptor) {
 	assignment := core.ContainerOfType[Assignment](r)
 	if assignment == nil {
 		// Some validations only apply to unassigned rule calls
@@ -518,7 +519,7 @@ func checkRuleCallPosition(call RuleCall, _ context.Context, accept core.Validat
 	}
 }
 
-func (a *ActionImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
+func (a *ActionImpl) Validate(ctx context.Context, _ *service.Container, _ string, accept core.ValidationAcceptor) {
 	checkActionAssignmentType(a, ctx, accept)
 	checkActionPropertyType(a, ctx, accept)
 }
@@ -598,7 +599,7 @@ func checkActionPropertyType(a Action, ctx context.Context, accept core.Validati
 	}
 }
 
-func (a *AssignmentImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
+func (a *AssignmentImpl) Validate(ctx context.Context, _ *service.Container, _ string, accept core.ValidationAcceptor) {
 	checkAssignmentType(a, ctx, accept)
 }
 
@@ -790,7 +791,7 @@ func doInterfaceIsAssignableTo(source Interface, target Interface, visited colle
 	return false
 }
 
-func (tg *TokenGroupImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
+func (tg *TokenGroupImpl) Validate(_ context.Context, _ *service.Container, _ string, accept core.ValidationAcceptor) {
 	checkRecursiveTokenGroup(tg, accept)
 	checkInvalidTokensInGroup(tg, accept)
 }
@@ -867,7 +868,7 @@ func checkInvalidTokensInGroup(tg TokenGroup, accept core.ValidationAcceptor) {
 //   - Operators must be keywords, tokens, or token groups (not hidden or
 //     comment tokens), and no operator may appear in two precedence groups.
 //   - The name of the generated operator token group must be available.
-func (rule *InfixRuleImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
+func (rule *InfixRuleImpl) Validate(ctx context.Context, _ *service.Container, _ string, accept core.ValidationAcceptor) {
 	checkInfixNodeType(rule, ctx, accept)
 	checkInfixOperandRule(rule, ctx, accept)
 	checkInfixOperators(rule, ctx, accept)
@@ -1139,7 +1140,7 @@ func doFindInterfaceField(iface Interface, name string, ctx context.Context, vis
 	return nil
 }
 
-func (cr *CrossRefImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
+func (cr *CrossRefImpl) Validate(ctx context.Context, _ *service.Container, _ string, accept core.ValidationAcceptor) {
 	checkCrossRefHasTerminal(cr, ctx, accept)
 	checkCrossRefToken(cr, ctx, accept)
 }
