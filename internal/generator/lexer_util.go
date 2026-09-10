@@ -340,9 +340,6 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 
 		for _, token := range tokens.TopLevel {
 			tokenIndex := result.TokenIndex.ByToken[token]
-			if result.TokenIndex.SourceType[tokenIndex] != SourceTokenDecl {
-				continue
-			}
 			if !slices.Contains(defaultMode.ModeTokenTypes.Tokens, tokenIndex) {
 				defaultMode.ModeTokenTypes.Tokens = append(defaultMode.ModeTokenTypes.Tokens, tokenIndex)
 			}
@@ -389,7 +386,6 @@ func populateTokenTypes(result *GenerateTokenTypesResult) {
 			code.AppendLine("const ", GeneratedTokenIdxName(token), " = ", GeneratedTokenIdxName(keyword))
 			code.AppendLine()
 			code.AppendLine("var ", varName, " = ", GeneratedTokenName(keyword))
-			mergeImports(result.Imports, map[string]bool{})
 			currentTokenIndex = result.TokenIndex.ByKeyword[keyword.Value()]
 			result.TokenIndex.SourceType[currentTokenIndex] = SourceTokenDecl
 			tokenType := TokenType{
