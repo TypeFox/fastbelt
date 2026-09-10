@@ -471,6 +471,7 @@ func checkTokenModesCoverParserTokens(g Grammar, ctx context.Context, accept cor
 	}
 	coverage := collectTokenModeCoverage(g, ctx)
 	reported := collections.NewSet[string]()
+	allKeywords := allGrammarKeywords(g)
 outerLoop:
 	for node := range core.AllChildren(g) {
 		switch node := node.(type) {
@@ -513,7 +514,7 @@ outerLoop:
 						//error is already reported by the grammar validator, so ignore it here
 						continue
 					}
-					for _, keyword := range allGrammarKeywords(g) {
+					for _, keyword := range allKeywords {
 						value := KeywordValue(keyword)
 						if pattern.MatchString(value) && coverage.keywords.Has(value) {
 							continue outerLoop
