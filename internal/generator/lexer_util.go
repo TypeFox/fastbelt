@@ -318,6 +318,7 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 	}
 	if result.TokenModes["default"] == nil {
 		//if token mode "default" is not defined, we need to create it
+		alreadyUsed := map[int]bool{}
 		defaultMode := TokenMode{
 			Id:      len(result.TokenModes),
 			VarName: "TokenMode_default",
@@ -332,16 +333,18 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 
 		for _, keyword := range keywords.Keywords {
 			tokenIndex := result.TokenIndex.ByKeyword[keyword.Value()]
-			if slices.Contains(defaultMode.ModeTokenTypes.Keywords, tokenIndex) {
+			if _, ok := alreadyUsed[tokenIndex]; ok {
 				continue
 			}
+			alreadyUsed[tokenIndex] = true
 			defaultMode.ModeTokenTypes.Keywords = append(defaultMode.ModeTokenTypes.Keywords, tokenIndex)
 			//keywords don't have type or command, so we don't need to add anything to TokenTypeUsages
 		}
 
 		for _, token := range tokens.TopLevel {
 			tokenIndex := result.TokenIndex.ByToken[token]
-			if !slices.Contains(defaultMode.ModeTokenTypes.Tokens, tokenIndex) {
+			if _, ok := alreadyUsed[tokenIndex]; !ok {
+				alreadyUsed[tokenIndex] = true
 				defaultMode.ModeTokenTypes.Tokens = append(defaultMode.ModeTokenTypes.Tokens, tokenIndex)
 			}
 			if token.Modifier() != "" || token.Command() != nil {

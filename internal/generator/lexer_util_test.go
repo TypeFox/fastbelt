@@ -320,7 +320,6 @@ func TestPopulateTokenModes_ShouldListTokenTypesInCorrectOrder2(t *testing.T) {
 	require.Equal(t, 1, len(tokenTypes.TokenModes))
 	require.NotEqual(t, nil, tokenTypes.TokenModes["default"])
 
-	//[ID, UP, WS], but in this PR, it's [UP, ID, WS]
 	kws := tokenTypes.Keywords.Keywords
 	require.Equal(t, 3, len(kws))
 	require.Equal(t, "\"+\"", kws[0].Value())
@@ -332,4 +331,27 @@ func TestPopulateTokenModes_ShouldListTokenTypesInCorrectOrder2(t *testing.T) {
 
 	tokenMode := tokenTypes.TokenModes["default"]
 	require.EqualValues(t, []int{idxPlus, idxStar, idxQuestion}, tokenMode.ModeTokenTypes.Keywords)
+}
+
+func TestPopulateTokenModes_ShouldAddSemicolonOnlyOnce(t *testing.T) {
+	f := test.New(t, grammar.CreateServices())
+	doc := f.Parse(`
+		grammar Ord;
+		interface M { Greeting string }
+		entry M: Greeting="Hallo";
+		hidden token SEMI: ";"
+	`).AssertNoErrors()
+	grammr, ok := doc.Document.Root.(grammar.Grammar)
+	require.True(t, ok)
+	tokenTypes := GenerateTokenTypes(grammr)
+	populateTokenTypes(&tokenTypes)
+	populateTokenModes(&tokenTypes, grammr.TokenModes())
+	modeTokenTypes := tokenTypes.TokenModes["default"].ModeTokenTypes
+	assert.Equal(t, "\"Hallo\"", tokenTypes.Keywords.Keywords[0].Value())
+	assert.Equal(t, "\";\"", tokenTypes.Keywords.Keywords[1].Value())
+	idxHallo := tokenTypes.TokenIndex.ByKeyword[tokenTypes.Keywords.Keywords[0].Value()]
+	idxSemicolon := tokenTypes.TokenIndex.ByKeyword[tokenTypes.Keywords.Keywords[1].Value()]
+	require.Equal(t, 2, len(modeTokenTypes.Keywords))
+	assert.Equal(t, idxHallo, modeTokenTypes.Keywords[0])
+	assert.Equal(t, idxSemicolon, modeTokenTypes.Keywords[1])
 }
