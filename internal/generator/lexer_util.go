@@ -223,7 +223,6 @@ func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
 
 func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.TokenMode) {
 	keywords := result.Keywords
-	tokenGroups := result.TokenGroups
 	tokens := result.TokenDecls
 	for index, tokenMode := range tokenModes {
 		modeName := "default"
@@ -329,30 +328,6 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 		}
 		result.TokenModes["default"] = &defaultMode
 		result.TokenModeOrder = append(result.TokenModeOrder, "default")
-
-		for _, tokenGroup := range tokenGroups.TopLevel {
-			for _, tokenIndex := range result.TokenIndex.ByTokenGroupParent[tokenGroup] {
-				if source, ok := result.TokenIndex.SourceType[tokenIndex]; ok && source != SourceGroup {
-					if source == SourceKeyword {
-						if slices.Contains(defaultMode.ModeTokenTypes.Keywords, tokenIndex) {
-							continue
-						}
-						defaultMode.ModeTokenTypes.Keywords = append(defaultMode.ModeTokenTypes.Keywords, tokenIndex)
-					} else {
-						if slices.Contains(defaultMode.ModeTokenTypes.Tokens, tokenIndex) {
-							continue
-						}
-						defaultMode.ModeTokenTypes.Tokens = append(defaultMode.ModeTokenTypes.Tokens, tokenIndex)
-					}
-					if tokenGroup.Modifier() != "" || tokenGroup.Command() != nil {
-						defaultMode.TokenTypeUsages[tokenIndex] = tokenTypeUsage{
-							TokenModifier: tokenGroup.Modifier(),
-							Command:       tokenGroup.Command(),
-						}
-					}
-				}
-			}
-		}
 
 		for _, keyword := range keywords.Keywords {
 			tokenIndex := result.TokenIndex.ByKeyword[keyword.Value()]
@@ -574,9 +549,6 @@ func keysFromMap(m map[string]grammar.Keyword) GetAllKeywordsResult {
 	for _, v := range m {
 		keywords = append(keywords, v)
 	}
-	sort.Slice(keywords, func(i, j int) bool {
-		return keywords[i].Value() < keywords[j].Value()
-	})
 	byValue := map[string]int{}
 	for i, k := range keywords {
 		byValue[k.Value()] = i

@@ -266,3 +266,75 @@ func TestPopulateTokenTypes_ShouldWorkThanksToTopologicalSort(t *testing.T) {
 	assert.EqualValues(t, []int{1}, tokenTypes.TokenIndex.ByTokenGroupParent[outerGroup])
 	assert.EqualValues(t, []int{1}, tokenTypes.TokenIndex.ByTokenGroupParent[innerGroup])
 }
+
+func TestPopulateTokenModes_ShouldListTokenTypesInCorrectOrder(t *testing.T) {
+	f := test.New(t, grammar.CreateServices())
+	doc := f.Parse(`
+		grammar Ord;
+		interface M { Name string  Up string }
+		entry M: Name=ID | Up=G;
+		token ID: /[a-zA-Z]+/
+		token UP: /[A-Z]+/
+		token group G {
+			UP
+		}
+		hidden token WS: /\s+/
+	`).AssertNoErrors()
+	grammr, ok := doc.Document.Root.(grammar.Grammar)
+	require.True(t, ok)
+	tokenTypes := GenerateTokenTypes(grammr)
+	populateTokenTypes(&tokenTypes)
+	populateTokenModes(&tokenTypes, grammr.TokenModes())
+
+	require.Equal(t, 1, len(tokenTypes.TokenModes))
+	require.NotEqual(t, nil, tokenTypes.TokenModes["default"])
+
+	//[ID, UP, WS], but in this PR, it's [UP, ID, WS]
+	tokens := tokenTypes.TokenDecls.TopLevel
+	require.Equal(t, 3, len(tokens))
+	require.Equal(t, "ID", tokens[0].Name())
+	require.Equal(t, "UP", tokens[1].Name())
+	require.Equal(t, "WS", tokens[2].Name())
+	idxID := tokenTypes.TokenIndex.ByToken[tokens[0]]
+	idxUP := tokenTypes.TokenIndex.ByToken[tokens[1]]
+	idxWS := tokenTypes.TokenIndex.ByToken[tokens[2]]
+
+	tokenMode := tokenTypes.TokenModes["default"]
+	require.EqualValues(t, []int{idxID, idxUP, idxWS}, tokenMode.ModeTokenTypes.Tokens)
+}
+
+// TODO better name...
+func TestPopulateTokenModes_2(t *testing.T) {
+	f := test.New(t, grammar.CreateServices())
+	doc := f.Parse(`
+		grammar Ord;
+		interface M { Card string }
+		entry M: Card=Cardinality;
+		token group Cardinality {
+			"+"
+			"*"
+			"?"
+		}
+	`).AssertNoErrors()
+	grammr, ok := doc.Document.Root.(grammar.Grammar)
+	require.True(t, ok)
+	tokenTypes := GenerateTokenTypes(grammr)
+	populateTokenTypes(&tokenTypes)
+	populateTokenModes(&tokenTypes, grammr.TokenModes())
+
+	require.Equal(t, 1, len(tokenTypes.TokenModes))
+	require.NotEqual(t, nil, tokenTypes.TokenModes["default"])
+
+	//[ID, UP, WS], but in this PR, it's [UP, ID, WS]
+	kws := tokenTypes.Keywords.Keywords
+	require.Equal(t, 3, len(kws))
+	require.Equal(t, "\"+\"", kws[0].Value())
+	require.Equal(t, "\"*\"", kws[1].Value())
+	require.Equal(t, "\"?\"", kws[2].Value())
+	idxPlus := tokenTypes.TokenIndex.ByKeyword[kws[0].Value()]
+	idxStar := tokenTypes.TokenIndex.ByKeyword[kws[1].Value()]
+	idxQuestion := tokenTypes.TokenIndex.ByKeyword[kws[2].Value()]
+
+	tokenMode := tokenTypes.TokenModes["default"]
+	require.EqualValues(t, []int{idxPlus, idxStar, idxQuestion}, tokenMode.ModeTokenTypes.Keywords)
+}
