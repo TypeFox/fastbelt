@@ -111,6 +111,10 @@ func newImportCmd() *cobra.Command {
 	return cmd
 }
 
+// runExportCLI loads and builds the input document and reports its diagnostics. This mirrors
+// runGenerateCLI in cmd/fastbelt/generate.go; the two are kept independent (rather than sharing a
+// helper) since this example is meant to double as a readable, self-contained template for
+// framework users building their own CLI.
 func runExportCLI(opts exportOptions) error {
 	inputPath, err := filepath.Abs(opts.inputPath)
 	if err != nil {
