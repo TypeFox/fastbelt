@@ -248,5 +248,5 @@ func (sc *CompletionSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 	case TypeFor_Declare:
 		return slices.Values(sc.Declares)
 	}
-	return core.EmptySymbolDescriptions
+	return core.EmptySymbolSeq
 }

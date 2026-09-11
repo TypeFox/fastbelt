@@ -6,6 +6,10 @@ package fastbelt
 
 import (
 	"context"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
+	"errors"
+	"fmt"
 	"iter"
 	"reflect"
 	"slices"
@@ -287,5 +291,168 @@ func (d *referenceDescriptions) ForTarget(target AstNode) iter.Seq[*ReferenceDes
 func NewReferenceDescriptionsFromMap(descriptions collections.MultiMap[AstNode, *ReferenceDescription]) ReferenceDescriptions {
 	return &referenceDescriptions{
 		descriptions: descriptions,
+	}
+}
+
+// MarshalJSONTo serializes the reference as a JSON object containing the URI of the resolved target ast node,
+// the cross ref text, as well as the err msg if the reference is unresolvable.
+// Returns an error if the reference has not been attempted to resolve (r.resolved == false).
+// With this function Reference[T] implements [json.MarshalerTo] and the method is called by `json.Marshal()`.
+func (r *Reference[T]) MarshalJSONTo(encoder *jsontext.Encoder) error {
+	// A nil reference marshals as JSON null.
+	if r == nil {
+		return encoder.WriteToken(jsontext.Null)
+	}
+	// We expect at this point that all references have been attempted to resolve.
+	if !r.resolved.Load() {
+		if path, err := PathOf(r.Owner()); err == nil {
+			return errors.New("Reference.MarshalJSONTo(): reference not resolved in node '" + path.String() + "'")
+		}
+		return errors.New("Reference.MarshalJSONTo(): reference not resolved")
+	}
+
+	var uri, errMsg string
+	if r.err != nil {
+		errMsg = r.err.Msg
+	} else if referenced := r.ref; any(referenced) != nil {
+		refPath, err := PathOf(referenced)
+		if err != nil {
+			referencerPath, _ := PathOf(r.Owner())
+			return fmt.Errorf("Reference.MarshalJSONTo(): failed to compute path fragment of node of type %T referenced by '%s'", referenced, referencerPath)
+		}
+
+		refDoc := referenced.Document()
+		if refDoc == nil {
+			referencerPath, _ := PathOf(r.Owner())
+			return fmt.Errorf("Reference.MarshalJSONTo(): node of type %T referenced by '%s' is not contained in any document", referenced, referencerPath)
+		}
+
+		if r.Owner() != nil && r.Owner().Document() == refDoc {
+			uri = "#" + refPath.String()
+		} else {
+			uri = refDoc.URI.WithFragment(refPath.String()).String()
+		}
+	} else {
+		return errors.New("Reference.MarshalJSONTo(): unexpected state")
+	}
+
+	return json.MarshalEncode(encoder, struct {
+		RefText string `json:"$refText"`
+		Ref     string `json:"$ref,omitempty"`
+		Err     string `json:"$error,omitempty"`
+	}{
+		RefText: r.unit.String(),
+		Ref:     uri,
+		Err:     errMsg,
+	})
+}
+
+// UnmarshalJSON revives the reference as a JSON object. It inspects properties named '$ref', '$refText', and '$error'.
+// '$ref' is expected to contain a URI string denoting the target node within the same or another document, may be absent if the reference was unresolvable before serializing.
+// '$refText' denotes the cross reference string.
+// '$error' contains the error msg if the reference was unresolvable before serializing
+// With this method Reference[T] implements [json.Unmarshaler], and instances can be populated by [json.Unmarshal()].
+// However, we typically call it directly via [typefox.dev/fastbelt/util.UnmarshalReference],
+// which the code generated for [json.UnmarshalerFrom] implementations of AST node types calls in turn.
+//
+// Note: Since we're calling this method directly within the unmarshaling implementations of the AST nodes based on a raw [jsontext.Value],
+// implementing [json.UnmarshalerFrom].UnmarshalJSONFrom(*jsontext.Decoder) doesn't bring any benefit here, since the value chunks ([]byte) are rather small.
+// Therefore, we stick to implementing the plain [json.Unmarshaler] interface here.
+func (r *Reference[T]) UnmarshalJSON(value []byte) error {
+	aux := &struct {
+		RefText string `json:"$refText"`
+		Ref     string `json:"$ref"`
+		Err     string `json:"$error"`
+	}{}
+	if err := json.Unmarshal(value, aux); err != nil {
+		return err
+	}
+
+	// requirement: r.owner is initialized
+	r.unit = NewSyntheticToken(aux.RefText, r.owner)
+	r.getter = newJsonReferenceGetter[T](aux.Ref)
+	if aux.Err != "" {
+		r.err = NewReferenceError(aux.Err)
+	}
+	return nil
+}
+
+// JsonLinkingHelper instances are required for properly linking cross references in ASTs
+// being created by unmarshaling JSON data via the [json.Unmarshal] API.
+// A default implementation is provided by [typefox.dev/fastbelt/util/NewJsonLinkingHelper]().
+//
+// The helper is expected to be present even for references that turn out to target the same document:
+// whether a reference is same- or cross-document is only known once its '$ref' URI is inspected during
+// resolution, and by design that resolution fails fast if no helper is present in the context,
+// rather than silently succeeding for some references and not others depending on their target.
+// Consequently, any [context.Context] used to (re)build a workspace that may contain JSON-loaded
+// documents must carry a helper via [JsonLinkingHelperKey] - including on rebuilds triggered by
+// unrelated document edits, which commonly build with a fresh context.Background()-derived one.
+//
+// It is to be provided as part of the context argument of typefox.dev/fastbelt/workspace.Builder.Build](Context, ...), like
+//
+//	documents, err := service.Get[workspace.DocumentManager](sc)
+//	err = builder.Build(
+//	    context.WithValue(
+//	        ctx,
+//	        fastbelt.JsonLinkingHelperKey(),
+//	        util.NewJsonLinkingHelper(documents),
+//	    ),
+//	    ...,
+//	    ...,
+//	);
+type JsonLinkingHelper interface {
+	GetDocument(uri URI) *Document
+}
+
+var jsonLinkingHelperKey = reflect.TypeFor[JsonLinkingHelper]()
+
+// JsonLinkingHelperKey returns a singleton identifier key for registering a [JsonLinkingHelper] instance
+// in the [context.Context] object used by [typefox.dev/fastbelt/workspace.Builder.Build](Context, ...),
+// which is required for linking references in ASTs obtained by unmarshaling JSON data.
+// See also [JsonLinkingHelper].
+func JsonLinkingHelperKey() any {
+	return jsonLinkingHelperKey
+}
+
+func newJsonReferenceGetter[T AstNode](uriString string) ReferenceGetter[T] {
+	return func(ctx context.Context, ref *Reference[T]) (*SymbolDescription, *ReferenceError) {
+		// ref.err is set from the imported '$error' by UnmarshalJSON and only survives here on the
+		// very first resolution; Reset() clears it before any later resolution attempt. That's
+		// intentional: a reference that failed to link in the workspace it was exported from may
+		// well resolve in the workspace it is imported into (or after a rebuild), so re-resolution
+		// deliberately re-derives the error (e.g. "absent" below) instead of replaying the old one.
+		if ref.err != nil {
+			return nil, ref.err
+		}
+		if uriString == "" {
+			return nil, NewReferenceError("Reviving reference in Json document failed, '$ref' is absent or empty")
+		}
+		helper, ok := ctx.Value(jsonLinkingHelperKey).(JsonLinkingHelper)
+		if !ok {
+			return nil, NewReferenceError("JsonLinkingHelper unavailable")
+		}
+		var document *Document
+		uri := ParseURI(uriString)
+		if uri.Path() == "" {
+			document = ref.Owner().Document()
+		} else if doc := helper.GetDocument(uri.WithFragment("") /* zeros the fragment part */); doc != nil {
+			document = doc
+		} else {
+			return nil, NewReferenceError("Document not found: '" + uri.StringUnencoded() + "'")
+		}
+
+		if document.Root == nil {
+			return nil, NewReferenceError("Document is empty: '" + document.URI.StringUnencoded() + "'")
+		}
+
+		node, err := Resolve(document.Root, uri.Fragment())
+		if err != nil {
+			return nil, NewReferenceError(err.Error())
+		}
+		return &SymbolDescription{
+			URI:  uri,
+			Node: node,
+		}, nil
 	}
 }

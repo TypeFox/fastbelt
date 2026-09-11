@@ -47,10 +47,10 @@ func NewCompositeNodeSymbolDescription(node NamedCompositeNode) *SymbolDescripti
 	return NewSymbolDescription(node, node.NameNode())
 }
 
-// EmptySymbolDescriptions is an empty [SymbolSeq] sentinel.
+// EmptySymbolSeq is an empty [SymbolSeq] sentinel.
 //
 // It can be reused by implementations that have no symbols to return.
-var EmptySymbolDescriptions = extiter.Empty[*SymbolDescription]()
+var EmptySymbolSeq = extiter.Empty[*SymbolDescription]()
 
 // SymbolContainers is a service that is able to generate new [SymbolContainer] items
 // for the current language.
@@ -90,21 +90,27 @@ func (c *emptySymbolContainer) Put(desc *SymbolDescription) bool {
 }
 
 func (c *emptySymbolContainer) All() SymbolSeq {
-	return EmptySymbolDescriptions
+	return EmptySymbolSeq
 }
 
 func (c *emptySymbolContainer) ForType(targetType reflect.Type) SymbolSeq {
-	return EmptySymbolDescriptions
+	return EmptySymbolSeq
 }
 
 // MergeSymbolContainers merges multiple symbol containers into one. The resulting container
 // is immutable and reflects the combined contents of all input containers.
 func MergeSymbolContainers(containers iter.Seq[SymbolContainer]) SymbolContainer {
-	if extiter.IsEmpty(containers) {
+	// A container may be 'nil', e.g. in case a document in the document manager hasn't been built
+	// yet or has been reset and is not included in the current build cycle, so its exported symbols
+	// container is absent; filter such entries out once here rather than in every method below.
+	nonNil := extiter.Filter(containers, func(container SymbolContainer) bool {
+		return container != nil
+	})
+	if extiter.IsEmpty(nonNil) {
 		return EmptySymbolContainer
 	}
 	return &mergedSymbolContainer{
-		containers: containers,
+		containers: nonNil,
 	}
 }
 
