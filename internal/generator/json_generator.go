@@ -196,22 +196,23 @@ func generateJSONUnmarshalFrom(node codegen.Node, iface grammar.Interface) {
 				n.AppendLine(thisRef, ".", field.PName, " = make([]", field.GType, ", 0, len(aux."+field.Name+"))")
 				n.AppendLine("for _, item := range aux.", field.Name, " {")
 				n.Indent(func(n2 codegen.Node) {
-					switch field.GType {
-					case TOKEN_TYPE:
+					if field.GType == TOKEN_TYPE {
 						// Note: 'if field.Boolean' will never be true here, since we cannot parse lists of present test results ('?=')
 						//  and there're no other ways of creating pure boolean values in the grammar, although '[]bool' is a valid type
 						// all other primitive values are of type 'string' or 'composite'
 						n2.AppendLine(thisDotSet, field.Name, "Item(", genCreateNewToken("item"), ")")
-					case COMPOSITE_TYPE:
+					} else if field.GType == COMPOSITE_TYPE {
 						n2.AppendLine("cn := core.NewCompositeNode()")
 						n2.AppendLine("cn.AppendToken(", genCreateNewToken("item"), ")")
 						n2.AppendLine(thisDotSet, field.Name, "Item(cn)")
-					default:
-						if field.Reference {
-							genUnmarshalReference(n2, field, "item", "reference", thisRef, thisDotSet, errRef, true)
-						} else {
-							genUnmarshalChild(n2, field, "item", "node", thisDotSet, errRef, true)
-						}
+					} else if field.Reference {
+						genUnmarshalField(n2, field, "item", "reference", thisDotSet, true, func() string {
+							return "util.UnmarshalReference[" + field.RefTypeArg + "](" + thisRef + ", item)"
+						})
+					} else {
+						genUnmarshalField(n2, field, "item", "node", thisDotSet, true, func() string {
+							return "UnmarshalValue[" + field.Type + "](item)"
+						})
 					}
 				})
 				n.AppendLine("}")
@@ -236,9 +237,15 @@ func generateJSONUnmarshalFrom(node codegen.Node, iface grammar.Interface) {
 				})
 				n.AppendLine("}")
 			} else if field.Reference {
-				genUnmarshalReference(n, field, "aux."+field.Name, field.PName, thisRef, thisDotSet, errRef, false)
+				srcName := "aux." + field.Name
+				genUnmarshalField(n, field, srcName, field.PName, thisDotSet, false, func() string {
+					return "util.UnmarshalReference[" + field.RefTypeArg + "](" + thisRef + ", " + srcName + ")"
+				})
 			} else {
-				genUnmarshalChild(n, field, "aux."+field.Name, field.PName, thisDotSet, errRef, false)
+				srcName := "aux." + field.Name
+				genUnmarshalField(n, field, srcName, field.PName, thisDotSet, false, func() string {
+					return "UnmarshalValue[" + field.Type + "](" + srcName + ")"
+				})
 			}
 		}
 		n.AppendLine("return nil")
@@ -247,63 +254,37 @@ func generateJSONUnmarshalFrom(node codegen.Node, iface grammar.Interface) {
 	node.AppendLine()
 }
 
-func genUnmarshalReference(
-	node codegen.Node,
-	field FieldInfo,
-	srcName string,
-	targetName string,
-	thisRef string,
-	thisDotSet string,
-	errRef string,
-	loopItem bool,
-) {
-	genUnmarshalFieldContent(node, field, srcName, targetName, thisDotSet, loopItem, func(body codegen.Node) {
-		// for the sake simplicity and performance we call 'target.UnmarshalJSON()' directly instead of taking the route
-		// via json.Unmarshal(...), since Reference implements that method
-		// note: the generic impl has special handling for "RawMessage" being equal "null", sets the target pointer to "nil"
-		body.AppendLine(targetName, ", ", errRef, " := util.UnmarshalReference[", field.RefTypeArg, "](", thisRef, ", ", srcName, ")")
-		body.AppendLine("if ", errRef, " != nil {")
-		genReturnErr(body, errRef)
-	})
-}
-
-func genUnmarshalChild(
-	node codegen.Node,
-	field FieldInfo,
-	srcName string,
-	targetName string,
-	thisDotSet string,
-	errRef string,
-	loopItem bool,
-) {
-	genUnmarshalFieldContent(node, field, srcName, targetName, thisDotSet, loopItem, func(body codegen.Node) {
-		body.AppendLine(targetName, ", ", errRef, " := UnmarshalValue[", field.Type, "](", srcName, ")")
-		body.AppendLine("if ", errRef, " != nil {")
-		genReturnErr(body, errRef)
-	})
-}
-
-func genUnmarshalFieldContent(
+// genUnmarshalField emits the code that decodes one non-primitive field (a reference or a child
+// AST node, singular or a loop iteration) from srcName into targetName, guards against a nil/absent
+// source, and hands the result to the field's setter. callExpr returns the right-hand side of the
+// "targetName, _err := <callExpr>" assignment; it is the only part that differs between decoding a
+// reference (via util.UnmarshalReference) and a child node (via UnmarshalValue).
+func genUnmarshalField(
 	node codegen.Node,
 	field FieldInfo,
 	srcName string,
 	targetName string,
 	thisDotSet string,
 	loopItem bool,
-	unmarshalBody func(codegen.Node),
+	callExpr func() string,
 ) {
+	unmarshalBody := func(body codegen.Node) {
+		body.AppendLine(targetName, ", _err := ", callExpr())
+		body.AppendLine("if _err != nil {")
+		genReturnErr(body, "_err")
+	}
 	if loopItem {
 		unmarshalBody(node)
 		node.AppendLine("if ", targetName, " != nil {")
 		node.Indent(func(n2 codegen.Node) {
-			node.AppendLine(thisDotSet, field.Name, "Item(", targetName, ")")
+			n2.AppendLine(thisDotSet, field.Name, "Item(", targetName, ")")
 		})
 		node.AppendLine("}")
 	} else {
 		node.AppendLine("if ", srcName, " != nil {")
 		node.Indent(func(n2 codegen.Node) {
-			unmarshalBody(node)
-			node.AppendLine(thisDotSet, field.Name, "(", targetName, ")")
+			unmarshalBody(n2)
+			n2.AppendLine(thisDotSet, field.Name, "(", targetName, ")")
 		})
 		node.AppendLine("}")
 	}
