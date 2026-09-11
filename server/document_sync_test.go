@@ -309,6 +309,7 @@ func TestTextDocuments_DidSave(t *testing.T) {
 	doc := textdocStore.GetOverlay(uri)
 	if doc == nil {
 		t.Fatal("document should still exist after DidSave")
+		return
 	}
 	if doc.URI() != uri {
 		t.Errorf("expected URI %s, got %s", uri, doc.URI())

@@ -258,7 +258,7 @@ func (p *CompletionParser) ParseBinaryExpression() {
 	p.state.Sync(BinaryExpression__LoopEntry)
 	for p.lookahead.BinaryExpressionLoop(p.state) {
 		{
-			p.state.Consume(Token_BinaryExpressionOperator)
+			p.state.Consume(TokenGroup_BinaryExpressionOperator)
 		}
 		{
 			p.state.EnterRule(BinaryExpression__Basic_2)

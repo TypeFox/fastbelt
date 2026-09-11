@@ -45,6 +45,8 @@ type ParserState struct {
 	recovery          ErrorRecoveryStrategy
 	messages          ErrorMessageProvider
 	sim               *parserATNSimulator // lazily created adaptive (ALL(*)) predictor
+
+	lastErrorIndex int // index of the last token that caused an error, used to prevent infinite loops in recovery
 }
 
 func (p *ParserState) ATN() *RuntimeATN {
@@ -124,15 +126,16 @@ func NewParserState(tokens []core.Token, atn *RuntimeATN, recovery ErrorRecovery
 		panic("atn must be provided")
 	}
 	return &ParserState{
-		Tokens:       tokens,
-		Length:       len(tokens),
-		Index:        0,
-		ErrorMode:    ErrorModeNone,
-		errors:       []*core.ParserError{},
-		atn:          atn,
-		followStates: nil,
-		recovery:     recovery,
-		messages:     messages,
+		Tokens:         tokens,
+		Length:         len(tokens),
+		Index:          0,
+		ErrorMode:      ErrorModeNone,
+		errors:         []*core.ParserError{},
+		atn:            atn,
+		followStates:   nil,
+		recovery:       recovery,
+		messages:       messages,
+		lastErrorIndex: -1,
 	}
 }
 
