@@ -21,15 +21,15 @@ func (_this *EmptyImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 func (_this *BoolsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__   string `json:"$type"`
-		Bool  bool   `json:"bool,omitempty"`
-		Token bool   `json:"token,omitempty"`
-		Aux   bool   `json:"aux,omitempty"`
-		Core  bool   `json:"core,omitempty"`
-		Err   bool   `json:"err,omitempty"`
-		Node  bool   `json:"node,omitempty"`
-		This  bool   `json:"this,omitempty"`
-		Type  bool   `json:"type,omitempty"`
-		Util  bool   `json:"util,omitempty"`
+		Bool  bool   `json:"bool,omitzero"`
+		Token bool   `json:"token,omitzero"`
+		Aux   bool   `json:"aux,omitzero"`
+		Core  bool   `json:"core,omitzero"`
+		Err   bool   `json:"err,omitzero"`
+		Node  bool   `json:"node,omitzero"`
+		This  bool   `json:"this,omitzero"`
+		Type  bool   `json:"type,omitzero"`
+		Util  bool   `json:"util,omitzero"`
 	}{
 		T__:   "Bools",
 		Bool:  _this.IsBool(),

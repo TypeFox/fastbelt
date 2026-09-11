@@ -101,6 +101,11 @@ func generateJSONMarshalTo(node codegen.Node, iface grammar.Interface) {
 					// pointee, not the pointer), which would undo the absent/empty distinction
 					// this *string encoding exists for; omitzero only checks the pointer itself.
 					n2.AppendLine(field.Name, " *", field.Type, " `json:\"", field.JsonPropName, ",omitzero\"`")
+				} else if field.Boolean {
+					// under json v2, omitempty never drops false (it only drops null/""/{}/[]),
+					// so every optional '?=' assignment would always appear as "x": false in
+					// exported JSON; omitzero is the v2 spelling for dropping a false zero value.
+					n2.AppendLine(field.Name, " ", field.Type, " `json:\"", field.JsonPropName, ",omitzero\"`")
 				} else {
 					n2.AppendLine(field.Name, " ", field.Type, " `json:\"", field.JsonPropName, ",omitempty\"`")
 				}

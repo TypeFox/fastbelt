@@ -203,7 +203,7 @@ func (_this *ParserRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Name       *string                    `json:"name,omitzero"`
 		Body       Element                    `json:"body,omitempty"`
 		ReturnType *core.Reference[Interface] `json:"returnType,omitempty"`
-		Entry      bool                       `json:"entry,omitempty"`
+		Entry      bool                       `json:"entry,omitzero"`
 	}{
 		T__:        "ParserRule",
 		Name:       name,
