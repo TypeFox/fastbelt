@@ -333,10 +333,35 @@ func getTokenNeverReferencedMessage(tokenTypeName string, tokenValue string) str
 	return fmt.Sprintf("The %s '%s' is never referenced in a parser rule, so the lexer can never produce it.", tokenTypeName, tokenValue)
 }
 
+func getGroupMembers(group TokenGroup, cache map[TokenGroup]collections.Set[string], ctx context.Context) collections.Set[string] {
+	if set, ok := cache[group]; ok {
+		return set
+	} else {
+		seen := collections.NewSet[string]()
+		for _, tokenRef := range group.TokenRefs() {
+			switch ref := tokenRef.Ref(ctx).(type) {
+			case TokenGroup:
+				for elem := range getGroupMembers(ref, cache, ctx) {
+					seen.Add(elem)
+				}
+			case TokenDecl:
+				seen.Add(ref.Name())
+			}
+		}
+		for _, keyword := range group.Keywords() {
+			seen.Add(keyword.Value())
+		}
+		cache[group] = seen
+		return seen
+	}
+}
+
 func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept core.ValidationAcceptor) {
 	severity := core.SeverityWarning
 	seen := collections.NewSet[string]()
 	queue := []core.AstNode{}
+	cache := map[TokenGroup]collections.Set[string]{}
+
 	for _, composite := range g.Composites() {
 		for node := range core.AllChildren(composite) {
 			queue = append(queue, node)
@@ -344,11 +369,6 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 	}
 	for _, rule := range g.Rules() {
 		for node := range core.AllChildren(rule) {
-			queue = append(queue, node)
-		}
-	}
-	for _, group := range g.TokenGroups() {
-		for node := range core.AllChildren(group) {
 			queue = append(queue, node)
 		}
 	}
@@ -360,6 +380,16 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 			rule, ok := casted.Rule().Ref(ctx).(AbstractTokenRule)
 			if ok {
 				seen.Add(rule.Name())
+			}
+			switch rule := rule.(type) {
+			case TokenGroup:
+				for elem := range getGroupMembers(rule, cache, ctx) {
+					seen.Add(elem)
+				}
+			case TokenDecl:
+				if content, ok := rule.Content().(KeywordTokenContent); ok {
+					seen.Add(content.Keyword().Value())
+				}
 			}
 		}
 	}
@@ -405,7 +435,7 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 						))
 					}
 				case TokenUsage:
-					if tokenRef := member.TokenRef().Ref(context.Background()); tokenRef != nil {
+					if tokenRef := member.TokenRef().Ref(ctx); tokenRef != nil {
 						if decl, ok := tokenRef.(TokenDecl); ok {
 							if decl.Modifier() != "" {
 								continue
@@ -1915,11 +1945,11 @@ func (tu *TokenUsageImpl) Validate(ctx context.Context, _ string, accept core.Va
 	checkIfTokenUsageHasCommandOrModifierOnlyIfNotAGroup(tu, ctx, accept)
 }
 
-func checkIfTokenUsageHasCommandOrModifierOnlyIfNotAGroup(usage TokenUsage, _ context.Context, accept core.ValidationAcceptor) {
+func checkIfTokenUsageHasCommandOrModifierOnlyIfNotAGroup(usage TokenUsage, ctx context.Context, accept core.ValidationAcceptor) {
 	if usage.Modifier() == "" && usage.Command() == nil {
 		return
 	}
-	if group, ok := usage.TokenRef().Ref(context.Background()).(TokenGroup); ok {
+	if group, ok := usage.TokenRef().Ref(ctx).(TokenGroup); ok {
 		if usage.Modifier() != "" {
 			accept(core.NewDiagnostic(
 				core.SeverityError,
