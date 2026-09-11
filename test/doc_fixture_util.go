@@ -88,6 +88,7 @@ func AssertEqualAst(t *testing.T, expected, actual core.AstNode) bool {
 					getter, exists = expectedValueRefType.MethodByName("Is" + stringGetterName)
 					if !exists {
 						t.Errorf("at %q, type %T: value getter for field %s missing", pExpected, expected, field.Name)
+						return
 					}
 				}
 				expRet := getter.Func.Call(expectedGetterArg)[0]
