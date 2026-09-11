@@ -185,7 +185,7 @@ func runExportCLI(opts exportOptions) error {
 	return os.WriteFile(opts.outputPath, append(out, '\n'), 0644)
 }
 
-func runImportCLI(opts importOptions) error {
+func runImportCLI(opts importOptions) (err error) {
 	inputPath, err := filepath.Abs(opts.inputPath)
 	if err != nil {
 		return err
@@ -194,7 +194,11 @@ func runImportCLI(opts importOptions) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if cErr := file.Close(); cErr != nil && err == nil {
+			err = cErr
+		}
+	}()
 
 	document, err := core.NewDocumentFromString(string(lsp.URIFromPath(inputPath)), "arithmetics", "")
 	if err != nil {
