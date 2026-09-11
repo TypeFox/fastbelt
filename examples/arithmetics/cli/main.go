@@ -187,10 +187,11 @@ func runImportCLI(opts importOptions) error {
 		return err
 	}
 	file, err := os.Open(inputPath)
-
 	if err != nil {
 		return err
 	}
+	defer file.Close()
+
 	document, err := core.NewDocumentFromString("file:///"+filepath.Base(inputPath), "arithmetics", "")
 	if err != nil {
 		return err
