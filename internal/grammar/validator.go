@@ -338,6 +338,8 @@ func getGroupMembers(group TokenGroup, cache map[TokenGroup]collections.Set[stri
 		return set
 	} else {
 		seen := collections.NewSet[string]()
+		//add before computation to avoid endless loop for token groups in a cycle
+		cache[group] = seen
 		for _, tokenRef := range group.TokenRefs() {
 			switch ref := tokenRef.Ref(ctx).(type) {
 			case TokenGroup:
@@ -351,7 +353,6 @@ func getGroupMembers(group TokenGroup, cache map[TokenGroup]collections.Set[stri
 		for _, keyword := range group.Keywords() {
 			seen.Add(keyword.Value())
 		}
-		cache[group] = seen
 		return seen
 	}
 }
