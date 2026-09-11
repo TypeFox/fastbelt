@@ -347,11 +347,13 @@ func (r *Reference[T]) MarshalJSONTo(encoder *jsontext.Encoder) error {
 	})
 }
 
-// UnmarshalJSON revives the reference as a JSON object. It inspects properties named 'ref', 'refText', and 'err'.
-// 'ref' is expected to contain a URI string denoting the target node within the same or another document, may be absent if the reference was unresolvable before serializing.
-// 'refText' denotes the cross reference string.
-// 'err' contains the error msg if the reference was unresolvable before serializing
-// With this function Reference[T] implements [json.Unmarshaler].UnmarshalJSON() and the method is called by [json.Unmarshal()].
+// UnmarshalJSON revives the reference as a JSON object. It inspects properties named '$ref', '$refText', and '$error'.
+// '$ref' is expected to contain a URI string denoting the target node within the same or another document, may be absent if the reference was unresolvable before serializing.
+// '$refText' denotes the cross reference string.
+// '$error' contains the error msg if the reference was unresolvable before serializing
+// With this method Reference[T] implements [json.Unmarshaler], and instances can be populated by [json.Unmarshal()].
+// However, we typically call it directly via [typefox.dev/fastbelt/util.UnmarshalReference],
+// which the code generated for [json.UnmarshalerFrom] implementations of AST node types calls in turn.
 //
 // Note: Since we're calling this method directly within the unmarshaling implementations of the AST nodes based on a raw [jsontext.Value],
 // implementing [json.UnmarshalerFrom].UnmarshalJSONFrom(*jsontext.Decoder) doesn't bring any benefit here, since the value chunks ([]byte) are rather small.
@@ -424,7 +426,7 @@ func newJsonReferenceGetter[T AstNode](uriString string) ReferenceGetter[T] {
 			return nil, ref.err
 		}
 		if uriString == "" {
-			return nil, NewReferenceError("Reviving reference in Json document failed, 'ref' is absent of empty")
+			return nil, NewReferenceError("Reviving reference in Json document failed, '$ref' is absent or empty")
 		}
 		helper, ok := ctx.Value(jsonLinkingHelperKey).(JsonLinkingHelper)
 		if !ok {
