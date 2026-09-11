@@ -38,7 +38,7 @@ func Unmarshal[T core.AstNode](reader io.Reader, factories map[string]func() cor
 func UnmarshalValue[T core.AstNode](value jsontext.Value, factories map[string]func() core.AstNode) (T, error) {
 	var zero T
 	// first check for an explicit "null" value
-	if bytes.Equal(value[0:4], []byte("null")) {
+	if value.Kind() == jsontext.KindNull {
 		return zero, nil
 	}
 	nodeType, err := peekType(value)
@@ -114,7 +114,7 @@ func peekTypeSlow(value jsontext.Value) (string, error) {
 // Not intended to be used by client directly.
 func UnmarshalReference[T core.AstNode](owner core.AstNode, value jsontext.Value) (*core.Reference[T], error) {
 	// first check for an explicit "null" value
-	if bytes.Equal(value[0:4], []byte("null")) {
+	if value.Kind() == jsontext.KindNull {
 		return nil, nil
 	}
 	ref := core.NewReference[T](owner, nil, nil)
