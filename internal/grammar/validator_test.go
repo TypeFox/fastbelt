@@ -1860,3 +1860,19 @@ func TestTokenGroupDoesNotNeedToBeListedInTokenModeWhenAtLeastOneMemberIsUsed(t 
 	require.Equal(t, 0, len(doc.Document.Diagnostics))
 	doc.AssertNoDiagnostics()
 }
+
+func TestUseTokenDeclViaTokenGroup(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar UseTokenDeclViaTokenGroup;
+		interface Model {
+			Name string
+		}
+		entry Model: Name=Identifier;
+		token group Identifier {
+			ID "$this"
+		}
+		token <|1:ID|>: /[a-zA-Z_][a-zA-Z0-9_]*/;
+	`)
+	doc.AssertNoDiagnostic("1")
+}
