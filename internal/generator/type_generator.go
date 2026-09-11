@@ -78,8 +78,10 @@ type FieldInfo struct {
 	// mostly equal to 'JsonTagName' except for reserved keywords
 	PName string
 
-	Array          bool
-	Reference      bool
+	Array     bool
+	Reference bool
+	// Name of the referenced interface type, set only if Reference is true.
+	RefTypeArg     string
 	Boolean        bool
 	Type           string
 	HasTokenGetter bool
@@ -98,7 +100,7 @@ func getFieldInfo(field grammar.Field) FieldInfo {
 	}
 	_, array := field.Type().(grammar.ArrayType)
 	typ := getTypeName(field.Type())
-	ref := isReferenceType(field.Type())
+	ref, refTypeArg := isReferenceType(field.Type())
 	gtype := typ
 	hasTokenGetter := false
 	hasNodeGetter := false
@@ -121,6 +123,7 @@ func getFieldInfo(field grammar.Field) FieldInfo {
 		JsonPropName:   jsonPropName,
 		Array:          array,
 		Reference:      ref,
+		RefTypeArg:     refTypeArg,
 		Type:           typ,
 		HasTokenGetter: hasTokenGetter,
 		HasNodeGetter:  hasNodeGetter,
@@ -143,13 +146,16 @@ func getTypeName(fieldType grammar.FieldType) string {
 	}
 }
 
-func isReferenceType(fieldType grammar.FieldType) bool {
-	if _, ok := fieldType.(grammar.ReferenceType); ok {
-		return true
+// isReferenceType reports whether fieldType is (or, for an array type, contains) a reference type.
+// If so, the second return value is the name of the referenced interface type, e.g. "X" for a
+// field declared in the fb grammar as "*X" or "[]*X".
+func isReferenceType(fieldType grammar.FieldType) (bool, string) {
+	if refType, ok := fieldType.(grammar.ReferenceType); ok {
+		return true, refType.Type().Text()
 	} else if arrayType, ok := fieldType.(grammar.ArrayType); ok {
 		return isReferenceType(arrayType.InternalType())
 	} else {
-		return false
+		return false, ""
 	}
 }
 

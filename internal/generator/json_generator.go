@@ -5,8 +5,6 @@
 package generator
 
 import (
-	"strings"
-
 	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/util/codegen"
 )
@@ -215,7 +213,7 @@ func genUnmarshalReference(
 		// for the sake simplicity and performance we call 'target.UnmarshalJSON()' directly instead of taking the route
 		// via json.Unmarshal(...), since Reference implements that method
 		// note: the generic impl has special handling for "RawMessage" being equal "null", sets the target pointer to "nil"
-		body.AppendLine(targetName, ", ", errRef, " := util.UnmarshalReference[", strings.Split(field.Type, "[")[1], "(", thisRef, ", ", srcName, ")")
+		body.AppendLine(targetName, ", ", errRef, " := util.UnmarshalReference[", field.RefTypeArg, "](", thisRef, ", ", srcName, ")")
 		body.AppendLine("if ", errRef, " != nil {")
 		genReturnErr(body, errRef)
 	})
