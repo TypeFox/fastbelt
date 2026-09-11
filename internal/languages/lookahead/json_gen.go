@@ -11,14 +11,24 @@ import (
 )
 
 func (_this *ObjImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var value *string
+	if _this.ValueToken() != nil {
+		_v := _this.Value()
+		value = &_v
+	}
+	var node *string
+	if _this.NodeNode() != nil {
+		_v := _this.Node()
+		node = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
-		T__   string `json:"$type"`
-		Value string `json:"value,omitempty"`
-		Node  string `json:"node,omitempty"`
+		T__   string  `json:"$type"`
+		Value *string `json:"value,omitzero"`
+		Node  *string `json:"node,omitzero"`
 	}{
 		T__:   "Obj",
-		Value: _this.Value(),
-		Node:  _this.Node(),
+		Value: value,
+		Node:  node,
 	})
 }
 
@@ -33,31 +43,48 @@ func (_this *RootImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 }
 
 func (_this *BImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var value *string
+	if _this.ValueToken() != nil {
+		_v := _this.Value()
+		value = &_v
+	}
+	var node *string
+	if _this.NodeNode() != nil {
+		_v := _this.Node()
+		node = &_v
+	}
+	var post *string
+	if _this.PostToken() != nil {
+		_v := _this.Post()
+		post = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
-		T__   string `json:"$type"`
-		Value string `json:"value,omitempty"`
-		Node  string `json:"node,omitempty"`
-		Post  string `json:"post,omitempty"`
+		T__   string  `json:"$type"`
+		Value *string `json:"value,omitzero"`
+		Node  *string `json:"node,omitzero"`
+		Post  *string `json:"post,omitzero"`
 	}{
 		T__:   "B",
-		Value: _this.Value(),
-		Node:  _this.Node(),
-		Post:  _this.Post(),
+		Value: value,
+		Node:  node,
+		Post:  post,
 	})
 }
 
 func (_this *ObjImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Value string `json:"value"`
-		Node  string `json:"node"`
+		Value *string `json:"value"`
+		Node  *string `json:"node"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	_this.SetValue(core.NewSyntheticToken(aux.Value, _this))
-	{
+	if aux.Value != nil {
+		_this.SetValue(core.NewSyntheticToken(*aux.Value, _this))
+	}
+	if aux.Node != nil {
 		cn := core.NewCompositeNode()
-		cn.AppendToken(core.NewSyntheticToken(aux.Node, _this))
+		cn.AppendToken(core.NewSyntheticToken(*aux.Node, _this))
 		_this.SetNode(cn)
 	}
 	return nil
@@ -82,20 +109,24 @@ func (_this *RootImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 
 func (_this *BImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Value string `json:"value"`
-		Node  string `json:"node"`
-		Post  string `json:"post"`
+		Value *string `json:"value"`
+		Node  *string `json:"node"`
+		Post  *string `json:"post"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	_this.SetValue(core.NewSyntheticToken(aux.Value, _this))
-	{
+	if aux.Value != nil {
+		_this.SetValue(core.NewSyntheticToken(*aux.Value, _this))
+	}
+	if aux.Node != nil {
 		cn := core.NewCompositeNode()
-		cn.AppendToken(core.NewSyntheticToken(aux.Node, _this))
+		cn.AppendToken(core.NewSyntheticToken(*aux.Node, _this))
 		_this.SetNode(cn)
 	}
-	_this.SetPost(core.NewSyntheticToken(aux.Post, _this))
+	if aux.Post != nil {
+		_this.SetPost(core.NewSyntheticToken(*aux.Post, _this))
+	}
 	return nil
 }
 

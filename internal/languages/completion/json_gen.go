@@ -29,13 +29,18 @@ func (_this *RootImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 }
 
 func (_this *DeclareImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var name *string
+	if _this.NameNode() != nil {
+		_v := _this.Name()
+		name = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
 		T__      string    `json:"$type"`
-		Name     string    `json:"name,omitempty"`
+		Name     *string   `json:"name,omitzero"`
 		Children []Declare `json:"children,omitempty"`
 	}{
 		T__:      "Declare",
-		Name:     _this.Name(),
+		Name:     name,
 		Children: _this.Children(),
 	})
 }
@@ -170,15 +175,15 @@ func (_this *RootImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 
 func (_this *DeclareImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Name     string           `json:"name"`
+		Name     *string          `json:"name"`
 		Children []jsontext.Value `json:"children"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	{
+	if aux.Name != nil {
 		cn := core.NewCompositeNode()
-		cn.AppendToken(core.NewSyntheticToken(aux.Name, _this))
+		cn.AppendToken(core.NewSyntheticToken(*aux.Name, _this))
 		_this.SetName(cn)
 	}
 	_this.children = make([]Declare, 0, len(aux.Children))

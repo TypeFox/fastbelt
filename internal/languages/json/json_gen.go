@@ -37,32 +37,87 @@ func (_this *BoolsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 }
 
 func (_this *StringsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var _String *string
+	if _this.StringToken() != nil {
+		_v := _this.String()
+		_String = &_v
+	}
+	var token *string
+	if _this.TokenToken() != nil {
+		_v := _this.Token()
+		token = &_v
+	}
+	var i *string
+	if _this.IToken() != nil {
+		_v := _this.I()
+		i = &_v
+	}
+	var j *string
+	if _this.JToken() != nil {
+		_v := _this.J()
+		j = &_v
+	}
+	var aux *string
+	if _this.AuxToken() != nil {
+		_v := _this.Aux()
+		aux = &_v
+	}
+	var core *string
+	if _this.CoreToken() != nil {
+		_v := _this.Core()
+		core = &_v
+	}
+	var err *string
+	if _this.ErrToken() != nil {
+		_v := _this.Err()
+		err = &_v
+	}
+	var node *string
+	if _this.NodeToken() != nil {
+		_v := _this.Node()
+		node = &_v
+	}
+	var this *string
+	if _this.ThisToken() != nil {
+		_v := _this.This()
+		this = &_v
+	}
+	var _Type *string
+	if _this.TypeToken() != nil {
+		_v := _this.Type()
+		_Type = &_v
+	}
+	var util *string
+	if _this.UtilToken() != nil {
+		_v := _this.Util()
+		util = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
-		T__    string `json:"$type"`
-		String string `json:"string,omitempty"`
-		Token  string `json:"token,omitempty"`
-		I      string `json:"i,omitempty"`
-		J      string `json:"j,omitempty"`
-		Aux    string `json:"aux,omitempty"`
-		Core   string `json:"core,omitempty"`
-		Err    string `json:"err,omitempty"`
-		Node   string `json:"node,omitempty"`
-		This   string `json:"this,omitempty"`
-		Type   string `json:"type,omitempty"`
-		Util   string `json:"util,omitempty"`
+		T__    string  `json:"$type"`
+		String *string `json:"string,omitzero"`
+		Token  *string `json:"token,omitzero"`
+		I      *string `json:"i,omitzero"`
+		J      *string `json:"j,omitzero"`
+		Aux    *string `json:"aux,omitzero"`
+		Core   *string `json:"core,omitzero"`
+		Err    *string `json:"err,omitzero"`
+		Node   *string `json:"node,omitzero"`
+		This   *string `json:"this,omitzero"`
+		Type   *string `json:"type,omitzero"`
+		Util   *string `json:"util,omitzero"`
 	}{
 		T__:    "Strings",
-		String: _this.String(),
-		Token:  _this.Token(),
-		I:      _this.I(),
-		J:      _this.J(),
-		Aux:    _this.Aux(),
-		Core:   _this.Core(),
-		Err:    _this.Err(),
-		Node:   _this.Node(),
-		This:   _this.This(),
-		Type:   _this.Type(),
-		Util:   _this.Util(),
+		String: _String,
+		Token:  token,
+		I:      i,
+		J:      j,
+		Aux:    aux,
+		Core:   core,
+		Err:    err,
+		Node:   node,
+		This:   this,
+		Type:   _Type,
+		Util:   util,
 	})
 }
 
@@ -171,28 +226,73 @@ func (_this *StringListsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 }
 
 func (_this *CompositesImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var composite *string
+	if _this.CompositeNode() != nil {
+		_v := _this.Composite()
+		composite = &_v
+	}
+	var token *string
+	if _this.TokenNode() != nil {
+		_v := _this.Token()
+		token = &_v
+	}
+	var aux *string
+	if _this.AuxNode() != nil {
+		_v := _this.Aux()
+		aux = &_v
+	}
+	var core *string
+	if _this.CoreNode() != nil {
+		_v := _this.Core()
+		core = &_v
+	}
+	var err *string
+	if _this.ErrNode() != nil {
+		_v := _this.Err()
+		err = &_v
+	}
+	var node *string
+	if _this.NodeNode() != nil {
+		_v := _this.Node()
+		node = &_v
+	}
+	var this *string
+	if _this.ThisNode() != nil {
+		_v := _this.This()
+		this = &_v
+	}
+	var _Type *string
+	if _this.TypeNode() != nil {
+		_v := _this.Type()
+		_Type = &_v
+	}
+	var util *string
+	if _this.UtilNode() != nil {
+		_v := _this.Util()
+		util = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
-		T__       string `json:"$type"`
-		Composite string `json:"composite,omitempty"`
-		Token     string `json:"token,omitempty"`
-		Aux       string `json:"aux,omitempty"`
-		Core      string `json:"core,omitempty"`
-		Err       string `json:"err,omitempty"`
-		Node      string `json:"node,omitempty"`
-		This      string `json:"this,omitempty"`
-		Type      string `json:"type,omitempty"`
-		Util      string `json:"util,omitempty"`
+		T__       string  `json:"$type"`
+		Composite *string `json:"composite,omitzero"`
+		Token     *string `json:"token,omitzero"`
+		Aux       *string `json:"aux,omitzero"`
+		Core      *string `json:"core,omitzero"`
+		Err       *string `json:"err,omitzero"`
+		Node      *string `json:"node,omitzero"`
+		This      *string `json:"this,omitzero"`
+		Type      *string `json:"type,omitzero"`
+		Util      *string `json:"util,omitzero"`
 	}{
 		T__:       "Composites",
-		Composite: _this.Composite(),
-		Token:     _this.Token(),
-		Aux:       _this.Aux(),
-		Core:      _this.Core(),
-		Err:       _this.Err(),
-		Node:      _this.Node(),
-		This:      _this.This(),
-		Type:      _this.Type(),
-		Util:      _this.Util(),
+		Composite: composite,
+		Token:     token,
+		Aux:       aux,
+		Core:      core,
+		Err:       err,
+		Node:      node,
+		This:      this,
+		Type:      _Type,
+		Util:      util,
 	})
 }
 
@@ -483,32 +583,54 @@ func (_this *BoolsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 
 func (_this *StringsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		String string `json:"string"`
-		Token  string `json:"token"`
-		I      string `json:"i"`
-		J      string `json:"j"`
-		Aux    string `json:"aux"`
-		Core   string `json:"core"`
-		Err    string `json:"err"`
-		Node   string `json:"node"`
-		This   string `json:"this"`
-		Type   string `json:"type"`
-		Util   string `json:"util"`
+		String *string `json:"string"`
+		Token  *string `json:"token"`
+		I      *string `json:"i"`
+		J      *string `json:"j"`
+		Aux    *string `json:"aux"`
+		Core   *string `json:"core"`
+		Err    *string `json:"err"`
+		Node   *string `json:"node"`
+		This   *string `json:"this"`
+		Type   *string `json:"type"`
+		Util   *string `json:"util"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	_this.SetString(core.NewSyntheticToken(aux.String, _this))
-	_this.SetToken(core.NewSyntheticToken(aux.Token, _this))
-	_this.SetI(core.NewSyntheticToken(aux.I, _this))
-	_this.SetJ(core.NewSyntheticToken(aux.J, _this))
-	_this.SetAux(core.NewSyntheticToken(aux.Aux, _this))
-	_this.SetCore(core.NewSyntheticToken(aux.Core, _this))
-	_this.SetErr(core.NewSyntheticToken(aux.Err, _this))
-	_this.SetNode(core.NewSyntheticToken(aux.Node, _this))
-	_this.SetThis(core.NewSyntheticToken(aux.This, _this))
-	_this.SetType(core.NewSyntheticToken(aux.Type, _this))
-	_this.SetUtil(core.NewSyntheticToken(aux.Util, _this))
+	if aux.String != nil {
+		_this.SetString(core.NewSyntheticToken(*aux.String, _this))
+	}
+	if aux.Token != nil {
+		_this.SetToken(core.NewSyntheticToken(*aux.Token, _this))
+	}
+	if aux.I != nil {
+		_this.SetI(core.NewSyntheticToken(*aux.I, _this))
+	}
+	if aux.J != nil {
+		_this.SetJ(core.NewSyntheticToken(*aux.J, _this))
+	}
+	if aux.Aux != nil {
+		_this.SetAux(core.NewSyntheticToken(*aux.Aux, _this))
+	}
+	if aux.Core != nil {
+		_this.SetCore(core.NewSyntheticToken(*aux.Core, _this))
+	}
+	if aux.Err != nil {
+		_this.SetErr(core.NewSyntheticToken(*aux.Err, _this))
+	}
+	if aux.Node != nil {
+		_this.SetNode(core.NewSyntheticToken(*aux.Node, _this))
+	}
+	if aux.This != nil {
+		_this.SetThis(core.NewSyntheticToken(*aux.This, _this))
+	}
+	if aux.Type != nil {
+		_this.SetType(core.NewSyntheticToken(*aux.Type, _this))
+	}
+	if aux.Util != nil {
+		_this.SetUtil(core.NewSyntheticToken(*aux.Util, _this))
+	}
 	return nil
 }
 
@@ -603,62 +725,62 @@ func (_this *StringListsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) erro
 
 func (_this *CompositesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Composite string `json:"composite"`
-		Token     string `json:"token"`
-		Aux       string `json:"aux"`
-		Core      string `json:"core"`
-		Err       string `json:"err"`
-		Node      string `json:"node"`
-		This      string `json:"this"`
-		Type      string `json:"type"`
-		Util      string `json:"util"`
+		Composite *string `json:"composite"`
+		Token     *string `json:"token"`
+		Aux       *string `json:"aux"`
+		Core      *string `json:"core"`
+		Err       *string `json:"err"`
+		Node      *string `json:"node"`
+		This      *string `json:"this"`
+		Type      *string `json:"type"`
+		Util      *string `json:"util"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	{
+	if aux.Composite != nil {
 		cn := core.NewCompositeNode()
-		cn.AppendToken(core.NewSyntheticToken(aux.Composite, _this))
+		cn.AppendToken(core.NewSyntheticToken(*aux.Composite, _this))
 		_this.SetComposite(cn)
 	}
-	{
+	if aux.Token != nil {
 		cn := core.NewCompositeNode()
-		cn.AppendToken(core.NewSyntheticToken(aux.Token, _this))
+		cn.AppendToken(core.NewSyntheticToken(*aux.Token, _this))
 		_this.SetToken(cn)
 	}
-	{
+	if aux.Aux != nil {
 		cn := core.NewCompositeNode()
-		cn.AppendToken(core.NewSyntheticToken(aux.Aux, _this))
+		cn.AppendToken(core.NewSyntheticToken(*aux.Aux, _this))
 		_this.SetAux(cn)
 	}
-	{
+	if aux.Core != nil {
 		cn := core.NewCompositeNode()
-		cn.AppendToken(core.NewSyntheticToken(aux.Core, _this))
+		cn.AppendToken(core.NewSyntheticToken(*aux.Core, _this))
 		_this.SetCore(cn)
 	}
-	{
+	if aux.Err != nil {
 		cn := core.NewCompositeNode()
-		cn.AppendToken(core.NewSyntheticToken(aux.Err, _this))
+		cn.AppendToken(core.NewSyntheticToken(*aux.Err, _this))
 		_this.SetErr(cn)
 	}
-	{
+	if aux.Node != nil {
 		cn := core.NewCompositeNode()
-		cn.AppendToken(core.NewSyntheticToken(aux.Node, _this))
+		cn.AppendToken(core.NewSyntheticToken(*aux.Node, _this))
 		_this.SetNode(cn)
 	}
-	{
+	if aux.This != nil {
 		cn := core.NewCompositeNode()
-		cn.AppendToken(core.NewSyntheticToken(aux.This, _this))
+		cn.AppendToken(core.NewSyntheticToken(*aux.This, _this))
 		_this.SetThis(cn)
 	}
-	{
+	if aux.Type != nil {
 		cn := core.NewCompositeNode()
-		cn.AppendToken(core.NewSyntheticToken(aux.Type, _this))
+		cn.AppendToken(core.NewSyntheticToken(*aux.Type, _this))
 		_this.SetType(cn)
 	}
-	{
+	if aux.Util != nil {
 		cn := core.NewCompositeNode()
-		cn.AppendToken(core.NewSyntheticToken(aux.Util, _this))
+		cn.AppendToken(core.NewSyntheticToken(*aux.Util, _this))
 		_this.SetUtil(cn)
 	}
 	return nil

@@ -50,13 +50,22 @@ func generateJSONMarshalTo(node codegen.Node, iface grammar.Interface) {
 
 	node.AppendLine("func (", thisRef, " *", iface.Name(), "Impl) MarshalJSONTo(_encoder *jsontext.Encoder) error {")
 	node.Indent(func(n codegen.Node) {
-		// preprocess []string fields: they are stored as []*core.Token internally but shall be serialized as plain strings;
-		// instead of implementing 'MarshalJSON()' for *core.Token, a preprocessing loop calling '.String()' for each item
-		// is added for each of such fields
+		// preprocess token/composite fields: they are stored as *core.Token / core.CompositeNode
+		// internally but shall be serialized as plain strings; instead of implementing
+		// 'MarshalJSON()' for *core.Token, a preprocessing loop/block calling '.String()' is added
+		// for each of such fields. Non-array fields preprocess into a *string local instead of a
+		// plain string, nil when the field's underlying token/composite is absent, so marshaling
+		// can tell that apart from an explicitly present but empty string, matching how
+		// UnmarshalJSONFrom revives them (array fields don't need this: a missing array decodes
+		// to an empty slice, indistinguishable from - and treated the same as - an empty one).
 		var stringListFields = map[string]string{}
+		var stringFields = map[string]string{}
 		for _, field := range fields {
-			if field.Array && (field.GType == TOKEN_TYPE || field.GType == COMPOSITE_TYPE) {
-				varName := field.LName
+			if field.Boolean || (field.GType != TOKEN_TYPE && field.GType != COMPOSITE_TYPE) {
+				continue
+			}
+			varName := field.LName
+			if field.Array {
 				stringListFields[field.Name] = varName
 
 				n.AppendLine(varName, " := make([]string, len(", thisDot, field.Name, "()))")
@@ -65,17 +74,36 @@ func generateJSONMarshalTo(node codegen.Node, iface grammar.Interface) {
 					n2.AppendLine(varName, "[_j] = _item.String()")
 				})
 				n.AppendLine("}")
+			} else {
+				stringFields[field.Name] = varName
+
+				presenceGetter := field.Name + "Token"
+				if field.GType == COMPOSITE_TYPE {
+					presenceGetter = field.Name + "Node"
+				}
+				n.AppendLine("var ", varName, " *string")
+				n.AppendLine("if ", thisDot, presenceGetter, "() != nil {")
+				n.Indent(func(n2 codegen.Node) {
+					n2.AppendLine("_v := ", thisDot, field.Name, "()")
+					n2.AppendLine(varName, " = &_v")
+				})
+				n.AppendLine("}")
 			}
 		}
 		n.AppendLine("return json.MarshalEncode(_encoder, struct {")
 		n.Indent(func(n2 codegen.Node) {
 			n2.AppendLine("T__", " ", "string", " `json:\"$type\"`")
 			for _, field := range fields {
-				typeStr := field.Type
 				if field.Array {
-					typeStr = "[]" + typeStr
+					n2.AppendLine(field.Name, " []", field.Type, " `json:\"", field.JsonPropName, ",omitempty\"`")
+				} else if _, present := stringFields[field.Name]; present {
+					// omitempty also drops a non-nil pointer to an empty string (it checks the
+					// pointee, not the pointer), which would undo the absent/empty distinction
+					// this *string encoding exists for; omitzero only checks the pointer itself.
+					n2.AppendLine(field.Name, " *", field.Type, " `json:\"", field.JsonPropName, ",omitzero\"`")
+				} else {
+					n2.AppendLine(field.Name, " ", field.Type, " `json:\"", field.JsonPropName, ",omitempty\"`")
 				}
-				n2.AppendLine(field.Name, " ", typeStr, " `json:\"", field.JsonPropName, ",omitempty\"`")
 			}
 		})
 		n.AppendLine("}{")
@@ -83,6 +111,8 @@ func generateJSONMarshalTo(node codegen.Node, iface grammar.Interface) {
 			n2.AppendLine("T__: ", "\"", iface.Name(), "\",")
 			for _, field := range fields {
 				if varName, present := stringListFields[field.Name]; present {
+					n2.AppendLine(field.Name, ": ", varName, ",")
+				} else if varName, present := stringFields[field.Name]; present {
 					n2.AppendLine(field.Name, ": ", varName, ",")
 				} else {
 					getterName := field.Name
@@ -105,6 +135,13 @@ func getAuxFieldType(field FieldInfo) string {
 		typ = "bool"
 	} else if field.GType == TOKEN_TYPE || field.GType == COMPOSITE_TYPE {
 		typ = "string"
+		// non-array token/composite fields use *string so that an omitted JSON property
+		// (nil) can be told apart from an explicitly present, empty string; array fields
+		// don't need this, since a missing array property already decodes to a nil/empty
+		// slice distinct from a present-but-empty one (both loops below produce no items)
+		if !field.Array {
+			typ = "*" + typ
+		}
 	} else {
 		typ = "jsontext.Value"
 	}
@@ -178,12 +215,16 @@ func generateJSONUnmarshalFrom(node codegen.Node, iface grammar.Interface) {
 				})
 				n.AppendLine("}")
 			} else if field.GType == TOKEN_TYPE {
-				n.AppendLine(thisDotSet, field.Name, "(", genCreateNewToken("aux."+field.Name), ")")
+				n.AppendLine("if aux.", field.Name, " != nil {")
+				n.Indent(func(n2 codegen.Node) {
+					n2.AppendLine(thisDotSet, field.Name, "(", genCreateNewToken("*aux."+field.Name), ")")
+				})
+				n.AppendLine("}")
 			} else if field.GType == COMPOSITE_TYPE {
-				n.AppendLine("{")
+				n.AppendLine("if aux.", field.Name, " != nil {")
 				n.Indent(func(n2 codegen.Node) {
 					n2.AppendLine("cn := core.NewCompositeNode()")
-					n2.AppendLine("cn.AppendToken(", genCreateNewToken("aux."+field.Name), ")")
+					n2.AppendLine("cn.AppendToken(", genCreateNewToken("*aux."+field.Name), ")")
 					n2.AppendLine(thisDotSet, field.Name, "(cn)")
 				})
 				n.AppendLine("}")

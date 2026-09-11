@@ -414,3 +414,102 @@ const circularBJson = `{
 		}
 	]
 }`
+
+// TestJsonWithAbsentFields programmatically composes an AST containing token fields that were
+// never set as opposed to set to an empty string, and asserts that MarshalJSONTo /
+// UnmarshalJSONFrom preserve that distinction through a roundtrip: an absent token field must
+// marshal without its JSON property (not as ""), a token explicitly set to "" must marshal as
+// "" (not be dropped), and both must revive as such - not as one another - after unmarshaling.
+func TestJsonWithAbsentFields(t *testing.T) {
+	mod := NewModule()
+	mod.SetName(core.NewSyntheticToken("test", mod))
+
+	def := NewDefinition()
+	def.SetName(core.NewSyntheticToken("f", def))
+
+	// named: Name is set to a non-empty string
+	named := NewDeclaredParameter()
+	named.SetName(core.NewSyntheticToken("x", named))
+	def.SetArgsItem(named)
+
+	// unnamed: Name is intentionally left unset (nil token), as opposed to an empty string
+	unnamed := NewDeclaredParameter()
+	def.SetArgsItem(unnamed)
+	require.Nil(t, unnamed.NameToken(), "test setup: Name must be unset")
+
+	// emptyNamed: Name is explicitly set to an empty string, as opposed to being left unset
+	emptyNamed := NewDeclaredParameter()
+	emptyNamed.SetName(core.NewSyntheticToken("", emptyNamed))
+	def.SetArgsItem(emptyNamed)
+
+	oneLiteral := NewNumberLiteral()
+	oneLiteral.SetValue(core.NewSyntheticToken("1", oneLiteral))
+
+	// emptyLiteral: Value is explicitly set to an empty string, as opposed to being left unset
+	emptyLiteral := NewNumberLiteral()
+	emptyLiteral.SetValue(core.NewSyntheticToken("", emptyLiteral))
+
+	sum := NewBinaryExpression()
+	sum.SetLeft(oneLiteral)
+	sum.SetOperator(core.NewSyntheticToken("+", sum))
+	sum.SetRight(emptyLiteral)
+	def.SetExpression(sum)
+
+	mod.SetStatementsItem(def)
+
+	res, err := json.Marshal(mod, jsontext.WithIndent("	"))
+	require.NoError(t, err)
+	assert.Equal(t, absentFieldsJson, string(res))
+
+	revived, err := UnmarshalValue[Module](res)
+	require.NoError(t, err)
+
+	revivedArgs := revived.Statements()[0].(Definition).Args()
+	assert.Equal(t, "x", revivedArgs[0].Name())
+	assert.Nil(t, revivedArgs[1].NameToken(), "an absent 'name' property must revive as a nil token, not a token with an empty image")
+	assert.NotNil(t, revivedArgs[2].NameToken(), "a 'name' property explicitly set to \"\" must revive as a non-nil token with an empty image")
+	assert.Equal(t, "", revivedArgs[2].Name())
+
+	revivedLeft := revived.Statements()[0].(Definition).Expression().(BinaryExpression).Left().(NumberLiteral)
+	assert.Equal(t, "1", revivedLeft.Value())
+
+	revivedRight := revived.Statements()[0].(Definition).Expression().(BinaryExpression).Right().(NumberLiteral)
+	assert.NotNil(t, revivedRight.ValueToken(), "a 'value' property explicitly set to \"\" must revive as a non-nil token with an empty image")
+	assert.Equal(t, "", revivedRight.Value())
+}
+
+const absentFieldsJson = `{
+	"$type": "Module",
+	"name": "test",
+	"statements": [
+		{
+			"$type": "Definition",
+			"name": "f",
+			"args": [
+				{
+					"$type": "DeclaredParameter",
+					"name": "x"
+				},
+				{
+					"$type": "DeclaredParameter"
+				},
+				{
+					"$type": "DeclaredParameter",
+					"name": ""
+				}
+			],
+			"expression": {
+				"$type": "BinaryExpression",
+				"left": {
+					"$type": "NumberLiteral",
+					"value": "1"
+				},
+				"operator": "+",
+				"right": {
+					"$type": "NumberLiteral",
+					"value": ""
+				}
+			}
+		}
+	]
+}`

@@ -21,26 +21,46 @@ func (_this *ModelImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 }
 
 func (_this *ItemImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var value *string
+	if _this.ValueToken() != nil {
+		_v := _this.Value()
+		value = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
-		T__   string `json:"$type"`
-		Value string `json:"value,omitempty"`
+		T__   string  `json:"$type"`
+		Value *string `json:"value,omitzero"`
 	}{
 		T__:   "Item",
-		Value: _this.Value(),
+		Value: value,
 	})
 }
 
 func (_this *RecoveryImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var value *string
+	if _this.ValueToken() != nil {
+		_v := _this.Value()
+		value = &_v
+	}
+	var first *string
+	if _this.FirstToken() != nil {
+		_v := _this.First()
+		first = &_v
+	}
+	var second *string
+	if _this.SecondToken() != nil {
+		_v := _this.Second()
+		second = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
-		T__    string `json:"$type"`
-		Value  string `json:"value,omitempty"`
-		First  string `json:"first,omitempty"`
-		Second string `json:"second,omitempty"`
+		T__    string  `json:"$type"`
+		Value  *string `json:"value,omitzero"`
+		First  *string `json:"first,omitzero"`
+		Second *string `json:"second,omitzero"`
 	}{
 		T__:    "Recovery",
-		Value:  _this.Value(),
-		First:  _this.First(),
-		Second: _this.Second(),
+		Value:  value,
+		First:  first,
+		Second: second,
 	})
 }
 
@@ -63,27 +83,35 @@ func (_this *ModelImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 
 func (_this *ItemImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Value string `json:"value"`
+		Value *string `json:"value"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	_this.SetValue(core.NewSyntheticToken(aux.Value, _this))
+	if aux.Value != nil {
+		_this.SetValue(core.NewSyntheticToken(*aux.Value, _this))
+	}
 	return nil
 }
 
 func (_this *RecoveryImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Value  string `json:"value"`
-		First  string `json:"first"`
-		Second string `json:"second"`
+		Value  *string `json:"value"`
+		First  *string `json:"first"`
+		Second *string `json:"second"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	_this.SetValue(core.NewSyntheticToken(aux.Value, _this))
-	_this.SetFirst(core.NewSyntheticToken(aux.First, _this))
-	_this.SetSecond(core.NewSyntheticToken(aux.Second, _this))
+	if aux.Value != nil {
+		_this.SetValue(core.NewSyntheticToken(*aux.Value, _this))
+	}
+	if aux.First != nil {
+		_this.SetFirst(core.NewSyntheticToken(*aux.First, _this))
+	}
+	if aux.Second != nil {
+		_this.SetSecond(core.NewSyntheticToken(*aux.Second, _this))
+	}
 	return nil
 }
 

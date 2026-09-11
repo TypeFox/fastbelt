@@ -11,13 +11,18 @@ import (
 )
 
 func (_this *ModuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var name *string
+	if _this.NameToken() != nil {
+		_v := _this.Name()
+		name = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
 		T__        string      `json:"$type"`
-		Name       string      `json:"name,omitempty"`
+		Name       *string     `json:"name,omitzero"`
 		Statements []Statement `json:"statements,omitempty"`
 	}{
 		T__:        "Module",
-		Name:       _this.Name(),
+		Name:       name,
 		Statements: _this.Statements(),
 	})
 }
@@ -31,36 +36,51 @@ func (_this *StatementImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 }
 
 func (_this *AbstractDefinitionImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var name *string
+	if _this.NameToken() != nil {
+		_v := _this.Name()
+		name = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
-		T__  string `json:"$type"`
-		Name string `json:"name,omitempty"`
+		T__  string  `json:"$type"`
+		Name *string `json:"name,omitzero"`
 	}{
 		T__:  "AbstractDefinition",
-		Name: _this.Name(),
+		Name: name,
 	})
 }
 
 func (_this *DefinitionImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var name *string
+	if _this.NameToken() != nil {
+		_v := _this.Name()
+		name = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
 		T__        string              `json:"$type"`
-		Name       string              `json:"name,omitempty"`
+		Name       *string             `json:"name,omitzero"`
 		Args       []DeclaredParameter `json:"args,omitempty"`
 		Expression Expression          `json:"expression,omitempty"`
 	}{
 		T__:        "Definition",
-		Name:       _this.Name(),
+		Name:       name,
 		Args:       _this.Args(),
 		Expression: _this.Expression(),
 	})
 }
 
 func (_this *DeclaredParameterImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var name *string
+	if _this.NameToken() != nil {
+		_v := _this.Name()
+		name = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
-		T__  string `json:"$type"`
-		Name string `json:"name,omitempty"`
+		T__  string  `json:"$type"`
+		Name *string `json:"name,omitzero"`
 	}{
 		T__:  "DeclaredParameter",
-		Name: _this.Name(),
+		Name: name,
 	})
 }
 
@@ -83,15 +103,20 @@ func (_this *ExpressionImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 }
 
 func (_this *BinaryExpressionImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var operator *string
+	if _this.OperatorToken() != nil {
+		_v := _this.Operator()
+		operator = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
 		T__      string     `json:"$type"`
 		Left     Expression `json:"left,omitempty"`
-		Operator string     `json:"operator,omitempty"`
+		Operator *string    `json:"operator,omitzero"`
 		Right    Expression `json:"right,omitempty"`
 	}{
 		T__:      "BinaryExpression",
 		Left:     _this.Left(),
-		Operator: _this.Operator(),
+		Operator: operator,
 		Right:    _this.Right(),
 	})
 }
@@ -109,24 +134,31 @@ func (_this *FunctionCallImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 }
 
 func (_this *NumberLiteralImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var value *string
+	if _this.ValueToken() != nil {
+		_v := _this.Value()
+		value = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
-		T__   string `json:"$type"`
-		Value string `json:"value,omitempty"`
+		T__   string  `json:"$type"`
+		Value *string `json:"value,omitzero"`
 	}{
 		T__:   "NumberLiteral",
-		Value: _this.Value(),
+		Value: value,
 	})
 }
 
 func (_this *ModuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Name       string           `json:"name"`
+		Name       *string          `json:"name"`
 		Statements []jsontext.Value `json:"statements"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
+	if aux.Name != nil {
+		_this.SetName(core.NewSyntheticToken(*aux.Name, _this))
+	}
 	_this.statements = make([]Statement, 0, len(aux.Statements))
 	for _, item := range aux.Statements {
 		node, _err := UnmarshalValue[Statement](item)
@@ -146,25 +178,29 @@ func (_this *StatementImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error 
 
 func (_this *AbstractDefinitionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Name string `json:"name"`
+		Name *string `json:"name"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
+	if aux.Name != nil {
+		_this.SetName(core.NewSyntheticToken(*aux.Name, _this))
+	}
 	return nil
 }
 
 func (_this *DefinitionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Name       string           `json:"name"`
+		Name       *string          `json:"name"`
 		Args       []jsontext.Value `json:"args"`
 		Expression jsontext.Value   `json:"expression"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
+	if aux.Name != nil {
+		_this.SetName(core.NewSyntheticToken(*aux.Name, _this))
+	}
 	_this.args = make([]DeclaredParameter, 0, len(aux.Args))
 	for _, item := range aux.Args {
 		node, _err := UnmarshalValue[DeclaredParameter](item)
@@ -187,12 +223,14 @@ func (_this *DefinitionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 
 func (_this *DeclaredParameterImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Name string `json:"name"`
+		Name *string `json:"name"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
+	if aux.Name != nil {
+		_this.SetName(core.NewSyntheticToken(*aux.Name, _this))
+	}
 	return nil
 }
 
@@ -220,7 +258,7 @@ func (_this *ExpressionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 func (_this *BinaryExpressionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		Left     jsontext.Value `json:"left"`
-		Operator string         `json:"operator"`
+		Operator *string        `json:"operator"`
 		Right    jsontext.Value `json:"right"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
@@ -233,7 +271,9 @@ func (_this *BinaryExpressionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder)
 		}
 		_this.SetLeft(left)
 	}
-	_this.SetOperator(core.NewSyntheticToken(aux.Operator, _this))
+	if aux.Operator != nil {
+		_this.SetOperator(core.NewSyntheticToken(*aux.Operator, _this))
+	}
 	if aux.Right != nil {
 		right, _err := UnmarshalValue[Expression](aux.Right)
 		if _err != nil {
@@ -274,12 +314,14 @@ func (_this *FunctionCallImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) err
 
 func (_this *NumberLiteralImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Value string `json:"value"`
+		Value *string `json:"value"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	_this.SetValue(core.NewSyntheticToken(aux.Value, _this))
+	if aux.Value != nil {
+		_this.SetValue(core.NewSyntheticToken(*aux.Value, _this))
+	}
 	return nil
 }
 

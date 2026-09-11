@@ -11,16 +11,21 @@ import (
 )
 
 func (_this *StatemachineImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var name *string
+	if _this.NameToken() != nil {
+		_v := _this.Name()
+		name = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
 		T__      string                 `json:"$type"`
-		Name     string                 `json:"name,omitempty"`
+		Name     *string                `json:"name,omitzero"`
 		Events   []Event                `json:"events,omitempty"`
 		Commands []Command              `json:"commands,omitempty"`
 		Init     *core.Reference[State] `json:"init,omitempty"`
 		States   []State                `json:"states,omitempty"`
 	}{
 		T__:      "Statemachine",
-		Name:     _this.Name(),
+		Name:     name,
 		Events:   _this.Events(),
 		Commands: _this.Commands(),
 		Init:     _this.Init(),
@@ -29,34 +34,49 @@ func (_this *StatemachineImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 }
 
 func (_this *EventImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var name *string
+	if _this.NameToken() != nil {
+		_v := _this.Name()
+		name = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
-		T__  string `json:"$type"`
-		Name string `json:"name,omitempty"`
+		T__  string  `json:"$type"`
+		Name *string `json:"name,omitzero"`
 	}{
 		T__:  "Event",
-		Name: _this.Name(),
+		Name: name,
 	})
 }
 
 func (_this *CommandImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var name *string
+	if _this.NameToken() != nil {
+		_v := _this.Name()
+		name = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
-		T__  string `json:"$type"`
-		Name string `json:"name,omitempty"`
+		T__  string  `json:"$type"`
+		Name *string `json:"name,omitzero"`
 	}{
 		T__:  "Command",
-		Name: _this.Name(),
+		Name: name,
 	})
 }
 
 func (_this *StateImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var name *string
+	if _this.NameToken() != nil {
+		_v := _this.Name()
+		name = &_v
+	}
 	return json.MarshalEncode(_encoder, struct {
 		T__         string                     `json:"$type"`
-		Name        string                     `json:"name,omitempty"`
+		Name        *string                    `json:"name,omitzero"`
 		Actions     []*core.Reference[Command] `json:"actions,omitempty"`
 		Transitions []Transition               `json:"transitions,omitempty"`
 	}{
 		T__:         "State",
-		Name:        _this.Name(),
+		Name:        name,
 		Actions:     _this.Actions(),
 		Transitions: _this.Transitions(),
 	})
@@ -76,7 +96,7 @@ func (_this *TransitionImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 
 func (_this *StatemachineImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Name     string           `json:"name"`
+		Name     *string          `json:"name"`
 		Events   []jsontext.Value `json:"events"`
 		Commands []jsontext.Value `json:"commands"`
 		Init     jsontext.Value   `json:"init"`
@@ -85,7 +105,9 @@ func (_this *StatemachineImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) err
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
+	if aux.Name != nil {
+		_this.SetName(core.NewSyntheticToken(*aux.Name, _this))
+	}
 	_this.events = make([]Event, 0, len(aux.Events))
 	for _, item := range aux.Events {
 		node, _err := UnmarshalValue[Event](item)
@@ -128,36 +150,42 @@ func (_this *StatemachineImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) err
 
 func (_this *EventImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Name string `json:"name"`
+		Name *string `json:"name"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
+	if aux.Name != nil {
+		_this.SetName(core.NewSyntheticToken(*aux.Name, _this))
+	}
 	return nil
 }
 
 func (_this *CommandImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Name string `json:"name"`
+		Name *string `json:"name"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
+	if aux.Name != nil {
+		_this.SetName(core.NewSyntheticToken(*aux.Name, _this))
+	}
 	return nil
 }
 
 func (_this *StateImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Name        string           `json:"name"`
+		Name        *string          `json:"name"`
 		Actions     []jsontext.Value `json:"actions"`
 		Transitions []jsontext.Value `json:"transitions"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
-	_this.SetName(core.NewSyntheticToken(aux.Name, _this))
+	if aux.Name != nil {
+		_this.SetName(core.NewSyntheticToken(*aux.Name, _this))
+	}
 	_this.actions = make([]*core.Reference[Command], 0, len(aux.Actions))
 	for _, item := range aux.Actions {
 		reference, _err := util.UnmarshalReference[Command](_this, item)
