@@ -100,11 +100,17 @@ func (c *emptySymbolContainer) ForType(targetType reflect.Type) SymbolSeq {
 // MergeSymbolContainers merges multiple symbol containers into one. The resulting container
 // is immutable and reflects the combined contents of all input containers.
 func MergeSymbolContainers(containers iter.Seq[SymbolContainer]) SymbolContainer {
-	if extiter.IsEmpty(containers) {
+	// A container may be 'nil', e.g. in case a document in the document manager hasn't been built
+	// yet or has been reset and is not included in the current build cycle, so its exported symbols
+	// container is absent; filter such entries out once here rather than in every method below.
+	nonNil := extiter.Filter(containers, func(container SymbolContainer) bool {
+		return container != nil
+	})
+	if extiter.IsEmpty(nonNil) {
 		return EmptySymbolContainer
 	}
 	return &mergedSymbolContainer{
-		containers: containers,
+		containers: nonNil,
 	}
 }
 
@@ -125,12 +131,6 @@ func (c *mergedSymbolContainer) All() SymbolSeq {
 
 func (c *mergedSymbolContainer) ForType(targetType reflect.Type) SymbolSeq {
 	return extiter.FlatMap(c.containers, func(container SymbolContainer) SymbolSeq {
-		if container == nil {
-			// in case a document in the document manager hasn't been build yet or has been reset
-			// and is not included in the current build cycle its exported symbols container may be absent;
-			// map 'nil' to an empty seq in such cases
-			return EmptySymbolSeq
-		}
 		return container.ForType(targetType)
 	})
 }
