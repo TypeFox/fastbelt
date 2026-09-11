@@ -330,7 +330,7 @@ func (r *Reference[T]) MarshalJSONTo(encoder *jsontext.Encoder) error {
 		if r.Owner() != nil && r.Owner().Document() == refDoc {
 			uri = "#" + refPath.String()
 		} else {
-			uri = refDoc.URI.WithFragment(refPath.String()).StringUnencoded()
+			uri = refDoc.URI.WithFragment(refPath.String()).String()
 		}
 	} else {
 		return errors.New("Reference.MarshalJSONTo(): unexpected state")

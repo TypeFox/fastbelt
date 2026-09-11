@@ -316,7 +316,7 @@ const circularAJson = `{
 					"$type": "FunctionCall",
 					"callable": {
 						"$refText": "two",
-						"$ref": "inmemory:/testB#/statements@0"
+						"$ref": "inmemory:/testB#%2Fstatements%400"
 					}
 				},
 				"operator": "*",
@@ -392,7 +392,7 @@ const circularBJson = `{
 				],
 				"callable": {
 					"$refText": "root",
-					"$ref": "inmemory:/testA#/statements@0"
+					"$ref": "inmemory:/testA#%2Fstatements%400"
 				}
 			}
 		},
