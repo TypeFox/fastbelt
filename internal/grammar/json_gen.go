@@ -184,8 +184,8 @@ func (_this *TokenImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 
 func (_this *TokenGroupImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	regexps := make([]string, len(_this.Regexps()))
-	for j, item := range _this.Regexps() {
-		regexps[j] = item.String()
+	for _j, _item := range _this.Regexps() {
+		regexps[_j] = _item.String()
 	}
 	return json.MarshalEncode(_encoder, struct {
 		T__       string                               `json:"$type"`

@@ -11,79 +11,154 @@ interface Bools {
     Bool bool
     Token bool
 
-    // we cannot parse a list of boolean values directly, and we cannot represent `false` values in pure bools in the AST;
-    // only absent clauses/items can yield `false` prop values in AST nodes;
-    // hence, no `boolList` field is defined here in the AST interface definition
-
     Aux bool
     Core bool
     Err bool
     Node bool
     This bool
-    Util bool
-
     Type bool
+    Util bool
 }
+
+// we cannot parse a list of boolean values directly, and we cannot represent `false` values in pure bools in the AST;
+// only absent clauses/items can yield `false` prop values in AST nodes;
+// hence, no `BoolLists` case is defined here
+
 
 interface Strings {
     String string
     Token string
-
-    StringList []string
+    I string
+    J string
 
     Aux string
     Core string
     Err string
     Node string
     This string
-    Util string
-
     Type string
+    Util string
+}
+
+interface StringLists {
+    String []string
+    Composite []string
+    Token []string
+    Int []string
+    Uint []string
+    Make []string
+    Item []string
+    I []string
+    J []string
+
+    Aux []string
+    Core []string
+    Err []string
+    Node []string
+    This []string
+    Type []string
+    Util []string
 }
 
 interface Composites {
     Composite composite
     Token composite
 
-    CompositeList []composite
-
     Aux composite
     Core composite
     Err composite
     Node composite
     This composite
-    Util composite
-
     Type composite
+    Util composite
+}
+
+interface CompositeLists {
+    Composite []composite
+    String []composite
+    Token []composite
+    Int []composite
+    Uint []composite
+    Make []composite
+    Item []composite
+    I []composite
+    J []composite
+
+    Aux []composite
+    Core []composite
+    Err []composite
+    Node []composite
+    This []composite
+    Type []composite
+    Util []composite
 }
 
 interface Objects {
     Object Objects
-    ObjectList []Objects
+    Token Objects
 
     Aux Objects
     Core Objects
     Err Objects
     Node Objects
     This Objects
-    Util Objects
-
     Type Objects
+    Util Objects
+}
+
+interface ObjectLists {
+    Object []Objects
+    Composite []Objects
+    String []Objects
+    Token []Objects
+    Int []Objects
+    Uint []Objects
+    Make []Objects
+    Item []Objects
+    I []Objects
+    J []Objects
+
+    Aux []Objects
+    Core []Objects
+    Err []Objects
+    Node []Objects
+    This []Objects
+    Type []Objects
+    Util []Objects
 }
 
 interface References {
     Reference *References
-    Token References
-    ReferenceList []*References
+    Token *References
 
     Aux *References
     Core *References
     Err *References
     Node *References
     This *References
-    Util *References
-
     Type *References
+    Util *References
+}
+
+interface ReferenceLists {
+    Reference []*References
+    Composite []*References
+    String []*References
+    Token []*References
+    Int []*References
+    Uint []*References
+    Make []*References
+    Item []*References
+    I []*References
+    J []*References
+
+    Aux []*References
+    Core []*References
+    Err []*References
+    Node []*References
+    This []*References
+    Type []*References
+    Util []*References
 }
 
 entry Bools: Bool?="bool";

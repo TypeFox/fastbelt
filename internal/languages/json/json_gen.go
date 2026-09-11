@@ -20,8 +20,8 @@ func (_this *BoolsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Err   bool   `json:"err,omitempty"`
 		Node  bool   `json:"node,omitempty"`
 		This  bool   `json:"this,omitempty"`
-		Util  bool   `json:"util,omitempty"`
 		Type  bool   `json:"type,omitempty"`
+		Util  bool   `json:"util,omitempty"`
 	}{
 		T__:   "Bools",
 		Bool:  _this.IsBool(),
@@ -31,126 +31,408 @@ func (_this *BoolsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Err:   _this.IsErr(),
 		Node:  _this.IsNode(),
 		This:  _this.IsThis(),
-		Util:  _this.IsUtil(),
 		Type:  _this.IsType(),
+		Util:  _this.IsUtil(),
 	})
 }
 
 func (_this *StringsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
-	stringList := make([]string, len(_this.StringList()))
-	for j, item := range _this.StringList() {
-		stringList[j] = item.String()
+	return json.MarshalEncode(_encoder, struct {
+		T__    string `json:"$type"`
+		String string `json:"string,omitempty"`
+		Token  string `json:"token,omitempty"`
+		I      string `json:"i,omitempty"`
+		J      string `json:"j,omitempty"`
+		Aux    string `json:"aux,omitempty"`
+		Core   string `json:"core,omitempty"`
+		Err    string `json:"err,omitempty"`
+		Node   string `json:"node,omitempty"`
+		This   string `json:"this,omitempty"`
+		Type   string `json:"type,omitempty"`
+		Util   string `json:"util,omitempty"`
+	}{
+		T__:    "Strings",
+		String: _this.String(),
+		Token:  _this.Token(),
+		I:      _this.I(),
+		J:      _this.J(),
+		Aux:    _this.Aux(),
+		Core:   _this.Core(),
+		Err:    _this.Err(),
+		Node:   _this.Node(),
+		This:   _this.This(),
+		Type:   _this.Type(),
+		Util:   _this.Util(),
+	})
+}
+
+func (_this *StringListsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	_String := make([]string, len(_this.String()))
+	for _j, _item := range _this.String() {
+		_String[_j] = _item.String()
+	}
+	composite := make([]string, len(_this.Composite()))
+	for _j, _item := range _this.Composite() {
+		composite[_j] = _item.String()
+	}
+	token := make([]string, len(_this.Token()))
+	for _j, _item := range _this.Token() {
+		token[_j] = _item.String()
+	}
+	_Int := make([]string, len(_this.Int()))
+	for _j, _item := range _this.Int() {
+		_Int[_j] = _item.String()
+	}
+	_Uint := make([]string, len(_this.Uint()))
+	for _j, _item := range _this.Uint() {
+		_Uint[_j] = _item.String()
+	}
+	_Make := make([]string, len(_this.Make()))
+	for _j, _item := range _this.Make() {
+		_Make[_j] = _item.String()
+	}
+	item := make([]string, len(_this.Item()))
+	for _j, _item := range _this.Item() {
+		item[_j] = _item.String()
+	}
+	i := make([]string, len(_this.I()))
+	for _j, _item := range _this.I() {
+		i[_j] = _item.String()
+	}
+	j := make([]string, len(_this.J()))
+	for _j, _item := range _this.J() {
+		j[_j] = _item.String()
+	}
+	aux := make([]string, len(_this.Aux()))
+	for _j, _item := range _this.Aux() {
+		aux[_j] = _item.String()
+	}
+	core := make([]string, len(_this.Core()))
+	for _j, _item := range _this.Core() {
+		core[_j] = _item.String()
+	}
+	err := make([]string, len(_this.Err()))
+	for _j, _item := range _this.Err() {
+		err[_j] = _item.String()
+	}
+	node := make([]string, len(_this.Node()))
+	for _j, _item := range _this.Node() {
+		node[_j] = _item.String()
+	}
+	this := make([]string, len(_this.This()))
+	for _j, _item := range _this.This() {
+		this[_j] = _item.String()
+	}
+	_Type := make([]string, len(_this.Type()))
+	for _j, _item := range _this.Type() {
+		_Type[_j] = _item.String()
+	}
+	util := make([]string, len(_this.Util()))
+	for _j, _item := range _this.Util() {
+		util[_j] = _item.String()
 	}
 	return json.MarshalEncode(_encoder, struct {
-		T__        string   `json:"$type"`
-		String     string   `json:"string,omitempty"`
-		Token      string   `json:"token,omitempty"`
-		StringList []string `json:"stringList,omitempty"`
-		Aux        string   `json:"aux,omitempty"`
-		Core       string   `json:"core,omitempty"`
-		Err        string   `json:"err,omitempty"`
-		Node       string   `json:"node,omitempty"`
-		This       string   `json:"this,omitempty"`
-		Util       string   `json:"util,omitempty"`
-		Type       string   `json:"type,omitempty"`
+		T__       string   `json:"$type"`
+		String    []string `json:"string,omitempty"`
+		Composite []string `json:"composite,omitempty"`
+		Token     []string `json:"token,omitempty"`
+		Int       []string `json:"int,omitempty"`
+		Uint      []string `json:"uint,omitempty"`
+		Make      []string `json:"make,omitempty"`
+		Item      []string `json:"item,omitempty"`
+		I         []string `json:"i,omitempty"`
+		J         []string `json:"j,omitempty"`
+		Aux       []string `json:"aux,omitempty"`
+		Core      []string `json:"core,omitempty"`
+		Err       []string `json:"err,omitempty"`
+		Node      []string `json:"node,omitempty"`
+		This      []string `json:"this,omitempty"`
+		Type      []string `json:"type,omitempty"`
+		Util      []string `json:"util,omitempty"`
 	}{
-		T__:        "Strings",
-		String:     _this.String(),
-		Token:      _this.Token(),
-		StringList: stringList,
-		Aux:        _this.Aux(),
-		Core:       _this.Core(),
-		Err:        _this.Err(),
-		Node:       _this.Node(),
-		This:       _this.This(),
-		Util:       _this.Util(),
-		Type:       _this.Type(),
+		T__:       "StringLists",
+		String:    _String,
+		Composite: composite,
+		Token:     token,
+		Int:       _Int,
+		Uint:      _Uint,
+		Make:      _Make,
+		Item:      item,
+		I:         i,
+		J:         j,
+		Aux:       aux,
+		Core:      core,
+		Err:       err,
+		Node:      node,
+		This:      this,
+		Type:      _Type,
+		Util:      util,
 	})
 }
 
 func (_this *CompositesImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
-	compositeList := make([]string, len(_this.CompositeList()))
-	for j, item := range _this.CompositeList() {
-		compositeList[j] = item.String()
+	return json.MarshalEncode(_encoder, struct {
+		T__       string `json:"$type"`
+		Composite string `json:"composite,omitempty"`
+		Token     string `json:"token,omitempty"`
+		Aux       string `json:"aux,omitempty"`
+		Core      string `json:"core,omitempty"`
+		Err       string `json:"err,omitempty"`
+		Node      string `json:"node,omitempty"`
+		This      string `json:"this,omitempty"`
+		Type      string `json:"type,omitempty"`
+		Util      string `json:"util,omitempty"`
+	}{
+		T__:       "Composites",
+		Composite: _this.Composite(),
+		Token:     _this.Token(),
+		Aux:       _this.Aux(),
+		Core:      _this.Core(),
+		Err:       _this.Err(),
+		Node:      _this.Node(),
+		This:      _this.This(),
+		Type:      _this.Type(),
+		Util:      _this.Util(),
+	})
+}
+
+func (_this *CompositeListsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	composite := make([]string, len(_this.Composite()))
+	for _j, _item := range _this.Composite() {
+		composite[_j] = _item.String()
+	}
+	_String := make([]string, len(_this.String()))
+	for _j, _item := range _this.String() {
+		_String[_j] = _item.String()
+	}
+	token := make([]string, len(_this.Token()))
+	for _j, _item := range _this.Token() {
+		token[_j] = _item.String()
+	}
+	_Int := make([]string, len(_this.Int()))
+	for _j, _item := range _this.Int() {
+		_Int[_j] = _item.String()
+	}
+	_Uint := make([]string, len(_this.Uint()))
+	for _j, _item := range _this.Uint() {
+		_Uint[_j] = _item.String()
+	}
+	_Make := make([]string, len(_this.Make()))
+	for _j, _item := range _this.Make() {
+		_Make[_j] = _item.String()
+	}
+	item := make([]string, len(_this.Item()))
+	for _j, _item := range _this.Item() {
+		item[_j] = _item.String()
+	}
+	i := make([]string, len(_this.I()))
+	for _j, _item := range _this.I() {
+		i[_j] = _item.String()
+	}
+	j := make([]string, len(_this.J()))
+	for _j, _item := range _this.J() {
+		j[_j] = _item.String()
+	}
+	aux := make([]string, len(_this.Aux()))
+	for _j, _item := range _this.Aux() {
+		aux[_j] = _item.String()
+	}
+	core := make([]string, len(_this.Core()))
+	for _j, _item := range _this.Core() {
+		core[_j] = _item.String()
+	}
+	err := make([]string, len(_this.Err()))
+	for _j, _item := range _this.Err() {
+		err[_j] = _item.String()
+	}
+	node := make([]string, len(_this.Node()))
+	for _j, _item := range _this.Node() {
+		node[_j] = _item.String()
+	}
+	this := make([]string, len(_this.This()))
+	for _j, _item := range _this.This() {
+		this[_j] = _item.String()
+	}
+	_Type := make([]string, len(_this.Type()))
+	for _j, _item := range _this.Type() {
+		_Type[_j] = _item.String()
+	}
+	util := make([]string, len(_this.Util()))
+	for _j, _item := range _this.Util() {
+		util[_j] = _item.String()
 	}
 	return json.MarshalEncode(_encoder, struct {
-		T__           string   `json:"$type"`
-		Composite     string   `json:"composite,omitempty"`
-		Token         string   `json:"token,omitempty"`
-		CompositeList []string `json:"compositeList,omitempty"`
-		Aux           string   `json:"aux,omitempty"`
-		Core          string   `json:"core,omitempty"`
-		Err           string   `json:"err,omitempty"`
-		Node          string   `json:"node,omitempty"`
-		This          string   `json:"this,omitempty"`
-		Util          string   `json:"util,omitempty"`
-		Type          string   `json:"type,omitempty"`
+		T__       string   `json:"$type"`
+		Composite []string `json:"composite,omitempty"`
+		String    []string `json:"string,omitempty"`
+		Token     []string `json:"token,omitempty"`
+		Int       []string `json:"int,omitempty"`
+		Uint      []string `json:"uint,omitempty"`
+		Make      []string `json:"make,omitempty"`
+		Item      []string `json:"item,omitempty"`
+		I         []string `json:"i,omitempty"`
+		J         []string `json:"j,omitempty"`
+		Aux       []string `json:"aux,omitempty"`
+		Core      []string `json:"core,omitempty"`
+		Err       []string `json:"err,omitempty"`
+		Node      []string `json:"node,omitempty"`
+		This      []string `json:"this,omitempty"`
+		Type      []string `json:"type,omitempty"`
+		Util      []string `json:"util,omitempty"`
 	}{
-		T__:           "Composites",
-		Composite:     _this.Composite(),
-		Token:         _this.Token(),
-		CompositeList: compositeList,
-		Aux:           _this.Aux(),
-		Core:          _this.Core(),
-		Err:           _this.Err(),
-		Node:          _this.Node(),
-		This:          _this.This(),
-		Util:          _this.Util(),
-		Type:          _this.Type(),
+		T__:       "CompositeLists",
+		Composite: composite,
+		String:    _String,
+		Token:     token,
+		Int:       _Int,
+		Uint:      _Uint,
+		Make:      _Make,
+		Item:      item,
+		I:         i,
+		J:         j,
+		Aux:       aux,
+		Core:      core,
+		Err:       err,
+		Node:      node,
+		This:      this,
+		Type:      _Type,
+		Util:      util,
 	})
 }
 
 func (_this *ObjectsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
-		T__        string    `json:"$type"`
-		Object     Objects   `json:"object,omitempty"`
-		ObjectList []Objects `json:"objectList,omitempty"`
-		Aux        Objects   `json:"aux,omitempty"`
-		Core       Objects   `json:"core,omitempty"`
-		Err        Objects   `json:"err,omitempty"`
-		Node       Objects   `json:"node,omitempty"`
-		This       Objects   `json:"this,omitempty"`
-		Util       Objects   `json:"util,omitempty"`
-		Type       Objects   `json:"type,omitempty"`
+		T__    string  `json:"$type"`
+		Object Objects `json:"object,omitempty"`
+		Token  Objects `json:"token,omitempty"`
+		Aux    Objects `json:"aux,omitempty"`
+		Core   Objects `json:"core,omitempty"`
+		Err    Objects `json:"err,omitempty"`
+		Node   Objects `json:"node,omitempty"`
+		This   Objects `json:"this,omitempty"`
+		Type   Objects `json:"type,omitempty"`
+		Util   Objects `json:"util,omitempty"`
 	}{
-		T__:        "Objects",
-		Object:     _this.Object(),
-		ObjectList: _this.ObjectList(),
-		Aux:        _this.Aux(),
-		Core:       _this.Core(),
-		Err:        _this.Err(),
-		Node:       _this.Node(),
-		This:       _this.This(),
-		Util:       _this.Util(),
-		Type:       _this.Type(),
+		T__:    "Objects",
+		Object: _this.Object(),
+		Token:  _this.Token(),
+		Aux:    _this.Aux(),
+		Core:   _this.Core(),
+		Err:    _this.Err(),
+		Node:   _this.Node(),
+		This:   _this.This(),
+		Type:   _this.Type(),
+		Util:   _this.Util(),
+	})
+}
+
+func (_this *ObjectListsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
+		T__       string    `json:"$type"`
+		Object    []Objects `json:"object,omitempty"`
+		Composite []Objects `json:"composite,omitempty"`
+		String    []Objects `json:"string,omitempty"`
+		Token     []Objects `json:"token,omitempty"`
+		Int       []Objects `json:"int,omitempty"`
+		Uint      []Objects `json:"uint,omitempty"`
+		Make      []Objects `json:"make,omitempty"`
+		Item      []Objects `json:"item,omitempty"`
+		I         []Objects `json:"i,omitempty"`
+		J         []Objects `json:"j,omitempty"`
+		Aux       []Objects `json:"aux,omitempty"`
+		Core      []Objects `json:"core,omitempty"`
+		Err       []Objects `json:"err,omitempty"`
+		Node      []Objects `json:"node,omitempty"`
+		This      []Objects `json:"this,omitempty"`
+		Type      []Objects `json:"type,omitempty"`
+		Util      []Objects `json:"util,omitempty"`
+	}{
+		T__:       "ObjectLists",
+		Object:    _this.Object(),
+		Composite: _this.Composite(),
+		String:    _this.String(),
+		Token:     _this.Token(),
+		Int:       _this.Int(),
+		Uint:      _this.Uint(),
+		Make:      _this.Make(),
+		Item:      _this.Item(),
+		I:         _this.I(),
+		J:         _this.J(),
+		Aux:       _this.Aux(),
+		Core:      _this.Core(),
+		Err:       _this.Err(),
+		Node:      _this.Node(),
+		This:      _this.This(),
+		Type:      _this.Type(),
+		Util:      _this.Util(),
 	})
 }
 
 func (_this *ReferencesImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
-		T__           string                        `json:"$type"`
-		Reference     *core.Reference[References]   `json:"reference,omitempty"`
-		Token         References                    `json:"token,omitempty"`
-		ReferenceList []*core.Reference[References] `json:"referenceList,omitempty"`
-		Aux           *core.Reference[References]   `json:"aux,omitempty"`
-		Core          *core.Reference[References]   `json:"core,omitempty"`
-		Err           *core.Reference[References]   `json:"err,omitempty"`
-		Node          *core.Reference[References]   `json:"node,omitempty"`
-		This          *core.Reference[References]   `json:"this,omitempty"`
-		Util          *core.Reference[References]   `json:"util,omitempty"`
-		Type          *core.Reference[References]   `json:"type,omitempty"`
+		T__       string                      `json:"$type"`
+		Reference *core.Reference[References] `json:"reference,omitempty"`
+		Token     *core.Reference[References] `json:"token,omitempty"`
+		Aux       *core.Reference[References] `json:"aux,omitempty"`
+		Core      *core.Reference[References] `json:"core,omitempty"`
+		Err       *core.Reference[References] `json:"err,omitempty"`
+		Node      *core.Reference[References] `json:"node,omitempty"`
+		This      *core.Reference[References] `json:"this,omitempty"`
+		Type      *core.Reference[References] `json:"type,omitempty"`
+		Util      *core.Reference[References] `json:"util,omitempty"`
 	}{
-		T__:           "References",
-		Reference:     _this.Reference(),
-		Token:         _this.Token(),
-		ReferenceList: _this.ReferenceList(),
-		Aux:           _this.Aux(),
-		Core:          _this.Core(),
-		Err:           _this.Err(),
-		Node:          _this.Node(),
-		This:          _this.This(),
-		Util:          _this.Util(),
-		Type:          _this.Type(),
+		T__:       "References",
+		Reference: _this.Reference(),
+		Token:     _this.Token(),
+		Aux:       _this.Aux(),
+		Core:      _this.Core(),
+		Err:       _this.Err(),
+		Node:      _this.Node(),
+		This:      _this.This(),
+		Type:      _this.Type(),
+		Util:      _this.Util(),
+	})
+}
+
+func (_this *ReferenceListsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
+		T__       string                        `json:"$type"`
+		Reference []*core.Reference[References] `json:"reference,omitempty"`
+		Composite []*core.Reference[References] `json:"composite,omitempty"`
+		String    []*core.Reference[References] `json:"string,omitempty"`
+		Token     []*core.Reference[References] `json:"token,omitempty"`
+		Int       []*core.Reference[References] `json:"int,omitempty"`
+		Uint      []*core.Reference[References] `json:"uint,omitempty"`
+		Make      []*core.Reference[References] `json:"make,omitempty"`
+		Item      []*core.Reference[References] `json:"item,omitempty"`
+		I         []*core.Reference[References] `json:"i,omitempty"`
+		J         []*core.Reference[References] `json:"j,omitempty"`
+		Aux       []*core.Reference[References] `json:"aux,omitempty"`
+		Core      []*core.Reference[References] `json:"core,omitempty"`
+		Err       []*core.Reference[References] `json:"err,omitempty"`
+		Node      []*core.Reference[References] `json:"node,omitempty"`
+		This      []*core.Reference[References] `json:"this,omitempty"`
+		Type      []*core.Reference[References] `json:"type,omitempty"`
+		Util      []*core.Reference[References] `json:"util,omitempty"`
+	}{
+		T__:       "ReferenceLists",
+		Reference: _this.Reference(),
+		Composite: _this.Composite(),
+		String:    _this.String(),
+		Token:     _this.Token(),
+		Int:       _this.Int(),
+		Uint:      _this.Uint(),
+		Make:      _this.Make(),
+		Item:      _this.Item(),
+		I:         _this.I(),
+		J:         _this.J(),
+		Aux:       _this.Aux(),
+		Core:      _this.Core(),
+		Err:       _this.Err(),
+		Node:      _this.Node(),
+		This:      _this.This(),
+		Type:      _this.Type(),
+		Util:      _this.Util(),
 	})
 }
 
@@ -163,8 +445,8 @@ func (_this *BoolsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		Err   bool `json:"err"`
 		Node  bool `json:"node"`
 		This  bool `json:"this"`
-		Util  bool `json:"util"`
 		Type  bool `json:"type"`
+		Util  bool `json:"util"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
@@ -190,59 +472,146 @@ func (_this *BoolsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	if aux.This {
 		_this.SetThis(core.NewSyntheticToken("", _this))
 	}
-	if aux.Util {
-		_this.SetUtil(core.NewSyntheticToken("", _this))
-	}
 	if aux.Type {
 		_this.SetType(core.NewSyntheticToken("", _this))
+	}
+	if aux.Util {
+		_this.SetUtil(core.NewSyntheticToken("", _this))
 	}
 	return nil
 }
 
 func (_this *StringsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		String     string   `json:"string"`
-		Token      string   `json:"token"`
-		StringList []string `json:"stringList"`
-		Aux        string   `json:"aux"`
-		Core       string   `json:"core"`
-		Err        string   `json:"err"`
-		Node       string   `json:"node"`
-		This       string   `json:"this"`
-		Util       string   `json:"util"`
-		Type       string   `json:"type"`
+		String string `json:"string"`
+		Token  string `json:"token"`
+		I      string `json:"i"`
+		J      string `json:"j"`
+		Aux    string `json:"aux"`
+		Core   string `json:"core"`
+		Err    string `json:"err"`
+		Node   string `json:"node"`
+		This   string `json:"this"`
+		Type   string `json:"type"`
+		Util   string `json:"util"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
 	}
 	_this.SetString(core.NewSyntheticToken(aux.String, _this))
 	_this.SetToken(core.NewSyntheticToken(aux.Token, _this))
-	_this.stringList = make([]*core.Token, 0, len(aux.StringList))
-	for _, item := range aux.StringList {
-		_this.SetStringListItem(core.NewSyntheticToken(item, _this))
-	}
+	_this.SetI(core.NewSyntheticToken(aux.I, _this))
+	_this.SetJ(core.NewSyntheticToken(aux.J, _this))
 	_this.SetAux(core.NewSyntheticToken(aux.Aux, _this))
 	_this.SetCore(core.NewSyntheticToken(aux.Core, _this))
 	_this.SetErr(core.NewSyntheticToken(aux.Err, _this))
 	_this.SetNode(core.NewSyntheticToken(aux.Node, _this))
 	_this.SetThis(core.NewSyntheticToken(aux.This, _this))
-	_this.SetUtil(core.NewSyntheticToken(aux.Util, _this))
 	_this.SetType(core.NewSyntheticToken(aux.Type, _this))
+	_this.SetUtil(core.NewSyntheticToken(aux.Util, _this))
+	return nil
+}
+
+func (_this *StringListsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	aux := &struct {
+		String    []string `json:"string"`
+		Composite []string `json:"composite"`
+		Token     []string `json:"token"`
+		Int       []string `json:"int"`
+		Uint      []string `json:"uint"`
+		Make      []string `json:"make"`
+		Item      []string `json:"item"`
+		I         []string `json:"i"`
+		J         []string `json:"j"`
+		Aux       []string `json:"aux"`
+		Core      []string `json:"core"`
+		Err       []string `json:"err"`
+		Node      []string `json:"node"`
+		This      []string `json:"this"`
+		Type      []string `json:"type"`
+		Util      []string `json:"util"`
+	}{}
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
+	}
+	_this.string = make([]*core.Token, 0, len(aux.String))
+	for _, item := range aux.String {
+		_this.SetStringItem(core.NewSyntheticToken(item, _this))
+	}
+	_this.composite = make([]*core.Token, 0, len(aux.Composite))
+	for _, item := range aux.Composite {
+		_this.SetCompositeItem(core.NewSyntheticToken(item, _this))
+	}
+	_this.token = make([]*core.Token, 0, len(aux.Token))
+	for _, item := range aux.Token {
+		_this.SetTokenItem(core.NewSyntheticToken(item, _this))
+	}
+	_this.int = make([]*core.Token, 0, len(aux.Int))
+	for _, item := range aux.Int {
+		_this.SetIntItem(core.NewSyntheticToken(item, _this))
+	}
+	_this.uint = make([]*core.Token, 0, len(aux.Uint))
+	for _, item := range aux.Uint {
+		_this.SetUintItem(core.NewSyntheticToken(item, _this))
+	}
+	_this.make = make([]*core.Token, 0, len(aux.Make))
+	for _, item := range aux.Make {
+		_this.SetMakeItem(core.NewSyntheticToken(item, _this))
+	}
+	_this.item = make([]*core.Token, 0, len(aux.Item))
+	for _, item := range aux.Item {
+		_this.SetItemItem(core.NewSyntheticToken(item, _this))
+	}
+	_this.i = make([]*core.Token, 0, len(aux.I))
+	for _, item := range aux.I {
+		_this.SetIItem(core.NewSyntheticToken(item, _this))
+	}
+	_this.j = make([]*core.Token, 0, len(aux.J))
+	for _, item := range aux.J {
+		_this.SetJItem(core.NewSyntheticToken(item, _this))
+	}
+	_this.aux = make([]*core.Token, 0, len(aux.Aux))
+	for _, item := range aux.Aux {
+		_this.SetAuxItem(core.NewSyntheticToken(item, _this))
+	}
+	_this.core = make([]*core.Token, 0, len(aux.Core))
+	for _, item := range aux.Core {
+		_this.SetCoreItem(core.NewSyntheticToken(item, _this))
+	}
+	_this.err = make([]*core.Token, 0, len(aux.Err))
+	for _, item := range aux.Err {
+		_this.SetErrItem(core.NewSyntheticToken(item, _this))
+	}
+	_this.node = make([]*core.Token, 0, len(aux.Node))
+	for _, item := range aux.Node {
+		_this.SetNodeItem(core.NewSyntheticToken(item, _this))
+	}
+	_this.this = make([]*core.Token, 0, len(aux.This))
+	for _, item := range aux.This {
+		_this.SetThisItem(core.NewSyntheticToken(item, _this))
+	}
+	_this._Type = make([]*core.Token, 0, len(aux.Type))
+	for _, item := range aux.Type {
+		_this.SetTypeItem(core.NewSyntheticToken(item, _this))
+	}
+	_this.util = make([]*core.Token, 0, len(aux.Util))
+	for _, item := range aux.Util {
+		_this.SetUtilItem(core.NewSyntheticToken(item, _this))
+	}
 	return nil
 }
 
 func (_this *CompositesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Composite     string   `json:"composite"`
-		Token         string   `json:"token"`
-		CompositeList []string `json:"compositeList"`
-		Aux           string   `json:"aux"`
-		Core          string   `json:"core"`
-		Err           string   `json:"err"`
-		Node          string   `json:"node"`
-		This          string   `json:"this"`
-		Util          string   `json:"util"`
-		Type          string   `json:"type"`
+		Composite string `json:"composite"`
+		Token     string `json:"token"`
+		Aux       string `json:"aux"`
+		Core      string `json:"core"`
+		Err       string `json:"err"`
+		Node      string `json:"node"`
+		This      string `json:"this"`
+		Type      string `json:"type"`
+		Util      string `json:"util"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
@@ -256,12 +625,6 @@ func (_this *CompositesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		cn := core.NewCompositeNode()
 		cn.AppendToken(core.NewSyntheticToken(aux.Token, _this))
 		_this.SetToken(cn)
-	}
-	_this.compositeList = make([]core.CompositeNode, 0, len(aux.CompositeList))
-	for _, item := range aux.CompositeList {
-		cn := core.NewCompositeNode()
-		cn.AppendToken(core.NewSyntheticToken(item, _this))
-		_this.SetCompositeListItem(cn)
 	}
 	{
 		cn := core.NewCompositeNode()
@@ -290,28 +653,149 @@ func (_this *CompositesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 	}
 	{
 		cn := core.NewCompositeNode()
-		cn.AppendToken(core.NewSyntheticToken(aux.Util, _this))
-		_this.SetUtil(cn)
+		cn.AppendToken(core.NewSyntheticToken(aux.Type, _this))
+		_this.SetType(cn)
 	}
 	{
 		cn := core.NewCompositeNode()
-		cn.AppendToken(core.NewSyntheticToken(aux.Type, _this))
-		_this.SetType(cn)
+		cn.AppendToken(core.NewSyntheticToken(aux.Util, _this))
+		_this.SetUtil(cn)
+	}
+	return nil
+}
+
+func (_this *CompositeListsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	aux := &struct {
+		Composite []string `json:"composite"`
+		String    []string `json:"string"`
+		Token     []string `json:"token"`
+		Int       []string `json:"int"`
+		Uint      []string `json:"uint"`
+		Make      []string `json:"make"`
+		Item      []string `json:"item"`
+		I         []string `json:"i"`
+		J         []string `json:"j"`
+		Aux       []string `json:"aux"`
+		Core      []string `json:"core"`
+		Err       []string `json:"err"`
+		Node      []string `json:"node"`
+		This      []string `json:"this"`
+		Type      []string `json:"type"`
+		Util      []string `json:"util"`
+	}{}
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
+	}
+	_this.composite = make([]core.CompositeNode, 0, len(aux.Composite))
+	for _, item := range aux.Composite {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetCompositeItem(cn)
+	}
+	_this.string = make([]core.CompositeNode, 0, len(aux.String))
+	for _, item := range aux.String {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetStringItem(cn)
+	}
+	_this.token = make([]core.CompositeNode, 0, len(aux.Token))
+	for _, item := range aux.Token {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetTokenItem(cn)
+	}
+	_this.int = make([]core.CompositeNode, 0, len(aux.Int))
+	for _, item := range aux.Int {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetIntItem(cn)
+	}
+	_this.uint = make([]core.CompositeNode, 0, len(aux.Uint))
+	for _, item := range aux.Uint {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetUintItem(cn)
+	}
+	_this.make = make([]core.CompositeNode, 0, len(aux.Make))
+	for _, item := range aux.Make {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetMakeItem(cn)
+	}
+	_this.item = make([]core.CompositeNode, 0, len(aux.Item))
+	for _, item := range aux.Item {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetItemItem(cn)
+	}
+	_this.i = make([]core.CompositeNode, 0, len(aux.I))
+	for _, item := range aux.I {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetIItem(cn)
+	}
+	_this.j = make([]core.CompositeNode, 0, len(aux.J))
+	for _, item := range aux.J {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetJItem(cn)
+	}
+	_this.aux = make([]core.CompositeNode, 0, len(aux.Aux))
+	for _, item := range aux.Aux {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetAuxItem(cn)
+	}
+	_this.core = make([]core.CompositeNode, 0, len(aux.Core))
+	for _, item := range aux.Core {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetCoreItem(cn)
+	}
+	_this.err = make([]core.CompositeNode, 0, len(aux.Err))
+	for _, item := range aux.Err {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetErrItem(cn)
+	}
+	_this.node = make([]core.CompositeNode, 0, len(aux.Node))
+	for _, item := range aux.Node {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetNodeItem(cn)
+	}
+	_this.this = make([]core.CompositeNode, 0, len(aux.This))
+	for _, item := range aux.This {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetThisItem(cn)
+	}
+	_this._Type = make([]core.CompositeNode, 0, len(aux.Type))
+	for _, item := range aux.Type {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetTypeItem(cn)
+	}
+	_this.util = make([]core.CompositeNode, 0, len(aux.Util))
+	for _, item := range aux.Util {
+		cn := core.NewCompositeNode()
+		cn.AppendToken(core.NewSyntheticToken(item, _this))
+		_this.SetUtilItem(cn)
 	}
 	return nil
 }
 
 func (_this *ObjectsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Object     jsontext.Value   `json:"object"`
-		ObjectList []jsontext.Value `json:"objectList"`
-		Aux        jsontext.Value   `json:"aux"`
-		Core       jsontext.Value   `json:"core"`
-		Err        jsontext.Value   `json:"err"`
-		Node       jsontext.Value   `json:"node"`
-		This       jsontext.Value   `json:"this"`
-		Util       jsontext.Value   `json:"util"`
-		Type       jsontext.Value   `json:"type"`
+		Object jsontext.Value `json:"object"`
+		Token  jsontext.Value `json:"token"`
+		Aux    jsontext.Value `json:"aux"`
+		Core   jsontext.Value `json:"core"`
+		Err    jsontext.Value `json:"err"`
+		Node   jsontext.Value `json:"node"`
+		This   jsontext.Value `json:"this"`
+		Type   jsontext.Value `json:"type"`
+		Util   jsontext.Value `json:"util"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
@@ -323,15 +807,12 @@ func (_this *ObjectsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		}
 		_this.SetObject(object)
 	}
-	_this.objectList = make([]Objects, 0, len(aux.ObjectList))
-	for _, item := range aux.ObjectList {
-		node, _err := UnmarshalValue[Objects](item)
+	if aux.Token != nil {
+		token, _err := UnmarshalValue[Objects](aux.Token)
 		if _err != nil {
 			return _err
 		}
-		if node != nil {
-			_this.SetObjectListItem(node)
-		}
+		_this.SetToken(token)
 	}
 	if aux.Aux != nil {
 		aux, _err := UnmarshalValue[Objects](aux.Aux)
@@ -368,13 +849,6 @@ func (_this *ObjectsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		}
 		_this.SetThis(this)
 	}
-	if aux.Util != nil {
-		util, _err := UnmarshalValue[Objects](aux.Util)
-		if _err != nil {
-			return _err
-		}
-		_this.SetUtil(util)
-	}
 	if aux.Type != nil {
 		_Type, _err := UnmarshalValue[Objects](aux.Type)
 		if _err != nil {
@@ -382,21 +856,223 @@ func (_this *ObjectsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		}
 		_this.SetType(_Type)
 	}
+	if aux.Util != nil {
+		util, _err := UnmarshalValue[Objects](aux.Util)
+		if _err != nil {
+			return _err
+		}
+		_this.SetUtil(util)
+	}
+	return nil
+}
+
+func (_this *ObjectListsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	aux := &struct {
+		Object    []jsontext.Value `json:"object"`
+		Composite []jsontext.Value `json:"composite"`
+		String    []jsontext.Value `json:"string"`
+		Token     []jsontext.Value `json:"token"`
+		Int       []jsontext.Value `json:"int"`
+		Uint      []jsontext.Value `json:"uint"`
+		Make      []jsontext.Value `json:"make"`
+		Item      []jsontext.Value `json:"item"`
+		I         []jsontext.Value `json:"i"`
+		J         []jsontext.Value `json:"j"`
+		Aux       []jsontext.Value `json:"aux"`
+		Core      []jsontext.Value `json:"core"`
+		Err       []jsontext.Value `json:"err"`
+		Node      []jsontext.Value `json:"node"`
+		This      []jsontext.Value `json:"this"`
+		Type      []jsontext.Value `json:"type"`
+		Util      []jsontext.Value `json:"util"`
+	}{}
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
+	}
+	_this.object = make([]Objects, 0, len(aux.Object))
+	for _, item := range aux.Object {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetObjectItem(node)
+		}
+	}
+	_this.composite = make([]Objects, 0, len(aux.Composite))
+	for _, item := range aux.Composite {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetCompositeItem(node)
+		}
+	}
+	_this.string = make([]Objects, 0, len(aux.String))
+	for _, item := range aux.String {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetStringItem(node)
+		}
+	}
+	_this.token = make([]Objects, 0, len(aux.Token))
+	for _, item := range aux.Token {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetTokenItem(node)
+		}
+	}
+	_this.int = make([]Objects, 0, len(aux.Int))
+	for _, item := range aux.Int {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetIntItem(node)
+		}
+	}
+	_this.uint = make([]Objects, 0, len(aux.Uint))
+	for _, item := range aux.Uint {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetUintItem(node)
+		}
+	}
+	_this.make = make([]Objects, 0, len(aux.Make))
+	for _, item := range aux.Make {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetMakeItem(node)
+		}
+	}
+	_this.item = make([]Objects, 0, len(aux.Item))
+	for _, item := range aux.Item {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetItemItem(node)
+		}
+	}
+	_this.i = make([]Objects, 0, len(aux.I))
+	for _, item := range aux.I {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetIItem(node)
+		}
+	}
+	_this.j = make([]Objects, 0, len(aux.J))
+	for _, item := range aux.J {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetJItem(node)
+		}
+	}
+	_this.aux = make([]Objects, 0, len(aux.Aux))
+	for _, item := range aux.Aux {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetAuxItem(node)
+		}
+	}
+	_this.core = make([]Objects, 0, len(aux.Core))
+	for _, item := range aux.Core {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetCoreItem(node)
+		}
+	}
+	_this.err = make([]Objects, 0, len(aux.Err))
+	for _, item := range aux.Err {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetErrItem(node)
+		}
+	}
+	_this.node = make([]Objects, 0, len(aux.Node))
+	for _, item := range aux.Node {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetNodeItem(node)
+		}
+	}
+	_this.this = make([]Objects, 0, len(aux.This))
+	for _, item := range aux.This {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetThisItem(node)
+		}
+	}
+	_this._Type = make([]Objects, 0, len(aux.Type))
+	for _, item := range aux.Type {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetTypeItem(node)
+		}
+	}
+	_this.util = make([]Objects, 0, len(aux.Util))
+	for _, item := range aux.Util {
+		node, _err := UnmarshalValue[Objects](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetUtilItem(node)
+		}
+	}
 	return nil
 }
 
 func (_this *ReferencesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Reference     jsontext.Value   `json:"reference"`
-		Token         jsontext.Value   `json:"token"`
-		ReferenceList []jsontext.Value `json:"referenceList"`
-		Aux           jsontext.Value   `json:"aux"`
-		Core          jsontext.Value   `json:"core"`
-		Err           jsontext.Value   `json:"err"`
-		Node          jsontext.Value   `json:"node"`
-		This          jsontext.Value   `json:"this"`
-		Util          jsontext.Value   `json:"util"`
-		Type          jsontext.Value   `json:"type"`
+		Reference jsontext.Value `json:"reference"`
+		Token     jsontext.Value `json:"token"`
+		Aux       jsontext.Value `json:"aux"`
+		Core      jsontext.Value `json:"core"`
+		Err       jsontext.Value `json:"err"`
+		Node      jsontext.Value `json:"node"`
+		This      jsontext.Value `json:"this"`
+		Type      jsontext.Value `json:"type"`
+		Util      jsontext.Value `json:"util"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
@@ -409,21 +1085,11 @@ func (_this *ReferencesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		_this.SetReference(reference)
 	}
 	if aux.Token != nil {
-		token, _err := UnmarshalValue[References](aux.Token)
+		token, _err := util.UnmarshalReference[References](_this, aux.Token)
 		if _err != nil {
 			return _err
 		}
 		_this.SetToken(token)
-	}
-	_this.referenceList = make([]*core.Reference[References], 0, len(aux.ReferenceList))
-	for _, item := range aux.ReferenceList {
-		reference, _err := util.UnmarshalReference[References](_this, item)
-		if _err != nil {
-			return _err
-		}
-		if reference != nil {
-			_this.SetReferenceListItem(reference)
-		}
 	}
 	if aux.Aux != nil {
 		aux, _err := util.UnmarshalReference[References](_this, aux.Aux)
@@ -460,6 +1126,13 @@ func (_this *ReferencesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		}
 		_this.SetThis(this)
 	}
+	if aux.Type != nil {
+		_Type, _err := util.UnmarshalReference[References](_this, aux.Type)
+		if _err != nil {
+			return _err
+		}
+		_this.SetType(_Type)
+	}
 	if aux.Util != nil {
 		util, _err := util.UnmarshalReference[References](_this, aux.Util)
 		if _err != nil {
@@ -467,12 +1140,201 @@ func (_this *ReferencesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		}
 		_this.SetUtil(util)
 	}
-	if aux.Type != nil {
-		_Type, _err := util.UnmarshalReference[References](_this, aux.Type)
+	return nil
+}
+
+func (_this *ReferenceListsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	aux := &struct {
+		Reference []jsontext.Value `json:"reference"`
+		Composite []jsontext.Value `json:"composite"`
+		String    []jsontext.Value `json:"string"`
+		Token     []jsontext.Value `json:"token"`
+		Int       []jsontext.Value `json:"int"`
+		Uint      []jsontext.Value `json:"uint"`
+		Make      []jsontext.Value `json:"make"`
+		Item      []jsontext.Value `json:"item"`
+		I         []jsontext.Value `json:"i"`
+		J         []jsontext.Value `json:"j"`
+		Aux       []jsontext.Value `json:"aux"`
+		Core      []jsontext.Value `json:"core"`
+		Err       []jsontext.Value `json:"err"`
+		Node      []jsontext.Value `json:"node"`
+		This      []jsontext.Value `json:"this"`
+		Type      []jsontext.Value `json:"type"`
+		Util      []jsontext.Value `json:"util"`
+	}{}
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
+	}
+	_this.reference = make([]*core.Reference[References], 0, len(aux.Reference))
+	for _, item := range aux.Reference {
+		reference, _err := util.UnmarshalReference[References](_this, item)
 		if _err != nil {
 			return _err
 		}
-		_this.SetType(_Type)
+		if reference != nil {
+			_this.SetReferenceItem(reference)
+		}
+	}
+	_this.composite = make([]*core.Reference[References], 0, len(aux.Composite))
+	for _, item := range aux.Composite {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetCompositeItem(reference)
+		}
+	}
+	_this.string = make([]*core.Reference[References], 0, len(aux.String))
+	for _, item := range aux.String {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetStringItem(reference)
+		}
+	}
+	_this.token = make([]*core.Reference[References], 0, len(aux.Token))
+	for _, item := range aux.Token {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetTokenItem(reference)
+		}
+	}
+	_this.int = make([]*core.Reference[References], 0, len(aux.Int))
+	for _, item := range aux.Int {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetIntItem(reference)
+		}
+	}
+	_this.uint = make([]*core.Reference[References], 0, len(aux.Uint))
+	for _, item := range aux.Uint {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetUintItem(reference)
+		}
+	}
+	_this.make = make([]*core.Reference[References], 0, len(aux.Make))
+	for _, item := range aux.Make {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetMakeItem(reference)
+		}
+	}
+	_this.item = make([]*core.Reference[References], 0, len(aux.Item))
+	for _, item := range aux.Item {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetItemItem(reference)
+		}
+	}
+	_this.i = make([]*core.Reference[References], 0, len(aux.I))
+	for _, item := range aux.I {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetIItem(reference)
+		}
+	}
+	_this.j = make([]*core.Reference[References], 0, len(aux.J))
+	for _, item := range aux.J {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetJItem(reference)
+		}
+	}
+	_this.aux = make([]*core.Reference[References], 0, len(aux.Aux))
+	for _, item := range aux.Aux {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetAuxItem(reference)
+		}
+	}
+	_this.core = make([]*core.Reference[References], 0, len(aux.Core))
+	for _, item := range aux.Core {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetCoreItem(reference)
+		}
+	}
+	_this.err = make([]*core.Reference[References], 0, len(aux.Err))
+	for _, item := range aux.Err {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetErrItem(reference)
+		}
+	}
+	_this.node = make([]*core.Reference[References], 0, len(aux.Node))
+	for _, item := range aux.Node {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetNodeItem(reference)
+		}
+	}
+	_this.this = make([]*core.Reference[References], 0, len(aux.This))
+	for _, item := range aux.This {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetThisItem(reference)
+		}
+	}
+	_this._Type = make([]*core.Reference[References], 0, len(aux.Type))
+	for _, item := range aux.Type {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetTypeItem(reference)
+		}
+	}
+	_this.util = make([]*core.Reference[References], 0, len(aux.Util))
+	for _, item := range aux.Util {
+		reference, _err := util.UnmarshalReference[References](_this, item)
+		if _err != nil {
+			return _err
+		}
+		if reference != nil {
+			_this.SetUtilItem(reference)
+		}
 	}
 	return nil
 }

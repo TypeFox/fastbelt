@@ -56,13 +56,13 @@ func generateJSONMarshalTo(node codegen.Node, iface grammar.Interface) {
 		var stringListFields = map[string]string{}
 		for _, field := range fields {
 			if field.Array && (field.GType == TOKEN_TYPE || field.GType == COMPOSITE_TYPE) {
-				varName := field.PName
+				varName := field.LName
 				stringListFields[field.Name] = varName
 
 				n.AppendLine(varName, " := make([]string, len(", thisDot, field.Name, "()))")
-				n.AppendLine("for j, item := range ", thisDot, field.Name, "() {")
+				n.AppendLine("for _j, _item := range ", thisDot, field.Name, "() {")
 				n.Indent(func(n2 codegen.Node) {
-					n2.AppendLine(varName, "[j] = item.String()")
+					n2.AppendLine(varName, "[_j] = _item.String()")
 				})
 				n.AppendLine("}")
 			}

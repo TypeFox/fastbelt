@@ -6,6 +6,7 @@ package generator
 
 import (
 	"context"
+	"go/types"
 	"slices"
 	"sort"
 	"strings"
@@ -77,7 +78,8 @@ type FieldInfo struct {
 	// Private name, used to avoid conflicts with reserved keywords
 	// mostly equal to 'JsonTagName' except for reserved keywords
 	PName string
-
+	// Local var name, used to avoid conflicts with reserved std library names
+	LName     string
 	Array     bool
 	Reference bool
 	// Name of the referenced interface type, set only if Reference is true.
@@ -97,6 +99,10 @@ func getFieldInfo(field grammar.Field) FieldInfo {
 	pname := jsonPropName
 	if reservedKeywords[pname] {
 		pname = "_" + name
+	}
+	lname := pname
+	if types.Universe.Lookup(lname) != nil {
+		lname = "_" + name
 	}
 	_, array := field.Type().(grammar.ArrayType)
 	typ := getTypeName(field.Type())
@@ -120,6 +126,7 @@ func getFieldInfo(field grammar.Field) FieldInfo {
 	return FieldInfo{
 		Name:           name,
 		PName:          pname,
+		LName:          lname,
 		JsonPropName:   jsonPropName,
 		Array:          array,
 		Reference:      ref,
