@@ -140,6 +140,9 @@ func UnmarshalAndBuildDocument(ctx context.Context, sc *service.Container, docum
 	if document.Root, err = Unmarshal[core.AstNode](input, factories); err != nil {
 		return err
 	}
+	if document.Root == nil {
+		return fmt.Errorf("util.UnmarshalAndBuildDocument: input content is 'null', skipping document build")
+	}
 
 	document.State = core.DocStateParsed
 	core.AssignContainers(document)
