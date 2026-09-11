@@ -92,7 +92,9 @@ func (_this *StatemachineImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) err
 		if _err != nil {
 			return _err
 		}
-		_this.SetEventsItem(node)
+		if node != nil {
+			_this.SetEventsItem(node)
+		}
 	}
 	_this.commands = make([]Command, 0, len(aux.Commands))
 	for _, item := range aux.Commands {
@@ -100,7 +102,9 @@ func (_this *StatemachineImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) err
 		if _err != nil {
 			return _err
 		}
-		_this.SetCommandsItem(node)
+		if node != nil {
+			_this.SetCommandsItem(node)
+		}
 	}
 	if aux.Init != nil {
 		init, _err := util.UnmarshalReference[State](_this, aux.Init)
@@ -115,7 +119,9 @@ func (_this *StatemachineImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) err
 		if _err != nil {
 			return _err
 		}
-		_this.SetStatesItem(node)
+		if node != nil {
+			_this.SetStatesItem(node)
+		}
 	}
 	return nil
 }
@@ -158,7 +164,9 @@ func (_this *StateImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		if _err != nil {
 			return _err
 		}
-		_this.SetActionsItem(reference)
+		if reference != nil {
+			_this.SetActionsItem(reference)
+		}
 	}
 	_this.transitions = make([]Transition, 0, len(aux.Transitions))
 	for _, item := range aux.Transitions {
@@ -166,7 +174,9 @@ func (_this *StateImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		if _err != nil {
 			return _err
 		}
-		_this.SetTransitionsItem(node)
+		if node != nil {
+			_this.SetTransitionsItem(node)
+		}
 	}
 	return nil
 }

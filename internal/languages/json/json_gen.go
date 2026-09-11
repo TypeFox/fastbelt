@@ -329,7 +329,9 @@ func (_this *ObjectsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		if _err != nil {
 			return _err
 		}
-		_this.SetObjectListItem(node)
+		if node != nil {
+			_this.SetObjectListItem(node)
+		}
 	}
 	if aux.Aux != nil {
 		aux, _err := UnmarshalValue[Objects](aux.Aux)
@@ -419,7 +421,9 @@ func (_this *ReferencesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		if _err != nil {
 			return _err
 		}
-		_this.SetReferenceListItem(reference)
+		if reference != nil {
+			_this.SetReferenceListItem(reference)
+		}
 	}
 	if aux.Aux != nil {
 		aux, _err := util.UnmarshalReference[References](_this, aux.Aux)

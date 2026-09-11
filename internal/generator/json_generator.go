@@ -246,7 +246,11 @@ func genUnmarshalFieldContent(
 ) {
 	if loopItem {
 		unmarshalBody(node)
-		node.AppendLine(thisDotSet, field.Name, "Item(", targetName, ")")
+		node.AppendLine("if ", targetName, " != nil {")
+		node.Indent(func(n2 codegen.Node) {
+			node.AppendLine(thisDotSet, field.Name, "Item(", targetName, ")")
+		})
+		node.AppendLine("}")
 	} else {
 		node.AppendLine("if ", srcName, " != nil {")
 		node.Indent(func(n2 codegen.Node) {

@@ -161,7 +161,9 @@ func (_this *RootImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		if _err != nil {
 			return _err
 		}
-		_this.SetObjectsItem(node)
+		if node != nil {
+			_this.SetObjectsItem(node)
+		}
 	}
 	return nil
 }
@@ -185,7 +187,9 @@ func (_this *DeclareImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		if _err != nil {
 			return _err
 		}
-		_this.SetChildrenItem(node)
+		if node != nil {
+			_this.SetChildrenItem(node)
+		}
 	}
 	return nil
 }
@@ -220,7 +224,9 @@ func (_this *FImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		if _err != nil {
 			return _err
 		}
-		_this.SetItemsItem(node)
+		if node != nil {
+			_this.SetItemsItem(node)
+		}
 	}
 	return nil
 }

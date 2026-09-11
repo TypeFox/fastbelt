@@ -378,7 +378,9 @@ func (_this *GrammarImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		if _err != nil {
 			return _err
 		}
-		_this.SetRulesItem(node)
+		if node != nil {
+			_this.SetRulesItem(node)
+		}
 	}
 	_this.composites = make([]CompositeRule, 0, len(aux.Composites))
 	for _, item := range aux.Composites {
@@ -386,7 +388,9 @@ func (_this *GrammarImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		if _err != nil {
 			return _err
 		}
-		_this.SetCompositesItem(node)
+		if node != nil {
+			_this.SetCompositesItem(node)
+		}
 	}
 	_this.infixRules = make([]InfixRule, 0, len(aux.InfixRules))
 	for _, item := range aux.InfixRules {
@@ -394,7 +398,9 @@ func (_this *GrammarImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		if _err != nil {
 			return _err
 		}
-		_this.SetInfixRulesItem(node)
+		if node != nil {
+			_this.SetInfixRulesItem(node)
+		}
 	}
 	_this.terminals = make([]Token, 0, len(aux.Terminals))
 	for _, item := range aux.Terminals {
@@ -402,7 +408,9 @@ func (_this *GrammarImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		if _err != nil {
 			return _err
 		}
-		_this.SetTerminalsItem(node)
+		if node != nil {
+			_this.SetTerminalsItem(node)
+		}
 	}
 	_this.tokenGroups = make([]TokenGroup, 0, len(aux.TokenGroups))
 	for _, item := range aux.TokenGroups {
@@ -410,7 +418,9 @@ func (_this *GrammarImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		if _err != nil {
 			return _err
 		}
-		_this.SetTokenGroupsItem(node)
+		if node != nil {
+			_this.SetTokenGroupsItem(node)
+		}
 	}
 	_this.interfaces = make([]Interface, 0, len(aux.Interfaces))
 	for _, item := range aux.Interfaces {
@@ -418,7 +428,9 @@ func (_this *GrammarImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		if _err != nil {
 			return _err
 		}
-		_this.SetInterfacesItem(node)
+		if node != nil {
+			_this.SetInterfacesItem(node)
+		}
 	}
 	return nil
 }
@@ -439,7 +451,9 @@ func (_this *InterfaceImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error 
 		if _err != nil {
 			return _err
 		}
-		_this.SetExtendsItem(reference)
+		if reference != nil {
+			_this.SetExtendsItem(reference)
+		}
 	}
 	_this.fields = make([]Field, 0, len(aux.Fields))
 	for _, item := range aux.Fields {
@@ -447,7 +461,9 @@ func (_this *InterfaceImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error 
 		if _err != nil {
 			return _err
 		}
-		_this.SetFieldsItem(node)
+		if node != nil {
+			_this.SetFieldsItem(node)
+		}
 	}
 	return nil
 }
@@ -668,7 +684,9 @@ func (_this *TokenGroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		if _err != nil {
 			return _err
 		}
-		_this.SetTokenRefsItem(reference)
+		if reference != nil {
+			_this.SetTokenRefsItem(reference)
+		}
 	}
 	_this.regexps = make([]*core.Token, 0, len(aux.Regexps))
 	for _, item := range aux.Regexps {
@@ -680,7 +698,9 @@ func (_this *TokenGroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		if _err != nil {
 			return _err
 		}
-		_this.SetKeywordsItem(node)
+		if node != nil {
+			_this.SetKeywordsItem(node)
+		}
 	}
 	return nil
 }
@@ -711,7 +731,9 @@ func (_this *AlternativesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) err
 		if _err != nil {
 			return _err
 		}
-		_this.SetAltsItem(node)
+		if node != nil {
+			_this.SetAltsItem(node)
+		}
 	}
 	return nil
 }
@@ -731,7 +753,9 @@ func (_this *GroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		if _err != nil {
 			return _err
 		}
-		_this.SetElementsItem(node)
+		if node != nil {
+			_this.SetElementsItem(node)
+		}
 	}
 	return nil
 }
@@ -922,7 +946,9 @@ func (_this *InfixRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error 
 		if _err != nil {
 			return _err
 		}
-		_this.SetGroupsItem(node)
+		if node != nil {
+			_this.SetGroupsItem(node)
+		}
 	}
 	return nil
 }
@@ -942,7 +968,9 @@ func (_this *PrecedenceGroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) 
 		if _err != nil {
 			return _err
 		}
-		_this.SetOperatorsItem(node)
+		if node != nil {
+			_this.SetOperatorsItem(node)
+		}
 	}
 	return nil
 }

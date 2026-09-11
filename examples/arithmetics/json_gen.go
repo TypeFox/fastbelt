@@ -133,7 +133,9 @@ func (_this *ModuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		if _err != nil {
 			return _err
 		}
-		_this.SetStatementsItem(node)
+		if node != nil {
+			_this.SetStatementsItem(node)
+		}
 	}
 	return nil
 }
@@ -169,7 +171,9 @@ func (_this *DefinitionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		if _err != nil {
 			return _err
 		}
-		_this.SetArgsItem(node)
+		if node != nil {
+			_this.SetArgsItem(node)
+		}
 	}
 	if aux.Expression != nil {
 		expression, _err := UnmarshalValue[Expression](aux.Expression)
@@ -254,7 +258,9 @@ func (_this *FunctionCallImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) err
 		if _err != nil {
 			return _err
 		}
-		_this.SetArgsItem(node)
+		if node != nil {
+			_this.SetArgsItem(node)
+		}
 	}
 	if aux.Callable != nil {
 		callable, _err := util.UnmarshalReference[AbstractDefinition](_this, aux.Callable)
