@@ -6,6 +6,7 @@ package test
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
@@ -192,11 +193,16 @@ func (f *Fixture) NewDoc(doc *core.Document, ranges []RangeMarker, indices []Ind
 func (f *Fixture) Delete(uri core.URI) {
 	documents := service.MustGet[workspace.DocumentManager](f.sc)
 	documents.Delete(uri)
+	deletedURI := uri.StringUnencoded()
+	f.docs = slices.DeleteFunc(f.docs, func(d *Doc) bool {
+		return d.Document.URI.StringUnencoded() == deletedURI
+	})
 }
 
 func (f *Fixture) Clear() {
 	documents := service.MustGet[workspace.DocumentManager](f.sc)
 	documents.Clear()
+	f.docs = nil
 }
 
 // extractMarkers scans content for embedded position markers, removes them, and
