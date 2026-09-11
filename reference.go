@@ -379,6 +379,14 @@ func (r *Reference[T]) UnmarshalJSON(value []byte) error {
 // being created by unmarshaling JSON data via the [json.Unmarshal] API.
 // A default implementation is provided by [typefox.dev/fastbelt/util/NewJsonLinkingHelper]().
 //
+// The helper is expected to be present even for references that turn out to target the same document:
+// whether a reference is same- or cross-document is only known once its '$ref' URI is inspected during
+// resolution, and by design that resolution fails fast if no helper is present in the context,
+// rather than silently succeeding for some references and not others depending on their target.
+// Consequently, any [context.Context] used to (re)build a workspace that may contain JSON-loaded
+// documents must carry a helper via [JsonLinkingHelperKey] - including on rebuilds triggered by
+// unrelated document edits, which commonly build with a fresh context.Background()-derived one.
+//
 // It is to be provided as part of the context argument of typefox.dev/fastbelt/workspace.Builder.Build](Context, ...), like
 //
 //	documents, err := service.Get[workspace.DocumentManager](sc)
@@ -407,6 +415,11 @@ func JsonLinkingHelperKey() any {
 
 func newJsonReferenceGetter[T AstNode](uriString string) ReferenceGetter[T] {
 	return func(ctx context.Context, ref *Reference[T]) (*SymbolDescription, *ReferenceError) {
+		// ref.err is set from the imported '$error' by UnmarshalJSON and only survives here on the
+		// very first resolution; Reset() clears it before any later resolution attempt. That's
+		// intentional: a reference that failed to link in the workspace it was exported from may
+		// well resolve in the workspace it is imported into (or after a rebuild), so re-resolution
+		// deliberately re-derives the error (e.g. "absent" below) instead of replaying the old one.
 		if ref.err != nil {
 			return nil, ref.err
 		}
