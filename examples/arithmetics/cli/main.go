@@ -55,10 +55,11 @@ func main() {
 
 func runCmd() error {
 	rootCmd := &cobra.Command{
-		Use:          "arithmetics",
-		Short:        "Work with .arithmetics documents",
-		Long:         rootLongHelp,
-		SilenceUsage: true,
+		Use:           "arithmetics",
+		Short:         "Work with .arithmetics documents",
+		Long:          rootLongHelp,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 	rootCmd.SetOut(os.Stdout)
 	rootCmd.SetErr(os.Stderr)
@@ -149,10 +150,12 @@ func runExportCLI(opts exportOptions) error {
 		if diag.Severity == core.SeverityError {
 			errCount++
 		}
-		tRange := diag.Range.LspRange(document.TextDoc)
+		lspRange := diag.Range.LspRange(document.TextDoc)
 		fmt.Fprintf(os.Stderr, "%s - %d:%d %s\n",
 			diag.Severity.String(),
-			tRange.Start, tRange.End,
+			// For printing, convert to 1-based line and column numbers.
+			lspRange.Start.Line+1,
+			lspRange.Start.Character+1,
 			diag.Message,
 		)
 	}
