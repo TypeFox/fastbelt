@@ -54,12 +54,13 @@ func UnmarshalValue[T core.AstNode](value jsontext.Value, factories map[string]f
 	if !ok {
 		return zero, fmt.Errorf("util.UnmarshalValue: %T is not convertible to type %s", instance, reflect.TypeFor[T]())
 	}
-	if unmarshaler, ok := instance.(json.UnmarshalerFrom); ok {
-		if err := unmarshaler.UnmarshalJSONFrom(jsontext.NewDecoder(bytes.NewReader(value))); err != nil {
-			return zero, fmt.Errorf("util.UnmarshalValue %s: %w", nodeType, err)
-		}
-	} else {
+	if _, ok := instance.(json.UnmarshalerFrom); !ok {
 		return zero, fmt.Errorf("util.UnmarshalValue: %T is not convertible to type json.UnmarshalerFrom", instance)
+	}
+	// json.Unmarshal dispatches to UnmarshalerFrom via a pooled decoder that aliases the input,
+	// increases performance notably compared to allocating a fresh jsontext.Decoder over a copy of value for every node.
+	if err := json.Unmarshal(value, instance); err != nil {
+		return zero, fmt.Errorf("util.UnmarshalValue %s: %w", nodeType, err)
 	}
 	return asT, nil
 }
