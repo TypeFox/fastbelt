@@ -173,7 +173,7 @@ func (_this *ModuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 }
 
 func (_this *StatementImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
-	return nil
+	return _decoder.SkipValue()
 }
 
 func (_this *AbstractDefinitionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
@@ -252,7 +252,7 @@ func (_this *EvaluationImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 }
 
 func (_this *ExpressionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
-	return nil
+	return _decoder.SkipValue()
 }
 
 func (_this *BinaryExpressionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {

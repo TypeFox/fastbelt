@@ -9,6 +9,49 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
+type Empty interface {
+	core.AstNode
+
+	IsEmpty()
+}
+
+func NewEmpty() Empty {
+	return &EmptyImpl{}
+}
+
+type EmptyData struct {
+}
+
+func (i *EmptyData) IsEmpty() {}
+
+func (i *EmptyData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+}
+
+func (i *EmptyData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+}
+
+type EmptyImpl struct {
+	core.AstNodeBase
+	EmptyData
+}
+
+func (i *EmptyImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.EmptyData.ForEachNode(fn)
+}
+
+func (i *EmptyImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.EmptyData.ForEachReference(fn)
+}
+
+func (i *EmptyImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	nodePath, _ := core.PathOf(i)
+	return nil, fmt.Errorf("EmptyImpl.Resolve: field '%s' does not exist in node '%s' of type 'Empty'", field.Value(), nodePath)
+}
+
 type Bools interface {
 	core.AstNode
 
@@ -2644,6 +2687,7 @@ var JsonSyntheticFactories = map[string]func() core.AstNode{
 	"Bools":          func() core.AstNode { return NewBools() },
 	"CompositeLists": func() core.AstNode { return NewCompositeLists() },
 	"Composites":     func() core.AstNode { return NewComposites() },
+	"Empty":          func() core.AstNode { return NewEmpty() },
 	"ObjectLists":    func() core.AstNode { return NewObjectLists() },
 	"Objects":        func() core.AstNode { return NewObjects() },
 	"ReferenceLists": func() core.AstNode { return NewReferenceLists() },

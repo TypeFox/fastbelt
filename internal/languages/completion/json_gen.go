@@ -150,7 +150,7 @@ func (_this *OImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 }
 
 func (_this *ObjImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
-	return nil
+	return _decoder.SkipValue()
 }
 
 func (_this *RootImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {

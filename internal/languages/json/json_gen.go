@@ -10,6 +10,14 @@ import (
 	"typefox.dev/fastbelt/util"
 )
 
+func (_this *EmptyImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
+		T__ string `json:"$type"`
+	}{
+		T__: "Empty",
+	})
+}
+
 func (_this *BoolsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__   string `json:"$type"`
@@ -534,6 +542,10 @@ func (_this *ReferenceListsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error
 		Type:      _this.Type(),
 		Util:      _this.Util(),
 	})
+}
+
+func (_this *EmptyImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	return _decoder.SkipValue()
 }
 
 func (_this *BoolsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {

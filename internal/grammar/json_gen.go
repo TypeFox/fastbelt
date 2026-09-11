@@ -634,7 +634,7 @@ func (_this *FieldImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 }
 
 func (_this *FieldTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
-	return nil
+	return _decoder.SkipValue()
 }
 
 func (_this *ArrayTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {

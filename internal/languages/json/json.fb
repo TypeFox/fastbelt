@@ -7,6 +7,11 @@ grammar Json;
 // this grammar with its interface definitions aims at checking the absence of any naming conflicts
 //  between generated property inspired names and names hard-coded in generator of `json_gen.go` files
 
+// Empty is a marker interface with no fields: it checks that UnmarshalJSONFrom still consumes
+// exactly one JSON value even when there is nothing to decode into a struct field, satisfying
+// json.UnmarshalerFrom's "read or write exactly one value" contract.
+interface Empty {}
+
 interface Bools {
     Bool bool
     Token bool

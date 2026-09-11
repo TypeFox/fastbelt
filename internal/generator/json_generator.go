@@ -166,7 +166,9 @@ func generateJSONUnmarshalFrom(node codegen.Node, iface grammar.Interface) {
 
 	if len(fields) == 0 {
 		node.Indent(func(n2 codegen.Node) {
-			n2.AppendLine("return nil")
+			// json.UnmarshalerFrom requires reading exactly one value; with no fields to
+			// populate there's nothing to decode into, but the value must still be consumed.
+			n2.AppendLine("return _decoder.SkipValue()")
 		})
 		node.AppendLine("}")
 		node.AppendLine()
