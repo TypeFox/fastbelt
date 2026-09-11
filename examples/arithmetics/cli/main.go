@@ -37,13 +37,14 @@ instead.`
 const exportExamples = `  arithmetics export ./example.arithmetics
   arithmetics export ./example.arithmetics -o ./example.json`
 
-const importLongHelp = `Import an arithmetics description from JSON.
+const importLongHelp = `Import an arithmetics description from JSON, rebuild it, and re-export it as
+JSON for verification.
 
 By default the result is written to stdout. Use --output to write to a file
 instead.`
 
 const importExamples = `  arithmetics import ./example.json
-  arithmetics import ./example.json -o ./example.arithmetics`
+  arithmetics import ./example.json -o ./example.reexported.json`
 
 func main() {
 	if err := runCmd(); err != nil {
@@ -203,6 +204,9 @@ func runImportCLI(opts importOptions) error {
 		return err
 	}
 
-	_, err = fmt.Fprintf(os.Stdout, "%s\n", out)
-	return err
+	if opts.outputPath == "" {
+		_, err = fmt.Fprintf(os.Stdout, "%s\n", out)
+		return err
+	}
+	return os.WriteFile(opts.outputPath, append(out, '\n'), 0644)
 }
