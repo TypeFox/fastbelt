@@ -19,17 +19,20 @@ import (
 	"typefox.dev/fastbelt/workspace"
 )
 
+// jsonRoundtripLanguages lists the grammars exercised by both TestJsonRoundtrip and
+// BenchmarkJsonRoundtrip.
+var jsonRoundtripLanguages = []struct {
+	name string
+	path string
+}{
+	{"Fastbelt Grammar language", "grammar.fb"},
+	{"Completion test language", "../languages/completion/completion.fb"},
+	{"Lookahead test language", "../languages/lookahead/lookahead.fb"},
+	{"TokenGroups test language", "../languages/token_groups/token_groups.fb"},
+}
+
 func TestJsonRoundtrip(t *testing.T) {
-	tests := []struct {
-		name string
-		path string
-	}{
-		{"Fastbelt Grammar language", "grammar.fb"},
-		{"Completion test language", "../languages/completion/completion.fb"},
-		{"Lookahead test language", "../languages/lookahead/lookahead.fb"},
-		{"TokenGroups test language", "../languages/token_groups/token_groups.fb"},
-	}
-	for _, tt := range tests {
+	for _, tt := range jsonRoundtripLanguages {
 		t.Run(tt.name, func(t *testing.T) {
 			grammmar, err := os.ReadFile(tt.path)
 			require.NoError(t, err)
@@ -41,18 +44,9 @@ func TestJsonRoundtrip(t *testing.T) {
 }
 
 func BenchmarkJsonRoundtrip(b *testing.B) {
-	tests := []struct {
-		name string
-		path string
-	}{
-		{"Fastbelt Grammar language", "grammar.fb"},
-		{"Completion test language", "../languages/completion/completion.fb"},
-		{"Lookahead test language", "../languages/lookahead/lookahead.fb"},
-		{"TokenGroups test language", "../languages/token_groups/token_groups.fb"},
-	}
 	services1 := CreateServices()
 	f1 := test.New(b, services1)
-	for _, tt := range tests {
+	for _, tt := range jsonRoundtripLanguages {
 		grammar, err := os.ReadFile(tt.path)
 		require.NoError(b, err)
 
@@ -66,7 +60,6 @@ func BenchmarkJsonRoundtrip(b *testing.B) {
 		require.NoError(b, err)
 
 		b.Run(tt.name+"/marshal", func(b *testing.B) {
-			b.ResetTimer()
 			for b.Loop() {
 				if _, err := json.Marshal(grammar1); err != nil {
 					b.Fatal(err)
@@ -74,7 +67,6 @@ func BenchmarkJsonRoundtrip(b *testing.B) {
 			}
 		})
 		b.Run(tt.name+"/unmarshal", func(b *testing.B) {
-			b.ResetTimer()
 			for b.Loop() {
 				grammar2 := NewGrammar()
 				if err := json.Unmarshal(inJson, grammar2); err != nil {
@@ -83,7 +75,6 @@ func BenchmarkJsonRoundtrip(b *testing.B) {
 			}
 		})
 		b.Run(tt.name+"/unmarshal-self", func(b *testing.B) {
-			b.ResetTimer()
 			for b.Loop() {
 				if _, err := UnmarshalValue[Grammar](inJson); err != nil {
 					b.Fatal(err)
