@@ -428,9 +428,7 @@ func newJsonReferenceGetter[T AstNode](uriString string) ReferenceGetter[T] {
 		}
 		helper, ok := ctx.Value(jsonLinkingHelperKey).(JsonLinkingHelper)
 		if !ok {
-			return nil, &ReferenceError{
-				Msg: "JsonLinkingHelper unavailable",
-			}
+			return nil, NewReferenceError("JsonLinkingHelper unavailable")
 		}
 		var document *Document
 		uri := ParseURI(uriString)
