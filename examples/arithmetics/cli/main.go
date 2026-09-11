@@ -192,7 +192,7 @@ func runImportCLI(opts importOptions) error {
 	}
 	defer file.Close()
 
-	document, err := core.NewDocumentFromString("file:///"+filepath.Base(inputPath), "arithmetics", "")
+	document, err := core.NewDocumentFromString(string(lsp.URIFromPath(inputPath)), "arithmetics", "")
 	if err != nil {
 		return err
 	}
