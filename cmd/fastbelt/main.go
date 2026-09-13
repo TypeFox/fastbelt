@@ -32,7 +32,8 @@ each step.`
 
 const generateExamples = `  fastbelt generate ./grammar.fb
   fastbelt generate ./lang.fb -o ./internal/lang -p lang
-  fastbelt generate ./mylanguage.fb --atn -v`
+  fastbelt generate ./mylanguage.fb --atn -v
+  fastbelt generate ./mylanguage.fb --railroad`
 
 const scaffoldLongHelp = `Scaffold a new language project from templates.
 
@@ -83,6 +84,7 @@ func newGenerateCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&opts.outputPath, "output", "o", "./", "Path to the output directory")
 	cmd.Flags().StringVarP(&opts.packageName, "package", "p", "", "Package name for generated code (defaults to the last segment of the output path)")
 	cmd.Flags().BoolVar(&opts.atn, "atn", false, "Enable markdown output about ATN construction")
+	cmd.Flags().BoolVar(&opts.railroad, "railroad", false, "Generate railroad syntax diagrams (SVG per rule)")
 	cmd.Flags().BoolVarP(&opts.verbose, "verbose", "v", false, "Enable verbose output about written files")
 	return cmd
 }

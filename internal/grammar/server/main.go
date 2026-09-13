@@ -9,6 +9,7 @@ import (
 	"log"
 
 	"typefox.dev/fastbelt/internal/grammar"
+	"typefox.dev/fastbelt/internal/grammarhover"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/util/service"
 )
@@ -18,6 +19,7 @@ func CreateServices() *service.Container {
 	sc := service.NewContainer()
 	grammar.SetupServices(sc)
 	grammar.SetupGeneratedServerServices(sc)
+	service.Put(sc, grammarhover.NewHoverProvider(sc))
 	server.SetupDefaultServices(sc)
 	server.SetupStdioServices(sc)
 	sc.Seal()

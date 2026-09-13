@@ -26,6 +26,7 @@ type generateOptions struct {
 	outputPath  string
 	packageName string
 	atn         bool
+	railroad    bool
 	verbose     bool
 }
 
@@ -165,8 +166,31 @@ func runGenerateCLI(opts generateOptions) error {
 			return err
 		}
 	}
+	if opts.railroad {
+		if err := writeRailroadDiagrams(grammar, packageName, outputPath, writeFile); err != nil {
+			return err
+		}
+	}
 
 	return nil
+}
+
+func writeRailroadDiagrams(g grammarPkg.Grammar, packageName, outputPath string, writeFile func(name, path, content string) error) error {
+	railroadDir := filepath.Join(outputPath, "railroad")
+	if err := os.MkdirAll(railroadDir, 0755); err != nil {
+		return err
+	}
+	diagrams := generator.GenerateRailroadDiagrams(g)
+	names := make([]string, 0, len(diagrams))
+	for name, svg := range diagrams {
+		names = append(names, name)
+		if err := writeFile("railroad-"+name, filepath.Join(railroadDir, name+".svg"), svg); err != nil {
+			return err
+		}
+	}
+	sort.Strings(names)
+	return writeFile("railroad-index", filepath.Join(railroadDir, "index.md"),
+		generator.GenerateRailroadIndexMarkdown(packageName, names))
 }
 
 func validateEntryRule(g grammarPkg.Grammar) (grammarPkg.ParserRule, error) {

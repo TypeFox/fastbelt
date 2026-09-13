@@ -28,36 +28,20 @@ func NewDefaultHoverProvider(sc *service.Container) HoverProvider {
 }
 
 func (s *DefaultHoverProvider) HandleHoverRequest(ctx context.Context, params *lsp.HoverParams) (*lsp.Hover, error) {
-	documentManager := service.MustGet[workspace.DocumentManager](s.sc)
-	uri := core.ParseURI(string(params.TextDocument.URI))
-	doc := documentManager.Get(uri)
-	if doc == nil {
+	target, sourceRange, ok := ResolveHoverTarget(ctx, s.sc, params)
+	if !ok {
 		return nil, nil
 	}
 
-	offset := doc.TextDoc.OffsetAt(params.Position)
-	first, second := doc.Tokens.SearchOffset2(offset)
-	if first == nil {
-		return nil, nil
-	}
-
-	nameFinder := service.MustGet[NameFinder](s.sc)
-	foundName := nameFinder.Find(ctx, first, second)
-	if foundName.Target == nil || foundName.Source == nil {
-		return nil, nil
-	}
-
-	targetNode := foundName.Target.Owner()
 	docProvider, err := service.Get[DocumentationProvider](s.sc)
 	if err != nil {
 		return nil, nil
 	}
-	content := docProvider.Documentation(targetNode)
+	content := docProvider.Documentation(target)
 	if content == "" {
 		return nil, nil
 	}
 
-	sourceRange := foundName.Source.TextRange().LspRange(doc.TextDoc)
 	return &lsp.Hover{
 		Contents: lsp.MarkupContent{
 			Kind:  lsp.Markdown,
@@ -65,4 +49,40 @@ func (s *DefaultHoverProvider) HandleHoverRequest(ctx context.Context, params *l
 		},
 		Range: sourceRange,
 	}, nil
+}
+
+// ResolveHoverTarget resolves the AST node referenced at the hover position
+// in params - the declaration itself, or any name/reference that resolves
+// to it - along with the source range of that name/reference. ok is false
+// when there's nothing to hover at that position (no document, no token
+// there, or no resolvable name), in which case callers should return
+// (nil, nil) from their own HandleHoverRequest.
+//
+// It's exported so a language that needs a custom HoverProvider - e.g. to
+// show content beyond documentation comments - can reuse this resolution
+// step (built on [NameFinder]) instead of duplicating it. See
+// internal/grammarhover for an example: it composes documentation with a
+// railroad syntax diagram, a concept specific to fastbelt's own grammar
+// language that has no place in this generic package.
+func ResolveHoverTarget(ctx context.Context, sc *service.Container, params *lsp.HoverParams) (target core.AstNode, sourceRange lsp.Range, ok bool) {
+	documentManager := service.MustGet[workspace.DocumentManager](sc)
+	uri := core.ParseURI(string(params.TextDocument.URI))
+	doc := documentManager.Get(uri)
+	if doc == nil {
+		return nil, lsp.Range{}, false
+	}
+
+	offset := doc.TextDoc.OffsetAt(params.Position)
+	first, second := doc.Tokens.SearchOffset2(offset)
+	if first == nil {
+		return nil, lsp.Range{}, false
+	}
+
+	nameFinder := service.MustGet[NameFinder](sc)
+	foundName := nameFinder.Find(ctx, first, second)
+	if foundName.Target == nil || foundName.Source == nil {
+		return nil, lsp.Range{}, false
+	}
+
+	return foundName.Target.Owner(), foundName.Source.TextRange().LspRange(doc.TextDoc), true
 }
