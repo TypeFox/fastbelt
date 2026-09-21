@@ -59,6 +59,7 @@ const (
 	ValidateInfixOperatorGroupName           = "infixOperatorGroupName"
 	ValidateModifierNotAllowedOnGroups       = "modifierNotAllowedOnGroups"
 	ValidateCommandNotAllowedOnGroups        = "commandNotAllowedOnGroups"
+	ValidateTokenRefRefersToOuterScope       = "tokenRefRefersToOuterScope"
 )
 
 // defaultTokenModeName is the name under which the mode marked
@@ -90,6 +91,7 @@ func (g *GrammarImpl) Validate(ctx context.Context, _ string, accept core.Valida
 	checkParserRulesCoverVisibleTokens(g, ctx, accept)
 	checkIfNonDefaultTokenModesHasNoExit(g, ctx, accept)
 	checkIfKeywordPureStandaloneOrTokenDecl(g, ctx, accept)
+	checkIfTokenRefRefersToOuterScope(g, ctx, accept)
 }
 
 // tokenModeName returns the name a token mode is registered under. The mode
@@ -1968,6 +1970,42 @@ func checkIfTokenUsageHasCommandOrModifierOnlyIfNotAGroup(usage TokenUsage, ctx 
 				core.WithToken(usage.ModifierToken()),
 				core.WithCode(ValidateCommandNotAllowedOnGroups),
 			))
+		}
+	}
+}
+
+func checkIfTokenRefRefersToOuterScope(g Grammar, ctx context.Context, accept core.ValidationAcceptor) {
+	checkTokenRef := func(mode TokenMode, reference *core.Reference[AbstractTokenRule]) {
+		tokenRule := reference.Ref(ctx)
+		if tokenRule != nil {
+			parentMode := core.ContainerOfType[TokenMode](tokenRule)
+			if parentMode != nil && parentMode != mode {
+				accept(core.NewDiagnostic(
+					core.SeverityError,
+					"Referencing a token from a scope of a token mode is not allowed. Use a top-level token instead.",
+					reference.Owner(),
+					core.WithTextRange(reference.TextRange()),
+					core.WithCode(ValidateTokenRefRefersToOuterScope),
+				))
+			}
+		}
+	}
+
+	for _, group := range g.TokenGroups() {
+		for _, ref := range group.TokenRefs() {
+			checkTokenRef(nil, ref)
+		}
+	}
+
+	for _, mode := range g.TokenModes() {
+		for _, member := range mode.Members() {
+			if groupUsage, ok := member.(TokenGroupUsage); ok {
+				for _, ref := range groupUsage.Group().TokenRefs() {
+					checkTokenRef(mode, ref)
+				}
+			} else if tokenUsage, ok := member.(TokenUsage); ok {
+				checkTokenRef(mode, tokenUsage.TokenRef())
+			}
 		}
 	}
 }

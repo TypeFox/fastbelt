@@ -46,26 +46,7 @@ func (s *scopeProviderImpl) ScopeRuleCallRule(ctx context.Context, reference *co
 	if !ok {
 		return core.EmptyScope
 	}
-	symbols := []*core.SymbolDescription{}
-	for _, tokenMode := range root.TokenModes() {
-		for _, member := range tokenMode.Members() {
-			if tokenDeclUsage, ok := member.(TokenDeclUsage); ok {
-				tokenDecl := tokenDeclUsage.Declaration()
-				if tokenDecl.NameToken() == nil {
-					continue
-				}
-				symbols = append(symbols, core.NewSymbolDescription(tokenDecl, tokenDecl.NameToken()))
-			} else if tokenGroupUsage, ok := member.(TokenGroupUsage); ok {
-				tokenGroup := tokenGroupUsage.Group()
-				if tokenGroup.NameToken() == nil {
-					continue
-				}
-				symbols = append(symbols, core.NewSymbolDescription(tokenGroup, tokenGroup.NameToken()))
-			}
-		}
-	}
-	outer := linking.DefaultScopeOfType[AbstractRule](reference.Owner())
-	return core.NewMapScopeFromSlice(symbols, outer)
+	return extractTokenReference(root, reference)
 }
 
 func (s *scopeProviderImpl) ScopeActionProperty(ctx context.Context, reference *core.Reference[Field]) core.Scope {
@@ -89,6 +70,45 @@ func (s *scopeProviderImpl) ScopeAssignmentProperty(ctx context.Context, referen
 		return core.NewMapScopeFromSlice(descriptions, nil)
 	}
 	return core.EmptyScope
+}
+
+func (s *scopeProviderImpl) ScopeTokenGroupTokenRefs(ctx context.Context, reference *core.Reference[AbstractTokenRule]) core.Scope {
+	root, ok := reference.Owner().Document().Root.(Grammar)
+	if !ok {
+		return core.EmptyScope
+	}
+	return extractTokenReference(root, reference)
+}
+
+func extractTokenReference[T AbstractRule](root Grammar, reference *core.Reference[T]) core.Scope {
+	symbols := []*core.SymbolDescription{}
+	for _, tokenMode := range root.TokenModes() {
+		for _, member := range tokenMode.Members() {
+			if tokenDeclUsage, ok := member.(TokenDeclUsage); ok {
+				tokenDecl := tokenDeclUsage.Declaration()
+				if tokenDecl.NameToken() == nil {
+					continue
+				}
+				symbols = append(symbols, core.NewSymbolDescription(tokenDecl, tokenDecl.NameToken()))
+			} else if tokenGroupUsage, ok := member.(TokenGroupUsage); ok {
+				tokenGroup := tokenGroupUsage.Group()
+				if tokenGroup.NameToken() == nil {
+					continue
+				}
+				symbols = append(symbols, core.NewSymbolDescription(tokenGroup, tokenGroup.NameToken()))
+			}
+		}
+	}
+	outer := linking.DefaultScopeOfType[T](reference.Owner())
+	return core.NewMapScopeFromSlice(symbols, outer)
+}
+
+func (s *scopeProviderImpl) ScopeTokenUsageTokenRef(ctx context.Context, reference *core.Reference[AbstractTokenRule]) core.Scope {
+	root, ok := reference.Owner().Document().Root.(Grammar)
+	if !ok {
+		return core.EmptyScope
+	}
+	return extractTokenReference(root, reference)
 }
 
 func getCurrentType(ctx context.Context, node core.AstNode) Interface {

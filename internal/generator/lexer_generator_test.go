@@ -278,10 +278,7 @@ func TestGenerateLexerModeLocalTokenDeclaration(t *testing.T) {
 	assert.NotContains(t, outer, "Token_INNER")
 }
 
-// A mode-local declaration is visible to parser rules but not to a token usage
-// in a different mode, which the linker reports. The generated lexer must still
-// be well-formed - the unresolvable entry is dropped rather than emitted broken.
-func TestGenerateLexerModeLocalTokenIsNotSharedAcrossModes(t *testing.T) {
+func TestGenerateLexerModeLocalTokenIsSharedAcrossModes(t *testing.T) {
 	code := generateLexerFor(t, `
 		grammar Test;
 		interface Foo { Greeting string Content string }
@@ -298,12 +295,12 @@ func TestGenerateLexerModeLocalTokenIsNotSharedAcrossModes(t *testing.T) {
 			")" -> pop
 		}
 		token mode Other {
-			INNER -> pop
+			INNER -> pop    //valid BUT(!) during validation this will get an error!
 		}
 	`)
 	assert.Equal(t, 1, strings.Count(code, "var Token_INNER ="))
 	other := code[strings.Index(code, `NewTokenMode("Other"`):]
-	assert.NotContains(t, other, "Token_INNER")
+	assert.Contains(t, other, "Token_INNER")
 }
 
 func TestGenerateLexerModeLocalTokenGroupWithCommand(t *testing.T) {

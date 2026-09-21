@@ -1876,3 +1876,79 @@ func TestUseTokenDeclViaTokenGroup(t *testing.T) {
 	`)
 	doc.AssertNoDiagnostic("1")
 }
+
+func TestReferencingOuterScopeFromTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Model {
+			Name string
+		}
+		entry Model: Name=Hallo;
+		token mode default {
+			token Hallo: "hallo"
+		}
+		token mode Other {
+			<|1:Hallo|>
+		}
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithCode(ValidateTokenRefRefersToOuterScope)
+}
+
+func TestReferencingOuterScopeFromTokenModeViaTokenGroup(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Model {
+			Name string
+		}
+		entry Model: Name=Hallo;
+		token mode default {
+			token group Hallo { "hallo" }
+		}
+		token mode Other {
+			<|1:Hallo|>
+		}
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithCode(ValidateTokenRefRefersToOuterScope)
+}
+
+func TestReferencingInnerScopeFromTopLevelTokenGroup(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Model {
+			Name string
+		}
+		entry Model: Name=Hallo;
+		token mode default {
+			token Hallo: "hallo"
+		}
+		token group G {
+			<|1:Hallo|>
+		}
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithCode(ValidateTokenRefRefersToOuterScope)
+}
+
+func TestReferencingInnerScopeFromTopLevelTokenGroupViaTokenGroup(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Model {
+			Name string
+		}
+		entry Model: Name=Hallo;
+		token mode default {
+			token group Hallo { "hallo" }
+		}
+		token group G {
+			<|1:Hallo|>
+		}
+	`)
+	diag := doc.ExpectDiagnostic("1")
+	diag.WithCode(ValidateTokenRefRefersToOuterScope)
+}

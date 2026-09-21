@@ -499,7 +499,7 @@ func TestModeLocalTokenIsNotVisibleToOtherModes(t *testing.T) {
 	// A mode-local declaration belongs to its own mode: parser rules can call
 	// it, but another mode cannot list it.
 	doc.ExpectDiagnostic("1").WithSeverity(core.SeverityError).
-		WithMessageContaining("Could not resolve reference to 'INNER'")
+		WithCode(ValidateTokenRefRefersToOuterScope)
 }
 
 func TestModeLocalTokenShadowsTopLevelTokenOfSameName(t *testing.T) {
