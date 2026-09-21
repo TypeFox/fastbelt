@@ -375,6 +375,14 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 			queue = append(queue, node)
 		}
 	}
+	for _, infixRule := range g.InfixRules() {
+		queue = append(queue, infixRule.Call())
+		for _, group := range infixRule.Groups() {
+			for _, operator := range group.Operators() {
+				queue = append(queue, operator)
+			}
+		}
+	}
 	for _, node := range queue {
 		switch casted := node.(type) {
 		case Keyword:
