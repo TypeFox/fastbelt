@@ -1952,3 +1952,46 @@ func TestReferencingInnerScopeFromTopLevelTokenGroupViaTokenGroup(t *testing.T) 
 	diag := doc.ExpectDiagnostic("1")
 	diag.WithCode(ValidateTokenRefRefersToOuterScope)
 }
+
+func TestInfixRulesShallAlsoBeIncludedInCoverageChecks(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test
+
+		entry Expression: BinaryExpression
+
+		interface Expression {}
+
+		interface BinaryExpression extends Expression {
+			Left Expression
+			Operator string //"%" | "+" | "-"
+			Right Expression
+		}
+
+		interface PrimaryExpression extends Expression {}
+		interface NumericLiteral extends PrimaryExpression {
+			Value string
+		}
+
+
+		infix BinaryExpression on PrimaryExpression:
+			"%"
+			> right "^"
+			> AdditionOp
+
+
+		token group <|1:AdditionOp|> {
+			"+"
+			"-"
+		}
+
+		PrimaryExpression returns Expression:
+			"(" Expression ")" |
+			{NumericLiteral} Value=NUMBER
+
+		token NUMBER: /\d+/
+
+		hidden token WS: /\s+/
+	`)
+	doc.AssertNoDiagnostic("1") //no ValidateTokenGroupNotCoveredByParserRule
+}
