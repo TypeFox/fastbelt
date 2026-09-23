@@ -30,10 +30,11 @@ func (s *GrammarTokenHighlightingStrategy) Highlight(ctx context.Context, token 
 		Interface_Extends_ID_1:
 		accept(legendProvider.Interface(), 0)
 	case ParserRule_Name_ID,
-		Token_Name_ID,
+		TokenDecl_Name_ID,
 		CompositeRule_Name_ID,
 		RuleCall_Rule_ID,
 		InfixRule_Name_ID,
+		TokenUsage_TokenRef_ID,
 		TokenGroup_Name_ID,
 		TokenGroup_TokenRefs_ID:
 		accept(legendProvider.Function(), 0)
@@ -52,8 +53,9 @@ func (s *GrammarTokenHighlightingStrategy) Highlight(ctx context.Context, token 
 		Action_Type_ID,
 		Action_current:
 		accept(legendProvider.Type(), 0)
-	case Token_Type_comment,
-		Token_Type_hidden,
+	case TokenDecl_Modifier_TokenModifier,
+		KeywordUsage_Modifier_TokenModifier,
+		TokenUsage_Modifier_TokenModifier,
 		PrecedenceGroup_Associativity_left,
 		PrecedenceGroup_Associativity_right:
 		accept(legendProvider.Modifier(), 0)

@@ -12,7 +12,7 @@ const (
 )
 
 var BValueAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_Identifier, Keyword_b},
+	Types:  []*core.TokenType{TokenGroup_Identifier, Keyword_b},
 	Lookup: []int{1: 1, 2: 2, 12: 1, 13: 1},
 }
 
@@ -49,7 +49,7 @@ func (l *DefaultTokenGroupsParserLookahead) BValueAlternatives(state *parser.Par
 }
 
 func (l *DefaultTokenGroupsParserLookahead) DValueOptional(state *parser.ParserState) bool {
-	return Token_Identifier.Matches(state.LA(1).Type)
+	return TokenGroup_Identifier.Matches(state.LA(1).Type)
 }
 
 func (l *DefaultTokenGroupsParserLookahead) HAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {

@@ -7,11 +7,8 @@ package generator
 import (
 	"go/format"
 	"runtime"
-	"sort"
 	"strings"
 
-	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/util/codegen"
 )
 
@@ -54,46 +51,6 @@ func WriteSB(sb *strings.Builder, texts ...string) {
 	for _, text := range texts {
 		sb.WriteString(text)
 	}
-}
-
-func GetAllKeywords(grammr grammar.Grammar) []grammar.Keyword {
-	keywords := map[string]grammar.Keyword{}
-	for node := range core.AllChildren(grammr) {
-		if keyword, ok := node.(grammar.Keyword); ok {
-			keywords[keyword.Value()] = keyword
-		}
-	}
-	return keysFromMap(keywords)
-}
-
-func keysFromMap(m map[string]grammar.Keyword) []grammar.Keyword {
-	keys := []grammar.Keyword{}
-	for _, v := range m {
-		keys = append(keys, v)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i].Value() < keys[j].Value()
-	})
-	return keys
-}
-
-func GeneratedTokenName(t core.AstNode) string {
-	switch t := t.(type) {
-	case grammar.AbstractTokenRule:
-		return "Token_" + t.Name()
-	case grammar.Keyword:
-		return "Keyword_" + grammar.KeywordName(t)
-	default:
-		panic("unexpected type")
-	}
-}
-
-func GeneratedTokenIdxName(t core.AstNode) string {
-	return GeneratedTokenName(t) + "_Idx"
-}
-
-func KeywordValue(k grammar.Keyword) string {
-	return k.Value()[1 : len(k.Value())-1]
 }
 
 // topoSort returns uniqueTargets sorted so that child elements appear before

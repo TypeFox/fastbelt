@@ -61,5 +61,5 @@ I returns Obj: "i" (
 
 composite QualifiedNameRecursive: ID ("." QualifiedNameRecursive)?;
 
-hidden token WS: /[ \t\r\n]+/;
-token ID: /\w[\w0-9]*/;
+hidden token WS: /[ \t\r\n]+/
+token ID: /\w[\w0-9]*/
