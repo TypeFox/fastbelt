@@ -1942,7 +1942,7 @@ func checkIfKeywordPureStandaloneOrTokenDecl(g Grammar, _ context.Context, accep
 		for kw := range kws {
 			accept(core.NewDiagnostic(
 				core.SeverityError,
-				fmt.Sprintf("The keyword '%s' is used both as a standalone keyword and as a token declaration. A unique keyword value must be either pure standalone or pure token declarations.", kw.Value()),
+				fmt.Sprintf("The keyword %s is declared both inline in parser rules and in a token declaration. Only one of these declarations is valid.", kw.Value()),
 				kw,
 				core.WithToken(kw.ValueToken()),
 				core.WithCode(ValidateKeywordPureStandaloneOrTokenDecl),
