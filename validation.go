@@ -81,9 +81,8 @@ type ValidationAcceptor func(diagnostic *Diagnostic)
 type Validator interface {
 	// Validate performs validation on the receiver node.
 	// sc is the service container of the running language server.
-	// The level parameter identifies when validation runs (e.g. "on-type", "on-save").
 	// The accept callback is used to collect diagnostics.
-	Validate(ctx context.Context, sc *service.Container, level string, accept ValidationAcceptor)
+	Validate(ctx context.Context, sc *service.Container, accept ValidationAcceptor)
 }
 
 // DiagnosticOption configures optional fields of a [Diagnostic] created by [NewDiagnostic].
