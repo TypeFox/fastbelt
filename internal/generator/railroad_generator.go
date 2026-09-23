@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"typefox.dev/fastbelt/internal/grammar"
-	"typefox.dev/fastbelt/internal/railroad"
 )
 
 // GenerateRailroadDiagrams renders a standalone SVG railroad diagram for
@@ -21,17 +20,17 @@ func GenerateRailroadDiagrams(grammr grammar.Grammar) map[string]string {
 	ctx := context.Background()
 	out := make(map[string]string)
 	for _, rule := range grammr.Rules() {
-		if diagram, ok := railroad.BuildRuleDiagram(ctx, rule); ok {
+		if diagram, ok := grammar.BuildRuleDiagram(ctx, rule); ok {
 			out[rule.Name()] = diagram.SVG()
 		}
 	}
 	for _, rule := range grammr.Composites() {
-		if diagram, ok := railroad.BuildRuleDiagram(ctx, rule); ok {
+		if diagram, ok := grammar.BuildRuleDiagram(ctx, rule); ok {
 			out[rule.Name()] = diagram.SVG()
 		}
 	}
 	for _, rule := range grammr.InfixRules() {
-		if diagram, ok := railroad.BuildRuleDiagram(ctx, rule); ok {
+		if diagram, ok := grammar.BuildRuleDiagram(ctx, rule); ok {
 			out[rule.Name()] = diagram.SVG()
 		}
 	}

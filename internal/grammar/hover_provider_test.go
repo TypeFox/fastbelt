@@ -2,7 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package grammarhover
+package grammar
 
 import (
 	"encoding/base64"
@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/test"
 	"typefox.dev/fastbelt/util/service"
@@ -22,7 +21,7 @@ const dataImagePrefix = "data:image/svg+xml;base64,"
 func newHoverFixture(t *testing.T) (*service.Container, *test.Fixture) {
 	t.Helper()
 	sc := service.NewContainer()
-	grammar.SetupServices(sc)
+	SetupServices(sc)
 	service.Put(sc, NewHoverProvider(sc))
 	server.SetupDefaultServices(sc)
 	sc.Seal()

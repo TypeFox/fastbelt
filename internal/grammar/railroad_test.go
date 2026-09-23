@@ -2,18 +2,18 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-package railroad
+package grammar
 
 import (
 	"testing"
 
-	"typefox.dev/fastbelt/internal/grammar"
+	"typefox.dev/fastbelt/internal/railroad"
 	"typefox.dev/fastbelt/test"
 )
 
-func newFixture(t *testing.T) *test.Fixture {
+func newRailroadFixture(t *testing.T) *test.Fixture {
 	t.Helper()
-	return test.New(t, grammar.CreateServices())
+	return test.New(t, CreateServices())
 }
 
 const mappingFixtureGrammar = `grammar Test
@@ -47,102 +47,102 @@ token STRING: /"[^"]*"/
 `
 
 func TestMapElement_SequenceWithCardinalityAndTokenVsRuleCall(t *testing.T) {
-	f := newFixture(t)
+	f := newRailroadFixture(t)
 	doc := f.Parse(mappingFixtureGrammar)
 	doc.AssertNoParseErrors()
 
-	foo := test.MustFindNamedNode[grammar.ParserRule](doc, "Foo")
+	foo := test.MustFindNamedNode[ParserRule](doc, "Foo")
 	node := MapElement(doc.Ctx(), foo.Body())
 
-	seq, ok := node.(*Sequence)
+	seq, ok := node.(*railroad.Sequence)
 	if !ok {
-		t.Fatalf("Foo's body = %T, want *Sequence", node)
+		t.Fatalf("Foo's body = %T, want *railroad.Sequence", node)
 	}
 	if len(seq.Items) != 4 {
 		t.Fatalf("Foo's body has %d items, want 4 (%v)", len(seq.Items), seq.Items)
 	}
 
-	if _, ok := seq.Items[0].(*Terminal); !ok {
-		t.Errorf("item 0 (keyword \"begin\") = %T, want *Terminal", seq.Items[0])
+	if _, ok := seq.Items[0].(*railroad.Terminal); !ok {
+		t.Errorf("item 0 (keyword \"begin\") = %T, want *railroad.Terminal", seq.Items[0])
 	}
-	if _, ok := seq.Items[1].(*Terminal); !ok {
-		t.Errorf("item 1 (Name=ID, ID is a token) = %T, want *Terminal", seq.Items[1])
+	if _, ok := seq.Items[1].(*railroad.Terminal); !ok {
+		t.Errorf("item 1 (Name=ID, ID is a token) = %T, want *railroad.Terminal", seq.Items[1])
 	}
 
 	// Items+=Item*: Item is a parser rule, so it maps to NonTerminal, and
 	// the '*' on the assignment wraps it in ZeroOrMore == Optional(OneOrMore).
-	choice, ok := seq.Items[2].(*Choice)
+	choice, ok := seq.Items[2].(*railroad.Choice)
 	if !ok {
-		t.Fatalf("item 2 (Items+=Item*) = %T, want *Choice (from ZeroOrMore)", seq.Items[2])
+		t.Fatalf("item 2 (Items+=Item*) = %T, want *railroad.Choice (from ZeroOrMore)", seq.Items[2])
 	}
-	oneOrMore, ok := choice.Items[1].(*OneOrMore)
+	oneOrMore, ok := choice.Items[1].(*railroad.OneOrMore)
 	if !ok {
-		t.Fatalf("ZeroOrMore's wrapped item = %T, want *OneOrMore", choice.Items[1])
+		t.Fatalf("ZeroOrMore's wrapped item = %T, want *railroad.OneOrMore", choice.Items[1])
 	}
-	if _, ok := oneOrMore.Item.(*NonTerminal); !ok {
-		t.Errorf("Item ruleCall = %T, want *NonTerminal", oneOrMore.Item)
+	if _, ok := oneOrMore.Item.(*railroad.NonTerminal); !ok {
+		t.Errorf("Item ruleCall = %T, want *railroad.NonTerminal", oneOrMore.Item)
 	}
 
 	// ("end")? : Optional(Terminal).
-	optChoice, ok := seq.Items[3].(*Choice)
+	optChoice, ok := seq.Items[3].(*railroad.Choice)
 	if !ok {
-		t.Fatalf("item 3 (\"end\")? = %T, want *Choice (from Optional)", seq.Items[3])
+		t.Fatalf("item 3 (\"end\")? = %T, want *railroad.Choice (from Optional)", seq.Items[3])
 	}
-	if _, ok := optChoice.Items[1].(*Terminal); !ok {
-		t.Errorf("Optional's wrapped item = %T, want *Terminal", optChoice.Items[1])
+	if _, ok := optChoice.Items[1].(*railroad.Terminal); !ok {
+		t.Errorf("Optional's wrapped item = %T, want *railroad.Terminal", optChoice.Items[1])
 	}
 }
 
 func TestMapElement_Alternatives(t *testing.T) {
-	f := newFixture(t)
+	f := newRailroadFixture(t)
 	doc := f.Parse(mappingFixtureGrammar)
 	doc.AssertNoParseErrors()
 
-	item := test.MustFindNamedNode[grammar.ParserRule](doc, "Item")
+	item := test.MustFindNamedNode[ParserRule](doc, "Item")
 	node := MapElement(doc.Ctx(), item.Body())
 
-	choice, ok := node.(*Choice)
+	choice, ok := node.(*railroad.Choice)
 	if !ok {
-		t.Fatalf("Item's body = %T, want *Choice", node)
+		t.Fatalf("Item's body = %T, want *railroad.Choice", node)
 	}
 	if len(choice.Items) != 2 {
 		t.Fatalf("Item's body has %d alternatives, want 2", len(choice.Items))
 	}
 	for i, alt := range choice.Items {
-		if _, ok := alt.(*Terminal); !ok {
-			t.Errorf("alternative %d = %T, want *Terminal (both branches are token assignments)", i, alt)
+		if _, ok := alt.(*railroad.Terminal); !ok {
+			t.Errorf("alternative %d = %T, want *railroad.Terminal (both branches are token assignments)", i, alt)
 		}
 	}
 }
 
 func TestMapElement_Action(t *testing.T) {
-	f := newFixture(t)
+	f := newRailroadFixture(t)
 	doc := f.Parse(mappingFixtureGrammar)
 	doc.AssertNoParseErrors()
 
-	rule := test.MustFindNamedNode[grammar.ParserRule](doc, "ActionRule")
+	rule := test.MustFindNamedNode[ParserRule](doc, "ActionRule")
 	node := MapElement(doc.Ctx(), rule.Body())
 
-	seq, ok := node.(*Sequence)
+	seq, ok := node.(*railroad.Sequence)
 	if !ok {
-		t.Fatalf("ActionRule's body = %T, want *Sequence", node)
+		t.Fatalf("ActionRule's body = %T, want *railroad.Sequence", node)
 	}
-	if _, ok := seq.Items[0].(Skip); !ok {
-		t.Errorf("action element = %T, want Skip (consumes no tokens)", seq.Items[0])
+	if _, ok := seq.Items[0].(railroad.Skip); !ok {
+		t.Errorf("action element = %T, want railroad.Skip (consumes no tokens)", seq.Items[0])
 	}
 }
 
 func TestMapElement_UnresolvedRuleCallDoesNotPanic(t *testing.T) {
-	f := newFixture(t)
+	f := newRailroadFixture(t)
 	doc := f.Parse(mappingFixtureGrammar)
 	doc.AssertNoParseErrors()
 
-	rule := test.MustFindNamedNode[grammar.ParserRule](doc, "BrokenRule")
+	rule := test.MustFindNamedNode[ParserRule](doc, "BrokenRule")
 	node := MapElement(doc.Ctx(), rule.Body())
 
-	nt, ok := node.(*NonTerminal)
+	nt, ok := node.(*railroad.NonTerminal)
 	if !ok {
-		t.Fatalf("BrokenRule's body = %T, want *NonTerminal", node)
+		t.Fatalf("BrokenRule's body = %T, want *railroad.NonTerminal", node)
 	}
 	if !nt.Unresolved {
 		t.Errorf("unresolved rule call should be flagged Unresolved, got %+v", nt)
@@ -153,11 +153,11 @@ func TestMapElement_UnresolvedRuleCallDoesNotPanic(t *testing.T) {
 }
 
 func TestBuildRuleDiagram_CompositeRule(t *testing.T) {
-	f := newFixture(t)
+	f := newRailroadFixture(t)
 	doc := f.Parse(mappingFixtureGrammar)
 	doc.AssertNoParseErrors()
 
-	combo := test.MustFindNamedNode[grammar.CompositeRule](doc, "Combo")
+	combo := test.MustFindNamedNode[CompositeRule](doc, "Combo")
 	diagram, ok := BuildRuleDiagram(doc.Ctx(), combo)
 	if !ok {
 		t.Fatal("BuildRuleDiagram returned ok=false for a CompositeRule")
@@ -168,11 +168,11 @@ func TestBuildRuleDiagram_CompositeRule(t *testing.T) {
 }
 
 func TestBuildRuleDiagram_TerminalRuleHasNoDiagram(t *testing.T) {
-	f := newFixture(t)
+	f := newRailroadFixture(t)
 	doc := f.Parse(mappingFixtureGrammar)
 	doc.AssertNoParseErrors()
 
-	idToken := test.MustFindNamedNode[grammar.Token](doc, "ID")
+	idToken := test.MustFindNamedNode[Token](doc, "ID")
 	_, ok := BuildRuleDiagram(doc.Ctx(), idToken)
 	if ok {
 		t.Error("BuildRuleDiagram should return ok=false for a token rule")
@@ -208,53 +208,53 @@ token NUMBER: /[0-9]+/
 `
 
 func TestMapInfixRule_SynthesizesOperandOperatorRepeatShape(t *testing.T) {
-	f := newFixture(t)
+	f := newRailroadFixture(t)
 	doc := f.Parse(infixFixtureGrammar)
 	doc.AssertNoParseErrors()
 
-	rule := test.MustFindNamedNode[grammar.InfixRule](doc, "BinaryExpression")
+	rule := test.MustFindNamedNode[InfixRule](doc, "BinaryExpression")
 	if rule.Body() != nil {
 		t.Fatal("expected the InfixRule's Body to be nil before ExpandInfixRules runs")
 	}
 
 	node := mapInfixRule(doc.Ctx(), rule)
-	seq, ok := node.(*Sequence)
+	seq, ok := node.(*railroad.Sequence)
 	if !ok {
-		t.Fatalf("infix rule diagram = %T, want *Sequence (operand, (operator operand)*)", node)
+		t.Fatalf("infix rule diagram = %T, want *railroad.Sequence (operand, (operator operand)*)", node)
 	}
 	if len(seq.Items) != 2 {
 		t.Fatalf("infix sequence has %d items, want 2", len(seq.Items))
 	}
-	if _, ok := seq.Items[0].(*NonTerminal); !ok {
-		t.Errorf("operand = %T, want *NonTerminal (PrimaryExpression)", seq.Items[0])
+	if _, ok := seq.Items[0].(*railroad.NonTerminal); !ok {
+		t.Errorf("operand = %T, want *railroad.NonTerminal (PrimaryExpression)", seq.Items[0])
 	}
 
-	repeatChoice, ok := seq.Items[1].(*Choice)
+	repeatChoice, ok := seq.Items[1].(*railroad.Choice)
 	if !ok {
-		t.Fatalf("repeat wrapper = %T, want *Choice (from ZeroOrMore)", seq.Items[1])
+		t.Fatalf("repeat wrapper = %T, want *railroad.Choice (from ZeroOrMore)", seq.Items[1])
 	}
-	oneOrMore, ok := repeatChoice.Items[1].(*OneOrMore)
+	oneOrMore, ok := repeatChoice.Items[1].(*railroad.OneOrMore)
 	if !ok {
-		t.Fatalf("ZeroOrMore's wrapped item = %T, want *OneOrMore", repeatChoice.Items[1])
+		t.Fatalf("ZeroOrMore's wrapped item = %T, want *railroad.OneOrMore", repeatChoice.Items[1])
 	}
-	innerSeq, ok := oneOrMore.Item.(*Sequence)
+	innerSeq, ok := oneOrMore.Item.(*railroad.Sequence)
 	if !ok {
-		t.Fatalf("repeated body = %T, want *Sequence (operator, operand)", oneOrMore.Item)
+		t.Fatalf("repeated body = %T, want *railroad.Sequence (operator, operand)", oneOrMore.Item)
 	}
 	if len(innerSeq.Items) != 2 {
 		t.Fatalf("repeated body has %d items, want 2 (operator, operand)", len(innerSeq.Items))
 	}
 	// Operators across all precedence groups: "+", "-" (keywords) and MulOp
 	// (a token group ruleCall) - 3 operators, so they render as a Choice.
-	operatorChoice, ok := innerSeq.Items[0].(*Choice)
+	operatorChoice, ok := innerSeq.Items[0].(*railroad.Choice)
 	if !ok {
-		t.Fatalf("operator = %T, want *Choice (3 operators across precedence groups)", innerSeq.Items[0])
+		t.Fatalf("operator = %T, want *railroad.Choice (3 operators across precedence groups)", innerSeq.Items[0])
 	}
 	if len(operatorChoice.Items) != 3 {
 		t.Fatalf("operatorChoice has %d items, want 3", len(operatorChoice.Items))
 	}
-	if _, ok := innerSeq.Items[1].(*NonTerminal); !ok {
-		t.Errorf("second operand = %T, want *NonTerminal", innerSeq.Items[1])
+	if _, ok := innerSeq.Items[1].(*railroad.NonTerminal); !ok {
+		t.Errorf("second operand = %T, want *railroad.NonTerminal", innerSeq.Items[1])
 	}
 
 	// Reading Call()/Groups() must not have mutated the AST: Body() is
@@ -265,11 +265,11 @@ func TestMapInfixRule_SynthesizesOperandOperatorRepeatShape(t *testing.T) {
 }
 
 func TestBuildRuleDiagram_InfixRule(t *testing.T) {
-	f := newFixture(t)
+	f := newRailroadFixture(t)
 	doc := f.Parse(infixFixtureGrammar)
 	doc.AssertNoParseErrors()
 
-	rule := test.MustFindNamedNode[grammar.InfixRule](doc, "BinaryExpression")
+	rule := test.MustFindNamedNode[InfixRule](doc, "BinaryExpression")
 	diagram, ok := BuildRuleDiagram(doc.Ctx(), rule)
 	if !ok || diagram == nil {
 		t.Fatalf("BuildRuleDiagram(InfixRule) = (%v, %v), want a non-nil diagram and ok=true", diagram, ok)

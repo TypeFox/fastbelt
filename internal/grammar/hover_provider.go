@@ -2,27 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-// Package grammarhover provides a server.HoverProvider for fastbelt's own
-// self-hosted grammar language (internal/grammar): the same
-// documentation-comment content as server.DefaultHoverProvider, plus - for
-// grammar rule nodes - a railroad syntax diagram of the rule's concrete
-// syntax.
-//
-// It exists as its own package - rather than living in package server - for
-// two reasons. First, railroad diagrams only ever make sense for a
-// language whose AST has a "grammar rule" concept, i.e. only
-// internal/grammar; no other language server built with fastbelt has any
-// use for it, so it doesn't belong in the generic framework package.
-// Second, it couldn't live in server even if that were desirable:
-// internal/railroad already imports internal/grammar (to map grammar AST
-// nodes to diagram nodes), and internal/grammar's own test files import
-// package server (to exercise the real language server) - so server
-// importing internal/grammar or internal/railroad, directly or transitively,
-// would close an import cycle for those tests. This package is the one
-// place allowed to depend on all three, since it's imported only by the
-// grammar language server's entrypoint (internal/grammar/server) and by
-// this package's own tests.
-package grammarhover
+package grammar
 
 import (
 	"context"
@@ -30,15 +10,15 @@ import (
 	"fmt"
 
 	core "typefox.dev/fastbelt"
-	"typefox.dev/fastbelt/internal/grammar"
-	"typefox.dev/fastbelt/internal/railroad"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/lsp"
 )
 
 // HoverProvider is the grammar language's implementation of
-// [server.HoverProvider].
+// [server.HoverProvider]: the same documentation-comment content as
+// server.DefaultHoverProvider, plus - for grammar rule nodes - a railroad
+// syntax diagram of the rule's concrete syntax.
 type HoverProvider struct {
 	sc *service.Container
 }
@@ -80,11 +60,11 @@ func (p *HoverProvider) HandleHoverRequest(ctx context.Context, params *lsp.Hove
 // railroad diagram for node, or "" if node isn't a grammar rule with a
 // meaningful concrete-syntax diagram (e.g. a terminal/token rule).
 func diagramMarkdown(ctx context.Context, node core.AstNode) string {
-	rule, ok := node.(grammar.AbstractRule)
+	rule, ok := node.(AbstractRule)
 	if !ok {
 		return ""
 	}
-	diagram, ok := railroad.BuildRuleDiagram(ctx, rule)
+	diagram, ok := BuildRuleDiagram(ctx, rule)
 	if !ok {
 		return ""
 	}
