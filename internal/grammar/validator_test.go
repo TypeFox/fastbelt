@@ -1995,3 +1995,24 @@ func TestInfixRulesShallAlsoBeIncludedInCoverageChecks(t *testing.T) {
 	`)
 	doc.AssertNoDiagnostic("1") //no ValidateTokenGroupNotCoveredByParserRule
 }
+
+func TestHiddenTokenUsageInTokenModeNotMarkedAsDiagnostic(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test
+		interface Model {
+			X string
+		}
+		entry Model:
+			X=ID
+
+		token WS: /\s+/
+		token ID: /[a-zA-Z_][a-zA-Z_0-9]*/
+
+		token mode default {
+			ID
+			hidden <|1:WS|>
+		}
+	`)
+	doc.AssertNoDiagnostic("1")
+}

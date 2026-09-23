@@ -447,16 +447,15 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 					}
 				case TokenUsage:
 					if tokenRef := member.TokenRef().Ref(ctx); tokenRef != nil {
-						if decl, ok := tokenRef.(TokenDecl); ok {
-							if decl.Modifier() != "" {
-								continue
-							}
+						if member.Modifier() != "" {
+							continue
 						}
 						if !seen.Has(tokenRef.Name()) {
 							accept(core.NewDiagnostic(
 								severity,
 								getTokenNeverReferencedMessage("token", tokenRef.Name()),
 								member,
+								core.WithReference(member.TokenRef()),
 								core.WithCode(ValidateTerminalNotCoveredByParserRule),
 							))
 						}
