@@ -8,6 +8,7 @@ package grammar
 
 import (
 	"typefox.dev/fastbelt/linking"
+	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
@@ -29,6 +30,13 @@ func SetupServices(sc *service.Container) {
 	// Override the default scope provider
 	service.Override[FastbeltScopeProvider](sc, newScopeProviderImpl(sc))
 	service.Override(sc, newImportedSymbolsProviderImpl(sc))
+
+	// Set a semantic token highlighting strategy
+	service.Put(sc, server.NewTokenBasedSemanticTokensProvider(
+		sc,
+		legendProvider,
+		NewGrammarTokenHighlightingStrategy(),
+	))
 }
 
 // CreateServices creates a service container for the grammar language to be used in the CLI and tests.
