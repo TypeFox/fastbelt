@@ -13,8 +13,8 @@ import (
 
 // DocumentValidator validates a document's AST and collects diagnostics.
 type DocumentValidator interface {
-	// Validate returns diagnostics for doc. It walks doc.Root and calls
-	// [core.Validator] methods on AST nodes that implement that interface.
+	// Validate returns diagnostics for doc. ctx may be used to cancel a
+	// long-running validation, in which case the result may be incomplete.
 	Validate(ctx context.Context, doc *core.Document) []*core.Diagnostic
 }
 

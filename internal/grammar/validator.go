@@ -276,7 +276,7 @@ const (
 //     switch to and the command is dropped during code generation.
 //   - `pop` returns to the mode below the current one on the stack, so a target
 //     mode cannot be honored.
-func (c *TokenCommandImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
+func (c *TokenCommandImpl) Validate(_ context.Context, _ *service.Container, accept core.ValidationAcceptor) {
 	checkTokenCommandMode(c, accept)
 }
 
@@ -316,7 +316,7 @@ func checkTokenCommandMode(c TokenCommand, accept core.ValidationAcceptor) {
 
 // TokenModeImpl.Validate checks token mode constraints:
 //   - A mode without members leaves the lexer with nothing to match.
-func (m *TokenModeImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
+func (m *TokenModeImpl) Validate(_ context.Context, _ *service.Container, accept core.ValidationAcceptor) {
 	checkTokenModeNotEmpty(m, accept)
 	checkTokenModeMembersAreUnique(m, accept)
 }
@@ -1894,11 +1894,11 @@ func checkTokenModeMembersAreUnique(tm TokenMode, accept core.ValidationAcceptor
 	}
 }
 
-func (m *KeywordSelectorImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
+func (m *KeywordSelectorImpl) Validate(_ context.Context, _ *service.Container, accept core.ValidationAcceptor) {
 	checkRegExpIsValid(m.SelectorToken(), accept)
 }
 
-func (m *RegexpTokenContentImpl) Validate(_ context.Context, _ string, accept core.ValidationAcceptor) {
+func (m *RegexpTokenContentImpl) Validate(_ context.Context, _ *service.Container, accept core.ValidationAcceptor) {
 	checkRegExpIsValid(m.RegexpToken(), accept)
 }
 
@@ -1954,7 +1954,7 @@ func checkIfKeywordPureStandaloneOrTokenDecl(g Grammar, _ context.Context, accep
 	}
 }
 
-func (tu *TokenUsageImpl) Validate(ctx context.Context, _ string, accept core.ValidationAcceptor) {
+func (tu *TokenUsageImpl) Validate(ctx context.Context, _ *service.Container, accept core.ValidationAcceptor) {
 	checkIfTokenUsageHasCommandOrModifierOnlyIfNotAGroup(tu, ctx, accept)
 }
 
