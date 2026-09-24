@@ -19,18 +19,11 @@ type Greeting interface {
 }
 
 func NewGreeting() Greeting {
-	return &GreetingImpl{
-		AstNodeBase:  core.NewAstNode(),
-		GreetingData: NewGreetingData(),
-	}
+	return &GreetingImpl{}
 }
 
 type GreetingData struct {
 	name *core.Token
-}
-
-func NewGreetingData() GreetingData {
-	return GreetingData{}
 }
 
 func (i *GreetingData) IsGreeting() {}
@@ -93,18 +86,11 @@ type Farewell interface {
 }
 
 func NewFarewell() Farewell {
-	return &FarewellImpl{
-		AstNodeBase:  core.NewAstNode(),
-		FarewellData: NewFarewellData(),
-	}
+	return &FarewellImpl{}
 }
 
 type FarewellData struct {
 	to *core.Reference[Greeting]
-}
-
-func NewFarewellData() FarewellData {
-	return FarewellData{}
 }
 
 func (i *FarewellData) IsFarewell() {}

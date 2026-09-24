@@ -69,7 +69,7 @@ func parseDocument(srv *service.Container, content string) *fastbelt.Document {
 	lexer := service.MustGet[lexer.Lexer](srv)
 	parser := service.MustGet[parser.Parser](srv)
 	doc := fastbelt.NewDocumentFromString("file:///workspace/test.statemachine", "statemachine", content)
-	lexer.Lex(doc)
+	lexer.Exec(doc)
 	parser.Parse(doc)
 	return doc
 }

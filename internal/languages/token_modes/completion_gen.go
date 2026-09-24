@@ -56,8 +56,8 @@ func NewTokenModesCompletionAdapter(sc *service.Container) *TokenModesCompletion
 	return &TokenModesCompletionAdapter{sc: sc}
 }
 
-func (a *TokenModesCompletionAdapter) Parse(tokens []core.Token) *parser.CompletionParseResult {
-	return NewCompletionParser(a.sc).Parse(tokens)
+func (a *TokenModesCompletionAdapter) Parse(document *core.Document, tokens []core.Token) *parser.CompletionParseResult {
+	return NewCompletionParser(a.sc).Parse(document, tokens)
 }
 
 func (a *TokenModesCompletionAdapter) ATN() *parser.RuntimeATN {
