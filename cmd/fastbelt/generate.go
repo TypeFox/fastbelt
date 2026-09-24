@@ -5,20 +5,13 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
-	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/cmd"
 	"typefox.dev/fastbelt/internal/grammar"
-	"typefox.dev/fastbelt/textdoc"
-	"typefox.dev/fastbelt/util/service"
-	"typefox.dev/fastbelt/workspace"
-	"typefox.dev/lsp"
 )
 
 type generateOptions struct {
@@ -49,57 +42,17 @@ func runGenerateCLI(opts generateOptions) error {
 		return err
 	}
 
-	grammarText, err := os.ReadFile(grammarPath)
+	// Every .fb file in the grammar's directory is part of the grammar, so a
+	// file argument stands for its directory.
+	grammarDir := grammarPath
+	if info, err := os.Stat(grammarPath); err != nil {
+		return err
+	} else if !info.IsDir() {
+		grammarDir = filepath.Dir(grammarPath)
+	}
+	g, err := cmd.LoadGrammarDir(grammarDir)
 	if err != nil {
 		return err
-	}
-
-	sc := grammar.CreateServices()
-	file := textdoc.NewFile(lsp.URIFromPath(grammarPath), "fb", 0, string(grammarText))
-
-	document := core.NewDocument(file)
-	documents, err := service.Get[workspace.DocumentManager](sc)
-	if err != nil {
-		return err
-	}
-	documents.Set(document)
-	builder, err := service.Get[workspace.Builder](sc)
-	if err != nil {
-		return err
-	}
-	if err := builder.Build(context.Background(), []*core.Document{document}, nil); err != nil {
-		return err
-	}
-
-	diagnostics := document.Diagnostics
-	errCount := 0
-
-	sort.SliceStable(diagnostics, func(i, j int) bool {
-		return diagnostics[i].Range.Start < diagnostics[j].Range.Start
-	})
-
-	for _, diag := range diagnostics {
-		if diag.Severity == core.SeverityError {
-			errCount++
-		}
-		lspRange := diag.Range.LspRange(file)
-		fmt.Printf(
-			"%s - %d:%d %s\n",
-			diag.Severity.String(),
-			// For printing, convert to 1-based line and column numbers.
-			lspRange.Start.Line+1,
-			lspRange.Start.Character+1,
-			diag.Message,
-		)
-	}
-
-	if errCount > 0 {
-		return fmt.Errorf("aborting code generation due to %d errors", errCount)
-	}
-
-	g, ok := document.Root.(grammar.Grammar)
-	if !ok {
-		return fmt.Errorf("parser result is not a Grammar")
 	}
 	entryRule, err := validateEntryRule(g)
 	if err != nil {

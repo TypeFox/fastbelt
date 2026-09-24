@@ -21,7 +21,12 @@ Use the generate command to produce parser, lexer, types, linker, and service
 code from your grammar, or use scaffold to create a full language project
 template.`
 
-const generateLongHelp = `Generate code artifacts from a .fb grammar file.
+const generateLongHelp = `Generate code artifacts from a .fb grammar.
+
+The argument is a .fb file or a directory. Every .fb file in that directory is
+part of the grammar: the files must declare the same grammar name, share one
+namespace for rules, tokens and interfaces, and contain exactly one rule marked
+as entry between them.
 
 The generated files include parser, lexer, types, linker, and service wiring.
 By default, output is written to the current directory and the package name is
@@ -31,7 +36,7 @@ A typical workflow is to iterate on grammar changes and rerun generation after
 each step.`
 
 const generateExamples = `  fastbelt generate ./grammar.fb
-  fastbelt generate ./lang.fb -o ./internal/lang -p lang
+  fastbelt generate ./grammar -o ./internal/lang -p lang
   fastbelt generate ./mylanguage.fb --atn -v`
 
 const scaffoldLongHelp = `Scaffold a new language project from templates.
@@ -70,7 +75,7 @@ func runCmd() error {
 func newGenerateCmd() *cobra.Command {
 	opts := generateOptions{}
 	cmd := &cobra.Command{
-		Use:     "generate <grammar>",
+		Use:     "generate <grammar file or directory>",
 		Short:   "Generate code from a grammar definition",
 		Long:    generateLongHelp,
 		Example: generateExamples,
