@@ -51,17 +51,18 @@ Add a directive to some file in your module (assumes install with `go tool`):
 ## Railroad diagrams
 
 Hovering a rule name in a `.fb` grammar file - its declaration or any reference to it -
-shows a railroad syntax diagram for that rule alongside its documentation comment.
+shows a railroad syntax diagram for that rule alongside its documentation comment
+(token rules have none).
 
-To generate standalone SVG diagrams (one file per rule) instead, or in addition, pass
-`--railroad` to `generate`:
+You can also generate standalone SVG diagrams by passing `--railroad` to `generate`:
 
 ```sh
 fastbelt generate ./grammar.fb -o ./ --railroad
 ```
 
 This writes one `<RuleName>.svg` per parser, composite, and infix rule to a `railroad/`
-subdirectory, plus an `index.md` linking all of them for convenient browsing.
+subdirectory, plus an `index.md` linking all of them in grammar order. Diagrams of
+renamed or deleted rules are not removed from `railroad/`.
 
 ## Scaffolding
 

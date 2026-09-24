@@ -44,9 +44,3 @@ func TestDiagramSVGEmptyBody(t *testing.T) {
 		t.Fatalf("SVG is not well-formed XML: %v\n%s", err, svg)
 	}
 }
-
-func TestChoiceWithNoItemsDoesNotPanic(t *testing.T) {
-	c := &Choice{Normal: 0, Items: nil}
-	d := &Diagram{Item: c}
-	_ = d.SVG() // must not panic
-}

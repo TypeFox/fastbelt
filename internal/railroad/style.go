@@ -4,7 +4,7 @@
 
 package railroad
 
-// CSS classes shared between the node renderers above and the <style> block
+// CSS classes shared between the node renderers and the <style> block
 // emitted by Diagram.SVG.
 const (
 	classTerminal              = "rr-terminal"

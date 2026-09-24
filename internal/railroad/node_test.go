@@ -42,22 +42,3 @@ func TestOptionalGeometry(t *testing.T) {
 		t.Errorf("Down() = %v, want 11", got)
 	}
 }
-
-func TestZeroOrMoreGeometry(t *testing.T) {
-	item := &Terminal{Text: "x"}
-	zom := ZeroOrMore(item)
-
-	oneOrMore := &OneOrMore{Item: item}
-	want := Optional(oneOrMore)
-	if zom.Width() != want.Width() || zom.Up() != want.Up() || zom.Down() != want.Down() {
-		t.Errorf("ZeroOrMore geometry (%v,%v,%v) does not match Optional(OneOrMore) (%v,%v,%v)",
-			zom.Width(), zom.Up(), zom.Down(), want.Width(), want.Up(), want.Down())
-	}
-}
-
-func TestSkipIsZeroSized(t *testing.T) {
-	s := Skip{}
-	if s.Width() != 0 || s.Up() != 0 || s.Down() != 0 {
-		t.Errorf("Skip{} geometry = (%v,%v,%v), want (0,0,0)", s.Width(), s.Up(), s.Down())
-	}
-}

@@ -9,7 +9,7 @@ import "math"
 // Choice stacks its items vertically, with the item at index Normal drawn
 // on the main centerline and the rest branching above (indices < Normal) or
 // below (indices > Normal) via quarter-circle arcs. Optional and ZeroOrMore
-// are built on top of this.
+// are built on top of this. Items must not be empty.
 type Choice struct {
 	Normal int
 	Items  []Node
@@ -53,23 +53,14 @@ func (c *Choice) needsSpace() bool { return false }
 
 func (c *Choice) render(x, y, width float64) *svgElement {
 	g := el("g")
-	if len(c.Items) == 0 {
-		// Defensive: a malformed/partial document could in principle
-		// produce an Alternatives node with no alternatives. Render as a
-		// straight passthrough rather than indexing an empty slice.
-		gapL, gapR := determineGaps(width, c.Width())
-		g.add(newPath(x, y).h(gapL).element())
-		g.add(newPath(x+gapL+c.Width(), y).h(gapR).element())
-		return g
-	}
-
-	gapL, gapR := determineGaps(width, c.Width())
-	g.add(newPath(x, y).h(gapL).element())
-	g.add(newPath(x+gapL+c.Width(), y).h(gapR).element())
-	x += gapL
+	w := c.Width()
+	gap := (width - w) / 2
+	g.add(newPath(x, y).h(gap).element())
+	g.add(newPath(x+gap+w, y).h(gap).element())
+	x += gap
 
 	last := len(c.Items) - 1
-	innerWidth := c.Width() - arcRadius*4
+	innerWidth := w - arcRadius*4
 
 	// Items above the main centerline, curving up and back down.
 	distanceFromY := 0.0
@@ -89,9 +80,9 @@ func (c *Choice) render(x, y, width float64) *svgElement {
 	}
 
 	// The straight-line path through the normal item.
-	g.add(newPath(x, y).right(arcRadius * 2).element())
+	g.add(newPath(x, y).h(arcRadius * 2).element())
 	g.add(c.Items[c.Normal].render(x+arcRadius*2, y, innerWidth))
-	g.add(newPath(x+arcRadius*2+innerWidth, y).right(arcRadius * 2).element())
+	g.add(newPath(x+arcRadius*2+innerWidth, y).h(arcRadius * 2).element())
 
 	// Items below the main centerline, curving down and back up.
 	distanceFromY = 0.0

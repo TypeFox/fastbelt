@@ -15,19 +15,19 @@ import (
 	"typefox.dev/lsp"
 )
 
-// HoverProvider is the grammar language's implementation of
-// [server.HoverProvider]: the same documentation-comment content as
-// server.DefaultHoverProvider, plus - for grammar rule nodes - a railroad
-// syntax diagram of the rule's concrete syntax.
-type HoverProvider struct {
+type hoverProviderImpl struct {
 	sc *service.Container
 }
 
+// NewHoverProvider returns the grammar language's [server.HoverProvider]:
+// the same documentation-comment content as [server.DefaultHoverProvider],
+// plus - for grammar rule nodes - a railroad syntax diagram of the rule's
+// concrete syntax.
 func NewHoverProvider(sc *service.Container) server.HoverProvider {
-	return &HoverProvider{sc: sc}
+	return &hoverProviderImpl{sc: sc}
 }
 
-func (p *HoverProvider) HandleHoverRequest(ctx context.Context, params *lsp.HoverParams) (*lsp.Hover, error) {
+func (p *hoverProviderImpl) HandleHoverRequest(ctx context.Context, params *lsp.HoverParams) (*lsp.Hover, error) {
 	target, sourceRange, ok := server.ResolveHoverTarget(ctx, p.sc, params)
 	if !ok {
 		return nil, nil

@@ -5,6 +5,7 @@
 package railroad
 
 import (
+	"html"
 	"strconv"
 	"strings"
 )
@@ -23,7 +24,6 @@ type svgElement struct {
 	attrs    []svgAttr
 	children []*svgElement
 	text     string
-	hasText  bool
 }
 
 func el(tag string) *svgElement {
@@ -46,10 +46,11 @@ func (e *svgElement) add(children ...*svgElement) *svgElement {
 
 func (e *svgElement) setText(s string) *svgElement {
 	e.text = s
-	e.hasText = true
 	return e
 }
 
+// writeTo serializes e as XML. html.EscapeString only emits entities that
+// are also valid XML (&amp; &lt; &gt; &#34; &#39;).
 func (e *svgElement) writeTo(b *strings.Builder) {
 	b.WriteByte('<')
 	b.WriteString(e.tag)
@@ -57,17 +58,15 @@ func (e *svgElement) writeTo(b *strings.Builder) {
 		b.WriteByte(' ')
 		b.WriteString(a.name)
 		b.WriteString(`="`)
-		b.WriteString(escapeAttr(a.value))
+		b.WriteString(html.EscapeString(a.value))
 		b.WriteByte('"')
 	}
-	if !e.hasText && len(e.children) == 0 {
+	if e.text == "" && len(e.children) == 0 {
 		b.WriteString("/>")
 		return
 	}
 	b.WriteByte('>')
-	if e.hasText {
-		b.WriteString(escapeText(e.text))
-	}
+	b.WriteString(html.EscapeString(e.text))
 	for _, c := range e.children {
 		c.writeTo(b)
 	}
@@ -88,40 +87,4 @@ func (e *svgElement) String() string {
 // needed to avoid binary-fraction noise.
 func formatNum(v float64) string {
 	return strconv.FormatFloat(v, 'f', -1, 64)
-}
-
-func escapeAttr(s string) string {
-	var b strings.Builder
-	for _, r := range s {
-		switch r {
-		case '&':
-			b.WriteString("&amp;")
-		case '"':
-			b.WriteString("&quot;")
-		case '<':
-			b.WriteString("&lt;")
-		case '>':
-			b.WriteString("&gt;")
-		default:
-			b.WriteRune(r)
-		}
-	}
-	return b.String()
-}
-
-func escapeText(s string) string {
-	var b strings.Builder
-	for _, r := range s {
-		switch r {
-		case '&':
-			b.WriteString("&amp;")
-		case '<':
-			b.WriteString("&lt;")
-		case '>':
-			b.WriteString("&gt;")
-		default:
-			b.WriteRune(r)
-		}
-	}
-	return b.String()
 }

@@ -181,16 +181,13 @@ func writeRailroadDiagrams(g grammarPkg.Grammar, packageName, outputPath string,
 		return err
 	}
 	diagrams := generator.GenerateRailroadDiagrams(g)
-	names := make([]string, 0, len(diagrams))
-	for name, svg := range diagrams {
-		names = append(names, name)
-		if err := writeFile("railroad-"+name, filepath.Join(railroadDir, name+".svg"), svg); err != nil {
+	for _, d := range diagrams {
+		if err := writeFile("railroad-"+d.Name, filepath.Join(railroadDir, d.Name+".svg"), d.SVG); err != nil {
 			return err
 		}
 	}
-	sort.Strings(names)
 	return writeFile("railroad-index", filepath.Join(railroadDir, "index.md"),
-		generator.GenerateRailroadIndexMarkdown(packageName, names))
+		generator.GenerateRailroadIndexMarkdown(packageName, diagrams))
 }
 
 func validateEntryRule(g grammarPkg.Grammar) (grammarPkg.ParserRule, error) {

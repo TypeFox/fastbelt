@@ -4,30 +4,33 @@
 
 package railroad
 
-import "strings"
+import "strconv"
 
 // pathBuilder builds the "d" attribute of an SVG <path> element via
 // chainable relative move/line/arc commands, mirroring
 // railroad-diagrams@1.0.0's Path helper.
 type pathBuilder struct {
-	d strings.Builder
+	d []byte
 }
 
 func newPath(x, y float64) *pathBuilder {
-	p := &pathBuilder{}
-	p.d.WriteString("M" + formatNum(x) + " " + formatNum(y))
+	p := &pathBuilder{d: make([]byte, 0, 64)}
+	p.d = append(p.d, 'M')
+	p.d = appendNum(p.d, x)
+	p.d = append(p.d, ' ')
+	p.d = appendNum(p.d, y)
 	return p
 }
 
 func (p *pathBuilder) h(val float64) *pathBuilder {
-	p.d.WriteString("h" + formatNum(val))
+	p.d = append(p.d, 'h')
+	p.d = appendNum(p.d, val)
 	return p
 }
 
-func (p *pathBuilder) right(val float64) *pathBuilder { return p.h(val) }
-
 func (p *pathBuilder) v(val float64) *pathBuilder {
-	p.d.WriteString("v" + formatNum(val))
+	p.d = append(p.d, 'v')
+	p.d = appendNum(p.d, val)
 	return p
 }
 
@@ -46,15 +49,27 @@ func (p *pathBuilder) arc(sweep string) *pathBuilder {
 	if sweep[0] == 's' || sweep[1] == 'n' {
 		y = -y
 	}
-	cw := 0
+	cw := byte('0')
 	switch sweep {
 	case "ne", "es", "sw", "wn":
-		cw = 1
+		cw = '1'
 	}
-	p.d.WriteString("a" + formatNum(arcRadius) + " " + formatNum(arcRadius) + " 0 0 " + formatNum(float64(cw)) + " " + formatNum(x) + " " + formatNum(y))
+	p.d = append(p.d, 'a')
+	p.d = appendNum(p.d, arcRadius)
+	p.d = append(p.d, ' ')
+	p.d = appendNum(p.d, arcRadius)
+	p.d = append(p.d, " 0 0 "...)
+	p.d = append(p.d, cw, ' ')
+	p.d = appendNum(p.d, x)
+	p.d = append(p.d, ' ')
+	p.d = appendNum(p.d, y)
 	return p
 }
 
 func (p *pathBuilder) element() *svgElement {
-	return el("path").attr("d", p.d.String())
+	return el("path").attr("d", string(p.d))
+}
+
+func appendNum(b []byte, v float64) []byte {
+	return strconv.AppendFloat(b, v, 'f', -1, 64)
 }

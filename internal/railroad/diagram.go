@@ -4,18 +4,12 @@
 
 package railroad
 
-import "math"
-
 const diagramPadding = 20.0
 
-// Diagram is a complete railroad diagram for a single grammar rule: a Start
-// marker, the rule's body, and an End marker, laid out left to right.
+// Diagram is a complete railroad diagram for a single grammar rule: a start
+// marker, the rule's body, and an end marker, laid out left to right.
 type Diagram struct {
 	Item Node
-}
-
-func (d *Diagram) items() []Node {
-	return []Node{Start{}, d.Item, End{}}
 }
 
 // SVG renders the diagram to a standalone SVG document: no XML declaration
@@ -23,38 +17,16 @@ func (d *Diagram) items() []Node {
 // background fill so it reads correctly on both light and dark hosts (see
 // style.go).
 func (d *Diagram) SVG() string {
-	items := d.items()
+	seq := &Sequence{Items: []Node{start{}, d.Item, end{}}}
+	width := seq.Width()
+	up := seq.Up()
 
-	width := 1.0 // matches railroad-diagrams@1.0.0's Diagram width fudge
-	up, down := 0.0, 0.0
-	for _, it := range items {
-		width += it.Width()
-		if it.needsSpace() {
-			width += 20
-		}
-		up = math.Max(up, it.Up())
-		down = math.Max(down, it.Down())
-	}
+	g := el("g").attr("transform", "translate(.5 .5)").
+		add(seq.render(diagramPadding, diagramPadding+up, width))
 
-	x := diagramPadding
-	y := diagramPadding + up
-
-	g := el("g").attr("transform", "translate(.5 .5)")
-	for _, it := range items {
-		if it.needsSpace() {
-			g.add(newPath(x, y).h(10).element())
-			x += 10
-		}
-		g.add(it.render(x, y, it.Width()))
-		x += it.Width()
-		if it.needsSpace() {
-			g.add(newPath(x, y).h(10).element())
-			x += 10
-		}
-	}
-
-	totalWidth := width + diagramPadding*2
-	totalHeight := up + down + diagramPadding*2
+	// The +1 matches railroad-diagrams@1.0.0's Diagram width fudge.
+	totalWidth := width + 1 + diagramPadding*2
+	totalHeight := up + seq.Down() + diagramPadding*2
 
 	svg := el("svg").
 		attr("xmlns", "http://www.w3.org/2000/svg").

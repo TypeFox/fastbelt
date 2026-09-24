@@ -7,7 +7,7 @@
 // https://github.com/tabatkins/railroad-diagrams (railroad-diagrams@1.0.0,
 // CC0), covering the primitives needed for context-free grammar rules:
 // Sequence, Choice, Optional, ZeroOrMore, OneOrMore, Terminal, NonTerminal,
-// Skip, Start, and End.
+// and Skip.
 package railroad
 
 // Layout constants, ported verbatim from railroad-diagrams@1.0.0.
@@ -36,11 +36,4 @@ type Node interface {
 	// width (which may be wider than Width(), in which case the node is
 	// centered within it).
 	render(x, y, width float64) *svgElement
-}
-
-// determineGaps splits the difference between an outer width and an inner
-// (natural) width evenly on both sides, centering the inner content.
-func determineGaps(outer, inner float64) (float64, float64) {
-	diff := outer - inner
-	return diff / 2, diff / 2
 }

@@ -16,9 +16,9 @@ import (
 func BuildRuleDiagram(ctx context.Context, rule AbstractRule) (diagram *railroad.Diagram, ok bool) {
 	switch r := rule.(type) {
 	case ParserRule:
-		return &railroad.Diagram{Item: MapElement(ctx, r.Body())}, true
+		return &railroad.Diagram{Item: mapElement(ctx, r.Body())}, true
 	case CompositeRule:
-		return &railroad.Diagram{Item: MapElement(ctx, r.Body())}, true
+		return &railroad.Diagram{Item: mapElement(ctx, r.Body())}, true
 	case InfixRule:
 		return &railroad.Diagram{Item: mapInfixRule(ctx, r)}, true
 	default:
@@ -28,10 +28,9 @@ func BuildRuleDiagram(ctx context.Context, rule AbstractRule) (diagram *railroad
 	}
 }
 
-// MapElement recursively maps one Element - and its cardinality - to a
-// railroad.Node. Exported so tests can assert on the resulting Node tree
-// directly, without round-tripping through SVG text.
-func MapElement(ctx context.Context, el Element) railroad.Node {
+// mapElement recursively maps one Element - and its cardinality - to a
+// railroad.Node.
+func mapElement(ctx context.Context, el Element) railroad.Node {
 	if el == nil {
 		return railroad.Skip{}
 	}
@@ -53,7 +52,7 @@ func mapBase(ctx context.Context, el Element) railroad.Node {
 	case Alternatives:
 		items := make([]railroad.Node, 0, len(e.Alts()))
 		for _, alt := range e.Alts() {
-			items = append(items, MapElement(ctx, alt))
+			items = append(items, mapElement(ctx, alt))
 		}
 		if len(items) == 0 {
 			// A malformed/partial Alternatives (e.g. mid-edit) - render as
@@ -64,17 +63,22 @@ func mapBase(ctx context.Context, el Element) railroad.Node {
 	case Group:
 		items := make([]railroad.Node, 0, len(e.Elements()))
 		for _, item := range e.Elements() {
-			items = append(items, MapElement(ctx, item))
+			items = append(items, mapElement(ctx, item))
 		}
 		return &railroad.Sequence{Items: items}
 	case Assignment:
 		// The property name and =/+=/?= operator are a tree-building
 		// concern, not part of the concrete syntax the diagram depicts.
-		return MapElement(ctx, e.Value())
+		return mapElement(ctx, e.Value())
 	case CrossRef:
+		if e.Rule() == nil {
+			// "[Type]" without ":Rule" is a validation error, but still
+			// renders (e.g. mid-edit), flagged like an unresolved rule call.
+			return &railroad.NonTerminal{Text: e.Type().Text(), Unresolved: true}
+		}
 		// A CrossRef's own Rule() is itself a RuleCall, so this reduces to
 		// the RuleCall case below.
-		return MapElement(ctx, e.Rule())
+		return mapElement(ctx, e.Rule())
 	case RuleCall:
 		return mapRuleCall(ctx, e)
 	case Keyword:
@@ -106,12 +110,12 @@ func mapRuleCall(ctx context.Context, call RuleCall) railroad.Node {
 // write into an InfixRule's Body - "operand (operator operand)*".
 // Precedence and associativity are intentionally flattened.
 func mapInfixRule(ctx context.Context, rule InfixRule) railroad.Node {
-	operand := MapElement(ctx, rule.Call())
+	operand := mapElement(ctx, rule.Call())
 
 	var operators []railroad.Node
 	for _, group := range rule.Groups() {
 		for _, op := range group.Operators() {
-			operators = append(operators, MapElement(ctx, op))
+			operators = append(operators, mapElement(ctx, op))
 		}
 	}
 	if len(operators) == 0 {
@@ -125,7 +129,7 @@ func mapInfixRule(ctx context.Context, rule InfixRule) railroad.Node {
 		operatorNode = &railroad.Choice{Normal: 0, Items: operators}
 	}
 
-	secondOperand := MapElement(ctx, rule.Call())
+	secondOperand := mapElement(ctx, rule.Call())
 	repeat := railroad.ZeroOrMore(&railroad.Sequence{Items: []railroad.Node{operatorNode, secondOperand}})
 	return &railroad.Sequence{Items: []railroad.Node{operand, repeat}}
 }

@@ -42,10 +42,11 @@ func (s *Sequence) needsSpace() bool { return false }
 
 func (s *Sequence) render(x, y, width float64) *svgElement {
 	g := el("g")
-	gapL, gapR := determineGaps(width, s.Width())
-	g.add(newPath(x, y).h(gapL).element())
-	g.add(newPath(x+gapL+s.Width(), y).h(gapR).element())
-	x += gapL
+	w := s.Width()
+	gap := (width - w) / 2
+	g.add(newPath(x, y).h(gap).element())
+	g.add(newPath(x+gap+w, y).h(gap).element())
+	x += gap
 
 	for _, it := range s.Items {
 		if it.needsSpace() {

@@ -58,13 +58,8 @@ func (s *DefaultHoverProvider) HandleHoverRequest(ctx context.Context, params *l
 // there, or no resolvable name), in which case callers should return
 // (nil, nil) from their own HandleHoverRequest.
 //
-// It's exported so a language that needs a custom HoverProvider - e.g. to
-// show content beyond documentation comments - can reuse this resolution
-// step (built on [NameFinder]) instead of duplicating it. See
-// internal/grammar's HoverProvider for an example: it composes
-// documentation with a railroad syntax diagram, a concept specific to
-// fastbelt's own grammar language that has no place in this generic
-// package.
+// Custom HoverProviders can use it to show more than documentation comments
+// without repeating this lookup.
 func ResolveHoverTarget(ctx context.Context, sc *service.Container, params *lsp.HoverParams) (target core.AstNode, sourceRange lsp.Range, ok bool) {
 	documentManager := service.MustGet[workspace.DocumentManager](sc)
 	uri := core.ParseURI(string(params.TextDocument.URI))

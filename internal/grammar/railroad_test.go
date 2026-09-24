@@ -52,7 +52,7 @@ func TestMapElement_SequenceWithCardinalityAndTokenVsRuleCall(t *testing.T) {
 	doc.AssertNoParseErrors()
 
 	foo := test.MustFindNamedNode[ParserRule](doc, "Foo")
-	node := MapElement(doc.Ctx(), foo.Body())
+	node := mapElement(doc.Ctx(), foo.Body())
 
 	seq, ok := node.(*railroad.Sequence)
 	if !ok {
@@ -99,7 +99,7 @@ func TestMapElement_Alternatives(t *testing.T) {
 	doc.AssertNoParseErrors()
 
 	item := test.MustFindNamedNode[ParserRule](doc, "Item")
-	node := MapElement(doc.Ctx(), item.Body())
+	node := mapElement(doc.Ctx(), item.Body())
 
 	choice, ok := node.(*railroad.Choice)
 	if !ok {
@@ -121,7 +121,7 @@ func TestMapElement_Action(t *testing.T) {
 	doc.AssertNoParseErrors()
 
 	rule := test.MustFindNamedNode[ParserRule](doc, "ActionRule")
-	node := MapElement(doc.Ctx(), rule.Body())
+	node := mapElement(doc.Ctx(), rule.Body())
 
 	seq, ok := node.(*railroad.Sequence)
 	if !ok {
@@ -138,7 +138,7 @@ func TestMapElement_UnresolvedRuleCallDoesNotPanic(t *testing.T) {
 	doc.AssertNoParseErrors()
 
 	rule := test.MustFindNamedNode[ParserRule](doc, "BrokenRule")
-	node := MapElement(doc.Ctx(), rule.Body())
+	node := mapElement(doc.Ctx(), rule.Body())
 
 	nt, ok := node.(*railroad.NonTerminal)
 	if !ok {
@@ -149,6 +149,45 @@ func TestMapElement_UnresolvedRuleCallDoesNotPanic(t *testing.T) {
 	}
 	if nt.Text != "UnknownRule" {
 		t.Errorf("Text = %q, want %q", nt.Text, "UnknownRule")
+	}
+}
+
+const crossRefFixtureGrammar = `grammar Test
+
+interface Foo {
+    Target *Foo
+    Other *Foo
+}
+
+entry Foo returns Foo:
+    "ref" Target=[Foo:ID] Other=[Foo]
+
+token ID: /[a-zA-Z_][a-zA-Z0-9_]*/
+`
+
+func TestMapElement_CrossRef(t *testing.T) {
+	f := newRailroadFixture(t)
+	doc := f.Parse(crossRefFixtureGrammar)
+	doc.AssertNoParseErrors()
+
+	foo := test.MustFindNamedNode[ParserRule](doc, "Foo")
+	seq, ok := mapElement(doc.Ctx(), foo.Body()).(*railroad.Sequence)
+	if !ok || len(seq.Items) != 3 {
+		t.Fatalf("Foo's body = %#v, want a *railroad.Sequence of 3 items", seq)
+	}
+
+	// [Foo:ID]: the cross-reference renders as its token.
+	if term, ok := seq.Items[1].(*railroad.Terminal); !ok || term.Text != "ID" {
+		t.Errorf("[Foo:ID] = %#v, want *railroad.Terminal{Text: \"ID\"}", seq.Items[1])
+	}
+
+	// [Foo] (missing ":Rule", a validation error): still rendered, flagged.
+	nt, ok := seq.Items[2].(*railroad.NonTerminal)
+	if !ok {
+		t.Fatalf("[Foo] = %T, want *railroad.NonTerminal", seq.Items[2])
+	}
+	if nt.Text != "Foo" || !nt.Unresolved {
+		t.Errorf("[Foo] = %+v, want Text \"Foo\" and Unresolved", nt)
 	}
 }
 
@@ -172,7 +211,7 @@ func TestBuildRuleDiagram_TerminalRuleHasNoDiagram(t *testing.T) {
 	doc := f.Parse(mappingFixtureGrammar)
 	doc.AssertNoParseErrors()
 
-	idToken := test.MustFindNamedNode[Token](doc, "ID")
+	idToken := test.MustFindNamedNode[TokenDecl](doc, "ID")
 	_, ok := BuildRuleDiagram(doc.Ctx(), idToken)
 	if ok {
 		t.Error("BuildRuleDiagram should return ok=false for a token rule")
