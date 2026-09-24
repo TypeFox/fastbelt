@@ -26,8 +26,8 @@ import (
 )
 
 // Language configures one language served by the generated language server: the
-// grammar entry rule it parses from and the [Selector] that claims its
-// documents.
+// grammar entry rule it parses from, and the LSP language id and URI-path glob
+// patterns that claim its documents.
 type Language struct {
 	Entry      string
 	LanguageID string
@@ -168,14 +168,20 @@ func mergeGrammars(grammars []grammar.Grammar) (grammar.Grammar, error) {
 	merged := grammar.NewGrammar()
 	merged.SetName(grammars[0].NameToken())
 
-	names := map[string]string{} // element name -> kind, for duplicate detection
-	claim := func(kind, n string) error {
+	// Rules, composites, tokens and token groups share one namespace; interfaces
+	// live in their own (an interface may share its name with the rule that
+	// produces it, which is the idiomatic way to declare a rule's return type).
+	// This mirrors the grammar validator's uniqueness checks.
+	ruleNames := map[string]string{}      // element name -> kind, for duplicate detection
+	interfaceNames := map[string]string{} // interface name -> kind
+	claimIn := func(names map[string]string, kind, n string) error {
 		if prev, ok := names[n]; ok {
 			return fmt.Errorf("duplicate %s name %q across grammar files (already declared as %s)", kind, n, prev)
 		}
 		names[n] = kind
 		return nil
 	}
+	claim := func(kind, n string) error { return claimIn(ruleNames, kind, n) }
 
 	for _, g := range grammars {
 		if g.Name() != merged.Name() {
@@ -206,7 +212,7 @@ func mergeGrammars(grammars []grammar.Grammar) (grammar.Grammar, error) {
 			merged.SetTokenGroupsItem(tg)
 		}
 		for _, iface := range g.Interfaces() {
-			if err := claim("interface", iface.Name()); err != nil {
+			if err := claimIn(interfaceNames, "interface", iface.Name()); err != nil {
 				return nil, err
 			}
 			merged.SetInterfacesItem(iface)

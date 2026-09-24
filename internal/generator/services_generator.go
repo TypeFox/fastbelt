@@ -5,7 +5,7 @@
 package generator
 
 import (
-	"strings"
+	"strconv"
 
 	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/util/codegen"
@@ -43,8 +43,13 @@ func GenerateServices(grammr grammar.Grammar, selectors []Selector, packageName 
 					n.Indent(func(n codegen.Node) {
 						n.AppendLine("sc,")
 						for _, s := range selectors {
-							patterns := strings.Join(s.Patterns, "\", \"")
-							n.AppendLine("core.NewDocumentSelectorWithPatterns(\"", s.LanguageID, "\", \"", patterns, "\"),")
+							// Quote every literal so ids/patterns containing `"` or `\`
+							// (e.g. Windows-style globs) still yield compilable code.
+							n.Append("core.NewDocumentSelectorWithPatterns(", strconv.Quote(s.LanguageID))
+							for _, pattern := range s.Patterns {
+								n.Append(", ", strconv.Quote(pattern))
+							}
+							n.AppendLine("),")
 						}
 					})
 					n.AppendLine("),")

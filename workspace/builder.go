@@ -187,6 +187,7 @@ func (s *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
 	switch {
 	case !state.Has(core.DocStateLexed):
 		doc.Tokens = core.TokenSlice{}
+		doc.Comments = core.TokenSlice{}
 		doc.LexerErrors = []*core.LexerError{}
 		fallthrough
 	case !state.Has(core.DocStateParsed):

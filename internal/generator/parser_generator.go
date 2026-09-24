@@ -589,18 +589,26 @@ func emitEntryDispatch(node codegen.Node, entryRules []grammar.ParserRule) {
 		node.AppendLine("result := cp.Parse", entryRules[0].Name(), "()")
 		return
 	}
-	node.AppendLine("selector := service.MustGet[core.LanguageSelector](p.sc)")
 	node.AppendLine("var result core.AstNode")
+	emitLanguageSwitch(node, "p.sc", "result = ", entryRules)
+}
+
+// emitLanguageSwitch emits the shared multi-entry dispatch used by the main and
+// the completion parser: a core.LanguageSelector lookup on the given container
+// expression and a switch that calls `<assign>cp.Parse<Entry>()` for the
+// selected language, with index 0 as the default for -1/no-match.
+func emitLanguageSwitch(node codegen.Node, containerExpr, assign string, entryRules []grammar.ParserRule) {
+	node.AppendLine("selector := service.MustGet[core.LanguageSelector](", containerExpr, ")")
 	node.AppendLine("switch i, _ := selector.Select(document.URI); i {")
 	for i := 1; i < len(entryRules); i++ {
 		node.AppendLine("case ", strconv.Itoa(i), ":")
 		node.Indent(func(n codegen.Node) {
-			n.AppendLine("result = cp.Parse", entryRules[i].Name(), "()")
+			n.AppendLine(assign, "cp.Parse", entryRules[i].Name(), "()")
 		})
 	}
 	node.AppendLine("default:")
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("result = cp.Parse", entryRules[0].Name(), "()")
+		n.AppendLine(assign, "cp.Parse", entryRules[0].Name(), "()")
 	})
 	node.AppendLine("}")
 }
@@ -705,19 +713,7 @@ func emitCompletionEntryDispatch(node codegen.Node, entryRules []grammar.ParserR
 		node.AppendLine("cp.Parse", entryRules[0].Name(), "()")
 		return
 	}
-	node.AppendLine("selector := service.MustGet[core.LanguageSelector](cp.sc)")
-	node.AppendLine("switch i, _ := selector.Select(document.URI); i {")
-	for i := 1; i < len(entryRules); i++ {
-		node.AppendLine("case ", strconv.Itoa(i), ":")
-		node.Indent(func(in codegen.Node) {
-			in.AppendLine("cp.Parse", entryRules[i].Name(), "()")
-		})
-	}
-	node.AppendLine("default:")
-	node.Indent(func(in codegen.Node) {
-		in.AppendLine("cp.Parse", entryRules[0].Name(), "()")
-	})
-	node.AppendLine("}")
+	emitLanguageSwitch(node, "cp.sc", "", entryRules)
 }
 
 // buildFollowStateNameMap maps each grammar.RuleCall to the constant name of
