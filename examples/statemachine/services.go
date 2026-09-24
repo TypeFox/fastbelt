@@ -7,6 +7,7 @@ package statemachine
 //go:generate go run ../../cmd/fastbelt generate ./statemachine.fb -v --atn
 
 import (
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
@@ -16,8 +17,13 @@ import (
 
 // SetupServices sets up the base services for the statemachine language.
 func SetupServices(sc *service.Container) {
-	service.Put[workspace.LanguageID](sc, "statemachine")
-	service.Put[workspace.FileExtensions](sc, []string{".statemachine"})
+	service.Put[core.LanguageSelector](
+		sc,
+		core.NewDefaultLanguageSelector(
+			sc,
+			core.NewDocumentSelectorWithPatterns("statemachine", "**/*.statemachine"),
+		),
+	)
 	textdoc.SetupDefaultServices(sc)
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)

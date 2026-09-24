@@ -7,6 +7,7 @@ package completion
 //go:generate go run ../../../cmd/fastbelt generate ./completion.fb -v
 
 import (
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
@@ -16,8 +17,12 @@ import (
 
 // SetupServices sets up the base services for the completion test language.
 func SetupServices(sc *service.Container) {
-	service.Put[workspace.LanguageID](sc, "completion")
-	service.Put[workspace.FileExtensions](sc, []string{".cmpl"})
+	service.Put[core.LanguageSelector](
+		sc,
+		core.NewDefaultLanguageSelector(sc,
+			core.NewDocumentSelectorWithPatterns("completion", "**/*.cmpl"),
+		),
+	)
 	textdoc.SetupDefaultServices(sc)
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)

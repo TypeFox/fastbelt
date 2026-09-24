@@ -7,6 +7,8 @@ package grammar
 import (
 	"context"
 	"errors"
+
+	core "typefox.dev/fastbelt"
 )
 
 var errMissingKeywordValue = errors.New("keyword has no token value")
@@ -51,11 +53,43 @@ func FindReturnType(rule AbstractRuleWithReturnType, ctx context.Context) Interf
 	return FindInterfaceByName(grammar, rule.Name())
 }
 
+// FindInterfaceByName looks up an interface by name in the folder-wide grammar
+// that grammar belongs to (see [siblingGrammars]).
 func FindInterfaceByName(grammar Grammar, name string) Interface {
+	if view := viewOf(grammar); view != nil {
+		return view.interfaces[name]
+	}
 	for _, iface := range grammar.Interfaces() {
 		if iface.Name() == name {
 			return iface
 		}
 	}
 	return nil
+}
+
+// siblingGrammars returns the grammar roots of every .fb file in the same
+// folder as g, g itself included, sorted by URI so that folder-wide
+// diagnostics are deterministic. All files of a folder form one grammar; see
+// [folderGrammar].
+func siblingGrammars(g Grammar) []Grammar {
+	if view := viewOf(g); view != nil {
+		return view.grammars
+	}
+	return []Grammar{g}
+}
+
+// folderGrammar returns a grammar node that lists the declarations of every
+// sibling of g (see [siblingGrammars]): g itself for a single-file folder, and
+// otherwise the read-only aggregate that the importer builds once per folder.
+func folderGrammar(g Grammar) Grammar {
+	if view := viewOf(g); view != nil {
+		return view.folder
+	}
+	return g
+}
+
+// ownedBy reports whether node belongs to doc. Folder-wide checks compute over
+// the whole folder but only report on the nodes of the document being validated.
+func ownedBy(doc *core.Document, node core.AstNode) bool {
+	return node.Document() == doc
 }

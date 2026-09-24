@@ -9,15 +9,18 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/parallel"
+	"typefox.dev/fastbelt/util/service"
 )
 
-// Lexer tokenizes a complete source string in one shot.
+// Lexer tokenizes a document in one shot and stores the result on it.
 type Lexer interface {
-	Exec(input string) *LexerResult
+	// Exec tokenizes document.TextDoc and sets [core.Document.Tokens],
+	// [core.Document.Comments], and [core.Document.LexerErrors].
+	Exec(document *core.Document)
 }
 
-// LexerResult holds everything produced by a single [Lexer.Exec] pass over
-// source text.
+// LexerResult holds everything produced by a single [DefaultLexer.Lex] pass
+// over source text.
 type LexerResult struct {
 	// Tokens is the main token stream passed to the parser.
 	Tokens []core.Token
@@ -39,18 +42,45 @@ const defaultTokenRatio = 1.0 / 5.0
 // functions build one from the [core.TokenType] descriptors emitted for a
 // grammar.
 type DefaultLexer struct {
-	tokenModes []*TokenMode
-	// index into tokenModes of the mode every Exec starts in
+	sc *service.Container
+	// one token mode list per language; index 0 is the fallback
+	languages [][]*TokenMode
+	// index into each language's token modes of the mode every run starts in
 	defaultMode int
-	// running exponential moving average of tokens-per-byte
-	avgRatio *parallel.RunningAverage
+	// running exponential moving average of tokens-per-byte (per language)
+	avgRatio []*parallel.RunningAverage
 }
 
-// Exec scans input from left to right using longest-match disambiguation among
-// token types registered at construction time.
-func (l *DefaultLexer) Exec(input string) *LexerResult {
+// Exec tokenizes the document with the token modes of its language. The
+// language is resolved via [core.LanguageSelector] when more than one was
+// registered, mirroring the generated parser's entry dispatch.
+func (l *DefaultLexer) Exec(document *core.Document) {
+	language := 0
+	if len(l.languages) > 1 {
+		selector := service.MustGet[core.LanguageSelector](l.sc)
+		if i, _ := selector.Select(document.URI); i > 0 && i < len(l.languages) {
+			language = i
+		}
+	}
+	result := l.lex(document.TextDoc.Text(nil), language)
+	document.Tokens = result.Tokens
+	document.Comments = result.Comments
+	document.LexerErrors = result.Errors
+}
+
+// Lex scans input with the token modes of the first language. Multi-language
+// lexers route documents via [DefaultLexer.Exec] instead.
+func (l *DefaultLexer) Lex(input string) *LexerResult {
+	return l.lex(input, 0)
+}
+
+// lex scans input from left to right using longest-match disambiguation among
+// the token types of the active mode of the given language.
+func (l *DefaultLexer) lex(input string, language int) *LexerResult {
+	tokenModes := l.languages[language]
+	avgRatio := l.avgRatio[language]
 	length := len(input)
-	tokens := make([]core.Token, 0, l.avgRatio.Capacity(length))
+	tokens := make([]core.Token, 0, avgRatio.Capacity(length))
 	comments := make([]core.Token, 0)
 	errors := make([]*core.LexerError, 0)
 	var modifiers map[int][]core.Token
@@ -58,7 +88,7 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 	// The mode stack is local to this call: a DefaultLexer is shared between
 	// documents and Exec may run concurrently, so input that ends inside a
 	// pushed mode must not leak into the next run.
-	stack := NewTokenModeStack(l.tokenModes[l.defaultMode])
+	stack := NewTokenModeStack(tokenModes[l.defaultMode])
 	currentTokenMode := stack.Peek()
 
 	var offset int
@@ -117,13 +147,13 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 				// stack, so a later pop returns to whatever was below it rather
 				// than to the mode that was replaced. This mirrors ANTLR's
 				// `mode` and is intentional: only `push` can be undone by `pop`.
-				stack.SetMode(l.tokenModes[longestType.PushMode])
+				stack.SetMode(tokenModes[longestType.PushMode])
 				currentTokenMode = stack.Peek()
 			case longestType.PopMode:
 				stack.Pop()
 				currentTokenMode = stack.Peek()
 			case longestType.PushMode > -1:
-				stack.Push(l.tokenModes[longestType.PushMode])
+				stack.Push(tokenModes[longestType.PushMode])
 				currentTokenMode = stack.Peek()
 			}
 		} else {
@@ -138,7 +168,7 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 
 	if length > 0 {
 		// Update the average tokens-per-byte
-		l.avgRatio.Update(float64(len(tokens)) / float64(length))
+		avgRatio.Update(float64(len(tokens)) / float64(length))
 	}
 
 	return &LexerResult{
@@ -151,15 +181,32 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 
 const maxChar = 256
 
-// NewDefaultLexer returns a [DefaultLexer] that starts every [DefaultLexer.Exec]
-// in tokenModes[defaultMode]. The returned lexer is safe for concurrent use.
-func NewDefaultLexer(defaultMode int, tokenModes ...*TokenMode) *DefaultLexer {
-	if defaultMode < 0 || defaultMode >= len(tokenModes) {
-		panic("lexer: default token mode index out of range")
+// NewDefaultLexer returns a [DefaultLexer] that starts every run in
+// tokenModes[defaultMode]. The returned lexer is safe for concurrent use.
+func NewDefaultLexer(sc *service.Container, defaultMode int, tokenModes ...*TokenMode) *DefaultLexer {
+	return NewMultiLanguageLexer(sc, defaultMode, tokenModes)
+}
+
+// NewMultiLanguageLexer returns a lexer with one token mode list per language.
+// Mode indices (including defaultMode) are shared across languages, so each
+// list must have the same length. The document's language is resolved via
+// [core.LanguageSelector]; index 0 is the fallback for documents that match
+// no language.
+func NewMultiLanguageLexer(sc *service.Container, defaultMode int, languages ...[]*TokenMode) *DefaultLexer {
+	if len(languages) == 0 {
+		panic("lexer: at least one language is required")
+	}
+	avgRatios := make([]*parallel.RunningAverage, len(languages))
+	for i, tokenModes := range languages {
+		if defaultMode < 0 || defaultMode >= len(tokenModes) {
+			panic("lexer: default token mode index out of range")
+		}
+		avgRatios[i] = parallel.NewRunningAverage(defaultTokenRatio)
 	}
 	return &DefaultLexer{
-		tokenModes:  tokenModes,
+		sc:          sc,
+		languages:   languages,
 		defaultMode: defaultMode,
-		avgRatio:    parallel.NewRunningAverage(defaultTokenRatio),
+		avgRatio:    avgRatios,
 	}
 }

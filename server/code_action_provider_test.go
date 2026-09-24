@@ -25,8 +25,6 @@ func newCodeActionTestServer(t *testing.T, setup func(sc *service.Container)) ls
 	textdoc.SetupDefaultServices(sc)
 	setup(sc)
 	server.SetupDefaultServices(sc)
-	service.Put[workspace.LanguageID](sc, "plaintext")
-	service.Put[workspace.FileExtensions](sc, []string{".txt"})
 	sc.Seal()
 	return service.MustGet[lsp.Server](sc)
 }
