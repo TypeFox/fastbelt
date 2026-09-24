@@ -73,7 +73,8 @@ func TestFolderGrammarNameMismatch(t *testing.T) {
 	for _, doc := range docs {
 		doc.ExpectDiagnostic("name").
 			WithSeverity(core.SeverityError).
-			WithCode(ValidateGrammarNameMismatch)
+			WithCode(ValidateGrammarNameMismatch).
+			WithMessage("All grammar files in a folder form one grammar and must declare the same name, but found: 'Alpha' and 'Beta'.")
 	}
 	// A file in another folder is a different grammar and does not interfere.
 	other := f.ParseURI(`
@@ -227,5 +228,81 @@ func TestFolderKeywordInlineAndAsTokenDecl(t *testing.T) {
 		doc.ExpectDiagnostic("kw").
 			WithSeverity(core.SeverityError).
 			WithCode(ValidateKeywordPureStandaloneOrTokenDecl)
+	}
+}
+
+func TestFolderViewIsSharedAcrossSiblings(t *testing.T) {
+	f := test.New(t, CreateServices())
+	docs := f.ParseAll(
+		"file:///ws/a.fb", `
+			grammar Test;
+			interface Foo { Name string }
+			Foo: Name=ID;
+		`+commonTokens,
+		"file:///ws/b.fb", `
+			grammar Test;
+			interface Bar { Name string }
+			Bar: Name=ID;
+		`,
+	)
+	a := docs[0].Root().(Grammar)
+	b := docs[1].Root().(Grammar)
+	// One view per folder: both documents resolve to the same aggregate.
+	assert.Same(t, viewOf(a), viewOf(b))
+	assert.Same(t, folderGrammar(a), folderGrammar(b))
+	assert.Equal(t, []Grammar{a, b}, siblingGrammars(b))
+	assert.Same(t, test.MustFindNamedNode[Interface](docs[1], "Bar"), FindInterfaceByName(a, "Bar"))
+}
+
+func TestFolderGrammarNameMismatchListsAllNames(t *testing.T) {
+	f := test.New(t, CreateServices())
+	docs := f.ParseAll(
+		"file:///ws/a.fb", `
+			grammar <|name:Gamma|>;
+			interface Foo { Name string }
+			Foo: Name=ID;
+		`+commonTokens,
+		"file:///ws/b.fb", `
+			grammar <|name:Alpha|>;
+			interface Bar { Name string }
+			Bar: Name=ID;
+		`,
+		"file:///ws/c.fb", `
+			grammar <|name:Beta|>;
+			interface Baz { Name string }
+			Baz: Name=ID;
+		`,
+		// Same name as a.fb: no new entry in the list.
+		"file:///ws/d.fb", `
+			grammar <|name:Gamma|>;
+			interface Qux { Name string }
+			Qux: Name=ID;
+		`,
+	)
+	// Every file reports the full, sorted, de-duplicated set of names.
+	for _, doc := range docs {
+		doc.ExpectDiagnostic("name").
+			WithSeverity(core.SeverityError).
+			WithCode(ValidateGrammarNameMismatch).
+			WithMessageContaining("'Alpha', 'Beta' and 'Gamma'")
+	}
+}
+
+func TestFolderGrammarNamesMatchNoDiagnostic(t *testing.T) {
+	f := test.New(t, CreateServices())
+	docs := f.ParseAll(
+		"file:///ws/a.fb", `
+			grammar Test;
+			interface Foo { Name string }
+			Foo: Name=ID;
+		`+commonTokens,
+		"file:///ws/b.fb", `
+			grammar Test;
+			interface Bar { Name string }
+			Bar: Name=ID;
+		`,
+	)
+	for _, doc := range docs {
+		doc.AssertNoErrors()
 	}
 }
