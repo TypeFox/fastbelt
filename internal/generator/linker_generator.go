@@ -258,16 +258,19 @@ func generateSymbolContainers(context *LinkerGeneratorContext) codegen.Node {
 
 	// Type vars and Type method.
 	// For a parent type, Type returns its own list PLUS all descendant lists
+	subtypesForTarget := map[string][]string{}
 	for _, target := range sortedTargets {
 		node.AppendLine("var TypeFor_", target, " = reflect.TypeFor[", target, "]()")
+		subtypesForTarget[target] = subtypesInTargets(target, sortedTargets, context.ifaceParents)
 	}
+
 	node.AppendLine()
 	node.AppendLine("func (sc *", name, "SymbolContainer) ForType(t reflect.Type) core.SymbolSeq {")
 	node.Indent(func(n codegen.Node) {
 		if len(sortedTargets) > 0 {
 			n.AppendLine("switch t {")
 			for _, target := range sortedTargets {
-				subtypes := subtypesInTargets(target, sortedTargets, context.ifaceParents)
+				subtypes := subtypesForTarget[target]
 				n.AppendLine("case TypeFor_", target, ":")
 				if len(subtypes) == 1 {
 					// No descendants in target set, simple path.
@@ -296,7 +299,7 @@ func generateSymbolContainers(context *LinkerGeneratorContext) codegen.Node {
 		if len(sortedTargets) > 0 {
 			n.AppendLine("switch t {")
 			for _, target := range sortedTargets {
-				subtypes := subtypesInTargets(target, sortedTargets, context.ifaceParents)
+				subtypes := subtypesForTarget[target]
 				n.AppendLine("case TypeFor_", target, ":")
 				if len(subtypes) == 1 {
 					// No descendants in target set, the type maps to exactly one slice.
