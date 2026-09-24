@@ -5,6 +5,8 @@
 package fastbelt
 
 import (
+	"sync"
+
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/glob"
 	"typefox.dev/fastbelt/util/service"
@@ -62,12 +64,17 @@ type LanguageSelector interface {
 
 // DefaultLanguageSelector selects a language by matching the document against an
 // ordered list of [DocumentSelector] values, returning the first match's index.
-// It resolves the document's language id from the [textdoc.Store] first, then
-// falls back to the URI-path glob. The store is looked up lazily from the
-// container so the selector can be registered before the container is sealed.
+// It resolves the document's language id from the [textdoc.Store] first and
+// matches it against every selector's language id; only when no selector claims
+// that id does it fall back to the URI-path globs (in selector order). The store
+// is looked up lazily from the container so the selector can be registered
+// before the container is sealed.
 type DefaultLanguageSelector struct {
 	sc        *service.Container
 	selectors []DocumentSelector
+
+	storeOnce sync.Once
+	store     textdoc.Store // nil when no store is registered
 }
 
 // NewDefaultLanguageSelector returns a new [DefaultLanguageSelector]
@@ -76,16 +83,38 @@ func NewDefaultLanguageSelector(sc *service.Container, selectors ...DocumentSele
 	return &DefaultLanguageSelector{sc: sc, selectors: selectors}
 }
 
+// textdocStore returns the registered [textdoc.Store], resolving it from the
+// container on first use. Select runs on the build hot path (once per document
+// for the lexer, the parser and the completion parser), so the container lookup
+// is not repeated.
+func (s *DefaultLanguageSelector) textdocStore() textdoc.Store {
+	s.storeOnce.Do(func() {
+		if s.sc == nil {
+			return
+		}
+		if store, err := service.Get[textdoc.Store](s.sc); err == nil {
+			s.store = store
+		}
+	})
+	return s.store
+}
+
 func (s *DefaultLanguageSelector) Select(uri URI) (int, string) {
-	languageID := ""
-	// If a document handle already exists for the given URI, use its language id.
-	if store, err := service.Get[textdoc.Store](s.sc); err == nil {
+	// If a document handle already exists for the given URI, its (client
+	// supplied) language id takes precedence over any path glob.
+	if store := s.textdocStore(); store != nil {
 		if handle := store.Get(uri.DocumentURI()); handle != nil {
-			languageID = handle.LanguageID()
+			if languageID := handle.LanguageID(); languageID != "" {
+				for i, sel := range s.selectors {
+					if sel.LanguageID == languageID {
+						return i, sel.LanguageID
+					}
+				}
+			}
 		}
 	}
 	for i, sel := range s.selectors {
-		if sel.Matches(languageID, uri) {
+		if sel.Matcher != nil && sel.Matcher(uri) {
 			return i, sel.LanguageID
 		}
 	}

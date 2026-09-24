@@ -105,7 +105,9 @@ type DefaultInitializer struct {
 }
 
 // NewDefaultInitializer returns an [Initializer] that scans workspace folders
-// for files matching [FileExtensions]. Will skip hidden directories (names starting with ".").
+// for files accepted by the registered [IncludeFilter] (by default, files that
+// the [core.LanguageSelector] maps to a language). Will skip hidden directories
+// (names starting with ".").
 func NewDefaultInitializer(sc *service.Container) Initializer {
 	return &DefaultInitializer{sc: sc}
 }

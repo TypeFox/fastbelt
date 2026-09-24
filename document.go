@@ -174,7 +174,7 @@ const docStateComplete = DocStateLexed | DocStateParsed | DocStateExportedSymbol
 	DocStateValidated
 
 // IsComplete reports whether all framework-defined build phases have completed,
-// i.e. every state bit from DocStateParsed through DocStateValidated is set.
+// i.e. every state bit from DocStateLexed through DocStateValidated is set.
 //
 // IsComplete only considers the framework-defined states; custom document states
 // defined by adopters (which occupy higher bits) are ignored, so a document is
