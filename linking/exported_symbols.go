@@ -41,6 +41,9 @@ func (s *DefaultSymbolExporter) ExportSymbols(ctx context.Context, document *cor
 	}
 	// Describe direct children of the root (not nested deeper)
 	for child := range core.ChildNodes(root) {
+		if ctx.Err() != nil {
+			break
+		}
 		if desc := DescribeExport(child); desc != nil {
 			exports.Put(desc)
 		}

@@ -36,6 +36,9 @@ func (s *DefaultReferenceDescriptionsProvider) ReferenceDescriptions(ctx context
 	describer := service.MustGet[ReferenceDescriber](s.sc)
 	descriptions := collections.NewMultiMap[core.AstNode, *core.ReferenceDescription]()
 	for _, ref := range document.References {
+		if ctx.Err() != nil {
+			break
+		}
 		node := ref.RefNode(ctx)
 		if node != nil {
 			description := describer.DescribeReference(ctx, ref)

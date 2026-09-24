@@ -36,6 +36,9 @@ func (s *DefaultLocalSymbolsProvider) LocalSymbols(ctx context.Context, document
 	containers := localSymbols.Symbols
 
 	for node := range core.AllChildren(root) {
+		if ctx.Err() != nil {
+			break
+		}
 		desc, containerNode := DescribeLocal(node)
 		if desc != nil && containerNode != nil {
 			if symbols, exists := containers[containerNode]; exists {
