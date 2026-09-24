@@ -58,22 +58,22 @@ type TokenModesReferencesConstructor interface {
 }
 
 type DefaultTokenModesReferencesConstructor struct {
-	sc              *service.Container
-	referenceLinker func() TokenModesReferenceLinker
+	linkVariableRefName func() core.ReferenceGetter[VariableDecl]
 }
 
 func NewDefaultTokenModesReferencesConstructor(sc *service.Container) TokenModesReferencesConstructor {
+	referenceLinker := sync.OnceValue(func() TokenModesReferenceLinker {
+		return service.MustGet[TokenModesReferenceLinker](sc)
+	})
 	return &DefaultTokenModesReferencesConstructor{
-		sc: sc,
-		referenceLinker: sync.OnceValue(func() TokenModesReferenceLinker {
-			return service.MustGet[TokenModesReferenceLinker](sc)
+		linkVariableRefName: sync.OnceValue(func() core.ReferenceGetter[VariableDecl] {
+			return referenceLinker().LinkVariableRefName
 		}),
 	}
 }
 
 func (s *DefaultTokenModesReferencesConstructor) VariableRefName(owner core.AstNode, unit core.StringUnit) *core.Reference[VariableDecl] {
-	fn := s.referenceLinker().LinkVariableRefName
-	return core.NewReference(owner, unit, fn)
+	return core.NewReference(owner, unit, s.linkVariableRefName())
 }
 
 type TokenModesSymbolContainers struct{}
@@ -113,4 +113,12 @@ func (sc *TokenModesSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 		return slices.Values(sc.VariableDecls)
 	}
 	return core.EmptySymbolDescriptions
+}
+
+func (sc *TokenModesSymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {
+	switch t {
+	case TypeFor_VariableDecl:
+		return sc.VariableDecls, true
+	}
+	return nil, true
 }
