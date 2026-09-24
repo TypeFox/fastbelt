@@ -380,20 +380,17 @@ token mode Inner {
 	doc.ExpectHoverAt("usage", "The inner mode")
 }
 
-func TestCompletionDoesNotOfferTokenModesFromOtherDocuments(t *testing.T) {
+func TestCompletionOffersTokenModesFromOtherDocuments(t *testing.T) {
 	f := lspFixture(t)
 	docs := f.ParseAll(
-		"file:///sibling.fb", `grammar Sibling;
+		"file:///sibling.fb", `grammar Test;
 interface Bar { Name string }
 Bar: Name=NAME;
 token NAME: /[A-Z]+/
-token mode default {
-	NAME
-}
 token mode Sibling {
 	NAME -> pop
 }`,
-		"file:///own.fb", `grammar Own;
+		"file:///own.fb", `grammar Test;
 interface Foo { Greeting string }
 Foo: Greeting=ID;
 token ID: /[a-z]+/
@@ -407,8 +404,8 @@ token mode Local {
 }`,
 	)
 	labels := completionLabels(docs[1].CompletionItems("cursor"))
-	// Token modes are file-local, so only modes of this document are offered.
+	// All grammar files of a folder share one mode table, so modes of sibling
+	// documents are offered as well.
 	assert.Contains(t, labels, "Local")
-	assert.NotContains(t, labels, "Sibling",
-		"a mode from another document would not resolve, so it must not be offered")
+	assert.Contains(t, labels, "Sibling")
 }

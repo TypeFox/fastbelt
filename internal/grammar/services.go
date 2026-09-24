@@ -34,6 +34,9 @@ func SetupServices(sc *service.Container) {
 	// Override the default scope provider
 	service.Override[FastbeltScopeProvider](sc, newScopeProviderImpl(sc))
 	service.Override(sc, newImportedSymbolsProviderImpl(sc))
+	// Every .fb file of a folder is part of one grammar: a change in one file
+	// re-validates its siblings.
+	service.Override(sc, newChangeImpactImpl(sc))
 
 	// Set a semantic token highlighting strategy
 	service.Put(sc, server.NewTokenBasedSemanticTokensProvider(

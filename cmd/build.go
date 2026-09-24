@@ -35,7 +35,8 @@ type Language struct {
 }
 
 // BuildContext drives a programmatic build. Input points at a directory of .fb
-// files (all sharing the same grammar name); Languages selects one entry rule
+// files, which together form one grammar (validated as a whole: one grammar
+// name, unique names, shared token modes); Languages selects one entry rule
 // each. With a single language the result is equivalent to the fastbelt
 // generate CLI.
 type BuildContext struct {
@@ -58,15 +59,7 @@ func (c *BuildContext) Build() error {
 	if err != nil {
 		return err
 	}
-	files, err := collectGrammarFiles(fullInput)
-	if err != nil {
-		return err
-	}
-	if len(files) == 0 {
-		return fmt.Errorf("no .fb grammar files found in %s", fullInput)
-	}
-
-	g, err := parseAndMerge(files)
+	g, err := LoadGrammarDir(fullInput)
 	if err != nil {
 		return err
 	}
@@ -99,6 +92,20 @@ func (c *BuildContext) Build() error {
 		pkg = filepath.Base(out)
 	}
 	return Generate(g, entries, selectors, out, pkg, c.ATN, c.Verbose)
+}
+
+// LoadGrammarDir parses, links and validates every top-level .fb file in dir as
+// one grammar and returns the combined result. Diagnostics are printed; any
+// error diagnostic aborts with an error.
+func LoadGrammarDir(dir string) (grammar.Grammar, error) {
+	files, err := collectGrammarFiles(dir)
+	if err != nil {
+		return nil, err
+	}
+	if len(files) == 0 {
+		return nil, fmt.Errorf("no .fb grammar files found in %s", dir)
+	}
+	return parseAndMerge(files)
 }
 
 // collectGrammarFiles returns the absolute paths of top-level *.fb files in dir.
@@ -157,65 +164,38 @@ func parseAndMerge(files []string) (grammar.Grammar, error) {
 	if len(grammars) == 1 {
 		return grammars[0], nil
 	}
-	return mergeGrammars(grammars)
+	return mergeGrammars(grammars), nil
 }
 
-// mergeGrammars combines several grammars (which must share one grammar name)
-// into a single grammar and reparents every element so container-based lookups
-// (e.g. grammar.FindReturnType) span all files. Duplicate rule/interface names
-// across files are a hard error.
-func mergeGrammars(grammars []grammar.Grammar) (grammar.Grammar, error) {
+// mergeGrammars concatenates several grammars into a single one and reparents
+// every element so container-based lookups in the generator span all files.
+// Consistency across files (one grammar name, unique names, a single default
+// token mode, ...) is the grammar validator's job: it checks the whole folder
+// and parseAndMerge aborts on any error before getting here.
+func mergeGrammars(grammars []grammar.Grammar) grammar.Grammar {
 	merged := grammar.NewGrammar()
 	merged.SetName(grammars[0].NameToken())
-
-	// Rules, composites, tokens and token groups share one namespace; interfaces
-	// live in their own (an interface may share its name with the rule that
-	// produces it, which is the idiomatic way to declare a rule's return type).
-	// This mirrors the grammar validator's uniqueness checks.
-	ruleNames := map[string]string{}      // element name -> kind, for duplicate detection
-	interfaceNames := map[string]string{} // interface name -> kind
-	claimIn := func(names map[string]string, kind, n string) error {
-		if prev, ok := names[n]; ok {
-			return fmt.Errorf("duplicate %s name %q across grammar files (already declared as %s)", kind, n, prev)
-		}
-		names[n] = kind
-		return nil
-	}
-	claim := func(kind, n string) error { return claimIn(ruleNames, kind, n) }
-
 	for _, g := range grammars {
-		if g.Name() != merged.Name() {
-			return nil, fmt.Errorf("all grammar files must declare the same grammar name; found %q and %q", merged.Name(), g.Name())
+		for _, item := range g.Rules() {
+			merged.SetRulesItem(item)
 		}
-		for _, r := range g.Rules() {
-			if err := claim("rule", r.Name()); err != nil {
-				return nil, err
-			}
-			merged.SetRulesItem(r)
+		for _, item := range g.Composites() {
+			merged.SetCompositesItem(item)
 		}
-		for _, ci := range g.Composites() {
-			if err := claim("composite", ci.Name()); err != nil {
-				return nil, err
-			}
-			merged.SetCompositesItem(ci)
+		for _, item := range g.InfixRules() {
+			merged.SetInfixRulesItem(item)
 		}
-		for _, t := range g.Terminals() {
-			if err := claim("token", t.Name()); err != nil {
-				return nil, err
-			}
-			merged.SetTerminalsItem(t)
+		for _, item := range g.Terminals() {
+			merged.SetTerminalsItem(item)
 		}
-		for _, tg := range g.TokenGroups() {
-			if err := claim("token group", tg.Name()); err != nil {
-				return nil, err
-			}
-			merged.SetTokenGroupsItem(tg)
+		for _, item := range g.TokenGroups() {
+			merged.SetTokenGroupsItem(item)
 		}
-		for _, iface := range g.Interfaces() {
-			if err := claimIn(interfaceNames, "interface", iface.Name()); err != nil {
-				return nil, err
-			}
-			merged.SetInterfacesItem(iface)
+		for _, item := range g.TokenModes() {
+			merged.SetTokenModesItem(item)
+		}
+		for _, item := range g.Interfaces() {
+			merged.SetInterfacesItem(item)
 		}
 	}
 
@@ -225,7 +205,7 @@ func mergeGrammars(grammars []grammar.Grammar) (grammar.Grammar, error) {
 	doc := core.NewDocument(file)
 	doc.Root = merged
 	core.AssignContainers(doc)
-	return merged, nil
+	return merged
 }
 
 // findEntryRule resolves a language's Entry to a parser rule that exists and is
