@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -107,18 +108,29 @@ func checkGrammarNamesMatch(g Grammar, accept core.ValidationAcceptor) {
 	if g.NameToken() == nil {
 		return
 	}
-	for _, sibling := range siblingGrammars(g)[1:] {
-		if sibling.Name() == "" || sibling.Name() == g.Name() {
+	names := map[string]bool{}
+
+	for _, sibling := range siblingGrammars(g) {
+		if sibling.Name() == "" {
 			continue
 		}
+		names[sibling.Name()] = true
+	}
+	if len(names) > 1 {
+		nameList := []string{}
+		for name := range names {
+			nameList = append(nameList, "'"+name+"'")
+		}
+		slices.Sort(nameList)
+		last := len(nameList) - 1
+		found := strings.Join(nameList[:last], ", ") + " and " + nameList[last]
 		accept(core.NewDiagnostic(
 			core.SeverityError,
-			fmt.Sprintf("All grammar files in a folder form one grammar and must declare the same name; found '%s' and '%s'.", g.Name(), sibling.Name()),
+			fmt.Sprintf("All grammar files in a folder form one grammar and must declare the same name, but found: %s.", found),
 			g,
 			core.WithToken(g.NameToken()),
 			core.WithCode(ValidateGrammarNameMismatch),
 		))
-		return
 	}
 }
 

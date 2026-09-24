@@ -28,14 +28,12 @@ func SetupServices(sc *service.Container) {
 	workspace.SetupDefaultServices(sc)
 	SetupGeneratedServices(sc)
 
-	// Override the default parser lookahead
+	// We have a custom lookahead to support grammars without semicolons.
 	service.Override(sc, newFastbeltParserLookahead())
 
-	// Override the default scope provider
 	service.Override[FastbeltScopeProvider](sc, newScopeProviderImpl(sc))
 	service.Override(sc, newImportedSymbolsProviderImpl(sc))
-	// Every .fb file of a folder is part of one grammar: a change in one file
-	// re-validates its siblings.
+	// Every .fb file of a folder is part of one grammar, requires custom change impact computation.
 	service.Override(sc, newChangeImpactImpl(sc))
 
 	// Set a semantic token highlighting strategy
