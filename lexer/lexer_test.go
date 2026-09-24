@@ -59,7 +59,7 @@ func stringLexer(customGroup int) *DefaultLexer {
 		UseTokenType(quote).WithPopMode(),
 		UseTokenType(text).WithModifier(customGroup),
 	)
-	return NewDefaultLexer(modeDefault, modes...)
+	return NewDefaultLexer(nil, modeDefault, modes...)
 }
 
 // --- Longest match and tie-breaking ---
@@ -67,12 +67,12 @@ func stringLexer(customGroup int) *DefaultLexer {
 func TestExecPrefersLongestMatch(t *testing.T) {
 	short := literal(1, "SHORT", "a")
 	long := literal(2, "LONG", "abc")
-	lexer := NewDefaultLexer(0, NewTokenMode("default",
+	lexer := NewDefaultLexer(nil, 0, NewTokenMode("default",
 		UseTokenType(short),
 		UseTokenType(long),
 	))
 
-	result := lexer.Exec("abc")
+	result := lexer.Lex("abc")
 	require.Len(t, result.Tokens, 1)
 	assert.Equal(t, "LONG", result.Tokens[0].Type.Name)
 }
@@ -80,12 +80,12 @@ func TestExecPrefersLongestMatch(t *testing.T) {
 func TestExecFirstRegisteredWinsEqualLengthMatch(t *testing.T) {
 	first := literal(1, "FIRST", "a")
 	second := literal(2, "SECOND", "a")
-	lexer := NewDefaultLexer(0, NewTokenMode("default",
+	lexer := NewDefaultLexer(nil, 0, NewTokenMode("default",
 		UseTokenType(first),
 		UseTokenType(second),
 	))
 
-	result := lexer.Exec("a")
+	result := lexer.Lex("a")
 	require.Len(t, result.Tokens, 1)
 	assert.Equal(t, "FIRST", result.Tokens[0].Type.Name,
 		"among equal-length matches the first registered token type must win")
@@ -98,14 +98,14 @@ func TestExecRoutesTokensToModifiers(t *testing.T) {
 	ws := matchRunes(2, "WS", spaces)
 	comment := literal(3, "COMMENT", "#")
 	other := literal(4, "OTHER", "!")
-	lexer := NewDefaultLexer(0, NewTokenMode("default",
+	lexer := NewDefaultLexer(nil, 0, NewTokenMode("default",
 		UseTokenType(word),
 		UseTokenType(ws).WithModifier(core.SkippedModifier),
 		UseTokenType(comment).WithModifier(core.CommentModifier),
 		UseTokenType(other).WithModifier(7),
 	))
 
-	result := lexer.Exec("ab #ff!")
+	result := lexer.Lex("ab #ff!")
 	assert.Equal(t, []string{"ab", "ff"}, images(result.Tokens))
 	assert.Equal(t, []string{"#"}, images(result.Comments))
 	require.Contains(t, result.Modifiers, 7)
@@ -115,15 +115,15 @@ func TestExecRoutesTokensToModifiers(t *testing.T) {
 
 func TestExecModifiersIsNilWithoutCustomModifiers(t *testing.T) {
 	word := matchRunes(1, "WORD", lowercase)
-	lexer := NewDefaultLexer(0, NewTokenMode("default", UseTokenType(word)))
+	lexer := NewDefaultLexer(nil, 0, NewTokenMode("default", UseTokenType(word)))
 
-	assert.Nil(t, lexer.Exec("ab").Modifiers)
+	assert.Nil(t, lexer.Lex("ab").Modifiers)
 }
 
 func TestExecCollectsCustomModifierFromNonDefaultMode(t *testing.T) {
 	lexer := stringLexer(7)
 
-	result := lexer.Exec(`ab "inside" cd`)
+	result := lexer.Lex(`ab "inside" cd`)
 	assert.Equal(t, []string{"ab", `"`, `"`, "cd"}, images(result.Tokens))
 	require.Contains(t, result.Modifiers, 7)
 	assert.Equal(t, []string{"inside"}, images(result.Modifiers[7]))
@@ -132,7 +132,7 @@ func TestExecCollectsCustomModifierFromNonDefaultMode(t *testing.T) {
 func TestExecSkipsHiddenTokenFromNonDefaultMode(t *testing.T) {
 	lexer := stringLexer(core.SkippedModifier)
 
-	result := lexer.Exec(`ab "inside" cd`)
+	result := lexer.Lex(`ab "inside" cd`)
 	assert.Equal(t, []string{"ab", `"`, `"`, "cd"}, images(result.Tokens))
 	assert.Nil(t, result.Modifiers)
 }
@@ -140,7 +140,7 @@ func TestExecSkipsHiddenTokenFromNonDefaultMode(t *testing.T) {
 func TestExecCollectsCommentFromNonDefaultMode(t *testing.T) {
 	lexer := stringLexer(core.CommentModifier)
 
-	result := lexer.Exec(`ab "inside" cd`)
+	result := lexer.Lex(`ab "inside" cd`)
 	assert.Equal(t, []string{"inside"}, images(result.Comments))
 }
 
@@ -149,7 +149,7 @@ func TestExecCollectsCommentFromNonDefaultMode(t *testing.T) {
 func TestExecPushAndPopMode(t *testing.T) {
 	lexer := stringLexer(0)
 
-	result := lexer.Exec(`ab "in string" cd`)
+	result := lexer.Lex(`ab "in string" cd`)
 	assert.Equal(t, []string{"ID", "QUOTE", "TEXT", "QUOTE", "ID"}, names(result.Tokens))
 	assert.Equal(t, []string{"ab", `"`, "in string", `"`, "cd"}, images(result.Tokens))
 	assert.Empty(t, result.Errors)
@@ -178,9 +178,9 @@ func TestExecNestedPushMode(t *testing.T) {
 		UseTokenType(innerBody),
 		UseTokenType(leave).WithPopMode(),
 	)
-	lexer := NewDefaultLexer(0, modes...)
+	lexer := NewDefaultLexer(nil, 0, modes...)
 
-	result := lexer.Exec("o(m[i))o")
+	result := lexer.Lex("o(m[i))o")
 	assert.Equal(t, []string{
 		"OUTER", "ENTER_MIDDLE", "MIDDLE", "ENTER_INNER", "INNER", "LEAVE", "LEAVE", "OUTER",
 	}, names(result.Tokens))
@@ -206,9 +206,9 @@ func TestExecSetModeDoesNotGrowTheModeStack(t *testing.T) {
 		UseTokenType(inSecond),
 		UseTokenType(b).WithPopMode(),
 	)
-	lexer := NewDefaultLexer(0, modes...)
+	lexer := NewDefaultLexer(nil, 0, modes...)
 
-	result := lexer.Exec("axbxy")
+	result := lexer.Lex("axbxy")
 	assert.Equal(t, []string{"A", "IN_SECOND", "B", "IN_SECOND"}, names(result.Tokens))
 	require.Len(t, result.Errors, 1, "y belongs to the start mode, which is no longer active")
 	assert.Equal(t, int32(4), result.Errors[0].Range.Start)
@@ -236,9 +236,9 @@ func TestExecSetModeKeepsOuterModeReachable(t *testing.T) {
 		UseTokenType(inOther),
 		UseTokenType(leave).WithPopMode(),
 	)
-	lexer := NewDefaultLexer(0, modes...)
+	lexer := NewDefaultLexer(nil, 0, modes...)
 
-	result := lexer.Exec("d(mso)d")
+	result := lexer.Lex("d(mso)d")
 	assert.Equal(t, []string{
 		"IN_DEFAULT", "ENTER", "IN_MIDDLE", "SET", "IN_OTHER", "LEAVE", "IN_DEFAULT",
 	}, names(result.Tokens))
@@ -250,12 +250,12 @@ func TestExecUnbalancedPopStaysInStartMode(t *testing.T) {
 	// lexing of the remaining input.
 	pop := literal(1, "POP", ")")
 	word := matchRunes(2, "WORD", lowercase)
-	lexer := NewDefaultLexer(0, NewTokenMode("default",
+	lexer := NewDefaultLexer(nil, 0, NewTokenMode("default",
 		UseTokenType(pop).WithPopMode(),
 		UseTokenType(word),
 	))
 
-	result := lexer.Exec(")ab)cd")
+	result := lexer.Lex(")ab)cd")
 	assert.Equal(t, []string{"POP", "WORD", "POP", "WORD"}, names(result.Tokens))
 	assert.Empty(t, result.Errors)
 }
@@ -276,9 +276,9 @@ func TestExecPopAndGroupApplyTogether(t *testing.T) {
 		UseTokenType(leave).WithPopMode().WithModifier(core.CommentModifier),
 		UseTokenType(inside),
 	)
-	lexer := NewDefaultLexer(0, modes...)
+	lexer := NewDefaultLexer(nil, 0, modes...)
 
-	result := lexer.Exec("(ab)!")
+	result := lexer.Lex("(ab)!")
 	assert.Equal(t, []string{"ENTER", "INSIDE", "OUTSIDE"}, names(result.Tokens))
 	assert.Equal(t, []string{")"}, images(result.Comments))
 }
@@ -287,9 +287,9 @@ func TestExecPopAndGroupApplyTogether(t *testing.T) {
 
 func TestExecReportsUnmatchedInput(t *testing.T) {
 	word := matchRunes(1, "WORD", lowercase)
-	lexer := NewDefaultLexer(0, NewTokenMode("default", UseTokenType(word)))
+	lexer := NewDefaultLexer(nil, 0, NewTokenMode("default", UseTokenType(word)))
 
-	result := lexer.Exec("ab!cd")
+	result := lexer.Lex("ab!cd")
 	assert.Equal(t, []string{"ab", "cd"}, images(result.Tokens))
 	require.Len(t, result.Errors, 1)
 	assert.Equal(t, int32(2), result.Errors[0].Range.Start)
@@ -300,9 +300,9 @@ func TestExecUnmatchedInputConsumesWholeRune(t *testing.T) {
 	// A multi-byte rune that matches nothing must be skipped as one unit, so
 	// the next offset stays on a rune boundary.
 	word := matchRunes(1, "WORD", lowercase)
-	lexer := NewDefaultLexer(0, NewTokenMode("default", UseTokenType(word)))
+	lexer := NewDefaultLexer(nil, 0, NewTokenMode("default", UseTokenType(word)))
 
-	result := lexer.Exec("aä b")
+	result := lexer.Lex("aä b")
 	require.Len(t, result.Errors, 2)
 	assert.Equal(t, int32(1), result.Errors[0].Range.Start)
 	assert.Equal(t, int32(3), result.Errors[0].Range.End, "the two-byte rune must be consumed as a whole")
@@ -314,7 +314,7 @@ func TestExecUnmatchedInputKeepsActiveMode(t *testing.T) {
 	// the closing quote still pops.
 	lexer := stringLexer(0)
 
-	result := lexer.Exec(`"in#side" ab`)
+	result := lexer.Lex(`"in#side" ab`)
 	assert.Equal(t, []string{"QUOTE", "TEXT", "TEXT", "QUOTE", "ID"}, names(result.Tokens))
 	require.Len(t, result.Errors, 1)
 	assert.Equal(t, int32(3), result.Errors[0].Range.Start)
@@ -323,7 +323,7 @@ func TestExecUnmatchedInputKeepsActiveMode(t *testing.T) {
 func TestExecUnterminatedModeAtEndOfInput(t *testing.T) {
 	lexer := stringLexer(0)
 
-	result := lexer.Exec(`ab "unterminated`)
+	result := lexer.Lex(`ab "unterminated`)
 	assert.Equal(t, []string{"ID", "QUOTE", "TEXT"}, names(result.Tokens))
 	assert.Equal(t, []string{"ab", `"`, "unterminated"}, images(result.Tokens))
 	// Leaving a mode open is not a lexer error; the parser reports the
@@ -334,7 +334,7 @@ func TestExecUnterminatedModeAtEndOfInput(t *testing.T) {
 func TestExecEmptyInput(t *testing.T) {
 	lexer := stringLexer(0)
 
-	result := lexer.Exec("")
+	result := lexer.Lex("")
 	assert.Empty(t, result.Tokens)
 	assert.Empty(t, result.Comments)
 	assert.Empty(t, result.Errors)
@@ -348,10 +348,10 @@ func TestExecResetsModeStackBetweenRuns(t *testing.T) {
 	// input that ends inside a pushed mode must not affect the next run.
 	lexer := stringLexer(0)
 
-	first := lexer.Exec(`"unterminated`)
+	first := lexer.Lex(`"unterminated`)
 	require.Equal(t, []string{"QUOTE", "TEXT"}, names(first.Tokens))
 
-	second := lexer.Exec(`ab "in string" cd`)
+	second := lexer.Lex(`ab "in string" cd`)
 	assert.Equal(t, []string{"ID", "QUOTE", "TEXT", "QUOTE", "ID"}, names(second.Tokens))
 	assert.Empty(t, second.Errors)
 }
@@ -360,9 +360,9 @@ func TestExecRepeatedRunsAreIdentical(t *testing.T) {
 	lexer := stringLexer(0)
 	const input = `ab "in string" cd`
 
-	first := names(lexer.Exec(input).Tokens)
+	first := names(lexer.Lex(input).Tokens)
 	for range 5 {
-		assert.Equal(t, first, names(lexer.Exec(input).Tokens))
+		assert.Equal(t, first, names(lexer.Lex(input).Tokens))
 	}
 }
 
@@ -378,14 +378,14 @@ func TestExecIsSafeForConcurrentUse(t *testing.T) {
 	}
 	expected := make([][]string, len(inputs))
 	for i, input := range inputs {
-		expected[i] = names(lexer.Exec(input).Tokens)
+		expected[i] = names(lexer.Lex(input).Tokens)
 	}
 
 	var wg sync.WaitGroup
 	for round := range 50 {
 		for i, input := range inputs {
 			wg.Go(func() {
-				assert.Equal(t, expected[i], names(lexer.Exec(input).Tokens),
+				assert.Equal(t, expected[i], names(lexer.Lex(input).Tokens),
 					"round %d, input %q", round, input)
 			})
 		}

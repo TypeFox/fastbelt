@@ -73,7 +73,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 		}
 		// STEP 1.1: Lex the document and produce tokens.
 		if !doc.State.Has(core.DocStateLexed) {
-			lexer.Lex(doc)
+			lexer.Exec(doc)
 			doc.State = doc.State.With(core.DocStateLexed)
 			s.notifyListeners(ctx, core.DocStateLexed, doc)
 		}

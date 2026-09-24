@@ -6,6 +6,7 @@ import (
 	"strings"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
+	"typefox.dev/fastbelt/util/service"
 	"unicode/utf8"
 )
 
@@ -451,7 +452,7 @@ const (
 	TokenMode_default = 0
 )
 
-func NewLexer() lexer.Lexer {
+func NewLexer(sc *service.Container) lexer.Lexer {
 	modes := make([]*lexer.TokenMode, 1)
 	modes[TokenMode_default] = lexer.NewTokenMode("default",
 		lexer.UseTokenType(Keyword_a),
@@ -469,5 +470,5 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Token_INT),
 		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
 	)
-	return lexer.NewDefaultLexer(TokenMode_default, modes...)
+	return lexer.NewDefaultLexer(sc, TokenMode_default, modes...)
 }

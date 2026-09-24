@@ -25,10 +25,13 @@
 //
 // The generated `NewLexer` function returns a [DefaultLexer] constructed via
 // [NewDefaultLexer] with one [TokenMode] per `token mode` declaration in the
-// grammar. [typefox.dev/fastbelt/workspace.DefaultDocumentParser] obtains a
-// [Lexer] from the service container, calls [Lexer.Exec], and stores
-// [LexerResult.Tokens], [LexerResult.Comments], and [LexerResult.Errors] on the
-// document before parsing.
+// grammar. Grammars with multiple configured languages use
+// [NewMultiLanguageLexer] instead, passing one token mode list per language;
+// at lex time the document is routed to its language's token set via
+// [core.LanguageSelector], mirroring the generated parser's entry rule
+// dispatch. The [typefox.dev/fastbelt/workspace] builder obtains a [Lexer]
+// from the service container and calls [Lexer.Exec], which stores tokens,
+// comments, and lexer errors on the document before parsing.
 //
 // # Lexing model
 //
@@ -42,9 +45,9 @@
 //     type wins; generated lexers list keywords before regex token rules, so
 //     keywords take precedence when both match the same span.
 //  3. Route the match by [TokenTypeUsage.Modifier]: default tokens go to
-//     [LexerResult.Tokens], hidden tokens are dropped, comments go to
-//     [LexerResult.Comments], and other modifiers are collected in
-//     [LexerResult.Modifiers].
+//     [core.Document.Tokens], hidden tokens are dropped, comments go to
+//     [core.Document.Comments]. [DefaultLexer.Lex] additionally exposes
+//     tokens with other modifiers in [LexerResult.Modifiers].
 //  4. Apply the match's mode command, if any (see below).
 //  5. If no token type matches, emit a [core.LexerError] and advance by one
 //     UTF-8 code point so lexing can continue. The active mode is unchanged.

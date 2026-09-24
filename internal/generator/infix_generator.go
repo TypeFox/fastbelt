@@ -12,15 +12,6 @@ import (
 	"typefox.dev/fastbelt/util/codegen"
 )
 
-// mustExpandInfixRules desugars all infix rules of the grammar (idempotent).
-// Every generator entry point calls it so the synthesized rule bodies and
-// operator token groups exist regardless of the order generators run in.
-func mustExpandInfixRules(grammr grammar.Grammar) {
-	if err := grammar.ExpandInfixRules(grammr); err != nil {
-		panic(err.Error())
-	}
-}
-
 // generateInfixParseFunction emits the Parse function of an infix rule.
 //
 // The completion parser reuses the generic element emitter over the

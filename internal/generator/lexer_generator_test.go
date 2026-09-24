@@ -22,7 +22,7 @@ func generateLexerFor(t *testing.T, src string) string {
 	doc := f.Parse(src)
 	grammr, ok := doc.Document.Root.(grammar.Grammar)
 	require.True(t, ok)
-	return GenerateLexer(grammr, "test", GenerateTokenTypes(grammr))
+	return GenerateLexer(grammr, nil, "test", GenerateTokenTypes(grammr))
 }
 
 func TestGenerateLexerModeCommands(t *testing.T) {
@@ -42,7 +42,7 @@ func TestGenerateLexerModeCommands(t *testing.T) {
 	`)
 	assert.Contains(t, code, "lexer.UseTokenType(Token_ID).WithPushMode(TokenMode_Other)")
 	assert.Contains(t, code, "lexer.UseTokenType(Token_ID).WithPopMode()")
-	assert.Contains(t, code, "lexer.NewDefaultLexer(TokenMode_default, modes...)")
+	assert.Contains(t, code, "lexer.NewDefaultLexer(sc, TokenMode_default, modes...)")
 }
 
 func TestGenerateLexerSetModeCommand(t *testing.T) {
@@ -159,7 +159,7 @@ func TestGenerateLexerModeIdsFollowDeclarationOrder(t *testing.T) {
 	assert.Contains(t, code, "TokenMode_First   = 0")
 	assert.Contains(t, code, "TokenMode_default = 1")
 	assert.Contains(t, code, "modes := make([]*lexer.TokenMode, 2)")
-	assert.Contains(t, code, "lexer.NewDefaultLexer(TokenMode_default, modes...)")
+	assert.Contains(t, code, "lexer.NewDefaultLexer(sc, TokenMode_default, modes...)")
 }
 
 func TestGenerateLexerImplicitDefaultModeRegistersEverything(t *testing.T) {
@@ -180,7 +180,7 @@ func TestGenerateLexerImplicitDefaultModeRegistersEverything(t *testing.T) {
 	assert.Contains(t, code, "lexer.UseTokenType(Keyword_Exclamation),")
 	assert.Contains(t, code, "lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier)")
 	assert.Contains(t, code, "lexer.UseTokenType(Token_SL_COMMENT).WithModifier(core.CommentModifier)")
-	assert.Contains(t, code, "lexer.NewDefaultLexer(TokenMode_default, modes...)")
+	assert.Contains(t, code, "lexer.NewDefaultLexer(sc, TokenMode_default, modes...)")
 }
 
 // --- Modifier and command precedence ---

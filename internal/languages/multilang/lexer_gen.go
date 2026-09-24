@@ -10,35 +10,13 @@ import (
 	"unicode/utf8"
 )
 
-const Keyword_goodbye_Idx = 1
-
-var Keyword_goodbye = core.NewTokenType(
-	Keyword_goodbye_Idx,
-	"goodbye",
-	"goodbye",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "goodbye") {
-			return 7
-		}
-		return 0
-	},
-	[]rune{'g'},
-)
-
-const Keyword_hello_Idx = 2
+const Keyword_hello_Idx = 1
 
 var Keyword_hello = core.NewTokenType(
 	Keyword_hello_Idx,
 	"hello",
 	"hello",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "hello") {
 			return 5
@@ -48,16 +26,29 @@ var Keyword_hello = core.NewTokenType(
 	[]rune{'h'},
 )
 
+const Keyword_goodbye_Idx = 2
+
+var Keyword_goodbye = core.NewTokenType(
+	Keyword_goodbye_Idx,
+	"goodbye",
+	"goodbye",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "goodbye") {
+			return 7
+		}
+		return 0
+	},
+	[]rune{'g'},
+)
+
 const Token_ID_Idx = 3
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
 	"ID",
 	"ID",
-	0,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -128,10 +119,7 @@ var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
 	"WS",
 	"WS",
-	core.SkippedGroup,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -196,18 +184,24 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
+const (
+	TokenMode_default = 0
+)
+
 func NewLexer(sc *service.Container) lexer.Lexer {
-	return lexer.NewMultiLanguageLexer(
-		sc,
-		[]*core.TokenType{ // Greeting
-			Keyword_hello,
-			Token_ID,
-			Token_WS,
-		},
-		[]*core.TokenType{ // Farewell
-			Keyword_goodbye,
-			Token_ID,
-			Token_WS,
-		},
+	// Greeting
+	modes0 := make([]*lexer.TokenMode, 1)
+	modes0[TokenMode_default] = lexer.NewTokenMode("default",
+		lexer.UseTokenType(Keyword_hello),
+		lexer.UseTokenType(Token_ID),
+		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
 	)
+	// Farewell
+	modes1 := make([]*lexer.TokenMode, 1)
+	modes1[TokenMode_default] = lexer.NewTokenMode("default",
+		lexer.UseTokenType(Keyword_goodbye),
+		lexer.UseTokenType(Token_ID),
+		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
+	)
+	return lexer.NewMultiLanguageLexer(sc, TokenMode_default, modes0, modes1)
 }

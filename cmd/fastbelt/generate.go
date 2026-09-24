@@ -105,20 +105,14 @@ func runGenerateCLI(opts generateOptions) error {
 	if err != nil {
 		return err
 	}
-	// Desugar infix rules once, so every generator below sees the synthesized
-	// operator token groups and flat rule bodies.
-	if err := grammarPkg.ExpandInfixRules(grammar); err != nil {
-		return err
-	}
-
 	// Delegate code generation to the shared build API. A single-language CLI
 	// build passes exactly one entry rule, so the generated parser keeps its
 	// direct (non-dispatching) Parse body.
 	return cmd.Generate(g, []grammar.ParserRule{entryRule}, nil, outputPath, packageName, opts.atn, verbose)
 }
 
-func validateEntryRule(g grammarPkg.Grammar) (grammarPkg.ParserRule, error) {
-	var entries []grammarPkg.ParserRule
+func validateEntryRule(g grammar.Grammar) (grammar.ParserRule, error) {
+	var entries []grammar.ParserRule
 	for _, rule := range g.Rules() {
 		if rule.IsEntry() {
 			entries = append(entries, rule)

@@ -34,10 +34,6 @@ type Language struct {
 	Patterns   []string
 }
 
-// Plugin can mutate a [BuildContext] before its languages are resolved. It is
-// intentionally minimal; richer hooks are deferred until a concrete need.
-type Plugin func(*BuildContext)
-
 // BuildContext drives a programmatic build. Input points at a directory of .fb
 // files (all sharing the same grammar name); Languages selects one entry rule
 // each. With a single language the result is equivalent to the fastbelt
@@ -47,7 +43,6 @@ type BuildContext struct {
 	Output    string // defaults to Input
 	Package   string // defaults to filepath.Base(Output)
 	Languages []Language
-	Plugins   []Plugin
 	ATN       bool
 	Verbose   bool
 }
@@ -56,9 +51,6 @@ type BuildContext struct {
 // language's entry rule exists and is marked entry, and generates the combined
 // language package into Output.
 func (c *BuildContext) Build() error {
-	for _, p := range c.Plugins {
-		p(c)
-	}
 	if len(c.Languages) == 0 {
 		return fmt.Errorf("no languages configured")
 	}
@@ -305,6 +297,11 @@ func Generate(g grammar.Grammar, entries []grammar.ParserRule, selectors []gener
 		return nil
 	}
 
+	// Desugar infix rules once, so every generator below sees the synthesized
+	// operator token groups and flat rule bodies.
+	if err := grammar.ExpandInfixRules(g); err != nil {
+		return err
+	}
 	tokenTypes := generator.GenerateTokenTypes(g)
 	atnData := generator.BuildParserATNData(g, tokenTypes)
 

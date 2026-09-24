@@ -37,7 +37,6 @@ type parserATNData struct {
 // GenerateParser, GenerateCompletionParser, and GenerateParserLookahead.
 // Returns nil when the ATN cannot be built (invalid grammar).
 func BuildParserATNData(grammr grammar.Grammar, tokenTypes GenerateTokenTypesResult) *parserATNData {
-	mustExpandInfixRules(grammr)
 	builtATN, _ := internalATN.CreateATN(grammr, tokenTypes.TokenTypeIds())
 	if builtATN == nil {
 		return nil
@@ -288,7 +287,6 @@ func (ctx *ParserGeneratorContext) nextLoopLabel() string {
 // file shares a package with parser_gen.go, it reuses the lookahead tables and
 // ATN-decision indices defined there.
 func GenerateParserLookahead(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult, atnData *parserATNData) string {
-	mustExpandInfixRules(grammr)
 	context := &ParserGeneratorContext{
 		grammar:      grammr,
 		lookaheads:   make(map[core.AstNode]LookaheadValue),
@@ -513,7 +511,6 @@ func decisionConstName(methodName string) string {
 }
 
 func GenerateParser(grammr grammar.Grammar, entryRules []grammar.ParserRule, packageName string, tokenTypes GenerateTokenTypesResult, atnData *parserATNData) string {
-	mustExpandInfixRules(grammr)
 	context := &ParserGeneratorContext{
 		grammar:      grammr,
 		lookaheads:   make(map[core.AstNode]LookaheadValue),
@@ -616,7 +613,6 @@ func emitEntryDispatch(node codegen.Node, entryRules []grammar.ParserRule) {
 // The generated file reuses the lookahead tables and ATN builder defined by
 // GenerateParser/EmitGoSource, so it must be emitted into the same package.
 func GenerateCompletionParser(grammr grammar.Grammar, entryRules []grammar.ParserRule, packageName string, tokenTypes GenerateTokenTypesResult, atnData *parserATNData) string {
-	mustExpandInfixRules(grammr)
 	context := &ParserGeneratorContext{
 		grammar:      grammr,
 		lookaheads:   make(map[core.AstNode]LookaheadValue),
