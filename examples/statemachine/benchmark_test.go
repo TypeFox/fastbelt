@@ -87,6 +87,32 @@ func BenchmarkTraverseContentSeq(b *testing.B) {
 	}
 }
 
+// BenchmarkTraverseContentSeqHalf breaks out of the loop after visiting half of the
+// nodes. With short-circuiting traversal this should take roughly half the time of
+// BenchmarkTraverseContentSeq.
+func BenchmarkTraverseContentSeqHalf(b *testing.B) {
+	content, elementCount := generateStatemachineContent(0)
+	srv := CreateServices()
+	documentParser := service.MustGet[workspace.DocumentParser](srv)
+	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
+	if err != nil {
+		b.Fatal(err)
+	}
+	documentParser.Parse(doc)
+	half := elementCount / 2
+
+	for b.Loop() {
+		count := 0
+		for range fastbelt.AllChildren(doc.Root) {
+			count++
+			if count == half {
+				break
+			}
+		}
+		_ = count
+	}
+}
+
 func TestAllNodesEquivalence(t *testing.T) {
 	content, elementCount := generateStatemachineContent(0)
 	srv := CreateServices()
@@ -242,4 +268,24 @@ func generateStatemachineContent(index int) (string, int) {
 	}
 
 	return sb.String(), elementCount
+}
+
+func TestAllNodesEarlyExitShortCircuits(t *testing.T) {
+	content, elementCount := generateStatemachineContent(0)
+	srv := CreateServices()
+	documentParser := service.MustGet[workspace.DocumentParser](srv)
+	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
+	if err != nil {
+		t.Fatal(err)
+	}
+	documentParser.Parse(doc)
+	visited := 0
+	for range fastbelt.AllNodes(doc.Root) {
+		visited++
+		if visited == 3 {
+			break
+		}
+	}
+	assert.Equal(t, 3, visited)
+	assert.Greater(t, elementCount, 3)
 }
