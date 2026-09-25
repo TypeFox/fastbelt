@@ -13,10 +13,9 @@ import (
 
 // DocumentValidator validates a document's AST and collects diagnostics.
 type DocumentValidator interface {
-	// Validate returns diagnostics for doc at the given validation level
-	// (for example "on-save"). It walks doc.Root and calls [core.Validator]
-	// methods on AST nodes that implement that interface.
-	Validate(ctx context.Context, doc *core.Document, level string) []*core.Diagnostic
+	// Validate returns diagnostics for doc. ctx may be used to cancel a
+	// long-running validation, in which case the result may be incomplete.
+	Validate(ctx context.Context, doc *core.Document) []*core.Diagnostic
 }
 
 // DefaultDocumentValidator is the default implementation of [DocumentValidator].
@@ -30,7 +29,7 @@ func NewDefaultDocumentValidator(sc *service.Container) DocumentValidator {
 	return &DefaultDocumentValidator{sc: sc}
 }
 
-func (s *DefaultDocumentValidator) Validate(ctx context.Context, doc *core.Document, level string) []*core.Diagnostic {
+func (s *DefaultDocumentValidator) Validate(ctx context.Context, doc *core.Document) []*core.Diagnostic {
 	if doc.Root == nil {
 		return nil
 	}
@@ -58,7 +57,7 @@ func (s *DefaultDocumentValidator) Validate(ctx context.Context, doc *core.Docum
 			break
 		}
 		if validator, ok := node.(core.Validator); ok {
-			validator.Validate(ctx, level, accept)
+			validator.Validate(ctx, s.sc, accept)
 		}
 	}
 	return diagnostics

@@ -4,7 +4,11 @@
 
 package fastbelt
 
-import "context"
+import (
+	"context"
+
+	"typefox.dev/fastbelt/util/service"
+)
 
 // DiagnosticSeverity mirrors LSP DiagnosticSeverity values.
 type DiagnosticSeverity int
@@ -76,9 +80,9 @@ type ValidationAcceptor func(diagnostic *Diagnostic)
 // Validator can be implemented by AST node Impl structs to provide custom validation checks.
 type Validator interface {
 	// Validate performs validation on the receiver node.
-	// The level parameter identifies when validation runs (e.g. "on-type", "on-save").
+	// sc is the service container of the running language server.
 	// The accept callback is used to collect diagnostics.
-	Validate(ctx context.Context, level string, accept ValidationAcceptor)
+	Validate(ctx context.Context, sc *service.Container, accept ValidationAcceptor)
 }
 
 // DiagnosticOption configures optional fields of a [Diagnostic] created by [NewDiagnostic].
