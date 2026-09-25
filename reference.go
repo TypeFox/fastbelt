@@ -269,16 +269,18 @@ type referenceDescriptions struct {
 	descriptions collections.MultiMap[AstNode, *ReferenceDescription]
 }
 
+var emptyReferenceDescriptions = extiter.Empty[*ReferenceDescription]()
+
 func (d *referenceDescriptions) All() iter.Seq[*ReferenceDescription] {
-	if d == nil {
-		return extiter.Empty[*ReferenceDescription]()
+	if d == nil || d.descriptions == nil {
+		return emptyReferenceDescriptions
 	}
 	return d.descriptions.Values()
 }
 
 func (d *referenceDescriptions) ForTarget(target AstNode) iter.Seq[*ReferenceDescription] {
-	if d == nil {
-		return extiter.Empty[*ReferenceDescription]()
+	if d == nil || d.descriptions == nil {
+		return emptyReferenceDescriptions
 	}
 	return slices.Values(d.descriptions.Get(target))
 }

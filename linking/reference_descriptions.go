@@ -37,7 +37,8 @@ func (s *DefaultReferenceDescriptionsProvider) ReferenceDescriptions(ctx context
 	descriptions := collections.NewMultiMap[core.AstNode, *core.ReferenceDescription]()
 	for _, ref := range document.References {
 		if ctx.Err() != nil {
-			break
+			// Build was cancelled, exit early
+			return nil
 		}
 		node := ref.RefNode(ctx)
 		if node != nil {

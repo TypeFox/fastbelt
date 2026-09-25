@@ -37,7 +37,8 @@ func (s *DefaultLocalSymbolsProvider) LocalSymbols(ctx context.Context, document
 
 	for node := range core.AllChildren(root) {
 		if ctx.Err() != nil {
-			break
+			// Build was cancelled, exit early
+			return nil
 		}
 		desc, containerNode := DescribeLocal(node)
 		if desc != nil && containerNode != nil {
