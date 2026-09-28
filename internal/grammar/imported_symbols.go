@@ -120,16 +120,21 @@ func newFolderView(docs []*core.Document) *folderView {
 	case 1:
 		view.folder = view.grammars[0]
 	default:
-		view.folder = aggregateGrammar(view.grammars)
+		view.folder = AggregateGrammar(view.grammars)
 	}
 	return view
 }
 
-// aggregateGrammar returns a detached grammar node listing the declarations of
+// AggregateGrammar returns a detached grammar node listing the declarations of
 // every given grammar. The generated setters only append to slices, so the
 // listed nodes keep their real container and document; the aggregate is a
-// read-only view for checks that must consider the whole folder.
-func aggregateGrammar(grammars []Grammar) Grammar {
+// read-only view for checks that must consider the whole folder. The code
+// generator reparents it to merge the files of a folder.
+//
+// Elements are sorted by name so the generated code does not depend on the
+// order of declarations across files. Terminals keep file order: it is
+// semantically relevant and critical for correct lexing.
+func AggregateGrammar(grammars []Grammar) Grammar {
 	folder := NewGrammar()
 	folder.SetName(grammars[0].NameToken())
 	for _, g := range grammars {
@@ -155,7 +160,21 @@ func aggregateGrammar(grammars []Grammar) Grammar {
 			folder.SetInterfacesItem(item)
 		}
 	}
+	// The getters return the backing slices, so sorting in place reorders the
+	// aggregate.
+	sortByName(folder.Rules())
+	sortByName(folder.Composites())
+	sortByName(folder.InfixRules())
+	sortByName(folder.TokenGroups())
+	sortByName(folder.TokenModes())
+	sortByName(folder.Interfaces())
 	return folder
+}
+
+// sortByName sorts items by name in place. The sort is stable, so elements
+// with the same name (rejected by validation anyway) keep file order.
+func sortByName[T interface{ Name() string }](items []T) {
+	slices.SortStableFunc(items, func(a, b T) int { return strings.Compare(a.Name(), b.Name()) })
 }
 
 // viewOf returns the folderView of the document g belongs to, or nil when the

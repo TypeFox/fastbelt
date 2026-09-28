@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"unicode/utf8"
@@ -126,13 +127,7 @@ func generateTokenModes(context context.Context, n codegen.Node, varName string,
 		tokenMode := tokenTypes.TokenModes[modeName]
 		n.AppendLine(varName, "[", tokenMode.VarName, "] = lexer.NewTokenMode(\"", modeName, "\",")
 		n.Indent(func(nn codegen.Node) {
-			for _, tokenIndex := range tokenMode.ModeTokenTypes.Keywords {
-				tokenType := tokenTypes.TokenTypes.ByTokenIndex[tokenIndex]
-				if reachable == nil || reachable[tokenType.VarName] || tokenMode.TokenTypeUsages[tokenIndex] != (tokenTypeUsage{}) {
-					generateTokenTypeUsage(context, nn, tokenType, tokenMode, tokenIndex, tokenTypes)
-				}
-			}
-			for _, tokenIndex := range tokenMode.ModeTokenTypes.Tokens {
+			for _, tokenIndex := range slices.Concat(tokenMode.ModeTokenTypes.Keywords, tokenMode.ModeTokenTypes.Tokens) {
 				tokenType := tokenTypes.TokenTypes.ByTokenIndex[tokenIndex]
 				if reachable == nil || reachable[tokenType.VarName] || tokenMode.TokenTypeUsages[tokenIndex] != (tokenTypeUsage{}) {
 					generateTokenTypeUsage(context, nn, tokenType, tokenMode, tokenIndex, tokenTypes)

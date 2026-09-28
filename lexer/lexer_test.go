@@ -93,48 +93,11 @@ func TestExecFirstRegisteredWinsEqualLengthMatch(t *testing.T) {
 
 // --- Groups ---
 
-func TestExecRoutesTokensToModifiers(t *testing.T) {
-	word := matchRunes(1, "WORD", lowercase)
-	ws := matchRunes(2, "WS", spaces)
-	comment := literal(3, "COMMENT", "#")
-	other := literal(4, "OTHER", "!")
-	lexer := NewDefaultLexer(nil, 0, NewTokenMode("default",
-		UseTokenType(word),
-		UseTokenType(ws).WithModifier(core.SkippedModifier),
-		UseTokenType(comment).WithModifier(core.CommentModifier),
-		UseTokenType(other).WithModifier(7),
-	))
-
-	result := lexer.Lex("ab #ff!")
-	assert.Equal(t, []string{"ab", "ff"}, images(result.Tokens))
-	assert.Equal(t, []string{"#"}, images(result.Comments))
-	require.Contains(t, result.Modifiers, 7)
-	assert.Equal(t, []string{"!"}, images(result.Modifiers[7]))
-	assert.Empty(t, result.Errors)
-}
-
-func TestExecModifiersIsNilWithoutCustomModifiers(t *testing.T) {
-	word := matchRunes(1, "WORD", lowercase)
-	lexer := NewDefaultLexer(nil, 0, NewTokenMode("default", UseTokenType(word)))
-
-	assert.Nil(t, lexer.Lex("ab").Modifiers)
-}
-
-func TestExecCollectsCustomModifierFromNonDefaultMode(t *testing.T) {
-	lexer := stringLexer(7)
-
-	result := lexer.Lex(`ab "inside" cd`)
-	assert.Equal(t, []string{"ab", `"`, `"`, "cd"}, images(result.Tokens))
-	require.Contains(t, result.Modifiers, 7)
-	assert.Equal(t, []string{"inside"}, images(result.Modifiers[7]))
-}
-
 func TestExecSkipsHiddenTokenFromNonDefaultMode(t *testing.T) {
 	lexer := stringLexer(core.SkippedModifier)
 
 	result := lexer.Lex(`ab "inside" cd`)
 	assert.Equal(t, []string{"ab", `"`, `"`, "cd"}, images(result.Tokens))
-	assert.Nil(t, result.Modifiers)
 }
 
 func TestExecCollectsCommentFromNonDefaultMode(t *testing.T) {
@@ -338,7 +301,6 @@ func TestExecEmptyInput(t *testing.T) {
 	assert.Empty(t, result.Tokens)
 	assert.Empty(t, result.Comments)
 	assert.Empty(t, result.Errors)
-	assert.Nil(t, result.Modifiers)
 }
 
 // --- Reuse of a single lexer instance ---
@@ -401,6 +363,11 @@ func TestMultiLanguageLexerStartsInConfiguredMode(t *testing.T) {
 		NewTokenMode("Inner", UseTokenType(text)),
 	}
 	lexer := NewMultiLanguageLexer(nil, []int{0, 1}, modes, modes)
-	assert.Equal(t, []string{"ID"}, names(lexer.lex("abc", 0).Tokens))
-	assert.Equal(t, []string{"TEXT"}, names(lexer.lex("abc", 1).Tokens))
+	assert.Equal(t, []string{"ID"}, names(lexer.exec("abc", 0).Tokens))
+	assert.Equal(t, []string{"TEXT"}, names(lexer.exec("abc", 1).Tokens))
+}
+
+// Lex scans input with the token modes of the first language.
+func (l *DefaultLexer) Lex(input string) *lexerResult {
+	return l.exec(input, 0)
 }

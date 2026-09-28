@@ -548,7 +548,12 @@ func GenerateParser(grammr grammar.Grammar, entryRules []grammar.ParserRule, pac
 		n.AppendLine("referencesConstructor := service.MustGet[", grammr.Name(), "ReferencesConstructor](p.sc)")
 		n.AppendLine("lookahead := service.MustGet[", grammr.Name(), "ParserLookahead](p.sc)")
 		n.AppendLine("cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}")
-		emitEntryDispatch(n, entryRules)
+		assign := "result := "
+		if len(entryRules) > 1 {
+			n.AppendLine("var result core.AstNode")
+			assign = "result = "
+		}
+		emitEntryDispatch(n, "p.sc", assign, entryRules)
 		n.AppendLine("cp.state.ExpectEndOfInput()")
 		n.AppendLine("document.ParserErrors = cp.state.Errors()")
 		n.AppendLine("document.Root = result")
@@ -579,25 +584,17 @@ func GenerateParser(grammr grammar.Grammar, entryRules []grammar.ParserRule, pac
 	return FormatIfPossible(node.String())
 }
 
-// emitEntryDispatch emits the entry-rule invocation for the main parser's Parse
-// method. With a single entry it calls that rule directly (behavior-preserving
-// for single-language grammars). With multiple entries it resolves the
-// document's language via the registered core.LanguageSelector and switches to
-// the matching entry rule; index 0 also serves as the fallback for -1/no-match.
-func emitEntryDispatch(node codegen.Node, entryRules []grammar.ParserRule) {
+// emitEntryDispatch emits the entry-rule invocation `<assign>cp.Parse<Entry>()`
+// shared by the main and the completion parser. With a single entry it calls
+// that rule directly (behavior-preserving for single-language grammars). With
+// multiple entries it resolves the document's language via the
+// core.LanguageSelector of the given container expression and switches to the
+// matching entry rule; index 0 also serves as the fallback for -1/no-match.
+func emitEntryDispatch(node codegen.Node, containerExpr, assign string, entryRules []grammar.ParserRule) {
 	if len(entryRules) <= 1 {
-		node.AppendLine("result := cp.Parse", entryRules[0].Name(), "()")
+		node.AppendLine(assign, "cp.Parse", entryRules[0].Name(), "()")
 		return
 	}
-	node.AppendLine("var result core.AstNode")
-	emitLanguageSwitch(node, "p.sc", "result = ", entryRules)
-}
-
-// emitLanguageSwitch emits the shared multi-entry dispatch used by the main and
-// the completion parser: a core.LanguageSelector lookup on the given container
-// expression and a switch that calls `<assign>cp.Parse<Entry>()` for the
-// selected language, with index 0 as the default for -1/no-match.
-func emitLanguageSwitch(node codegen.Node, containerExpr, assign string, entryRules []grammar.ParserRule) {
 	node.AppendLine("selector := service.MustGet[core.LanguageSelector](", containerExpr, ")")
 	node.AppendLine("switch i, _ := selector.Select(document.URI); i {")
 	for i := 1; i < len(entryRules); i++ {
@@ -676,7 +673,7 @@ func GenerateCompletionParser(grammr grammar.Grammar, entryRules []grammar.Parse
 		n.AppendLine("cp := &CompletionParser{sc: p.sc, atn: p.atn, lookahead: lookahead}")
 		n.AppendLine("cp.state = parser.NewParserState(tokens, p.atn(), recovery, messages)")
 		n.AppendLine("cp.cp = parser.NewCompletionParserState(cp.state)")
-		emitCompletionEntryDispatch(n, entryRules)
+		emitEntryDispatch(n, "cp.sc", "", entryRules)
 		n.AppendLine("return cp.cp.Result(tokens)")
 	})
 	node.AppendLine("}")
@@ -703,17 +700,6 @@ func completionDocParam(entryRules []grammar.ParserRule) string {
 		return "_ *core.Document,"
 	}
 	return "document *core.Document,"
-}
-
-// emitCompletionEntryDispatch emits the entry-rule invocation for the completion
-// parser: a direct call for a single entry, or a core.LanguageSelector switch
-// (index 0 is the fallback for -1/no-match) for multiple entries.
-func emitCompletionEntryDispatch(node codegen.Node, entryRules []grammar.ParserRule) {
-	if len(entryRules) <= 1 {
-		node.AppendLine("cp.Parse", entryRules[0].Name(), "()")
-		return
-	}
-	emitLanguageSwitch(node, "cp.sc", "", entryRules)
 }
 
 // buildFollowStateNameMap maps each grammar.RuleCall to the constant name of

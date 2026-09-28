@@ -10,12 +10,12 @@
 package cmd
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
-	"sort"
 	"strings"
 
 	core "typefox.dev/fastbelt"
@@ -112,7 +112,8 @@ func (c *BuildContext) Build() error {
 // one grammar and returns the combined result. Diagnostics are printed; any
 // error diagnostic aborts with an error.
 func LoadGrammarDir(dir string) (grammar.Grammar, error) {
-	files, err := collectGrammarFiles(dir)
+	// Glob returns the matches sorted, so the merged grammar is deterministic.
+	files, err := filepath.Glob(filepath.Join(dir, "*.fb"))
 	if err != nil {
 		return nil, err
 	}
@@ -120,23 +121,6 @@ func LoadGrammarDir(dir string) (grammar.Grammar, error) {
 		return nil, fmt.Errorf("no .fb grammar files found in %s", dir)
 	}
 	return parseAndMerge(files)
-}
-
-// collectGrammarFiles returns the absolute paths of top-level *.fb files in dir.
-func collectGrammarFiles(dir string) ([]string, error) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, err
-	}
-	var files []string
-	for _, e := range entries {
-		if e.IsDir() || filepath.Ext(e.Name()) != ".fb" {
-			continue
-		}
-		files = append(files, filepath.Join(dir, e.Name()))
-	}
-	sort.Strings(files)
-	return files, nil
 }
 
 // parseAndMerge parses every grammar file in a single shared container (so
@@ -181,56 +165,16 @@ func parseAndMerge(files []string) (grammar.Grammar, error) {
 	return mergeGrammars(grammars), nil
 }
 
-// mergeGrammars concatenates several grammars into a single one and reparents
-// every element so container-based lookups in the generator span all files.
-// Ensures a sorting by name for all elements except for terminals:
-// The ordering of terminals is semantically relevant and critical for correct lexing.
+// mergeGrammars concatenates several grammars into a single one (elements
+// sorted by name, see [grammar.AggregateGrammar]) and reparents every element
+// so container-based lookups in the generator span all files.
 func mergeGrammars(grammars []grammar.Grammar) grammar.Grammar {
-	merged := grammar.NewGrammar()
-	merged.SetName(grammars[0].NameToken())
-	for _, item := range sortedByName(grammars, grammar.Grammar.Rules) {
-		merged.SetRulesItem(item)
-	}
-	for _, item := range sortedByName(grammars, grammar.Grammar.Composites) {
-		merged.SetCompositesItem(item)
-	}
-	for _, item := range sortedByName(grammars, grammar.Grammar.InfixRules) {
-		merged.SetInfixRulesItem(item)
-	}
-	for _, item := range sortedByName(grammars, grammar.Grammar.TokenGroups) {
-		merged.SetTokenGroupsItem(item)
-	}
-	for _, item := range sortedByName(grammars, grammar.Grammar.TokenModes) {
-		merged.SetTokenModesItem(item)
-	}
-	for _, item := range sortedByName(grammars, grammar.Grammar.Interfaces) {
-		merged.SetInterfacesItem(item)
-	}
-	for _, g := range grammars {
-		for _, item := range g.Terminals() {
-			merged.SetTerminalsItem(item)
-		}
-	}
-
-	// Reparent every appended element onto the merged grammar so that
-	// container walks (return-type resolution) see the combined element set.
+	merged := grammar.AggregateGrammar(grammars)
 	file := textdoc.NewFile(lsp.URIFromPath("merged.fb"), "fb", 0, "")
 	doc := core.NewDocument(file)
 	doc.Root = merged
 	core.AssignContainers(doc)
 	return merged
-}
-
-// sortedByName collects the elements that get selects from every grammar and
-// returns them sorted by name. The sort is stable, so elements with the same
-// name (rejected by validation anyway) keep file order.
-func sortedByName[T interface{ Name() string }](grammars []grammar.Grammar, get func(grammar.Grammar) []T) []T {
-	var items []T
-	for _, g := range grammars {
-		items = append(items, get(g)...)
-	}
-	slices.SortStableFunc(items, func(a, b T) int { return strings.Compare(a.Name(), b.Name()) })
-	return items
 }
 
 // findEntryRule resolves a language's Entry to a parser rule that exists and is
@@ -251,22 +195,20 @@ func findEntryRule(g grammar.Grammar, name string) (grammar.ParserRule, error) {
 // empty name means the default mode, which is implicit when the grammar
 // declares no token modes at all and must be declared otherwise.
 func checkTokenMode(g grammar.Grammar, lang Language) error {
-	hasDefault := len(g.TokenModes()) == 0
+	name := cmp.Or(lang.TokenMode, "default")
 	for _, mode := range g.TokenModes() {
-		if mode.IsDefault() {
-			hasDefault = true
-		} else if mode.Name() == lang.TokenMode {
+		if (mode.IsDefault() && name == "default") || mode.Name() == name {
 			return nil
 		}
 	}
-	if lang.TokenMode == "" || lang.TokenMode == "default" {
-		if hasDefault {
-			return nil
-		}
+	if name != "default" {
+		return fmt.Errorf("token mode %q not found in grammar", name)
+	}
+	if len(g.TokenModes()) > 0 {
 		return fmt.Errorf("language %q (entry %s) starts in the default token mode, "+
 			"but the grammar declares no default token mode; set Language.TokenMode", lang.LanguageID, lang.Entry)
 	}
-	return fmt.Errorf("token mode %q not found in grammar", lang.TokenMode)
+	return nil
 }
 
 // reportDiagnostics prints sorted diagnostics for the given documents and
@@ -287,15 +229,8 @@ func reportDiagnostics(docs []*core.Document) error {
 			})
 		}
 	}
-	sort.SliceStable(diagnostics, func(i, j int) bool {
-		a, b := diagnostics[i], diagnostics[j]
-		if a.file != b.file {
-			return a.file < b.file
-		}
-		if a.pos.Line != b.pos.Line {
-			return a.pos.Line < b.pos.Line
-		}
-		return a.pos.Character < b.pos.Character
+	slices.SortStableFunc(diagnostics, func(a, b located) int {
+		return cmp.Or(strings.Compare(a.file, b.file), cmp.Compare(a.pos.Line, b.pos.Line), cmp.Compare(a.pos.Character, b.pos.Character))
 	})
 	errCount := 0
 	for _, d := range diagnostics {

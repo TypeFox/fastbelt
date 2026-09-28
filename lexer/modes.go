@@ -24,7 +24,7 @@ func UseTokenType(tokenType *core.TokenType) *TokenTypeUsage {
 		TokenType: tokenType,
 		PushMode:  -1,
 		PopMode:   false,
-		Modifier:  0,
+		Modifier:  core.DefaultTokenModifier,
 	}
 }
 

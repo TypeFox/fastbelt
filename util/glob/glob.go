@@ -5,17 +5,17 @@
 // Package glob provides a minimal glob matcher over slash-separated paths.
 package glob
 
-import "strings"
+import (
+	"path"
+	"strings"
+)
 
-// Match reports whether path matches a glob pattern. Paths are matched
-// segment-by-segment on '/'. Within a segment, '*' matches any run of
-// non-separator characters and '?' matches a single one. The '**' segment
-// matches zero or more whole segments (crossing separators).
-//
-// Note: This is a minimal implementation for internal use, does not support
-// most glob features, and is not intended to be a general-purpose glob matcher.
-func Match(pattern, path string) bool {
-	return matchSegments(strings.Split(pattern, "/"), strings.Split(path, "/"))
+// Match reports whether name matches a glob pattern. Paths are matched
+// segment-by-segment on '/'. Within a segment the [path.Match] syntax applies
+// ('*', '?', character classes). The '**' segment matches zero or more whole
+// segments (crossing separators).
+func Match(pattern, name string) bool {
+	return matchSegments(strings.Split(pattern, "/"), strings.Split(name, "/"))
 }
 
 func matchSegments(pat, name []string) bool {
@@ -34,37 +34,8 @@ func matchSegments(pat, name []string) bool {
 	if len(name) == 0 {
 		return false
 	}
-	if !matchSegment(pat[0], name[0]) {
+	if ok, _ := path.Match(pat[0], name[0]); !ok {
 		return false
 	}
 	return matchSegments(pat[1:], name[1:])
-}
-
-// matchSegment matches a single path segment with '*' and '?' wildcards.
-// Iterative backtracking on bytes ('?' matches any byte; the segment never
-// contains a '/').
-func matchSegment(p, s string) bool {
-	pi, si := 0, 0
-	star, ss := -1, 0
-	for si < len(s) {
-		switch {
-		case pi < len(p) && (p[pi] == s[si] || p[pi] == '?'):
-			pi++
-			si++
-		case pi < len(p) && p[pi] == '*':
-			star = pi
-			ss = si
-			pi++
-		case star != -1:
-			pi = star + 1
-			ss++
-			si = ss
-		default:
-			return false
-		}
-	}
-	for pi < len(p) && p[pi] == '*' {
-		pi++
-	}
-	return pi == len(p)
 }

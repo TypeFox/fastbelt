@@ -109,22 +109,17 @@ func checkGrammarNamesMatch(g Grammar, accept core.ValidationAcceptor) {
 	if g.NameToken() == nil {
 		return
 	}
-	names := map[string]bool{}
-
+	var names []string
 	for _, sibling := range siblingGrammars(g) {
-		if sibling.Name() == "" {
-			continue
+		if sibling.Name() != "" {
+			names = append(names, "'"+sibling.Name()+"'")
 		}
-		names[sibling.Name()] = true
 	}
+	slices.Sort(names)
+	names = slices.Compact(names)
 	if len(names) > 1 {
-		nameList := []string{}
-		for name := range names {
-			nameList = append(nameList, "'"+name+"'")
-		}
-		slices.Sort(nameList)
-		last := len(nameList) - 1
-		found := strings.Join(nameList[:last], ", ") + " and " + nameList[last]
+		last := len(names) - 1
+		found := strings.Join(names[:last], ", ") + " and " + names[last]
 		accept(core.NewDiagnostic(
 			core.SeverityError,
 			fmt.Sprintf("All grammar files in a folder form one grammar and must declare the same name, but found: %s.", found),
@@ -278,39 +273,25 @@ func isMultiLanguage(folder Grammar) bool {
 		if rule.IsEntry() {
 			entries++
 		}
-		if entries > 1 {
-			return true
-		}
 	}
-	return false
+	return entries > 1
 }
 
 func checkIfDefaultTokenModeIsRequired(g, folder Grammar, accept core.ValidationAcceptor) {
-	if isMultiLanguage(folder) {
+	if isMultiLanguage(folder) || hasDefaultTokenMode(folder) {
 		return
 	}
-	if len(g.TokenModes()) > 0 {
-		hasDefault := false
-		var nonDefaultTokenMode TokenMode = nil
-		for _, mode := range folder.TokenModes() {
-			if mode.IsDefault() {
-				hasDefault = true
-				break
-			} else if nonDefaultTokenMode == nil && ownedBy(g.Document(), mode) {
-				//mark only the first non-default token mode of this document
-				//one diagnostic is enough to indicate that a default token mode is required
-				nonDefaultTokenMode = mode
-			}
-		}
-		if !hasDefault && nonDefaultTokenMode != nil {
-			accept(core.NewDiagnostic(
-				core.SeverityError,
-				"At least one token mode must be marked as default.",
-				nonDefaultTokenMode,
-				core.WithToken(nonDefaultTokenMode.NameToken()),
-				core.WithCode(ValidateDefaultTokenModeRequired),
-			))
-		}
+	// Mark only the first token mode of this document: one diagnostic is
+	// enough to indicate that a default token mode is required.
+	for _, mode := range g.TokenModes() {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			"At least one token mode must be marked as default.",
+			mode,
+			core.WithToken(mode.NameToken()),
+			core.WithCode(ValidateDefaultTokenModeRequired),
+		))
+		return
 	}
 }
 

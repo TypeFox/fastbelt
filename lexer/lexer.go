@@ -19,9 +19,9 @@ type Lexer interface {
 	Exec(document *core.Document)
 }
 
-// LexerResult holds everything produced by a single [DefaultLexer.Lex] pass
+// lexerResult holds everything produced by a single [DefaultLexer.Lex] pass
 // over source text.
-type LexerResult struct {
+type lexerResult struct {
 	// Tokens is the main token stream passed to the parser.
 	Tokens []core.Token
 	// Comments holds tokens whose Type ([core.TokenType]) is marked with the modifier [core.CommentModifier] via the type [TokenTypeUsage].
@@ -29,9 +29,6 @@ type LexerResult struct {
 	Comments []core.Token
 	// Errors lists recoverable lexing problems (unrecognized input).
 	Errors []*core.LexerError
-	// Modifiers collects tokens routed to custom [TokenTypeUsage.Modifier] values
-	// other than the default, skipped, or comment modifiers. Nil when empty.
-	Modifiers map[int][]core.Token
 }
 
 // Allocate a new token every ~5 characters on average
@@ -62,28 +59,21 @@ func (l *DefaultLexer) Exec(document *core.Document) {
 			language = i
 		}
 	}
-	result := l.lex(document.TextDoc.Text(nil), language)
+	result := l.exec(document.TextDoc.Text(nil), language)
 	document.Tokens = result.Tokens
 	document.Comments = result.Comments
 	document.LexerErrors = result.Errors
 }
 
-// Lex scans input with the token modes of the first language. Multi-language
-// lexers route documents via [DefaultLexer.Exec] instead.
-func (l *DefaultLexer) Lex(input string) *LexerResult {
-	return l.lex(input, 0)
-}
-
-// lex scans input from left to right using longest-match disambiguation among
+// exec scans input from left to right using longest-match disambiguation among
 // the token types of the active mode of the given language.
-func (l *DefaultLexer) lex(input string, language int) *LexerResult {
+func (l *DefaultLexer) exec(input string, language int) *lexerResult {
 	tokenModes := l.languages[language]
 	avgRatio := l.avgRatio[language]
 	length := len(input)
 	tokens := make([]core.Token, 0, avgRatio.Capacity(length))
 	comments := make([]core.Token, 0)
 	errors := make([]*core.LexerError, 0)
-	var modifiers map[int][]core.Token
 
 	// The mode stack is local to this call: a DefaultLexer is shared between
 	// documents and Exec may run concurrently, so input that ends inside a
@@ -124,17 +114,8 @@ func (l *DefaultLexer) lex(input string, language int) *LexerResult {
 					input[offset:end],
 					offset, end,
 				))
-			case 0:
+			case core.DefaultTokenModifier:
 				tokens = append(tokens, core.NewToken(
-					longestType.TokenType,
-					input[offset:end],
-					offset, end,
-				))
-			default:
-				if modifiers == nil {
-					modifiers = make(map[int][]core.Token)
-				}
-				modifiers[longestType.Modifier] = append(modifiers[longestType.Modifier], core.NewToken(
 					longestType.TokenType,
 					input[offset:end],
 					offset, end,
@@ -171,11 +152,10 @@ func (l *DefaultLexer) lex(input string, language int) *LexerResult {
 		avgRatio.Update(float64(len(tokens)) / float64(length))
 	}
 
-	return &LexerResult{
-		Tokens:    tokens,
-		Comments:  comments,
-		Errors:    errors,
-		Modifiers: modifiers,
+	return &lexerResult{
+		Tokens:   tokens,
+		Comments: comments,
+		Errors:   errors,
 	}
 }
 
@@ -195,9 +175,6 @@ func NewDefaultLexer(sc *service.Container, defaultMode int, tokenModes ...*Toke
 func NewMultiLanguageLexer(sc *service.Container, startModes []int, languages ...[]*TokenMode) *DefaultLexer {
 	if len(languages) == 0 {
 		panic("lexer: at least one language is required")
-	}
-	if len(startModes) != len(languages) {
-		panic("lexer: one start token mode per language is required")
 	}
 	avgRatios := make([]*parallel.RunningAverage, len(languages))
 	for i, tokenModes := range languages {
