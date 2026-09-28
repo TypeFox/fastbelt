@@ -21,12 +21,15 @@ import (
 type importedSymbolsProviderImpl struct {
 	sc *service.Container
 	// folders caches one folderView per folder path, shared by every document
-	// of that folder. See folderView for how staleness is detected.
-	folders sync.Map
+	// of that folder. See folderView for how staleness is detected. Documents
+	// are imported in parallel, so the check-and-build is serialized to hand
+	// every sibling the same view.
+	mu      sync.Mutex
+	folders map[string]*folderView
 }
 
 func newImportedSymbolsProviderImpl(sc *service.Container) linking.SymbolImporter {
-	return &importedSymbolsProviderImpl{sc: sc}
+	return &importedSymbolsProviderImpl{sc: sc, folders: map[string]*folderView{}}
 }
 
 // folderViewKey is the [core.Document.Data] key under which [ImportSymbols]
@@ -71,13 +74,13 @@ func (s *importedSymbolsProviderImpl) ImportSymbols(ctx context.Context, doc *co
 // folderView returns the cached view for folder when it still matches docs,
 // and builds and caches a new one otherwise.
 func (s *importedSymbolsProviderImpl) folderView(folder string, docs []*core.Document) *folderView {
-	if cached, ok := s.folders.Load(folder); ok {
-		if view := cached.(*folderView); view.matches(docs) {
-			return view
-		}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if view, ok := s.folders[folder]; ok && view.matches(docs) {
+		return view
 	}
 	view := newFolderView(docs)
-	s.folders.Store(folder, view)
+	s.folders[folder] = view
 	return view
 }
 
