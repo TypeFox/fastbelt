@@ -9,6 +9,72 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
+type Farewell interface {
+	core.AstNode
+
+	IsFarewell()
+	To() *core.Reference[Greeting]
+	SetTo(value *core.Reference[Greeting])
+}
+
+func NewFarewell() Farewell {
+	return &FarewellImpl{}
+}
+
+type FarewellData struct {
+	to *core.Reference[Greeting]
+}
+
+func (i *FarewellData) IsFarewell() {}
+
+func (i *FarewellData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+}
+
+func (i *FarewellData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	if i.to != nil {
+		fn(i.to, fieldNameTo, -1)
+	}
+}
+
+func (i *FarewellData) To() *core.Reference[Greeting] {
+	if i != nil && i.to != nil {
+		return i.to
+	} else {
+		return nil
+	}
+}
+
+func (i *FarewellData) SetTo(value *core.Reference[Greeting]) {
+	i.to = value
+}
+
+type FarewellImpl struct {
+	core.AstNodeBase
+	FarewellData
+}
+
+func (i *FarewellImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.FarewellData.ForEachNode(fn)
+}
+
+func (i *FarewellImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.FarewellData.ForEachReference(fn)
+}
+
+func (i *FarewellImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameTo:
+		return nil, fmt.Errorf("FarewellImpl.Resolve: field 'to' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("FarewellImpl.Resolve: field '%s' does not exist in node '%s' of type 'Farewell'", field.Value(), nodePath)
+	}
+}
+
 type Greeting interface {
 	core.AstNode
 
@@ -74,72 +140,6 @@ func (i *GreetingImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("GreetingImpl.Resolve: field '%s' does not exist in node '%s' of type 'Greeting'", field.Value(), nodePath)
-	}
-}
-
-type Farewell interface {
-	core.AstNode
-
-	IsFarewell()
-	To() *core.Reference[Greeting]
-	SetTo(value *core.Reference[Greeting])
-}
-
-func NewFarewell() Farewell {
-	return &FarewellImpl{}
-}
-
-type FarewellData struct {
-	to *core.Reference[Greeting]
-}
-
-func (i *FarewellData) IsFarewell() {}
-
-func (i *FarewellData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-}
-
-func (i *FarewellData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	if i.to != nil {
-		fn(i.to, fieldNameTo, -1)
-	}
-}
-
-func (i *FarewellData) To() *core.Reference[Greeting] {
-	if i != nil && i.to != nil {
-		return i.to
-	} else {
-		return nil
-	}
-}
-
-func (i *FarewellData) SetTo(value *core.Reference[Greeting]) {
-	i.to = value
-}
-
-type FarewellImpl struct {
-	core.AstNodeBase
-	FarewellData
-}
-
-func (i *FarewellImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.FarewellData.ForEachNode(fn)
-}
-
-func (i *FarewellImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.FarewellData.ForEachReference(fn)
-}
-
-func (i *FarewellImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
-	if path.Empty() {
-		return i, nil
-	}
-	field, _ := path.Head()
-	switch field {
-	case fieldNameTo:
-		return nil, fmt.Errorf("FarewellImpl.Resolve: field 'to' is a cross-reference instead of a container field")
-	default:
-		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("FarewellImpl.Resolve: field '%s' does not exist in node '%s' of type 'Farewell'", field.Value(), nodePath)
 	}
 }
 

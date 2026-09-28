@@ -8,16 +8,16 @@ import (
 )
 
 const (
-	Greeting__Start = iota
-	Greeting__Stop
-	Farewell__Start
+	Farewell__Start = iota
 	Farewell__Stop
-	Greeting_hello
-	Greeting_Name_ID
-	Greeting__Basic
+	Greeting__Start
+	Greeting__Stop
 	Farewell_goodbye
 	Farewell_To_ID
 	Farewell__Basic
+	Greeting_hello
+	Greeting_Name_ID
+	Greeting__Basic
 )
 
 var once sync.Once
@@ -31,30 +31,21 @@ func ATN() *parser.RuntimeATN {
 }
 func BuildATN() *parser.RuntimeATN {
 	states := make([]*parser.RuntimeATNState, 10)
-	states[Greeting__Start] = parser.NewATNState(Greeting__Start, parser.ATNRuleStart, true)
-	states[Greeting__Stop] = parser.NewATNState(Greeting__Stop, parser.ATNRuleStop, false)
 	states[Farewell__Start] = parser.NewATNState(Farewell__Start, parser.ATNRuleStart, true)
 	states[Farewell__Stop] = parser.NewATNState(Farewell__Stop, parser.ATNRuleStop, false)
-	states[Greeting_hello] = parser.NewATNState(Greeting_hello, parser.ATNBasic, false)
-	states[Greeting_Name_ID] = parser.NewATNState(Greeting_Name_ID, parser.ATNBasic, false)
-	states[Greeting__Basic] = parser.NewATNState(Greeting__Basic, parser.ATNBasic, true)
+	states[Greeting__Start] = parser.NewATNState(Greeting__Start, parser.ATNRuleStart, true)
+	states[Greeting__Stop] = parser.NewATNState(Greeting__Stop, parser.ATNRuleStop, false)
 	states[Farewell_goodbye] = parser.NewATNState(Farewell_goodbye, parser.ATNBasic, false)
 	states[Farewell_To_ID] = parser.NewATNState(Farewell_To_ID, parser.ATNBasic, false)
 	states[Farewell__Basic] = parser.NewATNState(Farewell__Basic, parser.ATNBasic, true)
-	states[Greeting__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[Greeting_hello]),
-	)
+	states[Greeting_hello] = parser.NewATNState(Greeting_hello, parser.ATNBasic, false)
+	states[Greeting_Name_ID] = parser.NewATNState(Greeting_Name_ID, parser.ATNBasic, false)
+	states[Greeting__Basic] = parser.NewATNState(Greeting__Basic, parser.ATNBasic, true)
 	states[Farewell__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Farewell_goodbye]),
 	)
-	states[Greeting_hello].AppendTransitions(
-		parser.NewAtomTransition(states[Greeting_Name_ID], Keyword_hello, nil),
-	)
-	states[Greeting_Name_ID].AppendTransitions(
-		parser.NewAtomTransition(states[Greeting__Basic], Token_ID, nil),
-	)
-	states[Greeting__Basic].AppendTransitions(
-		parser.NewEpsilonTransition(states[Greeting__Stop]),
+	states[Greeting__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[Greeting_hello]),
 	)
 	states[Farewell_goodbye].AppendTransitions(
 		parser.NewAtomTransition(states[Farewell_To_ID], Keyword_goodbye, nil),
@@ -64,6 +55,15 @@ func BuildATN() *parser.RuntimeATN {
 	)
 	states[Farewell__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[Farewell__Stop]),
+	)
+	states[Greeting_hello].AppendTransitions(
+		parser.NewAtomTransition(states[Greeting_Name_ID], Keyword_hello, nil),
+	)
+	states[Greeting_Name_ID].AppendTransitions(
+		parser.NewAtomTransition(states[Greeting__Basic], Token_ID, nil),
+	)
+	states[Greeting__Basic].AppendTransitions(
+		parser.NewEpsilonTransition(states[Greeting__Stop]),
 	)
 	decisionStates := make([]*parser.RuntimeATNState, 0)
 	decisionMap := make([]*parser.RuntimeATNState, 0)

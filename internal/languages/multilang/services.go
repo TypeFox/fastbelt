@@ -5,7 +5,6 @@
 package multilang
 
 import (
-	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
@@ -15,14 +14,6 @@ import (
 
 func SetupServices(sc *service.Container) {
 	textdoc.SetupDefaultServices(sc)
-	service.Put[core.LanguageSelector](
-		sc,
-		core.NewDefaultLanguageSelector(
-			sc,
-			core.NewDocumentSelectorWithPatterns("greeting", "**/*.hello"),
-			core.NewDocumentSelectorWithPatterns("farewell", "**/*.bye"),
-		),
-	)
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)
 	server.SetupDefaultServices(sc)

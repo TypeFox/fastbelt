@@ -14,7 +14,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
+	"strings"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/internal/generator"
@@ -75,6 +77,11 @@ func (c *BuildContext) Build() error {
 		selectors[i] = generator.Selector{
 			LanguageID: lang.LanguageID,
 			Patterns:   lang.Patterns,
+		}
+		if len(lang.Patterns) == 0 {
+			fmt.Printf("Info: language %q (entry %s) declares no patterns. "+
+				"Register a custom core.LanguageSelector before SetupGeneratedServices "+
+				"to ensure correct behavior of the language.\n", lang.LanguageID, lang.Entry)
 		}
 	}
 
@@ -169,33 +176,32 @@ func parseAndMerge(files []string) (grammar.Grammar, error) {
 
 // mergeGrammars concatenates several grammars into a single one and reparents
 // every element so container-based lookups in the generator span all files.
-// Consistency across files (one grammar name, unique names, a single default
-// token mode, ...) is the grammar validator's job: it checks the whole folder
-// and parseAndMerge aborts on any error before getting here.
+// Ensures a sorting by name for all elements except for terminals:
+// The ordering of terminals is semantically relevant and critical for correct lexing.
 func mergeGrammars(grammars []grammar.Grammar) grammar.Grammar {
 	merged := grammar.NewGrammar()
 	merged.SetName(grammars[0].NameToken())
+	for _, item := range sortedByName(grammars, grammar.Grammar.Rules) {
+		merged.SetRulesItem(item)
+	}
+	for _, item := range sortedByName(grammars, grammar.Grammar.Composites) {
+		merged.SetCompositesItem(item)
+	}
+	for _, item := range sortedByName(grammars, grammar.Grammar.InfixRules) {
+		merged.SetInfixRulesItem(item)
+	}
+	for _, item := range sortedByName(grammars, grammar.Grammar.TokenGroups) {
+		merged.SetTokenGroupsItem(item)
+	}
+	for _, item := range sortedByName(grammars, grammar.Grammar.TokenModes) {
+		merged.SetTokenModesItem(item)
+	}
+	for _, item := range sortedByName(grammars, grammar.Grammar.Interfaces) {
+		merged.SetInterfacesItem(item)
+	}
 	for _, g := range grammars {
-		for _, item := range g.Rules() {
-			merged.SetRulesItem(item)
-		}
-		for _, item := range g.Composites() {
-			merged.SetCompositesItem(item)
-		}
-		for _, item := range g.InfixRules() {
-			merged.SetInfixRulesItem(item)
-		}
 		for _, item := range g.Terminals() {
 			merged.SetTerminalsItem(item)
-		}
-		for _, item := range g.TokenGroups() {
-			merged.SetTokenGroupsItem(item)
-		}
-		for _, item := range g.TokenModes() {
-			merged.SetTokenModesItem(item)
-		}
-		for _, item := range g.Interfaces() {
-			merged.SetInterfacesItem(item)
 		}
 	}
 
@@ -206,6 +212,18 @@ func mergeGrammars(grammars []grammar.Grammar) grammar.Grammar {
 	doc.Root = merged
 	core.AssignContainers(doc)
 	return merged
+}
+
+// sortedByName collects the elements that get selects from every grammar and
+// returns them sorted by name. The sort is stable, so elements with the same
+// name (rejected by validation anyway) keep file order.
+func sortedByName[T interface{ Name() string }](grammars []grammar.Grammar, get func(grammar.Grammar) []T) []T {
+	var items []T
+	for _, g := range grammars {
+		items = append(items, get(g)...)
+	}
+	slices.SortStableFunc(items, func(a, b T) int { return strings.Compare(a.Name(), b.Name()) })
+	return items
 }
 
 // findEntryRule resolves a language's Entry to a parser rule that exists and is

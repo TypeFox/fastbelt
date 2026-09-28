@@ -41,26 +41,6 @@ func NewParser(sc *service.Container) *Parser {
 	}
 }
 
-func (p *Parser) ParseGreeting() Greeting {
-	current := NewGreeting()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
-	{
-		{
-			token := p.state.Consume(Keyword_hello)
-			core.AssignToken(current, token, Greeting_hello)
-		}
-		{
-			token := p.state.Consume(Token_ID)
-			core.AssignToken(current, token, Greeting_Name_ID)
-			if token != nil {
-				current.SetName(token)
-			}
-		}
-	}
-	current.SetTextRangeEnd(p.state.LA(0).Range.End)
-	return current
-}
-
 func (p *Parser) ParseFarewell() Farewell {
 	current := NewFarewell()
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
@@ -74,6 +54,26 @@ func (p *Parser) ParseFarewell() Farewell {
 			core.AssignToken(current, token, Farewell_To_ID)
 			if token != nil {
 				current.SetTo(p.referencesConstructor.FarewellTo(current, token))
+			}
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseGreeting() Greeting {
+	current := NewGreeting()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Keyword_hello)
+			core.AssignToken(current, token, Greeting_hello)
+		}
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, Greeting_Name_ID)
+			if token != nil {
+				current.SetName(token)
 			}
 		}
 	}

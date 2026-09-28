@@ -10,23 +10,7 @@ import (
 	"unicode/utf8"
 )
 
-const Keyword_hello_Idx = 1
-
-var Keyword_hello = core.NewTokenType(
-	Keyword_hello_Idx,
-	"hello",
-	"hello",
-	core.TokenKindKeyword,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "hello") {
-			return 5
-		}
-		return 0
-	},
-	[]rune{'h'},
-)
-
-const Keyword_goodbye_Idx = 2
+const Keyword_goodbye_Idx = 1
 
 var Keyword_goodbye = core.NewTokenType(
 	Keyword_goodbye_Idx,
@@ -40,6 +24,22 @@ var Keyword_goodbye = core.NewTokenType(
 		return 0
 	},
 	[]rune{'g'},
+)
+
+const Keyword_hello_Idx = 2
+
+var Keyword_hello = core.NewTokenType(
+	Keyword_hello_Idx,
+	"hello",
+	"hello",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "hello") {
+			return 5
+		}
+		return 0
+	},
+	[]rune{'h'},
 )
 
 const Token_ID_Idx = 3

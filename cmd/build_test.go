@@ -51,9 +51,11 @@ func TestLoadGrammarDirMergesFiles(t *testing.T) {
 	require.Len(t, g.Rules(), 2)
 	require.Len(t, g.Interfaces(), 2)
 	require.Len(t, g.Terminals(), 2)
-	// The implicit return type of Farewell is found in the merged grammar.
-	farewell := g.Rules()[1]
+	// Rules are sorted by name regardless of file order, and the implicit
+	// return type of Farewell is found in the merged grammar.
+	farewell := g.Rules()[0]
 	require.Equal(t, "Farewell", farewell.Name())
+	require.Equal(t, "Greeting", g.Rules()[1].Name())
 	require.NotNil(t, grammar.FindReturnType(farewell, t.Context()))
 }
 

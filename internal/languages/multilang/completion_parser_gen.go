@@ -45,19 +45,6 @@ func (p *CompletionParser) Parse(document *core.Document, tokens []core.Token) *
 	return cp.cp.Result(tokens)
 }
 
-func (p *CompletionParser) ParseGreeting() {
-	p.cp.EnterRule("Greeting", Greeting__Start)
-	defer p.cp.ExitRule()
-	{
-		p.state.Consume(Keyword_hello)
-	}
-	{
-		p.cp.MarkAssignment("Name")
-		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
-	}
-}
-
 func (p *CompletionParser) ParseFarewell() {
 	p.cp.EnterRule("Farewell", Farewell__Start)
 	defer p.cp.ExitRule()
@@ -66,6 +53,19 @@ func (p *CompletionParser) ParseFarewell() {
 	}
 	{
 		p.cp.MarkAssignment("To")
+		p.state.Consume(Token_ID)
+		p.cp.ClearAssignment()
+	}
+}
+
+func (p *CompletionParser) ParseGreeting() {
+	p.cp.EnterRule("Greeting", Greeting__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_hello)
+	}
+	{
+		p.cp.MarkAssignment("Name")
 		p.state.Consume(Token_ID)
 		p.cp.ClearAssignment()
 	}

@@ -1,0 +1,7 @@
+grammar MultilangModel
+
+interface Farewell {
+    To *Greeting
+}
+
+entry Farewell: "goodbye" To=[Greeting:ID]
