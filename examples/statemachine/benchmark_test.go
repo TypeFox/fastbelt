@@ -94,12 +94,7 @@ func BenchmarkTraverseContentSeq(b *testing.B) {
 func BenchmarkTraverseContentSeqHalf(b *testing.B) {
 	content, elementCount := generateStatemachineContent(0)
 	srv := CreateServices()
-	documentParser := service.MustGet[workspace.DocumentParser](srv)
-	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
-	if err != nil {
-		b.Fatal(err)
-	}
-	documentParser.Parse(doc)
+	doc := parseDocument(srv, content)
 	half := elementCount / 2
 
 	for b.Loop() {
@@ -254,12 +249,7 @@ func generateStatemachineContent(index int) (string, int) {
 func TestAllNodesEarlyExitShortCircuits(t *testing.T) {
 	content, elementCount := generateStatemachineContent(0)
 	srv := CreateServices()
-	documentParser := service.MustGet[workspace.DocumentParser](srv)
-	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
-	if err != nil {
-		t.Fatal(err)
-	}
-	documentParser.Parse(doc)
+	doc := parseDocument(srv, content)
 	visited := 0
 	for range fastbelt.AllNodes(doc.Root) {
 		visited++
