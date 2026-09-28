@@ -392,3 +392,15 @@ func TestExecIsSafeForConcurrentUse(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestMultiLanguageLexerStartsInConfiguredMode(t *testing.T) {
+	id := matchRunes(1, "ID", lowercase)
+	text := matchRunes(2, "TEXT", lowercase)
+	modes := []*TokenMode{
+		NewTokenMode("default", UseTokenType(id)),
+		NewTokenMode("Inner", UseTokenType(text)),
+	}
+	lexer := NewMultiLanguageLexer(nil, []int{0, 1}, modes, modes)
+	assert.Equal(t, []string{"ID"}, names(lexer.lex("abc", 0).Tokens))
+	assert.Equal(t, []string{"TEXT"}, names(lexer.lex("abc", 1).Tokens))
+}

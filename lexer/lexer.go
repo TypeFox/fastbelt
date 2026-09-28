@@ -45,8 +45,8 @@ type DefaultLexer struct {
 	sc *service.Container
 	// one token mode list per language; index 0 is the fallback
 	languages [][]*TokenMode
-	// index into each language's token modes of the mode every run starts in
-	defaultMode int
+	// per language: index into its token modes of the mode every run starts in
+	startModes []int
 	// running exponential moving average of tokens-per-byte (per language)
 	avgRatio []*parallel.RunningAverage
 }
@@ -88,7 +88,7 @@ func (l *DefaultLexer) lex(input string, language int) *LexerResult {
 	// The mode stack is local to this call: a DefaultLexer is shared between
 	// documents and Exec may run concurrently, so input that ends inside a
 	// pushed mode must not leak into the next run.
-	stack := NewTokenModeStack(tokenModes[l.defaultMode])
+	stack := NewTokenModeStack(tokenModes[l.startModes[language]])
 	currentTokenMode := stack.Peek()
 
 	var offset int
@@ -184,29 +184,32 @@ const maxChar = 256
 // NewDefaultLexer returns a [DefaultLexer] that starts every run in
 // tokenModes[defaultMode]. The returned lexer is safe for concurrent use.
 func NewDefaultLexer(sc *service.Container, defaultMode int, tokenModes ...*TokenMode) *DefaultLexer {
-	return NewMultiLanguageLexer(sc, defaultMode, tokenModes)
+	return NewMultiLanguageLexer(sc, []int{defaultMode}, tokenModes)
 }
 
 // NewMultiLanguageLexer returns a lexer with one token mode list per language.
-// Mode indices (including defaultMode) are shared across languages, so each
-// list must have the same length. The document's language is resolved via
-// [core.LanguageSelector]; index 0 is the fallback for documents that match
-// no language.
-func NewMultiLanguageLexer(sc *service.Container, defaultMode int, languages ...[]*TokenMode) *DefaultLexer {
+// startModes holds, per language, the index of the token mode a run starts in.
+// Mode indices are shared across languages, so each list must have the same
+// length. The document's language is resolved via [core.LanguageSelector];
+// index 0 is the fallback for documents that match no language.
+func NewMultiLanguageLexer(sc *service.Container, startModes []int, languages ...[]*TokenMode) *DefaultLexer {
 	if len(languages) == 0 {
 		panic("lexer: at least one language is required")
 	}
+	if len(startModes) != len(languages) {
+		panic("lexer: one start token mode per language is required")
+	}
 	avgRatios := make([]*parallel.RunningAverage, len(languages))
 	for i, tokenModes := range languages {
-		if defaultMode < 0 || defaultMode >= len(tokenModes) {
-			panic("lexer: default token mode index out of range")
+		if startModes[i] < 0 || startModes[i] >= len(tokenModes) {
+			panic("lexer: start token mode index out of range")
 		}
 		avgRatios[i] = parallel.NewRunningAverage(defaultTokenRatio)
 	}
 	return &DefaultLexer{
-		sc:          sc,
-		languages:   languages,
-		defaultMode: defaultMode,
-		avgRatio:    avgRatios,
+		sc:         sc,
+		languages:  languages,
+		startModes: startModes,
+		avgRatio:   avgRatios,
 	}
 }

@@ -306,3 +306,39 @@ func TestFolderGrammarNamesMatchNoDiagnostic(t *testing.T) {
 		doc.AssertNoErrors()
 	}
 }
+
+// Mirrors the multilang example: a tokens-only file whose tokens are used by
+// sibling files that each declare their own (non-default) token mode.
+func TestFolderTokenUsedOnlyBySiblingModes(t *testing.T) {
+	f := test.New(t, CreateServices())
+	docs := f.ParseAll(
+		"file:///ws/common.fb", `
+			grammar Test;
+			token ID: /[_a-zA-Z][\w_]*/
+			hidden token WS: /\s+/
+		`,
+		"file:///ws/farewell.fb", `
+			grammar Test;
+			interface Farewell { To *Greeting }
+			entry Farewell: "goodbye" To=[Greeting:ID]
+			token mode FarewellMode {
+				"goodbye"
+				ID
+				hidden WS
+			}
+		`,
+		"file:///ws/greeting.fb", `
+			grammar Test;
+			interface Greeting { Name string }
+			entry Greeting: "hello" Name=ID
+			token mode GreetingMode {
+				"hello"
+				ID
+				hidden WS
+			}
+		`,
+	)
+	for _, doc := range docs {
+		doc.AssertNoDiagnostics()
+	}
+}

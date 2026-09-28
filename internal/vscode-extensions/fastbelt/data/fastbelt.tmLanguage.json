@@ -20,10 +20,6 @@
             "match": "\\b(?i:true|false)\\b"
         },
         {
-            "name": "keyword.symbol.fastbelt",
-            "match": "(\\{|\\}|\\:|\\]|\\[|\\(|\\)|(\\??|\\+?)\\=|->|\\=>|<|>|\\,|\\*|\\+|\\@|\\||\\&|\\?|\\!|\\;)"
-        },
-        {
             "name": "string.quoted.double.fastbelt",
             "begin": "\"",
             "end": "\"",

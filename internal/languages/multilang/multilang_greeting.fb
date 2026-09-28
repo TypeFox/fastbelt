@@ -5,3 +5,9 @@ interface Greeting {
 }
 
 entry Greeting: "hello" Name=ID
+
+token mode GreetingMode {
+    "hello"
+    ID
+    hidden WS
+}

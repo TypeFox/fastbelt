@@ -2016,3 +2016,31 @@ func TestHiddenTokenUsageInTokenModeNotMarkedAsDiagnostic(t *testing.T) {
 	`)
 	doc.AssertNoDiagnostic("1")
 }
+
+// A grammar with several entry rules is built as several languages, each with
+// its own start token mode, so no default mode is required and modes that are
+// never entered from (or never leave to) another mode are fine.
+func TestMultiLanguageGrammarNeedsNoDefaultTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	f.Parse(`
+		grammar Test;
+		interface Greeting { Name string }
+		interface Farewell { To *Greeting }
+		entry Greeting: "hello" Name=ID;
+		entry Farewell: "goodbye" To=[Greeting:ID];
+
+		token ID: /[_a-zA-Z][\w_]*/
+		hidden token WS: /\s+/
+
+		token mode GreetingMode {
+			"hello"
+			ID
+			hidden WS
+		}
+		token mode FarewellMode {
+			"goodbye"
+			ID
+			hidden WS
+		}
+	`).AssertNoDiagnostics()
+}

@@ -5,3 +5,9 @@ interface Farewell {
 }
 
 entry Farewell: "goodbye" To=[Greeting:ID]
+
+token mode FarewellMode {
+    "goodbye"
+    ID
+    hidden WS
+}

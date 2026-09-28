@@ -98,7 +98,7 @@ func (g *GrammarImpl) Validate(ctx context.Context, _ *service.Container, accept
 	checkTokenModesAreReachable(g, folder, ctx, accept)
 	checkTokenModesCoverParserTokens(g, folder, ctx, accept)
 	checkParserRulesCoverVisibleTokens(g, folder, ctx, accept)
-	checkIfNonDefaultTokenModesHasNoExit(g, ctx, accept)
+	checkIfNonDefaultTokenModesHasNoExit(g, folder, ctx, accept)
 	checkIfKeywordPureStandaloneOrTokenDecl(g, folder, ctx, accept)
 	checkIfTokenRefRefersToOuterScope(g, ctx, accept)
 }
@@ -173,11 +173,13 @@ func checkTokenModesAreReachable(g, folder Grammar, ctx context.Context, accept 
 			}
 		}
 	}
-	visited := collections.NewSet[TokenMode]()
-	queue := []TokenMode{}
-	if entryMode != nil {
-		queue = append(queue, entryMode)
+	if entryMode == nil {
+		// Without a default mode the start modes are configured per language
+		// by the build, so reachability cannot be judged from the grammar.
+		return
 	}
+	visited := collections.NewSet[TokenMode]()
+	queue := []TokenMode{entryMode}
 	for len(queue) > 0 {
 		current := queue[0]
 		queue = queue[1:]
@@ -202,8 +204,10 @@ func checkTokenModesAreReachable(g, folder Grammar, ctx context.Context, accept 
 	}
 }
 
-func checkIfNonDefaultTokenModesHasNoExit(g Grammar, _ context.Context, accept core.ValidationAcceptor) {
-	if len(g.TokenModes()) == 0 {
+func checkIfNonDefaultTokenModesHasNoExit(g, folder Grammar, _ context.Context, accept core.ValidationAcceptor) {
+	if len(g.TokenModes()) == 0 || !hasDefaultTokenMode(folder) {
+		// Without a default mode every mode is a potential start mode of a
+		// language and needs no way back.
 		return
 	}
 	for _, mode := range g.TokenModes() {
@@ -254,7 +258,37 @@ func getCommand(member TokenModeMember) TokenCommand {
 	return nil
 }
 
+// hasDefaultTokenMode reports whether the folder declares a `token mode default`.
+func hasDefaultTokenMode(folder Grammar) bool {
+	for _, mode := range folder.TokenModes() {
+		if mode.IsDefault() {
+			return true
+		}
+	}
+	return false
+}
+
+// isMultiLanguage reports whether the folder declares several entry rules. Such
+// a grammar is built with one language per entry rule, and each language
+// configures the token mode its lexer starts in (see the cmd package), so the
+// checks that assume the lexer starts in the default mode do not apply.
+func isMultiLanguage(folder Grammar) bool {
+	entries := 0
+	for _, rule := range folder.Rules() {
+		if rule.IsEntry() {
+			entries++
+		}
+		if entries > 1 {
+			return true
+		}
+	}
+	return false
+}
+
 func checkIfDefaultTokenModeIsRequired(g, folder Grammar, accept core.ValidationAcceptor) {
+	if isMultiLanguage(folder) {
+		return
+	}
 	if len(g.TokenModes()) > 0 {
 		hasDefault := false
 		var nonDefaultTokenMode TokenMode = nil

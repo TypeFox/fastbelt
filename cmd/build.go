@@ -28,10 +28,12 @@ import (
 )
 
 // Language configures one language served by the generated language server: the
-// grammar entry rule it parses from, and the LSP language id and URI-path glob
+// grammar entry rule it parses from, the token mode its lexer starts in (the
+// `default` mode when empty), and the LSP language id and URI-path glob
 // patterns that claim its documents.
 type Language struct {
 	Entry      string
+	TokenMode  string
 	LanguageID string
 	Patterns   []string
 }
@@ -67,6 +69,7 @@ func (c *BuildContext) Build() error {
 	}
 
 	entries := make([]grammar.ParserRule, len(c.Languages))
+	startModes := make([]string, len(c.Languages))
 	selectors := make([]generator.Selector, len(c.Languages))
 	for i, lang := range c.Languages {
 		rule, err := findEntryRule(g, lang.Entry)
@@ -74,6 +77,10 @@ func (c *BuildContext) Build() error {
 			return err
 		}
 		entries[i] = rule
+		if err := checkTokenMode(g, lang); err != nil {
+			return err
+		}
+		startModes[i] = lang.TokenMode
 		selectors[i] = generator.Selector{
 			LanguageID: lang.LanguageID,
 			Patterns:   lang.Patterns,
@@ -98,7 +105,7 @@ func (c *BuildContext) Build() error {
 	if pkg == "" {
 		pkg = filepath.Base(out)
 	}
-	return Generate(g, entries, selectors, out, pkg, c.ATN, c.Verbose)
+	return Generate(g, entries, startModes, selectors, out, pkg, c.ATN, c.Verbose)
 }
 
 // LoadGrammarDir parses, links and validates every top-level .fb file in dir as
@@ -240,6 +247,28 @@ func findEntryRule(g grammar.Grammar, name string) (grammar.ParserRule, error) {
 	return nil, fmt.Errorf("entry rule %q not found in grammar", name)
 }
 
+// checkTokenMode verifies that the language's start token mode exists. An
+// empty name means the default mode, which is implicit when the grammar
+// declares no token modes at all and must be declared otherwise.
+func checkTokenMode(g grammar.Grammar, lang Language) error {
+	hasDefault := len(g.TokenModes()) == 0
+	for _, mode := range g.TokenModes() {
+		if mode.IsDefault() {
+			hasDefault = true
+		} else if mode.Name() == lang.TokenMode {
+			return nil
+		}
+	}
+	if lang.TokenMode == "" || lang.TokenMode == "default" {
+		if hasDefault {
+			return nil
+		}
+		return fmt.Errorf("language %q (entry %s) starts in the default token mode, "+
+			"but the grammar declares no default token mode; set Language.TokenMode", lang.LanguageID, lang.Entry)
+	}
+	return fmt.Errorf("token mode %q not found in grammar", lang.TokenMode)
+}
+
 // reportDiagnostics prints sorted diagnostics for the given documents and
 // returns an error when any are of error severity.
 func reportDiagnostics(docs []*core.Document) error {
@@ -284,9 +313,11 @@ func reportDiagnostics(docs []*core.Document) error {
 }
 
 // Generate writes the generated Go files for grammar g into outDir. entries
-// lists the entry rules (index-aligned to the configured languages); with a
-// single entry the output matches the single-language CLI.
-func Generate(g grammar.Grammar, entries []grammar.ParserRule, selectors []generator.Selector, outDir, pkg string, atn, verbose bool) error {
+// lists the entry rules and startModes the start token modes (both
+// index-aligned to the configured languages; a nil startModes or empty name
+// means the default mode); with a single entry the output matches the
+// single-language CLI.
+func Generate(g grammar.Grammar, entries []grammar.ParserRule, startModes []string, selectors []generator.Selector, outDir, pkg string, atn, verbose bool) error {
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return err
 	}
@@ -316,7 +347,7 @@ func Generate(g grammar.Grammar, entries []grammar.ParserRule, selectors []gener
 		{"completion-parser", "completion_parser_gen.go", generator.GenerateCompletionParser(g, entries, pkg, tokenTypes, atnData)},
 		{"parser-lookahead", "parser_lookahead_gen.go", generator.GenerateParserLookahead(g, pkg, tokenTypes, atnData)},
 		{"completion", "completion_gen.go", generator.GenerateCompletion(g, pkg)},
-		{"lexer", "lexer_gen.go", generator.GenerateLexer(g, entries, pkg, tokenTypes)},
+		{"lexer", "lexer_gen.go", generator.GenerateLexer(g, entries, startModes, pkg, tokenTypes)},
 		{"services", "services_gen.go", generator.GenerateServices(g, selectors, pkg)},
 		{"atn", "atn_gen.go", generator.GenerateATN(g, pkg, tokenTypes)},
 	}

@@ -22,7 +22,7 @@ func generateLexerFor(t *testing.T, src string) string {
 	doc := f.Parse(src)
 	grammr, ok := doc.Document.Root.(grammar.Grammar)
 	require.True(t, ok)
-	return GenerateLexer(grammr, nil, "test", GenerateTokenTypes(grammr))
+	return GenerateLexer(grammr, nil, nil, "test", GenerateTokenTypes(grammr))
 }
 
 func TestGenerateLexerModeCommands(t *testing.T) {

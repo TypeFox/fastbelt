@@ -61,7 +61,7 @@ func runGenerateCLI(opts generateOptions) error {
 	// Delegate code generation to the shared build API. A single-language CLI
 	// build passes exactly one entry rule, so the generated parser keeps its
 	// direct (non-dispatching) Parse body.
-	return cmd.Generate(g, []grammar.ParserRule{entryRule}, nil, outputPath, packageName, opts.atn, verbose)
+	return cmd.Generate(g, []grammar.ParserRule{entryRule}, nil, nil, outputPath, packageName, opts.atn, verbose)
 }
 
 func validateEntryRule(g grammar.Grammar) (grammar.ParserRule, error) {

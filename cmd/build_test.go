@@ -125,3 +125,95 @@ func TestLoadGrammarDirRejectsMismatchedGrammarNames(t *testing.T) {
 	_, err := LoadGrammarDir(dir)
 	require.ErrorContains(t, err, "aborting code generation due to 2 errors")
 }
+
+func TestLoadGrammarDirRejectsTwoDefaultTokenModes(t *testing.T) {
+	dir := writeGrammarDir(t,
+		"a.fb", `
+			grammar Multi
+			interface Greeting { Name string }
+			entry Greeting: "hello" Name=ID
+			token mode default {
+				"hello"
+				ID
+				hidden WS
+			}
+		`+multiTokens,
+		"b.fb", `
+			grammar Multi
+			token mode default {
+				ID
+			}
+		`,
+	)
+
+	_, err := LoadGrammarDir(dir)
+	require.ErrorContains(t, err, "aborting code generation due to")
+}
+
+const modeGrammar = `
+	grammar Multi
+	interface Greeting { Name string }
+	interface Farewell { Name string }
+	entry Greeting: "hello" Name=ID
+	entry Farewell: "goodbye" Name=ID
+	token ID: /[_a-zA-Z][\w_]*/
+	hidden token WS: /\s+/
+	token mode default {
+		"hello" -> push(Inner)
+		ID
+		hidden WS
+	}
+	token mode Inner {
+		"goodbye"
+		ID -> pop
+		hidden WS
+	}
+`
+
+func TestBuildRejectsUnknownTokenMode(t *testing.T) {
+	dir := writeGrammarDir(t, "a.fb", modeGrammar)
+	ctx := &BuildContext{Input: dir, Output: t.TempDir(), Package: "multi", Languages: []Language{
+		{Entry: "Farewell", TokenMode: "Nope"},
+	}}
+	require.ErrorContains(t, ctx.Build(), `token mode "Nope" not found`)
+}
+
+func TestBuildUsesConfiguredStartTokenMode(t *testing.T) {
+	dir := writeGrammarDir(t, "a.fb", modeGrammar)
+	out := t.TempDir()
+	ctx := &BuildContext{Input: dir, Output: out, Package: "multi", Languages: []Language{
+		{Entry: "Greeting", LanguageID: "greeting", Patterns: []string{"**/*.hello"}},
+		{Entry: "Farewell", TokenMode: "Inner", LanguageID: "farewell", Patterns: []string{"**/*.bye"}},
+	}}
+	require.NoError(t, ctx.Build())
+	code, err := os.ReadFile(filepath.Join(out, "lexer_gen.go"))
+	require.NoError(t, err)
+	require.Contains(t, string(code), "lexer.NewMultiLanguageLexer(sc, []int{TokenMode_default, TokenMode_Inner}, modes0, modes1)")
+}
+
+func TestBuildRequiresStartModeWithoutDefaultTokenMode(t *testing.T) {
+	dir := writeGrammarDir(t, "a.fb", `
+		grammar Multi
+		interface Greeting { Name string }
+		interface Farewell { Name string }
+		entry Greeting: "hello" Name=ID
+		entry Farewell: "goodbye" Name=ID
+		token ID: /[_a-zA-Z][\w_]*/
+		hidden token WS: /\s+/
+		token mode GreetingMode {
+			"hello"
+			ID
+			hidden WS
+		}
+		token mode FarewellMode {
+			"goodbye"
+			ID
+			hidden WS
+		}
+	`)
+	ctx := &BuildContext{Input: dir, Output: t.TempDir(), Package: "multi", Languages: []Language{
+		{Entry: "Greeting", TokenMode: "GreetingMode", LanguageID: "greeting"},
+		{Entry: "Farewell", LanguageID: "farewell"},
+	}}
+	require.ErrorContains(t, ctx.Build(), "declares no default token mode")
+}

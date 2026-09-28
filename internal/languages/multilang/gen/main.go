@@ -17,11 +17,13 @@ func main() {
 		Languages: []cmd.Language{
 			{
 				Entry:      "Greeting",
+				TokenMode:  "GreetingMode",
 				LanguageID: "greeting",
 				Patterns:   []string{"**/*.hello"},
 			},
 			{
 				Entry:      "Farewell",
+				TokenMode:  "FarewellMode",
 				LanguageID: "farewell",
 				Patterns:   []string{"**/*.bye"},
 			},

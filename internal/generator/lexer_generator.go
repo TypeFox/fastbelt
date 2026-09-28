@@ -19,7 +19,10 @@ import (
 	"typefox.dev/fastbelt/util/codegen"
 )
 
-func GenerateLexer(grammr grammar.Grammar, entryRules []grammar.ParserRule, packageName string, tokenTypes GenerateTokenTypesResult) string {
+// GenerateLexer emits the lexer for grammr. entryRules lists one entry rule per
+// language and startModes the token mode each language starts in (index
+// aligned; nil or "" means the default mode).
+func GenerateLexer(grammr grammar.Grammar, entryRules []grammar.ParserRule, startModes []string, packageName string, tokenTypes GenerateTokenTypesResult) string {
 	nodes := []codegen.Node{}
 
 	imports := map[string]bool{}
@@ -55,7 +58,7 @@ func GenerateLexer(grammr grammar.Grammar, entryRules []grammar.ParserRule, pack
 	}
 
 	generateLexerModeEnums(node, tokenTypes)
-	generateMainLexerFunction(context.Background(), node, grammr, entryRules, tokenTypes)
+	generateMainLexerFunction(context.Background(), node, grammr, entryRules, startModes, tokenTypes)
 	return FormatIfPossible(node.String())
 }
 
@@ -71,13 +74,20 @@ func generateLexerModeEnums(node codegen.Node, tokenTypes GenerateTokenTypesResu
 	node.AppendLine()
 }
 
-func generateMainLexerFunction(context context.Context, node codegen.Node, grammr grammar.Grammar, entryRules []grammar.ParserRule, tokenTypes GenerateTokenTypesResult) {
-	defaultMode := tokenTypes.TokenModes["default"].VarName
+func generateMainLexerFunction(context context.Context, node codegen.Node, grammr grammar.Grammar, entryRules []grammar.ParserRule, startModes []string, tokenTypes GenerateTokenTypesResult) {
+	// startMode returns the var name of the mode language i starts in. Mode
+	// existence is validated by the build before generation.
+	startMode := func(i int) string {
+		if i < len(startModes) && startModes[i] != "" {
+			return tokenTypes.TokenModes[startModes[i]].VarName
+		}
+		return tokenTypes.TokenModes["default"].VarName
+	}
 	node.AppendLine("func NewLexer(sc *service.Container) lexer.Lexer {")
 	node.Indent(func(n codegen.Node) {
 		if len(entryRules) <= 1 {
 			generateTokenModes(context, n, "modes", nil, tokenTypes)
-			n.AppendLine("return lexer.NewDefaultLexer(sc, " + defaultMode + ", modes...)")
+			n.AppendLine("return lexer.NewDefaultLexer(sc, " + startMode(0) + ", modes...)")
 			return
 		}
 		// One token mode list per language, index-aligned with the parser's
@@ -88,7 +98,14 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, gramm
 			n.AppendLine("// ", entry.Name())
 			generateTokenModes(context, n, varName, reachableTokenNames(grammr, entry), tokenTypes)
 		}
-		n.Append("return lexer.NewMultiLanguageLexer(sc, " + defaultMode)
+		n.Append("return lexer.NewMultiLanguageLexer(sc, []int{")
+		for i := range entryRules {
+			if i > 0 {
+				n.Append(", ")
+			}
+			n.Append(startMode(i))
+		}
+		n.Append("}")
 		for i := range entryRules {
 			n.Append(", modes" + strconv.Itoa(i))
 		}
