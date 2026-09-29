@@ -687,10 +687,7 @@ func TestUpdateConsecutiveUpdates(t *testing.T) {
 // content slice, so Update must never modify that slice in place.
 func TestUpdateDoesNotMutateAliasedStrings(t *testing.T) {
 	original := strings.Clone("hello world")
-	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, original)
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewOverlay("file:///test.txt", "plaintext", 1, original)
 
 	replace := func(end uint32, text string, version int32) {
 		t.Helper()
