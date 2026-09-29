@@ -6,6 +6,8 @@ package arithmetics
 
 import (
 	"context"
+	"iter"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -147,4 +149,68 @@ func TestAfterOperatorCompletion(t *testing.T) {
 		labels[item.Label] = true
 	}
 	assert.True(t, labels["x"], "expected reference to definition 'x' in completion items, got %v", labels)
+}
+
+// countingCompletionFilter counts the completions of a reference.
+type countingCompletionFilter struct {
+	DefaultArithmeticsCompletionFilter
+	count int
+}
+
+func (f *countingCompletionFilter) FilterFunctionCallCallable(_ context.Context, _ *core.Reference[AbstractDefinition], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.count++
+	return in
+}
+
+// completeReferences returns the labels of the references that are offered
+// at the cursor, and how often a reference was completed for them.
+func completeReferences(t *testing.T, content string) ([]string, int) {
+	t.Helper()
+	filter := &countingCompletionFilter{}
+	sc := service.NewContainer()
+	SetupServices(sc)
+	service.Put[ArithmeticsCompletionFilter](sc, filter)
+	SetupGeneratedServerServices(sc)
+	server.SetupDefaultServices(sc)
+	sc.Seal()
+	doc := test.New(t, sc).Parse(content)
+
+	labels := []string{}
+	for _, item := range doc.CompletionItems("cursor") {
+		if item.Kind == lsp.ReferenceCompletion {
+			labels = append(labels, item.Label)
+		}
+	}
+	return labels, filter.count
+}
+
+// TestCompletionOfParameters verifies that the parameters of a definition
+// are offered inside of its expression only, also behind an expression that
+// is longer than the completion engine looks back.
+func TestCompletionOfParameters(t *testing.T) {
+	long := "1" + strings.Repeat(" + 1", 40)
+	cases := []struct {
+		content  string
+		expected []string
+	}{
+		{"module test def f(a, b): 1 + <|cursor>", []string{"a", "b", "f"}},
+		{"module test def f(a, b): 1 + 2 * <|cursor>", []string{"a", "b", "f"}},
+		{"module test def f(a, b): " + long + " + <|cursor>", []string{"a", "b", "f"}},
+		{"module test def f(a, b): 1; <|cursor>", []string{"f"}},
+		{"module test def f(a, b): " + long + "; <|cursor>", []string{"f"}},
+	}
+	for _, c := range cases {
+		t.Run(c.content, func(t *testing.T) {
+			labels, _ := completeReferences(t, c.content)
+			assert.ElementsMatch(t, c.expected, labels)
+		})
+	}
+}
+
+// TestCompletionOfReferenceOnce verifies that a reference is completed once,
+// although several paths of the grammar lead to it.
+func TestCompletionOfReferenceOnce(t *testing.T) {
+	labels, count := completeReferences(t, "module test def f(a, b): ( <|cursor>")
+	assert.ElementsMatch(t, []string{"a", "b", "f"}, labels)
+	assert.Equal(t, 1, count)
 }

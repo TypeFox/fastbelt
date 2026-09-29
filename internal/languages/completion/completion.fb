@@ -7,7 +7,7 @@ interface Root {
     Objects []Obj
 }
 
-entry Root: Objects+=(Declare | A | B | C | D | E | F | G | H | I | J | K | L | M | N | O)*;
+entry Root: Objects+=(Declare | A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q | R | S | T | U | V | W | Z)*;
 
 interface Declare extends Obj {
     Name composite
@@ -118,6 +118,144 @@ interface O extends Obj {
 
 // action used to change type
 O returns Obj: {O} "o" Ref=[Declare:ID];
+
+interface P extends Obj {
+    Locals []Declare
+    Item PItem
+    Others []PItem
+}
+
+interface PItem {
+    Ref *Declare
+}
+
+// cross-reference in a nested rule, inside of a container with local symbols
+P: "p" LBRACE Locals+=Declare* "use" Item=PItem (AND Others+=PItem)* RBRACE;
+
+PItem: Ref=[Declare:ID];
+
+interface Q extends Obj {
+    Locals []Declare
+    Items []PItem
+    Nested []Q
+}
+
+// cross-references in a loop without separators, inside of nested containers with local symbols
+Q: "q" LBRACE (Locals+=Declare | Items+=PItem | Nested+=Q)* RBRACE;
+
+interface R extends Obj {
+    Items []RItem
+}
+
+interface RItem {
+    Ref *Declare
+    Previous RItem
+}
+
+// list of items without separators that are wrapped by a tree-rewriting action
+R: "r" LBRACE Items+=RItem* RBRACE;
+
+RItem: Ref=[Declare:ID] ({RItem.Previous=current} AND Ref=[Declare:ID])*;
+
+interface S extends Obj {
+    Items []SItem
+}
+
+interface SItem {}
+
+interface SRef extends SItem {
+    Ref *Declare
+}
+
+interface SBinary extends SItem {
+    Left SItem
+    Operator string
+    Right SItem
+}
+
+// list of items without separators that are wrapped by an infix rule
+S: "s" LBRACE Items+=SBinary* RBRACE;
+
+infix SBinary on SPrimary:
+    "times"
+    > "plus"
+
+SPrimary returns SItem: {SRef} Ref=[Declare:ID];
+
+interface T extends Obj {
+    Item TItem
+}
+
+interface TItem {}
+
+interface TRef extends TItem {
+    Ref *Declare
+}
+
+interface TGroup extends TItem {
+    Elements []TItem
+}
+
+// items that a tree-rewriting action wraps into a list, using the property of the assignments that follow it
+T: "t" LBRACE Item=TGroup RBRACE;
+
+TGroup returns TItem: TElement ({TGroup.Elements+=current} Elements+=TElement+)?;
+
+TElement returns TItem: {TRef} Ref=[Declare:ID] | LBRACE TGroup RBRACE;
+
+interface U extends Obj {
+    Right SItem
+    Items []PItem
+}
+
+// assignment to a property with the name of an operand of the infix rule that it calls
+U: "u" Right=SBinary Items+=PItem*;
+
+interface V extends Obj {
+    Locals []Declare
+    Ref *Declare
+    Children []V
+}
+
+// cross-reference next to nested containers of the same type
+V: "v" LBRACE (Locals+=Declare | Ref=[Declare:ID] | Children+=V)* RBRACE;
+
+interface W extends Obj {
+    Name WName
+    Refs WRefs
+}
+
+interface WName {
+    Name string
+    Ref *Declare
+}
+
+interface WRefs {
+    Ref1 *Declare
+    Ref *Declare
+}
+
+// alternatives that read the same token in different ways
+W: "w" (Name=WName | Refs=WRefs);
+
+WName: Name=ID Ref=[Declare:ID] FIRST;
+
+WRefs: Ref1=[Declare:ID] Ref=[Declare:ID] SECOND;
+
+interface Z extends Obj {
+    Items []ZItem
+}
+
+interface ZItem {
+    Inner PItem
+}
+
+interface ZWrapper extends ZItem {}
+
+// nested rule that changes the type of its node with an action
+Z: "z" LBRACE Items+=ZItem* RBRACE;
+
+ZItem: {ZWrapper} Inner=PItem;
 
 token DECLARE: "declare"
 token FIRST: "first"

@@ -11,21 +11,47 @@ const (
 	DecisionCAlternatives = 5
 	DecisionDAlternatives = 6
 	DecisionKAlternatives = 11
+	DecisionWAlternatives = 26
 )
 
 var BAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_FIRST, Token_SECOND},
-	Lookup: []int{19: 1, 20: 2},
+	Lookup: []int{31: 1, 32: 2},
 }
 
 var JAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_SELF},
-	Lookup: []int{22: 2, 32: 1},
+	Lookup: []int{34: 2, 44: 1},
+}
+
+var QAlternatives = parser.LL1Lookahead{
+	Types:  []*core.TokenType{Token_DECLARE, Token_ID, Keyword_q},
+	Lookup: []int{20: 3, 30: 1, 44: 2},
 }
 
 var RootObjectsAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_DECLARE, Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h, Keyword_i, Keyword_j, Keyword_k, Keyword_l, Keyword_m, Keyword_n, Keyword_o},
-	Lookup: []int{1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 11, 11: 12, 14: 13, 15: 14, 16: 15, 17: 16, 18: 1},
+	Types:  []*core.TokenType{Token_DECLARE, Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h, Keyword_i, Keyword_j, Keyword_k, Keyword_l, Keyword_m, Keyword_n, Keyword_o, Keyword_p, Keyword_q, Keyword_r, Keyword_s, Keyword_t, Keyword_u, Keyword_v, Keyword_w, Keyword_z},
+	Lookup: []int{1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 11, 11: 12, 14: 13, 15: 14, 16: 15, 17: 16, 18: 17, 20: 18, 21: 19, 22: 20, 23: 21, 24: 22, 25: 23, 26: 24, 27: 25, 30: 1},
+}
+
+var TElementAlternatives = parser.LL1Lookahead{
+	Types:  []*core.TokenType{Token_ID, Token_LBRACE},
+	Lookup: []int{37: 2, 44: 1},
+}
+
+var TGroupElementsLoop = parser.LL1Lookahead{
+	Types:  []*core.TokenType{Token_LBRACE, Token_ID},
+	Lookup: []int{37: 1, 44: 1},
+}
+
+var TGroupOptional = parser.LL1Lookahead{
+	Types:  []*core.TokenType{Token_LBRACE, Token_ID},
+	Lookup: []int{37: 1, 44: 1},
+}
+
+var VAlternatives = parser.LL1Lookahead{
+	Types:  []*core.TokenType{Token_DECLARE, Token_ID, Keyword_v},
+	Lookup: []int{25: 3, 30: 1, 44: 2},
 }
 
 // CompletionParserLookahead abstracts every lookahead/prediction decision performed by
@@ -47,7 +73,21 @@ type CompletionParserLookahead interface {
 	LOptional(state *parser.ParserState) bool
 	MemberCallLoop(state *parser.ParserState) bool
 	MemberCallNoDotLoop(state *parser.ParserState) bool
+	PLocalsLoop(state *parser.ParserState) bool
+	PLoop(state *parser.ParserState) bool
+	QAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
+	RItemLoop(state *parser.ParserState) bool
+	RItemsLoop(state *parser.ParserState) bool
 	RootObjectsAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
+	SBinaryLoop(state *parser.ParserState) bool
+	SItemsLoop(state *parser.ParserState) bool
+	TElementAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
+	TGroupElementsLoop(state *parser.ParserState) bool
+	TGroupOptional(state *parser.ParserState) bool
+	UItemsLoop(state *parser.ParserState) bool
+	VAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
+	WAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
+	ZItemsLoop(state *parser.ParserState) bool
 }
 
 // DefaultCompletionParserLookahead resolves every decision with the parser state's built-in
@@ -108,6 +148,64 @@ func (l *DefaultCompletionParserLookahead) MemberCallNoDotLoop(state *parser.Par
 	return state.LA(1).Type == Token_ID
 }
 
+func (l *DefaultCompletionParserLookahead) PLocalsLoop(state *parser.ParserState) bool {
+	return state.LA(1).Type == Token_DECLARE
+}
+
+func (l *DefaultCompletionParserLookahead) PLoop(state *parser.ParserState) bool {
+	return state.LA(1).Type == Token_AND
+}
+
+func (l *DefaultCompletionParserLookahead) QAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+	return state.Lookahead(QAlternatives)
+}
+
+func (l *DefaultCompletionParserLookahead) RItemLoop(state *parser.ParserState) bool {
+	return state.LA(1).Type == Token_AND
+}
+
+func (l *DefaultCompletionParserLookahead) RItemsLoop(state *parser.ParserState) bool {
+	return state.LA(1).Type == Token_ID
+}
+
 func (l *DefaultCompletionParserLookahead) RootObjectsAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
 	return state.Lookahead(RootObjectsAlternatives)
+}
+
+func (l *DefaultCompletionParserLookahead) SBinaryLoop(state *parser.ParserState) bool {
+	return TokenGroup_SBinaryOperator.Matches(state.LA(1).Type)
+}
+
+func (l *DefaultCompletionParserLookahead) SItemsLoop(state *parser.ParserState) bool {
+	return state.LA(1).Type == Token_ID
+}
+
+func (l *DefaultCompletionParserLookahead) TElementAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+	return state.Lookahead(TElementAlternatives)
+}
+
+func (l *DefaultCompletionParserLookahead) TGroupElementsLoop(state *parser.ParserState) bool {
+	prediction, _ := state.Lookahead(TGroupElementsLoop)
+	return prediction == 0
+}
+
+func (l *DefaultCompletionParserLookahead) TGroupOptional(state *parser.ParserState) bool {
+	prediction, _ := state.Lookahead(TGroupOptional)
+	return prediction == 0
+}
+
+func (l *DefaultCompletionParserLookahead) UItemsLoop(state *parser.ParserState) bool {
+	return state.LA(1).Type == Token_ID
+}
+
+func (l *DefaultCompletionParserLookahead) VAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+	return state.Lookahead(VAlternatives)
+}
+
+func (l *DefaultCompletionParserLookahead) WAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+	return state.AdaptivePredict(DecisionWAlternatives, l.PredictionMode())
+}
+
+func (l *DefaultCompletionParserLookahead) ZItemsLoop(state *parser.ParserState) bool {
+	return state.LA(1).Type == Token_ID
 }

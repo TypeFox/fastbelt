@@ -24,6 +24,14 @@ type CompletionScopeProvider interface {
 	ScopeKRef2(ctx context.Context, reference *core.Reference[Declare]) core.Scope
 	ScopeNRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
 	ScopeORef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopePItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeRItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeSRefRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeTRefRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeVRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeWNameRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeWRefsRef1(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeWRefsRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
 }
 
 type DefaultCompletionScopeProvider struct {
@@ -70,6 +78,38 @@ func (s *DefaultCompletionScopeProvider) ScopeORef(ctx context.Context, referenc
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
+func (s *DefaultCompletionScopeProvider) ScopePItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+	return linking.DefaultScopeOfType[Declare](reference.Owner())
+}
+
+func (s *DefaultCompletionScopeProvider) ScopeRItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+	return linking.DefaultScopeOfType[Declare](reference.Owner())
+}
+
+func (s *DefaultCompletionScopeProvider) ScopeSRefRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+	return linking.DefaultScopeOfType[Declare](reference.Owner())
+}
+
+func (s *DefaultCompletionScopeProvider) ScopeTRefRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+	return linking.DefaultScopeOfType[Declare](reference.Owner())
+}
+
+func (s *DefaultCompletionScopeProvider) ScopeVRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+	return linking.DefaultScopeOfType[Declare](reference.Owner())
+}
+
+func (s *DefaultCompletionScopeProvider) ScopeWNameRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+	return linking.DefaultScopeOfType[Declare](reference.Owner())
+}
+
+func (s *DefaultCompletionScopeProvider) ScopeWRefsRef1(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+	return linking.DefaultScopeOfType[Declare](reference.Owner())
+}
+
+func (s *DefaultCompletionScopeProvider) ScopeWRefsRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+	return linking.DefaultScopeOfType[Declare](reference.Owner())
+}
+
 type CompletionReferenceLinker interface {
 	LinkERef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkFItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
@@ -80,6 +120,14 @@ type CompletionReferenceLinker interface {
 	LinkKRef2(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkNRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkORef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkPItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkRItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkSRefRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkTRefRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkVRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkWNameRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkWRefsRef1(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkWRefsRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
 }
 
 type DefaultCompletionReferenceLinker struct {
@@ -141,6 +189,46 @@ func (s *DefaultCompletionReferenceLinker) LinkORef(ctx context.Context, referen
 	return core.DefaultLink(scope, reference.Text())
 }
 
+func (s *DefaultCompletionReferenceLinker) LinkPItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopePItemRef(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
+}
+
+func (s *DefaultCompletionReferenceLinker) LinkRItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeRItemRef(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
+}
+
+func (s *DefaultCompletionReferenceLinker) LinkSRefRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeSRefRef(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
+}
+
+func (s *DefaultCompletionReferenceLinker) LinkTRefRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeTRefRef(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
+}
+
+func (s *DefaultCompletionReferenceLinker) LinkVRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeVRef(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
+}
+
+func (s *DefaultCompletionReferenceLinker) LinkWNameRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeWNameRef(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
+}
+
+func (s *DefaultCompletionReferenceLinker) LinkWRefsRef1(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeWRefsRef1(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
+}
+
+func (s *DefaultCompletionReferenceLinker) LinkWRefsRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeWRefsRef(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
+}
+
 type CompletionReferencesConstructor interface {
 	ERef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
 	FItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
@@ -151,6 +239,14 @@ type CompletionReferencesConstructor interface {
 	KRef2(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
 	NRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
 	ORef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	PItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	RItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	SRefRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	TRefRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	VRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	WNameRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	WRefsRef1(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	WRefsRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
 }
 
 type DefaultCompletionReferencesConstructor struct {
@@ -163,6 +259,14 @@ type DefaultCompletionReferencesConstructor struct {
 	linkKRef2         func() core.ReferenceGetter[Declare]
 	linkNRef          func() core.ReferenceGetter[Declare]
 	linkORef          func() core.ReferenceGetter[Declare]
+	linkPItemRef      func() core.ReferenceGetter[Declare]
+	linkRItemRef      func() core.ReferenceGetter[Declare]
+	linkSRefRef       func() core.ReferenceGetter[Declare]
+	linkTRefRef       func() core.ReferenceGetter[Declare]
+	linkVRef          func() core.ReferenceGetter[Declare]
+	linkWNameRef      func() core.ReferenceGetter[Declare]
+	linkWRefsRef1     func() core.ReferenceGetter[Declare]
+	linkWRefsRef      func() core.ReferenceGetter[Declare]
 }
 
 func NewDefaultCompletionReferencesConstructor(sc *service.Container) CompletionReferencesConstructor {
@@ -196,6 +300,30 @@ func NewDefaultCompletionReferencesConstructor(sc *service.Container) Completion
 		}),
 		linkORef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
 			return referenceLinker().LinkORef
+		}),
+		linkPItemRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkPItemRef
+		}),
+		linkRItemRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkRItemRef
+		}),
+		linkSRefRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkSRefRef
+		}),
+		linkTRefRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkTRefRef
+		}),
+		linkVRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkVRef
+		}),
+		linkWNameRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkWNameRef
+		}),
+		linkWRefsRef1: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkWRefsRef1
+		}),
+		linkWRefsRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkWRefsRef
 		}),
 	}
 }
@@ -234,6 +362,38 @@ func (s *DefaultCompletionReferencesConstructor) NRef(owner core.AstNode, unit c
 
 func (s *DefaultCompletionReferencesConstructor) ORef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
 	return core.NewReference(owner, unit, s.linkORef())
+}
+
+func (s *DefaultCompletionReferencesConstructor) PItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkPItemRef())
+}
+
+func (s *DefaultCompletionReferencesConstructor) RItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkRItemRef())
+}
+
+func (s *DefaultCompletionReferencesConstructor) SRefRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkSRefRef())
+}
+
+func (s *DefaultCompletionReferencesConstructor) TRefRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkTRefRef())
+}
+
+func (s *DefaultCompletionReferencesConstructor) VRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkVRef())
+}
+
+func (s *DefaultCompletionReferencesConstructor) WNameRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkWNameRef())
+}
+
+func (s *DefaultCompletionReferencesConstructor) WRefsRef1(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkWRefsRef1())
+}
+
+func (s *DefaultCompletionReferencesConstructor) WRefsRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkWRefsRef())
 }
 
 type CompletionSymbolContainers struct{}

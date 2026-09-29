@@ -5,6 +5,7 @@ package completion
 import (
 	"context"
 	"iter"
+	"unique"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
@@ -23,6 +24,14 @@ type CompletionCompletionFilter interface {
 	FilterKRef2(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterNRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterORef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterPItemRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterRItemRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterSRefRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterTRefRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterVRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterWNameRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterWRefsRef1(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterWRefsRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 }
 
 type DefaultCompletionCompletionFilter struct{}
@@ -64,6 +73,38 @@ func (*DefaultCompletionCompletionFilter) FilterNRef(_ context.Context, _ *core.
 }
 
 func (*DefaultCompletionCompletionFilter) FilterORef(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
+func (*DefaultCompletionCompletionFilter) FilterPItemRef(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
+func (*DefaultCompletionCompletionFilter) FilterRItemRef(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
+func (*DefaultCompletionCompletionFilter) FilterSRefRef(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
+func (*DefaultCompletionCompletionFilter) FilterTRefRef(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
+func (*DefaultCompletionCompletionFilter) FilterVRef(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
+func (*DefaultCompletionCompletionFilter) FilterWNameRef(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
+func (*DefaultCompletionCompletionFilter) FilterWRefsRef1(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
+func (*DefaultCompletionCompletionFilter) FilterWRefsRef(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	return in
 }
 
@@ -182,6 +223,102 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		candidates := scopes.ScopeORef(ctx, ref).AllElements()
 		return filter.FilterORef(ctx, ref, candidates)
 	},
+	"PItem.Ref": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(PItem)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[CompletionReferencesConstructor](sc)
+		scopes := service.MustGet[CompletionScopeProvider](sc)
+		filter := service.MustGet[CompletionCompletionFilter](sc)
+		ref := refs.PItemRef(typedOwner, nil)
+		candidates := scopes.ScopePItemRef(ctx, ref).AllElements()
+		return filter.FilterPItemRef(ctx, ref, candidates)
+	},
+	"RItem.Ref": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(RItem)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[CompletionReferencesConstructor](sc)
+		scopes := service.MustGet[CompletionScopeProvider](sc)
+		filter := service.MustGet[CompletionCompletionFilter](sc)
+		ref := refs.RItemRef(typedOwner, nil)
+		candidates := scopes.ScopeRItemRef(ctx, ref).AllElements()
+		return filter.FilterRItemRef(ctx, ref, candidates)
+	},
+	"SRef.Ref": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(SRef)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[CompletionReferencesConstructor](sc)
+		scopes := service.MustGet[CompletionScopeProvider](sc)
+		filter := service.MustGet[CompletionCompletionFilter](sc)
+		ref := refs.SRefRef(typedOwner, nil)
+		candidates := scopes.ScopeSRefRef(ctx, ref).AllElements()
+		return filter.FilterSRefRef(ctx, ref, candidates)
+	},
+	"TRef.Ref": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(TRef)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[CompletionReferencesConstructor](sc)
+		scopes := service.MustGet[CompletionScopeProvider](sc)
+		filter := service.MustGet[CompletionCompletionFilter](sc)
+		ref := refs.TRefRef(typedOwner, nil)
+		candidates := scopes.ScopeTRefRef(ctx, ref).AllElements()
+		return filter.FilterTRefRef(ctx, ref, candidates)
+	},
+	"V.Ref": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(V)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[CompletionReferencesConstructor](sc)
+		scopes := service.MustGet[CompletionScopeProvider](sc)
+		filter := service.MustGet[CompletionCompletionFilter](sc)
+		ref := refs.VRef(typedOwner, nil)
+		candidates := scopes.ScopeVRef(ctx, ref).AllElements()
+		return filter.FilterVRef(ctx, ref, candidates)
+	},
+	"WName.Ref": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(WName)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[CompletionReferencesConstructor](sc)
+		scopes := service.MustGet[CompletionScopeProvider](sc)
+		filter := service.MustGet[CompletionCompletionFilter](sc)
+		ref := refs.WNameRef(typedOwner, nil)
+		candidates := scopes.ScopeWNameRef(ctx, ref).AllElements()
+		return filter.FilterWNameRef(ctx, ref, candidates)
+	},
+	"WRefs.Ref1": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(WRefs)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[CompletionReferencesConstructor](sc)
+		scopes := service.MustGet[CompletionScopeProvider](sc)
+		filter := service.MustGet[CompletionCompletionFilter](sc)
+		ref := refs.WRefsRef1(typedOwner, nil)
+		candidates := scopes.ScopeWRefsRef1(ctx, ref).AllElements()
+		return filter.FilterWRefsRef1(ctx, ref, candidates)
+	},
+	"WRefs.Ref": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(WRefs)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[CompletionReferencesConstructor](sc)
+		scopes := service.MustGet[CompletionScopeProvider](sc)
+		filter := service.MustGet[CompletionCompletionFilter](sc)
+		ref := refs.WRefsRef(typedOwner, nil)
+		candidates := scopes.ScopeWRefsRef(ctx, ref).AllElements()
+		return filter.FilterWRefsRef(ctx, ref, candidates)
+	},
 }
 
 type CompletionCompletionAdapter struct {
@@ -260,6 +397,43 @@ func (a *CompletionCompletionAdapter) HasAssignment(node core.AstNode, property 
 		case "Ref":
 			return n.Ref() != nil
 		}
+	case PItem:
+		switch property {
+		case "Ref":
+			return n.Ref() != nil
+		}
+	case RItem:
+		switch property {
+		case "Ref":
+			return n.Ref() != nil
+		}
+	case SRef:
+		switch property {
+		case "Ref":
+			return n.Ref() != nil
+		}
+	case TRef:
+		switch property {
+		case "Ref":
+			return n.Ref() != nil
+		}
+	case V:
+		switch property {
+		case "Ref":
+			return n.Ref() != nil
+		}
+	case WName:
+		switch property {
+		case "Ref":
+			return n.Ref() != nil
+		}
+	case WRefs:
+		switch property {
+		case "Ref":
+			return n.Ref() != nil
+		case "Ref1":
+			return n.Ref1() != nil
+		}
 	}
 	return false
 }
@@ -275,6 +449,40 @@ func (a *CompletionCompletionAdapter) ApplyAction(actionType, property string, v
 			}
 		}
 		return node
+	case "RItem":
+		node := NewRItem()
+		switch property {
+		case "Previous":
+			if v, ok := value.(RItem); ok {
+				node.SetPrevious(v)
+			}
+		}
+		return node
+	case "TGroup":
+		node := NewTGroup()
+		switch property {
+		case "Elements":
+			if v, ok := value.(TItem); ok {
+				node.SetElementsItem(v)
+			}
+		}
+		return node
 	}
 	return nil
+}
+
+func (a *CompletionCompletionAdapter) AssignsCurrent(container core.AstNode, field unique.Handle[string], index int) bool {
+	if _, ok := container.(MemberCall); ok && field == fieldNamePrevious && index < 0 {
+		return true
+	}
+	if _, ok := container.(RItem); ok && field == fieldNamePrevious && index < 0 {
+		return true
+	}
+	if _, ok := container.(TGroup); ok && field == fieldNameElements && index == 0 {
+		return true
+	}
+	if _, ok := container.(SBinary); ok && (field == fieldNameLeft || field == fieldNameRight) {
+		return true
+	}
+	return false
 }

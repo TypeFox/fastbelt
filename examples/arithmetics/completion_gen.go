@@ -5,6 +5,7 @@ package arithmetics
 import (
 	"context"
 	"iter"
+	"unique"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
@@ -96,4 +97,11 @@ func (a *ArithmeticsCompletionAdapter) ApplyAction(actionType, property string, 
 	_ = property
 	_ = value
 	return nil
+}
+
+func (a *ArithmeticsCompletionAdapter) AssignsCurrent(container core.AstNode, field unique.Handle[string], index int) bool {
+	if _, ok := container.(BinaryExpression); ok && (field == fieldNameLeft || field == fieldNameRight) {
+		return true
+	}
+	return false
 }

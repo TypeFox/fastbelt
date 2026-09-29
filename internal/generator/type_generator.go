@@ -42,34 +42,6 @@ func GenerateTypes(grammr grammar.Grammar, packageName string) string {
 	return FormatIfPossible(node.String())
 }
 
-var reservedKeywords = map[string]bool{
-	"break":       true,
-	"case":        true,
-	"chan":        true,
-	"const":       true,
-	"continue":    true,
-	"default":     true,
-	"defer":       true,
-	"else":        true,
-	"fallthrough": true,
-	"for":         true,
-	"func":        true,
-	"go":          true,
-	"goto":        true,
-	"if":          true,
-	"import":      true,
-	"interface":   true,
-	"map":         true,
-	"package":     true,
-	"range":       true,
-	"return":      true,
-	"select":      true,
-	"struct":      true,
-	"switch":      true,
-	"type":        true,
-	"var":         true,
-}
-
 type FieldInfo struct {
 	Name string
 	// Private name, used to avoid conflicts with reserved keywords
@@ -88,10 +60,7 @@ type FieldInfo struct {
 
 func getFieldInfo(field grammar.Field) FieldInfo {
 	name := field.Name()
-	pname := strings.ToLower(name[0:1]) + name[1:]
-	if reservedKeywords[pname] {
-		pname = "_" + name
-	}
+	pname := grammar.GoFieldName(name)
 	_, array := field.Type().(grammar.ArrayType)
 	typ := getTypeName(field.Type())
 	ref := isReferenceType(field.Type())

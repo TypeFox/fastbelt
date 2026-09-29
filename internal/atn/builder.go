@@ -20,7 +20,7 @@ type ATNRuleBuilder interface {
 	MakeAlternatives(lookaheadName string, start *ATNState, alts []*ATNHandle) *ATNHandle
 	MakeConcatenation(alts []*ATNHandle) *ATNHandle
 	TokenRef(tokenTypeId int) *ATNHandle
-	RuleRef(otherRule grammar.AbstractRuleWithBody) *ATNHandle
+	RuleRef(otherRule grammar.AbstractRuleWithBody, call *parser.RuleCallInfo, hint *parser.CompletionHint) *ATNHandle
 
 	NewEpsilonTransition(source *ATNState, target *ATNState)
 
@@ -273,14 +273,16 @@ func (rb *ATNRuleBuilderImpl) TokenRef(tokenTypeId int) *ATNHandle {
 	return &ATNHandle{Left: left, Right: right}
 }
 
-func (rb *ATNRuleBuilderImpl) RuleRef(otherRule grammar.AbstractRuleWithBody) *ATNHandle {
+func (rb *ATNRuleBuilderImpl) RuleRef(otherRule grammar.AbstractRuleWithBody, call *parser.RuleCallInfo, hint *parser.CompletionHint) *ATNHandle {
 	ruleStart := rb.parent.atn.RuleToStartState[otherRule]
 	left := rb.NewState(parser.ATNBasic)
 	right := rb.NewState(parser.ATNBasic)
 	addTransition(left, &RuleTransition{
-		TargetState: ruleStart,
-		Rule:        otherRule,
-		FollowState: right,
+		TargetState:    ruleStart,
+		Rule:           otherRule,
+		FollowState:    right,
+		Call:           call,
+		CompletionHint: hint,
 	})
 	return &ATNHandle{Left: left, Right: right}
 }
