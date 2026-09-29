@@ -176,8 +176,14 @@ func NewMultiLanguageLexer(sc *service.Container, startModes []int, languages ..
 	if len(languages) == 0 {
 		panic("lexer: at least one language is required")
 	}
+	if len(startModes) != len(languages) {
+		panic("lexer: one start token mode per language is required")
+	}
 	avgRatios := make([]*parallel.RunningAverage, len(languages))
 	for i, tokenModes := range languages {
+		if len(tokenModes) != len(languages[0]) {
+			panic("lexer: every language must have the same number of token modes")
+		}
 		if startModes[i] < 0 || startModes[i] >= len(tokenModes) {
 			panic("lexer: start token mode index out of range")
 		}

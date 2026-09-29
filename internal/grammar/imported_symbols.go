@@ -20,16 +20,13 @@ import (
 
 type importedSymbolsProviderImpl struct {
 	sc *service.Container
-	// folders caches one folderView per folder path, shared by every document
-	// of that folder. See folderView for how staleness is detected. Documents
-	// are imported in parallel, so the check-and-build is serialized to hand
-	// every sibling the same view.
-	mu      sync.Mutex
-	folders map[string]*folderView
+	// Documents are imported in parallel, so the check-and-build of a folder
+	// view is serialized to hand every sibling the same view.
+	mu sync.Mutex
 }
 
 func newImportedSymbolsProviderImpl(sc *service.Container) linking.SymbolImporter {
-	return &importedSymbolsProviderImpl{sc: sc, folders: map[string]*folderView{}}
+	return &importedSymbolsProviderImpl{sc: sc}
 }
 
 // folderViewKey is the [core.Document.Data] key under which [ImportSymbols]
@@ -67,21 +64,24 @@ func (s *importedSymbolsProviderImpl) ImportSymbols(ctx context.Context, doc *co
 	})
 	imported := core.MergeSymbolContainers(allExportedSymbols)
 	doc.ImportedSymbols = imported
-	doc.Data.Store(folderViewKey{}, s.folderView(path.Dir(doc.URI.Path()), sameFolderDocs))
+	s.storeFolderView(doc, sameFolderDocs)
 	return imported
 }
 
-// folderView returns the cached view for folder when it still matches docs,
-// and builds and caches a new one otherwise.
-func (s *importedSymbolsProviderImpl) folderView(folder string, docs []*core.Document) *folderView {
+// storeFolderView stores the folder view on doc: the view a sibling already
+// holds when it still matches docs, and a freshly built one otherwise. Views
+// are referenced only by the documents they describe, so they are released
+// together with them when a folder's files are deleted.
+func (s *importedSymbolsProviderImpl) storeFolderView(doc *core.Document, docs []*core.Document) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if view, ok := s.folders[folder]; ok && view.matches(docs) {
-		return view
+	for _, sibling := range docs {
+		if value, ok := sibling.Data.Load(folderViewKey{}); ok && value.(*folderView).matches(docs) {
+			doc.Data.Store(folderViewKey{}, value)
+			return
+		}
 	}
-	view := newFolderView(docs)
-	s.folders[folder] = view
-	return view
+	doc.Data.Store(folderViewKey{}, newFolderView(docs))
 }
 
 func (v *folderView) matches(docs []*core.Document) bool {

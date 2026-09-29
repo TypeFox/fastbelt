@@ -48,6 +48,8 @@
 //  3. Route the match by [TokenTypeUsage.Modifier]: default tokens go to
 //     [core.Document.Tokens], hidden tokens are dropped, comments go to
 //     [core.Document.Comments].
+//  4. Apply the match's mode command, if any (push, pop or mode; see Token
+//     modes below), so the next offset is scanned with the new active mode.
 //  5. If no token type matches, emit a [core.LexerError] and advance by one
 //     UTF-8 code point so lexing can continue. The active mode is unchanged.
 //

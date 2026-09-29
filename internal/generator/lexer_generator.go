@@ -179,20 +179,17 @@ func reachableTokenNames(grammr grammar.Grammar, entry grammar.ParserRule) map[s
 					continue
 				}
 				switch target := n.Rule().Ref(ctx).(type) {
-				case grammar.ParserRule:
-					if !visitedRules[target.Name()] {
-						visitedRules[target.Name()] = true
-						visitRule(target)
-					}
-				case grammar.CompositeRule:
-					if !visitedRules[target.Name()] {
-						visitedRules[target.Name()] = true
-						visitRule(target)
-					}
 				case grammar.TokenDecl:
 					reachable[GeneratedTokenName(target)] = true
 				case grammar.TokenGroup:
 					visitGroup(target)
+				case grammar.ParserRule, grammar.CompositeRule, grammar.InfixRule:
+					// An infix rule's operators (keywords or token calls) and its
+					// operand call are children of the rule node like any body.
+					if !visitedRules[target.Name()] {
+						visitedRules[target.Name()] = true
+						visitRule(target)
+					}
 				}
 			}
 		}

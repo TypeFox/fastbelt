@@ -1,6 +1,10 @@
 package lexer
 
-import core "typefox.dev/fastbelt"
+import (
+	"fmt"
+
+	core "typefox.dev/fastbelt"
+)
 
 // TokenTypeUsage describes how a [core.TokenType] is used in a [TokenMode].
 // A token type can be used once per token mode, but can have different usages in different token modes.
@@ -44,9 +48,16 @@ func (ttu *TokenTypeUsage) WithSetMode(mode int) *TokenTypeUsage {
 	return ttu
 }
 
+// WithModifier routes the token to the stream selected by modifier: one of
+// [core.DefaultTokenModifier], [core.SkippedModifier] or [core.CommentModifier].
+// Any other value panics, since the lexer would silently drop such tokens.
 func (ttu *TokenTypeUsage) WithModifier(modifier int) *TokenTypeUsage {
-	ttu.Modifier = modifier
-	return ttu
+	switch modifier {
+	case core.DefaultTokenModifier, core.SkippedModifier, core.CommentModifier:
+		ttu.Modifier = modifier
+		return ttu
+	}
+	panic(fmt.Sprintf("lexer: unknown token modifier %d", modifier))
 }
 
 // IsSkipped reports whether t is routed to the skipped-token modifier.

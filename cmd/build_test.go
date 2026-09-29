@@ -7,6 +7,7 @@ package cmd
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -216,4 +217,40 @@ func TestBuildRequiresStartModeWithoutDefaultTokenMode(t *testing.T) {
 		{Entry: "Farewell", LanguageID: "farewell"},
 	}}
 	require.ErrorContains(t, ctx.Build(), "declares no default token mode")
+}
+
+// Operators of an infix rule are only reachable through that rule, so a
+// multi-language lexer must keep them in the modes of the language that calls
+// the rule.
+func TestBuildMultiLanguageLexerKeepsInfixOperators(t *testing.T) {
+	dir := writeGrammarDir(t, "a.fb", `
+		grammar Multi
+		interface Greeting { Name string }
+		interface Calc { Value Expression }
+		interface Expression {}
+		interface BinaryExpression extends Expression { Left Expression Operator string Right Expression }
+		interface NumberLiteral extends Expression { Value string }
+		entry Greeting: "hello" Name=ID
+		entry Calc: "calc" Value=Expression
+		Expression returns Expression: BinaryExpression
+		infix BinaryExpression on PrimaryExpression:
+			"+" | "-"
+		PrimaryExpression returns Expression: NumberLiteral
+		NumberLiteral: Value=NUMBER
+		token NUMBER: /[0-9]+/
+	`+multiTokens)
+	out := t.TempDir()
+	ctx := &BuildContext{Input: dir, Output: out, Package: "multi", Languages: []Language{
+		{Entry: "Greeting", LanguageID: "greeting", Patterns: []string{"**/*.hello"}},
+		{Entry: "Calc", LanguageID: "calc", Patterns: []string{"**/*.calc"}},
+	}}
+	require.NoError(t, ctx.Build())
+	code, err := os.ReadFile(filepath.Join(out, "lexer_gen.go"))
+	require.NoError(t, err)
+	// Everything after "// Calc" belongs to the second language's modes.
+	_, calcModes, found := strings.Cut(string(code), "// Calc")
+	require.True(t, found)
+	require.Contains(t, calcModes, "Keyword_Plus")
+	require.Contains(t, calcModes, "Keyword_Dash")
+	require.Contains(t, calcModes, "Token_NUMBER")
 }

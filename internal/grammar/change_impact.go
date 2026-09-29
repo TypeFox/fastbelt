@@ -5,6 +5,8 @@
 package grammar
 
 import (
+	"path"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/collections"
 	"typefox.dev/fastbelt/util/service"
@@ -24,8 +26,12 @@ func newChangeImpactImpl(sc *service.Container) workspace.DocumentChangeImpact {
 }
 
 func (s *changeImpactImpl) Affected(doc *core.Document, changedURIs collections.Set[string]) bool {
+	// changedURIs holds unencoded URI strings (see workspace.DocumentUpdater),
+	// so the folder is compared on the string: Affected runs once per document
+	// in the workspace and parsing every changed URI each time adds up.
+	folder := path.Dir(doc.URI.StringUnencoded())
 	for changed := range changedURIs {
-		if sameFolder(doc.URI, core.ParseURI(changed)) {
+		if path.Dir(changed) == folder {
 			return true
 		}
 	}
