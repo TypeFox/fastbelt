@@ -187,41 +187,19 @@ var Token_WS_Accepting = [2]bool{
 const (
 	TokenMode_FarewellMode = 0
 	TokenMode_GreetingMode = 1
-	TokenMode_default      = 2
 )
 
 func NewLexer(sc *service.Container) lexer.Lexer {
-	// Greeting
-	modes0 := make([]*lexer.TokenMode, 3)
-	modes0[TokenMode_FarewellMode] = lexer.NewTokenMode("FarewellMode",
-		lexer.UseTokenType(Token_ID),
-		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
-	)
-	modes0[TokenMode_GreetingMode] = lexer.NewTokenMode("GreetingMode",
-		lexer.UseTokenType(Keyword_hello),
-		lexer.UseTokenType(Token_ID),
-		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
-	)
-	modes0[TokenMode_default] = lexer.NewTokenMode("default",
-		lexer.UseTokenType(Keyword_hello),
-		lexer.UseTokenType(Token_ID),
-		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
-	)
-	// Farewell
-	modes1 := make([]*lexer.TokenMode, 3)
-	modes1[TokenMode_FarewellMode] = lexer.NewTokenMode("FarewellMode",
+	modes := make([]*lexer.TokenMode, 2)
+	modes[TokenMode_FarewellMode] = lexer.NewTokenMode("FarewellMode",
 		lexer.UseTokenType(Keyword_goodbye),
 		lexer.UseTokenType(Token_ID),
 		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
 	)
-	modes1[TokenMode_GreetingMode] = lexer.NewTokenMode("GreetingMode",
+	modes[TokenMode_GreetingMode] = lexer.NewTokenMode("GreetingMode",
+		lexer.UseTokenType(Keyword_hello),
 		lexer.UseTokenType(Token_ID),
 		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
 	)
-	modes1[TokenMode_default] = lexer.NewTokenMode("default",
-		lexer.UseTokenType(Keyword_goodbye),
-		lexer.UseTokenType(Token_ID),
-		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
-	)
-	return lexer.NewMultiLanguageLexer(sc, []int{TokenMode_GreetingMode, TokenMode_FarewellMode}, modes0, modes1)
+	return lexer.NewMultiLanguageLexer(sc, []int{TokenMode_GreetingMode, TokenMode_FarewellMode}, modes...)
 }

@@ -26,11 +26,21 @@
 // The generated `NewLexer` function returns a [DefaultLexer] constructed via
 // [NewDefaultLexer] with one [TokenMode] per `token mode` declaration in the
 // grammar. Grammars with multiple configured languages use
-// [NewMultiLanguageLexer] instead, passing one token mode list and one start
+// [NewMultiLanguageLexer] instead, passing the same token modes plus one start
 // mode per language (the `default` mode unless the language's build
-// configuration names another); at lex time the document is routed to its
-// language's token set via [core.LanguageSelector], mirroring the generated
-// parser's entry rule dispatch. The [typefox.dev/fastbelt/workspace] builder obtains a [Lexer]
+// configuration names another). At lex time the document's language is
+// resolved via [core.LanguageSelector], mirroring the generated parser's entry
+// rule dispatch, and the run starts in that language's mode. Which tokens a
+// language sees is therefore decided by its start mode and the modes reachable
+// from it.
+//
+// A multi-language grammar that declares no token modes gets one generated
+// token mode per language, named after the language's entry rule. It holds
+// only the keywords and tokens reachable from that entry rule (plus hidden
+// and comment tokens), so a keyword of one language stays an ordinary
+// identifier in the others. Declared token modes are never pruned this way.
+//
+// The [typefox.dev/fastbelt/workspace] builder obtains a [Lexer]
 // from the service container and calls [Lexer.Exec], which stores tokens,
 // comments, and lexer errors on the document before parsing.
 //

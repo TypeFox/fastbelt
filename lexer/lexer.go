@@ -40,22 +40,23 @@ const defaultTokenRatio = 1.0 / 5.0
 // grammar.
 type DefaultLexer struct {
 	sc *service.Container
-	// one token mode list per language; index 0 is the fallback
-	languages [][]*TokenMode
-	// per language: index into its token modes of the mode every run starts in
+	// token modes shared by all languages
+	modes []*TokenMode
+	// per language: index into modes of the mode every run starts in; index 0
+	// is the fallback
 	startModes []int
 	// running exponential moving average of tokens-per-byte (per language)
 	avgRatio []*parallel.RunningAverage
 }
 
-// Exec tokenizes the document with the token modes of its language. The
+// Exec tokenizes the document, starting in the token mode of its language. The
 // language is resolved via [core.LanguageSelector] when more than one was
 // registered, mirroring the generated parser's entry dispatch.
 func (l *DefaultLexer) Exec(document *core.Document) {
 	language := 0
-	if len(l.languages) > 1 {
+	if len(l.startModes) > 1 {
 		selector := service.MustGet[core.LanguageSelector](l.sc)
-		if i, _ := selector.Select(document.URI); i > 0 && i < len(l.languages) {
+		if i, _ := selector.Select(document.URI); i > 0 && i < len(l.startModes) {
 			language = i
 		}
 	}
@@ -68,7 +69,7 @@ func (l *DefaultLexer) Exec(document *core.Document) {
 // exec scans input from left to right using longest-match disambiguation among
 // the token types of the active mode of the given language.
 func (l *DefaultLexer) exec(input string, language int) *lexerResult {
-	tokenModes := l.languages[language]
+	tokenModes := l.modes
 	avgRatio := l.avgRatio[language]
 	length := len(input)
 	tokens := make([]core.Token, 0, avgRatio.Capacity(length))
@@ -164,34 +165,29 @@ const maxChar = 256
 // NewDefaultLexer returns a [DefaultLexer] that starts every run in
 // tokenModes[defaultMode]. The returned lexer is safe for concurrent use.
 func NewDefaultLexer(sc *service.Container, defaultMode int, tokenModes ...*TokenMode) *DefaultLexer {
-	return NewMultiLanguageLexer(sc, []int{defaultMode}, tokenModes)
+	return NewMultiLanguageLexer(sc, []int{defaultMode}, tokenModes...)
 }
 
-// NewMultiLanguageLexer returns a lexer with one token mode list per language.
-// startModes holds, per language, the index of the token mode a run starts in.
-// Mode indices are shared across languages, so each list must have the same
-// length. The document's language is resolved via [core.LanguageSelector];
-// index 0 is the fallback for documents that match no language.
-func NewMultiLanguageLexer(sc *service.Container, startModes []int, languages ...[]*TokenMode) *DefaultLexer {
-	if len(languages) == 0 {
+// NewMultiLanguageLexer returns a lexer that serves one language per entry of
+// startModes, all sharing tokenModes. startModes[i] is the index of the token
+// mode a run of language i starts in, so a language sees the tokens of its
+// start mode and of the modes reachable from it. The document's language is
+// resolved via [core.LanguageSelector]; language 0 is the fallback for
+// documents that match none.
+func NewMultiLanguageLexer(sc *service.Container, startModes []int, tokenModes ...*TokenMode) *DefaultLexer {
+	if len(startModes) == 0 {
 		panic("lexer: at least one language is required")
 	}
-	if len(startModes) != len(languages) {
-		panic("lexer: one start token mode per language is required")
-	}
-	avgRatios := make([]*parallel.RunningAverage, len(languages))
-	for i, tokenModes := range languages {
-		if len(tokenModes) != len(languages[0]) {
-			panic("lexer: every language must have the same number of token modes")
-		}
-		if startModes[i] < 0 || startModes[i] >= len(tokenModes) {
+	avgRatios := make([]*parallel.RunningAverage, len(startModes))
+	for i, startMode := range startModes {
+		if startMode < 0 || startMode >= len(tokenModes) {
 			panic("lexer: start token mode index out of range")
 		}
 		avgRatios[i] = parallel.NewRunningAverage(defaultTokenRatio)
 	}
 	return &DefaultLexer{
 		sc:         sc,
-		languages:  languages,
+		modes:      tokenModes,
 		startModes: startModes,
 		avgRatio:   avgRatios,
 	}

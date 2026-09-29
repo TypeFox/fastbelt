@@ -362,7 +362,7 @@ func TestMultiLanguageLexerStartsInConfiguredMode(t *testing.T) {
 		NewTokenMode("default", UseTokenType(id)),
 		NewTokenMode("Inner", UseTokenType(text)),
 	}
-	lexer := NewMultiLanguageLexer(nil, []int{0, 1}, modes, modes)
+	lexer := NewMultiLanguageLexer(nil, []int{0, 1}, modes...)
 	assert.Equal(t, []string{"ID"}, names(lexer.exec("abc", 0).Tokens))
 	assert.Equal(t, []string{"TEXT"}, names(lexer.exec("abc", 1).Tokens))
 }

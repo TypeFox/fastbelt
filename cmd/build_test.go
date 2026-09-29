@@ -189,7 +189,7 @@ func TestBuildUsesConfiguredStartTokenMode(t *testing.T) {
 	require.NoError(t, ctx.Build())
 	code, err := os.ReadFile(filepath.Join(out, "lexer_gen.go"))
 	require.NoError(t, err)
-	require.Contains(t, string(code), "lexer.NewMultiLanguageLexer(sc, []int{TokenMode_default, TokenMode_Inner}, modes0, modes1)")
+	require.Contains(t, string(code), "lexer.NewMultiLanguageLexer(sc, []int{TokenMode_default, TokenMode_Inner}, modes...)")
 }
 
 func TestBuildRequiresStartModeWithoutDefaultTokenMode(t *testing.T) {
@@ -247,10 +247,15 @@ func TestBuildMultiLanguageLexerKeepsInfixOperators(t *testing.T) {
 	require.NoError(t, ctx.Build())
 	code, err := os.ReadFile(filepath.Join(out, "lexer_gen.go"))
 	require.NoError(t, err)
-	// Everything after "// Calc" belongs to the second language's modes.
-	_, calcModes, found := strings.Cut(string(code), "// Calc")
+	// The grammar declares no token modes, so each language gets a synthetic
+	// one. Everything from the Calc mode on belongs to the second language.
+	greetingMode, calcMode, found := strings.Cut(string(code), "modes[TokenMode_Calc] =")
 	require.True(t, found)
-	require.Contains(t, calcModes, "Keyword_Plus")
-	require.Contains(t, calcModes, "Keyword_Dash")
-	require.Contains(t, calcModes, "Token_NUMBER")
+	_, greetingMode, found = strings.Cut(greetingMode, "modes[TokenMode_Greeting] =")
+	require.True(t, found)
+	require.Contains(t, calcMode, "Keyword_Plus")
+	require.Contains(t, calcMode, "Keyword_Dash")
+	require.Contains(t, calcMode, "Token_NUMBER")
+	require.NotContains(t, greetingMode, "Keyword_Plus")
+	require.NotContains(t, greetingMode, "Token_NUMBER")
 }
