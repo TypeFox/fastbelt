@@ -4,13 +4,13 @@ This repository was generated with [fastbelt](https://github.com/TypeFox/fastbel
 
 It includes:
 
-- **`{{.GrammarFile}}`** — minimal fastbelt grammar (`{{.GrammarName}}`).
-- **`gen.go`** — `//go:generate` running `go tool typefox.dev/fastbelt/cmd/fastbelt generate` to emit `*_gen.go`.
-- **`services.go`** — LSP service wiring (document, workspace, linking, generated lexer/parser).
-- **`cmd/{{.LSPSlug}}`** — language server entrypoint (stdio JSON-RPC).
+- **`{{.GrammarFile}}`**: Minimal fastbelt grammar (`{{.GrammarName}}`).
+- **`gen/main.go`**: Build script using the `typefox.dev/fastbelt/cmd` API to emit `*_gen.go`; add one `cmd.Language` per entry rule to serve several languages from one grammar.
+- **`services.go`**: LSP service wiring (document, workspace, linking, generated lexer/parser/document selector) and the `//go:generate go run ./gen` directive.
+- **`cmd/{{.LSPSlug}}`**: Language server entrypoint (stdio JSON-RPC).
 {{ if .CreateVSCodeExtension -}}
-- **`vscode-extension/`** — VS Code language client + TextMate grammar skeleton.
-- **Root `package.json`** — npm workspace so you can build and package the extension from the repo root.
+- **`vscode-extension/`**: VS Code language client + TextMate grammar skeleton.
+- **Root `package.json`**: npm workspace so you can build and package the extension from the repo root.
 {{- end}}
 
 ## Requirements
@@ -44,6 +44,6 @@ npm run package
 ```
 
 - **`npm run build`** runs TypeScript checks, bundles the client with esbuild, and builds the Go language server into `vscode-extension/dist/server`.
-- **`npm run package`** produces `vscode-extension/{{.VSIXFilename}}` (a `.vsix` you can install with “Install from VSIX…”).
+- **`npm run package`** produces `vscode-extension/{{.VSIXFilename}}` (a `.vsix` you can install with "Install from VSIX…").
 {{- end}}
 Upstream docs and sources: [https://github.com/TypeFox/fastbelt](https://github.com/TypeFox/fastbelt)

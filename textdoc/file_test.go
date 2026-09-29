@@ -11,10 +11,7 @@ import (
 )
 
 func TestNewFile(t *testing.T) {
-	doc, err := NewFile("file:///test.txt", "plaintext", 1, "hello\nworld")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewFile("file:///test.txt", "plaintext", 1, "hello\nworld")
 
 	if doc.URI() != "file:///test.txt" {
 		t.Errorf("Expected URI 'file:///test.txt', got '%s'", doc.URI())
@@ -45,10 +42,7 @@ func TestNewFile(t *testing.T) {
 
 func TestPositionAt(t *testing.T) {
 	// Test with multi-line document
-	doc, err := NewFile("file:///test.txt", "plaintext", 1, "ab\ncd")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewFile("file:///test.txt", "plaintext", 1, "ab\ncd")
 
 	tests := []struct {
 		offset   int
@@ -148,10 +142,7 @@ func TestPositionAtEdgeCases(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			doc, err := NewFile("file:///test.txt", "plaintext", 1, tc.content)
-			if err != nil {
-				t.Fatalf("New failed: %v", err)
-			}
+			doc := NewFile("file:///test.txt", "plaintext", 1, tc.content)
 
 			for _, test := range tc.tests {
 				pos := doc.PositionAt(test.offset)
@@ -165,10 +156,7 @@ func TestPositionAtEdgeCases(t *testing.T) {
 }
 
 func TestOffsetAt(t *testing.T) {
-	doc, err := NewFile("file:///test.txt", "plaintext", 1, "ab\ncd")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewFile("file:///test.txt", "plaintext", 1, "ab\ncd")
 
 	tests := []struct {
 		position lsp.Position
@@ -193,10 +181,7 @@ func TestOffsetAt(t *testing.T) {
 }
 
 func TestTextWithRange(t *testing.T) {
-	doc, err := NewFile("file:///test.txt", "plaintext", 1, "hello\nworld")
-	if err != nil {
-		t.Fatalf("New failed: %v", err)
-	}
+	doc := NewFile("file:///test.txt", "plaintext", 1, "hello\nworld")
 
 	// Get substring
 	r := &lsp.Range{
@@ -279,10 +264,7 @@ func TestPositionAtUTF16(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			doc, err := NewFile("file:///test.txt", "plaintext", 1, tc.content)
-			if err != nil {
-				t.Fatalf("NewFile failed: %v", err)
-			}
+			doc := NewFile("file:///test.txt", "plaintext", 1, tc.content)
 			for _, test := range tc.tests {
 				pos := doc.PositionAt(test.offset)
 				if pos != test.expected {
@@ -362,10 +344,7 @@ func TestOffsetAtUTF16(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			doc, err := NewFile("file:///test.txt", "plaintext", 1, tc.content)
-			if err != nil {
-				t.Fatalf("NewFile failed: %v", err)
-			}
+			doc := NewFile("file:///test.txt", "plaintext", 1, tc.content)
 			for _, test := range tc.tests {
 				offset := doc.OffsetAt(test.position)
 				if offset != test.expected {
@@ -391,10 +370,7 @@ func TestLineOffsets(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		doc, err := NewFile("file:///test.txt", "plaintext", 1, test.content)
-		if err != nil {
-			t.Fatalf("New failed: %v", err)
-		}
+		doc := NewFile("file:///test.txt", "plaintext", 1, test.content)
 		lineCount := doc.LineCount()
 		if lineCount != len(test.expected) {
 			t.Errorf("Content '%s': expected %d lines, got %d", test.content, len(test.expected), lineCount)

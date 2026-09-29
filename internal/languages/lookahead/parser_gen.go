@@ -15,7 +15,7 @@ type Parser struct {
 	lookahead             LookaheadParserLookahead
 }
 
-func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
+func (p *Parser) Parse(document *core.Document) {
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
 	referencesConstructor := service.MustGet[LookaheadReferencesConstructor](p.sc)
@@ -23,7 +23,9 @@ func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
 	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
 	result := cp.ParseRoot()
 	cp.state.ExpectEndOfInput()
-	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
+	document.ParserErrors = cp.state.Errors()
+	document.Root = result
+	core.AssignContainers(document)
 }
 
 func NewParser(sc *service.Container) *Parser {

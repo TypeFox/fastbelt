@@ -46,9 +46,8 @@
 // Each language project defines SetupServices to wire a complete container
 // for that language. By convention, SetupServices:
 //
-//   - registers language-specific configuration such as
-//     [typefox.dev/fastbelt/workspace.LanguageID] and
-//     [typefox.dev/fastbelt/workspace.FileExtensions],
+//   - registers a [typefox.dev/fastbelt.LanguageSelector] that maps document
+//     URIs to the languages of the grammar,
 //   - calls the framework SetupDefaultServices functions listed above,
 //   - calls SetupGeneratedServices from generated code (registers the lexer,
 //     parser, scope provider, and other grammar-specific services), and

@@ -9,16 +9,19 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/parallel"
+	"typefox.dev/fastbelt/util/service"
 )
 
-// Lexer tokenizes a complete source string in one shot.
+// Lexer tokenizes a document in one shot and stores the result on it.
 type Lexer interface {
-	Exec(input string) *LexerResult
+	// Exec tokenizes document.TextDoc and sets [core.Document.Tokens],
+	// [core.Document.Comments], and [core.Document.LexerErrors].
+	Exec(document *core.Document)
 }
 
-// LexerResult holds everything produced by a single [Lexer.Exec] pass over
-// source text.
-type LexerResult struct {
+// lexerResult holds everything produced by a single [DefaultLexer.Lex] pass
+// over source text.
+type lexerResult struct {
 	// Tokens is the main token stream passed to the parser.
 	Tokens []core.Token
 	// Comments holds tokens whose Type ([core.TokenType]) is marked with the modifier [core.CommentModifier] via the type [TokenTypeUsage].
@@ -26,9 +29,6 @@ type LexerResult struct {
 	Comments []core.Token
 	// Errors lists recoverable lexing problems (unrecognized input).
 	Errors []*core.LexerError
-	// Modifiers collects tokens routed to custom [TokenTypeUsage.Modifier] values
-	// other than the default, skipped, or comment modifiers. Nil when empty.
-	Modifiers map[int][]core.Token
 }
 
 // Allocate a new token every ~5 characters on average
@@ -39,26 +39,47 @@ const defaultTokenRatio = 1.0 / 5.0
 // functions build one from the [core.TokenType] descriptors emitted for a
 // grammar.
 type DefaultLexer struct {
-	tokenModes []*TokenMode
-	// index into tokenModes of the mode every Exec starts in
-	defaultMode int
-	// running exponential moving average of tokens-per-byte
-	avgRatio *parallel.RunningAverage
+	sc *service.Container
+	// token modes shared by all languages
+	modes []*TokenMode
+	// per language: index into modes of the mode every run starts in; index 0
+	// is the fallback
+	startModes []int
+	// running exponential moving average of tokens-per-byte (per language)
+	avgRatio []*parallel.RunningAverage
 }
 
-// Exec scans input from left to right using longest-match disambiguation among
-// token types registered at construction time.
-func (l *DefaultLexer) Exec(input string) *LexerResult {
+// Exec tokenizes the document, starting in the token mode of its language. The
+// language is resolved via [core.LanguageSelector] when more than one was
+// registered, mirroring the generated parser's entry dispatch.
+func (l *DefaultLexer) Exec(document *core.Document) {
+	language := 0
+	if len(l.startModes) > 1 {
+		selector := service.MustGet[core.LanguageSelector](l.sc)
+		if i, _ := selector.Select(document.URI); i > 0 && i < len(l.startModes) {
+			language = i
+		}
+	}
+	result := l.exec(document.TextDoc.Text(nil), language)
+	document.Tokens = result.Tokens
+	document.Comments = result.Comments
+	document.LexerErrors = result.Errors
+}
+
+// exec scans input from left to right using longest-match disambiguation among
+// the token types of the active mode of the given language.
+func (l *DefaultLexer) exec(input string, language int) *lexerResult {
+	tokenModes := l.modes
+	avgRatio := l.avgRatio[language]
 	length := len(input)
-	tokens := make([]core.Token, 0, l.avgRatio.Capacity(length))
+	tokens := make([]core.Token, 0, avgRatio.Capacity(length))
 	comments := make([]core.Token, 0)
 	errors := make([]*core.LexerError, 0)
-	var modifiers map[int][]core.Token
 
 	// The mode stack is local to this call: a DefaultLexer is shared between
 	// documents and Exec may run concurrently, so input that ends inside a
 	// pushed mode must not leak into the next run.
-	stack := NewTokenModeStack(l.tokenModes[l.defaultMode])
+	stack := NewTokenModeStack(tokenModes[l.startModes[language]])
 	currentTokenMode := stack.Peek()
 
 	var offset int
@@ -94,17 +115,8 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 					input[offset:end],
 					offset, end,
 				))
-			case 0:
+			case core.DefaultTokenModifier:
 				tokens = append(tokens, core.NewToken(
-					longestType.TokenType,
-					input[offset:end],
-					offset, end,
-				))
-			default:
-				if modifiers == nil {
-					modifiers = make(map[int][]core.Token)
-				}
-				modifiers[longestType.Modifier] = append(modifiers[longestType.Modifier], core.NewToken(
 					longestType.TokenType,
 					input[offset:end],
 					offset, end,
@@ -117,13 +129,13 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 				// stack, so a later pop returns to whatever was below it rather
 				// than to the mode that was replaced. This mirrors ANTLR's
 				// `mode` and is intentional: only `push` can be undone by `pop`.
-				stack.SetMode(l.tokenModes[longestType.PushMode])
+				stack.SetMode(tokenModes[longestType.PushMode])
 				currentTokenMode = stack.Peek()
 			case longestType.PopMode:
 				stack.Pop()
 				currentTokenMode = stack.Peek()
 			case longestType.PushMode > -1:
-				stack.Push(l.tokenModes[longestType.PushMode])
+				stack.Push(tokenModes[longestType.PushMode])
 				currentTokenMode = stack.Peek()
 			}
 		} else {
@@ -138,28 +150,45 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 
 	if length > 0 {
 		// Update the average tokens-per-byte
-		l.avgRatio.Update(float64(len(tokens)) / float64(length))
+		avgRatio.Update(float64(len(tokens)) / float64(length))
 	}
 
-	return &LexerResult{
-		Tokens:    tokens,
-		Comments:  comments,
-		Errors:    errors,
-		Modifiers: modifiers,
+	return &lexerResult{
+		Tokens:   tokens,
+		Comments: comments,
+		Errors:   errors,
 	}
 }
 
 const maxChar = 256
 
-// NewDefaultLexer returns a [DefaultLexer] that starts every [DefaultLexer.Exec]
-// in tokenModes[defaultMode]. The returned lexer is safe for concurrent use.
-func NewDefaultLexer(defaultMode int, tokenModes ...*TokenMode) *DefaultLexer {
-	if defaultMode < 0 || defaultMode >= len(tokenModes) {
-		panic("lexer: default token mode index out of range")
+// NewDefaultLexer returns a [DefaultLexer] that starts every run in
+// tokenModes[defaultMode]. The returned lexer is safe for concurrent use.
+func NewDefaultLexer(sc *service.Container, defaultMode int, tokenModes ...*TokenMode) *DefaultLexer {
+	return NewMultiLanguageLexer(sc, []int{defaultMode}, tokenModes...)
+}
+
+// NewMultiLanguageLexer returns a lexer that serves one language per entry of
+// startModes, all sharing tokenModes. startModes[i] is the index of the token
+// mode a run of language i starts in, so a language sees the tokens of its
+// start mode and of the modes reachable from it. The document's language is
+// resolved via [core.LanguageSelector]; language 0 is the fallback for
+// documents that match none.
+func NewMultiLanguageLexer(sc *service.Container, startModes []int, tokenModes ...*TokenMode) *DefaultLexer {
+	if len(startModes) == 0 {
+		panic("lexer: at least one language is required")
+	}
+	avgRatios := make([]*parallel.RunningAverage, len(startModes))
+	for i, startMode := range startModes {
+		if startMode < 0 || startMode >= len(tokenModes) {
+			panic("lexer: start token mode index out of range")
+		}
+		avgRatios[i] = parallel.NewRunningAverage(defaultTokenRatio)
 	}
 	return &DefaultLexer{
-		tokenModes:  tokenModes,
-		defaultMode: defaultMode,
-		avgRatio:    parallel.NewRunningAverage(defaultTokenRatio),
+		sc:         sc,
+		modes:      tokenModes,
+		startModes: startModes,
+		avgRatio:   avgRatios,
 	}
 }

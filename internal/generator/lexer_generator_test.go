@@ -22,7 +22,7 @@ func generateLexerFor(t *testing.T, src string) string {
 	doc := f.Parse(src)
 	grammr, ok := doc.Document.Root.(grammar.Grammar)
 	require.True(t, ok)
-	return GenerateLexer(grammr, "test", GenerateTokenTypes(grammr))
+	return GenerateLexer(grammr, nil, nil, "test", GenerateTokenTypes(grammr))
 }
 
 func TestGenerateLexerModeCommands(t *testing.T) {
@@ -42,7 +42,7 @@ func TestGenerateLexerModeCommands(t *testing.T) {
 	`)
 	assert.Contains(t, code, "lexer.UseTokenType(Token_ID).WithPushMode(TokenMode_Other)")
 	assert.Contains(t, code, "lexer.UseTokenType(Token_ID).WithPopMode()")
-	assert.Contains(t, code, "lexer.NewDefaultLexer(TokenMode_default, modes...)")
+	assert.Contains(t, code, "lexer.NewDefaultLexer(sc, TokenMode_default, modes...)")
 }
 
 func TestGenerateLexerSetModeCommand(t *testing.T) {
@@ -159,7 +159,7 @@ func TestGenerateLexerModeIdsFollowDeclarationOrder(t *testing.T) {
 	assert.Contains(t, code, "TokenMode_First   = 0")
 	assert.Contains(t, code, "TokenMode_default = 1")
 	assert.Contains(t, code, "modes := make([]*lexer.TokenMode, 2)")
-	assert.Contains(t, code, "lexer.NewDefaultLexer(TokenMode_default, modes...)")
+	assert.Contains(t, code, "lexer.NewDefaultLexer(sc, TokenMode_default, modes...)")
 }
 
 func TestGenerateLexerImplicitDefaultModeRegistersEverything(t *testing.T) {
@@ -180,7 +180,7 @@ func TestGenerateLexerImplicitDefaultModeRegistersEverything(t *testing.T) {
 	assert.Contains(t, code, "lexer.UseTokenType(Keyword_Exclamation),")
 	assert.Contains(t, code, "lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier)")
 	assert.Contains(t, code, "lexer.UseTokenType(Token_SL_COMMENT).WithModifier(core.CommentModifier)")
-	assert.Contains(t, code, "lexer.NewDefaultLexer(TokenMode_default, modes...)")
+	assert.Contains(t, code, "lexer.NewDefaultLexer(sc, TokenMode_default, modes...)")
 }
 
 // --- Modifier and command precedence ---
@@ -350,4 +350,66 @@ func TestGenerateLexerKeywordSelectorDoesNotDuplicateKeywords(t *testing.T) {
 	assert.Equal(t, 1, strings.Count(code, "lexer.UseTokenType(Keyword_hello)"),
 		"keyword registered more than once:\n%s", code)
 	assert.Equal(t, 1, strings.Count(code, "lexer.UseTokenType(Keyword_world)"))
+}
+
+// A multi-language grammar without token modes gets one synthetic mode per
+// language that only holds the tokens reachable from the language's entry rule.
+func TestGenerateLexerSyntheticLanguageModes(t *testing.T) {
+	f := test.New(t, grammar.CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Greeting { Name string }
+		interface Farewell { Name string }
+		entry Greeting: "hello" Name=ID;
+		entry Farewell: "goodbye" Name=ID;
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+	`)
+	grammr, ok := doc.Document.Root.(grammar.Grammar)
+	require.True(t, ok)
+	code := GenerateLexer(grammr, grammr.Rules(), nil, "test", GenerateTokenTypes(grammr))
+
+	assert.Contains(t, code, "lexer.NewMultiLanguageLexer(sc, []int{TokenMode_Greeting, TokenMode_Farewell}, modes...)")
+	assert.NotContains(t, code, "TokenMode_default")
+	start := strings.Index(code, "modes[TokenMode_Greeting]")
+	end := strings.Index(code, "modes[TokenMode_Farewell]")
+	require.True(t, start >= 0 && end > start)
+	greeting := code[start:end]
+	assert.Contains(t, greeting, "Keyword_hello")
+	assert.NotContains(t, greeting, "Keyword_goodbye")
+	assert.Contains(t, greeting, "Token_ID")
+	assert.Contains(t, greeting, "Token_WS")
+}
+
+// Declared token modes are emitted once and unpruned; languages only differ in
+// their start mode, and no implicit default mode is added.
+func TestGenerateLexerDeclaredModesAreShared(t *testing.T) {
+	f := test.New(t, grammar.CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface Greeting { Name string }
+		interface Farewell { Name string }
+		entry Greeting: "hello" Name=ID;
+		entry Farewell: "goodbye" Name=ID;
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+		token mode GreetingMode {
+			"hello"
+			ID
+			hidden WS
+		}
+		token mode FarewellMode {
+			"goodbye"
+			ID
+			hidden WS
+		}
+	`)
+	grammr, ok := doc.Document.Root.(grammar.Grammar)
+	require.True(t, ok)
+	code := GenerateLexer(grammr, grammr.Rules(), []string{"GreetingMode", "FarewellMode"}, "test", GenerateTokenTypes(grammr))
+
+	assert.Contains(t, code, "modes := make([]*lexer.TokenMode, 2)")
+	assert.Contains(t, code, "lexer.NewMultiLanguageLexer(sc, []int{TokenMode_GreetingMode, TokenMode_FarewellMode}, modes...)")
+	assert.NotContains(t, code, "TokenMode_default")
+	assert.Equal(t, 1, strings.Count(code, "modes[TokenMode_GreetingMode] ="))
 }

@@ -1,0 +1,4 @@
+grammar MultilangModel
+
+token ID: /[_a-zA-Z][\w_]*/
+hidden token WS: /\s+/

@@ -146,7 +146,7 @@ func TestTokenTypeUsageBuilders(t *testing.T) {
 
 	assert.True(t, UseTokenType(tokenType).WithModifier(core.SkippedModifier).IsSkipped())
 	assert.True(t, UseTokenType(tokenType).WithModifier(core.CommentModifier).IsComment())
-	assert.False(t, UseTokenType(tokenType).WithModifier(7).IsSkipped())
+	assert.Panics(t, func() { UseTokenType(tokenType).WithModifier(7) })
 }
 
 // --- TokenModeStack ---

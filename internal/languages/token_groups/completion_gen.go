@@ -34,8 +34,8 @@ func NewTokenGroupsCompletionAdapter(sc *service.Container) *TokenGroupsCompleti
 	return &TokenGroupsCompletionAdapter{sc: sc}
 }
 
-func (a *TokenGroupsCompletionAdapter) Parse(tokens []core.Token) *parser.CompletionParseResult {
-	return NewCompletionParser(a.sc).Parse(tokens)
+func (a *TokenGroupsCompletionAdapter) Parse(document *core.Document, tokens []core.Token) *parser.CompletionParseResult {
+	return NewCompletionParser(a.sc).Parse(document, tokens)
 }
 
 func (a *TokenGroupsCompletionAdapter) ATN() *parser.RuntimeATN {

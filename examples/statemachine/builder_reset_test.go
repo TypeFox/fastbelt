@@ -15,7 +15,7 @@ import (
 
 // TestResetKeepsLocalSymbols is a regression test for the Reset fallthrough
 // cascade: resetting a document with the updater's keep-state
-// (Parsed|ExportedSymbols|LocalSymbols) used to nil doc.LocalSymbols while
+// (Lexed|Parsed|ExportedSymbols|LocalSymbols) used to nil doc.LocalSymbols while
 // keeping the DocStateLocalSymbols bit, so the following build skipped
 // recomputing local symbols and relinked against nil.
 func TestResetKeepsLocalSymbols(t *testing.T) {
@@ -38,7 +38,7 @@ func TestResetKeepsLocalSymbols(t *testing.T) {
 	`).AssertNoErrors()
 
 	builder := service.MustGet[workspace.Builder](sc)
-	keep := core.DocStateParsed | core.DocStateExportedSymbols | core.DocStateLocalSymbols
+	keep := core.DocStateLexed | core.DocStateParsed | core.DocStateExportedSymbols | core.DocStateLocalSymbols
 	builder.Reset(doc.Document, keep)
 
 	if doc.Document.LocalSymbols == nil {

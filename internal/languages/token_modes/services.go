@@ -7,6 +7,7 @@ package token_modes
 //go:generate go run ../../../cmd/fastbelt generate ./token_modes.fb -v
 
 import (
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
@@ -15,8 +16,12 @@ import (
 )
 
 func SetupServices(sc *service.Container) {
-	service.Put[workspace.LanguageID](sc, "modes")
-	service.Put[workspace.FileExtensions](sc, []string{".mode"})
+	service.Put[core.LanguageSelector](
+		sc,
+		core.NewDefaultLanguageSelector(sc,
+			core.NewDocumentSelectorWithPatterns("modes", "**/*.mode"),
+		),
+	)
 	textdoc.SetupDefaultServices(sc)
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)
