@@ -6,9 +6,11 @@ package completion_test
 
 import (
 	"context"
+	"fmt"
 	"iter"
 	"strings"
 	"testing"
+	"unique"
 
 	"github.com/stretchr/testify/assert"
 	core "typefox.dev/fastbelt"
@@ -16,6 +18,7 @@ import (
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/test"
+	"typefox.dev/fastbelt/util/collections"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/lsp"
 )
@@ -35,6 +38,15 @@ import (
 //   J:      cross-reference and keyword alternative at the same position
 //   K:      two assignments to the same target type - dedup check
 //   L:      fully optional group in front of mandatory content
+//   P:      cross-reference in a nested rule, inside of a container with local symbols
+//   Q:      cross-references in a loop without separators, inside of nested containers
+//   R:      list of items without separators that are wrapped by a tree-rewriting action
+//   S:      list of items without separators that are wrapped by an infix rule
+//   T:      items that a tree-rewriting action wraps into a list
+//   U:      assignment to a property with the name of an operand of an infix rule
+//   V:      cross-reference next to nested containers of the same type
+//   W:      alternatives that read the same token in different ways
+//   Z:      nested rule that changes the type of its node with an action
 
 func completionAt(t *testing.T, src string) []lsp.CompletionItem {
 	t.Helper()
@@ -546,6 +558,390 @@ func TestCompletion_AfterO_ActionCrossRef(t *testing.T) {
 	assert.Len(t, items, 1)
 	if !hasLabel(items, "some") {
 		t.Errorf("expected 'some' as O.Ref candidate; got %v", itemLabels(items))
+	}
+}
+
+// The reference is completed on an existing PItem node, so the scope is
+// computed from the actual AST and contains the local symbols of P.
+func TestCompletion_AfterP_LocalSymbols_ExistingOwner(t *testing.T) {
+	items := completionAt(t, "p { declare local use local<|cursor> }")
+	if !hasLabel(items, "local") {
+		t.Errorf("expected 'local' as PItem.Ref candidate; got %v", itemLabels(items))
+	}
+}
+
+// The PItem node does not exist yet, so the reference is completed on a
+// synthetic owner. Its scope must still contain the local symbols of the
+// enclosing P node.
+func TestCompletion_AfterP_LocalSymbols_SyntheticOwner(t *testing.T) {
+	sources := []string{
+		"declare global p { declare local use <|cursor>",
+		"declare global p { declare local use <|cursor> }",
+		// Syntactically valid: the cursor is in front of the existing reference.
+		"declare global p { declare local use <|cursor>local }",
+	}
+	for _, src := range sources {
+		t.Run(src, func(t *testing.T) {
+			items := completionAt(t, src)
+			for _, want := range []string{"global", "local"} {
+				if !hasLabel(items, want) {
+					t.Errorf("expected %q as PItem.Ref candidate; got %v", want, itemLabels(items))
+				}
+			}
+		})
+	}
+}
+
+// ownerRecordingFilter records the owner of every reference of the rules P
+// to Z that is completed.
+type ownerRecordingFilter struct {
+	completion.DefaultCompletionCompletionFilter
+	owners []core.AstNode
+}
+
+func (f *ownerRecordingFilter) FilterTRefRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+func (f *ownerRecordingFilter) FilterVRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+func (f *ownerRecordingFilter) FilterWNameRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+func (f *ownerRecordingFilter) FilterWRefsRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+func (f *ownerRecordingFilter) FilterPItemRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+func (f *ownerRecordingFilter) FilterRItemRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+func (f *ownerRecordingFilter) FilterSRefRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+// completeOwners requests the completion at the cursor and returns the
+// owners of the references that were completed.
+func completeOwners(t *testing.T, src string) (*test.Doc, []core.AstNode) {
+	t.Helper()
+	filter := &ownerRecordingFilter{}
+	sc := service.NewContainer()
+	completion.SetupServices(sc)
+	service.Override[completion.CompletionCompletionFilter](sc, filter)
+	sc.Seal()
+
+	doc := test.New(t, sc).Parse(src)
+	doc.CompletionItems("cursor")
+	if len(filter.owners) == 0 {
+		t.Fatalf("expected the completion of a reference")
+	}
+	return doc, filter.owners
+}
+
+// ownerContainment describes where the owner of a completed reference is
+// expected in the AST.
+type ownerContainment struct {
+	src string
+	// Text of the expected container, with single spaces
+	container string
+	field     string
+	index     int
+}
+
+func assertOwnerContainment(t *testing.T, cases []ownerContainment) {
+	t.Helper()
+	for _, c := range cases {
+		t.Run(c.src, func(t *testing.T) {
+			_, owners := completeOwners(t, "declare foo declare bar declare baz "+c.src)
+			for _, owner := range owners {
+				container := owner.Container()
+				if container == nil {
+					t.Fatalf("expected the owner to have a container")
+				}
+				if text := strings.Join(strings.Fields(container.Text()), " "); text != c.container {
+					t.Errorf("expected the container %q; got %q of type %T", c.container, text, container)
+				}
+				field, index := owner.ContainmentData()
+				if field.Value() != c.field || index != c.index {
+					t.Errorf("expected containment %q@%d; got %q@%d", c.field, c.index, field.Value(), index)
+				}
+			}
+		})
+	}
+}
+
+// describeOwner returns the types and the containment data of the owner and
+// of its containers below the root, starting with the owner. The nodes that
+// are not part of the document are marked as new.
+func describeOwner(doc *test.Doc, owner core.AstNode) string {
+	existing := collections.NewSet[core.AstNode]()
+	for node := range core.AllNodes(doc.Root()) {
+		existing.Add(node)
+	}
+	segments := []string{}
+	for node := owner; node != nil && node != doc.Root(); node = node.Container() {
+		segment := strings.TrimSuffix(strings.TrimPrefix(fmt.Sprintf("%T", node), "*completion."), "Impl")
+		if !existing.Has(node) {
+			segment = "new " + segment
+		}
+		field, index := node.ContainmentData()
+		if field != (unique.Handle[string]{}) && field.Value() != "" {
+			segment += " at " + field.Value()
+			if index >= 0 {
+				segment += fmt.Sprintf("@%d", index)
+			}
+		}
+		segments = append(segments, segment)
+	}
+	return strings.Join(segments, ", ")
+}
+
+// assertOwners requests the completion at the cursor of each source and
+// compares the owners of the references with the expected descriptions, see
+// describeOwner. The root contains a single node.
+func assertOwners(t *testing.T, cases map[string][]string) {
+	t.Helper()
+	for src, expected := range cases {
+		t.Run(src, func(t *testing.T) {
+			doc, owners := completeOwners(t, src)
+			actual := []string{}
+			for _, owner := range owners {
+				actual = append(actual, describeOwner(doc, owner))
+			}
+			assert.ElementsMatch(t, expected, actual)
+		})
+	}
+}
+
+// The synthetic owner must know the property and the index that it would
+// have in the enclosing P node, as scope providers may depend on them.
+func TestCompletion_AfterP_SyntheticOwnerContainment(t *testing.T) {
+	cases := []struct {
+		src   string
+		field string
+		index int
+	}{
+		{"p { declare local use <|cursor>", "item", -1},
+		{"p { declare local use <|cursor>local }", "item", -1},
+		{"p { declare local use lo<|cursor>", "item", -1},
+		{"p { declare local use local and <|cursor>", "others", 0},
+		{"p { declare local use local and <|cursor>local and local }", "others", 0},
+		{"p { declare local use local and local and <|cursor>", "others", 1},
+		{"p { declare local use local and local and <|cursor>local }", "others", 1},
+		{"p { declare local use local and local and lo<|cursor>", "others", 1},
+	}
+	for _, c := range cases {
+		t.Run(c.src, func(t *testing.T) {
+			doc, owners := completeOwners(t, c.src)
+			for _, owner := range owners {
+				if owner.Container() != test.MustFindNode[completion.P](doc) {
+					t.Errorf("expected the container to be the P of the document; got %T", owner.Container())
+				}
+				field, index := owner.ContainmentData()
+				if field.Value() != c.field || index != c.index {
+					t.Errorf("expected containment %q@%d; got %q@%d", c.field, c.index, field.Value(), index)
+				}
+			}
+		})
+	}
+}
+
+// The items of Q have no separator, so the parser does not enter the loop
+// for an item that is missing. The owner is only known from the rule calls
+// that lead to the cross-reference.
+func TestCompletion_AfterQ_SyntheticOwnerContainment(t *testing.T) {
+	assertOwnerContainment(t, []ownerContainment{
+		{"q { <|cursor>", "q {", "items", 0},
+		{"q { <|cursor> }", "q { }", "items", 0},
+		{"q { declare local <|cursor>", "q { declare local", "items", 0},
+		{"q { foo <|cursor>", "q { foo", "items", 1},
+		{"q { foo <|cursor>foo }", "q { foo foo }", "items", 1},
+		{"q { foo foo <|cursor>", "q { foo foo", "items", 2},
+		// The cursor is behind the nested Q, so the owner belongs to the outer one
+		{"q { foo q { foo foo } <|cursor>", "q { foo q { foo foo }", "items", 1},
+		{"q { foo q { foo foo } <|cursor> }", "q { foo q { foo foo } }", "items", 1},
+		{"q { q { q { } <|cursor> } }", "q { q { } }", "items", 0},
+		// The cursor is inside of the nested Q
+		{"q { foo q { foo foo <|cursor>", "q { foo foo", "items", 2},
+		{"q { foo q { foo foo <|cursor> } }", "q { foo foo }", "items", 2},
+	})
+}
+
+// A tree-rewriting action wraps the items of R, also for the input that
+// follows the cursor. The owner of a new item still belongs to the R.
+func TestCompletion_AfterR_SyntheticOwnerContainment(t *testing.T) {
+	assertOwnerContainment(t, []ownerContainment{
+		{"r { <|cursor>", "r {", "items", 0},
+		{"r { foo and bar <|cursor>", "r { foo and bar", "items", 1},
+		{"r { foo and bar <|cursor> }", "r { foo and bar }", "items", 1},
+		// The items in front of the cursor are wrapped because of the input that follows it
+		{"r { foo <|cursor> and bar }", "r { foo and bar }", "items", 1},
+		{"r { foo and bar <|cursor> and baz }", "r { foo and bar and baz }", "items", 1},
+		{"r { foo foo and bar <|cursor> and baz }", "r { foo foo and bar and baz }", "items", 2},
+	})
+}
+
+// The operands of the infix rule SBinary are contained in the node of their
+// operator, which depends on the precedence of the operators.
+func TestCompletion_AfterS_SyntheticOwnerContainment(t *testing.T) {
+	assertOwnerContainment(t, []ownerContainment{
+		{"s { <|cursor>", "s {", "items", 0},
+		// The owner is the right operand of the operator in front of the cursor
+		{"s { foo plus <|cursor>", "foo plus", "right", -1},
+		{"s { foo plus bar times <|cursor>", "bar times", "right", -1},
+		{"s { foo times bar plus <|cursor>", "foo times bar plus", "right", -1},
+		{"s { foo plus <|cursor>bar times baz }", "foo plus bar times baz", "right", -1},
+		{"s { foo times <|cursor>bar plus baz }", "foo times bar", "right", -1},
+		// The owner is a new item behind the operands
+		{"s { foo plus bar times baz <|cursor>", "s { foo plus bar times baz", "items", 1},
+		{"s { foo times bar plus baz <|cursor> }", "s { foo times bar plus baz }", "items", 1},
+		// The operands in front of the cursor belong to operators that follow it
+		{"s { foo <|cursor> plus bar }", "s { foo plus bar }", "items", 1},
+		{"s { foo plus bar <|cursor> times baz }", "s { foo plus bar times baz }", "items", 1},
+		{"s { foo foo times bar <|cursor> plus baz }", "s { foo foo times bar plus baz }", "items", 2},
+	})
+}
+
+// The tree-rewriting action of TGroup wraps the node in front of the cursor
+// into a list, and the owner is the next item of that list. The main parser
+// only created the list if another item follows the cursor.
+func TestCompletion_AfterT_OwnerInActionList(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"t { <|cursor>":          {"new TRef at item, T at objects@0"},
+		"t { foo <|cursor>":      {"new TRef at elements@1, new TGroup at item, T at objects@0"},
+		"t { foo <|cursor> }":    {"new TRef at elements@1, new TGroup at item, T at objects@0"},
+		"t { foo <|cursor>bar }": {"new TRef at elements@1, TGroup at item, T at objects@0"},
+		"t { foo bar <|cursor>":  {"new TRef at elements@2, TGroup at item, T at objects@0"},
+		// The cursor is behind the nested list
+		"t { { foo bar } <|cursor>":       {"new TRef at elements@1, new TGroup at item, T at objects@0"},
+		"t { baz { foo bar } <|cursor> }": {"new TRef at elements@2, TGroup at item, T at objects@0"},
+		// The cursor is inside of the nested list
+		"t { baz { foo <|cursor>":       {"new TRef at elements@1, new TGroup at elements@1, TGroup at item, T at objects@0"},
+		"t { baz { foo bar <|cursor> }": {"new TRef at elements@2, TGroup at elements@1, TGroup at item, T at objects@0"},
+	})
+}
+
+// The property Right of U has the name of an operand of the infix rule that
+// it calls, which must not be confused when leaving the operands.
+func TestCompletion_AfterU_OwnerBehindInfixRule(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"u foo <|cursor>":                    {"new PItem at items@0, U at objects@0"},
+		"u foo plus bar times baz <|cursor>": {"new PItem at items@0, U at objects@0"},
+		"u foo times bar plus baz <|cursor>": {"new PItem at items@0, U at objects@0"},
+		"u foo plus bar foo <|cursor>":       {"new PItem at items@1, U at objects@0"},
+		"u foo plus <|cursor>":               {"new SRef at right, SBinary at right, U at objects@0"},
+	})
+}
+
+// The owner of the reference in V is the V that the cursor is in, and not a
+// nested V that ends in front of the cursor.
+func TestCompletion_AfterV_ExistingOwner(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"v { <|cursor>":               {"V at objects@0"},
+		"v { v { } <|cursor>":         {"V at objects@0"},
+		"v { v { v { } } <|cursor> }": {"V at objects@0"},
+		"v { v { v { } <|cursor> } }": {"V at children@0, V at objects@0"},
+		"v { v { } v { <|cursor> } }": {"V at children@1, V at objects@0"},
+	})
+	items := completionAt(t, "declare global v { declare outer v { declare inner } <|cursor> }")
+	for _, want := range []string{"global", "outer"} {
+		if !hasLabel(items, want) {
+			t.Errorf("expected %q as V.Ref candidate; got %v", want, itemLabels(items))
+		}
+	}
+	if hasLabel(items, "inner") {
+		t.Errorf("did not expect 'inner' as V.Ref candidate; got %v", itemLabels(items))
+	}
+}
+
+// The main parser reads the token in front of the cursor as the name of a
+// WName. The reference of WRefs reads it as a reference, so its owner is
+// unrelated to the node of the main parser.
+func TestCompletion_AfterW_OwnerOfOtherAlternative(t *testing.T) {
+	doc, owners := completeOwners(t, "w foo <|cursor>bar first")
+	if _, ok := test.MustFindNode[completion.W](doc).Name().(completion.WName); !ok {
+		t.Fatalf("expected the main parser to create a WName")
+	}
+	actual := []string{}
+	for _, owner := range owners {
+		actual = append(actual, describeOwner(doc, owner))
+	}
+	assert.ElementsMatch(t, []string{
+		"WName at name, W at objects@0",
+		"new WRefs, new Root",
+	}, actual)
+}
+
+// The action of ZItem changes the type of the node that contains the owner.
+func TestCompletion_AfterZ_OwnerInNodeOfAction(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"z { <|cursor>":     {"new PItem at inner, new ZWrapper at items@0, Z at objects@0"},
+		"z { foo <|cursor>": {"new PItem at inner, new ZWrapper at items@1, Z at objects@0"},
+	})
+}
+
+// The cursor is further away from the start of the nested Q than the
+// simulator looks back, so it has to leave a rule that it didn't enter.
+func TestCompletion_AfterQ_LongInput(t *testing.T) {
+	src := "declare global q { declare outer q { declare inner " + strings.Repeat("foo ", 40) + "} <|cursor>"
+	items := completionAt(t, src)
+	for _, want := range []string{"global", "outer"} {
+		if !hasLabel(items, want) {
+			t.Errorf("expected %q as PItem.Ref candidate; got %v", want, itemLabels(items))
+		}
+	}
+	if hasLabel(items, "inner") {
+		t.Errorf("did not expect 'inner' as PItem.Ref candidate; got %v", itemLabels(items))
+	}
+	_, owners := completeOwners(t, src)
+	for _, owner := range owners {
+		field, index := owner.ContainmentData()
+		if _, ok := owner.Container().(completion.Q); !ok || field.Value() != "items" || index != 0 {
+			t.Errorf("expected containment \"items\"@0 in a Q; got %q@%d in %T", field.Value(), index, owner.Container())
+		}
+	}
+}
+
+// The local symbols of a nested Q are not visible behind it.
+func TestCompletion_AfterQ_LocalSymbols(t *testing.T) {
+	cases := []struct {
+		src      string
+		expected []string
+		excluded []string
+	}{
+		{"declare global q { declare outer q { declare inner } <|cursor>", []string{"global", "outer"}, []string{"inner"}},
+		{"declare global q { declare outer q { declare inner } <|cursor> }", []string{"global", "outer"}, []string{"inner"}},
+		{"declare global q { declare outer q { declare inner <|cursor>", []string{"global", "outer", "inner"}, nil},
+		{"declare global q { declare outer q { declare inner } } <|cursor>", nil, []string{"global", "outer", "inner"}},
+	}
+	for _, c := range cases {
+		t.Run(c.src, func(t *testing.T) {
+			items := completionAt(t, c.src)
+			for _, want := range c.expected {
+				if !hasLabel(items, want) {
+					t.Errorf("expected %q as PItem.Ref candidate; got %v", want, itemLabels(items))
+				}
+			}
+			for _, unwanted := range c.excluded {
+				if hasLabel(items, unwanted) {
+					t.Errorf("did not expect %q as PItem.Ref candidate; got %v", unwanted, itemLabels(items))
+				}
+			}
+		})
 	}
 }
 

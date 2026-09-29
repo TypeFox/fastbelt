@@ -7,6 +7,8 @@ package parser
 import (
 	"context"
 	"iter"
+	"slices"
+	"unique"
 
 	core "typefox.dev/fastbelt"
 )
@@ -56,6 +58,16 @@ type LanguageCompletionAdapter interface {
 	ApplyAction(actionType, property string, value core.AstNode) core.AstNode
 }
 
+// CurrentAssignments is an optional extension of [LanguageCompletionAdapter].
+// The code generator emits it alongside the adapter.
+type CurrentAssignments interface {
+	// AssignsCurrent reports whether the child at the given field and index
+	// of the container was added by a tree-rewriting action or as the operand
+	// of an infix rule. Such a child is created by the same rule call as the
+	// container, in contrast to the child of an assigned rule call.
+	AssignsCurrent(container core.AstNode, field unique.Handle[string], index int) bool
+}
+
 // CompletionParseResult is the output of a CompletionParser run. It contains
 // every artefact the completion provider needs to drive the ATN simulator and
 // build the synthetic-owner chain.
@@ -82,15 +94,25 @@ type CompletionParseResult struct {
 // entry, Sync) - between snapshots, the simulator advances the live set by
 // consuming tokens.
 //
+// FollowStates is the stack of the ATN states that the rule calls in progress
+// return to. It lets the simulator leave the rule that the snapshot was taken
+// in. Fresh and Left describe how these rule calls changed since the last
+// token was consumed: the topmost Fresh entries of FollowStates were added
+// since then, and Left holds the FollowState indices of the assigned rule
+// calls that ended since then, in that order.
+//
 // RuleStack captures the live rule context at the moment the snapshot was
 // taken. It is what makes the completion provider's synthetic-owner chain
 // robust against error recovery: by the time Parse returns, the live stack
 // has been popped back to empty, but each snapshot preserves the context the
 // parser was in when it was recorded.
 type ATNSnapshot struct {
-	TokenIdx    int
-	ATNStateIdx int
-	RuleStack   []RuleContext
+	TokenIdx     int
+	ATNStateIdx  int
+	RuleStack    []RuleContext
+	FollowStates []int
+	Fresh        int
+	Left         []int
 }
 
 // RuleContext is a single frame of CompletionParseResult.RuleStack. RuleKey
@@ -123,6 +145,13 @@ type CompletionParserState struct {
 
 	snapshots []ATNSnapshot
 	ruleStack []RuleContext
+	// entries is parallel to ruleStack and holds the token index at which
+	// each rule was entered.
+	entries []int
+	// left holds the FollowState indices of the assigned rule calls that
+	// ended at the token index leftAt.
+	left   []int
+	leftAt int
 }
 
 // NewCompletionParserState wraps an existing ParserState so a generated
@@ -150,14 +179,34 @@ func (cp *CompletionParserState) State() *ParserState {
 // snapshots resume at that point.
 func (cp *CompletionParserState) EnterRule(ruleKey string, ruleStartStateIdx int) {
 	cp.ruleStack = append(cp.ruleStack, RuleContext{RuleKey: ruleKey})
+	cp.entries = append(cp.entries, cp.state.Index)
 	if cp.state.ErrorMode != ErrorModeNone {
 		return
 	}
-	cp.snapshots = append(cp.snapshots, ATNSnapshot{
-		TokenIdx:    cp.state.Index,
-		ATNStateIdx: ruleStartStateIdx,
-		RuleStack:   append([]RuleContext(nil), cp.ruleStack...),
-	})
+	cp.snapshots = append(cp.snapshots, cp.snapshot(ruleStartStateIdx))
+}
+
+// snapshot describes the current state of the parser at the given ATN state.
+func (cp *CompletionParserState) snapshot(atnStateIdx int) ATNSnapshot {
+	index := cp.state.Index
+	followStates := cp.state.followStates
+	// The entry rule has no follow state
+	fresh := 0
+	for i := len(cp.entries) - 1; i >= 0 && cp.entries[i] == index && fresh < len(followStates); i-- {
+		fresh++
+	}
+	var left []int
+	if cp.leftAt == index {
+		left = slices.Clone(cp.left)
+	}
+	return ATNSnapshot{
+		TokenIdx:     index,
+		ATNStateIdx:  atnStateIdx,
+		RuleStack:    slices.Clone(cp.ruleStack),
+		FollowStates: slices.Clone(followStates),
+		Fresh:        fresh,
+		Left:         left,
+	}
 }
 
 // ExitRule pops the top RuleContext. The matching push happens in EnterRule;
@@ -172,8 +221,27 @@ func (cp *CompletionParserState) EnterRule(ruleKey string, ruleStartStateIdx int
 // recovery, which is essential when the parser continues past a transient
 // error and enters more rules.
 func (cp *CompletionParserState) ExitRule() {
-	if len(cp.ruleStack) > 0 {
-		cp.ruleStack = cp.ruleStack[:len(cp.ruleStack)-1]
+	if last := len(cp.ruleStack) - 1; last >= 0 {
+		cp.leaveRule(cp.entries[last])
+		cp.ruleStack = cp.ruleStack[:last]
+		cp.entries = cp.entries[:last]
+	}
+}
+
+// leaveRule records the rule call that ends, if it is an assigned rule call
+// that consumed a token. The rule was entered at the token index entry.
+func (cp *CompletionParserState) leaveRule(entry int) {
+	index := cp.state.Index
+	if cp.leftAt != index {
+		cp.left, cp.leftAt = nil, index
+	}
+	followStates := cp.state.followStates
+	if entry == index || len(followStates) == 0 || cp.state.atn == nil {
+		return
+	}
+	followIdx := followStates[len(followStates)-1]
+	if call := cp.state.atn.ruleCallAt(followIdx); call != nil && call.Property != "" && !call.InfixOperand {
+		cp.left = append(slices.Clip(cp.left), followIdx)
 	}
 }
 
@@ -189,11 +257,7 @@ func (cp *CompletionParserState) RecordSnapshot(atnStateIdx int) {
 	if cp.state.ErrorMode != ErrorModeNone {
 		return
 	}
-	cp.snapshots = append(cp.snapshots, ATNSnapshot{
-		TokenIdx:    cp.state.Index,
-		ATNStateIdx: atnStateIdx,
-		RuleStack:   append([]RuleContext(nil), cp.ruleStack...),
-	})
+	cp.snapshots = append(cp.snapshots, cp.snapshot(atnStateIdx))
 }
 
 // MarkAssignment sets the assignment property on the top RuleContext. The
@@ -294,7 +358,24 @@ func (r *CompletionParseResult) SimulateAt(atn *RuntimeATN, cursor int) (live []
 	// If it yields a non-empty completion set, that likely means that the snapshot is valid (no syntax errors in the prefix)
 	// If it fails, we should try the next snapshot, which is closer to the cursor, but might be more specific (less broad)
 	try := func(s ATNSnapshot) ([]simPath, bool) {
-		l := atn.Simulate(s.ATNStateIdx, r.Tokens[s.TokenIdx:cursor])
+		if s.ATNStateIdx < 0 || s.ATNStateIdx >= len(atn.States) {
+			return nil, false
+		}
+		seed := simPath{stateIdx: s.ATNStateIdx, consumedAt: -1}
+		if atn.hasRuleCallInfo {
+			// Continue with the rule calls of the parser, so that the
+			// simulator can leave the rule that the snapshot was taken in
+			seed.stack = s.FollowStates
+			seed.hints = make([]*CompletionHint, len(s.FollowStates))
+			for i, followIdx := range s.FollowStates {
+				if rt := atn.ruleTransitionAt(followIdx); rt != nil {
+					seed.hints[i] = rt.CompletionHint
+				}
+			}
+			seed.fresh = s.Fresh
+			seed.left = s.Left
+		}
+		l := atn.simulateFrom(seed, r.Tokens[s.TokenIdx:cursor], DefaultSimConfig)
 		if len(l) == 0 {
 			return nil, false
 		}

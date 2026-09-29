@@ -38,22 +38,33 @@ func completionHintFor(cr grammar.CrossRef) *parser.CompletionHint {
 	if !ok {
 		panic(fmt.Sprintf("expected Field's container to be an Interface, got %T", field.Container()))
 	}
-	hint := &parser.CompletionHint{Field: iface.Name() + "." + fieldName}
-	if action := findPrecedingAction(assignment); action != nil {
-		typeName := ""
-		if t := action.Type(); t != nil {
-			typeName = t.Text()
-		}
-		actionProp := ""
-		if p := action.Property(); p != nil {
-			actionProp = p.Text()
-		}
-		hint.PrecedingAction = &parser.ActionInfo{
-			TargetType: typeName,
-			Property:   actionProp,
-		}
+	return &parser.CompletionHint{
+		Field:           iface.Name() + "." + fieldName,
+		PrecedingAction: precedingActionInfo(assignment),
 	}
-	return hint
+}
+
+// isRepeated reports whether the cardinality of the element repeats it.
+func isRepeated(el grammar.Element) bool {
+	return el.Cardinality() == "*" || el.Cardinality() == "+"
+}
+
+// precedingActionInfo describes the action that fires immediately before
+// el's first token is consumed. Returns nil if there is no such action.
+func precedingActionInfo(el grammar.Element) *parser.ActionInfo {
+	action := findPrecedingAction(el)
+	if action == nil {
+		return nil
+	}
+	info := &parser.ActionInfo{}
+	if t := action.Type(); t != nil {
+		info.TargetType = t.Text()
+	}
+	if p := action.Property(); p != nil {
+		info.Property = p.Text()
+		info.Field = grammar.GoFieldName(info.Property)
+	}
+	return info
 }
 
 // findPrecedingAction returns the grammar.Action that fires immediately
@@ -102,6 +113,49 @@ func findPrecedingAction(el grammar.Element) grammar.Action {
 		}
 	}
 	return nil
+}
+
+// ruleCallInfoFor returns how the node created by the rule call is added to
+// the AST: the type of the node and the property it is assigned to, if any.
+// The caller is the rule that contains the rule call.
+// The return value is never nil.
+func ruleCallInfoFor(rc grammar.RuleCall, rule, caller grammar.AbstractRuleWithBody) *parser.RuleCallInfo {
+	info := &parser.RuleCallInfo{}
+	withReturnType, ok := rule.(grammar.AbstractRuleWithReturnType)
+	if !ok {
+		// Composite rules do not create nodes
+		return info
+	}
+	if returnType := grammar.FindReturnType(withReturnType, context.Background()); returnType != nil {
+		info.Type = returnType.Name()
+	}
+	container := fastbelt.AstNode(rc).Container()
+	if alternatives, ok := container.(grammar.Alternatives); ok {
+		// The rule call is one of the alternatives of an assignment, e.g. `Items+=(A | B)`
+		container = alternatives.Container()
+	}
+	if assignment, ok := container.(grammar.Assignment); ok {
+		if assignment.Property() != nil {
+			info.Property = grammar.GoFieldName(assignment.Property().Text())
+			info.List = assignment.Operator() == "+="
+		}
+		info.PrecedingAction = precedingActionInfo(assignment)
+		info.Repeated = isRepeated(assignment)
+		return info
+	}
+	info.PrecedingAction = precedingActionInfo(rc)
+	info.Repeated = isRepeated(rc)
+	if _, ok := caller.(grammar.InfixRule); ok {
+		// The body of an infix rule is `operand (operator operand)*`, and the
+		// operand that follows an operator is its right operand. The first
+		// operand continues the node of the infix rule, like an unassigned
+		// rule call that is followed by a tree-rewriting action.
+		if group, ok := container.(grammar.Group); ok && group.Cardinality() == "*" {
+			info.Property = grammar.GoFieldName("Right")
+			info.InfixOperand = true
+		}
+	}
+	return info
 }
 
 func CreateATN(grammr grammar.Grammar, tokenTypeIds map[string]int) (*ATN, map[string]grammar.AbstractRuleWithBody) {
@@ -276,7 +330,7 @@ func convertRuleCall(
 
 	switch typed := rule.(type) {
 	case grammar.AbstractRuleWithBody:
-		handle := rb.RuleRef(typed)
+		handle := rb.RuleRef(typed, ruleCallInfoFor(rc, typed, rb.Rule()), nil)
 		handle.Left.RuleCallEntry = rc // tag so generator can find follow state via RuleCallEntry
 		return wrapWithCardinality(rb, handle, cardinality, lookaheadName, rc), nil
 	case grammar.AbstractTokenRule:
@@ -302,12 +356,9 @@ func convertCrossRef(
 	rule := cr.Rule().Rule().Ref(context.Background())
 	hint := completionHintFor(cr)
 	if abstractRule, ok := rule.(grammar.AbstractRuleWithBody); ok {
-		handle := rb.RuleRef(abstractRule)
-		for _, t := range handle.Left.Transitions {
-			if rt, ok := t.(*RuleTransition); ok && rt.Rule == abstractRule {
-				rt.CompletionHint = hint
-			}
-		}
+		// The rule provides the text of the cross-reference and creates no node
+		handle := rb.RuleRef(abstractRule, &parser.RuleCallInfo{}, hint)
+		handle.Left.RuleCallEntry = cr.Rule() // tag so generator can find follow state via RuleCallEntry
 		return handle, nil
 	}
 	id := rb.GetTokenTypeByName(rule.Name())

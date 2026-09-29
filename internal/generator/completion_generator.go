@@ -22,6 +22,7 @@ func GenerateCompletion(grammr grammar.Grammar, packageName string) string {
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("\"context\"")
 		n.AppendLine("\"iter\"")
+		n.AppendLine("\"unique\"")
 		n.AppendLine()
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
 		n.AppendLine("\"typefox.dev/fastbelt/parser\"")
@@ -232,7 +233,37 @@ func generateLspAdapter(ctx *LinkerGeneratorContext, actions []actionEntry) code
 
 	node.AppendNode(generateHasAssignment(ctx))
 	node.AppendNode(generateApplyAction(ctx, actions))
+	node.AppendNode(generateAssignsCurrent(ctx, actions))
 
+	return node
+}
+
+// generateAssignsCurrent emits the check for the children that a
+// tree-rewriting action or an infix rule adds to the node that it creates:
+// the current node of the action, and both operands of an infix operator.
+func generateAssignsCurrent(ctx *LinkerGeneratorContext, actions []actionEntry) codegen.Node {
+	node := codegen.NewNode()
+	name := ctx.grammar.Name()
+
+	node.AppendLine("func (a *", name, "CompletionAdapter) AssignsCurrent(container core.AstNode, field unique.Handle[string], index int) bool {")
+	for _, e := range actions {
+		// The current node is the first item that is added to a list
+		position := "index < 0"
+		if e.isArray {
+			position = "index == 0"
+		}
+		node.AppendLine("if _, ok := container.(", e.targetType, "); ok && field == ", fieldHandleVarName(grammar.GoFieldName(e.property)), " && ", position, " {")
+		node.AppendLine(" return true")
+		node.AppendLine("}")
+	}
+	for _, rule := range ctx.grammar.InfixRules() {
+		node.AppendLine("if _, ok := container.(", rule.Name(), "); ok && (field == ", fieldHandleVarName("left"), " || field == ", fieldHandleVarName("right"), ") {")
+		node.AppendLine(" return true")
+		node.AppendLine("}")
+	}
+	node.AppendLine("return false")
+	node.AppendLine("}")
+	node.AppendLine()
 	return node
 }
 

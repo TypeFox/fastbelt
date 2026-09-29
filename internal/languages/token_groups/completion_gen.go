@@ -5,6 +5,7 @@ package token_groups
 import (
 	"context"
 	"iter"
+	"unique"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
@@ -68,4 +69,8 @@ func (a *TokenGroupsCompletionAdapter) ApplyAction(actionType, property string, 
 	_ = property
 	_ = value
 	return nil
+}
+
+func (a *TokenGroupsCompletionAdapter) AssignsCurrent(container core.AstNode, field unique.Handle[string], index int) bool {
+	return false
 }
