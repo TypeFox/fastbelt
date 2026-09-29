@@ -153,6 +153,69 @@ func (p *Parser) ParseRoot() Root {
 					if result != nil {
 						current.SetObjectsItem(result)
 					}
+				case 16:
+					p.state.EnterRule(Root__Basic_33)
+					result := p.ParseP()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetObjectsItem(result)
+					}
+				case 17:
+					p.state.EnterRule(Root__Basic_35)
+					result := p.ParseQ()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetObjectsItem(result)
+					}
+				case 18:
+					p.state.EnterRule(Root__Basic_37)
+					result := p.ParseR()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetObjectsItem(result)
+					}
+				case 19:
+					p.state.EnterRule(Root__Basic_39)
+					result := p.ParseS()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetObjectsItem(result)
+					}
+				case 20:
+					p.state.EnterRule(Root__Basic_41)
+					result := p.ParseT()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetObjectsItem(result)
+					}
+				case 21:
+					p.state.EnterRule(Root__Basic_43)
+					result := p.ParseU()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetObjectsItem(result)
+					}
+				case 22:
+					p.state.EnterRule(Root__Basic_45)
+					result := p.ParseV()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetObjectsItem(result)
+					}
+				case 23:
+					p.state.EnterRule(Root__Basic_47)
+					result := p.ParseW()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetObjectsItem(result)
+					}
+				case 24:
+					p.state.EnterRule(Root__Basic_49)
+					result := p.ParseZ()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetObjectsItem(result)
+					}
 				default:
 					break loop0
 				}
@@ -334,7 +397,7 @@ func (p *Parser) ParseE() E {
 		{
 			result := core.NewCompositeNode()
 			result.SetTextRangeStart(p.state.LA(1).Range.Start)
-			p.state.EnterRule(0)
+			p.state.EnterRule(E__Basic_1)
 			p.ParseFQN(result)
 			p.state.ExitRule()
 			result.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -412,7 +475,7 @@ func (p *Parser) ParseFItem() FItem {
 		{
 			result := core.NewCompositeNode()
 			result.SetTextRangeStart(p.state.LA(1).Range.Start)
-			p.state.EnterRule(0)
+			p.state.EnterRule(FItem__Basic_1)
 			p.ParseFQN(result)
 			p.state.ExitRule()
 			result.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -727,6 +790,615 @@ func (p *Parser) ParseO() Obj {
 	return current
 }
 
+func (p *Parser) ParseP() P {
+	current := NewP()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Keyword_p)
+			core.AssignToken(current, token, P_p)
+		}
+		{
+			token := p.state.Consume(Token_LBRACE)
+			core.AssignToken(current, token, P_LBRACE)
+		}
+		{
+			p.state.Sync(P__LoopEntry_0)
+			for p.lookahead.PLocalsLoop(p.state) {
+				p.state.EnterRule(P__Basic_1)
+				result := p.ParseDeclare()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetLocalsItem(result)
+				}
+				p.state.Sync(P__LoopEntry_0)
+			}
+		}
+		{
+			token := p.state.Consume(Keyword_use)
+			core.AssignToken(current, token, P_use)
+		}
+		{
+			p.state.EnterRule(P__LoopEntry_1)
+			result := p.ParsePItem()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetItem(result)
+			}
+		}
+		p.state.Sync(P__LoopEntry_1)
+		for p.lookahead.PLoop(p.state) {
+			{
+				token := p.state.Consume(Token_AND)
+				core.AssignToken(current, token, P_AND)
+			}
+			{
+				p.state.EnterRule(P__Basic_4)
+				result := p.ParsePItem()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetOthersItem(result)
+				}
+			}
+			p.state.Sync(P__LoopEntry_1)
+		}
+		{
+			token := p.state.Consume(Token_RBRACE)
+			core.AssignToken(current, token, P_RBRACE)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParsePItem() PItem {
+	current := NewPItem()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, PItem_Ref_ID)
+			if token != nil {
+				current.SetRef(p.referencesConstructor.PItemRef(current, token))
+			}
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseQ() Q {
+	current := NewQ()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Keyword_q)
+			core.AssignToken(current, token, Q_q)
+		}
+		{
+			token := p.state.Consume(Token_LBRACE)
+			core.AssignToken(current, token, Q_LBRACE)
+		}
+		p.state.Sync(Q__LoopEntry)
+	loop1:
+		for {
+			switch prediction, _ := p.lookahead.QAlternatives(p.state); prediction {
+			case 0:
+				{
+					p.state.EnterRule(Q__Basic_1)
+					result := p.ParseDeclare()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetLocalsItem(result)
+					}
+				}
+			case 1:
+				{
+					p.state.EnterRule(Q__Basic_3)
+					result := p.ParsePItem()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetItemsItem(result)
+					}
+				}
+			case 2:
+				{
+					p.state.EnterRule(Q__Basic_5)
+					result := p.ParseQ()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetNestedItem(result)
+					}
+				}
+			default:
+				break loop1
+			}
+			p.state.Sync(Q__LoopEntry)
+		}
+		{
+			token := p.state.Consume(Token_RBRACE)
+			core.AssignToken(current, token, Q_RBRACE)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseR() R {
+	current := NewR()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Keyword_r)
+			core.AssignToken(current, token, R_r)
+		}
+		{
+			token := p.state.Consume(Token_LBRACE)
+			core.AssignToken(current, token, R_LBRACE)
+		}
+		{
+			p.state.Sync(R__LoopEntry)
+			for p.lookahead.RItemsLoop(p.state) {
+				p.state.EnterRule(R__Basic_1)
+				result := p.ParseRItem()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetItemsItem(result)
+				}
+				p.state.Sync(R__LoopEntry)
+			}
+		}
+		{
+			token := p.state.Consume(Token_RBRACE)
+			core.AssignToken(current, token, R_RBRACE)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseRItem() RItem {
+	current := NewRItem()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, RItem_Ref_ID_0)
+			if token != nil {
+				current.SetRef(p.referencesConstructor.RItemRef(current, token))
+			}
+		}
+		p.state.Sync(RItem__LoopEntry)
+		for p.lookahead.RItemLoop(p.state) {
+			{
+				result := NewRItem()
+				result.SetTextRange(current.TextRange())
+				result.SetPrevious(current)
+				current.SetTextRangeEnd(p.state.LA(0).Range.End)
+				current = result
+			}
+			current := current.(RItem)
+			{
+				token := p.state.Consume(Token_AND)
+				core.AssignToken(current, token, RItem_AND)
+			}
+			{
+				token := p.state.Consume(Token_ID)
+				core.AssignToken(current, token, RItem_Ref_ID_1)
+				if token != nil {
+					current.SetRef(p.referencesConstructor.RItemRef(current, token))
+				}
+			}
+			p.state.Sync(RItem__LoopEntry)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseS() S {
+	current := NewS()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Keyword_s)
+			core.AssignToken(current, token, S_s)
+		}
+		{
+			token := p.state.Consume(Token_LBRACE)
+			core.AssignToken(current, token, S_LBRACE)
+		}
+		{
+			p.state.Sync(S__LoopEntry)
+			for p.lookahead.SItemsLoop(p.state) {
+				p.state.EnterRule(S__Basic_1)
+				result := p.ParseSBinary()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetItemsItem(result)
+				}
+				p.state.Sync(S__LoopEntry)
+			}
+		}
+		{
+			token := p.state.Consume(Token_RBRACE)
+			core.AssignToken(current, token, S_RBRACE)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseSPrimary() SItem {
+	startPos := p.state.LA(1).Range.Start
+	var current SItem
+	{
+		{
+			result := NewSRef()
+			result.SetTextRangeStart(startPos)
+			current = result
+		}
+		current := current.(SRef)
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, SPrimary_Ref_ID)
+			if token != nil {
+				current.SetRef(p.referencesConstructor.SRefRef(current, token))
+			}
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseT() T {
+	current := NewT()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Keyword_t)
+			core.AssignToken(current, token, T_t)
+		}
+		{
+			token := p.state.Consume(Token_LBRACE)
+			core.AssignToken(current, token, T_LBRACE)
+		}
+		{
+			p.state.EnterRule(T_RBRACE)
+			result := p.ParseTGroup()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetItem(result)
+			}
+		}
+		{
+			token := p.state.Consume(Token_RBRACE)
+			core.AssignToken(current, token, T_RBRACE)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseTGroup() TItem {
+	var current TItem
+	{
+		{
+			p.state.EnterRule(TGroup__Basic_3)
+			result := p.ParseTElement()
+			p.state.ExitRule()
+			current = result
+		}
+		p.state.Sync(TGroup__Basic_3)
+		if p.lookahead.TGroupOptional(p.state) {
+			{
+				result := NewTGroup()
+				result.SetTextRange(current.TextRange())
+				result.SetElementsItem(current)
+				current.SetTextRangeEnd(p.state.LA(0).Range.End)
+				current = result
+			}
+			current := current.(TGroup)
+			{
+				for ok := true; ok; ok = p.lookahead.TGroupElementsLoop(p.state) {
+					p.state.EnterRule(TGroup__Basic_2)
+					result := p.ParseTElement()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetElementsItem(result)
+					}
+					p.state.Sync(TGroup__LoopBack)
+				}
+			}
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseTElement() TItem {
+	startPos := p.state.LA(1).Range.Start
+	var current TItem
+	{
+		switch prediction, failure := p.lookahead.TElementAlternatives(p.state); prediction {
+		case 0:
+			{
+				result := NewTRef()
+				result.SetTextRangeStart(startPos)
+				current = result
+			}
+			current := current.(TRef)
+			{
+				token := p.state.Consume(Token_ID)
+				core.AssignToken(current, token, TElement_Ref_ID)
+				if token != nil {
+					current.SetRef(p.referencesConstructor.TRefRef(current, token))
+				}
+			}
+		case 1:
+			{
+				current = NewTItem()
+				current.SetTextRangeStart(startPos)
+				token := p.state.Consume(Token_LBRACE)
+				core.AssignToken(current, token, TElement_LBRACE)
+			}
+			{
+				p.state.EnterRule(TElement_RBRACE)
+				result := p.ParseTGroup()
+				p.state.ExitRule()
+				core.MergeTokens(result, current.Tokens())
+				current = result
+			}
+			{
+				token := p.state.Consume(Token_RBRACE)
+				core.AssignToken(current, token, TElement_RBRACE)
+			}
+		default:
+			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewTItem()
+			current.SetTextRangeStart(startPos)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseU() U {
+	current := NewU()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Keyword_u)
+			core.AssignToken(current, token, U_u)
+		}
+		{
+			p.state.EnterRule(U__LoopEntry)
+			result := p.ParseSBinary()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetRight(result)
+			}
+		}
+		{
+			p.state.Sync(U__LoopEntry)
+			for p.lookahead.UItemsLoop(p.state) {
+				p.state.EnterRule(U__Basic_2)
+				result := p.ParsePItem()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetItemsItem(result)
+				}
+				p.state.Sync(U__LoopEntry)
+			}
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseV() V {
+	current := NewV()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Keyword_v)
+			core.AssignToken(current, token, V_v)
+		}
+		{
+			token := p.state.Consume(Token_LBRACE)
+			core.AssignToken(current, token, V_LBRACE)
+		}
+		p.state.Sync(V__LoopEntry)
+	loop2:
+		for {
+			switch prediction, _ := p.lookahead.VAlternatives(p.state); prediction {
+			case 0:
+				{
+					p.state.EnterRule(V__Basic_1)
+					result := p.ParseDeclare()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetLocalsItem(result)
+					}
+				}
+			case 1:
+				{
+					token := p.state.Consume(Token_ID)
+					core.AssignToken(current, token, V_Ref_ID)
+					if token != nil {
+						current.SetRef(p.referencesConstructor.VRef(current, token))
+					}
+				}
+			case 2:
+				{
+					p.state.EnterRule(V__Basic_4)
+					result := p.ParseV()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetChildrenItem(result)
+					}
+				}
+			default:
+				break loop2
+			}
+			p.state.Sync(V__LoopEntry)
+		}
+		{
+			token := p.state.Consume(Token_RBRACE)
+			core.AssignToken(current, token, V_RBRACE)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseW() W {
+	current := NewW()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Keyword_w)
+			core.AssignToken(current, token, W_w)
+		}
+		switch prediction, failure := p.lookahead.WAlternatives(p.state); prediction {
+		case 0:
+			{
+				p.state.EnterRule(W__Basic_1)
+				result := p.ParseWName()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetName(result)
+				}
+			}
+		case 1:
+			{
+				p.state.EnterRule(W__Basic_3)
+				result := p.ParseWRefs()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetRefs(result)
+				}
+			}
+		default:
+			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseWName() WName {
+	current := NewWName()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, WName_Name_ID)
+			if token != nil {
+				current.SetName(token)
+			}
+		}
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, WName_Ref_ID)
+			if token != nil {
+				current.SetRef(p.referencesConstructor.WNameRef(current, token))
+			}
+		}
+		{
+			token := p.state.Consume(Token_FIRST)
+			core.AssignToken(current, token, WName_FIRST)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseWRefs() WRefs {
+	current := NewWRefs()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, WRefs_Ref1_ID)
+			if token != nil {
+				current.SetRef1(p.referencesConstructor.WRefsRef1(current, token))
+			}
+		}
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, WRefs_Ref_ID)
+			if token != nil {
+				current.SetRef(p.referencesConstructor.WRefsRef(current, token))
+			}
+		}
+		{
+			token := p.state.Consume(Token_SECOND)
+			core.AssignToken(current, token, WRefs_SECOND)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseZ() Z {
+	current := NewZ()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Keyword_z)
+			core.AssignToken(current, token, Z_z)
+		}
+		{
+			token := p.state.Consume(Token_LBRACE)
+			core.AssignToken(current, token, Z_LBRACE)
+		}
+		{
+			p.state.Sync(Z__LoopEntry)
+			for p.lookahead.ZItemsLoop(p.state) {
+				p.state.EnterRule(Z__Basic_1)
+				result := p.ParseZItem()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetItemsItem(result)
+				}
+				p.state.Sync(Z__LoopEntry)
+			}
+		}
+		{
+			token := p.state.Consume(Token_RBRACE)
+			core.AssignToken(current, token, Z_RBRACE)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseZItem() ZItem {
+	startPos := p.state.LA(1).Range.Start
+	var current ZItem
+	{
+		{
+			result := NewZWrapper()
+			result.SetTextRangeStart(startPos)
+			current = result
+		}
+		current := current.(ZWrapper)
+		{
+			p.state.EnterRule(ZItem__Basic_1)
+			result := p.ParsePItem()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetInner(result)
+			}
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
 func (p *Parser) ParseFQN(current core.CompositeNode) {
 	{
 		token := p.state.Consume(Token_ID)
@@ -744,4 +1416,54 @@ func (p *Parser) ParseFQN(current core.CompositeNode) {
 		}
 		p.state.Sync(FQN__LoopEntry)
 	}
+}
+
+var SBinaryPrecedence = map[int]parser.InfixPrecedence{
+	Keyword_times_Idx: {Level: 0},
+	Keyword_plus_Idx:  {Level: 1},
+}
+
+func (p *Parser) ParseSBinary() SItem {
+	var parts []SItem
+	var operators []*core.Token
+	{
+		p.state.EnterRule(SBinary__LoopEntry)
+		result := p.ParseSPrimary()
+		p.state.ExitRule()
+		parts = append(parts, result)
+	}
+	p.state.Sync(SBinary__LoopEntry)
+	for p.lookahead.SBinaryLoop(p.state) {
+		if token := p.state.Consume(TokenGroup_SBinaryOperator); token != nil {
+			operators = append(operators, token)
+		}
+		{
+			p.state.EnterRule(SBinary__Basic_2)
+			result := p.ParseSPrimary()
+			p.state.ExitRule()
+			parts = append(parts, result)
+		}
+		p.state.Sync(SBinary__LoopEntry)
+	}
+	if len(parts) == 1 {
+		// A lone operand is returned unchanged; no binary node is created.
+		return parts[0]
+	}
+	return parser.BuildInfixTree(parts, operators, SBinaryPrecedence, func(left SItem, operator *core.Token, right SItem) SItem {
+		result := NewSBinary()
+		if left != nil {
+			result.SetLeft(left)
+			result.SetTextRangeStart(left.TextRange().Start)
+		}
+		if operator != nil {
+			core.AssignToken(result, operator, SBinary_SBinaryOperator)
+			result.SetOperator(operator)
+			result.SetTextRangeEnd(operator.Range.End)
+		}
+		if right != nil {
+			result.SetRight(right)
+			result.SetTextRangeEnd(right.TextRange().End)
+		}
+		return result
+	})
 }

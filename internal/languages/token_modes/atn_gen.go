@@ -229,7 +229,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[Interpolation_HashLeftBrace]),
 	)
 	states[Model__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[Statement__Start], states[Model__Basic_1], nil),
+		parser.NewRuleTransition(states[Statement__Start], states[Model__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "statements", List: true, Type: "Statement", Repeated: true}),
 	)
 	states[Model__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Model__LoopBack]),
@@ -245,7 +245,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[Model__LoopEntry]),
 	)
 	states[Statement__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[VariableDecl__Start], states[Statement__Basic_1], nil),
+		parser.NewRuleTransition(states[VariableDecl__Start], states[Statement__Basic_1], nil).WithCall(&parser.RuleCallInfo{Type: "VariableDecl"}),
 	)
 	states[Statement__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Statement__Stop]),
@@ -257,25 +257,25 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[VariableDecl__Basic_0], Keyword_ColonEquals, nil),
 	)
 	states[VariableDecl__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[Expression__Start], states[VariableDecl__Basic_1], nil),
+		parser.NewRuleTransition(states[Expression__Start], states[VariableDecl__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "value", Type: "Expression"}),
 	)
 	states[VariableDecl__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[VariableDecl__Stop]),
 	)
 	states[Expression__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[Additive__Start], states[Expression__Basic_1], nil),
+		parser.NewRuleTransition(states[Additive__Start], states[Expression__Basic_1], nil).WithCall(&parser.RuleCallInfo{Type: "Expression"}),
 	)
 	states[Expression__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Expression__Stop]),
 	)
 	states[Additive__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[Primary__Start], states[Additive__LoopEntry], nil),
+		parser.NewRuleTransition(states[Primary__Start], states[Additive__LoopEntry], nil).WithCall(&parser.RuleCallInfo{Type: "Primary"}),
 	)
 	states[Additive_Operator_Plus].AppendTransitions(
 		parser.NewAtomTransition(states[Additive__Basic_1], Keyword_Plus, nil),
 	)
 	states[Additive__Basic_1].AppendTransitions(
-		parser.NewRuleTransition(states[Primary__Start], states[Additive__Basic_2], nil),
+		parser.NewRuleTransition(states[Primary__Start], states[Additive__Basic_2], nil).WithCall(&parser.RuleCallInfo{Property: "right", Type: "Primary"}),
 	)
 	states[Additive__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[Additive__LoopBack]),
@@ -291,25 +291,25 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[Additive__LoopEntry]),
 	)
 	states[Primary__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[VariableRef__Start], states[Primary__Basic_1], nil),
+		parser.NewRuleTransition(states[VariableRef__Start], states[Primary__Basic_1], nil).WithCall(&parser.RuleCallInfo{Type: "VariableRef"}),
 	)
 	states[Primary__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Primary__BlockEnd]),
 	)
 	states[Primary__Basic_2].AppendTransitions(
-		parser.NewRuleTransition(states[NumericLiteral__Start], states[Primary__Basic_3], nil),
+		parser.NewRuleTransition(states[NumericLiteral__Start], states[Primary__Basic_3], nil).WithCall(&parser.RuleCallInfo{Type: "NumericLiteral"}),
 	)
 	states[Primary__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[Primary__BlockEnd]),
 	)
 	states[Primary__Basic_4].AppendTransitions(
-		parser.NewRuleTransition(states[StringLiteral__Start], states[Primary__Basic_5], nil),
+		parser.NewRuleTransition(states[StringLiteral__Start], states[Primary__Basic_5], nil).WithCall(&parser.RuleCallInfo{Type: "StringLiteral"}),
 	)
 	states[Primary__Basic_5].AppendTransitions(
 		parser.NewEpsilonTransition(states[Primary__BlockEnd]),
 	)
 	states[Primary__Basic_6].AppendTransitions(
-		parser.NewRuleTransition(states[Parentheses__Start], states[Primary__Basic_7], nil),
+		parser.NewRuleTransition(states[Parentheses__Start], states[Primary__Basic_7], nil).WithCall(&parser.RuleCallInfo{Type: "Parentheses"}),
 	)
 	states[Primary__Basic_7].AppendTransitions(
 		parser.NewEpsilonTransition(states[Primary__BlockEnd]),
@@ -327,7 +327,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[Parentheses__Basic_0], Keyword_LeftParen, nil),
 	)
 	states[Parentheses__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[Expression__Start], states[Parentheses_RightParen], nil),
+		parser.NewRuleTransition(states[Expression__Start], states[Parentheses_RightParen], nil).WithCall(&parser.RuleCallInfo{Property: "expr", Type: "Expression"}),
 	)
 	states[Parentheses_RightParen].AppendTransitions(
 		parser.NewAtomTransition(states[Parentheses__Basic_1], Keyword_RightParen, nil),
@@ -351,7 +351,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[StringLiteral__LoopEntry], Keyword_Backtick, nil),
 	)
 	states[StringLiteral__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[StringContent__Start], states[StringLiteral__Basic_1], nil),
+		parser.NewRuleTransition(states[StringContent__Start], states[StringLiteral__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "content", List: true, Type: "StringContent", Repeated: true}),
 	)
 	states[StringLiteral__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[StringLiteral__LoopBack]),
@@ -373,13 +373,13 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[StringLiteral__Stop]),
 	)
 	states[StringContent__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[StringText__Start], states[StringContent__Basic_1], nil),
+		parser.NewRuleTransition(states[StringText__Start], states[StringContent__Basic_1], nil).WithCall(&parser.RuleCallInfo{Type: "StringText"}),
 	)
 	states[StringContent__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[StringContent__BlockEnd]),
 	)
 	states[StringContent__Basic_2].AppendTransitions(
-		parser.NewRuleTransition(states[Interpolation__Start], states[StringContent__Basic_3], nil),
+		parser.NewRuleTransition(states[Interpolation__Start], states[StringContent__Basic_3], nil).WithCall(&parser.RuleCallInfo{Type: "Interpolation"}),
 	)
 	states[StringContent__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[StringContent__BlockEnd]),
@@ -401,7 +401,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[Interpolation__Basic_0], Keyword_HashLeftBrace, nil),
 	)
 	states[Interpolation__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[Expression__Start], states[Interpolation_RightBrace], nil),
+		parser.NewRuleTransition(states[Expression__Start], states[Interpolation_RightBrace], nil).WithCall(&parser.RuleCallInfo{Property: "expression", Type: "Expression"}),
 	)
 	states[Interpolation_RightBrace].AppendTransitions(
 		parser.NewAtomTransition(states[Interpolation__Basic_1], Keyword_RightBrace, nil),

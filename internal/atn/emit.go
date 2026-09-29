@@ -7,6 +7,7 @@ package atn
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/parser"
@@ -30,12 +31,41 @@ func renderCompletionHint(h *parser.CompletionHint) string {
 	}
 	out := "&parser.CompletionHint{Field: " + strconv.Quote(h.Field)
 	if h.PrecedingAction != nil {
-		out += ", PrecedingAction: &parser.ActionInfo{TargetType: " +
-			strconv.Quote(h.PrecedingAction.TargetType) +
-			", Property: " + strconv.Quote(h.PrecedingAction.Property) + "}"
+		out += ", PrecedingAction: " + renderActionInfo(h.PrecedingAction)
 	}
 	out += "}"
 	return out
+}
+
+func renderActionInfo(a *parser.ActionInfo) string {
+	out := "&parser.ActionInfo{TargetType: " + strconv.Quote(a.TargetType)
+	if a.Property != "" {
+		out += ", Property: " + strconv.Quote(a.Property) + ", Field: " + strconv.Quote(a.Field)
+	}
+	return out + "}"
+}
+
+func renderRuleCallInfo(c *parser.RuleCallInfo) string {
+	fields := []string{}
+	if c.Property != "" {
+		fields = append(fields, "Property: "+strconv.Quote(c.Property))
+	}
+	if c.List {
+		fields = append(fields, "List: true")
+	}
+	if c.Type != "" {
+		fields = append(fields, "Type: "+strconv.Quote(c.Type))
+	}
+	if c.InfixOperand {
+		fields = append(fields, "InfixOperand: true")
+	}
+	if c.PrecedingAction != nil {
+		fields = append(fields, "PrecedingAction: "+renderActionInfo(c.PrecedingAction))
+	}
+	if c.Repeated {
+		fields = append(fields, "Repeated: true")
+	}
+	return "&parser.RuleCallInfo{" + strings.Join(fields, ", ") + "}"
 }
 
 func EmitGoSource(pkgName string, rtn *ATN, grammr grammar.Grammar, tokenTypeVarNames []string) codegen.Node {
@@ -131,6 +161,8 @@ func EmitGoSource(pkgName string, rtn *ATN, grammr grammar.Grammar, tokenTypeVar
 							nm(at.FollowState),
 							"], ",
 							renderCompletionHint(at.CompletionHint),
+							").WithCall(",
+							renderRuleCallInfo(at.Call),
 							"),",
 						)
 					}

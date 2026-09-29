@@ -5,6 +5,7 @@ package lookahead
 import (
 	"context"
 	"iter"
+	"unique"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
@@ -68,4 +69,8 @@ func (a *LookaheadCompletionAdapter) ApplyAction(actionType, property string, va
 	_ = property
 	_ = value
 	return nil
+}
+
+func (a *LookaheadCompletionAdapter) AssignsCurrent(container core.AstNode, field unique.Handle[string], index int) bool {
+	return false
 }

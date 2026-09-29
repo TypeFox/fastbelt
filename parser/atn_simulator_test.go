@@ -202,6 +202,34 @@ func TestSimulator_HintsSurface(t *testing.T) {
 	}
 }
 
+// TestSimulator_RuleCallWithoutFollowState verifies that a rule transition
+// without a follow state is tolerated: the simulator cannot continue behind
+// the rule, but reports the hints inside of it.
+func TestSimulator_RuleCallWithoutFollowState(t *testing.T) {
+	tID := createTokenType(1, "ID")
+	hint := &CompletionHint{Field: "Transition.Event"}
+
+	innerStart := &RuntimeATNState{StateNumber: 1, Type: ATNRuleStart, Decision: -1, EpsilonOnlyTransitions: true}
+	innerMid := &RuntimeATNState{StateNumber: 2, Type: ATNBasic, Decision: -1}
+	innerStop := &RuntimeATNState{StateNumber: 3, Type: ATNRuleStop, Decision: -1}
+	innerStart.Transitions = []RuntimeTransition{&RuntimeAtomTransition{Target: innerMid, TokenType: tID, CompletionHint: hint}}
+	innerMid.Transitions = []RuntimeTransition{&RuntimeEpsilonTransition{Target: innerStop}}
+	outerStart := &RuntimeATNState{StateNumber: 0, Type: ATNBasic, Decision: -1, EpsilonOnlyTransitions: true}
+	outerStart.Transitions = []RuntimeTransition{
+		NewRuleTransition(innerStart, nil, nil).WithCall(&RuleCallInfo{Property: "event"}),
+	}
+	atn := NewRuntimeATN([]*RuntimeATNState{outerStart, innerStart, innerMid, innerStop}, nil, nil)
+
+	info := atn.NextCompletionsFromSet(atn.Simulate(0, nil))
+	if len(info.Hints) != 1 || len(info.Hints[0].Calls) != 1 || info.Hints[0].Calls[0] != nil {
+		t.Errorf("expected one hint with an unknown rule call; got %#v", info.Hints)
+	}
+	info = atn.NextCompletionsFromSet(atn.Simulate(0, []core.Token{tok(tID)}))
+	if len(info.Tokens) != 0 || len(info.Hints) != 0 {
+		t.Errorf("expected no completions behind the rule; got %#v", info)
+	}
+}
+
 // TestSimulator_EmptyLiveSetOnMismatch confirms that consuming a token with no
 // matching transition produces an empty live set (and that subsequent advances
 // short-circuit).

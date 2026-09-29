@@ -106,9 +106,14 @@ type CompletionHint struct {
 // to the named Property. The choice of single vs append assignment is
 // baked into the generated adapter from the field's grammar type, so the
 // operator does not need to travel through the ATN.
+//
+// Property is empty for an action that creates a node without assigning the
+// existing one. Field is the name of Property as used in
+// [fastbelt.AstNode.ContainmentData].
 type ActionInfo struct {
 	TargetType string // e.g. "MemberCall"
 	Property   string // e.g. "Previous"
+	Field      string // e.g. "previous"
 }
 
 // RuntimeAtomTransition fires on a specific token type.
@@ -155,10 +160,40 @@ func (t *RuntimeEpsilonTransition) IsEpsilon() bool             { return true }
 // transition reached inside the called rule then represents one token of
 // the cross-reference's text, so the simulator propagates this hint
 // onto its live-set paths until the matching RuleStop pops it off again.
+//
+// Call is nil if the ATN was generated without rule call information.
 type RuntimeRuleTransition struct {
 	Target         *RuntimeATNState // the rule's RuleStartState
 	FollowState    *RuntimeATNState
 	CompletionHint *CompletionHint
+	Call           *RuleCallInfo
+}
+
+// RuleCallInfo describes how the node created by a rule call is added to the
+// AST. The completion provider uses it to give the owner of a cross-reference
+// that doesn't exist yet the container that the parser would give to it.
+type RuleCallInfo struct {
+	// Property is the name of the field that the rule call is assigned to, as
+	// used in [fastbelt.AstNode.ContainmentData]. It is empty for an unassigned
+	// rule call, which continues the node of the calling rule.
+	Property string
+	// List reports whether the rule call is assigned with the += operator.
+	List bool
+	// Type is the name of the return type of the called rule. It is empty for
+	// rules that do not create nodes, such as composite rules.
+	Type string
+	// InfixOperand reports whether the rule call is the operand that follows
+	// an operator of an infix rule. Its node is assigned to the right operand
+	// of the operator, but the position of the operator in the tree depends on
+	// the precedence of the operators around it.
+	InfixOperand bool
+	// PrecedingAction is the action that is executed in front of the rule
+	// call, if the rule call is the first element that follows it.
+	PrecedingAction *ActionInfo
+	// Repeated reports whether the rule call has a cardinality that repeats
+	// it. The PrecedingAction is only executed in front of the first of the
+	// repeated rule calls then.
+	Repeated bool
 }
 
 func NewRuleTransition(target, followState *RuntimeATNState, hint *CompletionHint) *RuntimeRuleTransition {
@@ -167,6 +202,12 @@ func NewRuleTransition(target, followState *RuntimeATNState, hint *CompletionHin
 		FollowState:    followState,
 		CompletionHint: hint,
 	}
+}
+
+// WithCall sets the rule call information of the transition.
+func (t *RuntimeRuleTransition) WithCall(call *RuleCallInfo) *RuntimeRuleTransition {
+	t.Call = call
+	return t
 }
 
 func (t *RuntimeRuleTransition) GetTarget() *RuntimeATNState { return t.Target }
@@ -182,6 +223,9 @@ type RuntimeATN struct {
 	stateIdxCache map[*RuntimeATNState]int // pointer -> array index
 
 	nextTokensCache []*collections.BitSet // stateIdx -> bitset indexed by TokenType.Id
+
+	ruleTransitions []*RuntimeRuleTransition // follow stateIdx -> rule call that returns to that state
+	hasRuleCallInfo bool
 
 	// decisionToDFA holds one lazily-populated DFA per decision (indexed by
 	// RuntimeATNState.Decision). It is the shared, cross-parse cache used by the
@@ -204,6 +248,52 @@ func (atn *RuntimeATN) Init() {
 	atn.buildIdxCache()
 	atn.buildNextTokensCache()
 	atn.buildDecisionToDFA()
+	atn.buildRuleCalls()
+}
+
+func (atn *RuntimeATN) buildRuleCalls() {
+	atn.ruleTransitions = make([]*RuntimeRuleTransition, len(atn.States))
+	atn.hasRuleCallInfo = true
+	for _, state := range atn.States {
+		if state == nil {
+			continue
+		}
+		for _, t := range state.Transitions {
+			if rt, ok := t.(*RuntimeRuleTransition); ok {
+				if rt.Call == nil {
+					atn.hasRuleCallInfo = false
+				}
+				if idx := atn.stateIndex(rt.FollowState); idx >= 0 {
+					atn.ruleTransitions[idx] = rt
+				}
+			}
+		}
+	}
+}
+
+// ruleTransitionAt returns the rule transition that returns to the state at
+// followIdx, or nil if there is none.
+func (atn *RuntimeATN) ruleTransitionAt(followIdx int) *RuntimeRuleTransition {
+	if followIdx < 0 || followIdx >= len(atn.ruleTransitions) {
+		return nil
+	}
+	return atn.ruleTransitions[followIdx]
+}
+
+// ruleCallAt returns the information about the rule call that returns to the
+// state at followIdx, or nil if it is unknown.
+func (atn *RuntimeATN) ruleCallAt(followIdx int) *RuleCallInfo {
+	if rt := atn.ruleTransitionAt(followIdx); rt != nil {
+		return rt.Call
+	}
+	return nil
+}
+
+// HasRuleCallInfo reports whether every rule transition of the ATN carries
+// its [RuleCallInfo]. It is false for an ATN that was generated by an older
+// version of the generator.
+func (atn *RuntimeATN) HasRuleCallInfo() bool {
+	return atn.hasRuleCallInfo
 }
 
 func (atn *RuntimeATN) buildDecisionToDFA() {
