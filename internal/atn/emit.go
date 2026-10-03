@@ -161,7 +161,7 @@ func EmitGoSource(pkgName string, rtn *ATN, grammr grammar.Grammar, tokenTypeVar
 							nm(at.FollowState),
 							"], ",
 							renderCompletionHint(at.CompletionHint),
-							").WithCall(",
+							", ",
 							renderRuleCallInfo(at.Call),
 							"),",
 						)
