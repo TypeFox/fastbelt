@@ -919,151 +919,151 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[SBinary__Basic_0]),
 	)
 	states[Root__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[Declare__Start], states[Root__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "Declare", Repeated: true}),
+		parser.NewRuleTransition(states[Declare__Start], states[Root__Basic_1], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "Declare", Repeated: true}),
 	)
 	states[Root__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_2].AppendTransitions(
-		parser.NewRuleTransition(states[A__Start], states[Root__Basic_3], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "Obj", Repeated: true}),
+		parser.NewRuleTransition(states[A__Start], states[Root__Basic_3], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "Obj", Repeated: true}),
 	)
 	states[Root__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_4].AppendTransitions(
-		parser.NewRuleTransition(states[B__Start], states[Root__Basic_5], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "Obj", Repeated: true}),
+		parser.NewRuleTransition(states[B__Start], states[Root__Basic_5], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "Obj", Repeated: true}),
 	)
 	states[Root__Basic_5].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_6].AppendTransitions(
-		parser.NewRuleTransition(states[C__Start], states[Root__Basic_7], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "Obj", Repeated: true}),
+		parser.NewRuleTransition(states[C__Start], states[Root__Basic_7], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "Obj", Repeated: true}),
 	)
 	states[Root__Basic_7].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_8].AppendTransitions(
-		parser.NewRuleTransition(states[D__Start], states[Root__Basic_9], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "Obj", Repeated: true}),
+		parser.NewRuleTransition(states[D__Start], states[Root__Basic_9], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "Obj", Repeated: true}),
 	)
 	states[Root__Basic_9].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_10].AppendTransitions(
-		parser.NewRuleTransition(states[E__Start], states[Root__Basic_11], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "E", Repeated: true}),
+		parser.NewRuleTransition(states[E__Start], states[Root__Basic_11], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "E", Repeated: true}),
 	)
 	states[Root__Basic_11].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_12].AppendTransitions(
-		parser.NewRuleTransition(states[F__Start], states[Root__Basic_13], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "F", Repeated: true}),
+		parser.NewRuleTransition(states[F__Start], states[Root__Basic_13], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "F", Repeated: true}),
 	)
 	states[Root__Basic_13].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_14].AppendTransitions(
-		parser.NewRuleTransition(states[G__Start], states[Root__Basic_15], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "G", Repeated: true}),
+		parser.NewRuleTransition(states[G__Start], states[Root__Basic_15], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "G", Repeated: true}),
 	)
 	states[Root__Basic_15].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_16].AppendTransitions(
-		parser.NewRuleTransition(states[H__Start], states[Root__Basic_17], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "H", Repeated: true}),
+		parser.NewRuleTransition(states[H__Start], states[Root__Basic_17], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "H", Repeated: true}),
 	)
 	states[Root__Basic_17].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_18].AppendTransitions(
-		parser.NewRuleTransition(states[I__Start], states[Root__Basic_19], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "H", Repeated: true}),
+		parser.NewRuleTransition(states[I__Start], states[Root__Basic_19], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "H", Repeated: true}),
 	)
 	states[Root__Basic_19].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_20].AppendTransitions(
-		parser.NewRuleTransition(states[J__Start], states[Root__Basic_21], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "J", Repeated: true}),
+		parser.NewRuleTransition(states[J__Start], states[Root__Basic_21], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "J", Repeated: true}),
 	)
 	states[Root__Basic_21].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_22].AppendTransitions(
-		parser.NewRuleTransition(states[K__Start], states[Root__Basic_23], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "K", Repeated: true}),
+		parser.NewRuleTransition(states[K__Start], states[Root__Basic_23], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "K", Repeated: true}),
 	)
 	states[Root__Basic_23].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_24].AppendTransitions(
-		parser.NewRuleTransition(states[L__Start], states[Root__Basic_25], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "Obj", Repeated: true}),
+		parser.NewRuleTransition(states[L__Start], states[Root__Basic_25], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "Obj", Repeated: true}),
 	)
 	states[Root__Basic_25].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_26].AppendTransitions(
-		parser.NewRuleTransition(states[M__Start], states[Root__Basic_27], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "Obj", Repeated: true}),
+		parser.NewRuleTransition(states[M__Start], states[Root__Basic_27], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "Obj", Repeated: true}),
 	)
 	states[Root__Basic_27].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_28].AppendTransitions(
-		parser.NewRuleTransition(states[N__Start], states[Root__Basic_29], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "N", Repeated: true}),
+		parser.NewRuleTransition(states[N__Start], states[Root__Basic_29], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "N", Repeated: true}),
 	)
 	states[Root__Basic_29].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_30].AppendTransitions(
-		parser.NewRuleTransition(states[O__Start], states[Root__Basic_31], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "Obj", Repeated: true}),
+		parser.NewRuleTransition(states[O__Start], states[Root__Basic_31], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "Obj", Repeated: true}),
 	)
 	states[Root__Basic_31].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_32].AppendTransitions(
-		parser.NewRuleTransition(states[P__Start], states[Root__Basic_33], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "P", Repeated: true}),
+		parser.NewRuleTransition(states[P__Start], states[Root__Basic_33], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "P", Repeated: true}),
 	)
 	states[Root__Basic_33].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_34].AppendTransitions(
-		parser.NewRuleTransition(states[Q__Start], states[Root__Basic_35], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "Q", Repeated: true}),
+		parser.NewRuleTransition(states[Q__Start], states[Root__Basic_35], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "Q", Repeated: true}),
 	)
 	states[Root__Basic_35].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_36].AppendTransitions(
-		parser.NewRuleTransition(states[R__Start], states[Root__Basic_37], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "R", Repeated: true}),
+		parser.NewRuleTransition(states[R__Start], states[Root__Basic_37], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "R", Repeated: true}),
 	)
 	states[Root__Basic_37].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_38].AppendTransitions(
-		parser.NewRuleTransition(states[S__Start], states[Root__Basic_39], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "S", Repeated: true}),
+		parser.NewRuleTransition(states[S__Start], states[Root__Basic_39], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "S", Repeated: true}),
 	)
 	states[Root__Basic_39].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_40].AppendTransitions(
-		parser.NewRuleTransition(states[T__Start], states[Root__Basic_41], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "T", Repeated: true}),
+		parser.NewRuleTransition(states[T__Start], states[Root__Basic_41], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "T", Repeated: true}),
 	)
 	states[Root__Basic_41].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_42].AppendTransitions(
-		parser.NewRuleTransition(states[U__Start], states[Root__Basic_43], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "U", Repeated: true}),
+		parser.NewRuleTransition(states[U__Start], states[Root__Basic_43], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "U", Repeated: true}),
 	)
 	states[Root__Basic_43].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_44].AppendTransitions(
-		parser.NewRuleTransition(states[V__Start], states[Root__Basic_45], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "V", Repeated: true}),
+		parser.NewRuleTransition(states[V__Start], states[Root__Basic_45], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "V", Repeated: true}),
 	)
 	states[Root__Basic_45].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_46].AppendTransitions(
-		parser.NewRuleTransition(states[W__Start], states[Root__Basic_47], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "W", Repeated: true}),
+		parser.NewRuleTransition(states[W__Start], states[Root__Basic_47], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "W", Repeated: true}),
 	)
 	states[Root__Basic_47].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_48].AppendTransitions(
-		parser.NewRuleTransition(states[Z__Start], states[Root__Basic_49], nil).WithCall(&parser.RuleCallInfo{Property: "objects", List: true, Type: "Z", Repeated: true}),
+		parser.NewRuleTransition(states[Z__Start], states[Root__Basic_49], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "Z", Repeated: true}),
 	)
 	states[Root__Basic_49].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
@@ -1112,13 +1112,13 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[Declare__Basic_0], Token_DECLARE, nil),
 	)
 	states[Declare__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[FQN__Start], states[Declare__Basic_4], nil).WithCall(&parser.RuleCallInfo{}),
+		parser.NewRuleTransition(states[FQN__Start], states[Declare__Basic_4], nil, &parser.RuleCallInfo{}),
 	)
 	states[Declare_LBRACE].AppendTransitions(
 		parser.NewAtomTransition(states[Declare__LoopEntry], Token_LBRACE, nil),
 	)
 	states[Declare__Basic_1].AppendTransitions(
-		parser.NewRuleTransition(states[Declare__Start], states[Declare__Basic_2], nil).WithCall(&parser.RuleCallInfo{Property: "children", List: true, Type: "Declare", Repeated: true}),
+		parser.NewRuleTransition(states[Declare__Start], states[Declare__Basic_2], nil, &parser.RuleCallInfo{Property: "children", List: true, Type: "Declare", Repeated: true}),
 	)
 	states[Declare__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[Declare__LoopBack]),
@@ -1206,13 +1206,13 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[D__Basic_4], Keyword_d, nil),
 	)
 	states[D__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[DLong__Start], states[D__Basic_1], nil).WithCall(&parser.RuleCallInfo{Type: "Obj"}),
+		parser.NewRuleTransition(states[DLong__Start], states[D__Basic_1], nil, &parser.RuleCallInfo{Type: "Obj"}),
 	)
 	states[D__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[D__BlockEnd]),
 	)
 	states[D__Basic_2].AppendTransitions(
-		parser.NewRuleTransition(states[DShort__Start], states[D__Basic_3], nil).WithCall(&parser.RuleCallInfo{Type: "Obj"}),
+		parser.NewRuleTransition(states[DShort__Start], states[D__Basic_3], nil, &parser.RuleCallInfo{Type: "Obj"}),
 	)
 	states[D__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[D__BlockEnd]),
@@ -1228,7 +1228,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[E__Basic_0], Keyword_e, nil),
 	)
 	states[E__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[FQN__Start], states[E__Basic_1], &parser.CompletionHint{Field: "E.Ref"}).WithCall(&parser.RuleCallInfo{}),
+		parser.NewRuleTransition(states[FQN__Start], states[E__Basic_1], &parser.CompletionHint{Field: "E.Ref"}, &parser.RuleCallInfo{}),
 	)
 	states[E__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[E__Stop]),
@@ -1255,7 +1255,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[F__Basic_0], Keyword_f, nil),
 	)
 	states[F__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[FItem__Start], states[F__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "items", List: true, Type: "FItem", Repeated: true}),
+		parser.NewRuleTransition(states[FItem__Start], states[F__Basic_1], nil, &parser.RuleCallInfo{Property: "items", List: true, Type: "FItem", Repeated: true}),
 	)
 	states[F__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[F__LoopBack]),
@@ -1268,7 +1268,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[F__Stop]),
 	)
 	states[FItem__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[FQN__Start], states[FItem__Basic_1], &parser.CompletionHint{Field: "FItem.Ref"}).WithCall(&parser.RuleCallInfo{}),
+		parser.NewRuleTransition(states[FQN__Start], states[FItem__Basic_1], &parser.CompletionHint{Field: "FItem.Ref"}, &parser.RuleCallInfo{}),
 	)
 	states[FItem__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[FItem__Stop]),
@@ -1286,7 +1286,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[H__Basic_0], Keyword_h, nil),
 	)
 	states[H__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[MemberCall__Start], states[H__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "member", Type: "MemberCall"}),
+		parser.NewRuleTransition(states[MemberCall__Start], states[H__Basic_1], nil, &parser.RuleCallInfo{Property: "member", Type: "MemberCall"}),
 	)
 	states[H__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[H__Stop]),
@@ -1295,7 +1295,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[I__Basic_0], Keyword_i, nil),
 	)
 	states[I__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[MemberCallNoDot__Start], states[I__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "member", Type: "MemberCall"}),
+		parser.NewRuleTransition(states[MemberCallNoDot__Start], states[I__Basic_1], nil, &parser.RuleCallInfo{Property: "member", Type: "MemberCall"}),
 	)
 	states[I__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[I__Stop]),
@@ -1450,7 +1450,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[P__LoopEntry_0], Token_LBRACE, nil),
 	)
 	states[P__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[Declare__Start], states[P__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "locals", List: true, Type: "Declare", Repeated: true}),
+		parser.NewRuleTransition(states[Declare__Start], states[P__Basic_1], nil, &parser.RuleCallInfo{Property: "locals", List: true, Type: "Declare", Repeated: true}),
 	)
 	states[P__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[P__LoopBack_0]),
@@ -1469,13 +1469,13 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[P__Basic_2], Keyword_use, nil),
 	)
 	states[P__Basic_2].AppendTransitions(
-		parser.NewRuleTransition(states[PItem__Start], states[P__LoopEntry_1], nil).WithCall(&parser.RuleCallInfo{Property: "item", Type: "PItem"}),
+		parser.NewRuleTransition(states[PItem__Start], states[P__LoopEntry_1], nil, &parser.RuleCallInfo{Property: "item", Type: "PItem"}),
 	)
 	states[P_AND].AppendTransitions(
 		parser.NewAtomTransition(states[P__Basic_3], Token_AND, nil),
 	)
 	states[P__Basic_3].AppendTransitions(
-		parser.NewRuleTransition(states[PItem__Start], states[P__Basic_4], nil).WithCall(&parser.RuleCallInfo{Property: "others", List: true, Type: "PItem"}),
+		parser.NewRuleTransition(states[PItem__Start], states[P__Basic_4], nil, &parser.RuleCallInfo{Property: "others", List: true, Type: "PItem"}),
 	)
 	states[P__Basic_4].AppendTransitions(
 		parser.NewEpsilonTransition(states[P__LoopBack_1]),
@@ -1509,19 +1509,19 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[Q__LoopEntry], Token_LBRACE, nil),
 	)
 	states[Q__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[Declare__Start], states[Q__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "locals", List: true, Type: "Declare"}),
+		parser.NewRuleTransition(states[Declare__Start], states[Q__Basic_1], nil, &parser.RuleCallInfo{Property: "locals", List: true, Type: "Declare"}),
 	)
 	states[Q__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Q__BlockEnd]),
 	)
 	states[Q__Basic_2].AppendTransitions(
-		parser.NewRuleTransition(states[PItem__Start], states[Q__Basic_3], nil).WithCall(&parser.RuleCallInfo{Property: "items", List: true, Type: "PItem"}),
+		parser.NewRuleTransition(states[PItem__Start], states[Q__Basic_3], nil, &parser.RuleCallInfo{Property: "items", List: true, Type: "PItem"}),
 	)
 	states[Q__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[Q__BlockEnd]),
 	)
 	states[Q__Basic_4].AppendTransitions(
-		parser.NewRuleTransition(states[Q__Start], states[Q__Basic_5], nil).WithCall(&parser.RuleCallInfo{Property: "nested", List: true, Type: "Q"}),
+		parser.NewRuleTransition(states[Q__Start], states[Q__Basic_5], nil, &parser.RuleCallInfo{Property: "nested", List: true, Type: "Q"}),
 	)
 	states[Q__Basic_5].AppendTransitions(
 		parser.NewEpsilonTransition(states[Q__BlockEnd]),
@@ -1557,7 +1557,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[R__LoopEntry], Token_LBRACE, nil),
 	)
 	states[R__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[RItem__Start], states[R__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "items", List: true, Type: "RItem", Repeated: true}),
+		parser.NewRuleTransition(states[RItem__Start], states[R__Basic_1], nil, &parser.RuleCallInfo{Property: "items", List: true, Type: "RItem", Repeated: true}),
 	)
 	states[R__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[R__LoopBack]),
@@ -1607,7 +1607,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[S__LoopEntry], Token_LBRACE, nil),
 	)
 	states[S__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[SBinary__Start], states[S__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "items", List: true, Type: "SItem", Repeated: true}),
+		parser.NewRuleTransition(states[SBinary__Start], states[S__Basic_1], nil, &parser.RuleCallInfo{Property: "items", List: true, Type: "SItem", Repeated: true}),
 	)
 	states[S__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[S__LoopBack]),
@@ -1641,7 +1641,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[T__Basic_0], Token_LBRACE, nil),
 	)
 	states[T__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[TGroup__Start], states[T_RBRACE], nil).WithCall(&parser.RuleCallInfo{Property: "item", Type: "TItem"}),
+		parser.NewRuleTransition(states[TGroup__Start], states[T_RBRACE], nil, &parser.RuleCallInfo{Property: "item", Type: "TItem"}),
 	)
 	states[T_RBRACE].AppendTransitions(
 		parser.NewAtomTransition(states[T__Basic_1], Token_RBRACE, nil),
@@ -1650,10 +1650,10 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[T__Stop]),
 	)
 	states[TGroup__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[TElement__Start], states[TGroup__Basic_3], nil).WithCall(&parser.RuleCallInfo{Type: "TItem"}),
+		parser.NewRuleTransition(states[TElement__Start], states[TGroup__Basic_3], nil, &parser.RuleCallInfo{Type: "TItem"}),
 	)
 	states[TGroup__Basic_1].AppendTransitions(
-		parser.NewRuleTransition(states[TElement__Start], states[TGroup__Basic_2], nil).WithCall(&parser.RuleCallInfo{Property: "elements", List: true, Type: "TItem", PrecedingAction: &parser.ActionInfo{TargetType: "TGroup", Property: "Elements", Field: "elements"}, Repeated: true}),
+		parser.NewRuleTransition(states[TElement__Start], states[TGroup__Basic_2], nil, &parser.RuleCallInfo{Property: "elements", List: true, Type: "TItem", PrecedingAction: &parser.ActionInfo{TargetType: "TGroup", Property: "Elements", Field: "elements"}, Repeated: true}),
 	)
 	states[TGroup__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[TGroup__LoopBack]),
@@ -1679,7 +1679,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[TElement__Basic_1], Token_LBRACE, nil),
 	)
 	states[TElement__Basic_1].AppendTransitions(
-		parser.NewRuleTransition(states[TGroup__Start], states[TElement_RBRACE], nil).WithCall(&parser.RuleCallInfo{Type: "TItem"}),
+		parser.NewRuleTransition(states[TGroup__Start], states[TElement_RBRACE], nil, &parser.RuleCallInfo{Type: "TItem"}),
 	)
 	states[TElement_RBRACE].AppendTransitions(
 		parser.NewAtomTransition(states[TElement__Basic_2], Token_RBRACE, nil),
@@ -1698,10 +1698,10 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[U__Basic_0], Keyword_u, nil),
 	)
 	states[U__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[SBinary__Start], states[U__LoopEntry], nil).WithCall(&parser.RuleCallInfo{Property: "right", Type: "SItem"}),
+		parser.NewRuleTransition(states[SBinary__Start], states[U__LoopEntry], nil, &parser.RuleCallInfo{Property: "right", Type: "SItem"}),
 	)
 	states[U__Basic_1].AppendTransitions(
-		parser.NewRuleTransition(states[PItem__Start], states[U__Basic_2], nil).WithCall(&parser.RuleCallInfo{Property: "items", List: true, Type: "PItem", Repeated: true}),
+		parser.NewRuleTransition(states[PItem__Start], states[U__Basic_2], nil, &parser.RuleCallInfo{Property: "items", List: true, Type: "PItem", Repeated: true}),
 	)
 	states[U__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[U__LoopBack]),
@@ -1723,7 +1723,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[V__LoopEntry], Token_LBRACE, nil),
 	)
 	states[V__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[Declare__Start], states[V__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "locals", List: true, Type: "Declare"}),
+		parser.NewRuleTransition(states[Declare__Start], states[V__Basic_1], nil, &parser.RuleCallInfo{Property: "locals", List: true, Type: "Declare"}),
 	)
 	states[V__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[V__BlockEnd]),
@@ -1735,7 +1735,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[V__BlockEnd]),
 	)
 	states[V__Basic_3].AppendTransitions(
-		parser.NewRuleTransition(states[V__Start], states[V__Basic_4], nil).WithCall(&parser.RuleCallInfo{Property: "children", List: true, Type: "V"}),
+		parser.NewRuleTransition(states[V__Start], states[V__Basic_4], nil, &parser.RuleCallInfo{Property: "children", List: true, Type: "V"}),
 	)
 	states[V__Basic_4].AppendTransitions(
 		parser.NewEpsilonTransition(states[V__BlockEnd]),
@@ -1768,13 +1768,13 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[W__Basic_4], Keyword_w, nil),
 	)
 	states[W__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[WName__Start], states[W__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "name", Type: "WName"}),
+		parser.NewRuleTransition(states[WName__Start], states[W__Basic_1], nil, &parser.RuleCallInfo{Property: "name", Type: "WName"}),
 	)
 	states[W__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[W__BlockEnd]),
 	)
 	states[W__Basic_2].AppendTransitions(
-		parser.NewRuleTransition(states[WRefs__Start], states[W__Basic_3], nil).WithCall(&parser.RuleCallInfo{Property: "refs", Type: "WRefs"}),
+		parser.NewRuleTransition(states[WRefs__Start], states[W__Basic_3], nil, &parser.RuleCallInfo{Property: "refs", Type: "WRefs"}),
 	)
 	states[W__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[W__BlockEnd]),
@@ -1817,7 +1817,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[Z__LoopEntry], Token_LBRACE, nil),
 	)
 	states[Z__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[ZItem__Start], states[Z__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "items", List: true, Type: "ZItem", Repeated: true}),
+		parser.NewRuleTransition(states[ZItem__Start], states[Z__Basic_1], nil, &parser.RuleCallInfo{Property: "items", List: true, Type: "ZItem", Repeated: true}),
 	)
 	states[Z__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Z__LoopBack]),
@@ -1839,7 +1839,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[Z__Stop]),
 	)
 	states[ZItem__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[PItem__Start], states[ZItem__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "inner", Type: "PItem", PrecedingAction: &parser.ActionInfo{TargetType: "ZWrapper"}}),
+		parser.NewRuleTransition(states[PItem__Start], states[ZItem__Basic_1], nil, &parser.RuleCallInfo{Property: "inner", Type: "PItem", PrecedingAction: &parser.ActionInfo{TargetType: "ZWrapper"}}),
 	)
 	states[ZItem__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[ZItem__Stop]),
@@ -1867,13 +1867,13 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[FQN__LoopEntry]),
 	)
 	states[SBinary__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[SPrimary__Start], states[SBinary__LoopEntry], nil).WithCall(&parser.RuleCallInfo{Type: "SItem"}),
+		parser.NewRuleTransition(states[SPrimary__Start], states[SBinary__LoopEntry], nil, &parser.RuleCallInfo{Type: "SItem"}),
 	)
 	states[SBinary_SBinaryOperator].AppendTransitions(
 		parser.NewAtomTransition(states[SBinary__Basic_1], TokenGroup_SBinaryOperator, nil),
 	)
 	states[SBinary__Basic_1].AppendTransitions(
-		parser.NewRuleTransition(states[SPrimary__Start], states[SBinary__Basic_2], nil).WithCall(&parser.RuleCallInfo{Property: "right", Type: "SItem", InfixOperand: true}),
+		parser.NewRuleTransition(states[SPrimary__Start], states[SBinary__Basic_2], nil, &parser.RuleCallInfo{Property: "right", Type: "SItem", InfixOperand: true}),
 	)
 	states[SBinary__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[SBinary__LoopBack]),
