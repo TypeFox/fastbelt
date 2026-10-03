@@ -7,7 +7,7 @@ interface Root {
     Objects []Obj
 }
 
-entry Root: Objects+=(Declare | A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q | R | S | T | U | V | W | Z)*;
+entry Root: Objects+=(Declare | Seq | Alt | Prefix | Call | RefFQN | RefList | RefID | Member | MemberNoDot | RefOrKeyword | Dedup | Opt | Group | RefGroup | RefAction | Scope | Loop | Chain | Infix | Wrap | Shadow | Nest | Ambig | Retype)*;
 
 interface Declare extends Obj {
     Name composite
@@ -19,49 +19,49 @@ Declare: DECLARE Name=FQN (LBRACE Children+=Declare* RBRACE)?;
 composite FQN: ID (DOT ID)*;
 
 // straight-line continuation
-A returns Obj: "a" FIRST;
+Seq returns Obj: "seq" FIRST;
 
 // flat alternative - both branches must stay live post-commit
-B returns Obj: "b" (FIRST | SECOND);
+Alt returns Obj: "alt" (FIRST | SECOND);
 
 // shared-prefix alternative - keep both alts past the prefix
-C returns Obj: "c" (COMMON FIRST | COMMON SECOND);
+Prefix returns Obj: "prefix" (COMMON FIRST | COMMON SECOND);
 
-// rule-call alternative with shared prefix (DLong/DShort)
-D returns Obj: "d" (DLong | DShort);
+// rule-call alternative with shared prefix (CallLong/CallShort)
+Call returns Obj: "call" (CallLong | CallShort);
 
-interface E extends Obj {
+CallLong returns Obj: COMMON THEN LONG;
+CallShort returns Obj: COMMON;
+
+interface RefFQN extends Obj {
     Ref *Declare
 }
 
 // cross-reference via FQN composite
-E: "e" Ref=[Declare:FQN];
+RefFQN: "fqn" Ref=[Declare:FQN];
 
-DLong returns Obj: COMMON THEN LONG;
-DShort returns Obj: COMMON;
-
-interface F extends Obj {
-    Items []FItem
+interface RefList extends Obj {
+    Items []RefListItem
 }
 
-// nested rule with FItem children (synthetic chain coverage)
-F: "f" Items+=FItem+;
+// nested rule with RefListItem children (synthetic chain coverage)
+RefList: "list" Items+=RefListItem+;
 
-interface FItem {
+interface RefListItem {
     Ref *Declare
 }
 
-FItem: Ref=[Declare:FQN];
+RefListItem: Ref=[Declare:FQN];
 
-interface G extends Obj {
+interface RefID extends Obj {
     Ref *Declare
 }
 
 // cross-reference via plain ID
-G: "g" Ref=[Declare:ID];
+RefID: "ref" Ref=[Declare:ID];
 
-interface H extends Obj {
-    Member MemberCall
+interface Member extends Obj {
+    Call MemberCall
 }
 
 interface MemberCall {
@@ -70,192 +70,192 @@ interface MemberCall {
 }
 
 // cross-references with tree-rewriting actions (member calls)
-H: "h" Member=MemberCall;
+Member: "member" Call=MemberCall;
 
-// same as H, but without the dot to separate chained calls
+// same as Member, but without the dot to separate chained calls
 // ensures that synthetic references can properly complete
-I returns H: "i" Member=MemberCallNoDot;
+MemberNoDot returns Member: "nodot" Call=MemberCallNoDot;
 
 MemberCall: Ref=[Declare:ID] ({MemberCall.Previous=current} DOT Ref=[Declare:ID])*;
 
 MemberCallNoDot returns MemberCall: Ref=[Declare:ID] ({MemberCall.Previous=current} Ref=[Declare:ID])*;
 
-interface J extends Obj {
+interface RefOrKeyword extends Obj {
     Ref *Declare
 }
 
 // cross-reference and keyword alternative at the same position
-J: "j" (Ref=[Declare:ID] | SELF);
+RefOrKeyword: "choice" (Ref=[Declare:ID] | SELF);
 
-interface K extends Obj {
+interface Dedup extends Obj {
     Ref1 *Declare
     Ref2 *Declare
 }
 
 // two assignments to the same target type - dedup check
-K: "k" (Ref1=[Declare:ID] "x" | Ref2=[Declare:ID] "y");
+Dedup: "dedup" (Ref1=[Declare:ID] "x" | Ref2=[Declare:ID] "y");
 
 // fully optional group in front of mandatory content
-L returns Obj: "l" (OPTIONAL AND)? THEN END;
+Opt returns Obj: "opt" (OPTIONAL AND)? THEN END;
 
 token group SomeTokenGroup {
     ID "a" "b"
 }
 
 // token group after initial keyword - expect no completion
-M returns Obj: "m" SomeTokenGroup;
+Group returns Obj: "group" SomeTokenGroup;
 
-interface N extends Obj {
+interface RefGroup extends Obj {
     Ref *Declare
 }
 
 // token group used to perform cross reference
-N: "n" Ref=[Declare:SomeTokenGroup];
+RefGroup: "refgroup" Ref=[Declare:SomeTokenGroup];
 
-interface O extends Obj {
+interface RefAction extends Obj {
     Ref *Declare
 }
 
 // action used to change type
-O returns Obj: {O} "o" Ref=[Declare:ID];
+RefAction returns Obj: {RefAction} "action" Ref=[Declare:ID];
 
-interface P extends Obj {
+interface Scope extends Obj {
     Locals []Declare
-    Item PItem
-    Others []PItem
+    Item RefItem
+    Others []RefItem
 }
 
-interface PItem {
+interface RefItem {
     Ref *Declare
 }
 
 // cross-reference in a nested rule, inside of a container with local symbols
-P: "p" LBRACE Locals+=Declare* "use" Item=PItem (AND Others+=PItem)* RBRACE;
+Scope: "scope" LBRACE Locals+=Declare* "use" Item=RefItem (AND Others+=RefItem)* RBRACE;
 
-PItem: Ref=[Declare:ID];
+RefItem: Ref=[Declare:ID];
 
-interface Q extends Obj {
+interface Loop extends Obj {
     Locals []Declare
-    Items []PItem
-    Nested []Q
+    Items []RefItem
+    Nested []Loop
 }
 
 // cross-references in a loop without separators, inside of nested containers with local symbols
-Q: "q" LBRACE (Locals+=Declare | Items+=PItem | Nested+=Q)* RBRACE;
+Loop: "loop" LBRACE (Locals+=Declare | Items+=RefItem | Nested+=Loop)* RBRACE;
 
-interface R extends Obj {
-    Items []RItem
+interface Chain extends Obj {
+    Items []ChainItem
 }
 
-interface RItem {
+interface ChainItem {
     Ref *Declare
-    Previous RItem
+    Previous ChainItem
 }
 
 // list of items without separators that are wrapped by a tree-rewriting action
-R: "r" LBRACE Items+=RItem* RBRACE;
+Chain: "chain" LBRACE Items+=ChainItem* RBRACE;
 
-RItem: Ref=[Declare:ID] ({RItem.Previous=current} AND Ref=[Declare:ID])*;
+ChainItem: Ref=[Declare:ID] ({ChainItem.Previous=current} AND Ref=[Declare:ID])*;
 
-interface S extends Obj {
-    Items []SItem
+interface Infix extends Obj {
+    Items []Expr
 }
 
-interface SItem {}
+interface Expr {}
 
-interface SRef extends SItem {
+interface Operand extends Expr {
     Ref *Declare
 }
 
-interface SBinary extends SItem {
-    Left SItem
+interface Binary extends Expr {
+    Left Expr
     Operator string
-    Right SItem
+    Right Expr
 }
 
 // list of items without separators that are wrapped by an infix rule
-S: "s" LBRACE Items+=SBinary* RBRACE;
+Infix: "infix" LBRACE Items+=Binary* RBRACE;
 
-infix SBinary on SPrimary:
+infix Binary on Primary:
     "times"
     > "plus"
 
-SPrimary returns SItem: {SRef} Ref=[Declare:ID];
+Primary returns Expr: {Operand} Ref=[Declare:ID];
 
-interface T extends Obj {
-    Item TItem
+interface Wrap extends Obj {
+    Item WrapItem
 }
 
-interface TItem {}
+interface WrapItem {}
 
-interface TRef extends TItem {
+interface WrapRef extends WrapItem {
     Ref *Declare
 }
 
-interface TGroup extends TItem {
-    Elements []TItem
+interface WrapGroup extends WrapItem {
+    Elements []WrapItem
 }
 
 // items that a tree-rewriting action wraps into a list, using the property of the assignments that follow it
-T: "t" LBRACE Item=TGroup RBRACE;
+Wrap: "wrap" LBRACE Item=WrapGroup RBRACE;
 
-TGroup returns TItem: TElement ({TGroup.Elements+=current} Elements+=TElement+)?;
+WrapGroup returns WrapItem: WrapElement ({WrapGroup.Elements+=current} Elements+=WrapElement+)?;
 
-TElement returns TItem: {TRef} Ref=[Declare:ID] | LBRACE TGroup RBRACE;
+WrapElement returns WrapItem: {WrapRef} Ref=[Declare:ID] | LBRACE WrapGroup RBRACE;
 
-interface U extends Obj {
-    Right SItem
-    Items []PItem
+interface Shadow extends Obj {
+    Right Expr
+    Items []RefItem
 }
 
 // assignment to a property with the name of an operand of the infix rule that it calls
-U: "u" Right=SBinary Items+=PItem*;
+Shadow: "shadow" Right=Binary Items+=RefItem*;
 
-interface V extends Obj {
+interface Nest extends Obj {
     Locals []Declare
     Ref *Declare
-    Children []V
+    Children []Nest
 }
 
 // cross-reference next to nested containers of the same type
-V: "v" LBRACE (Locals+=Declare | Ref=[Declare:ID] | Children+=V)* RBRACE;
+Nest: "nest" LBRACE (Locals+=Declare | Ref=[Declare:ID] | Children+=Nest)* RBRACE;
 
-interface W extends Obj {
-    Name WName
-    Refs WRefs
+interface Ambig extends Obj {
+    Name AmbigName
+    Refs AmbigRefs
 }
 
-interface WName {
+interface AmbigName {
     Name string
     Ref *Declare
 }
 
-interface WRefs {
+interface AmbigRefs {
     Ref1 *Declare
     Ref *Declare
 }
 
 // alternatives that read the same token in different ways
-W: "w" (Name=WName | Refs=WRefs);
+Ambig: "ambig" (Name=AmbigName | Refs=AmbigRefs);
 
-WName: Name=ID Ref=[Declare:ID] FIRST;
+AmbigName: Name=ID Ref=[Declare:ID] FIRST;
 
-WRefs: Ref1=[Declare:ID] Ref=[Declare:ID] SECOND;
+AmbigRefs: Ref1=[Declare:ID] Ref=[Declare:ID] SECOND;
 
-interface Z extends Obj {
-    Items []ZItem
+interface Retype extends Obj {
+    Items []RetypeItem
 }
 
-interface ZItem {
-    Inner PItem
+interface RetypeItem {
+    Inner RefItem
 }
 
-interface ZWrapper extends ZItem {}
+interface RetypeWrapper extends RetypeItem {}
 
 // nested rule that changes the type of its node with an action
-Z: "z" LBRACE Items+=ZItem* RBRACE;
+Retype: "retype" LBRACE Items+=RetypeItem* RBRACE;
 
-ZItem: {ZWrapper} Inner=PItem;
+RetypeItem: {RetypeWrapper} Inner=RefItem;
 
 token DECLARE: "declare"
 token FIRST: "first"

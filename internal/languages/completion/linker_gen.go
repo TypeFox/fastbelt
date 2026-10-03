@@ -15,23 +15,23 @@ import (
 )
 
 type CompletionScopeProvider interface {
-	ScopeERef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
-	ScopeFItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
-	ScopeGRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeRefFQNRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeRefListItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeRefIDRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
 	ScopeMemberCallRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
-	ScopeJRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
-	ScopeKRef1(ctx context.Context, reference *core.Reference[Declare]) core.Scope
-	ScopeKRef2(ctx context.Context, reference *core.Reference[Declare]) core.Scope
-	ScopeNRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
-	ScopeORef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
-	ScopePItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
-	ScopeRItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
-	ScopeSRefRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
-	ScopeTRefRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
-	ScopeVRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
-	ScopeWNameRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
-	ScopeWRefsRef1(ctx context.Context, reference *core.Reference[Declare]) core.Scope
-	ScopeWRefsRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeRefOrKeywordRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeDedupRef1(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeDedupRef2(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeRefGroupRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeRefActionRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeRefItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeChainItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeOperandRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeWrapRefRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeNestRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeAmbigNameRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeAmbigRefsRef1(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeAmbigRefsRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
 }
 
 type DefaultCompletionScopeProvider struct {
@@ -42,15 +42,15 @@ func NewDefaultCompletionScopeProvider(sc *service.Container) CompletionScopePro
 	return &DefaultCompletionScopeProvider{sc: sc}
 }
 
-func (s *DefaultCompletionScopeProvider) ScopeERef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeRefFQNRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
-func (s *DefaultCompletionScopeProvider) ScopeFItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeRefListItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
-func (s *DefaultCompletionScopeProvider) ScopeGRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeRefIDRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
@@ -58,76 +58,76 @@ func (s *DefaultCompletionScopeProvider) ScopeMemberCallRef(ctx context.Context,
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
-func (s *DefaultCompletionScopeProvider) ScopeJRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeRefOrKeywordRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
-func (s *DefaultCompletionScopeProvider) ScopeKRef1(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeDedupRef1(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
-func (s *DefaultCompletionScopeProvider) ScopeKRef2(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeDedupRef2(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
-func (s *DefaultCompletionScopeProvider) ScopeNRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeRefGroupRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
-func (s *DefaultCompletionScopeProvider) ScopeORef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeRefActionRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
-func (s *DefaultCompletionScopeProvider) ScopePItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeRefItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
-func (s *DefaultCompletionScopeProvider) ScopeRItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeChainItemRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
-func (s *DefaultCompletionScopeProvider) ScopeSRefRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeOperandRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
-func (s *DefaultCompletionScopeProvider) ScopeTRefRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeWrapRefRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
-func (s *DefaultCompletionScopeProvider) ScopeVRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeNestRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
-func (s *DefaultCompletionScopeProvider) ScopeWNameRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeAmbigNameRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
-func (s *DefaultCompletionScopeProvider) ScopeWRefsRef1(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeAmbigRefsRef1(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
-func (s *DefaultCompletionScopeProvider) ScopeWRefsRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+func (s *DefaultCompletionScopeProvider) ScopeAmbigRefsRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
 type CompletionReferenceLinker interface {
-	LinkERef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkFItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkGRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkRefFQNRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkRefListItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkRefIDRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkMemberCallRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkJRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkKRef1(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkKRef2(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkNRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkORef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkPItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkRItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkSRefRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkTRefRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkVRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkWNameRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkWRefsRef1(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
-	LinkWRefsRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkRefOrKeywordRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkDedupRef1(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkDedupRef2(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkRefGroupRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkRefActionRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkRefItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkChainItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkOperandRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkWrapRefRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkNestRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkAmbigNameRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkAmbigRefsRef1(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkAmbigRefsRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
 }
 
 type DefaultCompletionReferenceLinker struct {
@@ -144,18 +144,18 @@ func NewDefaultCompletionReferenceLinker(sc *service.Container) CompletionRefere
 	}
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkERef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeERef(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkRefFQNRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeRefFQNRef(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkFItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeFItemRef(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkRefListItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeRefListItemRef(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkGRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeGRef(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkRefIDRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeRefIDRef(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
@@ -164,109 +164,109 @@ func (s *DefaultCompletionReferenceLinker) LinkMemberCallRef(ctx context.Context
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkJRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeJRef(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkRefOrKeywordRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeRefOrKeywordRef(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkKRef1(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeKRef1(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkDedupRef1(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeDedupRef1(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkKRef2(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeKRef2(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkDedupRef2(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeDedupRef2(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkNRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeNRef(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkRefGroupRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeRefGroupRef(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkORef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeORef(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkRefActionRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeRefActionRef(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkPItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopePItemRef(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkRefItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeRefItemRef(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkRItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeRItemRef(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkChainItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeChainItemRef(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkSRefRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeSRefRef(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkOperandRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeOperandRef(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkTRefRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeTRefRef(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkWrapRefRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeWrapRefRef(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkVRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeVRef(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkNestRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeNestRef(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkWNameRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeWNameRef(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkAmbigNameRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeAmbigNameRef(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkWRefsRef1(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeWRefsRef1(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkAmbigRefsRef1(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeAmbigRefsRef1(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
-func (s *DefaultCompletionReferenceLinker) LinkWRefsRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
-	scope := s.scopeProvider().ScopeWRefsRef(ctx, reference)
+func (s *DefaultCompletionReferenceLinker) LinkAmbigRefsRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeAmbigRefsRef(ctx, reference)
 	return core.DefaultLink(scope, reference.Text())
 }
 
 type CompletionReferencesConstructor interface {
-	ERef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
-	FItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
-	GRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	RefFQNRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	RefListItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	RefIDRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
 	MemberCallRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
-	JRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
-	KRef1(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
-	KRef2(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
-	NRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
-	ORef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
-	PItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
-	RItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
-	SRefRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
-	TRefRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
-	VRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
-	WNameRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
-	WRefsRef1(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
-	WRefsRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	RefOrKeywordRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	DedupRef1(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	DedupRef2(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	RefGroupRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	RefActionRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	RefItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	ChainItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	OperandRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	WrapRefRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	NestRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	AmbigNameRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	AmbigRefsRef1(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	AmbigRefsRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
 }
 
 type DefaultCompletionReferencesConstructor struct {
-	linkERef          func() core.ReferenceGetter[Declare]
-	linkFItemRef      func() core.ReferenceGetter[Declare]
-	linkGRef          func() core.ReferenceGetter[Declare]
-	linkMemberCallRef func() core.ReferenceGetter[Declare]
-	linkJRef          func() core.ReferenceGetter[Declare]
-	linkKRef1         func() core.ReferenceGetter[Declare]
-	linkKRef2         func() core.ReferenceGetter[Declare]
-	linkNRef          func() core.ReferenceGetter[Declare]
-	linkORef          func() core.ReferenceGetter[Declare]
-	linkPItemRef      func() core.ReferenceGetter[Declare]
-	linkRItemRef      func() core.ReferenceGetter[Declare]
-	linkSRefRef       func() core.ReferenceGetter[Declare]
-	linkTRefRef       func() core.ReferenceGetter[Declare]
-	linkVRef          func() core.ReferenceGetter[Declare]
-	linkWNameRef      func() core.ReferenceGetter[Declare]
-	linkWRefsRef1     func() core.ReferenceGetter[Declare]
-	linkWRefsRef      func() core.ReferenceGetter[Declare]
+	linkRefFQNRef       func() core.ReferenceGetter[Declare]
+	linkRefListItemRef  func() core.ReferenceGetter[Declare]
+	linkRefIDRef        func() core.ReferenceGetter[Declare]
+	linkMemberCallRef   func() core.ReferenceGetter[Declare]
+	linkRefOrKeywordRef func() core.ReferenceGetter[Declare]
+	linkDedupRef1       func() core.ReferenceGetter[Declare]
+	linkDedupRef2       func() core.ReferenceGetter[Declare]
+	linkRefGroupRef     func() core.ReferenceGetter[Declare]
+	linkRefActionRef    func() core.ReferenceGetter[Declare]
+	linkRefItemRef      func() core.ReferenceGetter[Declare]
+	linkChainItemRef    func() core.ReferenceGetter[Declare]
+	linkOperandRef      func() core.ReferenceGetter[Declare]
+	linkWrapRefRef      func() core.ReferenceGetter[Declare]
+	linkNestRef         func() core.ReferenceGetter[Declare]
+	linkAmbigNameRef    func() core.ReferenceGetter[Declare]
+	linkAmbigRefsRef1   func() core.ReferenceGetter[Declare]
+	linkAmbigRefsRef    func() core.ReferenceGetter[Declare]
 }
 
 func NewDefaultCompletionReferencesConstructor(sc *service.Container) CompletionReferencesConstructor {
@@ -274,126 +274,126 @@ func NewDefaultCompletionReferencesConstructor(sc *service.Container) Completion
 		return service.MustGet[CompletionReferenceLinker](sc)
 	})
 	return &DefaultCompletionReferencesConstructor{
-		linkERef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkERef
+		linkRefFQNRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkRefFQNRef
 		}),
-		linkFItemRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkFItemRef
+		linkRefListItemRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkRefListItemRef
 		}),
-		linkGRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkGRef
+		linkRefIDRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkRefIDRef
 		}),
 		linkMemberCallRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
 			return referenceLinker().LinkMemberCallRef
 		}),
-		linkJRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkJRef
+		linkRefOrKeywordRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkRefOrKeywordRef
 		}),
-		linkKRef1: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkKRef1
+		linkDedupRef1: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkDedupRef1
 		}),
-		linkKRef2: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkKRef2
+		linkDedupRef2: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkDedupRef2
 		}),
-		linkNRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkNRef
+		linkRefGroupRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkRefGroupRef
 		}),
-		linkORef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkORef
+		linkRefActionRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkRefActionRef
 		}),
-		linkPItemRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkPItemRef
+		linkRefItemRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkRefItemRef
 		}),
-		linkRItemRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkRItemRef
+		linkChainItemRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkChainItemRef
 		}),
-		linkSRefRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkSRefRef
+		linkOperandRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkOperandRef
 		}),
-		linkTRefRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkTRefRef
+		linkWrapRefRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkWrapRefRef
 		}),
-		linkVRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkVRef
+		linkNestRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkNestRef
 		}),
-		linkWNameRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkWNameRef
+		linkAmbigNameRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkAmbigNameRef
 		}),
-		linkWRefsRef1: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkWRefsRef1
+		linkAmbigRefsRef1: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkAmbigRefsRef1
 		}),
-		linkWRefsRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
-			return referenceLinker().LinkWRefsRef
+		linkAmbigRefsRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkAmbigRefsRef
 		}),
 	}
 }
 
-func (s *DefaultCompletionReferencesConstructor) ERef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkERef())
+func (s *DefaultCompletionReferencesConstructor) RefFQNRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkRefFQNRef())
 }
 
-func (s *DefaultCompletionReferencesConstructor) FItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkFItemRef())
+func (s *DefaultCompletionReferencesConstructor) RefListItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkRefListItemRef())
 }
 
-func (s *DefaultCompletionReferencesConstructor) GRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkGRef())
+func (s *DefaultCompletionReferencesConstructor) RefIDRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkRefIDRef())
 }
 
 func (s *DefaultCompletionReferencesConstructor) MemberCallRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
 	return core.NewReference(owner, unit, s.linkMemberCallRef())
 }
 
-func (s *DefaultCompletionReferencesConstructor) JRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkJRef())
+func (s *DefaultCompletionReferencesConstructor) RefOrKeywordRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkRefOrKeywordRef())
 }
 
-func (s *DefaultCompletionReferencesConstructor) KRef1(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkKRef1())
+func (s *DefaultCompletionReferencesConstructor) DedupRef1(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkDedupRef1())
 }
 
-func (s *DefaultCompletionReferencesConstructor) KRef2(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkKRef2())
+func (s *DefaultCompletionReferencesConstructor) DedupRef2(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkDedupRef2())
 }
 
-func (s *DefaultCompletionReferencesConstructor) NRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkNRef())
+func (s *DefaultCompletionReferencesConstructor) RefGroupRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkRefGroupRef())
 }
 
-func (s *DefaultCompletionReferencesConstructor) ORef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkORef())
+func (s *DefaultCompletionReferencesConstructor) RefActionRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkRefActionRef())
 }
 
-func (s *DefaultCompletionReferencesConstructor) PItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkPItemRef())
+func (s *DefaultCompletionReferencesConstructor) RefItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkRefItemRef())
 }
 
-func (s *DefaultCompletionReferencesConstructor) RItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkRItemRef())
+func (s *DefaultCompletionReferencesConstructor) ChainItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkChainItemRef())
 }
 
-func (s *DefaultCompletionReferencesConstructor) SRefRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkSRefRef())
+func (s *DefaultCompletionReferencesConstructor) OperandRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkOperandRef())
 }
 
-func (s *DefaultCompletionReferencesConstructor) TRefRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkTRefRef())
+func (s *DefaultCompletionReferencesConstructor) WrapRefRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkWrapRefRef())
 }
 
-func (s *DefaultCompletionReferencesConstructor) VRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkVRef())
+func (s *DefaultCompletionReferencesConstructor) NestRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkNestRef())
 }
 
-func (s *DefaultCompletionReferencesConstructor) WNameRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkWNameRef())
+func (s *DefaultCompletionReferencesConstructor) AmbigNameRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkAmbigNameRef())
 }
 
-func (s *DefaultCompletionReferencesConstructor) WRefsRef1(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkWRefsRef1())
+func (s *DefaultCompletionReferencesConstructor) AmbigRefsRef1(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkAmbigRefsRef1())
 }
 
-func (s *DefaultCompletionReferencesConstructor) WRefsRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
-	return core.NewReference(owner, unit, s.linkWRefsRef())
+func (s *DefaultCompletionReferencesConstructor) AmbigRefsRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkAmbigRefsRef())
 }
 
 type CompletionSymbolContainers struct{}
