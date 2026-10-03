@@ -223,35 +223,35 @@ func (i *DeclareImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	}
 }
 
-type E interface {
+type RefFQN interface {
 	core.AstNode
 	Obj
 
-	IsE()
+	IsRefFQN()
 	Ref() *core.Reference[Declare]
 	SetRef(value *core.Reference[Declare])
 }
 
-func NewE() E {
-	return &EImpl{}
+func NewRefFQN() RefFQN {
+	return &RefFQNImpl{}
 }
 
-type EData struct {
+type RefFQNData struct {
 	ref *core.Reference[Declare]
 }
 
-func (i *EData) IsE() {}
+func (i *RefFQNData) IsRefFQN() {}
 
-func (i *EData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RefFQNData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *EData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RefFQNData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
 		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
-func (i *EData) Ref() *core.Reference[Declare] {
+func (i *RefFQNData) Ref() *core.Reference[Declare] {
 	if i != nil && i.ref != nil {
 		return i.ref
 	} else {
@@ -259,93 +259,93 @@ func (i *EData) Ref() *core.Reference[Declare] {
 	}
 }
 
-func (i *EData) SetRef(value *core.Reference[Declare]) {
+func (i *RefFQNData) SetRef(value *core.Reference[Declare]) {
 	i.ref = value
 }
 
-type EImpl struct {
+type RefFQNImpl struct {
 	core.AstNodeBase
 	ObjData
-	EData
+	RefFQNData
 }
 
-func (i *EImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RefFQNImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.EData.ForEachNode(fn)
+	i.RefFQNData.ForEachNode(fn)
 }
 
-func (i *EImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RefFQNImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.EData.ForEachReference(fn)
+	i.RefFQNData.ForEachReference(fn)
 }
 
-func (i *EImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *RefFQNImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("EImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("RefFQNImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("EImpl.Resolve: field '%s' does not exist in node '%s' of type 'E'", field.Value(), nodePath)
+		return nil, fmt.Errorf("RefFQNImpl.Resolve: field '%s' does not exist in node '%s' of type 'RefFQN'", field.Value(), nodePath)
 	}
 }
 
-type F interface {
+type RefList interface {
 	core.AstNode
 	Obj
 
-	IsF()
-	Items() []FItem
-	SetItemsItem(item FItem)
+	IsRefList()
+	Items() []RefListItem
+	SetItemsItem(item RefListItem)
 }
 
-func NewF() F {
-	return &FImpl{}
+func NewRefList() RefList {
+	return &RefListImpl{}
 }
 
-type FData struct {
-	items []FItem
+type RefListData struct {
+	items []RefListItem
 }
 
-func (i *FData) IsF() {}
+func (i *RefListData) IsRefList() {}
 
-func (i *FData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RefListData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	for j, item := range i.items {
 		fn(item, fieldNameItems, j)
 	}
 }
 
-func (i *FData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RefListData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *FData) Items() []FItem {
+func (i *RefListData) Items() []RefListItem {
 	return i.items
 }
 
-func (i *FData) SetItemsItem(item FItem) {
+func (i *RefListData) SetItemsItem(item RefListItem) {
 	i.items = append(i.items, item)
 }
 
-type FImpl struct {
+type RefListImpl struct {
 	core.AstNodeBase
 	ObjData
-	FData
+	RefListData
 }
 
-func (i *FImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RefListImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.FData.ForEachNode(fn)
+	i.RefListData.ForEachNode(fn)
 }
 
-func (i *FImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RefListImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.FData.ForEachReference(fn)
+	i.RefListData.ForEachReference(fn)
 }
 
-func (i *FImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *RefListImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -354,48 +354,48 @@ func (i *FImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameItems:
 		if index >= len(i.Items()) {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("FImpl.Resolve: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
+			return nil, fmt.Errorf("RefListImpl.Resolve: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
 		}
 		child := i.Items()[index]
 		if child == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("FImpl.Resolve: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
+			return nil, fmt.Errorf("RefListImpl.Resolve: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("FImpl.Resolve: field '%s' does not exist in node '%s' of type 'F'", field.Value(), nodePath)
+		return nil, fmt.Errorf("RefListImpl.Resolve: field '%s' does not exist in node '%s' of type 'RefList'", field.Value(), nodePath)
 	}
 }
 
-type FItem interface {
+type RefListItem interface {
 	core.AstNode
 
-	IsFItem()
+	IsRefListItem()
 	Ref() *core.Reference[Declare]
 	SetRef(value *core.Reference[Declare])
 }
 
-func NewFItem() FItem {
-	return &FItemImpl{}
+func NewRefListItem() RefListItem {
+	return &RefListItemImpl{}
 }
 
-type FItemData struct {
+type RefListItemData struct {
 	ref *core.Reference[Declare]
 }
 
-func (i *FItemData) IsFItem() {}
+func (i *RefListItemData) IsRefListItem() {}
 
-func (i *FItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RefListItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *FItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RefListItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
 		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
-func (i *FItemData) Ref() *core.Reference[Declare] {
+func (i *RefListItemData) Ref() *core.Reference[Declare] {
 	if i != nil && i.ref != nil {
 		return i.ref
 	} else {
@@ -403,66 +403,66 @@ func (i *FItemData) Ref() *core.Reference[Declare] {
 	}
 }
 
-func (i *FItemData) SetRef(value *core.Reference[Declare]) {
+func (i *RefListItemData) SetRef(value *core.Reference[Declare]) {
 	i.ref = value
 }
 
-type FItemImpl struct {
+type RefListItemImpl struct {
 	core.AstNodeBase
-	FItemData
+	RefListItemData
 }
 
-func (i *FItemImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.FItemData.ForEachNode(fn)
+func (i *RefListItemImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.RefListItemData.ForEachNode(fn)
 }
 
-func (i *FItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.FItemData.ForEachReference(fn)
+func (i *RefListItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.RefListItemData.ForEachReference(fn)
 }
 
-func (i *FItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *RefListItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("FItemImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("RefListItemImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("FItemImpl.Resolve: field '%s' does not exist in node '%s' of type 'FItem'", field.Value(), nodePath)
+		return nil, fmt.Errorf("RefListItemImpl.Resolve: field '%s' does not exist in node '%s' of type 'RefListItem'", field.Value(), nodePath)
 	}
 }
 
-type G interface {
+type RefID interface {
 	core.AstNode
 	Obj
 
-	IsG()
+	IsRefID()
 	Ref() *core.Reference[Declare]
 	SetRef(value *core.Reference[Declare])
 }
 
-func NewG() G {
-	return &GImpl{}
+func NewRefID() RefID {
+	return &RefIDImpl{}
 }
 
-type GData struct {
+type RefIDData struct {
 	ref *core.Reference[Declare]
 }
 
-func (i *GData) IsG() {}
+func (i *RefIDData) IsRefID() {}
 
-func (i *GData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RefIDData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *GData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RefIDData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
 		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
-func (i *GData) Ref() *core.Reference[Declare] {
+func (i *RefIDData) Ref() *core.Reference[Declare] {
 	if i != nil && i.ref != nil {
 		return i.ref
 	} else {
@@ -470,112 +470,112 @@ func (i *GData) Ref() *core.Reference[Declare] {
 	}
 }
 
-func (i *GData) SetRef(value *core.Reference[Declare]) {
+func (i *RefIDData) SetRef(value *core.Reference[Declare]) {
 	i.ref = value
 }
 
-type GImpl struct {
+type RefIDImpl struct {
 	core.AstNodeBase
 	ObjData
-	GData
+	RefIDData
 }
 
-func (i *GImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RefIDImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.GData.ForEachNode(fn)
+	i.RefIDData.ForEachNode(fn)
 }
 
-func (i *GImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RefIDImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.GData.ForEachReference(fn)
+	i.RefIDData.ForEachReference(fn)
 }
 
-func (i *GImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *RefIDImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("GImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("RefIDImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("GImpl.Resolve: field '%s' does not exist in node '%s' of type 'G'", field.Value(), nodePath)
+		return nil, fmt.Errorf("RefIDImpl.Resolve: field '%s' does not exist in node '%s' of type 'RefID'", field.Value(), nodePath)
 	}
 }
 
-type H interface {
+type Member interface {
 	core.AstNode
 	Obj
 
-	IsH()
-	Member() MemberCall
-	SetMember(value MemberCall)
+	IsMember()
+	Call() MemberCall
+	SetCall(value MemberCall)
 }
 
-func NewH() H {
-	return &HImpl{}
+func NewMember() Member {
+	return &MemberImpl{}
 }
 
-type HData struct {
-	member MemberCall
+type MemberData struct {
+	call MemberCall
 }
 
-func (i *HData) IsH() {}
+func (i *MemberData) IsMember() {}
 
-func (i *HData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	if i.member != nil {
-		fn(i.member, fieldNameMember, -1)
+func (i *MemberData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	if i.call != nil {
+		fn(i.call, fieldNameCall, -1)
 	}
 }
 
-func (i *HData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *MemberData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *HData) Member() MemberCall {
-	if i != nil && i.member != nil {
-		return i.member
+func (i *MemberData) Call() MemberCall {
+	if i != nil && i.call != nil {
+		return i.call
 	} else {
 		return nil
 	}
 }
 
-func (i *HData) SetMember(value MemberCall) {
-	i.member = value
+func (i *MemberData) SetCall(value MemberCall) {
+	i.call = value
 }
 
-type HImpl struct {
+type MemberImpl struct {
 	core.AstNodeBase
 	ObjData
-	HData
+	MemberData
 }
 
-func (i *HImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *MemberImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.HData.ForEachNode(fn)
+	i.MemberData.ForEachNode(fn)
 }
 
-func (i *HImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *MemberImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.HData.ForEachReference(fn)
+	i.MemberData.ForEachReference(fn)
 }
 
-func (i *HImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *MemberImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	switch field {
-	case fieldNameMember:
-		if i.Member() == nil {
+	case fieldNameCall:
+		if i.Call() == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("HImpl.Resolve: field 'member' is nil in node '%s'", nodePath)
+			return nil, fmt.Errorf("MemberImpl.Resolve: field 'call' is nil in node '%s'", nodePath)
 		}
-		child := i.Member()
+		child := i.Call()
 		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("HImpl.Resolve: field '%s' does not exist in node '%s' of type 'H'", field.Value(), nodePath)
+		return nil, fmt.Errorf("MemberImpl.Resolve: field '%s' does not exist in node '%s' of type 'Member'", field.Value(), nodePath)
 	}
 }
 
@@ -670,35 +670,35 @@ func (i *MemberCallImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	}
 }
 
-type J interface {
+type RefOrKeyword interface {
 	core.AstNode
 	Obj
 
-	IsJ()
+	IsRefOrKeyword()
 	Ref() *core.Reference[Declare]
 	SetRef(value *core.Reference[Declare])
 }
 
-func NewJ() J {
-	return &JImpl{}
+func NewRefOrKeyword() RefOrKeyword {
+	return &RefOrKeywordImpl{}
 }
 
-type JData struct {
+type RefOrKeywordData struct {
 	ref *core.Reference[Declare]
 }
 
-func (i *JData) IsJ() {}
+func (i *RefOrKeywordData) IsRefOrKeyword() {}
 
-func (i *JData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RefOrKeywordData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *JData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RefOrKeywordData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
 		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
-func (i *JData) Ref() *core.Reference[Declare] {
+func (i *RefOrKeywordData) Ref() *core.Reference[Declare] {
 	if i != nil && i.ref != nil {
 		return i.ref
 	} else {
@@ -706,66 +706,66 @@ func (i *JData) Ref() *core.Reference[Declare] {
 	}
 }
 
-func (i *JData) SetRef(value *core.Reference[Declare]) {
+func (i *RefOrKeywordData) SetRef(value *core.Reference[Declare]) {
 	i.ref = value
 }
 
-type JImpl struct {
+type RefOrKeywordImpl struct {
 	core.AstNodeBase
 	ObjData
-	JData
+	RefOrKeywordData
 }
 
-func (i *JImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RefOrKeywordImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.JData.ForEachNode(fn)
+	i.RefOrKeywordData.ForEachNode(fn)
 }
 
-func (i *JImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RefOrKeywordImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.JData.ForEachReference(fn)
+	i.RefOrKeywordData.ForEachReference(fn)
 }
 
-func (i *JImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *RefOrKeywordImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("JImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("RefOrKeywordImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("JImpl.Resolve: field '%s' does not exist in node '%s' of type 'J'", field.Value(), nodePath)
+		return nil, fmt.Errorf("RefOrKeywordImpl.Resolve: field '%s' does not exist in node '%s' of type 'RefOrKeyword'", field.Value(), nodePath)
 	}
 }
 
-type K interface {
+type Dedup interface {
 	core.AstNode
 	Obj
 
-	IsK()
+	IsDedup()
 	Ref1() *core.Reference[Declare]
 	SetRef1(value *core.Reference[Declare])
 	Ref2() *core.Reference[Declare]
 	SetRef2(value *core.Reference[Declare])
 }
 
-func NewK() K {
-	return &KImpl{}
+func NewDedup() Dedup {
+	return &DedupImpl{}
 }
 
-type KData struct {
+type DedupData struct {
 	ref1 *core.Reference[Declare]
 	ref2 *core.Reference[Declare]
 }
 
-func (i *KData) IsK() {}
+func (i *DedupData) IsDedup() {}
 
-func (i *KData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *DedupData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *KData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *DedupData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref1 != nil {
 		fn(i.ref1, fieldNameRef1, -1)
 	}
@@ -774,7 +774,7 @@ func (i *KData) ForEachReference(fn func(core.UntypedReference, unique.Handle[st
 	}
 }
 
-func (i *KData) Ref1() *core.Reference[Declare] {
+func (i *DedupData) Ref1() *core.Reference[Declare] {
 	if i != nil && i.ref1 != nil {
 		return i.ref1
 	} else {
@@ -782,11 +782,11 @@ func (i *KData) Ref1() *core.Reference[Declare] {
 	}
 }
 
-func (i *KData) SetRef1(value *core.Reference[Declare]) {
+func (i *DedupData) SetRef1(value *core.Reference[Declare]) {
 	i.ref1 = value
 }
 
-func (i *KData) Ref2() *core.Reference[Declare] {
+func (i *DedupData) Ref2() *core.Reference[Declare] {
 	if i != nil && i.ref2 != nil {
 		return i.ref2
 	} else {
@@ -794,71 +794,71 @@ func (i *KData) Ref2() *core.Reference[Declare] {
 	}
 }
 
-func (i *KData) SetRef2(value *core.Reference[Declare]) {
+func (i *DedupData) SetRef2(value *core.Reference[Declare]) {
 	i.ref2 = value
 }
 
-type KImpl struct {
+type DedupImpl struct {
 	core.AstNodeBase
 	ObjData
-	KData
+	DedupData
 }
 
-func (i *KImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *DedupImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.KData.ForEachNode(fn)
+	i.DedupData.ForEachNode(fn)
 }
 
-func (i *KImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *DedupImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.KData.ForEachReference(fn)
+	i.DedupData.ForEachReference(fn)
 }
 
-func (i *KImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *DedupImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	switch field {
 	case fieldNameRef1:
-		return nil, fmt.Errorf("KImpl.Resolve: field 'ref1' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("DedupImpl.Resolve: field 'ref1' is a cross-reference instead of a container field")
 	case fieldNameRef2:
-		return nil, fmt.Errorf("KImpl.Resolve: field 'ref2' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("DedupImpl.Resolve: field 'ref2' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("KImpl.Resolve: field '%s' does not exist in node '%s' of type 'K'", field.Value(), nodePath)
+		return nil, fmt.Errorf("DedupImpl.Resolve: field '%s' does not exist in node '%s' of type 'Dedup'", field.Value(), nodePath)
 	}
 }
 
-type N interface {
+type RefGroup interface {
 	core.AstNode
 	Obj
 
-	IsN()
+	IsRefGroup()
 	Ref() *core.Reference[Declare]
 	SetRef(value *core.Reference[Declare])
 }
 
-func NewN() N {
-	return &NImpl{}
+func NewRefGroup() RefGroup {
+	return &RefGroupImpl{}
 }
 
-type NData struct {
+type RefGroupData struct {
 	ref *core.Reference[Declare]
 }
 
-func (i *NData) IsN() {}
+func (i *RefGroupData) IsRefGroup() {}
 
-func (i *NData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RefGroupData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *NData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RefGroupData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
 		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
-func (i *NData) Ref() *core.Reference[Declare] {
+func (i *RefGroupData) Ref() *core.Reference[Declare] {
 	if i != nil && i.ref != nil {
 		return i.ref
 	} else {
@@ -866,69 +866,69 @@ func (i *NData) Ref() *core.Reference[Declare] {
 	}
 }
 
-func (i *NData) SetRef(value *core.Reference[Declare]) {
+func (i *RefGroupData) SetRef(value *core.Reference[Declare]) {
 	i.ref = value
 }
 
-type NImpl struct {
+type RefGroupImpl struct {
 	core.AstNodeBase
 	ObjData
-	NData
+	RefGroupData
 }
 
-func (i *NImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RefGroupImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.NData.ForEachNode(fn)
+	i.RefGroupData.ForEachNode(fn)
 }
 
-func (i *NImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RefGroupImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.NData.ForEachReference(fn)
+	i.RefGroupData.ForEachReference(fn)
 }
 
-func (i *NImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *RefGroupImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("NImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("RefGroupImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("NImpl.Resolve: field '%s' does not exist in node '%s' of type 'N'", field.Value(), nodePath)
+		return nil, fmt.Errorf("RefGroupImpl.Resolve: field '%s' does not exist in node '%s' of type 'RefGroup'", field.Value(), nodePath)
 	}
 }
 
-type O interface {
+type RefAction interface {
 	core.AstNode
 	Obj
 
-	IsO()
+	IsRefAction()
 	Ref() *core.Reference[Declare]
 	SetRef(value *core.Reference[Declare])
 }
 
-func NewO() O {
-	return &OImpl{}
+func NewRefAction() RefAction {
+	return &RefActionImpl{}
 }
 
-type OData struct {
+type RefActionData struct {
 	ref *core.Reference[Declare]
 }
 
-func (i *OData) IsO() {}
+func (i *RefActionData) IsRefAction() {}
 
-func (i *OData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RefActionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *OData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RefActionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
 		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
-func (i *OData) Ref() *core.Reference[Declare] {
+func (i *RefActionData) Ref() *core.Reference[Declare] {
 	if i != nil && i.ref != nil {
 		return i.ref
 	} else {
@@ -936,66 +936,66 @@ func (i *OData) Ref() *core.Reference[Declare] {
 	}
 }
 
-func (i *OData) SetRef(value *core.Reference[Declare]) {
+func (i *RefActionData) SetRef(value *core.Reference[Declare]) {
 	i.ref = value
 }
 
-type OImpl struct {
+type RefActionImpl struct {
 	core.AstNodeBase
 	ObjData
-	OData
+	RefActionData
 }
 
-func (i *OImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RefActionImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.OData.ForEachNode(fn)
+	i.RefActionData.ForEachNode(fn)
 }
 
-func (i *OImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RefActionImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.OData.ForEachReference(fn)
+	i.RefActionData.ForEachReference(fn)
 }
 
-func (i *OImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *RefActionImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("OImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("RefActionImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("OImpl.Resolve: field '%s' does not exist in node '%s' of type 'O'", field.Value(), nodePath)
+		return nil, fmt.Errorf("RefActionImpl.Resolve: field '%s' does not exist in node '%s' of type 'RefAction'", field.Value(), nodePath)
 	}
 }
 
-type P interface {
+type Scope interface {
 	core.AstNode
 	Obj
 
-	IsP()
+	IsScope()
 	Locals() []Declare
 	SetLocalsItem(item Declare)
-	Item() PItem
-	SetItem(value PItem)
-	Others() []PItem
-	SetOthersItem(item PItem)
+	Item() RefItem
+	SetItem(value RefItem)
+	Others() []RefItem
+	SetOthersItem(item RefItem)
 }
 
-func NewP() P {
-	return &PImpl{}
+func NewScope() Scope {
+	return &ScopeImpl{}
 }
 
-type PData struct {
+type ScopeData struct {
 	locals []Declare
-	item   PItem
-	others []PItem
+	item   RefItem
+	others []RefItem
 }
 
-func (i *PData) IsP() {}
+func (i *ScopeData) IsScope() {}
 
-func (i *PData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *ScopeData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	for j, item := range i.locals {
 		fn(item, fieldNameLocals, j)
 	}
@@ -1007,18 +1007,18 @@ func (i *PData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	}
 }
 
-func (i *PData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *ScopeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *PData) Locals() []Declare {
+func (i *ScopeData) Locals() []Declare {
 	return i.locals
 }
 
-func (i *PData) SetLocalsItem(item Declare) {
+func (i *ScopeData) SetLocalsItem(item Declare) {
 	i.locals = append(i.locals, item)
 }
 
-func (i *PData) Item() PItem {
+func (i *ScopeData) Item() RefItem {
 	if i != nil && i.item != nil {
 		return i.item
 	} else {
@@ -1026,35 +1026,35 @@ func (i *PData) Item() PItem {
 	}
 }
 
-func (i *PData) SetItem(value PItem) {
+func (i *ScopeData) SetItem(value RefItem) {
 	i.item = value
 }
 
-func (i *PData) Others() []PItem {
+func (i *ScopeData) Others() []RefItem {
 	return i.others
 }
 
-func (i *PData) SetOthersItem(item PItem) {
+func (i *ScopeData) SetOthersItem(item RefItem) {
 	i.others = append(i.others, item)
 }
 
-type PImpl struct {
+type ScopeImpl struct {
 	core.AstNodeBase
 	ObjData
-	PData
+	ScopeData
 }
 
-func (i *PImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *ScopeImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.PData.ForEachNode(fn)
+	i.ScopeData.ForEachNode(fn)
 }
 
-func (i *PImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *ScopeImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.PData.ForEachReference(fn)
+	i.ScopeData.ForEachReference(fn)
 }
 
-func (i *PImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *ScopeImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -1063,66 +1063,66 @@ func (i *PImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameItem:
 		if i.Item() == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("PImpl.Resolve: field 'item' is nil in node '%s'", nodePath)
+			return nil, fmt.Errorf("ScopeImpl.Resolve: field 'item' is nil in node '%s'", nodePath)
 		}
 		child := i.Item()
 		return child.Resolve(path.Tail())
 	case fieldNameLocals:
 		if index >= len(i.Locals()) {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("PImpl.Resolve: index %d exceeds length of slice in 'locals' (length=%d) in node '%s'", index, len(i.Locals()), nodePath)
+			return nil, fmt.Errorf("ScopeImpl.Resolve: index %d exceeds length of slice in 'locals' (length=%d) in node '%s'", index, len(i.Locals()), nodePath)
 		}
 		child := i.Locals()[index]
 		if child == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("PImpl.Resolve: item %d of slice in field 'locals' is nil in node '%s'", index, nodePath)
+			return nil, fmt.Errorf("ScopeImpl.Resolve: item %d of slice in field 'locals' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
 	case fieldNameOthers:
 		if index >= len(i.Others()) {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("PImpl.Resolve: index %d exceeds length of slice in 'others' (length=%d) in node '%s'", index, len(i.Others()), nodePath)
+			return nil, fmt.Errorf("ScopeImpl.Resolve: index %d exceeds length of slice in 'others' (length=%d) in node '%s'", index, len(i.Others()), nodePath)
 		}
 		child := i.Others()[index]
 		if child == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("PImpl.Resolve: item %d of slice in field 'others' is nil in node '%s'", index, nodePath)
+			return nil, fmt.Errorf("ScopeImpl.Resolve: item %d of slice in field 'others' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("PImpl.Resolve: field '%s' does not exist in node '%s' of type 'P'", field.Value(), nodePath)
+		return nil, fmt.Errorf("ScopeImpl.Resolve: field '%s' does not exist in node '%s' of type 'Scope'", field.Value(), nodePath)
 	}
 }
 
-type PItem interface {
+type RefItem interface {
 	core.AstNode
 
-	IsPItem()
+	IsRefItem()
 	Ref() *core.Reference[Declare]
 	SetRef(value *core.Reference[Declare])
 }
 
-func NewPItem() PItem {
-	return &PItemImpl{}
+func NewRefItem() RefItem {
+	return &RefItemImpl{}
 }
 
-type PItemData struct {
+type RefItemData struct {
 	ref *core.Reference[Declare]
 }
 
-func (i *PItemData) IsPItem() {}
+func (i *RefItemData) IsRefItem() {}
 
-func (i *PItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RefItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *PItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RefItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
 		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
-func (i *PItemData) Ref() *core.Reference[Declare] {
+func (i *RefItemData) Ref() *core.Reference[Declare] {
 	if i != nil && i.ref != nil {
 		return i.ref
 	} else {
@@ -1130,63 +1130,63 @@ func (i *PItemData) Ref() *core.Reference[Declare] {
 	}
 }
 
-func (i *PItemData) SetRef(value *core.Reference[Declare]) {
+func (i *RefItemData) SetRef(value *core.Reference[Declare]) {
 	i.ref = value
 }
 
-type PItemImpl struct {
+type RefItemImpl struct {
 	core.AstNodeBase
-	PItemData
+	RefItemData
 }
 
-func (i *PItemImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.PItemData.ForEachNode(fn)
+func (i *RefItemImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.RefItemData.ForEachNode(fn)
 }
 
-func (i *PItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.PItemData.ForEachReference(fn)
+func (i *RefItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.RefItemData.ForEachReference(fn)
 }
 
-func (i *PItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *RefItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("PItemImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("RefItemImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("PItemImpl.Resolve: field '%s' does not exist in node '%s' of type 'PItem'", field.Value(), nodePath)
+		return nil, fmt.Errorf("RefItemImpl.Resolve: field '%s' does not exist in node '%s' of type 'RefItem'", field.Value(), nodePath)
 	}
 }
 
-type Q interface {
+type Loop interface {
 	core.AstNode
 	Obj
 
-	IsQ()
+	IsLoop()
 	Locals() []Declare
 	SetLocalsItem(item Declare)
-	Items() []PItem
-	SetItemsItem(item PItem)
-	Nested() []Q
-	SetNestedItem(item Q)
+	Items() []RefItem
+	SetItemsItem(item RefItem)
+	Nested() []Loop
+	SetNestedItem(item Loop)
 }
 
-func NewQ() Q {
-	return &QImpl{}
+func NewLoop() Loop {
+	return &LoopImpl{}
 }
 
-type QData struct {
+type LoopData struct {
 	locals []Declare
-	items  []PItem
-	nested []Q
+	items  []RefItem
+	nested []Loop
 }
 
-func (i *QData) IsQ() {}
+func (i *LoopData) IsLoop() {}
 
-func (i *QData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *LoopData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	for j, item := range i.locals {
 		fn(item, fieldNameLocals, j)
 	}
@@ -1198,50 +1198,50 @@ func (i *QData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	}
 }
 
-func (i *QData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *LoopData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *QData) Locals() []Declare {
+func (i *LoopData) Locals() []Declare {
 	return i.locals
 }
 
-func (i *QData) SetLocalsItem(item Declare) {
+func (i *LoopData) SetLocalsItem(item Declare) {
 	i.locals = append(i.locals, item)
 }
 
-func (i *QData) Items() []PItem {
+func (i *LoopData) Items() []RefItem {
 	return i.items
 }
 
-func (i *QData) SetItemsItem(item PItem) {
+func (i *LoopData) SetItemsItem(item RefItem) {
 	i.items = append(i.items, item)
 }
 
-func (i *QData) Nested() []Q {
+func (i *LoopData) Nested() []Loop {
 	return i.nested
 }
 
-func (i *QData) SetNestedItem(item Q) {
+func (i *LoopData) SetNestedItem(item Loop) {
 	i.nested = append(i.nested, item)
 }
 
-type QImpl struct {
+type LoopImpl struct {
 	core.AstNodeBase
 	ObjData
-	QData
+	LoopData
 }
 
-func (i *QImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *LoopImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.QData.ForEachNode(fn)
+	i.LoopData.ForEachNode(fn)
 }
 
-func (i *QImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *LoopImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.QData.ForEachReference(fn)
+	i.LoopData.ForEachReference(fn)
 }
 
-func (i *QImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *LoopImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -1250,95 +1250,95 @@ func (i *QImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameItems:
 		if index >= len(i.Items()) {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("QImpl.Resolve: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
+			return nil, fmt.Errorf("LoopImpl.Resolve: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
 		}
 		child := i.Items()[index]
 		if child == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("QImpl.Resolve: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
+			return nil, fmt.Errorf("LoopImpl.Resolve: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
 	case fieldNameLocals:
 		if index >= len(i.Locals()) {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("QImpl.Resolve: index %d exceeds length of slice in 'locals' (length=%d) in node '%s'", index, len(i.Locals()), nodePath)
+			return nil, fmt.Errorf("LoopImpl.Resolve: index %d exceeds length of slice in 'locals' (length=%d) in node '%s'", index, len(i.Locals()), nodePath)
 		}
 		child := i.Locals()[index]
 		if child == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("QImpl.Resolve: item %d of slice in field 'locals' is nil in node '%s'", index, nodePath)
+			return nil, fmt.Errorf("LoopImpl.Resolve: item %d of slice in field 'locals' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
 	case fieldNameNested:
 		if index >= len(i.Nested()) {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("QImpl.Resolve: index %d exceeds length of slice in 'nested' (length=%d) in node '%s'", index, len(i.Nested()), nodePath)
+			return nil, fmt.Errorf("LoopImpl.Resolve: index %d exceeds length of slice in 'nested' (length=%d) in node '%s'", index, len(i.Nested()), nodePath)
 		}
 		child := i.Nested()[index]
 		if child == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("QImpl.Resolve: item %d of slice in field 'nested' is nil in node '%s'", index, nodePath)
+			return nil, fmt.Errorf("LoopImpl.Resolve: item %d of slice in field 'nested' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("QImpl.Resolve: field '%s' does not exist in node '%s' of type 'Q'", field.Value(), nodePath)
+		return nil, fmt.Errorf("LoopImpl.Resolve: field '%s' does not exist in node '%s' of type 'Loop'", field.Value(), nodePath)
 	}
 }
 
-type R interface {
+type Chain interface {
 	core.AstNode
 	Obj
 
-	IsR()
-	Items() []RItem
-	SetItemsItem(item RItem)
+	IsChain()
+	Items() []ChainItem
+	SetItemsItem(item ChainItem)
 }
 
-func NewR() R {
-	return &RImpl{}
+func NewChain() Chain {
+	return &ChainImpl{}
 }
 
-type RData struct {
-	items []RItem
+type ChainData struct {
+	items []ChainItem
 }
 
-func (i *RData) IsR() {}
+func (i *ChainData) IsChain() {}
 
-func (i *RData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *ChainData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	for j, item := range i.items {
 		fn(item, fieldNameItems, j)
 	}
 }
 
-func (i *RData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *ChainData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *RData) Items() []RItem {
+func (i *ChainData) Items() []ChainItem {
 	return i.items
 }
 
-func (i *RData) SetItemsItem(item RItem) {
+func (i *ChainData) SetItemsItem(item ChainItem) {
 	i.items = append(i.items, item)
 }
 
-type RImpl struct {
+type ChainImpl struct {
 	core.AstNodeBase
 	ObjData
-	RData
+	ChainData
 }
 
-func (i *RImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *ChainImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.RData.ForEachNode(fn)
+	i.ChainData.ForEachNode(fn)
 }
 
-func (i *RImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *ChainImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.RData.ForEachReference(fn)
+	i.ChainData.ForEachReference(fn)
 }
 
-func (i *RImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *ChainImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -1347,54 +1347,54 @@ func (i *RImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameItems:
 		if index >= len(i.Items()) {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("RImpl.Resolve: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
+			return nil, fmt.Errorf("ChainImpl.Resolve: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
 		}
 		child := i.Items()[index]
 		if child == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("RImpl.Resolve: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
+			return nil, fmt.Errorf("ChainImpl.Resolve: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("RImpl.Resolve: field '%s' does not exist in node '%s' of type 'R'", field.Value(), nodePath)
+		return nil, fmt.Errorf("ChainImpl.Resolve: field '%s' does not exist in node '%s' of type 'Chain'", field.Value(), nodePath)
 	}
 }
 
-type RItem interface {
+type ChainItem interface {
 	core.AstNode
 
-	IsRItem()
+	IsChainItem()
 	Ref() *core.Reference[Declare]
 	SetRef(value *core.Reference[Declare])
-	Previous() RItem
-	SetPrevious(value RItem)
+	Previous() ChainItem
+	SetPrevious(value ChainItem)
 }
 
-func NewRItem() RItem {
-	return &RItemImpl{}
+func NewChainItem() ChainItem {
+	return &ChainItemImpl{}
 }
 
-type RItemData struct {
+type ChainItemData struct {
 	ref      *core.Reference[Declare]
-	previous RItem
+	previous ChainItem
 }
 
-func (i *RItemData) IsRItem() {}
+func (i *ChainItemData) IsChainItem() {}
 
-func (i *RItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *ChainItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.previous != nil {
 		fn(i.previous, fieldNamePrevious, -1)
 	}
 }
 
-func (i *RItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *ChainItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
 		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
-func (i *RItemData) Ref() *core.Reference[Declare] {
+func (i *ChainItemData) Ref() *core.Reference[Declare] {
 	if i != nil && i.ref != nil {
 		return i.ref
 	} else {
@@ -1402,11 +1402,11 @@ func (i *RItemData) Ref() *core.Reference[Declare] {
 	}
 }
 
-func (i *RItemData) SetRef(value *core.Reference[Declare]) {
+func (i *ChainItemData) SetRef(value *core.Reference[Declare]) {
 	i.ref = value
 }
 
-func (i *RItemData) Previous() RItem {
+func (i *ChainItemData) Previous() ChainItem {
 	if i != nil && i.previous != nil {
 		return i.previous
 	} else {
@@ -1414,24 +1414,24 @@ func (i *RItemData) Previous() RItem {
 	}
 }
 
-func (i *RItemData) SetPrevious(value RItem) {
+func (i *ChainItemData) SetPrevious(value ChainItem) {
 	i.previous = value
 }
 
-type RItemImpl struct {
+type ChainItemImpl struct {
 	core.AstNodeBase
-	RItemData
+	ChainItemData
 }
 
-func (i *RItemImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.RItemData.ForEachNode(fn)
+func (i *ChainItemImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.ChainItemData.ForEachNode(fn)
 }
 
-func (i *RItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.RItemData.ForEachReference(fn)
+func (i *ChainItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.ChainItemData.ForEachReference(fn)
 }
 
-func (i *RItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *ChainItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -1440,71 +1440,71 @@ func (i *RItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNamePrevious:
 		if i.Previous() == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("RItemImpl.Resolve: field 'previous' is nil in node '%s'", nodePath)
+			return nil, fmt.Errorf("ChainItemImpl.Resolve: field 'previous' is nil in node '%s'", nodePath)
 		}
 		child := i.Previous()
 		return child.Resolve(path.Tail())
 	case fieldNameRef:
-		return nil, fmt.Errorf("RItemImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("ChainItemImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("RItemImpl.Resolve: field '%s' does not exist in node '%s' of type 'RItem'", field.Value(), nodePath)
+		return nil, fmt.Errorf("ChainItemImpl.Resolve: field '%s' does not exist in node '%s' of type 'ChainItem'", field.Value(), nodePath)
 	}
 }
 
-type S interface {
+type Infix interface {
 	core.AstNode
 	Obj
 
-	IsS()
-	Items() []SItem
-	SetItemsItem(item SItem)
+	IsInfix()
+	Items() []Expr
+	SetItemsItem(item Expr)
 }
 
-func NewS() S {
-	return &SImpl{}
+func NewInfix() Infix {
+	return &InfixImpl{}
 }
 
-type SData struct {
-	items []SItem
+type InfixData struct {
+	items []Expr
 }
 
-func (i *SData) IsS() {}
+func (i *InfixData) IsInfix() {}
 
-func (i *SData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *InfixData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	for j, item := range i.items {
 		fn(item, fieldNameItems, j)
 	}
 }
 
-func (i *SData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *InfixData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *SData) Items() []SItem {
+func (i *InfixData) Items() []Expr {
 	return i.items
 }
 
-func (i *SData) SetItemsItem(item SItem) {
+func (i *InfixData) SetItemsItem(item Expr) {
 	i.items = append(i.items, item)
 }
 
-type SImpl struct {
+type InfixImpl struct {
 	core.AstNodeBase
 	ObjData
-	SData
+	InfixData
 }
 
-func (i *SImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *InfixImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.SData.ForEachNode(fn)
+	i.InfixData.ForEachNode(fn)
 }
 
-func (i *SImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *InfixImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.SData.ForEachReference(fn)
+	i.InfixData.ForEachReference(fn)
 }
 
-func (i *SImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *InfixImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -1513,92 +1513,92 @@ func (i *SImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameItems:
 		if index >= len(i.Items()) {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("SImpl.Resolve: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
+			return nil, fmt.Errorf("InfixImpl.Resolve: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
 		}
 		child := i.Items()[index]
 		if child == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("SImpl.Resolve: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
+			return nil, fmt.Errorf("InfixImpl.Resolve: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("SImpl.Resolve: field '%s' does not exist in node '%s' of type 'S'", field.Value(), nodePath)
+		return nil, fmt.Errorf("InfixImpl.Resolve: field '%s' does not exist in node '%s' of type 'Infix'", field.Value(), nodePath)
 	}
 }
 
-type SItem interface {
+type Expr interface {
 	core.AstNode
 
-	IsSItem()
+	IsExpr()
 }
 
-func NewSItem() SItem {
-	return &SItemImpl{}
+func NewExpr() Expr {
+	return &ExprImpl{}
 }
 
-type SItemData struct {
+type ExprData struct {
 }
 
-func (i *SItemData) IsSItem() {}
+func (i *ExprData) IsExpr() {}
 
-func (i *SItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *ExprData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *SItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *ExprData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-type SItemImpl struct {
+type ExprImpl struct {
 	core.AstNodeBase
-	SItemData
+	ExprData
 }
 
-func (i *SItemImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.SItemData.ForEachNode(fn)
+func (i *ExprImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.ExprData.ForEachNode(fn)
 }
 
-func (i *SItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.SItemData.ForEachReference(fn)
+func (i *ExprImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.ExprData.ForEachReference(fn)
 }
 
-func (i *SItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *ExprImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	nodePath, _ := core.PathOf(i)
-	return nil, fmt.Errorf("SItemImpl.Resolve: field '%s' does not exist in node '%s' of type 'SItem'", field.Value(), nodePath)
+	return nil, fmt.Errorf("ExprImpl.Resolve: field '%s' does not exist in node '%s' of type 'Expr'", field.Value(), nodePath)
 }
 
-type SRef interface {
+type Operand interface {
 	core.AstNode
-	SItem
+	Expr
 
-	IsSRef()
+	IsOperand()
 	Ref() *core.Reference[Declare]
 	SetRef(value *core.Reference[Declare])
 }
 
-func NewSRef() SRef {
-	return &SRefImpl{}
+func NewOperand() Operand {
+	return &OperandImpl{}
 }
 
-type SRefData struct {
+type OperandData struct {
 	ref *core.Reference[Declare]
 }
 
-func (i *SRefData) IsSRef() {}
+func (i *OperandData) IsOperand() {}
 
-func (i *SRefData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *OperandData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *SRefData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *OperandData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
 		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
-func (i *SRefData) Ref() *core.Reference[Declare] {
+func (i *OperandData) Ref() *core.Reference[Declare] {
 	if i != nil && i.ref != nil {
 		return i.ref
 	} else {
@@ -1606,67 +1606,67 @@ func (i *SRefData) Ref() *core.Reference[Declare] {
 	}
 }
 
-func (i *SRefData) SetRef(value *core.Reference[Declare]) {
+func (i *OperandData) SetRef(value *core.Reference[Declare]) {
 	i.ref = value
 }
 
-type SRefImpl struct {
+type OperandImpl struct {
 	core.AstNodeBase
-	SItemData
-	SRefData
+	ExprData
+	OperandData
 }
 
-func (i *SRefImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.SItemData.ForEachNode(fn)
-	i.SRefData.ForEachNode(fn)
+func (i *OperandImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.ExprData.ForEachNode(fn)
+	i.OperandData.ForEachNode(fn)
 }
 
-func (i *SRefImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.SItemData.ForEachReference(fn)
-	i.SRefData.ForEachReference(fn)
+func (i *OperandImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.ExprData.ForEachReference(fn)
+	i.OperandData.ForEachReference(fn)
 }
 
-func (i *SRefImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *OperandImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("SRefImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("OperandImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("SRefImpl.Resolve: field '%s' does not exist in node '%s' of type 'SRef'", field.Value(), nodePath)
+		return nil, fmt.Errorf("OperandImpl.Resolve: field '%s' does not exist in node '%s' of type 'Operand'", field.Value(), nodePath)
 	}
 }
 
-type SBinary interface {
+type Binary interface {
 	core.AstNode
-	SItem
+	Expr
 
-	IsSBinary()
-	Left() SItem
-	SetLeft(value SItem)
+	IsBinary()
+	Left() Expr
+	SetLeft(value Expr)
 	Operator() string
 	OperatorToken() *core.Token
 	SetOperator(value *core.Token)
-	Right() SItem
-	SetRight(value SItem)
+	Right() Expr
+	SetRight(value Expr)
 }
 
-func NewSBinary() SBinary {
-	return &SBinaryImpl{}
+func NewBinary() Binary {
+	return &BinaryImpl{}
 }
 
-type SBinaryData struct {
-	left     SItem
+type BinaryData struct {
+	left     Expr
 	operator *core.Token
-	right    SItem
+	right    Expr
 }
 
-func (i *SBinaryData) IsSBinary() {}
+func (i *BinaryData) IsBinary() {}
 
-func (i *SBinaryData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *BinaryData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.left != nil {
 		fn(i.left, fieldNameLeft, -1)
 	}
@@ -1675,10 +1675,10 @@ func (i *SBinaryData) ForEachNode(fn func(core.AstNode, unique.Handle[string], i
 	}
 }
 
-func (i *SBinaryData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *BinaryData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *SBinaryData) Left() SItem {
+func (i *BinaryData) Left() Expr {
 	if i != nil && i.left != nil {
 		return i.left
 	} else {
@@ -1686,11 +1686,11 @@ func (i *SBinaryData) Left() SItem {
 	}
 }
 
-func (i *SBinaryData) SetLeft(value SItem) {
+func (i *BinaryData) SetLeft(value Expr) {
 	i.left = value
 }
 
-func (i *SBinaryData) Operator() string {
+func (i *BinaryData) Operator() string {
 	if i != nil && i.operator != nil {
 		return i.operator.Image
 	} else {
@@ -1698,15 +1698,15 @@ func (i *SBinaryData) Operator() string {
 	}
 }
 
-func (i *SBinaryData) OperatorToken() *core.Token {
+func (i *BinaryData) OperatorToken() *core.Token {
 	return i.operator
 }
 
-func (i *SBinaryData) SetOperator(value *core.Token) {
+func (i *BinaryData) SetOperator(value *core.Token) {
 	i.operator = value
 }
 
-func (i *SBinaryData) Right() SItem {
+func (i *BinaryData) Right() Expr {
 	if i != nil && i.right != nil {
 		return i.right
 	} else {
@@ -1714,27 +1714,27 @@ func (i *SBinaryData) Right() SItem {
 	}
 }
 
-func (i *SBinaryData) SetRight(value SItem) {
+func (i *BinaryData) SetRight(value Expr) {
 	i.right = value
 }
 
-type SBinaryImpl struct {
+type BinaryImpl struct {
 	core.AstNodeBase
-	SItemData
-	SBinaryData
+	ExprData
+	BinaryData
 }
 
-func (i *SBinaryImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.SItemData.ForEachNode(fn)
-	i.SBinaryData.ForEachNode(fn)
+func (i *BinaryImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.ExprData.ForEachNode(fn)
+	i.BinaryData.ForEachNode(fn)
 }
 
-func (i *SBinaryImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.SItemData.ForEachReference(fn)
-	i.SBinaryData.ForEachReference(fn)
+func (i *BinaryImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.ExprData.ForEachReference(fn)
+	i.BinaryData.ForEachReference(fn)
 }
 
-func (i *SBinaryImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *BinaryImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -1743,54 +1743,54 @@ func (i *SBinaryImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameLeft:
 		if i.Left() == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("SBinaryImpl.Resolve: field 'left' is nil in node '%s'", nodePath)
+			return nil, fmt.Errorf("BinaryImpl.Resolve: field 'left' is nil in node '%s'", nodePath)
 		}
 		child := i.Left()
 		return child.Resolve(path.Tail())
 	case fieldNameRight:
 		if i.Right() == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("SBinaryImpl.Resolve: field 'right' is nil in node '%s'", nodePath)
+			return nil, fmt.Errorf("BinaryImpl.Resolve: field 'right' is nil in node '%s'", nodePath)
 		}
 		child := i.Right()
 		return child.Resolve(path.Tail())
 	case fieldNameOperator:
-		return nil, fmt.Errorf("SBinaryImpl.Resolve: field 'operator' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("BinaryImpl.Resolve: field 'operator' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("SBinaryImpl.Resolve: field '%s' does not exist in node '%s' of type 'SBinary'", field.Value(), nodePath)
+		return nil, fmt.Errorf("BinaryImpl.Resolve: field '%s' does not exist in node '%s' of type 'Binary'", field.Value(), nodePath)
 	}
 }
 
-type T interface {
+type Wrap interface {
 	core.AstNode
 	Obj
 
-	IsT()
-	Item() TItem
-	SetItem(value TItem)
+	IsWrap()
+	Item() WrapItem
+	SetItem(value WrapItem)
 }
 
-func NewT() T {
-	return &TImpl{}
+func NewWrap() Wrap {
+	return &WrapImpl{}
 }
 
-type TData struct {
-	item TItem
+type WrapData struct {
+	item WrapItem
 }
 
-func (i *TData) IsT() {}
+func (i *WrapData) IsWrap() {}
 
-func (i *TData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *WrapData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.item != nil {
 		fn(i.item, fieldNameItem, -1)
 	}
 }
 
-func (i *TData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *WrapData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *TData) Item() TItem {
+func (i *WrapData) Item() WrapItem {
 	if i != nil && i.item != nil {
 		return i.item
 	} else {
@@ -1798,27 +1798,27 @@ func (i *TData) Item() TItem {
 	}
 }
 
-func (i *TData) SetItem(value TItem) {
+func (i *WrapData) SetItem(value WrapItem) {
 	i.item = value
 }
 
-type TImpl struct {
+type WrapImpl struct {
 	core.AstNodeBase
 	ObjData
-	TData
+	WrapData
 }
 
-func (i *TImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *WrapImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.TData.ForEachNode(fn)
+	i.WrapData.ForEachNode(fn)
 }
 
-func (i *TImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *WrapImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.TData.ForEachReference(fn)
+	i.WrapData.ForEachReference(fn)
 }
 
-func (i *TImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *WrapImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -1827,88 +1827,88 @@ func (i *TImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameItem:
 		if i.Item() == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("TImpl.Resolve: field 'item' is nil in node '%s'", nodePath)
+			return nil, fmt.Errorf("WrapImpl.Resolve: field 'item' is nil in node '%s'", nodePath)
 		}
 		child := i.Item()
 		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("TImpl.Resolve: field '%s' does not exist in node '%s' of type 'T'", field.Value(), nodePath)
+		return nil, fmt.Errorf("WrapImpl.Resolve: field '%s' does not exist in node '%s' of type 'Wrap'", field.Value(), nodePath)
 	}
 }
 
-type TItem interface {
+type WrapItem interface {
 	core.AstNode
 
-	IsTItem()
+	IsWrapItem()
 }
 
-func NewTItem() TItem {
-	return &TItemImpl{}
+func NewWrapItem() WrapItem {
+	return &WrapItemImpl{}
 }
 
-type TItemData struct {
+type WrapItemData struct {
 }
 
-func (i *TItemData) IsTItem() {}
+func (i *WrapItemData) IsWrapItem() {}
 
-func (i *TItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *WrapItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *TItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *WrapItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-type TItemImpl struct {
+type WrapItemImpl struct {
 	core.AstNodeBase
-	TItemData
+	WrapItemData
 }
 
-func (i *TItemImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.TItemData.ForEachNode(fn)
+func (i *WrapItemImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.WrapItemData.ForEachNode(fn)
 }
 
-func (i *TItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.TItemData.ForEachReference(fn)
+func (i *WrapItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.WrapItemData.ForEachReference(fn)
 }
 
-func (i *TItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *WrapItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	nodePath, _ := core.PathOf(i)
-	return nil, fmt.Errorf("TItemImpl.Resolve: field '%s' does not exist in node '%s' of type 'TItem'", field.Value(), nodePath)
+	return nil, fmt.Errorf("WrapItemImpl.Resolve: field '%s' does not exist in node '%s' of type 'WrapItem'", field.Value(), nodePath)
 }
 
-type TRef interface {
+type WrapRef interface {
 	core.AstNode
-	TItem
+	WrapItem
 
-	IsTRef()
+	IsWrapRef()
 	Ref() *core.Reference[Declare]
 	SetRef(value *core.Reference[Declare])
 }
 
-func NewTRef() TRef {
-	return &TRefImpl{}
+func NewWrapRef() WrapRef {
+	return &WrapRefImpl{}
 }
 
-type TRefData struct {
+type WrapRefData struct {
 	ref *core.Reference[Declare]
 }
 
-func (i *TRefData) IsTRef() {}
+func (i *WrapRefData) IsWrapRef() {}
 
-func (i *TRefData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *WrapRefData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *TRefData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *WrapRefData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
 		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
-func (i *TRefData) Ref() *core.Reference[Declare] {
+func (i *WrapRefData) Ref() *core.Reference[Declare] {
 	if i != nil && i.ref != nil {
 		return i.ref
 	} else {
@@ -1916,93 +1916,93 @@ func (i *TRefData) Ref() *core.Reference[Declare] {
 	}
 }
 
-func (i *TRefData) SetRef(value *core.Reference[Declare]) {
+func (i *WrapRefData) SetRef(value *core.Reference[Declare]) {
 	i.ref = value
 }
 
-type TRefImpl struct {
+type WrapRefImpl struct {
 	core.AstNodeBase
-	TItemData
-	TRefData
+	WrapItemData
+	WrapRefData
 }
 
-func (i *TRefImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.TItemData.ForEachNode(fn)
-	i.TRefData.ForEachNode(fn)
+func (i *WrapRefImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.WrapItemData.ForEachNode(fn)
+	i.WrapRefData.ForEachNode(fn)
 }
 
-func (i *TRefImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.TItemData.ForEachReference(fn)
-	i.TRefData.ForEachReference(fn)
+func (i *WrapRefImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.WrapItemData.ForEachReference(fn)
+	i.WrapRefData.ForEachReference(fn)
 }
 
-func (i *TRefImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *WrapRefImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("TRefImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("WrapRefImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("TRefImpl.Resolve: field '%s' does not exist in node '%s' of type 'TRef'", field.Value(), nodePath)
+		return nil, fmt.Errorf("WrapRefImpl.Resolve: field '%s' does not exist in node '%s' of type 'WrapRef'", field.Value(), nodePath)
 	}
 }
 
-type TGroup interface {
+type WrapGroup interface {
 	core.AstNode
-	TItem
+	WrapItem
 
-	IsTGroup()
-	Elements() []TItem
-	SetElementsItem(item TItem)
+	IsWrapGroup()
+	Elements() []WrapItem
+	SetElementsItem(item WrapItem)
 }
 
-func NewTGroup() TGroup {
-	return &TGroupImpl{}
+func NewWrapGroup() WrapGroup {
+	return &WrapGroupImpl{}
 }
 
-type TGroupData struct {
-	elements []TItem
+type WrapGroupData struct {
+	elements []WrapItem
 }
 
-func (i *TGroupData) IsTGroup() {}
+func (i *WrapGroupData) IsWrapGroup() {}
 
-func (i *TGroupData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *WrapGroupData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	for j, item := range i.elements {
 		fn(item, fieldNameElements, j)
 	}
 }
 
-func (i *TGroupData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *WrapGroupData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *TGroupData) Elements() []TItem {
+func (i *WrapGroupData) Elements() []WrapItem {
 	return i.elements
 }
 
-func (i *TGroupData) SetElementsItem(item TItem) {
+func (i *WrapGroupData) SetElementsItem(item WrapItem) {
 	i.elements = append(i.elements, item)
 }
 
-type TGroupImpl struct {
+type WrapGroupImpl struct {
 	core.AstNodeBase
-	TItemData
-	TGroupData
+	WrapItemData
+	WrapGroupData
 }
 
-func (i *TGroupImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.TItemData.ForEachNode(fn)
-	i.TGroupData.ForEachNode(fn)
+func (i *WrapGroupImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.WrapItemData.ForEachNode(fn)
+	i.WrapGroupData.ForEachNode(fn)
 }
 
-func (i *TGroupImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.TItemData.ForEachReference(fn)
-	i.TGroupData.ForEachReference(fn)
+func (i *WrapGroupImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.WrapItemData.ForEachReference(fn)
+	i.WrapGroupData.ForEachReference(fn)
 }
 
-func (i *TGroupImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *WrapGroupImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -2011,43 +2011,43 @@ func (i *TGroupImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameElements:
 		if index >= len(i.Elements()) {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("TGroupImpl.Resolve: index %d exceeds length of slice in 'elements' (length=%d) in node '%s'", index, len(i.Elements()), nodePath)
+			return nil, fmt.Errorf("WrapGroupImpl.Resolve: index %d exceeds length of slice in 'elements' (length=%d) in node '%s'", index, len(i.Elements()), nodePath)
 		}
 		child := i.Elements()[index]
 		if child == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("TGroupImpl.Resolve: item %d of slice in field 'elements' is nil in node '%s'", index, nodePath)
+			return nil, fmt.Errorf("WrapGroupImpl.Resolve: item %d of slice in field 'elements' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("TGroupImpl.Resolve: field '%s' does not exist in node '%s' of type 'TGroup'", field.Value(), nodePath)
+		return nil, fmt.Errorf("WrapGroupImpl.Resolve: field '%s' does not exist in node '%s' of type 'WrapGroup'", field.Value(), nodePath)
 	}
 }
 
-type U interface {
+type Shadow interface {
 	core.AstNode
 	Obj
 
-	IsU()
-	Right() SItem
-	SetRight(value SItem)
-	Items() []PItem
-	SetItemsItem(item PItem)
+	IsShadow()
+	Right() Expr
+	SetRight(value Expr)
+	Items() []RefItem
+	SetItemsItem(item RefItem)
 }
 
-func NewU() U {
-	return &UImpl{}
+func NewShadow() Shadow {
+	return &ShadowImpl{}
 }
 
-type UData struct {
-	right SItem
-	items []PItem
+type ShadowData struct {
+	right Expr
+	items []RefItem
 }
 
-func (i *UData) IsU() {}
+func (i *ShadowData) IsShadow() {}
 
-func (i *UData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *ShadowData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.right != nil {
 		fn(i.right, fieldNameRight, -1)
 	}
@@ -2056,10 +2056,10 @@ func (i *UData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	}
 }
 
-func (i *UData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *ShadowData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *UData) Right() SItem {
+func (i *ShadowData) Right() Expr {
 	if i != nil && i.right != nil {
 		return i.right
 	} else {
@@ -2067,35 +2067,35 @@ func (i *UData) Right() SItem {
 	}
 }
 
-func (i *UData) SetRight(value SItem) {
+func (i *ShadowData) SetRight(value Expr) {
 	i.right = value
 }
 
-func (i *UData) Items() []PItem {
+func (i *ShadowData) Items() []RefItem {
 	return i.items
 }
 
-func (i *UData) SetItemsItem(item PItem) {
+func (i *ShadowData) SetItemsItem(item RefItem) {
 	i.items = append(i.items, item)
 }
 
-type UImpl struct {
+type ShadowImpl struct {
 	core.AstNodeBase
 	ObjData
-	UData
+	ShadowData
 }
 
-func (i *UImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *ShadowImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.UData.ForEachNode(fn)
+	i.ShadowData.ForEachNode(fn)
 }
 
-func (i *UImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *ShadowImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.UData.ForEachReference(fn)
+	i.ShadowData.ForEachReference(fn)
 }
 
-func (i *UImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *ShadowImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -2104,53 +2104,53 @@ func (i *UImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameItems:
 		if index >= len(i.Items()) {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("UImpl.Resolve: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
+			return nil, fmt.Errorf("ShadowImpl.Resolve: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
 		}
 		child := i.Items()[index]
 		if child == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("UImpl.Resolve: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
+			return nil, fmt.Errorf("ShadowImpl.Resolve: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
 	case fieldNameRight:
 		if i.Right() == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("UImpl.Resolve: field 'right' is nil in node '%s'", nodePath)
+			return nil, fmt.Errorf("ShadowImpl.Resolve: field 'right' is nil in node '%s'", nodePath)
 		}
 		child := i.Right()
 		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("UImpl.Resolve: field '%s' does not exist in node '%s' of type 'U'", field.Value(), nodePath)
+		return nil, fmt.Errorf("ShadowImpl.Resolve: field '%s' does not exist in node '%s' of type 'Shadow'", field.Value(), nodePath)
 	}
 }
 
-type V interface {
+type Nest interface {
 	core.AstNode
 	Obj
 
-	IsV()
+	IsNest()
 	Locals() []Declare
 	SetLocalsItem(item Declare)
 	Ref() *core.Reference[Declare]
 	SetRef(value *core.Reference[Declare])
-	Children() []V
-	SetChildrenItem(item V)
+	Children() []Nest
+	SetChildrenItem(item Nest)
 }
 
-func NewV() V {
-	return &VImpl{}
+func NewNest() Nest {
+	return &NestImpl{}
 }
 
-type VData struct {
+type NestData struct {
 	locals   []Declare
 	ref      *core.Reference[Declare]
-	children []V
+	children []Nest
 }
 
-func (i *VData) IsV() {}
+func (i *NestData) IsNest() {}
 
-func (i *VData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *NestData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	for j, item := range i.locals {
 		fn(item, fieldNameLocals, j)
 	}
@@ -2159,21 +2159,21 @@ func (i *VData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	}
 }
 
-func (i *VData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *NestData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
 		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
-func (i *VData) Locals() []Declare {
+func (i *NestData) Locals() []Declare {
 	return i.locals
 }
 
-func (i *VData) SetLocalsItem(item Declare) {
+func (i *NestData) SetLocalsItem(item Declare) {
 	i.locals = append(i.locals, item)
 }
 
-func (i *VData) Ref() *core.Reference[Declare] {
+func (i *NestData) Ref() *core.Reference[Declare] {
 	if i != nil && i.ref != nil {
 		return i.ref
 	} else {
@@ -2181,35 +2181,35 @@ func (i *VData) Ref() *core.Reference[Declare] {
 	}
 }
 
-func (i *VData) SetRef(value *core.Reference[Declare]) {
+func (i *NestData) SetRef(value *core.Reference[Declare]) {
 	i.ref = value
 }
 
-func (i *VData) Children() []V {
+func (i *NestData) Children() []Nest {
 	return i.children
 }
 
-func (i *VData) SetChildrenItem(item V) {
+func (i *NestData) SetChildrenItem(item Nest) {
 	i.children = append(i.children, item)
 }
 
-type VImpl struct {
+type NestImpl struct {
 	core.AstNodeBase
 	ObjData
-	VData
+	NestData
 }
 
-func (i *VImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *NestImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.VData.ForEachNode(fn)
+	i.NestData.ForEachNode(fn)
 }
 
-func (i *VImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *NestImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.VData.ForEachReference(fn)
+	i.NestData.ForEachReference(fn)
 }
 
-func (i *VImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *NestImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -2218,56 +2218,56 @@ func (i *VImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameChildren:
 		if index >= len(i.Children()) {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("VImpl.Resolve: index %d exceeds length of slice in 'children' (length=%d) in node '%s'", index, len(i.Children()), nodePath)
+			return nil, fmt.Errorf("NestImpl.Resolve: index %d exceeds length of slice in 'children' (length=%d) in node '%s'", index, len(i.Children()), nodePath)
 		}
 		child := i.Children()[index]
 		if child == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("VImpl.Resolve: item %d of slice in field 'children' is nil in node '%s'", index, nodePath)
+			return nil, fmt.Errorf("NestImpl.Resolve: item %d of slice in field 'children' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
 	case fieldNameLocals:
 		if index >= len(i.Locals()) {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("VImpl.Resolve: index %d exceeds length of slice in 'locals' (length=%d) in node '%s'", index, len(i.Locals()), nodePath)
+			return nil, fmt.Errorf("NestImpl.Resolve: index %d exceeds length of slice in 'locals' (length=%d) in node '%s'", index, len(i.Locals()), nodePath)
 		}
 		child := i.Locals()[index]
 		if child == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("VImpl.Resolve: item %d of slice in field 'locals' is nil in node '%s'", index, nodePath)
+			return nil, fmt.Errorf("NestImpl.Resolve: item %d of slice in field 'locals' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
 	case fieldNameRef:
-		return nil, fmt.Errorf("VImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("NestImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("VImpl.Resolve: field '%s' does not exist in node '%s' of type 'V'", field.Value(), nodePath)
+		return nil, fmt.Errorf("NestImpl.Resolve: field '%s' does not exist in node '%s' of type 'Nest'", field.Value(), nodePath)
 	}
 }
 
-type W interface {
+type Ambig interface {
 	core.AstNode
 	Obj
 
-	IsW()
-	Name() WName
-	SetName(value WName)
-	Refs() WRefs
-	SetRefs(value WRefs)
+	IsAmbig()
+	Name() AmbigName
+	SetName(value AmbigName)
+	Refs() AmbigRefs
+	SetRefs(value AmbigRefs)
 }
 
-func NewW() W {
-	return &WImpl{}
+func NewAmbig() Ambig {
+	return &AmbigImpl{}
 }
 
-type WData struct {
-	name WName
-	refs WRefs
+type AmbigData struct {
+	name AmbigName
+	refs AmbigRefs
 }
 
-func (i *WData) IsW() {}
+func (i *AmbigData) IsAmbig() {}
 
-func (i *WData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *AmbigData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.name != nil {
 		fn(i.name, fieldNameName, -1)
 	}
@@ -2276,10 +2276,10 @@ func (i *WData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	}
 }
 
-func (i *WData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *AmbigData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *WData) Name() WName {
+func (i *AmbigData) Name() AmbigName {
 	if i != nil && i.name != nil {
 		return i.name
 	} else {
@@ -2287,11 +2287,11 @@ func (i *WData) Name() WName {
 	}
 }
 
-func (i *WData) SetName(value WName) {
+func (i *AmbigData) SetName(value AmbigName) {
 	i.name = value
 }
 
-func (i *WData) Refs() WRefs {
+func (i *AmbigData) Refs() AmbigRefs {
 	if i != nil && i.refs != nil {
 		return i.refs
 	} else {
@@ -2299,27 +2299,27 @@ func (i *WData) Refs() WRefs {
 	}
 }
 
-func (i *WData) SetRefs(value WRefs) {
+func (i *AmbigData) SetRefs(value AmbigRefs) {
 	i.refs = value
 }
 
-type WImpl struct {
+type AmbigImpl struct {
 	core.AstNodeBase
 	ObjData
-	WData
+	AmbigData
 }
 
-func (i *WImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *AmbigImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.WData.ForEachNode(fn)
+	i.AmbigData.ForEachNode(fn)
 }
 
-func (i *WImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *AmbigImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.WData.ForEachReference(fn)
+	i.AmbigData.ForEachReference(fn)
 }
 
-func (i *WImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *AmbigImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -2328,27 +2328,27 @@ func (i *WImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameName:
 		if i.Name() == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("WImpl.Resolve: field 'name' is nil in node '%s'", nodePath)
+			return nil, fmt.Errorf("AmbigImpl.Resolve: field 'name' is nil in node '%s'", nodePath)
 		}
 		child := i.Name()
 		return child.Resolve(path.Tail())
 	case fieldNameRefs:
 		if i.Refs() == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("WImpl.Resolve: field 'refs' is nil in node '%s'", nodePath)
+			return nil, fmt.Errorf("AmbigImpl.Resolve: field 'refs' is nil in node '%s'", nodePath)
 		}
 		child := i.Refs()
 		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("WImpl.Resolve: field '%s' does not exist in node '%s' of type 'W'", field.Value(), nodePath)
+		return nil, fmt.Errorf("AmbigImpl.Resolve: field '%s' does not exist in node '%s' of type 'Ambig'", field.Value(), nodePath)
 	}
 }
 
-type WName interface {
+type AmbigName interface {
 	core.AstNode
 
-	IsWName()
+	IsAmbigName()
 	Name() string
 	NameToken() *core.Token
 	SetName(value *core.Token)
@@ -2356,27 +2356,27 @@ type WName interface {
 	SetRef(value *core.Reference[Declare])
 }
 
-func NewWName() WName {
-	return &WNameImpl{}
+func NewAmbigName() AmbigName {
+	return &AmbigNameImpl{}
 }
 
-type WNameData struct {
+type AmbigNameData struct {
 	name *core.Token
 	ref  *core.Reference[Declare]
 }
 
-func (i *WNameData) IsWName() {}
+func (i *AmbigNameData) IsAmbigName() {}
 
-func (i *WNameData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *AmbigNameData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *WNameData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *AmbigNameData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref != nil {
 		fn(i.ref, fieldNameRef, -1)
 	}
 }
 
-func (i *WNameData) Name() string {
+func (i *AmbigNameData) Name() string {
 	if i != nil && i.name != nil {
 		return i.name.Image
 	} else {
@@ -2384,15 +2384,15 @@ func (i *WNameData) Name() string {
 	}
 }
 
-func (i *WNameData) NameToken() *core.Token {
+func (i *AmbigNameData) NameToken() *core.Token {
 	return i.name
 }
 
-func (i *WNameData) SetName(value *core.Token) {
+func (i *AmbigNameData) SetName(value *core.Token) {
 	i.name = value
 }
 
-func (i *WNameData) Ref() *core.Reference[Declare] {
+func (i *AmbigNameData) Ref() *core.Reference[Declare] {
 	if i != nil && i.ref != nil {
 		return i.ref
 	} else {
@@ -2400,64 +2400,64 @@ func (i *WNameData) Ref() *core.Reference[Declare] {
 	}
 }
 
-func (i *WNameData) SetRef(value *core.Reference[Declare]) {
+func (i *AmbigNameData) SetRef(value *core.Reference[Declare]) {
 	i.ref = value
 }
 
-type WNameImpl struct {
+type AmbigNameImpl struct {
 	core.AstNodeBase
-	WNameData
+	AmbigNameData
 }
 
-func (i *WNameImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.WNameData.ForEachNode(fn)
+func (i *AmbigNameImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.AmbigNameData.ForEachNode(fn)
 }
 
-func (i *WNameImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.WNameData.ForEachReference(fn)
+func (i *AmbigNameImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.AmbigNameData.ForEachReference(fn)
 }
 
-func (i *WNameImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *AmbigNameImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	switch field {
 	case fieldNameName:
-		return nil, fmt.Errorf("WNameImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("AmbigNameImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	case fieldNameRef:
-		return nil, fmt.Errorf("WNameImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("AmbigNameImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("WNameImpl.Resolve: field '%s' does not exist in node '%s' of type 'WName'", field.Value(), nodePath)
+		return nil, fmt.Errorf("AmbigNameImpl.Resolve: field '%s' does not exist in node '%s' of type 'AmbigName'", field.Value(), nodePath)
 	}
 }
 
-type WRefs interface {
+type AmbigRefs interface {
 	core.AstNode
 
-	IsWRefs()
+	IsAmbigRefs()
 	Ref1() *core.Reference[Declare]
 	SetRef1(value *core.Reference[Declare])
 	Ref() *core.Reference[Declare]
 	SetRef(value *core.Reference[Declare])
 }
 
-func NewWRefs() WRefs {
-	return &WRefsImpl{}
+func NewAmbigRefs() AmbigRefs {
+	return &AmbigRefsImpl{}
 }
 
-type WRefsData struct {
+type AmbigRefsData struct {
 	ref1 *core.Reference[Declare]
 	ref  *core.Reference[Declare]
 }
 
-func (i *WRefsData) IsWRefs() {}
+func (i *AmbigRefsData) IsAmbigRefs() {}
 
-func (i *WRefsData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *AmbigRefsData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *WRefsData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *AmbigRefsData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	if i.ref1 != nil {
 		fn(i.ref1, fieldNameRef1, -1)
 	}
@@ -2466,7 +2466,7 @@ func (i *WRefsData) ForEachReference(fn func(core.UntypedReference, unique.Handl
 	}
 }
 
-func (i *WRefsData) Ref1() *core.Reference[Declare] {
+func (i *AmbigRefsData) Ref1() *core.Reference[Declare] {
 	if i != nil && i.ref1 != nil {
 		return i.ref1
 	} else {
@@ -2474,11 +2474,11 @@ func (i *WRefsData) Ref1() *core.Reference[Declare] {
 	}
 }
 
-func (i *WRefsData) SetRef1(value *core.Reference[Declare]) {
+func (i *AmbigRefsData) SetRef1(value *core.Reference[Declare]) {
 	i.ref1 = value
 }
 
-func (i *WRefsData) Ref() *core.Reference[Declare] {
+func (i *AmbigRefsData) Ref() *core.Reference[Declare] {
 	if i != nil && i.ref != nil {
 		return i.ref
 	} else {
@@ -2486,92 +2486,92 @@ func (i *WRefsData) Ref() *core.Reference[Declare] {
 	}
 }
 
-func (i *WRefsData) SetRef(value *core.Reference[Declare]) {
+func (i *AmbigRefsData) SetRef(value *core.Reference[Declare]) {
 	i.ref = value
 }
 
-type WRefsImpl struct {
+type AmbigRefsImpl struct {
 	core.AstNodeBase
-	WRefsData
+	AmbigRefsData
 }
 
-func (i *WRefsImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.WRefsData.ForEachNode(fn)
+func (i *AmbigRefsImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.AmbigRefsData.ForEachNode(fn)
 }
 
-func (i *WRefsImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.WRefsData.ForEachReference(fn)
+func (i *AmbigRefsImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.AmbigRefsData.ForEachReference(fn)
 }
 
-func (i *WRefsImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *AmbigRefsImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	switch field {
 	case fieldNameRef:
-		return nil, fmt.Errorf("WRefsImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("AmbigRefsImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
 	case fieldNameRef1:
-		return nil, fmt.Errorf("WRefsImpl.Resolve: field 'ref1' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("AmbigRefsImpl.Resolve: field 'ref1' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("WRefsImpl.Resolve: field '%s' does not exist in node '%s' of type 'WRefs'", field.Value(), nodePath)
+		return nil, fmt.Errorf("AmbigRefsImpl.Resolve: field '%s' does not exist in node '%s' of type 'AmbigRefs'", field.Value(), nodePath)
 	}
 }
 
-type Z interface {
+type Retype interface {
 	core.AstNode
 	Obj
 
-	IsZ()
-	Items() []ZItem
-	SetItemsItem(item ZItem)
+	IsRetype()
+	Items() []RetypeItem
+	SetItemsItem(item RetypeItem)
 }
 
-func NewZ() Z {
-	return &ZImpl{}
+func NewRetype() Retype {
+	return &RetypeImpl{}
 }
 
-type ZData struct {
-	items []ZItem
+type RetypeData struct {
+	items []RetypeItem
 }
 
-func (i *ZData) IsZ() {}
+func (i *RetypeData) IsRetype() {}
 
-func (i *ZData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RetypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	for j, item := range i.items {
 		fn(item, fieldNameItems, j)
 	}
 }
 
-func (i *ZData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RetypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *ZData) Items() []ZItem {
+func (i *RetypeData) Items() []RetypeItem {
 	return i.items
 }
 
-func (i *ZData) SetItemsItem(item ZItem) {
+func (i *RetypeData) SetItemsItem(item RetypeItem) {
 	i.items = append(i.items, item)
 }
 
-type ZImpl struct {
+type RetypeImpl struct {
 	core.AstNodeBase
 	ObjData
-	ZData
+	RetypeData
 }
 
-func (i *ZImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RetypeImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	i.ObjData.ForEachNode(fn)
-	i.ZData.ForEachNode(fn)
+	i.RetypeData.ForEachNode(fn)
 }
 
-func (i *ZImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RetypeImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 	i.ObjData.ForEachReference(fn)
-	i.ZData.ForEachReference(fn)
+	i.RetypeData.ForEachReference(fn)
 }
 
-func (i *ZImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *RetypeImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -2580,48 +2580,48 @@ func (i *ZImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameItems:
 		if index >= len(i.Items()) {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("ZImpl.Resolve: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
+			return nil, fmt.Errorf("RetypeImpl.Resolve: index %d exceeds length of slice in 'items' (length=%d) in node '%s'", index, len(i.Items()), nodePath)
 		}
 		child := i.Items()[index]
 		if child == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("ZImpl.Resolve: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
+			return nil, fmt.Errorf("RetypeImpl.Resolve: item %d of slice in field 'items' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("ZImpl.Resolve: field '%s' does not exist in node '%s' of type 'Z'", field.Value(), nodePath)
+		return nil, fmt.Errorf("RetypeImpl.Resolve: field '%s' does not exist in node '%s' of type 'Retype'", field.Value(), nodePath)
 	}
 }
 
-type ZItem interface {
+type RetypeItem interface {
 	core.AstNode
 
-	IsZItem()
-	Inner() PItem
-	SetInner(value PItem)
+	IsRetypeItem()
+	Inner() RefItem
+	SetInner(value RefItem)
 }
 
-func NewZItem() ZItem {
-	return &ZItemImpl{}
+func NewRetypeItem() RetypeItem {
+	return &RetypeItemImpl{}
 }
 
-type ZItemData struct {
-	inner PItem
+type RetypeItemData struct {
+	inner RefItem
 }
 
-func (i *ZItemData) IsZItem() {}
+func (i *RetypeItemData) IsRetypeItem() {}
 
-func (i *ZItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RetypeItemData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 	if i.inner != nil {
 		fn(i.inner, fieldNameInner, -1)
 	}
 }
 
-func (i *ZItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RetypeItemData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-func (i *ZItemData) Inner() PItem {
+func (i *RetypeItemData) Inner() RefItem {
 	if i != nil && i.inner != nil {
 		return i.inner
 	} else {
@@ -2629,24 +2629,24 @@ func (i *ZItemData) Inner() PItem {
 	}
 }
 
-func (i *ZItemData) SetInner(value PItem) {
+func (i *RetypeItemData) SetInner(value RefItem) {
 	i.inner = value
 }
 
-type ZItemImpl struct {
+type RetypeItemImpl struct {
 	core.AstNodeBase
-	ZItemData
+	RetypeItemData
 }
 
-func (i *ZItemImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.ZItemData.ForEachNode(fn)
+func (i *RetypeItemImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.RetypeItemData.ForEachNode(fn)
 }
 
-func (i *ZItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.ZItemData.ForEachReference(fn)
+func (i *RetypeItemImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.RetypeItemData.ForEachReference(fn)
 }
 
-func (i *ZItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *RetypeItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -2655,55 +2655,55 @@ func (i *ZItemImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameInner:
 		if i.Inner() == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("ZItemImpl.Resolve: field 'inner' is nil in node '%s'", nodePath)
+			return nil, fmt.Errorf("RetypeItemImpl.Resolve: field 'inner' is nil in node '%s'", nodePath)
 		}
 		child := i.Inner()
 		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("ZItemImpl.Resolve: field '%s' does not exist in node '%s' of type 'ZItem'", field.Value(), nodePath)
+		return nil, fmt.Errorf("RetypeItemImpl.Resolve: field '%s' does not exist in node '%s' of type 'RetypeItem'", field.Value(), nodePath)
 	}
 }
 
-type ZWrapper interface {
+type RetypeWrapper interface {
 	core.AstNode
-	ZItem
+	RetypeItem
 
-	IsZWrapper()
+	IsRetypeWrapper()
 }
 
-func NewZWrapper() ZWrapper {
-	return &ZWrapperImpl{}
+func NewRetypeWrapper() RetypeWrapper {
+	return &RetypeWrapperImpl{}
 }
 
-type ZWrapperData struct {
+type RetypeWrapperData struct {
 }
 
-func (i *ZWrapperData) IsZWrapper() {}
+func (i *RetypeWrapperData) IsRetypeWrapper() {}
 
-func (i *ZWrapperData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+func (i *RetypeWrapperData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
 }
 
-func (i *ZWrapperData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+func (i *RetypeWrapperData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
 }
 
-type ZWrapperImpl struct {
+type RetypeWrapperImpl struct {
 	core.AstNodeBase
-	ZItemData
-	ZWrapperData
+	RetypeItemData
+	RetypeWrapperData
 }
 
-func (i *ZWrapperImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.ZItemData.ForEachNode(fn)
-	i.ZWrapperData.ForEachNode(fn)
+func (i *RetypeWrapperImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.RetypeItemData.ForEachNode(fn)
+	i.RetypeWrapperData.ForEachNode(fn)
 }
 
-func (i *ZWrapperImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.ZItemData.ForEachReference(fn)
-	i.ZWrapperData.ForEachReference(fn)
+func (i *RetypeWrapperImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.RetypeItemData.ForEachReference(fn)
+	i.RetypeWrapperData.ForEachReference(fn)
 }
 
-func (i *ZWrapperImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *RetypeWrapperImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
@@ -2712,17 +2712,18 @@ func (i *ZWrapperImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameInner:
 		if i.Inner() == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("ZWrapperImpl.Resolve: field 'inner' is nil in node '%s'", nodePath)
+			return nil, fmt.Errorf("RetypeWrapperImpl.Resolve: field 'inner' is nil in node '%s'", nodePath)
 		}
 		child := i.Inner()
 		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("ZWrapperImpl.Resolve: field '%s' does not exist in node '%s' of type 'ZWrapper'", field.Value(), nodePath)
+		return nil, fmt.Errorf("RetypeWrapperImpl.Resolve: field '%s' does not exist in node '%s' of type 'RetypeWrapper'", field.Value(), nodePath)
 	}
 }
 
 var (
+	fieldNameCall     = unique.Make("call")
 	fieldNameChildren = unique.Make("children")
 	fieldNameElements = unique.Make("elements")
 	fieldNameInner    = unique.Make("inner")
@@ -2730,7 +2731,6 @@ var (
 	fieldNameItems    = unique.Make("items")
 	fieldNameLeft     = unique.Make("left")
 	fieldNameLocals   = unique.Make("locals")
-	fieldNameMember   = unique.Make("member")
 	fieldNameName     = unique.Make("name")
 	fieldNameNested   = unique.Make("nested")
 	fieldNameObjects  = unique.Make("objects")
@@ -2745,38 +2745,38 @@ var (
 )
 
 var CompletionSyntheticFactories = map[string]func() core.AstNode{
-	"Declare":    func() core.AstNode { return NewDeclare() },
-	"E":          func() core.AstNode { return NewE() },
-	"F":          func() core.AstNode { return NewF() },
-	"FItem":      func() core.AstNode { return NewFItem() },
-	"G":          func() core.AstNode { return NewG() },
-	"H":          func() core.AstNode { return NewH() },
-	"J":          func() core.AstNode { return NewJ() },
-	"K":          func() core.AstNode { return NewK() },
-	"MemberCall": func() core.AstNode { return NewMemberCall() },
-	"N":          func() core.AstNode { return NewN() },
-	"O":          func() core.AstNode { return NewO() },
-	"Obj":        func() core.AstNode { return NewObj() },
-	"P":          func() core.AstNode { return NewP() },
-	"PItem":      func() core.AstNode { return NewPItem() },
-	"Q":          func() core.AstNode { return NewQ() },
-	"R":          func() core.AstNode { return NewR() },
-	"RItem":      func() core.AstNode { return NewRItem() },
-	"Root":       func() core.AstNode { return NewRoot() },
-	"S":          func() core.AstNode { return NewS() },
-	"SBinary":    func() core.AstNode { return NewSBinary() },
-	"SItem":      func() core.AstNode { return NewSItem() },
-	"SRef":       func() core.AstNode { return NewSRef() },
-	"T":          func() core.AstNode { return NewT() },
-	"TGroup":     func() core.AstNode { return NewTGroup() },
-	"TItem":      func() core.AstNode { return NewTItem() },
-	"TRef":       func() core.AstNode { return NewTRef() },
-	"U":          func() core.AstNode { return NewU() },
-	"V":          func() core.AstNode { return NewV() },
-	"W":          func() core.AstNode { return NewW() },
-	"WName":      func() core.AstNode { return NewWName() },
-	"WRefs":      func() core.AstNode { return NewWRefs() },
-	"Z":          func() core.AstNode { return NewZ() },
-	"ZItem":      func() core.AstNode { return NewZItem() },
-	"ZWrapper":   func() core.AstNode { return NewZWrapper() },
+	"Ambig":         func() core.AstNode { return NewAmbig() },
+	"AmbigName":     func() core.AstNode { return NewAmbigName() },
+	"AmbigRefs":     func() core.AstNode { return NewAmbigRefs() },
+	"Binary":        func() core.AstNode { return NewBinary() },
+	"Chain":         func() core.AstNode { return NewChain() },
+	"ChainItem":     func() core.AstNode { return NewChainItem() },
+	"Declare":       func() core.AstNode { return NewDeclare() },
+	"Dedup":         func() core.AstNode { return NewDedup() },
+	"Expr":          func() core.AstNode { return NewExpr() },
+	"Infix":         func() core.AstNode { return NewInfix() },
+	"Loop":          func() core.AstNode { return NewLoop() },
+	"Member":        func() core.AstNode { return NewMember() },
+	"MemberCall":    func() core.AstNode { return NewMemberCall() },
+	"Nest":          func() core.AstNode { return NewNest() },
+	"Obj":           func() core.AstNode { return NewObj() },
+	"Operand":       func() core.AstNode { return NewOperand() },
+	"RefAction":     func() core.AstNode { return NewRefAction() },
+	"RefFQN":        func() core.AstNode { return NewRefFQN() },
+	"RefGroup":      func() core.AstNode { return NewRefGroup() },
+	"RefID":         func() core.AstNode { return NewRefID() },
+	"RefItem":       func() core.AstNode { return NewRefItem() },
+	"RefList":       func() core.AstNode { return NewRefList() },
+	"RefListItem":   func() core.AstNode { return NewRefListItem() },
+	"RefOrKeyword":  func() core.AstNode { return NewRefOrKeyword() },
+	"Retype":        func() core.AstNode { return NewRetype() },
+	"RetypeItem":    func() core.AstNode { return NewRetypeItem() },
+	"RetypeWrapper": func() core.AstNode { return NewRetypeWrapper() },
+	"Root":          func() core.AstNode { return NewRoot() },
+	"Scope":         func() core.AstNode { return NewScope() },
+	"Shadow":        func() core.AstNode { return NewShadow() },
+	"Wrap":          func() core.AstNode { return NewWrap() },
+	"WrapGroup":     func() core.AstNode { return NewWrapGroup() },
+	"WrapItem":      func() core.AstNode { return NewWrapItem() },
+	"WrapRef":       func() core.AstNode { return NewWrapRef() },
 }
