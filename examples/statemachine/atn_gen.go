@@ -160,7 +160,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[Statemachine__Basic_0], Keyword_events, nil),
 	)
 	states[Statemachine__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[Event__Start], states[Statemachine__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "events", List: true, Type: "Event", Repeated: true}),
+		parser.NewRuleTransition(states[Event__Start], states[Statemachine__Basic_1], nil, &parser.RuleCallInfo{Property: "events", List: true, Type: "Event", Repeated: true}),
 	)
 	states[Statemachine__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Statemachine__LoopBack_0]),
@@ -180,7 +180,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[Statemachine__Basic_3], Keyword_commands, nil),
 	)
 	states[Statemachine__Basic_3].AppendTransitions(
-		parser.NewRuleTransition(states[Command__Start], states[Statemachine__Basic_4], nil).WithCall(&parser.RuleCallInfo{Property: "commands", List: true, Type: "Command", Repeated: true}),
+		parser.NewRuleTransition(states[Command__Start], states[Statemachine__Basic_4], nil, &parser.RuleCallInfo{Property: "commands", List: true, Type: "Command", Repeated: true}),
 	)
 	states[Statemachine__Basic_4].AppendTransitions(
 		parser.NewEpsilonTransition(states[Statemachine__LoopBack_1]),
@@ -203,7 +203,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[Statemachine__LoopEntry], Token_ID, &parser.CompletionHint{Field: "Statemachine.Init"}),
 	)
 	states[Statemachine__Basic_6].AppendTransitions(
-		parser.NewRuleTransition(states[State__Start], states[Statemachine__Basic_7], nil).WithCall(&parser.RuleCallInfo{Property: "states", List: true, Type: "State", Repeated: true}),
+		parser.NewRuleTransition(states[State__Start], states[Statemachine__Basic_7], nil, &parser.RuleCallInfo{Property: "states", List: true, Type: "State", Repeated: true}),
 	)
 	states[Statemachine__Basic_7].AppendTransitions(
 		parser.NewEpsilonTransition(states[Statemachine__LoopBack_2]),
@@ -266,7 +266,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[State__Basic_1]),
 	)
 	states[State__Basic_3].AppendTransitions(
-		parser.NewRuleTransition(states[Transition__Start], states[State__Basic_4], nil).WithCall(&parser.RuleCallInfo{Property: "transitions", List: true, Type: "Transition", Repeated: true}),
+		parser.NewRuleTransition(states[Transition__Start], states[State__Basic_4], nil, &parser.RuleCallInfo{Property: "transitions", List: true, Type: "Transition", Repeated: true}),
 	)
 	states[State__Basic_4].AppendTransitions(
 		parser.NewEpsilonTransition(states[State__LoopBack_1]),

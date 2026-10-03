@@ -193,49 +193,49 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[H_h]),
 	)
 	states[Model__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[A__Start], states[Model__Basic_1], nil).WithCall(&parser.RuleCallInfo{Property: "item", Type: "Item"}),
+		parser.NewRuleTransition(states[A__Start], states[Model__Basic_1], nil, &parser.RuleCallInfo{Property: "item", Type: "Item"}),
 	)
 	states[Model__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Model__BlockEnd]),
 	)
 	states[Model__Basic_2].AppendTransitions(
-		parser.NewRuleTransition(states[B__Start], states[Model__Basic_3], nil).WithCall(&parser.RuleCallInfo{Property: "item", Type: "Item"}),
+		parser.NewRuleTransition(states[B__Start], states[Model__Basic_3], nil, &parser.RuleCallInfo{Property: "item", Type: "Item"}),
 	)
 	states[Model__Basic_3].AppendTransitions(
 		parser.NewEpsilonTransition(states[Model__BlockEnd]),
 	)
 	states[Model__Basic_4].AppendTransitions(
-		parser.NewRuleTransition(states[C__Start], states[Model__Basic_5], nil).WithCall(&parser.RuleCallInfo{Property: "item", Type: "Item"}),
+		parser.NewRuleTransition(states[C__Start], states[Model__Basic_5], nil, &parser.RuleCallInfo{Property: "item", Type: "Item"}),
 	)
 	states[Model__Basic_5].AppendTransitions(
 		parser.NewEpsilonTransition(states[Model__BlockEnd]),
 	)
 	states[Model__Basic_6].AppendTransitions(
-		parser.NewRuleTransition(states[D__Start], states[Model__Basic_7], nil).WithCall(&parser.RuleCallInfo{Property: "item", Type: "Item"}),
+		parser.NewRuleTransition(states[D__Start], states[Model__Basic_7], nil, &parser.RuleCallInfo{Property: "item", Type: "Item"}),
 	)
 	states[Model__Basic_7].AppendTransitions(
 		parser.NewEpsilonTransition(states[Model__BlockEnd]),
 	)
 	states[Model__Basic_8].AppendTransitions(
-		parser.NewRuleTransition(states[E__Start], states[Model__Basic_9], nil).WithCall(&parser.RuleCallInfo{Property: "item", Type: "Recovery"}),
+		parser.NewRuleTransition(states[E__Start], states[Model__Basic_9], nil, &parser.RuleCallInfo{Property: "item", Type: "Recovery"}),
 	)
 	states[Model__Basic_9].AppendTransitions(
 		parser.NewEpsilonTransition(states[Model__BlockEnd]),
 	)
 	states[Model__Basic_10].AppendTransitions(
-		parser.NewRuleTransition(states[F__Start], states[Model__Basic_11], nil).WithCall(&parser.RuleCallInfo{Property: "item", Type: "Item"}),
+		parser.NewRuleTransition(states[F__Start], states[Model__Basic_11], nil, &parser.RuleCallInfo{Property: "item", Type: "Item"}),
 	)
 	states[Model__Basic_11].AppendTransitions(
 		parser.NewEpsilonTransition(states[Model__BlockEnd]),
 	)
 	states[Model__Basic_12].AppendTransitions(
-		parser.NewRuleTransition(states[G__Start], states[Model__Basic_13], nil).WithCall(&parser.RuleCallInfo{Property: "item", Type: "Item"}),
+		parser.NewRuleTransition(states[G__Start], states[Model__Basic_13], nil, &parser.RuleCallInfo{Property: "item", Type: "Item"}),
 	)
 	states[Model__Basic_13].AppendTransitions(
 		parser.NewEpsilonTransition(states[Model__BlockEnd]),
 	)
 	states[Model__Basic_14].AppendTransitions(
-		parser.NewRuleTransition(states[H__Start], states[Model__Basic_15], nil).WithCall(&parser.RuleCallInfo{Property: "item", Type: "Item"}),
+		parser.NewRuleTransition(states[H__Start], states[Model__Basic_15], nil, &parser.RuleCallInfo{Property: "item", Type: "Item"}),
 	)
 	states[Model__Basic_15].AppendTransitions(
 		parser.NewEpsilonTransition(states[Model__BlockEnd]),

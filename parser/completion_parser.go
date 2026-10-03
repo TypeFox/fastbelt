@@ -56,11 +56,6 @@ type LanguageCompletionAdapter interface {
 	// type is not assignable to the property. Grammars without
 	// tree-rewrite actions emit a body that always returns nil.
 	ApplyAction(actionType, property string, value core.AstNode) core.AstNode
-}
-
-// CurrentAssignments is an optional extension of [LanguageCompletionAdapter].
-// The code generator emits it alongside the adapter.
-type CurrentAssignments interface {
 	// AssignsCurrent reports whether the child at the given field and index
 	// of the container was added by a tree-rewriting action or as the operand
 	// of an infix rule. Such a child is created by the same rule call as the
@@ -361,19 +356,14 @@ func (r *CompletionParseResult) SimulateAt(atn *RuntimeATN, cursor int) (live []
 		if s.ATNStateIdx < 0 || s.ATNStateIdx >= len(atn.States) {
 			return nil, false
 		}
-		seed := simPath{stateIdx: s.ATNStateIdx, consumedAt: -1}
-		if atn.hasRuleCallInfo {
-			// Continue with the rule calls of the parser, so that the
-			// simulator can leave the rule that the snapshot was taken in
-			seed.stack = s.FollowStates
-			seed.hints = make([]*CompletionHint, len(s.FollowStates))
-			for i, followIdx := range s.FollowStates {
-				if rt := atn.ruleTransitionAt(followIdx); rt != nil {
-					seed.hints[i] = rt.CompletionHint
-				}
+		// Continue with the rule calls of the parser, so that the simulator
+		// can leave the rule that the snapshot was taken in
+		seed := simPath{stateIdx: s.ATNStateIdx, stack: s.FollowStates, fresh: s.Fresh, left: s.Left, consumedAt: -1}
+		seed.hints = make([]*CompletionHint, len(s.FollowStates))
+		for i, followIdx := range s.FollowStates {
+			if rt := atn.ruleTransitionAt(followIdx); rt != nil {
+				seed.hints[i] = rt.CompletionHint
 			}
-			seed.fresh = s.Fresh
-			seed.left = s.Left
 		}
 		l := atn.simulateFrom(seed, r.Tokens[s.TokenIdx:cursor], DefaultSimConfig)
 		if len(l) == 0 {

@@ -216,7 +216,7 @@ func TestSimulator_RuleCallWithoutFollowState(t *testing.T) {
 	innerMid.Transitions = []RuntimeTransition{&RuntimeEpsilonTransition{Target: innerStop}}
 	outerStart := &RuntimeATNState{StateNumber: 0, Type: ATNBasic, Decision: -1, EpsilonOnlyTransitions: true}
 	outerStart.Transitions = []RuntimeTransition{
-		NewRuleTransition(innerStart, nil, nil).WithCall(&RuleCallInfo{Property: "event"}),
+		NewRuleTransition(innerStart, nil, nil, &RuleCallInfo{Property: "event"}),
 	}
 	atn := NewRuntimeATN([]*RuntimeATNState{outerStart, innerStart, innerMid, innerStop}, nil, nil)
 

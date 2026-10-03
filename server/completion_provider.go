@@ -155,7 +155,7 @@ func (s *DefaultCompletionProvider) completionsForContext(
 	info := atn.NextCompletionsFromSet(live)
 	// The rule calls of a hint are relative to the token in front of the cursor
 	var lastToken *core.Token
-	if cc.PrefixLen > 0 && atn.HasRuleCallInfo() {
+	if cc.PrefixLen > 0 {
 		lastToken = &doc.Tokens[cc.PrefixLen-1]
 	}
 
@@ -479,9 +479,9 @@ func buildSyntheticOwnerChain(adapter parser.LanguageCompletionAdapter, doc *cor
 // that the main parser would give to it. Scope providers find the same
 // symbols as for a node of the main parser then.
 //
-// The lastToken is nil if there is no such token or if the rule calls are
-// unknown. The owner is derived from the rule stack of the completion parser
-// then, and is not connected to the AST.
+// The lastToken is nil if there is no such token. The owner is derived from
+// the rule stack of the completion parser then, and is not connected to the
+// AST.
 //
 // Returns nil if the adapter doesn't know one of the rule keys; the
 // completion request then yields no candidates for this hint rather than
@@ -526,14 +526,13 @@ func baseOf(adapter parser.LanguageCompletionAdapter, hc parser.HintCompletion, 
 // rule call. The main parser also creates them for the input that follows
 // the cursor. Returns nil if that node is not assigned like the rule call.
 func containerOfCall(adapter parser.LanguageCompletionAdapter, node core.AstNode, call *parser.RuleCallInfo) core.AstNode {
-	assignments, _ := adapter.(parser.CurrentAssignments)
 	for {
 		container := node.Container()
 		if container == nil {
 			return nil
 		}
 		field, index := node.ContainmentData()
-		if assignments == nil || !assignments.AssignsCurrent(container, field, index) {
+		if !adapter.AssignsCurrent(container, field, index) {
 			if field == unique.Make(call.Property) {
 				return container
 			}
@@ -771,12 +770,7 @@ func applyPrecedingAction(adapter parser.LanguageCompletionAdapter, owner core.A
 	if wrapper == nil {
 		return owner
 	}
-	wrapper.SetDocument(owner.Document())
-	if container := owner.Container(); container != nil {
-		// The wrapper takes the place of the owner
-		field, index := owner.ContainmentData()
-		wrapper.SetContainer(container, field, index)
-	}
+	takePlace(wrapper, owner)
 	return wrapper
 }
 

@@ -652,38 +652,6 @@ func completeOwners(t *testing.T, src string) (*test.Doc, []core.AstNode) {
 	return doc, filter.owners
 }
 
-// ownerContainment describes where the owner of a completed reference is
-// expected in the AST.
-type ownerContainment struct {
-	src string
-	// Text of the expected container, with single spaces
-	container string
-	field     string
-	index     int
-}
-
-func assertOwnerContainment(t *testing.T, cases []ownerContainment) {
-	t.Helper()
-	for _, c := range cases {
-		t.Run(c.src, func(t *testing.T) {
-			_, owners := completeOwners(t, "declare foo declare bar declare baz "+c.src)
-			for _, owner := range owners {
-				container := owner.Container()
-				if container == nil {
-					t.Fatalf("expected the owner to have a container")
-				}
-				if text := strings.Join(strings.Fields(container.Text()), " "); text != c.container {
-					t.Errorf("expected the container %q; got %q of type %T", c.container, text, container)
-				}
-				field, index := owner.ContainmentData()
-				if field.Value() != c.field || index != c.index {
-					t.Errorf("expected containment %q@%d; got %q@%d", c.field, c.index, field.Value(), index)
-				}
-			}
-		})
-	}
-}
-
 // describeOwner returns the types and the containment data of the owner and
 // of its containers below the root, starting with the owner. The nodes that
 // are not part of the document are marked as new.
@@ -730,89 +698,71 @@ func assertOwners(t *testing.T, cases map[string][]string) {
 // The synthetic owner must know the property and the index that it would
 // have in the enclosing P node, as scope providers may depend on them.
 func TestCompletion_AfterP_SyntheticOwnerContainment(t *testing.T) {
-	cases := []struct {
-		src   string
-		field string
-		index int
-	}{
-		{"p { declare local use <|cursor>", "item", -1},
-		{"p { declare local use <|cursor>local }", "item", -1},
-		{"p { declare local use lo<|cursor>", "item", -1},
-		{"p { declare local use local and <|cursor>", "others", 0},
-		{"p { declare local use local and <|cursor>local and local }", "others", 0},
-		{"p { declare local use local and local and <|cursor>", "others", 1},
-		{"p { declare local use local and local and <|cursor>local }", "others", 1},
-		{"p { declare local use local and local and lo<|cursor>", "others", 1},
-	}
-	for _, c := range cases {
-		t.Run(c.src, func(t *testing.T) {
-			doc, owners := completeOwners(t, c.src)
-			for _, owner := range owners {
-				if owner.Container() != test.MustFindNode[completion.P](doc) {
-					t.Errorf("expected the container to be the P of the document; got %T", owner.Container())
-				}
-				field, index := owner.ContainmentData()
-				if field.Value() != c.field || index != c.index {
-					t.Errorf("expected containment %q@%d; got %q@%d", c.field, c.index, field.Value(), index)
-				}
-			}
-		})
-	}
+	assertOwners(t, map[string][]string{
+		"p { declare local use <|cursor>":                            {"new PItem at item, P at objects@0"},
+		"p { declare local use <|cursor>local }":                     {"new PItem at item, P at objects@0"},
+		"p { declare local use lo<|cursor>":                          {"new PItem at item, P at objects@0"},
+		"p { declare local use local and <|cursor>":                  {"new PItem at others@0, P at objects@0"},
+		"p { declare local use local and <|cursor>local and local }": {"new PItem at others@0, P at objects@0"},
+		"p { declare local use local and local and <|cursor>":        {"new PItem at others@1, P at objects@0"},
+		"p { declare local use local and local and <|cursor>local }": {"new PItem at others@1, P at objects@0"},
+		"p { declare local use local and local and lo<|cursor>":      {"new PItem at others@1, P at objects@0"},
+	})
 }
 
 // The items of Q have no separator, so the parser does not enter the loop
 // for an item that is missing. The owner is only known from the rule calls
 // that lead to the cross-reference.
 func TestCompletion_AfterQ_SyntheticOwnerContainment(t *testing.T) {
-	assertOwnerContainment(t, []ownerContainment{
-		{"q { <|cursor>", "q {", "items", 0},
-		{"q { <|cursor> }", "q { }", "items", 0},
-		{"q { declare local <|cursor>", "q { declare local", "items", 0},
-		{"q { foo <|cursor>", "q { foo", "items", 1},
-		{"q { foo <|cursor>foo }", "q { foo foo }", "items", 1},
-		{"q { foo foo <|cursor>", "q { foo foo", "items", 2},
+	assertOwners(t, map[string][]string{
+		"q { <|cursor>":               {"new PItem at items@0, Q at objects@0"},
+		"q { <|cursor> }":             {"new PItem at items@0, Q at objects@0"},
+		"q { declare local <|cursor>": {"new PItem at items@0, Q at objects@0"},
+		"q { foo <|cursor>":           {"new PItem at items@1, Q at objects@0"},
+		"q { foo <|cursor>foo }":      {"new PItem at items@1, Q at objects@0"},
+		"q { foo foo <|cursor>":       {"new PItem at items@2, Q at objects@0"},
 		// The cursor is behind the nested Q, so the owner belongs to the outer one
-		{"q { foo q { foo foo } <|cursor>", "q { foo q { foo foo }", "items", 1},
-		{"q { foo q { foo foo } <|cursor> }", "q { foo q { foo foo } }", "items", 1},
-		{"q { q { q { } <|cursor> } }", "q { q { } }", "items", 0},
+		"q { foo q { foo foo } <|cursor>":   {"new PItem at items@1, Q at objects@0"},
+		"q { foo q { foo foo } <|cursor> }": {"new PItem at items@1, Q at objects@0"},
+		"q { q { q { } <|cursor> } }":       {"new PItem at items@0, Q at nested@0, Q at objects@0"},
 		// The cursor is inside of the nested Q
-		{"q { foo q { foo foo <|cursor>", "q { foo foo", "items", 2},
-		{"q { foo q { foo foo <|cursor> } }", "q { foo foo }", "items", 2},
+		"q { foo q { foo foo <|cursor>":     {"new PItem at items@2, Q at nested@0, Q at objects@0"},
+		"q { foo q { foo foo <|cursor> } }": {"new PItem at items@2, Q at nested@0, Q at objects@0"},
 	})
 }
 
 // A tree-rewriting action wraps the items of R, also for the input that
 // follows the cursor. The owner of a new item still belongs to the R.
 func TestCompletion_AfterR_SyntheticOwnerContainment(t *testing.T) {
-	assertOwnerContainment(t, []ownerContainment{
-		{"r { <|cursor>", "r {", "items", 0},
-		{"r { foo and bar <|cursor>", "r { foo and bar", "items", 1},
-		{"r { foo and bar <|cursor> }", "r { foo and bar }", "items", 1},
+	assertOwners(t, map[string][]string{
+		"r { <|cursor>":               {"new RItem at items@0, R at objects@0"},
+		"r { foo and bar <|cursor>":   {"new RItem at items@1, R at objects@0"},
+		"r { foo and bar <|cursor> }": {"new RItem at items@1, R at objects@0"},
 		// The items in front of the cursor are wrapped because of the input that follows it
-		{"r { foo <|cursor> and bar }", "r { foo and bar }", "items", 1},
-		{"r { foo and bar <|cursor> and baz }", "r { foo and bar and baz }", "items", 1},
-		{"r { foo foo and bar <|cursor> and baz }", "r { foo foo and bar and baz }", "items", 2},
+		"r { foo <|cursor> and bar }":             {"new RItem at items@1, R at objects@0"},
+		"r { foo and bar <|cursor> and baz }":     {"new RItem at items@1, R at objects@0"},
+		"r { foo foo and bar <|cursor> and baz }": {"new RItem at items@2, R at objects@0"},
 	})
 }
 
 // The operands of the infix rule SBinary are contained in the node of their
 // operator, which depends on the precedence of the operators.
 func TestCompletion_AfterS_SyntheticOwnerContainment(t *testing.T) {
-	assertOwnerContainment(t, []ownerContainment{
-		{"s { <|cursor>", "s {", "items", 0},
+	assertOwners(t, map[string][]string{
+		"s { <|cursor>": {"new SRef at items@0, S at objects@0"},
 		// The owner is the right operand of the operator in front of the cursor
-		{"s { foo plus <|cursor>", "foo plus", "right", -1},
-		{"s { foo plus bar times <|cursor>", "bar times", "right", -1},
-		{"s { foo times bar plus <|cursor>", "foo times bar plus", "right", -1},
-		{"s { foo plus <|cursor>bar times baz }", "foo plus bar times baz", "right", -1},
-		{"s { foo times <|cursor>bar plus baz }", "foo times bar", "right", -1},
+		"s { foo plus <|cursor>":                {"new SRef at right, SBinary at items@0, S at objects@0"},
+		"s { foo plus bar times <|cursor>":      {"new SRef at right, SBinary at right, SBinary at items@0, S at objects@0"},
+		"s { foo times bar plus <|cursor>":      {"new SRef at right, SBinary at items@0, S at objects@0"},
+		"s { foo plus <|cursor>bar times baz }": {"new SRef at right, SBinary at items@0, S at objects@0"},
+		"s { foo times <|cursor>bar plus baz }": {"new SRef at right, SBinary at left, SBinary at items@0, S at objects@0"},
 		// The owner is a new item behind the operands
-		{"s { foo plus bar times baz <|cursor>", "s { foo plus bar times baz", "items", 1},
-		{"s { foo times bar plus baz <|cursor> }", "s { foo times bar plus baz }", "items", 1},
+		"s { foo plus bar times baz <|cursor>":   {"new SRef at items@1, S at objects@0"},
+		"s { foo times bar plus baz <|cursor> }": {"new SRef at items@1, S at objects@0"},
 		// The operands in front of the cursor belong to operators that follow it
-		{"s { foo <|cursor> plus bar }", "s { foo plus bar }", "items", 1},
-		{"s { foo plus bar <|cursor> times baz }", "s { foo plus bar times baz }", "items", 1},
-		{"s { foo foo times bar <|cursor> plus baz }", "s { foo foo times bar plus baz }", "items", 2},
+		"s { foo <|cursor> plus bar }":               {"new SRef at items@1, S at objects@0"},
+		"s { foo plus bar <|cursor> times baz }":     {"new SRef at items@1, S at objects@0"},
+		"s { foo foo times bar <|cursor> plus baz }": {"new SRef at items@2, S at objects@0"},
 	})
 }
 
@@ -907,13 +857,7 @@ func TestCompletion_AfterQ_LongInput(t *testing.T) {
 	if hasLabel(items, "inner") {
 		t.Errorf("did not expect 'inner' as PItem.Ref candidate; got %v", itemLabels(items))
 	}
-	_, owners := completeOwners(t, src)
-	for _, owner := range owners {
-		field, index := owner.ContainmentData()
-		if _, ok := owner.Container().(completion.Q); !ok || field.Value() != "items" || index != 0 {
-			t.Errorf("expected containment \"items\"@0 in a Q; got %q@%d in %T", field.Value(), index, owner.Container())
-		}
-	}
+	assertOwners(t, map[string][]string{src: {"new PItem at items@0, Q at objects@1"}})
 }
 
 // The local symbols of a nested Q are not visible behind it.

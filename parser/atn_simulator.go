@@ -47,9 +47,8 @@ var DefaultSimConfig = SimConfig{
 // implemented as `activeHintAfter(p.stack, p.hints)` below.
 //
 // consumedAt, fresh and left describe what happened around the last consumed
-// token. They are only tracked if the ATN has rule call information, and are
-// part of the identity then, because they determine the node that a
-// cross-reference at the cursor belongs to:
+// token. They are part of the identity, because they determine the node that
+// a cross-reference at the cursor belongs to:
 //   - consumedAt is the index of the state whose atom transition consumed
 //     the last token, or -1 if the path did not consume a token.
 //   - The topmost fresh frames of the stack were pushed since the last token.
@@ -210,8 +209,7 @@ type TokenCompletion struct {
 // the hint from a surrounding rule call).
 //
 // ConsumedAt, Left and Calls locate the owner of the cross-reference relative
-// to the node that owns the token in front of the cursor. They are only
-// meaningful if [RuntimeATN.HasRuleCallInfo] is true.
+// to the node that owns the token in front of the cursor.
 //   - ConsumedAt is the index of the ATN state whose atom transition
 //     consumed that token, or -1 if it was consumed by the completion parser
 //     and not by the simulator. It differs from the [fastbelt.Token.Kind]
@@ -391,8 +389,6 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 		out = append(out, p)
 		stack = append(stack, p)
 	}
-	// Without rule call information, all paths at the same position are equal
-	track := atn.hasRuleCallInfo
 	for len(stack) > 0 {
 		cur := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
@@ -413,7 +409,7 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 			np := simPath{stateIdx: top, stack: nextStack, hints: nextHints, consumedAt: cur.consumedAt, fresh: cur.fresh, left: cur.left}
 			if np.fresh > 0 {
 				np.fresh--
-			} else if call := atn.ruleCallAt(top); track && call != nil && call.Property != "" && !call.InfixOperand {
+			} else if call := atn.ruleCallAt(top); call != nil && call.Property != "" && !call.InfixOperand {
 				np.left = append(slices.Clip(cur.left), top)
 			}
 			if seen.add(np) {
@@ -451,10 +447,7 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 				newHints := make([]*CompletionHint, len(cur.hints)+1)
 				copy(newHints, cur.hints)
 				newHints[len(cur.hints)] = tt.CompletionHint
-				np := simPath{stateIdx: targetIdx, stack: newStack, hints: newHints, consumedAt: cur.consumedAt, fresh: cur.fresh, left: cur.left}
-				if track {
-					np.fresh++
-				}
+				np := simPath{stateIdx: targetIdx, stack: newStack, hints: newHints, consumedAt: cur.consumedAt, fresh: cur.fresh + 1, left: cur.left}
 				if !seen.add(np) {
 					continue
 				}
@@ -494,10 +487,7 @@ func (atn *RuntimeATN) advance(live []simPath, tokenType *core.TokenType, cfg Si
 			if targetIdx < 0 {
 				continue
 			}
-			np := simPath{stateIdx: targetIdx, stack: p.stack, hints: p.hints, consumedAt: -1}
-			if atn.hasRuleCallInfo {
-				np.consumedAt = p.stateIdx
-			}
+			np := simPath{stateIdx: targetIdx, stack: p.stack, hints: p.hints, consumedAt: p.stateIdx}
 			if !seen.add(np) {
 				continue
 			}
