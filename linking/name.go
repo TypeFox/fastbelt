@@ -26,12 +26,12 @@ func Name(node core.AstNode) core.StringUnit {
 
 	if namedNode, ok := node.(core.NamedTokenNode); ok {
 		// Unwrap the pointer to prevent nil issues
-		if t := namedNode.NameToken(); t != nil {
+		if t := namedNode.NameToken(); t != nil && t.Image != "" {
 			return t
 		}
 	} else if namedStringNode, ok := node.(core.NamedCompositeNode); ok {
 		// Unwrap the pointer to prevent nil issues
-		if cn := namedStringNode.NameNode(); cn != nil {
+		if cn := namedStringNode.NameNode(); cn != nil && cn.String() != "" {
 			return cn
 		}
 	}

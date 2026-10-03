@@ -171,9 +171,6 @@ func (s *DefaultCompletionProvider) completionsForContext(
 
 	// Token pass: contributor decides per (TokenType, atnState) what to emit.
 	for _, tc := range info.Tokens {
-		if _, hidden := info.HintedOnlyIDs[tc.TokenType.Id]; hidden {
-			continue
-		}
 		if !matcher.Match(cc.ReplaceText, tokenLabel(tc.TokenType)) {
 			continue
 		}
@@ -684,8 +681,10 @@ func listIndexAfter(container core.AstNode, field unique.Handle[string], token *
 	return index
 }
 
-// isEmptyNode reports whether the node has neither tokens nor child nodes,
-// like the nodes that the parser creates for input that is missing.
+// isEmptyNode reports whether the node has neither tokens, child nodes nor
+// cross-reference text, like the nodes that the parser creates for input
+// that is missing. The tokens of a composite cross-reference belong to its
+// unit, not to the node.
 func isEmptyNode(node core.AstNode) bool {
 	if len(node.Tokens()) > 0 {
 		return false
@@ -693,7 +692,13 @@ func isEmptyNode(node core.AstNode) bool {
 	for range core.ChildNodes(node) {
 		return false
 	}
-	return true
+	empty := true
+	node.ForEachReference(func(ref core.UntypedReference, _ unique.Handle[string], _ int) {
+		if unit := ref.Unit(); unit != nil && unit.String() != "" {
+			empty = false
+		}
+	})
+	return empty
 }
 
 // buildSyntheticOwnerChainFor extends buildSyntheticOwnerChain with the

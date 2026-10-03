@@ -184,7 +184,7 @@ func TestCompletion_AfterDCommonThen(t *testing.T) {
 }
 
 // Cross-reference entry with empty scope - Root keywords must not leak
-// (the ID atom inherits the RefFQN.Ref hint and HintedOnlyIDs suppresses it).
+// (the ID atom inherits the RefFQN.Ref hint, so it is not offered as a token).
 func TestCompletion_AfterRefFQN(t *testing.T) {
 	items := completionAt(t, "fqn <|cursor>")
 	for _, leaked := range []string{"declare", "seq", "alt", "prefix", "call", "fqn", "list", "ref"} {
@@ -1129,4 +1129,301 @@ func TestCompletion_ContributorSurfacesTerminalTokens(t *testing.T) {
 	if !hasLabel(items, "ID") {
 		t.Errorf("expected 'ID' terminal token; got %v", itemLabels(items))
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Cursor placement relative to tokens.
+// ---------------------------------------------------------------------------
+
+// Cursor glued to the end of a complete keyword: both the REPLACE
+// interpretation of the keyword itself and the INSERT interpretation of its
+// follow-set must surface, nothing else.
+func TestCompletion_CursorAtKeywordEnd(t *testing.T) {
+	items := completionAt(t, "seq<|cursor>")
+	assert.ElementsMatch(t, []string{"seq", "first"}, itemLabels(items))
+	if seq := itemWithLabel(items, "seq"); seq != nil && seq.TextEdit == nil {
+		t.Errorf("expected 'seq' to be REPLACE-shaped")
+	}
+	if first := itemWithLabel(items, "first"); first != nil && first.TextEdit != nil {
+		t.Errorf("expected 'first' to be INSERT-shaped; got %+v", first.TextEdit)
+	}
+}
+
+// Cursor at the very start of the document in front of existing input: the
+// entry keywords surface, the follow-set of the existing keyword does not.
+func TestCompletion_CursorBeforeFirstToken(t *testing.T) {
+	items := completionAt(t, "<|cursor>seq first")
+	if !hasLabel(items, "declare") || !hasLabel(items, "seq") {
+		t.Errorf("expected Root keywords in front of 'seq'; got %v", itemLabels(items))
+	}
+	if hasLabel(items, "first") {
+		t.Errorf("did not expect 'first' in front of 'seq'; got %v", itemLabels(items))
+	}
+}
+
+// CRLF line endings: the REPLACE range must be computed on the second line.
+func TestCompletion_AfterRefFQN_CRLF(t *testing.T) {
+	items := completionAt(t, "declare foo.bar\r\nfqn foo.<|cursor>")
+	item := itemWithLabel(items, "foo.bar")
+	if item == nil || item.TextEdit == nil {
+		t.Fatalf("expected REPLACE-shaped 'foo.bar'; got %v", itemLabels(items))
+	}
+	rng := item.TextEdit.TextEdit.Range
+	if rng.Start.Line != 1 || rng.End.Line != 1 || rng.Start.Character != 4 || rng.End.Character != 8 {
+		t.Errorf("expected range {1:4,1:8}; got %+v", rng)
+	}
+}
+
+// Partial second FQN segment: the whole composite is replaced.
+func TestCompletion_AfterRefFQN_FQNPartialSecondSegment(t *testing.T) {
+	items := completionAt(t, "declare foo.bar fqn foo.ba<|cursor>")
+	item := itemWithLabel(items, "foo.bar")
+	if item == nil || item.TextEdit == nil {
+		t.Fatalf("expected REPLACE-shaped 'foo.bar'; got %v", itemLabels(items))
+	}
+	rng := item.TextEdit.TextEdit.Range
+	if rng.Start.Character != 20 || rng.End.Character != 26 {
+		t.Errorf("expected range {20,26}; got %+v", rng)
+	}
+}
+
+// Garbage after the cursor must not affect the completions at the cursor.
+func TestCompletion_AfterRefFQN_WithSyntaxErrorAfterCursor(t *testing.T) {
+	items := completionAt(t, "declare foo fqn <|cursor> }}}")
+	assert.ElementsMatch(t, []string{"foo"}, itemLabels(items))
+}
+
+// A stray token directly in front of the cursor: the parser cannot resync
+// on a later token, but the user still expects the completions of the
+// position after the last valid input.
+func TestCompletion_SyntaxErrorDirectlyBeforeCursor(t *testing.T) {
+	for _, src := range []string{"seq first } <|cursor>", "alt first second <|cursor>"} {
+		t.Run(src, func(t *testing.T) {
+			items := completionAt(t, src)
+			if !hasLabel(items, "declare") {
+				t.Errorf("expected Root keywords after a stray token; got %v", itemLabels(items))
+			}
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Declare bodies.
+// ---------------------------------------------------------------------------
+
+// Inside the braces of a Declare, only nested declares and the closing
+// brace are valid; nothing from the Root loop leaks in.
+func TestCompletion_DeclareBody(t *testing.T) {
+	items := completionAt(t, "declare foo { <|cursor>")
+	assert.ElementsMatch(t, []string{"declare", "}"}, itemLabels(items))
+
+	items = completionAt(t, "declare global loop { declare foo { <|cursor>")
+	assert.ElementsMatch(t, []string{"declare", "}"}, itemLabels(items))
+}
+
+// After a Declare name, the FQN continuation, the body opener and the Root
+// loop are all valid.
+func TestCompletion_AfterDeclareName(t *testing.T) {
+	items := completionAt(t, "declare foo <|cursor>")
+	for _, want := range []string{".", "{", "declare", "seq"} {
+		if !hasLabel(items, want) {
+			t.Errorf("expected %q after a declare name; got %v", want, itemLabels(items))
+		}
+	}
+}
+
+// A Declare whose name is missing must not surface as an empty-labelled
+// candidate.
+func TestCompletion_NamelessDeclareNotProposed(t *testing.T) {
+	items := completionAt(t, "declare { } declare foo ref <|cursor>")
+	assert.ElementsMatch(t, []string{"foo"}, itemLabels(items))
+}
+
+// ---------------------------------------------------------------------------
+// Composite cross-references.
+// ---------------------------------------------------------------------------
+
+// A complete composite reference followed by whitespace is finished: the
+// cross-reference candidates must not be proposed again as an INSERT (which
+// would produce "fqn foo foo"). The plain-ID RefID rule gets this right.
+func TestCompletion_AfterRefFQN_CompleteRefNotProposedAgain(t *testing.T) {
+	items := completionAt(t, "declare foo ref foo <|cursor>")
+	if hasLabel(items, "foo") {
+		t.Errorf("did not expect 'foo' after a complete RefID; got %v", itemLabels(items))
+	}
+	items = completionAt(t, "declare foo fqn foo <|cursor>")
+	if hasLabel(items, "foo") {
+		t.Errorf("did not expect 'foo' after a complete RefFQN; got %v", itemLabels(items))
+	}
+}
+
+// After a trailing dot, only candidates that extend the typed prefix are
+// valid. An INSERT-shaped unrelated name would produce "foo.baz".
+func TestCompletion_AfterRefFQN_FQNTrailingDot_NoUnrelatedCandidates(t *testing.T) {
+	items := completionAt(t, "declare foo.bar declare baz fqn foo.<|cursor>")
+	if !hasLabel(items, "foo.bar") {
+		t.Errorf("expected 'foo.bar'; got %v", itemLabels(items))
+	}
+	if hasLabel(items, "baz") {
+		t.Errorf("did not expect 'baz' after 'foo.'; got %v", itemLabels(items))
+	}
+}
+
+func (f *ownerRecordingFilter) FilterRefListItemRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+// The items of RefList consist of a composite reference only, so the nodes
+// have no tokens of their own. They must still count when computing the
+// index of a new item.
+func TestCompletion_AfterRefList_SyntheticOwnerContainment(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"list <|cursor>":            {"new RefListItem at items@0, RefList at objects@0"},
+		"list foo <|cursor>":        {"new RefListItem at items@1, RefList at objects@0"},
+		"list foo.bar <|cursor>":    {"new RefListItem at items@1, RefList at objects@0"},
+		"list foo foo <|cursor>":    {"new RefListItem at items@2, RefList at objects@0"},
+		"list foo <|cursor>foo":     {"new RefListItem at items@1, RefList at objects@0"},
+		"list foo.<|cursor>":        {"new RefListItem at items@0, RefList at objects@0"},
+		"list foo foo.ba<|cursor>r": {"new RefListItem at items@1, RefList at objects@0"},
+	})
+}
+
+// ---------------------------------------------------------------------------
+// Member calls.
+// ---------------------------------------------------------------------------
+
+const memberDecls = "declare alpha { declare beta } "
+
+// Partial member segment: the candidate replaces exactly the typed segment,
+// not the whole chain.
+func TestCompletion_AfterMember_PartialSegment(t *testing.T) {
+	items := completionAt(t, memberDecls+"member alpha.be<|cursor>")
+	item := itemWithLabel(items, "beta")
+	if item == nil || item.TextEdit == nil {
+		t.Fatalf("expected REPLACE-shaped 'beta'; got %v", itemLabels(items))
+	}
+	rng := item.TextEdit.TextEdit.Range
+	start := len(memberDecls) + len("member alpha.")
+	if int(rng.Start.Character) != start || int(rng.End.Character) != start+2 {
+		t.Errorf("expected range {%d,%d}; got %+v", start, start+2, rng)
+	}
+	if hasLabel(items, "alpha") {
+		t.Errorf("did not expect 'alpha' from the previous member's scope; got %v", itemLabels(items))
+	}
+}
+
+// The previous member does not resolve: the scope provider returns the
+// empty scope, so no candidates surface.
+func TestCompletion_AfterMember_UnresolvedPrevious(t *testing.T) {
+	items := completionAt(t, memberDecls+"member nope.<|cursor>")
+	for _, unwanted := range []string{"alpha", "beta"} {
+		if hasLabel(items, unwanted) {
+			t.Errorf("did not expect %q behind an unresolved member; got %v", unwanted, itemLabels(items))
+		}
+	}
+}
+
+// The previous member resolves to a leaf without children.
+func TestCompletion_AfterMember_LeafWithoutChildren(t *testing.T) {
+	items := completionAt(t, memberDecls+"member alpha.beta.<|cursor>")
+	for _, unwanted := range []string{"alpha", "beta"} {
+		if hasLabel(items, unwanted) {
+			t.Errorf("did not expect %q behind a leaf member; got %v", unwanted, itemLabels(items))
+		}
+	}
+}
+
+// Cursor in front of an existing chain: only the first segment is completed.
+func TestCompletion_AfterMember_CursorBeforeChain(t *testing.T) {
+	items := completionAt(t, memberDecls+"member <|cursor>alpha.beta")
+	assert.ElementsMatch(t, []string{"alpha"}, itemLabels(items))
+}
+
+// Partial segment without dots: the scope is still the previous member's.
+func TestCompletion_AfterMemberNoDot_PartialSegment(t *testing.T) {
+	items := completionAt(t, memberDecls+"nodot alpha be<|cursor>")
+	if item := itemWithLabel(items, "beta"); item == nil || item.TextEdit == nil {
+		t.Errorf("expected REPLACE-shaped 'beta'; got %v", itemLabels(items))
+	}
+	if hasLabel(items, "alpha") {
+		t.Errorf("did not expect 'alpha' from the previous member's scope; got %v", itemLabels(items))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Keyword follow-sets of the container rules.
+// ---------------------------------------------------------------------------
+
+func TestCompletion_ContainerKeywords(t *testing.T) {
+	cases := map[string][]string{
+		"declare foo scope { <|cursor>":                          {"declare", "use"},
+		"declare foo scope { declare local use local <|cursor>":  {"and", "}"},
+		"declare foo chain { <|cursor>":                          {"}", "foo"},
+		"declare foo chain { foo <|cursor>":                      {"and", "}", "foo"},
+		"declare foo chain { foo and <|cursor>":                  {"foo"},
+		"declare foo infix { foo plus <|cursor>":                 {"foo"},
+		"declare foo wrap { <|cursor>":                           {"{", "foo"},
+		"declare foo wrap { foo <|cursor>":                       {"{", "}", "foo"},
+		"declare foo dedup foo <|cursor>":                        {"x", "y"},
+		"declare foo ambig <|cursor>":                            {"foo"},
+		"declare foo ambig foo foo <|cursor>":                    {"first", "second"},
+		"opt then <|cursor>":                                     {"end"},
+		"declare foo retype { foo <|cursor>":                     {"}", "foo"},
+		"declare global nest { declare outer nest { } <|cursor>": {"}", "nest", "declare", "global", "outer"},
+	}
+	for src, expected := range cases {
+		t.Run(src, func(t *testing.T) {
+			assert.ElementsMatch(t, expected, itemLabels(completionAt(t, src)))
+		})
+	}
+}
+
+// The operators of an infix rule are compiled into a token group, so the
+// default contributor does not propose them. The simulator must still
+// reach the operator position so a contributor can opt in.
+func TestCompletion_AfterInfix_OperatorTokenGroup(t *testing.T) {
+	items := completionAt(t, "declare foo infix { foo <|cursor>")
+	assert.ElementsMatch(t, []string{"}", "foo"}, itemLabels(items))
+
+	contrib := &recordingContributor{
+		onToken: func(tt *core.TokenType, _ int, _ server.ContributorContext, accept server.CompletionAcceptor) {
+			accept(lsp.CompletionItem{})
+		},
+	}
+	items = completionAtWith(t, "declare foo infix { foo <|cursor>", contrib)
+	if !hasLabel(items, "BinaryOperator") {
+		t.Errorf("expected the operator token group after an operand; got %v", itemLabels(items))
+	}
+	items = completionAtWith(t, "declare foo shadow foo <|cursor>", contrib)
+	if !hasLabel(items, "BinaryOperator") {
+		t.Errorf("expected the operator token group after the first operand of Shadow; got %v", itemLabels(items))
+	}
+}
+
+// Partial keyword that is also a prefix of a declared name: both the
+// keyword and the reference are REPLACE-shaped, non-matching names stay out.
+func TestCompletion_AfterRefOrKeyword_Partial(t *testing.T) {
+	items := completionAt(t, "declare self2 declare foo choice se<|cursor>")
+	for _, want := range []string{"self", "self2"} {
+		item := itemWithLabel(items, want)
+		if item == nil || item.TextEdit == nil {
+			t.Errorf("expected REPLACE-shaped %q; got %v", want, itemLabels(items))
+		}
+	}
+	if hasLabel(items, "foo") {
+		t.Errorf("did not expect non-matching 'foo'; got %v", itemLabels(items))
+	}
+}
+
+// The tree-rewriting action of ChainItem wraps the item in front of "and".
+// The main parser already created the wrapper (its Ref is the missing
+// input), so the owner is an existing node, consistently for the input that
+// ends at the cursor and for the input that continues behind it.
+func TestCompletion_AfterChain_OwnerAfterAction(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"chain { foo and <|cursor>":         {"ChainItem at items@0, Chain at objects@0"},
+		"chain { foo and <|cursor>foo }":    {"ChainItem at items@0, Chain at objects@0"},
+		"chain { foo and foo and <|cursor>": {"ChainItem at items@0, Chain at objects@0"},
+	})
 }
