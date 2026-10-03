@@ -179,8 +179,8 @@ func TestSimulator_RuleCallReturnsToFollow(t *testing.T) {
 }
 
 // TestSimulator_HintsSurface verifies that CompletionHints attached to atom
-// transitions are returned alongside the token bitset. Hints are deduplicated
-// by Field value.
+// transitions are returned in place of the token, whose candidates the hint
+// supplies. Hints are deduplicated by Field value.
 func TestSimulator_HintsSurface(t *testing.T) {
 	tID := createTokenType(1, "ID")
 	hint := &CompletionHint{Field: "Transition.Event"}
@@ -194,8 +194,8 @@ func TestSimulator_HintsSurface(t *testing.T) {
 
 	live := atn.Simulate(0, nil)
 	info := atn.NextCompletionsFromSet(live)
-	if !info.HasToken(tID.Id) {
-		t.Fatalf("expected ID token valid; got %v", info.Tokens)
+	if info.HasToken(tID.Id) {
+		t.Fatalf("expected the hinted ID token to be left to its hint; got %v", info.Tokens)
 	}
 	if len(info.Hints) != 1 || info.Hints[0].Hint.Field != "Transition.Event" {
 		t.Errorf("expected exactly one hint with Field='Transition.Event'; got %#v", info.Hints)
