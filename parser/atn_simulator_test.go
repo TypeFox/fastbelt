@@ -183,7 +183,7 @@ func TestSimulator_RuleCallReturnsToFollow(t *testing.T) {
 // supplies. Hints are deduplicated by Field value.
 func TestSimulator_HintsSurface(t *testing.T) {
 	tID := createTokenType(1, "ID")
-	hint := &CompletionHint{Field: "Transition.Event"}
+	hint := &CompletionHint{Owner: "Transition", Property: "Event"}
 
 	s0 := &RuntimeATNState{StateNumber: 0, Type: ATNBasic, Decision: -1}
 	s1 := &RuntimeATNState{StateNumber: 1, Type: ATNBasic, Decision: -1}
@@ -197,7 +197,7 @@ func TestSimulator_HintsSurface(t *testing.T) {
 	if info.HasToken(tID.Id) {
 		t.Fatalf("expected the hinted ID token to be left to its hint; got %v", info.Tokens)
 	}
-	if len(info.Hints) != 1 || info.Hints[0].Hint.Field != "Transition.Event" {
+	if len(info.Hints) != 1 || info.Hints[0].Hint.Key() != "Transition.Event" {
 		t.Errorf("expected exactly one hint with Field='Transition.Event'; got %#v", info.Hints)
 	}
 }
@@ -207,7 +207,7 @@ func TestSimulator_HintsSurface(t *testing.T) {
 // the rule, but reports the hints inside of it.
 func TestSimulator_RuleCallWithoutFollowState(t *testing.T) {
 	tID := createTokenType(1, "ID")
-	hint := &CompletionHint{Field: "Transition.Event"}
+	hint := &CompletionHint{Owner: "Transition", Property: "Event"}
 
 	innerStart := &RuntimeATNState{StateNumber: 1, Type: ATNRuleStart, Decision: -1, EpsilonOnlyTransitions: true}
 	innerMid := &RuntimeATNState{StateNumber: 2, Type: ATNBasic, Decision: -1}

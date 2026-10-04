@@ -106,8 +106,7 @@ func (s *DefaultCompletionProvider) HandleCompletionRequest(ctx context.Context,
 }
 
 // resolveContributor returns the contributor registered in the service
-// container if any, otherwise falls back to the one stored on the
-// provider (set by the constructor).
+// container if any, otherwise the default contributor.
 func (s *DefaultCompletionProvider) resolveContributor() CompletionContributor {
 	if c, err := service.Get[CompletionContributor](s.sc); err == nil && c != nil {
 		return c
@@ -162,7 +161,6 @@ func (s *DefaultCompletionProvider) completionsForContext(
 	contribCtx := ContributorContext{
 		Doc:          doc,
 		Cursor:       cursorOffset,
-		Node:         buildSyntheticOwnerChain(adapter, doc, result.RuleStack),
 		ReplaceRange: cc.ReplaceRange,
 		SortRank:     cc.SortRank,
 	}
@@ -181,28 +179,29 @@ func (s *DefaultCompletionProvider) completionsForContext(
 		contributor.CompletionForToken(ctx, tcCopy.TokenType, tcCopy.ATNStateIdx, contribCtx, accept)
 	}
 
-	// Cross-reference pass: dispatch per CompletionHint.Field; contributor
+	// Cross-reference pass: dispatch per hint on its owner; contributor
 	// decides per (SymbolDescription, hint, atnState) what to emit.
 	for _, hc := range info.Hints {
-		owner := buildOwner(adapter, doc, result.RuleStack, hc, lastToken, cursorOffset)
+		owner := buildOwner(adapter, doc, result.RuleStack, hc, lastToken)
 		if owner == nil {
 			continue
 		}
-		owner = applyPrecedingAction(adapter, owner, hc.Hint)
-		seq, ok := adapter.DispatchCompletion(ctx, hc.Hint.Field, owner)
+		seq, ok := adapter.DispatchCompletion(ctx, hc.Hint.Key(), owner)
 		if !ok {
 			continue
 		}
 		hcCopy := hc
+		refCtx := contribCtx
+		refCtx.Node = owner
 		for d := range seq {
 			dCopy := d
 			if !matcher.Match(cc.ReplaceText, dCopy.Name) {
 				continue
 			}
 			accept := func(item lsp.CompletionItem) {
-				items = append(items, EnrichReferenceCompletionItem(item, dCopy, contribCtx))
+				items = append(items, EnrichReferenceCompletionItem(item, dCopy, refCtx))
 			}
-			contributor.CompletionForReference(ctx, dCopy, hcCopy.Hint, hcCopy.ATNStateIdx, contribCtx, accept)
+			contributor.CompletionForReference(ctx, dCopy, hcCopy.Hint, hcCopy.ATNStateIdx, refCtx, accept)
 		}
 	}
 
@@ -465,9 +464,7 @@ func buildSyntheticOwnerChain(adapter parser.LanguageCompletionAdapter, doc *cor
 	return parent
 }
 
-// buildOwner returns the node that owns the cross-reference of the hint. The
-// hint's Field has the form "<OwnerRule>.<Property>" - we split on '.' to get
-// the type of the owner.
+// buildOwner returns the node that owns the cross-reference of the hint.
 //
 // The owner is derived from the node that owns the lastToken, which is the
 // token in front of the cursor, and from the rule calls that lead from there
@@ -480,20 +477,27 @@ func buildSyntheticOwnerChain(adapter parser.LanguageCompletionAdapter, doc *cor
 // the rule stack of the completion parser then, and is not connected to the
 // AST.
 //
+// If the hint carries an action that precedes the cross-reference, the
+// action is applied to the owner as the main parser would have on the next
+// token, see applyPrecedingAction.
+//
 // Returns nil if the adapter doesn't know one of the rule keys; the
 // completion request then yields no candidates for this hint rather than
 // silently returning the wrong scope.
-func buildOwner(adapter parser.LanguageCompletionAdapter, doc *core.Document, ruleStack []parser.RuleContext, hc parser.HintCompletion, lastToken *core.Token, cursorOffset int) core.AstNode {
+func buildOwner(adapter parser.LanguageCompletionAdapter, doc *core.Document, ruleStack []parser.RuleContext, hc parser.HintCompletion, lastToken *core.Token) core.AstNode {
+	var owner core.AstNode
 	if lastToken != nil {
-		if ownerType, _, ok := splitHintField(hc.Hint.Field); ok {
-			if base := baseOf(adapter, hc, lastToken); base != nil {
-				if owner := buildOwnerAt(adapter, base, hc, ownerType, lastToken); owner != nil {
-					return owner
-				}
-			}
+		if base := baseOf(adapter, hc, lastToken); base != nil {
+			owner = buildOwnerAt(adapter, base, hc, lastToken)
 		}
 	}
-	return buildSyntheticOwnerChainFor(adapter, doc, ruleStack, hc.Hint.Field, cursorOffset)
+	if owner == nil {
+		owner = buildSyntheticOwnerChainFor(adapter, doc, ruleStack, hc.Hint)
+	}
+	if owner == nil {
+		return nil
+	}
+	return applyPrecedingAction(adapter, owner, hc.Hint)
 }
 
 // baseOf returns the node of the rule that was in progress at the last
@@ -548,7 +552,8 @@ func containerOfCall(adapter parser.LanguageCompletionAdapter, node core.AstNode
 // the node of the last rule call. The lastToken is the token in front of it.
 //
 // Returns nil if the type of a node is unknown.
-func buildOwnerAt(adapter parser.LanguageCompletionAdapter, base core.AstNode, hc parser.HintCompletion, ownerType string, lastToken *core.Token) core.AstNode {
+func buildOwnerAt(adapter parser.LanguageCompletionAdapter, base core.AstNode, hc parser.HintCompletion, lastToken *core.Token) core.AstNode {
+	ownerType := hc.Hint.Owner
 	doc := base.Document()
 	// The rule call that ended last
 	var previous *parser.RuleCallInfo
@@ -705,27 +710,15 @@ func isEmptyNode(node core.AstNode) bool {
 // hint's owner rule when the rule stack doesn't already end at that rule.
 //
 // At cursor positions where a new rule could begin but hasn't yet, the
-// parser's rule stack stops one level above the rule the hint's field
-// belongs to. The hint's Field has the form "<OwnerRule>.<Property>" -
-// we split on '.' to get the owner rule name and append a synthetic for
-// it if the stack doesn't already end there.
+// parser's rule stack stops one level above the rule the hint's owner
+// belongs to, so a synthetic frame for the owner is appended if the stack
+// doesn't already end there.
 //
 // Returns nil if the adapter doesn't know one of the rule keys; the
 // completion request then yields no candidates for this hint rather than
 // silently returning the wrong scope.
-func buildSyntheticOwnerChainFor(adapter parser.LanguageCompletionAdapter, doc *core.Document, ruleStack []parser.RuleContext, hintField string, cursorOffset int) core.AstNode {
-	ownerType, _, ok := splitHintField(hintField)
-	if !ok {
-		return buildSyntheticOwnerChain(adapter, doc, ruleStack)
-	}
-	// Prefer the AST that the main parser already built. Tree-rewrite
-	// actions are executed during normal parsing, so the partial AST at
-	// the cursor already carries the chain a scope provider needs -
-	// reusing it avoids resynthesising state the parser tracked
-	// correctly.
-	if real := findExistingOwnerAtCursor(adapter, doc, ownerType, cursorOffset); real != nil {
-		return real
-	}
+func buildSyntheticOwnerChainFor(adapter parser.LanguageCompletionAdapter, doc *core.Document, ruleStack []parser.RuleContext, hint *parser.CompletionHint) core.AstNode {
+	ownerType := hint.Owner
 	// If the owner rule appears anywhere on the stack, the parser is
 	// already inside it - slice off any deeper frames. This covers
 	// cross-references whose text form is a separate rule: at the cursor
@@ -760,14 +753,7 @@ func buildSyntheticOwnerChainFor(adapter parser.LanguageCompletionAdapter, doc *
 // empty (the main parser already created the post-action node), the
 // owner is returned unchanged.
 func applyPrecedingAction(adapter parser.LanguageCompletionAdapter, owner core.AstNode, hint *parser.CompletionHint) core.AstNode {
-	if hint == nil || hint.PrecedingAction == nil {
-		return owner
-	}
-	_, property, ok := splitHintField(hint.Field)
-	if !ok {
-		return owner
-	}
-	if !adapter.HasAssignment(owner, property) {
+	if hint == nil || hint.PrecedingAction == nil || !adapter.HasAssignment(owner, hint.Property) {
 		return owner
 	}
 	action := hint.PrecedingAction
@@ -777,52 +763,6 @@ func applyPrecedingAction(adapter parser.LanguageCompletionAdapter, owner core.A
 	}
 	takePlace(wrapper, owner)
 	return wrapper
-}
-
-// findExistingOwnerAtCursor returns the AST node of the hint's owner-ast
-// type that is closest to (and contains) the cursor, by walking up from
-// the owner of the token immediately preceding the cursor. Returns nil
-// if no such node exists - typically because the cursor is at a position
-// where the rule hasn't been entered yet, in which case the synthetic
-// chain path applies.
-func findExistingOwnerAtCursor(adapter parser.LanguageCompletionAdapter, doc *core.Document, ownerRule string, cursorOffset int) core.AstNode {
-	template, ok := adapter.SyntheticOwnerFor(ownerRule)
-	if !ok || template == nil {
-		return nil
-	}
-	wantType := reflect.TypeOf(template)
-	info := backtrackToToken(doc.Tokens, cursorOffset)
-	idx := info.CurrentIdx
-	if idx < 0 {
-		idx = info.NextIdx - 1
-	}
-	if idx < 0 || idx >= len(doc.Tokens) {
-		return nil
-	}
-	node := doc.Tokens[idx].Owner()
-	for node != nil {
-		if reflect.TypeOf(node) == wantType {
-			return node
-		}
-		node = node.Container()
-	}
-	return nil
-}
-
-// splitHintField separates a CompletionHint.Field key of the form
-// "<OwnerRule>.<Property>" into its two halves. Returns ok=false for
-// malformed keys (no dot, or empty halves) so the caller can fall back
-// to the unextended rule-stack chain.
-func splitHintField(field string) (owner, property string, ok bool) {
-	for i := 0; i < len(field); i++ {
-		if field[i] == '.' {
-			if i == 0 || i == len(field)-1 {
-				return "", "", false
-			}
-			return field[:i], field[i+1:], true
-		}
-	}
-	return "", "", false
 }
 
 // EnrichTokenCompletionItem fills zero-valued fields on item with

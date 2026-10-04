@@ -39,7 +39,8 @@ func completionHintFor(cr grammar.CrossRef) *parser.CompletionHint {
 		panic(fmt.Sprintf("expected Field's container to be an Interface, got %T", field.Container()))
 	}
 	return &parser.CompletionHint{
-		Field:           iface.Name() + "." + fieldName,
+		Owner:           iface.Name(),
+		Property:        fieldName,
 		PrecedingAction: precedingActionInfo(assignment),
 	}
 }

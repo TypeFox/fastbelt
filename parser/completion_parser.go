@@ -70,10 +70,6 @@ type CompletionParseResult struct {
 	// Tokens is the token slice the parser was given (typically the document's
 	// prefix tokens up to the cursor).
 	Tokens []core.Token
-	// NextTokenIndex is the index of the next unconsumed token at the moment
-	// the parser stopped. For a complete prefix this equals len(Tokens); for a
-	// bailed parse it's the index of the offending token.
-	NextTokenIndex int
 	// Snapshots is the time-ordered sequence of (tokenIdx, atnStateIdx) pairs
 	// recorded at every rule entry and every Sync. The completion provider
 	// picks the latest entry with TokenIdx <= cursor as the simulator's start.
@@ -113,11 +109,9 @@ type ATNSnapshot struct {
 // RuleContext is a single frame of CompletionParseResult.RuleStack. RuleKey
 // is a stable identifier the generator emits per parser rule (typically the
 // rule's exported Go name, e.g. "Statemachine"); the synthetic-owner factory
-// table is keyed by this string. Assignment is the property name currently
-// being assigned (empty when the parser is not inside an assignment).
+// table is keyed by this string.
 type RuleContext struct {
-	RuleKey    string
-	Assignment string
+	RuleKey string
 }
 
 // CompletionParserState is the embedded helper a generated CompletionParser
@@ -131,9 +125,8 @@ type RuleContext struct {
 //	    p.cp.EnterRule("Foo", FooRuleStartStateIdx)
 //	    defer p.cp.ExitRule()
 //	    // ...mirrors the main parser's control flow, but every Sync(i) is
-//	    //  preceded by p.cp.RecordSnapshot(i), every assignment site is
-//	    //  preceded by p.cp.MarkAssignment("PropertyName"), and every
-//	    //  AST-mutation call (AssignToken, SetName, etc.) is omitted.
+//	    //  preceded by p.cp.RecordSnapshot(i), and every AST-mutation call
+//	    //  (AssignToken, SetName, etc.) is omitted.
 //	}
 type CompletionParserState struct {
 	state *ParserState
@@ -255,26 +248,6 @@ func (cp *CompletionParserState) RecordSnapshot(atnStateIdx int) {
 	cp.snapshots = append(cp.snapshots, cp.snapshot(atnStateIdx))
 }
 
-// MarkAssignment sets the assignment property on the top RuleContext. The
-// generator emits this immediately before each Consume that corresponds to an
-// assignment (`Property=...` in the grammar). The assignment value is cleared
-// automatically at the next EnterRule/ExitRule boundary; callers that need to
-// clear it earlier can call ClearAssignment.
-func (cp *CompletionParserState) MarkAssignment(property string) {
-	if len(cp.ruleStack) == 0 {
-		return
-	}
-	cp.ruleStack[len(cp.ruleStack)-1].Assignment = property
-}
-
-// ClearAssignment resets the top frame's Assignment field.
-func (cp *CompletionParserState) ClearAssignment() {
-	if len(cp.ruleStack) == 0 {
-		return
-	}
-	cp.ruleStack[len(cp.ruleStack)-1].Assignment = ""
-}
-
 // Result builds a CompletionParseResult snapshot. The generator's top-level
 // Parse method calls this once after the entry rule returns.
 //
@@ -286,10 +259,9 @@ func (cp *CompletionParserState) ClearAssignment() {
 func (cp *CompletionParserState) Result(tokens []core.Token) *CompletionParseResult {
 	snapshots := append([]ATNSnapshot(nil), cp.snapshots...)
 	return &CompletionParseResult{
-		Tokens:         tokens,
-		NextTokenIndex: cp.state.Index,
-		Snapshots:      snapshots,
-		RuleStack:      deepestRuleStack(snapshots),
+		Tokens:    tokens,
+		Snapshots: snapshots,
+		RuleStack: deepestRuleStack(snapshots),
 	}
 }
 
@@ -341,9 +313,6 @@ func deepestRuleStack(snapshots []ATNSnapshot) []RuleContext {
 // NextCompletionsFromSet finds reachable atom transitions; the latter
 // rules out snapshots that land at a RuleStop with an empty return stack
 // (the parser-committed-too-deep case).
-//
-// Callers that only want the cursor's snapshot without simulating should
-// use FindSnapshotAt instead.
 func (r *CompletionParseResult) SimulateAt(atn *RuntimeATN, cursor int) (live []simPath, snap ATNSnapshot, ok bool) {
 	if len(r.Snapshots) == 0 || cursor < 0 {
 		// No snapshots means the parser never entered any rule - not even the entry rule
@@ -399,43 +368,4 @@ func (r *CompletionParseResult) SimulateAt(atn *RuntimeATN, cursor int) (live []
 		}
 	}
 	return nil, ATNSnapshot{}, false
-}
-
-// FindSnapshotAt returns the snapshot that gives the broadest context at the
-// given cursor token index. Selection rules:
-//
-//   - If any snapshot has TokenIdx == cursor, return the EARLIEST such
-//     snapshot. Multiple snapshots at the same token index represent the
-//     parser making successive branch decisions at that position; the
-//     earliest reflects the parser BEFORE those decisions, so simulating
-//     from there exposes every alternative still consistent with the input
-//     consumed so far.
-//   - Otherwise (cursor lies strictly between two snapshots, or past all of
-//     them), return the LATEST snapshot with TokenIdx < cursor. The
-//     simulator advances forward from that snapshot through the intervening
-//     tokens.
-//
-// Returns (ATNSnapshot{}, false) if no snapshot fits - which only happens
-// for an empty result (no rule was ever entered).
-func (r *CompletionParseResult) FindSnapshotAt(cursor int) (ATNSnapshot, bool) {
-	var best ATNSnapshot
-	found := false
-	for _, s := range r.Snapshots {
-		if s.TokenIdx > cursor {
-			break
-		}
-		if s.TokenIdx == cursor {
-			// First snapshot AT the cursor wins; later ones at the same idx
-			// represent narrower contexts we don't want to commit to.
-			if !found || best.TokenIdx < cursor {
-				best = s
-				found = true
-			}
-			continue
-		}
-		// s.TokenIdx < cursor: track the latest such snapshot.
-		best = s
-		found = true
-	}
-	return best, found
 }

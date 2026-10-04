@@ -12,7 +12,7 @@ import (
 
 // TestCompletionParserState_SnapshotsAndStack verifies the bookkeeping
 // methods: EnterRule/ExitRule push and pop, RecordSnapshot/EnterRule both
-// append to Snapshots, and MarkAssignment updates the top frame.
+// append to Snapshots.
 func TestCompletionParserState_SnapshotsAndStack(t *testing.T) {
 	tA := core.NewTokenType(1, "a", "a", 0, nil, nil)
 
@@ -46,12 +46,7 @@ func TestCompletionParserState_SnapshotsAndStack(t *testing.T) {
 		t.Fatalf("unexpected second snapshot: %+v", got)
 	}
 
-	// Mark assignment + enter nested rule.
-	cp.MarkAssignment("Foo")
-	if cp.ruleStack[0].Assignment != "Foo" {
-		t.Fatalf("MarkAssignment didn't update top frame: %+v", cp.ruleStack)
-	}
-
+	// Enter nested rule.
 	state.Index = 2
 	cp.EnterRule("Inner", 33)
 	if got := len(cp.ruleStack); got != 2 {
@@ -59,9 +54,6 @@ func TestCompletionParserState_SnapshotsAndStack(t *testing.T) {
 	}
 
 	res := cp.Result(tokens)
-	if res.NextTokenIndex != 2 {
-		t.Errorf("expected NextTokenIndex=2; got %d", res.NextTokenIndex)
-	}
 	// Result.RuleStack is the deepest stack at the latest snapshot's
 	// TokenIdx - here, [Outer, Inner] from the Inner EnterRule snapshot at
 	// TokenIdx=2.
@@ -73,48 +65,5 @@ func TestCompletionParserState_SnapshotsAndStack(t *testing.T) {
 	cp.ExitRule()
 	if got := len(cp.ruleStack); got != 1 {
 		t.Fatalf("expected stack depth 1 after ExitRule; got %d", got)
-	}
-}
-
-// TestCompletionParseResult_FindSnapshotAt covers the broadest-context
-// selection rule. When several snapshots share a TokenIdx, the earliest one
-// (the broadest pre-branch context) wins; otherwise the latest snapshot
-// strictly before cursor wins.
-func TestCompletionParseResult_FindSnapshotAt(t *testing.T) {
-	res := &CompletionParseResult{
-		Snapshots: []ATNSnapshot{
-			{TokenIdx: 0, ATNStateIdx: 7},
-			{TokenIdx: 2, ATNStateIdx: 12},
-			// Two snapshots at idx=5: earliest (33) must win over later (44).
-			{TokenIdx: 5, ATNStateIdx: 33},
-			{TokenIdx: 5, ATNStateIdx: 44},
-		},
-	}
-	cases := []struct {
-		cursor       int
-		wantStateIdx int
-	}{
-		{0, 7},
-		{1, 7},
-		{2, 12},
-		{4, 12},
-		{5, 33},  // earliest at cursor
-		{99, 44}, // past everything: latest snapshot
-	}
-	for _, c := range cases {
-		s, ok := res.FindSnapshotAt(c.cursor)
-		if !ok {
-			t.Errorf("FindSnapshotAt(%d) returned ok=false", c.cursor)
-			continue
-		}
-		if s.ATNStateIdx != c.wantStateIdx {
-			t.Errorf("FindSnapshotAt(%d): got ATNStateIdx=%d, want %d", c.cursor, s.ATNStateIdx, c.wantStateIdx)
-		}
-	}
-
-	// Empty snapshots ⇒ not found.
-	empty := &CompletionParseResult{}
-	if _, ok := empty.FindSnapshotAt(0); ok {
-		t.Errorf("FindSnapshotAt on empty snapshots: expected ok=false")
 	}
 }

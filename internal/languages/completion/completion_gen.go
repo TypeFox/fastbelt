@@ -32,6 +32,8 @@ type CompletionCompletionFilter interface {
 	FilterAmbigNameRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterAmbigRefsRef1(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterAmbigRefsRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterDepA(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterDepB(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 }
 
 type DefaultCompletionCompletionFilter struct{}
@@ -105,6 +107,14 @@ func (*DefaultCompletionCompletionFilter) FilterAmbigRefsRef1(_ context.Context,
 }
 
 func (*DefaultCompletionCompletionFilter) FilterAmbigRefsRef(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
+func (*DefaultCompletionCompletionFilter) FilterDepA(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
+func (*DefaultCompletionCompletionFilter) FilterDepB(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	return in
 }
 
@@ -319,6 +329,30 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		candidates := scopes.ScopeAmbigRefsRef(ctx, ref).AllElements()
 		return filter.FilterAmbigRefsRef(ctx, ref, candidates)
 	},
+	"Dep.A": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(Dep)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[CompletionReferencesConstructor](sc)
+		scopes := service.MustGet[CompletionScopeProvider](sc)
+		filter := service.MustGet[CompletionCompletionFilter](sc)
+		ref := refs.DepA(typedOwner, nil)
+		candidates := scopes.ScopeDepA(ctx, ref).AllElements()
+		return filter.FilterDepA(ctx, ref, candidates)
+	},
+	"Dep.B": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(Dep)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[CompletionReferencesConstructor](sc)
+		scopes := service.MustGet[CompletionScopeProvider](sc)
+		filter := service.MustGet[CompletionCompletionFilter](sc)
+		ref := refs.DepB(typedOwner, nil)
+		candidates := scopes.ScopeDepB(ctx, ref).AllElements()
+		return filter.FilterDepB(ctx, ref, candidates)
+	},
 }
 
 type CompletionCompletionAdapter struct {
@@ -378,6 +412,13 @@ func (a *CompletionCompletionAdapter) HasAssignment(node core.AstNode, property 
 			return n.Ref1() != nil
 		case "Ref2":
 			return n.Ref2() != nil
+		}
+	case Dep:
+		switch property {
+		case "A":
+			return n.A() != nil
+		case "B":
+			return n.B() != nil
 		}
 	case MemberCall:
 		switch property {
