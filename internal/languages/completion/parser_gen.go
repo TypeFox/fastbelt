@@ -216,6 +216,13 @@ func (p *Parser) ParseRoot() Root {
 					if result != nil {
 						current.SetObjectsItem(result)
 					}
+				case 25:
+					p.state.EnterRule(Root__Basic_51)
+					result := p.ParseDep()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetObjectsItem(result)
+					}
 				default:
 					break loop0
 				}
@@ -1392,6 +1399,33 @@ func (p *Parser) ParseRetypeItem() RetypeItem {
 			p.state.ExitRule()
 			if result != nil {
 				current.SetInner(result)
+			}
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseDep() Dep {
+	current := NewDep()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Keyword_dep)
+			core.AssignToken(current, token, Dep_dep)
+		}
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, Dep_A_ID)
+			if token != nil {
+				current.SetA(p.referencesConstructor.DepA(current, token))
+			}
+		}
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, Dep_B_ID)
+			if token != nil {
+				current.SetB(p.referencesConstructor.DepB(current, token))
 			}
 		}
 	}

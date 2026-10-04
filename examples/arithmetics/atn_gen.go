@@ -339,7 +339,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[PrimaryExpression__BlockEnd]),
 	)
 	states[PrimaryExpression_Callable_ID].AppendTransitions(
-		parser.NewAtomTransition(states[PrimaryExpression__Basic_7], Token_ID, &parser.CompletionHint{Field: "FunctionCall.Callable", PrecedingAction: &parser.ActionInfo{TargetType: "FunctionCall"}}),
+		parser.NewAtomTransition(states[PrimaryExpression__Basic_7], Token_ID, &parser.CompletionHint{Owner: "FunctionCall", Property: "Callable", PrecedingAction: &parser.ActionInfo{TargetType: "FunctionCall"}}),
 	)
 	states[PrimaryExpression_LeftParen_1].AppendTransitions(
 		parser.NewAtomTransition(states[PrimaryExpression__Basic_3], Keyword_LeftParen, nil),

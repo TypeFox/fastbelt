@@ -41,3 +41,20 @@ func (s *CompletionScopeProviderImpl) ScopeMemberCallRef(ctx context.Context, re
 		return fastbelt.EmptyScope
 	}
 }
+
+// ScopeDepB returns the children of the Declare that A refers to.
+func (s *CompletionScopeProviderImpl) ScopeDepB(ctx context.Context, reference *fastbelt.Reference[Declare]) fastbelt.Scope {
+	dep, ok := reference.Owner().(Dep)
+	if !ok || dep.A() == nil {
+		return fastbelt.EmptyScope
+	}
+	decl := dep.A().Ref(ctx)
+	if decl == nil {
+		return fastbelt.EmptyScope
+	}
+	symbols := []*fastbelt.SymbolDescription{}
+	for _, member := range decl.Children() {
+		symbols = append(symbols, fastbelt.NewSymbolDescription(member, member.NameNode()))
+	}
+	return fastbelt.NewMapScopeFromSlice(symbols, nil)
+}

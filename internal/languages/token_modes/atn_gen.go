@@ -336,7 +336,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[Parentheses__Stop]),
 	)
 	states[VariableRef_Name_ID].AppendTransitions(
-		parser.NewAtomTransition(states[VariableRef__Basic], Token_ID, &parser.CompletionHint{Field: "VariableRef.Name"}),
+		parser.NewAtomTransition(states[VariableRef__Basic], Token_ID, &parser.CompletionHint{Owner: "VariableRef", Property: "Name"}),
 	)
 	states[VariableRef__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[VariableRef__Stop]),
