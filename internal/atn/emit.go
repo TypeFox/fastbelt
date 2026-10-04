@@ -29,7 +29,7 @@ func renderCompletionHint(h *parser.CompletionHint) string {
 	if h == nil {
 		return "nil"
 	}
-	out := "&parser.CompletionHint{Field: " + strconv.Quote(h.Field)
+	out := "&parser.CompletionHint{Owner: " + strconv.Quote(h.Owner) + ", Property: " + strconv.Quote(h.Property)
 	if h.PrecedingAction != nil {
 		out += ", PrecedingAction: " + renderActionInfo(h.PrecedingAction)
 	}

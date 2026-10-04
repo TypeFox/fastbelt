@@ -63,17 +63,17 @@ type CompletionContributor interface {
 
 // ContributorContext is the read-only view a contributor sees on each
 // stage call. Mirrors Langium's CompletionContext - exposes the
-// document, cursor offset, the synthetic AST node representing the
-// rule being completed at the cursor, and the per-cursor REPLACE
-// range / sort rank the framework would use by default.
+// document, cursor offset, the node that owns the cross-reference being
+// completed, and the per-cursor REPLACE range / sort rank the framework
+// would use by default.
 type ContributorContext struct {
 	Doc    *core.Document
 	Cursor int
 
-	// Node is the synthetic AST node representing the rule being
-	// completed at the cursor, built by buildSyntheticOwnerChain from
-	// the parser's RuleStack. May be nil at the document root or when
-	// the rule stack is empty.
+	// Node is the node that owns the cross-reference that is completed, as
+	// the scope provider sees it: a node of the AST, or a new node with the
+	// container and the containment data that the parser would give to it.
+	// It is only set in CompletionForReference.
 	Node core.AstNode
 
 	// ReplaceRange is the LSP range items should REPLACE

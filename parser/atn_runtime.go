@@ -96,8 +96,17 @@ type RuntimeTransition interface {
 // allocated parent when the existing node's assignment slot is already filled
 // - mirroring Langium's `NextFeature.type`/`property` synthesis.
 type CompletionHint struct {
-	Field           string
+	// Owner is the type of the node that owns the cross-reference, e.g.
+	// "Transition", and Property the name of its property, e.g. "Event".
+	Owner           string
+	Property        string
 	PrecedingAction *ActionInfo
+}
+
+// Key returns the key of the hint in the dispatch table of the generated
+// completion adapter, e.g. "Transition.Event".
+func (h *CompletionHint) Key() string {
+	return h.Owner + "." + h.Property
 }
 
 // ActionInfo describes a grammar Action that fires immediately before the

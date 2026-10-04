@@ -2722,7 +2722,99 @@ func (i *RetypeWrapperImpl) Resolve(path core.FragmentPath) (core.AstNode, error
 	}
 }
 
+type Dep interface {
+	core.AstNode
+	Obj
+
+	IsDep()
+	A() *core.Reference[Declare]
+	SetA(value *core.Reference[Declare])
+	B() *core.Reference[Declare]
+	SetB(value *core.Reference[Declare])
+}
+
+func NewDep() Dep {
+	return &DepImpl{}
+}
+
+type DepData struct {
+	a *core.Reference[Declare]
+	b *core.Reference[Declare]
+}
+
+func (i *DepData) IsDep() {}
+
+func (i *DepData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+}
+
+func (i *DepData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	if i.a != nil {
+		fn(i.a, fieldNameA, -1)
+	}
+	if i.b != nil {
+		fn(i.b, fieldNameB, -1)
+	}
+}
+
+func (i *DepData) A() *core.Reference[Declare] {
+	if i != nil && i.a != nil {
+		return i.a
+	} else {
+		return nil
+	}
+}
+
+func (i *DepData) SetA(value *core.Reference[Declare]) {
+	i.a = value
+}
+
+func (i *DepData) B() *core.Reference[Declare] {
+	if i != nil && i.b != nil {
+		return i.b
+	} else {
+		return nil
+	}
+}
+
+func (i *DepData) SetB(value *core.Reference[Declare]) {
+	i.b = value
+}
+
+type DepImpl struct {
+	core.AstNodeBase
+	ObjData
+	DepData
+}
+
+func (i *DepImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.ObjData.ForEachNode(fn)
+	i.DepData.ForEachNode(fn)
+}
+
+func (i *DepImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.ObjData.ForEachReference(fn)
+	i.DepData.ForEachReference(fn)
+}
+
+func (i *DepImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameA:
+		return nil, fmt.Errorf("DepImpl.Resolve: field 'a' is a cross-reference instead of a container field")
+	case fieldNameB:
+		return nil, fmt.Errorf("DepImpl.Resolve: field 'b' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("DepImpl.Resolve: field '%s' does not exist in node '%s' of type 'Dep'", field.Value(), nodePath)
+	}
+}
+
 var (
+	fieldNameA        = unique.Make("a")
+	fieldNameB        = unique.Make("b")
 	fieldNameCall     = unique.Make("call")
 	fieldNameChildren = unique.Make("children")
 	fieldNameElements = unique.Make("elements")
@@ -2753,6 +2845,7 @@ var CompletionSyntheticFactories = map[string]func() core.AstNode{
 	"ChainItem":     func() core.AstNode { return NewChainItem() },
 	"Declare":       func() core.AstNode { return NewDeclare() },
 	"Dedup":         func() core.AstNode { return NewDedup() },
+	"Dep":           func() core.AstNode { return NewDep() },
 	"Expr":          func() core.AstNode { return NewExpr() },
 	"Infix":         func() core.AstNode { return NewInfix() },
 	"Loop":          func() core.AstNode { return NewLoop() },

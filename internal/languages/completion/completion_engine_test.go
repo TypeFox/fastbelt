@@ -1011,9 +1011,8 @@ func TestCompletion_ContributorAcceptsTokenGroup(t *testing.T) {
 	}
 }
 
-// Reference hook receives hint.Field, atnState, and a synthetic owner.
-// cc.Node must be non-nil despite [Root, RefFQN, FQN] containing a composite
-// frame - the chain builder skips frames with no synthetic factory.
+// Reference hook receives the hint, atnState, and the owner of the reference.
+// cc.Node is the RefFQN node that the main parser created for "fqn".
 func TestCompletion_ContributorReferenceBranching(t *testing.T) {
 	type seen struct {
 		name     string
@@ -1027,7 +1026,7 @@ func TestCompletion_ContributorReferenceBranching(t *testing.T) {
 		onReference: func(d *core.SymbolDescription, hint *parser.CompletionHint, atnState int, cc server.ContributorContext, accept server.CompletionAcceptor) {
 			observations = append(observations, seen{
 				name:     d.Unit.String(),
-				field:    hint.Field,
+				field:    hint.Key(),
 				atnState: atnState,
 				node:     cc.Node,
 			})
@@ -1044,7 +1043,7 @@ func TestCompletion_ContributorReferenceBranching(t *testing.T) {
 	}
 	for _, o := range observations {
 		if o.field != "RefFQN.Ref" {
-			t.Errorf("expected hint.Field=\"RefFQN.Ref\"; got %+v", o)
+			t.Errorf("expected hint.Key()=\"RefFQN.Ref\"; got %+v", o)
 		}
 		if o.atnState <= 0 {
 			t.Errorf("expected positive atnState; got %+v", o)
@@ -1057,8 +1056,8 @@ func TestCompletion_ContributorReferenceBranching(t *testing.T) {
 	}
 }
 
-// Multi-level synthetic chain: cc.Node lands on RefListItem despite [Root, RefList]
-// not yet containing the RefListItem frame (cursor sits where one could begin).
+// The owner is a new RefListItem although the parser has not entered the rule
+// yet (cursor sits where one could begin).
 func TestCompletion_ContributorSyntheticChain(t *testing.T) {
 	type seen struct {
 		field string
@@ -1068,7 +1067,7 @@ func TestCompletion_ContributorSyntheticChain(t *testing.T) {
 
 	contrib := &recordingContributor{
 		onReference: func(d *core.SymbolDescription, hint *parser.CompletionHint, atnState int, cc server.ContributorContext, accept server.CompletionAcceptor) {
-			observations = append(observations, seen{field: hint.Field, node: cc.Node})
+			observations = append(observations, seen{field: hint.Key(), node: cc.Node})
 			accept(lsp.CompletionItem{})
 		},
 	}
@@ -1082,7 +1081,7 @@ func TestCompletion_ContributorSyntheticChain(t *testing.T) {
 	}
 	for _, o := range observations {
 		if o.field != "RefListItem.Ref" {
-			t.Errorf("expected hint.Field=\"RefListItem.Ref\"; got %+v", o)
+			t.Errorf("expected hint.Key()=\"RefListItem.Ref\"; got %+v", o)
 		}
 		if _, ok := o.node.(completion.RefListItem); !ok {
 			t.Errorf("expected cc.Node to be a synthetic RefListItem; got %T", o.node)
@@ -1425,5 +1424,52 @@ func TestCompletion_AfterChain_OwnerAfterAction(t *testing.T) {
 		"chain { foo and <|cursor>":         {"ChainItem at items@0, Chain at objects@0"},
 		"chain { foo and <|cursor>foo }":    {"ChainItem at items@0, Chain at objects@0"},
 		"chain { foo and foo and <|cursor>": {"ChainItem at items@0, Chain at objects@0"},
+	})
+}
+
+func (f *ownerRecordingFilter) FilterDepB(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+// Two cross-references in one node, where the scope of B depends on the
+// resolved A. The owner of B is the Dep node that the main parser created,
+// so the scope provider can resolve A on it.
+func TestCompletion_AfterDep_ScopeDependsOnSibling(t *testing.T) {
+	const decls = "declare alpha { declare beta } declare gamma "
+
+	// A has the default scope; the nested beta is not visible
+	items := completionAt(t, decls+"dep <|cursor>")
+	assert.ElementsMatch(t, []string{"alpha", "gamma"}, itemLabels(items))
+
+	// B sees the children of A only
+	items = completionAt(t, decls+"dep alpha <|cursor>")
+	assert.ElementsMatch(t, []string{"beta"}, itemLabels(items))
+	items = completionAt(t, decls+"dep alpha <|cursor>beta")
+	assert.ElementsMatch(t, []string{"beta"}, itemLabels(items))
+
+	// Partial B
+	items = completionAt(t, decls+"dep alpha be<|cursor>")
+	if item := itemWithLabel(items, "beta"); item == nil || item.TextEdit == nil {
+		t.Errorf("expected REPLACE-shaped 'beta'; got %v", itemLabels(items))
+	}
+	for _, unwanted := range []string{"alpha", "gamma"} {
+		if hasLabel(items, unwanted) {
+			t.Errorf("did not expect %q from the scope of A; got %v", unwanted, itemLabels(items))
+		}
+	}
+
+	// A is complete: it may be replaced, or B may be inserted
+	items = completionAt(t, decls+"dep alpha<|cursor>")
+	assert.ElementsMatch(t, []string{"alpha", "beta"}, itemLabels(items))
+
+	// A does not resolve
+	items = completionAt(t, decls+"dep nope <|cursor>")
+	assert.Empty(t, itemLabels(items))
+
+	assertOwners(t, map[string][]string{
+		"dep alpha <|cursor>":     {"Dep at objects@0"},
+		"dep alpha <|cursor>beta": {"Dep at objects@0"},
+		"dep alpha be<|cursor>":   {"Dep at objects@0"},
 	})
 }

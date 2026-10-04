@@ -76,7 +76,7 @@ func (p simPath) baseKey() string {
 	b.WriteByte('|')
 	for _, h := range p.hints {
 		if h != nil {
-			b.WriteString(h.Field)
+			b.WriteString(h.Key())
 		}
 		b.WriteByte(',')
 	}
@@ -275,7 +275,7 @@ func (info CompletionInfo) HasToken(tokenID int) bool {
 // CompletionHint.Field value.
 func (info CompletionInfo) HasHintField(field string) bool {
 	for _, h := range info.Hints {
-		if h.Hint != nil && h.Hint.Field == field {
+		if h.Hint != nil && h.Hint.Key() == field {
 			return true
 		}
 	}
@@ -319,7 +319,7 @@ func (atn *RuntimeATN) NextCompletionsFromSet(live []simPath) CompletionInfo {
 				if seenToken.Add([2]int{p.stateIdx, at.TokenType.Id}) {
 					info.Tokens = append(info.Tokens, TokenCompletion{TokenType: at.TokenType, ATNStateIdx: p.stateIdx})
 				}
-			} else if fresh && seenHint.Add(hintKey{p.stateIdx, hint.Field, owner}) {
+			} else if fresh && seenHint.Add(hintKey{p.stateIdx, hint.Key(), owner}) {
 				info.Hints = append(info.Hints, HintCompletion{
 					Hint:        hint,
 					ATNStateIdx: p.stateIdx,

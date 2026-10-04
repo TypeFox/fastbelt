@@ -7,7 +7,7 @@ interface Root {
     Objects []Obj
 }
 
-entry Root: Objects+=(Declare | Seq | Alt | Prefix | Call | RefFQN | RefList | RefID | Member | MemberNoDot | RefOrKeyword | Dedup | Opt | Group | RefGroup | RefAction | Scope | Loop | Chain | Infix | Wrap | Shadow | Nest | Ambig | Retype)*;
+entry Root: Objects+=(Declare | Seq | Alt | Prefix | Call | RefFQN | RefList | RefID | Member | MemberNoDot | RefOrKeyword | Dedup | Opt | Group | RefGroup | RefAction | Scope | Loop | Chain | Infix | Wrap | Shadow | Nest | Ambig | Retype | Dep)*;
 
 interface Declare extends Obj {
     Name composite
@@ -256,6 +256,15 @@ interface RetypeWrapper extends RetypeItem {}
 Retype: "retype" LBRACE Items+=RetypeItem* RBRACE;
 
 RetypeItem: {RetypeWrapper} Inner=RefItem;
+
+interface Dep extends Obj {
+    A *Declare
+    B *Declare
+}
+
+// two cross-references in one node, where the scope of B depends on the
+// resolved A (see the scope provider)
+Dep: "dep" A=[Declare:ID] B=[Declare:ID];
 
 token DECLARE: "declare"
 token FIRST: "first"

@@ -1135,13 +1135,13 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[Interface_Extends_ID_0], Keyword_extends, nil),
 	)
 	states[Interface_Extends_ID_0].AppendTransitions(
-		parser.NewAtomTransition(states[Interface__LoopEntry_0], Token_ID, &parser.CompletionHint{Field: "Interface.Extends"}),
+		parser.NewAtomTransition(states[Interface__LoopEntry_0], Token_ID, &parser.CompletionHint{Owner: "Interface", Property: "Extends"}),
 	)
 	states[Interface_Comma].AppendTransitions(
 		parser.NewAtomTransition(states[Interface_Extends_ID_1], Keyword_Comma, nil),
 	)
 	states[Interface_Extends_ID_1].AppendTransitions(
-		parser.NewAtomTransition(states[Interface__Basic_0], Token_ID, &parser.CompletionHint{Field: "Interface.Extends"}),
+		parser.NewAtomTransition(states[Interface__Basic_0], Token_ID, &parser.CompletionHint{Owner: "Interface", Property: "Extends"}),
 	)
 	states[Interface__Basic_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[Interface__LoopBack_0]),
@@ -1243,13 +1243,13 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[ReferenceType_Type_ID], Keyword_Asterisk, nil),
 	)
 	states[ReferenceType_Type_ID].AppendTransitions(
-		parser.NewAtomTransition(states[ReferenceType__Basic], Token_ID, &parser.CompletionHint{Field: "ReferenceType.Type"}),
+		parser.NewAtomTransition(states[ReferenceType__Basic], Token_ID, &parser.CompletionHint{Owner: "ReferenceType", Property: "Type"}),
 	)
 	states[ReferenceType__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[ReferenceType__Stop]),
 	)
 	states[SimpleType_Type_ID].AppendTransitions(
-		parser.NewAtomTransition(states[SimpleType__Basic], Token_ID, &parser.CompletionHint{Field: "SimpleType.Type"}),
+		parser.NewAtomTransition(states[SimpleType__Basic], Token_ID, &parser.CompletionHint{Owner: "SimpleType", Property: "Type"}),
 	)
 	states[SimpleType__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[SimpleType__Stop]),
@@ -1297,7 +1297,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[ParserRule_ReturnType_ID], Keyword_returns, nil),
 	)
 	states[ParserRule_ReturnType_ID].AppendTransitions(
-		parser.NewAtomTransition(states[ParserRule__Basic_2], Token_ID, &parser.CompletionHint{Field: "AbstractRuleWithReturnType.ReturnType"}),
+		parser.NewAtomTransition(states[ParserRule__Basic_2], Token_ID, &parser.CompletionHint{Owner: "AbstractRuleWithReturnType", Property: "ReturnType"}),
 	)
 	states[ParserRule__Basic_2].AppendTransitions(
 		parser.NewEpsilonTransition(states[ParserRule_Colon]),
@@ -1428,7 +1428,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[TokenCommand__Basic_6], Keyword_LeftParen, nil),
 	)
 	states[TokenCommand_Mode_ID].AppendTransitions(
-		parser.NewAtomTransition(states[TokenCommand__Basic_4], Token_ID, &parser.CompletionHint{Field: "TokenCommand.Mode"}),
+		parser.NewAtomTransition(states[TokenCommand__Basic_4], Token_ID, &parser.CompletionHint{Owner: "TokenCommand", Property: "Mode"}),
 	)
 	states[TokenCommand__Basic_4].AppendTransitions(
 		parser.NewEpsilonTransition(states[TokenCommand__BlockEnd_1]),
@@ -1469,7 +1469,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[TokenGroup__LoopEntry], Keyword_LeftBrace, nil),
 	)
 	states[TokenGroup_TokenRefs_ID].AppendTransitions(
-		parser.NewAtomTransition(states[TokenGroup__Basic_0], Token_ID, &parser.CompletionHint{Field: "TokenGroup.TokenRefs"}),
+		parser.NewAtomTransition(states[TokenGroup__Basic_0], Token_ID, &parser.CompletionHint{Owner: "TokenGroup", Property: "TokenRefs"}),
 	)
 	states[TokenGroup__Basic_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[TokenGroup__BlockEnd]),
@@ -1633,7 +1633,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[TokenUsage__Basic_0]),
 	)
 	states[TokenUsage_TokenRef_ID].AppendTransitions(
-		parser.NewAtomTransition(states[TokenUsage__Basic_4], Token_ID, &parser.CompletionHint{Field: "TokenUsage.TokenRef"}),
+		parser.NewAtomTransition(states[TokenUsage__Basic_4], Token_ID, &parser.CompletionHint{Owner: "TokenUsage", Property: "TokenRef"}),
 	)
 	states[TokenUsage__Basic_2].AppendTransitions(
 		parser.NewRuleTransition(states[TokenCommand__Start], states[TokenUsage__Basic_3], nil, &parser.RuleCallInfo{Property: "command", Type: "TokenCommand"}),
@@ -1810,7 +1810,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[Keyword__Stop]),
 	)
 	states[Assignment_Property_ID].AppendTransitions(
-		parser.NewAtomTransition(states[Assignment__Basic_3], Token_ID, &parser.CompletionHint{Field: "Assignment.Property"}),
+		parser.NewAtomTransition(states[Assignment__Basic_3], Token_ID, &parser.CompletionHint{Owner: "Assignment", Property: "Property"}),
 	)
 	states[Assignment_Operator_PlusEquals].AppendTransitions(
 		parser.NewAtomTransition(states[Assignment__Basic_0], Keyword_PlusEquals, nil),
@@ -1936,7 +1936,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[CrossRef_Type_ID], Keyword_LeftBracket, nil),
 	)
 	states[CrossRef_Type_ID].AppendTransitions(
-		parser.NewAtomTransition(states[CrossRef__Basic_2], Token_ID, &parser.CompletionHint{Field: "CrossRef.Type"}),
+		parser.NewAtomTransition(states[CrossRef__Basic_2], Token_ID, &parser.CompletionHint{Owner: "CrossRef", Property: "Type"}),
 	)
 	states[CrossRef_Colon].AppendTransitions(
 		parser.NewAtomTransition(states[CrossRef__Basic_0], Keyword_Colon, nil),
@@ -1958,7 +1958,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[CrossRef__Stop]),
 	)
 	states[RuleCall_Rule_ID].AppendTransitions(
-		parser.NewAtomTransition(states[RuleCall__Basic], Token_ID, &parser.CompletionHint{Field: "RuleCall.Rule"}),
+		parser.NewAtomTransition(states[RuleCall__Basic], Token_ID, &parser.CompletionHint{Owner: "RuleCall", Property: "Rule"}),
 	)
 	states[RuleCall__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[RuleCall__Stop]),
@@ -1967,13 +1967,13 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[Action_Type_ID], Keyword_LeftBrace, nil),
 	)
 	states[Action_Type_ID].AppendTransitions(
-		parser.NewAtomTransition(states[Action__Basic_4], Token_ID, &parser.CompletionHint{Field: "Action.Type"}),
+		parser.NewAtomTransition(states[Action__Basic_4], Token_ID, &parser.CompletionHint{Owner: "Action", Property: "Type"}),
 	)
 	states[Action_Dot].AppendTransitions(
 		parser.NewAtomTransition(states[Action_Property_ID], Keyword_Dot, nil),
 	)
 	states[Action_Property_ID].AppendTransitions(
-		parser.NewAtomTransition(states[Action__Basic_2], Token_ID, &parser.CompletionHint{Field: "Action.Property"}),
+		parser.NewAtomTransition(states[Action__Basic_2], Token_ID, &parser.CompletionHint{Owner: "Action", Property: "Property"}),
 	)
 	states[Action_Operator_PlusEquals].AppendTransitions(
 		parser.NewAtomTransition(states[Action__Basic_0], Keyword_PlusEquals, nil),
@@ -2133,7 +2133,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[InfixRule_ReturnType_ID], Keyword_returns, nil),
 	)
 	states[InfixRule_ReturnType_ID].AppendTransitions(
-		parser.NewAtomTransition(states[InfixRule__Basic_1], Token_ID, &parser.CompletionHint{Field: "AbstractRuleWithReturnType.ReturnType"}),
+		parser.NewAtomTransition(states[InfixRule__Basic_1], Token_ID, &parser.CompletionHint{Owner: "AbstractRuleWithReturnType", Property: "ReturnType"}),
 	)
 	states[InfixRule__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[InfixRule_Colon]),

@@ -43,7 +43,6 @@ func (p *CompletionParser) ParseModel() {
 	p.cp.EnterRule("Model", Model__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.MarkAssignment("Item")
 		switch prediction, _ := p.lookahead.ModelItemAlternatives(p.state); prediction {
 		case 0:
 			p.state.EnterRule(Model__Basic_1)
@@ -78,7 +77,6 @@ func (p *CompletionParser) ParseModel() {
 			p.ParseH()
 			p.state.ExitRule()
 		}
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -89,9 +87,7 @@ func (p *CompletionParser) ParseA() {
 		p.state.Consume(Keyword_a)
 	}
 	{
-		p.cp.MarkAssignment("Value")
 		p.state.Consume(TokenGroup_Identifier)
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -102,14 +98,12 @@ func (p *CompletionParser) ParseB() {
 		p.state.Consume(Keyword_b)
 	}
 	{
-		p.cp.MarkAssignment("Value")
 		switch prediction, _ := p.lookahead.BValueAlternatives(p.state); prediction {
 		case 0:
 			p.state.Consume(TokenGroup_Identifier)
 		case 1:
 			p.state.Consume(Keyword_b)
 		}
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -120,9 +114,7 @@ func (p *CompletionParser) ParseC() {
 		p.state.Consume(Keyword_c)
 	}
 	{
-		p.cp.MarkAssignment("Value")
 		p.state.Consume(TokenGroup_NestedIdentifier)
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -136,9 +128,7 @@ func (p *CompletionParser) ParseD() {
 		p.cp.RecordSnapshot(D__Basic_1)
 		p.state.Sync(D__Basic_1)
 		if p.lookahead.DValueOptional(p.state) {
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(TokenGroup_Identifier)
-			p.cp.ClearAssignment()
 		}
 	}
 }
@@ -150,14 +140,10 @@ func (p *CompletionParser) ParseE() {
 		p.state.Consume(Keyword_e)
 	}
 	{
-		p.cp.MarkAssignment("First")
 		p.state.Consume(TokenGroup_Identifier)
-		p.cp.ClearAssignment()
 	}
 	{
-		p.cp.MarkAssignment("Second")
 		p.state.Consume(TokenGroup_NestedIdentifier)
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -168,9 +154,7 @@ func (p *CompletionParser) ParseF() {
 		p.state.Consume(Keyword_f)
 	}
 	{
-		p.cp.MarkAssignment("Value")
 		p.state.Consume(TokenGroup_KeywordGroup)
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -181,9 +165,7 @@ func (p *CompletionParser) ParseG() {
 		p.state.Consume(Keyword_g)
 	}
 	{
-		p.cp.MarkAssignment("Value")
 		p.state.Consume(TokenGroup_RegexGroup)
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -199,18 +181,14 @@ func (p *CompletionParser) ParseH() {
 			p.state.Consume(TokenGroup_Identifier)
 		}
 		{
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Keyword_a)
-			p.cp.ClearAssignment()
 		}
 	case 1:
 		{
 			p.state.Consume(TokenGroup_Identifier)
 		}
 		{
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Keyword_b)
-			p.cp.ClearAssignment()
 		}
 	default:
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)

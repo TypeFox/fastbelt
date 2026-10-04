@@ -46,19 +46,15 @@ func (p *CompletionParser) ParseModule() {
 		p.state.Consume(Keyword_module)
 	}
 	{
-		p.cp.MarkAssignment("Name")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 	{
 		p.cp.RecordSnapshot(Module__LoopEntry)
 		p.state.Sync(Module__LoopEntry)
 		for p.lookahead.ModuleStatementsLoop(p.state) {
-			p.cp.MarkAssignment("Statements")
 			p.state.EnterRule(Module__Basic_1)
 			p.ParseStatement()
 			p.state.ExitRule()
-			p.cp.ClearAssignment()
 			p.cp.RecordSnapshot(Module__LoopEntry)
 			p.state.Sync(Module__LoopEntry)
 		}
@@ -93,9 +89,7 @@ func (p *CompletionParser) ParseDefinition() {
 		p.state.Consume(Keyword_def)
 	}
 	{
-		p.cp.MarkAssignment("Name")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 	p.cp.RecordSnapshot(Definition__Basic_4)
 	p.state.Sync(Definition__Basic_4)
@@ -104,11 +98,9 @@ func (p *CompletionParser) ParseDefinition() {
 			p.state.Consume(Keyword_LeftParen)
 		}
 		{
-			p.cp.MarkAssignment("Args")
 			p.state.EnterRule(Definition__LoopEntry)
 			p.ParseDeclaredParameter()
 			p.state.ExitRule()
-			p.cp.ClearAssignment()
 		}
 		p.cp.RecordSnapshot(Definition__LoopEntry)
 		p.state.Sync(Definition__LoopEntry)
@@ -117,11 +109,9 @@ func (p *CompletionParser) ParseDefinition() {
 				p.state.Consume(Keyword_Comma)
 			}
 			{
-				p.cp.MarkAssignment("Args")
 				p.state.EnterRule(Definition__Basic_2)
 				p.ParseDeclaredParameter()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			}
 			p.cp.RecordSnapshot(Definition__LoopEntry)
 			p.state.Sync(Definition__LoopEntry)
@@ -134,11 +124,9 @@ func (p *CompletionParser) ParseDefinition() {
 		p.state.Consume(Keyword_Colon)
 	}
 	{
-		p.cp.MarkAssignment("Expression")
 		p.state.EnterRule(Definition_Semicolon)
 		p.ParseExpression()
 		p.state.ExitRule()
-		p.cp.ClearAssignment()
 	}
 	{
 		p.state.Consume(Keyword_Semicolon)
@@ -149,9 +137,7 @@ func (p *CompletionParser) ParseDeclaredParameter() {
 	p.cp.EnterRule("DeclaredParameter", DeclaredParameter__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.MarkAssignment("Name")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -159,11 +145,9 @@ func (p *CompletionParser) ParseEvaluation() {
 	p.cp.EnterRule("Evaluation", Evaluation__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.MarkAssignment("Expression")
 		p.state.EnterRule(Evaluation_Semicolon)
 		p.ParseExpression()
 		p.state.ExitRule()
-		p.cp.ClearAssignment()
 	}
 	{
 		p.state.Consume(Keyword_Semicolon)
@@ -198,15 +182,11 @@ func (p *CompletionParser) ParsePrimaryExpression() {
 		}
 	case 1:
 		{
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Token_NUMBER)
-			p.cp.ClearAssignment()
 		}
 	case 2:
 		{
-			p.cp.MarkAssignment("Callable")
 			p.state.Consume(Token_ID)
-			p.cp.ClearAssignment()
 		}
 		p.cp.RecordSnapshot(PrimaryExpression__Basic_7)
 		p.state.Sync(PrimaryExpression__Basic_7)
@@ -215,11 +195,9 @@ func (p *CompletionParser) ParsePrimaryExpression() {
 				p.state.Consume(Keyword_LeftParen)
 			}
 			{
-				p.cp.MarkAssignment("Args")
 				p.state.EnterRule(PrimaryExpression__LoopEntry)
 				p.ParseExpression()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			}
 			p.cp.RecordSnapshot(PrimaryExpression__LoopEntry)
 			p.state.Sync(PrimaryExpression__LoopEntry)
@@ -228,11 +206,9 @@ func (p *CompletionParser) ParsePrimaryExpression() {
 					p.state.Consume(Keyword_Comma)
 				}
 				{
-					p.cp.MarkAssignment("Args")
 					p.state.EnterRule(PrimaryExpression__Basic_5)
 					p.ParseExpression()
 					p.state.ExitRule()
-					p.cp.ClearAssignment()
 				}
 				p.cp.RecordSnapshot(PrimaryExpression__LoopEntry)
 				p.state.Sync(PrimaryExpression__LoopEntry)
