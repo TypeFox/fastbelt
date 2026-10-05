@@ -22,10 +22,10 @@ import (
 )
 
 // GenerateLexer emits the lexer for grammr. entryRules lists one entry rule per
-// language and startModes the token mode each language starts in (index
+// language and entryModes the token mode each language starts in (index
 // aligned; nil or "" means the default mode). See lexerModes for the token
 // modes that end up in the lexer.
-func GenerateLexer(grammr grammar.Grammar, entryRules []grammar.ParserRule, startModes []string, packageName string, tokenTypes GenerateTokenTypesResult) string {
+func GenerateLexer(grammr grammar.Grammar, entryRules []grammar.ParserRule, entryModes []string, packageName string, tokenTypes GenerateTokenTypesResult) string {
 	nodes := []codegen.Node{}
 
 	imports := map[string]bool{}
@@ -60,7 +60,7 @@ func GenerateLexer(grammr grammar.Grammar, entryRules []grammar.ParserRule, star
 		node.AppendLine()
 	}
 
-	modes, starts := lexerModes(grammr, entryRules, startModes, tokenTypes)
+	modes, starts := lexerModes(grammr, entryRules, entryModes, tokenTypes)
 	generateLexerModeEnums(node, modes)
 	generateMainLexerFunction(context.Background(), node, modes, starts, tokenTypes)
 	return FormatIfPossible(node.String())
@@ -82,12 +82,12 @@ type lexerMode struct {
 // the var name of the mode its lexer starts in.
 //
 // Token modes declared in the grammar are emitted as they are: the grammar
-// author decides which tokens a language sees by giving it a start mode. A
+// author decides which tokens a language sees by giving it an entry mode. A
 // grammar without token modes that serves several languages gets one synthetic
 // mode per language instead, named after the entry rule and holding only the
 // token types reachable from it, so that a keyword of one language stays an
 // ordinary identifier in the others.
-func lexerModes(grammr grammar.Grammar, entryRules []grammar.ParserRule, startModes []string, tokenTypes GenerateTokenTypesResult) ([]lexerMode, []string) {
+func lexerModes(grammr grammar.Grammar, entryRules []grammar.ParserRule, entryModes []string, tokenTypes GenerateTokenTypesResult) ([]lexerMode, []string) {
 	declared := len(grammr.TokenModes()) > 0
 	if !declared && len(entryRules) > 1 {
 		modes := make([]lexerMode, len(entryRules))
@@ -121,8 +121,8 @@ func lexerModes(grammr grammar.Grammar, entryRules []grammar.ParserRule, startMo
 	starts := make([]string, max(1, len(entryRules)))
 	for i := range starts {
 		name := "default"
-		if i < len(startModes) && startModes[i] != "" {
-			name = startModes[i]
+		if i < len(entryModes) && entryModes[i] != "" {
+			name = entryModes[i]
 		}
 		mode := byName[name]
 		if mode == nil {
@@ -156,7 +156,7 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, modes
 			n.AppendLine("return lexer.NewDefaultLexer(sc, ", starts[0], ", modes...)")
 			return
 		}
-		// One start mode per language, index-aligned with the parser's entry
+		// One entry mode per language, index-aligned with the parser's entry
 		// dispatch.
 		n.AppendLine("return lexer.NewMultiLanguageLexer(sc, []int{", strings.Join(starts, ", "), "}, modes...)")
 	})

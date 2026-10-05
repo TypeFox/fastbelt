@@ -31,7 +31,7 @@
 // configuration names another). At lex time the document's language is
 // resolved via [core.LanguageSelector], mirroring the generated parser's entry
 // rule dispatch, and the run starts in that language's mode. Which tokens a
-// language sees is therefore decided by its start mode and the modes reachable
+// language sees is therefore decided by its entry mode and the modes reachable
 // from it.
 //
 // A multi-language grammar that declares no token modes gets one generated
@@ -79,7 +79,7 @@
 //
 //   - push: make another mode active, remembering the current one.
 //   - pop: return to the mode remembered by the matching push. A pop with
-//     nothing to return to keeps the start mode active rather than failing.
+//     nothing to return to keeps the entry mode active rather than failing.
 //   - mode: replace the active mode without remembering it, so a later pop
 //     returns to whatever was below it rather than to the replaced mode.
 //

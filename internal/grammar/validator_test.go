@@ -2018,7 +2018,7 @@ func TestHiddenTokenUsageInTokenModeNotMarkedAsDiagnostic(t *testing.T) {
 }
 
 // A grammar with several entry rules is built as several languages, each with
-// its own start token mode, so no default mode is required and modes that are
+// its own entry token mode, so no default mode is required and modes that are
 // never entered from (or never leave to) another mode are fine.
 func TestMultiLanguageGrammarNeedsNoDefaultTokenMode(t *testing.T) {
 	f := test.New(t, CreateServices())

@@ -119,8 +119,8 @@ func (s *TokenModeStack) Push(m *TokenMode) {
 }
 
 // Pop removes the active mode and returns it, making the mode below it active
-// again. Popping the bottom entry is a no-op that returns the start mode: input
-// with more pops than pushes stays in the start mode rather than failing.
+// again. Popping the bottom entry is a no-op that returns the entry mode: input
+// with more pops than pushes stays in the entry mode rather than failing.
 func (s *TokenModeStack) Pop() *TokenMode {
 	if len(s.modes) <= 1 {
 		return s.modes[0]

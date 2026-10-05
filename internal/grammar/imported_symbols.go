@@ -133,7 +133,13 @@ func newFolderView(docs []*core.Document) *folderView {
 //
 // Elements are sorted by name so the generated code does not depend on the
 // order of declarations across files. Terminals keep file order: it is
-// semantically relevant and critical for correct lexing.
+// semantically relevant and critical for correct lexing. The resulting
+// terminal order is therefore the order of the grammars (sorted by URI by the
+// callers, see ImportSymbols and cmd.LoadGrammarDir) and declaration order
+// within each file. Nothing checks that token rules of different files do not
+// overlap, so grammars with overlapping tokens across files should declare
+// token modes, whose member order fixes the precedence independent of file
+// names.
 func AggregateGrammar(grammars []Grammar) Grammar {
 	folder := NewGrammar()
 	folder.SetName(grammars[0].NameToken())

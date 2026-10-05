@@ -44,7 +44,7 @@ type DefaultLexer struct {
 	modes []*TokenMode
 	// per language: index into modes of the mode every run starts in; index 0
 	// is the fallback
-	startModes []int
+	entryModes []int
 	// running exponential moving average of tokens-per-byte (per language)
 	avgRatio []*parallel.RunningAverage
 }
@@ -54,9 +54,9 @@ type DefaultLexer struct {
 // registered, mirroring the generated parser's entry dispatch.
 func (l *DefaultLexer) Exec(document *core.Document) {
 	language := 0
-	if len(l.startModes) > 1 {
+	if len(l.entryModes) > 1 {
 		selector := service.MustGet[core.LanguageSelector](l.sc)
-		if i, _ := selector.Select(document.URI); i > 0 && i < len(l.startModes) {
+		if i, _ := selector.Select(document.URI); i > 0 && i < len(l.entryModes) {
 			language = i
 		}
 	}
@@ -79,7 +79,7 @@ func (l *DefaultLexer) exec(input string, language int) *lexerResult {
 	// The mode stack is local to this call: a DefaultLexer is shared between
 	// documents and Exec may run concurrently, so input that ends inside a
 	// pushed mode must not leak into the next run.
-	stack := NewTokenModeStack(tokenModes[l.startModes[language]])
+	stack := NewTokenModeStack(tokenModes[l.entryModes[language]])
 	currentTokenMode := stack.Peek()
 
 	var offset int
@@ -169,26 +169,26 @@ func NewDefaultLexer(sc *service.Container, defaultMode int, tokenModes ...*Toke
 }
 
 // NewMultiLanguageLexer returns a lexer that serves one language per entry of
-// startModes, all sharing tokenModes. startModes[i] is the index of the token
+// entryModes, all sharing tokenModes. entryModes[i] is the index of the token
 // mode a run of language i starts in, so a language sees the tokens of its
-// start mode and of the modes reachable from it. The document's language is
+// entry mode and of the modes reachable from it. The document's language is
 // resolved via [core.LanguageSelector]; language 0 is the fallback for
 // documents that match none.
-func NewMultiLanguageLexer(sc *service.Container, startModes []int, tokenModes ...*TokenMode) *DefaultLexer {
-	if len(startModes) == 0 {
+func NewMultiLanguageLexer(sc *service.Container, entryModes []int, tokenModes ...*TokenMode) *DefaultLexer {
+	if len(entryModes) == 0 {
 		panic("lexer: at least one language is required")
 	}
-	avgRatios := make([]*parallel.RunningAverage, len(startModes))
-	for i, startMode := range startModes {
-		if startMode < 0 || startMode >= len(tokenModes) {
-			panic("lexer: start token mode index out of range")
+	avgRatios := make([]*parallel.RunningAverage, len(entryModes))
+	for i, entryMode := range entryModes {
+		if entryMode < 0 || entryMode >= len(tokenModes) {
+			panic("lexer: entry token mode index out of range")
 		}
 		avgRatios[i] = parallel.NewRunningAverage(defaultTokenRatio)
 	}
 	return &DefaultLexer{
 		sc:         sc,
 		modes:      tokenModes,
-		startModes: startModes,
+		entryModes: entryModes,
 		avgRatio:   avgRatios,
 	}
 }

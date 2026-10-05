@@ -90,6 +90,6 @@ func folderGrammar(g Grammar) Grammar {
 
 // ownedBy reports whether node belongs to doc. Folder-wide checks compute over
 // the whole folder but only report on the nodes of the document being validated.
-func ownedBy(doc *core.Document, node core.AstNode) bool {
+func ownedBy(node core.AstNode, doc *core.Document) bool {
 	return node.Document() == doc
 }

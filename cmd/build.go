@@ -69,7 +69,7 @@ func (c *BuildContext) Build() error {
 	}
 
 	entries := make([]grammar.ParserRule, len(c.Languages))
-	startModes := make([]string, len(c.Languages))
+	entryModes := make([]string, len(c.Languages))
 	selectors := make([]generator.Selector, len(c.Languages))
 	for i, lang := range c.Languages {
 		rule, err := findEntryRule(g, lang.Entry)
@@ -80,7 +80,7 @@ func (c *BuildContext) Build() error {
 		if err := checkTokenMode(g, lang); err != nil {
 			return err
 		}
-		startModes[i] = lang.TokenMode
+		entryModes[i] = lang.TokenMode
 		selectors[i] = generator.Selector{
 			LanguageID: lang.LanguageID,
 			Patterns:   lang.Patterns,
@@ -105,7 +105,7 @@ func (c *BuildContext) Build() error {
 	if pkg == "" {
 		pkg = filepath.Base(out)
 	}
-	return Generate(g, entries, startModes, selectors, out, pkg, c.ATN, c.Verbose)
+	return Generate(g, entries, entryModes, selectors, out, pkg, c.ATN, c.Verbose)
 }
 
 // LoadGrammarDir parses, links and validates every top-level .fb file in dir as
@@ -191,7 +191,7 @@ func findEntryRule(g grammar.Grammar, name string) (grammar.ParserRule, error) {
 	return nil, fmt.Errorf("entry rule %q not found in grammar", name)
 }
 
-// checkTokenMode verifies that the language's start token mode exists. An
+// checkTokenMode verifies that the language's entry token mode exists. An
 // empty name means the default mode, which is implicit when the grammar
 // declares no token modes at all and must be declared otherwise.
 func checkTokenMode(g grammar.Grammar, lang Language) error {
@@ -248,11 +248,11 @@ func reportDiagnostics(docs []*core.Document) error {
 }
 
 // Generate writes the generated Go files for grammar g into outDir. entries
-// lists the entry rules and startModes the start token modes (both
-// index-aligned to the configured languages; a nil startModes or empty name
+// lists the entry rules and entryModes the entry token modes (both
+// index-aligned to the configured languages; a nil entryModes or empty name
 // means the default mode); with a single entry the output matches the
 // single-language CLI.
-func Generate(g grammar.Grammar, entries []grammar.ParserRule, startModes []string, selectors []generator.Selector, outDir, pkg string, atn, verbose bool) error {
+func Generate(g grammar.Grammar, entries []grammar.ParserRule, entryModes []string, selectors []generator.Selector, outDir, pkg string, atn, verbose bool) error {
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return err
 	}
@@ -282,7 +282,7 @@ func Generate(g grammar.Grammar, entries []grammar.ParserRule, startModes []stri
 		{"completion-parser", "completion_parser_gen.go", generator.GenerateCompletionParser(g, entries, pkg, tokenTypes, atnData)},
 		{"parser-lookahead", "parser_lookahead_gen.go", generator.GenerateParserLookahead(g, pkg, tokenTypes, atnData)},
 		{"completion", "completion_gen.go", generator.GenerateCompletion(g, pkg)},
-		{"lexer", "lexer_gen.go", generator.GenerateLexer(g, entries, startModes, pkg, tokenTypes)},
+		{"lexer", "lexer_gen.go", generator.GenerateLexer(g, entries, entryModes, pkg, tokenTypes)},
 		{"services", "services_gen.go", generator.GenerateServices(g, selectors, pkg)},
 		{"atn", "atn_gen.go", generator.GenerateATN(g, pkg, tokenTypes)},
 	}

@@ -151,10 +151,10 @@ func TestExecNestedPushMode(t *testing.T) {
 }
 
 func TestExecSetModeDoesNotGrowTheModeStack(t *testing.T) {
-	// `a` switches from the start mode to `second` with a set-mode command.
+	// `a` switches from the entry mode to `second` with a set-mode command.
 	// Because set-mode replaces the active mode rather than pushing onto the
 	// stack, the following pop has nothing to return to and `second` stays
-	// active - which is why `y` from the start mode no longer matches.
+	// active - which is why `y` from the entry mode no longer matches.
 	a := literal(1, "A", "a")
 	b := literal(2, "B", "b")
 	inSecond := literal(3, "IN_SECOND", "x")
@@ -173,7 +173,7 @@ func TestExecSetModeDoesNotGrowTheModeStack(t *testing.T) {
 
 	result := lexer.Lex("axbxy")
 	assert.Equal(t, []string{"A", "IN_SECOND", "B", "IN_SECOND"}, names(result.Tokens))
-	require.Len(t, result.Errors, 1, "y belongs to the start mode, which is no longer active")
+	require.Len(t, result.Errors, 1, "y belongs to the entry mode, which is no longer active")
 	assert.Equal(t, int32(4), result.Errors[0].Range.Start)
 }
 
@@ -208,8 +208,8 @@ func TestExecSetModeKeepsOuterModeReachable(t *testing.T) {
 	assert.Empty(t, result.Errors)
 }
 
-func TestExecUnbalancedPopStaysInStartMode(t *testing.T) {
-	// A pop in the start mode has nothing to return to and must not break
+func TestExecUnbalancedPopStaysInEntryMode(t *testing.T) {
+	// A pop in the entry mode has nothing to return to and must not break
 	// lexing of the remaining input.
 	pop := literal(1, "POP", ")")
 	word := matchRunes(2, "WORD", lowercase)

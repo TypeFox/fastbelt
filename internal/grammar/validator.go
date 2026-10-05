@@ -169,7 +169,7 @@ func checkTokenModesAreReachable(g, folder Grammar, ctx context.Context, accept 
 		}
 	}
 	if entryMode == nil {
-		// Without a default mode the start modes are configured per language
+		// Without a default mode the entry modes are configured per language
 		// by the build, so reachability cannot be judged from the grammar.
 		return
 	}
@@ -201,7 +201,7 @@ func checkTokenModesAreReachable(g, folder Grammar, ctx context.Context, accept 
 
 func checkIfNonDefaultTokenModesHasNoExit(g, folder Grammar, _ context.Context, accept core.ValidationAcceptor) {
 	if len(g.TokenModes()) == 0 || !hasDefaultTokenMode(folder) {
-		// Without a default mode every mode is a potential start mode of a
+		// Without a default mode every mode is a potential entry mode of a
 		// language and needs no way back.
 		return
 	}
@@ -304,7 +304,7 @@ func checkUniqueTokenModeNames(g, folder Grammar, accept core.ValidationAcceptor
 	for name, modes := range seen {
 		if len(modes) > 1 {
 			for _, mode := range modes {
-				if !ownedBy(g.Document(), mode) {
+				if !ownedBy(mode, g.Document()) {
 					continue
 				}
 				token := tokenModeNameToken(mode)
@@ -812,7 +812,7 @@ func checkUniqueRuleNames(g, folder Grammar, accept core.ValidationAcceptor) {
 	for name, nodes := range seen {
 		if len(nodes) > 1 {
 			for _, node := range nodes {
-				if !ownedBy(g.Document(), node) {
+				if !ownedBy(node, g.Document()) {
 					continue
 				}
 				accept(core.NewDiagnostic(
@@ -837,7 +837,7 @@ func checkUniqueInterfaceNames(g, folder Grammar, accept core.ValidationAcceptor
 	for name, ifaces := range seen {
 		if len(ifaces) > 1 {
 			for _, iface := range ifaces {
-				if !ownedBy(g.Document(), iface) {
+				if !ownedBy(iface, g.Document()) {
 					continue
 				}
 				accept(core.NewDiagnostic(
@@ -2007,7 +2007,7 @@ func checkIfKeywordPureStandaloneOrTokenDecl(g, folder Grammar, _ context.Contex
 			continue
 		}
 		for kw := range kws {
-			if !ownedBy(g.Document(), kw) {
+			if !ownedBy(kw, g.Document()) {
 				continue
 			}
 			accept(core.NewDiagnostic(

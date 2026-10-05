@@ -382,7 +382,7 @@ func TestGenerateLexerSyntheticLanguageModes(t *testing.T) {
 }
 
 // Declared token modes are emitted once and unpruned; languages only differ in
-// their start mode, and no implicit default mode is added.
+// their entry mode, and no implicit default mode is added.
 func TestGenerateLexerDeclaredModesAreShared(t *testing.T) {
 	f := test.New(t, grammar.CreateServices())
 	doc := f.Parse(`

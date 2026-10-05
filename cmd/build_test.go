@@ -192,7 +192,7 @@ func TestBuildUsesConfiguredStartTokenMode(t *testing.T) {
 	require.Contains(t, string(code), "lexer.NewMultiLanguageLexer(sc, []int{TokenMode_default, TokenMode_Inner}, modes...)")
 }
 
-func TestBuildRequiresStartModeWithoutDefaultTokenMode(t *testing.T) {
+func TestBuildRequiresEntryModeWithoutDefaultTokenMode(t *testing.T) {
 	dir := writeGrammarDir(t, "a.fb", `
 		grammar Multi
 		interface Greeting { Name string }

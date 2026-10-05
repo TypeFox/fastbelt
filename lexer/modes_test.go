@@ -167,7 +167,7 @@ func TestTokenModeStackPopAtBottomIsNoOp(t *testing.T) {
 	first := NewTokenMode("first")
 	stack := NewTokenModeStack(first)
 
-	// An unbalanced pop keeps the start mode active rather than emptying the
+	// An unbalanced pop keeps the entry mode active rather than emptying the
 	// stack, so lexing can continue.
 	assert.Same(t, first, stack.Pop())
 	assert.Same(t, first, stack.Peek())
