@@ -18,6 +18,7 @@ import (
 // SemanticTokensProvider defines the interface for handling semantic tokens requests in the LSP.
 // Also provides the token legend that is sent to the language client.
 type SemanticTokensProvider interface {
+	DocumentStateRequirements
 	SemanticTokensLegendProvider
 
 	HandleSemanticTokensFullRequest(ctx context.Context, params *lsp.SemanticTokensParams) (*lsp.SemanticTokens, error)
@@ -32,6 +33,7 @@ type TokenHighlightingStrategyAcceptor func(tokenType uint32, tokenModifier uint
 // Note that the "accept" function should only be called once per token.
 // Calling it multiple times for the same token will result in an error being returned to the language client.
 type TokenHighlightingStrategy interface {
+	// Highlight is the function called by the [TokenBasedSemanticTokensProvider] for each token in the document.
 	Highlight(ctx context.Context, token core.Token, accept TokenHighlightingStrategyAcceptor)
 }
 
@@ -41,6 +43,7 @@ type TokenHighlightingStrategy interface {
 // Otherwise, comment tokens will be highlighted using the comment token type from the legend with no modifiers.
 type CommentTokenHighlightingStrategy interface {
 	TokenHighlightingStrategy
+	// HighlightComment is the function called by the [TokenBasedSemanticTokensProvider] for each comment token in the document.
 	HighlightComment(ctx context.Context, commentToken core.Token, accept TokenHighlightingStrategyAcceptor)
 }
 
@@ -63,6 +66,13 @@ func NewTokenBasedSemanticTokensProvider(sc *service.Container, legendProvider S
 		strategy:         strategy,
 		commentTypeIndex: commentTypeIndex,
 	}
+}
+
+// RequiredState for the semantic token provider expects that the whole workspace is linked.
+// During semantic tokens computation, the adopter code might resolve references throughout
+// the workspace in order to figure out the type of a token.
+func (p *TokenBasedSemanticTokensProvider) RequiredState() (core.DocumentState, bool) {
+	return core.DocStateLinked, true
 }
 
 func (p *TokenBasedSemanticTokensProvider) Legend() lsp.SemanticTokensLegend {

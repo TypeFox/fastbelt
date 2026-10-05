@@ -285,19 +285,19 @@ func dispatchRead[P, R any](sc *service.Container, ctx context.Context, uri lsp.
 }
 
 func (s *DefaultLanguageServer) Completion(ctx context.Context, params *lsp.CompletionParams) (*lsp.CompletionList, error) {
-	return dispatchRead[CompletionProvider](s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p CompletionProvider) (*lsp.CompletionList, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p CompletionProvider) (*lsp.CompletionList, error) {
 		return p.HandleCompletionRequest(ctx, params)
 	})
 }
 
 func (s *DefaultLanguageServer) Definition(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.DefinitionLink, error) {
-	return dispatchRead[DefinitionProvider](s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p DefinitionProvider) ([]lsp.DefinitionLink, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p DefinitionProvider) ([]lsp.DefinitionLink, error) {
 		return p.HandleDefinitionRequest(ctx, params)
 	})
 }
 
 func (s *DefaultLanguageServer) References(ctx context.Context, params *lsp.ReferenceParams) ([]lsp.Location, error) {
-	return dispatchRead[ReferencesProvider](s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p ReferencesProvider) ([]lsp.Location, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p ReferencesProvider) ([]lsp.Location, error) {
 		return p.HandleReferencesRequest(ctx, params)
 	})
 }
@@ -311,12 +311,12 @@ func (s *DefaultLanguageServer) SetTrace(ctx context.Context, params *lsp.SetTra
 	return nil
 }
 func (s *DefaultLanguageServer) IncomingCalls(ctx context.Context, params *lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error) {
-	return dispatchRead[CallHierarchyProvider](s.sc, ctx, params.Item.URI, false, func(ctx context.Context, p CallHierarchyProvider) ([]lsp.CallHierarchyIncomingCall, error) {
+	return dispatchRead(s.sc, ctx, params.Item.URI, false, func(ctx context.Context, p CallHierarchyProvider) ([]lsp.CallHierarchyIncomingCall, error) {
 		return p.HandleIncomingCallsRequest(ctx, params)
 	})
 }
 func (s *DefaultLanguageServer) OutgoingCalls(ctx context.Context, params *lsp.CallHierarchyOutgoingCallsParams) ([]lsp.CallHierarchyOutgoingCall, error) {
-	return dispatchRead[CallHierarchyProvider](s.sc, ctx, params.Item.URI, false, func(ctx context.Context, p CallHierarchyProvider) ([]lsp.CallHierarchyOutgoingCall, error) {
+	return dispatchRead(s.sc, ctx, params.Item.URI, false, func(ctx context.Context, p CallHierarchyProvider) ([]lsp.CallHierarchyOutgoingCall, error) {
 		return p.HandleOutgoingCallsRequest(ctx, params)
 	})
 }
@@ -351,12 +351,12 @@ func dispatchResolveRead[P, RP, T any](sc *service.Container, ctx context.Contex
 }
 
 func (s *DefaultLanguageServer) ResolveCodeAction(ctx context.Context, params *lsp.CodeAction) (*lsp.CodeAction, error) {
-	return dispatchResolveRead[CodeActionProvider, ResolvingCodeActionProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingCodeActionProvider, params *lsp.CodeAction) (*lsp.CodeAction, error) {
+	return dispatchResolveRead[CodeActionProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingCodeActionProvider, params *lsp.CodeAction) (*lsp.CodeAction, error) {
 		return p.HandleCodeActionResolveRequest(ctx, params)
 	})
 }
 func (s *DefaultLanguageServer) ResolveCodeLens(ctx context.Context, params *lsp.CodeLens) (*lsp.CodeLens, error) {
-	return dispatchResolveRead[CodeLensProvider, ResolvingCodeLensProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingCodeLensProvider, params *lsp.CodeLens) (*lsp.CodeLens, error) {
+	return dispatchResolveRead[CodeLensProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingCodeLensProvider, params *lsp.CodeLens) (*lsp.CodeLens, error) {
 		return p.HandleCodeLensResolveRequest(ctx, params)
 	})
 }
@@ -364,12 +364,12 @@ func (s *DefaultLanguageServer) ResolveCompletionItem(ctx context.Context, param
 	return nil, nil
 }
 func (s *DefaultLanguageServer) ResolveDocumentLink(ctx context.Context, params *lsp.DocumentLink) (*lsp.DocumentLink, error) {
-	return dispatchResolveRead[DocumentLinkProvider, ResolvingDocumentLinkProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingDocumentLinkProvider, params *lsp.DocumentLink) (*lsp.DocumentLink, error) {
+	return dispatchResolveRead[DocumentLinkProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingDocumentLinkProvider, params *lsp.DocumentLink) (*lsp.DocumentLink, error) {
 		return p.HandleDocumentLinkResolveRequest(ctx, params)
 	})
 }
 func (s *DefaultLanguageServer) Resolve(ctx context.Context, params *lsp.InlayHint) (*lsp.InlayHint, error) {
-	return dispatchResolveRead[InlayHintProvider, ResolvingInlayHintProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingInlayHintProvider, params *lsp.InlayHint) (*lsp.InlayHint, error) {
+	return dispatchResolveRead[InlayHintProvider](s.sc, ctx, params, func(ctx context.Context, p ResolvingInlayHintProvider, params *lsp.InlayHint) (*lsp.InlayHint, error) {
 		return p.HandleInlayHintResolveRequest(ctx, params)
 	})
 }
@@ -386,12 +386,12 @@ func (s *DefaultLanguageServer) DidSaveNotebookDocument(ctx context.Context, par
 	return nil
 }
 func (s *DefaultLanguageServer) CodeAction(ctx context.Context, params *lsp.CodeActionParams) ([]lsp.CodeAction, error) {
-	return dispatchRead[CodeActionProvider](s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p CodeActionProvider) ([]lsp.CodeAction, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p CodeActionProvider) ([]lsp.CodeAction, error) {
 		return p.HandleCodeActionRequest(ctx, params)
 	})
 }
 func (s *DefaultLanguageServer) CodeLens(ctx context.Context, params *lsp.CodeLensParams) ([]lsp.CodeLens, error) {
-	return dispatchRead[CodeLensProvider](s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p CodeLensProvider) ([]lsp.CodeLens, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p CodeLensProvider) ([]lsp.CodeLens, error) {
 		return p.HandleCodeLensRequest(ctx, params)
 	})
 }
@@ -399,7 +399,7 @@ func (s *DefaultLanguageServer) ColorPresentation(ctx context.Context, params *l
 	return nil, nil
 }
 func (s *DefaultLanguageServer) Declaration(ctx context.Context, params *lsp.DeclarationParams) ([]lsp.DefinitionLink, error) {
-	return dispatchRead[DeclarationProvider](s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p DeclarationProvider) ([]lsp.DefinitionLink, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p DeclarationProvider) ([]lsp.DefinitionLink, error) {
 		return p.HandleDeclarationRequest(ctx, params)
 	})
 }
@@ -410,23 +410,23 @@ func (s *DefaultLanguageServer) DocumentColor(ctx context.Context, params *lsp.D
 	return nil, nil
 }
 func (s *DefaultLanguageServer) DocumentHighlight(ctx context.Context, params *lsp.DocumentHighlightParams) ([]lsp.DocumentHighlight, error) {
-	return dispatchRead[DocumentHighlightProvider](s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p DocumentHighlightProvider) ([]lsp.DocumentHighlight, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p DocumentHighlightProvider) ([]lsp.DocumentHighlight, error) {
 		return p.HandleDocumentHighlightRequest(ctx, params)
 	})
 }
 func (s *DefaultLanguageServer) DocumentLink(ctx context.Context, params *lsp.DocumentLinkParams) ([]lsp.DocumentLink, error) {
-	return dispatchRead[DocumentLinkProvider](s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p DocumentLinkProvider) ([]lsp.DocumentLink, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p DocumentLinkProvider) ([]lsp.DocumentLink, error) {
 		return p.HandleDocumentLinkRequest(ctx, params)
 	})
 }
 func (s *DefaultLanguageServer) DocumentSymbol(ctx context.Context, params *lsp.DocumentSymbolParams) ([]any, error) {
-	symbols, err := dispatchRead[DocumentSymbolProvider](s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p DocumentSymbolProvider) ([]lsp.DocumentSymbol, error) {
+	symbols, err := dispatchRead(s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p DocumentSymbolProvider) ([]lsp.DocumentSymbol, error) {
 		return p.HandleDocumentSymbolRequest(ctx, params)
 	})
 	return toAnySlice(symbols), err
 }
 func (s *DefaultLanguageServer) FoldingRange(ctx context.Context, params *lsp.FoldingRangeParams) ([]lsp.FoldingRange, error) {
-	return dispatchRead[FoldingRangeProvider](s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p FoldingRangeProvider) ([]lsp.FoldingRange, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p FoldingRangeProvider) ([]lsp.FoldingRange, error) {
 		return p.HandleFoldingRangeRequest(ctx, params)
 	})
 }
@@ -434,17 +434,17 @@ func (s *DefaultLanguageServer) Formatting(ctx context.Context, params *lsp.Docu
 	return nil, nil
 }
 func (s *DefaultLanguageServer) Hover(ctx context.Context, params *lsp.HoverParams) (*lsp.Hover, error) {
-	return dispatchRead[HoverProvider](s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p HoverProvider) (*lsp.Hover, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p HoverProvider) (*lsp.Hover, error) {
 		return p.HandleHoverRequest(ctx, params)
 	})
 }
 func (s *DefaultLanguageServer) Implementation(ctx context.Context, params *lsp.ImplementationParams) ([]lsp.DefinitionLink, error) {
-	return dispatchRead[ImplementationProvider](s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p ImplementationProvider) ([]lsp.DefinitionLink, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p ImplementationProvider) ([]lsp.DefinitionLink, error) {
 		return p.HandleImplementationRequest(ctx, params)
 	})
 }
 func (s *DefaultLanguageServer) InlayHint(ctx context.Context, params *lsp.InlayHintParams) ([]lsp.InlayHint, error) {
-	return dispatchRead[InlayHintProvider](s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p InlayHintProvider) ([]lsp.InlayHint, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p InlayHintProvider) ([]lsp.InlayHint, error) {
 		return p.HandleInlayHintRequest(ctx, params)
 	})
 }
@@ -487,7 +487,7 @@ func (s *DefaultLanguageServer) ExecuteCommand(ctx context.Context, params *lsp.
 }
 func (s *DefaultLanguageServer) Symbol(ctx context.Context, params *lsp.WorkspaceSymbolParams) ([]lsp.SymbolInformation, error) {
 	// No provider registered, return empty
-	return dispatchRead[WorkspaceSymbolProvider](s.sc, ctx, "", false, func(ctx context.Context, p WorkspaceSymbolProvider) ([]lsp.SymbolInformation, error) {
+	return dispatchRead(s.sc, ctx, "", false, func(ctx context.Context, p WorkspaceSymbolProvider) ([]lsp.SymbolInformation, error) {
 		return p.HandleWorkspaceSymbolRequest(ctx, params)
 	})
 }
@@ -513,17 +513,17 @@ func (s *DefaultLanguageServer) OnTypeFormatting(ctx context.Context, params *ls
 	return nil, nil
 }
 func (s *DefaultLanguageServer) PrepareCallHierarchy(ctx context.Context, params *lsp.CallHierarchyPrepareParams) ([]lsp.CallHierarchyItem, error) {
-	return dispatchRead[CallHierarchyProvider](s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p CallHierarchyProvider) ([]lsp.CallHierarchyItem, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p CallHierarchyProvider) ([]lsp.CallHierarchyItem, error) {
 		return p.HandlePrepareCallHierarchyRequest(ctx, params)
 	})
 }
 func (s *DefaultLanguageServer) PrepareRename(ctx context.Context, params *lsp.PrepareRenameParams) (*lsp.PrepareRenameResult, error) {
-	return dispatchRead[RenameProvider](s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p RenameProvider) (*lsp.PrepareRenameResult, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p RenameProvider) (*lsp.PrepareRenameResult, error) {
 		return p.PrepareRenameRequest(ctx, params)
 	})
 }
 func (s *DefaultLanguageServer) PrepareTypeHierarchy(ctx context.Context, params *lsp.TypeHierarchyPrepareParams) ([]lsp.TypeHierarchyItem, error) {
-	return dispatchRead[TypeHierarchyProvider](s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p TypeHierarchyProvider) ([]lsp.TypeHierarchyItem, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p TypeHierarchyProvider) ([]lsp.TypeHierarchyItem, error) {
 		return p.HandlePrepareTypeHierarchyRequest(ctx, params)
 	})
 }
@@ -534,7 +534,7 @@ func (s *DefaultLanguageServer) RangesFormatting(ctx context.Context, params *ls
 	return nil, nil
 }
 func (s *DefaultLanguageServer) Rename(ctx context.Context, params *lsp.RenameParams) (*lsp.WorkspaceEdit, error) {
-	return dispatchRead[RenameProvider](s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p RenameProvider) (*lsp.WorkspaceEdit, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p RenameProvider) (*lsp.WorkspaceEdit, error) {
 		return p.HandleRenameRequest(ctx, params)
 	})
 }
@@ -542,7 +542,7 @@ func (s *DefaultLanguageServer) SelectionRange(ctx context.Context, params *lsp.
 	return nil, nil
 }
 func (s *DefaultLanguageServer) SemanticTokensFull(ctx context.Context, params *lsp.SemanticTokensParams) (*lsp.SemanticTokens, error) {
-	return dispatchRead[SemanticTokensProvider](s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p SemanticTokensProvider) (*lsp.SemanticTokens, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, true, func(ctx context.Context, p SemanticTokensProvider) (*lsp.SemanticTokens, error) {
 		return p.HandleSemanticTokensFullRequest(ctx, params)
 	})
 }
@@ -553,22 +553,22 @@ func (s *DefaultLanguageServer) SemanticTokensRange(ctx context.Context, params 
 	return nil, nil
 }
 func (s *DefaultLanguageServer) SignatureHelp(ctx context.Context, params *lsp.SignatureHelpParams) (*lsp.SignatureHelp, error) {
-	return dispatchRead[SignatureHelpProvider](s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p SignatureHelpProvider) (*lsp.SignatureHelp, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p SignatureHelpProvider) (*lsp.SignatureHelp, error) {
 		return p.HandleSignatureHelpRequest(ctx, params)
 	})
 }
 func (s *DefaultLanguageServer) TypeDefinition(ctx context.Context, params *lsp.TypeDefinitionParams) ([]lsp.DefinitionLink, error) {
-	return dispatchRead[TypeDefinitionProvider](s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p TypeDefinitionProvider) ([]lsp.DefinitionLink, error) {
+	return dispatchRead(s.sc, ctx, params.TextDocument.URI, false, func(ctx context.Context, p TypeDefinitionProvider) ([]lsp.DefinitionLink, error) {
 		return p.HandleTypeDefinitionRequest(ctx, params)
 	})
 }
 func (s *DefaultLanguageServer) Subtypes(ctx context.Context, params *lsp.TypeHierarchySubtypesParams) ([]lsp.TypeHierarchyItem, error) {
-	return dispatchRead[TypeHierarchyProvider](s.sc, ctx, params.Item.URI, false, func(ctx context.Context, p TypeHierarchyProvider) ([]lsp.TypeHierarchyItem, error) {
+	return dispatchRead(s.sc, ctx, params.Item.URI, false, func(ctx context.Context, p TypeHierarchyProvider) ([]lsp.TypeHierarchyItem, error) {
 		return p.HandleSubtypesRequest(ctx, params)
 	})
 }
 func (s *DefaultLanguageServer) Supertypes(ctx context.Context, params *lsp.TypeHierarchySupertypesParams) ([]lsp.TypeHierarchyItem, error) {
-	return dispatchRead[TypeHierarchyProvider](s.sc, ctx, params.Item.URI, false, func(ctx context.Context, p TypeHierarchyProvider) ([]lsp.TypeHierarchyItem, error) {
+	return dispatchRead(s.sc, ctx, params.Item.URI, false, func(ctx context.Context, p TypeHierarchyProvider) ([]lsp.TypeHierarchyItem, error) {
 		return p.HandleSupertypesRequest(ctx, params)
 	})
 }
