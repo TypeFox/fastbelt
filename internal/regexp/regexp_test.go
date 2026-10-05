@@ -111,3 +111,10 @@ func TestStartChars_RuneNonAsciiBigRange(t *testing.T) {
 	expectedRunes := automatons.NewRuneSetRange(0, 0xFF)
 	assert.True(t, expectedRunes.Equals(*startChars))
 }
+
+// Go's parser rewrites [eE] into a case-folded literal; both cases must match.
+func TestCaseFoldedLiteral(t *testing.T) {
+	regexp := MustCompile(`[0-9]+[eE][0-9]+`)
+	checkRegexp(t, regexp, "1e2", []int{0, 3})
+	checkRegexp(t, regexp, "1E2", []int{0, 3})
+}
