@@ -1,8 +1,6 @@
-// Copyright 2025 TypeFox GmbH
-// This program and the accompanying materials are made available under the
-// terms of the MIT License, which is available in the project root.
-
 package {{.GoPackage}}
+
+//go:generate go run ./gen
 
 import (
 	"typefox.dev/fastbelt/linking"
@@ -13,8 +11,6 @@ import (
 
 // SetupServices sets up the base services for the {{.LanguageLabel}} language.
 func SetupServices(sc *service.Container) {
-	service.Put[workspace.LanguageID](sc, "{{.LanguageID}}")
-	service.Put[workspace.FileExtensions](sc, []string{"{{.FileDotExt}}"})
 	textdoc.SetupDefaultServices(sc)
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)

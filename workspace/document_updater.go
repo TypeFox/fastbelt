@@ -68,7 +68,10 @@ func (s *DefaultDocumentUpdater) Update(ctx context.Context, changed []textdoc.H
 			// (e.g. after the initial workspace load). Relinked documents keep
 			// their parsed AST, exported symbols, and local symbols because the
 			// documents themselves did not change.
-			keepState := core.DocStateParsed | core.DocStateExportedSymbols | core.DocStateLocalSymbols
+			keepState := core.DocStateLexed |
+				core.DocStateParsed |
+				core.DocStateExportedSymbols |
+				core.DocStateLocalSymbols
 			docs := make([]*core.Document, 0, len(changed)+10)
 			for doc := range docManager.All() {
 				if !changedURIs.Has(doc.URI.StringUnencoded()) && changeImpact.Affected(doc, changedURIs) {

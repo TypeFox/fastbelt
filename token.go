@@ -6,11 +6,14 @@ package fastbelt
 
 import "typefox.dev/fastbelt/util/collections"
 
-// SkippedModifier marks token types that the lexer should drop from all output streams.
-const SkippedModifier = -1
+// DefaultTokenModifier marks token types that the lexer should collect in [Document.Tokens].
+const DefaultTokenModifier = 0
 
-// CommentModifier marks token types that the lexer should collect in Document.Comments.
-const CommentModifier = -2
+// SkippedModifier marks token types that the lexer should drop from all output streams.
+const SkippedModifier = 1
+
+// CommentModifier marks token types that the lexer should collect in [Document.Comments].
+const CommentModifier = 2
 
 // TokenKind denotes the grammar construct that produced a TokenType:
 // 'Keyword', 'Token(Declaration)', or 'Group'. It is distinct from Modifier

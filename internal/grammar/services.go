@@ -7,6 +7,7 @@ package grammar
 //go:generate go run ../../cmd/fastbelt generate ./grammar.fb -v --atn
 
 import (
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
@@ -16,20 +17,24 @@ import (
 
 // SetupServices sets up the base services for the grammar language.
 func SetupServices(sc *service.Container) {
-	service.Put[workspace.LanguageID](sc, "fastbelt")
-	service.Put[workspace.FileExtensions](sc, []string{".fb"})
-
+	service.Put[core.LanguageSelector](
+		sc,
+		core.NewDefaultLanguageSelector(sc,
+			core.NewDocumentSelectorWithPatterns("fastbelt", "**/*.fb"),
+		),
+	)
 	textdoc.SetupDefaultServices(sc)
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)
 	SetupGeneratedServices(sc)
 
-	// Override the default parser lookahead
+	// We have a custom lookahead to support grammars without semicolons.
 	service.Override(sc, newFastbeltParserLookahead())
 
-	// Override the default scope provider
 	service.Override[FastbeltScopeProvider](sc, newScopeProviderImpl(sc))
 	service.Override(sc, newImportedSymbolsProviderImpl(sc))
+	// Every .fb file of a folder is part of one grammar, requires custom change impact computation.
+	service.Override(sc, newChangeImpactImpl(sc))
 
 	// Set a semantic token highlighting strategy
 	service.Put(sc, server.NewTokenBasedSemanticTokensProvider(

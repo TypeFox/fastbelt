@@ -146,7 +146,7 @@ func TestTokenTypeUsageBuilders(t *testing.T) {
 
 	assert.True(t, UseTokenType(tokenType).WithModifier(core.SkippedModifier).IsSkipped())
 	assert.True(t, UseTokenType(tokenType).WithModifier(core.CommentModifier).IsComment())
-	assert.False(t, UseTokenType(tokenType).WithModifier(7).IsSkipped())
+	assert.Panics(t, func() { UseTokenType(tokenType).WithModifier(7) })
 }
 
 // --- TokenModeStack ---
@@ -167,7 +167,7 @@ func TestTokenModeStackPopAtBottomIsNoOp(t *testing.T) {
 	first := NewTokenMode("first")
 	stack := NewTokenModeStack(first)
 
-	// An unbalanced pop keeps the start mode active rather than emptying the
+	// An unbalanced pop keeps the entry mode active rather than emptying the
 	// stack, so lexing can continue.
 	assert.Same(t, first, stack.Pop())
 	assert.Same(t, first, stack.Peek())

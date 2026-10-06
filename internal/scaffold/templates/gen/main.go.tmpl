@@ -1,0 +1,29 @@
+// Command gen generates the {{.LanguageLabel}} language package via the
+// fastbelt programmatic build API. It is invoked by the //go:generate
+// directive in services.go of the parent package.
+package main
+
+import (
+	"log"
+
+	"typefox.dev/fastbelt/cmd"
+)
+
+func main() {
+	ctx := &cmd.BuildContext{
+		Input:   ".",
+		Package: "{{.GoPackage}}",
+		// One entry per language served by this package.
+		Languages: []cmd.Language{
+			{
+				Entry:      "Document",
+				LanguageID: "{{.LanguageID}}",
+				Patterns:   []string{"**/*{{.FileDotExt}}"},
+			},
+		},
+		Verbose: true,
+	}
+	if err := ctx.Build(); err != nil {
+		log.Fatalf("{{.GoPackage}} generation failed: %v", err)
+	}
+}
