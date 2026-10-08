@@ -7,6 +7,7 @@ package fastbelt
 import (
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/lsp"
@@ -17,12 +18,15 @@ import (
 // For example, the Root node may be nil if the document has not been parsed yet.
 //
 // Access to the fields of Document should be synchronized using a [typefox.dev/fastbelt/workspace] Lock.
+// Readers admitted based on the document's build state (workspace Lock.ReadAt) may only access
+// the fields produced by the states they requested; later fields may still be under construction.
 // The document struct should never be copied after creation.
 type Document struct {
 	// URI identifies the document in the workspace.
 	URI URI
-	// State tracks which build phases already ran for this document.
-	State DocumentState
+	// state tracks which build phases already ran for this document.
+	// Access it through [Document.State] and [Document.SetState].
+	state atomic.Uint32
 	// Root is the AST root produced by parsing.
 	// It is nil until parsing succeeds.
 	Root AstNode
@@ -78,7 +82,6 @@ func NewDocument(textDoc textdoc.Handle) *Document {
 	uri := ParseURI(string(textDoc.URI()))
 	return &Document{
 		URI:                   uri,
-		State:                 0,
 		TextDoc:               textDoc,
 		Root:                  nil,
 		LocalSymbols:          nil,
@@ -106,6 +109,24 @@ func NewDocumentFromString(uri, languageId, content string) (*Document, error) {
 	}
 	doc := NewDocument(textDoc)
 	return doc, nil
+}
+
+// State returns the build phases that have completed for this document.
+//
+// It is safe to call concurrently with a running build: the atomic load pairs
+// with [Document.SetState], so a caller that observes a state bit is
+// guaranteed to see all document data written by that build phase.
+func (d *Document) State() DocumentState {
+	return DocumentState(d.state.Load())
+}
+
+// SetState replaces the document's build state.
+//
+// Callers must hold the workspace write lock and must write all document data
+// belonging to a phase before setting its bit; the atomic store publishes that
+// data to concurrent [Document.State] readers.
+func (d *Document) SetState(state DocumentState) {
+	d.state.Store(uint32(state))
 }
 
 // DocumentState is a bitmask capturing the already completed build phases of a document.
@@ -152,9 +173,9 @@ func (s DocumentState) String() string {
 	return strings.Join(flags, " | ")
 }
 
-// Has reports whether flag is set in s.
+// Has reports whether flag is set in s. If flag is a combination of multiple bits, Has reports whether all of them are set.
 func (s DocumentState) Has(flag DocumentState) bool {
-	return s&flag != 0
+	return s&flag == flag
 }
 
 // With returns s with flag set.

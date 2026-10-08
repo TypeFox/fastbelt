@@ -27,6 +27,9 @@ type DiagnosticsPublisher struct {
 	sc *service.Container
 }
 
+// Ensure DiagnosticsPublisher implements InitializeParticipant.
+var _ InitializeParticipant = (*DiagnosticsPublisher)(nil)
+
 // NewDiagnosticsPublisher creates a new instance of [DiagnosticsPublisher].
 func NewDiagnosticsPublisher(sc *service.Container) *DiagnosticsPublisher {
 	return &DiagnosticsPublisher{sc: sc}

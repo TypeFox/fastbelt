@@ -25,8 +25,17 @@ type DefaultDefinitionProvider struct {
 	sc *service.Container
 }
 
+// Ensure the DefaultDefinitionProvider implements the expected interfaces.
+var _ DefinitionProvider = (*DefaultDefinitionProvider)(nil)
+var _ DocumentStateRequirements = (*DefaultDefinitionProvider)(nil)
+
 func NewDefaultDefinitionProvider(sc *service.Container) DefinitionProvider {
 	return &DefaultDefinitionProvider{sc: sc}
+}
+
+// The default definition provider requires the document in question to be linked.
+func (s *DefaultDefinitionProvider) RequiredState() (core.DocumentState, bool) {
+	return core.DocStateLinked, false
 }
 
 func (s *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.DefinitionLink, error) {
