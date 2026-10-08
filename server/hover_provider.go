@@ -7,9 +7,7 @@ package server
 import (
 	"context"
 
-	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/service"
-	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
 
@@ -28,8 +26,8 @@ func NewDefaultHoverProvider(sc *service.Container) HoverProvider {
 }
 
 func (s *DefaultHoverProvider) HandleHoverRequest(ctx context.Context, params *lsp.HoverParams) (*lsp.Hover, error) {
-	target, sourceRange, ok := ResolveHoverTarget(ctx, s.sc, params)
-	if !ok {
+	target, sourceRange := TargetAtCursor(ctx, s.sc, &params.TextDocumentPositionParams)
+	if target == nil {
 		return nil, nil
 	}
 
@@ -49,36 +47,4 @@ func (s *DefaultHoverProvider) HandleHoverRequest(ctx context.Context, params *l
 		},
 		Range: sourceRange,
 	}, nil
-}
-
-// ResolveHoverTarget resolves the AST node referenced at the hover position
-// in params - the declaration itself, or any name/reference that resolves
-// to it - along with the source range of that name/reference. ok is false
-// when there's nothing to hover at that position (no document, no token
-// there, or no resolvable name), in which case callers should return
-// (nil, nil) from their own HandleHoverRequest.
-//
-// Custom HoverProviders can use it to show more than documentation comments
-// without repeating this lookup.
-func ResolveHoverTarget(ctx context.Context, sc *service.Container, params *lsp.HoverParams) (target core.AstNode, sourceRange lsp.Range, ok bool) {
-	documentManager := service.MustGet[workspace.DocumentManager](sc)
-	uri := core.ParseURI(string(params.TextDocument.URI))
-	doc := documentManager.Get(uri)
-	if doc == nil {
-		return nil, lsp.Range{}, false
-	}
-
-	offset := doc.TextDoc.OffsetAt(params.Position)
-	first, second := doc.Tokens.SearchOffset2(offset)
-	if first == nil {
-		return nil, lsp.Range{}, false
-	}
-
-	nameFinder := service.MustGet[NameFinder](sc)
-	foundName := nameFinder.Find(ctx, first, second)
-	if foundName.Target == nil || foundName.Source == nil {
-		return nil, lsp.Range{}, false
-	}
-
-	return foundName.Target.Owner(), foundName.Source.TextRange().LspRange(doc.TextDoc), true
 }

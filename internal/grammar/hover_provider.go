@@ -28,8 +28,8 @@ func NewHoverProvider(sc *service.Container) server.HoverProvider {
 }
 
 func (p *hoverProviderImpl) HandleHoverRequest(ctx context.Context, params *lsp.HoverParams) (*lsp.Hover, error) {
-	target, sourceRange, ok := server.ResolveHoverTarget(ctx, p.sc, params)
-	if !ok {
+	target, sourceRange := server.TargetAtCursor(ctx, p.sc, &params.TextDocumentPositionParams)
+	if target == nil {
 		return nil, nil
 	}
 
