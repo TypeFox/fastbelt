@@ -49,6 +49,21 @@ Add a directive to some file in your module (assumes install with `go tool`):
 //go:generate go tool typefox.dev/fastbelt/cmd/fastbelt generate ./grammar.fb -o ./
 ```
 
+## Railroad diagrams
+
+Pass `--railroad` to `generate` to also produce railroad syntax diagrams for your grammar:
+
+```sh
+fastbelt generate ./grammar.fb -o ./ --railroad
+```
+
+This writes one `<RuleName>.svg` per parser, composite, and infix rule to a `railroad/`
+subdirectory, plus an `index.md` linking all of them in grammar order. Diagrams of
+renamed or deleted rules are not removed from `railroad/`.
+
+The Fastbelt VS Code extension shows the same diagram when hovering a rule name in a
+`.fb` file.
+
 ## Scaffolding
 
 To bootstrap a **new Go module** for a language, run:
