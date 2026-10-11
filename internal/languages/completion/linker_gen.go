@@ -34,6 +34,7 @@ type CompletionScopeProvider interface {
 	ScopeAmbigRefsRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
 	ScopeDepA(ctx context.Context, reference *core.Reference[Declare]) core.Scope
 	ScopeDepB(ctx context.Context, reference *core.Reference[Declare]) core.Scope
+	ScopeActFirstRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope
 }
 
 type DefaultCompletionScopeProvider struct {
@@ -120,6 +121,10 @@ func (s *DefaultCompletionScopeProvider) ScopeDepB(ctx context.Context, referenc
 	return linking.DefaultScopeOfType[Declare](reference.Owner())
 }
 
+func (s *DefaultCompletionScopeProvider) ScopeActFirstRef(ctx context.Context, reference *core.Reference[Declare]) core.Scope {
+	return linking.DefaultScopeOfType[Declare](reference.Owner())
+}
+
 type CompletionReferenceLinker interface {
 	LinkRefFQNRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkRefListItemRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
@@ -140,6 +145,7 @@ type CompletionReferenceLinker interface {
 	LinkAmbigRefsRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkDepA(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
 	LinkDepB(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
+	LinkActFirstRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError)
 }
 
 type DefaultCompletionReferenceLinker struct {
@@ -251,6 +257,11 @@ func (s *DefaultCompletionReferenceLinker) LinkDepB(ctx context.Context, referen
 	return core.DefaultLink(scope, reference.Text())
 }
 
+func (s *DefaultCompletionReferenceLinker) LinkActFirstRef(ctx context.Context, reference *core.Reference[Declare]) (*core.SymbolDescription, *core.ReferenceError) {
+	scope := s.scopeProvider().ScopeActFirstRef(ctx, reference)
+	return core.DefaultLink(scope, reference.Text())
+}
+
 type CompletionReferencesConstructor interface {
 	RefFQNRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
 	RefListItemRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
@@ -271,6 +282,7 @@ type CompletionReferencesConstructor interface {
 	AmbigRefsRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
 	DepA(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
 	DepB(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
+	ActFirstRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare]
 }
 
 type DefaultCompletionReferencesConstructor struct {
@@ -293,6 +305,7 @@ type DefaultCompletionReferencesConstructor struct {
 	linkAmbigRefsRef    func() core.ReferenceGetter[Declare]
 	linkDepA            func() core.ReferenceGetter[Declare]
 	linkDepB            func() core.ReferenceGetter[Declare]
+	linkActFirstRef     func() core.ReferenceGetter[Declare]
 }
 
 func NewDefaultCompletionReferencesConstructor(sc *service.Container) CompletionReferencesConstructor {
@@ -356,6 +369,9 @@ func NewDefaultCompletionReferencesConstructor(sc *service.Container) Completion
 		}),
 		linkDepB: sync.OnceValue(func() core.ReferenceGetter[Declare] {
 			return referenceLinker().LinkDepB
+		}),
+		linkActFirstRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {
+			return referenceLinker().LinkActFirstRef
 		}),
 	}
 }
@@ -434,6 +450,10 @@ func (s *DefaultCompletionReferencesConstructor) DepA(owner core.AstNode, unit c
 
 func (s *DefaultCompletionReferencesConstructor) DepB(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
 	return core.NewReference(owner, unit, s.linkDepB())
+}
+
+func (s *DefaultCompletionReferencesConstructor) ActFirstRef(owner core.AstNode, unit core.StringUnit) *core.Reference[Declare] {
+	return core.NewReference(owner, unit, s.linkActFirstRef())
 }
 
 type CompletionSymbolContainers struct{}

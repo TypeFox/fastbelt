@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	DecisionActAlternatives    = 28
 	DecisionAmbigAlternatives  = 26
 	DecisionCallAlternatives   = 6
 	DecisionDedupAlternatives  = 11
@@ -16,42 +17,42 @@ const (
 
 var AltAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_FIRST, Token_SECOND},
-	Lookup: []int{32: 1, 33: 2},
+	Lookup: []int{33: 1, 34: 2},
 }
 
 var LoopAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_DECLARE, Token_ID, Keyword_loop},
-	Lookup: []int{20: 3, 31: 1, 47: 2},
+	Lookup: []int{20: 3, 32: 1, 48: 2},
 }
 
 var NestAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_DECLARE, Token_ID, Keyword_nest},
-	Lookup: []int{25: 3, 31: 1, 47: 2},
+	Lookup: []int{25: 3, 32: 1, 48: 2},
 }
 
 var RefOrKeywordAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_SELF},
-	Lookup: []int{35: 2, 47: 1},
+	Lookup: []int{36: 2, 48: 1},
 }
 
 var RootObjectsAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_DECLARE, Keyword_seq, Keyword_alt, Keyword_prefix, Keyword_call, Keyword_fqn, Keyword_list, Keyword_ref, Keyword_member, Keyword_nodot, Keyword_choice, Keyword_dedup, Keyword_opt, Keyword_group, Keyword_refgroup, Keyword_action, Keyword_scope, Keyword_loop, Keyword_chain, Keyword_infix, Keyword_wrap, Keyword_shadow, Keyword_nest, Keyword_ambig, Keyword_retype, Keyword_dep},
-	Lookup: []int{1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 11, 11: 12, 14: 13, 15: 14, 16: 15, 17: 16, 18: 17, 20: 18, 21: 19, 22: 20, 23: 21, 24: 22, 25: 23, 26: 24, 27: 25, 28: 26, 31: 1},
+	Types:  []*core.TokenType{Token_DECLARE, Keyword_seq, Keyword_alt, Keyword_prefix, Keyword_call, Keyword_fqn, Keyword_list, Keyword_ref, Keyword_member, Keyword_nodot, Keyword_choice, Keyword_dedup, Keyword_opt, Keyword_group, Keyword_refgroup, Keyword_action, Keyword_scope, Keyword_loop, Keyword_chain, Keyword_infix, Keyword_wrap, Keyword_shadow, Keyword_nest, Keyword_ambig, Keyword_retype, Keyword_dep, Keyword_act},
+	Lookup: []int{1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 11, 11: 12, 14: 13, 15: 14, 16: 15, 17: 16, 18: 17, 20: 18, 21: 19, 22: 20, 23: 21, 24: 22, 25: 23, 26: 24, 27: 25, 28: 26, 29: 27, 32: 1},
 }
 
 var WrapElementAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_LBRACE},
-	Lookup: []int{38: 2, 47: 1},
+	Lookup: []int{39: 2, 48: 1},
 }
 
 var WrapGroupElementsLoop = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_LBRACE, Token_ID},
-	Lookup: []int{38: 1, 47: 1},
+	Lookup: []int{39: 1, 48: 1},
 }
 
 var WrapGroupOptional = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_LBRACE, Token_ID},
-	Lookup: []int{38: 1, 47: 1},
+	Lookup: []int{39: 1, 48: 1},
 }
 
 // CompletionParserLookahead abstracts every lookahead/prediction decision performed by
@@ -61,6 +62,7 @@ var WrapGroupOptional = parser.LL1Lookahead{
 type CompletionParserLookahead interface {
 	parser.ParserLookahead
 
+	ActAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	AltAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	AmbigAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	BinaryLoop(state *parser.ParserState) bool
@@ -98,6 +100,10 @@ type DefaultCompletionParserLookahead struct {
 
 func NewDefaultCompletionParserLookahead() CompletionParserLookahead {
 	return &DefaultCompletionParserLookahead{}
+}
+
+func (l *DefaultCompletionParserLookahead) ActAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+	return state.AdaptivePredict(DecisionActAlternatives, l.PredictionMode())
 }
 
 func (l *DefaultCompletionParserLookahead) AltAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {

@@ -223,6 +223,13 @@ func (p *Parser) ParseRoot() Root {
 					if result != nil {
 						current.SetObjectsItem(result)
 					}
+				case 26:
+					p.state.EnterRule(Root__Basic_53)
+					result := p.ParseAct()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetObjectsItem(result)
+					}
 				default:
 					break loop0
 				}
@@ -1427,6 +1434,62 @@ func (p *Parser) ParseDep() Dep {
 			if token != nil {
 				current.SetB(p.referencesConstructor.DepB(current, token))
 			}
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseAct() Act {
+	current := NewAct()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Keyword_act)
+			core.AssignToken(current, token, Act_act)
+		}
+		switch prediction, failure := p.lookahead.ActAlternatives(p.state); prediction {
+		case 0:
+			{
+				result := NewActFirst()
+				result.SetTextRange(current.TextRange())
+				core.AssignTokens(result, current.Tokens())
+				current = result
+			}
+			current := current.(ActFirst)
+			{
+				token := p.state.Consume(Token_ID)
+				core.AssignToken(current, token, Act_Ref_ID)
+				if token != nil {
+					current.SetRef(p.referencesConstructor.ActFirstRef(current, token))
+				}
+			}
+			{
+				token := p.state.Consume(Token_FIRST)
+				core.AssignToken(current, token, Act_FIRST)
+			}
+		case 1:
+			{
+				result := NewActSecond()
+				result.SetTextRange(current.TextRange())
+				core.AssignTokens(result, current.Tokens())
+				current = result
+			}
+			current := current.(ActSecond)
+			{
+				p.state.EnterRule(Act_SECOND)
+				result := p.ParseRefItem()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetItem(result)
+				}
+			}
+			{
+				token := p.state.Consume(Token_SECOND)
+				core.AssignToken(current, token, Act_SECOND)
+			}
+		default:
+			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
