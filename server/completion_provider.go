@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 	"unique"
 
@@ -85,10 +86,20 @@ func (s *DefaultCompletionProvider) HandleCompletionRequest(ctx context.Context,
 	contributor := s.resolveContributor()
 	matcher := s.resolveFuzzyMatcher()
 
-	contexts := buildCompletionContexts(doc, offset)
-	items := make([]lsp.CompletionItem, 0, len(contexts)*8)
-	for _, cc := range contexts {
-		items = append(items, s.completionsForContext(ctx, contributor, matcher, adapter, atn, doc, offset, cc)...)
+	var items []lsp.CompletionItem
+	if comment := commentAt(doc.Comments, offset); comment != nil {
+		// Inside a comment, the grammar has nothing to say: only the
+		// contributor's comment stage runs.
+		cc := ContributorContext{Doc: doc, Cursor: offset}
+		contributor.CompletionForComment(ctx, comment, cc, func(item lsp.CompletionItem) {
+			items = append(items, EnrichCommentCompletionItem(item, cc))
+		})
+	} else {
+		contexts := buildCompletionContexts(doc, offset)
+		items = make([]lsp.CompletionItem, 0, len(contexts)*8)
+		for _, cc := range contexts {
+			items = append(items, s.completionsForContext(ctx, contributor, matcher, adapter, atn, doc, offset, cc)...)
+		}
 	}
 	items = deduplicateItems(items)
 
@@ -307,6 +318,21 @@ func backtrackToToken(tokens core.TokenSlice, offset int) cursorTokenInfo {
 		}
 	}
 	return info
+}
+
+// commentAt returns the comment that the cursor is inside of, or nil. The
+// cursor at the start of a comment is in front of it, the cursor at its end
+// is inside: a line comment ends at the line break, and the user who just
+// closed a block comment has not left it before typing a separator.
+func commentAt(comments core.TokenSlice, offset int) *core.Token {
+	// The first comment that ends at or behind the cursor
+	i := sort.Search(len(comments), func(i int) bool {
+		return int(comments[i].Range.End) >= offset
+	})
+	if i < len(comments) && int(comments[i].Range.Start) < offset {
+		return &comments[i]
+	}
+	return nil
 }
 
 // buildCompletionContexts produces the per-request cursor interpretations.
@@ -839,6 +865,20 @@ func EnrichSnippetCompletionItem(item lsp.CompletionItem, sn SnippetTemplate, cc
 	} else {
 		fillInsertion(&item, cc.ReplaceRange)
 	}
+	return item
+}
+
+// EnrichCommentCompletionItem fills zero-valued fields on an item emitted
+// inside a comment. The contributor supplies the label; there is no grammar
+// element to derive it from.
+func EnrichCommentCompletionItem(item lsp.CompletionItem, cc ContributorContext) lsp.CompletionItem {
+	if item.Kind == 0 {
+		item.Kind = lsp.TextCompletion
+	}
+	if item.SortText == "" {
+		item.SortText = fmt.Sprintf("%d-3-comment", cc.SortRank)
+	}
+	fillInsertion(&item, cc.ReplaceRange)
 	return item
 }
 

@@ -939,7 +939,129 @@ var Token_ID_Accepting = [2]bool{
 	1: true,
 }
 
-const TokenGroup_BinaryOperator_Idx = 49
+const Token_ML_COMMENT_Idx = 49
+
+var Token_ML_COMMENT = core.NewTokenType(
+	Token_ML_COMMENT_Idx,
+	"ML_COMMENT",
+	"ML_COMMENT",
+	core.TokenKindToken,
+	func(s string, offset int) int {
+		input := s[offset:]
+		length := len(input)
+		state := 0
+		acceptedIndex := 0
+		index := 0
+	loop:
+		for index < length {
+			r, runeSize := utf8.DecodeRuneInString(input[index:])
+			switch state {
+			case 0:
+				nextState := -1
+				next := Token_ML_COMMENT_Next[0]
+				lookup := Token_ML_COMMENT_Lookup[0]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 1:
+				nextState := -1
+				next := Token_ML_COMMENT_Next[1]
+				lookup := Token_ML_COMMENT_Lookup[1]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 2:
+				nextState := -1
+				next := Token_ML_COMMENT_Next[2]
+				lookup := Token_ML_COMMENT_Lookup[2]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 3:
+				nextState := -1
+				next := Token_ML_COMMENT_Next[3]
+				lookup := Token_ML_COMMENT_Lookup[3]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 4:
+				nextState := -1
+				next := Token_ML_COMMENT_Next[4]
+				lookup := Token_ML_COMMENT_Lookup[4]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			default:
+				break loop
+			}
+			index += runeSize
+			if Token_ML_COMMENT_Accepting[state] {
+				acceptedIndex = index
+			}
+		}
+		return acceptedIndex
+	},
+	[]rune{'/'},
+)
+var Token_ML_COMMENT_Lookup = [][]int64{
+	{0x0000002F0000002F},
+	{0x0000002A0000002A},
+	{0x0000002900000000, 0x0000002A0000002A, 0x0010FFFF0000002B},
+	{0x0000002900000000, 0x0000002A0000002A, 0x0000002E0000002B, 0x0000002F0000002F, 0x0010FFFF00000030},
+	{},
+}
+var Token_ML_COMMENT_Next = [][]int{
+	{1},
+	{2},
+	{2, 3, 2},
+	{2, 3, 2, 4, 2},
+	{},
+}
+var Token_ML_COMMENT_Accepting = [5]bool{
+	4: true,
+}
+
+const TokenGroup_BinaryOperator_Idx = 50
 
 var TokenGroup_BinaryOperator = core.NewTokenGroup(
 	TokenGroup_BinaryOperator_Idx,
@@ -951,7 +1073,7 @@ var TokenGroup_BinaryOperator = core.NewTokenGroup(
 	},
 )
 
-const TokenGroup_SomeTokenGroup_Idx = 50
+const TokenGroup_SomeTokenGroup_Idx = 51
 
 var TokenGroup_SomeTokenGroup = core.NewTokenGroup(
 	TokenGroup_SomeTokenGroup_Idx,
@@ -1019,6 +1141,7 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Token_DOT),
 		lexer.UseTokenType(Token_ID),
 		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
+		lexer.UseTokenType(Token_ML_COMMENT).WithModifier(core.CommentModifier),
 	)
 	return lexer.NewDefaultLexer(TokenMode_default, modes...)
 }

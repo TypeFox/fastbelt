@@ -935,6 +935,15 @@ type recordingContributor struct {
 	onToken     func(tt *core.TokenType, atnState int, cc server.ContributorContext, accept server.CompletionAcceptor)
 	onReference func(d *core.SymbolDescription, hint *parser.CompletionHint, atnState int, cc server.ContributorContext, accept server.CompletionAcceptor)
 	postProcess func(item *lsp.CompletionItem, cc server.ContributorContext) bool
+	onComment   func(comment *core.Token, cc server.ContributorContext, accept server.CompletionAcceptor)
+}
+
+func (r *recordingContributor) CompletionForComment(ctx context.Context, comment *core.Token, cc server.ContributorContext, accept server.CompletionAcceptor) {
+	if r.onComment != nil {
+		r.onComment(comment, cc, accept)
+		return
+	}
+	r.DefaultCompletionContributor.CompletionForComment(ctx, comment, cc, accept)
 }
 
 func (r *recordingContributor) CompletionForToken(ctx context.Context, tt *core.TokenType, atnState int, cc server.ContributorContext, accept server.CompletionAcceptor) {
@@ -1564,4 +1573,57 @@ func TestCompletion_Snippets(t *testing.T) {
 	}
 	assert.Equal(t, "seq ${1:first}", item.TextEdit.TextEdit.NewText)
 	assert.False(t, hasLabel(items, "always"), "did not expect 'always' for the typed 'se'; got %v", itemLabels(items))
+}
+
+// ---------------------------------------------------------------------------
+// Comments.
+// ---------------------------------------------------------------------------
+
+// Inside a comment, including right behind its closing delimiter, the
+// grammar proposes nothing. The cursor right in front of a comment, and the
+// cursor separated from its end, are outside of it.
+func TestCompletion_InsideComment_NoProposals(t *testing.T) {
+	for _, src := range []string{
+		"declare foo /* decl<|cursor> */",
+		"declare foo /*<|cursor>*/",
+		"declare foo /* line\n<|cursor>\nline */ ref ",
+		"declare foo /* comment */<|cursor> ref ",
+		"declare foo /* comment */<|cursor>",
+	} {
+		t.Run(src, func(t *testing.T) {
+			assert.Empty(t, itemLabels(completionAt(t, src)))
+		})
+	}
+	for _, src := range []string{
+		"declare foo <|cursor>/* comment */",
+		"declare foo /* comment */ <|cursor>",
+		"declare foo /* comment */\n<|cursor>",
+	} {
+		t.Run(src, func(t *testing.T) {
+			items := completionAt(t, src)
+			assert.True(t, hasLabel(items, "declare"), "expected Root keywords outside of the comment; got %v", itemLabels(items))
+		})
+	}
+	items := completionAt(t, "declare foo /* comment */ ref <|cursor>")
+	assert.ElementsMatch(t, []string{"foo"}, itemLabels(items))
+}
+
+// A contributor can propose items inside of a comment; it receives the
+// comment token, and the items are inserted at the cursor.
+func TestCompletion_InsideComment_Contributor(t *testing.T) {
+	var image string
+	contrib := &recordingContributor{
+		onComment: func(comment *core.Token, cc server.ContributorContext, accept server.CompletionAcceptor) {
+			image = comment.Image
+			accept(lsp.CompletionItem{Label: "@todo"})
+		},
+	}
+	items := completionAtWith(t, "declare foo /* decl<|cursor> */ ref ", contrib)
+	assert.Equal(t, "/* decl */", image)
+	assert.ElementsMatch(t, []string{"@todo"}, itemLabels(items))
+	item := itemWithLabel(items, "@todo")
+	assert.Equal(t, lsp.TextCompletion, item.Kind)
+	assert.Equal(t, "0-3-comment", item.SortText)
+	assert.Equal(t, "@todo", item.InsertText)
+	assert.Nil(t, item.TextEdit)
 }

@@ -296,6 +296,7 @@ token END: "end"
 
 token WS: /[ \t\r\n]+/
 token ID: /\w[\w0-9]*/
+token ML_COMMENT: /\/\*[\s\S]*?\*\//
 
 token mode default {
     keywords /^[a-z]+$/
@@ -305,4 +306,5 @@ token mode default {
     ID
 
     hidden WS
+    comment ML_COMMENT
 }
