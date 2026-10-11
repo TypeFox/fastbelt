@@ -24,7 +24,8 @@ type CompletionAcceptor func(item lsp.CompletionItem)
 // CompletionContributor is the language-supplied policy for generating
 // completion items. The completion provider drives three stages -
 // token, cross-reference candidate, snippet - and asks the contributor
-// once per emission what items to surface. The default contributor
+// once per emission what items to surface. Inside a comment, the comment
+// stage runs instead of the three. The default contributor
 // reproduces today's behavior byte-for-byte; adopters override
 // individual methods to inject documentation, drop entries, surface
 // terminal tokens, emit multiple variants, etc.
@@ -54,6 +55,13 @@ type CompletionContributor interface {
 	// ATN-driven, so no atnState parameter. The default emits one
 	// item.
 	CompletionForSnippet(ctx context.Context, sn SnippetTemplate, cc ContributorContext, accept CompletionAcceptor)
+
+	// CompletionForComment is called instead of the other stages when the
+	// cursor is inside a comment token, including at its end.
+	// The default emits nothing, so comments get no completions.
+	// cc.ReplaceRange is nil, so items are inserted at the cursor
+	// unless they carry their own TextEdit.
+	CompletionForComment(ctx context.Context, comment *core.Token, cc ContributorContext, accept CompletionAcceptor)
 
 	// PostProcess runs once per emitted item after enrichment and
 	// deduplication. Returning false drops the item; mutating *item
@@ -118,6 +126,10 @@ func (*DefaultCompletionContributor) CompletionForReference(_ context.Context, _
 // CompletionForSnippet emits one default item per applicable snippet.
 func (*DefaultCompletionContributor) CompletionForSnippet(_ context.Context, _ SnippetTemplate, _ ContributorContext, accept CompletionAcceptor) {
 	accept(lsp.CompletionItem{})
+}
+
+// CompletionForComment emits nothing: comments get no completions by default.
+func (*DefaultCompletionContributor) CompletionForComment(_ context.Context, _ *core.Token, _ ContributorContext, _ CompletionAcceptor) {
 }
 
 // PostProcess keeps every item unchanged.
