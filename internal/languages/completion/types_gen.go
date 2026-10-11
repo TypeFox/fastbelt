@@ -2812,6 +2812,204 @@ func (i *DepImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	}
 }
 
+type Act interface {
+	core.AstNode
+	Obj
+
+	IsAct()
+}
+
+func NewAct() Act {
+	return &ActImpl{}
+}
+
+type ActData struct {
+}
+
+func (i *ActData) IsAct() {}
+
+func (i *ActData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+}
+
+func (i *ActData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+}
+
+type ActImpl struct {
+	core.AstNodeBase
+	ObjData
+	ActData
+}
+
+func (i *ActImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.ObjData.ForEachNode(fn)
+	i.ActData.ForEachNode(fn)
+}
+
+func (i *ActImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.ObjData.ForEachReference(fn)
+	i.ActData.ForEachReference(fn)
+}
+
+func (i *ActImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	nodePath, _ := core.PathOf(i)
+	return nil, fmt.Errorf("ActImpl.Resolve: field '%s' does not exist in node '%s' of type 'Act'", field.Value(), nodePath)
+}
+
+type ActFirst interface {
+	core.AstNode
+	Act
+
+	IsActFirst()
+	Ref() *core.Reference[Declare]
+	SetRef(value *core.Reference[Declare])
+}
+
+func NewActFirst() ActFirst {
+	return &ActFirstImpl{}
+}
+
+type ActFirstData struct {
+	ref *core.Reference[Declare]
+}
+
+func (i *ActFirstData) IsActFirst() {}
+
+func (i *ActFirstData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+}
+
+func (i *ActFirstData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	if i.ref != nil {
+		fn(i.ref, fieldNameRef, -1)
+	}
+}
+
+func (i *ActFirstData) Ref() *core.Reference[Declare] {
+	if i != nil && i.ref != nil {
+		return i.ref
+	} else {
+		return nil
+	}
+}
+
+func (i *ActFirstData) SetRef(value *core.Reference[Declare]) {
+	i.ref = value
+}
+
+type ActFirstImpl struct {
+	core.AstNodeBase
+	ActData
+	ObjData
+	ActFirstData
+}
+
+func (i *ActFirstImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.ActData.ForEachNode(fn)
+	i.ObjData.ForEachNode(fn)
+	i.ActFirstData.ForEachNode(fn)
+}
+
+func (i *ActFirstImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.ActData.ForEachReference(fn)
+	i.ObjData.ForEachReference(fn)
+	i.ActFirstData.ForEachReference(fn)
+}
+
+func (i *ActFirstImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameRef:
+		return nil, fmt.Errorf("ActFirstImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("ActFirstImpl.Resolve: field '%s' does not exist in node '%s' of type 'ActFirst'", field.Value(), nodePath)
+	}
+}
+
+type ActSecond interface {
+	core.AstNode
+	Act
+
+	IsActSecond()
+	Item() RefItem
+	SetItem(value RefItem)
+}
+
+func NewActSecond() ActSecond {
+	return &ActSecondImpl{}
+}
+
+type ActSecondData struct {
+	item RefItem
+}
+
+func (i *ActSecondData) IsActSecond() {}
+
+func (i *ActSecondData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	if i.item != nil {
+		fn(i.item, fieldNameItem, -1)
+	}
+}
+
+func (i *ActSecondData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+}
+
+func (i *ActSecondData) Item() RefItem {
+	if i != nil && i.item != nil {
+		return i.item
+	} else {
+		return nil
+	}
+}
+
+func (i *ActSecondData) SetItem(value RefItem) {
+	i.item = value
+}
+
+type ActSecondImpl struct {
+	core.AstNodeBase
+	ActData
+	ObjData
+	ActSecondData
+}
+
+func (i *ActSecondImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.ActData.ForEachNode(fn)
+	i.ObjData.ForEachNode(fn)
+	i.ActSecondData.ForEachNode(fn)
+}
+
+func (i *ActSecondImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.ActData.ForEachReference(fn)
+	i.ObjData.ForEachReference(fn)
+	i.ActSecondData.ForEachReference(fn)
+}
+
+func (i *ActSecondImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameItem:
+		if i.Item() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("ActSecondImpl.Resolve: field 'item' is nil in node '%s'", nodePath)
+		}
+		child := i.Item()
+		return child.Resolve(path.Tail())
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("ActSecondImpl.Resolve: field '%s' does not exist in node '%s' of type 'ActSecond'", field.Value(), nodePath)
+	}
+}
+
 var (
 	fieldNameA        = unique.Make("a")
 	fieldNameB        = unique.Make("b")
@@ -2837,6 +3035,9 @@ var (
 )
 
 var CompletionSyntheticFactories = map[string]func() core.AstNode{
+	"Act":           func() core.AstNode { return NewAct() },
+	"ActFirst":      func() core.AstNode { return NewActFirst() },
+	"ActSecond":     func() core.AstNode { return NewActSecond() },
 	"Ambig":         func() core.AstNode { return NewAmbig() },
 	"AmbigName":     func() core.AstNode { return NewAmbigName() },
 	"AmbigRefs":     func() core.AstNode { return NewAmbigRefs() },

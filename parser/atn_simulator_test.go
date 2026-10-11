@@ -244,3 +244,62 @@ func TestSimulator_EmptyLiveSetOnMismatch(t *testing.T) {
 		t.Errorf("expected empty live set after mismatched token; got %d entries", len(live))
 	}
 }
+
+// TestSimulator_ReturnStackCap verifies that MaxReturnStack stops the
+// simulator from entering a recursive rule once the cap is reached.
+func TestSimulator_ReturnStackCap(t *testing.T) {
+	tA := createTokenType(1, "a")
+	tB := createTokenType(2, "b")
+
+	// R: 'a' R | 'b'
+	start := &RuntimeATNState{StateNumber: 0, Type: ATNRuleStart, Decision: -1, EpsilonOnlyTransitions: true}
+	altA := &RuntimeATNState{StateNumber: 1, Type: ATNBasic, Decision: -1}
+	call := &RuntimeATNState{StateNumber: 2, Type: ATNBasic, Decision: -1, EpsilonOnlyTransitions: true}
+	altB := &RuntimeATNState{StateNumber: 3, Type: ATNBasic, Decision: -1}
+	end := &RuntimeATNState{StateNumber: 4, Type: ATNBasic, Decision: -1, EpsilonOnlyTransitions: true}
+	stop := &RuntimeATNState{StateNumber: 5, Type: ATNRuleStop, Decision: -1}
+	start.Transitions = []RuntimeTransition{&RuntimeEpsilonTransition{Target: altA}, &RuntimeEpsilonTransition{Target: altB}}
+	altA.Transitions = []RuntimeTransition{&RuntimeAtomTransition{Target: call, TokenType: tA}}
+	call.Transitions = []RuntimeTransition{&RuntimeRuleTransition{Target: start, FollowState: end}}
+	altB.Transitions = []RuntimeTransition{&RuntimeAtomTransition{Target: end, TokenType: tB}}
+	end.Transitions = []RuntimeTransition{&RuntimeEpsilonTransition{Target: stop}}
+	atn := NewRuntimeATN([]*RuntimeATNState{start, altA, call, altB, end, stop}, nil, nil)
+
+	// Each 'a' behind the first one enters R again, pushing a return frame
+	tokens := []core.Token{tok(tA), tok(tA), tok(tA)}
+	info := atn.NextCompletionsFromSet(atn.Simulate(0, tokens))
+	if !info.HasToken(tA.Id) || !info.HasToken(tB.Id) {
+		t.Errorf("expected both alternatives after the recursive calls; got %v", info.Tokens)
+	}
+	live := atn.SimulateWithConfig(0, tokens, SimConfig{MaxLiveSet: DefaultSimConfig.MaxLiveSet, MaxReturnStack: 1})
+	if len(live) != 0 {
+		t.Errorf("expected the return-stack cap to stop the second recursion; got %d paths", len(live))
+	}
+}
+
+// TestSimulator_LiveSetCap verifies that MaxLiveSet truncates the exploration
+// of the closure, so an atom that is only reachable through a long chain of
+// epsilon transitions is not reached.
+func TestSimulator_LiveSetCap(t *testing.T) {
+	tA := createTokenType(1, "a")
+
+	s0 := &RuntimeATNState{StateNumber: 0, Type: ATNBasic, Decision: -1, EpsilonOnlyTransitions: true}
+	s1 := &RuntimeATNState{StateNumber: 1, Type: ATNBasic, Decision: -1, EpsilonOnlyTransitions: true}
+	s2 := &RuntimeATNState{StateNumber: 2, Type: ATNBasic, Decision: -1, EpsilonOnlyTransitions: true}
+	s3 := &RuntimeATNState{StateNumber: 3, Type: ATNBasic, Decision: -1}
+	s4 := &RuntimeATNState{StateNumber: 4, Type: ATNBasic, Decision: -1}
+	s0.Transitions = []RuntimeTransition{&RuntimeEpsilonTransition{Target: s1}}
+	s1.Transitions = []RuntimeTransition{&RuntimeEpsilonTransition{Target: s2}}
+	s2.Transitions = []RuntimeTransition{&RuntimeEpsilonTransition{Target: s3}}
+	s3.Transitions = []RuntimeTransition{&RuntimeAtomTransition{Target: s4, TokenType: tA}}
+	atn := NewRuntimeATN([]*RuntimeATNState{s0, s1, s2, s3, s4}, nil, nil)
+
+	tokens := []core.Token{tok(tA)}
+	if live := atn.Simulate(0, tokens); len(live) == 0 {
+		t.Errorf("expected 'a' to be consumed without a cap")
+	}
+	live := atn.SimulateWithConfig(0, tokens, SimConfig{MaxLiveSet: 1, MaxReturnStack: DefaultSimConfig.MaxReturnStack})
+	if len(live) != 0 {
+		t.Errorf("expected the live-set cap to truncate the closure in front of 'a'; got %d paths", len(live))
+	}
+}

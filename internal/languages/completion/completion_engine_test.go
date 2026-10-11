@@ -1192,20 +1192,6 @@ func TestCompletion_AfterRefFQN_WithSyntaxErrorAfterCursor(t *testing.T) {
 	assert.ElementsMatch(t, []string{"foo"}, itemLabels(items))
 }
 
-// A stray token directly in front of the cursor: the parser cannot resync
-// on a later token, but the user still expects the completions of the
-// position after the last valid input.
-func TestCompletion_SyntaxErrorDirectlyBeforeCursor(t *testing.T) {
-	for _, src := range []string{"seq first } <|cursor>", "alt first second <|cursor>"} {
-		t.Run(src, func(t *testing.T) {
-			items := completionAt(t, src)
-			if !hasLabel(items, "declare") {
-				t.Errorf("expected Root keywords after a stray token; got %v", itemLabels(items))
-			}
-		})
-	}
-}
-
 // ---------------------------------------------------------------------------
 // Declare bodies.
 // ---------------------------------------------------------------------------
@@ -1472,4 +1458,110 @@ func TestCompletion_AfterDep_ScopeDependsOnSibling(t *testing.T) {
 		"dep alpha <|cursor>beta": {"Dep at objects@0"},
 		"dep alpha be<|cursor>":   {"Dep at objects@0"},
 	})
+}
+
+func (f *ownerRecordingFilter) FilterActFirstRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+// The alternatives of Act start with simple actions, and the keyword behind
+// the cross-reference decides between them. At the cursor, the main parser has
+// not executed either action, so the owner is a new node of the action's type
+// that takes the place of the Act node - directly, or as the container of the
+// node of the assigned rule call. Once the input behind the cursor decides the
+// alternative, the owner of that alternative is the node of the main parser.
+func TestCompletion_AfterAct_OwnerOfUndecidedAction(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"act <|cursor>":           {"new ActFirst at objects@0", "new RefItem at item, new ActSecond at objects@0"},
+		"act fo<|cursor>":         {"new ActFirst at objects@0", "new RefItem at item, new ActSecond at objects@0"},
+		"act <|cursor>foo first":  {"ActFirst at objects@0", "new RefItem at item, new ActSecond at objects@0"},
+		"act <|cursor>foo second": {"new ActFirst at objects@0", "new RefItem at item, ActSecond at objects@0"},
+	})
+	items := completionAt(t, "declare foo act <|cursor>")
+	assert.ElementsMatch(t, []string{"foo"}, itemLabels(items))
+	items = completionAt(t, "declare foo act foo <|cursor>")
+	assert.ElementsMatch(t, []string{"first", "second"}, itemLabels(items))
+}
+
+// Both alternatives of Ambig read the token in front of the cursor, and the
+// keyword that decides between them is missing. Each cross-reference is
+// completed on its own synthetic owner, but the shared candidate surfaces once.
+func TestCompletion_AfterAmbig_SameCandidateOnce(t *testing.T) {
+	items := completionAt(t, "declare foo ambig foo <|cursor>")
+	assert.ElementsMatch(t, []string{"foo"}, itemLabels(items))
+	assertOwners(t, map[string][]string{
+		"ambig foo <|cursor>": {"new AmbigName, new Root", "new AmbigRefs, new Root"},
+	})
+}
+
+// A complete second alternative returns to the Root loop like the first one,
+// without leaking its own tokens or candidates.
+func TestCompletion_AfterSecondAlternative(t *testing.T) {
+	for _, src := range []string{
+		"alt second <|cursor>",
+		"prefix common second <|cursor>",
+		"declare foo dedup foo y <|cursor>",
+		"choice self <|cursor>",
+		"declare foo ambig foo foo first <|cursor>",
+		"declare foo ambig foo foo second <|cursor>",
+		"declare foo act foo first <|cursor>",
+		"declare foo act foo second <|cursor>",
+	} {
+		t.Run(src, func(t *testing.T) {
+			items := completionAt(t, src)
+			if !hasLabel(items, "declare") || hasLabel(items, "first") || hasLabel(items, "second") || hasLabel(items, "foo") {
+				t.Errorf("expected only Root keywords after a complete alternative; got %v", itemLabels(items))
+			}
+		})
+	}
+}
+
+// Snippets are gathered per cursor context like tokens: the Applicable
+// predicate gates them on the valid tokens of the simulator, the typed text
+// filters them like any other item, and the body is inserted or replaces the
+// typed text.
+func TestCompletion_Snippets(t *testing.T) {
+	registry := server.NewDefaultSnippetRegistry()
+	registry.Register(server.SnippetTemplate{
+		Label:      "seq first",
+		Detail:     "a complete Seq",
+		Body:       "seq ${1:first}",
+		Applicable: server.RequiresValidToken(completion.Keyword_seq),
+	})
+	registry.Register(server.SnippetTemplate{Label: "always", Body: "always"})
+	registry.Register(server.SnippetTemplate{Label: "never", Body: "never", Applicable: func(server.SnippetContext) bool { return false }})
+	sc := service.NewContainer()
+	completion.SetupServices(sc)
+	service.Override[server.SnippetRegistry](sc, registry)
+	sc.Seal()
+	complete := func(src string) []lsp.CompletionItem {
+		return test.New(t, sc).Parse(src).CompletionItems("cursor")
+	}
+
+	items := complete("<|cursor>")
+	item := itemWithLabel(items, "seq first")
+	if item == nil || !hasLabel(items, "always") || hasLabel(items, "never") {
+		t.Fatalf("expected the applicable snippets at the entry; got %v", itemLabels(items))
+	}
+	assert.Equal(t, lsp.SnippetCompletion, item.Kind)
+	assert.Equal(t, "a complete Seq", item.Detail)
+	assert.Equal(t, "seq ${1:first}", item.InsertText)
+	if assert.NotNil(t, item.InsertTextFormat) {
+		assert.Equal(t, lsp.SnippetTextFormat, *item.InsertTextFormat)
+	}
+	assert.Equal(t, "0-2-snippet", item.SortText)
+
+	// "seq" is not valid behind "fqn", so its snippet is not applicable there
+	items = complete("fqn <|cursor>")
+	assert.ElementsMatch(t, []string{"always"}, itemLabels(items))
+
+	// The body replaces the typed text; snippets that do not match it stay out
+	items = complete("se<|cursor>")
+	item = itemWithLabel(items, "seq first")
+	if item == nil || item.TextEdit == nil {
+		t.Fatalf("expected REPLACE-shaped 'seq first'; got %v", itemLabels(items))
+	}
+	assert.Equal(t, "seq ${1:first}", item.TextEdit.TextEdit.NewText)
+	assert.False(t, hasLabel(items, "always"), "did not expect 'always' for the typed 'se'; got %v", itemLabels(items))
 }

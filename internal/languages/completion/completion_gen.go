@@ -34,6 +34,7 @@ type CompletionCompletionFilter interface {
 	FilterAmbigRefsRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterDepA(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterDepB(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterActFirstRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 }
 
 type DefaultCompletionCompletionFilter struct{}
@@ -115,6 +116,10 @@ func (*DefaultCompletionCompletionFilter) FilterDepA(_ context.Context, _ *core.
 }
 
 func (*DefaultCompletionCompletionFilter) FilterDepB(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
+func (*DefaultCompletionCompletionFilter) FilterActFirstRef(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	return in
 }
 
@@ -353,6 +358,18 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		candidates := scopes.ScopeDepB(ctx, ref).AllElements()
 		return filter.FilterDepB(ctx, ref, candidates)
 	},
+	"ActFirst.Ref": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(ActFirst)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[CompletionReferencesConstructor](sc)
+		scopes := service.MustGet[CompletionScopeProvider](sc)
+		filter := service.MustGet[CompletionCompletionFilter](sc)
+		ref := refs.ActFirstRef(typedOwner, nil)
+		candidates := scopes.ScopeActFirstRef(ctx, ref).AllElements()
+		return filter.FilterActFirstRef(ctx, ref, candidates)
+	},
 }
 
 type CompletionCompletionAdapter struct {
@@ -389,6 +406,11 @@ func (a *CompletionCompletionAdapter) DispatchCompletion(ctx context.Context, fi
 
 func (a *CompletionCompletionAdapter) HasAssignment(node core.AstNode, property string) bool {
 	switch n := node.(type) {
+	case ActFirst:
+		switch property {
+		case "Ref":
+			return n.Ref() != nil
+		}
 	case AmbigName:
 		switch property {
 		case "Ref":

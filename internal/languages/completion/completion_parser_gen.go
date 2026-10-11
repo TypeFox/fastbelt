@@ -152,6 +152,10 @@ func (p *CompletionParser) ParseRoot() {
 				p.state.EnterRule(Root__Basic_51)
 				p.ParseDep()
 				p.state.ExitRule()
+			case 26:
+				p.state.EnterRule(Root__Basic_53)
+				p.ParseAct()
+				p.state.ExitRule()
 			default:
 				break loop0
 			}
@@ -921,6 +925,34 @@ func (p *CompletionParser) ParseDep() {
 	}
 	{
 		p.state.Consume(Token_ID)
+	}
+}
+
+func (p *CompletionParser) ParseAct() {
+	p.cp.EnterRule("Act", Act__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_act)
+	}
+	switch prediction, failure := p.lookahead.ActAlternatives(p.state); prediction {
+	case 0:
+		{
+			p.state.Consume(Token_ID)
+		}
+		{
+			p.state.Consume(Token_FIRST)
+		}
+	case 1:
+		{
+			p.state.EnterRule(Act_SECOND)
+			p.ParseRefItem()
+			p.state.ExitRule()
+		}
+		{
+			p.state.Consume(Token_SECOND)
+		}
+	default:
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 }
 
