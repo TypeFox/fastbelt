@@ -28,15 +28,7 @@ func (s *CompletionScopeProviderImpl) ScopeMemberCallRef(ctx context.Context, re
 			return s.DefaultCompletionScopeProvider.ScopeMemberCallRef(ctx, reference)
 		}
 		// Otherwise, use the scope of the previous member
-		decl := previous.Ref().Ref(ctx)
-		if decl == nil {
-			return fastbelt.EmptyScope
-		}
-		symbols := []*fastbelt.SymbolDescription{}
-		for _, member := range decl.Children() {
-			symbols = append(symbols, fastbelt.NewSymbolDescription(member, member.NameNode()))
-		}
-		return fastbelt.NewMapScopeFromSlice(symbols, nil)
+		return childrenScope(previous.Ref().Ref(ctx))
 	} else {
 		return fastbelt.EmptyScope
 	}
@@ -48,7 +40,12 @@ func (s *CompletionScopeProviderImpl) ScopeDepB(ctx context.Context, reference *
 	if !ok || dep.A() == nil {
 		return fastbelt.EmptyScope
 	}
-	decl := dep.A().Ref(ctx)
+	return childrenScope(dep.A().Ref(ctx))
+}
+
+// childrenScope returns the children of the Declare, or the empty scope if
+// the Declare is nil.
+func childrenScope(decl Declare) fastbelt.Scope {
 	if decl == nil {
 		return fastbelt.EmptyScope
 	}

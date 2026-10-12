@@ -63,66 +63,68 @@ type simPath struct {
 	left       []int
 }
 
-// baseKey identifies the position of the path in the ATN.
-func (p simPath) baseKey() string {
-	var b strings.Builder
-	b.Grow(8 + 6*len(p.stack) + 8*len(p.hints))
-	b.WriteString(strconv.Itoa(p.stateIdx))
-	b.WriteByte('|')
-	for _, s := range p.stack {
-		b.WriteString(strconv.Itoa(s))
+// writeInts appends the ints as a comma-terminated list.
+func writeInts(b *strings.Builder, xs []int) {
+	for _, x := range xs {
+		b.WriteString(strconv.Itoa(x))
 		b.WriteByte(',')
 	}
+}
+
+// keys identifies the path. The position is its position in the ATN, and
+// the key extends it with what happened around the last consumed token.
+func (p simPath) keys() (position, key string) {
+	var b strings.Builder
+	b.Grow(20 + 6*(len(p.stack)+len(p.left)) + 8*len(p.hints))
+	b.WriteString(strconv.Itoa(p.stateIdx))
+	b.WriteByte('|')
+	writeInts(&b, p.stack)
 	b.WriteByte('|')
 	for _, h := range p.hints {
 		if h != nil {
-			b.WriteString(h.Key())
+			b.WriteString(h.Owner)
+			b.WriteByte('.')
+			b.WriteString(h.Property)
 		}
 		b.WriteByte(',')
 	}
-	return b.String()
-}
-
-// key identifies the path: its position in the ATN given by the baseKey, and
-// what happened around the last consumed token.
-func (p simPath) key(baseKey string) string {
-	var b strings.Builder
-	b.Grow(len(baseKey) + 12 + 6*len(p.left))
-	b.WriteString(baseKey)
+	// A string returned by the builder stays valid when more is written
+	position = b.String()
 	b.WriteByte('|')
 	b.WriteString(strconv.Itoa(p.consumedAt))
 	b.WriteByte(',')
 	b.WriteString(strconv.Itoa(p.fresh))
 	b.WriteByte('|')
-	for _, s := range p.left {
-		b.WriteString(strconv.Itoa(s))
-		b.WriteByte(',')
-	}
-	return b.String()
+	writeInts(&b, p.left)
+	return position, b.String()
 }
 
 // pathSet is the set of the paths of a live set. It counts the positions of
-// its paths in the ATN separately, because they limit the size of a live set:
-// several paths at the same position add no tokens to the completion.
+// its paths in the ATN separately if asked to, because they limit the size of
+// a live set: several paths at the same position add no tokens to the
+// completion.
 type pathSet struct {
 	keys      collections.Set[string]
-	positions collections.Set[string]
+	positions collections.Set[string] // nil if the positions are not counted
 }
 
-func newPathSet(capacity int) pathSet {
-	return pathSet{
-		keys:      make(collections.Set[string], capacity),
-		positions: make(collections.Set[string], capacity),
+func newPathSet(capacity int, countPositions bool) pathSet {
+	s := pathSet{keys: make(collections.Set[string], capacity)}
+	if countPositions {
+		s.positions = make(collections.Set[string], capacity)
 	}
+	return s
 }
 
 // add reports whether the path is new.
 func (s pathSet) add(p simPath) bool {
-	baseKey := p.baseKey()
-	if !s.keys.Add(p.key(baseKey)) {
+	position, key := p.keys()
+	if !s.keys.Add(key) {
 		return false
 	}
-	s.positions.Add(baseKey)
+	if s.positions != nil {
+		s.positions.Add(position)
+	}
 	return true
 }
 
@@ -131,12 +133,10 @@ func (s pathSet) add(p simPath) bool {
 // continue the node of the calling rule, so they don't make a difference.
 func (atn *RuntimeATN) ownerKey(p simPath) string {
 	var b strings.Builder
+	b.Grow(12 + 6*(len(p.left)+p.fresh))
 	b.WriteString(strconv.Itoa(p.consumedAt))
 	b.WriteByte('|')
-	for _, s := range p.left {
-		b.WriteString(strconv.Itoa(s))
-		b.WriteByte(',')
-	}
+	writeInts(&b, p.left)
 	b.WriteByte('|')
 	for _, s := range p.freshFrames() {
 		if call := atn.ruleCallAt(s); call == nil || call.Property != "" || call.PrecedingAction != nil {
@@ -182,13 +182,11 @@ func (atn *RuntimeATN) Simulate(startStateIdx int, tokens []core.Token) []simPat
 
 // SimulateWithConfig is Simulate with explicit cost limits.
 func (atn *RuntimeATN) SimulateWithConfig(startStateIdx int, tokens []core.Token, cfg SimConfig) []simPath {
-	if startStateIdx < 0 || startStateIdx >= len(atn.States) {
-		return nil
-	}
 	return atn.simulateFrom(simPath{stateIdx: startStateIdx, consumedAt: -1}, tokens, cfg)
 }
 
 // simulateFrom advances the live set of the seed by consuming the tokens.
+// A seed at an unknown state yields an empty live set.
 func (atn *RuntimeATN) simulateFrom(seed simPath, tokens []core.Token, cfg SimConfig) []simPath {
 	// Seed the live set with the closure of the start state.
 	live := atn.epsilonClosure([]simPath{seed}, cfg)
@@ -271,24 +269,13 @@ func (info CompletionInfo) HasToken(tokenID int) bool {
 	return false
 }
 
-// HasHintField reports whether any HintCompletion carries the given
-// CompletionHint.Field value.
-func (info CompletionInfo) HasHintField(field string) bool {
-	for _, h := range info.Hints {
-		if h.Hint != nil && h.Hint.Key() == field {
-			return true
-		}
-	}
-	return false
-}
-
 // NextCompletionsFromSet returns a CompletionInfo covering every atom
 // transition reachable from the given live set's ε-closure. It is the
 // single public entry point for inspecting what the simulator yielded;
-// callers that only need set-membership use info.HasToken / HasHintField.
+// callers that only need set-membership use info.HasToken.
 //
 // Tokens and hints are deduplicated by (sourceStateIdx, Id) and
-// (sourceStateIdx, Field) respectively - so the same TokenType emitted
+// (sourceStateIdx, hint key) respectively - so the same TokenType emitted
 // from two different grammar positions surfaces twice, letting the
 // completion contributor distinguish them via ATNStateIdx. Hints that lead
 // to different owners are distinct as well.
@@ -305,7 +292,8 @@ func (atn *RuntimeATN) NextCompletionsFromSet(live []simPath) CompletionInfo {
 	seenHint := make(collections.Set[hintKey])
 	for _, p := range atn.epsilonClosure(live, DefaultSimConfig) {
 		pathHint, pathFresh := p.activeHint()
-		owner := atn.ownerKey(p)
+		// The owner key is only needed for paths that yield a hint
+		owner, ownerKnown := "", false
 		for _, t := range atn.States[p.stateIdx].Transitions {
 			at, ok := t.(*RuntimeAtomTransition)
 			if !ok || at.TokenType == nil {
@@ -319,7 +307,13 @@ func (atn *RuntimeATN) NextCompletionsFromSet(live []simPath) CompletionInfo {
 				if seenToken.Add([2]int{p.stateIdx, at.TokenType.Id}) {
 					info.Tokens = append(info.Tokens, TokenCompletion{TokenType: at.TokenType, ATNStateIdx: p.stateIdx})
 				}
-			} else if fresh && seenHint.Add(hintKey{p.stateIdx, hint.Key(), owner}) {
+			} else if fresh {
+				if !ownerKnown {
+					owner, ownerKnown = atn.ownerKey(p), true
+				}
+				if !seenHint.Add(hintKey{p.stateIdx, hint.Key(), owner}) {
+					continue
+				}
 				info.Hints = append(info.Hints, HintCompletion{
 					Hint:        hint,
 					ATNStateIdx: p.stateIdx,
@@ -348,7 +342,7 @@ func (atn *RuntimeATN) ruleCallsAt(followStates []int) []*RuleCallInfo {
 // (pop the top of the return stack). The result includes the seed states.
 func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 	out := make([]simPath, 0, len(seed))
-	seen := newPathSet(len(seed) * 2)
+	seen := newPathSet(len(seed)*2, true)
 	stack := make([]simPath, 0, len(seed))
 	// push adds the path to the closure if it is new and at a known state.
 	// A path at an unknown state (e.g. behind a rule call without a follow
@@ -373,12 +367,13 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 		// brought us here. The matching hint frame is popped alongside.
 		if state.Type == ATNRuleStop && len(cur.stack) > 0 {
 			top := cur.stack[len(cur.stack)-1]
-			nextStack := append([]int{}, cur.stack[:len(cur.stack)-1]...)
-			nextHints := append([]*CompletionHint{}, cur.hints[:len(cur.hints)-1]...)
-			np := simPath{stateIdx: top, stack: nextStack, hints: nextHints, consumedAt: cur.consumedAt, fresh: cur.fresh, left: cur.left}
+			np := cur
+			np.stateIdx = top
+			np.stack = slices.Clone(cur.stack[:len(cur.stack)-1])
+			np.hints = slices.Clone(cur.hints[:len(cur.hints)-1])
 			if np.fresh > 0 {
 				np.fresh--
-			} else if call := atn.ruleCallAt(top); call != nil && call.Property != "" && !call.InfixOperand {
+			} else if atn.ruleCallAt(top).leavesToContainer() {
 				np.left = append(slices.Clip(cur.left), top)
 			}
 			push(np)
@@ -388,18 +383,19 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 		for _, t := range state.Transitions {
 			switch tt := t.(type) {
 			case *RuntimeEpsilonTransition:
-				push(simPath{stateIdx: atn.stateIndex(tt.Target), stack: cur.stack, hints: cur.hints, consumedAt: cur.consumedAt, fresh: cur.fresh, left: cur.left})
+				np := cur
+				np.stateIdx = atn.stateIndex(tt.Target)
+				push(np)
 			case *RuntimeRuleTransition:
 				if len(cur.stack) >= cfg.MaxReturnStack {
 					continue
 				}
-				newStack := make([]int, len(cur.stack)+1)
-				copy(newStack, cur.stack)
-				newStack[len(cur.stack)] = atn.stateIndex(tt.FollowState)
-				newHints := make([]*CompletionHint, len(cur.hints)+1)
-				copy(newHints, cur.hints)
-				newHints[len(cur.hints)] = tt.CompletionHint
-				push(simPath{stateIdx: atn.stateIndex(tt.Target), stack: newStack, hints: newHints, consumedAt: cur.consumedAt, fresh: cur.fresh + 1, left: cur.left})
+				np := cur
+				np.stateIdx = atn.stateIndex(tt.Target)
+				np.stack = append(slices.Clip(cur.stack), atn.stateIndex(tt.FollowState))
+				np.hints = append(slices.Clip(cur.hints), tt.CompletionHint)
+				np.fresh++
+				push(np)
 			}
 		}
 		if cfg.MaxLiveSet > 0 && len(seen.positions) > cfg.MaxLiveSet {
@@ -416,7 +412,7 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 func (atn *RuntimeATN) advance(live []simPath, tokenType *core.TokenType, cfg SimConfig) []simPath {
 	closure := atn.epsilonClosure(live, cfg)
 	next := make([]simPath, 0, len(closure))
-	seen := newPathSet(len(closure))
+	seen := newPathSet(len(closure), false)
 	for _, p := range closure {
 		for _, t := range atn.States[p.stateIdx].Transitions {
 			at, ok := t.(*RuntimeAtomTransition)
@@ -427,6 +423,7 @@ func (atn *RuntimeATN) advance(live []simPath, tokenType *core.TokenType, cfg Si
 			if targetIdx < 0 {
 				continue
 			}
+			// The token consumed at p.stateIdx: nothing is fresh or left anymore
 			np := simPath{stateIdx: targetIdx, stack: p.stack, hints: p.hints, consumedAt: p.stateIdx}
 			if !seen.add(np) {
 				continue

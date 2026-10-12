@@ -8,13 +8,13 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"sort"
 	"strings"
 	"unique"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/collections"
+	"typefox.dev/fastbelt/util/extiter"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
@@ -325,12 +325,9 @@ func backtrackToToken(tokens core.TokenSlice, offset int) cursorTokenInfo {
 // is inside: a line comment ends at the line break, and the user who just
 // closed a block comment has not left it before typing a separator.
 func commentAt(comments core.TokenSlice, offset int) *core.Token {
-	// The first comment that ends at or behind the cursor
-	i := sort.Search(len(comments), func(i int) bool {
-		return int(comments[i].Range.End) >= offset
-	})
-	if i < len(comments) && int(comments[i].Range.Start) < offset {
-		return &comments[i]
+	// Between two adjacent comments, the first return value is the previous one
+	if comment, _ := comments.SearchOffset2(offset); comment != nil && int(comment.Range.Start) < offset {
+		return comment
 	}
 	return nil
 }
@@ -475,8 +472,8 @@ func buildSyntheticOwnerChain(adapter parser.LanguageCompletionAdapter, doc *cor
 	}
 	var parent core.AstNode
 	for _, frame := range ruleStack {
-		node, ok := adapter.SyntheticOwnerFor(frame.RuleKey)
-		if !ok || node == nil {
+		node := newNode(adapter, frame.RuleKey, doc)
+		if node == nil {
 			// Some rules have no associated AST node (composite nodes)
 			// Those are simply skipped
 			continue
@@ -484,7 +481,6 @@ func buildSyntheticOwnerChain(adapter parser.LanguageCompletionAdapter, doc *cor
 		if parent != nil {
 			node.SetContainer(parent, unique.Make(""), 0)
 		}
-		node.SetDocument(doc)
 		parent = node
 	}
 	return parent
@@ -635,24 +631,18 @@ func buildOwnerAt(adapter parser.LanguageCompletionAdapter, base core.AstNode, h
 		return create(ownerType)
 	}
 	// No rule call is assigned, so the owner is the node of the rule in progress
-	if isOfType(adapter, node, ownerType) {
-		return node
-	}
-	return replaceNode(adapter, node, ownerType)
+	return nodeOfType(adapter, node, ownerType)
 }
 
 // applyAction returns the node that results from executing the action with
 // the given node as the current node.
 func applyAction(adapter parser.LanguageCompletionAdapter, node core.AstNode, action *parser.ActionInfo) core.AstNode {
 	if action.Property == "" {
-		if isOfType(adapter, node, action.TargetType) {
-			return node
-		}
-		return replaceNode(adapter, node, action.TargetType)
+		return nodeOfType(adapter, node, action.TargetType)
 	}
 	// The main parser executed the action if the input continues behind the cursor
 	if container := node.Container(); container != nil && isOfType(adapter, container, action.TargetType) {
-		if field, index := node.ContainmentData(); field == unique.Make(action.Field) && index <= 0 {
+		if field, index := node.ContainmentData(); field == unique.Make(action.Field) && adapter.AssignsCurrent(container, field, index) {
 			return container
 		}
 	}
@@ -674,9 +664,13 @@ func newNode(adapter parser.LanguageCompletionAdapter, nodeType string, doc *cor
 	return node
 }
 
-// replaceNode creates a node of the given type that takes the place of the
-// given node in the AST. Returns nil if the type is unknown.
-func replaceNode(adapter parser.LanguageCompletionAdapter, node core.AstNode, nodeType string) core.AstNode {
+// nodeOfType returns the node if it has the given type, or else a new node of
+// that type that takes the place of the given node in the AST. Returns nil if
+// the type is unknown.
+func nodeOfType(adapter parser.LanguageCompletionAdapter, node core.AstNode, nodeType string) core.AstNode {
+	if isOfType(adapter, node, nodeType) {
+		return node
+	}
 	replacement := newNode(adapter, nodeType, node.Document())
 	if replacement != nil {
 		takePlace(replacement, node)
@@ -717,10 +711,7 @@ func listIndexAfter(container core.AstNode, field unique.Handle[string], token *
 // that is missing. The tokens of a composite cross-reference belong to its
 // unit, not to the node.
 func isEmptyNode(node core.AstNode) bool {
-	if len(node.Tokens()) > 0 {
-		return false
-	}
-	for range core.ChildNodes(node) {
+	if len(node.Tokens()) > 0 || !extiter.IsEmpty(core.ChildNodes(node)) {
 		return false
 	}
 	empty := true

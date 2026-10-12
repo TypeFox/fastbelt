@@ -35,7 +35,7 @@ type LanguageCompletionAdapter interface {
 	// completion when it can't build the synthetic chain.
 	SyntheticOwnerFor(ruleKey string) (core.AstNode, bool)
 	// DispatchCompletion runs the per-field scope+filter chain for the
-	// given CompletionHint.Field on the supplied synthetic owner. Returns
+	// given CompletionHint.Key on the supplied synthetic owner. Returns
 	// (nil, false) if the field key isn't registered.
 	DispatchCompletion(
 		ctx context.Context,
@@ -183,9 +183,10 @@ func (cp *CompletionParserState) snapshot(atnStateIdx int) ATNSnapshot {
 	for i := len(cp.entries) - 1; i >= 0 && cp.entries[i] == index && fresh < len(followStates); i-- {
 		fresh++
 	}
+	// leaveRule never changes cp.left in place, so the snapshot can share it
 	var left []int
 	if cp.leftAt == index {
-		left = slices.Clone(cp.left)
+		left = cp.left
 	}
 	return ATNSnapshot{
 		TokenIdx:     index,
@@ -228,7 +229,7 @@ func (cp *CompletionParserState) leaveRule(entry int) {
 		return
 	}
 	followIdx := followStates[len(followStates)-1]
-	if call := cp.state.atn.ruleCallAt(followIdx); call != nil && call.Property != "" && !call.InfixOperand {
+	if cp.state.atn.ruleCallAt(followIdx).leavesToContainer() {
 		cp.left = append(slices.Clip(cp.left), followIdx)
 	}
 }
@@ -322,9 +323,6 @@ func (r *CompletionParseResult) SimulateAt(atn *RuntimeATN, cursor int) (live []
 	// If it yields a non-empty completion set, that likely means that the snapshot is valid (no syntax errors in the prefix)
 	// If it fails, we should try the next snapshot, which is closer to the cursor, but might be more specific (less broad)
 	try := func(s ATNSnapshot) ([]simPath, bool) {
-		if s.ATNStateIdx < 0 || s.ATNStateIdx >= len(atn.States) {
-			return nil, false
-		}
 		// Continue with the rule calls of the parser, so that the simulator
 		// can leave the rule that the snapshot was taken in
 		seed := simPath{stateIdx: s.ATNStateIdx, stack: s.FollowStates, fresh: s.Fresh, left: s.Left, consumedAt: -1}

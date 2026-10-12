@@ -43,7 +43,7 @@ type CompletionContributor interface {
 	CompletionForToken(ctx context.Context, tt *core.TokenType, atnState int, cc ContributorContext, accept CompletionAcceptor)
 
 	// CompletionForReference is called once per cross-reference
-	// candidate the scope/dispatch pass produced. hint.Field
+	// candidate the scope/dispatch pass produced. hint.Key()
 	// identifies the reference field (e.g. "Transition.Event");
 	// atnState is the source ATN state of the rule transition that
 	// carried the hint. The default emits one item per d with all

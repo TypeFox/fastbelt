@@ -252,7 +252,7 @@ func generateAssignsCurrent(ctx *LinkerGeneratorContext, actions []actionEntry) 
 		if e.isArray {
 			position = "index == 0"
 		}
-		node.AppendLine("if _, ok := container.(", e.targetType, "); ok && field == ", fieldHandleVarName(grammar.GoFieldName(e.property)), " && ", position, " {")
+		node.AppendLine("if _, ok := container.(", e.targetType, "); ok && field == ", fieldHandleVarName(e.property), " && ", position, " {")
 		node.AppendLine(" return true")
 		node.AppendLine("}")
 	}

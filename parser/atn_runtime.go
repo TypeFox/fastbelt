@@ -129,7 +129,7 @@ type ActionInfo struct {
 //
 // CompletionHint is non-nil when this transition's token was emitted by a
 // cross-reference assignment; it lets the completion engine know that "match
-// Token_ID here" means "complete a reference to the field named by Hint.Field".
+// Token_ID here" means "complete a reference to the property named by the hint".
 type RuntimeAtomTransition struct {
 	Target         *RuntimeATNState
 	TokenType      *fastbelt.TokenType
@@ -201,6 +201,15 @@ type RuleCallInfo struct {
 	// it. The PrecedingAction is only executed in front of the first of the
 	// repeated rule calls then.
 	Repeated bool
+}
+
+// leavesToContainer reports whether leaving the rule call moves from the node
+// that it created to the container of that node. That is the case for an
+// assigned rule call, except for the operand of an infix rule, whose node
+// may end up as a container of the operator rather than the other way round.
+// A nil call is unknown and does not.
+func (c *RuleCallInfo) leavesToContainer() bool {
+	return c != nil && c.Property != "" && !c.InfixOperand
 }
 
 func NewRuleTransition(target, followState *RuntimeATNState, hint *CompletionHint, call *RuleCallInfo) *RuntimeRuleTransition {
