@@ -76,6 +76,8 @@ const (
 	Shadow__Stop
 	Nest__Start
 	Nest__Stop
+	Lead__Start
+	Lead__Stop
 	Ambig__Start
 	Ambig__Stop
 	AmbigName__Start
@@ -149,6 +151,8 @@ const (
 	Root__Basic_52
 	Root__Basic_53
 	Root__Basic_54
+	Root__Basic_55
+	Root__Basic_56
 	Root__BlockEnd
 	Root__LoopEntry
 	Root__LoopEnd
@@ -363,6 +367,10 @@ const (
 	Nest__LoopBack
 	Nest_RBRACE
 	Nest__Basic_6
+	Lead_Ref_HASH_ID
+	Lead_lead
+	Lead_Name_HASH_ID
+	Lead__Basic
 	Ambig_ambig
 	Ambig__Basic_0
 	Ambig__Basic_1
@@ -428,7 +436,7 @@ func ATN() *parser.RuntimeATN {
 	return atn
 }
 func BuildATN() *parser.RuntimeATN {
-	states := make([]*parser.RuntimeATNState, 408)
+	states := make([]*parser.RuntimeATNState, 416)
 	states[Root__Start] = parser.NewATNState(Root__Start, parser.ATNRuleStart, true)
 	states[Root__Stop] = parser.NewATNState(Root__Stop, parser.ATNRuleStop, false)
 	states[Declare__Start] = parser.NewATNState(Declare__Start, parser.ATNRuleStart, true)
@@ -497,6 +505,8 @@ func BuildATN() *parser.RuntimeATN {
 	states[Shadow__Stop] = parser.NewATNState(Shadow__Stop, parser.ATNRuleStop, false)
 	states[Nest__Start] = parser.NewATNState(Nest__Start, parser.ATNRuleStart, true)
 	states[Nest__Stop] = parser.NewATNState(Nest__Stop, parser.ATNRuleStop, false)
+	states[Lead__Start] = parser.NewATNState(Lead__Start, parser.ATNRuleStart, true)
+	states[Lead__Stop] = parser.NewATNState(Lead__Stop, parser.ATNRuleStop, false)
 	states[Ambig__Start] = parser.NewATNState(Ambig__Start, parser.ATNRuleStart, true)
 	states[Ambig__Stop] = parser.NewATNState(Ambig__Stop, parser.ATNRuleStop, false)
 	states[AmbigName__Start] = parser.NewATNState(AmbigName__Start, parser.ATNRuleStart, true)
@@ -569,7 +579,9 @@ func BuildATN() *parser.RuntimeATN {
 	states[Root__Basic_51] = parser.NewATNState(Root__Basic_51, parser.ATNBasic, true)
 	states[Root__Basic_52] = parser.NewATNState(Root__Basic_52, parser.ATNBasic, true)
 	states[Root__Basic_53] = parser.NewATNState(Root__Basic_53, parser.ATNBasic, true)
-	states[Root__Basic_54] = parser.NewATNState(Root__Basic_54, parser.ATNBasic, true).SetDecision(0)
+	states[Root__Basic_54] = parser.NewATNState(Root__Basic_54, parser.ATNBasic, true)
+	states[Root__Basic_55] = parser.NewATNState(Root__Basic_55, parser.ATNBasic, true)
+	states[Root__Basic_56] = parser.NewATNState(Root__Basic_56, parser.ATNBasic, true).SetDecision(0)
 	states[Root__BlockEnd] = parser.NewATNState(Root__BlockEnd, parser.ATNBlockEnd, true)
 	states[Root__LoopEntry] = parser.NewATNState(Root__LoopEntry, parser.ATNLoopEntry, true).SetDecision(1)
 	states[Root__LoopEnd] = parser.NewATNState(Root__LoopEnd, parser.ATNLoopEnd, true)
@@ -784,6 +796,10 @@ func BuildATN() *parser.RuntimeATN {
 	states[Nest__LoopBack] = parser.NewATNState(Nest__LoopBack, parser.ATNLoopBack, true)
 	states[Nest_RBRACE] = parser.NewATNState(Nest_RBRACE, parser.ATNBasic, false)
 	states[Nest__Basic_6] = parser.NewATNState(Nest__Basic_6, parser.ATNBasic, true)
+	states[Lead_Ref_HASH_ID] = parser.NewATNState(Lead_Ref_HASH_ID, parser.ATNBasic, false)
+	states[Lead_lead] = parser.NewATNState(Lead_lead, parser.ATNBasic, false)
+	states[Lead_Name_HASH_ID] = parser.NewATNState(Lead_Name_HASH_ID, parser.ATNBasic, false)
+	states[Lead__Basic] = parser.NewATNState(Lead__Basic, parser.ATNBasic, true)
 	states[Ambig_ambig] = parser.NewATNState(Ambig_ambig, parser.ATNBasic, false)
 	states[Ambig__Basic_0] = parser.NewATNState(Ambig__Basic_0, parser.ATNBasic, true)
 	states[Ambig__Basic_1] = parser.NewATNState(Ambig__Basic_1, parser.ATNBasic, true)
@@ -938,6 +954,9 @@ func BuildATN() *parser.RuntimeATN {
 	)
 	states[Nest__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Nest_nest]),
+	)
+	states[Lead__Start].AppendTransitions(
+		parser.NewEpsilonTransition(states[Lead_Ref_HASH_ID]),
 	)
 	states[Ambig__Start].AppendTransitions(
 		parser.NewEpsilonTransition(states[Ambig_ambig]),
@@ -1129,6 +1148,12 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[Root__BlockEnd]),
 	)
 	states[Root__Basic_54].AppendTransitions(
+		parser.NewRuleTransition(states[Lead__Start], states[Root__Basic_55], nil, &parser.RuleCallInfo{Property: "objects", List: true, Type: "Lead", Repeated: true}),
+	)
+	states[Root__Basic_55].AppendTransitions(
+		parser.NewEpsilonTransition(states[Root__BlockEnd]),
+	)
+	states[Root__Basic_56].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__Basic_0]),
 		parser.NewEpsilonTransition(states[Root__Basic_2]),
 		parser.NewEpsilonTransition(states[Root__Basic_4]),
@@ -1156,12 +1181,13 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[Root__Basic_48]),
 		parser.NewEpsilonTransition(states[Root__Basic_50]),
 		parser.NewEpsilonTransition(states[Root__Basic_52]),
+		parser.NewEpsilonTransition(states[Root__Basic_54]),
 	)
 	states[Root__BlockEnd].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__LoopBack]),
 	)
 	states[Root__LoopEntry].AppendTransitions(
-		parser.NewEpsilonTransition(states[Root__Basic_54]),
+		parser.NewEpsilonTransition(states[Root__Basic_56]),
 		parser.NewEpsilonTransition(states[Root__LoopEnd]),
 	)
 	states[Root__LoopEnd].AppendTransitions(
@@ -1826,6 +1852,18 @@ func BuildATN() *parser.RuntimeATN {
 	states[Nest__Basic_6].AppendTransitions(
 		parser.NewEpsilonTransition(states[Nest__Stop]),
 	)
+	states[Lead_Ref_HASH_ID].AppendTransitions(
+		parser.NewAtomTransition(states[Lead_lead], Token_HASH_ID, &parser.CompletionHint{Owner: "Lead", Property: "Ref"}),
+	)
+	states[Lead_lead].AppendTransitions(
+		parser.NewAtomTransition(states[Lead_Name_HASH_ID], Keyword_lead, nil),
+	)
+	states[Lead_Name_HASH_ID].AppendTransitions(
+		parser.NewAtomTransition(states[Lead__Basic], Token_HASH_ID, nil),
+	)
+	states[Lead__Basic].AppendTransitions(
+		parser.NewEpsilonTransition(states[Lead__Stop]),
+	)
 	states[Ambig_ambig].AppendTransitions(
 		parser.NewAtomTransition(states[Ambig__Basic_4], Keyword_ambig, nil),
 	)
@@ -1991,7 +2029,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[Binary__LoopEntry]),
 	)
 	decisionStates := make([]*parser.RuntimeATNState, 31)
-	decisionStates[0] = states[Root__Basic_54]
+	decisionStates[0] = states[Root__Basic_56]
 	decisionStates[1] = states[Root__LoopEntry]
 	decisionStates[2] = states[Declare__LoopEntry]
 	decisionStates[3] = states[Declare__Basic_4]
@@ -2023,7 +2061,7 @@ func BuildATN() *parser.RuntimeATN {
 	decisionStates[29] = states[FQN__LoopEntry]
 	decisionStates[30] = states[Binary__LoopEntry]
 	decisionMap := make([]*parser.RuntimeATNState, 31)
-	decisionMap[0] = states[Root__Basic_54]
+	decisionMap[0] = states[Root__Basic_56]
 	decisionMap[1] = states[Root__LoopEntry]
 	decisionMap[2] = states[Declare__LoopEntry]
 	decisionMap[3] = states[Declare__Basic_4]

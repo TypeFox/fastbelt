@@ -230,6 +230,13 @@ func (p *Parser) ParseRoot() Root {
 					if result != nil {
 						current.SetObjectsItem(result)
 					}
+				case 27:
+					p.state.EnterRule(Root__Basic_55)
+					result := p.ParseLead()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetObjectsItem(result)
+					}
 				default:
 					break loop0
 				}
@@ -1262,6 +1269,33 @@ func (p *Parser) ParseNest() Nest {
 		{
 			token := p.state.Consume(Token_RBRACE)
 			core.AssignToken(current, token, Nest_RBRACE)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseLead() Lead {
+	current := NewLead()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Token_HASH_ID)
+			core.AssignToken(current, token, Lead_Ref_HASH_ID)
+			if token != nil {
+				current.SetRef(p.referencesConstructor.LeadRef(current, token))
+			}
+		}
+		{
+			token := p.state.Consume(Keyword_lead)
+			core.AssignToken(current, token, Lead_lead)
+		}
+		{
+			token := p.state.Consume(Token_HASH_ID)
+			core.AssignToken(current, token, Lead_Name_HASH_ID)
+			if token != nil {
+				current.SetName(token)
+			}
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)

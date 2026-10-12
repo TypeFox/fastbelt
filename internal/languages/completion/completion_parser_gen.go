@@ -156,6 +156,10 @@ func (p *CompletionParser) ParseRoot() {
 				p.state.EnterRule(Root__Basic_53)
 				p.ParseAct()
 				p.state.ExitRule()
+			case 27:
+				p.state.EnterRule(Root__Basic_55)
+				p.ParseLead()
+				p.state.ExitRule()
 			default:
 				break loop0
 			}
@@ -824,6 +828,20 @@ loop2:
 	}
 	{
 		p.state.Consume(Token_RBRACE)
+	}
+}
+
+func (p *CompletionParser) ParseLead() {
+	p.cp.EnterRule("Lead", Lead__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Token_HASH_ID)
+	}
+	{
+		p.state.Consume(Keyword_lead)
+	}
+	{
+		p.state.Consume(Token_HASH_ID)
 	}
 }
 

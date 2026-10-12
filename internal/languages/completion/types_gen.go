@@ -2519,6 +2519,98 @@ func (i *AmbigRefsImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	}
 }
 
+type Lead interface {
+	core.AstNode
+	Obj
+
+	IsLead()
+	Ref() *core.Reference[Lead]
+	SetRef(value *core.Reference[Lead])
+	Name() string
+	NameToken() *core.Token
+	SetName(value *core.Token)
+}
+
+func NewLead() Lead {
+	return &LeadImpl{}
+}
+
+type LeadData struct {
+	ref  *core.Reference[Lead]
+	name *core.Token
+}
+
+func (i *LeadData) IsLead() {}
+
+func (i *LeadData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+}
+
+func (i *LeadData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	if i.ref != nil {
+		fn(i.ref, fieldNameRef, -1)
+	}
+}
+
+func (i *LeadData) Ref() *core.Reference[Lead] {
+	if i != nil && i.ref != nil {
+		return i.ref
+	} else {
+		return nil
+	}
+}
+
+func (i *LeadData) SetRef(value *core.Reference[Lead]) {
+	i.ref = value
+}
+
+func (i *LeadData) Name() string {
+	if i != nil && i.name != nil {
+		return i.name.Image
+	} else {
+		return ""
+	}
+}
+
+func (i *LeadData) NameToken() *core.Token {
+	return i.name
+}
+
+func (i *LeadData) SetName(value *core.Token) {
+	i.name = value
+}
+
+type LeadImpl struct {
+	core.AstNodeBase
+	ObjData
+	LeadData
+}
+
+func (i *LeadImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.ObjData.ForEachNode(fn)
+	i.LeadData.ForEachNode(fn)
+}
+
+func (i *LeadImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.ObjData.ForEachReference(fn)
+	i.LeadData.ForEachReference(fn)
+}
+
+func (i *LeadImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameName:
+		return nil, fmt.Errorf("LeadImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	case fieldNameRef:
+		return nil, fmt.Errorf("LeadImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("LeadImpl.Resolve: field '%s' does not exist in node '%s' of type 'Lead'", field.Value(), nodePath)
+	}
+}
+
 type Retype interface {
 	core.AstNode
 	Obj
@@ -3049,6 +3141,7 @@ var CompletionSyntheticFactories = map[string]func() core.AstNode{
 	"Dep":           func() core.AstNode { return NewDep() },
 	"Expr":          func() core.AstNode { return NewExpr() },
 	"Infix":         func() core.AstNode { return NewInfix() },
+	"Lead":          func() core.AstNode { return NewLead() },
 	"Loop":          func() core.AstNode { return NewLoop() },
 	"Member":        func() core.AstNode { return NewMember() },
 	"MemberCall":    func() core.AstNode { return NewMemberCall() },
