@@ -18,7 +18,6 @@ import (
 // SemanticTokensProvider defines the interface for handling semantic tokens requests in the LSP.
 // Also provides the token legend that is sent to the language client.
 type SemanticTokensProvider interface {
-	DocumentStateRequirements
 	SemanticTokensLegendProvider
 
 	HandleSemanticTokensFullRequest(ctx context.Context, params *lsp.SemanticTokensParams) (*lsp.SemanticTokens, error)
