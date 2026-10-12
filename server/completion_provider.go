@@ -495,9 +495,13 @@ func buildSyntheticOwnerChain(adapter parser.LanguageCompletionAdapter, doc *cor
 // that the main parser would give to it. Scope providers find the same
 // symbols as for a node of the main parser then.
 //
-// The lastToken is nil if there is no such token. The owner is derived from
-// the rule stack of the completion parser then, and is not connected to the
-// AST.
+// The lastToken is nil at the start of the document. The rule calls of the
+// hint lead from the entry rule to the cross-reference then, so the owner is
+// derived from the root of the AST.
+//
+// If the hint reads the last token in another way than the main parser did,
+// the owner is derived from the rule stack of the completion parser instead,
+// and is not connected to the AST.
 //
 // If the hint carries an action that precedes the cross-reference, the
 // action is applied to the owner as the main parser would have on the next
@@ -508,10 +512,8 @@ func buildSyntheticOwnerChain(adapter parser.LanguageCompletionAdapter, doc *cor
 // silently returning the wrong scope.
 func buildOwner(adapter parser.LanguageCompletionAdapter, doc *core.Document, ruleStack []parser.RuleContext, hc parser.HintCompletion, lastToken *core.Token) core.AstNode {
 	var owner core.AstNode
-	if lastToken != nil {
-		if base := baseOf(adapter, hc, lastToken); base != nil {
-			owner = buildOwnerAt(adapter, base, hc, lastToken)
-		}
+	if base := baseOf(adapter, doc, hc, lastToken); base != nil {
+		owner = buildOwnerAt(adapter, base, hc, lastToken)
 	}
 	if owner == nil {
 		owner = buildSyntheticOwnerChainFor(adapter, doc, ruleStack, hc.Hint)
@@ -525,7 +527,11 @@ func buildOwner(adapter parser.LanguageCompletionAdapter, doc *core.Document, ru
 // baseOf returns the node of the rule that was in progress at the last
 // token, after leaving the rules that ended since then. Returns nil if that
 // node is unknown.
-func baseOf(adapter parser.LanguageCompletionAdapter, hc parser.HintCompletion, lastToken *core.Token) core.AstNode {
+func baseOf(adapter parser.LanguageCompletionAdapter, doc *core.Document, hc parser.HintCompletion, lastToken *core.Token) core.AstNode {
+	if lastToken == nil {
+		// At the start of the document, the entry rule is in progress
+		return doc.Root
+	}
 	if hc.ConsumedAt >= 0 && hc.ConsumedAt != lastToken.Kind {
 		// The hint reads the token in another way than the main parser did,
 		// so the node that owns the token is unrelated to the hint.
@@ -695,9 +701,13 @@ func isOfType(adapter parser.LanguageCompletionAdapter, node core.AstNode, nodeT
 // listIndexAfter returns the index for a node that is added to the list of
 // the container after the given token, in front of the items that follow it.
 // An item that starts in front of the token and ends after it is split by
-// the new node, which follows the first part.
+// the new node, which follows the first part. A nil token is in front of
+// all items.
 func listIndexAfter(container core.AstNode, field unique.Handle[string], token *core.Token) int {
 	index := 0
+	if token == nil {
+		return index
+	}
 	container.ForEachNode(func(child core.AstNode, childField unique.Handle[string], childIndex int) {
 		if childField == field && !isEmptyNode(child) && child.TextRange().Start <= token.Range.Start {
 			index = childIndex + 1

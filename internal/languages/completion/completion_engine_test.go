@@ -598,6 +598,21 @@ func (f *ownerRecordingFilter) FilterAmbigRefsRef(_ context.Context, ref *core.R
 	return in
 }
 
+// leadOwnerRecordingFilter records the owners of Lead.Ref only. A Lead can
+// start at every position of the root, so the ownerRecordingFilter leaves it
+// out to keep the other owner tests focused.
+type leadOwnerRecordingFilter struct {
+	completion.DefaultCompletionCompletionFilter
+	owners []core.AstNode
+}
+
+func (f *leadOwnerRecordingFilter) FilterLeadRef(_ context.Context, ref *core.Reference[completion.Lead], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+func (f *leadOwnerRecordingFilter) recordedOwners() []core.AstNode { return f.owners }
+
 func (f *ownerRecordingFilter) FilterRefItemRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	f.owners = append(f.owners, ref.Owner())
 	return in
@@ -613,11 +628,26 @@ func (f *ownerRecordingFilter) FilterOperandRef(_ context.Context, ref *core.Ref
 	return in
 }
 
+// ownerRecorder is a completion filter that records the owners of the
+// references that it filters.
+type ownerRecorder interface {
+	completion.CompletionCompletionFilter
+	recordedOwners() []core.AstNode
+}
+
+func (f *ownerRecordingFilter) recordedOwners() []core.AstNode { return f.owners }
+
 // completeOwners requests the completion at the cursor and returns the
-// owners of the references that were completed.
+// owners of the references that were completed, as recorded by a new
+// ownerRecordingFilter.
 func completeOwners(t *testing.T, src string) (*test.Doc, []core.AstNode) {
 	t.Helper()
-	filter := &ownerRecordingFilter{}
+	return completeOwnersWith(t, src, &ownerRecordingFilter{})
+}
+
+// completeOwnersWith is completeOwners with the given filter.
+func completeOwnersWith(t *testing.T, src string, filter ownerRecorder) (*test.Doc, []core.AstNode) {
+	t.Helper()
 	sc := service.NewContainer()
 	completion.SetupServices(sc)
 	service.Override[completion.CompletionCompletionFilter](sc, filter)
@@ -625,10 +655,11 @@ func completeOwners(t *testing.T, src string) (*test.Doc, []core.AstNode) {
 
 	doc := test.New(t, sc).Parse(src)
 	doc.CompletionItems("cursor")
-	if len(filter.owners) == 0 {
+	owners := filter.recordedOwners()
+	if len(owners) == 0 {
 		t.Fatalf("expected the completion of a reference")
 	}
-	return doc, filter.owners
+	return doc, owners
 }
 
 // describeOwner returns the types and the containment data of the owner and
@@ -662,9 +693,15 @@ func describeOwner(doc *test.Doc, owner core.AstNode) string {
 // describeOwner. The root contains a single node.
 func assertOwners(t *testing.T, cases map[string][]string) {
 	t.Helper()
+	assertOwnersWith(t, func() ownerRecorder { return &ownerRecordingFilter{} }, cases)
+}
+
+// assertOwnersWith is assertOwners with a new filter per case.
+func assertOwnersWith(t *testing.T, newFilter func() ownerRecorder, cases map[string][]string) {
+	t.Helper()
 	for src, expected := range cases {
 		t.Run(src, func(t *testing.T) {
-			doc, owners := completeOwners(t, src)
+			doc, owners := completeOwnersWith(t, src, newFilter())
 			actual := []string{}
 			for _, owner := range owners {
 				actual = append(actual, describeOwner(doc, owner))
@@ -813,6 +850,45 @@ func TestCompletion_AfterAmbig_OwnerOfOtherAlternative(t *testing.T) {
 		"AmbigName at name, Ambig at objects@0",
 		"new AmbigRefs, new Root",
 	}, actual)
+}
+
+// The cross-reference of Lead can be the first token of the document, so
+// there is no token in front of the cursor. The owner must still be
+// contained in the root that the main parser built, with the containment
+// data that the parser would give to it, as it is one token later.
+func TestCompletion_AtDocumentStart_OwnerContainment(t *testing.T) {
+	assertOwnersWith(t, func() ownerRecorder { return &leadOwnerRecordingFilter{} }, map[string][]string{
+		"<|cursor>":                           {"new Lead at objects@0"},
+		"<|cursor>#foo lead #bar":             {"new Lead at objects@0"},
+		"<|cursor>#foo lead #bar declare baz": {"new Lead at objects@0"},
+		"#foo lead #bar <|cursor>":            {"new Lead at objects@1"},
+	})
+}
+
+// The Leads of the root are proposed for Lead.Ref at the start of the
+// document, as the scope provider finds them through the container of the
+// owner, which is the root that the main parser built from the input behind
+// the cursor.
+func TestCompletion_AtDocumentStart_ProposesSymbols(t *testing.T) {
+	items := completionAt(t, "<|cursor>#foo lead #bar")
+	if !hasLabel(items, "#bar") || !hasLabel(items, "declare") {
+		t.Errorf("expected '#bar' next to the keywords at the start; got %v", itemLabels(items))
+	}
+
+	// The typed prefix replaces the keywords by the matching Leads
+	items = completionAt(t, "#<|cursor>foo lead #bar #bar lead #baz")
+	assert.ElementsMatch(t, []string{"#bar", "#baz"}, itemLabels(items))
+	if item := itemWithLabel(items, "#bar"); item == nil || item.TextEdit == nil {
+		t.Errorf("expected REPLACE-shaped '#bar'; got %+v", item)
+	}
+
+	// Without Leads, nothing is proposed for the reference
+	items = completionAt(t, "<|cursor>declare foo")
+	for _, label := range itemLabels(items) {
+		if strings.HasPrefix(label, "#") {
+			t.Errorf("did not expect a Lead; got %v", itemLabels(items))
+		}
+	}
 }
 
 // The action of RetypeItem changes the type of the node that contains the owner.

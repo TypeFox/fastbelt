@@ -7,7 +7,7 @@ interface Root {
     Objects []Obj
 }
 
-entry Root: Objects+=(Declare | Seq | Alt | Prefix | Call | RefFQN | RefList | RefID | Member | MemberNoDot | RefOrKeyword | Dedup | Opt | Group | RefGroup | RefAction | Scope | Loop | Chain | Infix | Wrap | Shadow | Nest | Ambig | Retype | Dep | Act)*;
+entry Root: Objects+=(Declare | Seq | Alt | Prefix | Call | RefFQN | RefList | RefID | Member | MemberNoDot | RefOrKeyword | Dedup | Opt | Group | RefGroup | RefAction | Scope | Loop | Chain | Infix | Wrap | Shadow | Nest | Ambig | Retype | Dep | Act | Lead)*;
 
 interface Declare extends Obj {
     Name composite
@@ -235,6 +235,16 @@ interface AmbigRefs {
     Ref *Declare
 }
 
+interface Lead extends Obj {
+    Ref *Lead
+    Name string
+}
+
+// cross-reference that can be the first token of the document, so there is
+// no token in front of the cursor. It has its own token, so that the typed
+// prefixes of the other tests are not read as a reference.
+Lead: Ref=[Lead:HASH_ID] "lead" Name=HASH_ID;
+
 // alternatives that read the same token in different ways
 Ambig: "ambig" (Name=AmbigName | Refs=AmbigRefs);
 
@@ -296,6 +306,7 @@ token END: "end"
 
 token WS: /[ \t\r\n]+/
 token ID: /\w[\w0-9]*/
+token HASH_ID: /#\w+/
 token ML_COMMENT: /\/\*[\s\S]*?\*\//
 
 token mode default {
@@ -304,6 +315,7 @@ token mode default {
     RBRACE
     DOT
     ID
+    HASH_ID
 
     hidden WS
     comment ML_COMMENT

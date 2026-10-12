@@ -409,7 +409,23 @@ var Keyword_nest = core.NewTokenType(
 	[]rune{'n'},
 )
 
-const Keyword_ambig_Idx = 26
+const Keyword_lead_Idx = 26
+
+var Keyword_lead = core.NewTokenType(
+	Keyword_lead_Idx,
+	"lead",
+	"lead",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "lead") {
+			return 4
+		}
+		return 0
+	},
+	[]rune{'l'},
+)
+
+const Keyword_ambig_Idx = 27
 
 var Keyword_ambig = core.NewTokenType(
 	Keyword_ambig_Idx,
@@ -425,7 +441,7 @@ var Keyword_ambig = core.NewTokenType(
 	[]rune{'a'},
 )
 
-const Keyword_retype_Idx = 27
+const Keyword_retype_Idx = 28
 
 var Keyword_retype = core.NewTokenType(
 	Keyword_retype_Idx,
@@ -441,7 +457,7 @@ var Keyword_retype = core.NewTokenType(
 	[]rune{'r'},
 )
 
-const Keyword_dep_Idx = 28
+const Keyword_dep_Idx = 29
 
 var Keyword_dep = core.NewTokenType(
 	Keyword_dep_Idx,
@@ -457,7 +473,7 @@ var Keyword_dep = core.NewTokenType(
 	[]rune{'d'},
 )
 
-const Keyword_act_Idx = 29
+const Keyword_act_Idx = 30
 
 var Keyword_act = core.NewTokenType(
 	Keyword_act_Idx,
@@ -473,7 +489,7 @@ var Keyword_act = core.NewTokenType(
 	[]rune{'a'},
 )
 
-const Keyword_times_Idx = 30
+const Keyword_times_Idx = 31
 
 var Keyword_times = core.NewTokenType(
 	Keyword_times_Idx,
@@ -489,7 +505,7 @@ var Keyword_times = core.NewTokenType(
 	[]rune{'t'},
 )
 
-const Keyword_plus_Idx = 31
+const Keyword_plus_Idx = 32
 
 var Keyword_plus = core.NewTokenType(
 	Keyword_plus_Idx,
@@ -505,7 +521,7 @@ var Keyword_plus = core.NewTokenType(
 	[]rune{'p'},
 )
 
-const Keyword_declare_Idx = 32
+const Keyword_declare_Idx = 33
 
 var Keyword_declare = core.NewTokenType(
 	Keyword_declare_Idx,
@@ -521,7 +537,7 @@ var Keyword_declare = core.NewTokenType(
 	[]rune{'d'},
 )
 
-const Keyword_first_Idx = 33
+const Keyword_first_Idx = 34
 
 var Keyword_first = core.NewTokenType(
 	Keyword_first_Idx,
@@ -537,7 +553,7 @@ var Keyword_first = core.NewTokenType(
 	[]rune{'f'},
 )
 
-const Keyword_second_Idx = 34
+const Keyword_second_Idx = 35
 
 var Keyword_second = core.NewTokenType(
 	Keyword_second_Idx,
@@ -553,7 +569,7 @@ var Keyword_second = core.NewTokenType(
 	[]rune{'s'},
 )
 
-const Keyword_long_Idx = 35
+const Keyword_long_Idx = 36
 
 var Keyword_long = core.NewTokenType(
 	Keyword_long_Idx,
@@ -569,7 +585,7 @@ var Keyword_long = core.NewTokenType(
 	[]rune{'l'},
 )
 
-const Keyword_self_Idx = 36
+const Keyword_self_Idx = 37
 
 var Keyword_self = core.NewTokenType(
 	Keyword_self_Idx,
@@ -585,7 +601,7 @@ var Keyword_self = core.NewTokenType(
 	[]rune{'s'},
 )
 
-const Keyword_common_Idx = 37
+const Keyword_common_Idx = 38
 
 var Keyword_common = core.NewTokenType(
 	Keyword_common_Idx,
@@ -601,7 +617,7 @@ var Keyword_common = core.NewTokenType(
 	[]rune{'c'},
 )
 
-const Keyword_then_Idx = 38
+const Keyword_then_Idx = 39
 
 var Keyword_then = core.NewTokenType(
 	Keyword_then_Idx,
@@ -617,7 +633,7 @@ var Keyword_then = core.NewTokenType(
 	[]rune{'t'},
 )
 
-const Keyword_LeftBrace_Idx = 39
+const Keyword_LeftBrace_Idx = 40
 
 var Keyword_LeftBrace = core.NewTokenType(
 	Keyword_LeftBrace_Idx,
@@ -633,7 +649,7 @@ var Keyword_LeftBrace = core.NewTokenType(
 	[]rune{'{'},
 )
 
-const Keyword_RightBrace_Idx = 40
+const Keyword_RightBrace_Idx = 41
 
 var Keyword_RightBrace = core.NewTokenType(
 	Keyword_RightBrace_Idx,
@@ -649,7 +665,7 @@ var Keyword_RightBrace = core.NewTokenType(
 	[]rune{'}'},
 )
 
-const Keyword_Dot_Idx = 41
+const Keyword_Dot_Idx = 42
 
 var Keyword_Dot = core.NewTokenType(
 	Keyword_Dot_Idx,
@@ -665,7 +681,7 @@ var Keyword_Dot = core.NewTokenType(
 	[]rune{'.'},
 )
 
-const Keyword_optional_Idx = 42
+const Keyword_optional_Idx = 43
 
 var Keyword_optional = core.NewTokenType(
 	Keyword_optional_Idx,
@@ -681,7 +697,7 @@ var Keyword_optional = core.NewTokenType(
 	[]rune{'o'},
 )
 
-const Keyword_and_Idx = 43
+const Keyword_and_Idx = 44
 
 var Keyword_and = core.NewTokenType(
 	Keyword_and_Idx,
@@ -697,7 +713,7 @@ var Keyword_and = core.NewTokenType(
 	[]rune{'a'},
 )
 
-const Keyword_end_Idx = 44
+const Keyword_end_Idx = 45
 
 var Keyword_end = core.NewTokenType(
 	Keyword_end_Idx,
@@ -713,7 +729,7 @@ var Keyword_end = core.NewTokenType(
 	[]rune{'e'},
 )
 
-const Keyword_a_Idx = 45
+const Keyword_a_Idx = 46
 
 var Keyword_a = core.NewTokenType(
 	Keyword_a_Idx,
@@ -729,7 +745,7 @@ var Keyword_a = core.NewTokenType(
 	[]rune{'a'},
 )
 
-const Keyword_b_Idx = 46
+const Keyword_b_Idx = 47
 
 var Keyword_b = core.NewTokenType(
 	Keyword_b_Idx,
@@ -797,7 +813,7 @@ const Token_END_Idx = Keyword_end_Idx
 
 var Token_END = Keyword_end
 
-const Token_WS_Idx = 47
+const Token_WS_Idx = 48
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
@@ -868,7 +884,7 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_ID_Idx = 48
+const Token_ID_Idx = 49
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
@@ -939,7 +955,95 @@ var Token_ID_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_ML_COMMENT_Idx = 49
+const Token_HASH_ID_Idx = 50
+
+var Token_HASH_ID = core.NewTokenType(
+	Token_HASH_ID_Idx,
+	"HASH_ID",
+	"HASH_ID",
+	core.TokenKindToken,
+	func(s string, offset int) int {
+		input := s[offset:]
+		length := len(input)
+		state := 0
+		acceptedIndex := 0
+		index := 0
+	loop:
+		for index < length {
+			r, runeSize := utf8.DecodeRuneInString(input[index:])
+			switch state {
+			case 0:
+				nextState := -1
+				next := Token_HASH_ID_Next[0]
+				lookup := Token_HASH_ID_Lookup[0]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 1:
+				nextState := -1
+				next := Token_HASH_ID_Next[1]
+				lookup := Token_HASH_ID_Lookup[1]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			case 2:
+				nextState := -1
+				next := Token_HASH_ID_Next[2]
+				lookup := Token_HASH_ID_Lookup[2]
+				for i, lowHigh := range lookup {
+					if rune(lowHigh&0xFFFFFFFF) <= r && r <= rune(lowHigh>>32) {
+						nextState = next[i]
+						break
+					}
+				}
+				if nextState > -1 {
+					state = nextState
+				} else {
+					break loop
+				}
+			default:
+				break loop
+			}
+			index += runeSize
+			if Token_HASH_ID_Accepting[state] {
+				acceptedIndex = index
+			}
+		}
+		return acceptedIndex
+	},
+	[]rune{'#'},
+)
+var Token_HASH_ID_Lookup = [][]int64{
+	{0x0000002300000023},
+	{0x0000003900000030, 0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
+	{0x0000003900000030, 0x0000005A00000041, 0x0000005F0000005F, 0x0000007A00000061},
+}
+var Token_HASH_ID_Next = [][]int{
+	{1},
+	{2, 2, 2, 2},
+	{2, 2, 2, 2},
+}
+var Token_HASH_ID_Accepting = [3]bool{
+	2: true,
+}
+
+const Token_ML_COMMENT_Idx = 51
 
 var Token_ML_COMMENT = core.NewTokenType(
 	Token_ML_COMMENT_Idx,
@@ -1061,7 +1165,7 @@ var Token_ML_COMMENT_Accepting = [5]bool{
 	4: true,
 }
 
-const TokenGroup_BinaryOperator_Idx = 50
+const TokenGroup_BinaryOperator_Idx = 52
 
 var TokenGroup_BinaryOperator = core.NewTokenGroup(
 	TokenGroup_BinaryOperator_Idx,
@@ -1073,7 +1177,7 @@ var TokenGroup_BinaryOperator = core.NewTokenGroup(
 	},
 )
 
-const TokenGroup_SomeTokenGroup_Idx = 51
+const TokenGroup_SomeTokenGroup_Idx = 53
 
 var TokenGroup_SomeTokenGroup = core.NewTokenGroup(
 	TokenGroup_SomeTokenGroup_Idx,
@@ -1118,6 +1222,7 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Keyword_wrap),
 		lexer.UseTokenType(Keyword_shadow),
 		lexer.UseTokenType(Keyword_nest),
+		lexer.UseTokenType(Keyword_lead),
 		lexer.UseTokenType(Keyword_ambig),
 		lexer.UseTokenType(Keyword_retype),
 		lexer.UseTokenType(Keyword_dep),
@@ -1140,6 +1245,7 @@ func NewLexer() lexer.Lexer {
 		lexer.UseTokenType(Token_RBRACE),
 		lexer.UseTokenType(Token_DOT),
 		lexer.UseTokenType(Token_ID),
+		lexer.UseTokenType(Token_HASH_ID),
 		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
 		lexer.UseTokenType(Token_ML_COMMENT).WithModifier(core.CommentModifier),
 	)
