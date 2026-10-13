@@ -7,9 +7,7 @@ package server
 import (
 	"context"
 
-	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/service"
-	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
 
@@ -28,36 +26,20 @@ func NewDefaultHoverProvider(sc *service.Container) HoverProvider {
 }
 
 func (s *DefaultHoverProvider) HandleHoverRequest(ctx context.Context, params *lsp.HoverParams) (*lsp.Hover, error) {
-	documentManager := service.MustGet[workspace.DocumentManager](s.sc)
-	uri := core.ParseURI(string(params.TextDocument.URI))
-	doc := documentManager.Get(uri)
-	if doc == nil {
+	target, sourceRange := TargetAtCursor(ctx, s.sc, &params.TextDocumentPositionParams)
+	if target == nil {
 		return nil, nil
 	}
 
-	offset := doc.TextDoc.OffsetAt(params.Position)
-	first, second := doc.Tokens.SearchOffset2(offset)
-	if first == nil {
-		return nil, nil
-	}
-
-	nameFinder := service.MustGet[NameFinder](s.sc)
-	foundName := nameFinder.Find(ctx, first, second)
-	if foundName.Target == nil || foundName.Source == nil {
-		return nil, nil
-	}
-
-	targetNode := foundName.Target.Owner()
 	docProvider, err := service.Get[DocumentationProvider](s.sc)
 	if err != nil {
 		return nil, nil
 	}
-	content := docProvider.Documentation(targetNode)
+	content := docProvider.Documentation(target)
 	if content == "" {
 		return nil, nil
 	}
 
-	sourceRange := foundName.Source.TextRange().LspRange(doc.TextDoc)
 	return &lsp.Hover{
 		Contents: lsp.MarkupContent{
 			Kind:  lsp.Markdown,

@@ -5,9 +5,12 @@
 package server
 
 import (
+	"context"
 	"iter"
 
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/service"
+	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
 
@@ -29,6 +32,38 @@ func NodeAtCursor(doc *core.Document, position lsp.Position) core.AstNode {
 		return second.Element
 	}
 	return nil
+}
+
+// TargetAtCursor resolves the name or reference at the cursor position in
+// params to the AST node it refers to - the declaration itself, or the
+// declaration a reference resolves to - along with the source range of the
+// name or reference. Unlike [NodeAtCursor], it resolves references via
+// [NameFinder]. Returns a nil target if there is no document, no token at
+// the position, or no resolvable name.
+func TargetAtCursor(ctx context.Context, sc *service.Container, params *lsp.TextDocumentPositionParams) (target core.AstNode, sourceRange lsp.Range) {
+	documentManager := service.MustGet[workspace.DocumentManager](sc)
+	doc := documentManager.Get(core.ParseURI(string(params.TextDocument.URI)))
+	if doc == nil {
+		return nil, lsp.Range{}
+	}
+
+	offset := doc.TextDoc.OffsetAt(params.Position)
+	first, second := doc.Tokens.SearchOffset2(offset)
+	if first == nil {
+		return nil, lsp.Range{}
+	}
+
+	nameFinder := service.MustGet[NameFinder](sc)
+	foundName := nameFinder.Find(ctx, first, second)
+	if foundName.Target == nil || foundName.Source == nil {
+		return nil, lsp.Range{}
+	}
+
+	target = foundName.Target.Owner()
+	if target == nil {
+		return nil, lsp.Range{}
+	}
+	return target, foundName.Source.TextRange().LspRange(doc.TextDoc)
 }
 
 // NodesInRange iterates over every AST node in doc whose text range overlaps
