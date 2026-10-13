@@ -105,7 +105,7 @@ type DefaultDocumentChangeImpact struct {
 }
 
 // NewDefaultDocumentChangeImpact returns a [DocumentChangeImpact] that inspects
-// [core.Document.ReferenceDescriptions].
+// [core.Document.References].
 func NewDefaultDocumentChangeImpact(sc *service.Container) DocumentChangeImpact {
 	return &DefaultDocumentChangeImpact{sc: sc}
 }
@@ -120,18 +120,14 @@ func NewDefaultDocumentChangeImpact(sc *service.Container) DocumentChangeImpact 
 // Documents with unresolved references are also considered affected, since they
 // might resolve against a symbol introduced by the change.
 func (s *DefaultDocumentChangeImpact) Affected(doc *core.Document, changedURIs collections.Set[string]) bool {
+	docURI := doc.URI.StringUnencoded()
 	for _, ref := range doc.References {
-		if ref.Error() != nil {
+		targetDescription := ref.Description()
+		if targetDescription == nil || ref.Error() != nil {
+			// Failed to resolve, or an error, so relink document
 			return true
 		}
-	}
-
-	if doc.ReferenceDescriptions == nil {
-		return false
-	}
-	docURI := doc.URI.StringUnencoded()
-	for desc := range doc.ReferenceDescriptions.All() {
-		targetURI := desc.TargetURI()
+		targetURI := targetDescription.URI
 		if targetURI == nil {
 			continue
 		}

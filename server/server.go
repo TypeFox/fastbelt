@@ -25,10 +25,15 @@ type InitializeParticipant interface {
 	OnServerInitialize(params *lsp.ParamInitialize)
 }
 
-// DocumentStateRequirements is an interface for services that require certain a document state
+// DocumentStateRequirements is an interface for services that require a certain document state
 // to be reached before they can be used. If a service does not implement this interface,
 // the language server will assume that the service can only run after the workspace has been
 // fully built.
+//
+// A per-document requirement only covers the requested document. Other
+// documents may still be building: a service may resolve references into
+// them, but must not rely on their later build results, such as
+// [core.Document.ReferenceDescriptions] or diagnostics.
 type DocumentStateRequirements interface {
 	// RequiredState returns the document state that must be reached before
 	// the service can be used. The boolean value indicates whether the full
