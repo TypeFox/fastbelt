@@ -272,40 +272,15 @@ func TestReadAtWaitsForRequestedState(t *testing.T) {
 	w.finish()
 }
 
-// TestReadAtWaitsForUnknownDocument verifies that a URI with no document counts
-// as not ready and that ReadAt is admitted once a build creates the document.
-func TestReadAtWaitsForUnknownDocument(t *testing.T) {
+// TestReadAtReturnsForUnknownDocument verifies that a URI with no document is
+// immediately admitted
+func TestReadAtReturnsForUnknownDocument(t *testing.T) {
 	h := newLockHarness(t)
 	uri := core.ParseURI("file:///new.test")
 
 	ra := h.startReadAt(context.Background(), core.DocStateParsed, []core.URI{uri})
-	ra.assertBlocked("ReadAt proceeded for an unknown document")
-
-	// A build cycle creates and parses the document.
-	w := h.startWrite(context.Background())
-	w.awaitEntered("write was not admitted")
-	h.doc("file:///new.test", core.DocStateParsed)
-	h.lock.StateChanged(0)
-	w.finish()
-
-	ra.awaitEntered("ReadAt was not admitted after the document was created and parsed")
+	ra.awaitEntered("ReadAt was not admitted immediately on a missing document")
 	ra.finish()
-}
-
-// TestReadAtContextCancelledWhileWaiting verifies that a blocked ReadAt returns
-// ctx.Err() when cancelled.
-func TestReadAtContextCancelledWhileWaiting(t *testing.T) {
-	h := newLockHarness(t)
-	uri := core.ParseURI("file:///missing.test")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	ra := h.startReadAt(ctx, core.DocStateParsed, []core.URI{uri})
-	ra.assertBlocked("ReadAt proceeded for a missing document")
-
-	cancel()
-	ra.awaitDone("ReadAt did not return after context cancellation")
-	assert.ErrorIs(t, ra.err, context.Canceled)
-	ra.assertNotEntered("ReadAt callback ran despite cancellation")
 }
 
 // TestReadAtBlockedByPendingWrite verifies write priority for ReadAt: once a

@@ -4,7 +4,7 @@
 
 package workspace
 
-// This file contains various fixtures that help in testing the workspace lock-
+// This file contains various fixtures that help in testing the workspace lock.
 
 import (
 	"context"

@@ -60,7 +60,7 @@ type DefaultBuilder struct {
 	listenersMu sync.RWMutex
 }
 
-// NewDefaultBuilder returns a [Builder] that runs the standard three-phase
+// NewDefaultBuilder returns a [Builder] that runs the standard four-phase
 // build pipeline in parallel per document within each phase.
 func NewDefaultBuilder(sc *service.Container) Builder {
 	return &DefaultBuilder{sc: sc}
@@ -74,7 +74,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	// Wakes up any ReadAt calls to make sure they can see the new document state.
 	// Documents might reach the requested state before the full workspace does.
 	advance := func(doc *core.Document, state core.DocumentState) {
-		doc.SetState(doc.State().With(state))
+		doc.AddState(state)
 		lock.StateChanged(0)
 		s.notifyListeners(ctx, state, doc)
 	}
@@ -83,20 +83,22 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	parser := service.MustGet[DocumentParser](s.sc)
 	exporter := service.MustGet[linking.SymbolExporter](s.sc)
 	parallel.ForEach(docs, func(doc *core.Document, _ int) {
-		if ctx.Err() != nil {
-			return
-		}
 		// STEP 1.1: Parse the document and create the AST.
-		if !doc.State().Has(core.DocStateParsed) {
+		if ctx.Err() == nil && !doc.State().Has(core.DocStateParsed) {
 			parser.Parse(doc)
+			if ctx.Err() != nil {
+				s.resetParsed(doc)
+				return
+			}
 			advance(doc, core.DocStateParsed)
 		}
-		if ctx.Err() != nil {
-			return
-		}
 		// STEP 1.2: Compute the exported symbols for cross-document references.
-		if !doc.State().Has(core.DocStateExportedSymbols) {
+		if ctx.Err() == nil && !doc.State().Has(core.DocStateExportedSymbols) {
 			exporter.ExportSymbols(ctx, doc)
+			if ctx.Err() != nil {
+				s.resetExportedSymbols(doc)
+				return
+			}
 			advance(doc, core.DocStateExportedSymbols)
 		}
 	})
@@ -110,45 +112,62 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	// workspace-wide ReadAt calls are admitted.
 	lock.StateChanged(core.DocStateParsed | core.DocStateExportedSymbols)
 
-	// PHASE 2: Compute imported/local symbols and link (parallel per document).
+	// PHASE 2: Compute imported and local symbols (parallel per document and step).
 	// This requires the exported symbols of all documents to be available.
 	documentManager := service.MustGet[DocumentManager](s.sc)
 	importer := service.MustGet[linking.SymbolImporter](s.sc)
 	localSymbols := service.MustGet[linking.LocalSymbolsProvider](s.sc)
+	parallel.ForEach(docs, func(doc *core.Document, _ int) {
+		// STEP 2.1: Collect imported symbols from all other documents.
+		if ctx.Err() == nil && !doc.State().Has(core.DocStateImportedSymbols) {
+			allDocs := documentManager.All()
+			importer.ImportSymbols(ctx, doc, allDocs)
+			if ctx.Err() != nil {
+				s.resetImportedSymbols(doc)
+				return
+			}
+			advance(doc, core.DocStateImportedSymbols)
+		}
+		// STEP 2.2: Compute the local symbols for intra-document references.
+		if ctx.Err() == nil && !doc.State().Has(core.DocStateLocalSymbols) {
+			localSymbols.LocalSymbols(ctx, doc)
+			if ctx.Err() != nil {
+				s.resetLocalSymbols(doc)
+				return
+			}
+			advance(doc, core.DocStateLocalSymbols)
+		}
+	})
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	// Phase 2 barrier: the whole workspace has its static scopes computed.
+	lock.StateChanged(core.DocStateImportedSymbols | core.DocStateLocalSymbols)
+
+	// PHASE 3: Link and compute reference descriptions (parallel per document).
+	// Resolving a reference may resolve references of other documents, which
+	// reads their imported and local symbols. Keep this separate from phase 2
+	// so those scopes are complete before any document starts linking.
 	linker := service.MustGet[linking.Linker](s.sc)
 	referenceDescriptions := service.MustGet[linking.ReferenceDescriptionsProvider](s.sc)
 	parallel.ForEach(docs, func(doc *core.Document, _ int) {
-		if ctx.Err() != nil {
-			return
-		}
-		// STEP 2.1: Collect imported symbols from all other documents.
-		if !doc.State().Has(core.DocStateImportedSymbols) {
-			allDocs := documentManager.All()
-			importer.ImportSymbols(ctx, doc, allDocs)
-			advance(doc, core.DocStateImportedSymbols)
-		}
-		if ctx.Err() != nil {
-			return
-		}
-		// STEP 2.2: Compute the local symbols for intra-document references.
-		if !doc.State().Has(core.DocStateLocalSymbols) {
-			localSymbols.LocalSymbols(ctx, doc)
-			advance(doc, core.DocStateLocalSymbols)
-		}
-		if ctx.Err() != nil {
-			return
-		}
-		// STEP 2.3: Link the document to resolve all references.
-		if !doc.State().Has(core.DocStateLinked) {
+		// STEP 3.1: Link the document to resolve all references.
+		if ctx.Err() == nil && !doc.State().Has(core.DocStateLinked) {
 			linker.Link(ctx, doc)
+			if ctx.Err() != nil {
+				s.resetLinking(doc)
+				return
+			}
 			advance(doc, core.DocStateLinked)
 		}
-		if ctx.Err() != nil {
-			return
-		}
-		// STEP 2.4: Provide reference descriptions for the document.
-		if !doc.State().Has(core.DocStateReferences) {
+		// STEP 3.2: Provide reference descriptions for the document.
+		if ctx.Err() == nil && !doc.State().Has(core.DocStateReferences) {
 			referenceDescriptions.ReferenceDescriptions(ctx, doc)
+			if ctx.Err() != nil {
+				s.resetReferences(doc)
+				return
+			}
 			advance(doc, core.DocStateReferences)
 		}
 	})
@@ -156,11 +175,10 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	// Phase 2 barrier: the whole workspace is now linked and indexed.
-	lock.StateChanged(core.DocStateImportedSymbols | core.DocStateLocalSymbols |
-		core.DocStateLinked | core.DocStateReferences)
+	// Phase 3 barrier: the whole workspace is now linked and indexed.
+	lock.StateChanged(core.DocStateLinked | core.DocStateReferences)
 
-	// PHASE 3: Run custom validations (parallel per document).
+	// PHASE 4: Run custom validations (parallel per document).
 	validator := service.MustGet[DocumentValidator](s.sc)
 	parallel.ForEach(docs, func(doc *core.Document, _ int) {
 		if ctx.Err() != nil {
@@ -169,6 +187,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 		if !doc.State().Has(core.DocStateValidated) {
 			diagnostics := validator.Validate(ctx, doc)
 			if ctx.Err() != nil {
+				s.resetValidation(doc)
 				return
 			}
 			doc.Diagnostics = diagnostics
@@ -179,7 +198,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	// Phase 3 barrier: the whole workspace is validated.
+	// Phase 4 barrier: the whole workspace is validated.
 	lock.StateChanged(core.DocStateValidated)
 	return nil
 }
@@ -187,37 +206,61 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 func (s *DefaultBuilder) Reset(doc *core.Document, state core.DocumentState) {
 	switch {
 	case !state.Has(core.DocStateParsed):
-		doc.Root = nil
-		doc.Tokens = core.TokenSlice{}
-		doc.ParserErrors = []*core.ParserError{}
-		doc.LexerErrors = []*core.LexerError{}
-		doc.References = []core.UntypedReference{}
+		s.resetParsed(doc)
 		fallthrough
 	case !state.Has(core.DocStateExportedSymbols):
-		doc.ExportedSymbols = nil
+		s.resetExportedSymbols(doc)
 		fallthrough
 	case !state.Has(core.DocStateLocalSymbols):
-		doc.LocalSymbols = nil
+		s.resetLocalSymbols(doc)
 		fallthrough
 	case !state.Has(core.DocStateImportedSymbols):
-		doc.ImportedSymbols = nil
+		s.resetImportedSymbols(doc)
 		fallthrough
 	case !state.Has(core.DocStateLinked):
-		// Note: NOOP if the document should be completely reset,
-		// because the references slice is already cleared above.
-		// If not cleared, the references are reset to allow re-resolution
-		// on the next build.
-		for _, ref := range doc.References {
-			ref.Reset()
-		}
+		s.resetLinking(doc)
 		fallthrough
 	case !state.Has(core.DocStateReferences):
-		doc.ReferenceDescriptions = nil
+		s.resetReferences(doc)
 		fallthrough
 	case !state.Has(core.DocStateValidated):
-		doc.Diagnostics = []*core.Diagnostic{}
+		s.resetValidation(doc)
 	}
 	doc.SetState(doc.State() & state)
+}
+
+func (s *DefaultBuilder) resetParsed(doc *core.Document) {
+	doc.Root = nil
+	doc.Tokens = core.TokenSlice{}
+	doc.ParserErrors = []*core.ParserError{}
+	doc.LexerErrors = []*core.LexerError{}
+	doc.References = []core.UntypedReference{}
+}
+
+func (s *DefaultBuilder) resetExportedSymbols(doc *core.Document) {
+	doc.ExportedSymbols = nil
+}
+
+func (s *DefaultBuilder) resetLocalSymbols(doc *core.Document) {
+	doc.LocalSymbols = nil
+}
+
+func (s *DefaultBuilder) resetImportedSymbols(doc *core.Document) {
+	doc.ImportedSymbols = nil
+}
+
+func (s *DefaultBuilder) resetLinking(doc *core.Document) {
+	parallel.ForEach(doc.References, func(ref core.UntypedReference, _ int) {
+		ref.Reset()
+	})
+}
+
+func (s *DefaultBuilder) resetReferences(doc *core.Document) {
+	doc.ReferenceDescriptions = nil
+}
+
+func (s *DefaultBuilder) resetValidation(doc *core.Document) {
+	doc.Diagnostics = nil
 }
 
 func (s *DefaultBuilder) AddBuildStepListener(states core.DocumentState, listener BuildStepListener) {

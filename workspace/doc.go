@@ -36,19 +36,22 @@
 // [Builder] is the centerpiece of the package. It governs how a document moves
 // through a sequence of build steps, each recorded as a bit in the document's
 // [typefox.dev/fastbelt.DocumentState]. [Builder.Build] processes a batch of
-// documents in three phases, running documents in parallel within each phase
-// and checking the context for cancellation between steps:
+// documents in four phases, running documents in parallel within each phase
+// and checking the context for cancellation between steps. All documents
+// finish a phase before any enters the next:
 //
 //   - Phase 1 (per document): parse into an AST ([DocumentParser]) and compute
 //     the symbols the document exports to others.
-//   - Phase 2 (per document): import symbols from other documents, compute
-//     local symbols, link all cross-references, and index reference
-//     descriptions. This phase needs every document's exports from phase 1, so
-//     all documents must finish phase 1 before any enters phase 2.
-//   - Phase 3 (per document): run validations and store the resulting
+//   - Phase 2 (per document): import symbols from other documents and compute
+//     local symbols. This needs every document's exports from phase 1.
+//   - Phase 3 (per document): link all cross-references and index reference
+//     descriptions. Resolving a reference may resolve references of other
+//     documents (e.g. following a type declared elsewhere), so every
+//     document's scopes from phase 2 must be complete first.
+//   - Phase 4 (per document): run validations and store the resulting
 //     diagnostics on the document.
 //
-// The linking-related steps in phases 1 and 2 are performed by the services in
+// The linking-related steps in phases 1 to 3 are performed by the services in
 // [typefox.dev/fastbelt/linking], which the builder resolves from the container;
 // see that package for how each step works.
 //
