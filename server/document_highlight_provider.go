@@ -29,9 +29,9 @@ func NewDefaultDocumentHighlightProvider(sc *service.Container) DocumentHighligh
 	return &DefaultDocumentHighlightProvider{sc: sc}
 }
 
-// The default document highlight provider requires the document in question to be linked.
+// The default document highlight provider requires the document in question have its references indexed.
 func (s *DefaultDocumentHighlightProvider) RequiredState() (core.DocumentState, bool) {
-	return core.DocStateLinked, false
+	return core.DocStateReferences, false
 }
 
 func (s *DefaultDocumentHighlightProvider) HandleDocumentHighlightRequest(ctx context.Context, params *lsp.DocumentHighlightParams) ([]lsp.DocumentHighlight, error) {

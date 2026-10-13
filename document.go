@@ -124,6 +124,14 @@ func (d *Document) SetState(state DocumentState) {
 	d.state.Store(uint32(state))
 }
 
+// AddState atomically sets the bits of state on the document's build state.
+// Unlike combining [Document.State] and [Document.SetState], concurrent calls
+// for the same document never lose a bit. The same publishing rules as for
+// [Document.SetState] apply.
+func (d *Document) AddState(state DocumentState) {
+	d.state.Or(uint32(state))
+}
+
 // DocumentState is a bitmask capturing the already completed build phases of a document.
 type DocumentState uint32
 

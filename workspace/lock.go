@@ -31,9 +31,9 @@ type Lock interface {
 	Read(ctx context.Context, do func(ctx context.Context)) error
 	// ReadAt acquires a shared lock scoped to the given documents. It is
 	// admitted as soon as every URI resolves to a document whose state covers
-	// states, even while a build is writing. A URI with no document yet counts
-	// as not ready and waits for the build that creates it. ReadAt returns
-	// ctx.Err() if ctx is cancelled while waiting.
+	// states, even while a build is writing. A URI with no document yet
+	// is immediately admitted. ReadAt returns ctx.Err() if ctx is cancelled
+	// while waiting.
 	//
 	// If uris is empty, ReadAt is scoped to the whole workspace: it is
 	// admitted once every document in the workspace has reached states, as
@@ -210,10 +210,14 @@ func (l *DefaultLock) docsReadyLocked(states core.DocumentState, uris []core.URI
 	}
 	for _, uri := range uris {
 		doc := l.docs.Get(uri)
-		if doc == nil || !doc.State().Has(states) {
+		if doc != nil && !doc.State().Has(states) {
+			// If the document exists and the state hasn't been reached yet,
+			// report back to wait further.
 			return false
 		}
 	}
+	// All documents either don't exist or have reached the specified state.
+	// Request can now proceed!
 	return true
 }
 
