@@ -138,8 +138,7 @@ func (s *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 		return nil
 	}
 	docs := slices.Collect(service.MustGet[DocumentManager](s.sc).All())
-	builder.Build(ctx, docs)
-	return nil
+	return builder.Build(ctx, docs)
 }
 
 func (s *DefaultInitializer) loadFile(ctx context.Context, uri core.URI, fs FileSystem, languageID LanguageID) {
