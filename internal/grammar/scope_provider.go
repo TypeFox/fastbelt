@@ -22,8 +22,8 @@ func newScopeProviderImpl(_ *service.Container) *scopeProviderImpl {
 
 // Token modes need no override: every .fb file of a folder is part of one
 // grammar with a single mode table, so the generated default scope (all named
-// modes of the folder) is the right one. The unnamed default mode is targeted
-// as `push(default)` and is never exported.
+// modes of the folder) is the right one. The default mode is the one named
+// `default`, so `push(default)` is an ordinary reference to it.
 
 func (s *scopeProviderImpl) ScopeRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) core.Scope {
 	root, ok := reference.Owner().Document().Root.(Grammar)

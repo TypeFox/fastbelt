@@ -113,12 +113,11 @@ interface KeywordTokenContent extends TokenContent {
 KeywordTokenContent: Keyword=Keyword
 
 interface TokenCommand {
-    Type    string
-    Mode    *TokenMode
-    Default bool
+    Type string
+    Mode *TokenMode
 }
 
-TokenCommand:  "->" Type=("push"|"pop"|"mode") ("(" (Mode=[TokenMode:ID] | Default?="default") ")")?;
+TokenCommand:  "->" Type=("push"|"pop"|"mode") ("(" Mode=[TokenMode:ID] ")")?;
 
 interface TokenGroup extends AbstractTokenRule {
     TokenRefs        []*AbstractTokenRule
@@ -136,11 +135,10 @@ TokenGroup: "token" "group" Name=ID "{"
 
 interface TokenMode {
     Name    string
-    Default bool
     Members []TokenModeMember
 }
 
-TokenMode: "token" "mode" (Name=ID | Default?="default") "{"
+TokenMode: "token" "mode" Name=ID "{"
     Members+=TokenModeMember*
 "}"
 

@@ -230,7 +230,7 @@ token mode Inner {
 	assert.Equal(t, "INNER", symbol.Name)
 }
 
-func TestDocumentSymbolSkipsDefaultTokenMode(t *testing.T) {
+func TestDocumentSymbolIncludesDefaultTokenMode(t *testing.T) {
 	f := lspFixture(t)
 	doc := f.ParseURI(`grammar Test;
 interface Foo { Greeting string }
@@ -242,18 +242,20 @@ token mode default {
 	hidden WS
 }`, "file:///symbols-default.fb")
 	doc.AssertNoParseErrors()
-	// The default mode has no name of its own, so it contributes no symbol.
+	// The default mode is an ordinary mode named 'default'.
 	provider := service.MustGet[server.DocumentSymbolProvider](f.Services())
 	result, err := provider.HandleDocumentSymbolRequest(f.Ctx(), &lsp.DocumentSymbolParams{
 		TextDocument: lsp.TextDocumentIdentifier{URI: doc.Document.URI.DocumentURI()},
 	})
 	assert.NoError(t, err)
+	var names []string
 	for _, symbol := range result {
-		assert.NotEqual(t, "default", symbol.Name)
+		names = append(names, symbol.Name)
 		for _, child := range symbol.Children {
-			assert.NotEqual(t, "default", child.Name)
+			names = append(names, child.Name)
 		}
 	}
+	assert.Contains(t, names, "default")
 }
 
 // --- Folding ranges ---

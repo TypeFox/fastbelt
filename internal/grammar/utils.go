@@ -7,8 +7,6 @@ package grammar
 import (
 	"context"
 	"errors"
-
-	core "typefox.dev/fastbelt"
 )
 
 var errMissingKeywordValue = errors.New("keyword has no token value")
@@ -86,10 +84,4 @@ func folderGrammar(g Grammar) Grammar {
 		return view.folder
 	}
 	return g
-}
-
-// ownedBy reports whether node belongs to doc. Folder-wide checks compute over
-// the whole folder but only report on the nodes of the document being validated.
-func ownedBy(node core.AstNode, doc *core.Document) bool {
-	return node.Document() == doc
 }

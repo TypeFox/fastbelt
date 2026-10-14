@@ -572,31 +572,18 @@ func (p *Parser) ParseTokenCommand() TokenCommand {
 				}
 			}
 		}
-		p.state.Sync(TokenCommand__Basic_8)
+		p.state.Sync(TokenCommand__Basic_5)
 		if p.lookahead.TokenCommandOptional(p.state) {
 			{
 				token := p.state.Consume(Keyword_LeftParen)
 				core.AssignToken(current, token, TokenCommand_LeftParen)
 			}
-			switch prediction, failure := p.lookahead.TokenCommandAlternatives(p.state); prediction {
-			case 0:
-				{
-					token := p.state.Consume(Token_ID)
-					core.AssignToken(current, token, TokenCommand_Mode_ID)
-					if token != nil {
-						current.SetMode(p.referencesConstructor.TokenCommandMode(current, token))
-					}
+			{
+				token := p.state.Consume(Token_ID)
+				core.AssignToken(current, token, TokenCommand_Mode_ID)
+				if token != nil {
+					current.SetMode(p.referencesConstructor.TokenCommandMode(current, token))
 				}
-			case 1:
-				{
-					token := p.state.Consume(Keyword_default)
-					core.AssignToken(current, token, TokenCommand_Default_default)
-					if token != nil {
-						current.SetDefault(token)
-					}
-				}
-			default:
-				p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 			}
 			{
 				token := p.state.Consume(Keyword_RightParen)
@@ -696,25 +683,12 @@ func (p *Parser) ParseTokenMode() TokenMode {
 			token := p.state.Consume(Keyword_mode)
 			core.AssignToken(current, token, TokenMode_mode)
 		}
-		switch prediction, failure := p.lookahead.TokenModeAlternatives(p.state); prediction {
-		case 0:
-			{
-				token := p.state.Consume(Token_ID)
-				core.AssignToken(current, token, TokenMode_Name_ID)
-				if token != nil {
-					current.SetName(token)
-				}
+		{
+			token := p.state.Consume(Token_ID)
+			core.AssignToken(current, token, TokenMode_Name_ID)
+			if token != nil {
+				current.SetName(token)
 			}
-		case 1:
-			{
-				token := p.state.Consume(Keyword_default)
-				core.AssignToken(current, token, TokenMode_Default_default)
-				if token != nil {
-					current.SetDefault(token)
-				}
-			}
-		default:
-			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 		{
 			token := p.state.Consume(Keyword_LeftBrace)
@@ -723,7 +697,7 @@ func (p *Parser) ParseTokenMode() TokenMode {
 		{
 			p.state.Sync(TokenMode__LoopEntry)
 			for p.lookahead.TokenModeMembersLoop(p.state) {
-				p.state.EnterRule(TokenMode__Basic_4)
+				p.state.EnterRule(TokenMode__Basic_1)
 				result := p.ParseTokenModeMember()
 				p.state.ExitRule()
 				if result != nil {

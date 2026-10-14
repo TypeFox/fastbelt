@@ -444,27 +444,16 @@ func (p *CompletionParser) ParseTokenCommand() {
 		}
 		p.cp.ClearAssignment()
 	}
-	p.cp.RecordSnapshot(TokenCommand__Basic_8)
-	p.state.Sync(TokenCommand__Basic_8)
+	p.cp.RecordSnapshot(TokenCommand__Basic_5)
+	p.state.Sync(TokenCommand__Basic_5)
 	if p.lookahead.TokenCommandOptional(p.state) {
 		{
 			p.state.Consume(Keyword_LeftParen)
 		}
-		switch prediction, failure := p.lookahead.TokenCommandAlternatives(p.state); prediction {
-		case 0:
-			{
-				p.cp.MarkAssignment("Mode")
-				p.state.Consume(Token_ID)
-				p.cp.ClearAssignment()
-			}
-		case 1:
-			{
-				p.cp.MarkAssignment("Default")
-				p.state.Consume(Keyword_default)
-				p.cp.ClearAssignment()
-			}
-		default:
-			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		{
+			p.cp.MarkAssignment("Mode")
+			p.state.Consume(Token_ID)
+			p.cp.ClearAssignment()
 		}
 		{
 			p.state.Consume(Keyword_RightParen)
@@ -542,21 +531,10 @@ func (p *CompletionParser) ParseTokenMode() {
 	{
 		p.state.Consume(Keyword_mode)
 	}
-	switch prediction, failure := p.lookahead.TokenModeAlternatives(p.state); prediction {
-	case 0:
-		{
-			p.cp.MarkAssignment("Name")
-			p.state.Consume(Token_ID)
-			p.cp.ClearAssignment()
-		}
-	case 1:
-		{
-			p.cp.MarkAssignment("Default")
-			p.state.Consume(Keyword_default)
-			p.cp.ClearAssignment()
-		}
-	default:
-		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+	{
+		p.cp.MarkAssignment("Name")
+		p.state.Consume(Token_ID)
+		p.cp.ClearAssignment()
 	}
 	{
 		p.state.Consume(Keyword_LeftBrace)
@@ -566,7 +544,7 @@ func (p *CompletionParser) ParseTokenMode() {
 		p.state.Sync(TokenMode__LoopEntry)
 		for p.lookahead.TokenModeMembersLoop(p.state) {
 			p.cp.MarkAssignment("Members")
-			p.state.EnterRule(TokenMode__Basic_4)
+			p.state.EnterRule(TokenMode__Basic_1)
 			p.ParseTokenModeMember()
 			p.state.ExitRule()
 			p.cp.ClearAssignment()

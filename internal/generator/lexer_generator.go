@@ -104,7 +104,7 @@ func lexerModes(grammr grammar.Grammar, entryRules []grammar.ParserRule, entryMo
 
 	hasDefault := !declared
 	for _, mode := range grammr.TokenModes() {
-		hasDefault = hasDefault || mode.IsDefault()
+		hasDefault = hasDefault || mode.Name() == "default"
 	}
 	modes := make([]lexerMode, 0, len(tokenTypes.TokenModeOrder))
 	byName := map[string]*TokenMode{}
@@ -149,8 +149,15 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, modes
 	node.AppendLine("func NewLexer(sc *service.Container) lexer.Lexer {")
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("modes := make([]*lexer.TokenMode, ", strconv.Itoa(len(modes)), ")")
+		// Mode commands resolve their target by name among the emitted modes.
+		// Synthetic language modes only exist without declared token modes,
+		// where no command has a target.
+		targets := map[string]*TokenMode{}
 		for _, m := range modes {
-			generateTokenMode(context, n, m, modes, tokenTypes)
+			targets[m.name] = m.mode
+		}
+		for _, m := range modes {
+			generateTokenMode(context, n, m, targets, tokenTypes)
 		}
 		if len(starts) == 1 {
 			n.AppendLine("return lexer.NewDefaultLexer(sc, ", starts[0], ", modes...)")
@@ -164,25 +171,13 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, modes
 }
 
 // generateTokenMode emits the NewTokenMode call of m into the modes slice.
-func generateTokenMode(context context.Context, n codegen.Node, m lexerMode, modes []lexerMode, tokenTypes GenerateTokenTypesResult) {
-	// Mode commands resolve their target among the emitted modes. A synthetic
-	// language mode stands in for the default mode of its language.
-	targets := map[string]*TokenMode{}
-	if m.reachable != nil {
-		targets["default"] = m.mode
-	} else {
-		for _, other := range modes {
-			targets[other.name] = other.mode
-		}
-	}
-	tokenTypes.TokenModes = targets
-
+func generateTokenMode(context context.Context, n codegen.Node, m lexerMode, targets map[string]*TokenMode, tokenTypes GenerateTokenTypesResult) {
 	n.AppendLine("modes[", m.mode.VarName, "] = lexer.NewTokenMode(\"", m.name, "\",")
 	n.Indent(func(nn codegen.Node) {
 		for _, tokenIndex := range slices.Concat(m.mode.ModeTokenTypes.Keywords, m.mode.ModeTokenTypes.Tokens) {
 			tokenType := tokenTypes.TokenTypes.ByTokenIndex[tokenIndex]
 			if m.reachable == nil || m.reachable[tokenType.VarName] || m.mode.TokenTypeUsages[tokenIndex] != (tokenTypeUsage{}) {
-				generateTokenTypeUsage(context, nn, tokenType, m.mode, tokenIndex, tokenTypes)
+				generateTokenTypeUsage(context, nn, tokenType, m.mode, tokenIndex, targets)
 			}
 		}
 	})
@@ -250,21 +245,21 @@ func reachableTokenNames(grammr grammar.Grammar, entry grammar.ParserRule) map[s
 	return reachable
 }
 
-func generateTokenTypeUsage(context context.Context, nn codegen.Node, tokenType *TokenType, tokenMode *TokenMode, tokenIndex int, tokenTypes GenerateTokenTypesResult) {
+// generateTokenTypeUsage emits the UseTokenType call of a token type in
+// tokenMode. Mode commands resolve their target by name in targets.
+func generateTokenTypeUsage(context context.Context, nn codegen.Node, tokenType *TokenType, tokenMode *TokenMode, tokenIndex int, targets map[string]*TokenMode) {
 	nn.Append("lexer.UseTokenType(", tokenType.VarName, ")")
 	if usage, ok := tokenMode.TokenTypeUsages[tokenIndex]; ok {
 		if cmd := usage.Command; cmd != nil {
 			var cmdModeName string
-			if mode := cmd.Mode().Ref(context); cmd.IsDefault() || mode != nil {
-				if cmd.IsDefault() {
-					cmdModeName = "default"
-				} else {
-					cmdModeName = cmd.Mode().Ref(context).Name()
+			if cmd.Mode() != nil {
+				if mode := cmd.Mode().Ref(context); mode != nil {
+					cmdModeName = mode.Name()
 				}
 			}
 			// A push/mode command without a resolvable target mode is reported
 			// by validation; skip it here instead of emitting a broken lexer.
-			targetMode := tokenTypes.TokenModes[cmdModeName]
+			targetMode := targets[cmdModeName]
 			switch {
 			case cmd.Type() == "pop":
 				nn.Append(".WithPopMode()")
