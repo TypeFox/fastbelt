@@ -191,6 +191,10 @@ func TestBuildRejectsInvalidLanguageConfig(t *testing.T) {
 			{Entry: "Greeting", LanguageID: "same", Patterns: []string{"**/*.hello"}},
 			{Entry: "Farewell", TokenMode: "Inner", LanguageID: "same", Patterns: []string{"**/*.bye"}},
 		}, `language id "same" is used by more than one language`},
+		{"duplicate entry", []Language{
+			{Entry: "Greeting", LanguageID: "foo", Patterns: []string{"*.foo"}},
+			{Entry: "Greeting", LanguageID: "foo-legacy", Patterns: []string{"*.fool"}},
+		}, "entry rule Greeting is used by more than one language"},
 		{"bad pattern", []Language{{Entry: "Greeting", LanguageID: "greeting", Patterns: []string{"**/*.[a"}}}, "invalid pattern"},
 	} {
 		t.Run(c.name, func(t *testing.T) {

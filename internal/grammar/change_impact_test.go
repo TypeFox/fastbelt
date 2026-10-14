@@ -49,3 +49,19 @@ func TestChangeImpactCoversSiblingsInSameFolder(t *testing.T) {
 	// d references c, so a change to c affects it through the default rule.
 	assert.True(t, impact.Affected(d, collections.NewSet(c.URI.StringUnencoded())))
 }
+
+func TestChangeImpactSeparatesFoldersOnDifferentHosts(t *testing.T) {
+	sc := CreateServices()
+	f := test.New(t, sc)
+	docs := f.ParseAll(
+		"file://srv1/share/a.fb", "grammar Test; interface Foo { Name string } Foo: Name=ID;"+commonTokens,
+		"file://srv2/share/b.fb", "grammar Test; interface Bar { Name string } Bar: Name=ID;"+commonTokens,
+	)
+	a, b := docs[0].Document, docs[1].Document
+	impact := service.MustGet[workspace.DocumentChangeImpact](sc)
+
+	// Same path, different authority: two folders, so two grammars.
+	assert.False(t, impact.Affected(a, collections.NewSet(b.URI.StringUnencoded())))
+	// The importer agrees: the token rules both files declare do not clash.
+	docs[0].AssertNoErrors()
+}

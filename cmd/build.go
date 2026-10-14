@@ -75,6 +75,7 @@ func (c *BuildContext) Build() error {
 	entryModes := make([]string, len(c.Languages))
 	selectors := make([]generator.Selector, len(c.Languages))
 	languageIDs := map[string]bool{}
+	entryNames := map[string]bool{}
 	for i, lang := range c.Languages {
 		// The language selector resolves open documents by language id first,
 		// so an empty or shared id would route documents to the wrong language.
@@ -85,6 +86,13 @@ func (c *BuildContext) Build() error {
 			return fmt.Errorf("language id %q is used by more than one language", lang.LanguageID)
 		}
 		languageIDs[lang.LanguageID] = true
+		// The parser dispatches and the lexer names its modes per entry rule,
+		// so two languages cannot share one. Give one language several
+		// patterns instead.
+		if entryNames[lang.Entry] {
+			return fmt.Errorf("entry rule %s is used by more than one language", lang.Entry)
+		}
+		entryNames[lang.Entry] = true
 		for _, pattern := range lang.Patterns {
 			if _, err := path.Match(pattern, ""); err != nil {
 				return fmt.Errorf("language %q: invalid pattern %q: %w", lang.LanguageID, pattern, err)
@@ -229,7 +237,7 @@ func findEntryRule(g grammar.Grammar, name string) (grammar.ParserRule, error) {
 func findTokenMode(g grammar.Grammar, lang Language) (grammar.TokenMode, error) {
 	name := cmp.Or(lang.TokenMode, "default")
 	for _, mode := range g.TokenModes() {
-		if (mode.IsDefault() && name == "default") || mode.Name() == name {
+		if mode.Name() == name {
 			return mode, nil
 		}
 	}

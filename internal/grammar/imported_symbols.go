@@ -49,6 +49,11 @@ type folderView struct {
 	grammars   []Grammar        // roots that are grammars, same order
 	folder     Grammar          // aggregate of grammars, or the single grammar
 	interfaces map[string]Interface
+
+	// mu guards diagnostics, the result of the folder-wide grammar checks
+	// (see folderDiagnostics), computed once for all documents of the view.
+	mu          sync.Mutex
+	diagnostics map[*core.Document][]*core.Diagnostic
 }
 
 func (s *importedSymbolsProviderImpl) ImportSymbols(ctx context.Context, doc *core.Document, allDocs iter.Seq[*core.Document]) core.SymbolContainer {
@@ -199,6 +204,10 @@ func viewOf(g Grammar) *folderView {
 	return nil
 }
 
+// sameFolder reports whether two URIs point into the same folder, i.e. whether
+// their documents are part of the same grammar.
 func sameFolder(first, second core.URI) bool {
-	return path.Dir(first.Path()) == path.Dir(second.Path())
+	return first.Scheme() == second.Scheme() &&
+		first.Authority() == second.Authority() &&
+		path.Dir(first.Path()) == path.Dir(second.Path())
 }

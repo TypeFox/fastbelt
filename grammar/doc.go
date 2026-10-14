@@ -30,8 +30,8 @@
 // directory form a single grammar: they must declare the same grammar name,
 // and rules, tokens, token groups, token modes and interfaces declared in any
 // of them are visible from every other one. Names are unique across the
-// directory, token modes are shared (with exactly one default mode between all
-// files), and a rule's implicit return type may be an interface declared in a
+// directory, token modes are shared (with exactly one default mode, the mode
+// named `default`, between all files), and a rule's implicit return type may be an interface declared in a
 // sibling file. Validation treats the directory as a whole, so a problem that
 // spans two files, such as a duplicate name, is reported in both.
 //

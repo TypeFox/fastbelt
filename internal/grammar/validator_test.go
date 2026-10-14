@@ -1034,6 +1034,35 @@ func TestPopCommandWithTargetModeReference(t *testing.T) {
 	diag.WithCode(ValidateTokenCommandMode)
 }
 
+// A multi-language grammar needs no default mode, but then 'default' names no
+// mode and a command targeting it must not link.
+func TestPushDefaultWithoutDefaultTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface A { Name string }
+		interface B { Name string }
+		entry A: "a" Name=ID;
+		entry B: "b" Name=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode ModeA {
+			"a"
+			ID -> push(ModeB)
+			hidden WS
+		}
+
+		token mode ModeB {
+			"b"
+			ID -> push(<|1:default|>)
+			hidden WS
+		}
+	`)
+	doc.ExpectDiagnostic("1").WithMessageContaining("Could not resolve reference to 'default'")
+}
+
 // --- Token mode reachability and emptiness ---
 
 func TestUnreachableTokenMode(t *testing.T) {

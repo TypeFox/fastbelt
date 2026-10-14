@@ -36,9 +36,7 @@ func (s *GrammarTokenHighlightingStrategy) Highlight(ctx context.Context, token 
 		InfixRule_Name_ID,
 		TokenUsage_TokenRef_ID,
 		TokenMode_Name_ID,
-		TokenMode_Default_default,
 		TokenCommand_Mode_ID,
-		TokenCommand_Default_default,
 		TokenGroup_Name_ID,
 		TokenGroup_TokenRefs_ID:
 		accept(legendProvider.Function(), 0)
