@@ -5,6 +5,7 @@ package statemachine
 import (
 	"context"
 	"iter"
+	"unique"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
@@ -159,4 +160,8 @@ func (a *StatemachineModelCompletionAdapter) ApplyAction(actionType, property st
 	_ = property
 	_ = value
 	return nil
+}
+
+func (a *StatemachineModelCompletionAdapter) AssignsCurrent(container core.AstNode, field unique.Handle[string], index int) bool {
+	return false
 }

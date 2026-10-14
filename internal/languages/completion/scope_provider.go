@@ -28,16 +28,48 @@ func (s *CompletionScopeProviderImpl) ScopeMemberCallRef(ctx context.Context, re
 			return s.DefaultCompletionScopeProvider.ScopeMemberCallRef(ctx, reference)
 		}
 		// Otherwise, use the scope of the previous member
-		decl := previous.Ref().Ref(ctx)
-		if decl == nil {
-			return fastbelt.EmptyScope
-		}
-		symbols := []*fastbelt.SymbolDescription{}
-		for _, member := range decl.Children() {
-			symbols = append(symbols, fastbelt.NewSymbolDescription(member, member.NameNode()))
-		}
-		return fastbelt.NewMapScopeFromSlice(symbols, nil)
+		return childrenScope(previous.Ref().Ref(ctx))
 	} else {
 		return fastbelt.EmptyScope
 	}
+}
+
+// ScopeLeadRef returns the Leads of the root that contains the owner. The
+// scope depends on the container of the owner, which the completion provider
+// has to supply at the start of the document, where the cross-reference of
+// Lead has no token in front of it.
+func (s *CompletionScopeProviderImpl) ScopeLeadRef(ctx context.Context, reference *fastbelt.Reference[Lead]) fastbelt.Scope {
+	root, ok := reference.Owner().Container().(Root)
+	if !ok {
+		return fastbelt.EmptyScope
+	}
+	symbols := []*fastbelt.SymbolDescription{}
+	for _, obj := range root.Objects() {
+		if lead, ok := obj.(Lead); ok && lead.NameToken() != nil {
+			symbols = append(symbols, fastbelt.NewSymbolDescription(lead, lead.NameToken()))
+		}
+	}
+	return fastbelt.NewMapScopeFromSlice(symbols, nil)
+}
+
+// ScopeDepB returns the children of the Declare that A refers to.
+func (s *CompletionScopeProviderImpl) ScopeDepB(ctx context.Context, reference *fastbelt.Reference[Declare]) fastbelt.Scope {
+	dep, ok := reference.Owner().(Dep)
+	if !ok || dep.A() == nil {
+		return fastbelt.EmptyScope
+	}
+	return childrenScope(dep.A().Ref(ctx))
+}
+
+// childrenScope returns the children of the Declare, or the empty scope if
+// the Declare is nil.
+func childrenScope(decl Declare) fastbelt.Scope {
+	if decl == nil {
+		return fastbelt.EmptyScope
+	}
+	symbols := []*fastbelt.SymbolDescription{}
+	for _, member := range decl.Children() {
+		symbols = append(symbols, fastbelt.NewSymbolDescription(member, member.NameNode()))
+	}
+	return fastbelt.NewMapScopeFromSlice(symbols, nil)
 }

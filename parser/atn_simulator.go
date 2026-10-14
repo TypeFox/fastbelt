@@ -5,6 +5,7 @@
 package parser
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 
@@ -44,40 +45,125 @@ var DefaultSimConfig = SimConfig{
 // active when stack frame i was pushed, or nil if that push did not change
 // the active hint. The currently active hint is the topmost non-nil entry,
 // implemented as `activeHintAfter(p.stack, p.hints)` below.
+//
+// consumedAt, fresh and left describe what happened around the last consumed
+// token. They are part of the identity, because they determine the node that
+// a cross-reference at the cursor belongs to:
+//   - consumedAt is the index of the state whose atom transition consumed
+//     the last token, or -1 if the path did not consume a token.
+//   - The topmost fresh frames of the stack were pushed since the last token.
+//   - left holds the FollowState indices of the assigned rule calls that
+//     ended since the last token, in that order.
 type simPath struct {
-	stateIdx int
-	stack    []int
-	hints    []*CompletionHint
+	stateIdx   int
+	stack      []int
+	hints      []*CompletionHint
+	consumedAt int
+	fresh      int
+	left       []int
 }
 
-func (p simPath) key() string {
-	var b strings.Builder
-	b.Grow(8 + 6*len(p.stack) + 8*len(p.hints))
-	b.WriteString(strconv.Itoa(p.stateIdx))
-	b.WriteByte('|')
-	for _, s := range p.stack {
-		b.WriteString(strconv.Itoa(s))
+// writeInts appends the ints as a comma-terminated list.
+func writeInts(b *strings.Builder, xs []int) {
+	for _, x := range xs {
+		b.WriteString(strconv.Itoa(x))
 		b.WriteByte(',')
 	}
+}
+
+// keys identifies the path. The position is its position in the ATN, and
+// the key extends it with what happened around the last consumed token.
+func (p simPath) keys() (position, key string) {
+	var b strings.Builder
+	b.Grow(20 + 6*(len(p.stack)+len(p.left)) + 8*len(p.hints))
+	b.WriteString(strconv.Itoa(p.stateIdx))
+	b.WriteByte('|')
+	writeInts(&b, p.stack)
 	b.WriteByte('|')
 	for _, h := range p.hints {
 		if h != nil {
-			b.WriteString(h.Field)
+			b.WriteString(h.Owner)
+			b.WriteByte('.')
+			b.WriteString(h.Property)
 		}
 		b.WriteByte(',')
+	}
+	// A string returned by the builder stays valid when more is written
+	position = b.String()
+	b.WriteByte('|')
+	b.WriteString(strconv.Itoa(p.consumedAt))
+	b.WriteByte(',')
+	b.WriteString(strconv.Itoa(p.fresh))
+	b.WriteByte('|')
+	writeInts(&b, p.left)
+	return position, b.String()
+}
+
+// pathSet is the set of the paths of a live set. It counts the positions of
+// its paths in the ATN separately if asked to, because they limit the size of
+// a live set: several paths at the same position add no tokens to the
+// completion.
+type pathSet struct {
+	keys      collections.Set[string]
+	positions collections.Set[string] // nil if the positions are not counted
+}
+
+func newPathSet(capacity int, countPositions bool) pathSet {
+	s := pathSet{keys: make(collections.Set[string], capacity)}
+	if countPositions {
+		s.positions = make(collections.Set[string], capacity)
+	}
+	return s
+}
+
+// add reports whether the path is new.
+func (s pathSet) add(p simPath) bool {
+	position, key := p.keys()
+	if !s.keys.Add(key) {
+		return false
+	}
+	if s.positions != nil {
+		s.positions.Add(position)
+	}
+	return true
+}
+
+// ownerKey identifies the owner of a cross-reference that the path leads to,
+// apart from the type of the owner. Unassigned rule calls without an action
+// continue the node of the calling rule, so they don't make a difference.
+func (atn *RuntimeATN) ownerKey(p simPath) string {
+	var b strings.Builder
+	b.Grow(12 + 6*(len(p.left)+p.fresh))
+	b.WriteString(strconv.Itoa(p.consumedAt))
+	b.WriteByte('|')
+	writeInts(&b, p.left)
+	b.WriteByte('|')
+	for _, s := range p.freshFrames() {
+		if call := atn.ruleCallAt(s); call == nil || call.Property != "" || call.PrecedingAction != nil {
+			b.WriteString(strconv.Itoa(s))
+			b.WriteByte(',')
+		}
 	}
 	return b.String()
 }
 
-// activeHint returns the topmost non-nil entry on the path's hint stack,
-// or nil if no cross-reference rule call is currently in progress.
-func (p simPath) activeHint() *CompletionHint {
+// freshFrames returns the frames of the return stack that were pushed since
+// the last consumed token.
+func (p simPath) freshFrames() []int {
+	return p.stack[len(p.stack)-p.fresh:]
+}
+
+// activeHint returns the topmost non-nil entry on the path's hint stack and
+// whether its frame is fresh, i.e. whether the path is at the start of the
+// cross-reference text rather than inside of it. The hint is nil if no
+// cross-reference rule call is in progress.
+func (p simPath) activeHint() (hint *CompletionHint, fresh bool) {
 	for i := len(p.hints) - 1; i >= 0; i-- {
 		if p.hints[i] != nil {
-			return p.hints[i]
+			return p.hints[i], i >= len(p.stack)-p.fresh
 		}
 	}
-	return nil
+	return nil, false
 }
 
 // Simulate advances an NFA-style live set from startStateIdx by consuming the
@@ -96,11 +182,14 @@ func (atn *RuntimeATN) Simulate(startStateIdx int, tokens []core.Token) []simPat
 
 // SimulateWithConfig is Simulate with explicit cost limits.
 func (atn *RuntimeATN) SimulateWithConfig(startStateIdx int, tokens []core.Token, cfg SimConfig) []simPath {
-	if startStateIdx < 0 || startStateIdx >= len(atn.States) {
-		return nil
-	}
+	return atn.simulateFrom(simPath{stateIdx: startStateIdx, consumedAt: -1}, tokens, cfg)
+}
+
+// simulateFrom advances the live set of the seed by consuming the tokens.
+// A seed at an unknown state yields an empty live set.
+func (atn *RuntimeATN) simulateFrom(seed simPath, tokens []core.Token, cfg SimConfig) []simPath {
 	// Seed the live set with the closure of the start state.
-	live := atn.epsilonClosure([]simPath{{stateIdx: startStateIdx, stack: nil}}, cfg)
+	live := atn.epsilonClosure([]simPath{seed}, cfg)
 	for _, tok := range tokens {
 		live = atn.advance(live, tok.Type, cfg)
 		if len(live) == 0 {
@@ -124,25 +213,48 @@ type TokenCompletion struct {
 // HintCompletion is one rule-call hint emission. ATNStateIdx is the source
 // ATN state of the rule transition (or the atom transition that inherited
 // the hint from a surrounding rule call).
+//
+// ConsumedAt, Left and Calls locate the owner of the cross-reference relative
+// to the node that owns the token in front of the cursor.
+//   - ConsumedAt is the index of the ATN state whose atom transition
+//     consumed that token, or -1 if it was consumed by the completion parser
+//     and not by the simulator. It differs from the [fastbelt.Token.Kind]
+//     of the token if the simulator reads the token in another way than the
+//     main parser.
+//   - Left are the assigned rule calls that ended since that token, innermost
+//     first. Each of them leads from the node that it created to the
+//     container of that node, which results in the node that Calls start
+//     from. The operands of infix rules are not part of it.
+//   - Calls are the rule calls that were entered since that token and are
+//     still in progress, outermost first.
 type HintCompletion struct {
 	Hint        *CompletionHint
 	ATNStateIdx int
+	ConsumedAt  int
+	Left        []*RuleCallInfo
+	Calls       []*RuleCallInfo
 }
 
 // CompletionInfo bundles everything the completion provider needs from a
 // single live-set walk: every atom-transition emission (TokenType + source
-// ATN state), every cross-reference hint emission (CompletionHint + source
-// ATN state), and the subset of TokenType IDs that appeared ONLY on hinted
-// transitions in the closure. The completion provider uses HintedOnlyIDs
-// to suppress hinted ID tokens from the token pass - the dispatch table
-// supplies the real candidates with their actual names.
+// ATN state) that is not part of a cross-reference, and every cross-reference
+// hint emission (CompletionHint + source ATN state). The tokens of a
+// cross-reference are left to the hint, as the dispatch table supplies the
+// real candidates with their actual names.
 //
-// All slices/maps are owned by the caller after this returns; the simulator
+// All slices are owned by the caller after this returns; the simulator
 // keeps no internal state.
 type CompletionInfo struct {
-	Tokens        []TokenCompletion
-	Hints         []HintCompletion
-	HintedOnlyIDs collections.Set[int]
+	Tokens []TokenCompletion
+	Hints  []HintCompletion
+}
+
+// hintKey identifies a hint emission: the same hint from the same state
+// that leads to the same owner.
+type hintKey struct {
+	state int
+	field string
+	owner string
 }
 
 // HasToken reports whether tokenID appears in any TokenCompletion.
@@ -157,102 +269,72 @@ func (info CompletionInfo) HasToken(tokenID int) bool {
 	return false
 }
 
-// HasHintField reports whether any HintCompletion carries the given
-// CompletionHint.Field value.
-func (info CompletionInfo) HasHintField(field string) bool {
-	for _, h := range info.Hints {
-		if h.Hint != nil && h.Hint.Field == field {
-			return true
-		}
-	}
-	return false
-}
-
 // NextCompletionsFromSet returns a CompletionInfo covering every atom
 // transition reachable from the given live set's ε-closure. It is the
 // single public entry point for inspecting what the simulator yielded;
-// callers that only need set-membership use info.HasToken / HasHintField.
+// callers that only need set-membership use info.HasToken.
 //
 // Tokens and hints are deduplicated by (sourceStateIdx, Id) and
-// (sourceStateIdx, Field) respectively - so the same TokenType emitted
+// (sourceStateIdx, hint key) respectively - so the same TokenType emitted
 // from two different grammar positions surfaces twice, letting the
-// completion contributor distinguish them via ATNStateIdx.
+// completion contributor distinguish them via ATNStateIdx. Hints that lead
+// to different owners are distinct as well.
 //
-// hintedOnlyIDs holds TokenType.Id values that appeared on at least one
-// hinted (cross-reference) atom transition AND on no unhinted atom
-// transition. The completion provider uses this to skip emitting an "ID"
-// keyword item when the only valid use of ID at this position is a
-// cross-reference whose candidates the dispatch table will produce.
+// An atom that carries a hint, or that is inside of a cross-reference rule
+// call and inherits its hint (e.g. the ID + "." + ID atoms of an FQN
+// reference), yields the hint instead of the token. The hint is only
+// yielded at the start of the cross-reference text: inside of it, the
+// candidates would not extend the consumed text, and the completion context
+// that replaces the whole text supplies them.
 func (atn *RuntimeATN) NextCompletionsFromSet(live []simPath) CompletionInfo {
-	var tokenComps []TokenCompletion
-	var hints []HintCompletion
+	var info CompletionInfo
 	seenToken := make(collections.Set[[2]int])
-	seenHint := make(collections.Set[struct {
-		state int
-		field string
-	}])
-	hinted := make(collections.Set[int])
-	unhinted := make(collections.Set[int])
-	closure := atn.epsilonClosure(live, DefaultSimConfig)
-	for _, p := range closure {
-		if p.stateIdx < 0 || p.stateIdx >= len(atn.States) {
-			continue
-		}
-		state := atn.States[p.stateIdx]
-		if state == nil {
-			continue
-		}
-		pathHint := p.activeHint()
-		for _, t := range state.Transitions {
+	seenHint := make(collections.Set[hintKey])
+	for _, p := range atn.epsilonClosure(live, DefaultSimConfig) {
+		pathHint, pathFresh := p.activeHint()
+		// The owner key is only needed for paths that yield a hint
+		owner, ownerKnown := "", false
+		for _, t := range atn.States[p.stateIdx].Transitions {
 			at, ok := t.(*RuntimeAtomTransition)
 			if !ok || at.TokenType == nil {
 				continue
 			}
-			tk := [2]int{p.stateIdx, at.TokenType.Id}
-			if seenToken.Add(tk) {
-				tokenComps = append(tokenComps, TokenCompletion{
-					TokenType:   at.TokenType,
+			hint, fresh := at.CompletionHint, true
+			if hint == nil {
+				hint, fresh = pathHint, pathFresh
+			}
+			if hint == nil {
+				if seenToken.Add([2]int{p.stateIdx, at.TokenType.Id}) {
+					info.Tokens = append(info.Tokens, TokenCompletion{TokenType: at.TokenType, ATNStateIdx: p.stateIdx})
+				}
+			} else if fresh {
+				if !ownerKnown {
+					owner, ownerKnown = atn.ownerKey(p), true
+				}
+				if !seenHint.Add(hintKey{p.stateIdx, hint.Key(), owner}) {
+					continue
+				}
+				info.Hints = append(info.Hints, HintCompletion{
+					Hint:        hint,
 					ATNStateIdx: p.stateIdx,
+					ConsumedAt:  p.consumedAt,
+					Left:        atn.ruleCallsAt(p.left),
+					Calls:       atn.ruleCallsAt(p.freshFrames()),
 				})
 			}
-			// Atoms inside a cross-reference rule call inherit the rule
-			// call's hint when they don't carry one of their own. That
-			// makes every token of a multi-token cross-reference text
-			// (e.g. the ID + "." + ID atoms of an FQN reference) count as
-			// hinted, so HintedOnlyIDs suppresses them from the token
-			// pass and the cross-ref dispatch supplies the real candidates.
-			effectiveHint := at.CompletionHint
-			if effectiveHint == nil {
-				effectiveHint = pathHint
-			}
-			if effectiveHint != nil {
-				hinted.Add(at.TokenType.Id)
-				hk := struct {
-					state int
-					field string
-				}{p.stateIdx, effectiveHint.Field}
-				if seenHint.Add(hk) {
-					hints = append(hints, HintCompletion{
-						Hint:        effectiveHint,
-						ATNStateIdx: p.stateIdx,
-					})
-				}
-			} else {
-				unhinted.Add(at.TokenType.Id)
-			}
 		}
 	}
-	hintedOnly := make(collections.Set[int])
-	for id := range hinted {
-		if !unhinted.Has(id) {
-			hintedOnly.Add(id)
-		}
+	return info
+}
+
+// ruleCallsAt returns the rule calls that return to the given FollowState
+// indices.
+func (atn *RuntimeATN) ruleCallsAt(followStates []int) []*RuleCallInfo {
+	calls := make([]*RuleCallInfo, len(followStates))
+	for i, followIdx := range followStates {
+		calls[i] = atn.ruleCallAt(followIdx)
 	}
-	return CompletionInfo{
-		Tokens:        tokenComps,
-		Hints:         hints,
-		HintedOnlyIDs: hintedOnly,
-	}
+	return calls
 }
 
 // epsilonClosure expands the live set across every reachable epsilon-style
@@ -260,85 +342,66 @@ func (atn *RuntimeATN) NextCompletionsFromSet(live []simPath) CompletionInfo {
 // (pop the top of the return stack). The result includes the seed states.
 func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 	out := make([]simPath, 0, len(seed))
-	seen := make(collections.Set[string], len(seed)*2)
+	seen := newPathSet(len(seed)*2, true)
 	stack := make([]simPath, 0, len(seed))
-	for _, p := range seed {
-		k := p.key()
-		if !seen.Add(k) {
-			continue
+	// push adds the path to the closure if it is new and at a known state.
+	// A path at an unknown state (e.g. behind a rule call without a follow
+	// state) is dropped, so the closure only contains paths that its callers
+	// can expand.
+	push := func(p simPath) {
+		if p.stateIdx < 0 || p.stateIdx >= len(atn.States) || !seen.add(p) {
+			return
 		}
 		out = append(out, p)
 		stack = append(stack, p)
 	}
+	for _, p := range seed {
+		push(p)
+	}
 	for len(stack) > 0 {
 		cur := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
-		if cur.stateIdx < 0 || cur.stateIdx >= len(atn.States) {
-			continue
-		}
 		state := atn.States[cur.stateIdx]
-		if state == nil {
-			continue
-		}
 		// A rule-stop state pops the top of the return stack (if any) and
 		// continues at the FollowState recorded by the RuleTransition that
 		// brought us here. The matching hint frame is popped alongside.
 		if state.Type == ATNRuleStop && len(cur.stack) > 0 {
 			top := cur.stack[len(cur.stack)-1]
-			nextStack := append([]int{}, cur.stack[:len(cur.stack)-1]...)
-			nextHints := append([]*CompletionHint{}, cur.hints[:len(cur.hints)-1]...)
-			np := simPath{stateIdx: top, stack: nextStack, hints: nextHints}
-			k := np.key()
-			if seen.Add(k) {
-				out = append(out, np)
-				stack = append(stack, np)
+			np := cur
+			np.stateIdx = top
+			np.stack = slices.Clone(cur.stack[:len(cur.stack)-1])
+			np.hints = slices.Clone(cur.hints[:len(cur.hints)-1])
+			if np.fresh > 0 {
+				np.fresh--
+			} else if atn.ruleCallAt(top).leavesToContainer() {
+				np.left = append(slices.Clip(cur.left), top)
 			}
+			push(np)
 			// Stop states have no outgoing transitions of their own.
 			continue
 		}
 		for _, t := range state.Transitions {
 			switch tt := t.(type) {
 			case *RuntimeEpsilonTransition:
-				idx := atn.stateIndex(tt.Target)
-				if idx < 0 {
-					continue
-				}
-				np := simPath{stateIdx: idx, stack: cur.stack, hints: cur.hints}
-				k := np.key()
-				if !seen.Add(k) {
-					continue
-				}
-				out = append(out, np)
-				stack = append(stack, np)
+				np := cur
+				np.stateIdx = atn.stateIndex(tt.Target)
+				push(np)
 			case *RuntimeRuleTransition:
-				targetIdx := atn.stateIndex(tt.Target)
-				followIdx := atn.stateIndex(tt.FollowState)
-				if targetIdx < 0 {
-					continue
-				}
 				if len(cur.stack) >= cfg.MaxReturnStack {
 					continue
 				}
-				newStack := make([]int, len(cur.stack)+1)
-				copy(newStack, cur.stack)
-				newStack[len(cur.stack)] = followIdx
-				newHints := make([]*CompletionHint, len(cur.hints)+1)
-				copy(newHints, cur.hints)
-				newHints[len(cur.hints)] = tt.CompletionHint
-				np := simPath{stateIdx: targetIdx, stack: newStack, hints: newHints}
-				k := np.key()
-				if !seen.Add(k) {
-					continue
-				}
-				out = append(out, np)
-				stack = append(stack, np)
+				np := cur
+				np.stateIdx = atn.stateIndex(tt.Target)
+				np.stack = append(slices.Clip(cur.stack), atn.stateIndex(tt.FollowState))
+				np.hints = append(slices.Clip(cur.hints), tt.CompletionHint)
+				np.fresh++
+				push(np)
 			}
 		}
-		if cfg.MaxLiveSet > 0 && len(out) > cfg.MaxLiveSet {
-			// Trim from the end (most recently added) - this corresponds to
+		if cfg.MaxLiveSet > 0 && len(seen.positions) > cfg.MaxLiveSet {
+			// Stop the exploration. The paths that are dropped correspond to
 			// the deepest exploration in our DFS; the caller already has the
 			// nearer-front paths, which dominate the keyword set.
-			out = out[:cfg.MaxLiveSet]
 			break
 		}
 	}
@@ -349,16 +412,9 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 func (atn *RuntimeATN) advance(live []simPath, tokenType *core.TokenType, cfg SimConfig) []simPath {
 	closure := atn.epsilonClosure(live, cfg)
 	next := make([]simPath, 0, len(closure))
-	seen := make(collections.Set[string], len(closure))
+	seen := newPathSet(len(closure), false)
 	for _, p := range closure {
-		if p.stateIdx < 0 || p.stateIdx >= len(atn.States) {
-			continue
-		}
-		state := atn.States[p.stateIdx]
-		if state == nil {
-			continue
-		}
-		for _, t := range state.Transitions {
+		for _, t := range atn.States[p.stateIdx].Transitions {
 			at, ok := t.(*RuntimeAtomTransition)
 			if !ok || at.TokenType == nil || !at.TokenType.Matches(tokenType) {
 				continue
@@ -367,9 +423,9 @@ func (atn *RuntimeATN) advance(live []simPath, tokenType *core.TokenType, cfg Si
 			if targetIdx < 0 {
 				continue
 			}
-			np := simPath{stateIdx: targetIdx, stack: p.stack, hints: p.hints}
-			k := np.key()
-			if !seen.Add(k) {
+			// The token consumed at p.stateIdx: nothing is fresh or left anymore
+			np := simPath{stateIdx: targetIdx, stack: p.stack, hints: p.hints, consumedAt: p.stateIdx}
+			if !seen.add(np) {
 				continue
 			}
 			next = append(next, np)

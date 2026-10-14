@@ -14,6 +14,7 @@ import (
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/collections"
+	"typefox.dev/fastbelt/util/extiter"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
@@ -85,10 +86,20 @@ func (s *DefaultCompletionProvider) HandleCompletionRequest(ctx context.Context,
 	contributor := s.resolveContributor()
 	matcher := s.resolveFuzzyMatcher()
 
-	contexts := buildCompletionContexts(doc, offset)
-	items := make([]lsp.CompletionItem, 0, len(contexts)*8)
-	for _, cc := range contexts {
-		items = append(items, s.completionsForContext(ctx, contributor, matcher, adapter, atn, doc, offset, cc)...)
+	var items []lsp.CompletionItem
+	if comment := commentAt(doc.Comments, offset); comment != nil {
+		// Inside a comment, the grammar has nothing to say: only the
+		// contributor's comment stage runs.
+		cc := ContributorContext{Doc: doc, Cursor: offset}
+		contributor.CompletionForComment(ctx, comment, cc, func(item lsp.CompletionItem) {
+			items = append(items, EnrichCommentCompletionItem(item, cc))
+		})
+	} else {
+		contexts := buildCompletionContexts(doc, offset)
+		items = make([]lsp.CompletionItem, 0, len(contexts)*8)
+		for _, cc := range contexts {
+			items = append(items, s.completionsForContext(ctx, contributor, matcher, adapter, atn, doc, offset, cc)...)
+		}
 	}
 	items = deduplicateItems(items)
 
@@ -106,8 +117,7 @@ func (s *DefaultCompletionProvider) HandleCompletionRequest(ctx context.Context,
 }
 
 // resolveContributor returns the contributor registered in the service
-// container if any, otherwise falls back to the one stored on the
-// provider (set by the constructor).
+// container if any, otherwise the default contributor.
 func (s *DefaultCompletionProvider) resolveContributor() CompletionContributor {
 	if c, err := service.Get[CompletionContributor](s.sc); err == nil && c != nil {
 		return c
@@ -153,11 +163,15 @@ func (s *DefaultCompletionProvider) completionsForContext(
 		return nil
 	}
 	info := atn.NextCompletionsFromSet(live)
+	// The rule calls of a hint are relative to the token in front of the cursor
+	var lastToken *core.Token
+	if cc.PrefixLen > 0 {
+		lastToken = &doc.Tokens[cc.PrefixLen-1]
+	}
 
 	contribCtx := ContributorContext{
 		Doc:          doc,
 		Cursor:       cursorOffset,
-		Node:         buildSyntheticOwnerChain(adapter, doc, result.RuleStack),
 		ReplaceRange: cc.ReplaceRange,
 		SortRank:     cc.SortRank,
 	}
@@ -166,9 +180,6 @@ func (s *DefaultCompletionProvider) completionsForContext(
 
 	// Token pass: contributor decides per (TokenType, atnState) what to emit.
 	for _, tc := range info.Tokens {
-		if _, hidden := info.HintedOnlyIDs[tc.TokenType.Id]; hidden {
-			continue
-		}
 		if !matcher.Match(cc.ReplaceText, tokenLabel(tc.TokenType)) {
 			continue
 		}
@@ -179,28 +190,29 @@ func (s *DefaultCompletionProvider) completionsForContext(
 		contributor.CompletionForToken(ctx, tcCopy.TokenType, tcCopy.ATNStateIdx, contribCtx, accept)
 	}
 
-	// Cross-reference pass: dispatch per CompletionHint.Field; contributor
+	// Cross-reference pass: dispatch per hint on its owner; contributor
 	// decides per (SymbolDescription, hint, atnState) what to emit.
 	for _, hc := range info.Hints {
-		owner := buildSyntheticOwnerChainFor(adapter, doc, result.RuleStack, hc.Hint.Field, cursorOffset)
+		owner := buildOwner(adapter, doc, result.RuleStack, hc, lastToken)
 		if owner == nil {
 			continue
 		}
-		owner = applyPrecedingAction(adapter, owner, hc.Hint)
-		seq, ok := adapter.DispatchCompletion(ctx, hc.Hint.Field, owner)
+		seq, ok := adapter.DispatchCompletion(ctx, hc.Hint.Key(), owner)
 		if !ok {
 			continue
 		}
 		hcCopy := hc
+		refCtx := contribCtx
+		refCtx.Node = owner
 		for d := range seq {
 			dCopy := d
 			if !matcher.Match(cc.ReplaceText, dCopy.Name) {
 				continue
 			}
 			accept := func(item lsp.CompletionItem) {
-				items = append(items, EnrichReferenceCompletionItem(item, dCopy, contribCtx))
+				items = append(items, EnrichReferenceCompletionItem(item, dCopy, refCtx))
 			}
-			contributor.CompletionForReference(ctx, dCopy, hcCopy.Hint, hcCopy.ATNStateIdx, contribCtx, accept)
+			contributor.CompletionForReference(ctx, dCopy, hcCopy.Hint, hcCopy.ATNStateIdx, refCtx, accept)
 		}
 	}
 
@@ -306,6 +318,18 @@ func backtrackToToken(tokens core.TokenSlice, offset int) cursorTokenInfo {
 		}
 	}
 	return info
+}
+
+// commentAt returns the comment that the cursor is inside of, or nil. The
+// cursor at the start of a comment is in front of it, the cursor at its end
+// is inside: a line comment ends at the line break, and the user who just
+// closed a block comment has not left it before typing a separator.
+func commentAt(comments core.TokenSlice, offset int) *core.Token {
+	// Between two adjacent comments, the first return value is the previous one
+	if comment, _ := comments.SearchOffset2(offset); comment != nil && int(comment.Range.Start) < offset {
+		return comment
+	}
+	return nil
 }
 
 // buildCompletionContexts produces the per-request cursor interpretations.
@@ -448,8 +472,8 @@ func buildSyntheticOwnerChain(adapter parser.LanguageCompletionAdapter, doc *cor
 	}
 	var parent core.AstNode
 	for _, frame := range ruleStack {
-		node, ok := adapter.SyntheticOwnerFor(frame.RuleKey)
-		if !ok || node == nil {
+		node := newNode(adapter, frame.RuleKey, doc)
+		if node == nil {
 			// Some rules have no associated AST node (composite nodes)
 			// Those are simply skipped
 			continue
@@ -457,37 +481,271 @@ func buildSyntheticOwnerChain(adapter parser.LanguageCompletionAdapter, doc *cor
 		if parent != nil {
 			node.SetContainer(parent, unique.Make(""), 0)
 		}
-		node.SetDocument(doc)
 		parent = node
 	}
 	return parent
+}
+
+// buildOwner returns the node that owns the cross-reference of the hint.
+//
+// The owner is derived from the node that owns the lastToken, which is the
+// token in front of the cursor, and from the rule calls that lead from there
+// to the cross-reference. The result is a node of the AST that the main
+// parser built, or a new node with the container and the containment data
+// that the main parser would give to it. Scope providers find the same
+// symbols as for a node of the main parser then.
+//
+// The lastToken is nil at the start of the document. The rule calls of the
+// hint lead from the entry rule to the cross-reference then, so the owner is
+// derived from the root of the AST.
+//
+// If the hint reads the last token in another way than the main parser did,
+// the owner is derived from the rule stack of the completion parser instead,
+// and is not connected to the AST.
+//
+// If the hint carries an action that precedes the cross-reference, the
+// action is applied to the owner as the main parser would have on the next
+// token, see applyPrecedingAction.
+//
+// Returns nil if the adapter doesn't know one of the rule keys; the
+// completion request then yields no candidates for this hint rather than
+// silently returning the wrong scope.
+func buildOwner(adapter parser.LanguageCompletionAdapter, doc *core.Document, ruleStack []parser.RuleContext, hc parser.HintCompletion, lastToken *core.Token) core.AstNode {
+	var owner core.AstNode
+	if base := baseOf(adapter, doc, hc, lastToken); base != nil {
+		owner = buildOwnerAt(adapter, base, hc, lastToken)
+	}
+	if owner == nil {
+		owner = buildSyntheticOwnerChainFor(adapter, doc, ruleStack, hc.Hint)
+	}
+	if owner == nil {
+		return nil
+	}
+	return applyPrecedingAction(adapter, owner, hc.Hint)
+}
+
+// baseOf returns the node of the rule that was in progress at the last
+// token, after leaving the rules that ended since then. Returns nil if that
+// node is unknown.
+func baseOf(adapter parser.LanguageCompletionAdapter, doc *core.Document, hc parser.HintCompletion, lastToken *core.Token) core.AstNode {
+	if lastToken == nil {
+		// At the start of the document, the entry rule is in progress
+		return doc.Root
+	}
+	if hc.ConsumedAt >= 0 && hc.ConsumedAt != lastToken.Kind {
+		// The hint reads the token in another way than the main parser did,
+		// so the node that owns the token is unrelated to the hint.
+		return nil
+	}
+	base := lastToken.Owner()
+	for _, call := range hc.Left {
+		if base == nil {
+			return nil
+		}
+		base = containerOfCall(adapter, base, call)
+	}
+	return base
+}
+
+// containerOfCall returns the container of the node that the assigned rule
+// call created, which is the given node or one of its containers.
+//
+// A rule call creates several nodes if the rule contains tree-rewriting
+// actions or is an infix rule, and the outermost of them is the node of the
+// rule call. The main parser also creates them for the input that follows
+// the cursor. Returns nil if that node is not assigned like the rule call.
+func containerOfCall(adapter parser.LanguageCompletionAdapter, node core.AstNode, call *parser.RuleCallInfo) core.AstNode {
+	for {
+		container := node.Container()
+		if container == nil {
+			return nil
+		}
+		field, index := node.ContainmentData()
+		if !adapter.AssignsCurrent(container, field, index) {
+			if field == unique.Make(call.Property) {
+				return container
+			}
+			return nil
+		}
+		node = container
+	}
+}
+
+// buildOwnerAt returns the owner of a cross-reference that is reached from
+// the base through the rule calls of the hint. The base is the node of the
+// rule that the first rule call belongs to.
+//
+// An unassigned rule call continues the node of the calling rule, and an
+// assigned rule call creates a node that is contained in it. The owner is
+// the node of the last rule call. The lastToken is the token in front of it.
+//
+// Returns nil if the type of a node is unknown.
+func buildOwnerAt(adapter parser.LanguageCompletionAdapter, base core.AstNode, hc parser.HintCompletion, lastToken *core.Token) core.AstNode {
+	ownerType := hc.Hint.Owner
+	doc := base.Document()
+	// The rule call that ended last
+	var previous *parser.RuleCallInfo
+	if len(hc.Left) > 0 {
+		previous = hc.Left[len(hc.Left)-1]
+	}
+	// The node of the rule in progress. If assigned is set, it is the
+	// container of the node of that rule call, which is not created yet.
+	node := base
+	var assigned *parser.RuleCallInfo
+	nodeType := ""
+	create := func(nodeType string) core.AstNode {
+		created := newNode(adapter, nodeType, doc)
+		if created == nil {
+			return nil
+		}
+		field := unique.Make(assigned.Property)
+		index := -1
+		if assigned.List {
+			index = listIndexAfter(node, field, lastToken)
+		}
+		created.SetContainer(node, field, index)
+		return created
+	}
+	for _, call := range hc.Calls {
+		if call == nil {
+			return nil
+		}
+		if action := call.PrecedingAction; action != nil {
+			if assigned != nil {
+				// The action determines the type of the node to create
+				nodeType = action.TargetType
+			} else if call.Repeated && call == previous {
+				// The action was executed in front of the first of the repeated rule calls
+			} else if node = applyAction(adapter, node, action); node == nil {
+				return nil
+			}
+		}
+		if call.Property != "" {
+			if assigned != nil {
+				if node = create(nodeType); node == nil {
+					return nil
+				}
+			}
+			assigned, nodeType = call, call.Type
+		} else if assigned != nil && call.Type != "" {
+			// The called rule determines the type of the node to create,
+			// e.g. as one of several alternatives.
+			nodeType = call.Type
+		}
+	}
+	if assigned != nil {
+		return create(ownerType)
+	}
+	// No rule call is assigned, so the owner is the node of the rule in progress
+	return nodeOfType(adapter, node, ownerType)
+}
+
+// applyAction returns the node that results from executing the action with
+// the given node as the current node.
+func applyAction(adapter parser.LanguageCompletionAdapter, node core.AstNode, action *parser.ActionInfo) core.AstNode {
+	if action.Property == "" {
+		return nodeOfType(adapter, node, action.TargetType)
+	}
+	// The main parser executed the action if the input continues behind the cursor
+	if container := node.Container(); container != nil && isOfType(adapter, container, action.TargetType) {
+		if field, index := node.ContainmentData(); field == unique.Make(action.Field) && adapter.AssignsCurrent(container, field, index) {
+			return container
+		}
+	}
+	wrapper := adapter.ApplyAction(action.TargetType, action.Property, node)
+	if wrapper == nil {
+		return nil
+	}
+	takePlace(wrapper, node)
+	return wrapper
+}
+
+// newNode creates a node of the given type. Returns nil if the type is unknown.
+func newNode(adapter parser.LanguageCompletionAdapter, nodeType string, doc *core.Document) core.AstNode {
+	node, ok := adapter.SyntheticOwnerFor(nodeType)
+	if !ok || node == nil {
+		return nil
+	}
+	node.SetDocument(doc)
+	return node
+}
+
+// nodeOfType returns the node if it has the given type, or else a new node of
+// that type that takes the place of the given node in the AST. Returns nil if
+// the type is unknown.
+func nodeOfType(adapter parser.LanguageCompletionAdapter, node core.AstNode, nodeType string) core.AstNode {
+	if isOfType(adapter, node, nodeType) {
+		return node
+	}
+	replacement := newNode(adapter, nodeType, node.Document())
+	if replacement != nil {
+		takePlace(replacement, node)
+	}
+	return replacement
+}
+
+// takePlace gives the node the container and the containment data of another
+// node. The container does not refer to the node.
+func takePlace(node, other core.AstNode) {
+	field, index := other.ContainmentData()
+	node.SetContainer(other.Container(), field, index)
+	node.SetDocument(other.Document())
+}
+
+// isOfType reports whether the node has the given type, and not a subtype of it.
+func isOfType(adapter parser.LanguageCompletionAdapter, node core.AstNode, nodeType string) bool {
+	template, ok := adapter.SyntheticOwnerFor(nodeType)
+	return ok && template != nil && reflect.TypeOf(node) == reflect.TypeOf(template)
+}
+
+// listIndexAfter returns the index for a node that is added to the list of
+// the container after the given token, in front of the items that follow it.
+// An item that starts in front of the token and ends after it is split by
+// the new node, which follows the first part. A nil token is in front of
+// all items.
+func listIndexAfter(container core.AstNode, field unique.Handle[string], token *core.Token) int {
+	index := 0
+	if token == nil {
+		return index
+	}
+	container.ForEachNode(func(child core.AstNode, childField unique.Handle[string], childIndex int) {
+		if childField == field && !isEmptyNode(child) && child.TextRange().Start <= token.Range.Start {
+			index = childIndex + 1
+		}
+	})
+	return index
+}
+
+// isEmptyNode reports whether the node has neither tokens, child nodes nor
+// cross-reference text, like the nodes that the parser creates for input
+// that is missing. The tokens of a composite cross-reference belong to its
+// unit, not to the node.
+func isEmptyNode(node core.AstNode) bool {
+	if len(node.Tokens()) > 0 || !extiter.IsEmpty(core.ChildNodes(node)) {
+		return false
+	}
+	empty := true
+	node.ForEachReference(func(ref core.UntypedReference, _ unique.Handle[string], _ int) {
+		if unit := ref.Unit(); unit != nil && unit.String() != "" {
+			empty = false
+		}
+	})
+	return empty
 }
 
 // buildSyntheticOwnerChainFor extends buildSyntheticOwnerChain with the
 // hint's owner rule when the rule stack doesn't already end at that rule.
 //
 // At cursor positions where a new rule could begin but hasn't yet, the
-// parser's rule stack stops one level above the rule the hint's field
-// belongs to. The hint's Field has the form "<OwnerRule>.<Property>" -
-// we split on '.' to get the owner rule name and append a synthetic for
-// it if the stack doesn't already end there.
+// parser's rule stack stops one level above the rule the hint's owner
+// belongs to, so a synthetic frame for the owner is appended if the stack
+// doesn't already end there.
 //
 // Returns nil if the adapter doesn't know one of the rule keys; the
 // completion request then yields no candidates for this hint rather than
 // silently returning the wrong scope.
-func buildSyntheticOwnerChainFor(adapter parser.LanguageCompletionAdapter, doc *core.Document, ruleStack []parser.RuleContext, hintField string, cursorOffset int) core.AstNode {
-	ownerType, _, ok := splitHintField(hintField)
-	if !ok {
-		return buildSyntheticOwnerChain(adapter, doc, ruleStack)
-	}
-	// Prefer the AST that the main parser already built. Tree-rewrite
-	// actions are executed during normal parsing, so the partial AST at
-	// the cursor already carries the chain a scope provider needs -
-	// reusing it avoids resynthesising state the parser tracked
-	// correctly.
-	if real := findExistingOwnerAtCursor(adapter, doc, ownerType, cursorOffset); real != nil {
-		return real
-	}
+func buildSyntheticOwnerChainFor(adapter parser.LanguageCompletionAdapter, doc *core.Document, ruleStack []parser.RuleContext, hint *parser.CompletionHint) core.AstNode {
+	ownerType := hint.Owner
 	// If the owner rule appears anywhere on the stack, the parser is
 	// already inside it - slice off any deeper frames. This covers
 	// cross-references whose text form is a separate rule: at the cursor
@@ -522,14 +780,7 @@ func buildSyntheticOwnerChainFor(adapter parser.LanguageCompletionAdapter, doc *
 // empty (the main parser already created the post-action node), the
 // owner is returned unchanged.
 func applyPrecedingAction(adapter parser.LanguageCompletionAdapter, owner core.AstNode, hint *parser.CompletionHint) core.AstNode {
-	if hint == nil || hint.PrecedingAction == nil {
-		return owner
-	}
-	_, property, ok := splitHintField(hint.Field)
-	if !ok {
-		return owner
-	}
-	if !adapter.HasAssignment(owner, property) {
+	if hint == nil || hint.PrecedingAction == nil || !adapter.HasAssignment(owner, hint.Property) {
 		return owner
 	}
 	action := hint.PrecedingAction
@@ -537,57 +788,8 @@ func applyPrecedingAction(adapter parser.LanguageCompletionAdapter, owner core.A
 	if wrapper == nil {
 		return owner
 	}
-	wrapper.SetDocument(owner.Document())
-	if container := owner.Container(); container != nil {
-		wrapper.SetContainer(container, unique.Make(""), 0)
-	}
+	takePlace(wrapper, owner)
 	return wrapper
-}
-
-// findExistingOwnerAtCursor returns the AST node of the hint's owner-ast
-// type that is closest to (and contains) the cursor, by walking up from
-// the owner of the token immediately preceding the cursor. Returns nil
-// if no such node exists - typically because the cursor is at a position
-// where the rule hasn't been entered yet, in which case the synthetic
-// chain path applies.
-func findExistingOwnerAtCursor(adapter parser.LanguageCompletionAdapter, doc *core.Document, ownerRule string, cursorOffset int) core.AstNode {
-	template, ok := adapter.SyntheticOwnerFor(ownerRule)
-	if !ok || template == nil {
-		return nil
-	}
-	wantType := reflect.TypeOf(template)
-	info := backtrackToToken(doc.Tokens, cursorOffset)
-	idx := info.CurrentIdx
-	if idx < 0 {
-		idx = info.NextIdx - 1
-	}
-	if idx < 0 || idx >= len(doc.Tokens) {
-		return nil
-	}
-	node := doc.Tokens[idx].Owner()
-	for node != nil {
-		if reflect.TypeOf(node) == wantType {
-			return node
-		}
-		node = node.Container()
-	}
-	return nil
-}
-
-// splitHintField separates a CompletionHint.Field key of the form
-// "<OwnerRule>.<Property>" into its two halves. Returns ok=false for
-// malformed keys (no dot, or empty halves) so the caller can fall back
-// to the unextended rule-stack chain.
-func splitHintField(field string) (owner, property string, ok bool) {
-	for i := 0; i < len(field); i++ {
-		if field[i] == '.' {
-			if i == 0 || i == len(field)-1 {
-				return "", "", false
-			}
-			return field[:i], field[i+1:], true
-		}
-	}
-	return "", "", false
 }
 
 // EnrichTokenCompletionItem fills zero-valued fields on item with
@@ -664,6 +866,20 @@ func EnrichSnippetCompletionItem(item lsp.CompletionItem, sn SnippetTemplate, cc
 	} else {
 		fillInsertion(&item, cc.ReplaceRange)
 	}
+	return item
+}
+
+// EnrichCommentCompletionItem fills zero-valued fields on an item emitted
+// inside a comment. The contributor supplies the label; there is no grammar
+// element to derive it from.
+func EnrichCommentCompletionItem(item lsp.CompletionItem, cc ContributorContext) lsp.CompletionItem {
+	if item.Kind == 0 {
+		item.Kind = lsp.TextCompletion
+	}
+	if item.SortText == "" {
+		item.SortText = fmt.Sprintf("%d-3-comment", cc.SortRank)
+	}
+	fillInsertion(&item, cc.ReplaceRange)
 	return item
 }
 

@@ -96,8 +96,17 @@ type RuntimeTransition interface {
 // allocated parent when the existing node's assignment slot is already filled
 // - mirroring Langium's `NextFeature.type`/`property` synthesis.
 type CompletionHint struct {
-	Field           string
+	// Owner is the type of the node that owns the cross-reference, e.g.
+	// "Transition", and Property the name of its property, e.g. "Event".
+	Owner           string
+	Property        string
 	PrecedingAction *ActionInfo
+}
+
+// Key returns the key of the hint in the dispatch table of the generated
+// completion adapter, e.g. "Transition.Event".
+func (h *CompletionHint) Key() string {
+	return h.Owner + "." + h.Property
 }
 
 // ActionInfo describes a grammar Action that fires immediately before the
@@ -106,16 +115,21 @@ type CompletionHint struct {
 // to the named Property. The choice of single vs append assignment is
 // baked into the generated adapter from the field's grammar type, so the
 // operator does not need to travel through the ATN.
+//
+// Property is empty for an action that creates a node without assigning the
+// existing one. Field is the name of Property as used in
+// [fastbelt.AstNode.ContainmentData].
 type ActionInfo struct {
 	TargetType string // e.g. "MemberCall"
 	Property   string // e.g. "Previous"
+	Field      string // e.g. "previous"
 }
 
 // RuntimeAtomTransition fires on a specific token type.
 //
 // CompletionHint is non-nil when this transition's token was emitted by a
 // cross-reference assignment; it lets the completion engine know that "match
-// Token_ID here" means "complete a reference to the field named by Hint.Field".
+// Token_ID here" means "complete a reference to the property named by the hint".
 type RuntimeAtomTransition struct {
 	Target         *RuntimeATNState
 	TokenType      *fastbelt.TokenType
@@ -159,13 +173,51 @@ type RuntimeRuleTransition struct {
 	Target         *RuntimeATNState // the rule's RuleStartState
 	FollowState    *RuntimeATNState
 	CompletionHint *CompletionHint
+	Call           *RuleCallInfo
 }
 
-func NewRuleTransition(target, followState *RuntimeATNState, hint *CompletionHint) *RuntimeRuleTransition {
+// RuleCallInfo describes how the node created by a rule call is added to the
+// AST. The completion provider uses it to give the owner of a cross-reference
+// that doesn't exist yet the container that the parser would give to it.
+type RuleCallInfo struct {
+	// Property is the name of the field that the rule call is assigned to, as
+	// used in [fastbelt.AstNode.ContainmentData]. It is empty for an unassigned
+	// rule call, which continues the node of the calling rule.
+	Property string
+	// List reports whether the rule call is assigned with the += operator.
+	List bool
+	// Type is the name of the return type of the called rule. It is empty for
+	// rules that do not create nodes, such as composite rules.
+	Type string
+	// InfixOperand reports whether the rule call is the operand that follows
+	// an operator of an infix rule. Its node is assigned to the right operand
+	// of the operator, but the position of the operator in the tree depends on
+	// the precedence of the operators around it.
+	InfixOperand bool
+	// PrecedingAction is the action that is executed in front of the rule
+	// call, if the rule call is the first element that follows it.
+	PrecedingAction *ActionInfo
+	// Repeated reports whether the rule call has a cardinality that repeats
+	// it. The PrecedingAction is only executed in front of the first of the
+	// repeated rule calls then.
+	Repeated bool
+}
+
+// leavesToContainer reports whether leaving the rule call moves from the node
+// that it created to the container of that node. That is the case for an
+// assigned rule call, except for the operand of an infix rule, whose node
+// may end up as a container of the operator rather than the other way round.
+// A nil call is unknown and does not.
+func (c *RuleCallInfo) leavesToContainer() bool {
+	return c != nil && c.Property != "" && !c.InfixOperand
+}
+
+func NewRuleTransition(target, followState *RuntimeATNState, hint *CompletionHint, call *RuleCallInfo) *RuntimeRuleTransition {
 	return &RuntimeRuleTransition{
 		Target:         target,
 		FollowState:    followState,
 		CompletionHint: hint,
+		Call:           call,
 	}
 }
 
@@ -182,6 +234,8 @@ type RuntimeATN struct {
 	stateIdxCache map[*RuntimeATNState]int // pointer -> array index
 
 	nextTokensCache []*collections.BitSet // stateIdx -> bitset indexed by TokenType.Id
+
+	ruleTransitions []*RuntimeRuleTransition // follow stateIdx -> rule call that returns to that state
 
 	// decisionToDFA holds one lazily-populated DFA per decision (indexed by
 	// RuntimeATNState.Decision). It is the shared, cross-parse cache used by the
@@ -204,6 +258,41 @@ func (atn *RuntimeATN) Init() {
 	atn.buildIdxCache()
 	atn.buildNextTokensCache()
 	atn.buildDecisionToDFA()
+	atn.buildRuleCalls()
+}
+
+func (atn *RuntimeATN) buildRuleCalls() {
+	atn.ruleTransitions = make([]*RuntimeRuleTransition, len(atn.States))
+	for _, state := range atn.States {
+		if state == nil {
+			continue
+		}
+		for _, t := range state.Transitions {
+			if rt, ok := t.(*RuntimeRuleTransition); ok {
+				if idx := atn.stateIndex(rt.FollowState); idx >= 0 {
+					atn.ruleTransitions[idx] = rt
+				}
+			}
+		}
+	}
+}
+
+// ruleTransitionAt returns the rule transition that returns to the state at
+// followIdx, or nil if there is none.
+func (atn *RuntimeATN) ruleTransitionAt(followIdx int) *RuntimeRuleTransition {
+	if followIdx < 0 || followIdx >= len(atn.ruleTransitions) {
+		return nil
+	}
+	return atn.ruleTransitions[followIdx]
+}
+
+// ruleCallAt returns the information about the rule call that returns to the
+// state at followIdx, or nil if it is unknown.
+func (atn *RuntimeATN) ruleCallAt(followIdx int) *RuleCallInfo {
+	if rt := atn.ruleTransitionAt(followIdx); rt != nil {
+		return rt.Call
+	}
+	return nil
 }
 
 func (atn *RuntimeATN) buildDecisionToDFA() {

@@ -5,6 +5,7 @@ package grammar
 import (
 	"context"
 	"iter"
+	"unique"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
@@ -352,4 +353,14 @@ func (a *FastbeltCompletionAdapter) ApplyAction(actionType, property string, val
 		return node
 	}
 	return nil
+}
+
+func (a *FastbeltCompletionAdapter) AssignsCurrent(container core.AstNode, field unique.Handle[string], index int) bool {
+	if _, ok := container.(Alternatives); ok && field == fieldNameAlts && index == 0 {
+		return true
+	}
+	if _, ok := container.(Group); ok && field == fieldNameElements && index == 0 {
+		return true
+	}
+	return false
 }

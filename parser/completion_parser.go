@@ -7,6 +7,8 @@ package parser
 import (
 	"context"
 	"iter"
+	"slices"
+	"unique"
 
 	core "typefox.dev/fastbelt"
 )
@@ -33,7 +35,7 @@ type LanguageCompletionAdapter interface {
 	// completion when it can't build the synthetic chain.
 	SyntheticOwnerFor(ruleKey string) (core.AstNode, bool)
 	// DispatchCompletion runs the per-field scope+filter chain for the
-	// given CompletionHint.Field on the supplied synthetic owner. Returns
+	// given CompletionHint.Key on the supplied synthetic owner. Returns
 	// (nil, false) if the field key isn't registered.
 	DispatchCompletion(
 		ctx context.Context,
@@ -54,6 +56,11 @@ type LanguageCompletionAdapter interface {
 	// type is not assignable to the property. Grammars without
 	// tree-rewrite actions emit a body that always returns nil.
 	ApplyAction(actionType, property string, value core.AstNode) core.AstNode
+	// AssignsCurrent reports whether the child at the given field and index
+	// of the container was added by a tree-rewriting action or as the operand
+	// of an infix rule. Such a child is created by the same rule call as the
+	// container, in contrast to the child of an assigned rule call.
+	AssignsCurrent(container core.AstNode, field unique.Handle[string], index int) bool
 }
 
 // CompletionParseResult is the output of a CompletionParser run. It contains
@@ -63,10 +70,6 @@ type CompletionParseResult struct {
 	// Tokens is the token slice the parser was given (typically the document's
 	// prefix tokens up to the cursor).
 	Tokens []core.Token
-	// NextTokenIndex is the index of the next unconsumed token at the moment
-	// the parser stopped. For a complete prefix this equals len(Tokens); for a
-	// bailed parse it's the index of the offending token.
-	NextTokenIndex int
 	// Snapshots is the time-ordered sequence of (tokenIdx, atnStateIdx) pairs
 	// recorded at every rule entry and every Sync. The completion provider
 	// picks the latest entry with TokenIdx <= cursor as the simulator's start.
@@ -82,25 +85,33 @@ type CompletionParseResult struct {
 // entry, Sync) - between snapshots, the simulator advances the live set by
 // consuming tokens.
 //
+// FollowStates is the stack of the ATN states that the rule calls in progress
+// return to. It lets the simulator leave the rule that the snapshot was taken
+// in. Fresh and Left describe how these rule calls changed since the last
+// token was consumed: the topmost Fresh entries of FollowStates were added
+// since then, and Left holds the FollowState indices of the assigned rule
+// calls that ended since then, in that order.
+//
 // RuleStack captures the live rule context at the moment the snapshot was
 // taken. It is what makes the completion provider's synthetic-owner chain
 // robust against error recovery: by the time Parse returns, the live stack
 // has been popped back to empty, but each snapshot preserves the context the
 // parser was in when it was recorded.
 type ATNSnapshot struct {
-	TokenIdx    int
-	ATNStateIdx int
-	RuleStack   []RuleContext
+	TokenIdx     int
+	ATNStateIdx  int
+	RuleStack    []RuleContext
+	FollowStates []int
+	Fresh        int
+	Left         []int
 }
 
 // RuleContext is a single frame of CompletionParseResult.RuleStack. RuleKey
 // is a stable identifier the generator emits per parser rule (typically the
 // rule's exported Go name, e.g. "Statemachine"); the synthetic-owner factory
-// table is keyed by this string. Assignment is the property name currently
-// being assigned (empty when the parser is not inside an assignment).
+// table is keyed by this string.
 type RuleContext struct {
-	RuleKey    string
-	Assignment string
+	RuleKey string
 }
 
 // CompletionParserState is the embedded helper a generated CompletionParser
@@ -114,15 +125,21 @@ type RuleContext struct {
 //	    p.cp.EnterRule("Foo", FooRuleStartStateIdx)
 //	    defer p.cp.ExitRule()
 //	    // ...mirrors the main parser's control flow, but every Sync(i) is
-//	    //  preceded by p.cp.RecordSnapshot(i), every assignment site is
-//	    //  preceded by p.cp.MarkAssignment("PropertyName"), and every
-//	    //  AST-mutation call (AssignToken, SetName, etc.) is omitted.
+//	    //  preceded by p.cp.RecordSnapshot(i), and every AST-mutation call
+//	    //  (AssignToken, SetName, etc.) is omitted.
 //	}
 type CompletionParserState struct {
 	state *ParserState
 
 	snapshots []ATNSnapshot
 	ruleStack []RuleContext
+	// entries is parallel to ruleStack and holds the token index at which
+	// each rule was entered.
+	entries []int
+	// left holds the FollowState indices of the assigned rule calls that
+	// ended at the token index leftAt.
+	left   []int
+	leftAt int
 }
 
 // NewCompletionParserState wraps an existing ParserState so a generated
@@ -150,14 +167,35 @@ func (cp *CompletionParserState) State() *ParserState {
 // snapshots resume at that point.
 func (cp *CompletionParserState) EnterRule(ruleKey string, ruleStartStateIdx int) {
 	cp.ruleStack = append(cp.ruleStack, RuleContext{RuleKey: ruleKey})
+	cp.entries = append(cp.entries, cp.state.Index)
 	if cp.state.ErrorMode != ErrorModeNone {
 		return
 	}
-	cp.snapshots = append(cp.snapshots, ATNSnapshot{
-		TokenIdx:    cp.state.Index,
-		ATNStateIdx: ruleStartStateIdx,
-		RuleStack:   append([]RuleContext(nil), cp.ruleStack...),
-	})
+	cp.snapshots = append(cp.snapshots, cp.snapshot(ruleStartStateIdx))
+}
+
+// snapshot describes the current state of the parser at the given ATN state.
+func (cp *CompletionParserState) snapshot(atnStateIdx int) ATNSnapshot {
+	index := cp.state.Index
+	followStates := cp.state.followStates
+	// The entry rule has no follow state
+	fresh := 0
+	for i := len(cp.entries) - 1; i >= 0 && cp.entries[i] == index && fresh < len(followStates); i-- {
+		fresh++
+	}
+	// leaveRule never changes cp.left in place, so the snapshot can share it
+	var left []int
+	if cp.leftAt == index {
+		left = cp.left
+	}
+	return ATNSnapshot{
+		TokenIdx:     index,
+		ATNStateIdx:  atnStateIdx,
+		RuleStack:    slices.Clone(cp.ruleStack),
+		FollowStates: slices.Clone(followStates),
+		Fresh:        fresh,
+		Left:         left,
+	}
 }
 
 // ExitRule pops the top RuleContext. The matching push happens in EnterRule;
@@ -172,8 +210,27 @@ func (cp *CompletionParserState) EnterRule(ruleKey string, ruleStartStateIdx int
 // recovery, which is essential when the parser continues past a transient
 // error and enters more rules.
 func (cp *CompletionParserState) ExitRule() {
-	if len(cp.ruleStack) > 0 {
-		cp.ruleStack = cp.ruleStack[:len(cp.ruleStack)-1]
+	if last := len(cp.ruleStack) - 1; last >= 0 {
+		cp.leaveRule(cp.entries[last])
+		cp.ruleStack = cp.ruleStack[:last]
+		cp.entries = cp.entries[:last]
+	}
+}
+
+// leaveRule records the rule call that ends, if it is an assigned rule call
+// that consumed a token. The rule was entered at the token index entry.
+func (cp *CompletionParserState) leaveRule(entry int) {
+	index := cp.state.Index
+	if cp.leftAt != index {
+		cp.left, cp.leftAt = nil, index
+	}
+	followStates := cp.state.followStates
+	if entry == index || len(followStates) == 0 || cp.state.atn == nil {
+		return
+	}
+	followIdx := followStates[len(followStates)-1]
+	if cp.state.atn.ruleCallAt(followIdx).leavesToContainer() {
+		cp.left = append(slices.Clip(cp.left), followIdx)
 	}
 }
 
@@ -189,31 +246,7 @@ func (cp *CompletionParserState) RecordSnapshot(atnStateIdx int) {
 	if cp.state.ErrorMode != ErrorModeNone {
 		return
 	}
-	cp.snapshots = append(cp.snapshots, ATNSnapshot{
-		TokenIdx:    cp.state.Index,
-		ATNStateIdx: atnStateIdx,
-		RuleStack:   append([]RuleContext(nil), cp.ruleStack...),
-	})
-}
-
-// MarkAssignment sets the assignment property on the top RuleContext. The
-// generator emits this immediately before each Consume that corresponds to an
-// assignment (`Property=...` in the grammar). The assignment value is cleared
-// automatically at the next EnterRule/ExitRule boundary; callers that need to
-// clear it earlier can call ClearAssignment.
-func (cp *CompletionParserState) MarkAssignment(property string) {
-	if len(cp.ruleStack) == 0 {
-		return
-	}
-	cp.ruleStack[len(cp.ruleStack)-1].Assignment = property
-}
-
-// ClearAssignment resets the top frame's Assignment field.
-func (cp *CompletionParserState) ClearAssignment() {
-	if len(cp.ruleStack) == 0 {
-		return
-	}
-	cp.ruleStack[len(cp.ruleStack)-1].Assignment = ""
+	cp.snapshots = append(cp.snapshots, cp.snapshot(atnStateIdx))
 }
 
 // Result builds a CompletionParseResult snapshot. The generator's top-level
@@ -227,10 +260,9 @@ func (cp *CompletionParserState) ClearAssignment() {
 func (cp *CompletionParserState) Result(tokens []core.Token) *CompletionParseResult {
 	snapshots := append([]ATNSnapshot(nil), cp.snapshots...)
 	return &CompletionParseResult{
-		Tokens:         tokens,
-		NextTokenIndex: cp.state.Index,
-		Snapshots:      snapshots,
-		RuleStack:      deepestRuleStack(snapshots),
+		Tokens:    tokens,
+		Snapshots: snapshots,
+		RuleStack: deepestRuleStack(snapshots),
 	}
 }
 
@@ -282,9 +314,6 @@ func deepestRuleStack(snapshots []ATNSnapshot) []RuleContext {
 // NextCompletionsFromSet finds reachable atom transitions; the latter
 // rules out snapshots that land at a RuleStop with an empty return stack
 // (the parser-committed-too-deep case).
-//
-// Callers that only want the cursor's snapshot without simulating should
-// use FindSnapshotAt instead.
 func (r *CompletionParseResult) SimulateAt(atn *RuntimeATN, cursor int) (live []simPath, snap ATNSnapshot, ok bool) {
 	if len(r.Snapshots) == 0 || cursor < 0 {
 		// No snapshots means the parser never entered any rule - not even the entry rule
@@ -294,7 +323,16 @@ func (r *CompletionParseResult) SimulateAt(atn *RuntimeATN, cursor int) (live []
 	// If it yields a non-empty completion set, that likely means that the snapshot is valid (no syntax errors in the prefix)
 	// If it fails, we should try the next snapshot, which is closer to the cursor, but might be more specific (less broad)
 	try := func(s ATNSnapshot) ([]simPath, bool) {
-		l := atn.Simulate(s.ATNStateIdx, r.Tokens[s.TokenIdx:cursor])
+		// Continue with the rule calls of the parser, so that the simulator
+		// can leave the rule that the snapshot was taken in
+		seed := simPath{stateIdx: s.ATNStateIdx, stack: s.FollowStates, fresh: s.Fresh, left: s.Left, consumedAt: -1}
+		seed.hints = make([]*CompletionHint, len(s.FollowStates))
+		for i, followIdx := range s.FollowStates {
+			if rt := atn.ruleTransitionAt(followIdx); rt != nil {
+				seed.hints[i] = rt.CompletionHint
+			}
+		}
+		l := atn.simulateFrom(seed, r.Tokens[s.TokenIdx:cursor], DefaultSimConfig)
 		if len(l) == 0 {
 			return nil, false
 		}
@@ -328,43 +366,4 @@ func (r *CompletionParseResult) SimulateAt(atn *RuntimeATN, cursor int) (live []
 		}
 	}
 	return nil, ATNSnapshot{}, false
-}
-
-// FindSnapshotAt returns the snapshot that gives the broadest context at the
-// given cursor token index. Selection rules:
-//
-//   - If any snapshot has TokenIdx == cursor, return the EARLIEST such
-//     snapshot. Multiple snapshots at the same token index represent the
-//     parser making successive branch decisions at that position; the
-//     earliest reflects the parser BEFORE those decisions, so simulating
-//     from there exposes every alternative still consistent with the input
-//     consumed so far.
-//   - Otherwise (cursor lies strictly between two snapshots, or past all of
-//     them), return the LATEST snapshot with TokenIdx < cursor. The
-//     simulator advances forward from that snapshot through the intervening
-//     tokens.
-//
-// Returns (ATNSnapshot{}, false) if no snapshot fits - which only happens
-// for an empty result (no rule was ever entered).
-func (r *CompletionParseResult) FindSnapshotAt(cursor int) (ATNSnapshot, bool) {
-	var best ATNSnapshot
-	found := false
-	for _, s := range r.Snapshots {
-		if s.TokenIdx > cursor {
-			break
-		}
-		if s.TokenIdx == cursor {
-			// First snapshot AT the cursor wins; later ones at the same idx
-			// represent narrower contexts we don't want to commit to.
-			if !found || best.TokenIdx < cursor {
-				best = s
-				found = true
-			}
-			continue
-		}
-		// s.TokenIdx < cursor: track the latest such snapshot.
-		best = s
-		found = true
-	}
-	return best, found
 }

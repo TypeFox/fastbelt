@@ -24,7 +24,8 @@ type CompletionAcceptor func(item lsp.CompletionItem)
 // CompletionContributor is the language-supplied policy for generating
 // completion items. The completion provider drives three stages -
 // token, cross-reference candidate, snippet - and asks the contributor
-// once per emission what items to surface. The default contributor
+// once per emission what items to surface. Inside a comment, the comment
+// stage runs instead of the three. The default contributor
 // reproduces today's behavior byte-for-byte; adopters override
 // individual methods to inject documentation, drop entries, surface
 // terminal tokens, emit multiple variants, etc.
@@ -42,7 +43,7 @@ type CompletionContributor interface {
 	CompletionForToken(ctx context.Context, tt *core.TokenType, atnState int, cc ContributorContext, accept CompletionAcceptor)
 
 	// CompletionForReference is called once per cross-reference
-	// candidate the scope/dispatch pass produced. hint.Field
+	// candidate the scope/dispatch pass produced. hint.Key()
 	// identifies the reference field (e.g. "Transition.Event");
 	// atnState is the source ATN state of the rule transition that
 	// carried the hint. The default emits one item per d with all
@@ -55,6 +56,13 @@ type CompletionContributor interface {
 	// item.
 	CompletionForSnippet(ctx context.Context, sn SnippetTemplate, cc ContributorContext, accept CompletionAcceptor)
 
+	// CompletionForComment is called instead of the other stages when the
+	// cursor is inside a comment token, including at its end.
+	// The default emits nothing, so comments get no completions.
+	// cc.ReplaceRange is nil, so items are inserted at the cursor
+	// unless they carry their own TextEdit.
+	CompletionForComment(ctx context.Context, comment *core.Token, cc ContributorContext, accept CompletionAcceptor)
+
 	// PostProcess runs once per emitted item after enrichment and
 	// deduplication. Returning false drops the item; mutating *item
 	// rewrites it in place.
@@ -63,17 +71,17 @@ type CompletionContributor interface {
 
 // ContributorContext is the read-only view a contributor sees on each
 // stage call. Mirrors Langium's CompletionContext - exposes the
-// document, cursor offset, the synthetic AST node representing the
-// rule being completed at the cursor, and the per-cursor REPLACE
-// range / sort rank the framework would use by default.
+// document, cursor offset, the node that owns the cross-reference being
+// completed, and the per-cursor REPLACE range / sort rank the framework
+// would use by default.
 type ContributorContext struct {
 	Doc    *core.Document
 	Cursor int
 
-	// Node is the synthetic AST node representing the rule being
-	// completed at the cursor, built by buildSyntheticOwnerChain from
-	// the parser's RuleStack. May be nil at the document root or when
-	// the rule stack is empty.
+	// Node is the node that owns the cross-reference that is completed, as
+	// the scope provider sees it: a node of the AST, or a new node with the
+	// container and the containment data that the parser would give to it.
+	// It is only set in CompletionForReference.
 	Node core.AstNode
 
 	// ReplaceRange is the LSP range items should REPLACE
@@ -118,6 +126,10 @@ func (*DefaultCompletionContributor) CompletionForReference(_ context.Context, _
 // CompletionForSnippet emits one default item per applicable snippet.
 func (*DefaultCompletionContributor) CompletionForSnippet(_ context.Context, _ SnippetTemplate, _ ContributorContext, accept CompletionAcceptor) {
 	accept(lsp.CompletionItem{})
+}
+
+// CompletionForComment emits nothing: comments get no completions by default.
+func (*DefaultCompletionContributor) CompletionForComment(_ context.Context, _ *core.Token, _ ContributorContext, _ CompletionAcceptor) {
 }
 
 // PostProcess keeps every item unchanged.

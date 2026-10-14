@@ -49,101 +49,117 @@ func (p *CompletionParser) ParseRoot() {
 		for {
 			switch prediction, _ := p.lookahead.RootObjectsAlternatives(p.state); prediction {
 			case 0:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_1)
 				p.ParseDeclare()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			case 1:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_3)
-				p.ParseA()
+				p.ParseSeq()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			case 2:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_5)
-				p.ParseB()
+				p.ParseAlt()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			case 3:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_7)
-				p.ParseC()
+				p.ParsePrefix()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			case 4:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_9)
-				p.ParseD()
+				p.ParseCall()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			case 5:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_11)
-				p.ParseE()
+				p.ParseRefFQN()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			case 6:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_13)
-				p.ParseF()
+				p.ParseRefList()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			case 7:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_15)
-				p.ParseG()
+				p.ParseRefID()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			case 8:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_17)
-				p.ParseH()
+				p.ParseMember()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			case 9:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_19)
-				p.ParseI()
+				p.ParseMemberNoDot()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			case 10:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_21)
-				p.ParseJ()
+				p.ParseRefOrKeyword()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			case 11:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_23)
-				p.ParseK()
+				p.ParseDedup()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			case 12:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_25)
-				p.ParseL()
+				p.ParseOpt()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			case 13:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_27)
-				p.ParseM()
+				p.ParseGroup()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			case 14:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_29)
-				p.ParseN()
+				p.ParseRefGroup()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 			case 15:
-				p.cp.MarkAssignment("Objects")
 				p.state.EnterRule(Root__Basic_31)
-				p.ParseO()
+				p.ParseRefAction()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
+			case 16:
+				p.state.EnterRule(Root__Basic_33)
+				p.ParseScope()
+				p.state.ExitRule()
+			case 17:
+				p.state.EnterRule(Root__Basic_35)
+				p.ParseLoop()
+				p.state.ExitRule()
+			case 18:
+				p.state.EnterRule(Root__Basic_37)
+				p.ParseChain()
+				p.state.ExitRule()
+			case 19:
+				p.state.EnterRule(Root__Basic_39)
+				p.ParseInfix()
+				p.state.ExitRule()
+			case 20:
+				p.state.EnterRule(Root__Basic_41)
+				p.ParseWrap()
+				p.state.ExitRule()
+			case 21:
+				p.state.EnterRule(Root__Basic_43)
+				p.ParseShadow()
+				p.state.ExitRule()
+			case 22:
+				p.state.EnterRule(Root__Basic_45)
+				p.ParseNest()
+				p.state.ExitRule()
+			case 23:
+				p.state.EnterRule(Root__Basic_47)
+				p.ParseAmbig()
+				p.state.ExitRule()
+			case 24:
+				p.state.EnterRule(Root__Basic_49)
+				p.ParseRetype()
+				p.state.ExitRule()
+			case 25:
+				p.state.EnterRule(Root__Basic_51)
+				p.ParseDep()
+				p.state.ExitRule()
+			case 26:
+				p.state.EnterRule(Root__Basic_53)
+				p.ParseAct()
+				p.state.ExitRule()
+			case 27:
+				p.state.EnterRule(Root__Basic_55)
+				p.ParseLead()
+				p.state.ExitRule()
 			default:
 				break loop0
 			}
@@ -160,11 +176,9 @@ func (p *CompletionParser) ParseDeclare() {
 		p.state.Consume(Token_DECLARE)
 	}
 	{
-		p.cp.MarkAssignment("Name")
 		p.state.EnterRule(Declare__Basic_4)
 		p.ParseFQN()
 		p.state.ExitRule()
-		p.cp.ClearAssignment()
 	}
 	p.cp.RecordSnapshot(Declare__Basic_4)
 	p.state.Sync(Declare__Basic_4)
@@ -176,11 +190,9 @@ func (p *CompletionParser) ParseDeclare() {
 			p.cp.RecordSnapshot(Declare__LoopEntry)
 			p.state.Sync(Declare__LoopEntry)
 			for p.lookahead.DeclareChildrenLoop(p.state) {
-				p.cp.MarkAssignment("Children")
 				p.state.EnterRule(Declare__Basic_2)
 				p.ParseDeclare()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 				p.cp.RecordSnapshot(Declare__LoopEntry)
 				p.state.Sync(Declare__LoopEntry)
 			}
@@ -191,24 +203,24 @@ func (p *CompletionParser) ParseDeclare() {
 	}
 }
 
-func (p *CompletionParser) ParseA() {
-	p.cp.EnterRule("A", A__Start)
+func (p *CompletionParser) ParseSeq() {
+	p.cp.EnterRule("Seq", Seq__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_a)
+		p.state.Consume(Keyword_seq)
 	}
 	{
 		p.state.Consume(Token_FIRST)
 	}
 }
 
-func (p *CompletionParser) ParseB() {
-	p.cp.EnterRule("B", B__Start)
+func (p *CompletionParser) ParseAlt() {
+	p.cp.EnterRule("Alt", Alt__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_b)
+		p.state.Consume(Keyword_alt)
 	}
-	switch prediction, failure := p.lookahead.BAlternatives(p.state); prediction {
+	switch prediction, failure := p.lookahead.AltAlternatives(p.state); prediction {
 	case 0:
 		{
 			p.state.Consume(Token_FIRST)
@@ -222,13 +234,13 @@ func (p *CompletionParser) ParseB() {
 	}
 }
 
-func (p *CompletionParser) ParseC() {
-	p.cp.EnterRule("C", C__Start)
+func (p *CompletionParser) ParsePrefix() {
+	p.cp.EnterRule("Prefix", Prefix__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_c)
+		p.state.Consume(Keyword_prefix)
 	}
-	switch prediction, failure := p.lookahead.CAlternatives(p.state); prediction {
+	switch prediction, failure := p.lookahead.PrefixAlternatives(p.state); prediction {
 	case 0:
 		{
 			p.state.Consume(Token_COMMON)
@@ -248,23 +260,23 @@ func (p *CompletionParser) ParseC() {
 	}
 }
 
-func (p *CompletionParser) ParseD() {
-	p.cp.EnterRule("D", D__Start)
+func (p *CompletionParser) ParseCall() {
+	p.cp.EnterRule("Call", Call__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_d)
+		p.state.Consume(Keyword_call)
 	}
-	switch prediction, failure := p.lookahead.DAlternatives(p.state); prediction {
+	switch prediction, failure := p.lookahead.CallAlternatives(p.state); prediction {
 	case 0:
 		{
-			p.state.EnterRule(D__Basic_1)
-			p.ParseDLong()
+			p.state.EnterRule(Call__Basic_1)
+			p.ParseCallLong()
 			p.state.ExitRule()
 		}
 	case 1:
 		{
-			p.state.EnterRule(D__Basic_3)
-			p.ParseDShort()
+			p.state.EnterRule(Call__Basic_3)
+			p.ParseCallShort()
 			p.state.ExitRule()
 		}
 	default:
@@ -272,23 +284,8 @@ func (p *CompletionParser) ParseD() {
 	}
 }
 
-func (p *CompletionParser) ParseE() {
-	p.cp.EnterRule("E", E__Start)
-	defer p.cp.ExitRule()
-	{
-		p.state.Consume(Keyword_e)
-	}
-	{
-		p.cp.MarkAssignment("Ref")
-		p.state.EnterRule(0)
-		p.ParseFQN()
-		p.state.ExitRule()
-		p.cp.ClearAssignment()
-	}
-}
-
-func (p *CompletionParser) ParseDLong() {
-	p.cp.EnterRule("DLong", DLong__Start)
+func (p *CompletionParser) ParseCallLong() {
+	p.cp.EnterRule("CallLong", CallLong__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Token_COMMON)
@@ -301,85 +298,88 @@ func (p *CompletionParser) ParseDLong() {
 	}
 }
 
-func (p *CompletionParser) ParseDShort() {
-	p.cp.EnterRule("DShort", DShort__Start)
+func (p *CompletionParser) ParseCallShort() {
+	p.cp.EnterRule("CallShort", CallShort__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Token_COMMON)
 	}
 }
 
-func (p *CompletionParser) ParseF() {
-	p.cp.EnterRule("F", F__Start)
+func (p *CompletionParser) ParseRefFQN() {
+	p.cp.EnterRule("RefFQN", RefFQN__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_f)
+		p.state.Consume(Keyword_fqn)
 	}
 	{
-		for ok := true; ok; ok = p.lookahead.FItemsLoop(p.state) {
-			p.cp.MarkAssignment("Items")
-			p.state.EnterRule(F__Basic_1)
-			p.ParseFItem()
+		p.state.EnterRule(RefFQN__Basic_1)
+		p.ParseFQN()
+		p.state.ExitRule()
+	}
+}
+
+func (p *CompletionParser) ParseRefList() {
+	p.cp.EnterRule("RefList", RefList__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_list)
+	}
+	{
+		for ok := true; ok; ok = p.lookahead.RefListItemsLoop(p.state) {
+			p.state.EnterRule(RefList__Basic_1)
+			p.ParseRefListItem()
 			p.state.ExitRule()
-			p.cp.ClearAssignment()
-			p.cp.RecordSnapshot(F__LoopBack)
-			p.state.Sync(F__LoopBack)
+			p.cp.RecordSnapshot(RefList__LoopBack)
+			p.state.Sync(RefList__LoopBack)
 		}
 	}
 }
 
-func (p *CompletionParser) ParseFItem() {
-	p.cp.EnterRule("FItem", FItem__Start)
+func (p *CompletionParser) ParseRefListItem() {
+	p.cp.EnterRule("RefListItem", RefListItem__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.MarkAssignment("Ref")
-		p.state.EnterRule(0)
+		p.state.EnterRule(RefListItem__Basic_1)
 		p.ParseFQN()
 		p.state.ExitRule()
-		p.cp.ClearAssignment()
 	}
 }
 
-func (p *CompletionParser) ParseG() {
-	p.cp.EnterRule("G", G__Start)
+func (p *CompletionParser) ParseRefID() {
+	p.cp.EnterRule("RefID", RefID__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_g)
+		p.state.Consume(Keyword_ref)
 	}
 	{
-		p.cp.MarkAssignment("Ref")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 }
 
-func (p *CompletionParser) ParseH() {
-	p.cp.EnterRule("H", H__Start)
+func (p *CompletionParser) ParseMember() {
+	p.cp.EnterRule("Member", Member__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_h)
+		p.state.Consume(Keyword_member)
 	}
 	{
-		p.cp.MarkAssignment("Member")
-		p.state.EnterRule(H__Basic_1)
+		p.state.EnterRule(Member__Basic_1)
 		p.ParseMemberCall()
 		p.state.ExitRule()
-		p.cp.ClearAssignment()
 	}
 }
 
-func (p *CompletionParser) ParseI() {
-	p.cp.EnterRule("I", I__Start)
+func (p *CompletionParser) ParseMemberNoDot() {
+	p.cp.EnterRule("MemberNoDot", MemberNoDot__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_i)
+		p.state.Consume(Keyword_nodot)
 	}
 	{
-		p.cp.MarkAssignment("Member")
-		p.state.EnterRule(I__Basic_1)
+		p.state.EnterRule(MemberNoDot__Basic_1)
 		p.ParseMemberCallNoDot()
 		p.state.ExitRule()
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -387,9 +387,7 @@ func (p *CompletionParser) ParseMemberCall() {
 	p.cp.EnterRule("MemberCall", MemberCall__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.MarkAssignment("Ref")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 	p.cp.RecordSnapshot(MemberCall__LoopEntry)
 	p.state.Sync(MemberCall__LoopEntry)
@@ -398,9 +396,7 @@ func (p *CompletionParser) ParseMemberCall() {
 			p.state.Consume(Token_DOT)
 		}
 		{
-			p.cp.MarkAssignment("Ref")
 			p.state.Consume(Token_ID)
-			p.cp.ClearAssignment()
 		}
 		p.cp.RecordSnapshot(MemberCall__LoopEntry)
 		p.state.Sync(MemberCall__LoopEntry)
@@ -411,35 +407,29 @@ func (p *CompletionParser) ParseMemberCallNoDot() {
 	p.cp.EnterRule("MemberCallNoDot", MemberCallNoDot__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.MarkAssignment("Ref")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 	p.cp.RecordSnapshot(MemberCallNoDot__LoopEntry)
 	p.state.Sync(MemberCallNoDot__LoopEntry)
 	for p.lookahead.MemberCallNoDotLoop(p.state) {
 		{
-			p.cp.MarkAssignment("Ref")
 			p.state.Consume(Token_ID)
-			p.cp.ClearAssignment()
 		}
 		p.cp.RecordSnapshot(MemberCallNoDot__LoopEntry)
 		p.state.Sync(MemberCallNoDot__LoopEntry)
 	}
 }
 
-func (p *CompletionParser) ParseJ() {
-	p.cp.EnterRule("J", J__Start)
+func (p *CompletionParser) ParseRefOrKeyword() {
+	p.cp.EnterRule("RefOrKeyword", RefOrKeyword__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_j)
+		p.state.Consume(Keyword_choice)
 	}
-	switch prediction, failure := p.lookahead.JAlternatives(p.state); prediction {
+	switch prediction, failure := p.lookahead.RefOrKeywordAlternatives(p.state); prediction {
 	case 0:
 		{
-			p.cp.MarkAssignment("Ref")
 			p.state.Consume(Token_ID)
-			p.cp.ClearAssignment()
 		}
 	case 1:
 		{
@@ -450,27 +440,23 @@ func (p *CompletionParser) ParseJ() {
 	}
 }
 
-func (p *CompletionParser) ParseK() {
-	p.cp.EnterRule("K", K__Start)
+func (p *CompletionParser) ParseDedup() {
+	p.cp.EnterRule("Dedup", Dedup__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_k)
+		p.state.Consume(Keyword_dedup)
 	}
-	switch prediction, failure := p.lookahead.KAlternatives(p.state); prediction {
+	switch prediction, failure := p.lookahead.DedupAlternatives(p.state); prediction {
 	case 0:
 		{
-			p.cp.MarkAssignment("Ref1")
 			p.state.Consume(Token_ID)
-			p.cp.ClearAssignment()
 		}
 		{
 			p.state.Consume(Keyword_x)
 		}
 	case 1:
 		{
-			p.cp.MarkAssignment("Ref2")
 			p.state.Consume(Token_ID)
-			p.cp.ClearAssignment()
 		}
 		{
 			p.state.Consume(Keyword_y)
@@ -480,15 +466,15 @@ func (p *CompletionParser) ParseK() {
 	}
 }
 
-func (p *CompletionParser) ParseL() {
-	p.cp.EnterRule("L", L__Start)
+func (p *CompletionParser) ParseOpt() {
+	p.cp.EnterRule("Opt", Opt__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_l)
+		p.state.Consume(Keyword_opt)
 	}
-	p.cp.RecordSnapshot(L__Basic_1)
-	p.state.Sync(L__Basic_1)
-	if p.lookahead.LOptional(p.state) {
+	p.cp.RecordSnapshot(Opt__Basic_1)
+	p.state.Sync(Opt__Basic_1)
+	if p.lookahead.OptOptional(p.state) {
 		{
 			p.state.Consume(Token_OPTIONAL)
 		}
@@ -504,40 +490,487 @@ func (p *CompletionParser) ParseL() {
 	}
 }
 
-func (p *CompletionParser) ParseM() {
-	p.cp.EnterRule("M", M__Start)
+func (p *CompletionParser) ParseGroup() {
+	p.cp.EnterRule("Group", Group__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_m)
+		p.state.Consume(Keyword_group)
 	}
 	{
 		p.state.Consume(TokenGroup_SomeTokenGroup)
 	}
 }
 
-func (p *CompletionParser) ParseN() {
-	p.cp.EnterRule("N", N__Start)
+func (p *CompletionParser) ParseRefGroup() {
+	p.cp.EnterRule("RefGroup", RefGroup__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_n)
+		p.state.Consume(Keyword_refgroup)
 	}
 	{
-		p.cp.MarkAssignment("Ref")
 		p.state.Consume(TokenGroup_SomeTokenGroup)
-		p.cp.ClearAssignment()
 	}
 }
 
-func (p *CompletionParser) ParseO() {
-	p.cp.EnterRule("O", O__Start)
+func (p *CompletionParser) ParseRefAction() {
+	p.cp.EnterRule("RefAction", RefAction__Start)
 	defer p.cp.ExitRule()
 	{
-		p.state.Consume(Keyword_o)
+		p.state.Consume(Keyword_action)
 	}
 	{
-		p.cp.MarkAssignment("Ref")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
+	}
+}
+
+func (p *CompletionParser) ParseScope() {
+	p.cp.EnterRule("Scope", Scope__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_scope)
+	}
+	{
+		p.state.Consume(Token_LBRACE)
+	}
+	{
+		p.cp.RecordSnapshot(Scope__LoopEntry_0)
+		p.state.Sync(Scope__LoopEntry_0)
+		for p.lookahead.ScopeLocalsLoop(p.state) {
+			p.state.EnterRule(Scope__Basic_1)
+			p.ParseDeclare()
+			p.state.ExitRule()
+			p.cp.RecordSnapshot(Scope__LoopEntry_0)
+			p.state.Sync(Scope__LoopEntry_0)
+		}
+	}
+	{
+		p.state.Consume(Keyword_use)
+	}
+	{
+		p.state.EnterRule(Scope__LoopEntry_1)
+		p.ParseRefItem()
+		p.state.ExitRule()
+	}
+	p.cp.RecordSnapshot(Scope__LoopEntry_1)
+	p.state.Sync(Scope__LoopEntry_1)
+	for p.lookahead.ScopeLoop(p.state) {
+		{
+			p.state.Consume(Token_AND)
+		}
+		{
+			p.state.EnterRule(Scope__Basic_4)
+			p.ParseRefItem()
+			p.state.ExitRule()
+		}
+		p.cp.RecordSnapshot(Scope__LoopEntry_1)
+		p.state.Sync(Scope__LoopEntry_1)
+	}
+	{
+		p.state.Consume(Token_RBRACE)
+	}
+}
+
+func (p *CompletionParser) ParseRefItem() {
+	p.cp.EnterRule("RefItem", RefItem__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Token_ID)
+	}
+}
+
+func (p *CompletionParser) ParseLoop() {
+	p.cp.EnterRule("Loop", Loop__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_loop)
+	}
+	{
+		p.state.Consume(Token_LBRACE)
+	}
+	p.cp.RecordSnapshot(Loop__LoopEntry)
+	p.state.Sync(Loop__LoopEntry)
+loop1:
+	for {
+		switch prediction, _ := p.lookahead.LoopAlternatives(p.state); prediction {
+		case 0:
+			{
+				p.state.EnterRule(Loop__Basic_1)
+				p.ParseDeclare()
+				p.state.ExitRule()
+			}
+		case 1:
+			{
+				p.state.EnterRule(Loop__Basic_3)
+				p.ParseRefItem()
+				p.state.ExitRule()
+			}
+		case 2:
+			{
+				p.state.EnterRule(Loop__Basic_5)
+				p.ParseLoop()
+				p.state.ExitRule()
+			}
+		default:
+			break loop1
+		}
+		p.cp.RecordSnapshot(Loop__LoopEntry)
+		p.state.Sync(Loop__LoopEntry)
+	}
+	{
+		p.state.Consume(Token_RBRACE)
+	}
+}
+
+func (p *CompletionParser) ParseChain() {
+	p.cp.EnterRule("Chain", Chain__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_chain)
+	}
+	{
+		p.state.Consume(Token_LBRACE)
+	}
+	{
+		p.cp.RecordSnapshot(Chain__LoopEntry)
+		p.state.Sync(Chain__LoopEntry)
+		for p.lookahead.ChainItemsLoop(p.state) {
+			p.state.EnterRule(Chain__Basic_1)
+			p.ParseChainItem()
+			p.state.ExitRule()
+			p.cp.RecordSnapshot(Chain__LoopEntry)
+			p.state.Sync(Chain__LoopEntry)
+		}
+	}
+	{
+		p.state.Consume(Token_RBRACE)
+	}
+}
+
+func (p *CompletionParser) ParseChainItem() {
+	p.cp.EnterRule("ChainItem", ChainItem__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Token_ID)
+	}
+	p.cp.RecordSnapshot(ChainItem__LoopEntry)
+	p.state.Sync(ChainItem__LoopEntry)
+	for p.lookahead.ChainItemLoop(p.state) {
+		{
+			p.state.Consume(Token_AND)
+		}
+		{
+			p.state.Consume(Token_ID)
+		}
+		p.cp.RecordSnapshot(ChainItem__LoopEntry)
+		p.state.Sync(ChainItem__LoopEntry)
+	}
+}
+
+func (p *CompletionParser) ParseInfix() {
+	p.cp.EnterRule("Infix", Infix__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_infix)
+	}
+	{
+		p.state.Consume(Token_LBRACE)
+	}
+	{
+		p.cp.RecordSnapshot(Infix__LoopEntry)
+		p.state.Sync(Infix__LoopEntry)
+		for p.lookahead.InfixItemsLoop(p.state) {
+			p.state.EnterRule(Infix__Basic_1)
+			p.ParseBinary()
+			p.state.ExitRule()
+			p.cp.RecordSnapshot(Infix__LoopEntry)
+			p.state.Sync(Infix__LoopEntry)
+		}
+	}
+	{
+		p.state.Consume(Token_RBRACE)
+	}
+}
+
+func (p *CompletionParser) ParsePrimary() {
+	p.cp.EnterRule("Primary", Primary__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Token_ID)
+	}
+}
+
+func (p *CompletionParser) ParseWrap() {
+	p.cp.EnterRule("Wrap", Wrap__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_wrap)
+	}
+	{
+		p.state.Consume(Token_LBRACE)
+	}
+	{
+		p.state.EnterRule(Wrap_RBRACE)
+		p.ParseWrapGroup()
+		p.state.ExitRule()
+	}
+	{
+		p.state.Consume(Token_RBRACE)
+	}
+}
+
+func (p *CompletionParser) ParseWrapGroup() {
+	p.cp.EnterRule("WrapGroup", WrapGroup__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.EnterRule(WrapGroup__Basic_3)
+		p.ParseWrapElement()
+		p.state.ExitRule()
+	}
+	p.cp.RecordSnapshot(WrapGroup__Basic_3)
+	p.state.Sync(WrapGroup__Basic_3)
+	if p.lookahead.WrapGroupOptional(p.state) {
+		{
+			for ok := true; ok; ok = p.lookahead.WrapGroupElementsLoop(p.state) {
+				p.state.EnterRule(WrapGroup__Basic_2)
+				p.ParseWrapElement()
+				p.state.ExitRule()
+				p.cp.RecordSnapshot(WrapGroup__LoopBack)
+				p.state.Sync(WrapGroup__LoopBack)
+			}
+		}
+	}
+}
+
+func (p *CompletionParser) ParseWrapElement() {
+	p.cp.EnterRule("WrapElement", WrapElement__Start)
+	defer p.cp.ExitRule()
+	switch prediction, failure := p.lookahead.WrapElementAlternatives(p.state); prediction {
+	case 0:
+		{
+			p.state.Consume(Token_ID)
+		}
+	case 1:
+		{
+			p.state.Consume(Token_LBRACE)
+		}
+		{
+			p.state.EnterRule(WrapElement_RBRACE)
+			p.ParseWrapGroup()
+			p.state.ExitRule()
+		}
+		{
+			p.state.Consume(Token_RBRACE)
+		}
+	default:
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+	}
+}
+
+func (p *CompletionParser) ParseShadow() {
+	p.cp.EnterRule("Shadow", Shadow__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_shadow)
+	}
+	{
+		p.state.EnterRule(Shadow__LoopEntry)
+		p.ParseBinary()
+		p.state.ExitRule()
+	}
+	{
+		p.cp.RecordSnapshot(Shadow__LoopEntry)
+		p.state.Sync(Shadow__LoopEntry)
+		for p.lookahead.ShadowItemsLoop(p.state) {
+			p.state.EnterRule(Shadow__Basic_2)
+			p.ParseRefItem()
+			p.state.ExitRule()
+			p.cp.RecordSnapshot(Shadow__LoopEntry)
+			p.state.Sync(Shadow__LoopEntry)
+		}
+	}
+}
+
+func (p *CompletionParser) ParseNest() {
+	p.cp.EnterRule("Nest", Nest__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_nest)
+	}
+	{
+		p.state.Consume(Token_LBRACE)
+	}
+	p.cp.RecordSnapshot(Nest__LoopEntry)
+	p.state.Sync(Nest__LoopEntry)
+loop2:
+	for {
+		switch prediction, _ := p.lookahead.NestAlternatives(p.state); prediction {
+		case 0:
+			{
+				p.state.EnterRule(Nest__Basic_1)
+				p.ParseDeclare()
+				p.state.ExitRule()
+			}
+		case 1:
+			{
+				p.state.Consume(Token_ID)
+			}
+		case 2:
+			{
+				p.state.EnterRule(Nest__Basic_4)
+				p.ParseNest()
+				p.state.ExitRule()
+			}
+		default:
+			break loop2
+		}
+		p.cp.RecordSnapshot(Nest__LoopEntry)
+		p.state.Sync(Nest__LoopEntry)
+	}
+	{
+		p.state.Consume(Token_RBRACE)
+	}
+}
+
+func (p *CompletionParser) ParseLead() {
+	p.cp.EnterRule("Lead", Lead__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Token_HASH_ID)
+	}
+	{
+		p.state.Consume(Keyword_lead)
+	}
+	{
+		p.state.Consume(Token_HASH_ID)
+	}
+}
+
+func (p *CompletionParser) ParseAmbig() {
+	p.cp.EnterRule("Ambig", Ambig__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_ambig)
+	}
+	switch prediction, failure := p.lookahead.AmbigAlternatives(p.state); prediction {
+	case 0:
+		{
+			p.state.EnterRule(Ambig__Basic_1)
+			p.ParseAmbigName()
+			p.state.ExitRule()
+		}
+	case 1:
+		{
+			p.state.EnterRule(Ambig__Basic_3)
+			p.ParseAmbigRefs()
+			p.state.ExitRule()
+		}
+	default:
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+	}
+}
+
+func (p *CompletionParser) ParseAmbigName() {
+	p.cp.EnterRule("AmbigName", AmbigName__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Token_ID)
+	}
+	{
+		p.state.Consume(Token_ID)
+	}
+	{
+		p.state.Consume(Token_FIRST)
+	}
+}
+
+func (p *CompletionParser) ParseAmbigRefs() {
+	p.cp.EnterRule("AmbigRefs", AmbigRefs__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Token_ID)
+	}
+	{
+		p.state.Consume(Token_ID)
+	}
+	{
+		p.state.Consume(Token_SECOND)
+	}
+}
+
+func (p *CompletionParser) ParseRetype() {
+	p.cp.EnterRule("Retype", Retype__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_retype)
+	}
+	{
+		p.state.Consume(Token_LBRACE)
+	}
+	{
+		p.cp.RecordSnapshot(Retype__LoopEntry)
+		p.state.Sync(Retype__LoopEntry)
+		for p.lookahead.RetypeItemsLoop(p.state) {
+			p.state.EnterRule(Retype__Basic_1)
+			p.ParseRetypeItem()
+			p.state.ExitRule()
+			p.cp.RecordSnapshot(Retype__LoopEntry)
+			p.state.Sync(Retype__LoopEntry)
+		}
+	}
+	{
+		p.state.Consume(Token_RBRACE)
+	}
+}
+
+func (p *CompletionParser) ParseRetypeItem() {
+	p.cp.EnterRule("RetypeItem", RetypeItem__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.EnterRule(RetypeItem__Basic_1)
+		p.ParseRefItem()
+		p.state.ExitRule()
+	}
+}
+
+func (p *CompletionParser) ParseDep() {
+	p.cp.EnterRule("Dep", Dep__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_dep)
+	}
+	{
+		p.state.Consume(Token_ID)
+	}
+	{
+		p.state.Consume(Token_ID)
+	}
+}
+
+func (p *CompletionParser) ParseAct() {
+	p.cp.EnterRule("Act", Act__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_act)
+	}
+	switch prediction, failure := p.lookahead.ActAlternatives(p.state); prediction {
+	case 0:
+		{
+			p.state.Consume(Token_ID)
+		}
+		{
+			p.state.Consume(Token_FIRST)
+		}
+	case 1:
+		{
+			p.state.EnterRule(Act_SECOND)
+			p.ParseRefItem()
+			p.state.ExitRule()
+		}
+		{
+			p.state.Consume(Token_SECOND)
+		}
+	default:
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 }
 
@@ -558,5 +991,29 @@ func (p *CompletionParser) ParseFQN() {
 		}
 		p.cp.RecordSnapshot(FQN__LoopEntry)
 		p.state.Sync(FQN__LoopEntry)
+	}
+}
+
+func (p *CompletionParser) ParseBinary() {
+	p.cp.EnterRule("Binary", Binary__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.EnterRule(Binary__LoopEntry)
+		p.ParsePrimary()
+		p.state.ExitRule()
+	}
+	p.cp.RecordSnapshot(Binary__LoopEntry)
+	p.state.Sync(Binary__LoopEntry)
+	for p.lookahead.BinaryLoop(p.state) {
+		{
+			p.state.Consume(TokenGroup_BinaryOperator)
+		}
+		{
+			p.state.EnterRule(Binary__Basic_2)
+			p.ParsePrimary()
+			p.state.ExitRule()
+		}
+		p.cp.RecordSnapshot(Binary__LoopEntry)
+		p.state.Sync(Binary__LoopEntry)
 	}
 }
