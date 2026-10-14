@@ -20,20 +20,8 @@ import (
 // Initializer loads workspace files into [DocumentManager] when an LSP
 // workspace folder is opened.
 //
-// A build is not triggered automatically after initialization. Created
-// documents are left in the initial document state until [Builder.Build] runs.
-//
-// In a language server context, the first workspace build is triggered when a
-// file is opened. The textDocument/didOpen notification reaches the server's
-// document sync layer, which calls [DocumentUpdater.Update]. The updater
-// gathers every document that has not yet completed all build phases,
-// including files loaded during initialization.
-//
-// Adopters who wish to pre-build the workspace before a file is opened should
-// set a broader activation event for their IDE extension and invoke
-// [DocumentUpdater.Update] after the server receives the "initialized"
-// notification. In other usage contexts, such as a CLI, call the
-// [Initializer] and then [Builder] directly.
+// Once all documents are collected, the Initialize function should start
+// a workspace build using those documents.
 type Initializer interface {
 	// Initialize walks folders on disk, reads files whose extension matches
 	// [FileExtensions], and registers them with [DocumentManager]. Hidden
@@ -144,10 +132,21 @@ func (s *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 			return err
 		}
 	}
-	return nil
+	builder, err := service.Get[Builder](s.sc)
+	if err != nil {
+		log.Print("workspace builder is not set")
+		return nil
+	}
+	docs := slices.Collect(service.MustGet[DocumentManager](s.sc).All())
+	return builder.Build(ctx, docs)
 }
 
 func (s *DefaultInitializer) loadFile(ctx context.Context, uri core.URI, fs FileSystem, languageID LanguageID) {
+	docs := service.MustGet[DocumentManager](s.sc)
+	if docs.Has(uri) {
+		// Document already loaded, maybe through overlapping workspaces
+		return
+	}
 	content, err := fs.ReadFile(ctx, uri)
 	if err != nil {
 		log.Printf("failed to read file %s: %v", uri.String(), err)
@@ -159,5 +158,5 @@ func (s *DefaultInitializer) loadFile(ctx context.Context, uri core.URI, fs File
 		return
 	}
 	doc := core.NewDocument(textDoc)
-	service.MustGet[DocumentManager](s.sc).Set(doc)
+	docs.Set(doc)
 }

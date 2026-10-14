@@ -42,6 +42,17 @@ func NewDefaultCompletionProvider(sc *service.Container) CompletionProvider {
 	return &DefaultCompletionProvider{sc: sc}
 }
 
+// The default required state for completion is DocStateLinked, which has to be
+// satisfied across the whole workspace, because cross-references might require
+// complex scoping and linking to be fully resolved.
+func (s *DefaultCompletionProvider) RequiredState() (core.DocumentState, bool) {
+	return core.DocStateLinked, true
+}
+
+// Ensure that the default completion provider correctly implements the interfaces
+var _ DocumentStateRequirements = (*DefaultCompletionProvider)(nil)
+var _ CompletionProvider = (*DefaultCompletionProvider)(nil)
+
 // HandleCompletionRequest fulfils textDocument/completion. The flow is:
 //
 //  1. resolve doc + cursor offset;

@@ -7,7 +7,6 @@ package workspace
 import (
 	"iter"
 	"sync"
-	"sync/atomic"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/service"
@@ -22,7 +21,7 @@ type DocumentManager interface {
 	Get(uri core.URI) *core.Document
 	// Set adds or replaces a document keyed by document.URI.
 	Set(document *core.Document)
-	// All returns every managed document. The sequence may be iterated only once.
+	// All returns every managed document.
 	All() iter.Seq[*core.Document]
 	// Delete removes the document for uri and returns it, or nil if it was not managed.
 	Delete(uri core.URI) *core.Document
@@ -63,18 +62,9 @@ func (d *DefaultDocumentManager) Set(document *core.Document) {
 
 func (d *DefaultDocumentManager) All() iter.Seq[*core.Document] {
 	return func(yield func(*core.Document) bool) {
-		stop := atomic.Bool{}
-		d.documents.Range(func(key, value any) bool {
-			if stop.Load() {
-				return false
-			}
-			if doc, ok := value.(*core.Document); ok {
-				if !yield(doc) {
-					stop.Store(true)
-					return false
-				}
-			}
-			return true
+		d.documents.Range(func(_, value any) bool {
+			doc, ok := value.(*core.Document)
+			return !ok || yield(doc)
 		})
 	}
 }

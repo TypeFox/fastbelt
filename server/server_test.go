@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
@@ -18,8 +19,9 @@ import (
 // TestLanguageServerBasicLifecycle tests that the language server handles the basic LSP lifecycle.
 func TestLanguageServerBasicLifecycle(t *testing.T) {
 	sc := service.NewContainer()
-	workspace.SetupDefaultServices(sc)
 	textdoc.SetupDefaultServices(sc)
+	linking.SetupDefaultServices(sc)
+	workspace.SetupDefaultServices(sc)
 	SetupDefaultServices(sc)
 	service.Put[workspace.LanguageID](sc, "plaintext")
 	service.Put[workspace.FileExtensions](sc, []string{".txt"})
