@@ -34,8 +34,8 @@ func NewLookaheadCompletionAdapter(sc *service.Container) *LookaheadCompletionAd
 	return &LookaheadCompletionAdapter{sc: sc}
 }
 
-func (a *LookaheadCompletionAdapter) Parse(tokens []core.Token) *parser.CompletionParseResult {
-	return NewCompletionParser(a.sc).Parse(tokens)
+func (a *LookaheadCompletionAdapter) Parse(ctx context.Context, tokens []core.Token) *parser.CompletionParseResult {
+	return NewCompletionParser(a.sc).Parse(ctx, tokens)
 }
 
 func (a *LookaheadCompletionAdapter) ATN() *parser.RuntimeATN {

@@ -70,7 +70,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 		}
 		// STEP 1.1: Parse the document and create the AST.
 		if !doc.State.Has(core.DocStateParsed) {
-			parser.Parse(doc)
+			parser.Parse(ctx, doc)
 			doc.State = doc.State.With(core.DocStateParsed)
 			s.notifyListeners(ctx, core.DocStateParsed, doc)
 		}
