@@ -5,6 +5,7 @@
 package lexer
 
 import (
+	"context"
 	"unicode/utf8"
 
 	core "typefox.dev/fastbelt"
@@ -13,7 +14,7 @@ import (
 
 // Lexer tokenizes a complete source string in one shot.
 type Lexer interface {
-	Exec(input string) *LexerResult
+	Exec(ctx context.Context, input string) *LexerResult
 }
 
 // LexerResult holds everything produced by a single [Lexer.Exec] pass over
@@ -48,7 +49,7 @@ type DefaultLexer struct {
 
 // Exec scans input from left to right using longest-match disambiguation among
 // token types registered at construction time.
-func (l *DefaultLexer) Exec(input string) *LexerResult {
+func (l *DefaultLexer) Exec(ctx context.Context, input string) *LexerResult {
 	length := len(input)
 	tokens := make([]core.Token, 0, l.avgRatio.Capacity(length))
 	comments := make([]core.Token, 0)
@@ -134,6 +135,10 @@ func (l *DefaultLexer) Exec(input string) *LexerResult {
 			))
 		}
 		offset = end
+
+		if ctx.Err() != nil {
+			return &LexerResult{}
+		}
 	}
 
 	if length > 0 {
