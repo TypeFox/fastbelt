@@ -5,6 +5,7 @@
 package grammar
 
 import (
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -341,4 +342,29 @@ func TestFolderTokenUsedOnlyBySiblingModes(t *testing.T) {
 	for _, doc := range docs {
 		doc.AssertNoDiagnostics()
 	}
+}
+
+// The folder's terminal order follows the file order, so the language server
+// must order files like cmd.LoadGrammarDir (by file name) and not by the
+// percent-encoded URI: "a[.fb" is encoded as "a%5B.fb", which sorts before
+// "a0.fb", while the file name sorts after it.
+func TestFolderOrdersFilesByName(t *testing.T) {
+	f := test.New(t, CreateServices())
+	docs := f.ParseAll(
+		"file:///ws/a%5B.fb", `
+			grammar Test;
+			interface Foo { Name string }
+			Foo: Name=ID;
+		`+commonTokens,
+		"file:///ws/a0.fb", `
+			grammar Test;
+		`,
+	)
+	view := viewOf(docs[0].Document.Root.(Grammar))
+	require.NotNil(t, view)
+	names := []string{}
+	for _, doc := range view.docs {
+		names = append(names, path.Base(doc.URI.Path()))
+	}
+	assert.Equal(t, []string{"a0.fb", "a[.fb"}, names)
 }
