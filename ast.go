@@ -41,6 +41,8 @@ type AstNode interface {
 	Tokens() []*Token
 	// AppendToken appends token to the node's token list.
 	AppendToken(token *Token)
+	// PrependToken inserts token at the front of the node's token list.
+	PrependToken(token *Token)
 	// SetTokens replaces the node's token list with another list of tokens.
 	SetTokens(tokens []*Token)
 	// TextRange returns the text range of the node.
@@ -193,6 +195,23 @@ func (node *AstNodeBase) AppendToken(token *Token) {
 	}
 }
 
+// PrependToken inserts token at the front of the node's token list.
+//
+// Generated parsers use it when a rule consumed leading keywords before an
+// unassigned rule call replaced the node under construction: the keywords are
+// prepended to the callee's result instead of allocating a placeholder node.
+func (node *AstNodeBase) PrependToken(token *Token) {
+	if node != nil && token != nil {
+		if node.tokens == nil {
+			node.tokens = node.tokenBuf[:0]
+		}
+		n := len(node.tokens)
+		node.tokens = append(node.tokens, nil)
+		copy(node.tokens[1:], node.tokens[:n])
+		node.tokens[0] = token
+	}
+}
+
 // SetTokens replaces the node's token list with tokens.
 func (node *AstNodeBase) SetTokens(tokens []*Token) {
 	if node != nil {
@@ -321,6 +340,17 @@ func References(node AstNode) iter.Seq[UntypedReference] {
 func AssignToken(node AstNode, token *Token, kind int) {
 	if node != nil && token != nil {
 		node.AppendToken(token)
+		token.Element = node
+		token.Kind = kind
+	}
+}
+
+// PrependToken inserts token at the front of node's token list and records node and kind on the token.
+//
+// It is primarily used by generated parsers while constructing nodes incrementally.
+func PrependToken(node AstNode, token *Token, kind int) {
+	if node != nil && token != nil {
+		node.PrependToken(token)
 		token.Element = node
 		token.Kind = kind
 	}

@@ -44,6 +44,16 @@ func BenchmarkParser(b *testing.B) {
 	}
 }
 
+func BenchmarkLexer(b *testing.B) {
+	content := generateArithmeticsContent()
+	l := NewLexer()
+	b.SetBytes(int64(len(content)))
+	b.ResetTimer()
+	for b.Loop() {
+		_ = l.Exec(content)
+	}
+}
+
 // BenchmarkLexerAndParser benchmarks a full lex + parse pass per iteration.
 func BenchmarkLexerAndParser(b *testing.B) {
 	content := generateArithmeticsContent()
