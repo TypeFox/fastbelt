@@ -1034,6 +1034,35 @@ func TestPopCommandWithTargetModeReference(t *testing.T) {
 	diag.WithCode(ValidateTokenCommandMode)
 }
 
+// A multi-language grammar needs no default mode, but then 'default' names no
+// mode and a command targeting it must not link.
+func TestPushDefaultWithoutDefaultTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(`
+		grammar Test;
+		interface A { Name string }
+		interface B { Name string }
+		entry A: "a" Name=ID;
+		entry B: "b" Name=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode ModeA {
+			"a"
+			ID -> push(ModeB)
+			hidden WS
+		}
+
+		token mode ModeB {
+			"b"
+			ID -> push(<|1:default|>)
+			hidden WS
+		}
+	`)
+	doc.ExpectDiagnostic("1").WithMessageContaining("Could not resolve reference to 'default'")
+}
+
 // --- Token mode reachability and emptiness ---
 
 func TestUnreachableTokenMode(t *testing.T) {
@@ -1128,6 +1157,25 @@ func TestUnreachableTokenModeReachedFromNestedMode(t *testing.T) {
 	diag := doc.ExpectDiagnostic("1")
 	diag.WithSeverity(core.SeverityWarning)
 	diag.WithCode(ValidateNonDefaultTokenModeNoPop)
+}
+
+// With several entry rules, a named mode may be the entry mode of a language,
+// so it is neither unreachable nor required to exit.
+func TestNamedEntryModeNextToDefaultModeInMultiLanguageGrammar(t *testing.T) {
+	f := test.New(t, CreateServices())
+	f.Parse(`
+		grammar Test;
+		interface Greeting { Name string }
+		interface Farewell { Name string }
+		entry Greeting: "hello" Name=ID;
+		entry Farewell: "goodbye" Name=ID;
+
+		token ID: /[a-z]+/
+		hidden token WS: /\s+/
+
+		token mode default { "hello" ID hidden WS }
+		token mode FarewellMode { "goodbye" ID hidden WS }
+	`).AssertNoDiagnostics()
 }
 
 func TestEmptyTokenMode(t *testing.T) {
@@ -2015,4 +2063,32 @@ func TestHiddenTokenUsageInTokenModeNotMarkedAsDiagnostic(t *testing.T) {
 		}
 	`)
 	doc.AssertNoDiagnostic("1")
+}
+
+// A grammar with several entry rules is built as several languages, each with
+// its own entry token mode, so no default mode is required and modes that are
+// never entered from (or never leave to) another mode are fine.
+func TestMultiLanguageGrammarNeedsNoDefaultTokenMode(t *testing.T) {
+	f := test.New(t, CreateServices())
+	f.Parse(`
+		grammar Test;
+		interface Greeting { Name string }
+		interface Farewell { To *Greeting }
+		entry Greeting: "hello" Name=ID;
+		entry Farewell: "goodbye" To=[Greeting:ID];
+
+		token ID: /[_a-zA-Z][\w_]*/
+		hidden token WS: /\s+/
+
+		token mode GreetingMode {
+			"hello"
+			ID
+			hidden WS
+		}
+		token mode FarewellMode {
+			"goodbye"
+			ID
+			hidden WS
+		}
+	`).AssertNoDiagnostics()
 }

@@ -194,7 +194,6 @@ func (r GenerateTokenTypesResult) TokenTypeNamesByTokenIndex() []string {
 }
 
 func GenerateTokenTypes(grammr grammar.Grammar) GenerateTokenTypesResult {
-	mustExpandInfixRules(grammr)
 	keywords := GetAllKeywords(grammr)
 	tokenDecls := GetAllTokenDecls(grammr)
 	tokenGroups := GetAllTokenGroups(grammr)
@@ -226,10 +225,7 @@ func populateTokenModes(result *GenerateTokenTypesResult, tokenModes []grammar.T
 	keywords := result.Keywords
 	tokens := result.TokenDecls
 	for index, tokenMode := range tokenModes {
-		modeName := "default"
-		if !tokenMode.IsDefault() {
-			modeName = tokenMode.Name()
-		}
+		modeName := tokenMode.Name()
 		current := TokenMode{
 			Id:      index,
 			VarName: "TokenMode_" + modeName,

@@ -51,11 +51,37 @@ func FindReturnType(rule AbstractRuleWithReturnType, ctx context.Context) Interf
 	return FindInterfaceByName(grammar, rule.Name())
 }
 
+// FindInterfaceByName looks up an interface by name in the folder-wide grammar
+// that grammar belongs to (see [siblingGrammars]).
 func FindInterfaceByName(grammar Grammar, name string) Interface {
+	if view := viewOf(grammar); view != nil {
+		return view.interfaces[name]
+	}
 	for _, iface := range grammar.Interfaces() {
 		if iface.Name() == name {
 			return iface
 		}
 	}
 	return nil
+}
+
+// siblingGrammars returns the grammar roots of every .fb file in the same
+// folder as g, g itself included, sorted by URI so that folder-wide
+// diagnostics are deterministic. All files of a folder form one grammar; see
+// [folderGrammar].
+func siblingGrammars(g Grammar) []Grammar {
+	if view := viewOf(g); view != nil {
+		return view.grammars
+	}
+	return []Grammar{g}
+}
+
+// folderGrammar returns a grammar node that lists the declarations of every
+// sibling of g (see [siblingGrammars]): g itself for a single-file folder, and
+// otherwise the read-only aggregate that the importer builds once per folder.
+func folderGrammar(g Grammar) Grammar {
+	if view := viewOf(g); view != nil {
+		return view.folder
+	}
+	return g
 }
