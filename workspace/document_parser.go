@@ -35,7 +35,7 @@ func (s *DefaultDocumentParser) Parse(ctx context.Context, doc *core.Document) {
 	text := doc.TextDoc.Text(nil)
 	// Run the lexer
 	lexer := service.MustGet[lexer.Lexer](s.sc)
-	lexerRes := lexer.Exec(text)
+	lexerRes := lexer.Exec(ctx, text)
 	if ctx.Err() != nil {
 		return
 	}

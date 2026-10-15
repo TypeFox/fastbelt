@@ -255,9 +255,8 @@ func (p *ParserState) ExitRule() {
 		p.followStates = p.followStates[:len(p.followStates)-1]
 	}
 	if p.Context.Err() != nil {
-		// Use ErrorMode as a proxy to abort parsing. Jumping to the end makes
-		// every lookahead see EOF, so loops terminate instead of spinning on
-		// a token that fail mode never consumes.
+		// Use ErrorMode as a proxy to abort parsing.
+		// Also, make sure that lookaheads terminate by jumping to the end of the token stream.
 		p.ErrorMode = ErrorModeFail
 		p.Index = p.Length
 		return
