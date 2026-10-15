@@ -29,17 +29,22 @@ func (n *infixTestNode) String() string {
 	return "(" + n.left.String() + " " + n.op + " " + n.right.String() + ")"
 }
 
-// parseInfixInput splits "1 + 2 * 3" into leaf nodes and operator tokens,
-// assigning each distinct operator symbol a stable token type id.
-func parseInfixInput(input string, typeIds map[string]int) (parts []*infixTestNode, operators []*core.Token) {
-	for i, field := range strings.Fields(input) {
-		if i%2 == 0 {
-			parts = append(parts, &infixTestNode{name: field})
-		} else {
-			operators = append(operators, &core.Token{Image: field, Type: &core.TokenType{Id: typeIds[field], Name: field}})
-		}
-	}
-	return parts, operators
+// Mirrors the arithmetics grammar: "%" > "^" > "*" | "/" > "+" | "-",
+// plus a loosest right-associative "=" level.
+var infixTestTypeIds = map[string]int{"%": 1, "^": 2, "*": 3, "/": 4, "+": 5, "-": 6, "=": 7}
+
+var infixTestTable = []InfixPrecedence{
+	1: {Level: 0},
+	2: {Level: 1},
+	3: {Level: 2},
+	4: {Level: 2},
+	5: {Level: 3},
+	6: {Level: 3},
+	7: {Level: 4, Right: true},
+}
+
+func infixTestOperator(image string, typeId int) *core.Token {
+	return &core.Token{Image: image, Type: &core.TokenType{Id: typeId, Name: image}}
 }
 
 func buildInfixTestNode(left *infixTestNode, operator *core.Token, right *infixTestNode) *infixTestNode {
@@ -50,20 +55,21 @@ func buildInfixTestNode(left *infixTestNode, operator *core.Token, right *infixT
 	return &infixTestNode{left: left, right: right, op: op}
 }
 
-func TestBuildInfixTree(t *testing.T) {
-	typeIds := map[string]int{"%": 1, "^": 2, "*": 3, "/": 4, "+": 5, "-": 6, "=": 7}
-	// Mirrors the arithmetics grammar: "%" > "^" > "*" | "/" > "+" | "-",
-	// plus a loosest right-associative "=" level.
-	precedence := map[int]InfixPrecedence{
-		typeIds["%"]: {Level: 0},
-		typeIds["^"]: {Level: 1},
-		typeIds["*"]: {Level: 2},
-		typeIds["/"]: {Level: 2},
-		typeIds["+"]: {Level: 3},
-		typeIds["-"]: {Level: 3},
-		typeIds["="]: {Level: 4, Right: true},
+// foldInfixInput feeds "1 + 2 * 3" into fold: even fields are operands, odd
+// fields are operators looked up in infixTestTypeIds.
+func foldInfixInput(fold *InfixFold[*infixTestNode], input string) *infixTestNode {
+	frame := fold.Begin()
+	for i, field := range strings.Fields(input) {
+		if i%2 == 0 {
+			fold.Operand(&infixTestNode{name: field})
+		} else {
+			fold.Operator(frame, infixTestOperator(field, infixTestTypeIds[field]), infixTestTable, buildInfixTestNode)
+		}
 	}
+	return fold.End(frame, buildInfixTestNode)
+}
 
+func TestInfixFold(t *testing.T) {
 	cases := map[string]string{
 		"1":                 "1",
 		"1 + 2":             "(1 + 2)",
@@ -76,44 +82,80 @@ func TestBuildInfixTree(t *testing.T) {
 		"a = b = c":         "(a = (b = c))",
 		"a = b + c = d":     "(a = ((b + c) = d))",
 	}
+	var fold InfixFold[*infixTestNode]
 	for input, expected := range cases {
-		parts, operators := parseInfixInput(input, typeIds)
-		tree := BuildInfixTree(parts, operators, precedence, buildInfixTestNode)
+		tree := foldInfixInput(&fold, input)
 		assert.Equal(t, expected, tree.String(), "input %q", input)
+		assert.Empty(t, fold.operands, "input %q", input)
+		assert.Empty(t, fold.ops, "input %q", input)
 	}
 }
 
-func TestBuildInfixTreeSinglePartIsReturnedUnchanged(t *testing.T) {
+func TestInfixFoldSingleOperandIsReturnedUnchanged(t *testing.T) {
+	var fold InfixFold[*infixTestNode]
 	part := &infixTestNode{name: "1"}
-	tree := BuildInfixTree([]*infixTestNode{part}, nil, nil, buildInfixTestNode)
-	assert.Same(t, part, tree)
+	frame := fold.Begin()
+	fold.Operand(part)
+	assert.Same(t, part, fold.End(frame, buildInfixTestNode))
 }
 
-func TestBuildInfixTreeEmptyParts(t *testing.T) {
-	tree := BuildInfixTree(nil, nil, nil, buildInfixTestNode)
-	assert.Nil(t, tree)
+func TestInfixFoldNoOperands(t *testing.T) {
+	var fold InfixFold[*infixTestNode]
+	frame := fold.Begin()
+	assert.Nil(t, fold.End(frame, buildInfixTestNode))
 }
 
-func TestBuildInfixTreeDanglingOperator(t *testing.T) {
-	precedence := map[int]InfixPrecedence{1: {Level: 0}, 2: {Level: 0}}
-
+func TestInfixFoldDanglingOperator(t *testing.T) {
 	// "1 + 2 -" — the trailing operator has no right operand.
-	parts := []*infixTestNode{{name: "1"}, {name: "2"}}
-	operators := []*core.Token{
-		{Image: "+", Type: &core.TokenType{Id: 1, Name: "+"}},
-		{Image: "-", Type: &core.TokenType{Id: 2, Name: "-"}},
-	}
-	tree := BuildInfixTree(parts, operators, precedence, buildInfixTestNode)
+	var fold InfixFold[*infixTestNode]
+	tree := foldInfixInput(&fold, "1 + 2 -")
 	assert.Equal(t, "((1 + 2) - <nil>)", tree.String())
 }
 
-func TestBuildInfixTreeUnknownOperatorBindsLoosest(t *testing.T) {
-	precedence := map[int]InfixPrecedence{1: {Level: 0}}
-	parts := []*infixTestNode{{name: "1"}, {name: "2"}, {name: "3"}}
-	operators := []*core.Token{
-		{Image: "?", Type: &core.TokenType{Id: 99, Name: "?"}},
-		{Image: "*", Type: &core.TokenType{Id: 1, Name: "*"}},
-	}
-	tree := BuildInfixTree(parts, operators, precedence, buildInfixTestNode)
-	assert.Equal(t, "(1 ? (2 * 3))", tree.String())
+func TestInfixFoldMissingLeftOperand(t *testing.T) {
+	var fold InfixFold[*infixTestNode]
+	frame := fold.Begin()
+	fold.Operator(frame, infixTestOperator("+", 5), infixTestTable, buildInfixTestNode)
+	fold.Operand(&infixTestNode{name: "1"})
+	assert.Equal(t, "(<nil> + 1)", fold.End(frame, buildInfixTestNode).String())
+}
+
+func TestInfixFoldUnknownOperatorBindsLoosest(t *testing.T) {
+	var fold InfixFold[*infixTestNode]
+	frame := fold.Begin()
+	fold.Operand(&infixTestNode{name: "1"})
+	fold.Operator(frame, infixTestOperator("?", 99), infixTestTable, buildInfixTestNode)
+	fold.Operand(&infixTestNode{name: "2"})
+	fold.Operator(frame, infixTestOperator("*", 3), infixTestTable, buildInfixTestNode)
+	fold.Operand(&infixTestNode{name: "3"})
+	assert.Equal(t, "(1 ? (2 * 3))", fold.End(frame, buildInfixTestNode).String())
+}
+
+func TestInfixFoldNilOperatorBindsLoosest(t *testing.T) {
+	var fold InfixFold[*infixTestNode]
+	frame := fold.Begin()
+	fold.Operand(&infixTestNode{name: "1"})
+	fold.Operator(frame, nil, infixTestTable, buildInfixTestNode)
+	fold.Operand(&infixTestNode{name: "2"})
+	fold.Operator(frame, infixTestOperator("*", 3), infixTestTable, buildInfixTestNode)
+	fold.Operand(&infixTestNode{name: "3"})
+	assert.Equal(t, "(1 ? (2 * 3))", fold.End(frame, buildInfixTestNode).String())
+}
+
+// TestInfixFoldNestedFrame mirrors a parenthesized operand: the inner
+// invocation runs on the same fold while the outer one is still open.
+func TestInfixFoldNestedFrame(t *testing.T) {
+	var fold InfixFold[*infixTestNode]
+	outer := fold.Begin()
+	fold.Operand(&infixTestNode{name: "1"})
+	fold.Operator(outer, infixTestOperator("*", 3), infixTestTable, buildInfixTestNode)
+	inner := foldInfixInput(&fold, "2 + 3")
+	assert.Equal(t, "(2 + 3)", inner.String())
+	fold.Operand(inner)
+	fold.Operator(outer, infixTestOperator("+", 5), infixTestTable, buildInfixTestNode)
+	fold.Operand(&infixTestNode{name: "4"})
+	tree := fold.End(outer, buildInfixTestNode)
+	assert.Equal(t, "((1 * (2 + 3)) + 4)", tree.String())
+	assert.Empty(t, fold.operands)
+	assert.Empty(t, fold.ops)
 }
