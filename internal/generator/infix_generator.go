@@ -7,6 +7,7 @@ package generator
 import (
 	ctx "context"
 	"strconv"
+	"strings"
 
 	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/util/codegen"
@@ -24,10 +25,10 @@ func mustExpandInfixRules(grammr grammar.Grammar) {
 // generateInfixParseFunction emits the Parse function of an infix rule.
 //
 // The completion parser reuses the generic element emitter over the
-// synthesized flat body. The real parser collects operands and operator
-// tokens in flat slices with a single token-group consume per operator (no
-// alternatives decision), then folds them into a binary tree with
-// parser.BuildInfixTree.
+// synthesized flat body. The real parser feeds operands and operator tokens
+// (a single token-group consume per operator, no alternatives decision) into
+// the rule's parser.InfixFold field, which folds them into a binary tree as
+// they arrive without any per-call slices.
 func generateInfixParseFunction(node codegen.Node, context *ParserGeneratorContext, rule grammar.InfixRule, groupMembers map[string][]string) {
 	returnType := grammar.FindReturnType(rule, ctx.Background())
 	if returnType == nil {
@@ -63,79 +64,97 @@ func generateInfixParseFunction(node codegen.Node, context *ParserGeneratorConte
 
 	syncCall := buildSyncCall(context, inner)
 	operatorState := context.atnData.elementStateName(operatorCall)
+	fold := "p." + infixFoldFieldName(rule)
+	build := "p.build" + rule.Name()
 	emitOperand := func(n codegen.Node, call grammar.RuleCall) {
 		n.AppendLine("{")
 		n.Indent(func(in codegen.Node) {
 			in.AppendLine("p.state.EnterRule(", context.atnData.followState(call), ")")
 			in.AppendLine("result := p.Parse", operand.Name(), "()")
 			in.AppendLine("p.state.ExitRule()")
-			in.AppendLine("parts = append(parts, result)")
+			in.AppendLine(fold, ".Operand(result)")
 		})
 		n.AppendLine("}")
 	}
 
+	// build<Rule> constructs one binary node; it is handed to the fold as a
+	// method value, which does not escape and therefore does not allocate.
+	node.AppendLine("func (p *", receiverType, ") build", rule.Name(), "(left ", returnType.Name(), ", operator *core.Token, right ", returnType.Name(), ") ", returnType.Name(), " {")
+	node.Indent(func(n codegen.Node) {
+		n.AppendLine("result := New", rule.Name(), "()")
+		n.AppendLine("if left != nil {")
+		n.Indent(func(in codegen.Node) {
+			in.AppendLine("result.SetLeft(left)")
+			in.AppendLine("result.SetTextRangeStart(left.TextRange().Start)")
+		})
+		n.AppendLine("}")
+		n.AppendLine("if operator != nil {")
+		n.Indent(func(in codegen.Node) {
+			in.AppendLine("core.AssignToken(result, operator, ", operatorState, ")")
+			in.AppendLine("result.SetOperator(operator)")
+			in.AppendLine("result.SetTextRangeEnd(operator.Range.End)")
+		})
+		n.AppendLine("}")
+		n.AppendLine("if right != nil {")
+		n.Indent(func(in codegen.Node) {
+			in.AppendLine("result.SetRight(right)")
+			in.AppendLine("result.SetTextRangeEnd(right.TextRange().End)")
+		})
+		n.AppendLine("}")
+		n.AppendLine("return result")
+	})
+	node.AppendLine("}")
+	node.AppendLine()
+
 	node.AppendLine("func (p *", receiverType, ") Parse", rule.Name(), "() ", returnType.Name(), " {")
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("var parts []", returnType.Name())
-		n.AppendLine("var operators []*core.Token")
+		n.AppendLine("frame := ", fold, ".Begin()")
 		emitOperand(n, firstCall)
 		if syncCall != "" {
 			n.AppendLine(syncCall)
 		}
 		n.AppendLine("for ", guardCall(context, inner), " {")
 		n.Indent(func(in codegen.Node) {
-			in.AppendLine("if token := p.state.Consume(", GeneratedTokenName(operatorGroup), "); token != nil {")
-			in.Indent(func(iin codegen.Node) {
-				iin.AppendLine("operators = append(operators, token)")
-			})
-			in.AppendLine("}")
+			in.AppendLine("token := p.state.Consume(", GeneratedTokenName(operatorGroup), ")")
+			in.AppendLine(fold, ".Operator(frame, token, ", precedenceVar, ", ", build, ")")
 			emitOperand(in, secondCall)
 			if syncCall != "" {
 				in.AppendLine(syncCall)
 			}
 		})
 		n.AppendLine("}")
-		n.AppendLine("if len(parts) == 1 {")
-		n.Indent(func(in codegen.Node) {
-			in.AppendLine("// A lone operand is returned unchanged; no binary node is created.")
-			in.AppendLine("return parts[0]")
-		})
-		n.AppendLine("}")
-		n.AppendLine("return parser.BuildInfixTree(parts, operators, ", precedenceVar, ", func(left ", returnType.Name(), ", operator *core.Token, right ", returnType.Name(), ") ", returnType.Name(), " {")
-		n.Indent(func(in codegen.Node) {
-			in.AppendLine("result := New", rule.Name(), "()")
-			in.AppendLine("if left != nil {")
-			in.Indent(func(iin codegen.Node) {
-				iin.AppendLine("result.SetLeft(left)")
-				iin.AppendLine("result.SetTextRangeStart(left.TextRange().Start)")
-			})
-			in.AppendLine("}")
-			in.AppendLine("if operator != nil {")
-			in.Indent(func(iin codegen.Node) {
-				iin.AppendLine("core.AssignToken(result, operator, ", operatorState, ")")
-				iin.AppendLine("result.SetOperator(operator)")
-				iin.AppendLine("result.SetTextRangeEnd(operator.Range.End)")
-			})
-			in.AppendLine("}")
-			in.AppendLine("if right != nil {")
-			in.Indent(func(iin codegen.Node) {
-				iin.AppendLine("result.SetRight(right)")
-				iin.AppendLine("result.SetTextRangeEnd(right.TextRange().End)")
-			})
-			in.AppendLine("}")
-			in.AppendLine("return result")
-		})
-		n.AppendLine("})")
+		n.AppendLine("return ", fold, ".End(frame, ", build, ")")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
 }
 
-// generateInfixPrecedenceVar emits the precedence table of an infix rule,
-// keyed by leaf token type id. Token-group operators are expanded to their
-// leaf members so the runtime lookup is a single map access on Token.TypeId.
+// infixFoldFieldName returns the name of the generated Parser field holding the
+// parser.InfixFold of an infix rule.
+func infixFoldFieldName(rule grammar.InfixRule) string {
+	name := rule.Name()
+	return strings.ToLower(name[:1]) + name[1:] + "Fold"
+}
+
+// generateInfixFoldFields emits one parser.InfixFold field per infix rule into
+// the generated Parser struct.
+func generateInfixFoldFields(node codegen.Node, grammr grammar.Grammar) {
+	for _, rule := range grammr.InfixRules() {
+		returnType := grammar.FindReturnType(rule, ctx.Background())
+		if returnType == nil {
+			panic("Unable to find return type for infix rule: " + rule.Name())
+		}
+		node.AppendLine(infixFoldFieldName(rule), " parser.InfixFold[", returnType.Name(), "]")
+	}
+}
+
+// generateInfixPrecedenceVar emits the precedence table of an infix rule as a
+// slice indexed by leaf token type id. Token-group operators are expanded to
+// their leaf members so the runtime lookup is a single bounds-checked index on
+// Token.Type.Id. Every operator the generated parser can consume (it consumes
+// the rule's token group) has an entry.
 func generateInfixPrecedenceVar(node codegen.Node, name string, rule grammar.InfixRule, groupMembers map[string][]string) {
-	node.AppendLine("var ", name, " = map[int]parser.InfixPrecedence{")
+	node.AppendLine("var ", name, " = []parser.InfixPrecedence{")
 	node.Indent(func(n codegen.Node) {
 		seen := map[string]bool{}
 		for level, group := range rule.Groups() {
