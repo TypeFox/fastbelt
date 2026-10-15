@@ -118,6 +118,72 @@ type ParserGeneratorContext struct {
 	currentNil bool
 	// currentType is the rule return type used to materialize a lazy `current`.
 	currentType string
+	// deferredTokens lists keyword tokens consumed while `current` was still
+	// nil, held in local variables until `current` exists: they are appended
+	// when a placeholder node is materialized, or prepended to the result of an
+	// unassigned rule call that replaces `current` (see generateGroupParser).
+	deferredTokens []deferredToken
+	// deferredSeq numbers the deferred token variables (kw0, kw1, ...) within a rule.
+	deferredSeq int
+}
+
+// deferredToken is a keyword token held in a local variable of the generated
+// parse function until the node it belongs to exists.
+type deferredToken struct {
+	varName string
+	kind    string
+}
+
+// deferKeyword emits the consume of a keyword into a fresh local variable and
+// records it for the next flush.
+func (c *ParserGeneratorContext) deferKeyword(node codegen.Node, keyword grammar.Keyword) {
+	varName := "kw" + strconv.Itoa(c.deferredSeq)
+	c.deferredSeq++
+	node.AppendLine(varName, " := p.state.Consume(", GeneratedTokenName(keyword), ")")
+	c.deferredTokens = append(c.deferredTokens, deferredToken{varName: varName, kind: c.atnData.elementStateName(keyword)})
+}
+
+// flushDeferredAppend appends the deferred tokens to a freshly materialized `current`.
+func (c *ParserGeneratorContext) flushDeferredAppend(node codegen.Node) {
+	for _, t := range c.deferredTokens {
+		node.AppendLine("core.AssignToken(current, ", t.varName, ", ", t.kind, ")")
+	}
+	c.deferredTokens = nil
+}
+
+// flushDeferredPrepend prepends the deferred tokens to a `current` that was just
+// replaced by the result of an unassigned rule call, and widens its range to
+// the rule start since the callee recorded only its own start.
+func (c *ParserGeneratorContext) flushDeferredPrepend(node codegen.Node) {
+	if len(c.deferredTokens) == 0 {
+		return
+	}
+	for i := len(c.deferredTokens) - 1; i >= 0; i-- {
+		t := c.deferredTokens[i]
+		node.AppendLine("core.PrependToken(current, ", t.varName, ", ", t.kind, ")")
+	}
+	node.AppendLine("current.SetTextRangeStart(startPos)")
+	c.deferredTokens = nil
+}
+
+// deferrableKeywordRun returns the number of leading keywords of elements that
+// can be consumed before `current` exists: a run of keywords with cardinality
+// one directly followed by an element that replaces `current` wholesale. Any
+// other shape returns 0 and the keywords materialize `current` as usual.
+func deferrableKeywordRun(elements []grammar.Element) int {
+	n := 0
+	for n < len(elements) && isDeferrableKeyword(elements[n]) {
+		n++
+	}
+	if n == 0 || n == len(elements) || firstCurrentTouch(elements[n]) != touchReplace {
+		return 0
+	}
+	return n
+}
+
+func isDeferrableKeyword(element grammar.Element) bool {
+	_, ok := element.(grammar.Keyword)
+	return ok && element.Cardinality() == CardinalityOne
 }
 
 // ensureCurrent materializes a deferred `current` node right before emitted
@@ -140,6 +206,7 @@ func (c *ParserGeneratorContext) ensureCurrentGuard(node codegen.Node, guard boo
 	write := func(n codegen.Node) {
 		n.AppendLine("current = New", c.currentType, "()")
 		n.AppendLine("current.SetTextRangeStart(startPos)")
+		c.flushDeferredAppend(n)
 	}
 	if guard {
 		node.AppendLine("if current == nil {")
@@ -171,7 +238,7 @@ const (
 // replaces `current` wholesale; token rule calls append to current instead.
 func ruleCallReplacesCurrent(ruleCall grammar.RuleCall) bool {
 	switch ruleCall.Rule().Ref(ctx.Background()).(type) {
-	case grammar.ParserRule, grammar.CompositeRule:
+	case grammar.ParserRule, grammar.CompositeRule, grammar.InfixRule:
 		return true
 	}
 	return false
@@ -197,10 +264,21 @@ func firstCurrentTouch(element grammar.Element) currentTouch {
 		}
 		return touchUse
 	case grammar.Group:
+		// Leading keywords are skipped: when the first real touch replaces
+		// `current`, they are deferred and prepended to the replacement
+		// (see deferrableKeywordRun); otherwise they use `current` as usual.
+		sawKeyword := false
 		for _, el := range e.Elements() {
+			if isDeferrableKeyword(el) {
+				sawKeyword = true
+				continue
+			}
 			if touch := firstCurrentTouch(el); touch != touchNone {
 				return touch
 			}
+		}
+		if sawKeyword {
+			return touchUse
 		}
 		return touchNone
 	case grammar.Alternatives:
@@ -232,6 +310,11 @@ func delegatesWithoutStart(element grammar.Element) bool {
 		return ruleCallReplacesCurrent(e)
 	case grammar.Group:
 		for _, el := range e.Elements() {
+			if isDeferrableKeyword(el) {
+				// Deferred keywords are prepended to the delegation result,
+				// which then needs the rule start.
+				return false
+			}
 			if firstCurrentTouch(el) == touchNone {
 				continue
 			}
@@ -540,6 +623,7 @@ func GenerateParser(grammr grammar.Grammar, entryRule grammar.ParserRule, packag
 		n.AppendLine("sc *service.Container")
 		n.AppendLine("referencesConstructor ", grammr.Name(), "ReferencesConstructor")
 		n.AppendLine("lookahead ", grammr.Name(), "ParserLookahead")
+		generateInfixFoldFields(n, grammr)
 	})
 	node.AppendLine("}")
 	node.AppendLine()
@@ -1022,6 +1106,8 @@ func generateParseFunction(node codegen.Node, context *ParserGeneratorContext, r
 			context.lazyCurrent = lazy
 			context.currentNil = lazy
 			context.currentType = returnType.Name()
+			context.deferredTokens = nil
+			context.deferredSeq = 0
 			if lazy {
 				// At least one path replaces `current` before touching it, so
 				// the placeholder node is only allocated where actually needed.
@@ -1103,6 +1189,7 @@ func generateAbstractElementParser(node codegen.Node, context *ParserGeneratorCo
 				n.AppendLine("result := New", e.Type().Text(), "()")
 				n.AppendLine("result.SetTextRangeStart(startPos)")
 				n.AppendLine("current = result")
+				context.flushDeferredAppend(n)
 			})
 			node.AppendLine("}")
 			node.AppendLine("current := current.(", e.Type().Text(), ")")
@@ -1152,8 +1239,10 @@ func generateAbstractElementParser(node codegen.Node, context *ParserGeneratorCo
 			}
 			if resultName == "result" && !context.inCompositeRule {
 				if context.currentNil {
-					// `current` is still unallocated and carries no tokens.
+					// `current` is still unallocated; any keywords consumed so
+					// far are held in locals and prepended to the result.
 					indent.AppendLine("current = result")
+					context.flushDeferredPrepend(indent)
 					context.currentNil = false
 				} else {
 					// Unassigned rule call result — merge into current node
@@ -1243,7 +1332,16 @@ func generateGroupParser(node codegen.Node, context *ParserGeneratorContext, gro
 	syncCall := buildSyncCall(context, group)
 	generateCardinality(node, func(n codegen.Node) {
 		n.Indent(func(in codegen.Node) {
-			for _, element := range group.Elements() {
+			elements := group.Elements()
+			deferred := 0
+			if context.lazyCurrent && context.currentNil && !context.completion {
+				deferred = deferrableKeywordRun(elements)
+			}
+			for i, element := range elements {
+				if i < deferred {
+					context.deferKeyword(in, element.(grammar.Keyword))
+					continue
+				}
 				generateAbstractElementParser(in, context, element)
 			}
 		})
@@ -1343,6 +1441,10 @@ func generateAlternativesParser(node codegen.Node, context *ParserGeneratorConte
 	// unallocated state independently; the guard after the switch covers the
 	// branches (including the no-viable default) that did not allocate.
 	lazyBranches := context.currentNil
+	// Keywords deferred before the switch are declared in the enclosing scope;
+	// every branch flushes them on its own, and so does the guard after the
+	// switch for the branches that allocated nothing.
+	deferredBefore := append([]deferredToken(nil), context.deferredTokens...)
 	generateCardinality(node, func(n codegen.Node) {
 		n.AppendLine(orSwitchHead(context, alts))
 		for i, alt := range alts.Alts() {
@@ -1350,8 +1452,14 @@ func generateAlternativesParser(node codegen.Node, context *ParserGeneratorConte
 			n.Indent(func(in codegen.Node) {
 				if lazyBranches {
 					context.currentNil = true
+					context.deferredTokens = append([]deferredToken(nil), deferredBefore...)
 				}
 				generateAbstractElementParser(in, context, alt)
+				if len(context.deferredTokens) > len(deferredBefore) {
+					// The branch deferred keywords of its own but never
+					// allocated `current`; flush them while they are in scope.
+					context.ensureCurrent(in)
+				}
 			})
 		}
 		n.AppendLine("default:")
@@ -1361,6 +1469,7 @@ func generateAlternativesParser(node codegen.Node, context *ParserGeneratorConte
 		n.AppendLine("}")
 		if lazyBranches {
 			context.currentNil = true
+			context.deferredTokens = deferredBefore
 			context.materializeCurrentGuard(n)
 		}
 	}, func(n codegen.Node) {

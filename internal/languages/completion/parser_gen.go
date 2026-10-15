@@ -291,32 +291,36 @@ func (p *Parser) ParseC() Obj {
 }
 
 func (p *Parser) ParseD() Obj {
-	current := NewObj()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current Obj
 	{
-		{
-			token := p.state.Consume(Keyword_d)
-			core.AssignToken(current, token, D_d)
-		}
+		kw0 := p.state.Consume(Keyword_d)
 		switch prediction, failure := p.lookahead.DAlternatives(p.state); prediction {
 		case 0:
 			{
 				p.state.EnterRule(D__Basic_1)
 				result := p.ParseDLong()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
+				core.PrependToken(current, kw0, D_d)
+				current.SetTextRangeStart(startPos)
 			}
 		case 1:
 			{
 				p.state.EnterRule(D__Basic_3)
 				result := p.ParseDShort()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
+				core.PrependToken(current, kw0, D_d)
+				current.SetTextRangeStart(startPos)
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewObj()
+			current.SetTextRangeStart(startPos)
+			core.AssignToken(current, kw0, D_d)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
