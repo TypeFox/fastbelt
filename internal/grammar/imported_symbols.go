@@ -61,8 +61,11 @@ func (s *importedSymbolsProviderImpl) ImportSymbols(ctx context.Context, doc *co
 	sameFolderDocs := slices.Collect(extiter.Filter(allDocs, func(other *core.Document) bool {
 		return sameFolder(doc.URI, other.URI)
 	}))
+	// Siblings share their folder, so this orders them by file name, like
+	// cmd.LoadGrammarDir does. The encoded URI would order differently for
+	// names with escaped characters, and the file order fixes terminal order.
 	slices.SortFunc(sameFolderDocs, func(a, b *core.Document) int {
-		return strings.Compare(a.URI.String(), b.URI.String())
+		return strings.Compare(a.URI.Path(), b.URI.Path())
 	})
 	allExportedSymbols := extiter.Map(slices.Values(sameFolderDocs), func(d *core.Document) core.SymbolContainer {
 		return d.ExportedSymbols
@@ -139,8 +142,8 @@ func newFolderView(docs []*core.Document) *folderView {
 // Elements are sorted by name so the generated code does not depend on the
 // order of declarations across files. Terminals keep file order: it is
 // semantically relevant and critical for correct lexing. The resulting
-// terminal order is therefore the order of the grammars (sorted by URI by the
-// callers, see ImportSymbols and cmd.LoadGrammarDir) and declaration order
+// terminal order is therefore the order of the grammars (sorted by file name
+// by the callers, see ImportSymbols and cmd.LoadGrammarDir) and declaration order
 // within each file. Nothing checks that token rules of different files do not
 // overlap, so grammars with overlapping tokens across files should declare
 // token modes, whose member order fixes the precedence independent of file
