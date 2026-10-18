@@ -22,31 +22,39 @@ func TestParseCancelledContextTerminates(t *testing.T) {
 	}
 	lexer := service.MustGet[lexer.Lexer](srv)
 	parser := service.MustGet[parser.Parser](srv)
-	doc.Tokens = lexer.Exec(t.Context(), content).Tokens
+	lexerResult, _ := lexer.Exec(t.Context(), content)
+	doc.Tokens = lexerResult.Tokens
 	ctx, cancel := context.WithCancel(t.Context())
 	// Cancel ahead of time
 	cancel()
 	parser.Parse(ctx, doc)
 }
 
-// hugeStateCount yields a ~5 MB document, large enough that timer and
+// hugeStateCount yields a ~20 MB document, large enough that timer and
 // scheduling jitter stay small relative to a full lexer or parser run.
-const hugeStateCount = 50_000
+const hugeStateCount = 200_000
 
 func TestLexerCancellationStopsEarly(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skip long running lexer cancellation test")
+	}
 	content, _ := generateStatemachineContentWithStates(0, hugeStateCount)
 	lexer := service.MustGet[lexer.Lexer](CreateServices())
 	assertCancellationStopsEarly(t, func(ctx context.Context) { lexer.Exec(ctx, content) })
 }
 
 func TestParserCancellationStopsEarly(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skip long running parser cancellation test")
+	}
 	content, _ := generateStatemachineContentWithStates(0, hugeStateCount)
 	srv := CreateServices()
 	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	if err != nil {
 		t.Fatal(err)
 	}
-	doc.Tokens = service.MustGet[lexer.Lexer](srv).Exec(t.Context(), content).Tokens
+	lexerResult, _ := service.MustGet[lexer.Lexer](srv).Exec(t.Context(), content)
+	doc.Tokens = lexerResult.Tokens
 	parser := service.MustGet[parser.Parser](srv)
 	assertCancellationStopsEarly(t, func(ctx context.Context) { parser.Parse(ctx, doc) })
 }

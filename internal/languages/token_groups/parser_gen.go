@@ -17,7 +17,7 @@ type Parser struct {
 	lookahead             TokenGroupsParserLookahead
 }
 
-func (p *Parser) Parse(ctx context.Context, document *core.Document) *parser.ParseResult {
+func (p *Parser) Parse(ctx context.Context, document *core.Document) (*parser.ParseResult, error) {
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
 	referencesConstructor := service.MustGet[TokenGroupsReferencesConstructor](p.sc)
@@ -29,8 +29,11 @@ func (p *Parser) Parse(ctx context.Context, document *core.Document) *parser.Par
 		state:                 parser.NewParserState(ctx, document.Tokens, ATN(), recovery, messages),
 	}
 	result := cp.ParseModel()
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
 	cp.state.ExpectEndOfInput()
-	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
+	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}, nil
 }
 
 func NewParser(sc *service.Container) *Parser {

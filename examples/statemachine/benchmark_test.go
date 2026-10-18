@@ -74,7 +74,8 @@ func BenchmarkParser(b *testing.B) {
 	srv := CreateServices()
 	lexerService := service.MustGet[lexer.Lexer](srv)
 	parserService := service.MustGet[parser.Parser](srv)
-	tokens := lexerService.Exec(b.Context(), content).Tokens
+	lexerResult, _ := lexerService.Exec(b.Context(), content)
+	tokens := lexerResult.Tokens
 	doc, err := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	if err != nil {
 		b.Fatal(err)
@@ -83,7 +84,7 @@ func BenchmarkParser(b *testing.B) {
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		result := parserService.Parse(b.Context(), doc)
+		result, _ := parserService.Parse(b.Context(), doc)
 		doc.Root = result.Node
 	}
 }
@@ -95,7 +96,7 @@ func BenchmarkLexer(b *testing.B) {
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		_ = l.Exec(b.Context(), content)
+		_, _ = l.Exec(b.Context(), content)
 	}
 }
 
@@ -112,8 +113,9 @@ func BenchmarkLexerAndParser(b *testing.B) {
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		doc.Tokens = lexerService.Exec(b.Context(), content).Tokens
-		result := parserService.Parse(b.Context(), doc)
+		lexerResult, _ := lexerService.Exec(b.Context(), content)
+		doc.Tokens = lexerResult.Tokens
+		result, _ := parserService.Parse(b.Context(), doc)
 		doc.Root = result.Node
 	}
 }

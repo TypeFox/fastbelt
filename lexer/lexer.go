@@ -14,7 +14,7 @@ import (
 
 // Lexer tokenizes a complete source string in one shot.
 type Lexer interface {
-	Exec(ctx context.Context, input string) *LexerResult
+	Exec(ctx context.Context, input string) (*LexerResult, error)
 }
 
 // LexerResult holds everything produced by a single [Lexer.Exec] pass over
@@ -49,7 +49,10 @@ type DefaultLexer struct {
 
 // Exec scans input from left to right using longest-match disambiguation among
 // token types registered at construction time.
-func (l *DefaultLexer) Exec(ctx context.Context, input string) *LexerResult {
+func (l *DefaultLexer) Exec(ctx context.Context, input string) (*LexerResult, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	length := len(input)
 	tokens := make([]core.Token, 0, l.avgRatio.Capacity(length))
 	comments := make([]core.Token, 0)
@@ -136,8 +139,9 @@ func (l *DefaultLexer) Exec(ctx context.Context, input string) *LexerResult {
 		}
 		offset = end
 
-		if ctx.Err() != nil {
-			return &LexerResult{}
+		// Don't check the context on every token
+		if len(tokens)&1023 == 0 && ctx.Err() != nil {
+			return nil, ctx.Err()
 		}
 	}
 
@@ -151,7 +155,7 @@ func (l *DefaultLexer) Exec(ctx context.Context, input string) *LexerResult {
 		Comments:  comments,
 		Errors:    errors,
 		Modifiers: modifiers,
-	}
+	}, nil
 }
 
 const maxChar = 256
