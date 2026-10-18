@@ -5,10 +5,10 @@
 package e2e_test
 
 import (
+	"bufio"
 	"bytes"
 	"context"
-	"errors"
-	"io"
+	"fmt"
 	"os"
 	"os/exec"
 	"path"
@@ -69,11 +69,12 @@ func TestScaffoldModule_endToEnd(t *testing.T) {
 		name string
 		args []string
 	}{
-		{"npm install", []string{"install"}},
+		// vsce is only needed for "npm run package", which this test never runs; it is by far the heaviest dependency.
+		{"drop vsce", []string{"pkg", "delete", "devDependencies.@vscode/vsce"}},
+		{"npm install", []string{"install", "--no-audit", "--no-fund", "--prefer-offline"}},
 		{"npm run build", []string{"run", "build"}},
 		{"npm run bundle", []string{"run", "bundle"}},
 	} {
-		step := step
 		t.Run(step.name, func(t *testing.T) {
 			cmd := exec.Command("npm", step.args...)
 			cmd.Dir = moduleRoot
@@ -91,36 +92,34 @@ func TestScaffoldModule_endToEnd(t *testing.T) {
 		lspPkg := "./" + filepath.ToSlash(filepath.Join("cmd", lspDir))
 		cmd := exec.CommandContext(ctx, "go", "run", lspPkg)
 		cmd.Dir = moduleRoot
-		stdinR, stdinW := io.Pipe()
-		cmd.Stdin = stdinR
+		cmd.WaitDelay = 10 * time.Second
+		stdin, err := cmd.StdinPipe()
+		require.NoError(t, err)
+		stdout, err := cmd.StdoutPipe()
+		require.NoError(t, err)
 		var stderr bytes.Buffer
 		cmd.Stderr = &stderr
-		cmd.Stdout = io.Discard
-
 		require.NoError(t, cmd.Start())
-		waitErr := make(chan error, 1)
-		go func() { waitErr <- cmd.Wait() }()
 
+		// Send an initialize request and wait for the first framed response instead of sleeping:
+		// proves the server started and answers. EOF on stdout means it exited early.
+		body := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}}`
+		_, err = fmt.Fprintf(stdin, "Content-Length: %d\r\n\r\n%s", len(body), body)
+		require.NoError(t, err)
+		responded := make(chan error, 1)
+		go func() {
+			_, err := bufio.NewReader(stdout).ReadString('\n')
+			responded <- err
+		}()
 		select {
-		case <-time.After(5 * time.Second):
-			cancel()
-		case err := <-waitErr:
-			_ = stdinW.Close()
-			if err != nil {
-				t.Fatalf("LSP exited early: %v stderr=%q", err, stderr.String())
-			}
-			t.Fatal("LSP exited cleanly before timeout (expected it to block reading stdio)")
+		case err := <-responded:
+			require.NoError(t, err, "LSP produced no response; stderr=%q", stderr.String())
+		case <-ctx.Done():
+			t.Fatalf("timed out waiting for LSP initialize response; stderr=%q", stderr.String())
 		}
-		_ = stdinW.Close()
-		err := <-waitErr
-		require.Error(t, err, "expected LSP process to stop after context cancel; stderr=%q", stderr.String())
-		// CommandContext may surface context.Canceled, or Wait may report signal: killed.
-		ok := errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
-		if !ok {
-			var exitErr *exec.ExitError
-			ok = errors.As(err, &exitErr)
-		}
-		require.True(t, ok, "unexpected wait result: %v stderr=%q", err, stderr.String())
+		_ = stdin.Close()
+		cancel()
+		_ = cmd.Wait()
 	})
 }
 
