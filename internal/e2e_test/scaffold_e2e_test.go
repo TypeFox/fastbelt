@@ -111,15 +111,17 @@ func TestScaffoldModule_endToEnd(t *testing.T) {
 			_, err := bufio.NewReader(stdout).ReadString('\n')
 			responded <- err
 		}()
+		var readErr error
 		select {
-		case err := <-responded:
-			require.NoError(t, err, "LSP produced no response; stderr=%q", stderr.String())
+		case readErr = <-responded:
 		case <-ctx.Done():
-			t.Fatalf("timed out waiting for LSP initialize response; stderr=%q", stderr.String())
+			readErr = ctx.Err()
 		}
+		// Stop the server and wait for exec's stderr copier before reading the buffer (data race otherwise).
 		_ = stdin.Close()
 		cancel()
 		_ = cmd.Wait()
+		require.NoError(t, readErr, "LSP produced no initialize response; stderr=%q", stderr.String())
 	})
 }
 
