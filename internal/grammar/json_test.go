@@ -121,11 +121,12 @@ func parseExportImportGrammar(t testing.TB, grammar []byte) (core.AstNode, core.
 	doc2.State = core.DocStateParsed
 	core.AssignContainers(doc2)
 	documents2.Set(doc2)
-	f2.NewDoc(doc2, nil, nil)
+	imported := f2.NewDoc(doc2, nil, nil)
 
 	// Step 5: Run the full build pipeline on the unmarshaled document
 	err = builder2.Build(f2.Ctx(), slices.Collect(documents2.All()), nil)
 	require.NoError(t, err)
+	imported.AssertNoLinkingErrors()
 
 	return doc1.Root(), doc2.Root
 }

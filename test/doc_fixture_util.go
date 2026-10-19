@@ -5,6 +5,7 @@
 package test
 
 import (
+	"context"
 	"iter"
 	"reflect"
 	"slices"
@@ -15,7 +16,11 @@ import (
 	core "typefox.dev/fastbelt"
 )
 
-var REF_TOKEN_TYPE = reflect.TypeFor[*core.Token]()
+var (
+	tokenRefType         = reflect.TypeFor[*core.Token]()
+	compositeNodeType    = reflect.TypeFor[core.CompositeNode]()
+	untypedReferenceType = reflect.TypeFor[core.UntypedReference]()
+)
 
 // AssertEqualAst recursively compares two AST subtrees node by node. Diffs are
 // reported via t.Errorf with the node's document path from core.PathOf.
@@ -40,7 +45,7 @@ func AssertEqualAst(t *testing.T, expected, actual core.AstNode) bool {
 	}
 
 	// 3. Primitive field values must match
-	//  Recall that the actual AstNode is composed of at least to other structs, maybe further ones:
+	//  Recall that the actual AstNode is composed of at least two other structs, maybe further ones:
 	//    * AstNodeBase
 	//    * ...Data
 	//   [* ...Data ]
@@ -68,8 +73,14 @@ func AssertEqualAst(t *testing.T, expected, actual core.AstNode) bool {
 		fields := expectedValue.FieldByIndex([]int{subStructIndex}).Type().Fields()
 
 		for field := range fields {
-			isToken := field.Type.Kind() == reflect.Pointer && field.Type == REF_TOKEN_TYPE
-			if !(isToken) {
+			fieldType := field.Type
+			isSlice := fieldType.Kind() == reflect.Slice
+			elemType := fieldType
+			if isSlice {
+				elemType = fieldType.Elem()
+			}
+			isRelevant := elemType == tokenRefType || elemType == compositeNodeType || elemType.Implements(untypedReferenceType)
+			if !isRelevant {
 				continue
 			}
 
@@ -94,14 +105,36 @@ func AssertEqualAst(t *testing.T, expected, actual core.AstNode) bool {
 				expRet := getter.Func.Call(expectedGetterArg)[0]
 				actRet := getter.Func.Call(actualGetterArg)[0]
 
-				if expRet.Kind() == reflect.Bool {
+				switch {
+				// slice values 1st:
+				// no slice of boolean literals expected here, we cannot assign them in parser rules (as of now),
+				// proceed with '*core.Token' items:
+				case isSlice && elemType == tokenRefType:
+					assertEqualTokenSlices(t, pExpected, field.Name, expRet, actRet)
+				case isSlice && elemType == compositeNodeType:
+					assertEqualCompositeSlices(t, pExpected, field.Name, expRet, actRet)
+				case isSlice && elemType.Implements(untypedReferenceType): // reference slice
+					if expRet.Len() != actRet.Len() {
+						t.Errorf("at %q: reference list field '%s' length mismatch\n  expected: %d\n  actual: %d", pExpected, field.Name, expRet.Len(), actRet.Len())
+						return
+					}
+					for i := 0; i < expRet.Len(); i++ {
+						assertEqualReference(t, pExpected, field.Name, expRet.Index(i), actRet.Index(i))
+					}
+				// non-slice values 2nd:
+				case expRet.Kind() == reflect.Bool:
 					if exp, act := expRet.Bool(), actRet.Bool(); exp != act {
 						t.Errorf("at %q: primitive bool field '%s' mismatch\n  expected: %v\n  actual: %v", pExpected, field.Name, exp, act)
 					}
-				} else {
+				case elemType == tokenRefType || elemType == compositeNodeType:
+					// the getters of singular token and composite fields both return string
 					if exp, act := expRet.String(), actRet.String(); exp != act {
 						t.Errorf("at %q: primitive string field '%s' mismatch\n  expected: %v\n  actual: %v", pExpected, field.Name, exp, act)
 					}
+				case elemType.Implements(untypedReferenceType):
+					assertEqualReference(t, pExpected, field.Name, expRet, actRet)
+				default:
+					t.Errorf("at %q: unexpected type %s of field %s", pExpected, field.Type, field.Name)
 				}
 			})
 		}
@@ -159,4 +192,107 @@ func AssertEqualAst(t *testing.T, expected, actual core.AstNode) bool {
 	}
 
 	return true
+}
+
+// assertEqualTokenSlices compares the .Image of each *core.Token in two []*core.Token field values.
+func assertEqualTokenSlices(t *testing.T, path any, fieldName string, expected, actual reflect.Value) {
+	t.Helper()
+	expImages := tokenImages(expected)
+	actImages := tokenImages(actual)
+	if !slices.Equal(expImages, actImages) {
+		t.Errorf("at %q: token list field '%s' mismatch\n  expected: %v\n  actual: %v", path, fieldName, expImages, actImages)
+	}
+}
+
+func tokenImages(value reflect.Value) []string {
+	images := make([]string, value.Len())
+	for i := range images {
+		if tok, ok := value.Index(i).Interface().(*core.Token); ok && tok != nil {
+			images[i] = tok.Image
+		}
+	}
+	return images
+}
+
+// assertEqualCompositeSlices compares the .String() of each core.CompositeNode in two
+// []core.CompositeNode field values.
+func assertEqualCompositeSlices(t *testing.T, path any, fieldName string, expected, actual reflect.Value) {
+	t.Helper()
+	expImages := compositeImages(expected)
+	actImages := compositeImages(actual)
+	if !slices.Equal(expImages, actImages) {
+		t.Errorf("at %q: composite list field '%s' mismatch\n  expected: %v\n  actual: %v", path, fieldName, expImages, actImages)
+	}
+}
+
+func compositeImages(value reflect.Value) []string {
+	images := make([]string, value.Len())
+	for i := range images {
+		if cn, ok := value.Index(i).Interface().(core.CompositeNode); ok && cn != nil {
+			images[i] = cn.String()
+		}
+	}
+	return images
+}
+
+// assertEqualReference compares a single core.UntypedReference field value: the cross-reference
+// text, whether resolution failed on both sides, and (if resolved on both) the resolved target's
+// document-relative path. A nil reference on either side is treated as unresolved with no text.
+func assertEqualReference(t *testing.T, path any, fieldName string, expected, actual reflect.Value) {
+	t.Helper()
+	expRef, _ := expected.Interface().(core.UntypedReference)
+	actRef, _ := actual.Interface().(core.UntypedReference)
+
+	expText, actText := refText(expRef), refText(actRef)
+	if expText != actText {
+		t.Errorf("at %q: reference field '%s' text mismatch\n  expected: %q\n  actual: %q", path, fieldName, expText, actText)
+	}
+
+	expErr, actErr := refError(expRef), refError(actRef)
+	if (expErr == nil) != (actErr == nil) {
+		t.Errorf("at %q: reference field '%s' resolution mismatch\n  expected error: %v\n  actual error: %v", path, fieldName, expErr, actErr)
+		return
+	}
+	if expErr != nil {
+		// Both sides failed to resolve; the exact message may differ if resolution failed for a
+		// different reason (e.g. an unavailable JsonLinkingHelper), so there's nothing further to compare.
+		return
+	}
+
+	expTargetPath, expOk := refTargetPath(expRef)
+	actTargetPath, actOk := refTargetPath(actRef)
+	if expOk != actOk || expTargetPath != actTargetPath {
+		t.Errorf("at %q: reference field '%s' target mismatch\n  expected: %v\n  actual: %v", path, fieldName, expTargetPath, actTargetPath)
+	}
+}
+
+func refText(ref core.UntypedReference) string {
+	if ref == nil {
+		return ""
+	}
+	return ref.Text()
+}
+
+func refError(ref core.UntypedReference) *core.ReferenceError {
+	if ref == nil {
+		return nil
+	}
+	return ref.Error()
+}
+
+// refTargetPath returns the document-relative path of ref's resolved target, or ok=false if ref
+// is nil or has no resolved target.
+func refTargetPath(ref core.UntypedReference) (path string, ok bool) {
+	if ref == nil {
+		return "", false
+	}
+	target := ref.RefNode(context.Background())
+	if target == nil {
+		return "", false
+	}
+	fragmentPath, err := core.PathOf(target)
+	if err != nil {
+		return "", false
+	}
+	return fragmentPath.String(), true
 }
