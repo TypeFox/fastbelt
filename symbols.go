@@ -102,11 +102,12 @@ func (c *emptySymbolContainer) ForType(targetType reflect.Type) SymbolSeq {
 func MergeSymbolContainers(containers iter.Seq[SymbolContainer]) SymbolContainer {
 	// A container may be 'nil', e.g. in case a document in the document manager hasn't been built
 	// yet or has been reset and is not included in the current build cycle, so its exported symbols
-	// container is absent; filter such entries out once here rather than in every method below.
+	// container is absent; thus, create a filtered sequence of non-nil container entries first.
 	nonNil := extiter.Filter(containers, func(container SymbolContainer) bool {
 		return container != nil
 	})
 	if extiter.IsEmpty(nonNil) {
+		// optimization: avoids unnecessary object allocation for the common case of no containers to merge.
 		return EmptySymbolContainer
 	}
 	return &mergedSymbolContainer{
