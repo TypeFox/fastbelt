@@ -372,6 +372,7 @@ func TestExecResetsModeStackBetweenRuns(t *testing.T) {
 	require.Equal(t, []string{"QUOTE", "TEXT"}, names(first.Tokens))
 
 	second, err := lexer.Exec(t.Context(), `ab "in string" cd`)
+	require.NoError(t, err)
 	assert.Equal(t, []string{"ID", "QUOTE", "TEXT", "QUOTE", "ID"}, names(second.Tokens))
 	assert.Empty(t, second.Errors)
 }
