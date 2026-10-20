@@ -20,7 +20,7 @@ const (
 
 var ObjAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h, Keyword_i},
-	Lookup: []int{6: 1, 7: 2, 8: 3, 9: 4, 10: 5, 11: 6, 12: 7, 13: 8, 15: 9},
+	Lookup: []int{1: 1, 2: 2, 4: 3, 7: 4, 8: 5, 11: 6, 12: 7, 13: 8, 14: 9},
 }
 
 // LookaheadParserLookahead abstracts every lookahead/prediction decision performed by

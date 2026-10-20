@@ -33,10 +33,14 @@ func NewDefaultLinker(sc *service.Container) Linker {
 }
 
 func (s *DefaultLinker) Link(ctx context.Context, document *core.Document) {
-	parallel.ForEach(document.References, func(ref core.UntypedReference, _ int) {
-		if ctx.Err() != nil {
-			return
-		}
-		ref.Resolve(ctx)
-	})
+	// Each worker resolves references with its own resolution chain context,
+	// so cycle detection does not need to allocate per resolved reference.
+	parallel.ForEachWithSetup(document.References,
+		func() context.Context { return core.WithResolutionChain(ctx) },
+		func(workerCtx context.Context, ref core.UntypedReference, _ int) {
+			if workerCtx.Err() != nil {
+				return
+			}
+			ref.Resolve(workerCtx)
+		})
 }

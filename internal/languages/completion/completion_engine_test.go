@@ -241,6 +241,7 @@ func TestCompletion_PartialKeyword(t *testing.T) {
 	declare := itemWithLabel(items, "declare")
 	if declare == nil {
 		t.Fatalf("expected 'declare'; got %v", itemLabels(items))
+		return
 	}
 	if declare.TextEdit == nil {
 		t.Errorf("expected REPLACE TextEdit on partial-keyword item; got nil")
@@ -253,6 +254,7 @@ func TestCompletion_InsideKeyword(t *testing.T) {
 	declare := itemWithLabel(items, "declare")
 	if declare == nil {
 		t.Fatalf("expected 'declare'; got %v", itemLabels(items))
+		return
 	}
 	if declare.TextEdit == nil {
 		t.Errorf("expected REPLACE TextEdit on full-keyword item; got nil")
@@ -292,7 +294,7 @@ e foo.<|cursor>`)
 		return
 	}
 	edit := item.TextEdit
-	textEdit := edit.Value.(lsp.TextEdit)
+	textEdit := *edit.TextEdit
 	// The edit should replace the full "foo." segment
 	if textEdit.NewText != "foo.bar" {
 		t.Errorf("expected replacement text 'foo.bar'; got %q", textEdit.NewText)
@@ -389,10 +391,10 @@ func TestCompletion_AfterH_MemberCall(t *testing.T) {
 	if dot == nil || gamma == nil {
 		t.Fatalf("expected '.' and 'gamma'; got %v", itemLabels(items))
 	}
-	if dot.TextEdit == nil {
+	if dot != nil && dot.TextEdit == nil {
 		t.Errorf("expected '.' to carry a REPLACE TextEdit")
 	}
-	if gamma.TextEdit != nil {
+	if gamma != nil && gamma.TextEdit != nil {
 		t.Errorf("expected 'gamma' to be INSERT-shaped (no TextEdit); got %+v", gamma.TextEdit)
 	}
 }
@@ -581,7 +583,7 @@ type hidingCompletionFilter struct {
 func (h *hidingCompletionFilter) FilterERef(ctx context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	return func(yield func(*core.SymbolDescription) bool) {
 		for d := range in {
-			if d.Name.String() == h.hide {
+			if d.Unit.String() == h.hide {
 				continue
 			}
 			if !yield(d) {
@@ -648,7 +650,8 @@ func TestCompletion_ContributorTokenDocs(t *testing.T) {
 			}
 			item := lsp.CompletionItem{}
 			if tt.Name == "declare" {
-				item.Documentation = &lsp.Or_CompletionItem_documentation{Value: "Declares a named symbol."}
+				docs := "Declares a named symbol."
+				item.Documentation = &lsp.CompletionItemDocumentation{String: &docs}
 			}
 			accept(item)
 		},
@@ -658,6 +661,7 @@ func TestCompletion_ContributorTokenDocs(t *testing.T) {
 	declare := itemWithLabel(items, "declare")
 	if declare == nil {
 		t.Fatalf("expected 'declare'; got %v", itemLabels(items))
+		return
 	}
 	if declare.Documentation == nil {
 		t.Errorf("expected Documentation set; got nil")
@@ -703,7 +707,7 @@ func TestCompletion_ContributorReferenceBranching(t *testing.T) {
 	contrib := &recordingContributor{
 		onReference: func(d *core.SymbolDescription, hint *parser.CompletionHint, atnState int, cc server.ContributorContext, accept server.CompletionAcceptor) {
 			observations = append(observations, seen{
-				name:     d.Name.String(),
+				name:     d.Unit.String(),
 				field:    hint.Field,
 				atnState: atnState,
 				node:     cc.Node,
@@ -788,6 +792,7 @@ func TestCompletion_ContributorPostProcess(t *testing.T) {
 	c := itemWithLabel(items, "c")
 	if c == nil {
 		t.Fatalf("expected 'c' keyword; got %v", itemLabels(items))
+		return
 	}
 	if !strings.HasPrefix(c.SortText, "zzz-") {
 		t.Errorf("expected rewritten SortText; got %q", c.SortText)

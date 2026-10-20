@@ -515,6 +515,6 @@ func TestResolve(t *testing.T) {
 
 	t.Run("errorReporting/slice-index-typo", func(t *testing.T) {
 		_, err := core.Resolve(root, "/statements@1a/expression")
-		assert.ErrorContains(t, err, "parsePath: index '1a' is not a valid uint: strconv.Atoi: parsing \"1a\": invalid syntax")
+		assert.ErrorContains(t, err, "parsePath: index '1a' is not a valid int: strconv.Atoi: parsing \"1a\": invalid syntax")
 	})
 }

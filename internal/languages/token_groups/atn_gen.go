@@ -257,7 +257,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[A_Value_Identifier], Keyword_a, nil),
 	)
 	states[A_Value_Identifier].AppendTransitions(
-		parser.NewAtomTransition(states[A__Basic], Token_Identifier, nil),
+		parser.NewAtomTransition(states[A__Basic], TokenGroup_Identifier, nil),
 	)
 	states[A__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[A__Stop]),
@@ -266,7 +266,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[B__Basic_2], Keyword_b, nil),
 	)
 	states[B_Value_Identifier].AppendTransitions(
-		parser.NewAtomTransition(states[B__Basic_0], Token_Identifier, nil),
+		parser.NewAtomTransition(states[B__Basic_0], TokenGroup_Identifier, nil),
 	)
 	states[B__Basic_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[B__BlockEnd]),
@@ -288,7 +288,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[C_Value_NestedIdentifier], Keyword_c, nil),
 	)
 	states[C_Value_NestedIdentifier].AppendTransitions(
-		parser.NewAtomTransition(states[C__Basic], Token_NestedIdentifier, nil),
+		parser.NewAtomTransition(states[C__Basic], TokenGroup_NestedIdentifier, nil),
 	)
 	states[C__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[C__Stop]),
@@ -297,7 +297,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[D__Basic_1], Keyword_d, nil),
 	)
 	states[D_Value_Identifier].AppendTransitions(
-		parser.NewAtomTransition(states[D__Basic_0], Token_Identifier, nil),
+		parser.NewAtomTransition(states[D__Basic_0], TokenGroup_Identifier, nil),
 	)
 	states[D__Basic_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[D__Stop]),
@@ -310,10 +310,10 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[E_First_Identifier], Keyword_e, nil),
 	)
 	states[E_First_Identifier].AppendTransitions(
-		parser.NewAtomTransition(states[E_Second_NestedIdentifier], Token_Identifier, nil),
+		parser.NewAtomTransition(states[E_Second_NestedIdentifier], TokenGroup_Identifier, nil),
 	)
 	states[E_Second_NestedIdentifier].AppendTransitions(
-		parser.NewAtomTransition(states[E__Basic], Token_NestedIdentifier, nil),
+		parser.NewAtomTransition(states[E__Basic], TokenGroup_NestedIdentifier, nil),
 	)
 	states[E__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[E__Stop]),
@@ -322,7 +322,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[F_Value_KeywordGroup], Keyword_f, nil),
 	)
 	states[F_Value_KeywordGroup].AppendTransitions(
-		parser.NewAtomTransition(states[F__Basic], Token_KeywordGroup, nil),
+		parser.NewAtomTransition(states[F__Basic], TokenGroup_KeywordGroup, nil),
 	)
 	states[F__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[F__Stop]),
@@ -331,7 +331,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[G_Value_RegexGroup], Keyword_g, nil),
 	)
 	states[G_Value_RegexGroup].AppendTransitions(
-		parser.NewAtomTransition(states[G__Basic], Token_RegexGroup, nil),
+		parser.NewAtomTransition(states[G__Basic], TokenGroup_RegexGroup, nil),
 	)
 	states[G__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[G__Stop]),
@@ -340,7 +340,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[H__Basic_2], Keyword_h, nil),
 	)
 	states[H_Identifier_0].AppendTransitions(
-		parser.NewAtomTransition(states[H_Value_a], Token_Identifier, nil),
+		parser.NewAtomTransition(states[H_Value_a], TokenGroup_Identifier, nil),
 	)
 	states[H_Value_a].AppendTransitions(
 		parser.NewAtomTransition(states[H__Basic_0], Keyword_a, nil),
@@ -349,7 +349,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[H__BlockEnd]),
 	)
 	states[H_Identifier_1].AppendTransitions(
-		parser.NewAtomTransition(states[H_Value_b], Token_Identifier, nil),
+		parser.NewAtomTransition(states[H_Value_b], TokenGroup_Identifier, nil),
 	)
 	states[H_Value_b].AppendTransitions(
 		parser.NewAtomTransition(states[H__Basic_1], Keyword_b, nil),

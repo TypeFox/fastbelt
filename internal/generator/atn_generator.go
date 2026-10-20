@@ -10,8 +10,10 @@ import (
 )
 
 func GenerateATN(grammr grammar.Grammar, packageName string, tokenTypes GenerateTokenTypesResult) string {
-	mustExpandInfixRules(grammr)
-	a, _ := atn.CreateATN(grammr, tokenTypes.TokenTypeIds)
-	source := atn.EmitGoSource(packageName, a, grammr, tokenTypes.TokenTypeVarNames)
+    mustExpandInfixRules(grammr)
+	tokenTypeIds := tokenTypes.TokenTypeIds()
+	tokenTypeNames := tokenTypes.TokenTypeVarNamesByTokenIndex()
+	a, _ := atn.CreateATN(grammr, tokenTypeIds)
+	source := atn.EmitGoSource(packageName, a, grammr, tokenTypeNames)
 	return FormatIfPossible(source.String())
 }

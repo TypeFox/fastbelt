@@ -158,7 +158,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 			return
 		}
 		if !doc.State.Has(core.DocStateValidated) {
-			diagnostics := validator.Validate(ctx, doc, "on-save")
+			diagnostics := validator.Validate(ctx, doc)
 			if ctx.Err() != nil {
 				return
 			}

@@ -337,7 +337,7 @@ func (p *Parser) ParseBinaryExpression() Expression {
 	}
 	p.state.Sync(BinaryExpression__LoopEntry)
 	for p.lookahead.BinaryExpressionLoop(p.state) {
-		if token := p.state.Consume(Token_BinaryExpressionOperator); token != nil {
+		if token := p.state.Consume(TokenGroup_BinaryExpressionOperator); token != nil {
 			operators = append(operators, token)
 		}
 		{

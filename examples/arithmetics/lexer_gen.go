@@ -9,244 +9,13 @@ import (
 	"unicode/utf8"
 )
 
-const Keyword_Percent_Idx = 1
-
-var Keyword_Percent = core.NewTokenType(
-	Keyword_Percent_Idx,
-	"%",
-	"%",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "%") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'%'},
-)
-
-const Keyword_LeftParen_Idx = 2
-
-var Keyword_LeftParen = core.NewTokenType(
-	Keyword_LeftParen_Idx,
-	"(",
-	"(",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "(") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'('},
-)
-
-const Keyword_RightParen_Idx = 3
-
-var Keyword_RightParen = core.NewTokenType(
-	Keyword_RightParen_Idx,
-	")",
-	")",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], ")") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{')'},
-)
-
-const Keyword_Asterisk_Idx = 4
-
-var Keyword_Asterisk = core.NewTokenType(
-	Keyword_Asterisk_Idx,
-	"*",
-	"*",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "*") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'*'},
-)
-
-const Keyword_Plus_Idx = 5
-
-var Keyword_Plus = core.NewTokenType(
-	Keyword_Plus_Idx,
-	"+",
-	"+",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "+") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'+'},
-)
-
-const Keyword_Comma_Idx = 6
-
-var Keyword_Comma = core.NewTokenType(
-	Keyword_Comma_Idx,
-	",",
-	",",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], ",") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{','},
-)
-
-const Keyword_Dash_Idx = 7
-
-var Keyword_Dash = core.NewTokenType(
-	Keyword_Dash_Idx,
-	"-",
-	"-",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "-") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'-'},
-)
-
-const Keyword_Slash_Idx = 8
-
-var Keyword_Slash = core.NewTokenType(
-	Keyword_Slash_Idx,
-	"/",
-	"/",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "/") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'/'},
-)
-
-const Keyword_Colon_Idx = 9
-
-var Keyword_Colon = core.NewTokenType(
-	Keyword_Colon_Idx,
-	":",
-	":",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], ":") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{':'},
-)
-
-const Keyword_Semicolon_Idx = 10
-
-var Keyword_Semicolon = core.NewTokenType(
-	Keyword_Semicolon_Idx,
-	";",
-	";",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], ";") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{';'},
-)
-
-const Keyword_Caret_Idx = 11
-
-var Keyword_Caret = core.NewTokenType(
-	Keyword_Caret_Idx,
-	"^",
-	"^",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "^") {
-			return 1
-		}
-		return 0
-	},
-	[]rune{'^'},
-)
-
-const Keyword_def_Idx = 12
-
-var Keyword_def = core.NewTokenType(
-	Keyword_def_Idx,
-	"def",
-	"def",
-	0,
-	core.TokenKindKeyword,
-	0,
-	false,
-	func(text string, offset int) int {
-		if strings.HasPrefix(text[offset:], "def") {
-			return 3
-		}
-		return 0
-	},
-	[]rune{'d'},
-)
-
-const Keyword_module_Idx = 13
+const Keyword_module_Idx = 1
 
 var Keyword_module = core.NewTokenType(
 	Keyword_module_Idx,
 	"module",
 	"module",
-	0,
 	core.TokenKindKeyword,
-	0,
-	false,
 	func(text string, offset int) int {
 		if strings.HasPrefix(text[offset:], "module") {
 			return 6
@@ -256,16 +25,205 @@ var Keyword_module = core.NewTokenType(
 	[]rune{'m'},
 )
 
+const Keyword_def_Idx = 2
+
+var Keyword_def = core.NewTokenType(
+	Keyword_def_Idx,
+	"def",
+	"def",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "def") {
+			return 3
+		}
+		return 0
+	},
+	[]rune{'d'},
+)
+
+const Keyword_LeftParen_Idx = 3
+
+var Keyword_LeftParen = core.NewTokenType(
+	Keyword_LeftParen_Idx,
+	"(",
+	"(",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "(") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'('},
+)
+
+const Keyword_Comma_Idx = 4
+
+var Keyword_Comma = core.NewTokenType(
+	Keyword_Comma_Idx,
+	",",
+	",",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], ",") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{','},
+)
+
+const Keyword_RightParen_Idx = 5
+
+var Keyword_RightParen = core.NewTokenType(
+	Keyword_RightParen_Idx,
+	")",
+	")",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], ")") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{')'},
+)
+
+const Keyword_Colon_Idx = 6
+
+var Keyword_Colon = core.NewTokenType(
+	Keyword_Colon_Idx,
+	":",
+	":",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], ":") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{':'},
+)
+
+const Keyword_Semicolon_Idx = 7
+
+var Keyword_Semicolon = core.NewTokenType(
+	Keyword_Semicolon_Idx,
+	";",
+	";",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], ";") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{';'},
+)
+
+const Keyword_Percent_Idx = 8
+
+var Keyword_Percent = core.NewTokenType(
+	Keyword_Percent_Idx,
+	"%",
+	"%",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "%") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'%'},
+)
+
+const Keyword_Caret_Idx = 9
+
+var Keyword_Caret = core.NewTokenType(
+	Keyword_Caret_Idx,
+	"^",
+	"^",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "^") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'^'},
+)
+
+const Keyword_Asterisk_Idx = 10
+
+var Keyword_Asterisk = core.NewTokenType(
+	Keyword_Asterisk_Idx,
+	"*",
+	"*",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "*") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'*'},
+)
+
+const Keyword_Slash_Idx = 11
+
+var Keyword_Slash = core.NewTokenType(
+	Keyword_Slash_Idx,
+	"/",
+	"/",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "/") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'/'},
+)
+
+const Keyword_Plus_Idx = 12
+
+var Keyword_Plus = core.NewTokenType(
+	Keyword_Plus_Idx,
+	"+",
+	"+",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "+") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'+'},
+)
+
+const Keyword_Dash_Idx = 13
+
+var Keyword_Dash = core.NewTokenType(
+	Keyword_Dash_Idx,
+	"-",
+	"-",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "-") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'-'},
+)
+
 const Token_ID_Idx = 14
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
 	"ID",
 	"ID",
-	0,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -336,10 +294,7 @@ var Token_NUMBER = core.NewTokenType(
 	Token_NUMBER_Idx,
 	"NUMBER",
 	"NUMBER",
-	0,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -428,10 +383,7 @@ var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
 	"WS",
 	"WS",
-	core.SkippedGroup,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -502,10 +454,7 @@ var Token_ML_COMMENT = core.NewTokenType(
 	Token_ML_COMMENT_Idx,
 	"ML_COMMENT",
 	"ML_COMMENT",
-	core.CommentGroup,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -627,10 +576,7 @@ var Token_SL_COMMENT = core.NewTokenType(
 	Token_SL_COMMENT_Idx,
 	"SL_COMMENT",
 	"SL_COMMENT",
-	core.SkippedGroup,
 	core.TokenKindToken,
-	0,
-	false,
 	func(s string, offset int) int {
 		input := s[offset:]
 		length := len(input)
@@ -712,10 +658,10 @@ var Token_SL_COMMENT_Accepting = [3]bool{
 	2: true,
 }
 
-const Token_AdditionOp_Idx = 19
+const TokenGroup_AdditionOp_Idx = 19
 
-var Token_AdditionOp = core.NewTokenGroup(
-	Token_AdditionOp_Idx,
+var TokenGroup_AdditionOp = core.NewTokenGroup(
+	TokenGroup_AdditionOp_Idx,
 	"AdditionOp",
 	"AdditionOp",
 	[]*core.TokenType{
@@ -724,51 +670,57 @@ var Token_AdditionOp = core.NewTokenGroup(
 	},
 )
 
-const Token_BinaryExpressionOperator_Idx = 20
+const TokenGroup_BinaryExpressionOperator_Idx = 20
 
-var Token_BinaryExpressionOperator = core.NewTokenGroup(
-	Token_BinaryExpressionOperator_Idx,
+var TokenGroup_BinaryExpressionOperator = core.NewTokenGroup(
+	TokenGroup_BinaryExpressionOperator_Idx,
 	"BinaryExpressionOperator",
 	"BinaryExpressionOperator",
 	[]*core.TokenType{
 		Keyword_Caret,
 		Keyword_Percent,
-		Token_AdditionOp,
-		Token_MultiplicationOp,
+		TokenGroup_AdditionOp,
+		TokenGroup_MultiplicationOp,
 	},
 )
 
-const Token_MultiplicationOp_Idx = 21
+const TokenGroup_MultiplicationOp_Idx = 21
 
-var Token_MultiplicationOp = core.NewTokenGroup(
-	Token_MultiplicationOp_Idx,
+var TokenGroup_MultiplicationOp = core.NewTokenGroup(
+	TokenGroup_MultiplicationOp_Idx,
 	"MultiplicationOp",
 	"MultiplicationOp",
 	[]*core.TokenType{
 		Keyword_Asterisk,
 		Keyword_Slash,
 	},
+)
+
+const (
+	TokenMode_default = 0
 )
 
 func NewLexer() lexer.Lexer {
-	return lexer.NewDefaultLexer(
-		Keyword_Percent,
-		Keyword_LeftParen,
-		Keyword_RightParen,
-		Keyword_Asterisk,
-		Keyword_Plus,
-		Keyword_Comma,
-		Keyword_Dash,
-		Keyword_Slash,
-		Keyword_Colon,
-		Keyword_Semicolon,
-		Keyword_Caret,
-		Keyword_def,
-		Keyword_module,
-		Token_ID,
-		Token_NUMBER,
-		Token_WS,
-		Token_ML_COMMENT,
-		Token_SL_COMMENT,
+	modes := make([]*lexer.TokenMode, 1)
+	modes[TokenMode_default] = lexer.NewTokenMode("default",
+		lexer.UseTokenType(Keyword_module),
+		lexer.UseTokenType(Keyword_def),
+		lexer.UseTokenType(Keyword_LeftParen),
+		lexer.UseTokenType(Keyword_Comma),
+		lexer.UseTokenType(Keyword_RightParen),
+		lexer.UseTokenType(Keyword_Colon),
+		lexer.UseTokenType(Keyword_Semicolon),
+		lexer.UseTokenType(Keyword_Percent),
+		lexer.UseTokenType(Keyword_Caret),
+		lexer.UseTokenType(Keyword_Asterisk),
+		lexer.UseTokenType(Keyword_Slash),
+		lexer.UseTokenType(Keyword_Plus),
+		lexer.UseTokenType(Keyword_Dash),
+		lexer.UseTokenType(Token_ID),
+		lexer.UseTokenType(Token_NUMBER),
+		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
+		lexer.UseTokenType(Token_ML_COMMENT).WithModifier(core.CommentModifier),
+		lexer.UseTokenType(Token_SL_COMMENT).WithModifier(core.SkippedModifier),
 	)
+	return lexer.NewDefaultLexer(TokenMode_default, modes...)
 }

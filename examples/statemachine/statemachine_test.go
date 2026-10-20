@@ -6,6 +6,7 @@ package statemachine
 
 import (
 	"testing"
+	"unique"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -275,4 +276,45 @@ func TestUnresolvedReference(t *testing.T) {
 	require.NotNil(t, initRef)
 	// "missing" does not name any state — resolution should fail.
 	assert.NotNil(t, initRef.Error(), "reference to nonexistent state should have an error")
+}
+
+func TestAssignContainersConsistency(t *testing.T) {
+	f := test.New(t, CreateServices())
+	doc := f.Parse(lightSwitch)
+	doc.AssertNoErrors()
+
+	root := doc.Root()
+	if root.Container() != nil {
+		t.Errorf("root node: expected nil container, got %v", root.Container())
+	}
+	if root.Document() != doc.Document {
+		t.Errorf("root node: expected document %p, got %p", doc.Document, root.Document())
+	}
+
+	var visited int
+	var walk func(parent fastbelt.AstNode)
+	walk = func(parent fastbelt.AstNode) {
+		parent.ForEachNode(func(child fastbelt.AstNode, field unique.Handle[string], index int) {
+			visited++
+			gotField, gotIndex := child.ContainmentData()
+			if child.Container() != parent {
+				t.Errorf("node %T: expected container %T, got %T", child, parent, child.Container())
+			}
+			if child.Document() != doc.Document {
+				t.Errorf("node %T: expected document %p, got %p", child, doc.Document, child.Document())
+			}
+			if gotField != field {
+				t.Errorf("node %T: expected containment field %q, got %q", child, field.Value(), gotField.Value())
+			}
+			if gotIndex != index {
+				t.Errorf("node %T: expected containment index %d, got %d", child, index, gotIndex)
+			}
+			walk(child)
+		})
+	}
+	walk(root)
+
+	if visited == 0 {
+		t.Fatal("fixture produced no child nodes, test would trivially pass")
+	}
 }

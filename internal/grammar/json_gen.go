@@ -22,8 +22,9 @@ func (_this *GrammarImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Rules       []ParserRule    `json:"rules,omitempty"`
 		Composites  []CompositeRule `json:"composites,omitempty"`
 		InfixRules  []InfixRule     `json:"infixRules,omitempty"`
-		Terminals   []Token         `json:"terminals,omitempty"`
+		Terminals   []TokenDecl     `json:"terminals,omitempty"`
 		TokenGroups []TokenGroup    `json:"tokenGroups,omitempty"`
+		TokenModes  []TokenMode     `json:"tokenModes,omitempty"`
 		Interfaces  []Interface     `json:"interfaces,omitempty"`
 	}{
 		T__:         "Grammar",
@@ -33,6 +34,7 @@ func (_this *GrammarImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		InfixRules:  _this.InfixRules(),
 		Terminals:   _this.Terminals(),
 		TokenGroups: _this.TokenGroups(),
+		TokenModes:  _this.TokenModes(),
 		Interfaces:  _this.Interfaces(),
 	})
 }
@@ -177,21 +179,6 @@ func (_this *AbstractRuleWithReturnTypeImpl) MarshalJSONTo(_encoder *jsontext.En
 	})
 }
 
-func (_this *AbstractTokenRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
-	var name *string
-	if _this.NameToken() != nil {
-		_v := _this.Name()
-		name = &_v
-	}
-	return json.MarshalEncode(_encoder, struct {
-		T__  string  `json:"$type"`
-		Name *string `json:"name,omitzero"`
-	}{
-		T__:  "AbstractTokenRule",
-		Name: name,
-	})
-}
-
 func (_this *ParserRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	var name *string
 	if _this.NameToken() != nil {
@@ -213,17 +200,56 @@ func (_this *ParserRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	})
 }
 
-func (_this *TokenImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+func (_this *AbstractTokenRuleImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	var name *string
 	if _this.NameToken() != nil {
 		_v := _this.Name()
 		name = &_v
 	}
-	var _Type *string
-	if _this.TypeToken() != nil {
-		_v := _this.Type()
-		_Type = &_v
+	return json.MarshalEncode(_encoder, struct {
+		T__  string  `json:"$type"`
+		Name *string `json:"name,omitzero"`
+	}{
+		T__:  "AbstractTokenRule",
+		Name: name,
+	})
+}
+
+func (_this *TokenDeclImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var name *string
+	if _this.NameToken() != nil {
+		_v := _this.Name()
+		name = &_v
 	}
+	var modifier *string
+	if _this.ModifierToken() != nil {
+		_v := _this.Modifier()
+		modifier = &_v
+	}
+	return json.MarshalEncode(_encoder, struct {
+		T__      string       `json:"$type"`
+		Name     *string      `json:"name,omitzero"`
+		Content  TokenContent `json:"content,omitempty"`
+		Modifier *string      `json:"modifier,omitzero"`
+		Command  TokenCommand `json:"command,omitempty"`
+	}{
+		T__:      "TokenDecl",
+		Name:     name,
+		Content:  _this.Content(),
+		Modifier: modifier,
+		Command:  _this.Command(),
+	})
+}
+
+func (_this *TokenContentImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
+		T__ string `json:"$type"`
+	}{
+		T__: "TokenContent",
+	})
+}
+
+func (_this *RegexpTokenContentImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	var regexp *string
 	if _this.RegexpToken() != nil {
 		_v := _this.Regexp()
@@ -231,14 +257,39 @@ func (_this *TokenImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	}
 	return json.MarshalEncode(_encoder, struct {
 		T__    string  `json:"$type"`
-		Name   *string `json:"name,omitzero"`
-		Type   *string `json:"type,omitzero"`
 		Regexp *string `json:"regexp,omitzero"`
 	}{
-		T__:    "Token",
-		Name:   name,
-		Type:   _Type,
+		T__:    "RegexpTokenContent",
 		Regexp: regexp,
+	})
+}
+
+func (_this *KeywordTokenContentImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
+		T__     string  `json:"$type"`
+		Keyword Keyword `json:"keyword,omitempty"`
+	}{
+		T__:     "KeywordTokenContent",
+		Keyword: _this.Keyword(),
+	})
+}
+
+func (_this *TokenCommandImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var _Type *string
+	if _this.TypeToken() != nil {
+		_v := _this.Type()
+		_Type = &_v
+	}
+	return json.MarshalEncode(_encoder, struct {
+		T__     string                     `json:"$type"`
+		Type    *string                    `json:"type,omitzero"`
+		Mode    *core.Reference[TokenMode] `json:"mode,omitempty"`
+		Default bool                       `json:"default,omitzero"`
+	}{
+		T__:     "TokenCommand",
+		Type:    _Type,
+		Mode:    _this.Mode(),
+		Default: _this.IsDefault(),
 	})
 }
 
@@ -248,22 +299,122 @@ func (_this *TokenGroupImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		_v := _this.Name()
 		name = &_v
 	}
-	regexps := make([]string, len(_this.Regexps()))
-	for _j, _item := range _this.Regexps() {
-		regexps[_j] = _item.String()
+	keywordSelectors := make([]string, len(_this.KeywordSelectors()))
+	for _j, _item := range _this.KeywordSelectors() {
+		keywordSelectors[_j] = _item.String()
 	}
 	return json.MarshalEncode(_encoder, struct {
-		T__       string                               `json:"$type"`
-		Name      *string                              `json:"name,omitzero"`
-		TokenRefs []*core.Reference[AbstractTokenRule] `json:"tokenRefs,omitempty"`
-		Regexps   []string                             `json:"regexps,omitempty"`
-		Keywords  []Keyword                            `json:"keywords,omitempty"`
+		T__              string                               `json:"$type"`
+		Name             *string                              `json:"name,omitzero"`
+		TokenRefs        []*core.Reference[AbstractTokenRule] `json:"tokenRefs,omitempty"`
+		Keywords         []Keyword                            `json:"keywords,omitempty"`
+		KeywordSelectors []string                             `json:"keywordSelectors,omitempty"`
 	}{
-		T__:       "TokenGroup",
-		Name:      name,
-		TokenRefs: _this.TokenRefs(),
-		Regexps:   regexps,
-		Keywords:  _this.Keywords(),
+		T__:              "TokenGroup",
+		Name:             name,
+		TokenRefs:        _this.TokenRefs(),
+		Keywords:         _this.Keywords(),
+		KeywordSelectors: keywordSelectors,
+	})
+}
+
+func (_this *TokenModeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var name *string
+	if _this.NameToken() != nil {
+		_v := _this.Name()
+		name = &_v
+	}
+	return json.MarshalEncode(_encoder, struct {
+		T__     string            `json:"$type"`
+		Name    *string           `json:"name,omitzero"`
+		Default bool              `json:"default,omitzero"`
+		Members []TokenModeMember `json:"members,omitempty"`
+	}{
+		T__:     "TokenMode",
+		Name:    name,
+		Default: _this.IsDefault(),
+		Members: _this.Members(),
+	})
+}
+
+func (_this *TokenModeMemberImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
+		T__ string `json:"$type"`
+	}{
+		T__: "TokenModeMember",
+	})
+}
+
+func (_this *TokenDeclUsageImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
+		T__         string    `json:"$type"`
+		Declaration TokenDecl `json:"declaration,omitempty"`
+	}{
+		T__:         "TokenDeclUsage",
+		Declaration: _this.Declaration(),
+	})
+}
+
+func (_this *TokenGroupUsageImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	return json.MarshalEncode(_encoder, struct {
+		T__   string     `json:"$type"`
+		Group TokenGroup `json:"group,omitempty"`
+	}{
+		T__:   "TokenGroupUsage",
+		Group: _this.Group(),
+	})
+}
+
+func (_this *TokenUsageImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var modifier *string
+	if _this.ModifierToken() != nil {
+		_v := _this.Modifier()
+		modifier = &_v
+	}
+	return json.MarshalEncode(_encoder, struct {
+		T__      string                             `json:"$type"`
+		Modifier *string                            `json:"modifier,omitzero"`
+		TokenRef *core.Reference[AbstractTokenRule] `json:"tokenRef,omitempty"`
+		Command  TokenCommand                       `json:"command,omitempty"`
+	}{
+		T__:      "TokenUsage",
+		Modifier: modifier,
+		TokenRef: _this.TokenRef(),
+		Command:  _this.Command(),
+	})
+}
+
+func (_this *KeywordUsageImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var modifier *string
+	if _this.ModifierToken() != nil {
+		_v := _this.Modifier()
+		modifier = &_v
+	}
+	return json.MarshalEncode(_encoder, struct {
+		T__      string       `json:"$type"`
+		Modifier *string      `json:"modifier,omitzero"`
+		Keyword  Keyword      `json:"keyword,omitempty"`
+		Command  TokenCommand `json:"command,omitempty"`
+	}{
+		T__:      "KeywordUsage",
+		Modifier: modifier,
+		Keyword:  _this.Keyword(),
+		Command:  _this.Command(),
+	})
+}
+
+func (_this *KeywordSelectorImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
+	var selector *string
+	if _this.SelectorToken() != nil {
+		_v := _this.Selector()
+		selector = &_v
+	}
+	return json.MarshalEncode(_encoder, struct {
+		T__      string  `json:"$type"`
+		Selector *string `json:"selector,omitzero"`
+	}{
+		T__:      "KeywordSelector",
+		Selector: selector,
 	})
 }
 
@@ -506,6 +657,7 @@ func (_this *GrammarImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		InfixRules  []jsontext.Value `json:"infixRules"`
 		Terminals   []jsontext.Value `json:"terminals"`
 		TokenGroups []jsontext.Value `json:"tokenGroups"`
+		TokenModes  []jsontext.Value `json:"tokenModes"`
 		Interfaces  []jsontext.Value `json:"interfaces"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
@@ -544,9 +696,9 @@ func (_this *GrammarImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 			_this.SetInfixRulesItem(node)
 		}
 	}
-	_this.terminals = make([]Token, 0, len(aux.Terminals))
+	_this.terminals = make([]TokenDecl, 0, len(aux.Terminals))
 	for _, item := range aux.Terminals {
-		node, _err := UnmarshalValue[Token](item)
+		node, _err := UnmarshalValue[TokenDecl](item)
 		if _err != nil {
 			return _err
 		}
@@ -562,6 +714,16 @@ func (_this *GrammarImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		}
 		if node != nil {
 			_this.SetTokenGroupsItem(node)
+		}
+	}
+	_this.tokenModes = make([]TokenMode, 0, len(aux.TokenModes))
+	for _, item := range aux.TokenModes {
+		node, _err := UnmarshalValue[TokenMode](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetTokenModesItem(node)
 		}
 	}
 	_this.interfaces = make([]Interface, 0, len(aux.Interfaces))
@@ -764,19 +926,6 @@ func (_this *AbstractRuleWithReturnTypeImpl) UnmarshalJSONFrom(_decoder *jsontex
 	return nil
 }
 
-func (_this *AbstractTokenRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
-	aux := &struct {
-		Name *string `json:"name"`
-	}{}
-	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
-		return _err
-	}
-	if aux.Name != nil {
-		_this.SetName(core.NewSyntheticToken(*aux.Name, _this))
-	}
-	return nil
-}
-
 func (_this *ParserRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		Name       *string        `json:"name"`
@@ -810,11 +959,9 @@ func (_this *ParserRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 	return nil
 }
 
-func (_this *TokenImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+func (_this *AbstractTokenRuleImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Name   *string `json:"name"`
-		Type   *string `json:"type"`
-		Regexp *string `json:"regexp"`
+		Name *string `json:"name"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
@@ -822,8 +969,52 @@ func (_this *TokenImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	if aux.Name != nil {
 		_this.SetName(core.NewSyntheticToken(*aux.Name, _this))
 	}
-	if aux.Type != nil {
-		_this.SetType(core.NewSyntheticToken(*aux.Type, _this))
+	return nil
+}
+
+func (_this *TokenDeclImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	aux := &struct {
+		Name     *string        `json:"name"`
+		Content  jsontext.Value `json:"content"`
+		Modifier *string        `json:"modifier"`
+		Command  jsontext.Value `json:"command"`
+	}{}
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
+	}
+	if aux.Name != nil {
+		_this.SetName(core.NewSyntheticToken(*aux.Name, _this))
+	}
+	if aux.Content != nil {
+		content, _err := UnmarshalValue[TokenContent](aux.Content)
+		if _err != nil {
+			return _err
+		}
+		_this.SetContent(content)
+	}
+	if aux.Modifier != nil {
+		_this.SetModifier(core.NewSyntheticToken(*aux.Modifier, _this))
+	}
+	if aux.Command != nil {
+		command, _err := UnmarshalValue[TokenCommand](aux.Command)
+		if _err != nil {
+			return _err
+		}
+		_this.SetCommand(command)
+	}
+	return nil
+}
+
+func (_this *TokenContentImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	return _decoder.SkipValue()
+}
+
+func (_this *RegexpTokenContentImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	aux := &struct {
+		Regexp *string `json:"regexp"`
+	}{}
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
 	}
 	if aux.Regexp != nil {
 		_this.SetRegexp(core.NewSyntheticToken(*aux.Regexp, _this))
@@ -831,12 +1022,54 @@ func (_this *TokenImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	return nil
 }
 
+func (_this *KeywordTokenContentImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	aux := &struct {
+		Keyword jsontext.Value `json:"keyword"`
+	}{}
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
+	}
+	if aux.Keyword != nil {
+		keyword, _err := UnmarshalValue[Keyword](aux.Keyword)
+		if _err != nil {
+			return _err
+		}
+		_this.SetKeyword(keyword)
+	}
+	return nil
+}
+
+func (_this *TokenCommandImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	aux := &struct {
+		Type    *string        `json:"type"`
+		Mode    jsontext.Value `json:"mode"`
+		Default bool           `json:"default"`
+	}{}
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
+	}
+	if aux.Type != nil {
+		_this.SetType(core.NewSyntheticToken(*aux.Type, _this))
+	}
+	if aux.Mode != nil {
+		mode, _err := util.UnmarshalReference[TokenMode](_this, aux.Mode)
+		if _err != nil {
+			return _err
+		}
+		_this.SetMode(mode)
+	}
+	if aux.Default {
+		_this.SetDefault(core.NewSyntheticToken("", _this))
+	}
+	return nil
+}
+
 func (_this *TokenGroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Name      *string          `json:"name"`
-		TokenRefs []jsontext.Value `json:"tokenRefs"`
-		Regexps   []string         `json:"regexps"`
-		Keywords  []jsontext.Value `json:"keywords"`
+		Name             *string          `json:"name"`
+		TokenRefs        []jsontext.Value `json:"tokenRefs"`
+		Keywords         []jsontext.Value `json:"keywords"`
+		KeywordSelectors []string         `json:"keywordSelectors"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
@@ -854,10 +1087,6 @@ func (_this *TokenGroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 			_this.SetTokenRefsItem(reference)
 		}
 	}
-	_this.regexps = make([]*core.Token, 0, len(aux.Regexps))
-	for _, item := range aux.Regexps {
-		_this.SetRegexpsItem(core.NewSyntheticToken(item, _this))
-	}
 	_this.keywords = make([]Keyword, 0, len(aux.Keywords))
 	for _, item := range aux.Keywords {
 		node, _err := UnmarshalValue[Keyword](item)
@@ -867,6 +1096,147 @@ func (_this *TokenGroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		if node != nil {
 			_this.SetKeywordsItem(node)
 		}
+	}
+	_this.keywordSelectors = make([]*core.Token, 0, len(aux.KeywordSelectors))
+	for _, item := range aux.KeywordSelectors {
+		_this.SetKeywordSelectorsItem(core.NewSyntheticToken(item, _this))
+	}
+	return nil
+}
+
+func (_this *TokenModeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	aux := &struct {
+		Name    *string          `json:"name"`
+		Default bool             `json:"default"`
+		Members []jsontext.Value `json:"members"`
+	}{}
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
+	}
+	if aux.Name != nil {
+		_this.SetName(core.NewSyntheticToken(*aux.Name, _this))
+	}
+	if aux.Default {
+		_this.SetDefault(core.NewSyntheticToken("", _this))
+	}
+	_this.members = make([]TokenModeMember, 0, len(aux.Members))
+	for _, item := range aux.Members {
+		node, _err := UnmarshalValue[TokenModeMember](item)
+		if _err != nil {
+			return _err
+		}
+		if node != nil {
+			_this.SetMembersItem(node)
+		}
+	}
+	return nil
+}
+
+func (_this *TokenModeMemberImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	return _decoder.SkipValue()
+}
+
+func (_this *TokenDeclUsageImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	aux := &struct {
+		Declaration jsontext.Value `json:"declaration"`
+	}{}
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
+	}
+	if aux.Declaration != nil {
+		declaration, _err := UnmarshalValue[TokenDecl](aux.Declaration)
+		if _err != nil {
+			return _err
+		}
+		_this.SetDeclaration(declaration)
+	}
+	return nil
+}
+
+func (_this *TokenGroupUsageImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	aux := &struct {
+		Group jsontext.Value `json:"group"`
+	}{}
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
+	}
+	if aux.Group != nil {
+		group, _err := UnmarshalValue[TokenGroup](aux.Group)
+		if _err != nil {
+			return _err
+		}
+		_this.SetGroup(group)
+	}
+	return nil
+}
+
+func (_this *TokenUsageImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	aux := &struct {
+		Modifier *string        `json:"modifier"`
+		TokenRef jsontext.Value `json:"tokenRef"`
+		Command  jsontext.Value `json:"command"`
+	}{}
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
+	}
+	if aux.Modifier != nil {
+		_this.SetModifier(core.NewSyntheticToken(*aux.Modifier, _this))
+	}
+	if aux.TokenRef != nil {
+		tokenRef, _err := util.UnmarshalReference[AbstractTokenRule](_this, aux.TokenRef)
+		if _err != nil {
+			return _err
+		}
+		_this.SetTokenRef(tokenRef)
+	}
+	if aux.Command != nil {
+		command, _err := UnmarshalValue[TokenCommand](aux.Command)
+		if _err != nil {
+			return _err
+		}
+		_this.SetCommand(command)
+	}
+	return nil
+}
+
+func (_this *KeywordUsageImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	aux := &struct {
+		Modifier *string        `json:"modifier"`
+		Keyword  jsontext.Value `json:"keyword"`
+		Command  jsontext.Value `json:"command"`
+	}{}
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
+	}
+	if aux.Modifier != nil {
+		_this.SetModifier(core.NewSyntheticToken(*aux.Modifier, _this))
+	}
+	if aux.Keyword != nil {
+		keyword, _err := UnmarshalValue[Keyword](aux.Keyword)
+		if _err != nil {
+			return _err
+		}
+		_this.SetKeyword(keyword)
+	}
+	if aux.Command != nil {
+		command, _err := UnmarshalValue[TokenCommand](aux.Command)
+		if _err != nil {
+			return _err
+		}
+		_this.SetCommand(command)
+	}
+	return nil
+}
+
+func (_this *KeywordSelectorImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
+	aux := &struct {
+		Selector *string `json:"selector"`
+	}{}
+	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
+		return _err
+	}
+	if aux.Selector != nil {
+		_this.SetSelector(core.NewSyntheticToken(*aux.Selector, _this))
 	}
 	return nil
 }

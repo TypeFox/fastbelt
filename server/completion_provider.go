@@ -194,7 +194,7 @@ func (s *DefaultCompletionProvider) completionsForContext(
 		hcCopy := hc
 		for d := range seq {
 			dCopy := d
-			if !matcher.Match(cc.ReplaceText, dCopy.Name.String()) {
+			if !matcher.Match(cc.ReplaceText, dCopy.Name) {
 				continue
 			}
 			accept := func(item lsp.CompletionItem) {
@@ -625,7 +625,7 @@ func EnrichReferenceCompletionItem(item lsp.CompletionItem, d *core.SymbolDescri
 	if d == nil {
 		return item
 	}
-	defaultLabel := d.Name.String()
+	defaultLabel := d.Name
 	if item.Label == "" {
 		item.Label = defaultLabel
 	}
@@ -683,8 +683,8 @@ func fillInsertion(item *lsp.CompletionItem, replace *lsp.Range) {
 // every client that supports completion.
 func applyInsertion(item *lsp.CompletionItem, text string, replace *lsp.Range, insertFormat *lsp.InsertTextFormat) {
 	if replace != nil {
-		item.TextEdit = &lsp.Or_CompletionItem_textEdit{
-			Value: lsp.TextEdit{Range: *replace, NewText: text},
+		item.TextEdit = &lsp.CompletionItemTextEdit{
+			TextEdit: &lsp.TextEdit{Range: *replace, NewText: text},
 		}
 		// InsertText is ignored by the client when TextEdit is present,
 		// but we set it anyway for clients that fall back to it.

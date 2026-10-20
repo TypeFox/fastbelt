@@ -738,3 +738,44 @@ func TestUpdateConsecutiveUpdates(t *testing.T) {
 		t.Errorf("After second update: expected 'a\\nmodified\\nchanged', got '%s'", doc.Text(nil))
 	}
 }
+
+// TestUpdateDoesNotMutateAliasedStrings guards the aliasing contract: the string
+// passed to NewOverlay and the strings returned by Text share memory with the
+// content slice, so Update must never modify that slice in place.
+func TestUpdateDoesNotMutateAliasedStrings(t *testing.T) {
+	original := strings.Clone("hello world")
+	doc, err := NewOverlay("file:///test.txt", "plaintext", 1, original)
+	if err != nil {
+		t.Fatalf("New failed: %v", err)
+	}
+
+	replace := func(end uint32, text string, version int32) {
+		t.Helper()
+		err := doc.Update([]lsp.TextDocumentContentChangeEvent{{
+			Range: &lsp.Range{
+				Start: lsp.Position{Line: 0, Character: 6},
+				End:   lsp.Position{Line: 0, Character: end},
+			},
+			Text: text,
+		}}, version)
+		if err != nil {
+			t.Fatalf("Update failed: %v", err)
+		}
+	}
+
+	// Edit the content backed by the caller's string
+	replace(11, "Go", 2)
+	if original != "hello world" {
+		t.Errorf("original string mutated: %q", original)
+	}
+
+	// Edit the content backed by an overlay-owned slice; views taken before must survive
+	view := doc.Text(nil)
+	replace(8, "Gopher", 3)
+	if view != "hello Go" {
+		t.Errorf("earlier Text() view mutated: %q", view)
+	}
+	if doc.Text(nil) != "hello Gopher" {
+		t.Errorf("Expected 'hello Gopher', got %q", doc.Text(nil))
+	}
+}

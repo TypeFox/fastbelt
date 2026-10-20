@@ -111,6 +111,31 @@ func (r *Reference[T]) TextRange() TextRange {
 	return r.unit.TextRange()
 }
 
+// resolutionChainKey is the context key under which a [resolutionChain] is stored.
+type resolutionChainKey struct{}
+
+// resolutionChain tracks the references currently being resolved, for cycle
+// detection. It is mutated without synchronization and must therefore only be
+// used by a single goroutine at a time.
+type resolutionChain struct {
+	refs []UntypedReference
+}
+
+// WithResolutionChain returns a context that carries a reusable resolution
+// chain for reference cycle detection.
+//
+// The chain is mutated without synchronization: the returned context must not
+// be shared by goroutines that resolve references concurrently. Create one
+// chain context per goroutine instead.
+func WithResolutionChain(ctx context.Context) context.Context {
+	return context.WithValue(ctx, resolutionChainKey{}, &resolutionChain{})
+}
+
+func getResolveChain(ctx context.Context) *resolutionChain {
+	chain, _ := ctx.Value(resolutionChainKey{}).(*resolutionChain)
+	return chain
+}
+
 // Resolve resolves the reference exactly once for this instance.
 // It is safe for concurrent use.
 func (r *Reference[T]) Resolve(ctx context.Context) {
@@ -123,9 +148,9 @@ func (r *Reference[T]) Resolve(ctx context.Context) {
 }
 
 func (r *Reference[T]) resolveSlow(ctx context.Context) {
-	// We can use the context to detect cyclic reference resolution attempts
-	// We are allowed to do this outside of the mutex lock because context is immutable
-	if ctx.Value(r) != nil {
+	// Cyclic resolution attempts are detected via the resolution chain
+	chain := getResolveChain(ctx)
+	if chain != nil && slices.Contains(chain.refs, UntypedReference(r)) {
 		// Note that we write directly to r.err without locking here
 		// This is safe, because the reference is already locked by the caller
 		// Attempting to lock it again would cause a deadlock anyway
@@ -139,8 +164,18 @@ func (r *Reference[T]) resolveSlow(ctx context.Context) {
 		// Another goroutine might have resolved it while we were waiting for the lock
 		return
 	}
-	newCtx := context.WithValue(ctx, r, true)
-	desc, e := r.getter(newCtx, r)
+	if chain == nil {
+		// No chain provided, so create a context with a new chain
+		chain = &resolutionChain{}
+		ctx = context.WithValue(ctx, resolutionChainKey{}, chain)
+	}
+	// Append the current reference to the chain for cycle detection
+	chain.refs = append(chain.refs, r)
+	defer func() {
+		// Pop the reference from the chain after resolution
+		chain.refs = chain.refs[:len(chain.refs)-1]
+	}()
+	desc, e := r.getter(ctx, r)
 	r.description = desc
 	if r.err == nil {
 		// Do not overwrite existing errors
@@ -273,16 +308,18 @@ type referenceDescriptions struct {
 	descriptions collections.MultiMap[AstNode, *ReferenceDescription]
 }
 
+var emptyReferenceDescriptions = extiter.Empty[*ReferenceDescription]()
+
 func (d *referenceDescriptions) All() iter.Seq[*ReferenceDescription] {
-	if d == nil {
-		return extiter.Empty[*ReferenceDescription]()
+	if d == nil || d.descriptions == nil {
+		return emptyReferenceDescriptions
 	}
 	return d.descriptions.Values()
 }
 
 func (d *referenceDescriptions) ForTarget(target AstNode) iter.Seq[*ReferenceDescription] {
-	if d == nil {
-		return extiter.Empty[*ReferenceDescription]()
+	if d == nil || d.descriptions == nil {
+		return emptyReferenceDescriptions
 	}
 	return slices.Values(d.descriptions.Get(target))
 }

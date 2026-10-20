@@ -116,6 +116,6 @@
 			"outFiles": [
 				"${workspaceFolder}/internal/vscode-extensions/statemachine/dist/**/*.js"
 			]
-		}
+		},
 	]
 }

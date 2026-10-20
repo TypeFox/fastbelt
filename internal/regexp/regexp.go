@@ -3,6 +3,7 @@ package regexp
 import (
 	"fmt"
 	"regexp/syntax"
+	"unicode"
 
 	"typefox.dev/fastbelt/internal/automatons"
 )
@@ -105,7 +106,15 @@ func newNFAFromSyntax(op *syntax.Regexp) *automatons.NFA {
 	case syntax.OpLiteral:
 		chain := make([]*automatons.NFA, len(op.Rune))
 		for i, r := range op.Rune {
-			chain[i] = kit.Consume(automatons.NewRuneSetRune(r))
+			runeSet := automatons.NewRuneSetRune(r)
+			if op.Flags&syntax.FoldCase != 0 {
+				// The parser rewrites classes like [eE] into a case-folded literal.
+				// We have to loop until we arrive at the original character.
+				for f := unicode.SimpleFold(r); f != r; f = unicode.SimpleFold(f) {
+					runeSet.AddRange(f, f)
+				}
+			}
+			chain[i] = kit.Consume(runeSet)
 		}
 		return kit.Concat(chain...)
 	case syntax.OpCharClass:

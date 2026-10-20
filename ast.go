@@ -239,49 +239,49 @@ func (node *AstNodeBase) Resolve(path FragmentPath) (AstNode, error) {
 // In benchmarks, it is roughly 5x slower than the current implementation.
 // By using a callback-based approach, we can traverse the entire subtree with minimal overhead.
 // But we lose the ability to short-circuit the traversal when we find what we're looking for.
-// In practice, this is not a big issue, because most traversals will need to visit most of the nodes anyway.
+// Instead, traverseContent short-circuits by refusing to descend once stopped; ancestors still
+// enumerate their remaining child slots, but each costs only a flag check.
 // AllNodes and AllChildren are slightly less efficient than traverseContent,
 // but only by roughly 10%, and they provide a much nicer API for most use cases, so the trade-off is worth it.
 
 // Traverses all children of the given node, calling the specified function for each child.
 // Does not call the function for the given node itself.
 //
-// Note that this function will traverse the entire subtree, without short-circuiting.
-func traverseContent(node AstNode, fn func(AstNode)) {
-	node.ForEachNode(func(child AstNode, containerField unique.Handle[string], index int) {
-		fn(child)
-		traverseContent(child, fn)
-	})
+// Returning false from fn stops the traversal: no further subtrees are entered.
+// Sibling slots of the ancestors are still enumerated by their ForEachNode
+// implementations, but each is rejected by a single flag check.
+func traverseContent(node AstNode, fn func(AstNode) bool) {
+	// The visitor closure is created once and recurses via itself; recursing
+	// through traverseContent would heap allocate a closure per visited node.
+	stopped := false
+	var visit func(child AstNode, containerField unique.Handle[string], index int)
+	visit = func(child AstNode, containerField unique.Handle[string], index int) {
+		if stopped {
+			return
+		}
+		if !fn(child) {
+			stopped = true
+			return
+		}
+		child.ForEachNode(visit)
+	}
+	node.ForEachNode(visit)
 }
 
 // AllNodes creates an iterator over the given node and all its descendant nodes.
-//
-// Early loop exit is honored correctly, but does not short-circuit the traversal.
 func AllNodes(node AstNode) iter.Seq[AstNode] {
 	return func(yield func(AstNode) bool) {
 		if !yield(node) {
 			return
 		}
-		stopped := false
-		traverseContent(node, func(n AstNode) {
-			if !stopped && !yield(n) {
-				stopped = true
-			}
-		})
+		traverseContent(node, yield)
 	}
 }
 
 // AllChildren creates an iterator over all descendant nodes of the given node, excluding the node itself.
-//
-// Early loop exit is honored correctly, but does not short-circuit the traversal.
 func AllChildren(node AstNode) iter.Seq[AstNode] {
 	return func(yield func(AstNode) bool) {
-		stopped := false
-		traverseContent(node, func(n AstNode) {
-			if !stopped && !yield(n) {
-				stopped = true
-			}
-		})
+		traverseContent(node, yield)
 	}
 }
 
@@ -386,20 +386,32 @@ func AssignContainers(doc *Document) {
 }
 
 func doAssignContainers(doc *Document, root AstNode, references *[]UntypedReference) {
-	root.SetDocument(doc)
-	root.ForEachNode(func(child AstNode, containerField unique.Handle[string], index int) {
+	// Both closures are created once per document and track the current parent
+	// node mutably; capturing the parent per recursion level instead would heap
+	// allocate two closures per AST node.
+	current := root
+	var visitNode func(child AstNode, containerField unique.Handle[string], index int)
+	var visitReference func(ur UntypedReference, containerField unique.Handle[string], index int)
+	visitNode = func(child AstNode, containerField unique.Handle[string], index int) {
 		child.SetDocument(doc)
-		child.SetContainer(root, containerField, index)
-		doAssignContainers(doc, child, references)
-	})
-	root.ForEachReference(func(ur UntypedReference, containerField unique.Handle[string], index int) {
+		child.SetContainer(current, containerField, index)
+		prev := current
+		current = child
+		child.ForEachNode(visitNode)
+		child.ForEachReference(visitReference)
+		current = prev
+	}
+	visitReference = func(ur UntypedReference, containerField unique.Handle[string], index int) {
 		*references = append(*references, ur)
 		unit := ur.Unit()
 		if stringNode, ok := unit.(CompositeNode); ok {
 			stringNode.SetDocument(doc)
-			stringNode.SetContainer(root, containerField, index)
+			stringNode.SetContainer(current, containerField, index)
 		}
-	})
+	}
+	root.SetDocument(doc)
+	root.ForEachNode(visitNode)
+	root.ForEachReference(visitReference)
 }
 
 // NamedNode represents an [AstNode] whose name is accessible as a string in the Name field.
