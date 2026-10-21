@@ -112,7 +112,7 @@ func (sc *ArithmeticsSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 	case TypeFor_AbstractDefinition:
 		return slices.Values(sc.AbstractDefinitions)
 	}
-	return core.EmptySymbolDescriptions
+	return core.EmptySymbolSeq
 }
 
 func (sc *ArithmeticsSymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {

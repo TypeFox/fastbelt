@@ -66,11 +66,11 @@ func (sc *LookaheadSymbolContainer) Put(desc *core.SymbolDescription) bool {
 }
 
 func (sc *LookaheadSymbolContainer) All() core.SymbolSeq {
-	return core.EmptySymbolDescriptions
+	return core.EmptySymbolSeq
 }
 
 func (sc *LookaheadSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
-	return core.EmptySymbolDescriptions
+	return core.EmptySymbolSeq
 }
 
 func (sc *LookaheadSymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {

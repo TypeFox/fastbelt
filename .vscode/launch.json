@@ -67,6 +67,30 @@
 			]
 		},
 		{
+			"name": "Arithmetics CLI export 'price-calc' to JSON",
+			"type": "go",
+			"request": "launch",
+			"mode": "debug",
+			"program": "${workspaceFolder}/examples/arithmetics/cli",
+			"cwd": "${workspaceFolder}/examples/arithmetics/examples",
+			"args": [
+				"export",
+				"./price-calc.calc"
+			],
+		},
+		{
+			"name": "Arithmetics CLI import 'price-calc' from JSON",
+			"type": "go",
+			"request": "launch",
+			"mode": "debug",
+			"program": "${workspaceFolder}/examples/arithmetics/cli",
+			"cwd": "${workspaceFolder}/examples/arithmetics/examples",
+			"args": [
+				"import",
+				"./price-calc.calc.json"
+			],
+		},
+		{
 			"name": "Statemachine Extension",
 			"type": "extensionHost",
 			"request": "launch",

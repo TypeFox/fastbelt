@@ -367,7 +367,7 @@ func (sc *FastbeltSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 			slices.Values(sc.AbstractRules),
 		)
 	}
-	return core.EmptySymbolDescriptions
+	return core.EmptySymbolSeq
 }
 
 func (sc *FastbeltSymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {

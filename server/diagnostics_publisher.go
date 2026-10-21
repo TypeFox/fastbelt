@@ -6,7 +6,8 @@ package server
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"log"
 
 	core "typefox.dev/fastbelt"
@@ -106,7 +107,7 @@ func toLspDiagnostic(textDoc textdoc.Handle, d core.Diagnostic) lsp.Diagnostic {
 	if d.Data != nil {
 		raw, err := json.Marshal(d.Data)
 		if err == nil {
-			rawMsg := json.RawMessage(raw)
+			rawMsg := jsontext.Value(raw)
 			result.Data = &rawMsg
 		}
 	}

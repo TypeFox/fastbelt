@@ -112,7 +112,7 @@ func (sc *TokenModesSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
 	case TypeFor_VariableDecl:
 		return slices.Values(sc.VariableDecls)
 	}
-	return core.EmptySymbolDescriptions
+	return core.EmptySymbolSeq
 }
 
 func (sc *TokenModesSymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {

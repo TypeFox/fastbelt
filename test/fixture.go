@@ -6,6 +6,7 @@ package test
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
@@ -147,7 +148,7 @@ func (f *Fixture) ParseURI(content, uri string) *Doc {
 	if err := builder.Build(f.ctx, []*core.Document{doc}, nil); err != nil {
 		f.t.Fatalf("fbtest: build failed: %v", err)
 	}
-	return f.newDoc(doc, ranges, indices)
+	return f.NewDoc(doc, ranges, indices)
 }
 
 // ParseAll builds multiple documents together, enabling cross-document reference
@@ -174,7 +175,7 @@ func (f *Fixture) ParseAll(uriContentPairs ...string) []*Doc {
 		documents := service.MustGet[workspace.DocumentManager](f.sc)
 		documents.Set(doc)
 		coreDocs = append(coreDocs, doc)
-		results = append(results, f.newDoc(doc, ranges, indices))
+		results = append(results, f.NewDoc(doc, ranges, indices))
 	}
 	builder := service.MustGet[workspace.Builder](f.sc)
 	if err := builder.Build(f.ctx, coreDocs, nil); err != nil {
@@ -183,10 +184,25 @@ func (f *Fixture) ParseAll(uriContentPairs ...string) []*Doc {
 	return results
 }
 
-func (f *Fixture) newDoc(doc *core.Document, ranges []RangeMarker, indices []IndexMarker) *Doc {
+func (f *Fixture) NewDoc(doc *core.Document, ranges []RangeMarker, indices []IndexMarker) *Doc {
 	testDoc := &Doc{Document: doc, Ranges: ranges, Indices: indices, fixture: f}
 	f.docs = append(f.docs, testDoc)
 	return testDoc
+}
+
+func (f *Fixture) Delete(uri core.URI) {
+	documents := service.MustGet[workspace.DocumentManager](f.sc)
+	documents.Delete(uri)
+	deletedURI := uri.StringUnencoded()
+	f.docs = slices.DeleteFunc(f.docs, func(d *Doc) bool {
+		return d.Document.URI.StringUnencoded() == deletedURI
+	})
+}
+
+func (f *Fixture) Clear() {
+	documents := service.MustGet[workspace.DocumentManager](f.sc)
+	documents.Clear()
+	f.docs = nil
 }
 
 // extractMarkers scans content for embedded position markers, removes them, and

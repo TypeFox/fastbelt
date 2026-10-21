@@ -66,11 +66,11 @@ func (sc *TokenGroupsSymbolContainer) Put(desc *core.SymbolDescription) bool {
 }
 
 func (sc *TokenGroupsSymbolContainer) All() core.SymbolSeq {
-	return core.EmptySymbolDescriptions
+	return core.EmptySymbolSeq
 }
 
 func (sc *TokenGroupsSymbolContainer) ForType(t reflect.Type) core.SymbolSeq {
-	return core.EmptySymbolDescriptions
+	return core.EmptySymbolSeq
 }
 
 func (sc *TokenGroupsSymbolContainer) ForTypeSlice(t reflect.Type) ([]*core.SymbolDescription, bool) {

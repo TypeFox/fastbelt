@@ -6,6 +6,7 @@ package generator
 
 import (
 	"context"
+	"go/types"
 	"slices"
 	"sort"
 	"strings"
@@ -72,11 +73,17 @@ var reservedKeywords = map[string]bool{
 
 type FieldInfo struct {
 	Name string
+	// variant of Name with first char in lower case
+	JsonPropName string
 	// Private name, used to avoid conflicts with reserved keywords
+	// mostly equal to 'JsonTagName' except for reserved keywords
 	PName string
-
-	Array          bool
-	Reference      bool
+	// Local var name, used to avoid conflicts with reserved std library names
+	LName     string
+	Array     bool
+	Reference bool
+	// Name of the referenced interface type, set only if Reference is true.
+	RefTypeArg     string
 	Boolean        bool
 	Type           string
 	HasTokenGetter bool
@@ -88,13 +95,18 @@ type FieldInfo struct {
 
 func getFieldInfo(field grammar.Field) FieldInfo {
 	name := field.Name()
-	pname := strings.ToLower(name[0:1]) + name[1:]
+	jsonPropName := strings.ToLower(name[0:1]) + name[1:]
+	pname := jsonPropName
 	if reservedKeywords[pname] {
 		pname = "_" + name
 	}
+	lname := pname
+	if types.Universe.Lookup(lname) != nil {
+		lname = "_" + name
+	}
 	_, array := field.Type().(grammar.ArrayType)
 	typ := getTypeName(field.Type())
-	ref := isReferenceType(field.Type())
+	ref, refTypeArg := isReferenceType(field.Type())
 	gtype := typ
 	hasTokenGetter := false
 	hasNodeGetter := false
@@ -114,8 +126,11 @@ func getFieldInfo(field grammar.Field) FieldInfo {
 	return FieldInfo{
 		Name:           name,
 		PName:          pname,
+		LName:          lname,
+		JsonPropName:   jsonPropName,
 		Array:          array,
 		Reference:      ref,
+		RefTypeArg:     refTypeArg,
 		Type:           typ,
 		HasTokenGetter: hasTokenGetter,
 		HasNodeGetter:  hasNodeGetter,
@@ -138,13 +153,16 @@ func getTypeName(fieldType grammar.FieldType) string {
 	}
 }
 
-func isReferenceType(fieldType grammar.FieldType) bool {
-	if _, ok := fieldType.(grammar.ReferenceType); ok {
-		return true
+// isReferenceType reports whether fieldType is (or, for an array type, contains) a reference type.
+// If so, the second return value is the name of the referenced interface type, e.g. "X" for a
+// field declared in the fb grammar as "*X" or "[]*X".
+func isReferenceType(fieldType grammar.FieldType) (bool, string) {
+	if refType, ok := fieldType.(grammar.ReferenceType); ok {
+		return true, refType.Type().Text()
 	} else if arrayType, ok := fieldType.(grammar.ArrayType); ok {
 		return isReferenceType(arrayType.InternalType())
 	} else {
-		return false
+		return false, ""
 	}
 }
 
