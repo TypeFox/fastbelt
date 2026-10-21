@@ -56,9 +56,8 @@ func NewDefaultCompletionProvider(sc *service.Container) CompletionProvider {
 //     the same keyword at boundaries between rules;
 //  5. apply the CompletionContributor's PostProcess hook.
 //
-// Each context's TokenTypes/hints share the same downstream pipeline
-// (keyword pass, dispatch pass, snippet pass); only the prefix token
-// slice and the resulting TextEdit shape differ.
+// Inside a comment, steps 2 and 3 are replaced by the contributor's comment
+// stage.
 func (s *DefaultCompletionProvider) HandleCompletionRequest(ctx context.Context, params *lsp.CompletionParams) (*lsp.CompletionList, error) {
 	empty := &lsp.CompletionList{IsIncomplete: false, Items: []lsp.CompletionItem{}}
 
@@ -88,8 +87,6 @@ func (s *DefaultCompletionProvider) HandleCompletionRequest(ctx context.Context,
 
 	var items []lsp.CompletionItem
 	if comment := commentAt(doc.Comments, offset); comment != nil {
-		// Inside a comment, the grammar has nothing to say: only the
-		// contributor's comment stage runs.
 		cc := ContributorContext{Doc: doc, Cursor: offset}
 		contributor.CompletionForComment(ctx, comment, cc, func(item lsp.CompletionItem) {
 			items = append(items, EnrichCommentCompletionItem(item, cc))
@@ -126,10 +123,7 @@ func (s *DefaultCompletionProvider) resolveContributor() CompletionContributor {
 }
 
 // resolveFuzzyMatcher returns the FuzzyMatcher registered in the service
-// container, falling back to a fresh DefaultFuzzyMatcher when the
-// container has none. The fallback keeps the completion pipeline
-// usable in tests/embedded setups that haven't called
-// SetupDefaultServices.
+// container if any, otherwise the default matcher.
 func (s *DefaultCompletionProvider) resolveFuzzyMatcher() FuzzyMatcher {
 	if m, err := service.Get[FuzzyMatcher](s.sc); err == nil && m != nil {
 		return m
@@ -139,13 +133,9 @@ func (s *DefaultCompletionProvider) resolveFuzzyMatcher() FuzzyMatcher {
 
 // completionsForContext runs the CompletionParser+simulator+dispatch
 // pipeline for one cursor context and returns the items it produced.
-// Snippets are gathered here (rather than in HandleCompletionRequest) so
-// that snippet applicability predicates can inspect the simulator's
-// per-context TokenTypes.
-//
-// Each pass builds an acceptor closure that captures the appropriate
-// enrichment helper and the per-context state; the contributor decides
-// whether and how often to emit, the provider enriches the emission.
+// Snippets are gathered here too, so that their applicability predicates can
+// inspect the per-context TokenTypes. In each pass, the contributor decides
+// what to emit and the provider enriches the emitted items.
 func (s *DefaultCompletionProvider) completionsForContext(
 	ctx context.Context,
 	contributor CompletionContributor,
@@ -178,7 +168,7 @@ func (s *DefaultCompletionProvider) completionsForContext(
 
 	items := make([]lsp.CompletionItem, 0, len(info.Tokens)+len(info.Hints)+4)
 
-	// Token pass: contributor decides per (TokenType, atnState) what to emit.
+	// Token pass
 	for _, tc := range info.Tokens {
 		if !matcher.Match(cc.ReplaceText, tokenLabel(tc.TokenType)) {
 			continue
@@ -190,8 +180,7 @@ func (s *DefaultCompletionProvider) completionsForContext(
 		contributor.CompletionForToken(ctx, tcCopy.TokenType, tcCopy.ATNStateIdx, contribCtx, accept)
 	}
 
-	// Cross-reference pass: dispatch per hint on its owner; contributor
-	// decides per (SymbolDescription, hint, atnState) what to emit.
+	// Cross-reference pass: dispatch per hint on its owner
 	for _, hc := range info.Hints {
 		owner := buildOwner(adapter, doc, result.RuleStack, hc, lastToken)
 		if owner == nil {
@@ -216,7 +205,7 @@ func (s *DefaultCompletionProvider) completionsForContext(
 		}
 	}
 
-	// Snippet pass.
+	// Snippet pass
 	if reg, err := service.Get[SnippetRegistry](s.sc); err == nil && reg != nil {
 		tokenTypes := make([]*core.TokenType, 0, len(info.Tokens))
 		seen := make(collections.Set[int], len(info.Tokens))
@@ -254,9 +243,8 @@ func (s *DefaultCompletionProvider) completionsForContext(
 // in-progress token" (REPLACE semantics) and one for "complete what could
 // follow" (INSERT semantics). See buildCompletionContexts for the rules.
 type CompletionContext struct {
-	// PrefixLen is the number of tokens the simulator treats as committed
-	// (prefixTokens = doc.Tokens[:PrefixLen]). The simulator then walks
-	// SimulateAt(atn, PrefixLen) to land at the cursor.
+	// PrefixLen is the number of tokens in front of the cursor that the
+	// completion parser and the simulator consume: doc.Tokens[:PrefixLen].
 	PrefixLen int
 	// ReplaceRange, when non-nil, is the LSP range the produced items
 	// should REPLACE (the in-progress token). nil means INSERT at the
@@ -284,14 +272,11 @@ type cursorTokenInfo struct {
 }
 
 // backtrackToToken classifies the cursor's position relative to the
-// document's tokens, in terms the rest of the pipeline understands
-// (token indices, not byte offsets).
+// document's tokens.
 //
-// Token boundaries: Range.Start is inclusive, End is
-// exclusive. So "cursor inside a token" means Start < offset < End, and
-// "cursor at the end of a token" means offset == End. A cursor at
-// Start (offset == Start) sits BEFORE the token (it could still be part
-// of preceding whitespace), so we treat it as a between-tokens position.
+// Range.Start is inclusive, End is exclusive: the cursor is inside a token
+// if Start < offset < End, and at its end if offset == End. A cursor at
+// Start sits in front of the token and counts as a between-tokens position.
 func backtrackToToken(tokens core.TokenSlice, offset int) cursorTokenInfo {
 	info := cursorTokenInfo{CurrentIdx: -1, NextIdx: len(tokens)}
 	// Binary search for the first token whose Start >= offset.
@@ -305,8 +290,7 @@ func backtrackToToken(tokens core.TokenSlice, offset int) cursorTokenInfo {
 		}
 	}
 	info.NextIdx = lo
-	// The token possibly covering the cursor is the one immediately before
-	// NextIdx - check whether the cursor lies inside or at its end.
+	// The token in front of NextIdx may cover the cursor
 	if lo > 0 {
 		prev := lo - 1
 		end := int(tokens[prev].Range.End)
@@ -339,7 +323,7 @@ func buildCompletionContexts(doc *core.Document, offset int) []CompletionContext
 	info := backtrackToToken(doc.Tokens, offset)
 
 	if info.CurrentIdx < 0 {
-		// Cursor sits between tokens / past EOF - only "complete next".
+		// Cursor sits between tokens or past EOF: only "complete next"
 		return []CompletionContext{{
 			PrefixLen:    info.NextIdx,
 			ReplaceRange: nil,
@@ -355,16 +339,13 @@ func buildCompletionContexts(doc *core.Document, offset int) []CompletionContext
 		typed = curToken.Image[:offset-int(curToken.Range.Start)]
 	}
 
-	// When the current token is part of a multi-token CompositeNode,
-	// the REPLACE range must cover the whole composite span - otherwise accepting
-	// a candidate would overwrite only the trailing token and leave earlier segments
-	// behind, producing duplicated text. Walk back through tokens that
-	// belong to the same composite and widen the replace range / prefix.
+	// When the current token is part of a multi-token CompositeNode, the
+	// replace range and the typed text must cover the whole composite up to
+	// the cursor. Otherwise accepting a candidate would overwrite only the
+	// trailing token and leave the earlier segments behind.
 	if startIdx, ok := compositeStart(doc.Tokens, info.CurrentIdx); ok {
 		startToken := &doc.Tokens[startIdx]
-		// Replace start position with the start of the first token in the composite
 		replace.Start = startToken.Range.LspRange(doc.TextDoc).Start
-		// Regenerate the content of the composite up to the cursor position
 		var sb strings.Builder
 		for i := startIdx; i < info.CurrentIdx; i++ {
 			sb.WriteString(doc.Tokens[i].Image)
@@ -375,12 +356,8 @@ func buildCompletionContexts(doc *core.Document, offset int) []CompletionContext
 	}
 
 	if info.CurrentAtEnd {
-		// Fully-typed token: two interpretations are both legitimate.
-		// Either the user wants to replace what they just typed (REPLACE
-		// shape, rank 0), or they want to continue with the grammar's
-		// follow-set (INSERT shape, rank 1). The downstream filter prunes
-		// the replace context to items whose label can substitute for the
-		// content the user actually typed.
+		// At the end of a token, the user either wants to replace what they
+		// just typed (rank 0) or to continue with what may follow (rank 1).
 		return []CompletionContext{
 			{
 				PrefixLen:    prefixLen,
@@ -442,12 +419,10 @@ func tokenLabel(tt *core.TokenType) string {
 	return tt.Name
 }
 
-// deduplicateItems removes duplicate CompletionItems by (Kind, Label).
-// Multiple contexts can surface the same item (e.g. cursor right after a
-// keyword that's also valid at the next-token position); the client
-// should see each suggestion exactly once. First occurrence wins so
-// "complete current" items (which are emitted first) keep their
-// TextEdit replacement range.
+// deduplicateItems removes duplicate CompletionItems by (Kind, Label), as
+// several contexts can surface the same item. The first occurrence wins, so
+// "complete current" items (which are emitted first) keep their replacement
+// range.
 func deduplicateItems(items []lsp.CompletionItem) []lsp.CompletionItem {
 	seen := make(collections.Set[string], len(items))
 	out := items[:0]
@@ -461,21 +436,19 @@ func deduplicateItems(items []lsp.CompletionItem) []lsp.CompletionItem {
 	return out
 }
 
-// buildSyntheticOwnerChain walks the rule stack outermost-first, instantiates
-// a synthetic node per frame via the adapter, and wires Container() +
-// SetDocument() so scope providers reading node.Document() or walking
-// ContainerOfType[T] resolve correctly. Returns the innermost synthetic -
-// the owner of the in-progress reference.
+// buildSyntheticOwnerChain creates a synthetic node per frame of the rule
+// stack, outermost first, each contained in the previous one, and returns the
+// innermost. The chain is not connected to the AST of the document, but lets
+// scope providers walk the containers and read the document.
 func buildSyntheticOwnerChain(adapter parser.LanguageCompletionAdapter, doc *core.Document, ruleStack []parser.RuleContext) core.AstNode {
 	if len(ruleStack) == 0 {
 		return nil
 	}
 	var parent core.AstNode
 	for _, frame := range ruleStack {
-		node := newNode(adapter, frame.RuleKey, doc)
+		node := newNode(adapter, frame.Type, doc)
 		if node == nil {
-			// Some rules have no associated AST node (composite nodes)
-			// Those are simply skipped
+			// Rules without a node type, such as composite rules, are skipped
 			continue
 		}
 		if parent != nil {
@@ -507,9 +480,8 @@ func buildSyntheticOwnerChain(adapter parser.LanguageCompletionAdapter, doc *cor
 // action is applied to the owner as the main parser would have on the next
 // token, see applyPrecedingAction.
 //
-// Returns nil if the adapter doesn't know one of the rule keys; the
-// completion request then yields no candidates for this hint rather than
-// silently returning the wrong scope.
+// Returns nil if the adapter doesn't know one of the node types; the hint
+// then yields no candidates rather than candidates from the wrong scope.
 func buildOwner(adapter parser.LanguageCompletionAdapter, doc *core.Document, ruleStack []parser.RuleContext, hc parser.HintCompletion, lastToken *core.Token) core.AstNode {
 	var owner core.AstNode
 	if base := baseOf(adapter, doc, hc, lastToken); base != nil {
@@ -562,7 +534,7 @@ func containerOfCall(adapter parser.LanguageCompletionAdapter, node core.AstNode
 		}
 		field, index := node.ContainmentData()
 		if !adapter.AssignsCurrent(container, field, index) {
-			if field == unique.Make(call.Property) {
+			if field == unique.Make(call.Field) {
 				return container
 			}
 			return nil
@@ -598,7 +570,7 @@ func buildOwnerAt(adapter parser.LanguageCompletionAdapter, base core.AstNode, h
 		if created == nil {
 			return nil
 		}
-		field := unique.Make(assigned.Property)
+		field := unique.Make(assigned.Field)
 		index := -1
 		if assigned.List {
 			index = listIndexAfter(node, field, lastToken)
@@ -620,7 +592,7 @@ func buildOwnerAt(adapter parser.LanguageCompletionAdapter, base core.AstNode, h
 				return nil
 			}
 		}
-		if call.Property != "" {
+		if call.Field != "" {
 			if assigned != nil {
 				if node = create(nodeType); node == nil {
 					return nil
@@ -733,52 +705,31 @@ func isEmptyNode(node core.AstNode) bool {
 	return empty
 }
 
-// buildSyntheticOwnerChainFor extends buildSyntheticOwnerChain with the
-// hint's owner rule when the rule stack doesn't already end at that rule.
+// buildSyntheticOwnerChainFor builds the synthetic owner chain of the rule
+// stack up to the innermost frame of the hint's owner type. Deeper frames
+// belong to rules that parse the text of the cross-reference, such as a
+// composite rule. If the owner type is not on the stack, the parser has not
+// entered its rule yet, and a frame for it is appended.
 //
-// At cursor positions where a new rule could begin but hasn't yet, the
-// parser's rule stack stops one level above the rule the hint's owner
-// belongs to, so a synthetic frame for the owner is appended if the stack
-// doesn't already end there.
-//
-// Returns nil if the adapter doesn't know one of the rule keys; the
-// completion request then yields no candidates for this hint rather than
-// silently returning the wrong scope.
+// Returns nil if the adapter doesn't know one of the node types.
 func buildSyntheticOwnerChainFor(adapter parser.LanguageCompletionAdapter, doc *core.Document, ruleStack []parser.RuleContext, hint *parser.CompletionHint) core.AstNode {
 	ownerType := hint.Owner
-	// If the owner rule appears anywhere on the stack, the parser is
-	// already inside it - slice off any deeper frames. This covers
-	// cross-references whose text form is a separate rule: at the cursor
-	// the rule stack might end inside a string/composite rule that
-	// carries no AST node, while the owner rule (which holds the
-	// reference) sits one frame higher. Searching from the top down
-	// picks the innermost matching frame.
 	for i := len(ruleStack) - 1; i >= 0; i-- {
-		if ruleStack[i].RuleKey == ownerType {
+		if ruleStack[i].Type == ownerType {
 			return buildSyntheticOwnerChain(adapter, doc, ruleStack[:i+1])
 		}
 	}
-	// The owner rule isn't on the stack - the parser hasn't entered it
-	// yet (cursor sits at a position where it could begin). Append a
-	// synthetic frame for the owner so the chain has somewhere to
-	// dispatch on.
 	extended := make([]parser.RuleContext, 0, len(ruleStack)+1)
 	extended = append(extended, ruleStack...)
-	extended = append(extended, parser.RuleContext{RuleKey: ownerType})
+	extended = append(extended, parser.RuleContext{Type: ownerType})
 	return buildSyntheticOwnerChain(adapter, doc, extended)
 }
 
-// applyPrecedingAction handles tree-rewrite actions whose effect the main
-// parser couldn't materialise (because the action's trigger token wasn't
-// typed yet). If the hint carries action metadata AND the existing owner
-// already has the hint's property filled, we mirror what the main parser
-// would have done on the next iteration: allocate a new node of the
-// action's TargetType and assign the existing owner to its action
-// property slot. The new node becomes the owner the scope provider sees.
-//
-// When the hint has no action, or the owner's assignment slot is still
-// empty (the main parser already created the post-action node), the
-// owner is returned unchanged.
+// applyPrecedingAction applies the tree-rewriting action that precedes the
+// cross-reference of the hint, if the owner already has the hint's property
+// filled: the main parser would then wrap the owner in a new node of the
+// action's target type on the next token, and the new node becomes the owner
+// the scope provider sees. Otherwise the owner is returned unchanged.
 func applyPrecedingAction(adapter parser.LanguageCompletionAdapter, owner core.AstNode, hint *parser.CompletionHint) core.AstNode {
 	if hint == nil || hint.PrecedingAction == nil || !adapter.HasAssignment(owner, hint.Property) {
 		return owner
@@ -792,10 +743,8 @@ func applyPrecedingAction(adapter parser.LanguageCompletionAdapter, owner core.A
 	return wrapper
 }
 
-// EnrichTokenCompletionItem fills zero-valued fields on item with
-// per-stage defaults derived from tt and cc. The contributor returned
-// item is the source of truth - any field already set on it is
-// preserved verbatim.
+// EnrichTokenCompletionItem fills zero-valued fields on item with defaults
+// derived from tt and cc. Fields the contributor already set are preserved.
 func EnrichTokenCompletionItem(item lsp.CompletionItem, tt *core.TokenType, cc ContributorContext) lsp.CompletionItem {
 	if tt == nil {
 		return item
@@ -822,7 +771,7 @@ func EnrichTokenCompletionItem(item lsp.CompletionItem, tt *core.TokenType, cc C
 }
 
 // EnrichReferenceCompletionItem fills zero-valued fields on item with
-// per-stage defaults derived from d and cc.
+// defaults derived from d and cc.
 func EnrichReferenceCompletionItem(item lsp.CompletionItem, d *core.SymbolDescription, cc ContributorContext) lsp.CompletionItem {
 	if d == nil {
 		return item
@@ -841,8 +790,8 @@ func EnrichReferenceCompletionItem(item lsp.CompletionItem, d *core.SymbolDescri
 	return item
 }
 
-// EnrichSnippetCompletionItem fills zero-valued fields on item with
-// per-stage defaults derived from sn and cc.
+// EnrichSnippetCompletionItem fills zero-valued fields on item with defaults
+// derived from sn and cc.
 func EnrichSnippetCompletionItem(item lsp.CompletionItem, sn SnippetTemplate, cc ContributorContext) lsp.CompletionItem {
 	if item.Label == "" {
 		item.Label = sn.Label
@@ -862,7 +811,7 @@ func EnrichSnippetCompletionItem(item lsp.CompletionItem, sn SnippetTemplate, cc
 	}
 	if item.TextEdit == nil && item.InsertText == "" {
 		// Snippets default to inserting the body, not the label.
-		applyInsertion(&item, sn.Body, cc.ReplaceRange, item.InsertTextFormat)
+		applyInsertion(&item, sn.Body, cc.ReplaceRange)
 	} else {
 		fillInsertion(&item, cc.ReplaceRange)
 	}
@@ -889,24 +838,17 @@ func fillInsertion(item *lsp.CompletionItem, replace *lsp.Range) {
 	if item.TextEdit != nil || item.InsertText != "" {
 		return
 	}
-	applyInsertion(item, item.Label, replace, item.InsertTextFormat)
+	applyInsertion(item, item.Label, replace)
 }
 
-// applyInsertion populates either TextEdit (when replace != nil) or
-// InsertText so the client knows how to apply the chosen completion. The
-// LSP CompletionItem.TextEdit field is an Or<TextEdit|InsertReplaceEdit>
-// wrapper; we always emit the plain TextEdit shape because it works for
-// every client that supports completion.
-func applyInsertion(item *lsp.CompletionItem, text string, replace *lsp.Range, insertFormat *lsp.InsertTextFormat) {
+// applyInsertion sets InsertText to text, and TextEdit as well if there is a
+// range to replace. The plain TextEdit shape is used rather than
+// InsertReplaceEdit because every client supports it.
+func applyInsertion(item *lsp.CompletionItem, text string, replace *lsp.Range) {
+	item.InsertText = text
 	if replace != nil {
 		item.TextEdit = &lsp.CompletionItemTextEdit{
 			TextEdit: &lsp.TextEdit{Range: *replace, NewText: text},
 		}
-		// InsertText is ignored by the client when TextEdit is present,
-		// but we set it anyway for clients that fall back to it.
-		item.InsertText = text
-		return
 	}
-	item.InsertText = text
-	_ = insertFormat // kept for future per-callsite extension; SnippetTextFormat is already set on the item itself.
 }

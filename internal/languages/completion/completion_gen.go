@@ -32,10 +32,10 @@ type CompletionCompletionFilter interface {
 	FilterAmbigNameRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterAmbigRefsRef1(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterAmbigRefsRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
-	FilterLeadRef(ctx context.Context, reference *core.Reference[Lead], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterDepA(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterDepB(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 	FilterActFirstRef(ctx context.Context, reference *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
+	FilterLeadRef(ctx context.Context, reference *core.Reference[Lead], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription]
 }
 
 type DefaultCompletionCompletionFilter struct{}
@@ -112,10 +112,6 @@ func (*DefaultCompletionCompletionFilter) FilterAmbigRefsRef(_ context.Context, 
 	return in
 }
 
-func (*DefaultCompletionCompletionFilter) FilterLeadRef(_ context.Context, _ *core.Reference[Lead], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
-	return in
-}
-
 func (*DefaultCompletionCompletionFilter) FilterDepA(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	return in
 }
@@ -125,6 +121,10 @@ func (*DefaultCompletionCompletionFilter) FilterDepB(_ context.Context, _ *core.
 }
 
 func (*DefaultCompletionCompletionFilter) FilterActFirstRef(_ context.Context, _ *core.Reference[Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	return in
+}
+
+func (*DefaultCompletionCompletionFilter) FilterLeadRef(_ context.Context, _ *core.Reference[Lead], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	return in
 }
 
@@ -339,18 +339,6 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		candidates := scopes.ScopeAmbigRefsRef(ctx, ref).AllElements()
 		return filter.FilterAmbigRefsRef(ctx, ref, candidates)
 	},
-	"Lead.Ref": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
-		typedOwner, ok := owner.(Lead)
-		if !ok {
-			return func(yield func(*core.SymbolDescription) bool) {}
-		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
-		ref := refs.LeadRef(typedOwner, nil)
-		candidates := scopes.ScopeLeadRef(ctx, ref).AllElements()
-		return filter.FilterLeadRef(ctx, ref, candidates)
-	},
 	"Dep.A": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
 		typedOwner, ok := owner.(Dep)
 		if !ok {
@@ -387,6 +375,18 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		candidates := scopes.ScopeActFirstRef(ctx, ref).AllElements()
 		return filter.FilterActFirstRef(ctx, ref, candidates)
 	},
+	"Lead.Ref": func(ctx context.Context, sc *service.Container, owner core.AstNode) iter.Seq[*core.SymbolDescription] {
+		typedOwner, ok := owner.(Lead)
+		if !ok {
+			return func(yield func(*core.SymbolDescription) bool) {}
+		}
+		refs := service.MustGet[CompletionReferencesConstructor](sc)
+		scopes := service.MustGet[CompletionScopeProvider](sc)
+		filter := service.MustGet[CompletionCompletionFilter](sc)
+		ref := refs.LeadRef(typedOwner, nil)
+		candidates := scopes.ScopeLeadRef(ctx, ref).AllElements()
+		return filter.FilterLeadRef(ctx, ref, candidates)
+	},
 }
 
 type CompletionCompletionAdapter struct {
@@ -405,8 +405,8 @@ func (a *CompletionCompletionAdapter) ATN() *parser.RuntimeATN {
 	return BuildATN()
 }
 
-func (a *CompletionCompletionAdapter) SyntheticOwnerFor(ruleKey string) (core.AstNode, bool) {
-	factory, ok := CompletionSyntheticFactories[ruleKey]
+func (a *CompletionCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {
+	factory, ok := CompletionSyntheticFactories[nodeType]
 	if !ok {
 		return nil, false
 	}

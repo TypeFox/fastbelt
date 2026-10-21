@@ -116,8 +116,8 @@ func (a *StatemachineModelCompletionAdapter) ATN() *parser.RuntimeATN {
 	return BuildATN()
 }
 
-func (a *StatemachineModelCompletionAdapter) SyntheticOwnerFor(ruleKey string) (core.AstNode, bool) {
-	factory, ok := StatemachineModelSyntheticFactories[ruleKey]
+func (a *StatemachineModelCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {
+	factory, ok := StatemachineModelSyntheticFactories[nodeType]
 	if !ok {
 		return nil, false
 	}

@@ -32,7 +32,7 @@ func TestCompletionParserState_SnapshotsAndStack(t *testing.T) {
 	if got := cp.snapshots[0]; got.TokenIdx != 0 || got.ATNStateIdx != 7 {
 		t.Fatalf("unexpected first snapshot: %+v", got)
 	}
-	if got := cp.snapshots[0].RuleStack; len(got) != 1 || got[0].RuleKey != "Outer" {
+	if got := cp.snapshots[0].RuleStack; len(got) != 1 || got[0].Type != "Outer" {
 		t.Fatalf("expected RuleStack=[Outer] on first snapshot; got %+v", got)
 	}
 
@@ -57,7 +57,7 @@ func TestCompletionParserState_SnapshotsAndStack(t *testing.T) {
 	// Result.RuleStack is the deepest stack at the latest snapshot's
 	// TokenIdx - here, [Outer, Inner] from the Inner EnterRule snapshot at
 	// TokenIdx=2.
-	if len(res.RuleStack) != 2 || res.RuleStack[0].RuleKey != "Outer" || res.RuleStack[1].RuleKey != "Inner" {
+	if len(res.RuleStack) != 2 || res.RuleStack[0].Type != "Outer" || res.RuleStack[1].Type != "Inner" {
 		t.Errorf("unexpected RuleStack snapshot: %+v", res.RuleStack)
 	}
 

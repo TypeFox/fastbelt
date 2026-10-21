@@ -117,7 +117,7 @@ func findPrecedingAction(el grammar.Element) grammar.Action {
 }
 
 // ruleCallInfoFor returns how the node created by the rule call is added to
-// the AST: the type of the node and the property it is assigned to, if any.
+// the AST: the type of the node and the field it is assigned to, if any.
 // The caller is the rule that contains the rule call.
 // The return value is never nil.
 func ruleCallInfoFor(rc grammar.RuleCall, rule, caller grammar.AbstractRuleWithBody) *parser.RuleCallInfo {
@@ -137,7 +137,7 @@ func ruleCallInfoFor(rc grammar.RuleCall, rule, caller grammar.AbstractRuleWithB
 	}
 	if assignment, ok := container.(grammar.Assignment); ok {
 		if assignment.Property() != nil {
-			info.Property = grammar.GoFieldName(assignment.Property().Text())
+			info.Field = grammar.GoFieldName(assignment.Property().Text())
 			info.List = assignment.Operator() == "+="
 		}
 		info.PrecedingAction = precedingActionInfo(assignment)
@@ -152,7 +152,7 @@ func ruleCallInfoFor(rc grammar.RuleCall, rule, caller grammar.AbstractRuleWithB
 		// operand continues the node of the infix rule, like an unassigned
 		// rule call that is followed by a tree-rewriting action.
 		if group, ok := container.(grammar.Group); ok && group.Cardinality() == "*" {
-			info.Property = grammar.GoFieldName("Right")
+			info.Field = grammar.GoFieldName(grammar.InfixRightProperty)
 			info.InfixOperand = true
 		}
 	}

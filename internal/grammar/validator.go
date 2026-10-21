@@ -1570,7 +1570,7 @@ func checkInfixNodeType(rule InfixRule, ctx context.Context, accept core.Validat
 			core.WithCode(ValidateInfixReturnType),
 		))
 	}
-	for _, name := range []string{"Left", "Right"} {
+	for _, name := range []string{InfixLeftProperty, InfixRightProperty} {
 		field := findInterfaceField(nodeType, name, ctx)
 		if field == nil {
 			accept(core.NewDiagnostic(
@@ -1607,10 +1607,10 @@ func checkInfixNodeType(rule InfixRule, ctx context.Context, accept core.Validat
 			))
 		}
 	}
-	if field := findInterfaceField(nodeType, "Operator", ctx); field == nil {
+	if field := findInterfaceField(nodeType, InfixOperatorProperty, ctx); field == nil {
 		accept(core.NewDiagnostic(
 			core.SeverityError,
-			fmt.Sprintf("The node type '%s' must declare a field 'Operator' of type string.", nodeType.Name()),
+			fmt.Sprintf("The node type '%s' must declare a field '%s' of type string.", nodeType.Name(), InfixOperatorProperty),
 			rule,
 			core.WithToken(rule.NameToken()),
 			core.WithCode(ValidateInfixProperty),
@@ -1618,7 +1618,7 @@ func checkInfixNodeType(rule InfixRule, ctx context.Context, accept core.Validat
 	} else if primitiveType, ok := field.Type().(PrimitiveType); !ok || primitiveType.Type() != "string" {
 		accept(core.NewDiagnostic(
 			core.SeverityError,
-			fmt.Sprintf("The field 'Operator' of node type '%s' must be of type string.", nodeType.Name()),
+			fmt.Sprintf("The field '%s' of node type '%s' must be of type string.", InfixOperatorProperty, nodeType.Name()),
 			rule,
 			core.WithToken(rule.NameToken()),
 			core.WithCode(ValidateInfixProperty),

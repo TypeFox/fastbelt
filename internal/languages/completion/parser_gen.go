@@ -211,27 +211,34 @@ func (p *Parser) ParseRoot() Root {
 					}
 				case 24:
 					p.state.EnterRule(Root__Basic_49)
-					result := p.ParseRetype()
+					result := p.ParseDeep()
 					p.state.ExitRule()
 					if result != nil {
 						current.SetObjectsItem(result)
 					}
 				case 25:
 					p.state.EnterRule(Root__Basic_51)
-					result := p.ParseDep()
+					result := p.ParseRetype()
 					p.state.ExitRule()
 					if result != nil {
 						current.SetObjectsItem(result)
 					}
 				case 26:
 					p.state.EnterRule(Root__Basic_53)
-					result := p.ParseAct()
+					result := p.ParseDep()
 					p.state.ExitRule()
 					if result != nil {
 						current.SetObjectsItem(result)
 					}
 				case 27:
 					p.state.EnterRule(Root__Basic_55)
+					result := p.ParseAct()
+					p.state.ExitRule()
+					if result != nil {
+						current.SetObjectsItem(result)
+					}
+				case 28:
+					p.state.EnterRule(Root__Basic_57)
 					result := p.ParseLead()
 					p.state.ExitRule()
 					if result != nil {
@@ -1275,33 +1282,6 @@ func (p *Parser) ParseNest() Nest {
 	return current
 }
 
-func (p *Parser) ParseLead() Lead {
-	current := NewLead()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
-	{
-		{
-			token := p.state.Consume(Token_HASH_ID)
-			core.AssignToken(current, token, Lead_Ref_HASH_ID)
-			if token != nil {
-				current.SetRef(p.referencesConstructor.LeadRef(current, token))
-			}
-		}
-		{
-			token := p.state.Consume(Keyword_lead)
-			core.AssignToken(current, token, Lead_lead)
-		}
-		{
-			token := p.state.Consume(Token_HASH_ID)
-			core.AssignToken(current, token, Lead_Name_HASH_ID)
-			if token != nil {
-				current.SetName(token)
-			}
-		}
-	}
-	current.SetTextRangeEnd(p.state.LA(0).Range.End)
-	return current
-}
-
 func (p *Parser) ParseAmbig() Ambig {
 	current := NewAmbig()
 	current.SetTextRangeStart(p.state.LA(1).Range.Start)
@@ -1385,6 +1365,66 @@ func (p *Parser) ParseAmbigRefs() AmbigRefs {
 		{
 			token := p.state.Consume(Token_SECOND)
 			core.AssignToken(current, token, AmbigRefs_SECOND)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseDeep() Deep {
+	current := NewDeep()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Keyword_deep)
+			core.AssignToken(current, token, Deep_deep)
+		}
+		{
+			token := p.state.Consume(Token_LBRACE)
+			core.AssignToken(current, token, Deep_LBRACE)
+		}
+		{
+			p.state.EnterRule(Deep_RBRACE)
+			result := p.ParseDeepChoice()
+			p.state.ExitRule()
+			if result != nil {
+				current.SetBody(result)
+			}
+		}
+		{
+			token := p.state.Consume(Token_RBRACE)
+			core.AssignToken(current, token, Deep_RBRACE)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseDeepChoice() DeepBody {
+	current := NewDeepBody()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		switch prediction, failure := p.lookahead.DeepChoiceAlternatives(p.state); prediction {
+		case 0:
+			{
+				p.state.EnterRule(DeepChoice__Basic_1)
+				result := p.ParseAmbigName()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetName(result)
+				}
+			}
+		case 1:
+			{
+				p.state.EnterRule(DeepChoice__Basic_3)
+				result := p.ParseAmbigRefs()
+				p.state.ExitRule()
+				if result != nil {
+					current.SetRefs(result)
+				}
+			}
+		default:
+			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -1524,6 +1564,33 @@ func (p *Parser) ParseAct() Act {
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
+func (p *Parser) ParseLead() Lead {
+	current := NewLead()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Token_HASH_ID)
+			core.AssignToken(current, token, Lead_Ref_HASH_ID)
+			if token != nil {
+				current.SetRef(p.referencesConstructor.LeadRef(current, token))
+			}
+		}
+		{
+			token := p.state.Consume(Keyword_lead)
+			core.AssignToken(current, token, Lead_lead)
+		}
+		{
+			token := p.state.Consume(Token_HASH_ID)
+			core.AssignToken(current, token, Lead_Name_HASH_ID)
+			if token != nil {
+				current.SetName(token)
+			}
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)

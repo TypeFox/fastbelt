@@ -146,18 +146,22 @@ func (p *CompletionParser) ParseRoot() {
 				p.state.ExitRule()
 			case 24:
 				p.state.EnterRule(Root__Basic_49)
-				p.ParseRetype()
+				p.ParseDeep()
 				p.state.ExitRule()
 			case 25:
 				p.state.EnterRule(Root__Basic_51)
-				p.ParseDep()
+				p.ParseRetype()
 				p.state.ExitRule()
 			case 26:
 				p.state.EnterRule(Root__Basic_53)
-				p.ParseAct()
+				p.ParseDep()
 				p.state.ExitRule()
 			case 27:
 				p.state.EnterRule(Root__Basic_55)
+				p.ParseAct()
+				p.state.ExitRule()
+			case 28:
+				p.state.EnterRule(Root__Basic_57)
 				p.ParseLead()
 				p.state.ExitRule()
 			default:
@@ -204,7 +208,7 @@ func (p *CompletionParser) ParseDeclare() {
 }
 
 func (p *CompletionParser) ParseSeq() {
-	p.cp.EnterRule("Seq", Seq__Start)
+	p.cp.EnterRule("Obj", Seq__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_seq)
@@ -215,7 +219,7 @@ func (p *CompletionParser) ParseSeq() {
 }
 
 func (p *CompletionParser) ParseAlt() {
-	p.cp.EnterRule("Alt", Alt__Start)
+	p.cp.EnterRule("Obj", Alt__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_alt)
@@ -235,7 +239,7 @@ func (p *CompletionParser) ParseAlt() {
 }
 
 func (p *CompletionParser) ParsePrefix() {
-	p.cp.EnterRule("Prefix", Prefix__Start)
+	p.cp.EnterRule("Obj", Prefix__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_prefix)
@@ -261,7 +265,7 @@ func (p *CompletionParser) ParsePrefix() {
 }
 
 func (p *CompletionParser) ParseCall() {
-	p.cp.EnterRule("Call", Call__Start)
+	p.cp.EnterRule("Obj", Call__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_call)
@@ -285,7 +289,7 @@ func (p *CompletionParser) ParseCall() {
 }
 
 func (p *CompletionParser) ParseCallLong() {
-	p.cp.EnterRule("CallLong", CallLong__Start)
+	p.cp.EnterRule("Obj", CallLong__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Token_COMMON)
@@ -299,7 +303,7 @@ func (p *CompletionParser) ParseCallLong() {
 }
 
 func (p *CompletionParser) ParseCallShort() {
-	p.cp.EnterRule("CallShort", CallShort__Start)
+	p.cp.EnterRule("Obj", CallShort__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Token_COMMON)
@@ -371,7 +375,7 @@ func (p *CompletionParser) ParseMember() {
 }
 
 func (p *CompletionParser) ParseMemberNoDot() {
-	p.cp.EnterRule("MemberNoDot", MemberNoDot__Start)
+	p.cp.EnterRule("Member", MemberNoDot__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_nodot)
@@ -404,7 +408,7 @@ func (p *CompletionParser) ParseMemberCall() {
 }
 
 func (p *CompletionParser) ParseMemberCallNoDot() {
-	p.cp.EnterRule("MemberCallNoDot", MemberCallNoDot__Start)
+	p.cp.EnterRule("MemberCall", MemberCallNoDot__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Token_ID)
@@ -467,7 +471,7 @@ func (p *CompletionParser) ParseDedup() {
 }
 
 func (p *CompletionParser) ParseOpt() {
-	p.cp.EnterRule("Opt", Opt__Start)
+	p.cp.EnterRule("Obj", Opt__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_opt)
@@ -491,7 +495,7 @@ func (p *CompletionParser) ParseOpt() {
 }
 
 func (p *CompletionParser) ParseGroup() {
-	p.cp.EnterRule("Group", Group__Start)
+	p.cp.EnterRule("Obj", Group__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_group)
@@ -513,7 +517,7 @@ func (p *CompletionParser) ParseRefGroup() {
 }
 
 func (p *CompletionParser) ParseRefAction() {
-	p.cp.EnterRule("RefAction", RefAction__Start)
+	p.cp.EnterRule("Obj", RefAction__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_action)
@@ -692,7 +696,7 @@ func (p *CompletionParser) ParseInfix() {
 }
 
 func (p *CompletionParser) ParsePrimary() {
-	p.cp.EnterRule("Primary", Primary__Start)
+	p.cp.EnterRule("Expr", Primary__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Token_ID)
@@ -719,7 +723,7 @@ func (p *CompletionParser) ParseWrap() {
 }
 
 func (p *CompletionParser) ParseWrapGroup() {
-	p.cp.EnterRule("WrapGroup", WrapGroup__Start)
+	p.cp.EnterRule("WrapItem", WrapGroup__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.EnterRule(WrapGroup__Basic_3)
@@ -742,7 +746,7 @@ func (p *CompletionParser) ParseWrapGroup() {
 }
 
 func (p *CompletionParser) ParseWrapElement() {
-	p.cp.EnterRule("WrapElement", WrapElement__Start)
+	p.cp.EnterRule("WrapItem", WrapElement__Start)
 	defer p.cp.ExitRule()
 	switch prediction, failure := p.lookahead.WrapElementAlternatives(p.state); prediction {
 	case 0:
@@ -831,20 +835,6 @@ loop2:
 	}
 }
 
-func (p *CompletionParser) ParseLead() {
-	p.cp.EnterRule("Lead", Lead__Start)
-	defer p.cp.ExitRule()
-	{
-		p.state.Consume(Token_HASH_ID)
-	}
-	{
-		p.state.Consume(Keyword_lead)
-	}
-	{
-		p.state.Consume(Token_HASH_ID)
-	}
-}
-
 func (p *CompletionParser) ParseAmbig() {
 	p.cp.EnterRule("Ambig", Ambig__Start)
 	defer p.cp.ExitRule()
@@ -894,6 +884,46 @@ func (p *CompletionParser) ParseAmbigRefs() {
 	}
 	{
 		p.state.Consume(Token_SECOND)
+	}
+}
+
+func (p *CompletionParser) ParseDeep() {
+	p.cp.EnterRule("Deep", Deep__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_deep)
+	}
+	{
+		p.state.Consume(Token_LBRACE)
+	}
+	{
+		p.state.EnterRule(Deep_RBRACE)
+		p.ParseDeepChoice()
+		p.state.ExitRule()
+	}
+	{
+		p.state.Consume(Token_RBRACE)
+	}
+}
+
+func (p *CompletionParser) ParseDeepChoice() {
+	p.cp.EnterRule("DeepBody", DeepChoice__Start)
+	defer p.cp.ExitRule()
+	switch prediction, failure := p.lookahead.DeepChoiceAlternatives(p.state); prediction {
+	case 0:
+		{
+			p.state.EnterRule(DeepChoice__Basic_1)
+			p.ParseAmbigName()
+			p.state.ExitRule()
+		}
+	case 1:
+		{
+			p.state.EnterRule(DeepChoice__Basic_3)
+			p.ParseAmbigRefs()
+			p.state.ExitRule()
+		}
+	default:
+		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
 }
 
@@ -974,8 +1004,22 @@ func (p *CompletionParser) ParseAct() {
 	}
 }
 
+func (p *CompletionParser) ParseLead() {
+	p.cp.EnterRule("Lead", Lead__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Token_HASH_ID)
+	}
+	{
+		p.state.Consume(Keyword_lead)
+	}
+	{
+		p.state.Consume(Token_HASH_ID)
+	}
+}
+
 func (p *CompletionParser) ParseFQN() {
-	p.cp.EnterRule("FQN", FQN__Start)
+	p.cp.EnterRule("", FQN__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Token_ID)

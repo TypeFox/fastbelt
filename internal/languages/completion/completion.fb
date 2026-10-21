@@ -1,13 +1,14 @@
 grammar Completion;
 
-// Empty obj, we don't care about the actual AST structure for completion testing
+// Common supertype of the test cases in the root. Each case declares the AST
+// structure that its completion test depends on.
 interface Obj {}
 
 interface Root {
     Objects []Obj
 }
 
-entry Root: Objects+=(Declare | Seq | Alt | Prefix | Call | RefFQN | RefList | RefID | Member | MemberNoDot | RefOrKeyword | Dedup | Opt | Group | RefGroup | RefAction | Scope | Loop | Chain | Infix | Wrap | Shadow | Nest | Ambig | Retype | Dep | Act | Lead)*;
+entry Root: Objects+=(Declare | Seq | Alt | Prefix | Call | RefFQN | RefList | RefID | Member | MemberNoDot | RefOrKeyword | Dedup | Opt | Group | RefGroup | RefAction | Scope | Loop | Chain | Infix | Wrap | Shadow | Nest | Ambig | Deep | Retype | Dep | Act | Lead)*;
 
 interface Declare extends Obj {
     Name composite
@@ -235,22 +236,27 @@ interface AmbigRefs {
     Ref *Declare
 }
 
-interface Lead extends Obj {
-    Ref *Lead
-    Name string
-}
-
-// cross-reference that can be the first token of the document, so there is
-// no token in front of the cursor. It has its own token, so that the typed
-// prefixes of the other tests are not read as a reference.
-Lead: Ref=[Lead:HASH_ID] "lead" Name=HASH_ID;
-
 // alternatives that read the same token in different ways
 Ambig: "ambig" (Name=AmbigName | Refs=AmbigRefs);
 
 AmbigName: Name=ID Ref=[Declare:ID] FIRST;
 
 AmbigRefs: Ref1=[Declare:ID] Ref=[Declare:ID] SECOND;
+
+interface Deep extends Obj {
+    Body DeepBody
+}
+
+interface DeepBody {
+    Name AmbigName
+    Refs AmbigRefs
+}
+
+// the alternatives of Ambig, nested in a rule that is not named like the type
+// it returns
+Deep: "deep" LBRACE Body=DeepChoice RBRACE;
+
+DeepChoice returns DeepBody: Name=AmbigName | Refs=AmbigRefs;
 
 interface Retype extends Obj {
     Items []RetypeItem
@@ -289,6 +295,16 @@ interface ActSecond extends Act {
 // alternatives that start with a simple action, which the main parser only
 // executes once the keyword behind the cross-reference decides the alternative
 Act: "act" ({ActFirst} Ref=[Declare:ID] FIRST | {ActSecond} Item=RefItem SECOND);
+
+interface Lead extends Obj {
+    Ref *Lead
+    Name string
+}
+
+// cross-reference that can be the first token of the document, so there is
+// no token in front of the cursor. It has its own token, so that the typed
+// prefixes of the other tests are not read as a reference.
+Lead: Ref=[Lead:HASH_ID] "lead" Name=HASH_ID;
 
 token DECLARE: "declare"
 token FIRST: "first"

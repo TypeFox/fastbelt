@@ -65,8 +65,8 @@ func (a *TokenModesCompletionAdapter) ATN() *parser.RuntimeATN {
 	return BuildATN()
 }
 
-func (a *TokenModesCompletionAdapter) SyntheticOwnerFor(ruleKey string) (core.AstNode, bool) {
-	factory, ok := TokenModesSyntheticFactories[ruleKey]
+func (a *TokenModesCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {
+	factory, ok := TokenModesSyntheticFactories[nodeType]
 	if !ok {
 		return nil, false
 	}

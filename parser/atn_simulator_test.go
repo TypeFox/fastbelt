@@ -180,7 +180,7 @@ func TestSimulator_RuleCallReturnsToFollow(t *testing.T) {
 
 // TestSimulator_HintsSurface verifies that CompletionHints attached to atom
 // transitions are returned in place of the token, whose candidates the hint
-// supplies. Hints are deduplicated by Field value.
+// supplies. Hints are deduplicated by Key().
 func TestSimulator_HintsSurface(t *testing.T) {
 	tID := createTokenType(1, "ID")
 	hint := &CompletionHint{Owner: "Transition", Property: "Event"}
@@ -216,7 +216,7 @@ func TestSimulator_RuleCallWithoutFollowState(t *testing.T) {
 	innerMid.Transitions = []RuntimeTransition{&RuntimeEpsilonTransition{Target: innerStop}}
 	outerStart := &RuntimeATNState{StateNumber: 0, Type: ATNBasic, Decision: -1, EpsilonOnlyTransitions: true}
 	outerStart.Transitions = []RuntimeTransition{
-		NewRuleTransition(innerStart, nil, nil, &RuleCallInfo{Property: "event"}),
+		NewRuleTransition(innerStart, nil, nil, &RuleCallInfo{Field: "event"}),
 	}
 	atn := NewRuntimeATN([]*RuntimeATNState{outerStart, innerStart, innerMid, innerStop}, nil, nil)
 

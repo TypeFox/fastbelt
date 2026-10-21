@@ -43,8 +43,8 @@ func (a *TokenGroupsCompletionAdapter) ATN() *parser.RuntimeATN {
 	return BuildATN()
 }
 
-func (a *TokenGroupsCompletionAdapter) SyntheticOwnerFor(ruleKey string) (core.AstNode, bool) {
-	factory, ok := TokenGroupsSyntheticFactories[ruleKey]
+func (a *TokenGroupsCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {
+	factory, ok := TokenGroupsSyntheticFactories[nodeType]
 	if !ok {
 		return nil, false
 	}

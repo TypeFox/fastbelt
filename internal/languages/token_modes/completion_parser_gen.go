@@ -92,7 +92,7 @@ func (p *CompletionParser) ParseExpression() {
 }
 
 func (p *CompletionParser) ParseAdditive() {
-	p.cp.EnterRule("Additive", Additive__Start)
+	p.cp.EnterRule("Expression", Additive__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.EnterRule(Additive__LoopEntry)

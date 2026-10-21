@@ -165,7 +165,7 @@ func (p *CompletionParser) ParseExpression() {
 }
 
 func (p *CompletionParser) ParsePrimaryExpression() {
-	p.cp.EnterRule("PrimaryExpression", PrimaryExpression__Start)
+	p.cp.EnterRule("Expression", PrimaryExpression__Start)
 	defer p.cp.ExitRule()
 	switch prediction, failure := p.lookahead.PrimaryExpressionAlternatives(p.state); prediction {
 	case 0:

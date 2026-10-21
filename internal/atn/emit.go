@@ -47,8 +47,8 @@ func renderActionInfo(a *parser.ActionInfo) string {
 
 func renderRuleCallInfo(c *parser.RuleCallInfo) string {
 	fields := []string{}
-	if c.Property != "" {
-		fields = append(fields, "Property: "+strconv.Quote(c.Property))
+	if c.Field != "" {
+		fields = append(fields, "Field: "+strconv.Quote(c.Field))
 	}
 	if c.List {
 		fields = append(fields, "List: true")

@@ -65,8 +65,8 @@ func (a *ArithmeticsCompletionAdapter) ATN() *parser.RuntimeATN {
 	return BuildATN()
 }
 
-func (a *ArithmeticsCompletionAdapter) SyntheticOwnerFor(ruleKey string) (core.AstNode, bool) {
-	factory, ok := ArithmeticsSyntheticFactories[ruleKey]
+func (a *ArithmeticsCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {
+	factory, ok := ArithmeticsSyntheticFactories[nodeType]
 	if !ok {
 		return nil, false
 	}

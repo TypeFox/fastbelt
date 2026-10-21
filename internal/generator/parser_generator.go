@@ -1009,7 +1009,7 @@ func generateParseFunction(node codegen.Node, context *ParserGeneratorContext, r
 	if context.completion {
 		node.AppendLine("func (p *", receiverType, ") Parse", rule.Name(), "() {")
 		node.Indent(func(n codegen.Node) {
-			n.AppendLine("p.cp.EnterRule(", strconv.Quote(rule.Name()), ", ", context.atnData.ruleStart(rule), ")")
+			n.AppendLine("p.cp.EnterRule(", strconv.Quote(returnType.Name()), ", ", context.atnData.ruleStart(rule), ")")
 			n.AppendLine("defer p.cp.ExitRule()")
 			generateAbstractElementParser(n, context, rule.Body())
 		})
@@ -1053,7 +1053,7 @@ func generateCompositeParseFunction(node codegen.Node, context *ParserGeneratorC
 	if context.completion {
 		node.AppendLine("func (p *", receiverType, ") Parse", rule.Name(), "() {")
 		node.Indent(func(n codegen.Node) {
-			n.AppendLine("p.cp.EnterRule(", strconv.Quote(rule.Name()), ", ", context.atnData.ruleStart(rule), ")")
+			n.AppendLine("p.cp.EnterRule(\"\", ", context.atnData.ruleStart(rule), ")")
 			n.AppendLine("defer p.cp.ExitRule()")
 			generateAbstractElementParser(n, context, rule.Body())
 		})

@@ -639,7 +639,7 @@ func (p *CompletionParser) ParseKeywordSelector() {
 }
 
 func (p *CompletionParser) ParseAlternatives() {
-	p.cp.EnterRule("Alternatives", Alternatives__Start)
+	p.cp.EnterRule("Element", Alternatives__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.EnterRule(Alternatives__Basic_3)
@@ -665,7 +665,7 @@ func (p *CompletionParser) ParseAlternatives() {
 }
 
 func (p *CompletionParser) ParseGroup() {
-	p.cp.EnterRule("Group", Group__Start)
+	p.cp.EnterRule("Element", Group__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.EnterRule(Group__Basic_3)
@@ -810,7 +810,7 @@ func (p *CompletionParser) ParseAssignable() {
 }
 
 func (p *CompletionParser) ParseAssignableWithoutAlts() {
-	p.cp.EnterRule("AssignableWithoutAlts", AssignableWithoutAlts__Start)
+	p.cp.EnterRule("Assignable", AssignableWithoutAlts__Start)
 	defer p.cp.ExitRule()
 	switch prediction, failure := p.lookahead.AssignableWithoutAltsAlternatives(p.state); prediction {
 	case 0:
@@ -837,7 +837,7 @@ func (p *CompletionParser) ParseAssignableWithoutAlts() {
 }
 
 func (p *CompletionParser) ParseAssignableAlternatives() {
-	p.cp.EnterRule("AssignableAlternatives", AssignableAlternatives__Start)
+	p.cp.EnterRule("Assignable", AssignableAlternatives__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.EnterRule(AssignableAlternatives__Basic_3)
@@ -956,7 +956,7 @@ func (p *CompletionParser) ParseCompositeRule() {
 }
 
 func (p *CompletionParser) ParseCompositeAlternatives() {
-	p.cp.EnterRule("CompositeAlternatives", CompositeAlternatives__Start)
+	p.cp.EnterRule("Element", CompositeAlternatives__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.EnterRule(CompositeAlternatives__Basic_3)
@@ -982,7 +982,7 @@ func (p *CompletionParser) ParseCompositeAlternatives() {
 }
 
 func (p *CompletionParser) ParseCompositeGroup() {
-	p.cp.EnterRule("CompositeGroup", CompositeGroup__Start)
+	p.cp.EnterRule("Element", CompositeGroup__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.EnterRule(CompositeGroup__Basic_3)
@@ -1005,7 +1005,7 @@ func (p *CompletionParser) ParseCompositeGroup() {
 }
 
 func (p *CompletionParser) ParseCompositeElement() {
-	p.cp.EnterRule("CompositeElement", CompositeElement__Start)
+	p.cp.EnterRule("Element", CompositeElement__Start)
 	defer p.cp.ExitRule()
 	switch prediction, failure := p.lookahead.CompositeElementAlternatives(p.state); prediction {
 	case 0:
@@ -1135,7 +1135,7 @@ func (p *CompletionParser) ParsePrecedenceGroup() {
 }
 
 func (p *CompletionParser) ParseInfixOperator() {
-	p.cp.EnterRule("InfixOperator", InfixOperator__Start)
+	p.cp.EnterRule("Assignable", InfixOperator__Start)
 	defer p.cp.ExitRule()
 	switch prediction, failure := p.lookahead.InfixOperatorAlternatives(p.state); prediction {
 	case 0:

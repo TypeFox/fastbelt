@@ -419,7 +419,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[QualifiedNameRecursive_ID]),
 	)
 	states[Root__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[Obj__Start], states[Root__Basic_1], nil, &parser.RuleCallInfo{Property: "item", Type: "Obj"}),
+		parser.NewRuleTransition(states[Obj__Start], states[Root__Basic_1], nil, &parser.RuleCallInfo{Field: "item", Type: "Obj"}),
 	)
 	states[Root__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Root__Stop]),

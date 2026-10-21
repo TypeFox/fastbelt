@@ -206,8 +206,8 @@ func generateLspAdapter(ctx *LinkerGeneratorContext, actions []actionEntry) code
 	node.AppendLine("}")
 	node.AppendLine()
 
-	node.AppendLine("func (a *", name, "CompletionAdapter) SyntheticOwnerFor(ruleKey string) (core.AstNode, bool) {")
-	node.AppendLine(" factory, ok := ", name, "SyntheticFactories[ruleKey]")
+	node.AppendLine("func (a *", name, "CompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {")
+	node.AppendLine(" factory, ok := ", name, "SyntheticFactories[nodeType]")
 	node.AppendLine(" if !ok {")
 	node.AppendLine("  return nil, false")
 	node.AppendLine(" }")

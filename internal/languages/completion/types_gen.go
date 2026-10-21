@@ -2519,95 +2519,174 @@ func (i *AmbigRefsImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	}
 }
 
-type Lead interface {
+type Deep interface {
 	core.AstNode
 	Obj
 
-	IsLead()
-	Ref() *core.Reference[Lead]
-	SetRef(value *core.Reference[Lead])
-	Name() string
-	NameToken() *core.Token
-	SetName(value *core.Token)
+	IsDeep()
+	Body() DeepBody
+	SetBody(value DeepBody)
 }
 
-func NewLead() Lead {
-	return &LeadImpl{}
+func NewDeep() Deep {
+	return &DeepImpl{}
 }
 
-type LeadData struct {
-	ref  *core.Reference[Lead]
-	name *core.Token
+type DeepData struct {
+	body DeepBody
 }
 
-func (i *LeadData) IsLead() {}
+func (i *DeepData) IsDeep() {}
 
-func (i *LeadData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-}
-
-func (i *LeadData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	if i.ref != nil {
-		fn(i.ref, fieldNameRef, -1)
+func (i *DeepData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	if i.body != nil {
+		fn(i.body, fieldNameBody, -1)
 	}
 }
 
-func (i *LeadData) Ref() *core.Reference[Lead] {
-	if i != nil && i.ref != nil {
-		return i.ref
+func (i *DeepData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+}
+
+func (i *DeepData) Body() DeepBody {
+	if i != nil && i.body != nil {
+		return i.body
 	} else {
 		return nil
 	}
 }
 
-func (i *LeadData) SetRef(value *core.Reference[Lead]) {
-	i.ref = value
+func (i *DeepData) SetBody(value DeepBody) {
+	i.body = value
 }
 
-func (i *LeadData) Name() string {
-	if i != nil && i.name != nil {
-		return i.name.Image
-	} else {
-		return ""
+type DeepImpl struct {
+	core.AstNodeBase
+	ObjData
+	DeepData
+}
+
+func (i *DeepImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.ObjData.ForEachNode(fn)
+	i.DeepData.ForEachNode(fn)
+}
+
+func (i *DeepImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.ObjData.ForEachReference(fn)
+	i.DeepData.ForEachReference(fn)
+}
+
+func (i *DeepImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameBody:
+		if i.Body() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("DeepImpl.Resolve: field 'body' is nil in node '%s'", nodePath)
+		}
+		child := i.Body()
+		return child.Resolve(path.Tail())
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("DeepImpl.Resolve: field '%s' does not exist in node '%s' of type 'Deep'", field.Value(), nodePath)
 	}
 }
 
-func (i *LeadData) NameToken() *core.Token {
-	return i.name
+type DeepBody interface {
+	core.AstNode
+
+	IsDeepBody()
+	Name() AmbigName
+	SetName(value AmbigName)
+	Refs() AmbigRefs
+	SetRefs(value AmbigRefs)
 }
 
-func (i *LeadData) SetName(value *core.Token) {
+func NewDeepBody() DeepBody {
+	return &DeepBodyImpl{}
+}
+
+type DeepBodyData struct {
+	name AmbigName
+	refs AmbigRefs
+}
+
+func (i *DeepBodyData) IsDeepBody() {}
+
+func (i *DeepBodyData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	if i.name != nil {
+		fn(i.name, fieldNameName, -1)
+	}
+	if i.refs != nil {
+		fn(i.refs, fieldNameRefs, -1)
+	}
+}
+
+func (i *DeepBodyData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+}
+
+func (i *DeepBodyData) Name() AmbigName {
+	if i != nil && i.name != nil {
+		return i.name
+	} else {
+		return nil
+	}
+}
+
+func (i *DeepBodyData) SetName(value AmbigName) {
 	i.name = value
 }
 
-type LeadImpl struct {
+func (i *DeepBodyData) Refs() AmbigRefs {
+	if i != nil && i.refs != nil {
+		return i.refs
+	} else {
+		return nil
+	}
+}
+
+func (i *DeepBodyData) SetRefs(value AmbigRefs) {
+	i.refs = value
+}
+
+type DeepBodyImpl struct {
 	core.AstNodeBase
-	ObjData
-	LeadData
+	DeepBodyData
 }
 
-func (i *LeadImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	i.ObjData.ForEachNode(fn)
-	i.LeadData.ForEachNode(fn)
+func (i *DeepBodyImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.DeepBodyData.ForEachNode(fn)
 }
 
-func (i *LeadImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	i.ObjData.ForEachReference(fn)
-	i.LeadData.ForEachReference(fn)
+func (i *DeepBodyImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.DeepBodyData.ForEachReference(fn)
 }
 
-func (i *LeadImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+func (i *DeepBodyImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	if path.Empty() {
 		return i, nil
 	}
 	field, _ := path.Head()
 	switch field {
 	case fieldNameName:
-		return nil, fmt.Errorf("LeadImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
-	case fieldNameRef:
-		return nil, fmt.Errorf("LeadImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+		if i.Name() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("DeepBodyImpl.Resolve: field 'name' is nil in node '%s'", nodePath)
+		}
+		child := i.Name()
+		return child.Resolve(path.Tail())
+	case fieldNameRefs:
+		if i.Refs() == nil {
+			nodePath, _ := core.PathOf(i)
+			return nil, fmt.Errorf("DeepBodyImpl.Resolve: field 'refs' is nil in node '%s'", nodePath)
+		}
+		child := i.Refs()
+		return child.Resolve(path.Tail())
 	default:
 		nodePath, _ := core.PathOf(i)
-		return nil, fmt.Errorf("LeadImpl.Resolve: field '%s' does not exist in node '%s' of type 'Lead'", field.Value(), nodePath)
+		return nil, fmt.Errorf("DeepBodyImpl.Resolve: field '%s' does not exist in node '%s' of type 'DeepBody'", field.Value(), nodePath)
 	}
 }
 
@@ -3102,9 +3181,102 @@ func (i *ActSecondImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	}
 }
 
+type Lead interface {
+	core.AstNode
+	Obj
+
+	IsLead()
+	Ref() *core.Reference[Lead]
+	SetRef(value *core.Reference[Lead])
+	Name() string
+	NameToken() *core.Token
+	SetName(value *core.Token)
+}
+
+func NewLead() Lead {
+	return &LeadImpl{}
+}
+
+type LeadData struct {
+	ref  *core.Reference[Lead]
+	name *core.Token
+}
+
+func (i *LeadData) IsLead() {}
+
+func (i *LeadData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+}
+
+func (i *LeadData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	if i.ref != nil {
+		fn(i.ref, fieldNameRef, -1)
+	}
+}
+
+func (i *LeadData) Ref() *core.Reference[Lead] {
+	if i != nil && i.ref != nil {
+		return i.ref
+	} else {
+		return nil
+	}
+}
+
+func (i *LeadData) SetRef(value *core.Reference[Lead]) {
+	i.ref = value
+}
+
+func (i *LeadData) Name() string {
+	if i != nil && i.name != nil {
+		return i.name.Image
+	} else {
+		return ""
+	}
+}
+
+func (i *LeadData) NameToken() *core.Token {
+	return i.name
+}
+
+func (i *LeadData) SetName(value *core.Token) {
+	i.name = value
+}
+
+type LeadImpl struct {
+	core.AstNodeBase
+	ObjData
+	LeadData
+}
+
+func (i *LeadImpl) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
+	i.ObjData.ForEachNode(fn)
+	i.LeadData.ForEachNode(fn)
+}
+
+func (i *LeadImpl) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
+	i.ObjData.ForEachReference(fn)
+	i.LeadData.ForEachReference(fn)
+}
+
+func (i *LeadImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
+	if path.Empty() {
+		return i, nil
+	}
+	field, _ := path.Head()
+	switch field {
+	case fieldNameName:
+		return nil, fmt.Errorf("LeadImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
+	case fieldNameRef:
+		return nil, fmt.Errorf("LeadImpl.Resolve: field 'ref' is a cross-reference instead of a container field")
+	default:
+		nodePath, _ := core.PathOf(i)
+		return nil, fmt.Errorf("LeadImpl.Resolve: field '%s' does not exist in node '%s' of type 'Lead'", field.Value(), nodePath)
+	}
+}
+
 var (
 	fieldNameA        = unique.Make("a")
 	fieldNameB        = unique.Make("b")
+	fieldNameBody     = unique.Make("body")
 	fieldNameCall     = unique.Make("call")
 	fieldNameChildren = unique.Make("children")
 	fieldNameElements = unique.Make("elements")
@@ -3138,6 +3310,8 @@ var CompletionSyntheticFactories = map[string]func() core.AstNode{
 	"ChainItem":     func() core.AstNode { return NewChainItem() },
 	"Declare":       func() core.AstNode { return NewDeclare() },
 	"Dedup":         func() core.AstNode { return NewDedup() },
+	"Deep":          func() core.AstNode { return NewDeep() },
+	"DeepBody":      func() core.AstNode { return NewDeepBody() },
 	"Dep":           func() core.AstNode { return NewDep() },
 	"Expr":          func() core.AstNode { return NewExpr() },
 	"Infix":         func() core.AstNode { return NewInfix() },

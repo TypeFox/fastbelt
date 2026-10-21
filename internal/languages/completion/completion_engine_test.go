@@ -132,7 +132,7 @@ func TestCompletion_AfterPrefix(t *testing.T) {
 }
 
 // Headline regression: both Prefix branches stay live past the shared prefix.
-func TestCompletion_AfterCCommon(t *testing.T) {
+func TestCompletion_AfterPrefixCommon(t *testing.T) {
 	items := completionAt(t, "prefix common <|cursor>")
 	if !hasLabel(items, "first") {
 		t.Errorf("expected 'first' after 'prefix common'; got %v", itemLabels(items))
@@ -142,8 +142,8 @@ func TestCompletion_AfterCCommon(t *testing.T) {
 	}
 }
 
-// End-of-rule pop-back: Root loop re-enters after "a first".
-func TestCompletion_AfterAFirst(t *testing.T) {
+// End-of-rule pop-back: Root loop re-enters after "seq first".
+func TestCompletion_AfterSeqFirst(t *testing.T) {
 	items := completionAt(t, "seq first <|cursor>")
 	for _, want := range []string{"declare", "seq", "alt", "prefix", "call", "fqn", "list", "ref"} {
 		if !hasLabel(items, want) {
@@ -165,15 +165,15 @@ func TestCompletion_AfterCall(t *testing.T) {
 
 // Rule-call shared-prefix regression: CallLong's "then" must stay live
 // even though CallShort is already a complete parse.
-func TestCompletion_AfterDCommon(t *testing.T) {
+func TestCompletion_AfterCallCommon(t *testing.T) {
 	items := completionAt(t, "call common <|cursor>")
 	if !hasLabel(items, "then") {
 		t.Errorf("expected 'then' after 'call common'; got %v", itemLabels(items))
 	}
 }
 
-// Single-path stretch: only "long" follows "d common then".
-func TestCompletion_AfterDCommonThen(t *testing.T) {
+// Single-path stretch: only "long" follows "call common then".
+func TestCompletion_AfterCallCommonThen(t *testing.T) {
 	items := completionAt(t, "call common then <|cursor>")
 	if !hasLabel(items, "long") {
 		t.Errorf("expected 'long'; got %v", itemLabels(items))
@@ -598,21 +598,6 @@ func (f *ownerRecordingFilter) FilterAmbigRefsRef(_ context.Context, ref *core.R
 	return in
 }
 
-// leadOwnerRecordingFilter records the owners of Lead.Ref only. A Lead can
-// start at every position of the root, so the ownerRecordingFilter leaves it
-// out to keep the other owner tests focused.
-type leadOwnerRecordingFilter struct {
-	completion.DefaultCompletionCompletionFilter
-	owners []core.AstNode
-}
-
-func (f *leadOwnerRecordingFilter) FilterLeadRef(_ context.Context, ref *core.Reference[completion.Lead], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
-	f.owners = append(f.owners, ref.Owner())
-	return in
-}
-
-func (f *leadOwnerRecordingFilter) recordedOwners() []core.AstNode { return f.owners }
-
 func (f *ownerRecordingFilter) FilterRefItemRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	f.owners = append(f.owners, ref.Owner())
 	return in
@@ -636,6 +621,21 @@ type ownerRecorder interface {
 }
 
 func (f *ownerRecordingFilter) recordedOwners() []core.AstNode { return f.owners }
+
+// leadOwnerRecordingFilter records the owners of Lead.Ref only. A Lead can
+// start at every position of the root, so the ownerRecordingFilter leaves it
+// out to keep the other owner tests focused.
+type leadOwnerRecordingFilter struct {
+	completion.DefaultCompletionCompletionFilter
+	owners []core.AstNode
+}
+
+func (f *leadOwnerRecordingFilter) FilterLeadRef(_ context.Context, ref *core.Reference[completion.Lead], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+func (f *leadOwnerRecordingFilter) recordedOwners() []core.AstNode { return f.owners }
 
 // completeOwners requests the completion at the cursor and returns the
 // owners of the references that were completed, as recorded by a new
@@ -849,6 +849,22 @@ func TestCompletion_AfterAmbig_OwnerOfOtherAlternative(t *testing.T) {
 	assert.ElementsMatch(t, []string{
 		"AmbigName at name, Ambig at objects@0",
 		"new AmbigRefs, new Root",
+	}, actual)
+}
+
+// Like TestCompletion_AfterAmbig_OwnerOfOtherAlternative, but the owner of
+// AmbigRefs is derived from the rule stack of the completion parser, which
+// contains DeepChoice. The synthetic owner chain must contain the DeepBody
+// that DeepChoice returns, although the rule is not named like its type.
+func TestCompletion_AfterDeep_OwnerChainUsesReturnTypes(t *testing.T) {
+	doc, owners := completeOwners(t, "deep { foo <|cursor>bar first }")
+	actual := []string{}
+	for _, owner := range owners {
+		actual = append(actual, describeOwner(doc, owner))
+	}
+	assert.ElementsMatch(t, []string{
+		"AmbigName at name, DeepBody at body, Deep at objects@0",
+		"new AmbigRefs, new DeepBody, new Deep, new Root",
 	}, actual)
 }
 
@@ -1194,7 +1210,7 @@ func TestCompletion_ContributorPostProcess(t *testing.T) {
 	}
 	c := itemWithLabel(items, "call")
 	if c == nil {
-		t.Fatalf("expected 'prefix' keyword; got %v", itemLabels(items))
+		t.Fatalf("expected 'call' keyword; got %v", itemLabels(items))
 		return
 	}
 	if !strings.HasPrefix(c.SortText, "zzz-") {
@@ -1656,7 +1672,9 @@ func TestCompletion_Snippets(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 // Inside a comment, including right behind its closing delimiter, the
-// grammar proposes nothing. The cursor right in front of a comment, and the
+// grammar proposes nothing, and neither does the default
+// CompletionForComment that the SimpleCompletionContributor inherits. The
+// cursor right in front of a comment, and the
 // cursor separated from its end, are outside of it.
 func TestCompletion_InsideComment_NoProposals(t *testing.T) {
 	for _, src := range []string{

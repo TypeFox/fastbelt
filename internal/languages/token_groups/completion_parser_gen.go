@@ -81,7 +81,7 @@ func (p *CompletionParser) ParseModel() {
 }
 
 func (p *CompletionParser) ParseA() {
-	p.cp.EnterRule("A", A__Start)
+	p.cp.EnterRule("Item", A__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_a)
@@ -92,7 +92,7 @@ func (p *CompletionParser) ParseA() {
 }
 
 func (p *CompletionParser) ParseB() {
-	p.cp.EnterRule("B", B__Start)
+	p.cp.EnterRule("Item", B__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_b)
@@ -108,7 +108,7 @@ func (p *CompletionParser) ParseB() {
 }
 
 func (p *CompletionParser) ParseC() {
-	p.cp.EnterRule("C", C__Start)
+	p.cp.EnterRule("Item", C__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_c)
@@ -119,7 +119,7 @@ func (p *CompletionParser) ParseC() {
 }
 
 func (p *CompletionParser) ParseD() {
-	p.cp.EnterRule("D", D__Start)
+	p.cp.EnterRule("Item", D__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_d)
@@ -134,7 +134,7 @@ func (p *CompletionParser) ParseD() {
 }
 
 func (p *CompletionParser) ParseE() {
-	p.cp.EnterRule("E", E__Start)
+	p.cp.EnterRule("Recovery", E__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_e)
@@ -148,7 +148,7 @@ func (p *CompletionParser) ParseE() {
 }
 
 func (p *CompletionParser) ParseF() {
-	p.cp.EnterRule("F", F__Start)
+	p.cp.EnterRule("Item", F__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_f)
@@ -159,7 +159,7 @@ func (p *CompletionParser) ParseF() {
 }
 
 func (p *CompletionParser) ParseG() {
-	p.cp.EnterRule("G", G__Start)
+	p.cp.EnterRule("Item", G__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_g)
@@ -170,7 +170,7 @@ func (p *CompletionParser) ParseG() {
 }
 
 func (p *CompletionParser) ParseH() {
-	p.cp.EnterRule("H", H__Start)
+	p.cp.EnterRule("Item", H__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_h)

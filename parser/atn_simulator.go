@@ -17,18 +17,20 @@ import (
 // The defaults are conservative; callers needing different limits can
 // instantiate their own copy.
 type SimConfig struct {
-	// MaxLiveSet caps the size of the live set at each step. The simulation
-	// is an NFA exploration; pathological grammars can still grow it, so we
-	// drop the lowest-priority entries (oldest insertion order) when the cap
-	// is exceeded rather than refusing the request.
+	// MaxLiveSet caps the number of distinct ATN positions (state, return
+	// stack and hints) in the live set at each step. The simulation is an NFA
+	// exploration; pathological grammars can still grow it, so the epsilon
+	// closure stops exploring once the cap is exceeded rather than refusing
+	// the request. Several paths can share a position, so the live set itself
+	// can hold more paths than this.
 	MaxLiveSet int
 	// MaxReturnStack caps the depth of the per-path return stack. The parser
 	// itself has finite recursion in practice, so a generous default is fine.
 	MaxReturnStack int
 }
 
-// DefaultSimConfig is the SimConfig used by Simulate/NextCompletionsFromSet
-// when the convenience entry points (without explicit config) are called.
+// DefaultSimConfig is the SimConfig used by the entry points without an
+// explicit config: Simulate, SimulateAt and NextCompletionsFromSet.
 var DefaultSimConfig = SimConfig{
 	MaxLiveSet:     512,
 	MaxReturnStack: 64,
@@ -36,15 +38,16 @@ var DefaultSimConfig = SimConfig{
 
 // simPath is one node in the NFA live set: a state index plus the return-stack
 // of FollowState indices the simulator must continue at when leaving rules
-// through RuleStop transitions. Identity is the triple (stateIdx, stack,
-// hints): two paths at the same state with the same return stack but
-// different hint contexts must stay distinct because the completion
-// provider surfaces different items for each.
+// through RuleStop transitions. Its identity is the key returned by
+// [simPath.keys], which covers all fields: for example, two paths at the
+// same state with the same return stack but different hint contexts must
+// stay distinct because the completion provider surfaces different items
+// for each.
 //
 // hints is parallel to stack: hints[i] is the CompletionHint that became
 // active when stack frame i was pushed, or nil if that push did not change
 // the active hint. The currently active hint is the topmost non-nil entry,
-// implemented as `activeHintAfter(p.stack, p.hints)` below.
+// see [simPath.activeHint].
 //
 // consumedAt, fresh and left describe what happened around the last consumed
 // token. They are part of the identity, because they determine the node that
@@ -139,7 +142,7 @@ func (atn *RuntimeATN) ownerKey(p simPath) string {
 	writeInts(&b, p.left)
 	b.WriteByte('|')
 	for _, s := range p.freshFrames() {
-		if call := atn.ruleCallAt(s); call == nil || call.Property != "" || call.PrecedingAction != nil {
+		if call := atn.ruleCallAt(s); call == nil || call.Field != "" || call.PrecedingAction != nil {
 			b.WriteString(strconv.Itoa(s))
 			b.WriteByte(',')
 		}
@@ -167,15 +170,13 @@ func (p simPath) activeHint() (hint *CompletionHint, fresh bool) {
 }
 
 // Simulate advances an NFA-style live set from startStateIdx by consuming the
-// given tokens. The returned slice contains the encoded keys of every distinct
-// (state, return-stack) pair that survived consumption; pass it to
-// NextCompletionsFromSet to obtain the valid next tokens + hints.
+// given tokens and returns the paths that survived; pass them to
+// NextCompletionsFromSet to obtain the valid next tokens and hints.
 //
-// The simulator is deliberately path-aware (return stacks for RuleTransition /
-// RuleStop) so that completions inside deeply-nested rules resolve correctly.
-// It does not apply LL(k) lookahead - every alternative consistent with the
-// consumed tokens stays live. That is what we want for completion: the user
-// hasn't picked a branch yet.
+// The simulator tracks return stacks for rule calls, so that completions
+// inside nested rules resolve correctly. It does not apply LL(k) lookahead:
+// every alternative consistent with the consumed tokens stays live, as the
+// user hasn't picked a branch yet.
 func (atn *RuntimeATN) Simulate(startStateIdx int, tokens []core.Token) []simPath {
 	return atn.SimulateWithConfig(startStateIdx, tokens, DefaultSimConfig)
 }
@@ -188,7 +189,6 @@ func (atn *RuntimeATN) SimulateWithConfig(startStateIdx int, tokens []core.Token
 // simulateFrom advances the live set of the seed by consuming the tokens.
 // A seed at an unknown state yields an empty live set.
 func (atn *RuntimeATN) simulateFrom(seed simPath, tokens []core.Token, cfg SimConfig) []simPath {
-	// Seed the live set with the closure of the start state.
 	live := atn.epsilonClosure([]simPath{seed}, cfg)
 	for _, tok := range tokens {
 		live = atn.advance(live, tok.Type, cfg)
@@ -201,10 +201,8 @@ func (atn *RuntimeATN) simulateFrom(seed simPath, tokens []core.Token, cfg SimCo
 
 // TokenCompletion is one atom-transition emission: a TokenType that the
 // simulator reports as valid at the cursor, along with the source ATN state
-// index of the transition that produced it. Two cursors inside the same
-// rule but at different grammar positions surface different ATNStateIdx
-// values for the same TokenType - the completion contributor branches on
-// this to identify the exact grammar element being completed.
+// index of the transition that produced it. The completion contributor can
+// branch on ATNStateIdx to identify the exact grammar element being completed.
 type TokenCompletion struct {
 	TokenType   *core.TokenType
 	ATNStateIdx int
@@ -236,14 +234,10 @@ type HintCompletion struct {
 }
 
 // CompletionInfo bundles everything the completion provider needs from a
-// single live-set walk: every atom-transition emission (TokenType + source
-// ATN state) that is not part of a cross-reference, and every cross-reference
-// hint emission (CompletionHint + source ATN state). The tokens of a
+// single live-set walk: every atom-transition emission that is not part of a
+// cross-reference, and every cross-reference hint emission. The tokens of a
 // cross-reference are left to the hint, as the dispatch table supplies the
 // real candidates with their actual names.
-//
-// All slices are owned by the caller after this returns; the simulator
-// keeps no internal state.
 type CompletionInfo struct {
 	Tokens []TokenCompletion
 	Hints  []HintCompletion
@@ -257,9 +251,8 @@ type hintKey struct {
 	owner string
 }
 
-// HasToken reports whether tokenID appears in any TokenCompletion.
-// O(len(Tokens)); use it for assertions and one-off lookups, not for
-// hot-path filtering.
+// HasToken reports whether tokenID appears in any TokenCompletion. It is a
+// linear scan, meant for assertions and one-off lookups.
 func (info CompletionInfo) HasToken(tokenID int) bool {
 	for _, tc := range info.Tokens {
 		if tc.TokenType != nil && tc.TokenType.Id == tokenID {
@@ -270,15 +263,12 @@ func (info CompletionInfo) HasToken(tokenID int) bool {
 }
 
 // NextCompletionsFromSet returns a CompletionInfo covering every atom
-// transition reachable from the given live set's ε-closure. It is the
-// single public entry point for inspecting what the simulator yielded;
-// callers that only need set-membership use info.HasToken.
+// transition reachable from the given live set's ε-closure.
 //
-// Tokens and hints are deduplicated by (sourceStateIdx, Id) and
-// (sourceStateIdx, hint key) respectively - so the same TokenType emitted
-// from two different grammar positions surfaces twice, letting the
-// completion contributor distinguish them via ATNStateIdx. Hints that lead
-// to different owners are distinct as well.
+// Tokens are deduplicated by (source state, token type) and hints by (source
+// state, hint key, owner), so the same TokenType emitted from two different
+// grammar positions surfaces twice, letting the completion contributor
+// distinguish them via ATNStateIdx.
 //
 // An atom that carries a hint, or that is inside of a cross-reference rule
 // call and inherits its hint (e.g. the ID + "." + ID atoms of an FQN
@@ -399,9 +389,8 @@ func (atn *RuntimeATN) epsilonClosure(seed []simPath, cfg SimConfig) []simPath {
 			}
 		}
 		if cfg.MaxLiveSet > 0 && len(seen.positions) > cfg.MaxLiveSet {
-			// Stop the exploration. The paths that are dropped correspond to
-			// the deepest exploration in our DFS; the caller already has the
-			// nearer-front paths, which dominate the keyword set.
+			// The dropped paths are the deepest ones of the DFS; the nearer
+			// paths already collected dominate the completion set.
 			break
 		}
 	}

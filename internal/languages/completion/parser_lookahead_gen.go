@@ -8,51 +8,52 @@ import (
 )
 
 const (
-	DecisionActAlternatives    = 28
-	DecisionAmbigAlternatives  = 26
-	DecisionCallAlternatives   = 6
-	DecisionDedupAlternatives  = 11
-	DecisionPrefixAlternatives = 5
+	DecisionActAlternatives        = 29
+	DecisionAmbigAlternatives      = 26
+	DecisionCallAlternatives       = 6
+	DecisionDedupAlternatives      = 11
+	DecisionDeepChoiceAlternatives = 27
+	DecisionPrefixAlternatives     = 5
 )
 
 var AltAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_FIRST, Token_SECOND},
-	Lookup: []int{34: 1, 35: 2},
+	Lookup: []int{35: 1, 36: 2},
 }
 
 var LoopAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_DECLARE, Token_ID, Keyword_loop},
-	Lookup: []int{20: 3, 33: 1, 49: 2},
+	Lookup: []int{20: 3, 34: 1, 50: 2},
 }
 
 var NestAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_DECLARE, Token_ID, Keyword_nest},
-	Lookup: []int{25: 3, 33: 1, 49: 2},
+	Lookup: []int{25: 3, 34: 1, 50: 2},
 }
 
 var RefOrKeywordAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_SELF},
-	Lookup: []int{37: 2, 49: 1},
+	Lookup: []int{38: 2, 50: 1},
 }
 
 var RootObjectsAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_DECLARE, Keyword_seq, Keyword_alt, Keyword_prefix, Keyword_call, Keyword_fqn, Keyword_list, Keyword_ref, Keyword_member, Keyword_nodot, Keyword_choice, Keyword_dedup, Keyword_opt, Keyword_group, Keyword_refgroup, Keyword_action, Keyword_scope, Keyword_loop, Keyword_chain, Keyword_infix, Keyword_wrap, Keyword_shadow, Keyword_nest, Keyword_ambig, Keyword_retype, Keyword_dep, Keyword_act, Token_HASH_ID},
-	Lookup: []int{1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 11, 11: 12, 14: 13, 15: 14, 16: 15, 17: 16, 18: 17, 20: 18, 21: 19, 22: 20, 23: 21, 24: 22, 25: 23, 27: 24, 28: 25, 29: 26, 30: 27, 33: 1, 50: 28},
+	Types:  []*core.TokenType{Token_DECLARE, Keyword_seq, Keyword_alt, Keyword_prefix, Keyword_call, Keyword_fqn, Keyword_list, Keyword_ref, Keyword_member, Keyword_nodot, Keyword_choice, Keyword_dedup, Keyword_opt, Keyword_group, Keyword_refgroup, Keyword_action, Keyword_scope, Keyword_loop, Keyword_chain, Keyword_infix, Keyword_wrap, Keyword_shadow, Keyword_nest, Keyword_ambig, Keyword_deep, Keyword_retype, Keyword_dep, Keyword_act, Token_HASH_ID},
+	Lookup: []int{1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 11, 11: 12, 14: 13, 15: 14, 16: 15, 17: 16, 18: 17, 20: 18, 21: 19, 22: 20, 23: 21, 24: 22, 25: 23, 26: 24, 27: 25, 28: 26, 29: 27, 30: 28, 34: 1, 51: 29},
 }
 
 var WrapElementAlternatives = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_ID, Token_LBRACE},
-	Lookup: []int{40: 2, 49: 1},
+	Lookup: []int{41: 2, 50: 1},
 }
 
 var WrapGroupElementsLoop = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_LBRACE, Token_ID},
-	Lookup: []int{40: 1, 49: 1},
+	Lookup: []int{41: 1, 50: 1},
 }
 
 var WrapGroupOptional = parser.LL1Lookahead{
 	Types:  []*core.TokenType{Token_LBRACE, Token_ID},
-	Lookup: []int{40: 1, 49: 1},
+	Lookup: []int{41: 1, 50: 1},
 }
 
 // CompletionParserLookahead abstracts every lookahead/prediction decision performed by
@@ -72,6 +73,7 @@ type CompletionParserLookahead interface {
 	DeclareChildrenLoop(state *parser.ParserState) bool
 	DeclareOptional(state *parser.ParserState) bool
 	DedupAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
+	DeepChoiceAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	FQNLoop(state *parser.ParserState) bool
 	InfixItemsLoop(state *parser.ParserState) bool
 	LoopAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
@@ -140,6 +142,10 @@ func (l *DefaultCompletionParserLookahead) DeclareOptional(state *parser.ParserS
 
 func (l *DefaultCompletionParserLookahead) DedupAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
 	return state.AdaptivePredict(DecisionDedupAlternatives, l.PredictionMode())
+}
+
+func (l *DefaultCompletionParserLookahead) DeepChoiceAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
+	return state.AdaptivePredict(DecisionDeepChoiceAlternatives, l.PredictionMode())
 }
 
 func (l *DefaultCompletionParserLookahead) FQNLoop(state *parser.ParserState) bool {

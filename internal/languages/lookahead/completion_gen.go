@@ -43,8 +43,8 @@ func (a *LookaheadCompletionAdapter) ATN() *parser.RuntimeATN {
 	return BuildATN()
 }
 
-func (a *LookaheadCompletionAdapter) SyntheticOwnerFor(ruleKey string) (core.AstNode, bool) {
-	factory, ok := LookaheadSyntheticFactories[ruleKey]
+func (a *LookaheadCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {
+	factory, ok := LookaheadSyntheticFactories[nodeType]
 	if !ok {
 		return nil, false
 	}

@@ -252,8 +252,8 @@ func (a *FastbeltCompletionAdapter) ATN() *parser.RuntimeATN {
 	return BuildATN()
 }
 
-func (a *FastbeltCompletionAdapter) SyntheticOwnerFor(ruleKey string) (core.AstNode, bool) {
-	factory, ok := FastbeltSyntheticFactories[ruleKey]
+func (a *FastbeltCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {
+	factory, ok := FastbeltSyntheticFactories[nodeType]
 	if !ok {
 		return nil, false
 	}
