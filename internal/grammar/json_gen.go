@@ -114,17 +114,17 @@ func (_this *SimpleTypeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 }
 
 func (_this *PrimitiveTypeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
-	var _Type *string
+	var _type *string
 	if _this.TypeToken() != nil {
 		_v := _this.Type()
-		_Type = &_v
+		_type = &_v
 	}
 	return json.MarshalEncode(_encoder, struct {
 		T__  string  `json:"$type"`
 		Type *string `json:"type,omitzero"`
 	}{
 		T__:  "PrimitiveType",
-		Type: _Type,
+		Type: _type,
 	})
 }
 
@@ -275,10 +275,10 @@ func (_this *KeywordTokenContentImpl) MarshalJSONTo(_encoder *jsontext.Encoder) 
 }
 
 func (_this *TokenCommandImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
-	var _Type *string
+	var _type *string
 	if _this.TypeToken() != nil {
 		_v := _this.Type()
-		_Type = &_v
+		_type = &_v
 	}
 	return json.MarshalEncode(_encoder, struct {
 		T__     string                     `json:"$type"`
@@ -287,7 +287,7 @@ func (_this *TokenCommandImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Default bool                       `json:"default,omitzero"`
 	}{
 		T__:     "TokenCommand",
-		Type:    _Type,
+		Type:    _type,
 		Mode:    _this.Mode(),
 		Default: _this.IsDefault(),
 	})
@@ -786,11 +786,11 @@ func (_this *FieldImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		_this.SetName(core.NewSyntheticToken(*aux.Name, _this))
 	}
 	if aux.Type != nil {
-		_Type, _err := UnmarshalValue[FieldType](aux.Type)
+		_type, _err := UnmarshalValue[FieldType](aux.Type)
 		if _err != nil {
 			return _err
 		}
-		_this.SetType(_Type)
+		_this.SetType(_type)
 	}
 	return nil
 }
@@ -824,11 +824,11 @@ func (_this *ReferenceTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) er
 		return _err
 	}
 	if aux.Type != nil {
-		_Type, _err := util.UnmarshalReference[Interface](_this, aux.Type)
+		_type, _err := util.UnmarshalReference[Interface](_this, aux.Type)
 		if _err != nil {
 			return _err
 		}
-		_this.SetType(_Type)
+		_this.SetType(_type)
 	}
 	return nil
 }
@@ -841,11 +841,11 @@ func (_this *SimpleTypeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		return _err
 	}
 	if aux.Type != nil {
-		_Type, _err := util.UnmarshalReference[Interface](_this, aux.Type)
+		_type, _err := util.UnmarshalReference[Interface](_this, aux.Type)
 		if _err != nil {
 			return _err
 		}
-		_this.SetType(_Type)
+		_this.SetType(_type)
 	}
 	return nil
 }
@@ -1378,11 +1378,11 @@ func (_this *CrossRefImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		_this.SetCardinality(core.NewSyntheticToken(*aux.Cardinality, _this))
 	}
 	if aux.Type != nil {
-		_Type, _err := util.UnmarshalReference[Interface](_this, aux.Type)
+		_type, _err := util.UnmarshalReference[Interface](_this, aux.Type)
 		if _err != nil {
 			return _err
 		}
-		_this.SetType(_Type)
+		_this.SetType(_type)
 	}
 	if aux.Rule != nil {
 		rule, _err := UnmarshalValue[RuleCall](aux.Rule)
@@ -1429,11 +1429,11 @@ func (_this *ActionImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		_this.SetCardinality(core.NewSyntheticToken(*aux.Cardinality, _this))
 	}
 	if aux.Type != nil {
-		_Type, _err := util.UnmarshalReference[Interface](_this, aux.Type)
+		_type, _err := util.UnmarshalReference[Interface](_this, aux.Type)
 		if _err != nil {
 			return _err
 		}
-		_this.SetType(_Type)
+		_this.SetType(_type)
 	}
 	if aux.Operator != nil {
 		_this.SetOperator(core.NewSyntheticToken(*aux.Operator, _this))

@@ -6,7 +6,6 @@ package generator
 
 import (
 	"context"
-	"go/types"
 	"slices"
 	"sort"
 	"strings"
@@ -67,16 +66,9 @@ type FieldInfo struct {
 
 func getFieldInfo(field grammar.Field) FieldInfo {
 	name := field.Name()
-	jsonPropName := pname
-	jsonPropName := strings.ToLower(name[0:1]) + name[1:]
-	pname := jsonPropName
-	if reservedKeywords[pname] {
-		pname = "_" + name
-	}
-	lname := pname
-	if types.Universe.Lookup(lname) != nil {
-		lname = "_" + name
-	}
+	jsonPropName := grammar.FieldName(name)
+	pname := grammar.GoFieldName(name)
+	lname := grammar.GoLocalName(name)
 	_, array := field.Type().(grammar.ArrayType)
 	typ := getTypeName(field.Type())
 	ref, refTypeArg := isReferenceType(field.Type())

@@ -1189,7 +1189,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[Field__Basic_0], Token_ID, nil),
 	)
 	states[Field__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[FieldType__Start], states[Field__Basic_1], nil, &parser.RuleCallInfo{Field: "_Type", Type: "FieldType"}),
+		parser.NewRuleTransition(states[FieldType__Start], states[Field__Basic_1], nil, &parser.RuleCallInfo{Field: "_type", Type: "FieldType"}),
 	)
 	states[Field__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Field__Stop]),
