@@ -27,7 +27,7 @@ func NewCompletionParser(sc *service.Container) *CompletionParser {
 // the document's tokens up to the cursor) and returns the recorded
 // snapshots and rule stack. The completion provider feeds that result into
 // the ATN simulator.
-func (p *CompletionParser) Parse(tokens []core.Token) *parser.CompletionParseResult {
+func (p *CompletionParser) Parse(_ *core.Document, tokens []core.Token) *parser.CompletionParseResult {
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
 	lookahead := service.MustGet[FastbeltParserLookahead](p.sc)
@@ -385,23 +385,14 @@ func (p *CompletionParser) ParseTokenCommand() {
 			p.state.Consume(Keyword_mode)
 		}
 	}
-	p.cp.RecordSnapshot(TokenCommand__Basic_8)
-	p.state.Sync(TokenCommand__Basic_8)
+	p.cp.RecordSnapshot(TokenCommand__Basic_5)
+	p.state.Sync(TokenCommand__Basic_5)
 	if p.lookahead.TokenCommandOptional(p.state) {
 		{
 			p.state.Consume(Keyword_LeftParen)
 		}
-		switch prediction, failure := p.lookahead.TokenCommandAlternatives(p.state); prediction {
-		case 0:
-			{
-				p.state.Consume(Token_ID)
-			}
-		case 1:
-			{
-				p.state.Consume(Keyword_default)
-			}
-		default:
-			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		{
+			p.state.Consume(Token_ID)
 		}
 		{
 			p.state.Consume(Keyword_RightParen)
@@ -471,17 +462,8 @@ func (p *CompletionParser) ParseTokenMode() {
 	{
 		p.state.Consume(Keyword_mode)
 	}
-	switch prediction, failure := p.lookahead.TokenModeAlternatives(p.state); prediction {
-	case 0:
-		{
-			p.state.Consume(Token_ID)
-		}
-	case 1:
-		{
-			p.state.Consume(Keyword_default)
-		}
-	default:
-		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+	{
+		p.state.Consume(Token_ID)
 	}
 	{
 		p.state.Consume(Keyword_LeftBrace)
@@ -490,7 +472,7 @@ func (p *CompletionParser) ParseTokenMode() {
 		p.cp.RecordSnapshot(TokenMode__LoopEntry)
 		p.state.Sync(TokenMode__LoopEntry)
 		for p.lookahead.TokenModeMembersLoop(p.state) {
-			p.state.EnterRule(TokenMode__Basic_4)
+			p.state.EnterRule(TokenMode__Basic_1)
 			p.ParseTokenModeMember()
 			p.state.ExitRule()
 			p.cp.RecordSnapshot(TokenMode__LoopEntry)

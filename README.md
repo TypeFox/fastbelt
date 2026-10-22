@@ -76,8 +76,7 @@ That creates a directory named after the last segment of `--module` (here `./myl
 
 In the generated package directory you get:
 
-- `gen.go` with `go:generate` directives for grammar-based code generation
-- `services.go` with customization points for generated services
+- `services.go` with the `go:generate` directive for grammar-based code generation and customization points for generated services
 - `<language-id>.fb` as the initial grammar definition
 - `cmd/<language-id>-lsp/main.go` as the LSP server entrypoint
 

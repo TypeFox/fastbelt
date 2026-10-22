@@ -106,7 +106,6 @@ func parseExportImportGrammar(t testing.TB, grammar []byte) (core.AstNode, core.
 	))
 	defer f2.Clear()
 
-	language2 := service.MustGet[workspace.LanguageID](f2.Services())
 	documents2 := service.MustGet[workspace.DocumentManager](f2.Services())
 	builder2 := service.MustGet[workspace.Builder](f2.Services())
 
@@ -115,10 +114,9 @@ func parseExportImportGrammar(t testing.TB, grammar []byte) (core.AstNode, core.
 	err = json.Unmarshal(jsonData, grammar2)
 	require.NoError(t, err)
 
-	doc2, err := core.NewDocumentFromString("inmemory:///grammar.fb", string(language2), "")
-	require.NoError(t, err)
+	doc2 := core.NewDocumentFromString("inmemory:///grammar.fb", "fastbelt", "")
 	doc2.Root = grammar2
-	doc2.State = core.DocStateParsed
+	doc2.State = core.DocStateLexed | core.DocStateParsed
 	core.AssignContainers(doc2)
 	documents2.Set(doc2)
 	imported := f2.NewDoc(doc2, nil, nil)

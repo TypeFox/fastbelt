@@ -281,15 +281,13 @@ func (_this *TokenCommandImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		_type = &_v
 	}
 	return json.MarshalEncode(_encoder, struct {
-		T__     string                     `json:"$type"`
-		Type    *string                    `json:"type,omitzero"`
-		Mode    *core.Reference[TokenMode] `json:"mode,omitempty"`
-		Default bool                       `json:"default,omitzero"`
+		T__  string                     `json:"$type"`
+		Type *string                    `json:"type,omitzero"`
+		Mode *core.Reference[TokenMode] `json:"mode,omitempty"`
 	}{
-		T__:     "TokenCommand",
-		Type:    _type,
-		Mode:    _this.Mode(),
-		Default: _this.IsDefault(),
+		T__:  "TokenCommand",
+		Type: _type,
+		Mode: _this.Mode(),
 	})
 }
 
@@ -327,12 +325,10 @@ func (_this *TokenModeImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	return json.MarshalEncode(_encoder, struct {
 		T__     string            `json:"$type"`
 		Name    *string           `json:"name,omitzero"`
-		Default bool              `json:"default,omitzero"`
 		Members []TokenModeMember `json:"members,omitempty"`
 	}{
 		T__:     "TokenMode",
 		Name:    name,
-		Default: _this.IsDefault(),
 		Members: _this.Members(),
 	})
 }
@@ -1041,9 +1037,8 @@ func (_this *KeywordTokenContentImpl) UnmarshalJSONFrom(_decoder *jsontext.Decod
 
 func (_this *TokenCommandImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
-		Type    *string        `json:"type"`
-		Mode    jsontext.Value `json:"mode"`
-		Default bool           `json:"default"`
+		Type *string        `json:"type"`
+		Mode jsontext.Value `json:"mode"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
 		return _err
@@ -1057,9 +1052,6 @@ func (_this *TokenCommandImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) err
 			return _err
 		}
 		_this.SetMode(mode)
-	}
-	if aux.Default {
-		_this.SetDefault(core.NewSyntheticToken("", _this))
 	}
 	return nil
 }
@@ -1107,7 +1099,6 @@ func (_this *TokenGroupImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 func (_this *TokenModeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 	aux := &struct {
 		Name    *string          `json:"name"`
-		Default bool             `json:"default"`
 		Members []jsontext.Value `json:"members"`
 	}{}
 	if _err := json.UnmarshalDecode(_decoder, aux); _err != nil {
@@ -1115,9 +1106,6 @@ func (_this *TokenModeImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error 
 	}
 	if aux.Name != nil {
 		_this.SetName(core.NewSyntheticToken(*aux.Name, _this))
-	}
-	if aux.Default {
-		_this.SetDefault(core.NewSyntheticToken("", _this))
 	}
 	_this.members = make([]TokenModeMember, 0, len(aux.Members))
 	for _, item := range aux.Members {

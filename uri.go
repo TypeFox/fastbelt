@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync/atomic"
 
 	"typefox.dev/lsp"
 )
@@ -69,8 +70,8 @@ type uri struct {
 	path      string
 	query     string
 	fragment  string
-	encoded   *string
-	unencoded *string
+	encoded   atomic.Pointer[string]
+	unencoded atomic.Pointer[string]
 }
 
 func (u *uri) Scheme() string {
@@ -128,8 +129,8 @@ func (u *uri) Equal(other URI) bool {
 }
 
 func (u *uri) StringUnencoded() string {
-	if u.unencoded != nil {
-		return *u.unencoded
+	if v := u.unencoded.Load(); v != nil {
+		return *v
 	}
 	var result strings.Builder
 
@@ -165,13 +166,13 @@ func (u *uri) StringUnencoded() string {
 	}
 
 	value := result.String()
-	u.unencoded = &value
+	u.unencoded.Store(&value)
 	return value
 }
 
 func (u *uri) String() string {
-	if u.encoded != nil {
-		return *u.encoded
+	if v := u.encoded.Load(); v != nil {
+		return *v
 	}
 	var result strings.Builder
 
@@ -208,7 +209,7 @@ func (u *uri) String() string {
 	}
 
 	value := result.String()
-	u.encoded = &value
+	u.encoded.Store(&value)
 	return value
 }
 

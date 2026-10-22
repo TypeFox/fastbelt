@@ -25,10 +25,21 @@
 //
 // The generated `NewLexer` function returns a [DefaultLexer] constructed via
 // [NewDefaultLexer] with one [TokenMode] per `token mode` declaration in the
-// grammar. [typefox.dev/fastbelt/workspace.DefaultDocumentParser] obtains a
-// [Lexer] from the service container, calls [Lexer.Exec], and stores
-// [LexerResult.Tokens], [LexerResult.Comments], and [LexerResult.Errors] on the
-// document before parsing.
+// grammar. A build with several languages uses [NewMultiLanguageLexer] instead,
+// with one entry token mode per language. The entry mode is the `default` mode
+// unless the build configuration of the language names another one. At lex
+// time the document's language is resolved via [core.LanguageSelector] and the
+// run starts in the entry mode of that language.
+//
+// A multi-language grammar without token modes gets one generated token mode
+// per language, named after its entry rule. Such a mode only contains the
+// keywords and tokens used by the rules reachable from the entry rule, plus
+// hidden and comment tokens. This way a keyword of one language stays an
+// ordinary identifier in the others. Declared token modes are never reduced.
+//
+// The [typefox.dev/fastbelt/workspace] builder obtains a [Lexer] from the
+// service container and calls [Lexer.Exec], which stores tokens, comments, and
+// lexer errors on the document before parsing.
 //
 // # Lexing model
 //
@@ -42,10 +53,10 @@
 //     type wins; generated lexers list keywords before regex token rules, so
 //     keywords take precedence when both match the same span.
 //  3. Route the match by [TokenTypeUsage.Modifier]: default tokens go to
-//     [LexerResult.Tokens], hidden tokens are dropped, comments go to
-//     [LexerResult.Comments], and other modifiers are collected in
-//     [LexerResult.Modifiers].
-//  4. Apply the match's mode command, if any (see below).
+//     [core.Document.Tokens], hidden tokens are dropped, comments go to
+//     [core.Document.Comments].
+//  4. Apply the match's mode command, if any (push, pop or mode; see Token
+//     modes below).
 //  5. If no token type matches, emit a [core.LexerError] and advance by one
 //     UTF-8 code point so lexing can continue. The active mode is unchanged.
 //
@@ -65,7 +76,7 @@
 //
 //   - push: make another mode active, remembering the current one.
 //   - pop: return to the mode remembered by the matching push. A pop with
-//     nothing to return to keeps the start mode active rather than failing.
+//     nothing to return to keeps the entry mode active rather than failing.
 //   - mode: replace the active mode without remembering it, so a later pop
 //     returns to whatever was below it rather than to the replaced mode.
 //

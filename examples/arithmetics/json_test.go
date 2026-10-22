@@ -33,7 +33,6 @@ func TestJsonExport(t *testing.T) {
 		f.Clear()
 	}
 
-	language := service.MustGet[workspace.LanguageID](f.Services())
 	documents := service.MustGet[workspace.DocumentManager](f.Services())
 	builder := service.MustGet[workspace.Builder](f.Services())
 
@@ -94,12 +93,11 @@ func TestJsonExport(t *testing.T) {
 	})
 
 	loadJsonDoc := func(uri string, jsonInput string) {
-		doc, err := core.NewDocumentFromString(uri, string(language), "")
-		require.NoError(t, err)
+		doc := core.NewDocumentFromString(uri, "arithmetics", "")
 		mod, err := UnmarshalValue[Module]([]byte(jsonInput))
 		require.NoError(t, err)
 		doc.Root = mod
-		doc.State = core.DocStateParsed
+		doc.State = core.DocStateLexed | core.DocStateParsed
 		core.AssignContainers(doc)
 		documents.Set(doc)
 		f.NewDoc(doc, nil, nil)
@@ -119,7 +117,7 @@ func TestJsonExport(t *testing.T) {
 		)
 
 		for doc := range documents.All() {
-			builder.Reset(doc, core.DocStateParsed)
+			builder.Reset(doc, core.DocStateLexed|core.DocStateParsed)
 		}
 		err := builder.Build(
 			f.Ctx(), slices.Collect(documents.All()), nil,

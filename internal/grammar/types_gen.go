@@ -1474,9 +1474,6 @@ type TokenCommand interface {
 	SetType(value *core.Token)
 	Mode() *core.Reference[TokenMode]
 	SetMode(value *core.Reference[TokenMode])
-	IsDefault() bool
-	DefaultToken() *core.Token
-	SetDefault(value *core.Token)
 }
 
 func NewTokenCommand() TokenCommand {
@@ -1484,9 +1481,8 @@ func NewTokenCommand() TokenCommand {
 }
 
 type TokenCommandData struct {
-	_type    *core.Token
-	mode     *core.Reference[TokenMode]
-	_default *core.Token
+	_type *core.Token
+	mode  *core.Reference[TokenMode]
 }
 
 func (i *TokenCommandData) IsTokenCommand() {}
@@ -1528,18 +1524,6 @@ func (i *TokenCommandData) SetMode(value *core.Reference[TokenMode]) {
 	i.mode = value
 }
 
-func (i *TokenCommandData) IsDefault() bool {
-	return i != nil && i._default != nil
-}
-
-func (i *TokenCommandData) DefaultToken() *core.Token {
-	return i._default
-}
-
-func (i *TokenCommandData) SetDefault(value *core.Token) {
-	i._default = value
-}
-
 type TokenCommandImpl struct {
 	core.AstNodeBase
 	TokenCommandData
@@ -1559,8 +1543,6 @@ func (i *TokenCommandImpl) Resolve(path core.FragmentPath) (core.AstNode, error)
 	}
 	field, _ := path.Head()
 	switch field {
-	case fieldNameDefault:
-		return nil, fmt.Errorf("TokenCommandImpl.Resolve: field '_default' holds a primitive value instead of an ast node")
 	case fieldNameType:
 		return nil, fmt.Errorf("TokenCommandImpl.Resolve: field '_type' holds a primitive value instead of an ast node")
 	case fieldNameMode:
@@ -1687,9 +1669,6 @@ type TokenMode interface {
 	Name() string
 	NameToken() *core.Token
 	SetName(value *core.Token)
-	IsDefault() bool
-	DefaultToken() *core.Token
-	SetDefault(value *core.Token)
 	Members() []TokenModeMember
 	SetMembersItem(item TokenModeMember)
 }
@@ -1699,9 +1678,8 @@ func NewTokenMode() TokenMode {
 }
 
 type TokenModeData struct {
-	name     *core.Token
-	_default *core.Token
-	members  []TokenModeMember
+	name    *core.Token
+	members []TokenModeMember
 }
 
 func (i *TokenModeData) IsTokenMode() {}
@@ -1729,18 +1707,6 @@ func (i *TokenModeData) NameToken() *core.Token {
 
 func (i *TokenModeData) SetName(value *core.Token) {
 	i.name = value
-}
-
-func (i *TokenModeData) IsDefault() bool {
-	return i != nil && i._default != nil
-}
-
-func (i *TokenModeData) DefaultToken() *core.Token {
-	return i._default
-}
-
-func (i *TokenModeData) SetDefault(value *core.Token) {
-	i._default = value
 }
 
 func (i *TokenModeData) Members() []TokenModeMember {
@@ -1781,8 +1747,6 @@ func (i *TokenModeImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 			return nil, fmt.Errorf("TokenModeImpl.Resolve: item %d of slice in field 'members' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
-	case fieldNameDefault:
-		return nil, fmt.Errorf("TokenModeImpl.Resolve: field '_default' holds a primitive value instead of an ast node")
 	case fieldNameName:
 		return nil, fmt.Errorf("TokenModeImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	default:
@@ -3330,7 +3294,6 @@ func (i *PrecedenceGroupImpl) Resolve(path core.FragmentPath) (core.AstNode, err
 }
 
 var (
-	fieldNameDefault          = unique.Make("_default")
 	fieldNameType             = unique.Make("_type")
 	fieldNameAlts             = unique.Make("alts")
 	fieldNameAssociativity    = unique.Make("associativity")

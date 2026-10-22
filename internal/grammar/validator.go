@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -61,10 +62,10 @@ const (
 	ValidateModifierNotAllowedOnGroups       = "modifierNotAllowedOnGroups"
 	ValidateCommandNotAllowedOnGroups        = "commandNotAllowedOnGroups"
 	ValidateTokenRefRefersToOuterScope       = "tokenRefRefersToOuterScope"
+	ValidateGrammarNameMismatch              = "grammarNameMismatch"
 )
 
-// defaultTokenModeName is the name under which the mode marked
-// `token mode default` is registered. It is the mode the lexer starts in.
+// defaultTokenModeName is the name of the token mode the lexer starts in.
 const defaultTokenModeName = "default"
 
 // reservedFieldNames lists field names that must not be used because they
@@ -81,51 +82,103 @@ var reservedFieldNames = map[string]string{
 	"Resolve":          "AstNode.Resolve",
 }
 
-// GrammarImpl.Validate checks grammar-level constraints:
-//   - Rule names must be unique within the grammar.
-//   - Interface names must be unique within the grammar.
+// GrammarImpl.Validate checks grammar-level constraints.
+// Most checks run over the folder-wide grammar; each document reports the
+// diagnostics on its own nodes.
 func (g *GrammarImpl) Validate(ctx context.Context, _ *service.Container, accept core.ValidationAcceptor) {
-	checkUniqueRuleNames(g, accept)
-	checkUniqueInterfaceNames(g, accept)
-	checkUniqueTokenModeNames(g, accept)
-	checkIfDefaultTokenModeIsRequired(g, accept)
-	checkTokenModesAreReachable(g, ctx, accept)
-	checkTokenModesCoverParserTokens(g, ctx, accept)
-	checkParserRulesCoverVisibleTokens(g, ctx, accept)
-	checkIfNonDefaultTokenModesHasNoExit(g, ctx, accept)
-	checkIfKeywordPureStandaloneOrTokenDecl(g, ctx, accept)
+	checkGrammarNamesMatch(g, accept)
+	checkIfDefaultTokenModeIsRequired(g, folderGrammar(g), accept)
 	checkIfTokenRefRefersToOuterScope(g, ctx, accept)
+	for _, diagnostic := range folderDiagnostics(g, ctx) {
+		accept(diagnostic)
+	}
 }
 
-// tokenModeName returns the name a token mode is registered under. The mode
-// marked `default` has no name of its own.
-func tokenModeName(mode TokenMode) string {
-	if mode.IsDefault() {
-		return defaultTokenModeName
+// folderAcceptor receives a diagnostic of a folder-wide check and the node it
+// is reported on, which determines the document the diagnostic belongs to.
+type folderAcceptor func(node core.AstNode, diagnostic *core.Diagnostic)
+
+// folderDiagnostics returns the diagnostics of the folder-wide checks that
+// belong to the document of g. The checks run once per folder and are cached
+// on the folder view.
+func folderDiagnostics(g Grammar, ctx context.Context) []*core.Diagnostic {
+	view := viewOf(g)
+	if view == nil {
+		return runFolderChecks(g, ctx)[g.Document()]
 	}
-	return mode.Name()
+	view.mu.Lock()
+	defer view.mu.Unlock()
+	if view.diagnostics == nil {
+		diagnostics := runFolderChecks(view.folder, ctx)
+		if ctx.Err() != nil {
+			// Don't cache results of a cancelled context, references may be missing.
+			return diagnostics[g.Document()]
+		}
+		view.diagnostics = diagnostics
+	}
+	return view.diagnostics[g.Document()]
 }
 
-// tokenModeNameToken returns the token to anchor diagnostics about mode itself
-// on, which is either its name or the `default` marker.
-func tokenModeNameToken(mode TokenMode) *core.Token {
-	if mode.IsDefault() {
-		return mode.DefaultToken()
+// runFolderChecks runs the folder-wide checks and groups the diagnostics by document.
+func runFolderChecks(folder Grammar, ctx context.Context) map[*core.Document][]*core.Diagnostic {
+	diagnostics := map[*core.Document][]*core.Diagnostic{}
+	accept := func(node core.AstNode, diagnostic *core.Diagnostic) {
+		diagnostics[node.Document()] = append(diagnostics[node.Document()], diagnostic)
 	}
-	return mode.NameToken()
+	checkUniqueRuleNames(folder, accept)
+	checkUniqueInterfaceNames(folder, accept)
+	checkUniqueTokenModeNames(folder, accept)
+	checkTokenModesAreReachable(folder, ctx, accept)
+	checkTokenModesCoverParserTokens(folder, ctx, accept)
+	checkParserRulesCoverVisibleTokens(folder, ctx, accept)
+	checkIfNonDefaultTokenModesHasNoExit(folder, accept)
+	checkIfKeywordPureStandaloneOrTokenDecl(folder, accept)
+	return diagnostics
+}
+
+// checkGrammarNamesMatch reports an error if the grammar files of a folder
+// declare different names.
+func checkGrammarNamesMatch(g Grammar, accept core.ValidationAcceptor) {
+	if g.NameToken() == nil {
+		return
+	}
+	var names []string
+	for _, sibling := range siblingGrammars(g) {
+		if sibling.Name() != "" {
+			names = append(names, "'"+sibling.Name()+"'")
+		}
+	}
+	slices.Sort(names)
+	names = slices.Compact(names)
+	if len(names) > 1 {
+		last := len(names) - 1
+		found := strings.Join(names[:last], ", ") + " and " + names[last]
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			fmt.Sprintf("All grammar files in a folder form one grammar and must declare the same name, but found: %s.", found),
+			g,
+			core.WithToken(g.NameToken()),
+			core.WithCode(ValidateGrammarNameMismatch),
+		))
+	}
+}
+
+// isDefaultTokenMode reports whether mode is the default token mode.
+func isDefaultTokenMode(mode TokenMode) bool {
+	return mode.Name() == defaultTokenModeName
 }
 
 // checkTokenModesAreReachable reports token modes that no command switches to.
 // The lexer starts in the default mode and can only leave it through a `push` or
 // `mode` command, so a mode nothing targets is dead weight.
-func checkTokenModesAreReachable(g Grammar, ctx context.Context, accept core.ValidationAcceptor) {
-	if len(g.TokenModes()) == 0 {
+func checkTokenModesAreReachable(folder Grammar, ctx context.Context, accept folderAcceptor) {
+	if len(folder.TokenModes()) == 0 {
 		return
 	}
 	var entryMode TokenMode = nil
 	transitions := map[TokenMode][]TokenMode{}
-	for _, mode := range g.TokenModes() {
-		if mode.IsDefault() {
+	for _, mode := range folder.TokenModes() {
+		if isDefaultTokenMode(mode) {
 			entryMode = mode
 		}
 		for _, member := range mode.Members() {
@@ -135,11 +188,13 @@ func checkTokenModesAreReachable(g Grammar, ctx context.Context, accept core.Val
 			}
 		}
 	}
-	visited := collections.NewSet[TokenMode]()
-	queue := []TokenMode{}
-	if entryMode != nil {
-		queue = append(queue, entryMode)
+	if entryMode == nil || isMultiLanguage(folder) {
+		// Without a default mode or with several languages, the entry modes
+		// are configured by the build, not by the grammar.
+		return
 	}
+	visited := collections.NewSet[TokenMode]()
+	queue := []TokenMode{entryMode}
 	for len(queue) > 0 {
 		current := queue[0]
 		queue = queue[1:]
@@ -150,11 +205,11 @@ func checkTokenModesAreReachable(g Grammar, ctx context.Context, accept core.Val
 			}
 		}
 	}
-	for _, mode := range g.TokenModes() {
+	for _, mode := range folder.TokenModes() {
 		if visited.Has(mode) {
 			continue
 		}
-		accept(core.NewDiagnostic(
+		accept(mode, core.NewDiagnostic(
 			core.SeverityWarning,
 			fmt.Sprintf("The token mode '%s' is never entered from the default mode. Add a 'push(%s)' or 'mode(%s)' command to a token.", mode.Name(), mode.Name(), mode.Name()),
 			mode,
@@ -164,12 +219,14 @@ func checkTokenModesAreReachable(g Grammar, ctx context.Context, accept core.Val
 	}
 }
 
-func checkIfNonDefaultTokenModesHasNoExit(g Grammar, _ context.Context, accept core.ValidationAcceptor) {
-	if len(g.TokenModes()) == 0 {
+func checkIfNonDefaultTokenModesHasNoExit(folder Grammar, accept folderAcceptor) {
+	if len(folder.TokenModes()) == 0 || !hasDefaultTokenMode(folder) || isMultiLanguage(folder) {
+		// Without a default mode or with several languages, every mode is a
+		// potential entry mode and needs no exit.
 		return
 	}
-	for _, mode := range g.TokenModes() {
-		if mode.IsDefault() {
+	for _, mode := range folder.TokenModes() {
+		if isDefaultTokenMode(mode) {
 			continue
 		}
 		found := false
@@ -180,7 +237,7 @@ func checkIfNonDefaultTokenModesHasNoExit(g Grammar, _ context.Context, accept c
 			}
 		}
 		if !found {
-			accept(core.NewDiagnostic(
+			accept(mode, core.NewDiagnostic(
 				core.SeverityWarning,
 				fmt.Sprintf("The non-default token mode '%s' has no exit command ('mode' or 'pop').", mode.Name()),
 				mode,
@@ -216,47 +273,59 @@ func getCommand(member TokenModeMember) TokenCommand {
 	return nil
 }
 
-func checkIfDefaultTokenModeIsRequired(g Grammar, accept core.ValidationAcceptor) {
-	if len(g.TokenModes()) > 0 {
-		hasDefault := false
-		var nonDefaultTokenMode TokenMode = nil
-		for _, mode := range g.TokenModes() {
-			if mode.IsDefault() {
-				hasDefault = true
-				break
-			} else if nonDefaultTokenMode == nil {
-				//mark only the first non-default token mode
-				//one diagnostic is enough to indicate that a default token mode is required
-				nonDefaultTokenMode = mode
-			}
+// hasDefaultTokenMode reports whether the folder declares a default token mode.
+func hasDefaultTokenMode(folder Grammar) bool {
+	for _, mode := range folder.TokenModes() {
+		if isDefaultTokenMode(mode) {
+			return true
 		}
-		if !hasDefault {
-			accept(core.NewDiagnostic(
-				core.SeverityError,
-				"At least one token mode must be marked as default.",
-				nonDefaultTokenMode,
-				core.WithToken(nonDefaultTokenMode.NameToken()),
-				core.WithCode(ValidateDefaultTokenModeRequired),
-			))
+	}
+	return false
+}
+
+// isMultiLanguage reports whether the folder declares several entry rules.
+// Note: Such a grammar configures the entry token mode per language, so checks
+// that assume the lexer starts in the default mode don't apply.
+func isMultiLanguage(folder Grammar) bool {
+	entries := 0
+	for _, rule := range folder.Rules() {
+		if rule.IsEntry() {
+			entries++
 		}
+	}
+	return entries > 1
+}
+
+func checkIfDefaultTokenModeIsRequired(g, folder Grammar, accept core.ValidationAcceptor) {
+	if isMultiLanguage(folder) || hasDefaultTokenMode(folder) {
+		return
+	}
+	// One diagnostic per document is enough.
+	for _, mode := range g.TokenModes() {
+		accept(core.NewDiagnostic(
+			core.SeverityError,
+			"One token mode must be named 'default': the lexer starts in it.",
+			mode,
+			core.WithToken(mode.NameToken()),
+			core.WithCode(ValidateDefaultTokenModeRequired),
+		))
+		return
 	}
 }
 
-func checkUniqueTokenModeNames(g Grammar, accept core.ValidationAcceptor) {
+func checkUniqueTokenModeNames(folder Grammar, accept folderAcceptor) {
 	seen := map[string][]TokenMode{}
-	for _, mode := range g.TokenModes() {
-		name := tokenModeName(mode)
-		seen[name] = append(seen[name], mode)
+	for _, mode := range folder.TokenModes() {
+		seen[mode.Name()] = append(seen[mode.Name()], mode)
 	}
 	for name, modes := range seen {
 		if len(modes) > 1 {
 			for _, mode := range modes {
-				token := tokenModeNameToken(mode)
-				accept(core.NewDiagnostic(
+				accept(mode, core.NewDiagnostic(
 					core.SeverityError,
 					fmt.Sprintf("A token mode's name has to be unique. '%s' is used multiple times.", name),
 					mode,
-					core.WithToken(token),
+					core.WithToken(mode.NameToken()),
 					core.WithCode(ValidateUniqueTokenModeName),
 				))
 			}
@@ -282,23 +351,18 @@ func (c *TokenCommandImpl) Validate(_ context.Context, _ *service.Container, acc
 
 func checkTokenCommandMode(c TokenCommand, accept core.ValidationAcceptor) {
 	// An unresolvable mode reference is still a target; the linker reports it.
-	hasMode := c.IsDefault() || c.Mode() != nil
+	hasMode := c.Mode() != nil
 	switch c.Type() {
 	case tokenCommandPop:
 		if !hasMode {
 			return
 		}
-		options := []core.DiagnosticOption{core.WithCode(ValidateTokenCommandMode)}
-		if c.Mode() != nil {
-			options = append(options, core.WithReference(c.Mode()))
-		} else {
-			options = append(options, core.WithToken(c.DefaultToken()))
-		}
 		accept(core.NewDiagnostic(
 			core.SeverityError,
 			"The 'pop' command returns to the previous token mode and cannot take a target mode.",
 			c,
-			options...,
+			core.WithReference(c.Mode()),
+			core.WithCode(ValidateTokenCommandMode),
 		))
 	case tokenCommandPush, tokenCommandMode:
 		if hasMode {
@@ -327,9 +391,9 @@ func checkTokenModeNotEmpty(mode TokenMode, accept core.ValidationAcceptor) {
 	}
 	accept(core.NewDiagnostic(
 		core.SeverityWarning,
-		fmt.Sprintf("The token mode '%s' does not declare any token, so the lexer cannot match anything while it is active.", tokenModeName(mode)),
+		fmt.Sprintf("The token mode '%s' does not declare any token, so the lexer cannot match anything while it is active.", mode.Name()),
 		mode,
-		core.WithToken(tokenModeNameToken(mode)),
+		core.WithToken(mode.NameToken()),
 		core.WithCode(ValidateEmptyTokenMode),
 	))
 }
@@ -362,23 +426,24 @@ func getGroupMembers(group TokenGroup, cache map[TokenGroup]collections.Set[stri
 	}
 }
 
-func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept core.ValidationAcceptor) {
+func checkParserRulesCoverVisibleTokens(folder Grammar, ctx context.Context, accept folderAcceptor) {
 	severity := core.SeverityWarning
 	seen := collections.NewSet[string]()
 	queue := []core.AstNode{}
 	cache := map[TokenGroup]collections.Set[string]{}
 
-	for _, composite := range g.Composites() {
+	// Usages are collected folder-wide.
+	for _, composite := range folder.Composites() {
 		for node := range core.AllChildren(composite) {
 			queue = append(queue, node)
 		}
 	}
-	for _, rule := range g.Rules() {
+	for _, rule := range folder.Rules() {
 		for node := range core.AllChildren(rule) {
 			queue = append(queue, node)
 		}
 	}
-	for _, infixRule := range g.InfixRules() {
+	for _, infixRule := range folder.InfixRules() {
 		queue = append(queue, infixRule.Call())
 		for _, group := range infixRule.Groups() {
 			for _, operator := range group.Operators() {
@@ -408,13 +473,13 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 		}
 	}
 
-	if len(g.TokenModes()) == 0 {
-		for _, terminal := range g.Terminals() {
+	if len(folder.TokenModes()) == 0 {
+		for _, terminal := range folder.Terminals() {
 			if terminal.Modifier() != "" {
 				continue
 			}
 			if !seen.Has(terminal.Name()) {
-				accept(core.NewDiagnostic(
+				accept(terminal, core.NewDiagnostic(
 					severity,
 					getTokenNeverReferencedMessage("token", terminal.Name()),
 					terminal,
@@ -423,9 +488,9 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 				))
 			}
 		}
-		for _, group := range g.TokenGroups() {
+		for _, group := range folder.TokenGroups() {
 			if !seen.Has(group.Name()) {
-				accept(core.NewDiagnostic(
+				accept(group, core.NewDiagnostic(
 					severity,
 					getTokenNeverReferencedMessage("token group", group.Name()),
 					group,
@@ -435,12 +500,12 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 			}
 		}
 	} else {
-		for _, mode := range g.TokenModes() {
+		for _, mode := range folder.TokenModes() {
 			for _, member := range mode.Members() {
 				switch member := member.(type) {
 				case KeywordUsage:
 					if !seen.Has(member.Keyword().Value()) {
-						accept(core.NewDiagnostic(
+						accept(member, core.NewDiagnostic(
 							severity,
 							getTokenNeverReferencedMessage("keyword", member.Keyword().Value()),
 							member.Keyword(),
@@ -454,7 +519,7 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 							continue
 						}
 						if !seen.Has(tokenRef.Name()) {
-							accept(core.NewDiagnostic(
+							accept(member, core.NewDiagnostic(
 								severity,
 								getTokenNeverReferencedMessage("token", tokenRef.Name()),
 								member,
@@ -468,7 +533,7 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 						continue
 					}
 					if !seen.Has(member.Declaration().Name()) {
-						accept(core.NewDiagnostic(
+						accept(member, core.NewDiagnostic(
 							severity,
 							getTokenNeverReferencedMessage("token", member.Declaration().Name()),
 							member.Declaration(),
@@ -478,7 +543,7 @@ func checkParserRulesCoverVisibleTokens(g Grammar, ctx context.Context, accept c
 					}
 				case TokenGroupUsage:
 					if !seen.Has(member.Group().Name()) {
-						accept(core.NewDiagnostic(
+						accept(member, core.NewDiagnostic(
 							severity,
 							getTokenNeverReferencedMessage("token group", member.Group().Name()),
 							member.Group(),
@@ -504,71 +569,39 @@ type tokenModeCoverage struct {
 // token registration from the grammar as a whole, so anything left out of every
 // mode can never be produced by the lexer and makes the rule using it dead.
 //
-// Only the first occurrence of each keyword or token is reported: the fix is a
-// single entry in a token mode, not one per use site.
-func checkTokenModesCoverParserTokens(g Grammar, ctx context.Context, accept core.ValidationAcceptor) {
-	if len(g.TokenModes()) == 0 {
+// Only the first occurrence of each keyword or token per file is reported.
+func checkTokenModesCoverParserTokens(folder Grammar, ctx context.Context, accept folderAcceptor) {
+	if len(folder.TokenModes()) == 0 {
 		// Without explicit token modes every keyword and token is registered
 		// automatically, so nothing can be missing.
 		return
 	}
-	coverage := collectTokenModeCoverage(g, ctx)
-	reported := collections.NewSet[string]()
-	allKeywords := allGrammarKeywords(g)
-outerLoop:
-	for node := range core.AllChildren(g) {
-		switch node := node.(type) {
-		case Keyword:
-			value := KeywordValue(node)
-			if !insideParserRule(node) || coverage.keywords.Has(value) || !reported.Add(value) {
-				continue
-			}
-			accept(core.NewDiagnostic(
+	allKeywords := allGrammarKeywords(folder)
+	coverage := collectTokenModeCoverage(folder.TokenModes(), ctx, allKeywords)
+	type occurrence struct {
+		doc  *core.Document
+		name string
+	}
+	reported := collections.NewSet[occurrence]()
+	for node := range core.AllChildren(folder) {
+		if !insideParserRule(node) {
+			continue
+		}
+		keyword, rule := coverage.missing(node, ctx, allKeywords)
+		switch {
+		case keyword != "" && reported.Add(occurrence{node.Document(), keyword}):
+			accept(node, core.NewDiagnostic(
 				core.SeverityError,
-				fmt.Sprintf("The keyword %s is not registered in any token mode, so the lexer can never produce it. List it in a token mode or cover it with a 'keywords' selector.", value),
+				fmt.Sprintf("The keyword %s is not registered in any token mode, so the lexer can never produce it. List it in a token mode or cover it with a 'keywords' selector.", keyword),
 				node,
-				core.WithToken(node.ValueToken()),
+				core.WithToken(node.(Keyword).ValueToken()),
 				core.WithCode(ValidateKeywordNotInTokenMode),
 			))
-		case RuleCall:
-			rule, ok := node.Rule().Ref(ctx).(AbstractTokenRule)
-			if !ok || !insideParserRule(node) || coverage.covers(rule) || !reported.Add(rule.Name()) {
-				continue
-			}
-			if tokenGroup, ok := rule.(TokenGroup); ok {
-				//Ignore token groups FTM, since they are meant to be
-				//used as a grouped token type during parsing, not during lexing
-				//Instead test the individual token types in the group for coverage
-				//If all token types in the group are not covered, then the individual token group will be reported as missing
-				for _, member := range tokenGroup.TokenRefs() {
-					if member := member.Ref(ctx); member != nil && coverage.covers(member) {
-						continue outerLoop
-					}
-				}
-				for _, member := range tokenGroup.Keywords() {
-					value := KeywordValue(member)
-					if coverage.keywords.Has(value) {
-						continue outerLoop
-					}
-				}
-				for _, member := range tokenGroup.KeywordSelectors() {
-					pattern, err := regexp.Compile(RegexpValue(member.Image))
-					if err != nil {
-						//error is already reported by the grammar validator, so ignore it here
-						continue
-					}
-					for _, keyword := range allKeywords {
-						value := KeywordValue(keyword)
-						if pattern.MatchString(value) && coverage.keywords.Has(value) {
-							continue outerLoop
-						}
-					}
-				}
-			}
+		case rule != nil && reported.Add(occurrence{rule.Document(), rule.Name()}):
 			// Deliberately a warning, not an error: unlike a keyword, a token
 			// rule may be registered with the lexer by hand-written code, and a
 			// grammar that leaves one out still generates and builds.
-			accept(core.NewDiagnostic(
+			accept(rule, core.NewDiagnostic(
 				core.SeverityWarning,
 				fmt.Sprintf("The token '%s' is not registered in any token mode, so the lexer can never produce it. List it in a token mode.", rule.Name()),
 				rule,
@@ -577,6 +610,111 @@ outerLoop:
 			))
 		}
 	}
+}
+
+// MissingLanguageTokens returns the keywords and token rule names used by the
+// language starting at entry that are not registered in entryMode or any token
+// mode reachable from it. Only meaningful for grammars that declare token modes.
+func MissingLanguageTokens(g Grammar, entry ParserRule, entryMode TokenMode) (keywords, tokens []string) {
+	ctx := context.Background()
+	allKeywords := allGrammarKeywords(g)
+	coverage := collectTokenModeCoverage(reachableTokenModes(entryMode, ctx), ctx, allKeywords)
+	reported := collections.NewSet[string]()
+	visited := collections.NewSet(entry.Name())
+	var visit func(rule core.AstNode)
+	visit = func(rule core.AstNode) {
+		for node := range core.AllChildren(rule) {
+			keyword, token := coverage.missing(node, ctx, allKeywords)
+			switch {
+			case keyword != "" && reported.Add(keyword):
+				keywords = append(keywords, keyword)
+			case token != nil && reported.Add(token.Name()):
+				tokens = append(tokens, token.Name())
+			}
+			if call, ok := node.(RuleCall); ok && call.Rule() != nil {
+				switch target := call.Rule().Ref(ctx).(type) {
+				case ParserRule, CompositeRule, InfixRule:
+					if visited.Add(target.Name()) {
+						visit(target)
+					}
+				}
+			}
+		}
+	}
+	visit(entry)
+	return keywords, tokens
+}
+
+// reachableTokenModes returns start and every token mode transitively
+// reachable from it via mode commands.
+func reachableTokenModes(start TokenMode, ctx context.Context) []TokenMode {
+	visited := collections.NewSet[TokenMode]()
+	modes := []TokenMode{}
+	queue := []TokenMode{start}
+	for len(queue) > 0 {
+		mode := queue[0]
+		queue = queue[1:]
+		if mode == nil || !visited.Add(mode) {
+			continue
+		}
+		modes = append(modes, mode)
+		for _, member := range mode.Members() {
+			if command := getCommand(member); command != nil && command.Mode() != nil {
+				queue = append(queue, command.Mode().Ref(ctx))
+			}
+		}
+	}
+	return modes
+}
+
+// missing returns the keyword value or the token rule used by node that is not
+// covered. Both are empty if everything is covered.
+func (c tokenModeCoverage) missing(node core.AstNode, ctx context.Context, allKeywords []Keyword) (string, AbstractTokenRule) {
+	switch node := node.(type) {
+	case Keyword:
+		if value := KeywordValue(node); !c.keywords.Has(value) {
+			return value, nil
+		}
+	case RuleCall:
+		rule, ok := node.Rule().Ref(ctx).(AbstractTokenRule)
+		if ok && !c.covers(rule) && !c.coversGroupMember(rule, ctx, allKeywords) {
+			return "", rule
+		}
+	}
+	return "", nil
+}
+
+// coversGroupMember reports whether rule is a token group with at least one
+// covered member. A group only counts as missing when none of its members can be lexed.
+func (c tokenModeCoverage) coversGroupMember(rule AbstractTokenRule, ctx context.Context, allKeywords []Keyword) bool {
+	tokenGroup, ok := rule.(TokenGroup)
+	if !ok {
+		return false
+	}
+	for _, member := range tokenGroup.TokenRefs() {
+		if member := member.Ref(ctx); member != nil && c.covers(member) {
+			return true
+		}
+	}
+	for _, member := range tokenGroup.Keywords() {
+		if c.keywords.Has(KeywordValue(member)) {
+			return true
+		}
+	}
+	for _, member := range tokenGroup.KeywordSelectors() {
+		pattern, err := regexp.Compile(RegexpValue(member.Image))
+		if err != nil {
+			// error is already reported by the grammar validator, so ignore it here
+			continue
+		}
+		for _, keyword := range allKeywords {
+			value := KeywordValue(keyword)
+			if pattern.MatchString(value) && c.keywords.Has(value) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // insideParserRule reports whether node contributes to what the parser matches.
@@ -594,16 +732,15 @@ func insideParserRule(node core.AstNode) bool {
 	return false
 }
 
-func collectTokenModeCoverage(g Grammar, ctx context.Context) tokenModeCoverage {
+func collectTokenModeCoverage(modes []TokenMode, ctx context.Context, allKeywords []Keyword) tokenModeCoverage {
 	coverage := tokenModeCoverage{
 		keywords: collections.NewSet[string](),
 		rules:    collections.NewSet[string](),
 	}
-	allKeywords := allGrammarKeywords(g)
 	// Shared across modes: coverage is grammar-wide, so a group already expanded
 	// for one mode needs no second pass, and the set breaks reference cycles.
 	visitedGroups := collections.NewSet[string]()
-	for _, mode := range g.TokenModes() {
+	for _, mode := range modes {
 		for _, member := range mode.Members() {
 			switch member := member.(type) {
 			case TokenDeclUsage:
@@ -714,29 +851,29 @@ func allGrammarKeywords(g Grammar) []Keyword {
 	return keywords
 }
 
-func checkUniqueRuleNames(g Grammar, accept core.ValidationAcceptor) {
+func checkUniqueRuleNames(folder Grammar, accept folderAcceptor) {
 	seen := map[string][]core.NamedTokenNode{}
-	for _, rule := range g.Rules() {
+	for _, rule := range folder.Rules() {
 		if rule.Name() != "" {
 			seen[rule.Name()] = append(seen[rule.Name()], rule)
 		}
 	}
-	for _, terminal := range g.Terminals() {
+	for _, terminal := range folder.Terminals() {
 		if terminal.Name() != "" {
 			seen[terminal.Name()] = append(seen[terminal.Name()], terminal)
 		}
 	}
-	for _, tokenGroup := range g.TokenGroups() {
+	for _, tokenGroup := range folder.TokenGroups() {
 		if tokenGroup.Name() != "" {
 			seen[tokenGroup.Name()] = append(seen[tokenGroup.Name()], tokenGroup)
 		}
 	}
-	for _, infix := range g.InfixRules() {
+	for _, infix := range folder.InfixRules() {
 		if infix.Name() != "" {
 			seen[infix.Name()] = append(seen[infix.Name()], infix)
 		}
 	}
-	for _, tokenMode := range g.TokenModes() {
+	for _, tokenMode := range folder.TokenModes() {
 		for _, member := range tokenMode.Members() {
 			if usage, ok := member.(TokenDeclUsage); ok {
 				decl := usage.Declaration()
@@ -754,7 +891,7 @@ func checkUniqueRuleNames(g Grammar, accept core.ValidationAcceptor) {
 	for name, nodes := range seen {
 		if len(nodes) > 1 {
 			for _, node := range nodes {
-				accept(core.NewDiagnostic(
+				accept(node, core.NewDiagnostic(
 					core.SeverityError,
 					fmt.Sprintf("A rule's name has to be unique. '%s' is used multiple times.", name),
 					node,
@@ -766,9 +903,9 @@ func checkUniqueRuleNames(g Grammar, accept core.ValidationAcceptor) {
 	}
 }
 
-func checkUniqueInterfaceNames(g Grammar, accept core.ValidationAcceptor) {
+func checkUniqueInterfaceNames(folder Grammar, accept folderAcceptor) {
 	seen := map[string][]Interface{}
-	for _, iface := range g.Interfaces() {
+	for _, iface := range folder.Interfaces() {
 		if iface.Name() != "" {
 			seen[iface.Name()] = append(seen[iface.Name()], iface)
 		}
@@ -776,7 +913,7 @@ func checkUniqueInterfaceNames(g Grammar, accept core.ValidationAcceptor) {
 	for name, ifaces := range seen {
 		if len(ifaces) > 1 {
 			for _, iface := range ifaces {
-				accept(core.NewDiagnostic(
+				accept(iface, core.NewDiagnostic(
 					core.SeverityError,
 					fmt.Sprintf("An interface name has to be unique. '%s' is used multiple times.", name),
 					iface,
@@ -1915,10 +2052,10 @@ func checkRegExpIsValid(patternToken *core.Token, accept core.ValidationAcceptor
 	}
 }
 
-func checkIfKeywordPureStandaloneOrTokenDecl(g Grammar, _ context.Context, accept core.ValidationAcceptor) {
+func checkIfKeywordPureStandaloneOrTokenDecl(folder Grammar, accept folderAcceptor) {
 	//value => Keyword => isTokenDeclaration
 	keywords := map[string]map[Keyword]bool{}
-	for node := range core.AllChildren(g) {
+	for node := range core.AllChildren(folder) {
 		if kw, ok := node.(Keyword); ok {
 			value := kw.Value()
 			if _, exists := keywords[value]; !exists {
@@ -1943,7 +2080,7 @@ func checkIfKeywordPureStandaloneOrTokenDecl(g Grammar, _ context.Context, accep
 			continue
 		}
 		for kw := range kws {
-			accept(core.NewDiagnostic(
+			accept(kw, core.NewDiagnostic(
 				core.SeverityError,
 				fmt.Sprintf("The keyword %s is declared both inline in parser rules and in a token declaration. Only one of these declarations is valid.", kw.Value()),
 				kw,

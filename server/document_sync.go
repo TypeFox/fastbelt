@@ -81,17 +81,12 @@ func (s *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *lsp.DidOpe
 	uri := core.NormalizeURI(params.TextDocument.URI)
 	existing := textdocStore.Get(uri)
 
-	doc, err := textdoc.NewOverlay(
+	doc := textdoc.NewOverlay(
 		uri,
 		string(params.TextDocument.LanguageID),
 		params.TextDocument.Version,
 		params.TextDocument.Text,
 	)
-	if err != nil {
-		// Log error but continue - this is a notification, not a request
-		log.Printf("failed to create document overlay: %v", err)
-		return
-	}
 
 	textdocStore.AddOverlay(doc)
 	s.mu.RLock()
@@ -99,8 +94,12 @@ func (s *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *lsp.DidOpe
 		handler(ctx, &TextDocumentChangeEvent{Document: doc})
 	}
 	s.mu.RUnlock()
-	if existing != nil && existing.Text(nil) == params.TextDocument.Text {
-		// The text editor content is the same as the file content
+	if existing != nil && existing.Text(nil) == params.TextDocument.Text && existing.LanguageID() == doc.LanguageID() {
+		// The text editor content and language are the same as the file's.
+		// Nothing changed, don't start another workspace build.
+		// Note: Language clients will send didClose+didOpen with a different
+		// language ID if the user changes it - this will correctly generate
+		// a new document and start a new build.
 		return
 	}
 	updater := service.MustGet[workspace.DocumentUpdater](s.sc)

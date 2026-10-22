@@ -13,15 +13,11 @@ func BenchmarkNestedString(b *testing.B) {
 	content, _ := generateNestedString()
 	srv := CreateServices()
 	lexerService := service.MustGet[lexer.Lexer](srv)
-	doc, err := fastbelt.NewDocumentFromString("file:///workspace/nested_string.mode", "modes", content)
-	if err != nil {
-		b.Fatal(err)
-	}
+	doc := fastbelt.NewDocumentFromString("file:///workspace/nested_string.mode", "modes", content)
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		lexerResult := lexerService.Exec(content)
-		doc.Tokens = lexerResult.Tokens
+		lexerService.Exec(doc)
 	}
 }
 

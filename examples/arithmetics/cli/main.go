@@ -127,7 +127,7 @@ func runExportCLI(opts exportOptions) error {
 	}
 
 	sc := arithmetics.CreateServices()
-	file, _ := textdoc.NewFile(lsp.URIFromPath(inputPath), "arithmetics", 0, string(inputText))
+	file := textdoc.NewFile(lsp.URIFromPath(inputPath), "arithmetics", 0, string(inputText))
 
 	document := core.NewDocument(file)
 	documents, err := service.Get[workspace.DocumentManager](sc)
@@ -200,10 +200,7 @@ func runImportCLI(opts importOptions) (err error) {
 		}
 	}()
 
-	document, err := core.NewDocumentFromString(string(lsp.URIFromPath(inputPath)), "arithmetics", "")
-	if err != nil {
-		return err
-	}
+	document := core.NewDocumentFromString(string(lsp.URIFromPath(inputPath)), "arithmetics", "")
 	sc := arithmetics.CreateServices()
 
 	if err := util.UnmarshalAndBuildDocument(context.Background(), sc, document, file, arithmetics.ArithmeticsSyntheticFactories); err != nil {
