@@ -5,6 +5,7 @@ package lookahead
 import (
 	"context"
 	"iter"
+	"unique"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
@@ -39,11 +40,11 @@ func (a *LookaheadCompletionAdapter) Parse(tokens []core.Token) *parser.Completi
 }
 
 func (a *LookaheadCompletionAdapter) ATN() *parser.RuntimeATN {
-	return BuildATN()
+	return ATN()
 }
 
-func (a *LookaheadCompletionAdapter) SyntheticOwnerFor(ruleKey string) (core.AstNode, bool) {
-	factory, ok := LookaheadSyntheticFactories[ruleKey]
+func (a *LookaheadCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {
+	factory, ok := LookaheadSyntheticFactories[nodeType]
 	if !ok {
 		return nil, false
 	}
@@ -68,4 +69,8 @@ func (a *LookaheadCompletionAdapter) ApplyAction(actionType, property string, va
 	_ = property
 	_ = value
 	return nil
+}
+
+func (a *LookaheadCompletionAdapter) AssignsCurrent(container core.AstNode, field unique.Handle[string], index int) bool {
+	return false
 }

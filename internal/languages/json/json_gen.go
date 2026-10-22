@@ -45,10 +45,10 @@ func (_this *BoolsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 }
 
 func (_this *StringsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
-	var _String *string
+	var _string *string
 	if _this.StringToken() != nil {
 		_v := _this.String()
-		_String = &_v
+		_string = &_v
 	}
 	var token *string
 	if _this.TokenToken() != nil {
@@ -90,10 +90,10 @@ func (_this *StringsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		_v := _this.This()
 		this = &_v
 	}
-	var _Type *string
+	var _type *string
 	if _this.TypeToken() != nil {
 		_v := _this.Type()
-		_Type = &_v
+		_type = &_v
 	}
 	var util *string
 	if _this.UtilToken() != nil {
@@ -115,7 +115,7 @@ func (_this *StringsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Util   *string `json:"util,omitzero"`
 	}{
 		T__:    "Strings",
-		String: _String,
+		String: _string,
 		Token:  token,
 		I:      i,
 		J:      j,
@@ -124,15 +124,15 @@ func (_this *StringsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Err:    err,
 		Node:   node,
 		This:   this,
-		Type:   _Type,
+		Type:   _type,
 		Util:   util,
 	})
 }
 
 func (_this *StringListsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
-	_String := make([]string, len(_this.String()))
+	_string := make([]string, len(_this.String()))
 	for _j, _item := range _this.String() {
-		_String[_j] = _item.String()
+		_string[_j] = _item.String()
 	}
 	composite := make([]string, len(_this.Composite()))
 	for _j, _item := range _this.Composite() {
@@ -142,17 +142,17 @@ func (_this *StringListsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	for _j, _item := range _this.Token() {
 		token[_j] = _item.String()
 	}
-	_Int := make([]string, len(_this.Int()))
+	_int := make([]string, len(_this.Int()))
 	for _j, _item := range _this.Int() {
-		_Int[_j] = _item.String()
+		_int[_j] = _item.String()
 	}
-	_Uint := make([]string, len(_this.Uint()))
+	_uint := make([]string, len(_this.Uint()))
 	for _j, _item := range _this.Uint() {
-		_Uint[_j] = _item.String()
+		_uint[_j] = _item.String()
 	}
-	_Make := make([]string, len(_this.Make()))
+	_make := make([]string, len(_this.Make()))
 	for _j, _item := range _this.Make() {
-		_Make[_j] = _item.String()
+		_make[_j] = _item.String()
 	}
 	item := make([]string, len(_this.Item()))
 	for _j, _item := range _this.Item() {
@@ -186,9 +186,9 @@ func (_this *StringListsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 	for _j, _item := range _this.This() {
 		this[_j] = _item.String()
 	}
-	_Type := make([]string, len(_this.Type()))
+	_type := make([]string, len(_this.Type()))
 	for _j, _item := range _this.Type() {
-		_Type[_j] = _item.String()
+		_type[_j] = _item.String()
 	}
 	util := make([]string, len(_this.Util()))
 	for _j, _item := range _this.Util() {
@@ -214,12 +214,12 @@ func (_this *StringListsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Util      []string `json:"util,omitempty"`
 	}{
 		T__:       "StringLists",
-		String:    _String,
+		String:    _string,
 		Composite: composite,
 		Token:     token,
-		Int:       _Int,
-		Uint:      _Uint,
-		Make:      _Make,
+		Int:       _int,
+		Uint:      _uint,
+		Make:      _make,
 		Item:      item,
 		I:         i,
 		J:         j,
@@ -228,7 +228,7 @@ func (_this *StringListsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Err:       err,
 		Node:      node,
 		This:      this,
-		Type:      _Type,
+		Type:      _type,
 		Util:      util,
 	})
 }
@@ -269,10 +269,10 @@ func (_this *CompositesImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		_v := _this.This()
 		this = &_v
 	}
-	var _Type *string
+	var _type *string
 	if _this.TypeNode() != nil {
 		_v := _this.Type()
-		_Type = &_v
+		_type = &_v
 	}
 	var util *string
 	if _this.UtilNode() != nil {
@@ -299,7 +299,7 @@ func (_this *CompositesImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error {
 		Err:       err,
 		Node:      node,
 		This:      this,
-		Type:      _Type,
+		Type:      _type,
 		Util:      util,
 	})
 }
@@ -309,25 +309,25 @@ func (_this *CompositeListsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error
 	for _j, _item := range _this.Composite() {
 		composite[_j] = _item.String()
 	}
-	_String := make([]string, len(_this.String()))
+	_string := make([]string, len(_this.String()))
 	for _j, _item := range _this.String() {
-		_String[_j] = _item.String()
+		_string[_j] = _item.String()
 	}
 	token := make([]string, len(_this.Token()))
 	for _j, _item := range _this.Token() {
 		token[_j] = _item.String()
 	}
-	_Int := make([]string, len(_this.Int()))
+	_int := make([]string, len(_this.Int()))
 	for _j, _item := range _this.Int() {
-		_Int[_j] = _item.String()
+		_int[_j] = _item.String()
 	}
-	_Uint := make([]string, len(_this.Uint()))
+	_uint := make([]string, len(_this.Uint()))
 	for _j, _item := range _this.Uint() {
-		_Uint[_j] = _item.String()
+		_uint[_j] = _item.String()
 	}
-	_Make := make([]string, len(_this.Make()))
+	_make := make([]string, len(_this.Make()))
 	for _j, _item := range _this.Make() {
-		_Make[_j] = _item.String()
+		_make[_j] = _item.String()
 	}
 	item := make([]string, len(_this.Item()))
 	for _j, _item := range _this.Item() {
@@ -361,9 +361,9 @@ func (_this *CompositeListsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error
 	for _j, _item := range _this.This() {
 		this[_j] = _item.String()
 	}
-	_Type := make([]string, len(_this.Type()))
+	_type := make([]string, len(_this.Type()))
 	for _j, _item := range _this.Type() {
-		_Type[_j] = _item.String()
+		_type[_j] = _item.String()
 	}
 	util := make([]string, len(_this.Util()))
 	for _j, _item := range _this.Util() {
@@ -390,11 +390,11 @@ func (_this *CompositeListsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error
 	}{
 		T__:       "CompositeLists",
 		Composite: composite,
-		String:    _String,
+		String:    _string,
 		Token:     token,
-		Int:       _Int,
-		Uint:      _Uint,
-		Make:      _Make,
+		Int:       _int,
+		Uint:      _uint,
+		Make:      _make,
 		Item:      item,
 		I:         i,
 		J:         j,
@@ -403,7 +403,7 @@ func (_this *CompositeListsImpl) MarshalJSONTo(_encoder *jsontext.Encoder) error
 		Err:       err,
 		Node:      node,
 		This:      this,
-		Type:      _Type,
+		Type:      _type,
 		Util:      util,
 	})
 }
@@ -724,7 +724,7 @@ func (_this *StringListsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) erro
 	for _, item := range aux.This {
 		_this.SetThisItem(core.NewSyntheticToken(item, _this))
 	}
-	_this._Type = make([]*core.Token, 0, len(aux.Type))
+	_this._type = make([]*core.Token, 0, len(aux.Type))
 	for _, item := range aux.Type {
 		_this.SetTypeItem(core.NewSyntheticToken(item, _this))
 	}
@@ -904,7 +904,7 @@ func (_this *CompositeListsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) e
 		cn.AppendToken(core.NewSyntheticToken(item, _this))
 		_this.SetThisItem(cn)
 	}
-	_this._Type = make([]core.CompositeNode, 0, len(aux.Type))
+	_this._type = make([]core.CompositeNode, 0, len(aux.Type))
 	for _, item := range aux.Type {
 		cn := core.NewCompositeNode()
 		cn.AppendToken(core.NewSyntheticToken(item, _this))
@@ -984,11 +984,11 @@ func (_this *ObjectsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error {
 		_this.SetThis(this)
 	}
 	if aux.Type != nil {
-		_Type, _err := UnmarshalValue[Objects](aux.Type)
+		_type, _err := UnmarshalValue[Objects](aux.Type)
 		if _err != nil {
 			return _err
 		}
-		_this.SetType(_Type)
+		_this.SetType(_type)
 	}
 	if aux.Util != nil {
 		util, _err := UnmarshalValue[Objects](aux.Util)
@@ -1173,7 +1173,7 @@ func (_this *ObjectListsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) erro
 			_this.SetThisItem(node)
 		}
 	}
-	_this._Type = make([]Objects, 0, len(aux.Type))
+	_this._type = make([]Objects, 0, len(aux.Type))
 	for _, item := range aux.Type {
 		node, _err := UnmarshalValue[Objects](item)
 		if _err != nil {
@@ -1261,11 +1261,11 @@ func (_this *ReferencesImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) error
 		_this.SetThis(this)
 	}
 	if aux.Type != nil {
-		_Type, _err := util.UnmarshalReference[References](_this, aux.Type)
+		_type, _err := util.UnmarshalReference[References](_this, aux.Type)
 		if _err != nil {
 			return _err
 		}
-		_this.SetType(_Type)
+		_this.SetType(_type)
 	}
 	if aux.Util != nil {
 		util, _err := util.UnmarshalReference[References](_this, aux.Util)
@@ -1450,7 +1450,7 @@ func (_this *ReferenceListsImpl) UnmarshalJSONFrom(_decoder *jsontext.Decoder) e
 			_this.SetThisItem(reference)
 		}
 	}
-	_this._Type = make([]*core.Reference[References], 0, len(aux.Type))
+	_this._type = make([]*core.Reference[References], 0, len(aux.Type))
 	for _, item := range aux.Type {
 		reference, _err := util.UnmarshalReference[References](_this, item)
 		if _err != nil {

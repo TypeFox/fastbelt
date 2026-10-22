@@ -6,9 +6,11 @@ package completion_test
 
 import (
 	"context"
+	"fmt"
 	"iter"
 	"strings"
 	"testing"
+	"unique"
 
 	"github.com/stretchr/testify/assert"
 	core "typefox.dev/fastbelt"
@@ -16,25 +18,14 @@ import (
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/test"
+	"typefox.dev/fastbelt/util/collections"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/lsp"
 )
 
 // The Completion grammar is a hand-crafted test bed for the completion
-// engine. Each rule targets one simulator/parser edge case:
-//
-//   Root:   repeating entry rule
-//   Declare: exports symbols into scope (FQN composite name)
-//   A:      straight-line continuation
-//   B:      flat alternative - both branches must stay live post-commit
-//   C:      shared-prefix alternative - keep both alts past the prefix
-//   D:      rule-call alternative with shared prefix (DLong/DShort)
-//   E:      cross-reference via FQN composite
-//   F:      nested rule with FItem children (synthetic chain coverage)
-//   G:      cross-reference via plain ID
-//   J:      cross-reference and keyword alternative at the same position
-//   K:      two assignments to the same target type - dedup check
-//   L:      fully optional group in front of mandatory content
+// engine. Each rule targets one simulator/parser edge case and its keyword is
+// the lowercase rule name; see the comments in completion.fb.
 
 func completionAt(t *testing.T, src string) []lsp.CompletionItem {
 	t.Helper()
@@ -97,93 +88,93 @@ func countLabel(items []lsp.CompletionItem, label string) int {
 // Entry: every Root alternative starter must surface.
 func TestCompletion_AtEntry(t *testing.T) {
 	items := completionAt(t, "<|cursor>")
-	for _, want := range []string{"declare", "a", "b", "c", "d", "e", "f", "g"} {
+	for _, want := range []string{"declare", "seq", "alt", "prefix", "call", "fqn", "list", "ref"} {
 		if !hasLabel(items, want) {
 			t.Errorf("expected %q at entry; got %v", want, itemLabels(items))
 		}
 	}
 }
 
-// Straight-line continuation: only "first" follows "a".
-func TestCompletion_AfterA(t *testing.T) {
-	items := completionAt(t, "a <|cursor>")
+// Straight-line continuation: only "first" follows "seq".
+func TestCompletion_AfterSeq(t *testing.T) {
+	items := completionAt(t, "seq <|cursor>")
 	if !hasLabel(items, "first") {
-		t.Errorf("expected 'first' after 'a'; got %v", itemLabels(items))
+		t.Errorf("expected 'first' after 'seq'; got %v", itemLabels(items))
 	}
 	if hasLabel(items, "second") {
-		t.Errorf("did not expect 'second' after 'a'; got %v", itemLabels(items))
+		t.Errorf("did not expect 'second' after 'seq'; got %v", itemLabels(items))
 	}
 	if hasLabel(items, "a") {
-		t.Errorf("did not expect 'a' to repeat; got %v", itemLabels(items))
+		t.Errorf("did not expect 'seq' to repeat; got %v", itemLabels(items))
 	}
 }
 
-// Flat alternative: after "b" both branches must stay live.
-func TestCompletion_AfterB(t *testing.T) {
-	items := completionAt(t, "b <|cursor>")
+// Flat alternative: after "alt" both branches must stay live.
+func TestCompletion_AfterAlt(t *testing.T) {
+	items := completionAt(t, "alt <|cursor>")
 	if !hasLabel(items, "first") {
-		t.Errorf("expected 'first' after 'b'; got %v", itemLabels(items))
+		t.Errorf("expected 'first' after 'alt'; got %v", itemLabels(items))
 	}
 	if !hasLabel(items, "second") {
-		t.Errorf("expected 'second' after 'b'; got %v", itemLabels(items))
+		t.Errorf("expected 'second' after 'alt'; got %v", itemLabels(items))
 	}
 }
 
 // Shared-prefix entry: only "common" is valid before disambiguation.
-func TestCompletion_AfterC(t *testing.T) {
-	items := completionAt(t, "c <|cursor>")
+func TestCompletion_AfterPrefix(t *testing.T) {
+	items := completionAt(t, "prefix <|cursor>")
 	if !hasLabel(items, "common") {
-		t.Errorf("expected 'common' after 'c'; got %v", itemLabels(items))
+		t.Errorf("expected 'common' after 'prefix'; got %v", itemLabels(items))
 	}
 	if hasLabel(items, "first") || hasLabel(items, "second") {
 		t.Errorf("did not expect branch tokens before 'common'; got %v", itemLabels(items))
 	}
 }
 
-// Headline regression: both C branches stay live past the shared prefix.
-func TestCompletion_AfterCCommon(t *testing.T) {
-	items := completionAt(t, "c common <|cursor>")
+// Headline regression: both Prefix branches stay live past the shared prefix.
+func TestCompletion_AfterPrefixCommon(t *testing.T) {
+	items := completionAt(t, "prefix common <|cursor>")
 	if !hasLabel(items, "first") {
-		t.Errorf("expected 'first' after 'c common'; got %v", itemLabels(items))
+		t.Errorf("expected 'first' after 'prefix common'; got %v", itemLabels(items))
 	}
 	if !hasLabel(items, "second") {
-		t.Errorf("expected 'second' after 'c common'; got %v", itemLabels(items))
+		t.Errorf("expected 'second' after 'prefix common'; got %v", itemLabels(items))
 	}
 }
 
-// End-of-rule pop-back: Root loop re-enters after "a first".
-func TestCompletion_AfterAFirst(t *testing.T) {
-	items := completionAt(t, "a first <|cursor>")
-	for _, want := range []string{"declare", "a", "b", "c", "d", "e", "f", "g"} {
+// End-of-rule pop-back: Root loop re-enters after "seq first".
+func TestCompletion_AfterSeqFirst(t *testing.T) {
+	items := completionAt(t, "seq first <|cursor>")
+	for _, want := range []string{"declare", "seq", "alt", "prefix", "call", "fqn", "list", "ref"} {
 		if !hasLabel(items, want) {
-			t.Errorf("expected %q after 'a first'; got %v", want, itemLabels(items))
+			t.Errorf("expected %q after 'seq first'; got %v", want, itemLabels(items))
 		}
 	}
 }
 
-// Rule-call alternative entry: both DLong/DShort share "common".
-func TestCompletion_AfterD(t *testing.T) {
-	items := completionAt(t, "d <|cursor>")
+// Rule-call alternative entry: both CallLong/CallShort share "common".
+func TestCompletion_AfterCall(t *testing.T) {
+	items := completionAt(t, "call <|cursor>")
 	if !hasLabel(items, "common") {
-		t.Errorf("expected 'common' after 'd'; got %v", itemLabels(items))
+		t.Errorf("expected 'common' after 'call'; got %v", itemLabels(items))
 	}
 	if hasLabel(items, "then") || hasLabel(items, "long") {
-		t.Errorf("did not expect later DLong tokens; got %v", itemLabels(items))
+		t.Errorf("did not expect later CallLong tokens; got %v", itemLabels(items))
 	}
 }
 
-// Rule-call shared-prefix regression: DLong's "then" must stay live
-// even though DShort is already a complete parse.
-func TestCompletion_AfterDCommon(t *testing.T) {
-	items := completionAt(t, "d common <|cursor>")
+// Rule-call shared-prefix regression: CallLong's "then" must stay live
+// even though CallShort is already a complete parse.
+func TestCompletion_AfterCallCommon(t *testing.T) {
+	items := completionAt(t, "call common <|cursor>")
 	if !hasLabel(items, "then") {
-		t.Errorf("expected 'then' after 'd common'; got %v", itemLabels(items))
+		t.Errorf("expected 'then' after 'call common'; got %v", itemLabels(items))
 	}
 }
 
-// Single-path stretch: only "long" follows "d common then".
-func TestCompletion_AfterDCommonThen(t *testing.T) {
-	items := completionAt(t, "d common then <|cursor>")
+// Single-path stretch: only "long" follows "call common then".
+func TestCompletion_AfterCallCommonThen(t *testing.T) {
+	items := completionAt(t, "call common then <|cursor>")
 	if !hasLabel(items, "long") {
 		t.Errorf("expected 'long'; got %v", itemLabels(items))
 	}
@@ -193,10 +184,10 @@ func TestCompletion_AfterDCommonThen(t *testing.T) {
 }
 
 // Cross-reference entry with empty scope - Root keywords must not leak
-// (the ID atom inherits the E.Ref hint and HintedOnlyIDs suppresses it).
-func TestCompletion_AfterE(t *testing.T) {
-	items := completionAt(t, "e <|cursor>")
-	for _, leaked := range []string{"declare", "a", "b", "c", "d", "e", "f", "g"} {
+// (the ID atom inherits the RefFQN.Ref hint, so it is not offered as a token).
+func TestCompletion_AfterRefFQN(t *testing.T) {
+	items := completionAt(t, "fqn <|cursor>")
+	for _, leaked := range []string{"declare", "seq", "alt", "prefix", "call", "fqn", "list", "ref"} {
 		if hasLabel(items, leaked) {
 			t.Errorf("did not expect Root keyword %q mid-E; got %v", leaked, itemLabels(items))
 		}
@@ -204,18 +195,18 @@ func TestCompletion_AfterE(t *testing.T) {
 }
 
 // Cross-reference dispatch surfaces every Declare in scope.
-func TestCompletion_AfterE_WithDeclares(t *testing.T) {
-	items := completionAt(t, "declare foo declare bar e <|cursor>")
+func TestCompletion_AfterRefFQN_WithDeclares(t *testing.T) {
+	items := completionAt(t, "declare foo declare bar fqn <|cursor>")
 	for _, want := range []string{"foo", "bar"} {
 		if !hasLabel(items, want) {
-			t.Errorf("expected %q as E.Ref candidate; got %v", want, itemLabels(items))
+			t.Errorf("expected %q as RefFQN.Ref candidate; got %v", want, itemLabels(items))
 		}
 	}
 }
 
 // Multi-segment FQN names surface as a single composite label.
-func TestCompletion_AfterE_WithFQNDeclare(t *testing.T) {
-	items := completionAt(t, "declare foo.bar e <|cursor>")
+func TestCompletion_AfterRefFQN_WithFQNDeclare(t *testing.T) {
+	items := completionAt(t, "declare foo.bar fqn <|cursor>")
 	if !hasLabel(items, "foo.bar") {
 		t.Errorf("expected 'foo.bar'; got %v", itemLabels(items))
 	}
@@ -225,8 +216,8 @@ func TestCompletion_AfterE_WithFQNDeclare(t *testing.T) {
 }
 
 // Mid-FQN cursor: composite candidate still surfaces as one label.
-func TestCompletion_AfterE_WithFQNDeclare_InFQN(t *testing.T) {
-	items := completionAt(t, "declare foo.bar e foo<|cursor>")
+func TestCompletion_AfterRefFQN_WithFQNDeclare_InFQN(t *testing.T) {
+	items := completionAt(t, "declare foo.bar fqn foo<|cursor>")
 	if !hasLabel(items, "foo.bar") {
 		t.Errorf("expected 'foo.bar'; got %v", itemLabels(items))
 	}
@@ -262,28 +253,28 @@ func TestCompletion_InsideKeyword(t *testing.T) {
 }
 
 // Dispatch enumerates every Declare, not just the first match.
-func TestCompletion_AfterE_MultipleDeclares(t *testing.T) {
-	items := completionAt(t, "declare foo.bar declare foo.baz e <|cursor>")
+func TestCompletion_AfterRefFQN_MultipleDeclares(t *testing.T) {
+	items := completionAt(t, "declare foo.bar declare foo.baz fqn <|cursor>")
 	for _, want := range []string{"foo.bar", "foo.baz"} {
 		if !hasLabel(items, want) {
-			t.Errorf("expected %q as E.Ref candidate; got %v", want, itemLabels(items))
+			t.Errorf("expected %q as RefFQN.Ref candidate; got %v", want, itemLabels(items))
 		}
 	}
 }
 
 // Cursor right after the FQN separator dot.
-func TestCompletion_AfterE_FQNTrailingDot(t *testing.T) {
-	items := completionAt(t, "declare foo.bar e foo.<|cursor>")
+func TestCompletion_AfterRefFQN_FQNTrailingDot(t *testing.T) {
+	items := completionAt(t, "declare foo.bar fqn foo.<|cursor>")
 	if !hasLabel(items, "foo.bar") {
 		t.Errorf("expected 'foo.bar' after trailing dot; got %v", itemLabels(items))
 	}
 }
 
 // Cursor inside the second FQN segment.
-func TestCompletion_AfterE_FQNMidSegment(t *testing.T) {
+func TestCompletion_AfterRefFQN_FQNMidSegment(t *testing.T) {
 	items := completionAt(t, `
 declare foo.bar
-e foo.<|cursor>`)
+fqn foo.<|cursor>`)
 	item := itemWithLabel(items, "foo.bar")
 	if item == nil {
 		t.Errorf("expected 'foo.bar' for partial FQN mid-segment; got %v", itemLabels(items))
@@ -299,8 +290,8 @@ e foo.<|cursor>`)
 	if textEdit.NewText != "foo.bar" {
 		t.Errorf("expected replacement text 'foo.bar'; got %q", textEdit.NewText)
 	}
-	if textEdit.Range.Start.Character != 2 || textEdit.Range.End.Character != 6 {
-		t.Errorf("expected replacement range {2,6}; got {%d,%d}", textEdit.Range.Start.Character, textEdit.Range.End.Character)
+	if textEdit.Range.Start.Character != 4 || textEdit.Range.End.Character != 8 {
+		t.Errorf("expected replacement range {4,8}; got {%d,%d}", textEdit.Range.Start.Character, textEdit.Range.End.Character)
 	}
 }
 
@@ -308,35 +299,35 @@ e foo.<|cursor>`)
 // completions the user would expect at the cursor. Without recovery in the
 // completion parser, the parse stops at the first mismatch and the simulator
 // has no snapshot near the cursor to drive completions from.
-func TestCompletion_AfterE_WithSyntaxErrorMidPrefix(t *testing.T) {
-	items := completionAt(t, "declare foo bar e <|cursor>")
+func TestCompletion_AfterRefFQN_WithSyntaxErrorMidPrefix(t *testing.T) {
+	items := completionAt(t, "declare foo bar fqn <|cursor>")
 	for _, want := range []string{"foo"} {
 		if !hasLabel(items, want) {
-			t.Errorf("expected %q as E.Ref candidate despite stray 'bar'; got %v", want, itemLabels(items))
+			t.Errorf("expected %q as RefFQN.Ref candidate despite stray 'bar'; got %v", want, itemLabels(items))
 		}
 	}
 }
 
-// Rule re-entry through the Root loop: cursor inside B after a complete A.
+// Rule re-entry through the Root loop: cursor inside Alt after a complete Seq.
 func TestCompletion_MidRootSequence(t *testing.T) {
-	items := completionAt(t, "a first b <|cursor>")
+	items := completionAt(t, "seq first alt <|cursor>")
 	for _, want := range []string{"first", "second"} {
 		if !hasLabel(items, want) {
-			t.Errorf("expected %q after 'a first b'; got %v", want, itemLabels(items))
+			t.Errorf("expected %q after 'seq first alt'; got %v", want, itemLabels(items))
 		}
 	}
 }
 
 // Plain-ID cross-reference path (no FQN composite involved).
-func TestCompletion_AfterG_SimpleRef(t *testing.T) {
+func TestCompletion_AfterRefID_SimpleRef(t *testing.T) {
 	items := completionAt(t, `
 	declare alpha
 	declare beta
-	g <|cursor>
+	ref <|cursor>
 	`)
 	for _, want := range []string{"alpha", "beta"} {
 		if !hasLabel(items, want) {
-			t.Errorf("expected %q as G.Ref candidate; got %v", want, itemLabels(items))
+			t.Errorf("expected %q as RefID.Ref candidate; got %v", want, itemLabels(items))
 		}
 	}
 	if hasLabel(items, ".") {
@@ -345,22 +336,22 @@ func TestCompletion_AfterG_SimpleRef(t *testing.T) {
 }
 
 // Cursor-in-token heuristic for plain-ID cross-refs.
-func TestCompletion_AfterG_SimpleRef_Partial(t *testing.T) {
-	items := completionAt(t, "declare alpha g <|cursor>")
+func TestCompletion_AfterRefID_SimpleRef_Partial(t *testing.T) {
+	items := completionAt(t, "declare alpha ref <|cursor>")
 	if itemWithLabel(items, "alpha") == nil {
 		t.Fatalf("expected 'alpha' for partial simple-ID cross-ref; got %v", itemLabels(items))
 	}
 }
 
 // Use local scope for first member call completion
-func TestCompletion_AfterH_Simple(t *testing.T) {
+func TestCompletion_AfterMember_Simple(t *testing.T) {
 	items := completionAt(t, `
 		declare alpha {
 			declare beta {
 				declare gamma
 			}
 		}
-		h <|cursor>
+		member <|cursor>
 	`)
 	assert.Len(t, items, 1)
 	if itemWithLabel(items, "alpha") == nil {
@@ -370,19 +361,19 @@ func TestCompletion_AfterH_Simple(t *testing.T) {
 
 // Use previous member's scope for subsequent member call completion.
 // Also tests that actions are properly evaluated to populate the scope.
-func TestCompletion_AfterH_MemberCall(t *testing.T) {
+func TestCompletion_AfterMember_MemberCall(t *testing.T) {
 	items := completionAt(t, `
 		declare alpha {
 			declare beta {
 				declare gamma
 			}
 		}
-		h alpha.beta.<|cursor>
+		member alpha.beta.<|cursor>
 	`)
 	// Two contexts: the just-typed "." can be replaced (REPLACE-shaped
 	// "." suggestion) AND the next MemberCall.Ref can be inserted
 	// (INSERT-shaped "gamma"). Nothing else should leak in - the
-	// ReplaceRange filter prunes the Root-loop keywords (a, b, c, ...)
+	// ReplaceRange filter prunes the Root-loop keywords (seq, alt, prefix, ...)
 	// that are theoretically valid substitutes for "." but don't match
 	// what the user actually typed.
 	assert.Len(t, items, 2)
@@ -391,10 +382,10 @@ func TestCompletion_AfterH_MemberCall(t *testing.T) {
 	if dot == nil || gamma == nil {
 		t.Fatalf("expected '.' and 'gamma'; got %v", itemLabels(items))
 	}
-	if dot != nil && dot.TextEdit == nil {
+	if dot.TextEdit == nil {
 		t.Errorf("expected '.' to carry a REPLACE TextEdit")
 	}
-	if gamma != nil && gamma.TextEdit != nil {
+	if gamma.TextEdit != nil {
 		t.Errorf("expected 'gamma' to be INSERT-shaped (no TextEdit); got %+v", gamma.TextEdit)
 	}
 }
@@ -402,14 +393,14 @@ func TestCompletion_AfterH_MemberCall(t *testing.T) {
 // Use previous member's scope for subsequent member call completion.
 // Also tests that actions are properly evaluated to populate the scope.
 // This test covers the non-dot member call syntax, ensuring that the same
-func TestCompletion_AfterI_MemberCall(t *testing.T) {
+func TestCompletion_AfterMemberNoDot_MemberCall(t *testing.T) {
 	items := completionAt(t, `
 		declare alpha {
 			declare beta {
 				declare gamma
 			}
 		}
-		i alpha beta <|cursor>
+		nodot alpha beta <|cursor>
 	`)
 	// Do not assert length, as the rule could end at this point
 	// and surface all the other rule start keywords
@@ -419,26 +410,26 @@ func TestCompletion_AfterI_MemberCall(t *testing.T) {
 }
 
 // Same as previous test, but with the cursor before a member call segment
-func TestCompletion_AfterI_MemberCallWithExisting(t *testing.T) {
+func TestCompletion_AfterMemberNoDot_MemberCallWithExisting(t *testing.T) {
 	items := completionAt(t, `
 		declare alpha {
 			declare beta {
 				declare gamma
 			}
 		}
-		i alpha beta <|cursor>gamma
+		nodot alpha beta <|cursor>gamma
 	`)
 	if itemWithLabel(items, "gamma") == nil {
 		t.Fatalf("expected 'gamma' for member call completion; got %v", itemLabels(items))
 	}
 }
 
-// Mixed alternative: at the cursor after "j", both the cross-reference
+// Mixed alternative: at the cursor after "choice", both the cross-reference
 // candidates and the literal keyword in the sibling branch must surface.
-func TestCompletion_AfterJ_RefAndKeyword(t *testing.T) {
-	items := completionAt(t, "declare foo j <|cursor>")
+func TestCompletion_AfterRefOrKeyword_RefAndKeyword(t *testing.T) {
+	items := completionAt(t, "declare foo choice <|cursor>")
 	if !hasLabel(items, "foo") {
-		t.Errorf("expected 'foo' as J.Ref candidate; got %v", itemLabels(items))
+		t.Errorf("expected 'foo' as RefOrKeyword.Ref candidate; got %v", itemLabels(items))
 	}
 	if !hasLabel(items, "self") {
 		t.Errorf("expected 'self' keyword alternative; got %v", itemLabels(items))
@@ -447,46 +438,46 @@ func TestCompletion_AfterJ_RefAndKeyword(t *testing.T) {
 
 // Mixed alternative without any declared symbols: the keyword branch must
 // still surface even when the ref branch contributes nothing.
-func TestCompletion_AfterJ_KeywordWithoutDeclares(t *testing.T) {
-	items := completionAt(t, "declare some j <|cursor>")
+func TestCompletion_AfterRefOrKeyword_KeywordWithoutDeclares(t *testing.T) {
+	items := completionAt(t, "declare some choice <|cursor>")
 	assert.Len(t, items, 2)
 	if !hasLabel(items, "self") {
 		t.Errorf("expected 'self' keyword alternative; got %v", itemLabels(items))
 	}
 	if !hasLabel(items, "some") {
-		t.Errorf("expected 'some' as J.Ref candidate; got %v", itemLabels(items))
+		t.Errorf("expected 'some' as RefOrKeyword.Ref candidate; got %v", itemLabels(items))
 	}
 }
 
 // Two alternatives both assign a ref to Declare. The same candidate must
 // appear once, not once per alternative.
-func TestCompletion_AfterK_NoDuplicates(t *testing.T) {
-	items := completionAt(t, "declare foo k <|cursor>")
+func TestCompletion_AfterDedup_NoDuplicates(t *testing.T) {
+	items := completionAt(t, "declare foo dedup <|cursor>")
 	if got := countLabel(items, "foo"); got != 1 {
-		t.Errorf("expected 'foo' exactly once across K alternatives; got %d in %v", got, itemLabels(items))
+		t.Errorf("expected 'foo' exactly once across Dedup alternatives; got %d in %v", got, itemLabels(items))
 	}
 }
 
-// Fully optional prefix: at the cursor after "l", both the optional's
+// Fully optional prefix: at the cursor after "opt", both the optional's
 // opener ("anno") and the required follow-up ("doc") past the skipped
 // group must surface.
-func TestCompletion_AfterL_OptionalSkipped(t *testing.T) {
-	items := completionAt(t, "l <|cursor>")
+func TestCompletion_AfterOpt_OptionalSkipped(t *testing.T) {
+	items := completionAt(t, "opt <|cursor>")
 	assert.Len(t, items, 2)
 	for _, want := range []string{"optional", "then"} {
 		if !hasLabel(items, want) {
-			t.Errorf("expected %q after 'l'; got %v", want, itemLabels(items))
+			t.Errorf("expected %q after 'opt'; got %v", want, itemLabels(items))
 		}
 	}
 }
 
 // Once the optional group is entered, only its continuation is valid -
 // the required follow-up ("then") must not leak past the unfinished group.
-func TestCompletion_AfterL_OptionalEntered(t *testing.T) {
-	items := completionAt(t, "l optional <|cursor>")
+func TestCompletion_AfterOpt_OptionalEntered(t *testing.T) {
+	items := completionAt(t, "opt optional <|cursor>")
 	assert.Len(t, items, 1)
 	if !hasLabel(items, "and") {
-		t.Errorf("expected 'and' after 'l optional'; got %v", itemLabels(items))
+		t.Errorf("expected 'and' after 'opt optional'; got %v", itemLabels(items))
 	}
 	if hasLabel(items, "then") {
 		t.Errorf("did not expect 'then' mid-optional; got %v", itemLabels(items))
@@ -495,8 +486,8 @@ func TestCompletion_AfterL_OptionalEntered(t *testing.T) {
 
 // After completing the optional group, the required follow-up must
 // resurface.
-func TestCompletion_AfterL_OptionalCompleted(t *testing.T) {
-	items := completionAt(t, "l optional and <|cursor>")
+func TestCompletion_AfterOpt_OptionalCompleted(t *testing.T) {
+	items := completionAt(t, "opt optional and <|cursor>")
 	assert.Len(t, items, 1)
 	if !hasLabel(items, "then") {
 		t.Errorf("expected 'then' after completed optional; got %v", itemLabels(items))
@@ -506,10 +497,10 @@ func TestCompletion_AfterL_OptionalCompleted(t *testing.T) {
 	}
 }
 
-// Even though the token group following the "m" keyword contains
+// Even though the token group following the "group" keyword contains
 // some keywords, none of them should be proposed by default.
-func TestCompletion_AfterM_NoTokenGroupProposal(t *testing.T) {
-	items := completionAt(t, "m <|cursor>")
+func TestCompletion_AfterGroup_NoTokenGroupProposal(t *testing.T) {
+	items := completionAt(t, "group <|cursor>")
 	if len(items) != 0 {
 		t.Errorf("expected no completion items for empty token group; got %v", itemLabels(items))
 	}
@@ -517,21 +508,21 @@ func TestCompletion_AfterM_NoTokenGroupProposal(t *testing.T) {
 
 // We use a token group as a cross reference terminal
 // It should propose the names as usual
-func TestCompletion_AfterN_TokenGroupCrossRef(t *testing.T) {
-	items := completionAt(t, "declare some n <|cursor>")
+func TestCompletion_AfterRefGroup_TokenGroupCrossRef(t *testing.T) {
+	items := completionAt(t, "declare some refgroup <|cursor>")
 	assert.Len(t, items, 1)
 	if !hasLabel(items, "some") {
-		t.Errorf("expected 'some' as N.Ref candidate; got %v", itemLabels(items))
+		t.Errorf("expected 'some' as RefGroup.Ref candidate; got %v", itemLabels(items))
 	}
 }
 
 // The token group cross-reference must enumerate the full scope, not just the
 // first match, and each candidate must surface exactly once.
-func TestCompletion_AfterN_TokenGroupCrossRef_MultipleDeclares(t *testing.T) {
-	items := completionAt(t, "declare foo declare bar n <|cursor>")
+func TestCompletion_AfterRefGroup_TokenGroupCrossRef_MultipleDeclares(t *testing.T) {
+	items := completionAt(t, "declare foo declare bar refgroup <|cursor>")
 	for _, want := range []string{"foo", "bar"} {
 		if !hasLabel(items, want) {
-			t.Errorf("expected %q as N.Ref candidate; got %v", want, itemLabels(items))
+			t.Errorf("expected %q as RefGroup.Ref candidate; got %v", want, itemLabels(items))
 		}
 		if got := countLabel(items, want); got != 1 {
 			t.Errorf("expected %q exactly once; got %d in %v", want, got, itemLabels(items))
@@ -541,11 +532,431 @@ func TestCompletion_AfterN_TokenGroupCrossRef_MultipleDeclares(t *testing.T) {
 
 // We use a token group as a cross reference terminal
 // It should propose the names as usual
-func TestCompletion_AfterO_ActionCrossRef(t *testing.T) {
-	items := completionAt(t, "declare some o <|cursor>")
+func TestCompletion_AfterRefAction_ActionCrossRef(t *testing.T) {
+	items := completionAt(t, "declare some action <|cursor>")
 	assert.Len(t, items, 1)
 	if !hasLabel(items, "some") {
-		t.Errorf("expected 'some' as O.Ref candidate; got %v", itemLabels(items))
+		t.Errorf("expected 'some' as RefAction.Ref candidate; got %v", itemLabels(items))
+	}
+}
+
+// The reference is completed on an existing RefItem node, so the scope is
+// computed from the actual AST and contains the local symbols of Scope.
+func TestCompletion_AfterScope_LocalSymbols_ExistingOwner(t *testing.T) {
+	items := completionAt(t, "scope { declare local use local<|cursor> }")
+	if !hasLabel(items, "local") {
+		t.Errorf("expected 'local' as RefItem.Ref candidate; got %v", itemLabels(items))
+	}
+}
+
+// The RefItem node does not exist yet, so the reference is completed on a
+// synthetic owner. Its scope must still contain the local symbols of the
+// enclosing Scope node.
+func TestCompletion_AfterScope_LocalSymbols_SyntheticOwner(t *testing.T) {
+	sources := []string{
+		"declare global scope { declare local use <|cursor>",
+		"declare global scope { declare local use <|cursor> }",
+		// Syntactically valid: the cursor is in front of the existing reference.
+		"declare global scope { declare local use <|cursor>local }",
+	}
+	for _, src := range sources {
+		t.Run(src, func(t *testing.T) {
+			items := completionAt(t, src)
+			for _, want := range []string{"global", "local"} {
+				if !hasLabel(items, want) {
+					t.Errorf("expected %q as RefItem.Ref candidate; got %v", want, itemLabels(items))
+				}
+			}
+		})
+	}
+}
+
+// ownerRecordingFilter records the owner of every reference of the rules Scope
+// to Retype that is completed.
+type ownerRecordingFilter struct {
+	completion.DefaultCompletionCompletionFilter
+	owners []core.AstNode
+}
+
+func (f *ownerRecordingFilter) FilterWrapRefRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+func (f *ownerRecordingFilter) FilterNestRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+func (f *ownerRecordingFilter) FilterAmbigNameRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+func (f *ownerRecordingFilter) FilterAmbigRefsRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+func (f *ownerRecordingFilter) FilterRefItemRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+func (f *ownerRecordingFilter) FilterChainItemRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+func (f *ownerRecordingFilter) FilterOperandRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+// ownerRecorder is a completion filter that records the owners of the
+// references that it filters.
+type ownerRecorder interface {
+	completion.CompletionCompletionFilter
+	recordedOwners() []core.AstNode
+}
+
+func (f *ownerRecordingFilter) recordedOwners() []core.AstNode { return f.owners }
+
+// leadOwnerRecordingFilter records the owners of Lead.Ref only. A Lead can
+// start at every position of the root, so the ownerRecordingFilter leaves it
+// out to keep the other owner tests focused.
+type leadOwnerRecordingFilter struct {
+	completion.DefaultCompletionCompletionFilter
+	owners []core.AstNode
+}
+
+func (f *leadOwnerRecordingFilter) FilterLeadRef(_ context.Context, ref *core.Reference[completion.Lead], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+func (f *leadOwnerRecordingFilter) recordedOwners() []core.AstNode { return f.owners }
+
+// completeOwners requests the completion at the cursor and returns the
+// owners of the references that were completed, as recorded by a new
+// ownerRecordingFilter.
+func completeOwners(t *testing.T, src string) (*test.Doc, []core.AstNode) {
+	t.Helper()
+	return completeOwnersWith(t, src, &ownerRecordingFilter{})
+}
+
+// completeOwnersWith is completeOwners with the given filter.
+func completeOwnersWith(t *testing.T, src string, filter ownerRecorder) (*test.Doc, []core.AstNode) {
+	t.Helper()
+	sc := service.NewContainer()
+	completion.SetupServices(sc)
+	service.Override[completion.CompletionCompletionFilter](sc, filter)
+	sc.Seal()
+
+	doc := test.New(t, sc).Parse(src)
+	doc.CompletionItems("cursor")
+	owners := filter.recordedOwners()
+	if len(owners) == 0 {
+		t.Fatalf("expected the completion of a reference")
+	}
+	return doc, owners
+}
+
+// describeOwner returns the types and the containment data of the owner and
+// of its containers below the root, starting with the owner. The nodes that
+// are not part of the document are marked as new.
+func describeOwner(doc *test.Doc, owner core.AstNode) string {
+	existing := collections.NewSet[core.AstNode]()
+	for node := range core.AllNodes(doc.Root()) {
+		existing.Add(node)
+	}
+	segments := []string{}
+	for node := owner; node != nil && node != doc.Root(); node = node.Container() {
+		segment := strings.TrimSuffix(strings.TrimPrefix(fmt.Sprintf("%T", node), "*completion."), "Impl")
+		if !existing.Has(node) {
+			segment = "new " + segment
+		}
+		field, index := node.ContainmentData()
+		if field != (unique.Handle[string]{}) && field.Value() != "" {
+			segment += " at " + field.Value()
+			if index >= 0 {
+				segment += fmt.Sprintf("@%d", index)
+			}
+		}
+		segments = append(segments, segment)
+	}
+	return strings.Join(segments, ", ")
+}
+
+// assertOwners requests the completion at the cursor of each source and
+// compares the owners of the references with the expected descriptions, see
+// describeOwner. The root contains a single node.
+func assertOwners(t *testing.T, cases map[string][]string) {
+	t.Helper()
+	assertOwnersWith(t, func() ownerRecorder { return &ownerRecordingFilter{} }, cases)
+}
+
+// assertOwnersWith is assertOwners with a new filter per case.
+func assertOwnersWith(t *testing.T, newFilter func() ownerRecorder, cases map[string][]string) {
+	t.Helper()
+	for src, expected := range cases {
+		t.Run(src, func(t *testing.T) {
+			doc, owners := completeOwnersWith(t, src, newFilter())
+			actual := []string{}
+			for _, owner := range owners {
+				actual = append(actual, describeOwner(doc, owner))
+			}
+			assert.ElementsMatch(t, expected, actual)
+		})
+	}
+}
+
+// The synthetic owner must know the property and the index that it would
+// have in the enclosing Scope node, as scope providers may depend on them.
+func TestCompletion_AfterScope_SyntheticOwnerContainment(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"scope { declare local use <|cursor>":                            {"new RefItem at item, Scope at objects@0"},
+		"scope { declare local use <|cursor>local }":                     {"new RefItem at item, Scope at objects@0"},
+		"scope { declare local use lo<|cursor>":                          {"new RefItem at item, Scope at objects@0"},
+		"scope { declare local use local and <|cursor>":                  {"new RefItem at others@0, Scope at objects@0"},
+		"scope { declare local use local and <|cursor>local and local }": {"new RefItem at others@0, Scope at objects@0"},
+		"scope { declare local use local and local and <|cursor>":        {"new RefItem at others@1, Scope at objects@0"},
+		"scope { declare local use local and local and <|cursor>local }": {"new RefItem at others@1, Scope at objects@0"},
+		"scope { declare local use local and local and lo<|cursor>":      {"new RefItem at others@1, Scope at objects@0"},
+	})
+}
+
+// The items of Loop have no separator, so the parser does not enter the loop
+// for an item that is missing. The owner is only known from the rule calls
+// that lead to the cross-reference.
+func TestCompletion_AfterLoop_SyntheticOwnerContainment(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"loop { <|cursor>":               {"new RefItem at items@0, Loop at objects@0"},
+		"loop { <|cursor> }":             {"new RefItem at items@0, Loop at objects@0"},
+		"loop { declare local <|cursor>": {"new RefItem at items@0, Loop at objects@0"},
+		"loop { foo <|cursor>":           {"new RefItem at items@1, Loop at objects@0"},
+		"loop { foo <|cursor>foo }":      {"new RefItem at items@1, Loop at objects@0"},
+		"loop { foo foo <|cursor>":       {"new RefItem at items@2, Loop at objects@0"},
+		// The cursor is behind the nested Loop, so the owner belongs to the outer one
+		"loop { foo loop { foo foo } <|cursor>":   {"new RefItem at items@1, Loop at objects@0"},
+		"loop { foo loop { foo foo } <|cursor> }": {"new RefItem at items@1, Loop at objects@0"},
+		"loop { loop { loop { } <|cursor> } }":    {"new RefItem at items@0, Loop at nested@0, Loop at objects@0"},
+		// The cursor is inside of the nested Loop
+		"loop { foo loop { foo foo <|cursor>":     {"new RefItem at items@2, Loop at nested@0, Loop at objects@0"},
+		"loop { foo loop { foo foo <|cursor> } }": {"new RefItem at items@2, Loop at nested@0, Loop at objects@0"},
+	})
+}
+
+// A tree-rewriting action wraps the items of Chain, also for the input that
+// follows the cursor. The owner of a new item still belongs to the Chain.
+func TestCompletion_AfterChain_SyntheticOwnerContainment(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"chain { <|cursor>":               {"new ChainItem at items@0, Chain at objects@0"},
+		"chain { foo and bar <|cursor>":   {"new ChainItem at items@1, Chain at objects@0"},
+		"chain { foo and bar <|cursor> }": {"new ChainItem at items@1, Chain at objects@0"},
+		// The items in front of the cursor are wrapped because of the input that follows it
+		"chain { foo <|cursor> and bar }":             {"new ChainItem at items@1, Chain at objects@0"},
+		"chain { foo and bar <|cursor> and baz }":     {"new ChainItem at items@1, Chain at objects@0"},
+		"chain { foo foo and bar <|cursor> and baz }": {"new ChainItem at items@2, Chain at objects@0"},
+	})
+}
+
+// The operands of the infix rule Binary are contained in the node of their
+// operator, which depends on the precedence of the operators.
+func TestCompletion_AfterInfix_SyntheticOwnerContainment(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"infix { <|cursor>": {"new Operand at items@0, Infix at objects@0"},
+		// The owner is the right operand of the operator in front of the cursor
+		"infix { foo plus <|cursor>":                {"new Operand at right, Binary at items@0, Infix at objects@0"},
+		"infix { foo plus bar times <|cursor>":      {"new Operand at right, Binary at right, Binary at items@0, Infix at objects@0"},
+		"infix { foo times bar plus <|cursor>":      {"new Operand at right, Binary at items@0, Infix at objects@0"},
+		"infix { foo plus <|cursor>bar times baz }": {"new Operand at right, Binary at items@0, Infix at objects@0"},
+		"infix { foo times <|cursor>bar plus baz }": {"new Operand at right, Binary at left, Binary at items@0, Infix at objects@0"},
+		// The owner is a new item behind the operands
+		"infix { foo plus bar times baz <|cursor>":   {"new Operand at items@1, Infix at objects@0"},
+		"infix { foo times bar plus baz <|cursor> }": {"new Operand at items@1, Infix at objects@0"},
+		// The operands in front of the cursor belong to operators that follow it
+		"infix { foo <|cursor> plus bar }":               {"new Operand at items@1, Infix at objects@0"},
+		"infix { foo plus bar <|cursor> times baz }":     {"new Operand at items@1, Infix at objects@0"},
+		"infix { foo foo times bar <|cursor> plus baz }": {"new Operand at items@2, Infix at objects@0"},
+	})
+}
+
+// The tree-rewriting action of WrapGroup wraps the node in front of the cursor
+// into a list, and the owner is the next item of that list. The main parser
+// only created the list if another item follows the cursor.
+func TestCompletion_AfterWrap_OwnerInActionList(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"wrap { <|cursor>":          {"new WrapRef at item, Wrap at objects@0"},
+		"wrap { foo <|cursor>":      {"new WrapRef at elements@1, new WrapGroup at item, Wrap at objects@0"},
+		"wrap { foo <|cursor> }":    {"new WrapRef at elements@1, new WrapGroup at item, Wrap at objects@0"},
+		"wrap { foo <|cursor>bar }": {"new WrapRef at elements@1, WrapGroup at item, Wrap at objects@0"},
+		"wrap { foo bar <|cursor>":  {"new WrapRef at elements@2, WrapGroup at item, Wrap at objects@0"},
+		// The cursor is behind the nested list
+		"wrap { { foo bar } <|cursor>":       {"new WrapRef at elements@1, new WrapGroup at item, Wrap at objects@0"},
+		"wrap { baz { foo bar } <|cursor> }": {"new WrapRef at elements@2, WrapGroup at item, Wrap at objects@0"},
+		// The cursor is inside of the nested list
+		"wrap { baz { foo <|cursor>":       {"new WrapRef at elements@1, new WrapGroup at elements@1, WrapGroup at item, Wrap at objects@0"},
+		"wrap { baz { foo bar <|cursor> }": {"new WrapRef at elements@2, WrapGroup at elements@1, WrapGroup at item, Wrap at objects@0"},
+	})
+}
+
+// The property Right of Shadow has the name of an operand of the infix rule that
+// it calls, which must not be confused when leaving the operands.
+func TestCompletion_AfterShadow_OwnerBehindInfixRule(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"shadow foo <|cursor>":                    {"new RefItem at items@0, Shadow at objects@0"},
+		"shadow foo plus bar times baz <|cursor>": {"new RefItem at items@0, Shadow at objects@0"},
+		"shadow foo times bar plus baz <|cursor>": {"new RefItem at items@0, Shadow at objects@0"},
+		"shadow foo plus bar foo <|cursor>":       {"new RefItem at items@1, Shadow at objects@0"},
+		"shadow foo plus <|cursor>":               {"new Operand at right, Binary at right, Shadow at objects@0"},
+	})
+}
+
+// The owner of the reference in Nest is the Nest that the cursor is in, and not a
+// nested Nest that ends in front of the cursor.
+func TestCompletion_AfterNest_ExistingOwner(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"nest { <|cursor>":                     {"Nest at objects@0"},
+		"nest { nest { } <|cursor>":            {"Nest at objects@0"},
+		"nest { nest { nest { } } <|cursor> }": {"Nest at objects@0"},
+		"nest { nest { nest { } <|cursor> } }": {"Nest at children@0, Nest at objects@0"},
+		"nest { nest { } nest { <|cursor> } }": {"Nest at children@1, Nest at objects@0"},
+	})
+	items := completionAt(t, "declare global nest { declare outer nest { declare inner } <|cursor> }")
+	for _, want := range []string{"global", "outer"} {
+		if !hasLabel(items, want) {
+			t.Errorf("expected %q as Nest.Ref candidate; got %v", want, itemLabels(items))
+		}
+	}
+	if hasLabel(items, "inner") {
+		t.Errorf("did not expect 'inner' as Nest.Ref candidate; got %v", itemLabels(items))
+	}
+}
+
+// The main parser reads the token in front of the cursor as the name of a
+// AmbigName. The reference of AmbigRefs reads it as a reference, so its owner is
+// unrelated to the node of the main parser.
+func TestCompletion_AfterAmbig_OwnerOfOtherAlternative(t *testing.T) {
+	doc, owners := completeOwners(t, "ambig foo <|cursor>bar first")
+	if _, ok := test.FindNode[completion.Ambig](doc); !ok {
+		t.Fatalf("expected the main parser to create an AmbigName")
+	}
+	actual := []string{}
+	for _, owner := range owners {
+		actual = append(actual, describeOwner(doc, owner))
+	}
+	assert.ElementsMatch(t, []string{
+		"AmbigName at name, Ambig at objects@0",
+		"new AmbigRefs, new Root",
+	}, actual)
+}
+
+// Like TestCompletion_AfterAmbig_OwnerOfOtherAlternative, but the owner of
+// AmbigRefs is derived from the rule stack of the completion parser, which
+// contains DeepChoice. The synthetic owner chain must contain the DeepBody
+// that DeepChoice returns, although the rule is not named like its type.
+func TestCompletion_AfterDeep_OwnerChainUsesReturnTypes(t *testing.T) {
+	doc, owners := completeOwners(t, "deep { foo <|cursor>bar first }")
+	actual := []string{}
+	for _, owner := range owners {
+		actual = append(actual, describeOwner(doc, owner))
+	}
+	assert.ElementsMatch(t, []string{
+		"AmbigName at name, DeepBody at body, Deep at objects@0",
+		"new AmbigRefs, new DeepBody, new Deep, new Root",
+	}, actual)
+}
+
+// The cross-reference of Lead can be the first token of the document, so
+// there is no token in front of the cursor. The owner must still be
+// contained in the root that the main parser built, with the containment
+// data that the parser would give to it, as it is one token later.
+func TestCompletion_AtDocumentStart_OwnerContainment(t *testing.T) {
+	assertOwnersWith(t, func() ownerRecorder { return &leadOwnerRecordingFilter{} }, map[string][]string{
+		"<|cursor>":                           {"new Lead at objects@0"},
+		"<|cursor>#foo lead #bar":             {"new Lead at objects@0"},
+		"<|cursor>#foo lead #bar declare baz": {"new Lead at objects@0"},
+		"#foo lead #bar <|cursor>":            {"new Lead at objects@1"},
+	})
+}
+
+// The Leads of the root are proposed for Lead.Ref at the start of the
+// document, as the scope provider finds them through the container of the
+// owner, which is the root that the main parser built from the input behind
+// the cursor.
+func TestCompletion_AtDocumentStart_ProposesSymbols(t *testing.T) {
+	items := completionAt(t, "<|cursor>#foo lead #bar")
+	if !hasLabel(items, "#bar") || !hasLabel(items, "declare") {
+		t.Errorf("expected '#bar' next to the keywords at the start; got %v", itemLabels(items))
+	}
+
+	// The typed prefix replaces the keywords by the matching Leads
+	items = completionAt(t, "#<|cursor>foo lead #bar #bar lead #baz")
+	assert.ElementsMatch(t, []string{"#bar", "#baz"}, itemLabels(items))
+	if item := itemWithLabel(items, "#bar"); item == nil || item.TextEdit == nil {
+		t.Errorf("expected REPLACE-shaped '#bar'; got %+v", item)
+	}
+
+	// Without Leads, nothing is proposed for the reference
+	items = completionAt(t, "<|cursor>declare foo")
+	for _, label := range itemLabels(items) {
+		if strings.HasPrefix(label, "#") {
+			t.Errorf("did not expect a Lead; got %v", itemLabels(items))
+		}
+	}
+}
+
+// The action of RetypeItem changes the type of the node that contains the owner.
+func TestCompletion_AfterRetype_OwnerInNodeOfAction(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"retype { <|cursor>":     {"new RefItem at inner, new RetypeWrapper at items@0, Retype at objects@0"},
+		"retype { foo <|cursor>": {"new RefItem at inner, new RetypeWrapper at items@1, Retype at objects@0"},
+	})
+}
+
+// The cursor is further away from the start of the nested Loop than the
+// simulator looks back, so it has to leave a rule that it didn't enter.
+func TestCompletion_AfterLoop_LongInput(t *testing.T) {
+	src := "declare global loop { declare outer loop { declare inner " + strings.Repeat("foo ", 40) + "} <|cursor>"
+	items := completionAt(t, src)
+	for _, want := range []string{"global", "outer"} {
+		if !hasLabel(items, want) {
+			t.Errorf("expected %q as RefItem.Ref candidate; got %v", want, itemLabels(items))
+		}
+	}
+	if hasLabel(items, "inner") {
+		t.Errorf("did not expect 'inner' as RefItem.Ref candidate; got %v", itemLabels(items))
+	}
+	assertOwners(t, map[string][]string{src: {"new RefItem at items@0, Loop at objects@1"}})
+}
+
+// The local symbols of a nested Loop are not visible behind it.
+func TestCompletion_AfterLoop_LocalSymbols(t *testing.T) {
+	cases := []struct {
+		src      string
+		expected []string
+		excluded []string
+	}{
+		{"declare global loop { declare outer loop { declare inner } <|cursor>", []string{"global", "outer"}, []string{"inner"}},
+		{"declare global loop { declare outer loop { declare inner } <|cursor> }", []string{"global", "outer"}, []string{"inner"}},
+		{"declare global loop { declare outer loop { declare inner <|cursor>", []string{"global", "outer", "inner"}, nil},
+		{"declare global loop { declare outer loop { declare inner } } <|cursor>", nil, []string{"global", "outer", "inner"}},
+	}
+	for _, c := range cases {
+		t.Run(c.src, func(t *testing.T) {
+			items := completionAt(t, c.src)
+			for _, want := range c.expected {
+				if !hasLabel(items, want) {
+					t.Errorf("expected %q as RefItem.Ref candidate; got %v", want, itemLabels(items))
+				}
+			}
+			for _, unwanted := range c.excluded {
+				if hasLabel(items, unwanted) {
+					t.Errorf("did not expect %q as RefItem.Ref candidate; got %v", unwanted, itemLabels(items))
+				}
+			}
+		})
 	}
 }
 
@@ -553,7 +964,7 @@ func TestCompletion_AfterO_ActionCrossRef(t *testing.T) {
 // cross-reference, not just drive completion.
 func TestTokenGroupReference_Resolves(t *testing.T) {
 	sc := completion.CreateServices(&SimpleCompletionContributor{})
-	doc := test.New(t, sc).Parse("declare foo n foo")
+	doc := test.New(t, sc).Parse("declare foo refgroup foo")
 	doc.AssertNoErrors()
 
 	ref := test.MustFindReferenceWithText[completion.Declare](doc, "foo")
@@ -568,7 +979,7 @@ func TestTokenGroupReference_Resolves(t *testing.T) {
 // must report a resolution error.
 func TestTokenGroupReference_Unresolved(t *testing.T) {
 	sc := completion.CreateServices(&SimpleCompletionContributor{})
-	doc := test.New(t, sc).Parse("n missing")
+	doc := test.New(t, sc).Parse("refgroup missing")
 
 	ref := test.MustFindReferenceWithText[completion.Declare](doc, "missing")
 	assert.Nil(t, ref.Ref(doc.Ctx()))
@@ -580,7 +991,7 @@ type hidingCompletionFilter struct {
 	hide string
 }
 
-func (h *hidingCompletionFilter) FilterERef(ctx context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+func (h *hidingCompletionFilter) FilterRefFQNRef(ctx context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
 	return func(yield func(*core.SymbolDescription) bool) {
 		for d := range in {
 			if d.Unit.String() == h.hide {
@@ -593,14 +1004,14 @@ func (h *hidingCompletionFilter) FilterERef(ctx context.Context, ref *core.Refer
 	}
 }
 
-// FilterERef override hides one declare while siblings remain.
+// FilterRefFQNRef override hides one declare while siblings remain.
 func TestCompletion_FilterOverride(t *testing.T) {
 	sc := service.NewContainer()
 	completion.SetupServices(sc)
 	service.Override[completion.CompletionCompletionFilter](sc, &hidingCompletionFilter{hide: "bar"})
 	sc.Seal()
 
-	doc := test.New(t, sc).Parse("declare foo declare bar e <|cursor>")
+	doc := test.New(t, sc).Parse("declare foo declare bar fqn <|cursor>")
 	items := doc.CompletionItems("cursor")
 
 	if hasLabel(items, "bar") {
@@ -616,6 +1027,15 @@ type recordingContributor struct {
 	onToken     func(tt *core.TokenType, atnState int, cc server.ContributorContext, accept server.CompletionAcceptor)
 	onReference func(d *core.SymbolDescription, hint *parser.CompletionHint, atnState int, cc server.ContributorContext, accept server.CompletionAcceptor)
 	postProcess func(item *lsp.CompletionItem, cc server.ContributorContext) bool
+	onComment   func(comment *core.Token, cc server.ContributorContext, accept server.CompletionAcceptor)
+}
+
+func (r *recordingContributor) CompletionForComment(ctx context.Context, comment *core.Token, cc server.ContributorContext, accept server.CompletionAcceptor) {
+	if r.onComment != nil {
+		r.onComment(comment, cc, accept)
+		return
+	}
+	r.DefaultCompletionContributor.CompletionForComment(ctx, comment, cc, accept)
 }
 
 func (r *recordingContributor) CompletionForToken(ctx context.Context, tt *core.TokenType, atnState int, cc server.ContributorContext, accept server.CompletionAcceptor) {
@@ -685,16 +1105,15 @@ func TestCompletion_ContributorAcceptsTokenGroup(t *testing.T) {
 			}
 		},
 	}
-	items := completionAtWith(t, "m <|cursor>", contrib)
+	items := completionAtWith(t, "group <|cursor>", contrib)
 	assert.Len(t, items, 1)
 	if !hasLabel(items, "SomeTokenGroup") {
 		t.Errorf("expected accepted token group item to surface; got %v", itemLabels(items))
 	}
 }
 
-// Reference hook receives hint.Field, atnState, and a synthetic owner.
-// cc.Node must be non-nil despite [Root, E, FQN] containing a composite
-// frame - the chain builder skips frames with no synthetic factory.
+// Reference hook receives the hint, atnState, and the owner of the reference.
+// cc.Node is the RefFQN node that the main parser created for "fqn".
 func TestCompletion_ContributorReferenceBranching(t *testing.T) {
 	type seen struct {
 		name     string
@@ -708,14 +1127,14 @@ func TestCompletion_ContributorReferenceBranching(t *testing.T) {
 		onReference: func(d *core.SymbolDescription, hint *parser.CompletionHint, atnState int, cc server.ContributorContext, accept server.CompletionAcceptor) {
 			observations = append(observations, seen{
 				name:     d.Unit.String(),
-				field:    hint.Field,
+				field:    hint.Key(),
 				atnState: atnState,
 				node:     cc.Node,
 			})
 			accept(lsp.CompletionItem{})
 		},
 	}
-	items := completionAtWith(t, "declare foo e <|cursor>", contrib)
+	items := completionAtWith(t, "declare foo fqn <|cursor>", contrib)
 
 	if !hasLabel(items, "foo") {
 		t.Errorf("expected 'foo'; got %v", itemLabels(items))
@@ -724,22 +1143,22 @@ func TestCompletion_ContributorReferenceBranching(t *testing.T) {
 		t.Fatalf("expected at least one reference observation")
 	}
 	for _, o := range observations {
-		if o.field != "E.Ref" {
-			t.Errorf("expected hint.Field=\"E.Ref\"; got %+v", o)
+		if o.field != "RefFQN.Ref" {
+			t.Errorf("expected hint.Key()=\"RefFQN.Ref\"; got %+v", o)
 		}
 		if o.atnState <= 0 {
 			t.Errorf("expected positive atnState; got %+v", o)
 		}
 		if o.node == nil {
 			t.Errorf("expected cc.Node non-nil (composite skip); got %+v", o)
-		} else if _, ok := o.node.(completion.E); !ok {
-			t.Errorf("expected cc.Node to be a synthetic E; got %T", o.node)
+		} else if _, ok := o.node.(completion.RefFQN); !ok {
+			t.Errorf("expected cc.Node to be a synthetic RefFQN; got %T", o.node)
 		}
 	}
 }
 
-// Multi-level synthetic chain: cc.Node lands on FItem despite [Root, F]
-// not yet containing the FItem frame (cursor sits where one could begin).
+// The owner is a new RefListItem although the parser has not entered the rule
+// yet (cursor sits where one could begin).
 func TestCompletion_ContributorSyntheticChain(t *testing.T) {
 	type seen struct {
 		field string
@@ -749,11 +1168,11 @@ func TestCompletion_ContributorSyntheticChain(t *testing.T) {
 
 	contrib := &recordingContributor{
 		onReference: func(d *core.SymbolDescription, hint *parser.CompletionHint, atnState int, cc server.ContributorContext, accept server.CompletionAcceptor) {
-			observations = append(observations, seen{field: hint.Field, node: cc.Node})
+			observations = append(observations, seen{field: hint.Key(), node: cc.Node})
 			accept(lsp.CompletionItem{})
 		},
 	}
-	items := completionAtWith(t, "declare foo f <|cursor>", contrib)
+	items := completionAtWith(t, "declare foo list <|cursor>", contrib)
 
 	if !hasLabel(items, "foo") {
 		t.Errorf("expected 'foo'; got %v", itemLabels(items))
@@ -762,11 +1181,11 @@ func TestCompletion_ContributorSyntheticChain(t *testing.T) {
 		t.Fatalf("expected at least one reference observation")
 	}
 	for _, o := range observations {
-		if o.field != "FItem.Ref" {
-			t.Errorf("expected hint.Field=\"FItem.Ref\"; got %+v", o)
+		if o.field != "RefListItem.Ref" {
+			t.Errorf("expected hint.Key()=\"RefListItem.Ref\"; got %+v", o)
 		}
-		if _, ok := o.node.(completion.FItem); !ok {
-			t.Errorf("expected cc.Node to be a synthetic FItem; got %T", o.node)
+		if _, ok := o.node.(completion.RefListItem); !ok {
+			t.Errorf("expected cc.Node to be a synthetic RefListItem; got %T", o.node)
 		}
 	}
 }
@@ -789,9 +1208,9 @@ func TestCompletion_ContributorPostProcess(t *testing.T) {
 	if hasLabel(items, "declare") {
 		t.Errorf("expected 'declare' to be dropped; got %v", itemLabels(items))
 	}
-	c := itemWithLabel(items, "c")
+	c := itemWithLabel(items, "call")
 	if c == nil {
-		t.Fatalf("expected 'c' keyword; got %v", itemLabels(items))
+		t.Fatalf("expected 'call' keyword; got %v", itemLabels(items))
 		return
 	}
 	if !strings.HasPrefix(c.SortText, "zzz-") {
@@ -810,4 +1229,495 @@ func TestCompletion_ContributorSurfacesTerminalTokens(t *testing.T) {
 	if !hasLabel(items, "ID") {
 		t.Errorf("expected 'ID' terminal token; got %v", itemLabels(items))
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Cursor placement relative to tokens.
+// ---------------------------------------------------------------------------
+
+// Cursor glued to the end of a complete keyword: both the REPLACE
+// interpretation of the keyword itself and the INSERT interpretation of its
+// follow-set must surface, nothing else.
+func TestCompletion_CursorAtKeywordEnd(t *testing.T) {
+	items := completionAt(t, "seq<|cursor>")
+	assert.ElementsMatch(t, []string{"seq", "first"}, itemLabels(items))
+	if seq := itemWithLabel(items, "seq"); seq != nil && seq.TextEdit == nil {
+		t.Errorf("expected 'seq' to be REPLACE-shaped")
+	}
+	if first := itemWithLabel(items, "first"); first != nil && first.TextEdit != nil {
+		t.Errorf("expected 'first' to be INSERT-shaped; got %+v", first.TextEdit)
+	}
+}
+
+// Cursor at the very start of the document in front of existing input: the
+// entry keywords surface, the follow-set of the existing keyword does not.
+func TestCompletion_CursorBeforeFirstToken(t *testing.T) {
+	items := completionAt(t, "<|cursor>seq first")
+	if !hasLabel(items, "declare") || !hasLabel(items, "seq") {
+		t.Errorf("expected Root keywords in front of 'seq'; got %v", itemLabels(items))
+	}
+	if hasLabel(items, "first") {
+		t.Errorf("did not expect 'first' in front of 'seq'; got %v", itemLabels(items))
+	}
+}
+
+// CRLF line endings: the REPLACE range must be computed on the second line.
+func TestCompletion_AfterRefFQN_CRLF(t *testing.T) {
+	items := completionAt(t, "declare foo.bar\r\nfqn foo.<|cursor>")
+	item := itemWithLabel(items, "foo.bar")
+	if item == nil || item.TextEdit == nil {
+		t.Fatalf("expected REPLACE-shaped 'foo.bar'; got %v", itemLabels(items))
+	}
+	rng := item.TextEdit.TextEdit.Range
+	if rng.Start.Line != 1 || rng.End.Line != 1 || rng.Start.Character != 4 || rng.End.Character != 8 {
+		t.Errorf("expected range {1:4,1:8}; got %+v", rng)
+	}
+}
+
+// Partial second FQN segment: the whole composite is replaced.
+func TestCompletion_AfterRefFQN_FQNPartialSecondSegment(t *testing.T) {
+	items := completionAt(t, "declare foo.bar fqn foo.ba<|cursor>")
+	item := itemWithLabel(items, "foo.bar")
+	if item == nil || item.TextEdit == nil {
+		t.Fatalf("expected REPLACE-shaped 'foo.bar'; got %v", itemLabels(items))
+	}
+	rng := item.TextEdit.TextEdit.Range
+	if rng.Start.Character != 20 || rng.End.Character != 26 {
+		t.Errorf("expected range {20,26}; got %+v", rng)
+	}
+}
+
+// Garbage after the cursor must not affect the completions at the cursor.
+func TestCompletion_AfterRefFQN_WithSyntaxErrorAfterCursor(t *testing.T) {
+	items := completionAt(t, "declare foo fqn <|cursor> }}}")
+	assert.ElementsMatch(t, []string{"foo"}, itemLabels(items))
+}
+
+// ---------------------------------------------------------------------------
+// Declare bodies.
+// ---------------------------------------------------------------------------
+
+// Inside the braces of a Declare, only nested declares and the closing
+// brace are valid; nothing from the Root loop leaks in.
+func TestCompletion_DeclareBody(t *testing.T) {
+	items := completionAt(t, "declare foo { <|cursor>")
+	assert.ElementsMatch(t, []string{"declare", "}"}, itemLabels(items))
+
+	items = completionAt(t, "declare global loop { declare foo { <|cursor>")
+	assert.ElementsMatch(t, []string{"declare", "}"}, itemLabels(items))
+}
+
+// After a Declare name, the FQN continuation, the body opener and the Root
+// loop are all valid.
+func TestCompletion_AfterDeclareName(t *testing.T) {
+	items := completionAt(t, "declare foo <|cursor>")
+	for _, want := range []string{".", "{", "declare", "seq"} {
+		if !hasLabel(items, want) {
+			t.Errorf("expected %q after a declare name; got %v", want, itemLabels(items))
+		}
+	}
+}
+
+// A Declare whose name is missing must not surface as an empty-labelled
+// candidate.
+func TestCompletion_NamelessDeclareNotProposed(t *testing.T) {
+	items := completionAt(t, "declare { } declare foo ref <|cursor>")
+	assert.ElementsMatch(t, []string{"foo"}, itemLabels(items))
+}
+
+// ---------------------------------------------------------------------------
+// Composite cross-references.
+// ---------------------------------------------------------------------------
+
+// A complete composite reference followed by whitespace is finished: the
+// cross-reference candidates must not be proposed again as an INSERT (which
+// would produce "fqn foo foo"). The plain-ID RefID rule gets this right.
+func TestCompletion_AfterRefFQN_CompleteRefNotProposedAgain(t *testing.T) {
+	items := completionAt(t, "declare foo ref foo <|cursor>")
+	if hasLabel(items, "foo") {
+		t.Errorf("did not expect 'foo' after a complete RefID; got %v", itemLabels(items))
+	}
+	items = completionAt(t, "declare foo fqn foo <|cursor>")
+	if hasLabel(items, "foo") {
+		t.Errorf("did not expect 'foo' after a complete RefFQN; got %v", itemLabels(items))
+	}
+}
+
+// After a trailing dot, only candidates that extend the typed prefix are
+// valid. An INSERT-shaped unrelated name would produce "foo.baz".
+func TestCompletion_AfterRefFQN_FQNTrailingDot_NoUnrelatedCandidates(t *testing.T) {
+	items := completionAt(t, "declare foo.bar declare baz fqn foo.<|cursor>")
+	if !hasLabel(items, "foo.bar") {
+		t.Errorf("expected 'foo.bar'; got %v", itemLabels(items))
+	}
+	if hasLabel(items, "baz") {
+		t.Errorf("did not expect 'baz' after 'foo.'; got %v", itemLabels(items))
+	}
+}
+
+func (f *ownerRecordingFilter) FilterRefListItemRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+// The items of RefList consist of a composite reference only, so the nodes
+// have no tokens of their own. They must still count when computing the
+// index of a new item.
+func TestCompletion_AfterRefList_SyntheticOwnerContainment(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"list <|cursor>":            {"new RefListItem at items@0, RefList at objects@0"},
+		"list foo <|cursor>":        {"new RefListItem at items@1, RefList at objects@0"},
+		"list foo.bar <|cursor>":    {"new RefListItem at items@1, RefList at objects@0"},
+		"list foo foo <|cursor>":    {"new RefListItem at items@2, RefList at objects@0"},
+		"list foo <|cursor>foo":     {"new RefListItem at items@1, RefList at objects@0"},
+		"list foo.<|cursor>":        {"new RefListItem at items@0, RefList at objects@0"},
+		"list foo foo.ba<|cursor>r": {"new RefListItem at items@1, RefList at objects@0"},
+	})
+}
+
+// ---------------------------------------------------------------------------
+// Member calls.
+// ---------------------------------------------------------------------------
+
+const memberDecls = "declare alpha { declare beta } "
+
+// Partial member segment: the candidate replaces exactly the typed segment,
+// not the whole chain.
+func TestCompletion_AfterMember_PartialSegment(t *testing.T) {
+	items := completionAt(t, memberDecls+"member alpha.be<|cursor>")
+	item := itemWithLabel(items, "beta")
+	if item == nil || item.TextEdit == nil {
+		t.Fatalf("expected REPLACE-shaped 'beta'; got %v", itemLabels(items))
+	}
+	rng := item.TextEdit.TextEdit.Range
+	start := len(memberDecls) + len("member alpha.")
+	if int(rng.Start.Character) != start || int(rng.End.Character) != start+2 {
+		t.Errorf("expected range {%d,%d}; got %+v", start, start+2, rng)
+	}
+	if hasLabel(items, "alpha") {
+		t.Errorf("did not expect 'alpha' from the previous member's scope; got %v", itemLabels(items))
+	}
+}
+
+// The previous member does not resolve: the scope provider returns the
+// empty scope, so no candidates surface.
+func TestCompletion_AfterMember_UnresolvedPrevious(t *testing.T) {
+	items := completionAt(t, memberDecls+"member nope.<|cursor>")
+	for _, unwanted := range []string{"alpha", "beta"} {
+		if hasLabel(items, unwanted) {
+			t.Errorf("did not expect %q behind an unresolved member; got %v", unwanted, itemLabels(items))
+		}
+	}
+}
+
+// The previous member resolves to a leaf without children.
+func TestCompletion_AfterMember_LeafWithoutChildren(t *testing.T) {
+	items := completionAt(t, memberDecls+"member alpha.beta.<|cursor>")
+	for _, unwanted := range []string{"alpha", "beta"} {
+		if hasLabel(items, unwanted) {
+			t.Errorf("did not expect %q behind a leaf member; got %v", unwanted, itemLabels(items))
+		}
+	}
+}
+
+// Cursor in front of an existing chain: only the first segment is completed.
+func TestCompletion_AfterMember_CursorBeforeChain(t *testing.T) {
+	items := completionAt(t, memberDecls+"member <|cursor>alpha.beta")
+	assert.ElementsMatch(t, []string{"alpha"}, itemLabels(items))
+}
+
+// Partial segment without dots: the scope is still the previous member's.
+func TestCompletion_AfterMemberNoDot_PartialSegment(t *testing.T) {
+	items := completionAt(t, memberDecls+"nodot alpha be<|cursor>")
+	if item := itemWithLabel(items, "beta"); item == nil || item.TextEdit == nil {
+		t.Errorf("expected REPLACE-shaped 'beta'; got %v", itemLabels(items))
+	}
+	if hasLabel(items, "alpha") {
+		t.Errorf("did not expect 'alpha' from the previous member's scope; got %v", itemLabels(items))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Keyword follow-sets of the container rules.
+// ---------------------------------------------------------------------------
+
+func TestCompletion_ContainerKeywords(t *testing.T) {
+	cases := map[string][]string{
+		"declare foo scope { <|cursor>":                          {"declare", "use"},
+		"declare foo scope { declare local use local <|cursor>":  {"and", "}"},
+		"declare foo chain { <|cursor>":                          {"}", "foo"},
+		"declare foo chain { foo <|cursor>":                      {"and", "}", "foo"},
+		"declare foo chain { foo and <|cursor>":                  {"foo"},
+		"declare foo infix { foo plus <|cursor>":                 {"foo"},
+		"declare foo wrap { <|cursor>":                           {"{", "foo"},
+		"declare foo wrap { foo <|cursor>":                       {"{", "}", "foo"},
+		"declare foo dedup foo <|cursor>":                        {"x", "y"},
+		"declare foo ambig <|cursor>":                            {"foo"},
+		"declare foo ambig foo foo <|cursor>":                    {"first", "second"},
+		"opt then <|cursor>":                                     {"end"},
+		"declare foo retype { foo <|cursor>":                     {"}", "foo"},
+		"declare global nest { declare outer nest { } <|cursor>": {"}", "nest", "declare", "global", "outer"},
+	}
+	for src, expected := range cases {
+		t.Run(src, func(t *testing.T) {
+			assert.ElementsMatch(t, expected, itemLabels(completionAt(t, src)))
+		})
+	}
+}
+
+// The operators of an infix rule are compiled into a token group, so the
+// default contributor does not propose them. The simulator must still
+// reach the operator position so a contributor can opt in.
+func TestCompletion_AfterInfix_OperatorTokenGroup(t *testing.T) {
+	items := completionAt(t, "declare foo infix { foo <|cursor>")
+	assert.ElementsMatch(t, []string{"}", "foo"}, itemLabels(items))
+
+	contrib := &recordingContributor{
+		onToken: func(tt *core.TokenType, _ int, _ server.ContributorContext, accept server.CompletionAcceptor) {
+			accept(lsp.CompletionItem{})
+		},
+	}
+	items = completionAtWith(t, "declare foo infix { foo <|cursor>", contrib)
+	if !hasLabel(items, "BinaryOperator") {
+		t.Errorf("expected the operator token group after an operand; got %v", itemLabels(items))
+	}
+	items = completionAtWith(t, "declare foo shadow foo <|cursor>", contrib)
+	if !hasLabel(items, "BinaryOperator") {
+		t.Errorf("expected the operator token group after the first operand of Shadow; got %v", itemLabels(items))
+	}
+}
+
+// Partial keyword that is also a prefix of a declared name: both the
+// keyword and the reference are REPLACE-shaped, non-matching names stay out.
+func TestCompletion_AfterRefOrKeyword_Partial(t *testing.T) {
+	items := completionAt(t, "declare self2 declare foo choice se<|cursor>")
+	for _, want := range []string{"self", "self2"} {
+		item := itemWithLabel(items, want)
+		if item == nil || item.TextEdit == nil {
+			t.Errorf("expected REPLACE-shaped %q; got %v", want, itemLabels(items))
+		}
+	}
+	if hasLabel(items, "foo") {
+		t.Errorf("did not expect non-matching 'foo'; got %v", itemLabels(items))
+	}
+}
+
+// The tree-rewriting action of ChainItem wraps the item in front of "and".
+// The main parser already created the wrapper (its Ref is the missing
+// input), so the owner is an existing node, consistently for the input that
+// ends at the cursor and for the input that continues behind it.
+func TestCompletion_AfterChain_OwnerAfterAction(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"chain { foo and <|cursor>":         {"ChainItem at items@0, Chain at objects@0"},
+		"chain { foo and <|cursor>foo }":    {"ChainItem at items@0, Chain at objects@0"},
+		"chain { foo and foo and <|cursor>": {"ChainItem at items@0, Chain at objects@0"},
+	})
+}
+
+func (f *ownerRecordingFilter) FilterDepB(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+// Two cross-references in one node, where the scope of B depends on the
+// resolved A. The owner of B is the Dep node that the main parser created,
+// so the scope provider can resolve A on it.
+func TestCompletion_AfterDep_ScopeDependsOnSibling(t *testing.T) {
+	const decls = "declare alpha { declare beta } declare gamma "
+
+	// A has the default scope; the nested beta is not visible
+	items := completionAt(t, decls+"dep <|cursor>")
+	assert.ElementsMatch(t, []string{"alpha", "gamma"}, itemLabels(items))
+
+	// B sees the children of A only
+	items = completionAt(t, decls+"dep alpha <|cursor>")
+	assert.ElementsMatch(t, []string{"beta"}, itemLabels(items))
+	items = completionAt(t, decls+"dep alpha <|cursor>beta")
+	assert.ElementsMatch(t, []string{"beta"}, itemLabels(items))
+
+	// Partial B
+	items = completionAt(t, decls+"dep alpha be<|cursor>")
+	if item := itemWithLabel(items, "beta"); item == nil || item.TextEdit == nil {
+		t.Errorf("expected REPLACE-shaped 'beta'; got %v", itemLabels(items))
+	}
+	for _, unwanted := range []string{"alpha", "gamma"} {
+		if hasLabel(items, unwanted) {
+			t.Errorf("did not expect %q from the scope of A; got %v", unwanted, itemLabels(items))
+		}
+	}
+
+	// A is complete: it may be replaced, or B may be inserted
+	items = completionAt(t, decls+"dep alpha<|cursor>")
+	assert.ElementsMatch(t, []string{"alpha", "beta"}, itemLabels(items))
+
+	// A does not resolve
+	items = completionAt(t, decls+"dep nope <|cursor>")
+	assert.Empty(t, itemLabels(items))
+
+	assertOwners(t, map[string][]string{
+		"dep alpha <|cursor>":     {"Dep at objects@0"},
+		"dep alpha <|cursor>beta": {"Dep at objects@0"},
+		"dep alpha be<|cursor>":   {"Dep at objects@0"},
+	})
+}
+
+func (f *ownerRecordingFilter) FilterActFirstRef(_ context.Context, ref *core.Reference[completion.Declare], in iter.Seq[*core.SymbolDescription]) iter.Seq[*core.SymbolDescription] {
+	f.owners = append(f.owners, ref.Owner())
+	return in
+}
+
+// The alternatives of Act start with simple actions, and the keyword behind
+// the cross-reference decides between them. At the cursor, the main parser has
+// not executed either action, so the owner is a new node of the action's type
+// that takes the place of the Act node - directly, or as the container of the
+// node of the assigned rule call. Once the input behind the cursor decides the
+// alternative, the owner of that alternative is the node of the main parser.
+func TestCompletion_AfterAct_OwnerOfUndecidedAction(t *testing.T) {
+	assertOwners(t, map[string][]string{
+		"act <|cursor>":           {"new ActFirst at objects@0", "new RefItem at item, new ActSecond at objects@0"},
+		"act fo<|cursor>":         {"new ActFirst at objects@0", "new RefItem at item, new ActSecond at objects@0"},
+		"act <|cursor>foo first":  {"ActFirst at objects@0", "new RefItem at item, new ActSecond at objects@0"},
+		"act <|cursor>foo second": {"new ActFirst at objects@0", "new RefItem at item, ActSecond at objects@0"},
+	})
+	items := completionAt(t, "declare foo act <|cursor>")
+	assert.ElementsMatch(t, []string{"foo"}, itemLabels(items))
+	items = completionAt(t, "declare foo act foo <|cursor>")
+	assert.ElementsMatch(t, []string{"first", "second"}, itemLabels(items))
+}
+
+// Both alternatives of Ambig read the token in front of the cursor, and the
+// keyword that decides between them is missing. Each cross-reference is
+// completed on its own synthetic owner, but the shared candidate surfaces once.
+func TestCompletion_AfterAmbig_SameCandidateOnce(t *testing.T) {
+	items := completionAt(t, "declare foo ambig foo <|cursor>")
+	assert.ElementsMatch(t, []string{"foo"}, itemLabels(items))
+	assertOwners(t, map[string][]string{
+		"ambig foo <|cursor>": {"new AmbigName, new Root", "new AmbigRefs, new Root"},
+	})
+}
+
+// A complete second alternative returns to the Root loop like the first one,
+// without leaking its own tokens or candidates.
+func TestCompletion_AfterSecondAlternative(t *testing.T) {
+	for _, src := range []string{
+		"alt second <|cursor>",
+		"prefix common second <|cursor>",
+		"declare foo dedup foo y <|cursor>",
+		"choice self <|cursor>",
+		"declare foo ambig foo foo first <|cursor>",
+		"declare foo ambig foo foo second <|cursor>",
+		"declare foo act foo first <|cursor>",
+		"declare foo act foo second <|cursor>",
+	} {
+		t.Run(src, func(t *testing.T) {
+			items := completionAt(t, src)
+			if !hasLabel(items, "declare") || hasLabel(items, "first") || hasLabel(items, "second") || hasLabel(items, "foo") {
+				t.Errorf("expected only Root keywords after a complete alternative; got %v", itemLabels(items))
+			}
+		})
+	}
+}
+
+// Snippets are gathered per cursor context like tokens: the Applicable
+// predicate gates them on the valid tokens of the simulator, the typed text
+// filters them like any other item, and the body is inserted or replaces the
+// typed text.
+func TestCompletion_Snippets(t *testing.T) {
+	registry := server.NewDefaultSnippetRegistry()
+	registry.Register(server.SnippetTemplate{
+		Label:      "seq first",
+		Detail:     "a complete Seq",
+		Body:       "seq ${1:first}",
+		Applicable: server.RequiresValidToken(completion.Keyword_seq),
+	})
+	registry.Register(server.SnippetTemplate{Label: "always", Body: "always"})
+	registry.Register(server.SnippetTemplate{Label: "never", Body: "never", Applicable: func(server.SnippetContext) bool { return false }})
+	sc := service.NewContainer()
+	completion.SetupServices(sc)
+	service.Override[server.SnippetRegistry](sc, registry)
+	sc.Seal()
+	complete := func(src string) []lsp.CompletionItem {
+		return test.New(t, sc).Parse(src).CompletionItems("cursor")
+	}
+
+	items := complete("<|cursor>")
+	item := itemWithLabel(items, "seq first")
+	if item == nil || !hasLabel(items, "always") || hasLabel(items, "never") {
+		t.Fatalf("expected the applicable snippets at the entry; got %v", itemLabels(items))
+	}
+	assert.Equal(t, lsp.SnippetCompletion, item.Kind)
+	assert.Equal(t, "a complete Seq", item.Detail)
+	assert.Equal(t, "seq ${1:first}", item.InsertText)
+	if assert.NotNil(t, item.InsertTextFormat) {
+		assert.Equal(t, lsp.SnippetTextFormat, *item.InsertTextFormat)
+	}
+	assert.Equal(t, "0-2-snippet", item.SortText)
+
+	// "seq" is not valid behind "fqn", so its snippet is not applicable there
+	items = complete("fqn <|cursor>")
+	assert.ElementsMatch(t, []string{"always"}, itemLabels(items))
+
+	// The body replaces the typed text; snippets that do not match it stay out
+	items = complete("se<|cursor>")
+	item = itemWithLabel(items, "seq first")
+	if item == nil || item.TextEdit == nil {
+		t.Fatalf("expected REPLACE-shaped 'seq first'; got %v", itemLabels(items))
+	}
+	assert.Equal(t, "seq ${1:first}", item.TextEdit.TextEdit.NewText)
+	assert.False(t, hasLabel(items, "always"), "did not expect 'always' for the typed 'se'; got %v", itemLabels(items))
+}
+
+// ---------------------------------------------------------------------------
+// Comments.
+// ---------------------------------------------------------------------------
+
+// Inside a comment, including right behind its closing delimiter, the
+// grammar proposes nothing, and neither does the default
+// CompletionForComment that the SimpleCompletionContributor inherits. The
+// cursor right in front of a comment, and the
+// cursor separated from its end, are outside of it.
+func TestCompletion_InsideComment_NoProposals(t *testing.T) {
+	for _, src := range []string{
+		"declare foo /* decl<|cursor> */",
+		"declare foo /*<|cursor>*/",
+		"declare foo /* line\n<|cursor>\nline */ ref ",
+		"declare foo /* comment */<|cursor> ref ",
+		"declare foo /* comment */<|cursor>",
+	} {
+		t.Run(src, func(t *testing.T) {
+			assert.Empty(t, itemLabels(completionAt(t, src)))
+		})
+	}
+	for _, src := range []string{
+		"declare foo <|cursor>/* comment */",
+		"declare foo /* comment */ <|cursor>",
+		"declare foo /* comment */\n<|cursor>",
+	} {
+		t.Run(src, func(t *testing.T) {
+			items := completionAt(t, src)
+			assert.True(t, hasLabel(items, "declare"), "expected Root keywords outside of the comment; got %v", itemLabels(items))
+		})
+	}
+	items := completionAt(t, "declare foo /* comment */ ref <|cursor>")
+	assert.ElementsMatch(t, []string{"foo"}, itemLabels(items))
+}
+
+// A contributor can propose items inside of a comment; it receives the
+// comment token, and the items are inserted at the cursor.
+func TestCompletion_InsideComment_Contributor(t *testing.T) {
+	var image string
+	contrib := &recordingContributor{
+		onComment: func(comment *core.Token, cc server.ContributorContext, accept server.CompletionAcceptor) {
+			image = comment.Image
+			accept(lsp.CompletionItem{Label: "@todo"})
+		},
+	}
+	items := completionAtWith(t, "declare foo /* decl<|cursor> */ ref ", contrib)
+	assert.Equal(t, "/* decl */", image)
+	assert.ElementsMatch(t, []string{"@todo"}, itemLabels(items))
+	item := itemWithLabel(items, "@todo")
+	assert.Equal(t, lsp.TextCompletion, item.Kind)
+	assert.Equal(t, "0-3-comment", item.SortText)
+	assert.Equal(t, "@todo", item.InsertText)
+	assert.Nil(t, item.TextEdit)
 }

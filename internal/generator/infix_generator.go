@@ -39,6 +39,7 @@ func generateInfixParseFunction(node codegen.Node, context *ParserGeneratorConte
 	if context.completion {
 		node.AppendLine("func (p *", receiverType, ") Parse", rule.Name(), "() {")
 		node.Indent(func(n codegen.Node) {
+			// The node type of an infix rule is named like the rule, see grammar.FindInfixNodeType.
 			n.AppendLine("p.cp.EnterRule(", strconv.Quote(rule.Name()), ", ", context.atnData.ruleStart(rule), ")")
 			n.AppendLine("defer p.cp.ExitRule()")
 			generateAbstractElementParser(n, context, rule.Body())
@@ -106,20 +107,20 @@ func generateInfixParseFunction(node codegen.Node, context *ParserGeneratorConte
 			in.AppendLine("result := New", rule.Name(), "()")
 			in.AppendLine("if left != nil {")
 			in.Indent(func(iin codegen.Node) {
-				iin.AppendLine("result.SetLeft(left)")
+				iin.AppendLine("result.Set", grammar.InfixLeftProperty, "(left)")
 				iin.AppendLine("result.SetTextRangeStart(left.TextRange().Start)")
 			})
 			in.AppendLine("}")
 			in.AppendLine("if operator != nil {")
 			in.Indent(func(iin codegen.Node) {
 				iin.AppendLine("core.AssignToken(result, operator, ", operatorState, ")")
-				iin.AppendLine("result.SetOperator(operator)")
+				iin.AppendLine("result.Set", grammar.InfixOperatorProperty, "(operator)")
 				iin.AppendLine("result.SetTextRangeEnd(operator.Range.End)")
 			})
 			in.AppendLine("}")
 			in.AppendLine("if right != nil {")
 			in.Indent(func(iin codegen.Node) {
-				iin.AppendLine("result.SetRight(right)")
+				iin.AppendLine("result.Set", grammar.InfixRightProperty, "(right)")
 				iin.AppendLine("result.SetTextRangeEnd(right.TextRange().End)")
 			})
 			in.AppendLine("}")

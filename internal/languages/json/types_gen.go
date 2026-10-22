@@ -97,7 +97,7 @@ type BoolsData struct {
 	err   *core.Token
 	node  *core.Token
 	this  *core.Token
-	_Type *core.Token
+	_type *core.Token
 	util  *core.Token
 }
 
@@ -194,15 +194,15 @@ func (i *BoolsData) SetThis(value *core.Token) {
 }
 
 func (i *BoolsData) IsType() bool {
-	return i != nil && i._Type != nil
+	return i != nil && i._type != nil
 }
 
 func (i *BoolsData) TypeToken() *core.Token {
-	return i._Type
+	return i._type
 }
 
 func (i *BoolsData) SetType(value *core.Token) {
-	i._Type = value
+	i._type = value
 }
 
 func (i *BoolsData) IsUtil() bool {
@@ -251,7 +251,7 @@ func (i *BoolsImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameToken:
 		return nil, fmt.Errorf("BoolsImpl.Resolve: field 'token' holds a primitive value instead of an ast node")
 	case fieldNameType:
-		return nil, fmt.Errorf("BoolsImpl.Resolve: field '_Type' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("BoolsImpl.Resolve: field '_type' holds a primitive value instead of an ast node")
 	case fieldNameUtil:
 		return nil, fmt.Errorf("BoolsImpl.Resolve: field 'util' holds a primitive value instead of an ast node")
 	default:
@@ -313,7 +313,7 @@ type StringsData struct {
 	err    *core.Token
 	node   *core.Token
 	this   *core.Token
-	_Type  *core.Token
+	_type  *core.Token
 	util   *core.Token
 }
 
@@ -470,19 +470,19 @@ func (i *StringsData) SetThis(value *core.Token) {
 }
 
 func (i *StringsData) Type() string {
-	if i != nil && i._Type != nil {
-		return i._Type.Image
+	if i != nil && i._type != nil {
+		return i._type.Image
 	} else {
 		return ""
 	}
 }
 
 func (i *StringsData) TypeToken() *core.Token {
-	return i._Type
+	return i._type
 }
 
 func (i *StringsData) SetType(value *core.Token) {
-	i._Type = value
+	i._type = value
 }
 
 func (i *StringsData) Util() string {
@@ -539,7 +539,7 @@ func (i *StringsImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameToken:
 		return nil, fmt.Errorf("StringsImpl.Resolve: field 'token' holds a primitive value instead of an ast node")
 	case fieldNameType:
-		return nil, fmt.Errorf("StringsImpl.Resolve: field '_Type' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("StringsImpl.Resolve: field '_type' holds a primitive value instead of an ast node")
 	case fieldNameUtil:
 		return nil, fmt.Errorf("StringsImpl.Resolve: field 'util' holds a primitive value instead of an ast node")
 	default:
@@ -605,7 +605,7 @@ type StringListsData struct {
 	err       []*core.Token
 	node      []*core.Token
 	this      []*core.Token
-	_Type     []*core.Token
+	_type     []*core.Token
 	util      []*core.Token
 }
 
@@ -730,11 +730,11 @@ func (i *StringListsData) SetThisItem(item *core.Token) {
 }
 
 func (i *StringListsData) Type() []*core.Token {
-	return i._Type
+	return i._type
 }
 
 func (i *StringListsData) SetTypeItem(item *core.Token) {
-	i._Type = append(i._Type, item)
+	i._type = append(i._type, item)
 }
 
 func (i *StringListsData) Util() []*core.Token {
@@ -791,7 +791,7 @@ func (i *StringListsImpl) Resolve(path core.FragmentPath) (core.AstNode, error) 
 	case fieldNameToken:
 		return nil, fmt.Errorf("StringListsImpl.Resolve: field 'token' holds a primitive value instead of an ast node")
 	case fieldNameType:
-		return nil, fmt.Errorf("StringListsImpl.Resolve: field '_Type' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("StringListsImpl.Resolve: field '_type' holds a primitive value instead of an ast node")
 	case fieldNameUint:
 		return nil, fmt.Errorf("StringListsImpl.Resolve: field 'uint' holds a primitive value instead of an ast node")
 	case fieldNameUtil:
@@ -847,7 +847,7 @@ type CompositesData struct {
 	err       core.CompositeNode
 	node      core.CompositeNode
 	this      core.CompositeNode
-	_Type     core.CompositeNode
+	_type     core.CompositeNode
 	util      core.CompositeNode
 }
 
@@ -875,8 +875,8 @@ func (i *CompositesData) ForEachNode(fn func(core.AstNode, unique.Handle[string]
 	if i.this != nil {
 		fn(i.this, fieldNameThis, -1)
 	}
-	if i._Type != nil {
-		fn(i._Type, fieldNameType, -1)
+	if i._type != nil {
+		fn(i._type, fieldNameType, -1)
 	}
 	if i.util != nil {
 		fn(i.util, fieldNameUtil, -1)
@@ -999,19 +999,19 @@ func (i *CompositesData) SetThis(value core.CompositeNode) {
 }
 
 func (i *CompositesData) Type() string {
-	if i != nil && i._Type != nil {
-		return i._Type.String()
+	if i != nil && i._type != nil {
+		return i._type.String()
 	} else {
 		return ""
 	}
 }
 
 func (i *CompositesData) TypeNode() core.CompositeNode {
-	return i._Type
+	return i._type
 }
 
 func (i *CompositesData) SetType(value core.CompositeNode) {
-	i._Type = value
+	i._type = value
 }
 
 func (i *CompositesData) Util() string {
@@ -1064,7 +1064,7 @@ func (i *CompositesImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameToken:
 		return nil, fmt.Errorf("CompositesImpl.Resolve: field 'token' holds a primitive value instead of an ast node")
 	case fieldNameType:
-		return nil, fmt.Errorf("CompositesImpl.Resolve: field '_Type' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("CompositesImpl.Resolve: field '_type' holds a primitive value instead of an ast node")
 	case fieldNameUtil:
 		return nil, fmt.Errorf("CompositesImpl.Resolve: field 'util' holds a primitive value instead of an ast node")
 	default:
@@ -1130,7 +1130,7 @@ type CompositeListsData struct {
 	err       []core.CompositeNode
 	node      []core.CompositeNode
 	this      []core.CompositeNode
-	_Type     []core.CompositeNode
+	_type     []core.CompositeNode
 	util      []core.CompositeNode
 }
 
@@ -1179,7 +1179,7 @@ func (i *CompositeListsData) ForEachNode(fn func(core.AstNode, unique.Handle[str
 	for j, item := range i.this {
 		fn(item, fieldNameThis, j)
 	}
-	for j, item := range i._Type {
+	for j, item := range i._type {
 		fn(item, fieldNameType, j)
 	}
 	for j, item := range i.util {
@@ -1303,11 +1303,11 @@ func (i *CompositeListsData) SetThisItem(item core.CompositeNode) {
 }
 
 func (i *CompositeListsData) Type() []core.CompositeNode {
-	return i._Type
+	return i._type
 }
 
 func (i *CompositeListsData) SetTypeItem(item core.CompositeNode) {
-	i._Type = append(i._Type, item)
+	i._type = append(i._type, item)
 }
 
 func (i *CompositeListsData) Util() []core.CompositeNode {
@@ -1364,7 +1364,7 @@ func (i *CompositeListsImpl) Resolve(path core.FragmentPath) (core.AstNode, erro
 	case fieldNameToken:
 		return nil, fmt.Errorf("CompositeListsImpl.Resolve: field 'token' holds a primitive value instead of an ast node")
 	case fieldNameType:
-		return nil, fmt.Errorf("CompositeListsImpl.Resolve: field '_Type' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("CompositeListsImpl.Resolve: field '_type' holds a primitive value instead of an ast node")
 	case fieldNameUint:
 		return nil, fmt.Errorf("CompositeListsImpl.Resolve: field 'uint' holds a primitive value instead of an ast node")
 	case fieldNameUtil:
@@ -1411,7 +1411,7 @@ type ObjectsData struct {
 	err    Objects
 	node   Objects
 	this   Objects
-	_Type  Objects
+	_type  Objects
 	util   Objects
 }
 
@@ -1439,8 +1439,8 @@ func (i *ObjectsData) ForEachNode(fn func(core.AstNode, unique.Handle[string], i
 	if i.this != nil {
 		fn(i.this, fieldNameThis, -1)
 	}
-	if i._Type != nil {
-		fn(i._Type, fieldNameType, -1)
+	if i._type != nil {
+		fn(i._type, fieldNameType, -1)
 	}
 	if i.util != nil {
 		fn(i.util, fieldNameUtil, -1)
@@ -1535,15 +1535,15 @@ func (i *ObjectsData) SetThis(value Objects) {
 }
 
 func (i *ObjectsData) Type() Objects {
-	if i != nil && i._Type != nil {
-		return i._Type
+	if i != nil && i._type != nil {
+		return i._type
 	} else {
 		return nil
 	}
 }
 
 func (i *ObjectsData) SetType(value Objects) {
-	i._Type = value
+	i._type = value
 }
 
 func (i *ObjectsData) Util() Objects {
@@ -1629,7 +1629,7 @@ func (i *ObjectsImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameType:
 		if i.Type() == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("ObjectsImpl.Resolve: field '_Type' is nil in node '%s'", nodePath)
+			return nil, fmt.Errorf("ObjectsImpl.Resolve: field '_type' is nil in node '%s'", nodePath)
 		}
 		child := i.Type()
 		return child.Resolve(path.Tail())
@@ -1706,7 +1706,7 @@ type ObjectListsData struct {
 	err       []Objects
 	node      []Objects
 	this      []Objects
-	_Type     []Objects
+	_type     []Objects
 	util      []Objects
 }
 
@@ -1758,7 +1758,7 @@ func (i *ObjectListsData) ForEachNode(fn func(core.AstNode, unique.Handle[string
 	for j, item := range i.this {
 		fn(item, fieldNameThis, j)
 	}
-	for j, item := range i._Type {
+	for j, item := range i._type {
 		fn(item, fieldNameType, j)
 	}
 	for j, item := range i.util {
@@ -1890,11 +1890,11 @@ func (i *ObjectListsData) SetThisItem(item Objects) {
 }
 
 func (i *ObjectListsData) Type() []Objects {
-	return i._Type
+	return i._type
 }
 
 func (i *ObjectListsData) SetTypeItem(item Objects) {
-	i._Type = append(i._Type, item)
+	i._type = append(i._type, item)
 }
 
 func (i *ObjectListsData) Util() []Objects {
@@ -2081,12 +2081,12 @@ func (i *ObjectListsImpl) Resolve(path core.FragmentPath) (core.AstNode, error) 
 	case fieldNameType:
 		if index >= len(i.Type()) {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("ObjectListsImpl.Resolve: index %d exceeds length of slice in '_Type' (length=%d) in node '%s'", index, len(i.Type()), nodePath)
+			return nil, fmt.Errorf("ObjectListsImpl.Resolve: index %d exceeds length of slice in '_type' (length=%d) in node '%s'", index, len(i.Type()), nodePath)
 		}
 		child := i.Type()[index]
 		if child == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("ObjectListsImpl.Resolve: item %d of slice in field '_Type' is nil in node '%s'", index, nodePath)
+			return nil, fmt.Errorf("ObjectListsImpl.Resolve: item %d of slice in field '_type' is nil in node '%s'", index, nodePath)
 		}
 		return child.Resolve(path.Tail())
 	case fieldNameUint:
@@ -2153,7 +2153,7 @@ type ReferencesData struct {
 	err       *core.Reference[References]
 	node      *core.Reference[References]
 	this      *core.Reference[References]
-	_Type     *core.Reference[References]
+	_type     *core.Reference[References]
 	util      *core.Reference[References]
 }
 
@@ -2184,8 +2184,8 @@ func (i *ReferencesData) ForEachReference(fn func(core.UntypedReference, unique.
 	if i.this != nil {
 		fn(i.this, fieldNameThis, -1)
 	}
-	if i._Type != nil {
-		fn(i._Type, fieldNameType, -1)
+	if i._type != nil {
+		fn(i._type, fieldNameType, -1)
 	}
 	if i.util != nil {
 		fn(i.util, fieldNameUtil, -1)
@@ -2277,15 +2277,15 @@ func (i *ReferencesData) SetThis(value *core.Reference[References]) {
 }
 
 func (i *ReferencesData) Type() *core.Reference[References] {
-	if i != nil && i._Type != nil {
-		return i._Type
+	if i != nil && i._type != nil {
+		return i._type
 	} else {
 		return nil
 	}
 }
 
 func (i *ReferencesData) SetType(value *core.Reference[References]) {
-	i._Type = value
+	i._type = value
 }
 
 func (i *ReferencesData) Util() *core.Reference[References] {
@@ -2334,7 +2334,7 @@ func (i *ReferencesImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameToken:
 		return nil, fmt.Errorf("ReferencesImpl.Resolve: field 'token' is a cross-reference instead of a container field")
 	case fieldNameType:
-		return nil, fmt.Errorf("ReferencesImpl.Resolve: field '_Type' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("ReferencesImpl.Resolve: field '_type' is a cross-reference instead of a container field")
 	case fieldNameUtil:
 		return nil, fmt.Errorf("ReferencesImpl.Resolve: field 'util' is a cross-reference instead of a container field")
 	default:
@@ -2403,7 +2403,7 @@ type ReferenceListsData struct {
 	err       []*core.Reference[References]
 	node      []*core.Reference[References]
 	this      []*core.Reference[References]
-	_Type     []*core.Reference[References]
+	_type     []*core.Reference[References]
 	util      []*core.Reference[References]
 }
 
@@ -2458,7 +2458,7 @@ func (i *ReferenceListsData) ForEachReference(fn func(core.UntypedReference, uni
 	for j, item := range i.this {
 		fn(item, fieldNameThis, j)
 	}
-	for j, item := range i._Type {
+	for j, item := range i._type {
 		fn(item, fieldNameType, j)
 	}
 	for j, item := range i.util {
@@ -2587,11 +2587,11 @@ func (i *ReferenceListsData) SetThisItem(item *core.Reference[References]) {
 }
 
 func (i *ReferenceListsData) Type() []*core.Reference[References] {
-	return i._Type
+	return i._type
 }
 
 func (i *ReferenceListsData) SetTypeItem(item *core.Reference[References]) {
-	i._Type = append(i._Type, item)
+	i._type = append(i._type, item)
 }
 
 func (i *ReferenceListsData) Util() []*core.Reference[References] {
@@ -2650,7 +2650,7 @@ func (i *ReferenceListsImpl) Resolve(path core.FragmentPath) (core.AstNode, erro
 	case fieldNameToken:
 		return nil, fmt.Errorf("ReferenceListsImpl.Resolve: field 'token' is a cross-reference instead of a container field")
 	case fieldNameType:
-		return nil, fmt.Errorf("ReferenceListsImpl.Resolve: field '_Type' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("ReferenceListsImpl.Resolve: field '_type' is a cross-reference instead of a container field")
 	case fieldNameUint:
 		return nil, fmt.Errorf("ReferenceListsImpl.Resolve: field 'uint' is a cross-reference instead of a container field")
 	case fieldNameUtil:
@@ -2662,7 +2662,7 @@ func (i *ReferenceListsImpl) Resolve(path core.FragmentPath) (core.AstNode, erro
 }
 
 var (
-	fieldNameType      = unique.Make("_Type")
+	fieldNameType      = unique.Make("_type")
 	fieldNameAux       = unique.Make("aux")
 	fieldNameBool      = unique.Make("bool")
 	fieldNameComposite = unique.Make("composite")

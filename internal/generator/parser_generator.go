@@ -102,8 +102,8 @@ type ParserGeneratorContext struct {
 	atnData         *parserATNData // nil when ATN not built (degenerate grammar)
 	// completion distinguishes parser_gen.go (false) from completion_parser_gen.go
 	// (true). In completion mode, AST-construction emits are suppressed and
-	// CompletionParserState bookkeeping (EnterRule, RecordSnapshot,
-	// MarkAssignment) is inserted instead.
+	// CompletionParserState bookkeeping (EnterRule, RecordSnapshot) is
+	// inserted instead.
 	completion bool
 	// counter for unique Go loop labels (loop0, loop1, ...)
 	// Only used when the generator can combine an Alternatives node with its loop
@@ -603,7 +603,6 @@ func GenerateCompletionParser(grammr grammar.Grammar, entryRule grammar.ParserRu
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("\"sync\"")
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
 		n.AppendLine("\"typefox.dev/fastbelt/parser\"")
 		n.AppendLine("\"typefox.dev/fastbelt/util/service\"")
@@ -626,7 +625,7 @@ func GenerateCompletionParser(grammr grammar.Grammar, entryRule grammar.ParserRu
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("return &CompletionParser{")
 		n.AppendLine("	sc: sc,")
-		n.AppendLine("	atn: sync.OnceValue(BuildATN),")
+		n.AppendLine("	atn: ATN,")
 		n.AppendLine("}")
 	})
 	node.AppendLine("}")
@@ -1009,7 +1008,7 @@ func generateParseFunction(node codegen.Node, context *ParserGeneratorContext, r
 	if context.completion {
 		node.AppendLine("func (p *", receiverType, ") Parse", rule.Name(), "() {")
 		node.Indent(func(n codegen.Node) {
-			n.AppendLine("p.cp.EnterRule(", strconv.Quote(rule.Name()), ", ", context.atnData.ruleStart(rule), ")")
+			n.AppendLine("p.cp.EnterRule(", strconv.Quote(returnType.Name()), ", ", context.atnData.ruleStart(rule), ")")
 			n.AppendLine("defer p.cp.ExitRule()")
 			generateAbstractElementParser(n, context, rule.Body())
 		})
@@ -1053,7 +1052,7 @@ func generateCompositeParseFunction(node codegen.Node, context *ParserGeneratorC
 	if context.completion {
 		node.AppendLine("func (p *", receiverType, ") Parse", rule.Name(), "() {")
 		node.Indent(func(n codegen.Node) {
-			n.AppendLine("p.cp.EnterRule(", strconv.Quote(rule.Name()), ", ", context.atnData.ruleStart(rule), ")")
+			n.AppendLine("p.cp.EnterRule(\"\", ", context.atnData.ruleStart(rule), ")")
 			n.AppendLine("defer p.cp.ExitRule()")
 			generateAbstractElementParser(n, context, rule.Body())
 		})
@@ -1177,9 +1176,6 @@ func generateAbstractElementParser(node codegen.Node, context *ParserGeneratorCo
 				return
 			}
 			generateCardinality(indent, func(n codegen.Node) {
-				if context.completion {
-					n.AppendLine("p.cp.MarkAssignment(", strconv.Quote(e.Property().Text()), ")")
-				}
 				generateAssignable(n, context, e.Value(), func(n2 codegen.Node, resultName string) {
 					if context.completion {
 						return
@@ -1200,9 +1196,6 @@ func generateAbstractElementParser(node codegen.Node, context *ParserGeneratorCo
 					})
 					n2.AppendLine("}")
 				})
-				if context.completion {
-					n.AppendLine("p.cp.ClearAssignment()")
-				}
 			}, func(n codegen.Node) {
 				n.Append(guardCall(context, element))
 			}, syncCall, element.Cardinality())
@@ -1468,14 +1461,8 @@ func generateCombinedAssignmentParser(node codegen.Node, context *ParserGenerato
 		for i, alt := range alts.Alts() {
 			n.AppendLine("case ", strconv.Itoa(i), ":")
 			n.Indent(func(in codegen.Node) {
-				if context.completion {
-					in.AppendLine("p.cp.MarkAssignment(", strconv.Quote(e.Property().Text()), ")")
-				}
 				if assignable, ok := alt.(grammar.Assignable); ok {
 					generateAssignable(in, context, assignable, resultCb)
-				}
-				if context.completion {
-					in.AppendLine("p.cp.ClearAssignment()")
 				}
 			})
 		}

@@ -3,7 +3,6 @@
 package lookahead
 
 import (
-	"sync"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -20,7 +19,7 @@ type CompletionParser struct {
 func NewCompletionParser(sc *service.Container) *CompletionParser {
 	return &CompletionParser{
 		sc:  sc,
-		atn: sync.OnceValue(BuildATN),
+		atn: ATN,
 	}
 }
 
@@ -43,11 +42,9 @@ func (p *CompletionParser) ParseRoot() {
 	p.cp.EnterRule("Root", Root__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.MarkAssignment("Item")
 		p.state.EnterRule(Root__Basic_1)
 		p.ParseObj()
 		p.state.ExitRule()
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -115,17 +112,15 @@ func (p *CompletionParser) ParseObj() {
 }
 
 func (p *CompletionParser) ParseA() {
-	p.cp.EnterRule("A", A__Start)
+	p.cp.EnterRule("Obj", A__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_a)
 	}
 	{
-		p.cp.MarkAssignment("Node")
 		p.state.EnterRule(A__Basic_1)
 		p.ParseQualifiedPath()
 		p.state.ExitRule()
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -136,34 +131,28 @@ func (p *CompletionParser) ParseB() {
 		p.state.Consume(Keyword_b)
 	}
 	{
-		p.cp.MarkAssignment("Node")
 		p.state.EnterRule(B_Dot)
 		p.ParseQualifiedPath()
 		p.state.ExitRule()
-		p.cp.ClearAssignment()
 	}
 	{
 		p.state.Consume(Keyword_Dot)
 	}
 	{
-		p.cp.MarkAssignment("Post")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 }
 
 func (p *CompletionParser) ParseC() {
-	p.cp.EnterRule("C", C__Start)
+	p.cp.EnterRule("Obj", C__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_c)
 	}
 	{
-		p.cp.MarkAssignment("Node")
 		p.state.EnterRule(C__Basic_2)
 		p.ParseCLoop()
 		p.state.ExitRule()
-		p.cp.ClearAssignment()
 	}
 	p.cp.RecordSnapshot(C__Basic_2)
 	p.state.Sync(C__Basic_2)
@@ -172,25 +161,21 @@ func (p *CompletionParser) ParseC() {
 			p.state.Consume(Keyword_ColonColon)
 		}
 		{
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Keyword_AsteriskAsterisk)
-			p.cp.ClearAssignment()
 		}
 	}
 }
 
 func (p *CompletionParser) ParseD() {
-	p.cp.EnterRule("D", D__Start)
+	p.cp.EnterRule("Obj", D__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_d)
 	}
 	{
-		p.cp.MarkAssignment("Node")
 		p.state.EnterRule(D__Basic_2)
 		p.ParseDOpt()
 		p.state.ExitRule()
-		p.cp.ClearAssignment()
 	}
 	p.cp.RecordSnapshot(D__Basic_2)
 	p.state.Sync(D__Basic_2)
@@ -199,15 +184,13 @@ func (p *CompletionParser) ParseD() {
 			p.state.Consume(Keyword_ColonColon)
 		}
 		{
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Keyword_AsteriskAsterisk)
-			p.cp.ClearAssignment()
 		}
 	}
 }
 
 func (p *CompletionParser) ParseE() {
-	p.cp.EnterRule("E", E__Start)
+	p.cp.EnterRule("Obj", E__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_e)
@@ -216,9 +199,7 @@ func (p *CompletionParser) ParseE() {
 		p.cp.RecordSnapshot(E__Basic_1)
 		p.state.Sync(E__Basic_1)
 		if p.lookahead.EValueOptional(p.state) {
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Keyword_hello)
-			p.cp.ClearAssignment()
 		}
 	}
 	{
@@ -229,7 +210,7 @@ func (p *CompletionParser) ParseE() {
 }
 
 func (p *CompletionParser) ParseF() {
-	p.cp.EnterRule("F", F__Start)
+	p.cp.EnterRule("Obj", F__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_f)
@@ -242,9 +223,7 @@ func (p *CompletionParser) ParseF() {
 			}
 		}
 		{
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Keyword_hello)
-			p.cp.ClearAssignment()
 		}
 	case 1:
 		{
@@ -253,9 +232,7 @@ func (p *CompletionParser) ParseF() {
 			}
 		}
 		{
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Keyword_world)
-			p.cp.ClearAssignment()
 		}
 	default:
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
@@ -263,7 +240,7 @@ func (p *CompletionParser) ParseF() {
 }
 
 func (p *CompletionParser) ParseG() {
-	p.cp.EnterRule("G", G__Start)
+	p.cp.EnterRule("Obj", G__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_g)
@@ -271,29 +248,21 @@ func (p *CompletionParser) ParseG() {
 	switch prediction, failure := p.lookahead.GAlternatives(p.state); prediction {
 	case 0:
 		{
-			p.cp.MarkAssignment("Node")
 			p.state.EnterRule(G_Value_hello)
 			p.ParseQualifiedName()
 			p.state.ExitRule()
-			p.cp.ClearAssignment()
 		}
 		{
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Keyword_hello)
-			p.cp.ClearAssignment()
 		}
 	case 1:
 		{
-			p.cp.MarkAssignment("Node")
 			p.state.EnterRule(G_Value_world)
 			p.ParseQualifiedName()
 			p.state.ExitRule()
-			p.cp.ClearAssignment()
 		}
 		{
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Keyword_world)
-			p.cp.ClearAssignment()
 		}
 	default:
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
@@ -301,7 +270,7 @@ func (p *CompletionParser) ParseG() {
 }
 
 func (p *CompletionParser) ParseH() {
-	p.cp.EnterRule("H", H__Start)
+	p.cp.EnterRule("Obj", H__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_h)
@@ -309,29 +278,21 @@ func (p *CompletionParser) ParseH() {
 	switch prediction, failure := p.lookahead.HAlternatives(p.state); prediction {
 	case 0:
 		{
-			p.cp.MarkAssignment("Node")
 			p.state.EnterRule(H_Value_hello)
 			p.ParseQualifiedNameRecursive()
 			p.state.ExitRule()
-			p.cp.ClearAssignment()
 		}
 		{
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Keyword_hello)
-			p.cp.ClearAssignment()
 		}
 	case 1:
 		{
-			p.cp.MarkAssignment("Node")
 			p.state.EnterRule(H_Value_world)
 			p.ParseQualifiedNameRecursive()
 			p.state.ExitRule()
-			p.cp.ClearAssignment()
 		}
 		{
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Keyword_world)
-			p.cp.ClearAssignment()
 		}
 	default:
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
@@ -339,7 +300,7 @@ func (p *CompletionParser) ParseH() {
 }
 
 func (p *CompletionParser) ParseI() {
-	p.cp.EnterRule("I", I__Start)
+	p.cp.EnterRule("Obj", I__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_i)
@@ -347,29 +308,21 @@ func (p *CompletionParser) ParseI() {
 	switch prediction, failure := p.lookahead.IAlternatives(p.state); prediction {
 	case 0:
 		{
-			p.cp.MarkAssignment("Node")
 			p.state.EnterRule(I_Value_ID_0)
 			p.ParseQualifiedNameRecursive()
 			p.state.ExitRule()
-			p.cp.ClearAssignment()
 		}
 		{
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Token_ID)
-			p.cp.ClearAssignment()
 		}
 	case 1:
 		{
-			p.cp.MarkAssignment("Node")
 			p.state.EnterRule(I_Value_ID_1)
 			p.ParseQualifiedNameRecursive()
 			p.state.ExitRule()
-			p.cp.ClearAssignment()
 		}
 		{
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Token_ID)
-			p.cp.ClearAssignment()
 		}
 	default:
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
@@ -377,7 +330,7 @@ func (p *CompletionParser) ParseI() {
 }
 
 func (p *CompletionParser) ParseQualifiedName() {
-	p.cp.EnterRule("QualifiedName", QualifiedName__Start)
+	p.cp.EnterRule("", QualifiedName__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Token_ID)
@@ -397,7 +350,7 @@ func (p *CompletionParser) ParseQualifiedName() {
 }
 
 func (p *CompletionParser) ParsePath() {
-	p.cp.EnterRule("Path", Path__Start)
+	p.cp.EnterRule("", Path__Start)
 	defer p.cp.ExitRule()
 	switch prediction, failure := p.lookahead.PathAlternatives(p.state); prediction {
 	case 0:
@@ -432,7 +385,7 @@ func (p *CompletionParser) ParsePath() {
 }
 
 func (p *CompletionParser) ParseQualifiedPath() {
-	p.cp.EnterRule("QualifiedPath", QualifiedPath__Start)
+	p.cp.EnterRule("", QualifiedPath__Start)
 	defer p.cp.ExitRule()
 	switch prediction, failure := p.lookahead.QualifiedPathAlternatives(p.state); prediction {
 	case 0:
@@ -461,7 +414,7 @@ func (p *CompletionParser) ParseQualifiedPath() {
 }
 
 func (p *CompletionParser) ParseCLoop() {
-	p.cp.EnterRule("CLoop", CLoop__Start)
+	p.cp.EnterRule("", CLoop__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Token_ID)
@@ -481,7 +434,7 @@ func (p *CompletionParser) ParseCLoop() {
 }
 
 func (p *CompletionParser) ParseDOpt() {
-	p.cp.EnterRule("DOpt", DOpt__Start)
+	p.cp.EnterRule("", DOpt__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Token_ID)
@@ -499,7 +452,7 @@ func (p *CompletionParser) ParseDOpt() {
 }
 
 func (p *CompletionParser) ParseQualifiedNameRecursive() {
-	p.cp.EnterRule("QualifiedNameRecursive", QualifiedNameRecursive__Start)
+	p.cp.EnterRule("", QualifiedNameRecursive__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Token_ID)

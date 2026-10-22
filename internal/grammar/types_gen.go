@@ -378,14 +378,14 @@ func NewField() Field {
 
 type FieldData struct {
 	name  *core.Token
-	_Type FieldType
+	_type FieldType
 }
 
 func (i *FieldData) IsField() {}
 
 func (i *FieldData) ForEachNode(fn func(core.AstNode, unique.Handle[string], int)) {
-	if i._Type != nil {
-		fn(i._Type, fieldNameType, -1)
+	if i._type != nil {
+		fn(i._type, fieldNameType, -1)
 	}
 }
 
@@ -409,15 +409,15 @@ func (i *FieldData) SetName(value *core.Token) {
 }
 
 func (i *FieldData) Type() FieldType {
-	if i != nil && i._Type != nil {
-		return i._Type
+	if i != nil && i._type != nil {
+		return i._type
 	} else {
 		return nil
 	}
 }
 
 func (i *FieldData) SetType(value FieldType) {
-	i._Type = value
+	i._type = value
 }
 
 type FieldImpl struct {
@@ -442,7 +442,7 @@ func (i *FieldImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameType:
 		if i.Type() == nil {
 			nodePath, _ := core.PathOf(i)
-			return nil, fmt.Errorf("FieldImpl.Resolve: field '_Type' is nil in node '%s'", nodePath)
+			return nil, fmt.Errorf("FieldImpl.Resolve: field '_type' is nil in node '%s'", nodePath)
 		}
 		child := i.Type()
 		return child.Resolve(path.Tail())
@@ -586,7 +586,7 @@ func NewReferenceType() ReferenceType {
 }
 
 type ReferenceTypeData struct {
-	_Type *core.Reference[Interface]
+	_type *core.Reference[Interface]
 }
 
 func (i *ReferenceTypeData) IsReferenceType() {}
@@ -595,21 +595,21 @@ func (i *ReferenceTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[stri
 }
 
 func (i *ReferenceTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	if i._Type != nil {
-		fn(i._Type, fieldNameType, -1)
+	if i._type != nil {
+		fn(i._type, fieldNameType, -1)
 	}
 }
 
 func (i *ReferenceTypeData) Type() *core.Reference[Interface] {
-	if i != nil && i._Type != nil {
-		return i._Type
+	if i != nil && i._type != nil {
+		return i._type
 	} else {
 		return nil
 	}
 }
 
 func (i *ReferenceTypeData) SetType(value *core.Reference[Interface]) {
-	i._Type = value
+	i._type = value
 }
 
 type ReferenceTypeImpl struct {
@@ -635,7 +635,7 @@ func (i *ReferenceTypeImpl) Resolve(path core.FragmentPath) (core.AstNode, error
 	field, _ := path.Head()
 	switch field {
 	case fieldNameType:
-		return nil, fmt.Errorf("ReferenceTypeImpl.Resolve: field '_Type' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("ReferenceTypeImpl.Resolve: field '_type' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("ReferenceTypeImpl.Resolve: field '%s' does not exist in node '%s' of type 'ReferenceType'", field.Value(), nodePath)
@@ -656,7 +656,7 @@ func NewSimpleType() SimpleType {
 }
 
 type SimpleTypeData struct {
-	_Type *core.Reference[Interface]
+	_type *core.Reference[Interface]
 }
 
 func (i *SimpleTypeData) IsSimpleType() {}
@@ -665,21 +665,21 @@ func (i *SimpleTypeData) ForEachNode(fn func(core.AstNode, unique.Handle[string]
 }
 
 func (i *SimpleTypeData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	if i._Type != nil {
-		fn(i._Type, fieldNameType, -1)
+	if i._type != nil {
+		fn(i._type, fieldNameType, -1)
 	}
 }
 
 func (i *SimpleTypeData) Type() *core.Reference[Interface] {
-	if i != nil && i._Type != nil {
-		return i._Type
+	if i != nil && i._type != nil {
+		return i._type
 	} else {
 		return nil
 	}
 }
 
 func (i *SimpleTypeData) SetType(value *core.Reference[Interface]) {
-	i._Type = value
+	i._type = value
 }
 
 type SimpleTypeImpl struct {
@@ -705,7 +705,7 @@ func (i *SimpleTypeImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	field, _ := path.Head()
 	switch field {
 	case fieldNameType:
-		return nil, fmt.Errorf("SimpleTypeImpl.Resolve: field '_Type' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("SimpleTypeImpl.Resolve: field '_type' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("SimpleTypeImpl.Resolve: field '%s' does not exist in node '%s' of type 'SimpleType'", field.Value(), nodePath)
@@ -727,7 +727,7 @@ func NewPrimitiveType() PrimitiveType {
 }
 
 type PrimitiveTypeData struct {
-	_Type *core.Token
+	_type *core.Token
 }
 
 func (i *PrimitiveTypeData) IsPrimitiveType() {}
@@ -739,19 +739,19 @@ func (i *PrimitiveTypeData) ForEachReference(fn func(core.UntypedReference, uniq
 }
 
 func (i *PrimitiveTypeData) Type() string {
-	if i != nil && i._Type != nil {
-		return i._Type.Image
+	if i != nil && i._type != nil {
+		return i._type.Image
 	} else {
 		return ""
 	}
 }
 
 func (i *PrimitiveTypeData) TypeToken() *core.Token {
-	return i._Type
+	return i._type
 }
 
 func (i *PrimitiveTypeData) SetType(value *core.Token) {
-	i._Type = value
+	i._type = value
 }
 
 type PrimitiveTypeImpl struct {
@@ -777,7 +777,7 @@ func (i *PrimitiveTypeImpl) Resolve(path core.FragmentPath) (core.AstNode, error
 	field, _ := path.Head()
 	switch field {
 	case fieldNameType:
-		return nil, fmt.Errorf("PrimitiveTypeImpl.Resolve: field '_Type' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("PrimitiveTypeImpl.Resolve: field '_type' holds a primitive value instead of an ast node")
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("PrimitiveTypeImpl.Resolve: field '%s' does not exist in node '%s' of type 'PrimitiveType'", field.Value(), nodePath)
@@ -1484,9 +1484,9 @@ func NewTokenCommand() TokenCommand {
 }
 
 type TokenCommandData struct {
-	_Type    *core.Token
+	_type    *core.Token
 	mode     *core.Reference[TokenMode]
-	_Default *core.Token
+	_default *core.Token
 }
 
 func (i *TokenCommandData) IsTokenCommand() {}
@@ -1501,19 +1501,19 @@ func (i *TokenCommandData) ForEachReference(fn func(core.UntypedReference, uniqu
 }
 
 func (i *TokenCommandData) Type() string {
-	if i != nil && i._Type != nil {
-		return i._Type.Image
+	if i != nil && i._type != nil {
+		return i._type.Image
 	} else {
 		return ""
 	}
 }
 
 func (i *TokenCommandData) TypeToken() *core.Token {
-	return i._Type
+	return i._type
 }
 
 func (i *TokenCommandData) SetType(value *core.Token) {
-	i._Type = value
+	i._type = value
 }
 
 func (i *TokenCommandData) Mode() *core.Reference[TokenMode] {
@@ -1529,15 +1529,15 @@ func (i *TokenCommandData) SetMode(value *core.Reference[TokenMode]) {
 }
 
 func (i *TokenCommandData) IsDefault() bool {
-	return i != nil && i._Default != nil
+	return i != nil && i._default != nil
 }
 
 func (i *TokenCommandData) DefaultToken() *core.Token {
-	return i._Default
+	return i._default
 }
 
 func (i *TokenCommandData) SetDefault(value *core.Token) {
-	i._Default = value
+	i._default = value
 }
 
 type TokenCommandImpl struct {
@@ -1560,9 +1560,9 @@ func (i *TokenCommandImpl) Resolve(path core.FragmentPath) (core.AstNode, error)
 	field, _ := path.Head()
 	switch field {
 	case fieldNameDefault:
-		return nil, fmt.Errorf("TokenCommandImpl.Resolve: field '_Default' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("TokenCommandImpl.Resolve: field '_default' holds a primitive value instead of an ast node")
 	case fieldNameType:
-		return nil, fmt.Errorf("TokenCommandImpl.Resolve: field '_Type' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("TokenCommandImpl.Resolve: field '_type' holds a primitive value instead of an ast node")
 	case fieldNameMode:
 		return nil, fmt.Errorf("TokenCommandImpl.Resolve: field 'mode' is a cross-reference instead of a container field")
 	default:
@@ -1700,7 +1700,7 @@ func NewTokenMode() TokenMode {
 
 type TokenModeData struct {
 	name     *core.Token
-	_Default *core.Token
+	_default *core.Token
 	members  []TokenModeMember
 }
 
@@ -1732,15 +1732,15 @@ func (i *TokenModeData) SetName(value *core.Token) {
 }
 
 func (i *TokenModeData) IsDefault() bool {
-	return i != nil && i._Default != nil
+	return i != nil && i._default != nil
 }
 
 func (i *TokenModeData) DefaultToken() *core.Token {
-	return i._Default
+	return i._default
 }
 
 func (i *TokenModeData) SetDefault(value *core.Token) {
-	i._Default = value
+	i._default = value
 }
 
 func (i *TokenModeData) Members() []TokenModeMember {
@@ -1782,7 +1782,7 @@ func (i *TokenModeImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 		}
 		return child.Resolve(path.Tail())
 	case fieldNameDefault:
-		return nil, fmt.Errorf("TokenModeImpl.Resolve: field '_Default' holds a primitive value instead of an ast node")
+		return nil, fmt.Errorf("TokenModeImpl.Resolve: field '_default' holds a primitive value instead of an ast node")
 	case fieldNameName:
 		return nil, fmt.Errorf("TokenModeImpl.Resolve: field 'name' holds a primitive value instead of an ast node")
 	default:
@@ -2784,7 +2784,7 @@ func NewCrossRef() CrossRef {
 }
 
 type CrossRefData struct {
-	_Type *core.Reference[Interface]
+	_type *core.Reference[Interface]
 	rule  RuleCall
 }
 
@@ -2797,21 +2797,21 @@ func (i *CrossRefData) ForEachNode(fn func(core.AstNode, unique.Handle[string], 
 }
 
 func (i *CrossRefData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	if i._Type != nil {
-		fn(i._Type, fieldNameType, -1)
+	if i._type != nil {
+		fn(i._type, fieldNameType, -1)
 	}
 }
 
 func (i *CrossRefData) Type() *core.Reference[Interface] {
-	if i != nil && i._Type != nil {
-		return i._Type
+	if i != nil && i._type != nil {
+		return i._type
 	} else {
 		return nil
 	}
 }
 
 func (i *CrossRefData) SetType(value *core.Reference[Interface]) {
-	i._Type = value
+	i._type = value
 }
 
 func (i *CrossRefData) Rule() RuleCall {
@@ -2861,7 +2861,7 @@ func (i *CrossRefImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameCardinality:
 		return nil, fmt.Errorf("CrossRefImpl.Resolve: field 'cardinality' holds a primitive value instead of an ast node")
 	case fieldNameType:
-		return nil, fmt.Errorf("CrossRefImpl.Resolve: field '_Type' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("CrossRefImpl.Resolve: field '_type' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("CrossRefImpl.Resolve: field '%s' does not exist in node '%s' of type 'CrossRef'", field.Value(), nodePath)
@@ -2962,7 +2962,7 @@ func NewAction() Action {
 }
 
 type ActionData struct {
-	_Type    *core.Reference[Interface]
+	_type    *core.Reference[Interface]
 	operator *core.Token
 	property *core.Reference[Field]
 }
@@ -2973,8 +2973,8 @@ func (i *ActionData) ForEachNode(fn func(core.AstNode, unique.Handle[string], in
 }
 
 func (i *ActionData) ForEachReference(fn func(core.UntypedReference, unique.Handle[string], int)) {
-	if i._Type != nil {
-		fn(i._Type, fieldNameType, -1)
+	if i._type != nil {
+		fn(i._type, fieldNameType, -1)
 	}
 	if i.property != nil {
 		fn(i.property, fieldNameProperty, -1)
@@ -2982,15 +2982,15 @@ func (i *ActionData) ForEachReference(fn func(core.UntypedReference, unique.Hand
 }
 
 func (i *ActionData) Type() *core.Reference[Interface] {
-	if i != nil && i._Type != nil {
-		return i._Type
+	if i != nil && i._type != nil {
+		return i._type
 	} else {
 		return nil
 	}
 }
 
 func (i *ActionData) SetType(value *core.Reference[Interface]) {
-	i._Type = value
+	i._type = value
 }
 
 func (i *ActionData) Operator() string {
@@ -3050,7 +3050,7 @@ func (i *ActionImpl) Resolve(path core.FragmentPath) (core.AstNode, error) {
 	case fieldNameProperty:
 		return nil, fmt.Errorf("ActionImpl.Resolve: field 'property' is a cross-reference instead of a container field")
 	case fieldNameType:
-		return nil, fmt.Errorf("ActionImpl.Resolve: field '_Type' is a cross-reference instead of a container field")
+		return nil, fmt.Errorf("ActionImpl.Resolve: field '_type' is a cross-reference instead of a container field")
 	default:
 		nodePath, _ := core.PathOf(i)
 		return nil, fmt.Errorf("ActionImpl.Resolve: field '%s' does not exist in node '%s' of type 'Action'", field.Value(), nodePath)
@@ -3330,8 +3330,8 @@ func (i *PrecedenceGroupImpl) Resolve(path core.FragmentPath) (core.AstNode, err
 }
 
 var (
-	fieldNameDefault          = unique.Make("_Default")
-	fieldNameType             = unique.Make("_Type")
+	fieldNameDefault          = unique.Make("_default")
+	fieldNameType             = unique.Make("_type")
 	fieldNameAlts             = unique.Make("alts")
 	fieldNameAssociativity    = unique.Make("associativity")
 	fieldNameBody             = unique.Make("body")

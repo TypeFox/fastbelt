@@ -21,9 +21,9 @@ func TestAssignContainersConsistency(t *testing.T) {
 	doc := f.Parse(`
 declare foo { declare bar { declare baz } }
 declare qux.quux
-e qux.quux
-f qux.quux qux.quux
-g foo
+fqn qux.quux
+list qux.quux qux.quux
+ref foo
 `)
 	doc.AssertNoErrors()
 

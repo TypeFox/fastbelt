@@ -3,7 +3,6 @@
 package token_groups
 
 import (
-	"sync"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -20,7 +19,7 @@ type CompletionParser struct {
 func NewCompletionParser(sc *service.Container) *CompletionParser {
 	return &CompletionParser{
 		sc:  sc,
-		atn: sync.OnceValue(BuildATN),
+		atn: ATN,
 	}
 }
 
@@ -43,7 +42,6 @@ func (p *CompletionParser) ParseModel() {
 	p.cp.EnterRule("Model", Model__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.MarkAssignment("Item")
 		switch prediction, _ := p.lookahead.ModelItemAlternatives(p.state); prediction {
 		case 0:
 			p.state.EnterRule(Model__Basic_1)
@@ -78,56 +76,49 @@ func (p *CompletionParser) ParseModel() {
 			p.ParseH()
 			p.state.ExitRule()
 		}
-		p.cp.ClearAssignment()
 	}
 }
 
 func (p *CompletionParser) ParseA() {
-	p.cp.EnterRule("A", A__Start)
+	p.cp.EnterRule("Item", A__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_a)
 	}
 	{
-		p.cp.MarkAssignment("Value")
 		p.state.Consume(TokenGroup_Identifier)
-		p.cp.ClearAssignment()
 	}
 }
 
 func (p *CompletionParser) ParseB() {
-	p.cp.EnterRule("B", B__Start)
+	p.cp.EnterRule("Item", B__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_b)
 	}
 	{
-		p.cp.MarkAssignment("Value")
 		switch prediction, _ := p.lookahead.BValueAlternatives(p.state); prediction {
 		case 0:
 			p.state.Consume(TokenGroup_Identifier)
 		case 1:
 			p.state.Consume(Keyword_b)
 		}
-		p.cp.ClearAssignment()
 	}
 }
 
 func (p *CompletionParser) ParseC() {
-	p.cp.EnterRule("C", C__Start)
+	p.cp.EnterRule("Item", C__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_c)
 	}
 	{
-		p.cp.MarkAssignment("Value")
 		p.state.Consume(TokenGroup_NestedIdentifier)
-		p.cp.ClearAssignment()
 	}
 }
 
 func (p *CompletionParser) ParseD() {
-	p.cp.EnterRule("D", D__Start)
+	p.cp.EnterRule("Item", D__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_d)
@@ -136,59 +127,49 @@ func (p *CompletionParser) ParseD() {
 		p.cp.RecordSnapshot(D__Basic_1)
 		p.state.Sync(D__Basic_1)
 		if p.lookahead.DValueOptional(p.state) {
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(TokenGroup_Identifier)
-			p.cp.ClearAssignment()
 		}
 	}
 }
 
 func (p *CompletionParser) ParseE() {
-	p.cp.EnterRule("E", E__Start)
+	p.cp.EnterRule("Recovery", E__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_e)
 	}
 	{
-		p.cp.MarkAssignment("First")
 		p.state.Consume(TokenGroup_Identifier)
-		p.cp.ClearAssignment()
 	}
 	{
-		p.cp.MarkAssignment("Second")
 		p.state.Consume(TokenGroup_NestedIdentifier)
-		p.cp.ClearAssignment()
 	}
 }
 
 func (p *CompletionParser) ParseF() {
-	p.cp.EnterRule("F", F__Start)
+	p.cp.EnterRule("Item", F__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_f)
 	}
 	{
-		p.cp.MarkAssignment("Value")
 		p.state.Consume(TokenGroup_KeywordGroup)
-		p.cp.ClearAssignment()
 	}
 }
 
 func (p *CompletionParser) ParseG() {
-	p.cp.EnterRule("G", G__Start)
+	p.cp.EnterRule("Item", G__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_g)
 	}
 	{
-		p.cp.MarkAssignment("Value")
 		p.state.Consume(TokenGroup_RegexGroup)
-		p.cp.ClearAssignment()
 	}
 }
 
 func (p *CompletionParser) ParseH() {
-	p.cp.EnterRule("H", H__Start)
+	p.cp.EnterRule("Item", H__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.Consume(Keyword_h)
@@ -199,18 +180,14 @@ func (p *CompletionParser) ParseH() {
 			p.state.Consume(TokenGroup_Identifier)
 		}
 		{
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Keyword_a)
-			p.cp.ClearAssignment()
 		}
 	case 1:
 		{
 			p.state.Consume(TokenGroup_Identifier)
 		}
 		{
-			p.cp.MarkAssignment("Value")
 			p.state.Consume(Keyword_b)
-			p.cp.ClearAssignment()
 		}
 	default:
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)

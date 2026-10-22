@@ -87,10 +87,11 @@ func AssertEqualAst(t *testing.T, expected, actual core.AstNode) bool {
 			// for each field create a sub test, use the composed type's name instead of the component type's name
 			// to allow us seeing immediately that the all fields of the composed types are hit
 			t.Run(expectedValueType.Name()+"."+field.Name, func(t *testing.T) {
-				stringGetterName := strings.ToUpper(field.Name[0:1]) + field.Name[1:]
+				stringGetterName := field.Name
 				if stringGetterName[0] == '_' {
 					stringGetterName = stringGetterName[1:]
 				}
+				stringGetterName = strings.ToUpper(stringGetterName[0:1]) + stringGetterName[1:]
 
 				getter, exists := expectedValueRefType.MethodByName(stringGetterName)
 				if !exists {

@@ -5,6 +5,7 @@ package statemachine
 import (
 	"context"
 	"iter"
+	"unique"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
@@ -112,11 +113,11 @@ func (a *StatemachineModelCompletionAdapter) Parse(tokens []core.Token) *parser.
 }
 
 func (a *StatemachineModelCompletionAdapter) ATN() *parser.RuntimeATN {
-	return BuildATN()
+	return ATN()
 }
 
-func (a *StatemachineModelCompletionAdapter) SyntheticOwnerFor(ruleKey string) (core.AstNode, bool) {
-	factory, ok := StatemachineModelSyntheticFactories[ruleKey]
+func (a *StatemachineModelCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {
+	factory, ok := StatemachineModelSyntheticFactories[nodeType]
 	if !ok {
 		return nil, false
 	}
@@ -159,4 +160,8 @@ func (a *StatemachineModelCompletionAdapter) ApplyAction(actionType, property st
 	_ = property
 	_ = value
 	return nil
+}
+
+func (a *StatemachineModelCompletionAdapter) AssignsCurrent(container core.AstNode, field unique.Handle[string], index int) bool {
+	return false
 }

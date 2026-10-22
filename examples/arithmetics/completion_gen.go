@@ -5,6 +5,7 @@ package arithmetics
 import (
 	"context"
 	"iter"
+	"unique"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
@@ -61,11 +62,11 @@ func (a *ArithmeticsCompletionAdapter) Parse(tokens []core.Token) *parser.Comple
 }
 
 func (a *ArithmeticsCompletionAdapter) ATN() *parser.RuntimeATN {
-	return BuildATN()
+	return ATN()
 }
 
-func (a *ArithmeticsCompletionAdapter) SyntheticOwnerFor(ruleKey string) (core.AstNode, bool) {
-	factory, ok := ArithmeticsSyntheticFactories[ruleKey]
+func (a *ArithmeticsCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {
+	factory, ok := ArithmeticsSyntheticFactories[nodeType]
 	if !ok {
 		return nil, false
 	}
@@ -96,4 +97,11 @@ func (a *ArithmeticsCompletionAdapter) ApplyAction(actionType, property string, 
 	_ = property
 	_ = value
 	return nil
+}
+
+func (a *ArithmeticsCompletionAdapter) AssignsCurrent(container core.AstNode, field unique.Handle[string], index int) bool {
+	if _, ok := container.(BinaryExpression); ok && (field == fieldNameLeft || field == fieldNameRight) {
+		return true
+	}
+	return false
 }

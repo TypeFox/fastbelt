@@ -4,7 +4,7 @@
 
 package completion
 
-//go:generate go run ../../../cmd/fastbelt generate ./completion.fb -v
+//go:generate go run ../../../cmd/fastbelt generate ./completion.fb -v --atn
 
 import (
 	"typefox.dev/fastbelt/linking"

@@ -3,7 +3,6 @@
 package statemachine
 
 import (
-	"sync"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -20,7 +19,7 @@ type CompletionParser struct {
 func NewCompletionParser(sc *service.Container) *CompletionParser {
 	return &CompletionParser{
 		sc:  sc,
-		atn: sync.OnceValue(BuildATN),
+		atn: ATN,
 	}
 }
 
@@ -46,9 +45,7 @@ func (p *CompletionParser) ParseStatemachine() {
 		p.state.Consume(Keyword_statemachine)
 	}
 	{
-		p.cp.MarkAssignment("Name")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 	p.cp.RecordSnapshot(Statemachine__Basic_2)
 	p.state.Sync(Statemachine__Basic_2)
@@ -58,11 +55,9 @@ func (p *CompletionParser) ParseStatemachine() {
 		}
 		{
 			for ok := true; ok; ok = p.lookahead.StatemachineEventsLoop(p.state) {
-				p.cp.MarkAssignment("Events")
 				p.state.EnterRule(Statemachine__Basic_1)
 				p.ParseEvent()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 				p.cp.RecordSnapshot(Statemachine__LoopBack_0)
 				p.state.Sync(Statemachine__LoopBack_0)
 			}
@@ -76,11 +71,9 @@ func (p *CompletionParser) ParseStatemachine() {
 		}
 		{
 			for ok := true; ok; ok = p.lookahead.StatemachineCommandsLoop(p.state) {
-				p.cp.MarkAssignment("Commands")
 				p.state.EnterRule(Statemachine__Basic_4)
 				p.ParseCommand()
 				p.state.ExitRule()
-				p.cp.ClearAssignment()
 				p.cp.RecordSnapshot(Statemachine__LoopBack_1)
 				p.state.Sync(Statemachine__LoopBack_1)
 			}
@@ -90,19 +83,15 @@ func (p *CompletionParser) ParseStatemachine() {
 		p.state.Consume(Keyword_initialState)
 	}
 	{
-		p.cp.MarkAssignment("Init")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 	{
 		p.cp.RecordSnapshot(Statemachine__LoopEntry)
 		p.state.Sync(Statemachine__LoopEntry)
 		for p.lookahead.StatemachineStatesLoop(p.state) {
-			p.cp.MarkAssignment("States")
 			p.state.EnterRule(Statemachine__Basic_7)
 			p.ParseState()
 			p.state.ExitRule()
-			p.cp.ClearAssignment()
 			p.cp.RecordSnapshot(Statemachine__LoopEntry)
 			p.state.Sync(Statemachine__LoopEntry)
 		}
@@ -113,9 +102,7 @@ func (p *CompletionParser) ParseEvent() {
 	p.cp.EnterRule("Event", Event__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.MarkAssignment("Name")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -123,9 +110,7 @@ func (p *CompletionParser) ParseCommand() {
 	p.cp.EnterRule("Command", Command__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.MarkAssignment("Name")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -136,9 +121,7 @@ func (p *CompletionParser) ParseState() {
 		p.state.Consume(Keyword_state)
 	}
 	{
-		p.cp.MarkAssignment("Name")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 	p.cp.RecordSnapshot(State__Basic_2)
 	p.state.Sync(State__Basic_2)
@@ -151,9 +134,7 @@ func (p *CompletionParser) ParseState() {
 		}
 		{
 			for ok := true; ok; ok = p.lookahead.StateActionsLoop(p.state) {
-				p.cp.MarkAssignment("Actions")
 				p.state.Consume(Token_ID)
-				p.cp.ClearAssignment()
 				p.cp.RecordSnapshot(State__LoopBack_0)
 				p.state.Sync(State__LoopBack_0)
 			}
@@ -166,11 +147,9 @@ func (p *CompletionParser) ParseState() {
 		p.cp.RecordSnapshot(State__LoopEntry)
 		p.state.Sync(State__LoopEntry)
 		for p.lookahead.StateTransitionsLoop(p.state) {
-			p.cp.MarkAssignment("Transitions")
 			p.state.EnterRule(State__Basic_4)
 			p.ParseTransition()
 			p.state.ExitRule()
-			p.cp.ClearAssignment()
 			p.cp.RecordSnapshot(State__LoopEntry)
 			p.state.Sync(State__LoopEntry)
 		}
@@ -184,16 +163,12 @@ func (p *CompletionParser) ParseTransition() {
 	p.cp.EnterRule("Transition", Transition__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.MarkAssignment("Event")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 	{
 		p.state.Consume(Keyword_EqualsGreaterThan)
 	}
 	{
-		p.cp.MarkAssignment("State")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 }

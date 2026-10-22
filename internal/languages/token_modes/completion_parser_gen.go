@@ -3,7 +3,6 @@
 package token_modes
 
 import (
-	"sync"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -20,7 +19,7 @@ type CompletionParser struct {
 func NewCompletionParser(sc *service.Container) *CompletionParser {
 	return &CompletionParser{
 		sc:  sc,
-		atn: sync.OnceValue(BuildATN),
+		atn: ATN,
 	}
 }
 
@@ -46,11 +45,9 @@ func (p *CompletionParser) ParseModel() {
 		p.cp.RecordSnapshot(Model__LoopEntry)
 		p.state.Sync(Model__LoopEntry)
 		for p.lookahead.ModelStatementsLoop(p.state) {
-			p.cp.MarkAssignment("Statements")
 			p.state.EnterRule(Model__Basic_1)
 			p.ParseStatement()
 			p.state.ExitRule()
-			p.cp.ClearAssignment()
 			p.cp.RecordSnapshot(Model__LoopEntry)
 			p.state.Sync(Model__LoopEntry)
 		}
@@ -71,19 +68,15 @@ func (p *CompletionParser) ParseVariableDecl() {
 	p.cp.EnterRule("VariableDecl", VariableDecl__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.MarkAssignment("Name")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 	{
 		p.state.Consume(Keyword_ColonEquals)
 	}
 	{
-		p.cp.MarkAssignment("Value")
 		p.state.EnterRule(VariableDecl__Basic_1)
 		p.ParseExpression()
 		p.state.ExitRule()
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -98,7 +91,7 @@ func (p *CompletionParser) ParseExpression() {
 }
 
 func (p *CompletionParser) ParseAdditive() {
-	p.cp.EnterRule("Additive", Additive__Start)
+	p.cp.EnterRule("Expression", Additive__Start)
 	defer p.cp.ExitRule()
 	{
 		p.state.EnterRule(Additive__LoopEntry)
@@ -109,16 +102,12 @@ func (p *CompletionParser) ParseAdditive() {
 	p.state.Sync(Additive__LoopEntry)
 	for p.lookahead.AdditiveLoop(p.state) {
 		{
-			p.cp.MarkAssignment("Operator")
 			p.state.Consume(Keyword_Plus)
-			p.cp.ClearAssignment()
 		}
 		{
-			p.cp.MarkAssignment("Right")
 			p.state.EnterRule(Additive__Basic_2)
 			p.ParsePrimary()
 			p.state.ExitRule()
-			p.cp.ClearAssignment()
 		}
 		p.cp.RecordSnapshot(Additive__LoopEntry)
 		p.state.Sync(Additive__LoopEntry)
@@ -165,11 +154,9 @@ func (p *CompletionParser) ParseParentheses() {
 		p.state.Consume(Keyword_LeftParen)
 	}
 	{
-		p.cp.MarkAssignment("Expr")
 		p.state.EnterRule(Parentheses_RightParen)
 		p.ParseExpression()
 		p.state.ExitRule()
-		p.cp.ClearAssignment()
 	}
 	{
 		p.state.Consume(Keyword_RightParen)
@@ -180,9 +167,7 @@ func (p *CompletionParser) ParseVariableRef() {
 	p.cp.EnterRule("VariableRef", VariableRef__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.MarkAssignment("Name")
 		p.state.Consume(Token_ID)
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -190,9 +175,7 @@ func (p *CompletionParser) ParseNumericLiteral() {
 	p.cp.EnterRule("NumericLiteral", NumericLiteral__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.MarkAssignment("Value")
 		p.state.Consume(Token_INT)
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -206,11 +189,9 @@ func (p *CompletionParser) ParseStringLiteral() {
 		p.cp.RecordSnapshot(StringLiteral__LoopEntry)
 		p.state.Sync(StringLiteral__LoopEntry)
 		for p.lookahead.StringLiteralContentLoop(p.state) {
-			p.cp.MarkAssignment("Content")
 			p.state.EnterRule(StringLiteral__Basic_1)
 			p.ParseStringContent()
 			p.state.ExitRule()
-			p.cp.ClearAssignment()
 			p.cp.RecordSnapshot(StringLiteral__LoopEntry)
 			p.state.Sync(StringLiteral__LoopEntry)
 		}
@@ -245,9 +226,7 @@ func (p *CompletionParser) ParseStringText() {
 	p.cp.EnterRule("StringText", StringText__Start)
 	defer p.cp.ExitRule()
 	{
-		p.cp.MarkAssignment("Value")
 		p.state.Consume(Token_STRING_CONTENT)
-		p.cp.ClearAssignment()
 	}
 }
 
@@ -258,11 +237,9 @@ func (p *CompletionParser) ParseInterpolation() {
 		p.state.Consume(Keyword_HashLeftBrace)
 	}
 	{
-		p.cp.MarkAssignment("Expression")
 		p.state.EnterRule(Interpolation_RightBrace)
 		p.ParseExpression()
 		p.state.ExitRule()
-		p.cp.ClearAssignment()
 	}
 	{
 		p.state.Consume(Keyword_RightBrace)

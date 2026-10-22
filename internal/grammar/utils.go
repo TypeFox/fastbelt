@@ -7,6 +7,9 @@ package grammar
 import (
 	"context"
 	"errors"
+	"go/token"
+	"go/types"
+	"strings"
 )
 
 var errMissingKeywordValue = errors.New("keyword has no token value")
@@ -26,6 +29,29 @@ func convertString(keyword Keyword) (string, error) {
 		value = KeywordValue(keyword)
 	}
 	return value, nil
+}
+
+func FieldName(name string) string {
+	return strings.ToLower(name[0:1]) + name[1:]
+}
+
+// GoFieldName returns the name of the Go struct field that is generated for
+// the grammar field with the given name. The same name identifies the field
+// in the containment data of AST nodes.
+func GoFieldName(name string) string {
+	fieldName := FieldName(name)
+	if token.IsKeyword(fieldName) {
+		return "_" + fieldName
+	}
+	return fieldName
+}
+
+func GoLocalName(name string) string {
+	localName := GoFieldName(name)
+	if types.Universe.Lookup(localName) != nil {
+		return "_" + localName
+	}
+	return localName
 }
 
 func FindReturnType(rule AbstractRuleWithReturnType, ctx context.Context) Interface {

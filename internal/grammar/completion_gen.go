@@ -5,6 +5,7 @@ package grammar
 import (
 	"context"
 	"iter"
+	"unique"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
@@ -248,11 +249,11 @@ func (a *FastbeltCompletionAdapter) Parse(tokens []core.Token) *parser.Completio
 }
 
 func (a *FastbeltCompletionAdapter) ATN() *parser.RuntimeATN {
-	return BuildATN()
+	return ATN()
 }
 
-func (a *FastbeltCompletionAdapter) SyntheticOwnerFor(ruleKey string) (core.AstNode, bool) {
-	factory, ok := FastbeltSyntheticFactories[ruleKey]
+func (a *FastbeltCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {
+	factory, ok := FastbeltSyntheticFactories[nodeType]
 	if !ok {
 		return nil, false
 	}
@@ -352,4 +353,14 @@ func (a *FastbeltCompletionAdapter) ApplyAction(actionType, property string, val
 		return node
 	}
 	return nil
+}
+
+func (a *FastbeltCompletionAdapter) AssignsCurrent(container core.AstNode, field unique.Handle[string], index int) bool {
+	if _, ok := container.(Alternatives); ok && field == fieldNameAlts && index == 0 {
+		return true
+	}
+	if _, ok := container.(Group); ok && field == fieldNameElements && index == 0 {
+		return true
+	}
+	return false
 }

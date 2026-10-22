@@ -5,6 +5,7 @@ package token_modes
 import (
 	"context"
 	"iter"
+	"unique"
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
@@ -61,11 +62,11 @@ func (a *TokenModesCompletionAdapter) Parse(tokens []core.Token) *parser.Complet
 }
 
 func (a *TokenModesCompletionAdapter) ATN() *parser.RuntimeATN {
-	return BuildATN()
+	return ATN()
 }
 
-func (a *TokenModesCompletionAdapter) SyntheticOwnerFor(ruleKey string) (core.AstNode, bool) {
-	factory, ok := TokenModesSyntheticFactories[ruleKey]
+func (a *TokenModesCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {
+	factory, ok := TokenModesSyntheticFactories[nodeType]
 	if !ok {
 		return nil, false
 	}
@@ -104,4 +105,11 @@ func (a *TokenModesCompletionAdapter) ApplyAction(actionType, property string, v
 		return node
 	}
 	return nil
+}
+
+func (a *TokenModesCompletionAdapter) AssignsCurrent(container core.AstNode, field unique.Handle[string], index int) bool {
+	if _, ok := container.(BinaryExpression); ok && field == fieldNameLeft && index < 0 {
+		return true
+	}
+	return false
 }

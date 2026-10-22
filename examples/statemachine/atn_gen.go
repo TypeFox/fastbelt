@@ -160,7 +160,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[Statemachine__Basic_0], Keyword_events, nil),
 	)
 	states[Statemachine__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[Event__Start], states[Statemachine__Basic_1], nil),
+		parser.NewRuleTransition(states[Event__Start], states[Statemachine__Basic_1], nil, &parser.RuleCallInfo{Field: "events", List: true, Type: "Event", Repeated: true}),
 	)
 	states[Statemachine__Basic_1].AppendTransitions(
 		parser.NewEpsilonTransition(states[Statemachine__LoopBack_0]),
@@ -180,7 +180,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[Statemachine__Basic_3], Keyword_commands, nil),
 	)
 	states[Statemachine__Basic_3].AppendTransitions(
-		parser.NewRuleTransition(states[Command__Start], states[Statemachine__Basic_4], nil),
+		parser.NewRuleTransition(states[Command__Start], states[Statemachine__Basic_4], nil, &parser.RuleCallInfo{Field: "commands", List: true, Type: "Command", Repeated: true}),
 	)
 	states[Statemachine__Basic_4].AppendTransitions(
 		parser.NewEpsilonTransition(states[Statemachine__LoopBack_1]),
@@ -200,10 +200,10 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[Statemachine_Init_ID], Keyword_initialState, nil),
 	)
 	states[Statemachine_Init_ID].AppendTransitions(
-		parser.NewAtomTransition(states[Statemachine__LoopEntry], Token_ID, &parser.CompletionHint{Field: "Statemachine.Init"}),
+		parser.NewAtomTransition(states[Statemachine__LoopEntry], Token_ID, &parser.CompletionHint{Owner: "Statemachine", Property: "Init"}),
 	)
 	states[Statemachine__Basic_6].AppendTransitions(
-		parser.NewRuleTransition(states[State__Start], states[Statemachine__Basic_7], nil),
+		parser.NewRuleTransition(states[State__Start], states[Statemachine__Basic_7], nil, &parser.RuleCallInfo{Field: "states", List: true, Type: "State", Repeated: true}),
 	)
 	states[Statemachine__Basic_7].AppendTransitions(
 		parser.NewEpsilonTransition(states[Statemachine__LoopBack_2]),
@@ -243,7 +243,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewAtomTransition(states[State_Actions_ID], Keyword_LeftBrace, nil),
 	)
 	states[State_Actions_ID].AppendTransitions(
-		parser.NewAtomTransition(states[State__Basic_0], Token_ID, &parser.CompletionHint{Field: "State.Actions"}),
+		parser.NewAtomTransition(states[State__Basic_0], Token_ID, &parser.CompletionHint{Owner: "State", Property: "Actions"}),
 	)
 	states[State__Basic_0].AppendTransitions(
 		parser.NewEpsilonTransition(states[State__LoopBack_0]),
@@ -266,7 +266,7 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[State__Basic_1]),
 	)
 	states[State__Basic_3].AppendTransitions(
-		parser.NewRuleTransition(states[Transition__Start], states[State__Basic_4], nil),
+		parser.NewRuleTransition(states[Transition__Start], states[State__Basic_4], nil, &parser.RuleCallInfo{Field: "transitions", List: true, Type: "Transition", Repeated: true}),
 	)
 	states[State__Basic_4].AppendTransitions(
 		parser.NewEpsilonTransition(states[State__LoopBack_1]),
@@ -288,13 +288,13 @@ func BuildATN() *parser.RuntimeATN {
 		parser.NewEpsilonTransition(states[State__Stop]),
 	)
 	states[Transition_Event_ID].AppendTransitions(
-		parser.NewAtomTransition(states[Transition_EqualsGreaterThan], Token_ID, &parser.CompletionHint{Field: "Transition.Event"}),
+		parser.NewAtomTransition(states[Transition_EqualsGreaterThan], Token_ID, &parser.CompletionHint{Owner: "Transition", Property: "Event"}),
 	)
 	states[Transition_EqualsGreaterThan].AppendTransitions(
 		parser.NewAtomTransition(states[Transition_State_ID], Keyword_EqualsGreaterThan, nil),
 	)
 	states[Transition_State_ID].AppendTransitions(
-		parser.NewAtomTransition(states[Transition__Basic], Token_ID, &parser.CompletionHint{Field: "Transition.State"}),
+		parser.NewAtomTransition(states[Transition__Basic], Token_ID, &parser.CompletionHint{Owner: "Transition", Property: "State"}),
 	)
 	states[Transition__Basic].AppendTransitions(
 		parser.NewEpsilonTransition(states[Transition__Stop]),

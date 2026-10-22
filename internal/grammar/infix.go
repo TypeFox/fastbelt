@@ -12,6 +12,13 @@ import (
 	"typefox.dev/fastbelt/linking"
 )
 
+// Names of the properties that the node type of an infix rule declares.
+const (
+	InfixLeftProperty     = "Left"
+	InfixRightProperty    = "Right"
+	InfixOperatorProperty = "Operator"
+)
+
 // InfixOperatorGroupName returns the name of the token group synthesized by
 // [ExpandInfixRules] to unify all operator tokens of the given infix rule.
 func InfixOperatorGroupName(rule InfixRule) string {

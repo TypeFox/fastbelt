@@ -103,11 +103,14 @@ func (t *EpsilonTransition) SetTarget(target *ATNState) { t.TargetState = target
 // atom transition reached inside the called rule, so the completion
 // provider can dispatch per-field even when the cross-reference text
 // spans multiple tokens.
+//
+// Call mirrors parser.RuleCallInfo and is never nil.
 type RuleTransition struct {
 	TargetState    *ATNState // the rule's RuleStartState
 	Rule           grammar.AbstractRuleWithBody
 	FollowState    *ATNState
 	CompletionHint *parser.CompletionHint
+	Call           *parser.RuleCallInfo
 }
 
 func (t *RuleTransition) Target() *ATNState          { return t.TargetState }
