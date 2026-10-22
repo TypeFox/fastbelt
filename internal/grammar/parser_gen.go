@@ -3,6 +3,8 @@
 package grammar
 
 import (
+	"context"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -15,15 +17,23 @@ type Parser struct {
 	lookahead             FastbeltParserLookahead
 }
 
-func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
+func (p *Parser) Parse(ctx context.Context, document *core.Document) (*parser.ParseResult, error) {
 	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
 	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
 	referencesConstructor := service.MustGet[FastbeltReferencesConstructor](p.sc)
 	lookahead := service.MustGet[FastbeltParserLookahead](p.sc)
-	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
+	cp := &Parser{
+		sc:                    p.sc,
+		referencesConstructor: referencesConstructor,
+		lookahead:             lookahead,
+		state:                 parser.NewParserState(ctx, document.Tokens, ATN(), recovery, messages),
+	}
 	result := cp.ParseGrammar()
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
 	cp.state.ExpectEndOfInput()
-	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}
+	return &parser.ParseResult{Node: result, Errors: cp.state.Errors()}, nil
 }
 
 func NewParser(sc *service.Container) *Parser {

@@ -5,12 +5,14 @@
 package parser
 
 import (
+	"context"
+
 	core "typefox.dev/fastbelt"
 )
 
 // Parser defines the interface for parsing tokens (lexer output) into AST nodes.
 type Parser interface {
-	Parse(document *core.Document) *ParseResult
+	Parse(ctx context.Context, document *core.Document) (*ParseResult, error)
 }
 
 type ParseResult struct {
@@ -28,6 +30,7 @@ const (
 )
 
 type ParserState struct {
+	ctx       context.Context
 	Tokens    []core.Token
 	Length    int
 	Index     int
@@ -47,6 +50,10 @@ type ParserState struct {
 	sim               *parserATNSimulator // lazily created adaptive (ALL(*)) predictor
 
 	lastErrorIndex int // index of the last token that caused an error, used to prevent infinite loops in recovery
+}
+
+func (p *ParserState) Context() context.Context {
+	return p.ctx
 }
 
 func (p *ParserState) ATN() *RuntimeATN {
@@ -121,11 +128,15 @@ type LL1Lookahead struct {
 	Lookup []int
 }
 
-func NewParserState(tokens []core.Token, atn *RuntimeATN, recovery ErrorRecoveryStrategy, messages ErrorMessageProvider) *ParserState {
+func NewParserState(ctx context.Context, tokens []core.Token, atn *RuntimeATN, recovery ErrorRecoveryStrategy, messages ErrorMessageProvider) *ParserState {
 	if atn == nil {
 		panic("atn must be provided")
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	return &ParserState{
+		ctx:            ctx,
 		Tokens:         tokens,
 		Length:         len(tokens),
 		Index:          0,
@@ -249,6 +260,13 @@ func (p *ParserState) EnterRule(followStateIdx int) {
 func (p *ParserState) ExitRule() {
 	if len(p.followStates) > 0 {
 		p.followStates = p.followStates[:len(p.followStates)-1]
+	}
+	if p.ctx.Err() != nil {
+		// Use ErrorMode as a proxy to abort parsing.
+		// Also, make sure that lookaheads terminate by jumping to the end of the token stream.
+		p.ErrorMode = ErrorModeFail
+		p.Index = p.Length
+		return
 	}
 	if p.ErrorMode == ErrorModeFail {
 		// Once we exit the rule where the error was detected, we can attempt recovery.

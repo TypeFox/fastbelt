@@ -21,7 +21,7 @@ import (
 type LanguageCompletionAdapter interface {
 	// Parse runs the generated CompletionParser over the given prefix
 	// tokens (the document's tokens up to the cursor).
-	Parse(tokens []core.Token) *CompletionParseResult
+	Parse(ctx context.Context, tokens []core.Token) *CompletionParseResult
 	// ATN returns the RuntimeATN the simulator queries.
 	ATN() *RuntimeATN
 	// SyntheticOwnerFor returns a fresh, detached AST node of the given
