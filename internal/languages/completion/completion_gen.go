@@ -402,7 +402,7 @@ func (a *CompletionCompletionAdapter) Parse(tokens []core.Token) *parser.Complet
 }
 
 func (a *CompletionCompletionAdapter) ATN() *parser.RuntimeATN {
-	return BuildATN()
+	return ATN()
 }
 
 func (a *CompletionCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {

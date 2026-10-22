@@ -603,7 +603,6 @@ func GenerateCompletionParser(grammr grammar.Grammar, entryRule grammar.ParserRu
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("\"sync\"")
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
 		n.AppendLine("\"typefox.dev/fastbelt/parser\"")
 		n.AppendLine("\"typefox.dev/fastbelt/util/service\"")
@@ -626,7 +625,7 @@ func GenerateCompletionParser(grammr grammar.Grammar, entryRule grammar.ParserRu
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("return &CompletionParser{")
 		n.AppendLine("	sc: sc,")
-		n.AppendLine("	atn: sync.OnceValue(BuildATN),")
+		n.AppendLine("	atn: ATN,")
 		n.AppendLine("}")
 	})
 	node.AppendLine("}")

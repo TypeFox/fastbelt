@@ -202,7 +202,7 @@ func generateLspAdapter(ctx *LinkerGeneratorContext, actions []actionEntry) code
 	node.AppendLine()
 
 	node.AppendLine("func (a *", name, "CompletionAdapter) ATN() *parser.RuntimeATN {")
-	node.AppendLine(" return BuildATN()")
+	node.AppendLine(" return ATN()")
 	node.AppendLine("}")
 	node.AppendLine()
 

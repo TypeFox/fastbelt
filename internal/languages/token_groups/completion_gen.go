@@ -40,7 +40,7 @@ func (a *TokenGroupsCompletionAdapter) Parse(tokens []core.Token) *parser.Comple
 }
 
 func (a *TokenGroupsCompletionAdapter) ATN() *parser.RuntimeATN {
-	return BuildATN()
+	return ATN()
 }
 
 func (a *TokenGroupsCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {

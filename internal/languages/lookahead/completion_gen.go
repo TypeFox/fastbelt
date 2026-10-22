@@ -40,7 +40,7 @@ func (a *LookaheadCompletionAdapter) Parse(tokens []core.Token) *parser.Completi
 }
 
 func (a *LookaheadCompletionAdapter) ATN() *parser.RuntimeATN {
-	return BuildATN()
+	return ATN()
 }
 
 func (a *LookaheadCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {

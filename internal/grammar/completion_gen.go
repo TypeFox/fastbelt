@@ -249,7 +249,7 @@ func (a *FastbeltCompletionAdapter) Parse(tokens []core.Token) *parser.Completio
 }
 
 func (a *FastbeltCompletionAdapter) ATN() *parser.RuntimeATN {
-	return BuildATN()
+	return ATN()
 }
 
 func (a *FastbeltCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {

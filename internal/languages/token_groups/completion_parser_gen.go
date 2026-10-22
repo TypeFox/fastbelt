@@ -3,7 +3,6 @@
 package token_groups
 
 import (
-	"sync"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -20,7 +19,7 @@ type CompletionParser struct {
 func NewCompletionParser(sc *service.Container) *CompletionParser {
 	return &CompletionParser{
 		sc:  sc,
-		atn: sync.OnceValue(BuildATN),
+		atn: ATN,
 	}
 }
 

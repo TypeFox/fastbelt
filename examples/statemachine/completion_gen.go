@@ -113,7 +113,7 @@ func (a *StatemachineModelCompletionAdapter) Parse(tokens []core.Token) *parser.
 }
 
 func (a *StatemachineModelCompletionAdapter) ATN() *parser.RuntimeATN {
-	return BuildATN()
+	return ATN()
 }
 
 func (a *StatemachineModelCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {

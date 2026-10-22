@@ -62,7 +62,7 @@ func (a *ArithmeticsCompletionAdapter) Parse(tokens []core.Token) *parser.Comple
 }
 
 func (a *ArithmeticsCompletionAdapter) ATN() *parser.RuntimeATN {
-	return BuildATN()
+	return ATN()
 }
 
 func (a *ArithmeticsCompletionAdapter) SyntheticOwnerFor(nodeType string) (core.AstNode, bool) {
