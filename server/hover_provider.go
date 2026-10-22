@@ -7,6 +7,7 @@ package server
 import (
 	"context"
 
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/lsp"
 )
@@ -19,6 +20,15 @@ type HoverProvider interface {
 // DefaultHoverProvider is the default implementation of [HoverProvider].
 type DefaultHoverProvider struct {
 	sc *service.Container
+}
+
+// Ensure DefaultHoverProvider implements the expected interfaces.
+var _ HoverProvider = (*DefaultHoverProvider)(nil)
+var _ DocumentStateRequirements = (*DefaultHoverProvider)(nil)
+
+// RequiredState indicates that the default hover provider requires the document to be linked.
+func (s *DefaultHoverProvider) RequiredState() (core.DocumentState, bool) {
+	return core.DocStateLinked, false
 }
 
 func NewDefaultHoverProvider(sc *service.Container) HoverProvider {

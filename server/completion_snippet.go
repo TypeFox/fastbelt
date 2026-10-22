@@ -55,6 +55,9 @@ type DefaultSnippetRegistry struct {
 	snippets []SnippetTemplate
 }
 
+// Ensure DefaultSnippetRegistry implements SnippetRegistry.
+var _ SnippetRegistry = (*DefaultSnippetRegistry)(nil)
+
 // NewDefaultSnippetRegistry returns an empty registry.
 func NewDefaultSnippetRegistry() SnippetRegistry {
 	return &DefaultSnippetRegistry{}
