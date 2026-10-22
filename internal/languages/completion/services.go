@@ -20,7 +20,7 @@ func SetupServices(sc *service.Container) {
 	service.Put[core.LanguageSelector](
 		sc,
 		workspace.NewDefaultLanguageSelector(sc,
-			core.NewDocumentSelectorWithPatterns("completion", "**/*.cmpl"),
+			workspace.NewDocumentMatcherWithPatterns("completion", "**/*.cmpl"),
 		),
 	)
 	textdoc.SetupDefaultServices(sc)

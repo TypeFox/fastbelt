@@ -584,12 +584,9 @@ func GenerateParser(grammr grammar.Grammar, entryRules []grammar.ParserRule, pac
 	return FormatIfPossible(node.String())
 }
 
-// emitEntryDispatch emits the entry-rule invocation `<assign>cp.Parse<Entry>()`
-// shared by the main and the completion parser. With a single entry it calls
-// that rule directly (behavior-preserving for single-language grammars). With
-// multiple entries it resolves the document's language via the
-// core.LanguageSelector of the given container expression and switches to the
-// matching entry rule; index 0 also serves as the fallback for -1/no-match.
+// emitEntryDispatch emits the call of the entry rule for the main and the
+// completion parser. With several entry rules, it emits a switch over the
+// language index returned by the LanguageSelector. Index 0 is the fallback.
 func emitEntryDispatch(node codegen.Node, containerExpr, assign string, entryRules []grammar.ParserRule) {
 	if len(entryRules) <= 1 {
 		node.AppendLine(assign, "cp.Parse", entryRules[0].Name(), "()")
@@ -691,9 +688,8 @@ func GenerateCompletionParser(grammr grammar.Grammar, entryRules []grammar.Parse
 	return FormatIfPossible(node.String())
 }
 
-// completionDocParam is the document parameter for the generated
-// CompletionParser.Parse. A single-entry grammar ignores it (named "_"); a
-// multi-entry grammar uses it to dispatch to the owning entry rule.
+// completionDocParam returns the document parameter of the generated
+// CompletionParser.Parse. It is unused ("_") for a single entry rule.
 func completionDocParam(entryRules []grammar.ParserRule) string {
 	if len(entryRules) <= 1 {
 		return "_ *core.Document,"

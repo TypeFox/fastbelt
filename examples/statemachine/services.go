@@ -21,7 +21,7 @@ func SetupServices(sc *service.Container) {
 		sc,
 		workspace.NewDefaultLanguageSelector(
 			sc,
-			core.NewDocumentSelectorWithPatterns("statemachine", "**/*.statemachine"),
+			workspace.NewDocumentMatcherWithPatterns("statemachine", "**/*.statemachine"),
 		),
 	)
 	textdoc.SetupDefaultServices(sc)

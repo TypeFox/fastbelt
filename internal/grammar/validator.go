@@ -65,8 +65,7 @@ const (
 	ValidateGrammarNameMismatch              = "grammarNameMismatch"
 )
 
-// defaultTokenModeName is the name of the token mode the lexer starts in. It
-// is an ordinary mode name that `push(default)` and `mode(default)` reference.
+// defaultTokenModeName is the name of the token mode the lexer starts in.
 const defaultTokenModeName = "default"
 
 // reservedFieldNames lists field names that must not be used because they
@@ -84,11 +83,8 @@ var reservedFieldNames = map[string]string{
 }
 
 // GrammarImpl.Validate checks grammar-level constraints.
-//
-// Every .fb file of a folder is part of one grammar, so most checks compute
-// over the folder-wide grammar (see [folderGrammar]). They run once per folder
-// (see [folderDiagnostics]), and each document reports the diagnostics on its
-// own nodes.
+// Most checks run over the folder-wide grammar; each document reports the
+// diagnostics on its own nodes.
 func (g *GrammarImpl) Validate(ctx context.Context, _ *service.Container, accept core.ValidationAcceptor) {
 	checkGrammarNamesMatch(g, accept)
 	checkIfDefaultTokenModeIsRequired(g, folderGrammar(g), accept)
@@ -98,14 +94,13 @@ func (g *GrammarImpl) Validate(ctx context.Context, _ *service.Container, accept
 	}
 }
 
-// folderAcceptor receives a diagnostic of a folder-wide check together with
-// the node it is reported on, which determines the document it belongs to.
+// folderAcceptor receives a diagnostic of a folder-wide check and the node it
+// is reported on, which determines the document the diagnostic belongs to.
 type folderAcceptor func(node core.AstNode, diagnostic *core.Diagnostic)
 
 // folderDiagnostics returns the diagnostics of the folder-wide checks that
-// belong to the document of g. The checks run over the whole folder once and
-// the result is cached on the folder view shared by all siblings, so
-// validating every file of a folder does not repeat the folder-wide work.
+// belong to the document of g. The checks run once per folder and are cached
+// on the folder view.
 func folderDiagnostics(g Grammar, ctx context.Context) []*core.Diagnostic {
 	view := viewOf(g)
 	if view == nil {
@@ -116,8 +111,7 @@ func folderDiagnostics(g Grammar, ctx context.Context) []*core.Diagnostic {
 	if view.diagnostics == nil {
 		diagnostics := runFolderChecks(view.folder, ctx)
 		if ctx.Err() != nil {
-			// References resolved under a cancelled context may be missing;
-			// do not keep the result for the next build.
+			// Don't cache results of a cancelled context, references may be missing.
 			return diagnostics[g.Document()]
 		}
 		view.diagnostics = diagnostics
@@ -125,8 +119,7 @@ func folderDiagnostics(g Grammar, ctx context.Context) []*core.Diagnostic {
 	return view.diagnostics[g.Document()]
 }
 
-// runFolderChecks runs the folder-wide checks over folder and groups their
-// diagnostics by the document of the node they are reported on.
+// runFolderChecks runs the folder-wide checks and groups the diagnostics by document.
 func runFolderChecks(folder Grammar, ctx context.Context) map[*core.Document][]*core.Diagnostic {
 	diagnostics := map[*core.Document][]*core.Diagnostic{}
 	accept := func(node core.AstNode, diagnostic *core.Diagnostic) {
@@ -143,8 +136,8 @@ func runFolderChecks(folder Grammar, ctx context.Context) map[*core.Document][]*
 	return diagnostics
 }
 
-// checkGrammarNamesMatch reports a grammar whose name differs from a sibling
-// file's: all .fb files of a folder form one grammar and share its name.
+// checkGrammarNamesMatch reports an error if the grammar files of a folder
+// declare different names.
 func checkGrammarNamesMatch(g Grammar, accept core.ValidationAcceptor) {
 	if g.NameToken() == nil {
 		return
@@ -170,7 +163,7 @@ func checkGrammarNamesMatch(g Grammar, accept core.ValidationAcceptor) {
 	}
 }
 
-// isDefaultTokenMode reports whether mode is the one the lexer starts in.
+// isDefaultTokenMode reports whether mode is the default token mode.
 func isDefaultTokenMode(mode TokenMode) bool {
 	return mode.Name() == defaultTokenModeName
 }
@@ -196,9 +189,8 @@ func checkTokenModesAreReachable(folder Grammar, ctx context.Context, accept fol
 		}
 	}
 	if entryMode == nil || isMultiLanguage(folder) {
-		// Without a default mode, or with several languages, the entry modes
-		// are configured per language by the build, so reachability cannot be
-		// judged from the grammar.
+		// Without a default mode or with several languages, the entry modes
+		// are configured by the build, not by the grammar.
 		return
 	}
 	visited := collections.NewSet[TokenMode]()
@@ -229,8 +221,8 @@ func checkTokenModesAreReachable(folder Grammar, ctx context.Context, accept fol
 
 func checkIfNonDefaultTokenModesHasNoExit(folder Grammar, accept folderAcceptor) {
 	if len(folder.TokenModes()) == 0 || !hasDefaultTokenMode(folder) || isMultiLanguage(folder) {
-		// Without a default mode, or with several languages, every mode is a
-		// potential entry mode of a language and needs no way back.
+		// Without a default mode or with several languages, every mode is a
+		// potential entry mode and needs no exit.
 		return
 	}
 	for _, mode := range folder.TokenModes() {
@@ -281,7 +273,7 @@ func getCommand(member TokenModeMember) TokenCommand {
 	return nil
 }
 
-// hasDefaultTokenMode reports whether the folder declares a `token mode default`.
+// hasDefaultTokenMode reports whether the folder declares a default token mode.
 func hasDefaultTokenMode(folder Grammar) bool {
 	for _, mode := range folder.TokenModes() {
 		if isDefaultTokenMode(mode) {
@@ -291,10 +283,9 @@ func hasDefaultTokenMode(folder Grammar) bool {
 	return false
 }
 
-// isMultiLanguage reports whether the folder declares several entry rules. Such
-// a grammar is built with one language per entry rule, and each language
-// configures the token mode its lexer starts in (see the cmd package), so the
-// checks that assume the lexer starts in the default mode do not apply.
+// isMultiLanguage reports whether the folder declares several entry rules.
+// Note: Such a grammar configures the entry token mode per language, so checks
+// that assume the lexer starts in the default mode don't apply.
 func isMultiLanguage(folder Grammar) bool {
 	entries := 0
 	for _, rule := range folder.Rules() {
@@ -309,8 +300,7 @@ func checkIfDefaultTokenModeIsRequired(g, folder Grammar, accept core.Validation
 	if isMultiLanguage(folder) || hasDefaultTokenMode(folder) {
 		return
 	}
-	// Mark only the first token mode of this document: one diagnostic is
-	// enough to indicate that a default token mode is required.
+	// One diagnostic per document is enough.
 	for _, mode := range g.TokenModes() {
 		accept(core.NewDiagnostic(
 			core.SeverityError,
@@ -442,8 +432,7 @@ func checkParserRulesCoverVisibleTokens(folder Grammar, ctx context.Context, acc
 	queue := []core.AstNode{}
 	cache := map[TokenGroup]collections.Set[string]{}
 
-	// Usages are collected folder-wide, so a token used in one file and
-	// declared in another counts as covered.
+	// Usages are collected folder-wide.
 	for _, composite := range folder.Composites() {
 		for node := range core.AllChildren(composite) {
 			queue = append(queue, node)
@@ -580,8 +569,7 @@ type tokenModeCoverage struct {
 // token registration from the grammar as a whole, so anything left out of every
 // mode can never be produced by the lexer and makes the rule using it dead.
 //
-// Only the first occurrence of each keyword or token per file is reported: the
-// fix is a single entry in a token mode, not one per use site.
+// Only the first occurrence of each keyword or token per file is reported.
 func checkTokenModesCoverParserTokens(folder Grammar, ctx context.Context, accept folderAcceptor) {
 	if len(folder.TokenModes()) == 0 {
 		// Without explicit token modes every keyword and token is registered
@@ -624,11 +612,9 @@ func checkTokenModesCoverParserTokens(folder Grammar, ctx context.Context, accep
 	}
 }
 
-// MissingLanguageTokens returns the keywords and token rule names that the
-// language rooted at entry can demand from the lexer, but that neither
-// entryMode nor any token mode reachable from it through mode commands
-// registers. The lexer of that language can never produce them, so the rules
-// using them never match. It is meant for grammars that declare token modes.
+// MissingLanguageTokens returns the keywords and token rule names used by the
+// language starting at entry that are not registered in entryMode or any token
+// mode reachable from it. Only meaningful for grammars that declare token modes.
 func MissingLanguageTokens(g Grammar, entry ParserRule, entryMode TokenMode) (keywords, tokens []string) {
 	ctx := context.Background()
 	allKeywords := allGrammarKeywords(g)
@@ -659,8 +645,8 @@ func MissingLanguageTokens(g Grammar, entry ParserRule, entryMode TokenMode) (ke
 	return keywords, tokens
 }
 
-// reachableTokenModes returns start and every token mode that a mode command
-// can switch to from it, directly or transitively.
+// reachableTokenModes returns start and every token mode transitively
+// reachable from it via mode commands.
 func reachableTokenModes(start TokenMode, ctx context.Context) []TokenMode {
 	visited := collections.NewSet[TokenMode]()
 	modes := []TokenMode{}
@@ -681,9 +667,8 @@ func reachableTokenModes(start TokenMode, ctx context.Context) []TokenMode {
 	return modes
 }
 
-// missing returns the keyword value or the token rule that node (a keyword or
-// a rule call) demands from the lexer but the coverage lacks. Both are empty
-// when node demands nothing or only covered tokens.
+// missing returns the keyword value or the token rule used by node that is not
+// covered. Both are empty if everything is covered.
 func (c tokenModeCoverage) missing(node core.AstNode, ctx context.Context, allKeywords []Keyword) (string, AbstractTokenRule) {
 	switch node := node.(type) {
 	case Keyword:
@@ -700,9 +685,7 @@ func (c tokenModeCoverage) missing(node core.AstNode, ctx context.Context, allKe
 }
 
 // coversGroupMember reports whether rule is a token group with at least one
-// covered member. Token groups are meant to be used as a grouped token type
-// during parsing, not during lexing, so a group only counts as missing when
-// none of its members can be lexed.
+// covered member. A group only counts as missing when none of its members can be lexed.
 func (c tokenModeCoverage) coversGroupMember(rule AbstractTokenRule, ctx context.Context, allKeywords []Keyword) bool {
 	tokenGroup, ok := rule.(TokenGroup)
 	if !ok {

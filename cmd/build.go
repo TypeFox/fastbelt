@@ -28,36 +28,41 @@ import (
 	"typefox.dev/lsp"
 )
 
-// Language configures one language served by the generated language server: the
-// grammar entry rule it parses from, the token mode its lexer starts in (the
-// `default` mode when empty), and the LSP language id and URI-path glob
-// patterns that claim its documents. LanguageID is required and must be unique.
-// See [core.NewDocumentSelectorWithPatterns] for the pattern syntax.
+// Language specifies a language that can be parsed by the generated lexer/parser.
 type Language struct {
-	Entry      string
-	TokenMode  string
+	// Entry is the name of the parser rule that is used to enter the language
+	Entry string
+	// TokenMode is the entry token mode for that language. If not specified,
+	// the generator will use the token mode called "default", or generate a custom
+	// token mode based on the tokens used by the language.
+	TokenMode string
+	// LanguageID is the ID used for LSP documents for that language.
 	LanguageID string
-	Patterns   []string
+	// Patterns is a list of glob patterns that should be used to match documents
+	// of this language on the file system.
+	Patterns []string
 }
 
-// BuildContext drives a programmatic build. Input points at a directory of .fb
-// files, which together form one grammar (validated as a whole: one grammar
-// name, unique names, shared token modes); Languages selects one entry rule
-// each. With a single language the result is equivalent to the fastbelt
-// generate CLI.
 type BuildContext struct {
-	Input     string
-	Output    string // defaults to Input
-	Package   string // defaults to filepath.Base(Output)
+	// Input points at a directory of .fb files, not a singular file.
+	Input string
+	// Output directory, defaults to Input.
+	Output string
+	// Package name for the generated Go code, defaults to filepath.Base(Output)
+	Package string
+	// Languages defines the set of languages for this build. See [Language].
 	Languages []Language
-	ATN       bool
-	Railroad  bool
-	Verbose   bool
+	// ATN specifies whether to generate the markdown documentation for the
+	// augmented transitioning network (ATN), which might help with debugging grammars.
+	ATN bool
+	// Railroad specifies whether to generate railroad SVG diagrams for the grammars.
+	Railroad bool
+	// Verbose, if true, will add additional logging information.
+	Verbose bool
 }
 
-// Build parses and links every .fb file under Input, validates that each
-// language's entry rule exists and is marked entry, and generates the combined
-// language package into Output.
+// Build performs the code generation step for the fastbelt build process.
+// Any errors are reported via the error return value.
 func (c *BuildContext) Build() error {
 	if len(c.Languages) == 0 {
 		return fmt.Errorf("no languages configured")
@@ -165,8 +170,8 @@ func LoadGrammarDir(dir string) (grammar.Grammar, error) {
 
 // parseAndMerge parses every grammar file in a single shared container (so
 // cross-file references link), aborts on any error diagnostic, and returns the
-// combined grammar. A single file is returned as-is; multiple files are merged
-// into one grammar and reparented so return-type resolution spans all files.
+// combined grammar. A single file is returned as-is. Multiple files are merged
+// into one grammar.
 func parseAndMerge(files []string) (grammar.Grammar, error) {
 	sc := grammar.CreateServices()
 	documents := service.MustGet[workspace.DocumentManager](sc)

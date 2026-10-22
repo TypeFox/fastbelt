@@ -147,8 +147,6 @@ func (s *DefaultCompletionProvider) completionsForContext(
 	cc CompletionContext,
 ) []lsp.CompletionItem {
 	prefixTokens := doc.Tokens[:cc.PrefixLen]
-	// The document lets a multi-language adapter dispatch to the owning entry
-	// rule; single-language adapters ignore it.
 	result := adapter.Parse(doc, prefixTokens)
 	live, _, ok := result.SimulateAt(atn, cc.PrefixLen)
 	if !ok {

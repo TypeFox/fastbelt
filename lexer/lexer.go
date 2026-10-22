@@ -12,15 +12,14 @@ import (
 	"typefox.dev/fastbelt/util/service"
 )
 
-// Lexer tokenizes a document in one shot and stores the result on it.
+// Lexer tokenizes a document and stores the result on it.
 type Lexer interface {
-	// Exec tokenizes document.TextDoc and sets [core.Document.Tokens],
-	// [core.Document.Comments], and [core.Document.LexerErrors].
+	// Exec tokenizes the document text and sets the Tokens, Comments
+	// and LexerErrors fields of the document.
 	Exec(document *core.Document)
 }
 
-// lexerResult holds everything produced by a single [DefaultLexer.Lex] pass
-// over source text.
+// lexerResult holds everything produced by a single lexer run over source text.
 type lexerResult struct {
 	// Tokens is the main token stream passed to the parser.
 	Tokens []core.Token
@@ -40,18 +39,16 @@ const defaultTokenRatio = 1.0 / 5.0
 // grammar.
 type DefaultLexer struct {
 	sc *service.Container
-	// token modes shared by all languages
+	// modes holds all token modes, shared by all languages.
 	modes []*TokenMode
-	// per language: index into modes of the mode every run starts in; index 0
-	// is the fallback
+	// entryModes holds the index of the entry token mode per language.
 	entryModes []int
-	// running exponential moving average of tokens-per-byte (per language)
+	// avgRatio is the running exponential moving average of tokens-per-byte per language.
 	avgRatio []*parallel.RunningAverage
 }
 
-// Exec tokenizes the document, starting in the token mode of its language. The
-// language is resolved via [core.LanguageSelector] when more than one was
-// registered, mirroring the generated parser's entry dispatch.
+// Exec tokenizes the document, starting in the entry token mode of its language.
+// With more than one language, the language is resolved via the [core.LanguageSelector].
 func (l *DefaultLexer) Exec(document *core.Document) {
 	language := 0
 	if len(l.entryModes) > 1 {
@@ -67,7 +64,7 @@ func (l *DefaultLexer) Exec(document *core.Document) {
 }
 
 // exec scans input from left to right using longest-match disambiguation among
-// the token types of the active mode of the given language.
+// the token types of the active mode, starting in the entry mode of the language.
 func (l *DefaultLexer) exec(input string, language int) *lexerResult {
 	tokenModes := l.modes
 	avgRatio := l.avgRatio[language]
@@ -168,12 +165,9 @@ func NewDefaultLexer(sc *service.Container, defaultMode int, tokenModes ...*Toke
 	return NewMultiLanguageLexer(sc, []int{defaultMode}, tokenModes...)
 }
 
-// NewMultiLanguageLexer returns a lexer that serves one language per entry of
-// entryModes, all sharing tokenModes. entryModes[i] is the index of the token
-// mode a run of language i starts in, so a language sees the tokens of its
-// entry mode and of the modes reachable from it. The document's language is
-// resolved via [core.LanguageSelector]; language 0 is the fallback for
-// documents that match none.
+// NewMultiLanguageLexer returns a [DefaultLexer] for several languages that
+// share tokenModes. entryModes[i] is the index of the token mode that language i
+// starts in. Language 0 is the fallback for documents that match no language.
 func NewMultiLanguageLexer(sc *service.Container, entryModes []int, tokenModes ...*TokenMode) *DefaultLexer {
 	if len(entryModes) == 0 {
 		panic("lexer: at least one language is required")

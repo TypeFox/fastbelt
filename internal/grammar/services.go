@@ -20,7 +20,7 @@ func SetupServices(sc *service.Container) {
 	service.Put[core.LanguageSelector](
 		sc,
 		workspace.NewDefaultLanguageSelector(sc,
-			core.NewDocumentSelectorWithPatterns("fastbelt", "**/*.fb"),
+			workspace.NewDocumentMatcherWithPatterns("fastbelt", "**/*.fb"),
 		),
 	)
 	textdoc.SetupDefaultServices(sc)
@@ -28,12 +28,12 @@ func SetupServices(sc *service.Container) {
 	workspace.SetupDefaultServices(sc)
 	SetupGeneratedServices(sc)
 
-	// We have a custom lookahead to support grammars without semicolons.
+	// Custom lookahead to support grammars without semicolons.
 	service.Override(sc, newFastbeltParserLookahead())
 
 	service.Override[FastbeltScopeProvider](sc, newScopeProviderImpl(sc))
 	service.Override(sc, newImportedSymbolsProviderImpl(sc))
-	// Every .fb file of a folder is part of one grammar, requires custom change impact computation.
+	// Every .fb file of a folder is part of one grammar, so a change affects all of them.
 	service.Override(sc, newChangeImpactImpl(sc))
 
 	// Set a semantic token highlighting strategy

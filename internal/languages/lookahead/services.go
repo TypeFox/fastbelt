@@ -21,7 +21,7 @@ func SetupServices(sc *service.Container) {
 	service.Put[core.LanguageSelector](
 		sc,
 		workspace.NewDefaultLanguageSelector(sc,
-			core.NewDocumentSelectorWithPatterns("lookahead", "**/*.la"),
+			workspace.NewDocumentMatcherWithPatterns("lookahead", "**/*.la"),
 		),
 	)
 	textdoc.SetupDefaultServices(sc)

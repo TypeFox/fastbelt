@@ -19,7 +19,7 @@ func SetupServices(sc *service.Container) {
 	service.Put[core.LanguageSelector](
 		sc,
 		workspace.NewDefaultLanguageSelector(sc,
-			core.NewDocumentSelectorWithPatterns("modes", "**/*.mode"),
+			workspace.NewDocumentMatcherWithPatterns("modes", "**/*.mode"),
 		),
 	)
 	textdoc.SetupDefaultServices(sc)

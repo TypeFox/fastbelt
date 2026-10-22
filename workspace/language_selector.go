@@ -5,29 +5,52 @@
 package workspace
 
 import (
+	"github.com/gobwas/glob"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/util/service"
 )
 
-// DefaultLanguageSelector selects a language by matching the document against an
-// ordered list of [core.DocumentSelector] values, returning the first match's index.
-// It takes the language id of the document that the [DocumentManager] holds for
-// the URI first and matches it against every selector's language id; only when
-// there is no such document or no selector claims its id does it fall back to
-// the URI-path globs (in selector order).
-//
-// The managed document is the one that is being or was last built, so the lexer,
-// the parser and request-time consumers such as completion resolve the language
-// the document was built with, even while the text-document store already holds
-// a handle with another language id.
-type DefaultLanguageSelector struct {
-	sc        *service.Container
-	selectors []core.DocumentSelector
+// DocumentMatcher assigns documents to a language, either by LSP language ID
+// or by matching the document URI.
+type DocumentMatcher struct {
+	// LanguageID is the LSP language ID of the language.
+	LanguageID string
+	// Matcher returns true if the document with the given URI belongs to the language.
+	Matcher func(uri core.URI) bool
 }
 
-// NewDefaultLanguageSelector returns a new [DefaultLanguageSelector]
-// that matches documents against the given selectors in order.
-func NewDefaultLanguageSelector(sc *service.Container, selectors ...core.DocumentSelector) *DefaultLanguageSelector {
+// NewDocumentMatcherWithPatterns returns a DocumentMatcher for the given language ID
+// that matches document URI paths against a list of glob patterns.
+func NewDocumentMatcherWithPatterns(languageID string, patterns ...string) DocumentMatcher {
+	globs := make([]*glob.Pattern, len(patterns))
+	for i, pattern := range patterns {
+		globs[i] = glob.MustCompile(pattern)
+	}
+	return DocumentMatcher{LanguageID: languageID, Matcher: func(uri core.URI) bool {
+		for _, glob := range globs {
+			if glob.Match(uri.Path()) {
+				return true
+			}
+		}
+		return false
+	}}
+}
+
+// DefaultLanguageSelector is the default implementation of the LanguageSelector.
+// It holds one DocumentMatcher per language, in the order of the languages of the build.
+// Note: The list lives here because the service container has no multi-binding.
+//
+// Documents managed by the DocumentManager are matched by their language ID first
+// and fall back to the URI matchers. URIs of unmanaged documents are matched by
+// the URI matchers only.
+type DefaultLanguageSelector struct {
+	sc        *service.Container
+	selectors []DocumentMatcher
+}
+
+// NewDefaultLanguageSelector returns a new DefaultLanguageSelector
+// that matches documents against the given matchers in order.
+func NewDefaultLanguageSelector(sc *service.Container, selectors ...DocumentMatcher) *DefaultLanguageSelector {
 	return &DefaultLanguageSelector{sc: sc, selectors: selectors}
 }
 

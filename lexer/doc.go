@@ -25,24 +25,21 @@
 //
 // The generated `NewLexer` function returns a [DefaultLexer] constructed via
 // [NewDefaultLexer] with one [TokenMode] per `token mode` declaration in the
-// grammar. Grammars with multiple configured languages use
-// [NewMultiLanguageLexer] instead, passing the same token modes plus one start
-// mode per language (the `default` mode unless the language's build
-// configuration names another). At lex time the document's language is
-// resolved via [core.LanguageSelector], mirroring the generated parser's entry
-// rule dispatch, and the run starts in that language's mode. Which tokens a
-// language sees is therefore decided by its entry mode and the modes reachable
-// from it.
+// grammar. A build with several languages uses [NewMultiLanguageLexer] instead,
+// with one entry token mode per language. The entry mode is the `default` mode
+// unless the build configuration of the language names another one. At lex
+// time the document's language is resolved via [core.LanguageSelector] and the
+// run starts in the entry mode of that language.
 //
-// A multi-language grammar that declares no token modes gets one generated
-// token mode per language, named after the language's entry rule. It holds
-// only the keywords and tokens reachable from that entry rule (plus hidden
-// and comment tokens), so a keyword of one language stays an ordinary
-// identifier in the others. Declared token modes are never pruned this way.
+// A multi-language grammar without token modes gets one generated token mode
+// per language, named after its entry rule. Such a mode only contains the
+// keywords and tokens used by the rules reachable from the entry rule, plus
+// hidden and comment tokens. This way a keyword of one language stays an
+// ordinary identifier in the others. Declared token modes are never reduced.
 //
-// The [typefox.dev/fastbelt/workspace] builder obtains a [Lexer]
-// from the service container and calls [Lexer.Exec], which stores tokens,
-// comments, and lexer errors on the document before parsing.
+// The [typefox.dev/fastbelt/workspace] builder obtains a [Lexer] from the
+// service container and calls [Lexer.Exec], which stores tokens, comments, and
+// lexer errors on the document before parsing.
 //
 // # Lexing model
 //
@@ -59,7 +56,7 @@
 //     [core.Document.Tokens], hidden tokens are dropped, comments go to
 //     [core.Document.Comments].
 //  4. Apply the match's mode command, if any (push, pop or mode; see Token
-//     modes below), so the next offset is scanned with the new active mode.
+//     modes below).
 //  5. If no token type matches, emit a [core.LexerError] and advance by one
 //     UTF-8 code point so lexing can continue. The active mode is unchanged.
 //

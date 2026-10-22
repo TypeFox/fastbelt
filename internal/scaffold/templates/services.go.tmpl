@@ -1,8 +1,9 @@
 package {{.GoPackage}}
 
-//go:generate go run ./gen
+//go:generate go tool typefox.dev/fastbelt/cmd/fastbelt generate ./{{.GrammarFile}} -o . -p {{.GoPackage}} -v
 
 import (
+	"typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
@@ -11,6 +12,14 @@ import (
 
 // SetupServices sets up the base services for the {{.LanguageLabel}} language.
 func SetupServices(sc *service.Container) {
+	// Maps documents to this language by LSP language id and file pattern.
+	service.Put[fastbelt.LanguageSelector](
+		sc,
+		workspace.NewDefaultLanguageSelector(
+			sc,
+			workspace.NewDocumentMatcherWithPatterns("{{.LanguageID}}", "**/*{{.FileDotExt}}"),
+		),
+	)
 	textdoc.SetupDefaultServices(sc)
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)

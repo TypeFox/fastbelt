@@ -19,7 +19,7 @@ func SetupServices(sc *service.Container) {
 	service.Put[core.LanguageSelector](
 		sc,
 		workspace.NewDefaultLanguageSelector(sc,
-			core.NewDocumentSelectorWithPatterns("token_groups", "**/*.tg"),
+			workspace.NewDocumentMatcherWithPatterns("token_groups", "**/*.tg"),
 		),
 	)
 	textdoc.SetupDefaultServices(sc)

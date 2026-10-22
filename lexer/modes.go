@@ -48,9 +48,8 @@ func (ttu *TokenTypeUsage) WithSetMode(mode int) *TokenTypeUsage {
 	return ttu
 }
 
-// WithModifier routes the token to the stream selected by modifier: one of
-// [core.DefaultTokenModifier], [core.SkippedModifier] or [core.CommentModifier].
-// Any other value panics, since the lexer would silently drop such tokens.
+// WithModifier sets the token modifier: one of [core.DefaultTokenModifier],
+// [core.SkippedModifier] or [core.CommentModifier]. Any other value panics.
 func (ttu *TokenTypeUsage) WithModifier(modifier int) *TokenTypeUsage {
 	switch modifier {
 	case core.DefaultTokenModifier, core.SkippedModifier, core.CommentModifier:

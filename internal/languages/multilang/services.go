@@ -4,6 +4,8 @@
 
 package multilang
 
+//go:generate go run ./gen
+
 import (
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/server"

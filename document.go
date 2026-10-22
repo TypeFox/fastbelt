@@ -108,21 +108,21 @@ type DocumentState uint32
 
 const (
 	// DocStateLexed marks that lexing completed and produced token data.
-	DocStateLexed DocumentState = 1 << iota // 0x0001
+	DocStateLexed DocumentState = 1 << iota
 	// DocStateParsed marks that parsing completed and produced an AST.
-	DocStateParsed // 0x0002
+	DocStateParsed
 	// DocStateExportedSymbols marks that exported symbols were collected for cross-document linking.
-	DocStateExportedSymbols // 0x0004
+	DocStateExportedSymbols
 	// DocStateImportedSymbols marks that symbols from other documents were imported.
-	DocStateImportedSymbols // 0x0008
+	DocStateImportedSymbols
 	// DocStateLocalSymbols marks that local symbols for this document were collected.
-	DocStateLocalSymbols // 0x0010
+	DocStateLocalSymbols
 	// DocStateLinked marks that cross-references were linked.
-	DocStateLinked // 0x0020
+	DocStateLinked
 	// DocStateReferences marks that reference descriptions were collected.
-	DocStateReferences // 0x0040
+	DocStateReferences
 	// DocStateValidated marks that validators were executed and diagnostics were collected.
-	DocStateValidated // 0x0080
+	DocStateValidated
 )
 
 // String returns a readable representation of the set state flags.

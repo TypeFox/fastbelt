@@ -77,8 +77,8 @@ func FindReturnType(rule AbstractRuleWithReturnType, ctx context.Context) Interf
 	return FindInterfaceByName(grammar, rule.Name())
 }
 
-// FindInterfaceByName looks up an interface by name in the folder-wide grammar
-// that grammar belongs to (see [siblingGrammars]).
+// FindInterfaceByName returns the interface with the given name from the
+// folder-wide grammar, or nil if there is none.
 func FindInterfaceByName(grammar Grammar, name string) Interface {
 	if view := viewOf(grammar); view != nil {
 		return view.interfaces[name]
@@ -91,10 +91,8 @@ func FindInterfaceByName(grammar Grammar, name string) Interface {
 	return nil
 }
 
-// siblingGrammars returns the grammar roots of every .fb file in the same
-// folder as g, g itself included, sorted by URI so that folder-wide
-// diagnostics are deterministic. All files of a folder form one grammar; see
-// [folderGrammar].
+// siblingGrammars returns the grammars of all .fb files in the same folder as g,
+// including g itself, sorted by file name.
 func siblingGrammars(g Grammar) []Grammar {
 	if view := viewOf(g); view != nil {
 		return view.grammars
@@ -102,9 +100,9 @@ func siblingGrammars(g Grammar) []Grammar {
 	return []Grammar{g}
 }
 
-// folderGrammar returns a grammar node that lists the declarations of every
-// sibling of g (see [siblingGrammars]): g itself for a single-file folder, and
-// otherwise the read-only aggregate that the importer builds once per folder.
+// folderGrammar returns the folder-wide grammar that g is part of. For a
+// single-file folder this is g itself, otherwise a read-only aggregate of all
+// sibling grammars.
 func folderGrammar(g Grammar) Grammar {
 	if view := viewOf(g); view != nil {
 		return view.folder

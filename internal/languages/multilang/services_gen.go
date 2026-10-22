@@ -18,8 +18,8 @@ func SetupGeneratedServices(sc *service.Container) {
 			sc,
 			workspace.NewDefaultLanguageSelector(
 				sc,
-				core.NewDocumentSelectorWithPatterns("greeting", "*.hello"),
-				core.NewDocumentSelectorWithPatterns("farewell", "*.bye"),
+				workspace.NewDocumentMatcherWithPatterns("greeting", "*.hello"),
+				workspace.NewDocumentMatcherWithPatterns("farewell", "*.bye"),
 			),
 		)
 	}

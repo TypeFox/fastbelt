@@ -29,7 +29,8 @@ func (r *RunningAverage) Value() float64 {
 	return r.value(r.bits.Load())
 }
 
-// value decodes bits; zero (no sample recorded yet) means the default.
+// value decodes the average stored in bits. Zero means no sample has been
+// recorded yet and yields the default value.
 func (r *RunningAverage) value(bits uint64) float64 {
 	if bits == 0 {
 		return r.def

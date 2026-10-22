@@ -11,9 +11,12 @@ import (
 	"typefox.dev/fastbelt/util/codegen"
 )
 
+// Selector describes how documents are matched to one language.
 type Selector struct {
+	// LanguageID is the LSP language ID of the language.
 	LanguageID string
-	Patterns   []string
+	// Patterns is a list of glob patterns matching the documents of the language.
+	Patterns []string
 }
 
 func GenerateServices(grammr grammar.Grammar, selectors []Selector, packageName string) string {
@@ -46,9 +49,8 @@ func GenerateServices(grammr grammar.Grammar, selectors []Selector, packageName 
 					n.Indent(func(n codegen.Node) {
 						n.AppendLine("sc,")
 						for _, s := range selectors {
-							// Quote every literal so ids/patterns containing `"` or `\`
-							// (e.g. Windows-style globs) still yield compilable code.
-							n.Append("core.NewDocumentSelectorWithPatterns(", strconv.Quote(s.LanguageID))
+							// Quote the literals, patterns might contain `"` or `\`.
+							n.Append("workspace.NewDocumentMatcherWithPatterns(", strconv.Quote(s.LanguageID))
 							for _, pattern := range s.Patterns {
 								n.Append(", ", strconv.Quote(pattern))
 							}

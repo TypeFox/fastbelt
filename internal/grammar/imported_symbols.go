@@ -20,8 +20,7 @@ import (
 
 type importedSymbolsProviderImpl struct {
 	sc *service.Container
-	// Documents are imported in parallel, so the check-and-build of a folder
-	// view is serialized to hand every sibling the same view.
+	// mu serializes building the folder view, since documents are imported in parallel.
 	mu sync.Mutex
 }
 
@@ -29,30 +28,27 @@ func newImportedSymbolsProviderImpl(sc *service.Container) linking.SymbolImporte
 	return &importedSymbolsProviderImpl{sc: sc}
 }
 
-// folderViewKey is the [core.Document.Data] key under which [ImportSymbols]
-// stores the document's folderView.
+// folderViewKey is the document data key under which the folderView is stored.
 type folderViewKey struct{}
 
-// folderView is the "one grammar per folder" view shared by all .fb files of a
-// folder: their grammar roots, an aggregate grammar listing every declaration,
-// and an interface index. It is built once per folder state and reused by every
-// document of the folder, so validation and return-type lookups do not scan the
-// document manager or rebuild the aggregate per document.
-//
-// A view is valid for a given set of documents and roots. A changed file gets a
-// new [core.Document], a reparsed file a new root, and a change in one file
-// re-imports its siblings (see changeImpactImpl), so comparing the document and
-// root pointers on import is enough to detect a stale view.
+// folderView is the folder-wide grammar view shared by all .fb files of a folder.
+// It is built once per folder state and stored on every document of the folder.
+// Note: A view is stale once a document or its root pointer changed.
 type folderView struct {
-	docs       []*core.Document // sorted by URI
-	roots      []core.AstNode   // docs[i].Root at build time
-	grammars   []Grammar        // roots that are grammars, same order
-	folder     Grammar          // aggregate of grammars, or the single grammar
+	// docs are the documents of the folder, sorted by file name.
+	docs []*core.Document
+	// roots are the roots of docs at build time.
+	roots []core.AstNode
+	// grammars are the roots that are grammars, in the same order.
+	grammars []Grammar
+	// folder is the aggregate of all grammars, or the single grammar.
+	folder Grammar
+	// interfaces indexes the interfaces of all grammars by name.
 	interfaces map[string]Interface
 
-	// mu guards diagnostics, the result of the folder-wide grammar checks
-	// (see folderDiagnostics), computed once for all documents of the view.
-	mu          sync.Mutex
+	// mu guards diagnostics.
+	mu sync.Mutex
+	// diagnostics caches the result of the folder-wide checks per document.
 	diagnostics map[*core.Document][]*core.Diagnostic
 }
 
@@ -61,9 +57,7 @@ func (s *importedSymbolsProviderImpl) ImportSymbols(ctx context.Context, doc *co
 	sameFolderDocs := slices.Collect(extiter.Filter(allDocs, func(other *core.Document) bool {
 		return sameFolder(doc.URI, other.URI)
 	}))
-	// Siblings share their folder, so this orders them by file name, like
-	// cmd.LoadGrammarDir does. The encoded URI would order differently for
-	// names with escaped characters, and the file order fixes terminal order.
+	// Sort by file name, like cmd.LoadGrammarDir does. The file order determines the terminal order.
 	slices.SortFunc(sameFolderDocs, func(a, b *core.Document) int {
 		return strings.Compare(a.URI.Path(), b.URI.Path())
 	})
@@ -76,10 +70,8 @@ func (s *importedSymbolsProviderImpl) ImportSymbols(ctx context.Context, doc *co
 	return imported
 }
 
-// storeFolderView stores the folder view on doc: the view a sibling already
-// holds when it still matches docs, and a freshly built one otherwise. Views
-// are referenced only by the documents they describe, so they are released
-// together with them when a folder's files are deleted.
+// storeFolderView stores the folder view on doc. It reuses the view of a
+// sibling if it still matches docs and builds a new one otherwise.
 func (s *importedSymbolsProviderImpl) storeFolderView(doc *core.Document, docs []*core.Document) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -134,20 +126,11 @@ func newFolderView(docs []*core.Document) *folderView {
 }
 
 // AggregateGrammar returns a detached grammar node listing the declarations of
-// every given grammar. The generated setters only append to slices, so the
-// listed nodes keep their real container and document; the aggregate is a
-// read-only view for checks that must consider the whole folder. The code
-// generator reparents it to merge the files of a folder.
-//
-// Elements are sorted by name so the generated code does not depend on the
-// order of declarations across files. Terminals keep file order: it is
-// semantically relevant and critical for correct lexing. The resulting
-// terminal order is therefore the order of the grammars (sorted by file name
-// by the callers, see ImportSymbols and cmd.LoadGrammarDir) and declaration order
-// within each file. Nothing checks that token rules of different files do not
-// overlap, so grammars with overlapping tokens across files should declare
-// token modes, whose member order fixes the precedence independent of file
-// names.
+// all given grammars. The listed nodes keep their original container and document.
+// Elements are sorted by name, except terminals, which keep the order of the
+// grammars and their declaration order within each file.
+// Note: Grammars with overlapping tokens across files should declare token modes,
+// which fix the precedence independent of file names.
 func AggregateGrammar(grammars []Grammar) Grammar {
 	folder := NewGrammar()
 	folder.SetName(grammars[0].NameToken())
@@ -174,8 +157,7 @@ func AggregateGrammar(grammars []Grammar) Grammar {
 			folder.SetInterfacesItem(item)
 		}
 	}
-	// The getters return the backing slices, so sorting in place reorders the
-	// aggregate.
+	// The getters return the backing slices, so sorting in place works.
 	sortByName(folder.Rules())
 	sortByName(folder.Composites())
 	sortByName(folder.InfixRules())
@@ -185,15 +167,12 @@ func AggregateGrammar(grammars []Grammar) Grammar {
 	return folder
 }
 
-// sortByName sorts items by name in place. The sort is stable, so elements
-// with the same name (rejected by validation anyway) keep file order.
+// sortByName stably sorts items by name in place.
 func sortByName[T interface{ Name() string }](items []T) {
 	slices.SortStableFunc(items, func(a, b T) int { return strings.Compare(a.Name(), b.Name()) })
 }
 
-// viewOf returns the folderView of the document g belongs to, or nil when the
-// document was never imported (e.g. the synthetic merged grammar of the code
-// generator) or g is not one of the view's grammars.
+// viewOf returns the folderView of g's document, or nil if there is none.
 func viewOf(g Grammar) *folderView {
 	doc := g.Document()
 	if doc == nil {
@@ -207,8 +186,7 @@ func viewOf(g Grammar) *folderView {
 	return nil
 }
 
-// sameFolder reports whether two URIs point into the same folder, i.e. whether
-// their documents are part of the same grammar.
+// sameFolder reports whether two URIs point into the same folder.
 func sameFolder(first, second core.URI) bool {
 	return first.Scheme() == second.Scheme() &&
 		first.Authority() == second.Authority() &&

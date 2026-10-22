@@ -43,8 +43,8 @@ func runGenerateCLI(opts generateOptions) error {
 		return err
 	}
 
-	// Every .fb file in the grammar's directory is part of the grammar, so a
-	// file argument stands for its directory.
+	// A grammar consists of all .fb files in a directory, so a file argument
+	// refers to its directory.
 	grammarDir := grammarPath
 	if info, err := os.Stat(grammarPath); err != nil {
 		return err
@@ -59,9 +59,8 @@ func runGenerateCLI(opts generateOptions) error {
 	if err != nil {
 		return err
 	}
-	// Delegate code generation to the shared build API. A single-language CLI
-	// build passes exactly one entry rule, so the generated parser keeps its
-	// direct (non-dispatching) Parse body.
+	// The CLI only supports a single language. Use the cmd.BuildContext API
+	// to generate code for multiple languages.
 	return cmd.Generate(g, []grammar.ParserRule{entryRule}, nil, nil, outputPath, packageName, opts.atn, opts.railroad, verbose)
 }
 

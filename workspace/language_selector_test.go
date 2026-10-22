@@ -23,8 +23,8 @@ func newSelectorContainer() *service.Container {
 
 func TestDefaultLanguageSelectorMatchesByGlob(t *testing.T) {
 	selector := NewDefaultLanguageSelector(newSelectorContainer(),
-		core.NewDocumentSelectorWithPatterns("greeting", "**/*.hello"),
-		core.NewDocumentSelectorWithPatterns("farewell", "**/*.bye"),
+		NewDocumentMatcherWithPatterns("greeting", "**/*.hello"),
+		NewDocumentMatcherWithPatterns("farewell", "**/*.bye"),
 	)
 
 	i, id := selector.Select(core.ParseURI("file:///ws/a.hello"))
@@ -42,8 +42,8 @@ func TestDefaultLanguageSelectorMatchesByGlob(t *testing.T) {
 
 func TestDefaultLanguageSelectorMatchesBySimpleGlob(t *testing.T) {
 	selector := NewDefaultLanguageSelector(newSelectorContainer(),
-		core.NewDocumentSelectorWithPatterns("greeting", "*.hello"),
-		core.NewDocumentSelectorWithPatterns("farewell", "*.bye"),
+		NewDocumentMatcherWithPatterns("greeting", "*.hello"),
+		NewDocumentMatcherWithPatterns("farewell", "*.bye"),
 	)
 
 	i, id := selector.Select(core.ParseURI("file:///ws/a.hello"))
@@ -64,8 +64,8 @@ func TestDefaultLanguageSelectorMatchesBySimpleGlob(t *testing.T) {
 func TestDefaultLanguageSelectorPrefersManagedDocumentLanguageID(t *testing.T) {
 	sc := newSelectorContainer()
 	selector := NewDefaultLanguageSelector(sc,
-		core.NewDocumentSelectorWithPatterns("a", "**/*.txt"),
-		core.NewDocumentSelectorWithPatterns("b", "**/*.txt"),
+		NewDocumentMatcherWithPatterns("a", "**/*.txt"),
+		NewDocumentMatcherWithPatterns("b", "**/*.txt"),
 	)
 	uri := core.ParseURI("file:///ws/x.txt")
 	documents := service.MustGet[DocumentManager](sc)
@@ -89,4 +89,13 @@ func TestDefaultLanguageSelectorPrefersManagedDocumentLanguageID(t *testing.T) {
 	documents.Set(core.NewDocument(textdoc.NewOverlay(uri.DocumentURI(), "plaintext", 3, "")))
 	i, _ = selector.Select(uri)
 	assert.Equal(t, 0, i)
+}
+
+func TestDocumentMatcherWithPatterns(t *testing.T) {
+	selector := NewDocumentMatcherWithPatterns("greeting", "**/*.hello", "*.hi")
+
+	assert.True(t, selector.Matcher(core.ParseURI("file:///ws/a.hello")))
+	// A pattern without a '/' matches the file name in any directory.
+	assert.True(t, selector.Matcher(core.ParseURI("file:///ws/sub/a.hi")))
+	assert.False(t, selector.Matcher(core.ParseURI("file:///ws/a.bye")))
 }

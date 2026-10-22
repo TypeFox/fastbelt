@@ -2,8 +2,7 @@
 // This program and the accompanying materials are made available under the
 // terms of the MIT License, which is available in the project root.
 
-// Command gen generates the multilang example via the programmatic build API.
-// It is invoked by the //go:generate directive in the parent package.
+// Command gen generates the multilang example using the cmd.BuildContext API.
 package main
 
 import (

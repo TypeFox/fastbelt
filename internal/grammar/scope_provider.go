@@ -20,10 +20,8 @@ func newScopeProviderImpl(_ *service.Container) *scopeProviderImpl {
 	return &scopeProviderImpl{}
 }
 
-// Token modes need no override: every .fb file of a folder is part of one
-// grammar with a single mode table, so the generated default scope (all named
-// modes of the folder) is the right one. The default mode is the one named
-// `default`, so `push(default)` is an ordinary reference to it.
+// Note: Token modes use the generated default scope, which already contains
+// all named modes of the folder.
 
 func (s *scopeProviderImpl) ScopeRuleCallRule(ctx context.Context, reference *core.Reference[AbstractRule]) core.Scope {
 	root, ok := reference.Owner().Document().Root.(Grammar)
@@ -64,9 +62,9 @@ func (s *scopeProviderImpl) ScopeTokenGroupTokenRefs(ctx context.Context, refere
 	return extractTokenReference(root, reference)
 }
 
-// extractTokenReference scopes a token reference to the tokens and groups
-// declared inside the token modes of every grammar file in the folder (those are
-// nested too deep to be exported), followed by the default scope.
+// extractTokenReference returns the scope for a token reference: the tokens and
+// groups declared inside the token modes of all grammar files in the folder,
+// followed by the default scope.
 func extractTokenReference[T AbstractRule](root Grammar, reference *core.Reference[T]) core.Scope {
 	symbols := []*core.SymbolDescription{}
 	for _, g := range siblingGrammars(root) {

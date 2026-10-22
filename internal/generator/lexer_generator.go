@@ -21,10 +21,9 @@ import (
 	"typefox.dev/fastbelt/util/codegen"
 )
 
-// GenerateLexer emits the lexer for grammr. entryRules lists one entry rule per
-// language and entryModes the token mode each language starts in (index
-// aligned; nil or "" means the default mode). See lexerModes for the token
-// modes that end up in the lexer.
+// GenerateLexer emits the lexer_gen.go source for the grammar. entryRules holds
+// one entry rule per language, entryModes the name of the token mode each
+// language starts in (empty means "default").
 func GenerateLexer(grammr grammar.Grammar, entryRules []grammar.ParserRule, entryModes []string, packageName string, tokenTypes GenerateTokenTypesResult) string {
 	nodes := []codegen.Node{}
 
@@ -70,23 +69,19 @@ func GenerateLexer(grammr grammar.Grammar, entryRules []grammar.ParserRule, entr
 type lexerMode struct {
 	// name is the display name of the mode.
 	name string
+	// mode holds the token types of the mode.
 	mode *TokenMode
-	// reachable limits the mode to the token types with these var names, plus
-	// those carrying a modifier or mode command (hidden/comment tokens and mode
-	// switches must be lexed regardless of the parser rules). Nil keeps every
-	// token type of the mode.
+	// reachable restricts the emitted token types to these var names.
+	// Hidden/comment tokens and mode switches are always emitted. Nil emits all.
 	reachable map[string]bool
 }
 
 // lexerModes returns the token modes of the generated lexer and, per language,
-// the var name of the mode its lexer starts in.
-//
-// Token modes declared in the grammar are emitted as they are: the grammar
-// author decides which tokens a language sees by giving it an entry mode. A
-// grammar without token modes that serves several languages gets one synthetic
-// mode per language instead, named after the entry rule and holding only the
-// token types reachable from it, so that a keyword of one language stays an
-// ordinary identifier in the others.
+// the var name of its entry mode.
+// Token modes declared in the grammar are emitted as they are. A grammar
+// without token modes that serves several languages gets one generated mode
+// per language, named after its entry rule and holding only the token types
+// reachable from that rule.
 func lexerModes(grammr grammar.Grammar, entryRules []grammar.ParserRule, entryModes []string, tokenTypes GenerateTokenTypesResult) ([]lexerMode, []string) {
 	declared := len(grammr.TokenModes()) > 0
 	if !declared && len(entryRules) > 1 {
@@ -110,8 +105,7 @@ func lexerModes(grammr grammar.Grammar, entryRules []grammar.ParserRule, entryMo
 	byName := map[string]*TokenMode{}
 	for _, name := range tokenTypes.TokenModeOrder {
 		if name == "default" && !hasDefault {
-			// The implicit default mode is only a fallback for grammars
-			// without token modes; here nothing could enter it.
+			// The implicit default mode is unreachable when the grammar declares its own modes.
 			continue
 		}
 		mode := tokenTypes.TokenModes[name]
@@ -126,7 +120,7 @@ func lexerModes(grammr grammar.Grammar, entryRules []grammar.ParserRule, entryMo
 		}
 		mode := byName[name]
 		if mode == nil {
-			// Rejected by validation or the build; keep the output compilable.
+			// Unknown entry mode, already reported by validation. Keep the output compilable.
 			mode = modes[0].mode
 		}
 		starts[i] = mode.VarName
@@ -149,9 +143,7 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, modes
 	node.AppendLine("func NewLexer(sc *service.Container) lexer.Lexer {")
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("modes := make([]*lexer.TokenMode, ", strconv.Itoa(len(modes)), ")")
-		// Mode commands resolve their target by name among the emitted modes.
-		// Synthetic language modes only exist without declared token modes,
-		// where no command has a target.
+		// Mode commands resolve their target mode by name.
 		targets := map[string]*TokenMode{}
 		for _, m := range modes {
 			targets[m.name] = m.mode
@@ -163,14 +155,13 @@ func generateMainLexerFunction(context context.Context, node codegen.Node, modes
 			n.AppendLine("return lexer.NewDefaultLexer(sc, ", starts[0], ", modes...)")
 			return
 		}
-		// One entry mode per language, index-aligned with the parser's entry
-		// dispatch.
+		// One entry mode per language, in the same order as the parser's entry rules.
 		n.AppendLine("return lexer.NewMultiLanguageLexer(sc, []int{", strings.Join(starts, ", "), "}, modes...)")
 	})
 	node.AppendLine("}")
 }
 
-// generateTokenMode emits the NewTokenMode call of m into the modes slice.
+// generateTokenMode emits the NewTokenMode call for the given mode.
 func generateTokenMode(context context.Context, n codegen.Node, m lexerMode, targets map[string]*TokenMode, tokenTypes GenerateTokenTypesResult) {
 	n.AppendLine("modes[", m.mode.VarName, "] = lexer.NewTokenMode(\"", m.name, "\",")
 	n.Indent(func(nn codegen.Node) {
@@ -185,9 +176,7 @@ func generateTokenMode(context context.Context, n codegen.Node, m lexerMode, tar
 }
 
 // reachableTokenNames returns the generated var names (Keyword_*/Token_*) of
-// all token types referenced by the language rooted at entry: every keyword
-// and token declaration reachable through rule bodies, rule calls,
-// cross-references and token groups.
+// all token types used by the rules reachable from the entry rule.
 func reachableTokenNames(grammr grammar.Grammar, entry grammar.ParserRule) map[string]bool {
 	ctx := context.Background()
 	reachable := map[string]bool{}
@@ -230,8 +219,7 @@ func reachableTokenNames(grammr grammar.Grammar, entry grammar.ParserRule) map[s
 				case grammar.TokenGroup:
 					visitGroup(target)
 				case grammar.ParserRule, grammar.CompositeRule, grammar.InfixRule:
-					// An infix rule's operators (keywords or token calls) and its
-					// operand call are children of the rule node like any body.
+					// Infix operators and operands are children of the rule node as well.
 					if !visitedRules[target.Name()] {
 						visitedRules[target.Name()] = true
 						visitRule(target)
@@ -245,8 +233,7 @@ func reachableTokenNames(grammr grammar.Grammar, entry grammar.ParserRule) map[s
 	return reachable
 }
 
-// generateTokenTypeUsage emits the UseTokenType call of a token type in
-// tokenMode. Mode commands resolve their target by name in targets.
+// generateTokenTypeUsage emits the UseTokenType call for a token type of tokenMode.
 func generateTokenTypeUsage(context context.Context, nn codegen.Node, tokenType *TokenType, tokenMode *TokenMode, tokenIndex int, targets map[string]*TokenMode) {
 	nn.Append("lexer.UseTokenType(", tokenType.VarName, ")")
 	if usage, ok := tokenMode.TokenTypeUsages[tokenIndex]; ok {

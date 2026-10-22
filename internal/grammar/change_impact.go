@@ -12,9 +12,7 @@ import (
 )
 
 // changeImpactImpl marks every grammar file of a folder as affected when one
-// of them changes. All .fb files of a folder form one grammar, so folder-wide
-// validations (unique names, token coverage, ...) of the siblings must run
-// again even when they hold no reference into the changed file.
+// of them changes, since all .fb files of a folder form one grammar.
 type changeImpactImpl struct {
 	workspace.DocumentChangeImpact
 }
@@ -24,7 +22,7 @@ func newChangeImpactImpl(sc *service.Container) workspace.DocumentChangeImpact {
 }
 
 func (s *changeImpactImpl) Affected(doc *core.Document, changedURIs collections.Set[string]) bool {
-	// changedURIs holds unencoded URI strings (see workspace.DocumentUpdater).
+	// changedURIs holds unencoded URI strings.
 	for changed := range changedURIs {
 		if sameFolder(doc.URI, core.ParseURI(changed)) {
 			return true

@@ -96,8 +96,10 @@ func (s *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *lsp.DidOpe
 	s.mu.RUnlock()
 	if existing != nil && existing.Text(nil) == params.TextDocument.Text && existing.LanguageID() == doc.LanguageID() {
 		// The text editor content and language are the same as the file's.
-		// A different language id changes what the core.LanguageSelector
-		// resolves for this URI, so the document has to be rebuilt.
+		// Nothing changed, don't start another workspace build.
+		// Note: Language clients will send didClose+didOpen with a different
+		// language ID if the user changes it - this will correctly generate
+		// a new document and start a new build.
 		return
 	}
 	updater := service.MustGet[workspace.DocumentUpdater](s.sc)

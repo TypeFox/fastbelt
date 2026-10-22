@@ -46,14 +46,13 @@ type Initializer interface {
 // to filter files and directories.
 type IncludeFilter interface {
 	// Include returns true if the given file system entry should be included.
-	// If the entry is a file, the returned string is the language ID to assign
-	// to the document.
+	// For files, the second return value is the language ID of the document.
 	Include(entry DirEntry) (bool, string)
 }
 
 // DefaultIncludeFilter is the default implementation of [IncludeFilter].
-// It includes files whose URI path has a match in the [core.LanguageSelector].
-// It skips hidden directories (names starting with ".").
+// It includes files that the LanguageSelector maps to a language and skips
+// hidden directories (names starting with ".").
 type DefaultIncludeFilter struct {
 	sc       *service.Container
 	warnOnce sync.Once
@@ -67,10 +66,7 @@ func (s *DefaultIncludeFilter) Include(entry DirEntry) (bool, string) {
 		// Don't include hidden directories
 		return !strings.HasPrefix(name, "."), ""
 	}
-	// Prefer the registered LanguageSelector: a file belongs to the workspace
-	// when it maps to one of the configured languages. During the walk the file
-	// has no language id yet, so the selector decides purely on the URI-path
-	// glob.
+	// Note: The file isn't managed yet, so the selector only matches by URI.
 	if selector, err := service.Get[core.LanguageSelector](s.sc); err == nil {
 		index, languageId := selector.Select(entry.URI)
 		if index >= 0 {
@@ -109,9 +105,7 @@ type DefaultInitializer struct {
 }
 
 // NewDefaultInitializer returns an [Initializer] that scans workspace folders
-// for files accepted by the registered [IncludeFilter] (by default, files that
-// the [core.LanguageSelector] maps to a language). Will skip hidden directories
-// (names starting with ".").
+// for files accepted by the registered [IncludeFilter].
 func NewDefaultInitializer(sc *service.Container) Initializer {
 	return &DefaultInitializer{sc: sc}
 }
