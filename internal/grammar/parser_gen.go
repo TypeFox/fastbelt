@@ -1048,18 +1048,14 @@ func (p *Parser) ParseElement() Element {
 				current = result
 			}
 		case 4:
-			{
-				current = NewElement()
-				current.SetTextRangeStart(startPos)
-				token := p.state.Consume(Keyword_LeftParen)
-				core.AssignToken(current, token, Element_LeftParen)
-			}
+			kw0 := p.state.Consume(Keyword_LeftParen)
 			{
 				p.state.EnterRule(Element_RightParen)
 				result := p.ParseAlternatives()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
+				core.PrependToken(current, kw0, Element_LeftParen)
+				current.SetTextRangeStart(startPos)
 			}
 			{
 				token := p.state.Consume(Keyword_RightParen)
@@ -1176,18 +1172,14 @@ func (p *Parser) ParseAssignable() Assignable {
 				current = result
 			}
 		case 3:
-			{
-				current = NewAssignable()
-				current.SetTextRangeStart(startPos)
-				token := p.state.Consume(Keyword_LeftParen)
-				core.AssignToken(current, token, Assignable_LeftParen)
-			}
+			kw0 := p.state.Consume(Keyword_LeftParen)
 			{
 				p.state.EnterRule(Assignable_RightParen)
 				result := p.ParseAssignableAlternatives()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
+				core.PrependToken(current, kw0, Assignable_LeftParen)
+				current.SetTextRangeStart(startPos)
 			}
 			{
 				token := p.state.Consume(Keyword_RightParen)
@@ -1530,18 +1522,14 @@ func (p *Parser) ParseCompositeElement() Element {
 				current = result
 			}
 		case 2:
-			{
-				current = NewElement()
-				current.SetTextRangeStart(startPos)
-				token := p.state.Consume(Keyword_LeftParen)
-				core.AssignToken(current, token, CompositeElement_LeftParen)
-			}
+			kw0 := p.state.Consume(Keyword_LeftParen)
 			{
 				p.state.EnterRule(CompositeElement_RightParen)
 				result := p.ParseCompositeAlternatives()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
+				core.PrependToken(current, kw0, CompositeElement_LeftParen)
+				current.SetTextRangeStart(startPos)
 			}
 			{
 				token := p.state.Consume(Keyword_RightParen)

@@ -13,6 +13,7 @@ type Parser struct {
 	sc                    *service.Container
 	referencesConstructor CompletionReferencesConstructor
 	lookahead             CompletionParserLookahead
+	binaryFold            parser.InfixFold[Expr]
 }
 
 func (p *Parser) Parse(document *core.Document) *parser.ParseResult {
@@ -382,32 +383,36 @@ func (p *Parser) ParsePrefix() Obj {
 }
 
 func (p *Parser) ParseCall() Obj {
-	current := NewObj()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current Obj
 	{
-		{
-			token := p.state.Consume(Keyword_call)
-			core.AssignToken(current, token, Call_call)
-		}
+		kw0 := p.state.Consume(Keyword_call)
 		switch prediction, failure := p.lookahead.CallAlternatives(p.state); prediction {
 		case 0:
 			{
 				p.state.EnterRule(Call__Basic_1)
 				result := p.ParseCallLong()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
+				core.PrependToken(current, kw0, Call_call)
+				current.SetTextRangeStart(startPos)
 			}
 		case 1:
 			{
 				p.state.EnterRule(Call__Basic_3)
 				result := p.ParseCallShort()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
+				core.PrependToken(current, kw0, Call_call)
+				current.SetTextRangeStart(startPos)
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewObj()
+			current.SetTextRangeStart(startPos)
+			core.AssignToken(current, kw0, Call_call)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -1515,20 +1520,17 @@ func (p *Parser) ParseDep() Dep {
 }
 
 func (p *Parser) ParseAct() Act {
-	current := NewAct()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	startPos := p.state.LA(1).Range.Start
+	var current Act
 	{
-		{
-			token := p.state.Consume(Keyword_act)
-			core.AssignToken(current, token, Act_act)
-		}
+		kw0 := p.state.Consume(Keyword_act)
 		switch prediction, failure := p.lookahead.ActAlternatives(p.state); prediction {
 		case 0:
 			{
 				result := NewActFirst()
-				result.SetTextRange(current.TextRange())
-				core.AssignTokens(result, current.Tokens())
+				result.SetTextRangeStart(startPos)
 				current = result
+				core.AssignToken(current, kw0, Act_act)
 			}
 			current := current.(ActFirst)
 			{
@@ -1545,9 +1547,9 @@ func (p *Parser) ParseAct() Act {
 		case 1:
 			{
 				result := NewActSecond()
-				result.SetTextRange(current.TextRange())
-				core.AssignTokens(result, current.Tokens())
+				result.SetTextRangeStart(startPos)
 				current = result
+				core.AssignToken(current, kw0, Act_act)
 			}
 			current := current.(ActSecond)
 			{
@@ -1564,6 +1566,11 @@ func (p *Parser) ParseAct() Act {
 			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
+		}
+		if current == nil {
+			current = NewAct()
+			current.SetTextRangeStart(startPos)
+			core.AssignToken(current, kw0, Act_act)
 		}
 	}
 	current.SetTextRangeEnd(p.state.LA(0).Range.End)
@@ -1616,52 +1623,48 @@ func (p *Parser) ParseFQN(current core.CompositeNode) {
 	}
 }
 
-var BinaryPrecedence = map[int]parser.InfixPrecedence{
+var BinaryPrecedence = []parser.InfixPrecedence{
 	Keyword_times_Idx: {Level: 0},
 	Keyword_plus_Idx:  {Level: 1},
 }
 
+func (p *Parser) buildBinary(left Expr, operator *core.Token, right Expr) Expr {
+	result := NewBinary()
+	if left != nil {
+		result.SetLeft(left)
+		result.SetTextRangeStart(left.TextRange().Start)
+	}
+	if operator != nil {
+		core.AssignToken(result, operator, Binary_BinaryOperator)
+		result.SetOperator(operator)
+		result.SetTextRangeEnd(operator.Range.End)
+	}
+	if right != nil {
+		result.SetRight(right)
+		result.SetTextRangeEnd(right.TextRange().End)
+	}
+	return result
+}
+
 func (p *Parser) ParseBinary() Expr {
-	var parts []Expr
-	var operators []*core.Token
+	frame := p.binaryFold.Begin()
 	{
 		p.state.EnterRule(Binary__LoopEntry)
 		result := p.ParsePrimary()
 		p.state.ExitRule()
-		parts = append(parts, result)
+		p.binaryFold.Operand(result)
 	}
 	p.state.Sync(Binary__LoopEntry)
 	for p.lookahead.BinaryLoop(p.state) {
-		if token := p.state.Consume(TokenGroup_BinaryOperator); token != nil {
-			operators = append(operators, token)
-		}
+		token := p.state.Consume(TokenGroup_BinaryOperator)
+		p.binaryFold.Operator(frame, token, BinaryPrecedence, p.buildBinary)
 		{
 			p.state.EnterRule(Binary__Basic_2)
 			result := p.ParsePrimary()
 			p.state.ExitRule()
-			parts = append(parts, result)
+			p.binaryFold.Operand(result)
 		}
 		p.state.Sync(Binary__LoopEntry)
 	}
-	if len(parts) == 1 {
-		// A lone operand is returned unchanged; no binary node is created.
-		return parts[0]
-	}
-	return parser.BuildInfixTree(parts, operators, BinaryPrecedence, func(left Expr, operator *core.Token, right Expr) Expr {
-		result := NewBinary()
-		if left != nil {
-			result.SetLeft(left)
-			result.SetTextRangeStart(left.TextRange().Start)
-		}
-		if operator != nil {
-			core.AssignToken(result, operator, Binary_BinaryOperator)
-			result.SetOperator(operator)
-			result.SetTextRangeEnd(operator.Range.End)
-		}
-		if right != nil {
-			result.SetRight(right)
-			result.SetTextRangeEnd(right.TextRange().End)
-		}
-		return result
-	})
+	return p.binaryFold.End(frame, p.buildBinary)
 }
