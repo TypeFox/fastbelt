@@ -37,12 +37,17 @@ jobs:
       # -run=^$ ensures that no tests are run, only benchmarks
       run: go test -bench 'Benchmark' -benchtime=5s -run=^$ ./... | tee ${{ env.OUTPUT_FILE }}
 
-    - name: Download previous benchmark data
-      uses: actions/cache@v5
+    - name: Restore previous benchmark data
+      uses: actions/cache/restore@v5
       with:
-        # Cached data comes from main branch
+        # Cached data comes from main branch (PRs can read caches of their base branch)
         path: ${{ env.CACHE_DIR }}
-        key: ${{ runner.os }}-benchmark
+        # `key` is mandatory, but the run-specific key never matches an existing entry,
+        # so `restore-keys` below always picks the most recently created entry
+        # (except for re-attempts of the same workflow run, which shouldn't happen for the 'main' branch)
+        key: ${{ runner.os }}-benchmark-${{ github.run_id }}
+        restore-keys: |
+          ${{ runner.os }}-benchmark
 
     - name: Store benchmark result
       uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba #v1.22.1
@@ -60,3 +65,23 @@ jobs:
         summary-always: true
         # Only save if we are on main branch
         save-data-file: ${{ github.ref == 'refs/heads/main' }}
+
+    - name: Save updated benchmark data
+      # Explicitly save the updated benchmark data to the cache only if we are on the main branch.
+      # We use separate 'restore' and 'save' actions since we only save a new benchmark result
+      #  if we are on the main branch, matching the `save-data-file` guard above.
+      # Rationale: According to the docs of the plain 'actions/cache' action:
+      #  If the provided key matches an existing cache, a new cache is not created and if the provided key
+      #  doesn't match an existing cache, a new cache is automatically created provided the job completes successfully.
+      # Hence, if we would use a static cache key during 'Restore...' above (as earlier),
+      #  the cache would never be updated because the key would always match an existing cache entry.
+      # With a dynamic cache key as used above now the cache would be updated for each run
+      #  including PR runs (!), which would create a lot of disturbing cache entries.
+      # Subsequent PR runs would get decoupled from the main branch benchmark data evolution.
+      if: github.ref == 'refs/heads/main'
+      uses: actions/cache/save@v5
+      with:
+        path: ${{ env.CACHE_DIR }}
+        # actions/cache never overwrites an existing key (a hit skips saving),
+        # so each run saves under a unique key; old entries are evicted automatically
+        key: ${{ runner.os }}-benchmark-${{ github.run_id }}
