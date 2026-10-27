@@ -145,7 +145,7 @@ func UnmarshalAndBuildDocument(ctx context.Context, sc *service.Container, docum
 		return fmt.Errorf("util.UnmarshalAndBuildDocument: input content is 'null', skipping document build")
 	}
 
-	document.State = core.DocStateLexed | core.DocStateParsed
+	document.SetState(core.DocStateLexed | core.DocStateParsed)
 	core.AssignContainers(document)
 	documents.Set(document)
 
@@ -155,7 +155,7 @@ func UnmarshalAndBuildDocument(ctx context.Context, sc *service.Container, docum
 			core.JsonLinkingHelperKey(),
 			NewJsonLinkingHelper(documents),
 		),
-		[]*core.Document{document}, nil,
+		[]*core.Document{document},
 	); err != nil {
 		return err
 	}

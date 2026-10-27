@@ -116,13 +116,13 @@ func parseExportImportGrammar(t testing.TB, grammar []byte) (core.AstNode, core.
 
 	doc2 := core.NewDocumentFromString("inmemory:///grammar.fb", "fastbelt", "")
 	doc2.Root = grammar2
-	doc2.State = core.DocStateLexed | core.DocStateParsed
+	doc2.SetState(core.DocStateLexed | core.DocStateParsed)
 	core.AssignContainers(doc2)
 	documents2.Set(doc2)
 	imported := f2.NewDoc(doc2, nil, nil)
 
 	// Step 5: Run the full build pipeline on the unmarshaled document
-	err = builder2.Build(f2.Ctx(), slices.Collect(documents2.All()), nil)
+	err = builder2.Build(f2.Ctx(), slices.Collect(documents2.All()))
 	require.NoError(t, err)
 	imported.AssertNoLinkingErrors()
 
