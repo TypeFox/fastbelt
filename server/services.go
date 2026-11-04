@@ -37,8 +37,8 @@ func SetupDefaultServices(sc *service.Container) {
 	if !service.Has[lsp.Server](sc) {
 		service.Put(sc, NewDefaultLanguageServer(sc))
 	}
-	if !service.Has[DocumentSyncher](sc) {
-		service.Put(sc, NewDefaultDocumentSyncher(sc))
+	if !service.Has[DocumentSynchronizer](sc) {
+		service.Put(sc, NewDefaultDocumentSynchronizer(sc))
 	}
 	if !service.Has[DefinitionProvider](sc) {
 		service.Put(sc, NewDefaultDefinitionProvider(sc))

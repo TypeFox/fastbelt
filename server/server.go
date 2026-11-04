@@ -184,43 +184,43 @@ func (s *DefaultLanguageServer) Exit(ctx context.Context) error {
 }
 
 func (s *DefaultLanguageServer) DidOpen(ctx context.Context, params *lsp.DidOpenTextDocumentParams) error {
-	if documentSyncher, err := service.Get[DocumentSyncher](s.sc); err == nil {
-		documentSyncher.DidOpen(ctx, params)
+	if documentSynchronizer, err := service.Get[DocumentSynchronizer](s.sc); err == nil {
+		documentSynchronizer.DidOpen(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidChange(ctx context.Context, params *lsp.DidChangeTextDocumentParams) error {
-	if documentSyncher, err := service.Get[DocumentSyncher](s.sc); err == nil {
-		documentSyncher.DidChange(ctx, params)
+	if documentSynchronizer, err := service.Get[DocumentSynchronizer](s.sc); err == nil {
+		documentSynchronizer.DidChange(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidClose(ctx context.Context, params *lsp.DidCloseTextDocumentParams) error {
-	if documentSyncher, err := service.Get[DocumentSyncher](s.sc); err == nil {
-		documentSyncher.DidClose(ctx, params)
+	if documentSynchronizer, err := service.Get[DocumentSynchronizer](s.sc); err == nil {
+		documentSynchronizer.DidClose(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) WillSave(ctx context.Context, params *lsp.WillSaveTextDocumentParams) error {
-	if documentSyncher, err := service.Get[DocumentSyncher](s.sc); err == nil {
-		documentSyncher.WillSave(ctx, params)
+	if documentSynchronizer, err := service.Get[DocumentSynchronizer](s.sc); err == nil {
+		documentSynchronizer.WillSave(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) WillSaveWaitUntil(ctx context.Context, params *lsp.WillSaveTextDocumentParams) ([]lsp.TextEdit, error) {
-	if documentSyncher, err := service.Get[DocumentSyncher](s.sc); err == nil {
-		return documentSyncher.WillSaveWaitUntil(ctx, params)
+	if documentSynchronizer, err := service.Get[DocumentSynchronizer](s.sc); err == nil {
+		return documentSynchronizer.WillSaveWaitUntil(ctx, params)
 	}
 	return nil, nil
 }
 
 func (s *DefaultLanguageServer) DidSave(ctx context.Context, params *lsp.DidSaveTextDocumentParams) error {
-	if documentSyncher, err := service.Get[DocumentSyncher](s.sc); err == nil {
-		documentSyncher.DidSave(ctx, params)
+	if documentSynchronizer, err := service.Get[DocumentSynchronizer](s.sc); err == nil {
+		documentSynchronizer.DidSave(ctx, params)
 	}
 	return nil
 }

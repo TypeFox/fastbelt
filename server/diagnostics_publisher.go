@@ -38,11 +38,11 @@ func (d *DiagnosticsPublisher) OnServerInitialize(_ *lsp.ParamInitialize) {
 	if err != nil {
 		return
 	}
-	syncher, err := service.Get[DocumentSyncher](d.sc)
+	synchronizer, err := service.Get[DocumentSynchronizer](d.sc)
 	if err != nil {
 		return
 	}
-	syncher.OnDidOpen(func(ctx context.Context, event *TextDocumentChangeEvent) {
+	synchronizer.OnDidOpen(func(ctx context.Context, event *TextDocumentChangeEvent) {
 		docManager, err := service.Get[workspace.DocumentManager](d.sc)
 		if err != nil {
 			return
@@ -54,7 +54,7 @@ func (d *DiagnosticsPublisher) OnServerInitialize(_ *lsp.ParamInitialize) {
 			d.publishDocumentDiagnostics(ctx, document)
 		}
 	})
-	syncher.OnDidClose(func(ctx context.Context, event *TextDocumentChangeEvent) {
+	synchronizer.OnDidClose(func(ctx context.Context, event *TextDocumentChangeEvent) {
 		uri := core.NormalizeURI(event.Document.URI())
 		// Clear diagnostics for the closed document.
 		d.publishDiagnostics(ctx, uri, []lsp.Diagnostic{})
