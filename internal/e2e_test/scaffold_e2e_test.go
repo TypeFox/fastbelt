@@ -5,9 +5,11 @@
 package e2e_test
 
 import (
+	"bufio"
 	"bytes"
 	"context"
-	"errors"
+	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -15,6 +17,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -69,11 +72,12 @@ func TestScaffoldModule_endToEnd(t *testing.T) {
 		name string
 		args []string
 	}{
-		{"npm install", []string{"install"}},
+		// vsce is only needed for "npm run package", which this test never runs; it is by far the heaviest dependency.
+		{"drop vsce", []string{"pkg", "delete", "devDependencies.@vscode/vsce"}},
+		{"npm install", []string{"install", "--no-audit", "--no-fund", "--prefer-offline"}},
 		{"npm run build", []string{"run", "build"}},
 		{"npm run bundle", []string{"run", "bundle"}},
 	} {
-		step := step
 		t.Run(step.name, func(t *testing.T) {
 			cmd := exec.Command("npm", step.args...)
 			cmd.Dir = moduleRoot
@@ -91,37 +95,76 @@ func TestScaffoldModule_endToEnd(t *testing.T) {
 		lspPkg := "./" + filepath.ToSlash(filepath.Join("cmd", lspDir))
 		cmd := exec.CommandContext(ctx, "go", "run", lspPkg)
 		cmd.Dir = moduleRoot
-		stdinR, stdinW := io.Pipe()
-		cmd.Stdin = stdinR
+		cmd.WaitDelay = 10 * time.Second
+		stdin, err := cmd.StdinPipe()
+		require.NoError(t, err)
+		stdout, err := cmd.StdoutPipe()
+		require.NoError(t, err)
 		var stderr bytes.Buffer
 		cmd.Stderr = &stderr
-		cmd.Stdout = io.Discard
-
 		require.NoError(t, cmd.Start())
-		waitErr := make(chan error, 1)
-		go func() { waitErr <- cmd.Wait() }()
 
+		// Send an initialize request and wait for the first framed response instead of sleeping:
+		// proves the server started and answers. EOF on stdout means it exited early.
+		body := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}}`
+		_, err = fmt.Fprintf(stdin, "Content-Length: %d\r\n\r\n%s", len(body), body)
+		require.NoError(t, err)
+		type frame struct {
+			body []byte
+			err  error
+		}
+		responded := make(chan frame, 1)
+		go func() {
+			body, err := readLSPFrame(bufio.NewReader(stdout))
+			responded <- frame{body, err}
+		}()
+		var resp frame
 		select {
-		case <-time.After(5 * time.Second):
-			cancel()
-		case err := <-waitErr:
-			_ = stdinW.Close()
-			if err != nil {
-				t.Fatalf("LSP exited early: %v stderr=%q", err, stderr.String())
-			}
-			t.Fatal("LSP exited cleanly before timeout (expected it to block reading stdio)")
+		case resp = <-responded:
+		case <-ctx.Done():
+			resp.err = ctx.Err()
 		}
-		_ = stdinW.Close()
-		err := <-waitErr
-		require.Error(t, err, "expected LSP process to stop after context cancel; stderr=%q", stderr.String())
-		// CommandContext may surface context.Canceled, or Wait may report signal: killed.
-		ok := errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
-		if !ok {
-			var exitErr *exec.ExitError
-			ok = errors.As(err, &exitErr)
+		// Stop the server and wait for exec's stderr copier before reading the buffer (data race otherwise).
+		_ = stdin.Close()
+		cancel()
+		_ = cmd.Wait()
+		require.NoError(t, resp.err, "LSP produced no initialize response; stderr=%q", stderr.String())
+		var msg struct {
+			ID     int             `json:"id"`
+			Result json.RawMessage `json:"result"`
+			Error  json.RawMessage `json:"error"`
 		}
-		require.True(t, ok, "unexpected wait result: %v stderr=%q", err, stderr.String())
+		require.NoError(t, json.Unmarshal(resp.body, &msg), "response: %s", resp.body)
+		require.Equal(t, 1, msg.ID, "response: %s", resp.body)
+		require.Nil(t, msg.Error, "initialize returned an error: %s", resp.body)
+		require.Contains(t, string(msg.Result), "capabilities", "response: %s", resp.body)
 	})
+}
+
+// readLSPFrame reads one "Content-Length: N\r\n\r\n<body>" message from r.
+func readLSPFrame(r *bufio.Reader) ([]byte, error) {
+	n := -1
+	for {
+		line, err := r.ReadString('\n')
+		if err != nil {
+			return nil, err
+		}
+		line = strings.TrimRight(line, "\r\n")
+		if line == "" {
+			break
+		}
+		if v, ok := strings.CutPrefix(line, "Content-Length: "); ok {
+			if n, err = strconv.Atoi(v); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if n < 0 {
+		return nil, fmt.Errorf("missing Content-Length header")
+	}
+	body := make([]byte, n)
+	_, err := io.ReadFull(r, body)
+	return body, err
 }
 
 func repoRoot(t *testing.T) string {
