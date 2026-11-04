@@ -72,6 +72,7 @@ type DefaultDocumentSyncher struct {
 	mu                        sync.RWMutex
 }
 
+// NewDefaultDocumentSyncher creates a new [DefaultDocumentSyncher].
 func NewDefaultDocumentSyncher(sc *service.Container) DocumentSyncher {
 	return &DefaultDocumentSyncher{sc: sc}
 }

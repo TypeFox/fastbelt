@@ -33,12 +33,18 @@ func optionsIf[S, O any](sc *service.Container) *O {
 	return nil
 }
 
-// DefaultLanguageServer implements the [lsp.Server] interface
+// DefaultLanguageServer is the default implementation of the [lsp.Server]
+// interface. Apart from building the initialize response, it contains no
+// feature logic: it delegates each supported LSP method to the registered
+// service and advertises only the capabilities of registered services.
+// Feature requests run while holding the [workspace.Lock] for reading;
+// workspace/executeCommand does not, so a [CommandProvider] that reads the
+// workspace must acquire the lock itself.
 type DefaultLanguageServer struct {
 	sc *service.Container
 }
 
-// NewDefaultLanguageServer creates a new default language server.
+// NewDefaultLanguageServer creates a new [DefaultLanguageServer].
 func NewDefaultLanguageServer(sc *service.Container) lsp.Server {
 	return &DefaultLanguageServer{sc: sc}
 }
@@ -557,8 +563,10 @@ func (s *DefaultLanguageServer) WorkDoneProgressCancel(ctx context.Context, para
 	return nil
 }
 
-// StartLanguageServer starts a language server using the service container.
-// It sets up JSON-RPC communication over stdio and handles the essential LSP messages.
+// StartLanguageServer runs the language server configured in the service
+// container and blocks until its connection is closed. A transport must be
+// registered first, for example with [SetupStdioServices].
+// [DefaultLanguageServer] closes the connection on the LSP exit notification.
 func StartLanguageServer(ctx context.Context, sc *service.Container) error {
 	dialer, err := service.Get[jsonrpc2.Dialer](sc)
 	if err != nil {
@@ -591,12 +599,15 @@ func toAnySlice(symbols []lsp.DocumentSymbol) []any {
 	return result
 }
 
-// DefaultBinder implements the jsonrpc2.Binder interface
+// DefaultBinder is the default implementation of the [jsonrpc2.Binder]
+// interface. When the connection is established, it stores it in the
+// [Connection] service and attaches the [lsp.Server] from the service
+// container as the message handler.
 type DefaultBinder struct {
 	sc *service.Container
 }
 
-// NewDefaultBinder creates a new default binder.
+// NewDefaultBinder creates a new [DefaultBinder].
 func NewDefaultBinder(sc *service.Container) *DefaultBinder {
 	return &DefaultBinder{sc: sc}
 }
