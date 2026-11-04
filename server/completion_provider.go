@@ -159,7 +159,7 @@ func (s *DefaultCompletionProvider) completionsForContext(
 ) []lsp.CompletionItem {
 	prefixTokens := doc.Tokens[:cc.PrefixLen]
 	result := adapter.Parse(ctx, doc, prefixTokens)
-	if result == nil || ctx.Err() != nil {
+	if ctx.Err() != nil {
 		// Parsing was cancelled, the request is already aborted by the caller
 		return nil
 	}
