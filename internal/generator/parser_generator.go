@@ -634,10 +634,10 @@ func GenerateParser(grammr grammar.Grammar, entryRules []grammar.ParserRule, pac
 
 	node.AppendLine("func (p *Parser) Parse(document *core.Document) {")
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)")
-		n.AppendLine("messages := service.MustGet[parser.ErrorMessageProvider](p.sc)")
-		n.AppendLine("referencesConstructor := service.MustGet[", grammr.Name(), "ReferencesConstructor](p.sc)")
-		n.AppendLine("lookahead := service.MustGet[", grammr.Name(), "ParserLookahead](p.sc)")
+		n.AppendLine("recovery := p.sc.MustGet[parser.ErrorRecoveryStrategy]()")
+		n.AppendLine("messages := p.sc.MustGet[parser.ErrorMessageProvider]()")
+		n.AppendLine("referencesConstructor := p.sc.MustGet[", grammr.Name(), "ReferencesConstructor]()")
+		n.AppendLine("lookahead := p.sc.MustGet[", grammr.Name(), "ParserLookahead]()")
 		n.AppendLine("cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}")
 		assign := "result := "
 		if len(entryRules) > 1 {
@@ -683,7 +683,7 @@ func emitEntryDispatch(node codegen.Node, containerExpr, assign string, entryRul
 		node.AppendLine(assign, "cp.Parse", entryRules[0].Name(), "()")
 		return
 	}
-	node.AppendLine("selector := service.MustGet[core.LanguageSelector](", containerExpr, ")")
+	node.AppendLine("selector := ", containerExpr, ".MustGet[core.LanguageSelector]()")
 	node.AppendLine("switch i, _ := selector.Select(document.URI); i {")
 	for i := 1; i < len(entryRules); i++ {
 		node.AppendLine("case ", strconv.Itoa(i), ":")
@@ -754,9 +754,9 @@ func GenerateCompletionParser(grammr grammar.Grammar, entryRules []grammar.Parse
 	node.AppendLine("// the ATN simulator.")
 	node.AppendLine("func (p *CompletionParser) Parse(", completionDocParam(entryRules), " tokens []core.Token) *parser.CompletionParseResult {")
 	node.Indent(func(n codegen.Node) {
-		n.AppendLine("messages := service.MustGet[parser.ErrorMessageProvider](p.sc)")
-		n.AppendLine("recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)")
-		n.AppendLine("lookahead := service.MustGet[", grammr.Name(), "ParserLookahead](p.sc)")
+		n.AppendLine("messages := p.sc.MustGet[parser.ErrorMessageProvider]()")
+		n.AppendLine("recovery := p.sc.MustGet[parser.ErrorRecoveryStrategy]()")
+		n.AppendLine("lookahead := p.sc.MustGet[", grammr.Name(), "ParserLookahead]()")
 		n.AppendLine("cp := &CompletionParser{sc: p.sc, atn: p.atn, lookahead: lookahead}")
 		n.AppendLine("cp.state = parser.NewParserState(tokens, p.atn(), recovery, messages)")
 		n.AppendLine("cp.cp = parser.NewCompletionParserState(cp.state)")

@@ -428,7 +428,7 @@ func (r *Reference[T]) UnmarshalJSON(value []byte) error {
 //
 // It is to be provided as part of the context argument of typefox.dev/fastbelt/workspace.Builder.Build](Context, ...), like
 //
-//	documents, err := service.Get[workspace.DocumentManager](sc)
+//	documents, err := sc.Get[workspace.DocumentManager]()
 //	err = builder.Build(
 //	    context.WithValue(
 //	        ctx,

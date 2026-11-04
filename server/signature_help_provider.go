@@ -19,7 +19,7 @@ import (
 //	type MySignatureHelpProvider struct{ sc *service.Container }
 //
 //	func (p *MySignatureHelpProvider) HandleSignatureHelpRequest(ctx context.Context, params *lsp.SignatureHelpParams) (*lsp.SignatureHelp, error) {
-//	    documentManager := service.MustGet[workspace.DocumentManager](p.sc)
+//	    documentManager := p.sc.MustGet[workspace.DocumentManager]()
 //	    doc := documentManager.Get(core.ParseURI(string(params.TextDocument.URI)))
 //	    if doc == nil {
 //	        return nil, nil
@@ -42,7 +42,7 @@ import (
 //	}
 //
 //	// Register with the service container
-//	service.Put[server.SignatureHelpProvider](sc, &MySignatureHelpProvider{sc: sc})
+//	sc.Put[server.SignatureHelpProvider](&MySignatureHelpProvider{sc: sc})
 type SignatureHelpProvider interface {
 	HandleSignatureHelpRequest(ctx context.Context, params *lsp.SignatureHelpParams) (*lsp.SignatureHelp, error)
 }

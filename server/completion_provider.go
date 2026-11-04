@@ -61,11 +61,11 @@ func NewDefaultCompletionProvider(sc *service.Container) CompletionProvider {
 func (s *DefaultCompletionProvider) HandleCompletionRequest(ctx context.Context, params *lsp.CompletionParams) (*lsp.CompletionList, error) {
 	empty := &lsp.CompletionList{IsIncomplete: false, Items: []lsp.CompletionItem{}}
 
-	adapter, err := service.Get[parser.LanguageCompletionAdapter](s.sc)
+	adapter, err := s.sc.Get[parser.LanguageCompletionAdapter]()
 	if err != nil || adapter == nil {
 		return empty, nil
 	}
-	documentManager, err := service.Get[workspace.DocumentManager](s.sc)
+	documentManager, err := s.sc.Get[workspace.DocumentManager]()
 	if err != nil {
 		return empty, nil
 	}
@@ -116,7 +116,7 @@ func (s *DefaultCompletionProvider) HandleCompletionRequest(ctx context.Context,
 // resolveContributor returns the contributor registered in the service
 // container if any, otherwise the default contributor.
 func (s *DefaultCompletionProvider) resolveContributor() CompletionContributor {
-	if c, err := service.Get[CompletionContributor](s.sc); err == nil && c != nil {
+	if c, err := s.sc.Get[CompletionContributor](); err == nil && c != nil {
 		return c
 	}
 	return &DefaultCompletionContributor{}
@@ -125,7 +125,7 @@ func (s *DefaultCompletionProvider) resolveContributor() CompletionContributor {
 // resolveFuzzyMatcher returns the FuzzyMatcher registered in the service
 // container if any, otherwise the default matcher.
 func (s *DefaultCompletionProvider) resolveFuzzyMatcher() FuzzyMatcher {
-	if m, err := service.Get[FuzzyMatcher](s.sc); err == nil && m != nil {
+	if m, err := s.sc.Get[FuzzyMatcher](); err == nil && m != nil {
 		return m
 	}
 	return &DefaultFuzzyMatcher{}
@@ -206,7 +206,7 @@ func (s *DefaultCompletionProvider) completionsForContext(
 	}
 
 	// Snippet pass
-	if reg, err := service.Get[SnippetRegistry](s.sc); err == nil && reg != nil {
+	if reg, err := s.sc.Get[SnippetRegistry](); err == nil && reg != nil {
 		tokenTypes := make([]*core.TokenType, 0, len(info.Tokens))
 		seen := make(collections.Set[int], len(info.Tokens))
 		for _, tc := range info.Tokens {

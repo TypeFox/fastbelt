@@ -22,7 +22,7 @@ func newHoverFixture(t *testing.T) (*service.Container, *test.Fixture) {
 	t.Helper()
 	sc := service.NewContainer()
 	SetupServices(sc)
-	service.Put(sc, NewHoverProvider(sc))
+	sc.Put(NewHoverProvider(sc))
 	server.SetupDefaultServices(sc)
 	sc.Seal()
 	return sc, test.New(t, sc)
@@ -34,7 +34,7 @@ func hoverAt(t *testing.T, sc *service.Container, doc *test.Doc, label string) *
 	if err != nil {
 		t.Fatalf("marker %q: %v", label, err)
 	}
-	hoverProvider := service.MustGet[server.HoverProvider](sc)
+	hoverProvider := sc.MustGet[server.HoverProvider]()
 	result, err := hoverProvider.HandleHoverRequest(doc.Ctx(), &lsp.HoverParams{
 		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
 			TextDocument: lsp.TextDocumentIdentifier{URI: doc.Document.URI.DocumentURI()},

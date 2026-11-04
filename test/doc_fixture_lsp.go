@@ -4,7 +4,6 @@ import (
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/textdoc"
-	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
@@ -17,7 +16,7 @@ func (d *Doc) RunRename(label string, newName string) *Doc {
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: %v", err)
 	}
-	renameProvider, err := service.Get[server.RenameProvider](d.fixture.sc)
+	renameProvider, err := d.fixture.sc.Get[server.RenameProvider]()
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: no rename provider available: %v", err)
 	}
@@ -31,7 +30,7 @@ func (d *Doc) RunRename(label string, newName string) *Doc {
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: rename failed: %v", err)
 	}
-	documents := service.MustGet[workspace.DocumentManager](d.fixture.sc)
+	documents := d.fixture.sc.MustGet[workspace.DocumentManager]()
 	toUpdate := []*core.Document{}
 	for uri, fileEdits := range edits.Changes {
 		doc := documents.Get(core.ParseURI(string(uri)))
@@ -54,7 +53,7 @@ func (d *Doc) RunRename(label string, newName string) *Doc {
 		toUpdate = append(toUpdate, doc)
 	}
 	// Rebuild the affected documents to ensure that the changes are reflected in the AST
-	builder := service.MustGet[workspace.Builder](d.fixture.sc)
+	builder := d.fixture.sc.MustGet[workspace.Builder]()
 	for _, doc := range toUpdate {
 		// Fully reset each document
 		builder.Reset(doc, 0)
@@ -71,7 +70,7 @@ func (d *Doc) AssertDefinition(label string) {
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: %v", err)
 	}
-	defProvider, err := service.Get[server.DefinitionProvider](d.fixture.sc)
+	defProvider, err := d.fixture.sc.Get[server.DefinitionProvider]()
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: no definition provider available: %v", err)
 	}
@@ -117,7 +116,7 @@ func (d *Doc) AssertReferences(label string) {
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: %v", err)
 	}
-	refsProvider, err := service.Get[server.ReferencesProvider](d.fixture.sc)
+	refsProvider, err := d.fixture.sc.Get[server.ReferencesProvider]()
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: no references provider available: %v", err)
 	}
@@ -163,7 +162,7 @@ func (d *Doc) AssertHighlights(label string) {
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: %v", err)
 	}
-	highlightProvider, err := service.Get[server.DocumentHighlightProvider](d.fixture.sc)
+	highlightProvider, err := d.fixture.sc.Get[server.DocumentHighlightProvider]()
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: no document highlight provider available: %v", err)
 	}
@@ -206,7 +205,7 @@ func (d *Doc) AssertHighlights(label string) {
 // Returns the Doc for chaining.
 func (d *Doc) AssertFoldingRanges(labels ...string) *Doc {
 	d.fixture.t.Helper()
-	frProvider, err := service.Get[server.FoldingRangeProvider](d.fixture.sc)
+	frProvider, err := d.fixture.sc.Get[server.FoldingRangeProvider]()
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: no folding range provider available: %v", err)
 	}
@@ -258,7 +257,7 @@ func (d *Doc) ExpectHoverAt(label, markup string) *Doc {
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: %v", err)
 	}
-	hoverProvider, err := service.Get[server.HoverProvider](d.fixture.sc)
+	hoverProvider, err := d.fixture.sc.Get[server.HoverProvider]()
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: no hover provider available: %v", err)
 	}
@@ -301,7 +300,7 @@ func (d *Doc) ExpectNoHoverAt(label string) *Doc {
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: %v", err)
 	}
-	hoverProvider, err := service.Get[server.HoverProvider](d.fixture.sc)
+	hoverProvider, err := d.fixture.sc.Get[server.HoverProvider]()
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: no hover provider available: %v", err)
 	}
@@ -326,7 +325,7 @@ func (d *Doc) CompletionItems(label string) []lsp.CompletionItem {
 	if err != nil {
 		d.fixture.t.Fatalf("fbtest: CompletionItems: no marker with label %q", label)
 	}
-	provider := service.MustGet[server.CompletionProvider](d.fixture.sc)
+	provider := d.fixture.sc.MustGet[server.CompletionProvider]()
 	resp, err := provider.HandleCompletionRequest(d.Ctx(), &lsp.CompletionParams{
 		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
 			TextDocument: lsp.TextDocumentIdentifier{
@@ -346,7 +345,7 @@ func (d *Doc) CompletionItems(label string) []lsp.CompletionItem {
 func (d *Doc) FindSymbolAtLabel(label string) (*lsp.DocumentSymbol, bool) {
 	d.fixture.t.Helper()
 
-	provider, err := service.Get[server.DocumentSymbolProvider](d.fixture.sc)
+	provider, err := d.fixture.sc.Get[server.DocumentSymbolProvider]()
 	if err != nil {
 		return nil, false
 	}
@@ -425,7 +424,7 @@ func findSymbolAtRange(symbols []lsp.DocumentSymbol, targetRange lsp.Range) *lsp
 // and returns a SemanticTokenExpectation for asserting on them.
 func (d *Doc) ExpectSemanticTokens() *SemanticTokenExpectation {
 	d.fixture.t.Helper()
-	semanticTokensProvider := service.MustGet[server.SemanticTokensProvider](d.fixture.sc)
+	semanticTokensProvider := d.fixture.sc.MustGet[server.SemanticTokensProvider]()
 	params := &lsp.SemanticTokensParams{
 		TextDocument: lsp.TextDocumentIdentifier{
 			URI: lsp.DocumentURI(d.Document.URI.DocumentURI()),

@@ -10,12 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/test"
-	"typefox.dev/fastbelt/util/service"
 )
 
 func TestDocumentationSingleLineComment(t *testing.T) {
 	f := test.New(t, CreateLspServices(nil))
-	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
+	docProvider := f.Services().MustGet[server.DocumentationProvider]()
 
 	doc := f.Parse(`
 statemachine Test
@@ -38,7 +37,7 @@ end
 
 func TestDocumentationMultipleLineComments(t *testing.T) {
 	f := test.New(t, CreateLspServices(nil))
-	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
+	docProvider := f.Services().MustGet[server.DocumentationProvider]()
 
 	doc := f.Parse(`
 statemachine Test
@@ -62,7 +61,7 @@ end
 
 func TestDocumentationBlankLinePreserved(t *testing.T) {
 	f := test.New(t, CreateLspServices(nil))
-	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
+	docProvider := f.Services().MustGet[server.DocumentationProvider]()
 
 	doc := f.Parse(`
 statemachine Test
@@ -87,7 +86,7 @@ end
 
 func TestDocumentationBlockComment(t *testing.T) {
 	f := test.New(t, CreateLspServices(nil))
-	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
+	docProvider := f.Services().MustGet[server.DocumentationProvider]()
 
 	doc := f.Parse(`
 statemachine Test
@@ -113,7 +112,7 @@ end
 
 func TestDocumentationIgnoresCommentsSeparatedByBlankLine(t *testing.T) {
 	f := test.New(t, CreateLspServices(nil))
-	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
+	docProvider := f.Services().MustGet[server.DocumentationProvider]()
 
 	doc := f.Parse(`
 statemachine Test
@@ -138,7 +137,7 @@ end
 
 func TestDocumentationNoComment(t *testing.T) {
 	f := test.New(t, CreateLspServices(nil))
-	docProvider := service.MustGet[server.DocumentationProvider](f.Services())
+	docProvider := f.Services().MustGet[server.DocumentationProvider]()
 
 	doc := f.Parse(`
 statemachine Test

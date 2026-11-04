@@ -30,7 +30,7 @@ type SemanticTokensLegendProvider interface {
 //	// Returns the bit value of the new token modifier within the legend
 //	var extraModifier = legendProvider.AddModifier("extraTokenModifier")
 //	// Pass it to the semantic tokens provider, which sends the legend to the client
-//	service.Put(sc, server.NewTokenBasedSemanticTokensProvider(sc, legendProvider, strategy))
+//	sc.Put(server.NewTokenBasedSemanticTokensProvider(sc, legendProvider, strategy))
 type ExtendableSemanticTokensLegendProvider interface {
 	SemanticTokensLegendProvider
 

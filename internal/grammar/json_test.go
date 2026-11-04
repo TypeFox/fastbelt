@@ -15,7 +15,6 @@ import (
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/test"
 	"typefox.dev/fastbelt/util"
-	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 )
 
@@ -101,13 +100,13 @@ func parseExportImportGrammar(t testing.TB, grammar []byte) (core.AstNode, core.
 	services2 := CreateServices()
 	f2 := test.NewWithContext(t, services2, context.WithValue(
 		context.Background(), core.JsonLinkingHelperKey(), util.NewJsonLinkingHelper(
-			service.MustGet[workspace.DocumentManager](services2),
+			services2.MustGet[workspace.DocumentManager](),
 		),
 	))
 	defer f2.Clear()
 
-	documents2 := service.MustGet[workspace.DocumentManager](f2.Services())
-	builder2 := service.MustGet[workspace.Builder](f2.Services())
+	documents2 := f2.Services().MustGet[workspace.DocumentManager]()
+	builder2 := f2.Services().MustGet[workspace.Builder]()
 
 	// Step 4: Unmarshal via encoding/json and wire up the document
 	grammar2 := NewGrammar()

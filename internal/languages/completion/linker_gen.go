@@ -163,7 +163,7 @@ func NewDefaultCompletionReferenceLinker(sc *service.Container) CompletionRefere
 	return &DefaultCompletionReferenceLinker{
 		sc: sc,
 		scopeProvider: sync.OnceValue(func() CompletionScopeProvider {
-			return service.MustGet[CompletionScopeProvider](sc)
+			return sc.MustGet[CompletionScopeProvider]()
 		}),
 	}
 }
@@ -323,7 +323,7 @@ type DefaultCompletionReferencesConstructor struct {
 
 func NewDefaultCompletionReferencesConstructor(sc *service.Container) CompletionReferencesConstructor {
 	referenceLinker := sync.OnceValue(func() CompletionReferenceLinker {
-		return service.MustGet[CompletionReferenceLinker](sc)
+		return sc.MustGet[CompletionReferenceLinker]()
 	})
 	return &DefaultCompletionReferencesConstructor{
 		linkRefFQNRef: sync.OnceValue(func() core.ReferenceGetter[Declare] {

@@ -54,7 +54,7 @@ func createTestServicesWithUpdater() (*service.Container, *mockDocumentUpdater) 
 	SetupDefaultServices(sc)
 
 	updater := &mockDocumentUpdater{}
-	service.Override[workspace.DocumentUpdater](sc, updater)
+	sc.Override[workspace.DocumentUpdater](updater)
 
 	sc.Seal()
 	return sc, updater
@@ -89,7 +89,7 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 	}
 
 	// Verify document is in collection
-	textdocStore := service.MustGet[textdoc.Store](sc)
+	textdocStore := sc.MustGet[textdoc.Store]()
 	doc := textdocStore.GetOverlay(uri)
 	if doc == nil {
 		t.Fatal("document not found in collection")
@@ -158,7 +158,7 @@ func TestTextDocuments_MultipleDocuments(t *testing.T) {
 	}
 
 	// Verify all documents are present
-	textdocStore := service.MustGet[textdoc.Store](sc)
+	textdocStore := sc.MustGet[textdoc.Store]()
 	all := textdocStore.AllOverlays()
 	if len(all) != len(uris) {
 		t.Errorf("expected %d documents, got %d", len(uris), len(all))
@@ -210,7 +210,7 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 		},
 	})
 
-	textdocStore := service.MustGet[textdoc.Store](sc)
+	textdocStore := sc.MustGet[textdoc.Store]()
 	doc := textdocStore.GetOverlay(uri)
 	if doc == nil {
 		t.Fatal("document not found")
@@ -244,7 +244,7 @@ func TestTextDocuments_WillSave(t *testing.T) {
 	})
 
 	// Verify document still exists
-	textdocStore := service.MustGet[textdoc.Store](sc)
+	textdocStore := sc.MustGet[textdoc.Store]()
 	doc := textdocStore.GetOverlay(uri)
 	if doc == nil {
 		t.Fatal("document should still exist after WillSave")
@@ -302,7 +302,7 @@ func TestTextDocuments_DidSave(t *testing.T) {
 	})
 
 	// Verify document still exists
-	textdocStore := service.MustGet[textdoc.Store](sc)
+	textdocStore := sc.MustGet[textdoc.Store]()
 	doc := textdocStore.GetOverlay(uri)
 	if doc == nil {
 		t.Fatal("document should still exist after DidSave")

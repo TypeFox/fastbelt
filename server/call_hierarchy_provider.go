@@ -17,14 +17,14 @@ import (
 //	type MyCallHierarchyProvider struct{ sc *service.Container }
 //
 //	func (p *MyCallHierarchyProvider) HandlePrepareCallHierarchyRequest(ctx context.Context, params *lsp.CallHierarchyPrepareParams) ([]lsp.CallHierarchyItem, error) {
-//	    documentManager := service.MustGet[workspace.DocumentManager](p.sc)
+//	    documentManager := p.sc.MustGet[workspace.DocumentManager]()
 //	    doc := documentManager.Get(core.ParseURI(string(params.TextDocument.URI)))
 //	    if doc == nil {
 //	        return nil, nil
 //	    }
 //	    offset := doc.TextDoc.OffsetAt(params.Position)
 //	    first, second := doc.Tokens.SearchOffset2(offset)
-//	    nameFinder := service.MustGet[server.NameFinder](p.sc)
+//	    nameFinder := p.sc.MustGet[server.NameFinder]()
 //	    foundName := nameFinder.Find(ctx, first, second)
 //	    if foundName.Target == nil {
 //	        return nil, nil
@@ -51,7 +51,7 @@ import (
 //	}
 //
 //	// Register with the service container
-//	service.Put[server.CallHierarchyProvider](sc, &MyCallHierarchyProvider{sc: sc})
+//	sc.Put[server.CallHierarchyProvider](&MyCallHierarchyProvider{sc: sc})
 type CallHierarchyProvider interface {
 	HandlePrepareCallHierarchyRequest(ctx context.Context, params *lsp.CallHierarchyPrepareParams) ([]lsp.CallHierarchyItem, error)
 	HandleIncomingCallsRequest(ctx context.Context, params *lsp.CallHierarchyIncomingCallsParams) ([]lsp.CallHierarchyIncomingCall, error)

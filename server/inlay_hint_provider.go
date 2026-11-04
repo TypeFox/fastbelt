@@ -17,7 +17,7 @@ import (
 //	type MyInlayHintProvider struct{ sc *service.Container }
 //
 //	func (p *MyInlayHintProvider) HandleInlayHintRequest(ctx context.Context, params *lsp.InlayHintParams) ([]lsp.InlayHint, error) {
-//	    documentManager := service.MustGet[workspace.DocumentManager](p.sc)
+//	    documentManager := p.sc.MustGet[workspace.DocumentManager]()
 //	    doc := documentManager.Get(core.ParseURI(string(params.TextDocument.URI)))
 //	    if doc == nil {
 //	        return nil, nil
@@ -36,7 +36,7 @@ import (
 //	}
 //
 //	// Register with the service container
-//	service.Put[server.InlayHintProvider](sc, &MyInlayHintProvider{sc: sc})
+//	sc.Put[server.InlayHintProvider](&MyInlayHintProvider{sc: sc})
 type InlayHintProvider interface {
 	HandleInlayHintRequest(ctx context.Context, params *lsp.InlayHintParams) ([]lsp.InlayHint, error)
 }

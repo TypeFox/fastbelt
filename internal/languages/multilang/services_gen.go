@@ -13,9 +13,8 @@ import (
 // SetupGeneratedServices sets up the generated services for this grammar.
 // If any service is already set, it's not overwritten.
 func SetupGeneratedServices(sc *service.Container) {
-	if !service.Has[core.LanguageSelector](sc) {
-		service.Put[core.LanguageSelector](
-			sc,
+	if !sc.Has[core.LanguageSelector]() {
+		sc.Put[core.LanguageSelector](
 			workspace.NewDefaultLanguageSelector(
 				sc,
 				workspace.NewDocumentMatcherWithPatterns("greeting", "*.hello"),
@@ -23,42 +22,42 @@ func SetupGeneratedServices(sc *service.Container) {
 			),
 		)
 	}
-	if !service.Has[MultilangModelScopeProvider](sc) {
-		service.Put(sc, NewDefaultMultilangModelScopeProvider(sc))
+	if !sc.Has[MultilangModelScopeProvider]() {
+		sc.Put(NewDefaultMultilangModelScopeProvider(sc))
 	}
-	if !service.Has[MultilangModelReferenceLinker](sc) {
-		service.Put(sc, NewDefaultMultilangModelReferenceLinker(sc))
+	if !sc.Has[MultilangModelReferenceLinker]() {
+		sc.Put(NewDefaultMultilangModelReferenceLinker(sc))
 	}
-	if !service.Has[MultilangModelReferencesConstructor](sc) {
-		service.Put(sc, NewDefaultMultilangModelReferencesConstructor(sc))
+	if !sc.Has[MultilangModelReferencesConstructor]() {
+		sc.Put(NewDefaultMultilangModelReferencesConstructor(sc))
 	}
-	if !service.Has[MultilangModelParserLookahead](sc) {
-		service.Put(sc, NewDefaultMultilangModelParserLookahead())
+	if !sc.Has[MultilangModelParserLookahead]() {
+		sc.Put(NewDefaultMultilangModelParserLookahead())
 	}
-	if !service.Has[lexer.Lexer](sc) {
-		service.Put(sc, NewLexer(sc))
+	if !sc.Has[lexer.Lexer]() {
+		sc.Put(NewLexer(sc))
 	}
-	if !service.Has[parser.Parser](sc) {
-		service.Put[parser.Parser](sc, NewParser(sc))
+	if !sc.Has[parser.Parser]() {
+		sc.Put[parser.Parser](NewParser(sc))
 	}
-	if !service.Has[parser.ErrorRecoveryStrategy](sc) {
-		service.Put[parser.ErrorRecoveryStrategy](sc, parser.NewDefaultErrorRecovery())
+	if !sc.Has[parser.ErrorRecoveryStrategy]() {
+		sc.Put[parser.ErrorRecoveryStrategy](parser.NewDefaultErrorRecovery())
 	}
-	if !service.Has[parser.ErrorMessageProvider](sc) {
-		service.Put[parser.ErrorMessageProvider](sc, parser.NewDefaultErrorMessageProvider())
+	if !sc.Has[parser.ErrorMessageProvider]() {
+		sc.Put[parser.ErrorMessageProvider](parser.NewDefaultErrorMessageProvider())
 	}
-	if !service.Has[core.SymbolContainers](sc) {
-		service.Put[core.SymbolContainers](sc, NewSymbolContainers())
+	if !sc.Has[core.SymbolContainers]() {
+		sc.Put[core.SymbolContainers](NewSymbolContainers())
 	}
 }
 
 // SetupGeneratedServerServices sets up the generated language server services for this grammar.
 // If any service is already set, it's not overwritten.
 func SetupGeneratedServerServices(sc *service.Container) {
-	if !service.Has[MultilangModelCompletionFilter](sc) {
-		service.Put(sc, NewDefaultMultilangModelCompletionFilter())
+	if !sc.Has[MultilangModelCompletionFilter]() {
+		sc.Put(NewDefaultMultilangModelCompletionFilter())
 	}
-	if !service.Has[parser.LanguageCompletionAdapter](sc) {
-		service.Put[parser.LanguageCompletionAdapter](sc, NewMultilangModelCompletionAdapter(sc))
+	if !sc.Has[parser.LanguageCompletionAdapter]() {
+		sc.Put[parser.LanguageCompletionAdapter](NewMultilangModelCompletionAdapter(sc))
 	}
 }

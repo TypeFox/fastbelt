@@ -33,7 +33,7 @@ func NewDefaultTokenGroupsReferenceLinker(sc *service.Container) TokenGroupsRefe
 	return &DefaultTokenGroupsReferenceLinker{
 		sc: sc,
 		scopeProvider: sync.OnceValue(func() TokenGroupsScopeProvider {
-			return service.MustGet[TokenGroupsScopeProvider](sc)
+			return sc.MustGet[TokenGroupsScopeProvider]()
 		}),
 	}
 }

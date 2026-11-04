@@ -13,7 +13,6 @@ import (
 	"typefox.dev/fastbelt/lexer"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/test"
-	"typefox.dev/fastbelt/util/service"
 )
 
 // TestBenchmarkContentParses guards the benchmarks: a syntax error in the
@@ -29,8 +28,8 @@ func BenchmarkParser(b *testing.B) {
 	content := generateArithmeticsContent()
 	srv := CreateServices()
 	doc := fastbelt.NewDocumentFromString("file:///workspace/benchmark.arithmetics", "arithmetics", content)
-	lexerService := service.MustGet[lexer.Lexer](srv)
-	parserService := service.MustGet[parser.Parser](srv)
+	lexerService := srv.MustGet[lexer.Lexer]()
+	parserService := srv.MustGet[parser.Parser]()
 	lexerService.Exec(doc)
 	if len(doc.LexerErrors) > 0 {
 		b.Fatalf("lexer errors: %v", doc.LexerErrors)
@@ -45,7 +44,7 @@ func BenchmarkParser(b *testing.B) {
 func BenchmarkLexer(b *testing.B) {
 	content := generateArithmeticsContent()
 	srv := CreateServices()
-	lexerService := service.MustGet[lexer.Lexer](srv)
+	lexerService := srv.MustGet[lexer.Lexer]()
 	doc := fastbelt.NewDocumentFromString("file:///workspace/bench.calc", "arithmetics", content)
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
@@ -58,8 +57,8 @@ func BenchmarkLexer(b *testing.B) {
 func BenchmarkLexerAndParser(b *testing.B) {
 	content := generateArithmeticsContent()
 	srv := CreateServices()
-	lexerService := service.MustGet[lexer.Lexer](srv)
-	parserService := service.MustGet[parser.Parser](srv)
+	lexerService := srv.MustGet[lexer.Lexer]()
+	parserService := srv.MustGet[parser.Parser]()
 	doc := fastbelt.NewDocumentFromString("file:///workspace/bench.calc", "arithmetics", content)
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()

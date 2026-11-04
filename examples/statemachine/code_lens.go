@@ -48,7 +48,7 @@ type codeLensData struct {
 }
 
 func (p *stateMachineCodeLensProvider) HandleCodeLensRequest(ctx context.Context, params *lsp.CodeLensParams) ([]lsp.CodeLens, error) {
-	documentManager := service.MustGet[workspace.DocumentManager](p.sc)
+	documentManager := p.sc.MustGet[workspace.DocumentManager]()
 	uri := core.ParseURI(string(params.TextDocument.URI))
 	doc := documentManager.Get(uri)
 	if doc == nil || doc.Root == nil {
@@ -84,7 +84,7 @@ func (p *stateMachineCodeLensProvider) HandleCodeLensResolveRequest(ctx context.
 		return lens, nil
 	}
 
-	documentManager := service.MustGet[workspace.DocumentManager](p.sc)
+	documentManager := p.sc.MustGet[workspace.DocumentManager]()
 	doc := documentManager.Get(core.ParseURI(data.URI))
 	if doc == nil || doc.Root == nil {
 		return lens, nil
@@ -95,7 +95,7 @@ func (p *stateMachineCodeLensProvider) HandleCodeLensResolveRequest(ctx context.
 		return lens, nil
 	}
 
-	referencesFinder := service.MustGet[server.ReferencesFinder](p.sc)
+	referencesFinder := p.sc.MustGet[server.ReferencesFinder]()
 	count := countReferences(ctx, referencesFinder, target)
 	lens.Command = &lsp.Command{Title: fmt.Sprintf("%d reference(s)", count)}
 	return lens, nil

@@ -67,7 +67,7 @@ func (s *DefaultIncludeFilter) Include(entry DirEntry) (bool, string) {
 		return !strings.HasPrefix(name, "."), ""
 	}
 	// Note: The file isn't managed yet, so the selector only matches by URI.
-	if selector, err := service.Get[core.LanguageSelector](s.sc); err == nil {
+	if selector, err := s.sc.Get[core.LanguageSelector](); err == nil {
 		index, languageId := selector.Select(entry.URI)
 		if index >= 0 {
 			return true, languageId
@@ -111,11 +111,11 @@ func NewDefaultInitializer(sc *service.Container) Initializer {
 }
 
 func (s *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.WorkspaceFolder) error {
-	fs, err := service.Get[FileSystem](s.sc)
+	fs, err := s.sc.Get[FileSystem]()
 	if err != nil {
 		return nil
 	}
-	filter, err := service.Get[IncludeFilter](s.sc)
+	filter, err := s.sc.Get[IncludeFilter]()
 	if err != nil {
 		log.Print("workspace IncludeFilter is not set")
 		return nil
@@ -153,5 +153,5 @@ func (s *DefaultInitializer) loadFile(ctx context.Context, uri core.URI, fs File
 	}
 	textDoc := textdoc.NewFile(uri.DocumentURI(), languageID, 0, string(content))
 	doc := core.NewDocument(textDoc)
-	service.MustGet[DocumentManager](s.sc).Set(doc)
+	s.sc.MustGet[DocumentManager]().Set(doc)
 }

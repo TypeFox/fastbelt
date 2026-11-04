@@ -40,9 +40,9 @@ var MultilangModelCompletionDispatch = map[string]MultilangModelCompletionDispat
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[MultilangModelReferencesConstructor](sc)
-		scopes := service.MustGet[MultilangModelScopeProvider](sc)
-		filter := service.MustGet[MultilangModelCompletionFilter](sc)
+		refs := sc.MustGet[MultilangModelReferencesConstructor]()
+		scopes := sc.MustGet[MultilangModelScopeProvider]()
+		filter := sc.MustGet[MultilangModelCompletionFilter]()
 		ref := refs.FarewellTo(typedOwner, nil)
 		candidates := scopes.ScopeFarewellTo(ctx, ref).AllElements()
 		return filter.FilterFarewellTo(ctx, ref, candidates)

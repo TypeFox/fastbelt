@@ -122,10 +122,8 @@ func (node *AstNodeBase) ContainmentData() (unique.Handle[string], int) {
 	return node.containerField, node.containerIndex
 }
 
-// TODO: If concrete methods gain access to generics, refactor this into a method
-// See https://github.com/golang/go/issues/77273
-
 // ContainerOfType walks up node's container chain and returns the first ancestor assignable to T.
+// If node is nil, or no matching ancestor was found, returns nil.
 func ContainerOfType[T AstNode](node AstNode) T {
 	var zero T
 	if node == nil {

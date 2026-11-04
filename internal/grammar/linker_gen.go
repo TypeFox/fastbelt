@@ -109,7 +109,7 @@ func NewDefaultFastbeltReferenceLinker(sc *service.Container) FastbeltReferenceL
 	return &DefaultFastbeltReferenceLinker{
 		sc: sc,
 		scopeProvider: sync.OnceValue(func() FastbeltScopeProvider {
-			return service.MustGet[FastbeltScopeProvider](sc)
+			return sc.MustGet[FastbeltScopeProvider]()
 		}),
 	}
 }
@@ -206,7 +206,7 @@ type DefaultFastbeltReferencesConstructor struct {
 
 func NewDefaultFastbeltReferencesConstructor(sc *service.Container) FastbeltReferencesConstructor {
 	referenceLinker := sync.OnceValue(func() FastbeltReferenceLinker {
-		return service.MustGet[FastbeltReferenceLinker](sc)
+		return sc.MustGet[FastbeltReferenceLinker]()
 	})
 	return &DefaultFastbeltReferencesConstructor{
 		linkInterfaceExtends: sync.OnceValue(func() core.ReferenceGetter[Interface] {

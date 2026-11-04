@@ -28,7 +28,7 @@ func NewDefaultReferencesProvider(sc *service.Container) ReferencesProvider {
 }
 
 func (s *DefaultReferencesProvider) HandleReferencesRequest(ctx context.Context, params *lsp.ReferenceParams) ([]lsp.Location, error) {
-	documentManager := service.MustGet[workspace.DocumentManager](s.sc)
+	documentManager := s.sc.MustGet[workspace.DocumentManager]()
 	uri := core.ParseURI(string(params.TextDocument.URI))
 	targetDoc := documentManager.Get(uri)
 	if targetDoc == nil {
@@ -40,13 +40,13 @@ func (s *DefaultReferencesProvider) HandleReferencesRequest(ctx context.Context,
 	if first == nil {
 		return nil, nil // No token at the given position
 	}
-	nameFinder := service.MustGet[NameFinder](s.sc)
+	nameFinder := s.sc.MustGet[NameFinder]()
 	foundName := nameFinder.Find(ctx, first, second)
 	if foundName.Target == nil || foundName.Source == nil {
 		return nil, nil // Could not find a name
 	}
 	target := foundName.Target.Owner()
-	referencesFinder := service.MustGet[ReferencesFinder](s.sc)
+	referencesFinder := s.sc.MustGet[ReferencesFinder]()
 	locations := []lsp.Location{}
 	for refDesc := range referencesFinder.Find(ctx, target, FindReferencesOptions{
 		IncludeDeclaration: true,

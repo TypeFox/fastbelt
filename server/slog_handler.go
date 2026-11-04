@@ -61,7 +61,7 @@ func (h *SlogHandler) WithGroup(name string) slog.Handler {
 }
 
 func (h *SlogHandler) write(ctx context.Context, level lsp.MessageType, msg string) error {
-	conn, err := service.Get[*Connection](h.sc)
+	conn, err := h.sc.Get[*Connection]()
 	if err != nil {
 		return err
 	}

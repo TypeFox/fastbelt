@@ -26,7 +26,7 @@ func newCodeLensTestServer(t *testing.T, setup func(sc *service.Container)) lsp.
 	setup(sc)
 	server.SetupDefaultServices(sc)
 	sc.Seal()
-	return service.MustGet[lsp.Server](sc)
+	return sc.MustGet[lsp.Server]()
 }
 
 // plainCodeLensProvider implements only server.CodeLensProvider, not the resolving extension.
@@ -51,7 +51,7 @@ func TestCodeLensResolve_AdvertisedOnlyWhenSupported(t *testing.T) {
 	ctx := context.Background()
 
 	plainServer := newCodeLensTestServer(t, func(sc *service.Container) {
-		service.Put[server.CodeLensProvider](sc, plainCodeLensProvider{})
+		sc.Put[server.CodeLensProvider](plainCodeLensProvider{})
 	})
 	plainInit, err := plainServer.Initialize(ctx, &lsp.ParamInitialize{})
 	assert.NoError(t, err)
@@ -60,7 +60,7 @@ func TestCodeLensResolve_AdvertisedOnlyWhenSupported(t *testing.T) {
 	}
 
 	resolvingServer := newCodeLensTestServer(t, func(sc *service.Container) {
-		service.Put[server.CodeLensProvider](sc, resolvingCodeLensProvider{})
+		sc.Put[server.CodeLensProvider](resolvingCodeLensProvider{})
 	})
 	resolvingInit, err := resolvingServer.Initialize(ctx, &lsp.ParamInitialize{})
 	assert.NoError(t, err)
@@ -72,7 +72,7 @@ func TestCodeLensResolve_AdvertisedOnlyWhenSupported(t *testing.T) {
 func TestCodeLensResolve_Dispatch(t *testing.T) {
 	ctx := context.Background()
 	resolvingServer := newCodeLensTestServer(t, func(sc *service.Container) {
-		service.Put[server.CodeLensProvider](sc, resolvingCodeLensProvider{})
+		sc.Put[server.CodeLensProvider](resolvingCodeLensProvider{})
 	})
 
 	result, err := resolvingServer.ResolveCodeLens(ctx, &lsp.CodeLens{})
@@ -82,7 +82,7 @@ func TestCodeLensResolve_Dispatch(t *testing.T) {
 	}
 
 	plainServer := newCodeLensTestServer(t, func(sc *service.Container) {
-		service.Put[server.CodeLensProvider](sc, plainCodeLensProvider{})
+		sc.Put[server.CodeLensProvider](plainCodeLensProvider{})
 	})
 	original := &lsp.CodeLens{}
 	result, err = plainServer.ResolveCodeLens(ctx, original)

@@ -26,7 +26,7 @@ func newInlayHintTestServer(t *testing.T, setup func(sc *service.Container)) lsp
 	setup(sc)
 	server.SetupDefaultServices(sc)
 	sc.Seal()
-	return service.MustGet[lsp.Server](sc)
+	return sc.MustGet[lsp.Server]()
 }
 
 // plainInlayHintProvider implements only server.InlayHintProvider, not the resolving extension.
@@ -51,7 +51,7 @@ func TestInlayHintResolve_AdvertisedOnlyWhenSupported(t *testing.T) {
 	ctx := context.Background()
 
 	plainServer := newInlayHintTestServer(t, func(sc *service.Container) {
-		service.Put[server.InlayHintProvider](sc, plainInlayHintProvider{})
+		sc.Put[server.InlayHintProvider](plainInlayHintProvider{})
 	})
 	plainInit, err := plainServer.Initialize(ctx, &lsp.ParamInitialize{})
 	assert.NoError(t, err)
@@ -60,7 +60,7 @@ func TestInlayHintResolve_AdvertisedOnlyWhenSupported(t *testing.T) {
 	}
 
 	resolvingServer := newInlayHintTestServer(t, func(sc *service.Container) {
-		service.Put[server.InlayHintProvider](sc, resolvingInlayHintProvider{})
+		sc.Put[server.InlayHintProvider](resolvingInlayHintProvider{})
 	})
 	resolvingInit, err := resolvingServer.Initialize(ctx, &lsp.ParamInitialize{})
 	assert.NoError(t, err)
@@ -72,7 +72,7 @@ func TestInlayHintResolve_AdvertisedOnlyWhenSupported(t *testing.T) {
 func TestInlayHintResolve_Dispatch(t *testing.T) {
 	ctx := context.Background()
 	resolvingServer := newInlayHintTestServer(t, func(sc *service.Container) {
-		service.Put[server.InlayHintProvider](sc, resolvingInlayHintProvider{})
+		sc.Put[server.InlayHintProvider](resolvingInlayHintProvider{})
 	})
 
 	result, err := resolvingServer.Resolve(ctx, &lsp.InlayHint{})
@@ -82,7 +82,7 @@ func TestInlayHintResolve_Dispatch(t *testing.T) {
 	}
 
 	plainServer := newInlayHintTestServer(t, func(sc *service.Container) {
-		service.Put[server.InlayHintProvider](sc, plainInlayHintProvider{})
+		sc.Put[server.InlayHintProvider](plainInlayHintProvider{})
 	})
 	original := &lsp.InlayHint{}
 	result, err = plainServer.Resolve(ctx, original)

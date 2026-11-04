@@ -143,7 +143,7 @@ func generateLinker(context *LinkerGeneratorContext) codegen.Node {
 	node.AppendLine("	return &Default", context.grammar.Name(), "ReferenceLinker{")
 	node.AppendLine("		sc: sc,")
 	node.AppendLine("		scopeProvider: sync.OnceValue(func() ", context.grammar.Name(), "ScopeProvider {")
-	node.AppendLine("			return service.MustGet[", context.grammar.Name(), "ScopeProvider](sc)")
+	node.AppendLine("			return sc.MustGet[", context.grammar.Name(), "ScopeProvider]()")
 	node.AppendLine("		}),")
 	node.AppendLine("	}")
 	node.AppendLine("}")
@@ -340,7 +340,7 @@ func generateReferenceConstructor(context *LinkerGeneratorContext) codegen.Node 
 	node.AppendLine("func NewDefault", context.grammar.Name(), "ReferencesConstructor(sc *service.Container) ", context.grammar.Name(), "ReferencesConstructor {")
 	if len(context.fields) > 0 {
 		node.AppendLine("	referenceLinker := sync.OnceValue(func() ", context.grammar.Name(), "ReferenceLinker {")
-		node.AppendLine("		return service.MustGet[", context.grammar.Name(), "ReferenceLinker](sc)")
+		node.AppendLine("		return sc.MustGet[", context.grammar.Name(), "ReferenceLinker]()")
 		node.AppendLine("	})")
 	}
 	node.AppendLine("	return &Default", context.grammar.Name(), "ReferencesConstructor{")

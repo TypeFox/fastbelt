@@ -27,7 +27,7 @@ type InitializeParticipant interface {
 // optionsIf returns a fresh *O if a service of type S is registered, nil otherwise.
 // Used to advertise a server capability only when a provider service exists.
 func optionsIf[S, O any](sc *service.Container) *O {
-	if service.Has[S](sc) {
+	if sc.Has[S]() {
 		return new(O)
 	}
 	return nil
@@ -45,22 +45,22 @@ func NewDefaultLanguageServer(sc *service.Container) lsp.Server {
 
 func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.ParamInitialize) (*lsp.InitializeResult, error) {
 	// Initialize all participants first
-	for service := range service.GetAll[InitializeParticipant](s.sc) {
+	for service := range s.sc.GetAll[InitializeParticipant]() {
 		service.OnServerInitialize(params)
 	}
-	workspaceFolders, err := service.Get[*WorkspaceFolders](s.sc)
+	workspaceFolders, err := s.sc.Get[*WorkspaceFolders]()
 	if err != nil {
 		return nil, err
 	}
 	workspaceFolders.Value = params.WorkspaceFolders
 	completionOptions := optionsIf[CompletionProvider, lsp.CompletionOptions](s.sc)
 	if completionOptions != nil {
-		if triggers, err := service.Get[CompletionTriggers](s.sc); err == nil && triggers != nil {
+		if triggers, err := s.sc.Get[CompletionTriggers](); err == nil && triggers != nil {
 			completionOptions.TriggerCharacters = triggers.TriggerCharacters()
 		}
 	}
 	var semanticTokensRegistrationOptions *lsp.SemanticTokensRegistrationOptions
-	if tokenProvider, err := service.Get[SemanticTokensProvider](s.sc); err == nil && tokenProvider != nil {
+	if tokenProvider, err := s.sc.Get[SemanticTokensProvider](); err == nil && tokenProvider != nil {
 		full := lsp.SemanticTokensOptionsFullFromBool(true)
 		semanticTokensRegistrationOptions = &lsp.SemanticTokensRegistrationOptions{
 			SemanticTokensOptions: lsp.SemanticTokensOptions{
@@ -70,7 +70,7 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 		}
 	}
 	var renameProvider *lsp.RenameOptions
-	if service.Has[RenameProvider](s.sc) {
+	if s.sc.Has[RenameProvider]() {
 		renameProvider = &lsp.RenameOptions{PrepareProvider: true}
 	}
 	positionEncoding := lsp.UTF16
@@ -100,7 +100,7 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			CallHierarchyProvider:     optionsIf[CallHierarchyProvider, lsp.CallHierarchyRegistrationOptions](s.sc),
 			TypeHierarchyProvider:     optionsIf[TypeHierarchyProvider, lsp.TypeHierarchyRegistrationOptions](s.sc),
 			InlayHintProvider: func() *lsp.InlayHintRegistrationOptions {
-				provider, err := service.Get[InlayHintProvider](s.sc)
+				provider, err := s.sc.Get[InlayHintProvider]()
 				if err != nil {
 					return nil
 				}
@@ -109,7 +109,7 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 			}(),
 			SignatureHelpProvider: buildSignatureHelpOptions(s.sc),
 			CodeActionProvider: func() *lsp.CodeActionOptions {
-				provider, err := service.Get[CodeActionProvider](s.sc)
+				provider, err := s.sc.Get[CodeActionProvider]()
 				if err != nil {
 					return nil
 				}
@@ -117,7 +117,7 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 				return &lsp.CodeActionOptions{ResolveProvider: resolving}
 			}(),
 			CodeLensProvider: func() *lsp.CodeLensOptions {
-				provider, err := service.Get[CodeLensProvider](s.sc)
+				provider, err := s.sc.Get[CodeLensProvider]()
 				if err != nil {
 					return nil
 				}
@@ -125,7 +125,7 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 				return &lsp.CodeLensOptions{ResolveProvider: resolving}
 			}(),
 			DocumentLinkProvider: func() *lsp.DocumentLinkOptions {
-				provider, err := service.Get[DocumentLinkProvider](s.sc)
+				provider, err := s.sc.Get[DocumentLinkProvider]()
 				if err != nil {
 					return nil
 				}
@@ -133,7 +133,7 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 				return &lsp.DocumentLinkOptions{ResolveProvider: resolving}
 			}(),
 			ExecuteCommandProvider: func() *lsp.ExecuteCommandOptions {
-				provider, err := service.Get[CommandProvider](s.sc)
+				provider, err := s.sc.Get[CommandProvider]()
 				if err != nil {
 					return nil
 				}
@@ -144,10 +144,10 @@ func (s *DefaultLanguageServer) Initialize(ctx context.Context, params *lsp.Para
 }
 
 func buildSignatureHelpOptions(sc *service.Container) *lsp.SignatureHelpOptions {
-	if !service.Has[SignatureHelpProvider](sc) {
+	if !sc.Has[SignatureHelpProvider]() {
 		return nil
 	}
-	triggers, err := service.Get[SignatureHelpTriggers](sc)
+	triggers, err := sc.Get[SignatureHelpTriggers]()
 	if err != nil {
 		return nil
 	}
@@ -162,10 +162,10 @@ func buildSignatureHelpOptions(sc *service.Container) *lsp.SignatureHelpOptions 
 }
 
 func (s *DefaultLanguageServer) Initialized(ctx context.Context, params *lsp.InitializedParams) error {
-	if initializer, err := service.Get[workspace.Initializer](s.sc); err == nil {
+	if initializer, err := s.sc.Get[workspace.Initializer](); err == nil {
 		log.Print("LS Initializer running...")
 		defer log.Println("done.")
-		workspaceFolders := service.MustGet[*WorkspaceFolders](s.sc).Value
+		workspaceFolders := s.sc.MustGet[*WorkspaceFolders]().Value
 		return initializer.Initialize(ctx, workspaceFolders)
 	}
 	return nil
@@ -177,49 +177,49 @@ func (s *DefaultLanguageServer) Shutdown(ctx context.Context) error {
 
 func (s *DefaultLanguageServer) Exit(ctx context.Context) error {
 	// Close the connection to allow the server to exit
-	if connection := service.MustGet[*Connection](s.sc); connection.Value != nil {
+	if connection := s.sc.MustGet[*Connection](); connection.Value != nil {
 		return connection.Value.Close()
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidOpen(ctx context.Context, params *lsp.DidOpenTextDocumentParams) error {
-	if documentSyncher, err := service.Get[DocumentSyncher](s.sc); err == nil {
+	if documentSyncher, err := s.sc.Get[DocumentSyncher](); err == nil {
 		documentSyncher.DidOpen(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidChange(ctx context.Context, params *lsp.DidChangeTextDocumentParams) error {
-	if documentSyncher, err := service.Get[DocumentSyncher](s.sc); err == nil {
+	if documentSyncher, err := s.sc.Get[DocumentSyncher](); err == nil {
 		documentSyncher.DidChange(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) DidClose(ctx context.Context, params *lsp.DidCloseTextDocumentParams) error {
-	if documentSyncher, err := service.Get[DocumentSyncher](s.sc); err == nil {
+	if documentSyncher, err := s.sc.Get[DocumentSyncher](); err == nil {
 		documentSyncher.DidClose(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) WillSave(ctx context.Context, params *lsp.WillSaveTextDocumentParams) error {
-	if documentSyncher, err := service.Get[DocumentSyncher](s.sc); err == nil {
+	if documentSyncher, err := s.sc.Get[DocumentSyncher](); err == nil {
 		documentSyncher.WillSave(ctx, params)
 	}
 	return nil
 }
 
 func (s *DefaultLanguageServer) WillSaveWaitUntil(ctx context.Context, params *lsp.WillSaveTextDocumentParams) ([]lsp.TextEdit, error) {
-	if documentSyncher, err := service.Get[DocumentSyncher](s.sc); err == nil {
+	if documentSyncher, err := s.sc.Get[DocumentSyncher](); err == nil {
 		return documentSyncher.WillSaveWaitUntil(ctx, params)
 	}
 	return nil, nil
 }
 
 func (s *DefaultLanguageServer) DidSave(ctx context.Context, params *lsp.DidSaveTextDocumentParams) error {
-	if documentSyncher, err := service.Get[DocumentSyncher](s.sc); err == nil {
+	if documentSyncher, err := s.sc.Get[DocumentSyncher](); err == nil {
 		documentSyncher.DidSave(ctx, params)
 	}
 	return nil
@@ -231,14 +231,14 @@ func (s *DefaultLanguageServer) DidSave(ctx context.Context, params *lsp.DidSave
 // error or treated as an empty result.
 func dispatchRead[P, R any](sc *service.Container, ctx context.Context, required bool, handle func(context.Context, P) (R, error)) (R, error) {
 	var zero R
-	provider, err := service.Get[P](sc)
+	provider, err := sc.Get[P]()
 	if err != nil {
 		if required {
 			return zero, err
 		}
 		return zero, nil
 	}
-	lock, err := service.Get[workspace.Lock](sc)
+	lock, err := sc.Get[workspace.Lock]()
 	if err != nil {
 		return zero, err
 	}
@@ -295,7 +295,7 @@ func (s *DefaultLanguageServer) OutgoingCalls(ctx context.Context, params *lsp.C
 // is registered, or the registered one doesn't implement RP, params is
 // returned unchanged.
 func dispatchResolveRead[P, RP, T any](sc *service.Container, ctx context.Context, params T, handle func(context.Context, RP, T) (T, error)) (T, error) {
-	provider, err := service.Get[P](sc)
+	provider, err := sc.Get[P]()
 	if err != nil {
 		return params, nil
 	}
@@ -304,7 +304,7 @@ func dispatchResolveRead[P, RP, T any](sc *service.Container, ctx context.Contex
 		return params, nil
 	}
 	var zero T
-	lock, err := service.Get[workspace.Lock](sc)
+	lock, err := sc.Get[workspace.Lock]()
 	if err != nil {
 		return zero, err
 	}
@@ -447,7 +447,7 @@ func (s *DefaultLanguageServer) DidRenameFiles(ctx context.Context, params *lsp.
 	return nil
 }
 func (s *DefaultLanguageServer) ExecuteCommand(ctx context.Context, params *lsp.ExecuteCommandParams) (any, error) {
-	provider, err := service.Get[CommandProvider](s.sc)
+	provider, err := s.sc.Get[CommandProvider]()
 	if err != nil {
 		return nil, nil
 	}
@@ -510,11 +510,11 @@ func (s *DefaultLanguageServer) SelectionRange(ctx context.Context, params *lsp.
 	return nil, nil
 }
 func (s *DefaultLanguageServer) SemanticTokensFull(ctx context.Context, params *lsp.SemanticTokensParams) (*lsp.SemanticTokens, error) {
-	lock, err := service.Get[workspace.Lock](s.sc)
+	lock, err := s.sc.Get[workspace.Lock]()
 	if err != nil {
 		return nil, err
 	}
-	tokensProvider, err := service.Get[SemanticTokensProvider](s.sc)
+	tokensProvider, err := s.sc.Get[SemanticTokensProvider]()
 	if err != nil {
 		return nil, err
 	}
@@ -560,11 +560,11 @@ func (s *DefaultLanguageServer) WorkDoneProgressCancel(ctx context.Context, para
 // StartLanguageServer starts a language server using the service container.
 // It sets up JSON-RPC communication over stdio and handles the essential LSP messages.
 func StartLanguageServer(ctx context.Context, sc *service.Container) error {
-	dialer, err := service.Get[jsonrpc2.Dialer](sc)
+	dialer, err := sc.Get[jsonrpc2.Dialer]()
 	if err != nil {
 		return err
 	}
-	binder, err := service.Get[jsonrpc2.Binder](sc)
+	binder, err := sc.Get[jsonrpc2.Binder]()
 	if err != nil {
 		return err
 	}
@@ -603,13 +603,13 @@ func NewDefaultBinder(sc *service.Container) *DefaultBinder {
 
 func (b *DefaultBinder) Bind(ctx context.Context, conn *jsonrpc2.Connection) (jsonrpc2.ConnectionOptions, error) {
 	// Store the JSON-RPC connection in the service container
-	connection, err := service.Get[*Connection](b.sc)
+	connection, err := b.sc.Get[*Connection]()
 	if err != nil {
 		return jsonrpc2.ConnectionOptions{}, err
 	}
 	connection.Value = conn
 	// Bind the LSP server implementation from the service container to the connection
-	server, err := service.Get[lsp.Server](b.sc)
+	server, err := b.sc.Get[lsp.Server]()
 	if err != nil {
 		return jsonrpc2.ConnectionOptions{}, err
 	}
