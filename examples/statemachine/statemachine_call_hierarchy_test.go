@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/test"
-	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/lsp"
 )
 
@@ -22,8 +21,9 @@ import (
 //	on  --alarm--> panic
 //
 // So: off has 1 outgoing call (-> on) and 1 incoming call (from on).
-//     on  has 2 outgoing calls (-> off, -> panic) and 1 incoming call (from off).
-//     panic has 0 outgoing calls and 1 incoming call (from on).
+//
+//	on  has 2 outgoing calls (-> off, -> panic) and 1 incoming call (from off).
+//	panic has 0 outgoing calls and 1 incoming call (from on).
 const callHierarchySource = `
 statemachine Test
 events flick alarm
@@ -62,7 +62,7 @@ func TestCallHierarchy_PrepareOnStateName(t *testing.T) {
 	f := test.New(t, CreateLspServices(nil))
 	doc := f.Parse(callHierarchySource).AssertNoErrors()
 
-	provider := service.MustGet[server.CallHierarchyProvider](f.Services())
+	provider := f.Services().MustGet[server.CallHierarchyProvider]()
 
 	// Line 4 (0-indexed): "state off" - cursor on "off"
 	item := prepareStateItem(t, provider, doc.Document.URI.DocumentURI(), 5, 7)
@@ -74,7 +74,7 @@ func TestCallHierarchy_PrepareOnStateKeyword(t *testing.T) {
 	f := test.New(t, CreateLspServices(nil))
 	doc := f.Parse(callHierarchySource).AssertNoErrors()
 
-	provider := service.MustGet[server.CallHierarchyProvider](f.Services())
+	provider := f.Services().MustGet[server.CallHierarchyProvider]()
 
 	// Line 5: "state off" - cursor inside the "state" keyword, not the name.
 	// NameFinder should reject this: the cursor isn't within the name range.
@@ -95,7 +95,7 @@ func TestCallHierarchy_PrepareOnStateReference(t *testing.T) {
 	f := test.New(t, CreateLspServices(nil))
 	doc := f.Parse(callHierarchySource).AssertNoErrors()
 
-	provider := service.MustGet[server.CallHierarchyProvider](f.Services())
+	provider := f.Services().MustGet[server.CallHierarchyProvider]()
 
 	// Line 6: "  flick => on" - cursor on the "on" reference, not on state
 	// on's own declaration. NameFinder resolves this to the referenced state.
@@ -108,7 +108,7 @@ func TestCallHierarchy_PrepareOnNonState(t *testing.T) {
 	f := test.New(t, CreateLspServices(nil))
 	doc := f.Parse(callHierarchySource).AssertNoErrors()
 
-	provider := service.MustGet[server.CallHierarchyProvider](f.Services())
+	provider := f.Services().MustGet[server.CallHierarchyProvider]()
 
 	// Line 1: "statemachine Test" - not a state
 	items, err := provider.HandlePrepareCallHierarchyRequest(
@@ -128,7 +128,7 @@ func TestCallHierarchy_OutgoingCalls(t *testing.T) {
 	f := test.New(t, CreateLspServices(nil))
 	doc := f.Parse(callHierarchySource).AssertNoErrors()
 
-	provider := service.MustGet[server.CallHierarchyProvider](f.Services())
+	provider := f.Services().MustGet[server.CallHierarchyProvider]()
 	uri := doc.Document.URI.DocumentURI()
 
 	onItem := prepareStateItem(t, provider, uri, 9, 7) // "state on"
@@ -164,7 +164,7 @@ state on
 end
 `).AssertNoErrors()
 
-	provider := service.MustGet[server.CallHierarchyProvider](f.Services())
+	provider := f.Services().MustGet[server.CallHierarchyProvider]()
 	uri := doc.Document.URI.DocumentURI()
 
 	offItem := prepareStateItem(t, provider, uri, 5, 7) // "state off"
@@ -182,7 +182,7 @@ func TestCallHierarchy_IncomingCalls(t *testing.T) {
 	f := test.New(t, CreateLspServices(nil))
 	doc := f.Parse(callHierarchySource).AssertNoErrors()
 
-	provider := service.MustGet[server.CallHierarchyProvider](f.Services())
+	provider := f.Services().MustGet[server.CallHierarchyProvider]()
 	uri := doc.Document.URI.DocumentURI()
 
 	// "panic" is only reachable from "on" (via alarm).

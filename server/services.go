@@ -26,69 +26,69 @@ type Connection struct {
 // It should be called together with [SetupStdioServices] or [SetupWasmServices].
 // If any service is already set, it's not overwritten.
 func SetupDefaultServices(sc *service.Container) {
-	service.Put(sc, &WorkspaceFolders{})
-	service.Put(sc, &Connection{})
-	if !service.Has[slog.Handler](sc) {
-		service.Put(sc, NewSlogHandler(sc))
+	sc.Put(&WorkspaceFolders{})
+	sc.Put(&Connection{})
+	if !sc.Has[slog.Handler]() {
+		sc.Put(NewSlogHandler(sc))
 	}
-	if !service.Has[DiagnosticsPublisher](sc) {
-		service.Put(sc, NewDiagnosticsPublisher(sc))
+	if !sc.Has[DiagnosticsPublisher]() {
+		sc.Put(NewDiagnosticsPublisher(sc))
 	}
-	if !service.Has[lsp.Server](sc) {
-		service.Put(sc, NewDefaultLanguageServer(sc))
+	if !sc.Has[lsp.Server]() {
+		sc.Put(NewDefaultLanguageServer(sc))
 	}
-	if !service.Has[DocumentSyncher](sc) {
-		service.Put(sc, NewDefaultDocumentSyncher(sc))
+	if !sc.Has[DocumentSyncher]() {
+		sc.Put(NewDefaultDocumentSyncher(sc))
 	}
-	if !service.Has[DefinitionProvider](sc) {
-		service.Put(sc, NewDefaultDefinitionProvider(sc))
+	if !sc.Has[DefinitionProvider]() {
+		sc.Put(NewDefaultDefinitionProvider(sc))
 	}
-	if !service.Has[ReferencesProvider](sc) {
-		service.Put(sc, NewDefaultReferencesProvider(sc))
+	if !sc.Has[ReferencesProvider]() {
+		sc.Put(NewDefaultReferencesProvider(sc))
 	}
-	if !service.Has[FoldingRangeProvider](sc) {
-		service.Put(sc, NewDefaultFoldingRangeProvider(sc))
+	if !sc.Has[FoldingRangeProvider]() {
+		sc.Put(NewDefaultFoldingRangeProvider(sc))
 	}
-	if !service.Has[RenameProvider](sc) {
-		service.Put(sc, NewDefaultRenameProvider(sc))
+	if !sc.Has[RenameProvider]() {
+		sc.Put(NewDefaultRenameProvider(sc))
 	}
-	if !service.Has[NameFinder](sc) {
-		service.Put(sc, NewDefaultNameFinder(sc))
+	if !sc.Has[NameFinder]() {
+		sc.Put(NewDefaultNameFinder(sc))
 	}
-	if !service.Has[ReferencesFinder](sc) {
-		service.Put(sc, NewDefaultReferencesFinder(sc))
+	if !sc.Has[ReferencesFinder]() {
+		sc.Put(NewDefaultReferencesFinder(sc))
 	}
-	if !service.Has[DocumentSymbolProvider](sc) {
-		service.Put(sc, NewDefaultDocumentSymbolProvider(sc))
+	if !sc.Has[DocumentSymbolProvider]() {
+		sc.Put(NewDefaultDocumentSymbolProvider(sc))
 	}
-	if !service.Has[FuzzyMatcher](sc) {
-		service.Put(sc, NewDefaultFuzzyMatcher())
+	if !sc.Has[FuzzyMatcher]() {
+		sc.Put(NewDefaultFuzzyMatcher())
 	}
-	if !service.Has[CompletionProvider](sc) {
-		service.Put(sc, NewDefaultCompletionProvider(sc))
+	if !sc.Has[CompletionProvider]() {
+		sc.Put(NewDefaultCompletionProvider(sc))
 	}
-	if !service.Has[SnippetRegistry](sc) {
-		service.Put(sc, NewDefaultSnippetRegistry())
+	if !sc.Has[SnippetRegistry]() {
+		sc.Put(NewDefaultSnippetRegistry())
 	}
-	if !service.Has[CompletionTriggers](sc) {
-		service.Put(sc, NewDefaultCompletionTriggers())
+	if !sc.Has[CompletionTriggers]() {
+		sc.Put(NewDefaultCompletionTriggers())
 	}
-	if !service.Has[CompletionContributor](sc) {
-		service.Put(sc, NewDefaultCompletionContributor())
+	if !sc.Has[CompletionContributor]() {
+		sc.Put(NewDefaultCompletionContributor())
 	}
-	if !service.Has[SignatureHelpTriggers](sc) {
-		service.Put(sc, NewDefaultSignatureHelpTriggers())
+	if !sc.Has[SignatureHelpTriggers]() {
+		sc.Put(NewDefaultSignatureHelpTriggers())
 	}
-	if !service.Has[DocumentHighlightProvider](sc) {
-		service.Put(sc, NewDefaultDocumentHighlightProvider(sc))
+	if !sc.Has[DocumentHighlightProvider]() {
+		sc.Put(NewDefaultDocumentHighlightProvider(sc))
 	}
-	if !service.Has[WorkspaceSymbolProvider](sc) {
-		service.Put(sc, NewDefaultWorkspaceSymbolProvider(sc))
+	if !sc.Has[WorkspaceSymbolProvider]() {
+		sc.Put(NewDefaultWorkspaceSymbolProvider(sc))
 	}
-	if !service.Has[DocumentationProvider](sc) {
-		service.Put(sc, NewDefaultDocumentationProvider())
+	if !sc.Has[DocumentationProvider]() {
+		sc.Put(NewDefaultDocumentationProvider())
 	}
-	if !service.Has[HoverProvider](sc) {
-		service.Put(sc, NewDefaultHoverProvider(sc))
+	if !sc.Has[HoverProvider]() {
+		sc.Put(NewDefaultHoverProvider(sc))
 	}
 }

@@ -33,7 +33,7 @@ func NewDefaultReferenceDescriptionsProvider(sc *service.Container) ReferenceDes
 func (s *DefaultReferenceDescriptionsProvider) ReferenceDescriptions(ctx context.Context, document *core.Document) core.ReferenceDescriptions {
 	// Unlike AST node descriptions, reference descriptions can't be associated with specific node types,
 	// so the [ReferenceDescriber] interface is used as a service.
-	describer := service.MustGet[ReferenceDescriber](s.sc)
+	describer := s.sc.MustGet[ReferenceDescriber]()
 	descriptions := collections.NewMultiMap[core.AstNode, *core.ReferenceDescription]()
 	for _, ref := range document.References {
 		if ctx.Err() != nil {

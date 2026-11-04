@@ -64,9 +64,9 @@ func NewDefaultBuilder(sc *service.Container) Builder {
 
 func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downgrade func()) error {
 	// PHASE 1: Parse, and compute exports (parallel per document).
-	lexer := service.MustGet[lexer.Lexer](s.sc)
-	parser := service.MustGet[parser.Parser](s.sc)
-	exporter := service.MustGet[linking.SymbolExporter](s.sc)
+	lexer := s.sc.MustGet[lexer.Lexer]()
+	parser := s.sc.MustGet[parser.Parser]()
+	exporter := s.sc.MustGet[linking.SymbolExporter]()
 	parallel.ForEach(docs, func(doc *core.Document, _ int) {
 		if ctx.Err() != nil {
 			return
@@ -103,11 +103,11 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 
 	// PHASE 2: Compute imported/local symbols and link (parallel per document).
 	// This requires the exported symbols of all documents to be available.
-	documentManager := service.MustGet[DocumentManager](s.sc)
-	importer := service.MustGet[linking.SymbolImporter](s.sc)
-	localSymbols := service.MustGet[linking.LocalSymbolsProvider](s.sc)
-	linker := service.MustGet[linking.Linker](s.sc)
-	referenceDescriptions := service.MustGet[linking.ReferenceDescriptionsProvider](s.sc)
+	documentManager := s.sc.MustGet[DocumentManager]()
+	importer := s.sc.MustGet[linking.SymbolImporter]()
+	localSymbols := s.sc.MustGet[linking.LocalSymbolsProvider]()
+	linker := s.sc.MustGet[linking.Linker]()
+	referenceDescriptions := s.sc.MustGet[linking.ReferenceDescriptionsProvider]()
 	parallel.ForEach(docs, func(doc *core.Document, _ int) {
 		if ctx.Err() != nil {
 			return
@@ -164,7 +164,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document, downg
 	}
 
 	// PHASE 3: Run custom validations (parallel per document).
-	validator := service.MustGet[DocumentValidator](s.sc)
+	validator := s.sc.MustGet[DocumentValidator]()
 	parallel.ForEach(docs, func(doc *core.Document, _ int) {
 		if ctx.Err() != nil {
 			return

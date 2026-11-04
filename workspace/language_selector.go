@@ -55,7 +55,7 @@ func NewDefaultLanguageSelector(sc *service.Container, selectors ...DocumentMatc
 }
 
 func (s *DefaultLanguageSelector) Select(uri core.URI) (int, string) {
-	if documents, err := service.Get[DocumentManager](s.sc); err == nil {
+	if documents, err := s.sc.Get[DocumentManager](); err == nil {
 		if doc := documents.Get(uri); doc != nil {
 			if languageID := doc.TextDoc.LanguageID(); languageID != "" {
 				for i, sel := range s.selectors {

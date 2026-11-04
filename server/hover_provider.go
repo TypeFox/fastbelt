@@ -31,7 +31,7 @@ func (s *DefaultHoverProvider) HandleHoverRequest(ctx context.Context, params *l
 		return nil, nil
 	}
 
-	docProvider, err := service.Get[DocumentationProvider](s.sc)
+	docProvider, err := s.sc.Get[DocumentationProvider]()
 	if err != nil {
 		return nil, nil
 	}

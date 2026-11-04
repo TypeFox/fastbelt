@@ -113,7 +113,7 @@ func TestOperatorCompletion(t *testing.T) {
 	SetupGeneratedServerServices(sc)
 	server.SetupDefaultServices(sc)
 	var contributor server.CompletionContributor = &operatorCompletionContributor{}
-	service.Override(sc, contributor)
+	sc.Override(contributor)
 	sc.Seal()
 	doc := test.New(t, sc).Parse("module test 1 <|cursor>")
 
@@ -135,7 +135,7 @@ func TestAfterOperatorCompletion(t *testing.T) {
 	SetupGeneratedServerServices(sc)
 	server.SetupDefaultServices(sc)
 	var contributor server.CompletionContributor = &operatorCompletionContributor{}
-	service.Override(sc, contributor)
+	sc.Override(contributor)
 	sc.Seal()
 	doc := test.New(t, sc).Parse(`
 	module test
@@ -169,7 +169,7 @@ func completeReferences(t *testing.T, content string) ([]string, int) {
 	filter := &countingCompletionFilter{}
 	sc := service.NewContainer()
 	SetupServices(sc)
-	service.Put[ArithmeticsCompletionFilter](sc, filter)
+	sc.Put[ArithmeticsCompletionFilter](filter)
 	SetupGeneratedServerServices(sc)
 	server.SetupDefaultServices(sc)
 	sc.Seal()

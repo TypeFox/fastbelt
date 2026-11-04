@@ -12,31 +12,31 @@ import (
 // It is idempotent: types that are already registered are left unchanged.
 // Call it from a language's SetupServices, before [service.Container.Seal].
 func SetupDefaultServices(sc *service.Container) {
-	if !service.Has[DocumentManager](sc) {
-		service.Put(sc, NewDefaultDocumentManager(sc))
+	if !sc.Has[DocumentManager]() {
+		sc.Put(NewDefaultDocumentManager(sc))
 	}
-	if !service.Has[FileSystem](sc) {
-		service.Put(sc, NewDiskFileSystem())
+	if !sc.Has[FileSystem]() {
+		sc.Put(NewDiskFileSystem())
 	}
-	if !service.Has[Initializer](sc) {
-		service.Put(sc, NewDefaultInitializer(sc))
+	if !sc.Has[Initializer]() {
+		sc.Put(NewDefaultInitializer(sc))
 	}
-	if !service.Has[IncludeFilter](sc) {
-		service.Put(sc, NewDefaultIncludeFilter(sc))
+	if !sc.Has[IncludeFilter]() {
+		sc.Put(NewDefaultIncludeFilter(sc))
 	}
-	if !service.Has[Lock](sc) {
-		service.Put(sc, NewDefaultLock())
+	if !sc.Has[Lock]() {
+		sc.Put(NewDefaultLock())
 	}
-	if !service.Has[DocumentUpdater](sc) {
-		service.Put(sc, NewDefaultDocumentUpdater(sc))
+	if !sc.Has[DocumentUpdater]() {
+		sc.Put(NewDefaultDocumentUpdater(sc))
 	}
-	if !service.Has[DocumentChangeImpact](sc) {
-		service.Put(sc, NewDefaultDocumentChangeImpact(sc))
+	if !sc.Has[DocumentChangeImpact]() {
+		sc.Put(NewDefaultDocumentChangeImpact(sc))
 	}
-	if !service.Has[Builder](sc) {
-		service.Put(sc, NewDefaultBuilder(sc))
+	if !sc.Has[Builder]() {
+		sc.Put(NewDefaultBuilder(sc))
 	}
-	if !service.Has[DocumentValidator](sc) {
-		service.Put(sc, NewDefaultDocumentValidator(sc))
+	if !sc.Has[DocumentValidator]() {
+		sc.Put(NewDefaultDocumentValidator(sc))
 	}
 }

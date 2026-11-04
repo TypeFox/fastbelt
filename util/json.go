@@ -129,11 +129,11 @@ func UnmarshalReference[T core.AstNode](owner core.AstNode, value jsontext.Value
 // Similar to parsing-based document loading the ast build up first including the reference, while the resolution of the references is done during the linking phase of the building process.
 // For properly linking references to other documents, a helper object is attached to the context given to builder providing access to other documents.
 func UnmarshalAndBuildDocument(ctx context.Context, sc *service.Container, document *core.Document, input io.Reader, factories map[string]func() core.AstNode) error {
-	documents, err := service.Get[workspace.DocumentManager](sc)
+	documents, err := sc.Get[workspace.DocumentManager]()
 	if err != nil {
 		return err
 	}
-	builder, err := service.Get[workspace.Builder](sc)
+	builder, err := sc.Get[workspace.Builder]()
 	if err != nil {
 		return err
 	}

@@ -16,11 +16,11 @@ import (
 )
 
 func SetupWasmServices(sc *service.Container) {
-	if !service.Has[jsonrpc2.Binder](sc) {
-		service.Put[jsonrpc2.Binder](sc, NewWasmBinder(sc))
+	if !sc.Has[jsonrpc2.Binder]() {
+		sc.Put[jsonrpc2.Binder](NewWasmBinder(sc))
 	}
-	if !service.Has[jsonrpc2.Dialer](sc) {
-		service.Put[jsonrpc2.Dialer](sc, NewWasmDialer())
+	if !sc.Has[jsonrpc2.Dialer]() {
+		sc.Put[jsonrpc2.Dialer](NewWasmDialer())
 	}
 }
 

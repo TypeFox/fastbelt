@@ -6,13 +6,12 @@ import (
 
 	"typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
-	"typefox.dev/fastbelt/util/service"
 )
 
 func BenchmarkNestedString(b *testing.B) {
 	content, _ := generateNestedString()
 	srv := CreateServices()
-	lexerService := service.MustGet[lexer.Lexer](srv)
+	lexerService := srv.MustGet[lexer.Lexer]()
 	doc := fastbelt.NewDocumentFromString("file:///workspace/nested_string.mode", "modes", content)
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()

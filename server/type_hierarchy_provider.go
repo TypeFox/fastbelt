@@ -17,14 +17,14 @@ import (
 //	type MyTypeHierarchyProvider struct{ sc *service.Container }
 //
 //	func (p *MyTypeHierarchyProvider) HandlePrepareTypeHierarchyRequest(ctx context.Context, params *lsp.TypeHierarchyPrepareParams) ([]lsp.TypeHierarchyItem, error) {
-//	    documentManager := service.MustGet[workspace.DocumentManager](p.sc)
+//	    documentManager := p.sc.MustGet[workspace.DocumentManager]()
 //	    doc := documentManager.Get(core.ParseURI(string(params.TextDocument.URI)))
 //	    if doc == nil {
 //	        return nil, nil
 //	    }
 //	    offset := doc.TextDoc.OffsetAt(params.Position)
 //	    first, second := doc.Tokens.SearchOffset2(offset)
-//	    nameFinder := service.MustGet[server.NameFinder](p.sc)
+//	    nameFinder := p.sc.MustGet[server.NameFinder]()
 //	    foundName := nameFinder.Find(ctx, first, second)
 //	    if foundName.Target == nil {
 //	        return nil, nil
@@ -51,7 +51,7 @@ import (
 //	}
 //
 //	// Register with the service container
-//	service.Put[server.TypeHierarchyProvider](sc, &MyTypeHierarchyProvider{sc: sc})
+//	sc.Put[server.TypeHierarchyProvider](&MyTypeHierarchyProvider{sc: sc})
 type TypeHierarchyProvider interface {
 	HandlePrepareTypeHierarchyRequest(ctx context.Context, params *lsp.TypeHierarchyPrepareParams) ([]lsp.TypeHierarchyItem, error)
 	HandleSupertypesRequest(ctx context.Context, params *lsp.TypeHierarchySupertypesParams) ([]lsp.TypeHierarchyItem, error)

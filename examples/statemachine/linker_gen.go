@@ -61,7 +61,7 @@ func NewDefaultStatemachineModelReferenceLinker(sc *service.Container) Statemach
 	return &DefaultStatemachineModelReferenceLinker{
 		sc: sc,
 		scopeProvider: sync.OnceValue(func() StatemachineModelScopeProvider {
-			return service.MustGet[StatemachineModelScopeProvider](sc)
+			return sc.MustGet[StatemachineModelScopeProvider]()
 		}),
 	}
 }
@@ -102,7 +102,7 @@ type DefaultStatemachineModelReferencesConstructor struct {
 
 func NewDefaultStatemachineModelReferencesConstructor(sc *service.Container) StatemachineModelReferencesConstructor {
 	referenceLinker := sync.OnceValue(func() StatemachineModelReferenceLinker {
-		return service.MustGet[StatemachineModelReferenceLinker](sc)
+		return sc.MustGet[StatemachineModelReferenceLinker]()
 	})
 	return &DefaultStatemachineModelReferencesConstructor{
 		linkStatemachineInit: sync.OnceValue(func() core.ReferenceGetter[State] {

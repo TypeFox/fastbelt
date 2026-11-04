@@ -23,7 +23,7 @@ func TestLanguageServerBasicLifecycle(t *testing.T) {
 	SetupDefaultServices(sc)
 	sc.Seal()
 
-	server := service.MustGet[lsp.Server](sc)
+	server := sc.MustGet[lsp.Server]()
 	ctx := context.Background()
 
 	// Test Initialize

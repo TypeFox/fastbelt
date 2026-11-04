@@ -41,7 +41,7 @@ func NodeAtCursor(doc *core.Document, position lsp.Position) core.AstNode {
 // [NameFinder]. Returns a nil target if there is no document, no token at
 // the position, or no resolvable name.
 func TargetAtCursor(ctx context.Context, sc *service.Container, params *lsp.TextDocumentPositionParams) (target core.AstNode, sourceRange lsp.Range) {
-	documentManager := service.MustGet[workspace.DocumentManager](sc)
+	documentManager := sc.MustGet[workspace.DocumentManager]()
 	doc := documentManager.Get(core.ParseURI(string(params.TextDocument.URI)))
 	if doc == nil {
 		return nil, lsp.Range{}
@@ -53,7 +53,7 @@ func TargetAtCursor(ctx context.Context, sc *service.Container, params *lsp.Text
 		return nil, lsp.Range{}
 	}
 
-	nameFinder := service.MustGet[NameFinder](sc)
+	nameFinder := sc.MustGet[NameFinder]()
 	foundName := nameFinder.Find(ctx, first, second)
 	if foundName.Target == nil || foundName.Source == nil {
 		return nil, lsp.Range{}

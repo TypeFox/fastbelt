@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/test"
-	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/lsp"
 )
 
@@ -32,7 +31,7 @@ state on
 end
 `).AssertNoErrors()
 
-	provider := service.MustGet[server.InlayHintProvider](f.Services())
+	provider := f.Services().MustGet[server.InlayHintProvider]()
 	result, err := provider.HandleInlayHintRequest(
 		context.Background(),
 		&lsp.InlayHintParams{
@@ -70,7 +69,7 @@ state on
 end
 `).AssertNoErrors()
 
-	provider := service.MustGet[server.InlayHintProvider](f.Services())
+	provider := f.Services().MustGet[server.InlayHintProvider]()
 	result, err := provider.HandleInlayHintRequest(
 		context.Background(),
 		&lsp.InlayHintParams{

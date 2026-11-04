@@ -33,7 +33,7 @@ func NewDefaultLookaheadReferenceLinker(sc *service.Container) LookaheadReferenc
 	return &DefaultLookaheadReferenceLinker{
 		sc: sc,
 		scopeProvider: sync.OnceValue(func() LookaheadScopeProvider {
-			return service.MustGet[LookaheadScopeProvider](sc)
+			return sc.MustGet[LookaheadScopeProvider]()
 		}),
 	}
 }

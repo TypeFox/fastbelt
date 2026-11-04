@@ -12,7 +12,6 @@ import (
 	"typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/linking"
 	"typefox.dev/fastbelt/util/extiter"
-	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 )
 
@@ -31,7 +30,7 @@ func setupLinkedStatemachine(b *testing.B) (*fastbelt.Document, *fastbelt.Refere
 	content, _ := generateStatemachineContent(0)
 	srv := CreateServices()
 	doc := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
-	builder := service.MustGet[workspace.Builder](srv)
+	builder := srv.MustGet[workspace.Builder]()
 	if err := builder.Build(b.Context(), []*fastbelt.Document{doc}, nil); err != nil {
 		b.Fatalf("build failed: %v", err)
 	}

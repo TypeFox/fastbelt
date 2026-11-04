@@ -18,8 +18,7 @@ import (
 
 // SetupServices sets up the base services for the lookahead test language.
 func SetupServices(sc *service.Container) {
-	service.Put[core.LanguageSelector](
-		sc,
+	sc.Put[core.LanguageSelector](
 		workspace.NewDefaultLanguageSelector(sc,
 			workspace.NewDocumentMatcherWithPatterns("lookahead", "**/*.la"),
 		),
@@ -42,7 +41,7 @@ func CreateServices() *service.Container {
 	SetupServices(sc)
 	sc.Seal()
 	// Some of the adaptive prediction decisions in this grammar need full context LL to disambiguate
-	lookahead := service.MustGet[LookaheadParserLookahead](sc)
+	lookahead := sc.MustGet[LookaheadParserLookahead]()
 	lookahead.SetPredictionMode(parser.PredictionModeLL)
 	return sc
 }

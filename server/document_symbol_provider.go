@@ -56,7 +56,7 @@ func NewDocumentSymbolProviderWithFilter(sc *service.Container, filter DocumentS
 }
 
 func (p *DefaultDocumentSymbolProvider) HandleDocumentSymbolRequest(ctx context.Context, params *lsp.DocumentSymbolParams) ([]lsp.DocumentSymbol, error) {
-	documentManager := service.MustGet[workspace.DocumentManager](p.sc)
+	documentManager := p.sc.MustGet[workspace.DocumentManager]()
 	uri := core.ParseURI(string(params.TextDocument.URI))
 	doc := documentManager.Get(uri)
 	if doc == nil {

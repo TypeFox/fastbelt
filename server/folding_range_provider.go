@@ -81,7 +81,7 @@ func NewFoldingRangeProviderWithFilter(sc *service.Container, filter FoldingRang
 }
 
 func (p *DefaultFoldingRangeProvider) HandleFoldingRangeRequest(ctx context.Context, params *lsp.FoldingRangeParams) ([]lsp.FoldingRange, error) {
-	documentManager := service.MustGet[workspace.DocumentManager](p.sc)
+	documentManager := p.sc.MustGet[workspace.DocumentManager]()
 	uri := core.ParseURI(string(params.TextDocument.URI))
 	doc := documentManager.Get(uri)
 	if doc == nil {

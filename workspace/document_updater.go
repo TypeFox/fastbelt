@@ -41,10 +41,10 @@ func NewDefaultDocumentUpdater(sc *service.Container) DocumentUpdater {
 
 func (s *DefaultDocumentUpdater) Update(ctx context.Context, changed []textdoc.Handle, deleted []core.URI) {
 	go func() {
-		docManager := service.MustGet[DocumentManager](s.sc)
-		changeImpact := service.MustGet[DocumentChangeImpact](s.sc)
-		builder := service.MustGet[Builder](s.sc)
-		lock := service.MustGet[Lock](s.sc)
+		docManager := s.sc.MustGet[DocumentManager]()
+		changeImpact := s.sc.MustGet[DocumentChangeImpact]()
+		builder := s.sc.MustGet[Builder]()
+		lock := s.sc.MustGet[Lock]()
 		// Write cancels any previous pending or in-progress build and issues a
 		// fresh context. The outer ctx is from jsonrpc2 and has a different
 		// lifetime than the build.

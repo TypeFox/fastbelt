@@ -43,7 +43,7 @@ func NewDefaultArithmeticsReferenceLinker(sc *service.Container) ArithmeticsRefe
 	return &DefaultArithmeticsReferenceLinker{
 		sc: sc,
 		scopeProvider: sync.OnceValue(func() ArithmeticsScopeProvider {
-			return service.MustGet[ArithmeticsScopeProvider](sc)
+			return sc.MustGet[ArithmeticsScopeProvider]()
 		}),
 	}
 }
@@ -63,7 +63,7 @@ type DefaultArithmeticsReferencesConstructor struct {
 
 func NewDefaultArithmeticsReferencesConstructor(sc *service.Container) ArithmeticsReferencesConstructor {
 	referenceLinker := sync.OnceValue(func() ArithmeticsReferenceLinker {
-		return service.MustGet[ArithmeticsReferenceLinker](sc)
+		return sc.MustGet[ArithmeticsReferenceLinker]()
 	})
 	return &DefaultArithmeticsReferencesConstructor{
 		linkFunctionCallCallable: sync.OnceValue(func() core.ReferenceGetter[AbstractDefinition] {

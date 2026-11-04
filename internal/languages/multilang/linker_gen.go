@@ -43,7 +43,7 @@ func NewDefaultMultilangModelReferenceLinker(sc *service.Container) MultilangMod
 	return &DefaultMultilangModelReferenceLinker{
 		sc: sc,
 		scopeProvider: sync.OnceValue(func() MultilangModelScopeProvider {
-			return service.MustGet[MultilangModelScopeProvider](sc)
+			return sc.MustGet[MultilangModelScopeProvider]()
 		}),
 	}
 }
@@ -63,7 +63,7 @@ type DefaultMultilangModelReferencesConstructor struct {
 
 func NewDefaultMultilangModelReferencesConstructor(sc *service.Container) MultilangModelReferencesConstructor {
 	referenceLinker := sync.OnceValue(func() MultilangModelReferenceLinker {
-		return service.MustGet[MultilangModelReferenceLinker](sc)
+		return sc.MustGet[MultilangModelReferenceLinker]()
 	})
 	return &DefaultMultilangModelReferencesConstructor{
 		linkFarewellTo: sync.OnceValue(func() core.ReferenceGetter[Greeting] {

@@ -52,7 +52,7 @@ type DefaultLexer struct {
 func (l *DefaultLexer) Exec(document *core.Document) {
 	language := 0
 	if len(l.entryModes) > 1 {
-		selector := service.MustGet[core.LanguageSelector](l.sc)
+		selector := l.sc.MustGet[core.LanguageSelector]()
 		if i, _ := selector.Select(document.URI); i > 0 && i < len(l.entryModes) {
 			language = i
 		}

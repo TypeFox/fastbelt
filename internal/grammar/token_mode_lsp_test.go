@@ -243,7 +243,7 @@ token mode default {
 }`, "file:///symbols-default.fb")
 	doc.AssertNoParseErrors()
 	// The default mode is an ordinary mode named 'default'.
-	provider := service.MustGet[server.DocumentSymbolProvider](f.Services())
+	provider := f.Services().MustGet[server.DocumentSymbolProvider]()
 	result, err := provider.HandleDocumentSymbolRequest(f.Ctx(), &lsp.DocumentSymbolParams{
 		TextDocument: lsp.TextDocumentIdentifier{URI: doc.Document.URI.DocumentURI()},
 	})

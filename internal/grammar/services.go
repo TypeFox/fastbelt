@@ -17,8 +17,7 @@ import (
 
 // SetupServices sets up the base services for the grammar language.
 func SetupServices(sc *service.Container) {
-	service.Put[core.LanguageSelector](
-		sc,
+	sc.Put[core.LanguageSelector](
 		workspace.NewDefaultLanguageSelector(sc,
 			workspace.NewDocumentMatcherWithPatterns("fastbelt", "**/*.fb"),
 		),
@@ -29,15 +28,15 @@ func SetupServices(sc *service.Container) {
 	SetupGeneratedServices(sc)
 
 	// Custom lookahead to support grammars without semicolons.
-	service.Override(sc, newFastbeltParserLookahead())
+	sc.Override(newFastbeltParserLookahead())
 
-	service.Override[FastbeltScopeProvider](sc, newScopeProviderImpl(sc))
-	service.Override(sc, newImportedSymbolsProviderImpl(sc))
+	sc.Override[FastbeltScopeProvider](newScopeProviderImpl(sc))
+	sc.Override(newImportedSymbolsProviderImpl(sc))
 	// Every .fb file of a folder is part of one grammar, so a change affects all of them.
-	service.Override(sc, newChangeImpactImpl(sc))
+	sc.Override(newChangeImpactImpl(sc))
 
 	// Set a semantic token highlighting strategy
-	service.Put(sc, server.NewTokenBasedSemanticTokensProvider(
+	sc.Put(server.NewTokenBasedSemanticTokensProvider(
 		sc,
 		legendProvider,
 		NewGrammarTokenHighlightingStrategy(),

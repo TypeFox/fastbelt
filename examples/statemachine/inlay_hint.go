@@ -30,7 +30,7 @@ type stateMachineInlayHintProvider struct {
 var _ server.InlayHintProvider = (*stateMachineInlayHintProvider)(nil)
 
 func (p *stateMachineInlayHintProvider) HandleInlayHintRequest(ctx context.Context, params *lsp.InlayHintParams) ([]lsp.InlayHint, error) {
-	documentManager := service.MustGet[workspace.DocumentManager](p.sc)
+	documentManager := p.sc.MustGet[workspace.DocumentManager]()
 	doc := documentManager.Get(core.ParseURI(string(params.TextDocument.URI)))
 	if doc == nil || doc.Root == nil {
 		return nil, nil

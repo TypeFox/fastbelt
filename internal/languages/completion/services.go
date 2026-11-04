@@ -17,8 +17,7 @@ import (
 
 // SetupServices sets up the base services for the completion test language.
 func SetupServices(sc *service.Container) {
-	service.Put[core.LanguageSelector](
-		sc,
+	sc.Put[core.LanguageSelector](
 		workspace.NewDefaultLanguageSelector(sc,
 			workspace.NewDocumentMatcherWithPatterns("completion", "**/*.cmpl"),
 		),
@@ -26,7 +25,7 @@ func SetupServices(sc *service.Container) {
 	textdoc.SetupDefaultServices(sc)
 	linking.SetupDefaultServices(sc)
 	workspace.SetupDefaultServices(sc)
-	service.Put[CompletionScopeProvider](sc, NewCompletionScopeProviderImpl(sc))
+	sc.Put[CompletionScopeProvider](NewCompletionScopeProviderImpl(sc))
 	SetupGeneratedServices(sc)
 	SetupGeneratedServerServices(sc)
 	server.SetupDefaultServices(sc)
@@ -41,7 +40,7 @@ func CreateServices(contributor server.CompletionContributor) *service.Container
 	sc := service.NewContainer()
 	SetupServices(sc)
 	if contributor != nil {
-		service.Override(sc, contributor)
+		sc.Override(contributor)
 	}
 	sc.Seal()
 	return sc

@@ -650,7 +650,7 @@ func completeOwnersWith(t *testing.T, src string, filter ownerRecorder) (*test.D
 	t.Helper()
 	sc := service.NewContainer()
 	completion.SetupServices(sc)
-	service.Override[completion.CompletionCompletionFilter](sc, filter)
+	sc.Override[completion.CompletionCompletionFilter](filter)
 	sc.Seal()
 
 	doc := test.New(t, sc).Parse(src)
@@ -1008,7 +1008,7 @@ func (h *hidingCompletionFilter) FilterRefFQNRef(ctx context.Context, ref *core.
 func TestCompletion_FilterOverride(t *testing.T) {
 	sc := service.NewContainer()
 	completion.SetupServices(sc)
-	service.Override[completion.CompletionCompletionFilter](sc, &hidingCompletionFilter{hide: "bar"})
+	sc.Override[completion.CompletionCompletionFilter](&hidingCompletionFilter{hide: "bar"})
 	sc.Seal()
 
 	doc := test.New(t, sc).Parse("declare foo declare bar fqn <|cursor>")
@@ -1634,7 +1634,7 @@ func TestCompletion_Snippets(t *testing.T) {
 	registry.Register(server.SnippetTemplate{Label: "never", Body: "never", Applicable: func(server.SnippetContext) bool { return false }})
 	sc := service.NewContainer()
 	completion.SetupServices(sc)
-	service.Override[server.SnippetRegistry](sc, registry)
+	sc.Override[server.SnippetRegistry](registry)
 	sc.Seal()
 	complete := func(src string) []lsp.CompletionItem {
 		return test.New(t, sc).Parse(src).CompletionItems("cursor")
