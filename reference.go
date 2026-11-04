@@ -27,14 +27,15 @@ import (
 // are called for the first time.
 type Reference[T AstNode] struct {
 	unit        StringUnit
-	owner       AstNode
-	description *SymbolDescription
+	description atomic.Pointer[SymbolDescription]
 	err         *ReferenceError
-	ref         T
 	mu          sync.Mutex
 	getter      ReferenceGetter[T]
-	resolved    atomic.Bool
 }
+
+// unresolvedSymbol is stored as description when resolution finished without a symbol,
+// so that a non-nil description always means "resolution has been attempted".
+var unresolvedSymbol = &SymbolDescription{}
 
 // Reset clears all cached resolution results so the reference can be resolved again.
 func (r *Reference[T]) Reset() {
@@ -43,11 +44,8 @@ func (r *Reference[T]) Reset() {
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.resolved.Store(false)
-	r.description = nil
+	r.description.Store(nil)
 	r.err = nil
-	var zero T
-	r.ref = zero
 }
 
 // Unit returns the [StringUnit] that contains the textual reference.
@@ -68,10 +66,10 @@ func (r *Reference[T]) Text() string {
 
 // Owner returns the AST node that owns this reference.
 func (r *Reference[T]) Owner() AstNode {
-	if r == nil {
+	if r == nil || r.unit == nil {
 		return nil
 	}
-	return r.owner
+	return r.unit.Owner()
 }
 
 // Description returns the resolved symbol description, or nil when unresolved.
@@ -79,7 +77,11 @@ func (r *Reference[T]) Description() *SymbolDescription {
 	if r == nil {
 		return nil
 	}
-	return r.description
+	desc := r.description.Load()
+	if desc == unresolvedSymbol {
+		return nil
+	}
+	return desc
 }
 
 // RefNode returns the resolved target node as [AstNode].
@@ -95,7 +97,13 @@ func (r *Reference[T]) Ref(ctx context.Context) T {
 		return zero
 	}
 	r.Resolve(ctx)
-	return r.ref
+	// The description stays nil when a resolution cycle was detected.
+	// On a type mismatch the assertion fails and the zero value is returned; see resolveSlow.
+	if desc := r.description.Load(); desc != nil {
+		node, _ := desc.Node.(T)
+		return node
+	}
+	return zero
 }
 
 // Error returns the resolution error for this reference, if any.
@@ -140,7 +148,7 @@ func getResolveChain(ctx context.Context) *resolutionChain {
 // It is safe for concurrent use.
 func (r *Reference[T]) Resolve(ctx context.Context) {
 	// Fast path: check if already resolved without locking
-	if r == nil || r.resolved.Load() {
+	if r == nil || r.description.Load() != nil {
 		return
 	}
 	// Slow path (outlined so that the fast path can be inlined)
@@ -160,7 +168,7 @@ func (r *Reference[T]) resolveSlow(ctx context.Context) {
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if r.resolved.Load() {
+	if r.description.Load() != nil {
 		// Another goroutine might have resolved it while we were waiting for the lock
 		return
 	}
@@ -176,15 +184,12 @@ func (r *Reference[T]) resolveSlow(ctx context.Context) {
 		chain.refs = chain.refs[:len(chain.refs)-1]
 	}()
 	desc, e := r.getter(ctx, r)
-	r.description = desc
 	if r.err == nil {
 		// Do not overwrite existing errors
 		r.err = e
 	}
 	if desc != nil {
-		if node, ok := desc.Node.(T); ok {
-			r.ref = node
-		} else if r.err == nil {
+		if _, ok := desc.Node.(T); !ok && r.err == nil {
 			expectedType := reflect.TypeFor[T]().String()
 			actualType := "nil"
 			if desc.Node != nil {
@@ -192,14 +197,21 @@ func (r *Reference[T]) resolveSlow(ctx context.Context) {
 			}
 			r.err = NewReferenceError("Reference resolution type mismatch: expected " + expectedType + ", got " + actualType)
 		}
+	} else {
+		desc = unresolvedSymbol
 	}
-	r.resolved.Store(true)
+	// Publishing the description marks the reference as resolved; err must be written before this.
+	r.description.Store(desc)
 }
 
 // NewReference creates a lazy, typed reference owned by owner and backed by getter.
 func NewReference[T AstNode](owner AstNode, unit StringUnit, getter ReferenceGetter[T]) *Reference[T] {
+	if unit == nil {
+		// The owner is derived from the unit, so a unit-less reference (e.g. for completion
+		// or JSON unmarshaling) gets a synthetic token that carries the owner.
+		unit = NewSyntheticToken("", owner)
+	}
 	return &Reference[T]{
-		owner:  owner,
 		unit:   unit,
 		getter: getter,
 	}
@@ -333,7 +345,7 @@ func NewReferenceDescriptionsFromMap(descriptions collections.MultiMap[AstNode, 
 
 // MarshalJSONTo serializes the reference as a JSON object containing the URI of the resolved target ast node,
 // the cross ref text, as well as the err msg if the reference is unresolvable.
-// Returns an error if the reference has not been attempted to resolve (r.resolved == false).
+// Returns an error if the reference has not been attempted to resolve.
 // With this function Reference[T] implements [json.MarshalerTo] and the method is called by `json.Marshal()`.
 func (r *Reference[T]) MarshalJSONTo(encoder *jsontext.Encoder) error {
 	// A nil reference marshals as JSON null.
@@ -341,7 +353,7 @@ func (r *Reference[T]) MarshalJSONTo(encoder *jsontext.Encoder) error {
 		return encoder.WriteToken(jsontext.Null)
 	}
 	// We expect at this point that all references have been attempted to resolve.
-	if !r.resolved.Load() {
+	if r.description.Load() == nil {
 		if path, err := PathOf(r.Owner()); err == nil {
 			return errors.New("Reference.MarshalJSONTo(): reference not resolved in node '" + path.String() + "'")
 		}
@@ -351,7 +363,7 @@ func (r *Reference[T]) MarshalJSONTo(encoder *jsontext.Encoder) error {
 	var uri, errMsg string
 	if r.err != nil {
 		errMsg = r.err.Msg
-	} else if referenced := r.ref; any(referenced) != nil {
+	} else if referenced := r.Ref(context.Background()); any(referenced) != nil {
 		refPath, err := PathOf(referenced)
 		if err != nil {
 			referencerPath, _ := PathOf(r.Owner())
@@ -405,8 +417,8 @@ func (r *Reference[T]) UnmarshalJSON(value []byte) error {
 		return err
 	}
 
-	// requirement: r.owner is initialized
-	r.unit = NewSyntheticToken(aux.RefText, r.owner)
+	// requirement: r.unit carries the owner (see NewReference)
+	r.unit = NewSyntheticToken(aux.RefText, r.Owner())
 	r.getter = newJsonReferenceGetter[T](aux.Ref)
 	if aux.Err != "" {
 		r.err = NewReferenceError(aux.Err)
