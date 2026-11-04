@@ -25,7 +25,7 @@ type DefaultDefinitionProvider struct {
 	sc *service.Container
 }
 
-// NewDefaultDefinitionProvider creates a new default definition provider.
+// NewDefaultDefinitionProvider creates a new [DefaultDefinitionProvider].
 func NewDefaultDefinitionProvider(sc *service.Container) DefinitionProvider {
 	return &DefaultDefinitionProvider{sc: sc}
 }

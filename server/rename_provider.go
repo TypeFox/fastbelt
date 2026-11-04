@@ -26,7 +26,7 @@ type DefaultRenameProvider struct {
 	sc *service.Container
 }
 
-// NewDefaultRenameProvider creates a new default rename provider.
+// NewDefaultRenameProvider creates a new [DefaultRenameProvider].
 func NewDefaultRenameProvider(sc *service.Container) RenameProvider {
 	return &DefaultRenameProvider{sc: sc}
 }

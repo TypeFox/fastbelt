@@ -17,6 +17,7 @@ import (
 func CreateServices() *service.Container {
 	sc := service.NewContainer()
 	lang.SetupServices(sc)
+	lang.SetupGeneratedServerServices(sc)
 	server.SetupDefaultServices(sc)
 	server.SetupStdioServices(sc)
 	sc.Seal()

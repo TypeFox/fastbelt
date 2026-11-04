@@ -36,7 +36,7 @@ func optionsIf[S, O any](sc *service.Container) *O {
 // DefaultLanguageServer is the default implementation of the [lsp.Server]
 // interface. It contains no feature logic itself: each supported LSP method
 // is delegated to a dedicated service (such as [CompletionProvider] or
-// [DocumentSyncher]) looked up in the service container, and request-handling
+// [DefinitionProvider]) looked up in the service container, and request-handling
 // methods acquire the [workspace.Lock] for reading before consulting the
 // service. The capabilities announced in the initialize response reflect
 // which services are registered in the container. LSP methods without a
@@ -45,7 +45,7 @@ type DefaultLanguageServer struct {
 	sc *service.Container
 }
 
-// NewDefaultLanguageServer creates a new default language server.
+// NewDefaultLanguageServer creates a new [DefaultLanguageServer].
 func NewDefaultLanguageServer(sc *service.Container) lsp.Server {
 	return &DefaultLanguageServer{sc: sc}
 }
@@ -609,7 +609,7 @@ type DefaultBinder struct {
 	sc *service.Container
 }
 
-// NewDefaultBinder creates a new default binder.
+// NewDefaultBinder creates a new [DefaultBinder].
 func NewDefaultBinder(sc *service.Container) *DefaultBinder {
 	return &DefaultBinder{sc: sc}
 }

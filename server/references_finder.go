@@ -45,7 +45,7 @@ type DefaultReferencesFinder struct {
 	sc *service.Container
 }
 
-// NewDefaultReferencesFinder creates a new default references finder.
+// NewDefaultReferencesFinder creates a new [DefaultReferencesFinder].
 func NewDefaultReferencesFinder(sc *service.Container) ReferencesFinder {
 	return &DefaultReferencesFinder{sc: sc}
 }
