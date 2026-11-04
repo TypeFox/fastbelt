@@ -31,14 +31,18 @@ func BenchmarkParser(b *testing.B) {
 	doc := fastbelt.NewDocumentFromString("file:///workspace/benchmark.arithmetics", "arithmetics", content)
 	lexerService := service.MustGet[lexer.Lexer](srv)
 	parserService := service.MustGet[parser.Parser](srv)
-	lexerService.Exec(b.Context(), doc)
+	if lexerService.Exec(b.Context(), doc) != nil {
+		b.Fatal("Lexer run failed")
+	}
 	if len(doc.LexerErrors) > 0 {
 		b.Fatalf("lexer errors: %v", doc.LexerErrors)
 	}
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		parserService.Parse(b.Context(), doc)
+		if parserService.Parse(b.Context(), doc) != nil {
+			b.Fatal("Parser run failed")
+		}
 	}
 }
 
@@ -50,7 +54,9 @@ func BenchmarkLexer(b *testing.B) {
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		lexerService.Exec(doc)
+		if lexerService.Exec(b.Context(), doc) != nil {
+			b.Fatal("Lexer run failed")
+		}
 	}
 }
 
@@ -64,8 +70,12 @@ func BenchmarkLexerAndParser(b *testing.B) {
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		lexerService.Exec(b.Context(), doc)
-		parserService.Parse(b.Context(), doc)
+		if lexerService.Exec(b.Context(), doc) != nil {
+			b.Fatal("Lexer run failed")
+		}
+		if parserService.Parse(b.Context(), doc) != nil {
+			b.Fatal("Parser run failed")
+		}
 	}
 }
 
