@@ -31,7 +31,7 @@ func NewDefaultLocalSymbolsProvider(sc *service.Container) LocalSymbolsProvider 
 
 func (s *DefaultLocalSymbolsProvider) LocalSymbols(ctx context.Context, document *core.Document) core.LocalSymbols {
 	root := document.Root
-	symbolContainers := service.MustGet[core.SymbolContainers](s.sc)
+	symbolContainers := s.sc.MustGet[core.SymbolContainers]()
 	localSymbols := NewDefaultLocalSymbols()
 	containers := localSymbols.Symbols
 

@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"typefox.dev/fastbelt/server"
 	"typefox.dev/fastbelt/test"
-	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/lsp"
 )
 
@@ -52,7 +51,7 @@ state on
 end
 `).AssertNoErrors()
 
-	provider := service.MustGet[server.CodeLensProvider](f.Services())
+	provider := f.Services().MustGet[server.CodeLensProvider]()
 	result, err := provider.HandleCodeLensRequest(
 		context.Background(),
 		&lsp.CodeLensParams{
@@ -99,7 +98,7 @@ state off
 end
 `).AssertNoErrors()
 
-	provider := service.MustGet[server.CodeLensProvider](f.Services())
+	provider := f.Services().MustGet[server.CodeLensProvider]()
 	result, err := provider.HandleCodeLensRequest(
 		context.Background(),
 		&lsp.CodeLensParams{

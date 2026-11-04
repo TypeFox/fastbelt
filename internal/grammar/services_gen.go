@@ -12,42 +12,42 @@ import (
 // SetupGeneratedServices sets up the generated services for this grammar.
 // If any service is already set, it's not overwritten.
 func SetupGeneratedServices(sc *service.Container) {
-	if !service.Has[FastbeltScopeProvider](sc) {
-		service.Put(sc, NewDefaultFastbeltScopeProvider(sc))
+	if !sc.Has[FastbeltScopeProvider]() {
+		sc.Put(NewDefaultFastbeltScopeProvider(sc))
 	}
-	if !service.Has[FastbeltReferenceLinker](sc) {
-		service.Put(sc, NewDefaultFastbeltReferenceLinker(sc))
+	if !sc.Has[FastbeltReferenceLinker]() {
+		sc.Put(NewDefaultFastbeltReferenceLinker(sc))
 	}
-	if !service.Has[FastbeltReferencesConstructor](sc) {
-		service.Put(sc, NewDefaultFastbeltReferencesConstructor(sc))
+	if !sc.Has[FastbeltReferencesConstructor]() {
+		sc.Put(NewDefaultFastbeltReferencesConstructor(sc))
 	}
-	if !service.Has[FastbeltParserLookahead](sc) {
-		service.Put(sc, NewDefaultFastbeltParserLookahead())
+	if !sc.Has[FastbeltParserLookahead]() {
+		sc.Put(NewDefaultFastbeltParserLookahead())
 	}
-	if !service.Has[lexer.Lexer](sc) {
-		service.Put(sc, NewLexer(sc))
+	if !sc.Has[lexer.Lexer]() {
+		sc.Put(NewLexer(sc))
 	}
-	if !service.Has[parser.Parser](sc) {
-		service.Put[parser.Parser](sc, NewParser(sc))
+	if !sc.Has[parser.Parser]() {
+		sc.Put[parser.Parser](NewParser(sc))
 	}
-	if !service.Has[parser.ErrorRecoveryStrategy](sc) {
-		service.Put[parser.ErrorRecoveryStrategy](sc, parser.NewDefaultErrorRecovery())
+	if !sc.Has[parser.ErrorRecoveryStrategy]() {
+		sc.Put[parser.ErrorRecoveryStrategy](parser.NewDefaultErrorRecovery())
 	}
-	if !service.Has[parser.ErrorMessageProvider](sc) {
-		service.Put[parser.ErrorMessageProvider](sc, parser.NewDefaultErrorMessageProvider())
+	if !sc.Has[parser.ErrorMessageProvider]() {
+		sc.Put[parser.ErrorMessageProvider](parser.NewDefaultErrorMessageProvider())
 	}
-	if !service.Has[core.SymbolContainers](sc) {
-		service.Put[core.SymbolContainers](sc, NewSymbolContainers())
+	if !sc.Has[core.SymbolContainers]() {
+		sc.Put[core.SymbolContainers](NewSymbolContainers())
 	}
 }
 
 // SetupGeneratedServerServices sets up the generated language server services for this grammar.
 // If any service is already set, it's not overwritten.
 func SetupGeneratedServerServices(sc *service.Container) {
-	if !service.Has[FastbeltCompletionFilter](sc) {
-		service.Put(sc, NewDefaultFastbeltCompletionFilter())
+	if !sc.Has[FastbeltCompletionFilter]() {
+		sc.Put(NewDefaultFastbeltCompletionFilter())
 	}
-	if !service.Has[parser.LanguageCompletionAdapter](sc) {
-		service.Put[parser.LanguageCompletionAdapter](sc, NewFastbeltCompletionAdapter(sc))
+	if !sc.Has[parser.LanguageCompletionAdapter]() {
+		sc.Put[parser.LanguageCompletionAdapter](NewFastbeltCompletionAdapter(sc))
 	}
 }

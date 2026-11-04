@@ -26,7 +26,7 @@ func newCodeActionTestServer(t *testing.T, setup func(sc *service.Container)) ls
 	setup(sc)
 	server.SetupDefaultServices(sc)
 	sc.Seal()
-	return service.MustGet[lsp.Server](sc)
+	return sc.MustGet[lsp.Server]()
 }
 
 // plainCodeActionProvider implements only server.CodeActionProvider, not the resolving extension.
@@ -51,7 +51,7 @@ func TestCodeActionResolve_AdvertisedOnlyWhenSupported(t *testing.T) {
 	ctx := context.Background()
 
 	plainServer := newCodeActionTestServer(t, func(sc *service.Container) {
-		service.Put[server.CodeActionProvider](sc, plainCodeActionProvider{})
+		sc.Put[server.CodeActionProvider](plainCodeActionProvider{})
 	})
 	plainInit, err := plainServer.Initialize(ctx, &lsp.ParamInitialize{})
 	assert.NoError(t, err)
@@ -60,7 +60,7 @@ func TestCodeActionResolve_AdvertisedOnlyWhenSupported(t *testing.T) {
 	}
 
 	resolvingServer := newCodeActionTestServer(t, func(sc *service.Container) {
-		service.Put[server.CodeActionProvider](sc, resolvingCodeActionProvider{})
+		sc.Put[server.CodeActionProvider](resolvingCodeActionProvider{})
 	})
 	resolvingInit, err := resolvingServer.Initialize(ctx, &lsp.ParamInitialize{})
 	assert.NoError(t, err)
@@ -72,7 +72,7 @@ func TestCodeActionResolve_AdvertisedOnlyWhenSupported(t *testing.T) {
 func TestCodeActionResolve_Dispatch(t *testing.T) {
 	ctx := context.Background()
 	resolvingServer := newCodeActionTestServer(t, func(sc *service.Container) {
-		service.Put[server.CodeActionProvider](sc, resolvingCodeActionProvider{})
+		sc.Put[server.CodeActionProvider](resolvingCodeActionProvider{})
 	})
 
 	result, err := resolvingServer.ResolveCodeAction(ctx, &lsp.CodeAction{Title: "fix"})
@@ -82,7 +82,7 @@ func TestCodeActionResolve_Dispatch(t *testing.T) {
 	}
 
 	plainServer := newCodeActionTestServer(t, func(sc *service.Container) {
-		service.Put[server.CodeActionProvider](sc, plainCodeActionProvider{})
+		sc.Put[server.CodeActionProvider](plainCodeActionProvider{})
 	})
 	original := &lsp.CodeAction{Title: "fix"}
 	result, err = plainServer.ResolveCodeAction(ctx, original)

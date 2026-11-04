@@ -34,7 +34,7 @@ func (p *hoverProviderImpl) HandleHoverRequest(ctx context.Context, params *lsp.
 	}
 
 	content := ""
-	if docProvider, err := service.Get[server.DocumentationProvider](p.sc); err == nil {
+	if docProvider, err := p.sc.Get[server.DocumentationProvider](); err == nil {
 		content = docProvider.Documentation(target)
 	}
 	if diagram := diagramMarkdown(ctx, target); diagram != "" {

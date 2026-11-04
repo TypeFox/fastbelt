@@ -95,9 +95,9 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[FastbeltReferencesConstructor](sc)
-		scopes := service.MustGet[FastbeltScopeProvider](sc)
-		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		refs := sc.MustGet[FastbeltReferencesConstructor]()
+		scopes := sc.MustGet[FastbeltScopeProvider]()
+		filter := sc.MustGet[FastbeltCompletionFilter]()
 		ref := refs.InterfaceExtends(typedOwner, nil)
 		candidates := scopes.ScopeInterfaceExtends(ctx, ref).AllElements()
 		return filter.FilterInterfaceExtends(ctx, ref, candidates)
@@ -107,9 +107,9 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[FastbeltReferencesConstructor](sc)
-		scopes := service.MustGet[FastbeltScopeProvider](sc)
-		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		refs := sc.MustGet[FastbeltReferencesConstructor]()
+		scopes := sc.MustGet[FastbeltScopeProvider]()
+		filter := sc.MustGet[FastbeltCompletionFilter]()
 		ref := refs.ReferenceTypeType(typedOwner, nil)
 		candidates := scopes.ScopeReferenceTypeType(ctx, ref).AllElements()
 		return filter.FilterReferenceTypeType(ctx, ref, candidates)
@@ -119,9 +119,9 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[FastbeltReferencesConstructor](sc)
-		scopes := service.MustGet[FastbeltScopeProvider](sc)
-		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		refs := sc.MustGet[FastbeltReferencesConstructor]()
+		scopes := sc.MustGet[FastbeltScopeProvider]()
+		filter := sc.MustGet[FastbeltCompletionFilter]()
 		ref := refs.SimpleTypeType(typedOwner, nil)
 		candidates := scopes.ScopeSimpleTypeType(ctx, ref).AllElements()
 		return filter.FilterSimpleTypeType(ctx, ref, candidates)
@@ -131,9 +131,9 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[FastbeltReferencesConstructor](sc)
-		scopes := service.MustGet[FastbeltScopeProvider](sc)
-		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		refs := sc.MustGet[FastbeltReferencesConstructor]()
+		scopes := sc.MustGet[FastbeltScopeProvider]()
+		filter := sc.MustGet[FastbeltCompletionFilter]()
 		ref := refs.AbstractRuleWithReturnTypeReturnType(typedOwner, nil)
 		candidates := scopes.ScopeAbstractRuleWithReturnTypeReturnType(ctx, ref).AllElements()
 		return filter.FilterAbstractRuleWithReturnTypeReturnType(ctx, ref, candidates)
@@ -143,9 +143,9 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[FastbeltReferencesConstructor](sc)
-		scopes := service.MustGet[FastbeltScopeProvider](sc)
-		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		refs := sc.MustGet[FastbeltReferencesConstructor]()
+		scopes := sc.MustGet[FastbeltScopeProvider]()
+		filter := sc.MustGet[FastbeltCompletionFilter]()
 		ref := refs.TokenCommandMode(typedOwner, nil)
 		candidates := scopes.ScopeTokenCommandMode(ctx, ref).AllElements()
 		return filter.FilterTokenCommandMode(ctx, ref, candidates)
@@ -155,9 +155,9 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[FastbeltReferencesConstructor](sc)
-		scopes := service.MustGet[FastbeltScopeProvider](sc)
-		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		refs := sc.MustGet[FastbeltReferencesConstructor]()
+		scopes := sc.MustGet[FastbeltScopeProvider]()
+		filter := sc.MustGet[FastbeltCompletionFilter]()
 		ref := refs.TokenGroupTokenRefs(typedOwner, nil)
 		candidates := scopes.ScopeTokenGroupTokenRefs(ctx, ref).AllElements()
 		return filter.FilterTokenGroupTokenRefs(ctx, ref, candidates)
@@ -167,9 +167,9 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[FastbeltReferencesConstructor](sc)
-		scopes := service.MustGet[FastbeltScopeProvider](sc)
-		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		refs := sc.MustGet[FastbeltReferencesConstructor]()
+		scopes := sc.MustGet[FastbeltScopeProvider]()
+		filter := sc.MustGet[FastbeltCompletionFilter]()
 		ref := refs.TokenUsageTokenRef(typedOwner, nil)
 		candidates := scopes.ScopeTokenUsageTokenRef(ctx, ref).AllElements()
 		return filter.FilterTokenUsageTokenRef(ctx, ref, candidates)
@@ -179,9 +179,9 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[FastbeltReferencesConstructor](sc)
-		scopes := service.MustGet[FastbeltScopeProvider](sc)
-		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		refs := sc.MustGet[FastbeltReferencesConstructor]()
+		scopes := sc.MustGet[FastbeltScopeProvider]()
+		filter := sc.MustGet[FastbeltCompletionFilter]()
 		ref := refs.AssignmentProperty(typedOwner, nil)
 		candidates := scopes.ScopeAssignmentProperty(ctx, ref).AllElements()
 		return filter.FilterAssignmentProperty(ctx, ref, candidates)
@@ -191,9 +191,9 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[FastbeltReferencesConstructor](sc)
-		scopes := service.MustGet[FastbeltScopeProvider](sc)
-		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		refs := sc.MustGet[FastbeltReferencesConstructor]()
+		scopes := sc.MustGet[FastbeltScopeProvider]()
+		filter := sc.MustGet[FastbeltCompletionFilter]()
 		ref := refs.CrossRefType(typedOwner, nil)
 		candidates := scopes.ScopeCrossRefType(ctx, ref).AllElements()
 		return filter.FilterCrossRefType(ctx, ref, candidates)
@@ -203,9 +203,9 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[FastbeltReferencesConstructor](sc)
-		scopes := service.MustGet[FastbeltScopeProvider](sc)
-		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		refs := sc.MustGet[FastbeltReferencesConstructor]()
+		scopes := sc.MustGet[FastbeltScopeProvider]()
+		filter := sc.MustGet[FastbeltCompletionFilter]()
 		ref := refs.RuleCallRule(typedOwner, nil)
 		candidates := scopes.ScopeRuleCallRule(ctx, ref).AllElements()
 		return filter.FilterRuleCallRule(ctx, ref, candidates)
@@ -215,9 +215,9 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[FastbeltReferencesConstructor](sc)
-		scopes := service.MustGet[FastbeltScopeProvider](sc)
-		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		refs := sc.MustGet[FastbeltReferencesConstructor]()
+		scopes := sc.MustGet[FastbeltScopeProvider]()
+		filter := sc.MustGet[FastbeltCompletionFilter]()
 		ref := refs.ActionType(typedOwner, nil)
 		candidates := scopes.ScopeActionType(ctx, ref).AllElements()
 		return filter.FilterActionType(ctx, ref, candidates)
@@ -227,9 +227,9 @@ var FastbeltCompletionDispatch = map[string]FastbeltCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[FastbeltReferencesConstructor](sc)
-		scopes := service.MustGet[FastbeltScopeProvider](sc)
-		filter := service.MustGet[FastbeltCompletionFilter](sc)
+		refs := sc.MustGet[FastbeltReferencesConstructor]()
+		scopes := sc.MustGet[FastbeltScopeProvider]()
+		filter := sc.MustGet[FastbeltCompletionFilter]()
 		ref := refs.ActionProperty(typedOwner, nil)
 		candidates := scopes.ScopeActionProperty(ctx, ref).AllElements()
 		return filter.FilterActionProperty(ctx, ref, candidates)

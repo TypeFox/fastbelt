@@ -18,7 +18,7 @@ func CreateServices() *service.Container {
 	sc := service.NewContainer()
 	grammar.SetupServices(sc)
 	grammar.SetupGeneratedServerServices(sc)
-	service.Put(sc, grammar.NewHoverProvider(sc))
+	sc.Put(grammar.NewHoverProvider(sc))
 	server.SetupDefaultServices(sc)
 	server.SetupStdioServices(sc)
 	sc.Seal()

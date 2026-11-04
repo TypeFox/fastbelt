@@ -40,9 +40,9 @@ var ArithmeticsCompletionDispatch = map[string]ArithmeticsCompletionDispatchFunc
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[ArithmeticsReferencesConstructor](sc)
-		scopes := service.MustGet[ArithmeticsScopeProvider](sc)
-		filter := service.MustGet[ArithmeticsCompletionFilter](sc)
+		refs := sc.MustGet[ArithmeticsReferencesConstructor]()
+		scopes := sc.MustGet[ArithmeticsScopeProvider]()
+		filter := sc.MustGet[ArithmeticsCompletionFilter]()
 		ref := refs.FunctionCallCallable(typedOwner, nil)
 		candidates := scopes.ScopeFunctionCallCallable(ctx, ref).AllElements()
 		return filter.FilterFunctionCallCallable(ctx, ref, candidates)

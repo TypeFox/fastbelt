@@ -9,7 +9,6 @@ import (
 
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/test"
-	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 )
 
@@ -37,7 +36,7 @@ func TestResetKeepsLocalSymbols(t *testing.T) {
 		end
 	`).AssertNoErrors()
 
-	builder := service.MustGet[workspace.Builder](sc)
+	builder := sc.MustGet[workspace.Builder]()
 	keep := core.DocStateLexed | core.DocStateParsed | core.DocStateExportedSymbols | core.DocStateLocalSymbols
 	builder.Reset(doc.Document, keep)
 

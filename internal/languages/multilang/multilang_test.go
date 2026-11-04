@@ -136,7 +136,7 @@ func TestCompletionUsesBuiltLanguage(t *testing.T) {
 	sc := CreateServices()
 	doc := test.New(t, sc).ParseURI("<|cursor>", "file:///ws/a.hello")
 
-	store := service.MustGet[textdoc.Store](sc)
+	store := sc.MustGet[textdoc.Store]()
 	store.AddOverlay(textdoc.NewOverlay(doc.Document.URI.DocumentURI(), "farewell", 2, ""))
 
 	labels := []string{}

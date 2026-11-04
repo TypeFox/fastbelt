@@ -12,42 +12,42 @@ import (
 // SetupGeneratedServices sets up the generated services for this grammar.
 // If any service is already set, it's not overwritten.
 func SetupGeneratedServices(sc *service.Container) {
-	if !service.Has[StatemachineModelScopeProvider](sc) {
-		service.Put(sc, NewDefaultStatemachineModelScopeProvider(sc))
+	if !sc.Has[StatemachineModelScopeProvider]() {
+		sc.Put(NewDefaultStatemachineModelScopeProvider(sc))
 	}
-	if !service.Has[StatemachineModelReferenceLinker](sc) {
-		service.Put(sc, NewDefaultStatemachineModelReferenceLinker(sc))
+	if !sc.Has[StatemachineModelReferenceLinker]() {
+		sc.Put(NewDefaultStatemachineModelReferenceLinker(sc))
 	}
-	if !service.Has[StatemachineModelReferencesConstructor](sc) {
-		service.Put(sc, NewDefaultStatemachineModelReferencesConstructor(sc))
+	if !sc.Has[StatemachineModelReferencesConstructor]() {
+		sc.Put(NewDefaultStatemachineModelReferencesConstructor(sc))
 	}
-	if !service.Has[StatemachineModelParserLookahead](sc) {
-		service.Put(sc, NewDefaultStatemachineModelParserLookahead())
+	if !sc.Has[StatemachineModelParserLookahead]() {
+		sc.Put(NewDefaultStatemachineModelParserLookahead())
 	}
-	if !service.Has[lexer.Lexer](sc) {
-		service.Put(sc, NewLexer(sc))
+	if !sc.Has[lexer.Lexer]() {
+		sc.Put(NewLexer(sc))
 	}
-	if !service.Has[parser.Parser](sc) {
-		service.Put[parser.Parser](sc, NewParser(sc))
+	if !sc.Has[parser.Parser]() {
+		sc.Put[parser.Parser](NewParser(sc))
 	}
-	if !service.Has[parser.ErrorRecoveryStrategy](sc) {
-		service.Put[parser.ErrorRecoveryStrategy](sc, parser.NewDefaultErrorRecovery())
+	if !sc.Has[parser.ErrorRecoveryStrategy]() {
+		sc.Put[parser.ErrorRecoveryStrategy](parser.NewDefaultErrorRecovery())
 	}
-	if !service.Has[parser.ErrorMessageProvider](sc) {
-		service.Put[parser.ErrorMessageProvider](sc, parser.NewDefaultErrorMessageProvider())
+	if !sc.Has[parser.ErrorMessageProvider]() {
+		sc.Put[parser.ErrorMessageProvider](parser.NewDefaultErrorMessageProvider())
 	}
-	if !service.Has[core.SymbolContainers](sc) {
-		service.Put[core.SymbolContainers](sc, NewSymbolContainers())
+	if !sc.Has[core.SymbolContainers]() {
+		sc.Put[core.SymbolContainers](NewSymbolContainers())
 	}
 }
 
 // SetupGeneratedServerServices sets up the generated language server services for this grammar.
 // If any service is already set, it's not overwritten.
 func SetupGeneratedServerServices(sc *service.Container) {
-	if !service.Has[StatemachineModelCompletionFilter](sc) {
-		service.Put(sc, NewDefaultStatemachineModelCompletionFilter())
+	if !sc.Has[StatemachineModelCompletionFilter]() {
+		sc.Put(NewDefaultStatemachineModelCompletionFilter())
 	}
-	if !service.Has[parser.LanguageCompletionAdapter](sc) {
-		service.Put[parser.LanguageCompletionAdapter](sc, NewStatemachineModelCompletionAdapter(sc))
+	if !sc.Has[parser.LanguageCompletionAdapter]() {
+		sc.Put[parser.LanguageCompletionAdapter](NewStatemachineModelCompletionAdapter(sc))
 	}
 }

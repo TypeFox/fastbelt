@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"typefox.dev/fastbelt/test"
 	"typefox.dev/fastbelt/util/collections"
-	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 )
 
@@ -39,7 +38,7 @@ func TestChangeImpactCoversSiblingsInSameFolder(t *testing.T) {
 		`,
 	)
 	a, b, c, d := docs[0].Document, docs[1].Document, docs[2].Document, docs[3].Document
-	impact := service.MustGet[workspace.DocumentChangeImpact](sc)
+	impact := sc.MustGet[workspace.DocumentChangeImpact]()
 	changed := collections.NewSet(a.URI.StringUnencoded())
 
 	// b shares a's folder and is affected although it holds no reference into a.
@@ -58,7 +57,7 @@ func TestChangeImpactSeparatesFoldersOnDifferentHosts(t *testing.T) {
 		"file://srv2/share/b.fb", "grammar Test; interface Bar { Name string } Bar: Name=ID;"+commonTokens,
 	)
 	a, b := docs[0].Document, docs[1].Document
-	impact := service.MustGet[workspace.DocumentChangeImpact](sc)
+	impact := sc.MustGet[workspace.DocumentChangeImpact]()
 
 	// Same path, different authority: two folders, so two grammars.
 	assert.False(t, impact.Affected(a, collections.NewSet(b.URI.StringUnencoded())))

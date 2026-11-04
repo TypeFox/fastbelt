@@ -5,15 +5,15 @@
 // Package service provides a typed dependency injection container used across
 // Fastbelt. Framework packages and language implementations register shared
 // components (parsers, linkers, workspace builders, LSP handlers, etc.) in a
-// [Container] keyed by Go type, then retrieve them with [Get] or [MustGet]
+// [Container] keyed by Go type, then retrieve them with [Container.Get] or [Container.MustGet]
 // after the container is sealed.
 //
 // # Container lifecycle
 //
-// DI containers have two phases. During setup, register services with [Put]
-// and replace existing registrations with [Override]. Call [Container.Seal]
-// when wiring is complete; after that, [Put] and [Override] panic and [Get]
-// becomes available. [Has] reports whether a type is registered and may be
+// DI containers have two phases. During setup, register services with [Container.Put]
+// and replace existing registrations with [Container.Override]. Call [Container.Seal]
+// when wiring is complete; after that, [Container.Put] and [Container.Override] panic and [Container.Get]
+// becomes available. [Container.Has] reports whether a type is registered and may be
 // called before sealing.
 //
 // A typical factory helper looks like:
@@ -35,9 +35,9 @@
 //   - [typefox.dev/fastbelt/workspace.SetupDefaultServices]
 //   - [typefox.dev/fastbelt/server.SetupDefaultServices]
 //
-// These functions are idempotent: they call [Has] before [Put] and skip types
+// These functions are idempotent: they call [Container.Has] before [Container.Put] and skip types
 // that are already registered. A language can pre-register custom
-// implementations before calling them, or call [Override] afterward to replace
+// implementations before calling them, or call [Container.Override] afterward to replace
 // specific defaults while still using the framework defaults for everything
 // else.
 //
@@ -51,7 +51,7 @@
 //   - calls the framework SetupDefaultServices functions listed above,
 //   - calls SetupGeneratedServices from generated code (registers the lexer,
 //     parser, scope provider, and other grammar-specific services), and
-//   - optionally replaces defaults with [Override] for language-specific
+//   - optionally replaces defaults with [Container.Override] for language-specific
 //     behavior.
 //
 // CreateServices is the usual entry point for CLI tools and tests: it creates

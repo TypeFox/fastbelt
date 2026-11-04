@@ -14,8 +14,7 @@ import (
 
 // SetupServices sets up the base services for the arithmetics language.
 func SetupServices(sc *service.Container) {
-	service.Put[core.LanguageSelector](
-		sc,
+	sc.Put[core.LanguageSelector](
 		workspace.NewDefaultLanguageSelector(sc,
 			workspace.NewDocumentMatcherWithPatterns("arithmetics", "**/*.arithmetics"),
 		),

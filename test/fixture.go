@@ -132,13 +132,13 @@ func (f *Fixture) ParseURI(content, uri string) *Doc {
 	f.t.Helper()
 	cleanText, ranges, indices := extractMarkers(content, f.marking)
 	parsedUri := core.ParseURI(uri)
-	selector := service.MustGet[core.LanguageSelector](f.sc)
+	selector := f.sc.MustGet[core.LanguageSelector]()
 	_, languageID := selector.Select(parsedUri)
 	overlay := textdoc.NewOverlay(parsedUri.DocumentURI(), languageID, 0, cleanText)
 	doc := core.NewDocument(overlay)
-	documents := service.MustGet[workspace.DocumentManager](f.sc)
+	documents := f.sc.MustGet[workspace.DocumentManager]()
 	documents.Set(doc)
-	builder := service.MustGet[workspace.Builder](f.sc)
+	builder := f.sc.MustGet[workspace.Builder]()
 	if err := builder.Build(f.ctx, []*core.Document{doc}, nil); err != nil {
 		f.t.Fatalf("fbtest: build failed: %v", err)
 	}
@@ -154,7 +154,7 @@ func (f *Fixture) ParseAll(uriContentPairs ...string) []*Doc {
 	if len(uriContentPairs)%2 != 0 {
 		f.t.Fatalf("fbtest: ParseAll requires an even number of arguments (uri, content pairs)")
 	}
-	selector := service.MustGet[core.LanguageSelector](f.sc)
+	selector := f.sc.MustGet[core.LanguageSelector]()
 	n := len(uriContentPairs) / 2
 	coreDocs := make([]*core.Document, 0, n)
 	results := make([]*Doc, 0, n)
@@ -165,12 +165,12 @@ func (f *Fixture) ParseAll(uriContentPairs ...string) []*Doc {
 		_, languageID := selector.Select(parsedURI)
 		overlay := textdoc.NewOverlay(parsedURI.DocumentURI(), languageID, 0, cleanText)
 		doc := core.NewDocument(overlay)
-		documents := service.MustGet[workspace.DocumentManager](f.sc)
+		documents := f.sc.MustGet[workspace.DocumentManager]()
 		documents.Set(doc)
 		coreDocs = append(coreDocs, doc)
 		results = append(results, f.NewDoc(doc, ranges, indices))
 	}
-	builder := service.MustGet[workspace.Builder](f.sc)
+	builder := f.sc.MustGet[workspace.Builder]()
 	if err := builder.Build(f.ctx, coreDocs, nil); err != nil {
 		f.t.Fatalf("fbtest: build failed: %v", err)
 	}
@@ -184,7 +184,7 @@ func (f *Fixture) NewDoc(doc *core.Document, ranges []RangeMarker, indices []Ind
 }
 
 func (f *Fixture) Delete(uri core.URI) {
-	documents := service.MustGet[workspace.DocumentManager](f.sc)
+	documents := f.sc.MustGet[workspace.DocumentManager]()
 	documents.Delete(uri)
 	deletedURI := uri.StringUnencoded()
 	f.docs = slices.DeleteFunc(f.docs, func(d *Doc) bool {
@@ -193,7 +193,7 @@ func (f *Fixture) Delete(uri core.URI) {
 }
 
 func (f *Fixture) Clear() {
-	documents := service.MustGet[workspace.DocumentManager](f.sc)
+	documents := f.sc.MustGet[workspace.DocumentManager]()
 	documents.Clear()
 	f.docs = nil
 }
@@ -375,7 +375,7 @@ func (e *WorkspaceSymbolsExpectation) ExactMatch(expectedNames ...string) *Works
 func (f *Fixture) ExpectWorkspaceSymbols(query string) *WorkspaceSymbolsExpectation {
 	f.t.Helper()
 
-	provider, err := service.Get[server.WorkspaceSymbolProvider](f.sc)
+	provider, err := f.sc.Get[server.WorkspaceSymbolProvider]()
 	if err != nil {
 		f.t.Fatalf("fbtest: no workspace symbol provider registered")
 		return nil

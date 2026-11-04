@@ -19,7 +19,6 @@ import (
 	arithmetics "typefox.dev/fastbelt/examples/arithmetics"
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util"
-	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
@@ -130,12 +129,12 @@ func runExportCLI(opts exportOptions) error {
 	file := textdoc.NewFile(lsp.URIFromPath(inputPath), "arithmetics", 0, string(inputText))
 
 	document := core.NewDocument(file)
-	documents, err := service.Get[workspace.DocumentManager](sc)
+	documents, err := sc.Get[workspace.DocumentManager]()
 	if err != nil {
 		return err
 	}
 	documents.Set(document)
-	builder, err := service.Get[workspace.Builder](sc)
+	builder, err := sc.Get[workspace.Builder]()
 	if err != nil {
 		return err
 	}

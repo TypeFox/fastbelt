@@ -30,7 +30,7 @@ func NewDefaultDefinitionProvider(sc *service.Container) DefinitionProvider {
 }
 
 func (s *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.DefinitionLink, error) {
-	documentManager := service.MustGet[workspace.DocumentManager](s.sc)
+	documentManager := s.sc.MustGet[workspace.DocumentManager]()
 	uri := core.ParseURI(string(params.TextDocument.URI))
 	doc := documentManager.Get(uri)
 	if doc == nil {
@@ -43,7 +43,7 @@ func (s *DefaultDefinitionProvider) HandleDefinitionRequest(ctx context.Context,
 	if first == nil {
 		return nil, nil // No token at the given position
 	}
-	nameFinder := service.MustGet[NameFinder](s.sc)
+	nameFinder := s.sc.MustGet[NameFinder]()
 	foundName := nameFinder.Find(ctx, first, second)
 	if foundName.Target == nil || foundName.Source == nil {
 		return nil, nil // Could not find a name

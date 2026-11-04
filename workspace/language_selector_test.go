@@ -16,7 +16,7 @@ import (
 func newSelectorContainer() *service.Container {
 	sc := service.NewContainer()
 	textdoc.SetupDefaultServices(sc)
-	service.Put(sc, NewDefaultDocumentManager(sc))
+	sc.Put(NewDefaultDocumentManager(sc))
 	sc.Seal()
 	return sc
 }
@@ -68,7 +68,7 @@ func TestDefaultLanguageSelectorPrefersManagedDocumentLanguageID(t *testing.T) {
 		NewDocumentMatcherWithPatterns("b", "**/*.txt"),
 	)
 	uri := core.ParseURI("file:///ws/x.txt")
-	documents := service.MustGet[DocumentManager](sc)
+	documents := sc.MustGet[DocumentManager]()
 
 	// Not managed yet: the first glob wins.
 	i, _ := selector.Select(uri)
@@ -81,7 +81,7 @@ func TestDefaultLanguageSelectorPrefersManagedDocumentLanguageID(t *testing.T) {
 
 	// A newer handle in the store does not change the language until the
 	// document is rebuilt from it.
-	service.MustGet[textdoc.Store](sc).AddOverlay(textdoc.NewOverlay(uri.DocumentURI(), "a", 2, ""))
+	sc.MustGet[textdoc.Store]().AddOverlay(textdoc.NewOverlay(uri.DocumentURI(), "a", 2, ""))
 	i, _ = selector.Select(uri)
 	assert.Equal(t, 1, i)
 

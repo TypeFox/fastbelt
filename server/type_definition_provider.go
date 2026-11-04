@@ -22,7 +22,7 @@ import (
 //	}
 //
 //	// Register with the service container
-//	service.Put[server.TypeDefinitionProvider](sc, &MyTypeDefinitionProvider{sc: sc})
+//	sc.Put[server.TypeDefinitionProvider](&MyTypeDefinitionProvider{sc: sc})
 type TypeDefinitionProvider interface {
 	HandleTypeDefinitionRequest(ctx context.Context, params *lsp.TypeDefinitionParams) ([]lsp.DefinitionLink, error)
 }

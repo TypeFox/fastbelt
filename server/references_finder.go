@@ -45,7 +45,7 @@ func (rf *DefaultReferencesFinder) Find(ctx context.Context, target core.AstNode
 			sequences = append(sequences, extiter.Of(selfReference))
 		}
 	}
-	documentManager := service.MustGet[workspace.DocumentManager](rf.sc)
+	documentManager := rf.sc.MustGet[workspace.DocumentManager]()
 	if options.TargetURI == nil {
 		// Iterate through all documents and collect references to the symbol
 		for doc := range documentManager.All() {
