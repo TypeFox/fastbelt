@@ -36,7 +36,7 @@ func (rp *DefaultRenameProvider) RequiredState() (core.DocumentState, bool) {
 	return core.DocStateReferences, true
 }
 
-// NewDefaultRenameProvider creates a new default rename provider.
+// NewDefaultRenameProvider creates a new [DefaultRenameProvider].
 func NewDefaultRenameProvider(sc *service.Container) RenameProvider {
 	return &DefaultRenameProvider{sc: sc}
 }

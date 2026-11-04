@@ -3,18 +3,18 @@
 // terms of the MIT License, which is available in the project root.
 
 // Package server implements the Language Server Protocol (LSP) side of
-// Fastbelt. It exposes the language services built by
-// [typefox.dev/fastbelt/workspace] — parsed, linked, and validated documents —
-// to editors and IDEs: text documents are synchronized through LSP
-// notifications, and language features such as completion, go to definition,
-// find references, hover, and rename are answered from the workspace.
+// Fastbelt. It exposes the parsed, linked, and validated documents managed by
+// [typefox.dev/fastbelt/workspace] to editors and IDEs: text documents are
+// synchronized through LSP notifications, and language features such as
+// completion, go to definition, find references, hover, and rename are
+// computed from the documents in the workspace.
 //
 // # The language server and its method services
 //
 // [DefaultLanguageServer] implements the [typefox.dev/lsp.Server] interface,
 // but contains no feature logic of its own. Each supported LSP method is
 // delegated to a dedicated service interface (for example
-// [CompletionProvider] or [DocumentSynchronizer]) that is looked up in the
+// [CompletionProvider] or [DefinitionProvider]) that is looked up in the
 // [typefox.dev/fastbelt/util/service.Container] when the request arrives.
 // Request-handling methods first acquire the
 // [typefox.dev/fastbelt/workspace.Lock] for reading, so a request never
@@ -37,9 +37,9 @@
 //
 //   - [NameFinder] turns the token(s) at a cursor position into a
 //     [FoundName], pairing the unit under the cursor with the unit that
-//     holds the name of the referenced symbol — following cross-references
-//     to their target, or staying in place when the cursor is already on a
-//     declaration's name.
+//     holds the name of the referenced symbol. Cross-references are followed
+//     to their target; when the cursor is already on a declaration's name,
+//     that name is used directly.
 //   - [ReferencesFinder] yields every reference to a given AST node, drawing
 //     on the reference descriptions indexed per document. [FindReferencesOptions]
 //     controls whether the search is restricted to a single document and
@@ -59,12 +59,12 @@
 // SetupWasmServices (communication with a JavaScript host, available in
 // js/wasm builds). It dials a JSON-RPC connection using the registered
 // [golang.org/x/exp/jsonrpc2.Dialer] and [golang.org/x/exp/jsonrpc2.Binder]
-// — by default [DefaultBinder], which attaches the [typefox.dev/lsp.Server]
-// from the container as the message handler — and blocks until the
+// (by default [DefaultBinder], which attaches the [typefox.dev/lsp.Server]
+// from the container as the message handler) and blocks until the
 // connection is closed, which the default server triggers on the LSP exit
 // notification.
 //
-// A typical main function for a generated language looks like this:
+// A typical main function of a language server looks like this:
 //
 //	func main() {
 //		sc := service.NewContainer()

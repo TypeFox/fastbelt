@@ -29,7 +29,7 @@ type DefaultDocumentHighlightProvider struct {
 	sc *service.Container
 }
 
-// NewDefaultDocumentHighlightProvider creates a new default document highlight provider.
+// NewDefaultDocumentHighlightProvider creates a new [DefaultDocumentHighlightProvider].
 func NewDefaultDocumentHighlightProvider(sc *service.Container) DocumentHighlightProvider {
 	return &DefaultDocumentHighlightProvider{sc: sc}
 }

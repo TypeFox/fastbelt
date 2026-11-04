@@ -44,7 +44,7 @@ type DefaultNameFinder struct {
 	sc *service.Container
 }
 
-// NewDefaultNameFinder creates a new default name finder.
+// NewDefaultNameFinder creates a new [DefaultNameFinder].
 func NewDefaultNameFinder(sc *service.Container) NameFinder {
 	return &DefaultNameFinder{sc: sc}
 }

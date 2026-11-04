@@ -9,9 +9,9 @@
 // element. Goroutines are cheap, but not free: each one costs stack
 // allocation and scheduler bookkeeping, and running far more goroutines
 // than there are CPU cores adds overhead without adding throughput.
-// For workloads that iterate over large collections — such as the
+// For workloads that iterate over large collections, such as the
 // document build pipeline in [typefox.dev/fastbelt/workspace], which
-// parses, links, and validates every document in a workspace — this
+// parses, links, and validates every document in a workspace, this
 // overhead is measurable.
 //
 // This package therefore bounds concurrency instead of spawning
