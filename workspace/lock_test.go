@@ -129,6 +129,7 @@ func TestNewWriteCancelsPendingWrite(t *testing.T) {
 	w1 := h.startWrite(context.Background())
 	time.Sleep(shortWait) // let W1 register with the lock before W2 arrives
 	w2 := h.startWrite(context.Background())
+	w2.assertBlocked("W2 was admitted while the reader held the lock") // also lets W2 register (and cancel W1)
 
 	// Admission order between two queued writers is unspecified: pre-release
 	// both callbacks and assert only on the contexts they received.
@@ -139,9 +140,9 @@ func TestNewWriteCancelsPendingWrite(t *testing.T) {
 	w2.awaitDone("W2 did not complete")
 
 	// W1 must have run (mutations must not be lost) but with a cancelled context.
-	assert.ErrorIs(t, w1.ctx.Err(), context.Canceled, "W1 should have received a cancelled context")
+	assert.ErrorIs(t, w1.ctxErr, context.Canceled, "W1 should have received a cancelled context")
 	// W2 is the newest writer and must receive a live context.
-	assert.NoError(t, w2.ctx.Err(), "W2 should have received a fresh context")
+	assert.NoError(t, w2.ctxErr, "W2 should have received a fresh context")
 }
 
 // TestNewWriteCancelsActiveWrite verifies that a second Write call cancels the

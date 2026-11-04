@@ -39,7 +39,7 @@ func NewDefaultDocumentUpdater(sc *service.Container) DocumentUpdater {
 	return &DefaultDocumentUpdater{sc: sc}
 }
 
-func (s *DefaultDocumentUpdater) Update(ctx context.Context, changed []textdoc.Handle, deleted []core.URI) {
+func (s *DefaultDocumentUpdater) Update(_ context.Context, changed []textdoc.Handle, deleted []core.URI) {
 	go func() {
 		docManager := s.sc.MustGet[DocumentManager]()
 		changeImpact := s.sc.MustGet[DocumentChangeImpact]()

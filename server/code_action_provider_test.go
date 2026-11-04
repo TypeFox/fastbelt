@@ -22,6 +22,7 @@ func newCodeActionTestServer(t *testing.T, setup func(sc *service.Container)) ls
 	t.Helper()
 	sc := service.NewContainer()
 	workspace.SetupDefaultServices(sc)
+	sc.Override(workspace.NewNoopInitializer()) // no file system in tests; reads wait on Initializer.Ready
 	textdoc.SetupDefaultServices(sc)
 	setup(sc)
 	server.SetupDefaultServices(sc)

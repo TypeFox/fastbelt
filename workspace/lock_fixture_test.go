@@ -85,6 +85,7 @@ type lockOp struct {
 	release *signal
 	done    *signal
 	ctx     context.Context // ctx passed to the callback; valid once entered fired
+	ctxErr  error           // ctx.Err() as the callback returned; valid once done fired
 	err     error           // result of Read/ReadAt; valid once done fired
 }
 
@@ -98,6 +99,7 @@ func (op *lockOp) enter(ctx context.Context) {
 	op.ctx = ctx
 	op.entered.fire()
 	<-op.release.ch
+	op.ctxErr = ctx.Err()
 }
 
 // startWrite runs lock.Write in a goroutine and returns its handle.
