@@ -54,13 +54,12 @@ func optionsIf[S, O any](sc *service.Container) *O {
 }
 
 // DefaultLanguageServer is the default implementation of the [lsp.Server]
-// interface. It contains no feature logic itself: each supported LSP method
-// is delegated to a dedicated service (such as [CompletionProvider] or
-// [DefinitionProvider]) looked up in the service container, and request-handling
-// methods acquire the [workspace.Lock] for reading before consulting the
-// service. The capabilities announced in the initialize response reflect
-// which services are registered in the container. LSP methods without a
-// corresponding service are implemented as no-ops.
+// interface. Apart from building the initialize response, it contains no
+// feature logic: it delegates each supported LSP method to the registered
+// service and advertises only the capabilities of registered services.
+// Feature requests run while holding the [workspace.Lock] for reading;
+// workspace/executeCommand does not, so a [CommandProvider] that reads the
+// workspace must acquire the lock itself.
 type DefaultLanguageServer struct {
 	sc *service.Container
 }
@@ -630,11 +629,10 @@ func (s *DefaultLanguageServer) WorkDoneProgressCancel(ctx context.Context, para
 	return nil
 }
 
-// StartLanguageServer starts a language server using the service container.
-// It dials a JSON-RPC connection through the [jsonrpc2.Dialer] and
-// [jsonrpc2.Binder] registered in the container (see [SetupStdioServices]
-// for the stdio transport) and blocks until the connection is closed, which
-// [DefaultLanguageServer] triggers on the LSP exit notification.
+// StartLanguageServer runs the language server configured in the service
+// container and blocks until its connection is closed. A transport must be
+// registered first, for example with [SetupStdioServices].
+// [DefaultLanguageServer] closes the connection on the LSP exit notification.
 func StartLanguageServer(ctx context.Context, sc *service.Container) error {
 	dialer, err := sc.Get[jsonrpc2.Dialer]()
 	if err != nil {

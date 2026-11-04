@@ -20,8 +20,8 @@ type RenameProvider interface {
 }
 
 // DefaultRenameProvider is the default implementation of [RenameProvider].
-// It renames a symbol by generating a text edit for its declaration name and
-// for every reference found by [ReferencesFinder] across the workspace.
+// It renames a symbol by generating a text edit for every occurrence found
+// by [ReferencesFinder] across the workspace, including the declaration.
 type DefaultRenameProvider struct {
 	sc *service.Container
 }

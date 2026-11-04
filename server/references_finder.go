@@ -26,12 +26,9 @@ type FindReferencesOptions struct {
 	TargetURI core.URI
 }
 
-// ReferencesFinder finds all references to a given symbol. It is shared by
-// the LSP services that need the full set of references to a symbol, such as
-// the default references, document highlight, and rename providers.
-// Adopters should customize this service if they want to change how
-// references are collected; downstream LSP services will automatically use
-// the new implementation.
+// ReferencesFinder finds all references to a given symbol. It is used by the
+// default references, document highlight, and rename providers, so a custom
+// implementation changes all of them.
 type ReferencesFinder interface {
 	// Find returns the references pointing at the target node,
 	// with the search scope controlled by options.
