@@ -8,13 +8,16 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -106,23 +109,62 @@ func TestScaffoldModule_endToEnd(t *testing.T) {
 		body := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}}`
 		_, err = fmt.Fprintf(stdin, "Content-Length: %d\r\n\r\n%s", len(body), body)
 		require.NoError(t, err)
-		responded := make(chan error, 1)
+		type frame struct {
+			body []byte
+			err  error
+		}
+		responded := make(chan frame, 1)
 		go func() {
-			_, err := bufio.NewReader(stdout).ReadString('\n')
-			responded <- err
+			body, err := readLSPFrame(bufio.NewReader(stdout))
+			responded <- frame{body, err}
 		}()
-		var readErr error
+		var resp frame
 		select {
-		case readErr = <-responded:
+		case resp = <-responded:
 		case <-ctx.Done():
-			readErr = ctx.Err()
+			resp.err = ctx.Err()
 		}
 		// Stop the server and wait for exec's stderr copier before reading the buffer (data race otherwise).
 		_ = stdin.Close()
 		cancel()
 		_ = cmd.Wait()
-		require.NoError(t, readErr, "LSP produced no initialize response; stderr=%q", stderr.String())
+		require.NoError(t, resp.err, "LSP produced no initialize response; stderr=%q", stderr.String())
+		var msg struct {
+			ID     int             `json:"id"`
+			Result json.RawMessage `json:"result"`
+			Error  json.RawMessage `json:"error"`
+		}
+		require.NoError(t, json.Unmarshal(resp.body, &msg), "response: %s", resp.body)
+		require.Equal(t, 1, msg.ID, "response: %s", resp.body)
+		require.Nil(t, msg.Error, "initialize returned an error: %s", resp.body)
+		require.Contains(t, string(msg.Result), "capabilities", "response: %s", resp.body)
 	})
+}
+
+// readLSPFrame reads one "Content-Length: N\r\n\r\n<body>" message from r.
+func readLSPFrame(r *bufio.Reader) ([]byte, error) {
+	n := -1
+	for {
+		line, err := r.ReadString('\n')
+		if err != nil {
+			return nil, err
+		}
+		line = strings.TrimRight(line, "\r\n")
+		if line == "" {
+			break
+		}
+		if v, ok := strings.CutPrefix(line, "Content-Length: "); ok {
+			if n, err = strconv.Atoi(v); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if n < 0 {
+		return nil, fmt.Errorf("missing Content-Length header")
+	}
+	body := make([]byte, n)
+	_, err := io.ReadFull(r, body)
+	return body, err
 }
 
 func repoRoot(t *testing.T) string {
