@@ -22,14 +22,23 @@ import (
 // linking, reference indexing, and validation.
 type Builder interface {
 	// Build processes the provided documents through all build phases (parse, compute
-	// symbol table, link, validate). It must be called under [Lock.Write] and should
-	// regularly check ctx for cancellation between phases. Calling Build marks the
-	// transition from the write's mutation phase to its build phase (see [Lock.Write]):
-	// implementations signal [Lock.StateChanged] as document states advance so that
-	// [Lock.ReadAt] requests are admitted as soon as the states they need are reached,
-	// and report the workspace-wide floor after each phase barrier. The floor relies
-	// on every document outside docs already being complete, which the caller must
-	// ensure (the updater collects every incomplete document into the build set).
+	// symbol table, link, validate). It must be called under [Lock.Write].
+	//
+	// ctx is the context handed to the write action. It is cancelled when a newer
+	// [Lock.Write] supersedes the current one, so implementations should check it
+	// between phases and return early instead of finishing a build whose results
+	// are about to be replaced.
+	//
+	// A write has two phases: a mutation phase, in which documents may be added,
+	// deleted, or reset, and a build phase, in which document states only advance.
+	// Calling Build marks the transition to the build phase. From then on,
+	// implementations call [Lock.StateChanged] whenever a document reaches a new
+	// state, so that [Lock.ReadAt] requests waiting for that document are admitted
+	// without waiting for the whole build. After each phase has completed for all
+	// documents in docs, implementations also report that state as the workspace-wide
+	// floor, which admits workspace-wide [Lock.ReadAt] requests. The floor is only
+	// correct if every document outside docs is already complete; the caller must
+	// ensure this (the updater collects every incomplete document into the build set).
 	Build(ctx context.Context, docs []*core.Document) error
 	// Reset selectively clears build results of a document. The state parameter is a
 	// bitmask of states to keep; for every bit that is not set, the corresponding document
@@ -69,7 +78,15 @@ func NewDefaultBuilder(sc *service.Container) Builder {
 }
 
 func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error {
+	// ctx.Err() != nil means a newer Write has superseded this build: a later
+	// change will rebuild whatever is left incomplete, so every phase below
+	// skips its work and returns early once cancellation is observed.
 	lock := service.MustGet[Lock](s.sc)
+	if len(docs) == 0 {
+		// Nothing to build: every phase is vacuously complete, report the full floor
+		lock.StateChanged(core.DocStateComplete)
+		return nil
+	}
 	// Build has started, signal the lock to be ready to admit readers after
 	// advancing document states.
 	lock.StateChanged(0)
@@ -118,7 +135,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	// Phase 1 barrier: every document in docs is now parsed with exports
+	// Phase 1 barrier release: every document in docs is now parsed with exports
 	// computed, and documents outside docs were already complete when the
 	// updater collected the build set. Report the workspace floor so
 	// workspace-wide ReadAt calls are admitted.
@@ -154,7 +171,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	// Phase 2 barrier: the whole workspace has its static scopes computed.
+	// Phase 2 barrier release: the whole workspace has its static scopes computed.
 	lock.StateChanged(core.DocStateImportedSymbols | core.DocStateLocalSymbols)
 
 	// PHASE 3: Link and compute reference descriptions (parallel per document).

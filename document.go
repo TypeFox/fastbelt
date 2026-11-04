@@ -109,7 +109,7 @@ func NewDocumentFromString(uri, languageId, content string) *Document {
 // State returns the build phases that have completed for this document.
 //
 // It is safe to call concurrently with a running build: the atomic load pairs
-// with [Document.SetState], so a caller that observes a state bit is
+// with [Document.SetState]. A caller that observes a state bit is
 // guaranteed to see all document data written by that build phase.
 func (d *Document) State() DocumentState {
 	return DocumentState(d.state.Load())
@@ -196,7 +196,8 @@ func (s DocumentState) Without(flag DocumentState) DocumentState {
 	return s &^ flag
 }
 
-const docStateComplete = DocStateLexed | DocStateParsed | DocStateExportedSymbols |
+// DocStateComplete is a shorthand for all framework-provided flags.
+const DocStateComplete = DocStateLexed | DocStateParsed | DocStateExportedSymbols |
 	DocStateImportedSymbols | DocStateLocalSymbols | DocStateLinked | DocStateReferences |
 	DocStateValidated
 
@@ -208,5 +209,5 @@ const docStateComplete = DocStateLexed | DocStateParsed | DocStateExportedSymbol
 // reported complete as soon as the framework phases are done regardless of any
 // custom bits.
 func (s DocumentState) IsComplete() bool {
-	return s&docStateComplete == docStateComplete
+	return s&DocStateComplete == DocStateComplete
 }

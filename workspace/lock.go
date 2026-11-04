@@ -64,12 +64,12 @@ type DefaultLock struct {
 
 	mu             sync.Mutex
 	cond           *sync.Cond
-	writeHeld      bool               // exclusive write phase is active
-	writeWaiters   int                // number of goroutines waiting to acquire the write lock
+	writing        bool               // exclusive write phase is active
+	waitingWriters int                // number of goroutines waiting to acquire the write lock
 	readers        int                // number of active shared lock holders (Read and ReadAt)
-	stateAdvanced  bool               // current write entered the build phase; document states only advance
+	stateAdvancing bool               // current write entered the build phase; document states only advance
 	workspaceState core.DocumentState // floor reached by every document; reset when a write acquires the lock
-	readyCh        chan struct{}      // closed when !writeHeld && writeWaiters==0; replaced each cycle
+	readyCh        chan struct{}      // closed when !writing && waitingWriters==0; replaced each cycle
 	stateCh        chan struct{}      // closed and replaced whenever ReadAt admission may have changed
 	cancelWrite    context.CancelFunc // cancels the current pending or in-progress write
 }
@@ -94,34 +94,39 @@ func (l *DefaultLock) Write(ctx context.Context, do func(ctx context.Context)) {
 		l.cancelWrite()
 	}
 	l.cancelWrite = cancel
-	if !l.writeHeld && l.writeWaiters == 0 {
+	if !l.writing && l.waitingWriters == 0 {
 		// Transition from readable -> blocked: replace readyCh so incoming reads wait.
 		l.readyCh = make(chan struct{})
 	}
-	l.writeWaiters++
+	l.waitingWriters++
 	// Wait for the current write holder and all active readers to finish.
 	// We always proceed even if our context was cancelled by a newer Write call:
 	// do must run so that document mutations are never silently dropped.
-	for l.readers > 0 || l.writeHeld {
+	for l.readers > 0 || l.writing {
 		l.cond.Wait()
 	}
-	l.writeWaiters--
-	l.writeHeld = true
+	l.waitingWriters--
+	l.writing = true
 	// Back in the mutation phase: ReadAt must not trust document states, and
 	// the workspace floor no longer holds (documents may be reset or created).
-	l.stateAdvanced = false
+	l.stateAdvancing = false
 	l.workspaceState = 0
 	l.mu.Unlock()
 
 	defer func() {
+		// All of the following happens under mu, so the order of the wakeups
+		// below is irrelevant: no reader or writer can observe an intermediate
+		// state before mu is released.
 		l.mu.Lock()
-		l.writeHeld = false
-		if l.writeWaiters == 0 {
+		l.writing = false
+		if l.waitingWriters == 0 {
 			// No writer is waiting - unblock pending reads.
 			close(l.readyCh)
 		}
 		l.wakeReadAtLocked()
 		l.cond.Broadcast() // wake any writer waiting in cond.Wait
+		// Cancel the new context, to prevent a leak
+		cancel()
 		l.mu.Unlock()
 	}()
 
@@ -131,7 +136,7 @@ func (l *DefaultLock) Write(ctx context.Context, do func(ctx context.Context)) {
 func (l *DefaultLock) Read(ctx context.Context, do func(ctx context.Context)) error {
 	for {
 		l.mu.Lock()
-		if !l.writeHeld && l.writeWaiters == 0 {
+		if !l.writing && l.waitingWriters == 0 {
 			l.readers++
 			l.mu.Unlock()
 			break
@@ -157,9 +162,9 @@ func (l *DefaultLock) ReadAt(ctx context.Context, states core.DocumentState, uri
 		l.mu.Lock()
 		// Currently, no write is pending
 		// A pending write has priority over readers
-		if l.writeWaiters == 0 &&
+		if l.waitingWriters == 0 &&
 			// The current write is ready to admit readers
-			(!l.writeHeld || l.stateAdvanced) &&
+			(!l.writing || l.stateAdvancing) &&
 			// Every requested document is at the requested states
 			l.docsReadyLocked(states, uris) {
 			l.readers++
@@ -184,7 +189,7 @@ func (l *DefaultLock) ReadAt(ctx context.Context, states core.DocumentState, uri
 
 func (l *DefaultLock) StateChanged(current core.DocumentState) {
 	l.mu.Lock()
-	l.stateAdvanced = true
+	l.stateAdvancing = true
 	l.workspaceState = l.workspaceState.With(current)
 	l.wakeReadAtLocked()
 	l.mu.Unlock()
