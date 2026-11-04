@@ -11,58 +11,39 @@
 //
 // # The language server and its method services
 //
-// [DefaultLanguageServer] implements the [typefox.dev/lsp.Server] interface,
-// but contains no feature logic of its own. Each supported LSP method is
-// delegated to a dedicated service interface (for example
-// [CompletionProvider] or [DefinitionProvider]) that is looked up in the
-// [typefox.dev/fastbelt/util/service.Container] when the request arrives.
-// Request-handling methods first acquire the
-// [typefox.dev/fastbelt/workspace.Lock] for reading, so a request never
-// observes a half-built workspace. The capabilities announced to the client
-// in the initialize response are derived from which services are registered,
-// so the set of advertised features always matches the set of available
-// services.
+// Each LSP feature is provided by a service interface, such as
+// [CompletionProvider] or [DefinitionProvider], that [DefaultLanguageServer]
+// looks up in the [typefox.dev/fastbelt/util/service.Container].
 //
-// [SetupDefaultServices] registers the default implementation of every LSP
-// method service that has not been registered yet. To customize a feature,
-// register your own implementation of the corresponding interface. Services
-// that need to inspect the client's initialize request implement
-// [InitializeParticipant].
+// [SetupDefaultServices] registers the [DefaultLanguageServer], the
+// [DiagnosticsPublisher], a [SlogHandler], and default implementations for
+// document sync, completion, definition, references, document highlight,
+// document and workspace symbols, folding ranges, hover, and rename, plus the
+// helper services they use. A default feature implementation is only
+// registered if no implementation of its interface was registered
+// beforehand. Other features, such as semantic tokens or code actions, are
+// not registered by default; register an implementation to enable them
+// ([TokenBasedSemanticTokensProvider] is a ready-made one for semantic
+// tokens). Services that need to inspect the client's initialize request
+// implement [InitializeParticipant].
 //
 // # Shared name and reference lookup
 //
-// Most position-based LSP features start by answering the same question:
-// which named symbol does the cursor point at? Two services encapsulate this
-// so that all features resolve names consistently:
-//
-//   - [NameFinder] turns the token(s) at a cursor position into a
-//     [FoundName], pairing the unit under the cursor with the unit that
-//     holds the name of the referenced symbol. Cross-references are followed
-//     to their target; when the cursor is already on a declaration's name,
-//     that name is used directly.
-//   - [ReferencesFinder] yields every reference to a given AST node, drawing
-//     on the reference descriptions indexed per document. [FindReferencesOptions]
-//     controls whether the search is restricted to a single document and
-//     whether the declaration itself is included.
-//
-// The default definition, references, document highlight, hover, and rename
-// providers are thin compositions of these two services plus conversion to
-// LSP result types. Registering a custom [NameFinder] or [ReferencesFinder]
-// therefore adjusts all of these features at once.
+// Most position-based features first determine which symbol the cursor
+// points at. [NameFinder] resolves the name under the cursor to the symbol it
+// refers to, and [ReferencesFinder] collects all occurrences of a symbol. The
+// default providers are built on these two services, so all features resolve
+// names consistently; the type documentation lists which features each one
+// affects. Custom providers can reuse [TargetAtCursor], which returns the
+// target node and the source range at a cursor position.
 //
 // # Starting a server
 //
 // [StartLanguageServer] is the main entry point. It expects a fully
 // configured service container: the language-specific and workspace
 // services, the server services from [SetupDefaultServices], and a transport
-// registered with [SetupStdioServices] (communication over stdin/stdout) or
-// SetupWasmServices (communication with a JavaScript host, available in
-// js/wasm builds). It dials a JSON-RPC connection using the registered
-// [golang.org/x/exp/jsonrpc2.Dialer] and [golang.org/x/exp/jsonrpc2.Binder]
-// (by default [DefaultBinder], which attaches the [typefox.dev/lsp.Server]
-// from the container as the message handler) and blocks until the
-// connection is closed, which the default server triggers on the LSP exit
-// notification.
+// registered with [SetupStdioServices] (stdin/stdout) or SetupWasmServices
+// (JavaScript host, js/wasm builds only).
 //
 // A typical main function of a language server looks like this:
 //
@@ -78,7 +59,7 @@
 //		}
 //	}
 //
-// While the server runs, [DiagnosticsPublisher] pushes parser, linker, and
-// validation diagnostics to the client whenever an open document is rebuilt,
-// and [SlogHandler] forwards log output to the client as LSP log messages.
+// While the server runs, [DiagnosticsPublisher] pushes the diagnostics of
+// open documents to the client, and [SlogHandler] forwards log output to the
+// client as LSP log messages.
 package server
