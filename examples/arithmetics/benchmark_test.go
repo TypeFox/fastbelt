@@ -44,11 +44,13 @@ func BenchmarkParser(b *testing.B) {
 
 func BenchmarkLexer(b *testing.B) {
 	content := generateArithmeticsContent()
-	l := NewLexer()
+	srv := CreateServices()
+	lexerService := service.MustGet[lexer.Lexer](srv)
+	doc := fastbelt.NewDocumentFromString("file:///workspace/bench.calc", "arithmetics", content)
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		_ = l.Exec(content)
+		lexerService.Exec(doc)
 	}
 }
 

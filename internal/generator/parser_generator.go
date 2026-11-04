@@ -180,6 +180,13 @@ func deferrableKeywordRun(elements []grammar.Element) int {
 	return n
 }
 
+// isDeferrableKeyword reports whether element is a keyword whose consume can
+// be deferred. Only cardinality one qualifies: deferKeyword emits an
+// unconditional consume into a plain local variable. An optional keyword would
+// need a lookahead guard, a nil-able variable and a nil check at flush time,
+// and a repeated one a slice of tokens; those shapes are rare at the start of
+// a rule and not worth the extra generated code, so they simply materialize
+// `current` as before.
 func isDeferrableKeyword(element grammar.Element) bool {
 	_, ok := element.(grammar.Keyword)
 	return ok && element.Cardinality() == CardinalityOne

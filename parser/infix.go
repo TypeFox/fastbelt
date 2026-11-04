@@ -47,6 +47,16 @@ type InfixFold[T core.AstNode] struct {
 }
 
 // InfixFrame marks the stack depths at the start of one infix rule invocation.
+// It is needed because the fold is shared across nested invocations of the
+// same rule: while parsing an operand, a primary rule may transitively re-enter
+// the infix rule, e.g.
+//
+//	PrimaryExpression returns Expression: "(" BinaryExpression ")" | ...
+//
+// The inner invocation then pushes onto the same stacks. Its frame records
+// where its own operands and operators begin, so that reductions never reach
+// into the entries of the enclosing invocation and End can pop exactly the
+// inner invocation's entries.
 type InfixFrame struct {
 	operands, ops int
 }
@@ -77,6 +87,18 @@ func (f *InfixFold[T]) Operator(frame InfixFrame, token *core.Token, table []Inf
 		var zero T
 		f.operands = append(f.operands, zero)
 	}
+	// Invariant before the loop: within this frame, the operands stack holds
+	// exactly one more entry than the ops stack (operands and operators
+	// alternate, and the missing-operand case was just patched above). Each
+	// reduce consumes one operator and two operands and pushes one operand,
+	// so the invariant also holds after the loop.
+	//
+	// Reduce eagerly while the previous operator binds tighter (smaller level)
+	// than the incoming one, or equally tight and left-associative. The loop
+	// stops at the first operator that binds looser (it must wait for the
+	// incoming operator's right-hand side) or equally tight and
+	// right-associative (its right-hand side extends through the incoming
+	// operator), and never crosses the frame into an enclosing invocation.
 	for len(f.ops) > frame.ops {
 		top := f.ops[len(f.ops)-1]
 		if top.level < level || (top.level == level && !right) {
@@ -85,6 +107,8 @@ func (f *InfixFold[T]) Operator(frame InfixFrame, token *core.Token, table []Inf
 			break
 		}
 	}
+	// Finally push the incoming operator; it is reduced by a later Operator
+	// call or by End.
 	f.ops = append(f.ops, infixOp{token: token, level: level})
 }
 
@@ -97,9 +121,18 @@ func (f *InfixFold[T]) End(frame InfixFrame, build func(left T, operator *core.T
 		// A trailing operator has no right operand: substitute the zero value.
 		f.operands = append(f.operands, zero)
 	}
+	// Every operator still on the stack within this frame was deferred by
+	// Operator because it binds looser than, or is right-associative with,
+	// its successor. With the whole rule invocation consumed nothing else can
+	// follow, so reduce them all from the top down: this yields a
+	// right-leaning tree for right-associative runs and places the loosest
+	// operator at the root. Operators below frame.ops belong to enclosing
+	// invocations and are left alone.
 	for len(f.ops) > frame.ops {
 		f.reduce(build)
 	}
+	// Afterwards the frame holds at most one operand: the folded result, or
+	// nothing if the invocation pushed neither operands nor operators.
 	if len(f.operands) == frame.operands {
 		return zero
 	}
