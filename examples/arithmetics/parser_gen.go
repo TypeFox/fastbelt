@@ -13,6 +13,7 @@ type Parser struct {
 	sc                    *service.Container
 	referencesConstructor ArithmeticsReferencesConstructor
 	lookahead             ArithmeticsParserLookahead
+	binaryExpressionFold  parser.InfixFold[Expression]
 }
 
 func (p *Parser) Parse(document *core.Document) {
@@ -206,14 +207,12 @@ func (p *Parser) ParseEvaluation() Evaluation {
 }
 
 func (p *Parser) ParseExpression() Expression {
-	current := NewExpression()
-	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	var current Expression
 	{
 		{
 			p.state.EnterRule(Expression__Basic_1)
 			result := p.ParseBinaryExpression()
 			p.state.ExitRule()
-			core.MergeTokens(result, current.Tokens())
 			current = result
 		}
 	}
@@ -227,18 +226,14 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 	{
 		switch prediction, failure := p.lookahead.PrimaryExpressionAlternatives(p.state); prediction {
 		case 0:
-			{
-				current = NewExpression()
-				current.SetTextRangeStart(startPos)
-				token := p.state.Consume(Keyword_LeftParen)
-				core.AssignToken(current, token, PrimaryExpression_LeftParen_0)
-			}
+			kw0 := p.state.Consume(Keyword_LeftParen)
 			{
 				p.state.EnterRule(PrimaryExpression_RightParen_0)
 				result := p.ParseExpression()
 				p.state.ExitRule()
-				core.MergeTokens(result, current.Tokens())
 				current = result
+				core.PrependToken(current, kw0, PrimaryExpression_LeftParen_0)
+				current.SetTextRangeStart(startPos)
 			}
 			{
 				token := p.state.Consume(Keyword_RightParen)
@@ -319,7 +314,7 @@ func (p *Parser) ParsePrimaryExpression() Expression {
 	return current
 }
 
-var BinaryExpressionPrecedence = map[int]parser.InfixPrecedence{
+var BinaryExpressionPrecedence = []parser.InfixPrecedence{
 	Keyword_Percent_Idx:  {Level: 0},
 	Keyword_Caret_Idx:    {Level: 1, Right: true},
 	Keyword_Asterisk_Idx: {Level: 2},
@@ -328,47 +323,43 @@ var BinaryExpressionPrecedence = map[int]parser.InfixPrecedence{
 	Keyword_Plus_Idx:     {Level: 3},
 }
 
+func (p *Parser) buildBinaryExpression(left Expression, operator *core.Token, right Expression) Expression {
+	result := NewBinaryExpression()
+	if left != nil {
+		result.SetLeft(left)
+		result.SetTextRangeStart(left.TextRange().Start)
+	}
+	if operator != nil {
+		core.AssignToken(result, operator, BinaryExpression_BinaryExpressionOperator)
+		result.SetOperator(operator)
+		result.SetTextRangeEnd(operator.Range.End)
+	}
+	if right != nil {
+		result.SetRight(right)
+		result.SetTextRangeEnd(right.TextRange().End)
+	}
+	return result
+}
+
 func (p *Parser) ParseBinaryExpression() Expression {
-	var parts []Expression
-	var operators []*core.Token
+	frame := p.binaryExpressionFold.Begin()
 	{
 		p.state.EnterRule(BinaryExpression__LoopEntry)
 		result := p.ParsePrimaryExpression()
 		p.state.ExitRule()
-		parts = append(parts, result)
+		p.binaryExpressionFold.Operand(result)
 	}
 	p.state.Sync(BinaryExpression__LoopEntry)
 	for p.lookahead.BinaryExpressionLoop(p.state) {
-		if token := p.state.Consume(TokenGroup_BinaryExpressionOperator); token != nil {
-			operators = append(operators, token)
-		}
+		token := p.state.Consume(TokenGroup_BinaryExpressionOperator)
+		p.binaryExpressionFold.Operator(frame, token, BinaryExpressionPrecedence, p.buildBinaryExpression)
 		{
 			p.state.EnterRule(BinaryExpression__Basic_2)
 			result := p.ParsePrimaryExpression()
 			p.state.ExitRule()
-			parts = append(parts, result)
+			p.binaryExpressionFold.Operand(result)
 		}
 		p.state.Sync(BinaryExpression__LoopEntry)
 	}
-	if len(parts) == 1 {
-		// A lone operand is returned unchanged; no binary node is created.
-		return parts[0]
-	}
-	return parser.BuildInfixTree(parts, operators, BinaryExpressionPrecedence, func(left Expression, operator *core.Token, right Expression) Expression {
-		result := NewBinaryExpression()
-		if left != nil {
-			result.SetLeft(left)
-			result.SetTextRangeStart(left.TextRange().Start)
-		}
-		if operator != nil {
-			core.AssignToken(result, operator, BinaryExpression_BinaryExpressionOperator)
-			result.SetOperator(operator)
-			result.SetTextRangeEnd(operator.Range.End)
-		}
-		if right != nil {
-			result.SetRight(right)
-			result.SetTextRangeEnd(right.TextRange().End)
-		}
-		return result
-	})
+	return p.binaryExpressionFold.End(frame, p.buildBinaryExpression)
 }

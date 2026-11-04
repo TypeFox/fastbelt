@@ -42,6 +42,18 @@ func BenchmarkParser(b *testing.B) {
 	}
 }
 
+func BenchmarkLexer(b *testing.B) {
+	content := generateArithmeticsContent()
+	srv := CreateServices()
+	lexerService := service.MustGet[lexer.Lexer](srv)
+	doc := fastbelt.NewDocumentFromString("file:///workspace/bench.calc", "arithmetics", content)
+	b.SetBytes(int64(len(content)))
+	b.ResetTimer()
+	for b.Loop() {
+		lexerService.Exec(doc)
+	}
+}
+
 // BenchmarkLexerAndParser benchmarks a full lex + parse pass per iteration.
 func BenchmarkLexerAndParser(b *testing.B) {
 	content := generateArithmeticsContent()
