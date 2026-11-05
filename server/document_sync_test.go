@@ -62,7 +62,7 @@ func createTestServicesWithUpdater() (*service.Container, *mockDocumentUpdater) 
 
 func TestTextDocuments_Lifecycle(t *testing.T) {
 	sc, updater := createTestServicesWithUpdater()
-	ds := NewDefaultDocumentSyncher(sc)
+	ds := NewDefaultDocumentSynchronizer(sc)
 	ctx := context.Background()
 
 	// Open a document
@@ -136,7 +136,7 @@ func TestTextDocuments_Lifecycle(t *testing.T) {
 
 func TestTextDocuments_MultipleDocuments(t *testing.T) {
 	sc, _ := createTestServicesWithUpdater()
-	ds := NewDefaultDocumentSyncher(sc)
+	ds := NewDefaultDocumentSynchronizer(sc)
 	ctx := context.Background()
 
 	// Open multiple documents
@@ -180,7 +180,7 @@ func TestTextDocuments_MultipleDocuments(t *testing.T) {
 
 func TestTextDocuments_IncrementalChanges(t *testing.T) {
 	sc, _ := createTestServicesWithUpdater()
-	ds := NewDefaultDocumentSyncher(sc)
+	ds := NewDefaultDocumentSynchronizer(sc)
 	ctx := context.Background()
 
 	uri := lsp.DocumentURI("file:///test.txt")
@@ -224,7 +224,7 @@ func TestTextDocuments_IncrementalChanges(t *testing.T) {
 
 func TestTextDocuments_WillSave(t *testing.T) {
 	sc, _ := createTestServicesWithUpdater()
-	ds := NewDefaultDocumentSyncher(sc)
+	ds := NewDefaultDocumentSynchronizer(sc)
 	ctx := context.Background()
 
 	uri := lsp.DocumentURI("file:///test.txt")
@@ -253,7 +253,7 @@ func TestTextDocuments_WillSave(t *testing.T) {
 
 func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
 	sc, _ := createTestServicesWithUpdater()
-	ds := NewDefaultDocumentSyncher(sc)
+	ds := NewDefaultDocumentSynchronizer(sc)
 	ctx := context.Background()
 
 	uri := lsp.DocumentURI("file:///test.txt")
@@ -283,7 +283,7 @@ func TestTextDocuments_WillSaveWaitUntil(t *testing.T) {
 
 func TestTextDocuments_DidSave(t *testing.T) {
 	sc, _ := createTestServicesWithUpdater()
-	ds := NewDefaultDocumentSyncher(sc)
+	ds := NewDefaultDocumentSynchronizer(sc)
 	ctx := context.Background()
 
 	uri := lsp.DocumentURI("file:///test.txt")

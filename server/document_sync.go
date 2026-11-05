@@ -41,10 +41,10 @@ type TextDocumentWillSaveHandler func(ctx context.Context, event *TextDocumentWi
 // Only one handler can be registered for this event to ensure deterministic edit behavior.
 type TextDocumentWillSaveWaitUntilHandler func(ctx context.Context, event *TextDocumentWillSaveEvent) ([]lsp.TextEdit, error)
 
-// DocumentSyncher is a service for handling LSP text document synchronization notifications.
+// DocumentSynchronizer is a service for handling LSP text document synchronization notifications.
 //
 // Thread Safety: All methods are safe for concurrent use.
-type DocumentSyncher interface {
+type DocumentSynchronizer interface {
 	DidOpen(ctx context.Context, params *lsp.DidOpenTextDocumentParams)
 	DidChange(ctx context.Context, params *lsp.DidChangeTextDocumentParams)
 	DidClose(ctx context.Context, params *lsp.DidCloseTextDocumentParams)
@@ -60,8 +60,8 @@ type DocumentSyncher interface {
 	OnDidSave(handler TextDocumentChangeHandler)
 }
 
-// DefaultDocumentSyncher is the default implementation of DocumentSyncher.
-type DefaultDocumentSyncher struct {
+// DefaultDocumentSynchronizer is the default implementation of DocumentSynchronizer.
+type DefaultDocumentSynchronizer struct {
 	sc                        *service.Container
 	didOpenHandlers           []TextDocumentChangeHandler
 	didChangeHandlers         []TextDocumentChangeHandler
@@ -72,11 +72,11 @@ type DefaultDocumentSyncher struct {
 	mu                        sync.RWMutex
 }
 
-func NewDefaultDocumentSyncher(sc *service.Container) DocumentSyncher {
-	return &DefaultDocumentSyncher{sc: sc}
+func NewDefaultDocumentSynchronizer(sc *service.Container) DocumentSynchronizer {
+	return &DefaultDocumentSynchronizer{sc: sc}
 }
 
-func (s *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *lsp.DidOpenTextDocumentParams) {
+func (s *DefaultDocumentSynchronizer) DidOpen(ctx context.Context, params *lsp.DidOpenTextDocumentParams) {
 	textdocStore := service.MustGet[textdoc.Store](s.sc)
 	uri := core.NormalizeURI(params.TextDocument.URI)
 	existing := textdocStore.Get(uri)
@@ -106,13 +106,13 @@ func (s *DefaultDocumentSyncher) DidOpen(ctx context.Context, params *lsp.DidOpe
 	updater.Update(ctx, []textdoc.Handle{doc}, nil)
 }
 
-func (s *DefaultDocumentSyncher) OnDidOpen(handler TextDocumentChangeHandler) {
+func (s *DefaultDocumentSynchronizer) OnDidOpen(handler TextDocumentChangeHandler) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.didOpenHandlers = append(s.didOpenHandlers, handler)
 }
 
-func (s *DefaultDocumentSyncher) DidChange(ctx context.Context, params *lsp.DidChangeTextDocumentParams) {
+func (s *DefaultDocumentSynchronizer) DidChange(ctx context.Context, params *lsp.DidChangeTextDocumentParams) {
 	if len(params.ContentChanges) == 0 {
 		return
 	}
@@ -145,13 +145,13 @@ func (s *DefaultDocumentSyncher) DidChange(ctx context.Context, params *lsp.DidC
 	updater.Update(ctx, []textdoc.Handle{doc}, nil)
 }
 
-func (s *DefaultDocumentSyncher) OnDidChange(handler TextDocumentChangeHandler) {
+func (s *DefaultDocumentSynchronizer) OnDidChange(handler TextDocumentChangeHandler) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.didChangeHandlers = append(s.didChangeHandlers, handler)
 }
 
-func (s *DefaultDocumentSyncher) DidClose(ctx context.Context, params *lsp.DidCloseTextDocumentParams) {
+func (s *DefaultDocumentSynchronizer) DidClose(ctx context.Context, params *lsp.DidCloseTextDocumentParams) {
 	textdocStore := service.MustGet[textdoc.Store](s.sc)
 	uri := core.NormalizeURI(params.TextDocument.URI)
 	existing := textdocStore.GetOverlay(uri)
@@ -165,14 +165,14 @@ func (s *DefaultDocumentSyncher) DidClose(ctx context.Context, params *lsp.DidCl
 	textdocStore.RemoveOverlay(uri)
 }
 
-func (s *DefaultDocumentSyncher) OnDidClose(handler TextDocumentChangeHandler) {
+func (s *DefaultDocumentSynchronizer) OnDidClose(handler TextDocumentChangeHandler) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.didCloseHandlers = append(s.didCloseHandlers, handler)
 }
 
 // WillSave does nothing by default.
-func (s *DefaultDocumentSyncher) WillSave(ctx context.Context, params *lsp.WillSaveTextDocumentParams) {
+func (s *DefaultDocumentSynchronizer) WillSave(ctx context.Context, params *lsp.WillSaveTextDocumentParams) {
 	store := service.MustGet[textdoc.Store](s.sc)
 	uri := core.NormalizeURI(params.TextDocument.URI)
 	doc := store.GetOverlay(uri)
@@ -185,14 +185,14 @@ func (s *DefaultDocumentSyncher) WillSave(ctx context.Context, params *lsp.WillS
 	}
 }
 
-func (s *DefaultDocumentSyncher) OnWillSave(handler TextDocumentWillSaveHandler) {
+func (s *DefaultDocumentSynchronizer) OnWillSave(handler TextDocumentWillSaveHandler) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.willSaveHandlers = append(s.willSaveHandlers, handler)
 }
 
 // WillSaveWaitUntil does nothing by default.
-func (s *DefaultDocumentSyncher) WillSaveWaitUntil(ctx context.Context, params *lsp.WillSaveTextDocumentParams) ([]lsp.TextEdit, error) {
+func (s *DefaultDocumentSynchronizer) WillSaveWaitUntil(ctx context.Context, params *lsp.WillSaveTextDocumentParams) ([]lsp.TextEdit, error) {
 	edits := []lsp.TextEdit{}
 	store := service.MustGet[textdoc.Store](s.sc)
 	uri := core.NormalizeURI(params.TextDocument.URI)
@@ -212,14 +212,14 @@ func (s *DefaultDocumentSyncher) WillSaveWaitUntil(ctx context.Context, params *
 	return edits, nil
 }
 
-func (s *DefaultDocumentSyncher) OnWillSaveWaitUntil(handler TextDocumentWillSaveWaitUntilHandler) {
+func (s *DefaultDocumentSynchronizer) OnWillSaveWaitUntil(handler TextDocumentWillSaveWaitUntilHandler) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.willSaveWaitUntilHandlers = append(s.willSaveWaitUntilHandlers, handler)
 }
 
 // DidSave does nothing by default.
-func (s *DefaultDocumentSyncher) DidSave(ctx context.Context, params *lsp.DidSaveTextDocumentParams) {
+func (s *DefaultDocumentSynchronizer) DidSave(ctx context.Context, params *lsp.DidSaveTextDocumentParams) {
 	store := service.MustGet[textdoc.Store](s.sc)
 	uri := core.NormalizeURI(params.TextDocument.URI)
 	doc := store.GetOverlay(uri)
@@ -232,7 +232,7 @@ func (s *DefaultDocumentSyncher) DidSave(ctx context.Context, params *lsp.DidSav
 	}
 }
 
-func (s *DefaultDocumentSyncher) OnDidSave(handler TextDocumentChangeHandler) {
+func (s *DefaultDocumentSynchronizer) OnDidSave(handler TextDocumentChangeHandler) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.didSaveHandlers = append(s.didSaveHandlers, handler)
