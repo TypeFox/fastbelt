@@ -20,15 +20,15 @@ import (
 // states — potentially while a build is still writing other documents.
 type Lock interface {
 	// Write cancels any pending or in-progress write, then acquires an
-	// exclusive lock and calls do with a fresh context. do is always called,
+	// exclusive lock and calls do with a fresh context. task is always called,
 	// even if the context was cancelled by a newer write, so that document
 	// mutations are never silently dropped. Cancelled write actions should
 	// skip expensive work by checking ctx.Err().
-	Write(ctx context.Context, do func(ctx context.Context))
-	// Read acquires a shared lock on the whole workspace, calls do, then
+	Write(ctx context.Context, task func(ctx context.Context))
+	// Read acquires a shared lock on the whole workspace, calls task, then
 	// releases the lock. It blocks while a write is in progress or pending.
 	// Read returns ctx.Err() if ctx is cancelled while waiting.
-	Read(ctx context.Context, do func(ctx context.Context)) error
+	Read(ctx context.Context, task func(ctx context.Context)) error
 	// ReadAt acquires a shared lock scoped to the given documents. It is
 	// admitted as soon as every URI resolves to a document whose state covers
 	// states, even while a build is writing. A URI with no document yet
@@ -38,7 +38,7 @@ type Lock interface {
 	// If uris is empty, ReadAt is scoped to the whole workspace: it is
 	// admitted once every document in the workspace has reached states, as
 	// reported to [Lock.StateChanged] by the build.
-	ReadAt(ctx context.Context, states core.DocumentState, uris []core.URI, do func(ctx context.Context)) error
+	ReadAt(ctx context.Context, states core.DocumentState, uris []core.URI, task func(ctx context.Context)) error
 	// StateChanged signals that document build states advanced, waking
 	// pending ReadAt calls so they re-check their documents. current is the
 	// build state that every document in the workspace is guaranteed to have
@@ -85,7 +85,7 @@ func NewDefaultLock(sc *service.Container) Lock {
 	return l
 }
 
-func (l *DefaultLock) Write(ctx context.Context, do func(ctx context.Context)) {
+func (l *DefaultLock) Write(ctx context.Context, task func(ctx context.Context)) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	l.mu.Lock()
@@ -130,10 +130,10 @@ func (l *DefaultLock) Write(ctx context.Context, do func(ctx context.Context)) {
 		l.mu.Unlock()
 	}()
 
-	do(ctx)
+	task(ctx)
 }
 
-func (l *DefaultLock) Read(ctx context.Context, do func(ctx context.Context)) error {
+func (l *DefaultLock) Read(ctx context.Context, task func(ctx context.Context)) error {
 	for {
 		l.mu.Lock()
 		if !l.writing && l.waitingWriters == 0 {
@@ -153,11 +153,11 @@ func (l *DefaultLock) Read(ctx context.Context, do func(ctx context.Context)) er
 
 	defer l.releaseReader()
 
-	do(ctx)
+	task(ctx)
 	return nil
 }
 
-func (l *DefaultLock) ReadAt(ctx context.Context, states core.DocumentState, uris []core.URI, do func(ctx context.Context)) error {
+func (l *DefaultLock) ReadAt(ctx context.Context, states core.DocumentState, uris []core.URI, task func(ctx context.Context)) error {
 	for {
 		l.mu.Lock()
 		// Currently, no write is pending
@@ -183,7 +183,7 @@ func (l *DefaultLock) ReadAt(ctx context.Context, states core.DocumentState, uri
 
 	defer l.releaseReader()
 
-	do(ctx)
+	task(ctx)
 	return nil
 }
 
