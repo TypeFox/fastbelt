@@ -614,6 +614,7 @@ func GenerateParser(grammr grammar.Grammar, entryRules []grammar.ParserRule, pac
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n codegen.Node) {
+		n.AppendLine("\"context\"").AppendLine()
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
 		n.AppendLine("\"typefox.dev/fastbelt/parser\"")
 		n.AppendLine("\"typefox.dev/fastbelt/util/service\"")
@@ -632,23 +633,32 @@ func GenerateParser(grammr grammar.Grammar, entryRules []grammar.ParserRule, pac
 	node.AppendLine("}")
 	node.AppendLine()
 
-	node.AppendLine("func (p *Parser) Parse(document *core.Document) {")
+	node.AppendLine("func (p *Parser) Parse(ctx context.Context, document *core.Document) error {")
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)")
 		n.AppendLine("messages := service.MustGet[parser.ErrorMessageProvider](p.sc)")
 		n.AppendLine("referencesConstructor := service.MustGet[", grammr.Name(), "ReferencesConstructor](p.sc)")
 		n.AppendLine("lookahead := service.MustGet[", grammr.Name(), "ParserLookahead](p.sc)")
-		n.AppendLine("cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}")
+		n.AppendLine("cp := &Parser{")
+		n.AppendLine("    sc: p.sc,")
+		n.AppendLine("    referencesConstructor: referencesConstructor,")
+		n.AppendLine("    lookahead: lookahead,")
+		n.AppendLine("    state: parser.NewParserState(ctx, document.Tokens, ATN(), recovery, messages),")
+		n.AppendLine("}")
 		assign := "result := "
 		if len(entryRules) > 1 {
 			n.AppendLine("var result core.AstNode")
 			assign = "result = "
 		}
 		emitEntryDispatch(n, "p.sc", assign, entryRules)
+		n.AppendLine("if ctx.Err() != nil {")
+		n.AppendLine("    return ctx.Err()")
+		n.AppendLine("}")
 		n.AppendLine("cp.state.ExpectEndOfInput()")
 		n.AppendLine("document.ParserErrors = cp.state.Errors()")
 		n.AppendLine("document.Root = result")
 		n.AppendLine("core.AssignContainers(document)")
+		n.AppendLine("return nil")
 	})
 	node.AppendLine("}")
 	node.AppendLine()
@@ -720,6 +730,7 @@ func GenerateCompletionParser(grammr grammar.Grammar, entryRules []grammar.Parse
 	node.AppendLine()
 	node.AppendLine("import (")
 	node.Indent(func(n codegen.Node) {
+		n.AppendLine("\"context\"")
 		n.AppendLine("core \"typefox.dev/fastbelt\"")
 		n.AppendLine("\"typefox.dev/fastbelt/parser\"")
 		n.AppendLine("\"typefox.dev/fastbelt/util/service\"")
@@ -752,13 +763,13 @@ func GenerateCompletionParser(grammr grammar.Grammar, entryRules []grammar.Parse
 	node.AppendLine("// the document's tokens up to the cursor) and returns the recorded")
 	node.AppendLine("// snapshots and rule stack. The completion provider feeds that result into")
 	node.AppendLine("// the ATN simulator.")
-	node.AppendLine("func (p *CompletionParser) Parse(", completionDocParam(entryRules), " tokens []core.Token) *parser.CompletionParseResult {")
+	node.AppendLine("func (p *CompletionParser) Parse(ctx context.Context, ", completionDocParam(entryRules), " tokens []core.Token) *parser.CompletionParseResult {")
 	node.Indent(func(n codegen.Node) {
 		n.AppendLine("messages := service.MustGet[parser.ErrorMessageProvider](p.sc)")
 		n.AppendLine("recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)")
 		n.AppendLine("lookahead := service.MustGet[", grammr.Name(), "ParserLookahead](p.sc)")
 		n.AppendLine("cp := &CompletionParser{sc: p.sc, atn: p.atn, lookahead: lookahead}")
-		n.AppendLine("cp.state = parser.NewParserState(tokens, p.atn(), recovery, messages)")
+		n.AppendLine("cp.state = parser.NewParserState(ctx, tokens, p.atn(), recovery, messages)")
 		n.AppendLine("cp.cp = parser.NewCompletionParserState(cp.state)")
 		emitEntryDispatch(n, "cp.sc", "", entryRules)
 		n.AppendLine("return cp.cp.Result(tokens)")

@@ -23,7 +23,7 @@ type LanguageCompletionAdapter interface {
 	// tokens (the document's tokens up to the cursor) and returns the
 	// snapshots + rule stack the completion provider needs. The document is
 	// used to select the entry rule in a multi-language server.
-	Parse(document *core.Document, tokens []core.Token) *CompletionParseResult
+	Parse(ctx context.Context, document *core.Document, tokens []core.Token) *CompletionParseResult
 	// ATN returns the RuntimeATN the simulator queries.
 	ATN() *RuntimeATN
 	// SyntheticOwnerFor returns a fresh, detached AST node of the given
