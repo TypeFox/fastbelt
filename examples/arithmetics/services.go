@@ -17,7 +17,7 @@ func SetupServices(sc *service.Container) {
 	service.Put[core.LanguageSelector](
 		sc,
 		workspace.NewDefaultLanguageSelector(sc,
-			workspace.NewDocumentMatcherWithPatterns("arithmetics", "**/*.arithmetics"),
+			workspace.NewDocumentMatcherWithPatterns("arithmetics", "**/*.calc"),
 		),
 	)
 	textdoc.SetupDefaultServices(sc)

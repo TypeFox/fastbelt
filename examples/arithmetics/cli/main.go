@@ -139,7 +139,7 @@ func runExportCLI(opts exportOptions) error {
 	if err != nil {
 		return err
 	}
-	if err := builder.Build(context.Background(), []*core.Document{document}, nil); err != nil {
+	if err := builder.Build(context.Background(), []*core.Document{document}); err != nil {
 		return err
 	}
 

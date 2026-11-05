@@ -17,12 +17,21 @@ type DocumentHighlightProvider interface {
 	HandleDocumentHighlightRequest(ctx context.Context, params *lsp.DocumentHighlightParams) ([]lsp.DocumentHighlight, error)
 }
 
+// Ensure DefaultDocumentHighlightProvider implements the expected interfaces.
+var _ DocumentHighlightProvider = (*DefaultDocumentHighlightProvider)(nil)
+var _ DocumentStateRequirements = (*DefaultDocumentHighlightProvider)(nil)
+
 type DefaultDocumentHighlightProvider struct {
 	sc *service.Container
 }
 
 func NewDefaultDocumentHighlightProvider(sc *service.Container) DocumentHighlightProvider {
 	return &DefaultDocumentHighlightProvider{sc: sc}
+}
+
+// The default document highlight provider requires the document in question have its references indexed.
+func (s *DefaultDocumentHighlightProvider) RequiredState() (core.DocumentState, bool) {
+	return core.DocStateReferences, false
 }
 
 func (s *DefaultDocumentHighlightProvider) HandleDocumentHighlightRequest(ctx context.Context, params *lsp.DocumentHighlightParams) ([]lsp.DocumentHighlight, error) {

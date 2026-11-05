@@ -19,26 +19,17 @@ import (
 
 // Initializer loads workspace files into [DocumentManager] when an LSP
 // workspace folder is opened.
-//
-// A build is not triggered automatically after initialization. Created
-// documents are left in the initial document state until [Builder.Build] runs.
-//
-// In a language server context, the first workspace build is triggered when a
-// file is opened. The textDocument/didOpen notification reaches the server's
-// document sync layer, which calls [DocumentUpdater.Update]. The updater
-// gathers every document that has not yet completed all build phases,
-// including files loaded during initialization.
-//
-// Adopters who wish to pre-build the workspace before a file is opened should
-// set a broader activation event for their IDE extension and invoke
-// [DocumentUpdater.Update] after the server receives the "initialized"
-// notification. In other usage contexts, such as a CLI, call the
-// [Initializer] and then [Builder] directly.
 type Initializer interface {
 	// Initialize walks folders on disk, reads files whose extension matches
-	// [FileExtensions], and registers them with [DocumentManager]. Hidden
-	// directories (names starting with ".") are skipped.
+	// [FileExtensions], and registers them with [DocumentManager]. Should be called
+	// under [Lock.Write] to prevent concurrent write access to the documents.
 	Initialize(ctx context.Context, folders []lsp.WorkspaceFolder) error
+	// Ready returns a channel that is closed once all workspace files have been
+	// loaded into the [DocumentManager]. The initial build may still be running
+	// at that point: readers synchronize with it through [Lock], which the
+	// initializer holds for loading the workspace. Code that may run before
+	// the initialized notification arrives should wait on Ready first.
+	Ready() <-chan struct{}
 }
 
 // IncludeFilter determines whether a file system entry should be included
@@ -97,20 +88,41 @@ func (NoopInitializer) Initialize(ctx context.Context, folders []lsp.WorkspaceFo
 	return nil
 }
 
+var closedCh = func() chan struct{} { ch := make(chan struct{}); close(ch); return ch }()
+
+// Ready returns an already closed channel: there is nothing to wait for.
+func (NoopInitializer) Ready() <-chan struct{} {
+	return closedCh
+}
+
 // DefaultInitializer is the default implementation of [Initializer].
 // It scans the given workspace folders for files and matches them
 // against the configured [IncludeFilter].
 type DefaultInitializer struct {
-	sc *service.Container
+	sc        *service.Container
+	ready     chan struct{}
+	readyOnce sync.Once
 }
 
 // NewDefaultInitializer returns an [Initializer] that scans workspace folders
 // for files accepted by the registered [IncludeFilter].
 func NewDefaultInitializer(sc *service.Container) Initializer {
-	return &DefaultInitializer{sc: sc}
+	return &DefaultInitializer{sc: sc, ready: make(chan struct{})}
+}
+
+// Ready returns a channel that is closed once all workspace files are loaded.
+func (s *DefaultInitializer) Ready() <-chan struct{} {
+	return s.ready
+}
+
+// Marks the initializer as done, closing the Ready channel.
+func (s *DefaultInitializer) readyUp() {
+	s.readyOnce.Do(func() { close(s.ready) })
 }
 
 func (s *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.WorkspaceFolder) error {
+	// The initializer is always done once it exits this method
+	defer s.readyUp()
 	fs, err := service.Get[FileSystem](s.sc)
 	if err != nil {
 		return nil
@@ -139,13 +151,19 @@ func (s *DefaultInitializer) Initialize(ctx context.Context, folders []lsp.Works
 			return nil
 		})
 		if err != nil {
-			return err
+			// Print the issue, do not return here, simply walk the rest of the folders
+			log.Printf("Initializer encountered an error while walking %s: %v", root.StringUnencoded(), err)
 		}
 	}
 	return nil
 }
 
 func (s *DefaultInitializer) loadFile(ctx context.Context, uri core.URI, fs FileSystem, languageID string) {
+	docs := service.MustGet[DocumentManager](s.sc)
+	if docs.Has(uri) {
+		// Document already loaded, maybe through overlapping workspaces
+		return
+	}
 	content, err := fs.ReadFile(ctx, uri)
 	if err != nil {
 		log.Printf("failed to read file %s: %v", uri.String(), err)
@@ -153,5 +171,5 @@ func (s *DefaultInitializer) loadFile(ctx context.Context, uri core.URI, fs File
 	}
 	textDoc := textdoc.NewFile(uri.DocumentURI(), languageID, 0, string(content))
 	doc := core.NewDocument(textDoc)
-	service.MustGet[DocumentManager](s.sc).Set(doc)
+	docs.Set(doc)
 }

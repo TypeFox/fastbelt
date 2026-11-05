@@ -189,7 +189,7 @@ func parseAndMerge(files []string) (grammar.Grammar, error) {
 	}
 
 	builder := service.MustGet[workspace.Builder](sc)
-	if err := builder.Build(context.Background(), docs, nil); err != nil {
+	if err := builder.Build(context.Background(), docs); err != nil {
 		return nil, err
 	}
 	if err := reportDiagnostics(docs); err != nil {

@@ -23,6 +23,16 @@ type DefaultReferencesProvider struct {
 	sc *service.Container
 }
 
+// Ensure DefaultReferencesProvider implements the expected interfaces.
+var _ ReferencesProvider = (*DefaultReferencesProvider)(nil)
+var _ DocumentStateRequirements = (*DefaultReferencesProvider)(nil)
+
+// RequiredState indicates that the default references provider requires the workspace
+// to have reference information collected.
+func (rf *DefaultReferencesProvider) RequiredState() (core.DocumentState, bool) {
+	return core.DocStateReferences, true
+}
+
 func NewDefaultReferencesProvider(sc *service.Container) ReferencesProvider {
 	return &DefaultReferencesProvider{sc: sc}
 }
