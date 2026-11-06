@@ -25,10 +25,9 @@ type Overlay struct {
 // NewOverlay creates a new text document overlay.
 // The content parameter is accepted as a string and stored internally as bytes.
 func NewOverlay(uri lsp.DocumentURI, languageID string, version int32, content string) *Overlay {
-	file := NewFile(uri, languageID, version, content)
-	return &Overlay{
-		File: *file,
-	}
+	o := &Overlay{}
+	o.File.init(uri, languageID, version, content)
+	return o
 }
 
 // Update applies content changes to the overlay and updates its version.
@@ -208,29 +207,20 @@ func (o *Overlay) applyChangeLocked(change lsp.TextDocumentContentChangeEvent) e
 		o.content = newContent
 
 		// Invalidate line offsets cache
-		o.lineOffsets = nil
+		o.lineOffsets.Store(nil)
 	} else {
 		// Full document change
 		o.content = []byte(change.Text)
-		o.lineOffsets = nil
+		o.lineOffsets.Store(nil)
 	}
 	return nil
 }
 
-// getLineOffsetsLocked computes and caches line start offsets for the current
-// content. This method assumes the lock is already held (at least for reading),
-// and fills the cache on first use.
+// getLineOffsetsLocked returns the line start offsets for the current
+// content. This method assumes the lock is already held (at least for
+// reading); the cache is atomic, so concurrent readers may fill it.
 func (o *Overlay) getLineOffsetsLocked() []int {
-	if o.lineOffsets != nil {
-		return o.lineOffsets
-	}
-
-	// Need to compute line offsets
-	// Note: This is called from methods that already hold at least a read lock.
-	// For simplicity, we compute inline. A more sophisticated approach would
-	// upgrade to a write lock, but that requires releasing the read lock first.
-	o.lineOffsets = computeLineOffsets(o.content, true, 0)
-	return o.lineOffsets
+	return o.getLineOffsets()
 }
 
 // computeLineOffsets computes line offsets for the given content.
