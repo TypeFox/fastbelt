@@ -3,6 +3,7 @@ package regexp
 import (
 	"fmt"
 	"slices"
+	"unicode/utf8"
 
 	"typefox.dev/fastbelt/internal/automatons"
 	"typefox.dev/fastbelt/util/codegen"
@@ -100,6 +101,79 @@ func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsM
 	}
 }
 
+// asciiSelfLoop returns the ASCII bytes on which state source stays in source.
+func asciiSelfLoop(bySource *automatons.RuneRangeTargetsMapping, source int) (loop [utf8.RuneSelf]bool, any bool) {
+	for transition := range bySource.All() {
+		if transition.Values[0] != source {
+			continue
+		}
+		for c := max(transition.Range.Start, 0); c <= min(transition.Range.End, utf8.RuneSelf-1); c++ {
+			loop[c] = true
+			any = true
+		}
+	}
+	return loop, any
+}
+
+// generateSelfLoopFastPath emits, for every state that stays in itself on
+// some ASCII bytes (e.g. `[^"\\]*` inside a string, `\w*` in an identifier),
+// a loop that consumes those bytes with a table lookup, before the generic
+// per-rune transition. The state does not change while looping, so only the
+// accepted index needs updating. Returns nil if no state qualifies.
+func (r *RegexpImpl) generateSelfLoopFastPath(tokenName string, vars codegen.Node, deadState int) codegen.Node {
+	n := codegen.NewNode()
+	found := false
+	n.AppendLine("switch state {")
+	for source := 0; source < r.dfa.StateCount; source++ {
+		if source == deadState {
+			continue
+		}
+		loop, any := asciiSelfLoop(r.dfa.TransitionsBySource[source], source)
+		if !any {
+			continue
+		}
+		found = true
+		state := shiftStatesByDeadState(source, deadState)
+		tableName := fmt.Sprintf("%s_Loop%d", tokenName, state)
+		vars.Append(fmt.Sprintf("var %s = [%d]bool{", tableName, utf8.RuneSelf))
+		for c, ok := range loop {
+			if ok {
+				vars.Append(fmt.Sprintf("%d: true, ", c))
+			}
+		}
+		vars.AppendLine("}")
+		accepting := r.dfa.AcceptingStates[source]
+		n.AppendLine(fmt.Sprintf("case %d:", state))
+		n.Indent(func(n codegen.Node) {
+			if accepting {
+				n.AppendLine("start := index")
+			}
+			n.AppendLine("for index < length {")
+			n.Indent(func(n codegen.Node) {
+				n.AppendLine("c := input[index]")
+				n.AppendLine(fmt.Sprintf("if c >= utf8.RuneSelf || !%s[c] {", tableName))
+				n.Indent(func(n codegen.Node) { n.AppendLine("break") })
+				n.AppendLine("}")
+				n.AppendLine("index++")
+			})
+			n.AppendLine("}")
+			if accepting {
+				n.AppendLine("if index != start {")
+				n.Indent(func(n codegen.Node) { n.AppendLine("acceptedIndex = index") })
+				n.AppendLine("}")
+			}
+			n.AppendLine("if index == length {")
+			n.Indent(func(n codegen.Node) { n.AppendLine("break loop") })
+			n.AppendLine("}")
+		})
+	}
+	n.AppendLine("}")
+	if !found {
+		return nil
+	}
+	return n
+}
+
 type GenerateRegExpResult struct {
 	Imports map[string]bool
 	Vars    codegen.Node
@@ -133,6 +207,7 @@ func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateR
 	accepting.AppendLine("}")
 
 	imports := map[string]bool{"unicode/utf8": true}
+	selfLoops := codegen.NewNode()
 	root := codegen.NewNode()
 	root.AppendLine(fmt.Sprintf("func %s(s string, offset int) int {", funcName))
 	root.Indent(func(n codegen.Node) {
@@ -143,6 +218,9 @@ func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateR
 		n.AppendLine("index := 0")
 		n.AppendLine("loop: for index < length {")
 		n.Indent(func(n codegen.Node) {
+			if fast := r.generateSelfLoopFastPath(tokenName, selfLoops, deadState); fast != nil {
+				n.AppendNode(fast)
+			}
 			n.AppendLine("r, runeSize := utf8.DecodeRuneInString(input[index:])")
 			n.AppendLine("switch state {")
 			transitions := r.dfa.TransitionsBySource
@@ -180,6 +258,7 @@ func (r *RegexpImpl) GenerateRegExp(funcName string, tokenName string) GenerateR
 	vars.AppendNode(lookup)
 	vars.AppendNode(next)
 	vars.AppendNode(accepting)
+	vars.AppendNode(selfLoops)
 	return GenerateRegExpResult{
 		Imports: imports,
 		Code:    root,

@@ -11,3 +11,22 @@ func EmailPattern() string {
 func IPv4Pattern() string {
 	return `((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)`
 }
+
+// Typical lexer token patterns. Their DFAs loop on most ASCII characters,
+// which the generated self-loop fast path consumes with a table lookup.
+
+func StringPattern() string {
+	return `"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'`
+}
+
+func IDPattern() string {
+	return `[_a-zA-Z][\w_]*`
+}
+
+func WhitespacePattern() string {
+	return `[ \t\r\n]+`
+}
+
+func BlockCommentPattern() string {
+	return `/\*(?:[^*]|\*+[^*/])*\*+/`
+}

@@ -201,6 +201,23 @@ var Token_ID = core.NewTokenType(
 		index := 0
 	loop:
 		for index < length {
+			switch state {
+			case 1:
+				start := index
+				for index < length {
+					c := input[index]
+					if c >= utf8.RuneSelf || !Token_ID_Loop1[c] {
+						break
+					}
+					index++
+				}
+				if index != start {
+					acceptedIndex = index
+				}
+				if index == length {
+					break loop
+				}
+			}
 			r, runeSize := utf8.DecodeRuneInString(input[index:])
 			switch state {
 			case 0:
@@ -256,6 +273,7 @@ var Token_ID_Next = [][]int{
 var Token_ID_Accepting = [2]bool{
 	1: true,
 }
+var Token_ID_Loop1 = [128]bool{48: true, 49: true, 50: true, 51: true, 52: true, 53: true, 54: true, 55: true, 56: true, 57: true, 65: true, 66: true, 67: true, 68: true, 69: true, 70: true, 71: true, 72: true, 73: true, 74: true, 75: true, 76: true, 77: true, 78: true, 79: true, 80: true, 81: true, 82: true, 83: true, 84: true, 85: true, 86: true, 87: true, 88: true, 89: true, 90: true, 95: true, 97: true, 98: true, 99: true, 100: true, 101: true, 102: true, 103: true, 104: true, 105: true, 106: true, 107: true, 108: true, 109: true, 110: true, 111: true, 112: true, 113: true, 114: true, 115: true, 116: true, 117: true, 118: true, 119: true, 120: true, 121: true, 122: true}
 
 const Token_INT_Idx = 13
 
@@ -272,6 +290,23 @@ var Token_INT = core.NewTokenType(
 		index := 0
 	loop:
 		for index < length {
+			switch state {
+			case 1:
+				start := index
+				for index < length {
+					c := input[index]
+					if c >= utf8.RuneSelf || !Token_INT_Loop1[c] {
+						break
+					}
+					index++
+				}
+				if index != start {
+					acceptedIndex = index
+				}
+				if index == length {
+					break loop
+				}
+			}
 			r, runeSize := utf8.DecodeRuneInString(input[index:])
 			switch state {
 			case 0:
@@ -327,6 +362,7 @@ var Token_INT_Next = [][]int{
 var Token_INT_Accepting = [2]bool{
 	1: true,
 }
+var Token_INT_Loop1 = [128]bool{48: true, 49: true, 50: true, 51: true, 52: true, 53: true, 54: true, 55: true, 56: true, 57: true}
 
 const Token_WS_Idx = 14
 
@@ -343,6 +379,23 @@ var Token_WS = core.NewTokenType(
 		index := 0
 	loop:
 		for index < length {
+			switch state {
+			case 1:
+				start := index
+				for index < length {
+					c := input[index]
+					if c >= utf8.RuneSelf || !Token_WS_Loop1[c] {
+						break
+					}
+					index++
+				}
+				if index != start {
+					acceptedIndex = index
+				}
+				if index == length {
+					break loop
+				}
+			}
 			r, runeSize := utf8.DecodeRuneInString(input[index:])
 			switch state {
 			case 0:
@@ -398,6 +451,7 @@ var Token_WS_Next = [][]int{
 var Token_WS_Accepting = [2]bool{
 	1: true,
 }
+var Token_WS_Loop1 = [128]bool{9: true, 10: true, 12: true, 13: true, 32: true}
 
 const TokenGroup_Identifier_Idx = 15
 
