@@ -35,6 +35,9 @@ var URL_Next = [][]int{
 var URL_Accepting = [12]bool{
 	11: true,
 }
+var URL_Loop9 = [128]bool{35: true, 37: true, 43: true, 45: true, 48: true, 49: true, 50: true, 51: true, 52: true, 53: true, 54: true, 55: true, 56: true, 57: true, 58: true, 61: true, 64: true, 65: true, 66: true, 67: true, 68: true, 69: true, 70: true, 71: true, 72: true, 73: true, 74: true, 75: true, 76: true, 77: true, 78: true, 79: true, 80: true, 81: true, 82: true, 83: true, 84: true, 85: true, 86: true, 87: true, 88: true, 89: true, 90: true, 95: true, 97: true, 98: true, 99: true, 100: true, 101: true, 102: true, 103: true, 104: true, 105: true, 106: true, 107: true, 108: true, 109: true, 110: true, 111: true, 112: true, 113: true, 114: true, 115: true, 116: true, 117: true, 118: true, 119: true, 120: true, 121: true, 122: true, 126: true}
+var URL_Loop10 = [128]bool{46: true}
+var URL_Loop11 = [128]bool{35: true, 37: true, 38: true, 40: true, 41: true, 43: true, 45: true, 46: true, 47: true, 48: true, 49: true, 50: true, 51: true, 52: true, 53: true, 54: true, 55: true, 56: true, 57: true, 58: true, 61: true, 63: true, 64: true, 65: true, 66: true, 67: true, 68: true, 69: true, 70: true, 71: true, 72: true, 73: true, 74: true, 75: true, 76: true, 77: true, 78: true, 79: true, 80: true, 81: true, 82: true, 83: true, 84: true, 85: true, 86: true, 87: true, 88: true, 89: true, 90: true, 95: true, 97: true, 98: true, 99: true, 100: true, 101: true, 102: true, 103: true, 104: true, 105: true, 106: true, 107: true, 108: true, 109: true, 110: true, 111: true, 112: true, 113: true, 114: true, 115: true, 116: true, 117: true, 118: true, 119: true, 120: true, 121: true, 122: true, 126: true}
 
 func URL(s string, offset int) int {
 	input := s[offset:]
@@ -44,6 +47,45 @@ func URL(s string, offset int) int {
 	index := 0
 loop:
 	for index < length {
+		switch state {
+		case 9:
+			for index < length {
+				c := input[index]
+				if c >= utf8.RuneSelf || !URL_Loop9[c] {
+					break
+				}
+				index++
+			}
+			if index == length {
+				break loop
+			}
+		case 10:
+			for index < length {
+				c := input[index]
+				if c >= utf8.RuneSelf || !URL_Loop10[c] {
+					break
+				}
+				index++
+			}
+			if index == length {
+				break loop
+			}
+		case 11:
+			start := index
+			for index < length {
+				c := input[index]
+				if c >= utf8.RuneSelf || !URL_Loop11[c] {
+					break
+				}
+				index++
+			}
+			if index != start {
+				acceptedIndex = index
+			}
+			if index == length {
+				break loop
+			}
+		}
 		r, runeSize := utf8.DecodeRuneInString(input[index:])
 		switch state {
 		case 0:
