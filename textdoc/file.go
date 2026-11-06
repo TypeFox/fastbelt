@@ -5,6 +5,7 @@
 package textdoc
 
 import (
+	"sync/atomic"
 	"unicode/utf16"
 	"unicode/utf8"
 	"unsafe"
@@ -15,25 +16,32 @@ import (
 // File represents an immutable text document read from the file system.
 // It implements Handle but does not support modifications.
 type File struct {
-	uri         lsp.DocumentURI
-	languageID  string
-	version     int32
-	content     []byte
-	lineOffsets []int
+	uri        lsp.DocumentURI
+	languageID string
+	version    int32
+	content    []byte
+	// lineOffsets caches the line start offsets. It is computed on first use:
+	// many documents are only lexed and parsed, and need no positions. It is
+	// atomic because concurrent readers may fill it at the same time.
+	lineOffsets atomic.Pointer[[]int]
 }
 
 // NewFile creates a new text document file.
 // The content parameter is accepted as a string and stored internally as bytes.
 func NewFile(uri lsp.DocumentURI, languageID string, version int32, content string) *File {
-	f := &File{
-		uri:        uri,
-		languageID: languageID,
-		version:    version,
-		// Convert in-place from string to []byte without copying.
-		content: unsafe.Slice(unsafe.StringData(content), len(content)),
-	}
-	f.lineOffsets = computeLineOffsets(f.content, true, 0)
+	f := &File{}
+	f.init(uri, languageID, version, content)
 	return f
+}
+
+// init sets up f in place. File must not be copied after use (it holds an
+// atomic cache), so Overlay embeds it initialized through init.
+func (f *File) init(uri lsp.DocumentURI, languageID string, version int32, content string) {
+	f.uri = uri
+	f.languageID = languageID
+	f.version = version
+	// Convert in-place from string to []byte without copying.
+	f.content = unsafe.Slice(unsafe.StringData(content), len(content))
 }
 
 // URI returns the document URI.
@@ -155,14 +163,15 @@ func (f *File) LineCount() int {
 	return len(f.getLineOffsets())
 }
 
-// getLineOffsets returns the cached line start offsets.
+// getLineOffsets returns the line start offsets, computing them on first use.
+// Concurrent first calls may each compute them; they get equal results.
 func (f *File) getLineOffsets() []int {
-	if f.lineOffsets != nil {
-		return f.lineOffsets
+	if offsets := f.lineOffsets.Load(); offsets != nil {
+		return *offsets
 	}
-	// This should not happen if NewFile is used, but handle it defensively
-	f.lineOffsets = computeLineOffsets(f.content, true, 0)
-	return f.lineOffsets
+	offsets := computeLineOffsets(f.content, true, 0)
+	f.lineOffsets.Store(&offsets)
+	return offsets
 }
 
 // ensureBeforeEOL ensures the offset is before any end-of-line characters.
