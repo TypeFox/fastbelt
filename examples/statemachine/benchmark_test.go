@@ -65,6 +65,34 @@ func BenchmarkWorkspaceCycle(b *testing.B) {
 	b.ReportMetric(msPerResource, "ms/resource")
 }
 
+// BenchmarkWorkspaceCycleSingleDocument builds the same documents as
+// BenchmarkWorkspaceCycle, but one Build call per document, as an editor does
+// after an edit or a tool that processes files one at a time.
+func BenchmarkWorkspaceCycleSingleDocument(b *testing.B) {
+	length := 0
+	contents := make([]string, resourceCount)
+	for i := range contents {
+		contents[i], _ = generateStatemachineContent(i)
+		length += len(contents[i])
+	}
+	srv := CreateServices()
+	docManager := service.MustGet[workspace.DocumentManager](srv)
+	builder := service.MustGet[workspace.Builder](srv)
+
+	b.SetBytes(int64(length))
+	for b.Loop() {
+		docManager.Clear()
+		for i, content := range contents {
+			uri := fmt.Sprintf("file:///workspace/statemachine_%d.statemachine", i)
+			doc := fastbelt.NewDocumentFromString(uri, "statemachine", content)
+			docManager.Set(doc)
+			if err := builder.Build(context.Background(), []*fastbelt.Document{doc}, func() {}); err != nil {
+				b.Fatalf("build failed: %v", err)
+			}
+		}
+	}
+}
+
 func parseDocument(srv *service.Container, content string) *fastbelt.Document {
 	lexer := service.MustGet[lexer.Lexer](srv)
 	parser := service.MustGet[parser.Parser](srv)
