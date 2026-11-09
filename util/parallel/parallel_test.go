@@ -70,3 +70,16 @@ func BenchmarkParallelForEach(b *testing.B) {
 		})
 	}
 }
+
+// BenchmarkParallelForEachSingle measures the overhead of ForEach for a single
+// element, e.g. Builder.Build on one document.
+func BenchmarkParallelForEachSingle(b *testing.B) {
+	elements := []int{1}
+	sum := 0
+	for b.Loop() {
+		ForEach(elements, func(value int, index int) {
+			sum += value
+		})
+	}
+	_ = sum
+}
