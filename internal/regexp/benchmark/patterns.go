@@ -23,6 +23,13 @@ func IDPattern() string {
 	return `[_a-zA-Z][\w_]*`
 }
 
+// UnicodeIDPattern accepts non-ASCII letters inside the loop of the
+// identifier state, so a match alternates between the ASCII fast path and the
+// per-rune transitions.
+func UnicodeIDPattern() string {
+	return `[\p{L}_][\p{L}\p{N}_]*`
+}
+
 func WhitespacePattern() string {
 	return `[ \t\r\n]+`
 }
