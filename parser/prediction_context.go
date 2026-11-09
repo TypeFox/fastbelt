@@ -35,14 +35,26 @@ func emptyContextHash() uint64 { return hashCombine(1, 0) }
 
 func emptyPredictionContext() *predictionContext { return basePredictionContextEMPTY }
 
+// singletonStorage holds a singleton context together with the arrays backing
+// its parents and returnStates slices.
+type singletonStorage struct {
+	predictionContext
+	parent      [1]*predictionContext
+	returnState [1]int
+}
+
 func singletonPredictionContext(parent *predictionContext, returnState int) *predictionContext {
 	if returnState == predictionContextEmptyReturnState && parent == nil {
 		return basePredictionContextEMPTY
 	}
-	pc := &predictionContext{
-		parents:      []*predictionContext{parent},
-		returnStates: []int{returnState},
-	}
+	// One allocation instead of three: the one-element parents and
+	// returnStates slices are backed by arrays in the same object. Prediction
+	// creates a singleton context on every AdaptivePredict call. The slices are
+	// never written to after construction.
+	s := &singletonStorage{parent: [1]*predictionContext{parent}, returnState: [1]int{returnState}}
+	pc := &s.predictionContext
+	pc.parents = s.parent[:]
+	pc.returnStates = s.returnState[:]
 	if parent != nil {
 		pc.cachedHash = hashCombine(parent.cachedHash, uint64(returnState))
 	} else {
