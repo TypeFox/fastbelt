@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"sync"
 
 	"typefox.dev/lsp"
 )
@@ -17,9 +16,9 @@ import (
 // Overlay represents an open text document in the editor.
 // It may have unsaved edits and implements [Handle].
 // Conceptually, an overlay models in-memory edits layered on top of any on-disk file content.
+// Its methods are thread-safe; the read methods are those of the embedded [File].
 type Overlay struct {
 	File
-	mu sync.RWMutex
 }
 
 // NewOverlay creates a new text document overlay.
@@ -53,10 +52,7 @@ func (o *Overlay) Update(changes []lsp.TextDocumentContentChangeEvent, version i
 // The edits are automatically sorted by position, and overlapping edits return
 // an error. This method is thread-safe.
 func (o *Overlay) ApplyEdits(edits []lsp.TextEdit) (string, error) {
-	o.mu.RLock()
-	defer o.mu.RUnlock()
-
-	content := o.content
+	content, lineOffsets := o.lines()
 
 	// Sort edits by position (start line, then start character)
 	sortedEdits := make([]lsp.TextEdit, len(edits))
@@ -73,8 +69,8 @@ func (o *Overlay) ApplyEdits(edits []lsp.TextEdit) (string, error) {
 	estimatedLen := len(content)
 	for _, edit := range sortedEdits {
 		wellFormedEdit := getWellFormedEdit(edit)
-		startOffset := o.offsetAtLocked(wellFormedEdit.Range.Start)
-		endOffset := o.offsetAtLocked(wellFormedEdit.Range.End)
+		startOffset := offsetAt(content, lineOffsets, wellFormedEdit.Range.Start)
+		endOffset := offsetAt(content, lineOffsets, wellFormedEdit.Range.End)
 		estimatedLen += len(wellFormedEdit.NewText) - (endOffset - startOffset)
 	}
 
@@ -85,7 +81,7 @@ func (o *Overlay) ApplyEdits(edits []lsp.TextEdit) (string, error) {
 
 	for _, edit := range sortedEdits {
 		wellFormedEdit := getWellFormedEdit(edit)
-		startOffset := o.offsetAtLocked(wellFormedEdit.Range.Start)
+		startOffset := offsetAt(content, lineOffsets, wellFormedEdit.Range.Start)
 
 		if startOffset < lastModifiedOffset {
 			return "", errors.New("textdoc: overlapping edit")
@@ -99,66 +95,11 @@ func (o *Overlay) ApplyEdits(edits []lsp.TextEdit) (string, error) {
 			result.WriteString(wellFormedEdit.NewText)
 		}
 
-		lastModifiedOffset = o.offsetAtLocked(wellFormedEdit.Range.End)
+		lastModifiedOffset = offsetAt(content, lineOffsets, wellFormedEdit.Range.End)
 	}
 
 	result.Write(content[lastModifiedOffset:])
 	return result.String(), nil
-}
-
-// Version returns the current document version.
-// This method is thread-safe.
-func (o *Overlay) Version() int32 {
-	o.mu.RLock()
-	defer o.mu.RUnlock()
-	return o.version
-}
-
-// Content returns the byte slice that represents the document content.
-// This is not a copy. Do not modify the returned slice, as it may lead
-// to unexpected behavior. This method is thread-safe.
-func (o *Overlay) Content() []byte {
-	o.mu.RLock()
-	defer o.mu.RUnlock()
-	return o.File.Content()
-}
-
-// Text returns the text content or a substring if range is provided.
-// This is a convenience method that returns a string instead of []byte.
-// This method is thread-safe.
-func (o *Overlay) Text(r *lsp.Range) string {
-	o.mu.RLock()
-	defer o.mu.RUnlock()
-	return o.File.Text(r)
-}
-
-// PositionAt converts a zero-based byte-offset to a UTF16 position.
-// This method is thread-safe.
-func (o *Overlay) PositionAt(offset int) lsp.Position {
-	o.mu.RLock()
-	defer o.mu.RUnlock()
-	return o.File.PositionAt(offset)
-}
-
-// OffsetAt converts a UTF16 position to a zero-based byte-offset.
-// This method is thread-safe.
-func (o *Overlay) OffsetAt(position lsp.Position) int {
-	o.mu.RLock()
-	defer o.mu.RUnlock()
-	return o.File.OffsetAt(position)
-}
-
-// offsetAtLocked is the internal implementation of OffsetAt that assumes the lock is held.
-func (o *Overlay) offsetAtLocked(position lsp.Position) int {
-	return o.offsetAt(position)
-}
-
-// LineCount returns the number of lines in the document.
-// This method is thread-safe.
-func (o *Overlay) LineCount() int {
-	o.mu.RLock()
-	defer o.mu.RUnlock()
-	return o.File.LineCount()
 }
 
 // applyChangeLocked applies a single content change to the overlay.
@@ -169,14 +110,14 @@ func (o *Overlay) applyChangeLocked(change lsp.TextDocumentContentChangeEvent) e
 		wellFormedRange := getWellFormedRange(*change.Range)
 
 		// Validate that line numbers are within document bounds
-		lineOffsets := o.getLineOffsetsLocked()
+		lineOffsets := o.lineOffsetsLocked()
 		if int(wellFormedRange.Start.Line) >= len(lineOffsets) || int(wellFormedRange.End.Line) >= len(lineOffsets) {
 			return errors.New("textdoc: invalid range: line out of bounds")
 		}
 
 		// Validate that character positions are reasonable for their respective lines.
 		// We check against the maximum possible character position for each line.
-		// Note: offsetAtLocked will clamp positions and handle EOL positioning,
+		// Note: offsetAt will clamp positions and handle EOL positioning,
 		// but we want to reject positions that are clearly out of bounds.
 		for _, pos := range []lsp.Position{wellFormedRange.Start, wellFormedRange.End} {
 			lineStart := lineOffsets[pos.Line]
@@ -193,8 +134,8 @@ func (o *Overlay) applyChangeLocked(change lsp.TextDocumentContentChangeEvent) e
 			}
 		}
 
-		startOffset := o.offsetAtLocked(wellFormedRange.Start)
-		endOffset := o.offsetAtLocked(wellFormedRange.End)
+		startOffset := offsetAt(o.content, lineOffsets, wellFormedRange.Start)
+		endOffset := offsetAt(o.content, lineOffsets, wellFormedRange.End)
 
 		// Update content using []byte operations for efficiency
 		// Note: never modify the original content slice in-place:
@@ -207,20 +148,13 @@ func (o *Overlay) applyChangeLocked(change lsp.TextDocumentContentChangeEvent) e
 		o.content = newContent
 
 		// Invalidate line offsets cache
-		o.lineOffsets.Store(nil)
+		o.lineOffsets = nil
 	} else {
 		// Full document change
 		o.content = []byte(change.Text)
-		o.lineOffsets.Store(nil)
+		o.lineOffsets = nil
 	}
 	return nil
-}
-
-// getLineOffsetsLocked returns the line start offsets for the current
-// content. This method assumes the lock is already held (at least for
-// reading); the cache is atomic, so concurrent readers may fill it.
-func (o *Overlay) getLineOffsetsLocked() []int {
-	return o.getLineOffsets()
 }
 
 // computeLineOffsets computes line offsets for the given content.

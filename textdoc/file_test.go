@@ -5,6 +5,8 @@
 package textdoc
 
 import (
+	"strings"
+	"sync"
 	"testing"
 
 	"typefox.dev/lsp"
@@ -376,4 +378,33 @@ func TestLineOffsets(t *testing.T) {
 			t.Errorf("Content '%s': expected %d lines, got %d", test.content, len(test.expected), lineCount)
 		}
 	}
+}
+
+func TestLineOffsetsComputedOnFirstUse(t *testing.T) {
+	doc := NewFile("file:///test.txt", "plaintext", 1, "a\nb\nc")
+	if doc.lineOffsets != nil {
+		t.Fatal("line offsets computed before first use")
+	}
+	if got := doc.PositionAt(4); got != (lsp.Position{Line: 2, Character: 0}) {
+		t.Errorf("PositionAt(4) = %v, want 2:0", got)
+	}
+	if len(doc.lineOffsets) != 3 {
+		t.Errorf("line offsets = %v, want 3 entries", doc.lineOffsets)
+	}
+}
+
+// TestConcurrentFirstUse runs concurrent first uses of the line offsets; run
+// with -race.
+func TestConcurrentFirstUse(t *testing.T) {
+	doc := NewFile("file:///test.txt", "plaintext", 1, strings.Repeat("line\n", 1000))
+	var wg sync.WaitGroup
+	for i := range 8 {
+		wg.Go(func() {
+			pos := doc.PositionAt(i * 5)
+			if pos.Line != uint32(i) || doc.OffsetAt(pos) != i*5 || doc.LineCount() != 1001 {
+				t.Errorf("reader %d: position %v, line count %d", i, pos, doc.LineCount())
+			}
+		})
+	}
+	wg.Wait()
 }

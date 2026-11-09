@@ -6,6 +6,7 @@ package textdoc
 
 import (
 	"strings"
+	"sync"
 	"testing"
 
 	"typefox.dev/lsp"
@@ -717,5 +718,48 @@ func TestUpdateDoesNotMutateAliasedStrings(t *testing.T) {
 	}
 	if doc.Text(nil) != "hello Gopher" {
 		t.Errorf("Expected 'hello Gopher', got %q", doc.Text(nil))
+	}
+}
+
+// TestConcurrentReadsDuringUpdates reads positions while the overlay is
+// edited; run with -race. The updates only append lines, so the end of any
+// text read earlier keeps its position in all later versions.
+func TestConcurrentReadsDuringUpdates(t *testing.T) {
+	o := NewOverlay("file:///test.txt", "plaintext", 1, "a\nb\n")
+	var wg sync.WaitGroup
+	done := make(chan struct{})
+	for range 4 {
+		wg.Go(func() {
+			for {
+				select {
+				case <-done:
+					return
+				default:
+				}
+				text := o.Text(nil)
+				lines := strings.Count(text, "\n")
+				if pos := o.PositionAt(len(text)); pos != (lsp.Position{Line: uint32(lines)}) {
+					t.Errorf("end of a %d-line text at %v", lines, pos)
+				}
+				if got := o.LineCount(); got < lines+1 {
+					t.Errorf("LineCount() = %d after reading %d lines", got, lines)
+				}
+				if edited, err := o.ApplyEdits([]lsp.TextEdit{{NewText: "x"}}); err != nil || !strings.HasPrefix(edited, "xa\nb\n") {
+					t.Errorf("ApplyEdits = %q, %v", edited, err)
+				}
+			}
+		})
+	}
+	for v := int32(2); v < 200; v++ {
+		end := lsp.Position{Line: uint32(o.LineCount() - 1)}
+		change := lsp.TextDocumentContentChangeEvent{Range: &lsp.Range{Start: end, End: end}, Text: "c\n"}
+		if err := o.Update([]lsp.TextDocumentContentChangeEvent{change}, v); err != nil {
+			t.Fatal(err)
+		}
+	}
+	close(done)
+	wg.Wait()
+	if got := o.LineCount(); got != 3+198 {
+		t.Errorf("LineCount() = %d, want %d", got, 3+198)
 	}
 }
