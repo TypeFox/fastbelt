@@ -18,7 +18,7 @@ export function deactivate(): Thenable<void> | undefined {
 
 async function startLanguageClient(context: vscode.ExtensionContext): Promise<LanguageClient> {
     const serverOptions: ServerOptions = {
-        command: context.asAbsolutePath(path.join('dist', 'server' + (process.platform === 'win32' ? '.exe' : ''))),
+        command: context.asAbsolutePath(path.join('dist', '{{.LSPSlug}}' + (process.platform === 'win32' ? '.exe' : ''))),
         args: [],
         transport: TransportKind.stdio
     };
@@ -28,12 +28,12 @@ async function startLanguageClient(context: vscode.ExtensionContext): Promise<La
         // explicitly create an output channel enabling monitoring the LS logs from the beginning in vs code's 'output' view
         // (by default vs code creates such channels lazily on the first message)
         outputChannel: vscode.window.createOutputChannel(
-            '{{.LanguageLabel}} Language Server'
+            {{json (printf "%s Language Server" .LanguageLabel)}}
         )
     };
     const lc = new LanguageClient(
         '{{.LanguageID}}',
-        '{{.LanguageLabel}}',
+        {{json .LanguageLabel}},
         serverOptions,
         clientOptions
     );

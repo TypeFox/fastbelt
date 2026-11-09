@@ -1,8 +1,8 @@
 {
   "name": "{{.NPMExtension}}",
   "publisher": "local",
-  "displayName": "{{.LanguageLabel}}",
-  "description": "VS Code support for {{.LanguageLabel}}",
+  "displayName": {{json .LanguageLabel}},
+  "description": {{json (printf "VS Code support for %s" .LanguageLabel)}},
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.104.0"
@@ -17,7 +17,7 @@
       {
         "id": "{{.LanguageID}}",
         "aliases": [
-          "{{.LanguageLabel}}",
+          {{json .LanguageLabel}},
           "{{.ExportedBase}}"
         ],
         "extensions": [
@@ -42,7 +42,7 @@
     "watch:tsc": "tsc --noEmit --watch",
     "vscode:prepublish": "npm run check-types && node esbuild.js --production",
     "check-types": "tsc --noEmit",
-    "build-server": "go build -o dist/server ../cmd/{{.LSPSlug}}"
+    "build-server": "go build -o dist/ ../cmd/{{.LSPSlug}}"
   },
   "dependencies": {
     "vscode-languageclient": "~9.0.1"

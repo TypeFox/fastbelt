@@ -65,12 +65,19 @@ func newTemplateParams(s *Scaffolder) (templateParams, error) {
 	if base == "." || base == "/" {
 		return templateParams{}, fmt.Errorf("invalid module path %q", modulePath)
 	}
-	languageLabel := s.Language
-	languageLabel = strings.TrimSpace(languageLabel)
-	languageLabel = strings.ToUpper(languageLabel[0:1]) + languageLabel[1:]
+	languageLabel := strings.TrimSpace(s.Language)
 	if languageLabel == "" {
 		return templateParams{}, fmt.Errorf("language name is empty")
 	}
+	// The grammar name, Go package and file names are derived from the label and must be identifiers.
+	if !isASCIILetter(rune(languageLabel[0])) {
+		return templateParams{}, fmt.Errorf("language name %q must start with a letter (a-z)", s.Language)
+	}
+	// The label ends up in line comments of the generated sources.
+	if strings.ContainsFunc(languageLabel, unicode.IsControl) {
+		return templateParams{}, fmt.Errorf("language name %q must not contain control characters", s.Language)
+	}
+	languageLabel = strings.ToUpper(languageLabel[0:1]) + languageLabel[1:]
 
 	languageID := deriveLanguageID(languageLabel)
 	exported := exportedBase(languageLabel)
@@ -145,9 +152,15 @@ func deriveLanguageID(languageLabel string) string {
 	return s
 }
 
+func isASCIILetter(r rune) bool {
+	return 'a' <= r && r <= 'z' || 'A' <= r && r <= 'Z'
+}
+
+// exportedBase keeps only ASCII letters and digits: the result is used as a grammar name,
+// and the grammar language's identifiers are ASCII-only.
 func exportedBase(languageLabel string) string {
 	parts := strings.FieldsFunc(languageLabel, func(r rune) bool {
-		return r == '-' || r == '_' || unicode.IsSpace(r)
+		return !isASCIILetter(r) && !('0' <= r && r <= '9')
 	})
 	var b strings.Builder
 	for _, p := range parts {

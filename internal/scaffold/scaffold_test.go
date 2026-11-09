@@ -5,13 +5,12 @@
 package scaffold
 
 import (
-	"bytes"
+	"encoding/json"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-	"text/template"
 
 	"github.com/stretchr/testify/require"
 )
@@ -47,7 +46,7 @@ func TestPrepareNames_goKeywordPackage(t *testing.T) {
 func TestEmbeddedTemplatesExecute(t *testing.T) {
 	n, err := newTemplateParams(&Scaffolder{
 		ImportPath: "example.com/a/b",
-		Language:   "Zed",
+		Language:   `Bob's "Zed" \ DSL`,
 	})
 	require.NoError(t, err)
 	require.NoError(t, fs.WalkDir(templateFS, "templates", func(p string, d fs.DirEntry, walkErr error) error {
@@ -60,15 +59,31 @@ func TestEmbeddedTemplatesExecute(t *testing.T) {
 		if !strings.HasSuffix(p, ".tmpl") {
 			return nil
 		}
-		b, readErr := templateFS.ReadFile(p)
-		require.NoError(t, readErr)
-		tmpl, parseErr := template.New(p).Parse(string(b))
-		require.NoError(t, parseErr, p)
-		var buf bytes.Buffer
-		require.NoError(t, tmpl.Execute(&buf, n), p)
-		require.NotEmpty(t, buf.String(), p)
+		out, renderErr := (&Scaffolder{}).renderTemplate(strings.TrimPrefix(p, "templates/"), n)
+		require.NoError(t, renderErr, p)
+		require.NotEmpty(t, out, p)
+		if strings.HasSuffix(p, ".json.tmpl") {
+			require.True(t, json.Valid(out), "%s is not valid JSON:\n%s", p, out)
+		}
 		return nil
 	}))
+}
+
+func TestPrepareNames_sanitizesLanguage(t *testing.T) {
+	n, err := newTemplateParams(&Scaffolder{ImportPath: "x/y", Language: "C++"})
+	require.NoError(t, err)
+	require.Equal(t, "CModel", n.GrammarName)
+	require.Equal(t, "c", n.GoPackage)
+
+	for _, language := range []string{"", "   ", "3D Model", "++", "Élan", "a\nb"} {
+		_, err := newTemplateParams(&Scaffolder{ImportPath: "x/y", Language: language})
+		require.Error(t, err, "language %q", language)
+	}
+}
+
+func TestNewModulePath(t *testing.T) {
+	require.Equal(t, "example.com/acme/foo", newModulePath("example.com/acme/foo", "."))
+	require.Equal(t, "example.com/acme/foo", newModulePath("example.com/acme/foo/pkg/lang", filepath.Join("pkg", "lang")))
 }
 
 func TestReadGoModulePath(t *testing.T) {

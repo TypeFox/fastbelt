@@ -7,6 +7,7 @@ package scaffold
 import (
 	"bytes"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -68,7 +69,7 @@ func (s *Scaffolder) Run() error {
 		if err := ensureScaffoldDir(s.ModuleRoot); err != nil {
 			return err
 		}
-		if err := runGo(s.ModuleRoot, "mod", "init", names.ModulePath); err != nil {
+		if err := runGo(s.ModuleRoot, "mod", "init", newModulePath(s.ImportPath, relToMod)); err != nil {
 			return fmt.Errorf("go mod init: %w", err)
 		}
 		if s.WriteRoot != s.ModuleRoot {
@@ -206,6 +207,15 @@ func (s *Scaffolder) PopulateDirectoriesFromModuleDir(moduleRootDir, moduleImpor
 	s.WriteRoot = packageRoot
 	s.ImportPath = moduleImportPath + "/" + clean
 	return nil
+}
+
+// newModulePath returns the module path for go mod init: the package import path without
+// the package directory relToMod (relative to the module root, "." for the root itself).
+func newModulePath(importPath, relToMod string) string {
+	if relToMod == "." {
+		return importPath
+	}
+	return strings.TrimSuffix(importPath, "/"+filepath.ToSlash(relToMod))
 }
 
 func goGeneratePattern(moduleRoot, packageRoot string) (string, error) {
@@ -389,7 +399,12 @@ func (s *Scaffolder) renderTemplate(templatePath string, params templateParams) 
 	if err != nil {
 		return nil, err
 	}
-	t, err := template.New(templatePath).Parse(string(body))
+	// json renders a string as a JSON string literal, which is also a valid TypeScript literal.
+	funcs := template.FuncMap{"json": func(s string) (string, error) {
+		b, err := json.Marshal(s)
+		return string(b), err
+	}}
+	t, err := template.New(templatePath).Funcs(funcs).Parse(string(body))
 	if err != nil {
 		return nil, err
 	}
