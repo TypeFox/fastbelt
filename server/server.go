@@ -6,6 +6,8 @@ package server
 
 import (
 	"context"
+	"errors"
+	"io"
 	"log"
 
 	"golang.org/x/exp/jsonrpc2"
@@ -176,9 +178,10 @@ func (s *DefaultLanguageServer) Shutdown(ctx context.Context) error {
 }
 
 func (s *DefaultLanguageServer) Exit(ctx context.Context) error {
-	// Close the connection to allow the server to exit
+	// Close the connection to allow the server to exit. Close waits for running handlers,
+	// including this one, so it must not be called synchronously here.
 	if connection := service.MustGet[*Connection](s.sc); connection.Value != nil {
-		return connection.Value.Close()
+		go func() { _ = connection.Value.Close() }()
 	}
 	return nil
 }
@@ -578,8 +581,12 @@ func StartLanguageServer(ctx context.Context, sc *service.Container) error {
 		_ = conn.Close() // Ignore error in defer
 	}()
 
-	// Wait for the connection to close
-	return conn.Wait()
+	// Wait for the connection to close. A closed pipe means the server closed it itself
+	// (the client sent exit), which is a regular way to stop.
+	if err := conn.Wait(); err != nil && !errors.Is(err, io.ErrClosedPipe) {
+		return err
+	}
+	return nil
 }
 
 // toAnySlice converts []lsp.DocumentSymbol to []any for the LSP response.

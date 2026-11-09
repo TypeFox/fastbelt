@@ -30,19 +30,22 @@ func NewStdioDialer() *StdioDialer {
 }
 
 func (d *StdioDialer) Dial(ctx context.Context) (io.ReadWriteCloser, error) {
+	// A blocked read on stdin cannot be interrupted, so stdin is pumped through a pipe:
+	// closing the pipe is what lets the connection shut down on the LSP exit notification.
+	stdin, pump := io.Pipe()
+	go func() {
+		_, err := io.Copy(pump, os.Stdin)
+		pump.CloseWithError(err)
+	}()
 	return &stdioReadWriteCloser{
-		Reader: os.Stdin,
-		Writer: os.Stdout,
+		PipeReader: stdin,
+		Writer:     os.Stdout,
 	}, nil
 }
 
-// stdioReadWriteCloser combines stdin/stdout into a ReadWriteCloser
+// stdioReadWriteCloser combines stdin/stdout into a ReadWriteCloser.
+// Close ends reading from stdin; stdout doesn't need explicit closing.
 type stdioReadWriteCloser struct {
-	io.Reader
+	*io.PipeReader
 	io.Writer
-}
-
-func (rw *stdioReadWriteCloser) Close() error {
-	// stdin/stdout don't need explicit closing
-	return nil
 }

@@ -7,7 +7,10 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"os"
 	"testing"
+	"time"
 
 	"typefox.dev/fastbelt/textdoc"
 	"typefox.dev/fastbelt/util/service"
@@ -56,5 +59,43 @@ func TestLanguageServerBasicLifecycle(t *testing.T) {
 	err = server.Exit(ctx)
 	if err != nil {
 		t.Errorf("Exit failed: %v", err)
+	}
+}
+
+// TestStdioServerStopsOnExit checks that the exit notification ends StartLanguageServer
+// although stdin stays open.
+func TestStdioServerStopsOnExit(t *testing.T) {
+	stdin, client, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldStdin := os.Stdin
+	os.Stdin = stdin
+	t.Cleanup(func() {
+		os.Stdin = oldStdin
+		_ = client.Close() // ends the stdin pump of the dialer
+	})
+
+	sc := service.NewContainer()
+	workspace.SetupDefaultServices(sc)
+	textdoc.SetupDefaultServices(sc)
+	SetupDefaultServices(sc)
+	SetupStdioServices(sc)
+	sc.Seal()
+
+	done := make(chan error, 1)
+	go func() { done <- StartLanguageServer(context.Background(), sc) }()
+
+	body := `{"jsonrpc":"2.0","method":"exit"}`
+	if _, err := fmt.Fprintf(client, "Content-Length: %d\r\n\r\n%s", len(body), body); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Errorf("StartLanguageServer failed: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("language server did not stop after the exit notification")
 	}
 }
