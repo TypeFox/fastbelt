@@ -25,7 +25,7 @@ type Overlay struct {
 // The content parameter is accepted as a string and stored internally as bytes.
 func NewOverlay(uri lsp.DocumentURI, languageID string, version int32, content string) *Overlay {
 	o := &Overlay{}
-	o.File.init(uri, languageID, version, content)
+	o.init(uri, languageID, version, content)
 	return o
 }
 
