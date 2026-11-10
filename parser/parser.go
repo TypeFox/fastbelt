@@ -14,8 +14,8 @@ import (
 type Parser interface {
 	// Parse builds the AST from document.Tokens and sets the Root and
 	// ParserErrors fields of the document. If ctx is cancelled while parsing,
-	// the document is left untouched and ctx.Err() is returned.
-	Parse(ctx context.Context, document *core.Document) error
+	// the document is left untouched and the parser stops processing.
+	Parse(ctx context.Context, document *core.Document)
 }
 
 const (
@@ -48,10 +48,6 @@ type ParserState struct {
 	sim               *parserATNSimulator // lazily created adaptive (ALL(*)) predictor
 
 	lastErrorIndex int // index of the last token that caused an error, used to prevent infinite loops in recovery
-}
-
-func (p *ParserState) Context() context.Context {
-	return p.ctx
 }
 
 func (p *ParserState) ATN() *RuntimeATN {
@@ -162,6 +158,11 @@ func (p *ParserState) Consume(tokenType *core.TokenType) *core.Token {
 	if p.ErrorMode != ErrorModeNone {
 		return nil
 	}
+	// Periodically check for errors to avoid unnecessary parsing work.
+	const errorCheckCount = 256 - 1
+	if p.Index&errorCheckCount == 0 && p.checkError() {
+		return nil
+	}
 	current := p.LA(1)
 	// Fast path for the common exact-type match; Matches is a closure call and
 	// only needed for token groups (real tokens never carry a group TypeId).
@@ -259,18 +260,22 @@ func (p *ParserState) ExitRule() {
 	if len(p.followStates) > 0 {
 		p.followStates = p.followStates[:len(p.followStates)-1]
 	}
-	if p.ctx.Err() != nil {
-		// Use ErrorMode as a proxy to abort parsing.
-		// Also, make sure that lookaheads terminate by jumping to the end of the token stream.
-		p.ErrorMode = ErrorModeFail
-		p.Index = p.Length
-		return
-	}
 	if p.ErrorMode == ErrorModeFail {
 		// Once we exit the rule where the error was detected, we can attempt recovery.
 		p.ErrorMode = ErrorModeRecover
 		p.recovery.Recover(p)
 	}
+}
+
+func (p *ParserState) checkError() bool {
+	if p.ctx.Err() != nil {
+		// Use ErrorMode as a proxy to abort parsing.
+		// Also, make sure that lookaheads terminate by jumping to the end of the token stream.
+		p.ErrorMode = ErrorModeFail
+		p.Index = p.Length
+		return true
+	}
+	return false
 }
 
 // Sync delegates to the recovery strategy to discard unexpected tokens before

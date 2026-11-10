@@ -17,7 +17,10 @@ type Parser struct {
 	lookahead             LookaheadParserLookahead
 }
 
-func (p *Parser) Parse(ctx context.Context, document *core.Document) error {
+func (p *Parser) Parse(ctx context.Context, document *core.Document) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	recovery := p.sc.MustGet[parser.ErrorRecoveryStrategy]()
 	messages := p.sc.MustGet[parser.ErrorMessageProvider]()
 	referencesConstructor := p.sc.MustGet[LookaheadReferencesConstructor]()
@@ -30,13 +33,12 @@ func (p *Parser) Parse(ctx context.Context, document *core.Document) error {
 	}
 	result := cp.ParseRoot()
 	if ctx.Err() != nil {
-		return ctx.Err()
+		return
 	}
 	cp.state.ExpectEndOfInput()
 	document.ParserErrors = cp.state.Errors()
 	document.Root = result
 	core.AssignContainers(document)
-	return nil
 }
 
 func NewParser(sc *service.Container) *Parser {

@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/lexer"
 	"typefox.dev/fastbelt/parser"
@@ -23,11 +22,11 @@ func TestParseCancelledContextTerminates(t *testing.T) {
 	doc := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	lexer := srv.MustGet[lexer.Lexer]()
 	parser := srv.MustGet[parser.Parser]()
-	require.NoError(t, lexer.Exec(t.Context(), doc))
+	lexer.Exec(t.Context(), doc)
 	ctx, cancel := context.WithCancel(t.Context())
 	// Cancel ahead of time
 	cancel()
-	assert.Error(t, parser.Parse(ctx, doc))
+	parser.Parse(ctx, doc)
 	assert.Nil(t, doc.Root, "a cancelled parse must leave the document untouched")
 }
 
@@ -42,8 +41,8 @@ func TestLexerCancellationStopsEarly(t *testing.T) {
 	content, _ := generateStatemachineContentWithStates(0, hugeStateCount)
 	doc := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	lexer := CreateServices().MustGet[lexer.Lexer]()
-	assertCancellationStopsEarly(t, func(ctx context.Context) error {
-		return lexer.Exec(ctx, doc)
+	assertCancellationStopsEarly(t, func(ctx context.Context) {
+		lexer.Exec(ctx, doc)
 	})
 }
 
@@ -55,25 +54,23 @@ func TestParserCancellationStopsEarly(t *testing.T) {
 	srv := CreateServices()
 	doc := fastbelt.NewDocumentFromString("file:///workspace/statemachine_0.statemachine", "statemachine", content)
 	lexer := srv.MustGet[lexer.Lexer]()
-	require.NoError(t, lexer.Exec(t.Context(), doc))
+	lexer.Exec(t.Context(), doc)
 	parser := srv.MustGet[parser.Parser]()
-	assertCancellationStopsEarly(t, func(ctx context.Context) error {
-		return parser.Parse(ctx, doc)
+	assertCancellationStopsEarly(t, func(ctx context.Context) {
+		parser.Parse(ctx, doc)
 	})
 }
 
 // assertCancellationStopsEarly times a full run, then reruns with
 // cancellation fired after 20% of that time and asserts the cancelled run
 // finishes within 30% of it.
-func assertCancellationStopsEarly(t *testing.T, run func(ctx context.Context) error) {
+func assertCancellationStopsEarly(t *testing.T, run func(ctx context.Context)) {
 	t.Helper()
-	err := run(t.Context()) // warm up
-	require.NoError(t, err)
+	run(t.Context()) // warm up
 
 	runtime.GC()
 	start := time.Now()
-	err = run(t.Context())
-	require.NoError(t, err)
+	run(t.Context())
 	full := time.Since(start)
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -82,8 +79,7 @@ func assertCancellationStopsEarly(t *testing.T, run func(ctx context.Context) er
 	start = time.Now()
 	timer := time.AfterFunc(full/5, cancel)
 	defer timer.Stop()
-	err = run(ctx)
-	assert.Error(t, err)
+	run(ctx)
 	cancelled := time.Since(start)
 
 	t.Logf("full: %v, cancelled: %v", full, cancelled)

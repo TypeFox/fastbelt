@@ -20,12 +20,8 @@ func parseDocument(tb testing.TB, srv *service.Container, content string) *fastb
 	lexer := srv.MustGet[lexer.Lexer]()
 	parser := srv.MustGet[parser.Parser]()
 	doc := fastbelt.NewDocumentFromString("file:///workspace/test.statemachine", "statemachine", content)
-	if err := lexer.Exec(context.Background(), doc); err != nil {
-		tb.Fatal(err)
-	}
-	if err := parser.Parse(context.Background(), doc); err != nil {
-		tb.Fatal(err)
-	}
+	lexer.Exec(context.Background(), doc)
+	parser.Parse(context.Background(), doc)
 	return doc
 }
 

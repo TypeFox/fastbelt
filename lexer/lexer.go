@@ -17,8 +17,8 @@ import (
 type Lexer interface {
 	// Exec tokenizes the document text and sets the Tokens, Comments
 	// and LexerErrors fields of the document. If ctx is cancelled while
-	// lexing, the document is left untouched and ctx.Err() is returned.
-	Exec(ctx context.Context, document *core.Document) error
+	// lexing, the document is left untouched and lexing stops.
+	Exec(ctx context.Context, document *core.Document)
 }
 
 // lexerResult holds everything produced by a single lexer run over source text.
@@ -51,7 +51,7 @@ type DefaultLexer struct {
 
 // Exec tokenizes the document, starting in the entry token mode of its language.
 // With more than one language, the language is resolved via the [core.LanguageSelector].
-func (l *DefaultLexer) Exec(ctx context.Context, document *core.Document) error {
+func (l *DefaultLexer) Exec(ctx context.Context, document *core.Document) {
 	language := 0
 	if len(l.entryModes) > 1 {
 		selector := l.sc.MustGet[core.LanguageSelector]()
@@ -59,19 +59,18 @@ func (l *DefaultLexer) Exec(ctx context.Context, document *core.Document) error 
 			language = i
 		}
 	}
-	result, err := l.exec(ctx, document.TextDoc.Text(nil), language)
-	if err != nil {
-		return err
+	result := l.exec(ctx, document.TextDoc.Text(nil), language)
+	if result == nil {
+		return
 	}
 	document.Tokens = result.Tokens
 	document.Comments = result.Comments
 	document.LexerErrors = result.Errors
-	return nil
 }
 
 // exec scans input from left to right using longest-match disambiguation among
 // the token types of the active mode, starting in the entry mode of the language.
-func (l *DefaultLexer) exec(ctx context.Context, input string, language int) (*lexerResult, error) {
+func (l *DefaultLexer) exec(ctx context.Context, input string, language int) *lexerResult {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -81,6 +80,9 @@ func (l *DefaultLexer) exec(ctx context.Context, input string, language int) (*l
 	tokens := make([]core.Token, 0, avgRatio.Capacity(length))
 	comments := make([]core.Token, 0)
 	errors := make([]*core.LexerError, 0)
+	// Checking on every token for cancellation would be a performance hit,
+	// so we only check every 256 tokens. -1 for & operation in the check.
+	const errorCheckCount = 256 - 1
 
 	// The mode stack is local to this call: a DefaultLexer is shared between
 	// documents and Exec may run concurrently, so input that ends inside a
@@ -89,6 +91,9 @@ func (l *DefaultLexer) exec(ctx context.Context, input string, language int) (*l
 	currentTokenMode := stack.Peek()
 
 	var offset int
+	// Use a separate counter for checking context cancellation, since
+	// we cannot count hidden tokens separately.
+	var checkCount int
 	for offset < length && currentTokenMode != nil {
 		r, size := utf8.DecodeRuneInString(input[offset:])
 		mapIndex := int(r) % maxChar
@@ -154,9 +159,14 @@ func (l *DefaultLexer) exec(ctx context.Context, input string, language int) (*l
 		offset = end
 
 		// Don't check the context on every token
-		if len(tokens)&1023 == 0 && ctx.Err() != nil {
-			return nil, ctx.Err()
+		checkCount++
+		if checkCount&errorCheckCount == 0 && ctx.Err() != nil {
+			return nil
 		}
+	}
+
+	if ctx.Err() != nil {
+		return nil
 	}
 
 	if length > 0 {
@@ -168,7 +178,7 @@ func (l *DefaultLexer) exec(ctx context.Context, input string, language int) (*l
 		Tokens:   tokens,
 		Comments: comments,
 		Errors:   errors,
-	}, nil
+	}
 }
 
 const maxChar = 256

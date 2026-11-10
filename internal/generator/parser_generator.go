@@ -633,8 +633,11 @@ func GenerateParser(grammr grammar.Grammar, entryRules []grammar.ParserRule, pac
 	node.AppendLine("}")
 	node.AppendLine()
 
-	node.AppendLine("func (p *Parser) Parse(ctx context.Context, document *core.Document) error {")
+	node.AppendLine("func (p *Parser) Parse(ctx context.Context, document *core.Document) {")
 	node.Indent(func(n codegen.Node) {
+		n.AppendLine("if ctx == nil {")
+		n.AppendLine("    ctx = context.Background()")
+		n.AppendLine("}")
 		n.AppendLine("recovery := p.sc.MustGet[parser.ErrorRecoveryStrategy]()")
 		n.AppendLine("messages := p.sc.MustGet[parser.ErrorMessageProvider]()")
 		n.AppendLine("referencesConstructor := p.sc.MustGet[", grammr.Name(), "ReferencesConstructor]()")
@@ -652,13 +655,12 @@ func GenerateParser(grammr grammar.Grammar, entryRules []grammar.ParserRule, pac
 		}
 		emitEntryDispatch(n, "p.sc", assign, entryRules)
 		n.AppendLine("if ctx.Err() != nil {")
-		n.AppendLine("    return ctx.Err()")
+		n.AppendLine("    return")
 		n.AppendLine("}")
 		n.AppendLine("cp.state.ExpectEndOfInput()")
 		n.AppendLine("document.ParserErrors = cp.state.Errors()")
 		n.AppendLine("document.Root = result")
 		n.AppendLine("core.AssignContainers(document)")
-		n.AppendLine("return nil")
 	})
 	node.AppendLine("}")
 	node.AppendLine()

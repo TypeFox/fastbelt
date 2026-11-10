@@ -375,9 +375,9 @@ func (l *DefaultLexer) Lex(input string) *lexerResult {
 
 // mustExec scans input with the token modes of the given language.
 func mustExec(l *DefaultLexer, input string, language int) *lexerResult {
-	result, err := l.exec(context.Background(), input, language)
-	if err != nil {
-		panic(err)
+	result := l.exec(context.Background(), input, language)
+	if result == nil {
+		panic("lexing failed")
 	}
 	return result
 }
