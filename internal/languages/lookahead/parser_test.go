@@ -214,3 +214,10 @@ func TestIAmbiguousLookahead(t *testing.T) {
 	doc.AssertNoParseErrors()
 	expectValue(t, doc, "someValue")
 }
+
+func TestJNestedLoopFullContext(t *testing.T) {
+	sc := CreateServices()
+	doc := test.New(t, sc).Parse("j x is in-between y is in-between z and w and v")
+	doc.AssertNoParseErrors()
+	expectValue(t, doc, "xisin-betweenyisin-betweenzandwandv")
+}

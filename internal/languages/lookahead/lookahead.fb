@@ -11,7 +11,7 @@ interface Root {
 
 entry Root: Item=Obj;
 
-Obj: A | B | C | D | E | F | G | H | I;
+Obj: A | B | C | D | E | F | G | H | I | J;
 
 // Assert that the Path composite alternative is evaluated correctly
 A returns Obj: "a" Node=QualifiedPath;
@@ -60,6 +60,13 @@ I returns Obj: "i" (
 );
 
 composite QualifiedNameRecursive: ID ("." QualifiedNameRecursive)?;
+
+// Assert that full-context prediction handles a loop whose element contains the
+// same loop again: after `z`, "is" could continue the inner or the outer loop,
+// so the prediction merges contexts up to the empty (outermost) one.
+J returns Obj: "j" Node=JRange;
+
+composite JRange: ID ("is" "in-between" JRange "and" JRange)*;
 
 hidden token WS: /[ \t\r\n]+/
 token ID: /\w[\w0-9]*/

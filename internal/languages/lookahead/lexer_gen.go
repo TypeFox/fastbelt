@@ -234,7 +234,23 @@ var Keyword_i = core.NewTokenType(
 	[]rune{'i'},
 )
 
-const Keyword_Slash_Idx = 15
+const Keyword_j_Idx = 15
+
+var Keyword_j = core.NewTokenType(
+	Keyword_j_Idx,
+	"j",
+	"j",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "j") {
+			return 1
+		}
+		return 0
+	},
+	[]rune{'j'},
+)
+
+const Keyword_Slash_Idx = 16
 
 var Keyword_Slash = core.NewTokenType(
 	Keyword_Slash_Idx,
@@ -250,7 +266,7 @@ var Keyword_Slash = core.NewTokenType(
 	[]rune{'/'},
 )
 
-const Keyword_Colon_Idx = 16
+const Keyword_Colon_Idx = 17
 
 var Keyword_Colon = core.NewTokenType(
 	Keyword_Colon_Idx,
@@ -266,7 +282,55 @@ var Keyword_Colon = core.NewTokenType(
 	[]rune{':'},
 )
 
-const Token_WS_Idx = 17
+const Keyword_is_Idx = 18
+
+var Keyword_is = core.NewTokenType(
+	Keyword_is_Idx,
+	"is",
+	"is",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "is") {
+			return 2
+		}
+		return 0
+	},
+	[]rune{'i'},
+)
+
+const Keyword_inDashbetween_Idx = 19
+
+var Keyword_inDashbetween = core.NewTokenType(
+	Keyword_inDashbetween_Idx,
+	"in-between",
+	"in-between",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "in-between") {
+			return 10
+		}
+		return 0
+	},
+	[]rune{'i'},
+)
+
+const Keyword_and_Idx = 20
+
+var Keyword_and = core.NewTokenType(
+	Keyword_and_Idx,
+	"and",
+	"and",
+	core.TokenKindKeyword,
+	func(text string, offset int) int {
+		if strings.HasPrefix(text[offset:], "and") {
+			return 3
+		}
+		return 0
+	},
+	[]rune{'a'},
+)
+
+const Token_WS_Idx = 21
 
 var Token_WS = core.NewTokenType(
 	Token_WS_Idx,
@@ -337,7 +401,7 @@ var Token_WS_Accepting = [2]bool{
 	1: true,
 }
 
-const Token_ID_Idx = 18
+const Token_ID_Idx = 22
 
 var Token_ID = core.NewTokenType(
 	Token_ID_Idx,
@@ -429,8 +493,12 @@ func NewLexer(sc *service.Container) lexer.Lexer {
 		lexer.UseTokenType(Keyword_g),
 		lexer.UseTokenType(Keyword_h),
 		lexer.UseTokenType(Keyword_i),
+		lexer.UseTokenType(Keyword_j),
 		lexer.UseTokenType(Keyword_Slash),
 		lexer.UseTokenType(Keyword_Colon),
+		lexer.UseTokenType(Keyword_is),
+		lexer.UseTokenType(Keyword_inDashbetween),
+		lexer.UseTokenType(Keyword_and),
 		lexer.UseTokenType(Token_WS).WithModifier(core.SkippedModifier),
 		lexer.UseTokenType(Token_ID),
 	)

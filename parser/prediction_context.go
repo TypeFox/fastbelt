@@ -27,6 +27,9 @@ const predictionContextEmptyReturnState = 0x7FFFFFFF
 
 // basePredictionContextEMPTY is the shared empty context ("$").
 var basePredictionContextEMPTY = &predictionContext{
+	// One nil parent for the "$" return state, like ANTLR's empty context:
+	// array merges index parents and returnStates in parallel.
+	parents:      []*predictionContext{nil},
 	returnStates: []int{predictionContextEmptyReturnState},
 	cachedHash:   emptyContextHash(),
 }

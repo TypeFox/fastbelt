@@ -106,6 +106,12 @@ func (p *CompletionParser) ParseObj() {
 			p.ParseI()
 			p.state.ExitRule()
 		}
+	case 9:
+		{
+			p.state.EnterRule(Obj__Basic_19)
+			p.ParseJ()
+			p.state.ExitRule()
+		}
 	default:
 		p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 	}
@@ -329,6 +335,19 @@ func (p *CompletionParser) ParseI() {
 	}
 }
 
+func (p *CompletionParser) ParseJ() {
+	p.cp.EnterRule("Obj", J__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Keyword_j)
+	}
+	{
+		p.state.EnterRule(J__Basic_1)
+		p.ParseJRange()
+		p.state.ExitRule()
+	}
+}
+
 func (p *CompletionParser) ParseQualifiedName() {
 	p.cp.EnterRule("", QualifiedName__Start)
 	defer p.cp.ExitRule()
@@ -468,5 +487,38 @@ func (p *CompletionParser) ParseQualifiedNameRecursive() {
 			p.ParseQualifiedNameRecursive()
 			p.state.ExitRule()
 		}
+	}
+}
+
+func (p *CompletionParser) ParseJRange() {
+	p.cp.EnterRule("", JRange__Start)
+	defer p.cp.ExitRule()
+	{
+		p.state.Consume(Token_ID)
+	}
+	p.cp.RecordSnapshot(JRange__LoopEntry)
+	p.state.Sync(JRange__LoopEntry)
+	for p.lookahead.JRangeLoop(p.state) {
+		{
+			p.state.Consume(Keyword_is)
+		}
+		{
+			p.state.Consume(Keyword_inDashbetween)
+		}
+		{
+			p.state.EnterRule(JRange_and)
+			p.ParseJRange()
+			p.state.ExitRule()
+		}
+		{
+			p.state.Consume(Keyword_and)
+		}
+		{
+			p.state.EnterRule(JRange__Basic_2)
+			p.ParseJRange()
+			p.state.ExitRule()
+		}
+		p.cp.RecordSnapshot(JRange__LoopEntry)
+		p.state.Sync(JRange__LoopEntry)
 	}
 }
