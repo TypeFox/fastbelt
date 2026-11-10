@@ -119,6 +119,13 @@ func (p *Parser) ParseObj() Obj {
 				p.state.ExitRule()
 				current = result
 			}
+		case 9:
+			{
+				p.state.EnterRule(Obj__Basic_19)
+				result := p.ParseJ()
+				p.state.ExitRule()
+				current = result
+			}
 		default:
 			p.state.AppendError(p.state.Messages().NoViableAlternative(failure), failure.Token)
 		}
@@ -505,6 +512,30 @@ func (p *Parser) ParseI() Obj {
 	return current
 }
 
+func (p *Parser) ParseJ() Obj {
+	current := NewObj()
+	current.SetTextRangeStart(p.state.LA(1).Range.Start)
+	{
+		{
+			token := p.state.Consume(Keyword_j)
+			core.AssignToken(current, token, J_j)
+		}
+		{
+			result := core.NewCompositeNode()
+			result.SetTextRangeStart(p.state.LA(1).Range.Start)
+			p.state.EnterRule(J__Basic_1)
+			p.ParseJRange(result)
+			p.state.ExitRule()
+			result.SetTextRangeEnd(p.state.LA(0).Range.End)
+			if result != nil {
+				current.SetNode(result)
+			}
+		}
+	}
+	current.SetTextRangeEnd(p.state.LA(0).Range.End)
+	return current
+}
+
 func (p *Parser) ParseQualifiedName(current core.CompositeNode) {
 	{
 		token := p.state.Consume(Token_ID)
@@ -642,5 +673,38 @@ func (p *Parser) ParseQualifiedNameRecursive(current core.CompositeNode) {
 			p.ParseQualifiedNameRecursive(current)
 			p.state.ExitRule()
 		}
+	}
+}
+
+func (p *Parser) ParseJRange(current core.CompositeNode) {
+	{
+		token := p.state.Consume(Token_ID)
+		core.AssignToken(current, token, JRange_ID)
+	}
+	p.state.Sync(JRange__LoopEntry)
+	for p.lookahead.JRangeLoop(p.state) {
+		{
+			token := p.state.Consume(Keyword_is)
+			core.AssignToken(current, token, JRange_is)
+		}
+		{
+			token := p.state.Consume(Keyword_inDashbetween)
+			core.AssignToken(current, token, JRange_inDashbetween)
+		}
+		{
+			p.state.EnterRule(JRange_and)
+			p.ParseJRange(current)
+			p.state.ExitRule()
+		}
+		{
+			token := p.state.Consume(Keyword_and)
+			core.AssignToken(current, token, JRange_and)
+		}
+		{
+			p.state.EnterRule(JRange__Basic_2)
+			p.ParseJRange(current)
+			p.state.ExitRule()
+		}
+		p.state.Sync(JRange__LoopEntry)
 	}
 }

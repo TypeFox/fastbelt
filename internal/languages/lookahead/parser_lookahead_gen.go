@@ -14,13 +14,14 @@ const (
 	DecisionGAlternatives             = 8
 	DecisionHAlternatives             = 9
 	DecisionIAlternatives             = 10
+	DecisionJRangeLoop                = 18
 	DecisionPathAlternatives          = 13
 	DecisionQualifiedPathAlternatives = 14
 )
 
 var ObjAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h, Keyword_i},
-	Lookup: []int{1: 1, 2: 2, 4: 3, 7: 4, 8: 5, 11: 6, 12: 7, 13: 8, 14: 9},
+	Types:  []*core.TokenType{Keyword_a, Keyword_b, Keyword_c, Keyword_d, Keyword_e, Keyword_f, Keyword_g, Keyword_h, Keyword_i, Keyword_j},
+	Lookup: []int{1: 1, 2: 2, 4: 3, 7: 4, 8: 5, 11: 6, 12: 7, 13: 8, 14: 9, 15: 10},
 }
 
 // LookaheadParserLookahead abstracts every lookahead/prediction decision performed by
@@ -42,6 +43,7 @@ type LookaheadParserLookahead interface {
 	GAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	HAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	IAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
+	JRangeLoop(state *parser.ParserState) bool
 	ObjAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	PathAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure)
 	PathLoop(state *parser.ParserState) bool
@@ -108,6 +110,11 @@ func (l *DefaultLookaheadParserLookahead) HAlternatives(state *parser.ParserStat
 
 func (l *DefaultLookaheadParserLookahead) IAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
 	return state.AdaptivePredict(DecisionIAlternatives, l.PredictionMode())
+}
+
+func (l *DefaultLookaheadParserLookahead) JRangeLoop(state *parser.ParserState) bool {
+	prediction, _ := state.AdaptivePredict(DecisionJRangeLoop, l.PredictionMode())
+	return prediction == 0
 }
 
 func (l *DefaultLookaheadParserLookahead) ObjAlternatives(state *parser.ParserState) (int, *parser.PredictionFailure) {
