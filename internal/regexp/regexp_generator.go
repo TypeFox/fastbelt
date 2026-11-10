@@ -101,18 +101,19 @@ func GenerateTransitionsUsingBinarySearch(bySource *automatons.RuneRangeTargetsM
 	}
 }
 
-// asciiSelfLoop returns the ASCII bytes on which state source stays in source.
-func asciiSelfLoop(bySource *automatons.RuneRangeTargetsMapping, source int) (loop [utf8.RuneSelf]bool, any bool) {
+// asciiSelfLoop returns the ASCII bytes on which state source stays in source,
+// and whether there is at least one such byte (loops).
+func asciiSelfLoop(bySource *automatons.RuneRangeTargetsMapping, source int) (loop [utf8.RuneSelf]bool, loops bool) {
 	for transition := range bySource.All() {
 		if transition.Values[0] != source {
 			continue
 		}
 		for c := max(transition.Range.Start, 0); c <= min(transition.Range.End, utf8.RuneSelf-1); c++ {
 			loop[c] = true
-			any = true
+			loops = true
 		}
 	}
-	return loop, any
+	return loop, loops
 }
 
 // generateSelfLoopFastPath emits, for every state that stays in itself on
@@ -128,8 +129,8 @@ func (r *RegexpImpl) generateSelfLoopFastPath(tokenName string, vars codegen.Nod
 		if source == deadState {
 			continue
 		}
-		loop, any := asciiSelfLoop(r.dfa.TransitionsBySource[source], source)
-		if !any {
+		loop, loops := asciiSelfLoop(r.dfa.TransitionsBySource[source], source)
+		if !loops {
 			continue
 		}
 		found = true
