@@ -2,6 +2,7 @@ package benchmark
 
 import (
 	original "regexp"
+	"strings"
 	"testing"
 
 	generated "typefox.dev/fastbelt/internal/regexp/benchmark/generated"
@@ -47,5 +48,36 @@ func BenchmarkIPv4Original(b *testing.B) {
 	regexp := original.MustCompile(IPv4Pattern())
 	for b.Loop() {
 		regexp.FindStringIndex(ipv4)
+	}
+}
+
+var (
+	longString  = `"` + strings.Repeat(`some text with an \"escaped\" quote, `, 8) + `"`
+	longID      = strings.Repeat("identifier_", 8)
+	longSpace   = strings.Repeat(" ", 64) + "\n"
+	longComment = "/*" + strings.Repeat(" a comment line\n *", 8) + "/"
+)
+
+func BenchmarkStringCustom(b *testing.B) {
+	for b.Loop() {
+		generated.String(longString, 0)
+	}
+}
+
+func BenchmarkIDCustom(b *testing.B) {
+	for b.Loop() {
+		generated.ID(longID, 0)
+	}
+}
+
+func BenchmarkWhitespaceCustom(b *testing.B) {
+	for b.Loop() {
+		generated.Whitespace(longSpace, 0)
+	}
+}
+
+func BenchmarkBlockCommentCustom(b *testing.B) {
+	for b.Loop() {
+		generated.BlockComment(longComment, 0)
 	}
 }

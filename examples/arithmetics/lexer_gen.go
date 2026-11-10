@@ -233,6 +233,23 @@ var Token_ID = core.NewTokenType(
 		index := 0
 	loop:
 		for index < length {
+			switch state {
+			case 1:
+				start := index
+				for index < length {
+					c := input[index]
+					if c >= utf8.RuneSelf || !Token_ID_Loop1[c] {
+						break
+					}
+					index++
+				}
+				if index != start {
+					acceptedIndex = index
+				}
+				if index == length {
+					break loop
+				}
+			}
 			r, runeSize := utf8.DecodeRuneInString(input[index:])
 			switch state {
 			case 0:
@@ -288,6 +305,7 @@ var Token_ID_Next = [][]int{
 var Token_ID_Accepting = [2]bool{
 	1: true,
 }
+var Token_ID_Loop1 = [128]bool{48: true, 49: true, 50: true, 51: true, 52: true, 53: true, 54: true, 55: true, 56: true, 57: true, 65: true, 66: true, 67: true, 68: true, 69: true, 70: true, 71: true, 72: true, 73: true, 74: true, 75: true, 76: true, 77: true, 78: true, 79: true, 80: true, 81: true, 82: true, 83: true, 84: true, 85: true, 86: true, 87: true, 88: true, 89: true, 90: true, 95: true, 97: true, 98: true, 99: true, 100: true, 101: true, 102: true, 103: true, 104: true, 105: true, 106: true, 107: true, 108: true, 109: true, 110: true, 111: true, 112: true, 113: true, 114: true, 115: true, 116: true, 117: true, 118: true, 119: true, 120: true, 121: true, 122: true}
 
 const Token_NUMBER_Idx = 15
 
@@ -304,6 +322,38 @@ var Token_NUMBER = core.NewTokenType(
 		index := 0
 	loop:
 		for index < length {
+			switch state {
+			case 1:
+				start := index
+				for index < length {
+					c := input[index]
+					if c >= utf8.RuneSelf || !Token_NUMBER_Loop1[c] {
+						break
+					}
+					index++
+				}
+				if index != start {
+					acceptedIndex = index
+				}
+				if index == length {
+					break loop
+				}
+			case 2:
+				start := index
+				for index < length {
+					c := input[index]
+					if c >= utf8.RuneSelf || !Token_NUMBER_Loop2[c] {
+						break
+					}
+					index++
+				}
+				if index != start {
+					acceptedIndex = index
+				}
+				if index == length {
+					break loop
+				}
+			}
 			r, runeSize := utf8.DecodeRuneInString(input[index:])
 			switch state {
 			case 0:
@@ -377,6 +427,8 @@ var Token_NUMBER_Accepting = [3]bool{
 	1: true,
 	2: true,
 }
+var Token_NUMBER_Loop1 = [128]bool{48: true, 49: true, 50: true, 51: true, 52: true, 53: true, 54: true, 55: true, 56: true, 57: true}
+var Token_NUMBER_Loop2 = [128]bool{48: true, 49: true, 50: true, 51: true, 52: true, 53: true, 54: true, 55: true, 56: true, 57: true}
 
 const Token_WS_Idx = 16
 
@@ -393,6 +445,23 @@ var Token_WS = core.NewTokenType(
 		index := 0
 	loop:
 		for index < length {
+			switch state {
+			case 1:
+				start := index
+				for index < length {
+					c := input[index]
+					if c >= utf8.RuneSelf || !Token_WS_Loop1[c] {
+						break
+					}
+					index++
+				}
+				if index != start {
+					acceptedIndex = index
+				}
+				if index == length {
+					break loop
+				}
+			}
 			r, runeSize := utf8.DecodeRuneInString(input[index:])
 			switch state {
 			case 0:
@@ -448,6 +517,7 @@ var Token_WS_Next = [][]int{
 var Token_WS_Accepting = [2]bool{
 	1: true,
 }
+var Token_WS_Loop1 = [128]bool{9: true, 10: true, 12: true, 13: true, 32: true}
 
 const Token_ML_COMMENT_Idx = 17
 
@@ -464,6 +534,30 @@ var Token_ML_COMMENT = core.NewTokenType(
 		index := 0
 	loop:
 		for index < length {
+			switch state {
+			case 2:
+				for index < length {
+					c := input[index]
+					if c >= utf8.RuneSelf || !Token_ML_COMMENT_Loop2[c] {
+						break
+					}
+					index++
+				}
+				if index == length {
+					break loop
+				}
+			case 3:
+				for index < length {
+					c := input[index]
+					if c >= utf8.RuneSelf || !Token_ML_COMMENT_Loop3[c] {
+						break
+					}
+					index++
+				}
+				if index == length {
+					break loop
+				}
+			}
 			r, runeSize := utf8.DecodeRuneInString(input[index:])
 			switch state {
 			case 0:
@@ -570,6 +664,8 @@ var Token_ML_COMMENT_Next = [][]int{
 var Token_ML_COMMENT_Accepting = [5]bool{
 	4: true,
 }
+var Token_ML_COMMENT_Loop2 = [128]bool{0: true, 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true, 9: true, 10: true, 11: true, 12: true, 13: true, 14: true, 15: true, 16: true, 17: true, 18: true, 19: true, 20: true, 21: true, 22: true, 23: true, 24: true, 25: true, 26: true, 27: true, 28: true, 29: true, 30: true, 31: true, 32: true, 33: true, 34: true, 35: true, 36: true, 37: true, 38: true, 39: true, 40: true, 41: true, 43: true, 44: true, 45: true, 46: true, 47: true, 48: true, 49: true, 50: true, 51: true, 52: true, 53: true, 54: true, 55: true, 56: true, 57: true, 58: true, 59: true, 60: true, 61: true, 62: true, 63: true, 64: true, 65: true, 66: true, 67: true, 68: true, 69: true, 70: true, 71: true, 72: true, 73: true, 74: true, 75: true, 76: true, 77: true, 78: true, 79: true, 80: true, 81: true, 82: true, 83: true, 84: true, 85: true, 86: true, 87: true, 88: true, 89: true, 90: true, 91: true, 92: true, 93: true, 94: true, 95: true, 96: true, 97: true, 98: true, 99: true, 100: true, 101: true, 102: true, 103: true, 104: true, 105: true, 106: true, 107: true, 108: true, 109: true, 110: true, 111: true, 112: true, 113: true, 114: true, 115: true, 116: true, 117: true, 118: true, 119: true, 120: true, 121: true, 122: true, 123: true, 124: true, 125: true, 126: true, 127: true}
+var Token_ML_COMMENT_Loop3 = [128]bool{42: true}
 
 const Token_SL_COMMENT_Idx = 18
 
@@ -586,6 +682,23 @@ var Token_SL_COMMENT = core.NewTokenType(
 		index := 0
 	loop:
 		for index < length {
+			switch state {
+			case 2:
+				start := index
+				for index < length {
+					c := input[index]
+					if c >= utf8.RuneSelf || !Token_SL_COMMENT_Loop2[c] {
+						break
+					}
+					index++
+				}
+				if index != start {
+					acceptedIndex = index
+				}
+				if index == length {
+					break loop
+				}
+			}
 			r, runeSize := utf8.DecodeRuneInString(input[index:])
 			switch state {
 			case 0:
@@ -658,6 +771,7 @@ var Token_SL_COMMENT_Next = [][]int{
 var Token_SL_COMMENT_Accepting = [3]bool{
 	2: true,
 }
+var Token_SL_COMMENT_Loop2 = [128]bool{0: true, 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true, 9: true, 11: true, 12: true, 14: true, 15: true, 16: true, 17: true, 18: true, 19: true, 20: true, 21: true, 22: true, 23: true, 24: true, 25: true, 26: true, 27: true, 28: true, 29: true, 30: true, 31: true, 32: true, 33: true, 34: true, 35: true, 36: true, 37: true, 38: true, 39: true, 40: true, 41: true, 42: true, 43: true, 44: true, 45: true, 46: true, 47: true, 48: true, 49: true, 50: true, 51: true, 52: true, 53: true, 54: true, 55: true, 56: true, 57: true, 58: true, 59: true, 60: true, 61: true, 62: true, 63: true, 64: true, 65: true, 66: true, 67: true, 68: true, 69: true, 70: true, 71: true, 72: true, 73: true, 74: true, 75: true, 76: true, 77: true, 78: true, 79: true, 80: true, 81: true, 82: true, 83: true, 84: true, 85: true, 86: true, 87: true, 88: true, 89: true, 90: true, 91: true, 92: true, 93: true, 94: true, 95: true, 96: true, 97: true, 98: true, 99: true, 100: true, 101: true, 102: true, 103: true, 104: true, 105: true, 106: true, 107: true, 108: true, 109: true, 110: true, 111: true, 112: true, 113: true, 114: true, 115: true, 116: true, 117: true, 118: true, 119: true, 120: true, 121: true, 122: true, 123: true, 124: true, 125: true, 126: true, 127: true}
 
 const TokenGroup_AdditionOp_Idx = 19
 

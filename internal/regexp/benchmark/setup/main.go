@@ -41,4 +41,9 @@ func main() {
 	writeRegexpFile("URL", benchmark.URLPattern())
 	writeRegexpFile("Email", benchmark.EmailPattern())
 	writeRegexpFile("IPv4", benchmark.IPv4Pattern())
+	writeRegexpFile("String", benchmark.StringPattern())
+	writeRegexpFile("ID", benchmark.IDPattern())
+	writeRegexpFile("UnicodeID", benchmark.UnicodeIDPattern())
+	writeRegexpFile("Whitespace", benchmark.WhitespacePattern())
+	writeRegexpFile("BlockComment", benchmark.BlockCommentPattern())
 }
