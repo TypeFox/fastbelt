@@ -77,7 +77,7 @@ func NewDefaultDocumentSynchronizer(sc *service.Container) DocumentSynchronizer 
 }
 
 func (s *DefaultDocumentSynchronizer) DidOpen(ctx context.Context, params *lsp.DidOpenTextDocumentParams) {
-	textdocStore := service.MustGet[textdoc.Store](s.sc)
+	textdocStore := s.sc.MustGet[textdoc.Store]()
 	uri := core.NormalizeURI(params.TextDocument.URI)
 	existing := textdocStore.Get(uri)
 
@@ -102,7 +102,7 @@ func (s *DefaultDocumentSynchronizer) DidOpen(ctx context.Context, params *lsp.D
 		// a new document and start a new build.
 		return
 	}
-	updater := service.MustGet[workspace.DocumentUpdater](s.sc)
+	updater := s.sc.MustGet[workspace.DocumentUpdater]()
 	updater.Update(ctx, []textdoc.Handle{doc}, nil)
 }
 
@@ -117,7 +117,7 @@ func (s *DefaultDocumentSynchronizer) DidChange(ctx context.Context, params *lsp
 		return
 	}
 
-	textdocStore := service.MustGet[textdoc.Store](s.sc)
+	textdocStore := s.sc.MustGet[textdoc.Store]()
 	uri := core.NormalizeURI(params.TextDocument.URI)
 	doc := textdocStore.GetOverlay(uri)
 	if doc == nil {
@@ -141,7 +141,7 @@ func (s *DefaultDocumentSynchronizer) DidChange(ctx context.Context, params *lsp
 		handler(ctx, &TextDocumentChangeEvent{Document: doc})
 	}
 	s.mu.RUnlock()
-	updater := service.MustGet[workspace.DocumentUpdater](s.sc)
+	updater := s.sc.MustGet[workspace.DocumentUpdater]()
 	updater.Update(ctx, []textdoc.Handle{doc}, nil)
 }
 
@@ -152,7 +152,7 @@ func (s *DefaultDocumentSynchronizer) OnDidChange(handler TextDocumentChangeHand
 }
 
 func (s *DefaultDocumentSynchronizer) DidClose(ctx context.Context, params *lsp.DidCloseTextDocumentParams) {
-	textdocStore := service.MustGet[textdoc.Store](s.sc)
+	textdocStore := s.sc.MustGet[textdoc.Store]()
 	uri := core.NormalizeURI(params.TextDocument.URI)
 	existing := textdocStore.GetOverlay(uri)
 	if existing != nil {
@@ -173,7 +173,7 @@ func (s *DefaultDocumentSynchronizer) OnDidClose(handler TextDocumentChangeHandl
 
 // WillSave does nothing by default.
 func (s *DefaultDocumentSynchronizer) WillSave(ctx context.Context, params *lsp.WillSaveTextDocumentParams) {
-	store := service.MustGet[textdoc.Store](s.sc)
+	store := s.sc.MustGet[textdoc.Store]()
 	uri := core.NormalizeURI(params.TextDocument.URI)
 	doc := store.GetOverlay(uri)
 	if doc != nil {
@@ -194,7 +194,7 @@ func (s *DefaultDocumentSynchronizer) OnWillSave(handler TextDocumentWillSaveHan
 // WillSaveWaitUntil does nothing by default.
 func (s *DefaultDocumentSynchronizer) WillSaveWaitUntil(ctx context.Context, params *lsp.WillSaveTextDocumentParams) ([]lsp.TextEdit, error) {
 	edits := []lsp.TextEdit{}
-	store := service.MustGet[textdoc.Store](s.sc)
+	store := s.sc.MustGet[textdoc.Store]()
 	uri := core.NormalizeURI(params.TextDocument.URI)
 	doc := store.GetOverlay(uri)
 	if doc == nil {
@@ -220,7 +220,7 @@ func (s *DefaultDocumentSynchronizer) OnWillSaveWaitUntil(handler TextDocumentWi
 
 // DidSave does nothing by default.
 func (s *DefaultDocumentSynchronizer) DidSave(ctx context.Context, params *lsp.DidSaveTextDocumentParams) {
-	store := service.MustGet[textdoc.Store](s.sc)
+	store := s.sc.MustGet[textdoc.Store]()
 	uri := core.NormalizeURI(params.TextDocument.URI)
 	doc := store.GetOverlay(uri)
 	if doc != nil {

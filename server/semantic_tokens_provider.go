@@ -70,7 +70,7 @@ func (p *TokenBasedSemanticTokensProvider) Legend() lsp.SemanticTokensLegend {
 }
 
 func (p *TokenBasedSemanticTokensProvider) HandleSemanticTokensFullRequest(ctx context.Context, params *lsp.SemanticTokensParams) (*lsp.SemanticTokens, error) {
-	documentManager := service.MustGet[workspace.DocumentManager](p.sc)
+	documentManager := p.sc.MustGet[workspace.DocumentManager]()
 	uri := core.ParseURI(string(params.TextDocument.URI))
 	doc := documentManager.Get(uri)
 	if doc == nil {

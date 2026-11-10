@@ -32,7 +32,7 @@ type stateMachineCallHierarchyProvider struct {
 var _ server.CallHierarchyProvider = (*stateMachineCallHierarchyProvider)(nil)
 
 func (p *stateMachineCallHierarchyProvider) document(uri lsp.DocumentURI) *core.Document {
-	documentManager := service.MustGet[workspace.DocumentManager](p.sc)
+	documentManager := p.sc.MustGet[workspace.DocumentManager]()
 	return documentManager.Get(core.ParseURI(string(uri)))
 }
 
@@ -48,7 +48,7 @@ func (p *stateMachineCallHierarchyProvider) HandlePrepareCallHierarchyRequest(ct
 		return nil, nil
 	}
 
-	nameFinder := service.MustGet[server.NameFinder](p.sc)
+	nameFinder := p.sc.MustGet[server.NameFinder]()
 	foundName := nameFinder.Find(ctx, first, second)
 	if foundName.Target == nil {
 		return nil, nil

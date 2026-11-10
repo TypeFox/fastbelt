@@ -140,9 +140,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.RefFQNRef(typedOwner, nil)
 		candidates := scopes.ScopeRefFQNRef(ctx, ref).AllElements()
 		return filter.FilterRefFQNRef(ctx, ref, candidates)
@@ -152,9 +152,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.RefListItemRef(typedOwner, nil)
 		candidates := scopes.ScopeRefListItemRef(ctx, ref).AllElements()
 		return filter.FilterRefListItemRef(ctx, ref, candidates)
@@ -164,9 +164,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.RefIDRef(typedOwner, nil)
 		candidates := scopes.ScopeRefIDRef(ctx, ref).AllElements()
 		return filter.FilterRefIDRef(ctx, ref, candidates)
@@ -176,9 +176,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.MemberCallRef(typedOwner, nil)
 		candidates := scopes.ScopeMemberCallRef(ctx, ref).AllElements()
 		return filter.FilterMemberCallRef(ctx, ref, candidates)
@@ -188,9 +188,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.RefOrKeywordRef(typedOwner, nil)
 		candidates := scopes.ScopeRefOrKeywordRef(ctx, ref).AllElements()
 		return filter.FilterRefOrKeywordRef(ctx, ref, candidates)
@@ -200,9 +200,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.DedupRef1(typedOwner, nil)
 		candidates := scopes.ScopeDedupRef1(ctx, ref).AllElements()
 		return filter.FilterDedupRef1(ctx, ref, candidates)
@@ -212,9 +212,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.DedupRef2(typedOwner, nil)
 		candidates := scopes.ScopeDedupRef2(ctx, ref).AllElements()
 		return filter.FilterDedupRef2(ctx, ref, candidates)
@@ -224,9 +224,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.RefGroupRef(typedOwner, nil)
 		candidates := scopes.ScopeRefGroupRef(ctx, ref).AllElements()
 		return filter.FilterRefGroupRef(ctx, ref, candidates)
@@ -236,9 +236,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.RefActionRef(typedOwner, nil)
 		candidates := scopes.ScopeRefActionRef(ctx, ref).AllElements()
 		return filter.FilterRefActionRef(ctx, ref, candidates)
@@ -248,9 +248,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.RefItemRef(typedOwner, nil)
 		candidates := scopes.ScopeRefItemRef(ctx, ref).AllElements()
 		return filter.FilterRefItemRef(ctx, ref, candidates)
@@ -260,9 +260,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.ChainItemRef(typedOwner, nil)
 		candidates := scopes.ScopeChainItemRef(ctx, ref).AllElements()
 		return filter.FilterChainItemRef(ctx, ref, candidates)
@@ -272,9 +272,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.OperandRef(typedOwner, nil)
 		candidates := scopes.ScopeOperandRef(ctx, ref).AllElements()
 		return filter.FilterOperandRef(ctx, ref, candidates)
@@ -284,9 +284,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.WrapRefRef(typedOwner, nil)
 		candidates := scopes.ScopeWrapRefRef(ctx, ref).AllElements()
 		return filter.FilterWrapRefRef(ctx, ref, candidates)
@@ -296,9 +296,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.NestRef(typedOwner, nil)
 		candidates := scopes.ScopeNestRef(ctx, ref).AllElements()
 		return filter.FilterNestRef(ctx, ref, candidates)
@@ -308,9 +308,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.AmbigNameRef(typedOwner, nil)
 		candidates := scopes.ScopeAmbigNameRef(ctx, ref).AllElements()
 		return filter.FilterAmbigNameRef(ctx, ref, candidates)
@@ -320,9 +320,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.AmbigRefsRef1(typedOwner, nil)
 		candidates := scopes.ScopeAmbigRefsRef1(ctx, ref).AllElements()
 		return filter.FilterAmbigRefsRef1(ctx, ref, candidates)
@@ -332,9 +332,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.AmbigRefsRef(typedOwner, nil)
 		candidates := scopes.ScopeAmbigRefsRef(ctx, ref).AllElements()
 		return filter.FilterAmbigRefsRef(ctx, ref, candidates)
@@ -344,9 +344,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.DepA(typedOwner, nil)
 		candidates := scopes.ScopeDepA(ctx, ref).AllElements()
 		return filter.FilterDepA(ctx, ref, candidates)
@@ -356,9 +356,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.DepB(typedOwner, nil)
 		candidates := scopes.ScopeDepB(ctx, ref).AllElements()
 		return filter.FilterDepB(ctx, ref, candidates)
@@ -368,9 +368,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.ActFirstRef(typedOwner, nil)
 		candidates := scopes.ScopeActFirstRef(ctx, ref).AllElements()
 		return filter.FilterActFirstRef(ctx, ref, candidates)
@@ -380,9 +380,9 @@ var CompletionCompletionDispatch = map[string]CompletionCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[CompletionReferencesConstructor](sc)
-		scopes := service.MustGet[CompletionScopeProvider](sc)
-		filter := service.MustGet[CompletionCompletionFilter](sc)
+		refs := sc.MustGet[CompletionReferencesConstructor]()
+		scopes := sc.MustGet[CompletionScopeProvider]()
+		filter := sc.MustGet[CompletionCompletionFilter]()
 		ref := refs.LeadRef(typedOwner, nil)
 		candidates := scopes.ScopeLeadRef(ctx, ref).AllElements()
 		return filter.FilterLeadRef(ctx, ref, candidates)

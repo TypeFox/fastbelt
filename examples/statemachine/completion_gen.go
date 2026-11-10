@@ -55,9 +55,9 @@ var StatemachineModelCompletionDispatch = map[string]StatemachineModelCompletion
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[StatemachineModelReferencesConstructor](sc)
-		scopes := service.MustGet[StatemachineModelScopeProvider](sc)
-		filter := service.MustGet[StatemachineModelCompletionFilter](sc)
+		refs := sc.MustGet[StatemachineModelReferencesConstructor]()
+		scopes := sc.MustGet[StatemachineModelScopeProvider]()
+		filter := sc.MustGet[StatemachineModelCompletionFilter]()
 		ref := refs.StatemachineInit(typedOwner, nil)
 		candidates := scopes.ScopeStatemachineInit(ctx, ref).AllElements()
 		return filter.FilterStatemachineInit(ctx, ref, candidates)
@@ -67,9 +67,9 @@ var StatemachineModelCompletionDispatch = map[string]StatemachineModelCompletion
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[StatemachineModelReferencesConstructor](sc)
-		scopes := service.MustGet[StatemachineModelScopeProvider](sc)
-		filter := service.MustGet[StatemachineModelCompletionFilter](sc)
+		refs := sc.MustGet[StatemachineModelReferencesConstructor]()
+		scopes := sc.MustGet[StatemachineModelScopeProvider]()
+		filter := sc.MustGet[StatemachineModelCompletionFilter]()
 		ref := refs.StateActions(typedOwner, nil)
 		candidates := scopes.ScopeStateActions(ctx, ref).AllElements()
 		return filter.FilterStateActions(ctx, ref, candidates)
@@ -79,9 +79,9 @@ var StatemachineModelCompletionDispatch = map[string]StatemachineModelCompletion
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[StatemachineModelReferencesConstructor](sc)
-		scopes := service.MustGet[StatemachineModelScopeProvider](sc)
-		filter := service.MustGet[StatemachineModelCompletionFilter](sc)
+		refs := sc.MustGet[StatemachineModelReferencesConstructor]()
+		scopes := sc.MustGet[StatemachineModelScopeProvider]()
+		filter := sc.MustGet[StatemachineModelCompletionFilter]()
 		ref := refs.TransitionEvent(typedOwner, nil)
 		candidates := scopes.ScopeTransitionEvent(ctx, ref).AllElements()
 		return filter.FilterTransitionEvent(ctx, ref, candidates)
@@ -91,9 +91,9 @@ var StatemachineModelCompletionDispatch = map[string]StatemachineModelCompletion
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[StatemachineModelReferencesConstructor](sc)
-		scopes := service.MustGet[StatemachineModelScopeProvider](sc)
-		filter := service.MustGet[StatemachineModelCompletionFilter](sc)
+		refs := sc.MustGet[StatemachineModelReferencesConstructor]()
+		scopes := sc.MustGet[StatemachineModelScopeProvider]()
+		filter := sc.MustGet[StatemachineModelCompletionFilter]()
 		ref := refs.TransitionState(typedOwner, nil)
 		candidates := scopes.ScopeTransitionState(ctx, ref).AllElements()
 		return filter.FilterTransitionState(ctx, ref, candidates)

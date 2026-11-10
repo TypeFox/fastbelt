@@ -17,7 +17,6 @@ import (
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/test"
 	"typefox.dev/fastbelt/util"
-	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 )
 
@@ -25,7 +24,7 @@ func TestJsonExport(t *testing.T) {
 	services := CreateServices()
 	f := test.NewWithContext(t, services, context.WithValue(
 		context.Background(), core.JsonLinkingHelperKey(), util.NewJsonLinkingHelper(
-			service.MustGet[workspace.DocumentManager](services),
+			services.MustGet[workspace.DocumentManager](),
 		),
 	))
 
@@ -33,8 +32,8 @@ func TestJsonExport(t *testing.T) {
 		f.Clear()
 	}
 
-	documents := service.MustGet[workspace.DocumentManager](f.Services())
-	builder := service.MustGet[workspace.Builder](f.Services())
+	documents := f.Services().MustGet[workspace.DocumentManager]()
+	builder := f.Services().MustGet[workspace.Builder]()
 
 	t.Run("selfContained", func(t *testing.T) {
 		t.Cleanup(cleanup)

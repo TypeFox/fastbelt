@@ -33,7 +33,7 @@ func NewDefaultSymbolExporter(sc *service.Container) SymbolExporter {
 
 func (s *DefaultSymbolExporter) ExportSymbols(ctx context.Context, document *core.Document) core.SymbolContainer {
 	root := document.Root
-	exports := service.MustGet[core.SymbolContainers](s.sc).New()
+	exports := s.sc.MustGet[core.SymbolContainers]().New()
 
 	// Describe the root node itself
 	if desc := DescribeExport(root); desc != nil {

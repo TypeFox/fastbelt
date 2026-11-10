@@ -23,7 +23,6 @@ import (
 	"typefox.dev/fastbelt/internal/generator"
 	"typefox.dev/fastbelt/internal/grammar"
 	"typefox.dev/fastbelt/textdoc"
-	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
 )
@@ -174,7 +173,7 @@ func LoadGrammarDir(dir string) (grammar.Grammar, error) {
 // into one grammar.
 func parseAndMerge(files []string) (grammar.Grammar, error) {
 	sc := grammar.CreateServices()
-	documents := service.MustGet[workspace.DocumentManager](sc)
+	documents := sc.MustGet[workspace.DocumentManager]()
 
 	docs := make([]*core.Document, 0, len(files))
 	for _, path := range files {
@@ -188,7 +187,7 @@ func parseAndMerge(files []string) (grammar.Grammar, error) {
 		docs = append(docs, doc)
 	}
 
-	builder := service.MustGet[workspace.Builder](sc)
+	builder := sc.MustGet[workspace.Builder]()
 	if err := builder.Build(context.Background(), docs, nil); err != nil {
 		return nil, err
 	}

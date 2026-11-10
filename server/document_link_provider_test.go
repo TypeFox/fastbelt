@@ -26,7 +26,7 @@ func newDocumentLinkTestServer(t *testing.T, setup func(sc *service.Container)) 
 	setup(sc)
 	server.SetupDefaultServices(sc)
 	sc.Seal()
-	return service.MustGet[lsp.Server](sc)
+	return sc.MustGet[lsp.Server]()
 }
 
 // plainDocumentLinkProvider implements only server.DocumentLinkProvider, not the resolving extension.
@@ -51,7 +51,7 @@ func TestDocumentLinkResolve_AdvertisedOnlyWhenSupported(t *testing.T) {
 	ctx := context.Background()
 
 	plainServer := newDocumentLinkTestServer(t, func(sc *service.Container) {
-		service.Put[server.DocumentLinkProvider](sc, plainDocumentLinkProvider{})
+		sc.Put[server.DocumentLinkProvider](plainDocumentLinkProvider{})
 	})
 	plainInit, err := plainServer.Initialize(ctx, &lsp.ParamInitialize{})
 	assert.NoError(t, err)
@@ -60,7 +60,7 @@ func TestDocumentLinkResolve_AdvertisedOnlyWhenSupported(t *testing.T) {
 	}
 
 	resolvingServer := newDocumentLinkTestServer(t, func(sc *service.Container) {
-		service.Put[server.DocumentLinkProvider](sc, resolvingDocumentLinkProvider{})
+		sc.Put[server.DocumentLinkProvider](resolvingDocumentLinkProvider{})
 	})
 	resolvingInit, err := resolvingServer.Initialize(ctx, &lsp.ParamInitialize{})
 	assert.NoError(t, err)
@@ -72,7 +72,7 @@ func TestDocumentLinkResolve_AdvertisedOnlyWhenSupported(t *testing.T) {
 func TestDocumentLinkResolve_Dispatch(t *testing.T) {
 	ctx := context.Background()
 	resolvingServer := newDocumentLinkTestServer(t, func(sc *service.Container) {
-		service.Put[server.DocumentLinkProvider](sc, resolvingDocumentLinkProvider{})
+		sc.Put[server.DocumentLinkProvider](resolvingDocumentLinkProvider{})
 	})
 
 	result, err := resolvingServer.ResolveDocumentLink(ctx, &lsp.DocumentLink{})
@@ -82,7 +82,7 @@ func TestDocumentLinkResolve_Dispatch(t *testing.T) {
 	}
 
 	plainServer := newDocumentLinkTestServer(t, func(sc *service.Container) {
-		service.Put[server.DocumentLinkProvider](sc, plainDocumentLinkProvider{})
+		sc.Put[server.DocumentLinkProvider](plainDocumentLinkProvider{})
 	})
 	original := &lsp.DocumentLink{}
 	result, err = plainServer.ResolveDocumentLink(ctx, original)

@@ -40,9 +40,9 @@ var TokenModesCompletionDispatch = map[string]TokenModesCompletionDispatchFunc{
 		if !ok {
 			return func(yield func(*core.SymbolDescription) bool) {}
 		}
-		refs := service.MustGet[TokenModesReferencesConstructor](sc)
-		scopes := service.MustGet[TokenModesScopeProvider](sc)
-		filter := service.MustGet[TokenModesCompletionFilter](sc)
+		refs := sc.MustGet[TokenModesReferencesConstructor]()
+		scopes := sc.MustGet[TokenModesScopeProvider]()
+		filter := sc.MustGet[TokenModesCompletionFilter]()
 		ref := refs.VariableRefName(typedOwner, nil)
 		candidates := scopes.ScopeVariableRefName(ctx, ref).AllElements()
 		return filter.FilterVariableRefName(ctx, ref, candidates)

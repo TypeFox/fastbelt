@@ -26,7 +26,7 @@ func NewDefaultDocumentHighlightProvider(sc *service.Container) DocumentHighligh
 }
 
 func (s *DefaultDocumentHighlightProvider) HandleDocumentHighlightRequest(ctx context.Context, params *lsp.DocumentHighlightParams) ([]lsp.DocumentHighlight, error) {
-	documentManager := service.MustGet[workspace.DocumentManager](s.sc)
+	documentManager := s.sc.MustGet[workspace.DocumentManager]()
 	uri := core.ParseURI(string(params.TextDocument.URI))
 	targetDoc := documentManager.Get(uri)
 	if targetDoc == nil {
@@ -38,13 +38,13 @@ func (s *DefaultDocumentHighlightProvider) HandleDocumentHighlightRequest(ctx co
 	if first == nil {
 		return nil, nil // No token at the given position
 	}
-	nameFinder := service.MustGet[NameFinder](s.sc)
+	nameFinder := s.sc.MustGet[NameFinder]()
 	foundName := nameFinder.Find(ctx, first, second)
 	if foundName.Target == nil || foundName.Source == nil {
 		return nil, nil // Could not find a name
 	}
 	target := foundName.Target.Owner()
-	referencesFinder := service.MustGet[ReferencesFinder](s.sc)
+	referencesFinder := s.sc.MustGet[ReferencesFinder]()
 	highlights := []lsp.DocumentHighlight{}
 	for refDesc := range referencesFinder.Find(ctx, target, FindReferencesOptions{
 		IncludeDeclaration: true,

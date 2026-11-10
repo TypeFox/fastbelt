@@ -17,10 +17,10 @@ type Parser struct {
 }
 
 func (p *Parser) Parse(document *core.Document) {
-	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
-	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
-	referencesConstructor := service.MustGet[ArithmeticsReferencesConstructor](p.sc)
-	lookahead := service.MustGet[ArithmeticsParserLookahead](p.sc)
+	recovery := p.sc.MustGet[parser.ErrorRecoveryStrategy]()
+	messages := p.sc.MustGet[parser.ErrorMessageProvider]()
+	referencesConstructor := p.sc.MustGet[ArithmeticsReferencesConstructor]()
+	lookahead := p.sc.MustGet[ArithmeticsParserLookahead]()
 	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
 	result := cp.ParseModule()
 	cp.state.ExpectEndOfInput()

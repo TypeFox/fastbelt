@@ -21,7 +21,7 @@ func main() {
 	sc := statemachine.CreateLspServices(func(sc *service.Container) {
 		// Override the default services with browser-compatible implementations.
 		server.SetupWasmServices(sc)
-		service.Override(sc, workspace.NewNoopInitializer())
+		sc.Override(workspace.NewNoopInitializer())
 	})
 
 	// StartLanguageServer blocks on the connection until it is closed, which

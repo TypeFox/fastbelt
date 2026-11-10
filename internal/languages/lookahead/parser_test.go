@@ -13,15 +13,14 @@ import (
 	"typefox.dev/fastbelt/lexer"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/test"
-	"typefox.dev/fastbelt/util/service"
 )
 
 // Benchmarks the adaptive prediction of a long prefix in an alternative
 func BenchmarkNestedQualifiedNameLookahead(b *testing.B) {
 	content := "g A.B.C.D.E.F.G hello"
 	srv := CreateServices()
-	lexerService := service.MustGet[lexer.Lexer](srv)
-	parserService := service.MustGet[parser.Parser](srv)
+	lexerService := srv.MustGet[lexer.Lexer]()
+	parserService := srv.MustGet[parser.Parser]()
 	doc := fastbelt.NewDocumentFromString("file:///workspace/test.la", "lookahead", content)
 	lexerService.Exec(doc)
 	b.SetBytes(int64(len(content)))

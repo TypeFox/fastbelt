@@ -16,13 +16,13 @@ type Parser struct {
 }
 
 func (p *Parser) Parse(document *core.Document) {
-	recovery := service.MustGet[parser.ErrorRecoveryStrategy](p.sc)
-	messages := service.MustGet[parser.ErrorMessageProvider](p.sc)
-	referencesConstructor := service.MustGet[MultilangModelReferencesConstructor](p.sc)
-	lookahead := service.MustGet[MultilangModelParserLookahead](p.sc)
+	recovery := p.sc.MustGet[parser.ErrorRecoveryStrategy]()
+	messages := p.sc.MustGet[parser.ErrorMessageProvider]()
+	referencesConstructor := p.sc.MustGet[MultilangModelReferencesConstructor]()
+	lookahead := p.sc.MustGet[MultilangModelParserLookahead]()
 	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
 	var result core.AstNode
-	selector := service.MustGet[core.LanguageSelector](p.sc)
+	selector := p.sc.MustGet[core.LanguageSelector]()
 	switch i, _ := selector.Select(document.URI); i {
 	case 1:
 		result = cp.ParseFarewell()

@@ -34,16 +34,16 @@ func NewDiagnosticsPublisher(sc *service.Container) *DiagnosticsPublisher {
 }
 
 func (d *DiagnosticsPublisher) OnServerInitialize(_ *lsp.ParamInitialize) {
-	store, err := service.Get[textdoc.Store](d.sc)
+	store, err := d.sc.Get[textdoc.Store]()
 	if err != nil {
 		return
 	}
-	synchronizer, err := service.Get[DocumentSynchronizer](d.sc)
+	synchronizer, err := d.sc.Get[DocumentSynchronizer]()
 	if err != nil {
 		return
 	}
 	synchronizer.OnDidOpen(func(ctx context.Context, event *TextDocumentChangeEvent) {
-		docManager, err := service.Get[workspace.DocumentManager](d.sc)
+		docManager, err := d.sc.Get[workspace.DocumentManager]()
 		if err != nil {
 			return
 		}
@@ -59,7 +59,7 @@ func (d *DiagnosticsPublisher) OnServerInitialize(_ *lsp.ParamInitialize) {
 		// Clear diagnostics for the closed document.
 		d.publishDiagnostics(ctx, uri, []lsp.Diagnostic{})
 	})
-	builder, err := service.Get[workspace.Builder](d.sc)
+	builder, err := d.sc.Get[workspace.Builder]()
 	if err != nil {
 		return
 	}
@@ -115,7 +115,7 @@ func toLspDiagnostic(textDoc textdoc.Handle, d core.Diagnostic) lsp.Diagnostic {
 }
 
 func (d *DiagnosticsPublisher) publishDiagnostics(ctx context.Context, uri lsp.DocumentURI, diagnostics []lsp.Diagnostic) {
-	connection, err := service.Get[*Connection](d.sc)
+	connection, err := d.sc.Get[*Connection]()
 	if err != nil {
 		return
 	}

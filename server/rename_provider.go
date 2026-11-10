@@ -32,7 +32,7 @@ func (rp *DefaultRenameProvider) HandleRenameRequest(ctx context.Context, params
 		return nil, nil // Could not find a name
 	}
 	target := foundName.Target.Owner()
-	referencesFinder := service.MustGet[ReferencesFinder](rp.sc)
+	referencesFinder := rp.sc.MustGet[ReferencesFinder]()
 	workspaceEdit := &lsp.WorkspaceEdit{
 		Changes: map[lsp.DocumentURI][]lsp.TextEdit{},
 	}
@@ -65,7 +65,7 @@ func (rp *DefaultRenameProvider) PrepareRenameRequest(ctx context.Context, param
 
 func (rp *DefaultRenameProvider) findTargetNode(ctx context.Context, params *lsp.TextDocumentPositionParams) FoundName {
 	uri := core.ParseURI(string(params.TextDocument.URI))
-	documentManager := service.MustGet[workspace.DocumentManager](rp.sc)
+	documentManager := rp.sc.MustGet[workspace.DocumentManager]()
 	targetDoc := documentManager.Get(uri)
 	if targetDoc == nil {
 		return FoundName{} // Document not found
@@ -76,7 +76,7 @@ func (rp *DefaultRenameProvider) findTargetNode(ctx context.Context, params *lsp
 	if first == nil {
 		return FoundName{} // No token at the given position
 	}
-	nameFinder := service.MustGet[NameFinder](rp.sc)
+	nameFinder := rp.sc.MustGet[NameFinder]()
 	foundName := nameFinder.Find(ctx, first, second)
 	return foundName
 }

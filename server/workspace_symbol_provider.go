@@ -65,7 +65,7 @@ func NewWorkspaceSymbolProviderWithFilter(sc *service.Container, filter Workspac
 }
 
 func (p *DefaultWorkspaceSymbolProvider) HandleWorkspaceSymbolRequest(ctx context.Context, params *lsp.WorkspaceSymbolParams) ([]lsp.SymbolInformation, error) {
-	documentManager := service.MustGet[workspace.DocumentManager](p.sc)
+	documentManager := p.sc.MustGet[workspace.DocumentManager]()
 	matcher := p.resolveFuzzyMatcher()
 	query := strings.ToLower(params.Query)
 	maxCount := p.filter.MaxSymbolCount()
@@ -134,7 +134,7 @@ func (p *DefaultWorkspaceSymbolProvider) collectSymbolsFromDocument(doc *core.Do
 }
 
 func (s *DefaultWorkspaceSymbolProvider) resolveFuzzyMatcher() FuzzyMatcher {
-	if m, err := service.Get[FuzzyMatcher](s.sc); err == nil && m != nil {
+	if m, err := s.sc.Get[FuzzyMatcher](); err == nil && m != nil {
 		return m
 	}
 	return &DefaultFuzzyMatcher{}

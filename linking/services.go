@@ -9,22 +9,22 @@ import "typefox.dev/fastbelt/util/service"
 // SetupDefaultServices sets up the default services for the linking package.
 // If any service is already set, it's not overwritten.
 func SetupDefaultServices(sc *service.Container) {
-	if !service.Has[SymbolExporter](sc) {
-		service.Put(sc, NewDefaultSymbolExporter(sc))
+	if !sc.Has[SymbolExporter]() {
+		sc.Put(NewDefaultSymbolExporter(sc))
 	}
-	if !service.Has[SymbolImporter](sc) {
-		service.Put(sc, NewDefaultSymbolImporter(sc))
+	if !sc.Has[SymbolImporter]() {
+		sc.Put(NewDefaultSymbolImporter(sc))
 	}
-	if !service.Has[Linker](sc) {
-		service.Put(sc, NewDefaultLinker(sc))
+	if !sc.Has[Linker]() {
+		sc.Put(NewDefaultLinker(sc))
 	}
-	if !service.Has[LocalSymbolsProvider](sc) {
-		service.Put(sc, NewDefaultLocalSymbolsProvider(sc))
+	if !sc.Has[LocalSymbolsProvider]() {
+		sc.Put(NewDefaultLocalSymbolsProvider(sc))
 	}
-	if !service.Has[ReferenceDescriptionsProvider](sc) {
-		service.Put(sc, NewDefaultReferenceDescriptionsProvider(sc))
+	if !sc.Has[ReferenceDescriptionsProvider]() {
+		sc.Put(NewDefaultReferenceDescriptionsProvider(sc))
 	}
-	if !service.Has[ReferenceDescriber](sc) {
-		service.Put(sc, NewDefaultReferenceDescriber(sc))
+	if !sc.Has[ReferenceDescriber]() {
+		sc.Put(NewDefaultReferenceDescriber(sc))
 	}
 }

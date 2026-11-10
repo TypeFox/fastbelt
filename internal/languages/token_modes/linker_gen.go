@@ -43,7 +43,7 @@ func NewDefaultTokenModesReferenceLinker(sc *service.Container) TokenModesRefere
 	return &DefaultTokenModesReferenceLinker{
 		sc: sc,
 		scopeProvider: sync.OnceValue(func() TokenModesScopeProvider {
-			return service.MustGet[TokenModesScopeProvider](sc)
+			return sc.MustGet[TokenModesScopeProvider]()
 		}),
 	}
 }
@@ -63,7 +63,7 @@ type DefaultTokenModesReferencesConstructor struct {
 
 func NewDefaultTokenModesReferencesConstructor(sc *service.Container) TokenModesReferencesConstructor {
 	referenceLinker := sync.OnceValue(func() TokenModesReferenceLinker {
-		return service.MustGet[TokenModesReferenceLinker](sc)
+		return sc.MustGet[TokenModesReferenceLinker]()
 	})
 	return &DefaultTokenModesReferencesConstructor{
 		linkVariableRefName: sync.OnceValue(func() core.ReferenceGetter[VariableDecl] {

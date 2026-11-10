@@ -14,11 +14,11 @@ import (
 )
 
 func SetupStdioServices(sc *service.Container) {
-	if !service.Has[jsonrpc2.Binder](sc) {
-		service.Put[jsonrpc2.Binder](sc, NewDefaultBinder(sc))
+	if !sc.Has[jsonrpc2.Binder]() {
+		sc.Put[jsonrpc2.Binder](NewDefaultBinder(sc))
 	}
-	if !service.Has[jsonrpc2.Dialer](sc) {
-		service.Put[jsonrpc2.Dialer](sc, NewStdioDialer())
+	if !sc.Has[jsonrpc2.Dialer]() {
+		sc.Put[jsonrpc2.Dialer](NewStdioDialer())
 	}
 }
 
