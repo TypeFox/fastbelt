@@ -160,12 +160,15 @@ func (p *predictionContext) String() string {
 }
 
 // mergeCache memoizes prediction-context merges within a single prediction.
+// The zero value is ready to use: the map is allocated on the first put, so
+// predictions that never merge contexts (DFA hits) allocate nothing.
 type mergeCache struct {
 	m map[[2]*predictionContext]*predictionContext
 }
 
-func newMergeCache() *mergeCache {
-	return &mergeCache{m: map[[2]*predictionContext]*predictionContext{}}
+// reset empties the cache for the next prediction (drops the map).
+func (c *mergeCache) reset() {
+	c.m = nil
 }
 
 func (c *mergeCache) get(a, b *predictionContext) (*predictionContext, bool) {
@@ -179,6 +182,9 @@ func (c *mergeCache) get(a, b *predictionContext) (*predictionContext, bool) {
 func (c *mergeCache) put(a, b, v *predictionContext) {
 	if c == nil {
 		return
+	}
+	if c.m == nil {
+		c.m = map[[2]*predictionContext]*predictionContext{}
 	}
 	c.m[[2]*predictionContext{a, b}] = v
 }
