@@ -188,7 +188,7 @@ func parseAndMerge(files []string) (grammar.Grammar, error) {
 	}
 
 	builder := sc.MustGet[workspace.Builder]()
-	if err := builder.Build(context.Background(), docs, nil); err != nil {
+	if err := builder.Build(context.Background(), docs); err != nil {
 		return nil, err
 	}
 	if err := reportDiagnostics(docs); err != nil {

@@ -22,6 +22,7 @@ func newCodeLensTestServer(t *testing.T, setup func(sc *service.Container)) lsp.
 	t.Helper()
 	sc := service.NewContainer()
 	workspace.SetupDefaultServices(sc)
+	sc.Override(workspace.NewNoopInitializer()) // no file system in tests; reads wait on Initializer.Ready
 	textdoc.SetupDefaultServices(sc)
 	setup(sc)
 	server.SetupDefaultServices(sc)

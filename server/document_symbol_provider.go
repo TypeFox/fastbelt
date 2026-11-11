@@ -39,6 +39,14 @@ type DefaultDocumentSymbolProvider struct {
 	filter DocumentSymbolFilter
 }
 
+var _ DocumentSymbolProvider = (*DefaultDocumentSymbolProvider)(nil)
+var _ DocumentStateRequirements = (*DefaultDocumentSymbolProvider)(nil)
+
+// RequiredState indicates that the default document symbol provider requires the document to be parsed.
+func (p *DefaultDocumentSymbolProvider) RequiredState() (core.DocumentState, bool) {
+	return core.DocStateParsed, false
+}
+
 // NewDefaultDocumentSymbolProvider creates a provider using services from the container.
 func NewDefaultDocumentSymbolProvider(sc *service.Container) DocumentSymbolProvider {
 	return &DefaultDocumentSymbolProvider{
