@@ -21,7 +21,7 @@ import (
 type parserATNSimulator struct {
 	atn         *RuntimeATN
 	parserState *ParserState
-	mergeCache  *mergeCache
+	mergeCache  mergeCache // reset per prediction
 }
 
 func newParserATNSimulator(atn *RuntimeATN, p *ParserState) *parserATNSimulator {
@@ -72,7 +72,7 @@ func (m PredictionMode) String() string {
 // is non-nil exactly when the alternative is invalidAlt, carrying the divergence
 // offset and expected-token set for diagnostics.
 func (s *parserATNSimulator) adaptivePredict(decision int, mode PredictionMode) (int, *PredictionFailure) {
-	s.mergeCache = newMergeCache()
+	s.mergeCache.reset()
 	dfa := s.atn.decisionToDFA[mode][decision]
 
 	start := dfa.getStart()
@@ -219,7 +219,7 @@ func (s *parserATNSimulator) computeReachSet(closure *atnConfigSet, tokenType *c
 		for _, trans := range c.state.Transitions {
 			target := getReachableTarget(trans, tokenType)
 			if target != nil {
-				intermediate.Add(newATNConfigWithState(c, target, c.context), s.mergeCache)
+				intermediate.Add(newATNConfigWithState(c, target, c.context), &s.mergeCache)
 			}
 		}
 	}
@@ -244,7 +244,7 @@ func (s *parserATNSimulator) computeReachSet(closure *atnConfigSet, tokenType *c
 
 	if skippedStopStates != nil && (!fullCtx || !hasConfigInRuleStopState(reach)) {
 		for _, c := range skippedStopStates {
-			reach.Add(c, s.mergeCache)
+			reach.Add(c, &s.mergeCache)
 		}
 	}
 
@@ -261,7 +261,7 @@ func (s *parserATNSimulator) removeAllConfigsNotInRuleStopState(configs *atnConf
 	result := newATNConfigSet(configs.fullCtx)
 	for _, c := range configs.configs {
 		if isRuleStop(c) {
-			result.Add(c, s.mergeCache)
+			result.Add(c, &s.mergeCache)
 		}
 	}
 	return result
@@ -297,7 +297,7 @@ func (s *parserATNSimulator) closureCheckingStopState(config *atnConfig, configs
 			for i := 0; i < config.context.length(); i++ {
 				if config.context.getReturnState(i) == predictionContextEmptyReturnState {
 					if fullCtx {
-						configs.Add(newATNConfigWithContext(config, emptyPredictionContext()), s.mergeCache)
+						configs.Add(newATNConfigWithContext(config, emptyPredictionContext()), &s.mergeCache)
 						continue
 					}
 					// No context info: chase follow links.
@@ -312,7 +312,7 @@ func (s *parserATNSimulator) closureCheckingStopState(config *atnConfig, configs
 			}
 			return
 		} else if fullCtx {
-			configs.Add(config, s.mergeCache) // reached end of start rule
+			configs.Add(config, &s.mergeCache) // reached end of start rule
 			return
 		}
 		// else: no context info, fall through to closureWork to chase follow links
@@ -323,7 +323,7 @@ func (s *parserATNSimulator) closureCheckingStopState(config *atnConfig, configs
 func (s *parserATNSimulator) closureWork(config *atnConfig, configs *atnConfigSet, busy *closureBusy, fullCtx bool, depth int) {
 	state := config.state
 	if !state.EpsilonOnlyTransitions {
-		configs.Add(config, s.mergeCache)
+		configs.Add(config, &s.mergeCache)
 	}
 	srcIsRuleStop := isRuleStop(config)
 	for _, t := range state.Transitions {
