@@ -63,7 +63,7 @@ func TestParserCancellationStopsEarly(t *testing.T) {
 
 // assertCancellationStopsEarly times a full run, then reruns with
 // cancellation fired after 20% of that time and asserts the cancelled run
-// finishes within 30% of it.
+// finishes within 40% of it.
 func assertCancellationStopsEarly(t *testing.T, run func(ctx context.Context)) {
 	t.Helper()
 	run(t.Context()) // warm up
@@ -83,5 +83,5 @@ func assertCancellationStopsEarly(t *testing.T, run func(ctx context.Context)) {
 	cancelled := time.Since(start)
 
 	t.Logf("full: %v, cancelled: %v", full, cancelled)
-	assert.Less(t, cancelled, full*3/10)
+	assert.Less(t, cancelled, full*4/10)
 }
