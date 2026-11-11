@@ -55,13 +55,13 @@ func BenchmarkDeepNestedJRange(b *testing.B) {
 	lexerService := srv.MustGet[lexer.Lexer]()
 	parserService := srv.MustGet[parser.Parser]()
 	doc := fastbelt.NewDocumentFromString("file:///workspace/deep.la", "lookahead", content)
-	lexerService.Exec(doc)
+	lexerService.Exec(b.Context(), doc)
 	if len(doc.LexerErrors) > 0 {
 		b.Fatalf("lexer errors: %v", doc.LexerErrors)
 	}
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		parserService.Parse(doc)
+		parserService.Parse(b.Context(), doc)
 	}
 }
