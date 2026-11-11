@@ -53,12 +53,27 @@ func optionsIf[S, O any](sc *service.Container) *O {
 	return nil
 }
 
-// DefaultLanguageServer implements the [lsp.Server] interface
+// DefaultLanguageServer is the default implementation of the [lsp.Server]
+// interface. It contains no feature logic: it delegates each supported LSP
+// method to the registered service. Besides that, it builds the initialize
+// response and, on the initialized notification, runs the
+// [workspace.Initializer] and the initial build in the background while
+// holding the [workspace.Lock] for writing.
+//
+// A feature capability is advertised only if its provider service is
+// registered, with two exceptions: text document sync is always advertised,
+// and signature help additionally requires [SignatureHelpTriggers] with at
+// least one trigger character.
+//
+// Feature requests wait for [workspace.Initializer.Ready] and then run while
+// holding the [workspace.Lock] for reading. workspace/executeCommand does
+// neither, so a [CommandProvider] that reads the workspace must do both
+// itself.
 type DefaultLanguageServer struct {
 	sc *service.Container
 }
 
-// NewDefaultLanguageServer creates a new default language server.
+// NewDefaultLanguageServer creates a new [DefaultLanguageServer].
 func NewDefaultLanguageServer(sc *service.Container) lsp.Server {
 	return &DefaultLanguageServer{sc: sc}
 }
@@ -623,8 +638,10 @@ func (s *DefaultLanguageServer) WorkDoneProgressCancel(ctx context.Context, para
 	return nil
 }
 
-// StartLanguageServer starts a language server using the service container.
-// It sets up JSON-RPC communication over stdio and handles the essential LSP messages.
+// StartLanguageServer runs the language server configured in the service
+// container and blocks until its connection is closed. A transport must be
+// registered first, for example with [SetupStdioServices].
+// [DefaultLanguageServer] closes the connection on the LSP exit notification.
 func StartLanguageServer(ctx context.Context, sc *service.Container) error {
 	dialer, err := sc.Get[jsonrpc2.Dialer]()
 	if err != nil {
@@ -657,12 +674,15 @@ func toAnySlice(symbols []lsp.DocumentSymbol) []any {
 	return result
 }
 
-// DefaultBinder implements the jsonrpc2.Binder interface
+// DefaultBinder is the default implementation of the [jsonrpc2.Binder]
+// interface. When the connection is established, it stores it in the
+// [Connection] service and attaches the [lsp.Server] from the service
+// container as the message handler.
 type DefaultBinder struct {
 	sc *service.Container
 }
 
-// NewDefaultBinder creates a new default binder.
+// NewDefaultBinder creates a new [DefaultBinder].
 func NewDefaultBinder(sc *service.Container) *DefaultBinder {
 	return &DefaultBinder{sc: sc}
 }

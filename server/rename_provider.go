@@ -13,11 +13,15 @@ import (
 	"typefox.dev/lsp"
 )
 
+// RenameProvider is a service for handling LSP rename and prepare rename requests.
 type RenameProvider interface {
 	HandleRenameRequest(ctx context.Context, params *lsp.RenameParams) (*lsp.WorkspaceEdit, error)
 	PrepareRenameRequest(ctx context.Context, params *lsp.PrepareRenameParams) (*lsp.PrepareRenameResult, error)
 }
 
+// DefaultRenameProvider is the default implementation of [RenameProvider].
+// It renames a symbol by generating a text edit for every occurrence found
+// by [ReferencesFinder] across the workspace, including the declaration.
 type DefaultRenameProvider struct {
 	sc *service.Container
 }
@@ -32,6 +36,7 @@ func (rp *DefaultRenameProvider) RequiredState() (core.DocumentState, bool) {
 	return core.DocStateReferences, true
 }
 
+// NewDefaultRenameProvider creates a new [DefaultRenameProvider].
 func NewDefaultRenameProvider(sc *service.Container) RenameProvider {
 	return &DefaultRenameProvider{sc: sc}
 }

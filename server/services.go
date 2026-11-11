@@ -17,7 +17,8 @@ type WorkspaceFolders struct {
 	Value []lsp.WorkspaceFolder
 }
 
-// Connection is assigned by ConnectionBinder when the language server is started.
+// Connection holds the active JSON-RPC connection to the LSP client.
+// It is assigned by [DefaultBinder.Bind] when the language server is started.
 type Connection struct {
 	Value *jsonrpc2.Connection
 }
@@ -32,7 +33,7 @@ func SetupDefaultServices(sc *service.Container) {
 		sc.Put(NewSlogHandler(sc))
 	}
 	if !sc.Has[DiagnosticsPublisher]() {
-		sc.Put(NewDiagnosticsPublisher(sc))
+		sc.Put(NewDefaultDiagnosticsPublisher(sc))
 	}
 	if !sc.Has[lsp.Server]() {
 		sc.Put(NewDefaultLanguageServer(sc))

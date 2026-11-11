@@ -12,6 +12,10 @@ import (
 	"typefox.dev/fastbelt/util/service"
 )
 
+// FoundName is the result of a [NameFinder.Find] call. Either field may be
+// nil if the search could not determine the corresponding unit. Source and
+// Target are the same unit when the search started on a symbol's declaration
+// name rather than on a reference to it.
 type FoundName struct {
 	// The unit that contains the token that was used to start the search.
 	Source core.StringUnit
@@ -19,10 +23,10 @@ type FoundName struct {
 	Target core.StringUnit
 }
 
-// NameFinder is responsible for finding the source and target [core.StringUnit] for a given token.
-// It is used by various LSP services to find the name of a referenced/given symbol.
-// Adopters should customize this service if they want to change how names are found in LSP services.
-// Downstream LSP services will automatically use the new implementation.
+// NameFinder is responsible for finding the source and target [core.StringUnit]
+// for the tokens at a cursor position. It is used by [TargetAtCursor] and the
+// default definition, hover, references, document highlight, and rename
+// providers, so a custom implementation changes all of them.
 type NameFinder interface {
 	// Find returns the source and target [core.StringUnit] for the given tokens.
 	// This method accepts two tokens, as in some cases (i.e. if the cursor is between two tokens),
@@ -31,10 +35,16 @@ type NameFinder interface {
 	Find(ctx context.Context, first, second *core.Token) FoundName
 }
 
+// DefaultNameFinder is the default implementation of [NameFinder].
+// If a given token belongs to a cross-reference, it resolves the reference
+// and returns the name unit of the target symbol; if the token lies within
+// the name of a declaration, it returns that name unit as both source and
+// target.
 type DefaultNameFinder struct {
 	sc *service.Container
 }
 
+// NewDefaultNameFinder creates a new [DefaultNameFinder].
 func NewDefaultNameFinder(sc *service.Container) NameFinder {
 	return &DefaultNameFinder{sc: sc}
 }

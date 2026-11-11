@@ -15,6 +15,7 @@ import (
 	"typefox.dev/fastbelt/workspace"
 )
 
+// FindReferencesOptions controls the scope of a [ReferencesFinder.Find] search.
 type FindReferencesOptions struct {
 	// Whether to include the declaration of the symbol as a dedicated [core.ReferenceDescription] in the results.
 	// If true, will contain the declaration as a reference with the same source and target node, and the range of the name as the first element.
@@ -25,10 +26,18 @@ type FindReferencesOptions struct {
 	TargetURI core.URI
 }
 
+// ReferencesFinder finds all references to a given symbol. It is used by the
+// default references, document highlight, and rename providers, so a custom
+// implementation changes all of them.
 type ReferencesFinder interface {
+	// Find returns the references pointing at the target node,
+	// with the search scope controlled by options.
 	Find(ctx context.Context, target core.AstNode, options FindReferencesOptions) iter.Seq[*core.ReferenceDescription]
 }
 
+// DefaultReferencesFinder is the default implementation of [ReferencesFinder].
+// It draws on the reference descriptions indexed per document, iterating all
+// documents of the workspace unless a target URI is given.
 type DefaultReferencesFinder struct {
 	sc *service.Container
 }
@@ -36,6 +45,7 @@ type DefaultReferencesFinder struct {
 // Ensure DefaultReferencesFinder implements the expected interfaces.
 var _ ReferencesFinder = (*DefaultReferencesFinder)(nil)
 
+// NewDefaultReferencesFinder creates a new [DefaultReferencesFinder].
 func NewDefaultReferencesFinder(sc *service.Container) ReferencesFinder {
 	return &DefaultReferencesFinder{sc: sc}
 }
