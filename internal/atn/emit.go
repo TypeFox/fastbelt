@@ -25,11 +25,31 @@ func BuildStateIndexMap(a *ATN) map[*ATNState]int {
 	return idx
 }
 
-func renderCompletionHint(h *parser.CompletionHint) string {
-	if h == nil {
-		return "nil"
+// tableIndex collects the distinct values of a table, in order of their
+// first occurrence.
+type tableIndex struct {
+	values []string
+	index  map[string]int
+}
+
+func newTableIndex() *tableIndex {
+	return &tableIndex{index: map[string]int{}}
+}
+
+// ref adds v to the table if it is not in it yet, and returns the reference
+// to it in the generated code: its index plus one.
+func (t *tableIndex) ref(v string) int {
+	if _, ok := t.index[v]; !ok {
+		t.values = append(t.values, v)
+		t.index[v] = len(t.values)
 	}
-	out := "&parser.CompletionHint{Owner: " + strconv.Quote(h.Owner) + ", Property: " + strconv.Quote(h.Property)
+	return t.index[v]
+}
+
+// renderCompletionHintValue renders h as an element of a composite literal
+// of type []parser.CompletionHint.
+func renderCompletionHintValue(h *parser.CompletionHint) string {
+	out := "{Owner: " + strconv.Quote(h.Owner) + ", Property: " + strconv.Quote(h.Property)
 	if h.PrecedingAction != nil {
 		out += ", PrecedingAction: " + renderActionInfo(h.PrecedingAction)
 	}
@@ -45,7 +65,9 @@ func renderActionInfo(a *parser.ActionInfo) string {
 	return out + "}"
 }
 
-func renderRuleCallInfo(c *parser.RuleCallInfo) string {
+// renderRuleCallInfoValue renders c as an element of a composite literal of
+// type []parser.RuleCallInfo.
+func renderRuleCallInfoValue(c *parser.RuleCallInfo) string {
 	fields := []string{}
 	if c.Field != "" {
 		fields = append(fields, "Field: "+strconv.Quote(c.Field))
@@ -65,7 +87,7 @@ func renderRuleCallInfo(c *parser.RuleCallInfo) string {
 	if c.Repeated {
 		fields = append(fields, "Repeated: true")
 	}
-	return "&parser.RuleCallInfo{" + strings.Join(fields, ", ") + "}"
+	return "{" + strings.Join(fields, ", ") + "}"
 }
 
 func EmitGoSource(pkgName string, rtn *ATN, grammr grammar.Grammar, tokenTypeVarNames []string) codegen.Node {
@@ -87,6 +109,8 @@ func EmitGoSource(pkgName string, rtn *ATN, grammr grammar.Grammar, tokenTypeVar
 	n.AppendLine("import (")
 	n.Indent(func(n codegen.Node) {
 		n.AppendLine(`"sync"`)
+		n.AppendLine()
+		n.AppendLine(`core "typefox.dev/fastbelt"`)
 		n.AppendLine(`"typefox.dev/fastbelt/parser"`)
 	})
 	n.AppendLine(")")
@@ -119,77 +143,131 @@ func EmitGoSource(pkgName string, rtn *ATN, grammr grammar.Grammar, tokenTypeVar
 	})
 	n.AppendLine("}")
 
+	// The ATN is emitted as tables of plain data, which the Go compiler
+	// stores as static data, plus one call that builds the runtime ATN from
+	// them. Code that builds the states one by one would be a single huge
+	// function, whose compilation takes a lot of time and memory for large
+	// grammars.
+	usedTokens := map[int]bool{}
+	for _, s := range rtn.States {
+		for _, t := range s.Transitions {
+			if at, ok := t.(*AtomTransition); ok {
+				usedTokens[at.TokenTypeId] = true
+			}
+		}
+	}
+	// The completion hints and rule calls are collected while the
+	// transitions are emitted; their tables follow the transition table.
+	hints := newTableIndex()
+	calls := newTableIndex()
+
+	n.AppendLine()
+	n.AppendLine("// BuildATN builds the ATN of the grammar from the tables below.")
 	n.AppendLine("func BuildATN() *parser.RuntimeATN {")
 	n.Indent(func(n codegen.Node) {
-		n.AppendLine("states := make([]*parser.RuntimeATNState, ", strconv.Itoa(len(rtn.States)), ")")
+		n.AppendLine("return parser.NewRuntimeATNFromTables(parser.ATNTables{")
+		n.Indent(func(n codegen.Node) {
+			n.AppendLine("States: atnStateTable[:],")
+			n.AppendLine("Transitions: atnTransitionTable[:],")
+			n.AppendLine("DecisionStates: atnDecisionTable[:],")
+			n.AppendLine("TokenTypes: []*core.TokenType{")
+			n.Indent(func(n codegen.Node) {
+				for id, name := range tokenTypeVarNames {
+					if usedTokens[id] {
+						n.AppendLine(name, "_Idx: ", name, ",")
+					}
+				}
+			})
+			n.AppendLine("},")
+			n.AppendLine("CompletionHints: atnCompletionHintTable[:],")
+			n.AppendLine("RuleCalls: atnRuleCallTable[:],")
+		})
+		n.AppendLine("})")
+	})
+	n.AppendLine("}")
+	n.AppendLine()
 
-		// Emit state declarations (without transitions so forward refs are fine).
+	n.AppendLine("var atnStateTable = [...]parser.ATNStateEntry{")
+	n.Indent(func(n codegen.Node) {
 		for i, s := range rtn.States {
-			n.Append("states[", stateNames[i], "] = parser.NewATNState(", stateNames[i], ",", "parser.", atnStateTypeName(s.Type), ", ", strconv.FormatBool(s.EpsilonOnlyTransitions), ")")
-			if s.Decision >= 0 {
-				n.Append(".SetDecision(", strconv.Itoa(s.Decision), ")")
+			fields := []string{"Type: parser." + atnStateTypeName(s.Type)}
+			if s.EpsilonOnlyTransitions {
+				fields = append(fields, "EpsilonOnly: true")
 			}
-			n.AppendLine()
+			fields = append(fields, "Decision: "+strconv.Itoa(s.Decision))
+			if len(s.Transitions) > 0 {
+				fields = append(fields, "Transitions: "+strconv.Itoa(len(s.Transitions)))
+			}
+			n.AppendLine(stateNames[i], ": {", strings.Join(fields, ", "), "},")
 		}
+	})
+	n.AppendLine("}")
+	n.AppendLine()
 
-		// Emit transitions (states already declared, so pointer refs are valid).
+	n.AppendLine("var atnTransitionTable = [...]parser.ATNTransitionEntry{")
+	n.Indent(func(n codegen.Node) {
 		for i, s := range rtn.States {
 			if len(s.Transitions) == 0 {
 				continue
 			}
-			n.AppendLine("states[", stateNames[i], "].AppendTransitions(")
-			n.Indent(func(n codegen.Node) {
-				for _, t := range s.Transitions {
-					switch at := t.(type) {
-					case *AtomTransition:
-						n.AppendLine(
-							"parser.NewAtomTransition(states[",
-							nm(at.Target()),
-							"], ",
-							tokenTypeVarNames[at.TokenTypeId],
-							", ",
-							renderCompletionHint(at.CompletionHint),
-							"),",
-						)
-					case *EpsilonTransition:
-						n.AppendLine("parser.NewEpsilonTransition(states[", nm(at.Target()), "]),")
-					case *RuleTransition:
-						n.AppendLine(
-							"parser.NewRuleTransition(states[",
-							nm(at.Target()),
-							"], states[",
-							nm(at.FollowState),
-							"], ",
-							renderCompletionHint(at.CompletionHint),
-							", ",
-							renderRuleCallInfo(at.Call),
-							"),",
-						)
+			n.AppendLine("// ", stateNames[i])
+			for _, t := range s.Transitions {
+				var fields []string
+				switch at := t.(type) {
+				case *AtomTransition:
+					fields = append(fields, "Kind: parser.ATNAtomTransition", "Target: "+nm(at.Target()), "Token: "+tokenTypeVarNames[at.TokenTypeId]+"_Idx")
+					if at.CompletionHint != nil {
+						fields = append(fields, "Hint: "+strconv.Itoa(hints.ref(renderCompletionHintValue(at.CompletionHint))))
 					}
+				case *EpsilonTransition:
+					fields = append(fields, "Kind: parser.ATNEpsilonTransition", "Target: "+nm(at.Target()))
+				case *RuleTransition:
+					fields = append(fields, "Kind: parser.ATNRuleTransition", "Target: "+nm(at.Target()), "Follow: "+nm(at.FollowState))
+					if at.CompletionHint != nil {
+						fields = append(fields, "Hint: "+strconv.Itoa(hints.ref(renderCompletionHintValue(at.CompletionHint))))
+					}
+					if at.Call != nil {
+						fields = append(fields, "Call: "+strconv.Itoa(calls.ref(renderRuleCallInfoValue(at.Call))))
+					}
+				default:
+					panic(fmt.Sprintf("unexpected transition type %T", t))
 				}
-			})
-			n.AppendLine(")")
-		}
-
-		// DecisionStates slice.
-		n.AppendLine("decisionStates := make([]*parser.RuntimeATNState, ", strconv.Itoa(len(rtn.DecisionStates)), ")")
-		for i, ds := range rtn.DecisionStates {
-			if ds != nil {
-				n.AppendLine("decisionStates[", strconv.Itoa(i), "] = states[", nm(ds), "]")
+				n.AppendLine("{", strings.Join(fields, ", "), "},")
 			}
 		}
-
-		// DecisionMap: indexed by Decision number, populated from DecisionStates.
-		n.AppendLine("decisionMap := make([]*parser.RuntimeATNState, ", strconv.Itoa(len(rtn.DecisionStates)), ")")
-		for i, ds := range rtn.DecisionStates {
-			if ds != nil {
-				n.AppendLine("decisionMap[", strconv.Itoa(i), "] = states[", nm(ds), "]")
-			}
-		}
-
-		n.AppendLine("return parser.NewRuntimeATN(states, decisionStates, decisionMap)")
 	})
+	n.AppendLine("}")
+	n.AppendLine()
 
+	n.AppendLine("var atnDecisionTable = [...]int32{")
+	n.Indent(func(n codegen.Node) {
+		for i, ds := range rtn.DecisionStates {
+			if ds != nil {
+				n.AppendLine(strconv.Itoa(i), ": ", nm(ds), ",")
+			} else {
+				n.AppendLine(strconv.Itoa(i), ": -1,")
+			}
+		}
+	})
+	n.AppendLine("}")
+	n.AppendLine()
+
+	n.AppendLine("// atnCompletionHintTable and atnRuleCallTable are referenced by their")
+	n.AppendLine("// index plus one from atnTransitionTable.")
+	n.AppendLine("var atnCompletionHintTable = [...]parser.CompletionHint{")
+	n.Indent(func(n codegen.Node) {
+		for _, h := range hints.values {
+			n.AppendLine(h, ",")
+		}
+	})
+	n.AppendLine("}")
+	n.AppendLine()
+	n.AppendLine("var atnRuleCallTable = [...]parser.RuleCallInfo{")
+	n.Indent(func(n codegen.Node) {
+		for _, c := range calls.values {
+			n.AppendLine(c, ",")
+		}
+	})
 	n.AppendLine("}")
 	return n
 }
