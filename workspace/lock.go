@@ -56,8 +56,8 @@ type Lock interface {
 //
 // Writes have priority: a pending write blocks new readers (including ReadAt),
 // and starting a write cancels any write still in progress so the freshest
-// edit wins. The next write acquires the lock only after all readers — shared
-// and state-scoped — have drained, so readers never observe document resets.
+// edit wins. The next write acquires the lock only after all readers - shared
+// and state-scoped - have drained, so readers never observe document resets.
 type DefaultLock struct {
 	sc   *service.Container
 	docs DocumentManager // lazily resolved from sc on first ReadAt
@@ -113,24 +113,25 @@ func (l *DefaultLock) Write(ctx context.Context, task func(ctx context.Context))
 	l.workspaceState = 0
 	l.mu.Unlock()
 
-	defer func() {
-		// All of the following happens under mu, so the order of the wakeups
-		// below is irrelevant: no reader or writer can observe an intermediate
-		// state before mu is released.
-		l.mu.Lock()
-		l.writing = false
-		if l.waitingWriters == 0 {
-			// No writer is waiting - unblock pending reads.
-			close(l.readyCh)
-		}
-		l.wakeReadAtLocked()
-		l.cond.Broadcast() // wake any writer waiting in cond.Wait
-		// Cancel the new context, to prevent a leak
-		cancel()
-		l.mu.Unlock()
-	}()
-
+	// Always run the task, even if the context was cancelled by a newer write.
+	// The task is responsible for returning early if the context is cancelled.
 	task(ctx)
+
+	// Task is done, run the cleanup.
+	// All of the following happens under mu, so the order of the wakeups
+	// below is irrelevant: no reader or writer can observe an intermediate
+	// state before mu is released.
+	l.mu.Lock()
+	l.writing = false
+	if l.waitingWriters == 0 {
+		// No writer is waiting - unblock pending reads.
+		close(l.readyCh)
+	}
+	l.wakeReadAtLocked()
+	l.cond.Broadcast() // wake any writer waiting in cond.Wait
+	// Cancel the new context, to prevent a leak
+	cancel()
+	l.mu.Unlock()
 }
 
 func (l *DefaultLock) Read(ctx context.Context, task func(ctx context.Context)) error {

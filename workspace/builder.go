@@ -204,7 +204,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	// Phase 3 barrier: the whole workspace is now linked and indexed.
+	// Phase 3 barrier release: the whole workspace is now linked and indexed.
 	lock.StateChanged(core.DocStateLinked | core.DocStateReferences)
 
 	// PHASE 4: Run custom validations (parallel per document).
@@ -224,7 +224,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	// Phase 4 barrier: the whole workspace is validated.
+	// Phase 4 barrier release: the whole workspace is validated.
 	lock.StateChanged(core.DocStateValidated)
 	return nil
 }

@@ -289,10 +289,10 @@ func (s *DefaultLanguageServer) DidSave(ctx context.Context, params *lsp.DidSave
 func read(ctx context.Context, sc *service.Container, uri lsp.DocumentURI, provider any, do func(ctx context.Context)) error {
 	if initializer, err := sc.Get[workspace.Initializer](); err == nil {
 		select {
-		// Wait until the initializer is ready before continuing
-		case <-initializer.Ready():
 		case <-ctx.Done():
 			return ctx.Err()
+		// Wait until the initializer is ready before continuing
+		case <-initializer.Ready():
 		}
 	}
 	lock, err := sc.Get[workspace.Lock]()
