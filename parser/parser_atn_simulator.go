@@ -74,7 +74,7 @@ func (m PredictionMode) String() string {
 // real call stack, used only for the full-context LL fallback.
 func (s *parserATNSimulator) adaptivePredict(decision int, mode PredictionMode, outerContext *predictionContext) (int, *PredictionFailure) {
 	s.mergeCache = newMergeCache()
-	dfa := s.atn.decisionToDFA[decision]
+	dfa := s.atn.decisionToDFA[mode][decision]
 
 	start := dfa.getStart()
 	if start == nil {

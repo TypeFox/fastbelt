@@ -236,10 +236,13 @@ type RuntimeATN struct {
 
 	ruleTransitions []*RuntimeRuleTransition // follow stateIdx -> rule call that returns to that state
 
-	// decisionToDFA holds one lazily-populated DFA per decision (indexed by
-	// RuntimeATNState.Decision). It is the shared, cross-parse cache used by the
-	// adaptive (ALL(*)) predictor; each DFA guards its own mutation.
-	decisionToDFA []*dfa
+	// decisionToDFA holds one lazily-populated DFA per prediction mode and
+	// decision (indexed by PredictionMode, then RuntimeATNState.Decision). It is
+	// the shared, cross-parse cache used by the adaptive (ALL(*)) predictor;
+	// each DFA guards its own mutation. The modes need separate DFAs: SLL and
+	// LL compute different reach sets at the end of the decision rule, so an
+	// edge built in one mode is not valid in the other.
+	decisionToDFA [2][]*dfa
 }
 
 func NewRuntimeATN(states []*RuntimeATNState, decisionStates []*RuntimeATNState, decisionMap []*RuntimeATNState) *RuntimeATN {
@@ -295,9 +298,11 @@ func (atn *RuntimeATN) ruleCallAt(followIdx int) *RuleCallInfo {
 }
 
 func (atn *RuntimeATN) buildDecisionToDFA() {
-	atn.decisionToDFA = make([]*dfa, len(atn.DecisionStates))
-	for i, ds := range atn.DecisionStates {
-		atn.decisionToDFA[i] = newDFA(i, ds)
+	for mode := range atn.decisionToDFA {
+		atn.decisionToDFA[mode] = make([]*dfa, len(atn.DecisionStates))
+		for i, ds := range atn.DecisionStates {
+			atn.decisionToDFA[mode][i] = newDFA(i, ds)
+		}
 	}
 }
 
