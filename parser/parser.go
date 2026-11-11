@@ -5,12 +5,17 @@
 package parser
 
 import (
+	"context"
+
 	core "typefox.dev/fastbelt"
 )
 
 // Parser defines the interface for parsing tokens (lexer output) into AST nodes.
 type Parser interface {
-	Parse(document *core.Document)
+	// Parse builds the AST from document.Tokens and sets the Root and
+	// ParserErrors fields of the document. If ctx is cancelled while parsing,
+	// the document is left untouched and the parser stops processing.
+	Parse(ctx context.Context, document *core.Document)
 }
 
 const (
@@ -23,6 +28,7 @@ const (
 )
 
 type ParserState struct {
+	ctx       context.Context
 	Tokens    []core.Token
 	Length    int
 	Index     int
@@ -116,11 +122,15 @@ type LL1Lookahead struct {
 	Lookup []int
 }
 
-func NewParserState(tokens []core.Token, atn *RuntimeATN, recovery ErrorRecoveryStrategy, messages ErrorMessageProvider) *ParserState {
+func NewParserState(ctx context.Context, tokens []core.Token, atn *RuntimeATN, recovery ErrorRecoveryStrategy, messages ErrorMessageProvider) *ParserState {
 	if atn == nil {
 		panic("atn must be provided")
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	return &ParserState{
+		ctx:            ctx,
 		Tokens:         tokens,
 		Length:         len(tokens),
 		Index:          0,
@@ -146,6 +156,11 @@ func (p *ParserState) LA(offset int) *core.Token {
 
 func (p *ParserState) Consume(tokenType *core.TokenType) *core.Token {
 	if p.ErrorMode != ErrorModeNone {
+		return nil
+	}
+	// Periodically check for errors to avoid unnecessary parsing work.
+	const errorCheckCount = 256 - 1
+	if p.Index&errorCheckCount == 0 && p.checkError() {
 		return nil
 	}
 	current := p.LA(1)
@@ -250,6 +265,17 @@ func (p *ParserState) ExitRule() {
 		p.ErrorMode = ErrorModeRecover
 		p.recovery.Recover(p)
 	}
+}
+
+func (p *ParserState) checkError() bool {
+	if p.ctx.Err() != nil {
+		// Use ErrorMode as a proxy to abort parsing.
+		// Also, make sure that lookaheads terminate by jumping to the end of the token stream.
+		p.ErrorMode = ErrorModeFail
+		p.Index = p.Length
+		return true
+	}
+	return false
 }
 
 // Sync delegates to the recovery strategy to discard unexpected tokens before

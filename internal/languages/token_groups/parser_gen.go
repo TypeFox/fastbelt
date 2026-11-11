@@ -3,6 +3,8 @@
 package token_groups
 
 import (
+	"context"
+
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -15,13 +17,24 @@ type Parser struct {
 	lookahead             TokenGroupsParserLookahead
 }
 
-func (p *Parser) Parse(document *core.Document) {
+func (p *Parser) Parse(ctx context.Context, document *core.Document) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	recovery := p.sc.MustGet[parser.ErrorRecoveryStrategy]()
 	messages := p.sc.MustGet[parser.ErrorMessageProvider]()
 	referencesConstructor := p.sc.MustGet[TokenGroupsReferencesConstructor]()
 	lookahead := p.sc.MustGet[TokenGroupsParserLookahead]()
-	cp := &Parser{sc: p.sc, referencesConstructor: referencesConstructor, lookahead: lookahead, state: parser.NewParserState(document.Tokens, ATN(), recovery, messages)}
+	cp := &Parser{
+		sc:                    p.sc,
+		referencesConstructor: referencesConstructor,
+		lookahead:             lookahead,
+		state:                 parser.NewParserState(ctx, document.Tokens, ATN(), recovery, messages),
+	}
 	result := cp.ParseModel()
+	if ctx.Err() != nil {
+		return
+	}
 	cp.state.ExpectEndOfInput()
 	document.ParserErrors = cp.state.Errors()
 	document.Root = result

@@ -108,8 +108,8 @@ func NewStatemachineModelCompletionAdapter(sc *service.Container) *StatemachineM
 	return &StatemachineModelCompletionAdapter{sc: sc}
 }
 
-func (a *StatemachineModelCompletionAdapter) Parse(document *core.Document, tokens []core.Token) *parser.CompletionParseResult {
-	return NewCompletionParser(a.sc).Parse(document, tokens)
+func (a *StatemachineModelCompletionAdapter) Parse(ctx context.Context, document *core.Document, tokens []core.Token) *parser.CompletionParseResult {
+	return NewCompletionParser(a.sc).Parse(ctx, document, tokens)
 }
 
 func (a *StatemachineModelCompletionAdapter) ATN() *parser.RuntimeATN {

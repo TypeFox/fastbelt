@@ -105,7 +105,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 	parallel.ForEach(docs, func(doc *core.Document, _ int) {
 		// STEP 1.1: Lex the document and produce tokens.
 		if ctx.Err() == nil && !doc.State().Has(core.DocStateLexed) {
-			lexer.Exec(doc)
+			lexer.Exec(ctx, doc)
 			if ctx.Err() != nil {
 				s.resetLexed(doc)
 				return
@@ -114,7 +114,7 @@ func (s *DefaultBuilder) Build(ctx context.Context, docs []*core.Document) error
 		}
 		// STEP 1.2: Parse the document and create the AST.
 		if ctx.Err() == nil && !doc.State().Has(core.DocStateParsed) {
-			parser.Parse(doc)
+			parser.Parse(ctx, doc)
 			if ctx.Err() != nil {
 				s.resetParsed(doc)
 				return

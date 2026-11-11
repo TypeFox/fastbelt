@@ -16,7 +16,7 @@ func BenchmarkNestedString(b *testing.B) {
 	b.SetBytes(int64(len(content)))
 	b.ResetTimer()
 	for b.Loop() {
-		lexerService.Exec(doc)
+		lexerService.Exec(b.Context(), doc)
 	}
 }
 

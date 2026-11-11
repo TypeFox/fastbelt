@@ -3,6 +3,7 @@
 package grammar
 
 import (
+	"context"
 	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 	"typefox.dev/fastbelt/util/service"
@@ -27,12 +28,12 @@ func NewCompletionParser(sc *service.Container) *CompletionParser {
 // the document's tokens up to the cursor) and returns the recorded
 // snapshots and rule stack. The completion provider feeds that result into
 // the ATN simulator.
-func (p *CompletionParser) Parse(_ *core.Document, tokens []core.Token) *parser.CompletionParseResult {
+func (p *CompletionParser) Parse(ctx context.Context, _ *core.Document, tokens []core.Token) *parser.CompletionParseResult {
 	messages := p.sc.MustGet[parser.ErrorMessageProvider]()
 	recovery := p.sc.MustGet[parser.ErrorRecoveryStrategy]()
 	lookahead := p.sc.MustGet[FastbeltParserLookahead]()
 	cp := &CompletionParser{sc: p.sc, atn: p.atn, lookahead: lookahead}
-	cp.state = parser.NewParserState(tokens, p.atn(), recovery, messages)
+	cp.state = parser.NewParserState(ctx, tokens, p.atn(), recovery, messages)
 	cp.cp = parser.NewCompletionParserState(cp.state)
 	cp.ParseGrammar()
 	return cp.cp.Result(tokens)
