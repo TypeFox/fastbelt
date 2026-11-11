@@ -220,3 +220,21 @@ func TestJNestedLoopFullContext(t *testing.T) {
 	doc.AssertNoParseErrors()
 	expectValue(t, doc, "xisin-betweenyisin-betweenzandwandv")
 }
+
+// Assert that the prediction modes do not share DFA edges: every parser of a
+// grammar shares the prediction DFAs, and SLL and LL build different edges
+// for the same decision. "d A::**" needs LL (SLL enters DOpt's optional on
+// "::" and then misses an ID), so an SLL parse of it before an LL parse in
+// the same process must not change the LL result.
+func TestPredictionModesDoNotShareDFA(t *testing.T) {
+	atn = BuildATN() // a fresh DFA cache: earlier tests parse this input in LL mode
+
+	sll := CreateServices()
+	sll.MustGet[LookaheadParserLookahead]().SetPredictionMode(parser.PredictionModeSLL)
+	test.New(t, sll).Parse("d A::**") // SLL reports "Missing 'ID', got '**'."
+
+	doc := test.New(t, CreateServices()).Parse("d A::**")
+	doc.AssertNoParseErrors()
+	obj := expectValue(t, doc, "**")
+	assert.Equal(t, "A", obj.Node())
+}
