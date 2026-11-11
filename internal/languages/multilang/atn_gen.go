@@ -4,6 +4,8 @@ package multilang
 
 import (
 	"sync"
+
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 )
 
@@ -29,43 +31,61 @@ func ATN() *parser.RuntimeATN {
 	})
 	return atn
 }
+
+// BuildATN builds the ATN of the grammar from the tables below.
 func BuildATN() *parser.RuntimeATN {
-	states := make([]*parser.RuntimeATNState, 10)
-	states[Farewell__Start] = parser.NewATNState(Farewell__Start, parser.ATNRuleStart, true)
-	states[Farewell__Stop] = parser.NewATNState(Farewell__Stop, parser.ATNRuleStop, false)
-	states[Greeting__Start] = parser.NewATNState(Greeting__Start, parser.ATNRuleStart, true)
-	states[Greeting__Stop] = parser.NewATNState(Greeting__Stop, parser.ATNRuleStop, false)
-	states[Farewell_goodbye] = parser.NewATNState(Farewell_goodbye, parser.ATNBasic, false)
-	states[Farewell_To_ID] = parser.NewATNState(Farewell_To_ID, parser.ATNBasic, false)
-	states[Farewell__Basic] = parser.NewATNState(Farewell__Basic, parser.ATNBasic, true)
-	states[Greeting_hello] = parser.NewATNState(Greeting_hello, parser.ATNBasic, false)
-	states[Greeting_Name_ID] = parser.NewATNState(Greeting_Name_ID, parser.ATNBasic, false)
-	states[Greeting__Basic] = parser.NewATNState(Greeting__Basic, parser.ATNBasic, true)
-	states[Farewell__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[Farewell_goodbye]),
-	)
-	states[Greeting__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[Greeting_hello]),
-	)
-	states[Farewell_goodbye].AppendTransitions(
-		parser.NewAtomTransition(states[Farewell_To_ID], Keyword_goodbye, nil),
-	)
-	states[Farewell_To_ID].AppendTransitions(
-		parser.NewAtomTransition(states[Farewell__Basic], Token_ID, &parser.CompletionHint{Owner: "Farewell", Property: "To"}),
-	)
-	states[Farewell__Basic].AppendTransitions(
-		parser.NewEpsilonTransition(states[Farewell__Stop]),
-	)
-	states[Greeting_hello].AppendTransitions(
-		parser.NewAtomTransition(states[Greeting_Name_ID], Keyword_hello, nil),
-	)
-	states[Greeting_Name_ID].AppendTransitions(
-		parser.NewAtomTransition(states[Greeting__Basic], Token_ID, nil),
-	)
-	states[Greeting__Basic].AppendTransitions(
-		parser.NewEpsilonTransition(states[Greeting__Stop]),
-	)
-	decisionStates := make([]*parser.RuntimeATNState, 0)
-	decisionMap := make([]*parser.RuntimeATNState, 0)
-	return parser.NewRuntimeATN(states, decisionStates, decisionMap)
+	return parser.NewRuntimeATNFromTables(parser.ATNTables{
+		States:         atnStateTable[:],
+		Transitions:    atnTransitionTable[:],
+		DecisionStates: atnDecisionTable[:],
+		TokenTypes: []*core.TokenType{
+			Keyword_goodbye_Idx: Keyword_goodbye,
+			Keyword_hello_Idx:   Keyword_hello,
+			Token_ID_Idx:        Token_ID,
+		},
+		CompletionHints: atnCompletionHintTable[:],
+		RuleCalls:       atnRuleCallTable[:],
+	})
 }
+
+var atnStateTable = [...]parser.ATNStateEntry{
+	Farewell__Start:  {Type: parser.ATNRuleStart, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Farewell__Stop:   {Type: parser.ATNRuleStop, Decision: -1},
+	Greeting__Start:  {Type: parser.ATNRuleStart, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Greeting__Stop:   {Type: parser.ATNRuleStop, Decision: -1},
+	Farewell_goodbye: {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	Farewell_To_ID:   {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	Farewell__Basic:  {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Greeting_hello:   {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	Greeting_Name_ID: {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	Greeting__Basic:  {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+}
+
+var atnTransitionTable = [...]parser.ATNTransitionEntry{
+	// Farewell__Start
+	{Kind: parser.ATNEpsilonTransition, Target: Farewell_goodbye},
+	// Greeting__Start
+	{Kind: parser.ATNEpsilonTransition, Target: Greeting_hello},
+	// Farewell_goodbye
+	{Kind: parser.ATNAtomTransition, Target: Farewell_To_ID, Token: Keyword_goodbye_Idx},
+	// Farewell_To_ID
+	{Kind: parser.ATNAtomTransition, Target: Farewell__Basic, Token: Token_ID_Idx, Hint: 1},
+	// Farewell__Basic
+	{Kind: parser.ATNEpsilonTransition, Target: Farewell__Stop},
+	// Greeting_hello
+	{Kind: parser.ATNAtomTransition, Target: Greeting_Name_ID, Token: Keyword_hello_Idx},
+	// Greeting_Name_ID
+	{Kind: parser.ATNAtomTransition, Target: Greeting__Basic, Token: Token_ID_Idx},
+	// Greeting__Basic
+	{Kind: parser.ATNEpsilonTransition, Target: Greeting__Stop},
+}
+
+var atnDecisionTable = [...]int32{}
+
+// atnCompletionHintTable and atnRuleCallTable are referenced by their
+// index plus one from atnTransitionTable.
+var atnCompletionHintTable = [...]parser.CompletionHint{
+	{Owner: "Farewell", Property: "To"},
+}
+
+var atnRuleCallTable = [...]parser.RuleCallInfo{}

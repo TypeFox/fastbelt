@@ -4,6 +4,8 @@ package token_groups
 
 import (
 	"sync"
+
+	core "typefox.dev/fastbelt"
 	"typefox.dev/fastbelt/parser"
 )
 
@@ -91,288 +93,258 @@ func ATN() *parser.RuntimeATN {
 	})
 	return atn
 }
+
+// BuildATN builds the ATN of the grammar from the tables below.
 func BuildATN() *parser.RuntimeATN {
-	states := make([]*parser.RuntimeATNState, 72)
-	states[Model__Start] = parser.NewATNState(Model__Start, parser.ATNRuleStart, true)
-	states[Model__Stop] = parser.NewATNState(Model__Stop, parser.ATNRuleStop, false)
-	states[A__Start] = parser.NewATNState(A__Start, parser.ATNRuleStart, true)
-	states[A__Stop] = parser.NewATNState(A__Stop, parser.ATNRuleStop, false)
-	states[B__Start] = parser.NewATNState(B__Start, parser.ATNRuleStart, true)
-	states[B__Stop] = parser.NewATNState(B__Stop, parser.ATNRuleStop, false)
-	states[C__Start] = parser.NewATNState(C__Start, parser.ATNRuleStart, true)
-	states[C__Stop] = parser.NewATNState(C__Stop, parser.ATNRuleStop, false)
-	states[D__Start] = parser.NewATNState(D__Start, parser.ATNRuleStart, true)
-	states[D__Stop] = parser.NewATNState(D__Stop, parser.ATNRuleStop, false)
-	states[E__Start] = parser.NewATNState(E__Start, parser.ATNRuleStart, true)
-	states[E__Stop] = parser.NewATNState(E__Stop, parser.ATNRuleStop, false)
-	states[F__Start] = parser.NewATNState(F__Start, parser.ATNRuleStart, true)
-	states[F__Stop] = parser.NewATNState(F__Stop, parser.ATNRuleStop, false)
-	states[G__Start] = parser.NewATNState(G__Start, parser.ATNRuleStart, true)
-	states[G__Stop] = parser.NewATNState(G__Stop, parser.ATNRuleStop, false)
-	states[H__Start] = parser.NewATNState(H__Start, parser.ATNRuleStart, true)
-	states[H__Stop] = parser.NewATNState(H__Stop, parser.ATNRuleStop, false)
-	states[Model__Basic_0] = parser.NewATNState(Model__Basic_0, parser.ATNBasic, true)
-	states[Model__Basic_1] = parser.NewATNState(Model__Basic_1, parser.ATNBasic, true)
-	states[Model__Basic_2] = parser.NewATNState(Model__Basic_2, parser.ATNBasic, true)
-	states[Model__Basic_3] = parser.NewATNState(Model__Basic_3, parser.ATNBasic, true)
-	states[Model__Basic_4] = parser.NewATNState(Model__Basic_4, parser.ATNBasic, true)
-	states[Model__Basic_5] = parser.NewATNState(Model__Basic_5, parser.ATNBasic, true)
-	states[Model__Basic_6] = parser.NewATNState(Model__Basic_6, parser.ATNBasic, true)
-	states[Model__Basic_7] = parser.NewATNState(Model__Basic_7, parser.ATNBasic, true)
-	states[Model__Basic_8] = parser.NewATNState(Model__Basic_8, parser.ATNBasic, true)
-	states[Model__Basic_9] = parser.NewATNState(Model__Basic_9, parser.ATNBasic, true)
-	states[Model__Basic_10] = parser.NewATNState(Model__Basic_10, parser.ATNBasic, true)
-	states[Model__Basic_11] = parser.NewATNState(Model__Basic_11, parser.ATNBasic, true)
-	states[Model__Basic_12] = parser.NewATNState(Model__Basic_12, parser.ATNBasic, true)
-	states[Model__Basic_13] = parser.NewATNState(Model__Basic_13, parser.ATNBasic, true)
-	states[Model__Basic_14] = parser.NewATNState(Model__Basic_14, parser.ATNBasic, true)
-	states[Model__Basic_15] = parser.NewATNState(Model__Basic_15, parser.ATNBasic, true)
-	states[Model__Basic_16] = parser.NewATNState(Model__Basic_16, parser.ATNBasic, true).SetDecision(0)
-	states[Model__BlockEnd] = parser.NewATNState(Model__BlockEnd, parser.ATNBlockEnd, true)
-	states[A_a] = parser.NewATNState(A_a, parser.ATNBasic, false)
-	states[A_Value_Identifier] = parser.NewATNState(A_Value_Identifier, parser.ATNBasic, false)
-	states[A__Basic] = parser.NewATNState(A__Basic, parser.ATNBasic, true)
-	states[B_b] = parser.NewATNState(B_b, parser.ATNBasic, false)
-	states[B_Value_Identifier] = parser.NewATNState(B_Value_Identifier, parser.ATNBasic, false)
-	states[B__Basic_0] = parser.NewATNState(B__Basic_0, parser.ATNBasic, true)
-	states[B_Value_b] = parser.NewATNState(B_Value_b, parser.ATNBasic, false)
-	states[B__Basic_1] = parser.NewATNState(B__Basic_1, parser.ATNBasic, true)
-	states[B__Basic_2] = parser.NewATNState(B__Basic_2, parser.ATNBasic, true).SetDecision(1)
-	states[B__BlockEnd] = parser.NewATNState(B__BlockEnd, parser.ATNBlockEnd, true)
-	states[C_c] = parser.NewATNState(C_c, parser.ATNBasic, false)
-	states[C_Value_NestedIdentifier] = parser.NewATNState(C_Value_NestedIdentifier, parser.ATNBasic, false)
-	states[C__Basic] = parser.NewATNState(C__Basic, parser.ATNBasic, true)
-	states[D_d] = parser.NewATNState(D_d, parser.ATNBasic, false)
-	states[D_Value_Identifier] = parser.NewATNState(D_Value_Identifier, parser.ATNBasic, false)
-	states[D__Basic_0] = parser.NewATNState(D__Basic_0, parser.ATNBasic, true)
-	states[D__Basic_1] = parser.NewATNState(D__Basic_1, parser.ATNBasic, true).SetDecision(2)
-	states[E_e] = parser.NewATNState(E_e, parser.ATNBasic, false)
-	states[E_First_Identifier] = parser.NewATNState(E_First_Identifier, parser.ATNBasic, false)
-	states[E_Second_NestedIdentifier] = parser.NewATNState(E_Second_NestedIdentifier, parser.ATNBasic, false)
-	states[E__Basic] = parser.NewATNState(E__Basic, parser.ATNBasic, true)
-	states[F_f] = parser.NewATNState(F_f, parser.ATNBasic, false)
-	states[F_Value_KeywordGroup] = parser.NewATNState(F_Value_KeywordGroup, parser.ATNBasic, false)
-	states[F__Basic] = parser.NewATNState(F__Basic, parser.ATNBasic, true)
-	states[G_g] = parser.NewATNState(G_g, parser.ATNBasic, false)
-	states[G_Value_RegexGroup] = parser.NewATNState(G_Value_RegexGroup, parser.ATNBasic, false)
-	states[G__Basic] = parser.NewATNState(G__Basic, parser.ATNBasic, true)
-	states[H_h] = parser.NewATNState(H_h, parser.ATNBasic, false)
-	states[H_Identifier_0] = parser.NewATNState(H_Identifier_0, parser.ATNBasic, false)
-	states[H_Value_a] = parser.NewATNState(H_Value_a, parser.ATNBasic, false)
-	states[H__Basic_0] = parser.NewATNState(H__Basic_0, parser.ATNBasic, true)
-	states[H_Identifier_1] = parser.NewATNState(H_Identifier_1, parser.ATNBasic, false)
-	states[H_Value_b] = parser.NewATNState(H_Value_b, parser.ATNBasic, false)
-	states[H__Basic_1] = parser.NewATNState(H__Basic_1, parser.ATNBasic, true)
-	states[H__Basic_2] = parser.NewATNState(H__Basic_2, parser.ATNBasic, true).SetDecision(3)
-	states[H__BlockEnd] = parser.NewATNState(H__BlockEnd, parser.ATNBlockEnd, true)
-	states[Model__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[Model__Basic_16]),
-	)
-	states[A__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[A_a]),
-	)
-	states[B__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[B_b]),
-	)
-	states[C__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[C_c]),
-	)
-	states[D__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[D_d]),
-	)
-	states[E__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[E_e]),
-	)
-	states[F__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[F_f]),
-	)
-	states[G__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[G_g]),
-	)
-	states[H__Start].AppendTransitions(
-		parser.NewEpsilonTransition(states[H_h]),
-	)
-	states[Model__Basic_0].AppendTransitions(
-		parser.NewRuleTransition(states[A__Start], states[Model__Basic_1], nil, &parser.RuleCallInfo{Field: "item", Type: "Item"}),
-	)
-	states[Model__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[Model__BlockEnd]),
-	)
-	states[Model__Basic_2].AppendTransitions(
-		parser.NewRuleTransition(states[B__Start], states[Model__Basic_3], nil, &parser.RuleCallInfo{Field: "item", Type: "Item"}),
-	)
-	states[Model__Basic_3].AppendTransitions(
-		parser.NewEpsilonTransition(states[Model__BlockEnd]),
-	)
-	states[Model__Basic_4].AppendTransitions(
-		parser.NewRuleTransition(states[C__Start], states[Model__Basic_5], nil, &parser.RuleCallInfo{Field: "item", Type: "Item"}),
-	)
-	states[Model__Basic_5].AppendTransitions(
-		parser.NewEpsilonTransition(states[Model__BlockEnd]),
-	)
-	states[Model__Basic_6].AppendTransitions(
-		parser.NewRuleTransition(states[D__Start], states[Model__Basic_7], nil, &parser.RuleCallInfo{Field: "item", Type: "Item"}),
-	)
-	states[Model__Basic_7].AppendTransitions(
-		parser.NewEpsilonTransition(states[Model__BlockEnd]),
-	)
-	states[Model__Basic_8].AppendTransitions(
-		parser.NewRuleTransition(states[E__Start], states[Model__Basic_9], nil, &parser.RuleCallInfo{Field: "item", Type: "Recovery"}),
-	)
-	states[Model__Basic_9].AppendTransitions(
-		parser.NewEpsilonTransition(states[Model__BlockEnd]),
-	)
-	states[Model__Basic_10].AppendTransitions(
-		parser.NewRuleTransition(states[F__Start], states[Model__Basic_11], nil, &parser.RuleCallInfo{Field: "item", Type: "Item"}),
-	)
-	states[Model__Basic_11].AppendTransitions(
-		parser.NewEpsilonTransition(states[Model__BlockEnd]),
-	)
-	states[Model__Basic_12].AppendTransitions(
-		parser.NewRuleTransition(states[G__Start], states[Model__Basic_13], nil, &parser.RuleCallInfo{Field: "item", Type: "Item"}),
-	)
-	states[Model__Basic_13].AppendTransitions(
-		parser.NewEpsilonTransition(states[Model__BlockEnd]),
-	)
-	states[Model__Basic_14].AppendTransitions(
-		parser.NewRuleTransition(states[H__Start], states[Model__Basic_15], nil, &parser.RuleCallInfo{Field: "item", Type: "Item"}),
-	)
-	states[Model__Basic_15].AppendTransitions(
-		parser.NewEpsilonTransition(states[Model__BlockEnd]),
-	)
-	states[Model__Basic_16].AppendTransitions(
-		parser.NewEpsilonTransition(states[Model__Basic_0]),
-		parser.NewEpsilonTransition(states[Model__Basic_2]),
-		parser.NewEpsilonTransition(states[Model__Basic_4]),
-		parser.NewEpsilonTransition(states[Model__Basic_6]),
-		parser.NewEpsilonTransition(states[Model__Basic_8]),
-		parser.NewEpsilonTransition(states[Model__Basic_10]),
-		parser.NewEpsilonTransition(states[Model__Basic_12]),
-		parser.NewEpsilonTransition(states[Model__Basic_14]),
-	)
-	states[Model__BlockEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[Model__Stop]),
-	)
-	states[A_a].AppendTransitions(
-		parser.NewAtomTransition(states[A_Value_Identifier], Keyword_a, nil),
-	)
-	states[A_Value_Identifier].AppendTransitions(
-		parser.NewAtomTransition(states[A__Basic], TokenGroup_Identifier, nil),
-	)
-	states[A__Basic].AppendTransitions(
-		parser.NewEpsilonTransition(states[A__Stop]),
-	)
-	states[B_b].AppendTransitions(
-		parser.NewAtomTransition(states[B__Basic_2], Keyword_b, nil),
-	)
-	states[B_Value_Identifier].AppendTransitions(
-		parser.NewAtomTransition(states[B__Basic_0], TokenGroup_Identifier, nil),
-	)
-	states[B__Basic_0].AppendTransitions(
-		parser.NewEpsilonTransition(states[B__BlockEnd]),
-	)
-	states[B_Value_b].AppendTransitions(
-		parser.NewAtomTransition(states[B__Basic_1], Keyword_b, nil),
-	)
-	states[B__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[B__BlockEnd]),
-	)
-	states[B__Basic_2].AppendTransitions(
-		parser.NewEpsilonTransition(states[B_Value_Identifier]),
-		parser.NewEpsilonTransition(states[B_Value_b]),
-	)
-	states[B__BlockEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[B__Stop]),
-	)
-	states[C_c].AppendTransitions(
-		parser.NewAtomTransition(states[C_Value_NestedIdentifier], Keyword_c, nil),
-	)
-	states[C_Value_NestedIdentifier].AppendTransitions(
-		parser.NewAtomTransition(states[C__Basic], TokenGroup_NestedIdentifier, nil),
-	)
-	states[C__Basic].AppendTransitions(
-		parser.NewEpsilonTransition(states[C__Stop]),
-	)
-	states[D_d].AppendTransitions(
-		parser.NewAtomTransition(states[D__Basic_1], Keyword_d, nil),
-	)
-	states[D_Value_Identifier].AppendTransitions(
-		parser.NewAtomTransition(states[D__Basic_0], TokenGroup_Identifier, nil),
-	)
-	states[D__Basic_0].AppendTransitions(
-		parser.NewEpsilonTransition(states[D__Stop]),
-	)
-	states[D__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[D_Value_Identifier]),
-		parser.NewEpsilonTransition(states[D__Basic_0]),
-	)
-	states[E_e].AppendTransitions(
-		parser.NewAtomTransition(states[E_First_Identifier], Keyword_e, nil),
-	)
-	states[E_First_Identifier].AppendTransitions(
-		parser.NewAtomTransition(states[E_Second_NestedIdentifier], TokenGroup_Identifier, nil),
-	)
-	states[E_Second_NestedIdentifier].AppendTransitions(
-		parser.NewAtomTransition(states[E__Basic], TokenGroup_NestedIdentifier, nil),
-	)
-	states[E__Basic].AppendTransitions(
-		parser.NewEpsilonTransition(states[E__Stop]),
-	)
-	states[F_f].AppendTransitions(
-		parser.NewAtomTransition(states[F_Value_KeywordGroup], Keyword_f, nil),
-	)
-	states[F_Value_KeywordGroup].AppendTransitions(
-		parser.NewAtomTransition(states[F__Basic], TokenGroup_KeywordGroup, nil),
-	)
-	states[F__Basic].AppendTransitions(
-		parser.NewEpsilonTransition(states[F__Stop]),
-	)
-	states[G_g].AppendTransitions(
-		parser.NewAtomTransition(states[G_Value_RegexGroup], Keyword_g, nil),
-	)
-	states[G_Value_RegexGroup].AppendTransitions(
-		parser.NewAtomTransition(states[G__Basic], TokenGroup_RegexGroup, nil),
-	)
-	states[G__Basic].AppendTransitions(
-		parser.NewEpsilonTransition(states[G__Stop]),
-	)
-	states[H_h].AppendTransitions(
-		parser.NewAtomTransition(states[H__Basic_2], Keyword_h, nil),
-	)
-	states[H_Identifier_0].AppendTransitions(
-		parser.NewAtomTransition(states[H_Value_a], TokenGroup_Identifier, nil),
-	)
-	states[H_Value_a].AppendTransitions(
-		parser.NewAtomTransition(states[H__Basic_0], Keyword_a, nil),
-	)
-	states[H__Basic_0].AppendTransitions(
-		parser.NewEpsilonTransition(states[H__BlockEnd]),
-	)
-	states[H_Identifier_1].AppendTransitions(
-		parser.NewAtomTransition(states[H_Value_b], TokenGroup_Identifier, nil),
-	)
-	states[H_Value_b].AppendTransitions(
-		parser.NewAtomTransition(states[H__Basic_1], Keyword_b, nil),
-	)
-	states[H__Basic_1].AppendTransitions(
-		parser.NewEpsilonTransition(states[H__BlockEnd]),
-	)
-	states[H__Basic_2].AppendTransitions(
-		parser.NewEpsilonTransition(states[H_Identifier_0]),
-		parser.NewEpsilonTransition(states[H_Identifier_1]),
-	)
-	states[H__BlockEnd].AppendTransitions(
-		parser.NewEpsilonTransition(states[H__Stop]),
-	)
-	decisionStates := make([]*parser.RuntimeATNState, 4)
-	decisionStates[0] = states[Model__Basic_16]
-	decisionStates[1] = states[B__Basic_2]
-	decisionStates[2] = states[D__Basic_1]
-	decisionStates[3] = states[H__Basic_2]
-	decisionMap := make([]*parser.RuntimeATNState, 4)
-	decisionMap[0] = states[Model__Basic_16]
-	decisionMap[1] = states[B__Basic_2]
-	decisionMap[2] = states[D__Basic_1]
-	decisionMap[3] = states[H__Basic_2]
-	return parser.NewRuntimeATN(states, decisionStates, decisionMap)
+	return parser.NewRuntimeATNFromTables(parser.ATNTables{
+		States:         atnStateTable[:],
+		Transitions:    atnTransitionTable[:],
+		DecisionStates: atnDecisionTable[:],
+		TokenTypes: []*core.TokenType{
+			Keyword_a_Idx:                   Keyword_a,
+			Keyword_b_Idx:                   Keyword_b,
+			Keyword_c_Idx:                   Keyword_c,
+			Keyword_d_Idx:                   Keyword_d,
+			Keyword_e_Idx:                   Keyword_e,
+			Keyword_f_Idx:                   Keyword_f,
+			Keyword_g_Idx:                   Keyword_g,
+			Keyword_h_Idx:                   Keyword_h,
+			TokenGroup_Identifier_Idx:       TokenGroup_Identifier,
+			TokenGroup_KeywordGroup_Idx:     TokenGroup_KeywordGroup,
+			TokenGroup_NestedIdentifier_Idx: TokenGroup_NestedIdentifier,
+			TokenGroup_RegexGroup_Idx:       TokenGroup_RegexGroup,
+		},
+		CompletionHints: atnCompletionHintTable[:],
+		RuleCalls:       atnRuleCallTable[:],
+	})
+}
+
+var atnStateTable = [...]parser.ATNStateEntry{
+	Model__Start:              {Type: parser.ATNRuleStart, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Stop:               {Type: parser.ATNRuleStop, Decision: -1},
+	A__Start:                  {Type: parser.ATNRuleStart, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	A__Stop:                   {Type: parser.ATNRuleStop, Decision: -1},
+	B__Start:                  {Type: parser.ATNRuleStart, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	B__Stop:                   {Type: parser.ATNRuleStop, Decision: -1},
+	C__Start:                  {Type: parser.ATNRuleStart, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	C__Stop:                   {Type: parser.ATNRuleStop, Decision: -1},
+	D__Start:                  {Type: parser.ATNRuleStart, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	D__Stop:                   {Type: parser.ATNRuleStop, Decision: -1},
+	E__Start:                  {Type: parser.ATNRuleStart, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	E__Stop:                   {Type: parser.ATNRuleStop, Decision: -1},
+	F__Start:                  {Type: parser.ATNRuleStart, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	F__Stop:                   {Type: parser.ATNRuleStop, Decision: -1},
+	G__Start:                  {Type: parser.ATNRuleStart, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	G__Stop:                   {Type: parser.ATNRuleStop, Decision: -1},
+	H__Start:                  {Type: parser.ATNRuleStart, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	H__Stop:                   {Type: parser.ATNRuleStop, Decision: -1},
+	Model__Basic_0:            {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_1:            {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_2:            {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_3:            {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_4:            {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_5:            {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_6:            {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_7:            {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_8:            {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_9:            {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_10:           {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_11:           {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_12:           {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_13:           {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_14:           {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_15:           {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	Model__Basic_16:           {Type: parser.ATNBasic, EpsilonOnly: true, Decision: 0, Transitions: 8},
+	Model__BlockEnd:           {Type: parser.ATNBlockEnd, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	A_a:                       {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	A_Value_Identifier:        {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	A__Basic:                  {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	B_b:                       {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	B_Value_Identifier:        {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	B__Basic_0:                {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	B_Value_b:                 {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	B__Basic_1:                {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	B__Basic_2:                {Type: parser.ATNBasic, EpsilonOnly: true, Decision: 1, Transitions: 2},
+	B__BlockEnd:               {Type: parser.ATNBlockEnd, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	C_c:                       {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	C_Value_NestedIdentifier:  {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	C__Basic:                  {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	D_d:                       {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	D_Value_Identifier:        {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	D__Basic_0:                {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	D__Basic_1:                {Type: parser.ATNBasic, EpsilonOnly: true, Decision: 2, Transitions: 2},
+	E_e:                       {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	E_First_Identifier:        {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	E_Second_NestedIdentifier: {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	E__Basic:                  {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	F_f:                       {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	F_Value_KeywordGroup:      {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	F__Basic:                  {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	G_g:                       {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	G_Value_RegexGroup:        {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	G__Basic:                  {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	H_h:                       {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	H_Identifier_0:            {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	H_Value_a:                 {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	H__Basic_0:                {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	H_Identifier_1:            {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	H_Value_b:                 {Type: parser.ATNBasic, Decision: -1, Transitions: 1},
+	H__Basic_1:                {Type: parser.ATNBasic, EpsilonOnly: true, Decision: -1, Transitions: 1},
+	H__Basic_2:                {Type: parser.ATNBasic, EpsilonOnly: true, Decision: 3, Transitions: 2},
+	H__BlockEnd:               {Type: parser.ATNBlockEnd, EpsilonOnly: true, Decision: -1, Transitions: 1},
+}
+
+var atnTransitionTable = [...]parser.ATNTransitionEntry{
+	// Model__Start
+	{Kind: parser.ATNEpsilonTransition, Target: Model__Basic_16},
+	// A__Start
+	{Kind: parser.ATNEpsilonTransition, Target: A_a},
+	// B__Start
+	{Kind: parser.ATNEpsilonTransition, Target: B_b},
+	// C__Start
+	{Kind: parser.ATNEpsilonTransition, Target: C_c},
+	// D__Start
+	{Kind: parser.ATNEpsilonTransition, Target: D_d},
+	// E__Start
+	{Kind: parser.ATNEpsilonTransition, Target: E_e},
+	// F__Start
+	{Kind: parser.ATNEpsilonTransition, Target: F_f},
+	// G__Start
+	{Kind: parser.ATNEpsilonTransition, Target: G_g},
+	// H__Start
+	{Kind: parser.ATNEpsilonTransition, Target: H_h},
+	// Model__Basic_0
+	{Kind: parser.ATNRuleTransition, Target: A__Start, Follow: Model__Basic_1, Call: 1},
+	// Model__Basic_1
+	{Kind: parser.ATNEpsilonTransition, Target: Model__BlockEnd},
+	// Model__Basic_2
+	{Kind: parser.ATNRuleTransition, Target: B__Start, Follow: Model__Basic_3, Call: 1},
+	// Model__Basic_3
+	{Kind: parser.ATNEpsilonTransition, Target: Model__BlockEnd},
+	// Model__Basic_4
+	{Kind: parser.ATNRuleTransition, Target: C__Start, Follow: Model__Basic_5, Call: 1},
+	// Model__Basic_5
+	{Kind: parser.ATNEpsilonTransition, Target: Model__BlockEnd},
+	// Model__Basic_6
+	{Kind: parser.ATNRuleTransition, Target: D__Start, Follow: Model__Basic_7, Call: 1},
+	// Model__Basic_7
+	{Kind: parser.ATNEpsilonTransition, Target: Model__BlockEnd},
+	// Model__Basic_8
+	{Kind: parser.ATNRuleTransition, Target: E__Start, Follow: Model__Basic_9, Call: 2},
+	// Model__Basic_9
+	{Kind: parser.ATNEpsilonTransition, Target: Model__BlockEnd},
+	// Model__Basic_10
+	{Kind: parser.ATNRuleTransition, Target: F__Start, Follow: Model__Basic_11, Call: 1},
+	// Model__Basic_11
+	{Kind: parser.ATNEpsilonTransition, Target: Model__BlockEnd},
+	// Model__Basic_12
+	{Kind: parser.ATNRuleTransition, Target: G__Start, Follow: Model__Basic_13, Call: 1},
+	// Model__Basic_13
+	{Kind: parser.ATNEpsilonTransition, Target: Model__BlockEnd},
+	// Model__Basic_14
+	{Kind: parser.ATNRuleTransition, Target: H__Start, Follow: Model__Basic_15, Call: 1},
+	// Model__Basic_15
+	{Kind: parser.ATNEpsilonTransition, Target: Model__BlockEnd},
+	// Model__Basic_16
+	{Kind: parser.ATNEpsilonTransition, Target: Model__Basic_0},
+	{Kind: parser.ATNEpsilonTransition, Target: Model__Basic_2},
+	{Kind: parser.ATNEpsilonTransition, Target: Model__Basic_4},
+	{Kind: parser.ATNEpsilonTransition, Target: Model__Basic_6},
+	{Kind: parser.ATNEpsilonTransition, Target: Model__Basic_8},
+	{Kind: parser.ATNEpsilonTransition, Target: Model__Basic_10},
+	{Kind: parser.ATNEpsilonTransition, Target: Model__Basic_12},
+	{Kind: parser.ATNEpsilonTransition, Target: Model__Basic_14},
+	// Model__BlockEnd
+	{Kind: parser.ATNEpsilonTransition, Target: Model__Stop},
+	// A_a
+	{Kind: parser.ATNAtomTransition, Target: A_Value_Identifier, Token: Keyword_a_Idx},
+	// A_Value_Identifier
+	{Kind: parser.ATNAtomTransition, Target: A__Basic, Token: TokenGroup_Identifier_Idx},
+	// A__Basic
+	{Kind: parser.ATNEpsilonTransition, Target: A__Stop},
+	// B_b
+	{Kind: parser.ATNAtomTransition, Target: B__Basic_2, Token: Keyword_b_Idx},
+	// B_Value_Identifier
+	{Kind: parser.ATNAtomTransition, Target: B__Basic_0, Token: TokenGroup_Identifier_Idx},
+	// B__Basic_0
+	{Kind: parser.ATNEpsilonTransition, Target: B__BlockEnd},
+	// B_Value_b
+	{Kind: parser.ATNAtomTransition, Target: B__Basic_1, Token: Keyword_b_Idx},
+	// B__Basic_1
+	{Kind: parser.ATNEpsilonTransition, Target: B__BlockEnd},
+	// B__Basic_2
+	{Kind: parser.ATNEpsilonTransition, Target: B_Value_Identifier},
+	{Kind: parser.ATNEpsilonTransition, Target: B_Value_b},
+	// B__BlockEnd
+	{Kind: parser.ATNEpsilonTransition, Target: B__Stop},
+	// C_c
+	{Kind: parser.ATNAtomTransition, Target: C_Value_NestedIdentifier, Token: Keyword_c_Idx},
+	// C_Value_NestedIdentifier
+	{Kind: parser.ATNAtomTransition, Target: C__Basic, Token: TokenGroup_NestedIdentifier_Idx},
+	// C__Basic
+	{Kind: parser.ATNEpsilonTransition, Target: C__Stop},
+	// D_d
+	{Kind: parser.ATNAtomTransition, Target: D__Basic_1, Token: Keyword_d_Idx},
+	// D_Value_Identifier
+	{Kind: parser.ATNAtomTransition, Target: D__Basic_0, Token: TokenGroup_Identifier_Idx},
+	// D__Basic_0
+	{Kind: parser.ATNEpsilonTransition, Target: D__Stop},
+	// D__Basic_1
+	{Kind: parser.ATNEpsilonTransition, Target: D_Value_Identifier},
+	{Kind: parser.ATNEpsilonTransition, Target: D__Basic_0},
+	// E_e
+	{Kind: parser.ATNAtomTransition, Target: E_First_Identifier, Token: Keyword_e_Idx},
+	// E_First_Identifier
+	{Kind: parser.ATNAtomTransition, Target: E_Second_NestedIdentifier, Token: TokenGroup_Identifier_Idx},
+	// E_Second_NestedIdentifier
+	{Kind: parser.ATNAtomTransition, Target: E__Basic, Token: TokenGroup_NestedIdentifier_Idx},
+	// E__Basic
+	{Kind: parser.ATNEpsilonTransition, Target: E__Stop},
+	// F_f
+	{Kind: parser.ATNAtomTransition, Target: F_Value_KeywordGroup, Token: Keyword_f_Idx},
+	// F_Value_KeywordGroup
+	{Kind: parser.ATNAtomTransition, Target: F__Basic, Token: TokenGroup_KeywordGroup_Idx},
+	// F__Basic
+	{Kind: parser.ATNEpsilonTransition, Target: F__Stop},
+	// G_g
+	{Kind: parser.ATNAtomTransition, Target: G_Value_RegexGroup, Token: Keyword_g_Idx},
+	// G_Value_RegexGroup
+	{Kind: parser.ATNAtomTransition, Target: G__Basic, Token: TokenGroup_RegexGroup_Idx},
+	// G__Basic
+	{Kind: parser.ATNEpsilonTransition, Target: G__Stop},
+	// H_h
+	{Kind: parser.ATNAtomTransition, Target: H__Basic_2, Token: Keyword_h_Idx},
+	// H_Identifier_0
+	{Kind: parser.ATNAtomTransition, Target: H_Value_a, Token: TokenGroup_Identifier_Idx},
+	// H_Value_a
+	{Kind: parser.ATNAtomTransition, Target: H__Basic_0, Token: Keyword_a_Idx},
+	// H__Basic_0
+	{Kind: parser.ATNEpsilonTransition, Target: H__BlockEnd},
+	// H_Identifier_1
+	{Kind: parser.ATNAtomTransition, Target: H_Value_b, Token: TokenGroup_Identifier_Idx},
+	// H_Value_b
+	{Kind: parser.ATNAtomTransition, Target: H__Basic_1, Token: Keyword_b_Idx},
+	// H__Basic_1
+	{Kind: parser.ATNEpsilonTransition, Target: H__BlockEnd},
+	// H__Basic_2
+	{Kind: parser.ATNEpsilonTransition, Target: H_Identifier_0},
+	{Kind: parser.ATNEpsilonTransition, Target: H_Identifier_1},
+	// H__BlockEnd
+	{Kind: parser.ATNEpsilonTransition, Target: H__Stop},
+}
+
+var atnDecisionTable = [...]int32{
+	0: Model__Basic_16,
+	1: B__Basic_2,
+	2: D__Basic_1,
+	3: H__Basic_2,
+}
+
+// atnCompletionHintTable and atnRuleCallTable are referenced by their
+// index plus one from atnTransitionTable.
+var atnCompletionHintTable = [...]parser.CompletionHint{}
+
+var atnRuleCallTable = [...]parser.RuleCallInfo{
+	{Field: "item", Type: "Item"},
+	{Field: "item", Type: "Recovery"},
 }
