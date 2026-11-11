@@ -16,7 +16,7 @@
 // looks up in the [typefox.dev/fastbelt/util/service.Container].
 //
 // [SetupDefaultServices] registers the [DefaultLanguageServer], the
-// [DiagnosticsPublisher], a [SlogHandler], and default implementations for
+// [DefaultDiagnosticsPublisher], a [SlogHandler], and default implementations for
 // document sync, completion, definition, references, document highlight,
 // document and workspace symbols, folding ranges, hover, and rename, plus the
 // helper services they use. A default feature implementation is only
@@ -59,7 +59,9 @@
 //		}
 //	}
 //
-// While the server runs, [DiagnosticsPublisher] pushes the diagnostics of
+// While the server runs, the [DiagnosticsPublisher] pushes the diagnostics of
 // open documents to the client, and [SlogHandler] forwards log output to the
-// client as LSP log messages.
+// client as LSP log messages. Register a publisher created with
+// [NewDiagnosticsPublisherWithOptions] to cover all workspace documents, or a
+// [NoopDiagnosticsPublisher] to turn pushed diagnostics off.
 package server

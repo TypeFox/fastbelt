@@ -13,7 +13,11 @@ import (
 // CommandProvider is a service for handling LSP execute command requests.
 // Unlike other feature requests, workspace/executeCommand is not run under the
 // workspace read lock, so an implementation that reads the workspace must
-// acquire the [typefox.dev/fastbelt/workspace.Lock] itself.
+// acquire the [typefox.dev/fastbelt/workspace.Lock] itself. The lock is not
+// held before the initial workspace load starts, so the implementation must
+// first wait for [typefox.dev/fastbelt/workspace.Initializer.Ready];
+// otherwise a command arriving right after startup may see an empty or
+// partially loaded workspace.
 //
 // Usage:
 //

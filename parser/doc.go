@@ -53,8 +53,9 @@
 //
 // # Error recovery
 //
-// Generated parsers always produce an AST in [core.Document.Root], with nil
-// tokens or unset fields where input was missing, and record
+// Unless the context is cancelled, in which case the document is left
+// untouched, generated parsers always produce an AST in [core.Document.Root],
+// with nil tokens or unset fields where input was missing, and record
 // [core.ParserError] values in [core.Document.ParserErrors]. With
 // [DefaultErrorRecovery], parse errors do not stop the parse, so language
 // tooling keeps working on broken input. Error recovery never inserts

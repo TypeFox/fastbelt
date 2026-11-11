@@ -54,12 +54,21 @@ func optionsIf[S, O any](sc *service.Container) *O {
 }
 
 // DefaultLanguageServer is the default implementation of the [lsp.Server]
-// interface. Apart from building the initialize response, it contains no
-// feature logic: it delegates each supported LSP method to the registered
-// service and advertises only the capabilities of registered services.
-// Feature requests run while holding the [workspace.Lock] for reading;
-// workspace/executeCommand does not, so a [CommandProvider] that reads the
-// workspace must acquire the lock itself.
+// interface. It contains no feature logic: it delegates each supported LSP
+// method to the registered service. Besides that, it builds the initialize
+// response and, on the initialized notification, runs the
+// [workspace.Initializer] and the initial build in the background while
+// holding the [workspace.Lock] for writing.
+//
+// A feature capability is advertised only if its provider service is
+// registered, with two exceptions: text document sync is always advertised,
+// and signature help additionally requires [SignatureHelpTriggers] with at
+// least one trigger character.
+//
+// Feature requests wait for [workspace.Initializer.Ready] and then run while
+// holding the [workspace.Lock] for reading. workspace/executeCommand does
+// neither, so a [CommandProvider] that reads the workspace must do both
+// itself.
 type DefaultLanguageServer struct {
 	sc *service.Container
 }
