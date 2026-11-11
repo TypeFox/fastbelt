@@ -215,7 +215,7 @@ func (p *ParserState) AdaptivePredict(decision int, mode PredictionMode) (int, *
 	if p.sim == nil {
 		p.sim = newParserATNSimulator(p.atn, p)
 	}
-	return p.sim.adaptivePredict(decision, mode, p.initialPredictionContext(mode))
+	return p.sim.adaptivePredict(decision, mode)
 }
 
 // initialPredictionContext converts the parser's real call stack (followStates,

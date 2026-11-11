@@ -70,9 +70,8 @@ func (m PredictionMode) String() string {
 // adaptivePredict returns the predicted 0-based alternative for the given
 // decision, or invalidAlt (-1) if no alternative is viable. The second result
 // is non-nil exactly when the alternative is invalidAlt, carrying the divergence
-// offset and expected-token set for diagnostics. outerContext is the parser's
-// real call stack, used only for the full-context LL fallback.
-func (s *parserATNSimulator) adaptivePredict(decision int, mode PredictionMode, outerContext *predictionContext) (int, *PredictionFailure) {
+// offset and expected-token set for diagnostics.
+func (s *parserATNSimulator) adaptivePredict(decision int, mode PredictionMode) (int, *PredictionFailure) {
 	s.mergeCache = newMergeCache()
 	dfa := s.atn.decisionToDFA[mode][decision]
 
@@ -82,10 +81,10 @@ func (s *parserATNSimulator) adaptivePredict(decision int, mode PredictionMode, 
 		start = dfa.addState(newDFAState(-1, startClosure))
 		dfa.setStart(start)
 	}
-	return s.execATN(dfa, start, mode, outerContext)
+	return s.execATN(dfa, start, mode)
 }
 
-func (s *parserATNSimulator) execATN(dfa *dfa, start *dfaState, mode PredictionMode, outerContext *predictionContext) (int, *PredictionFailure) {
+func (s *parserATNSimulator) execATN(dfa *dfa, start *dfaState, mode PredictionMode) (int, *PredictionFailure) {
 	previousState := start
 	offset := 1
 	token := s.parserState.LA(offset)
@@ -108,7 +107,10 @@ func (s *parserATNSimulator) execATN(dfa *dfa, start *dfaState, mode PredictionM
 		if d.requiresFullContext && mode.FullContext() {
 			// Some decision paths have a conflict that depends on the full parser context
 			// We essentially restart the simulator here, using the full context
-			// Note that we're not preserving the DFA in this case
+			// Note that we're not preserving the DFA in this case.
+			// The outer context (the parser's real call stack) is only built here,
+			// since most predictions never need it.
+			outerContext := s.parserState.initialPredictionContext(mode)
 			startClosure := s.computeStartState(dfa.atnStartState, outerContext, true)
 			return s.execATNWithFullContext(startClosure)
 		}
