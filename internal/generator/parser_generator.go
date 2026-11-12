@@ -407,6 +407,7 @@ func GenerateParserLookahead(grammr grammar.Grammar, packageName string, tokenTy
 
 	// Build the maps once; generateLL1Lookahead needs them per table.
 	varNameToId := buildVarNameToId(tokenTypes)
+	varNameToName := buildVarNameToName(tokenTypes)
 	groupMembers := buildGroupVarNameToMembers(grammr, tokenTypes.Keywords)
 
 	node := NewRootNode()
@@ -446,7 +447,7 @@ func GenerateParserLookahead(grammr grammar.Grammar, packageName string, tokenTy
 	// Static LL(1) lookup tables, one per decision that uses the static path.
 	for _, m := range methods {
 		if m.table != nil {
-			generateLL1Lookahead(node, m.name, *m.table, varNameToId, groupMembers)
+			generateLL1Lookahead(node, m.name, *m.table, varNameToId, varNameToName, groupMembers)
 			node.AppendLine()
 		}
 	}
@@ -1731,6 +1732,20 @@ func buildVarNameToId(tokenTypes GenerateTokenTypesResult) map[string]int {
 	return varNameToId
 }
 
+// buildVarNameToName maps each token var name to the name of its runtime
+// token type (core.TokenType.Name), the name diagnostics show.
+func buildVarNameToName(tokenTypes GenerateTokenTypesResult) map[string]string {
+	varNameToName := make(map[string]string, len(tokenTypes.TokenTypes.All))
+	for _, tokenType := range tokenTypes.TokenTypes.All {
+		varNameToName[tokenType.VarName] = tokenType.Name
+	}
+	// The name of a keyword's token type is its text without the quotes.
+	for _, keyword := range tokenTypes.Keywords.Keywords {
+		varNameToName[GeneratedTokenName(keyword)] = grammar.KeywordValue(keyword)
+	}
+	return varNameToName
+}
+
 func buildGroupVarNameToMembers(grammr grammar.Grammar, keywords GetAllKeywordsResult) map[string][]string {
 	groups := make(map[string][]string)
 	for _, tg := range grammr.TokenGroups() {
@@ -1769,7 +1784,7 @@ func getLeafIdsForVarName(varName string, varNameToId map[string]int, groupMembe
 	return nil
 }
 
-func generateLL1Lookahead(node codegen.Node, name string, lookahead LL1Decision, varNameToId map[string]int, groupMembers map[string][]string) {
+func generateLL1Lookahead(node codegen.Node, name string, lookahead LL1Decision, varNameToId map[string]int, varNameToName map[string]string, groupMembers map[string][]string) {
 	// Token ids may be sparse (keyword-backed tokens alias their keyword), so
 	// size the lookup by the largest id rather than the number of var names.
 	maxId := 0
@@ -1798,6 +1813,13 @@ func generateLL1Lookahead(node codegen.Node, name string, lookahead LL1Decision,
 			}
 		}
 	}
+
+	// Types is only used for the expected tokens of a no-viable-alternative
+	// diagnostic: sort it by token name, like the ATN simulator sorts its
+	// expected tokens, so both prediction paths list them in the same order.
+	slices.SortStableFunc(typeNames, func(a, b string) int {
+		return strings.Compare(varNameToName[a], varNameToName[b])
+	})
 
 	lookupParts := make([]string, 0, len(lookup))
 	for i, v := range lookup {

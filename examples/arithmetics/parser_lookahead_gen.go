@@ -8,17 +8,17 @@ import (
 )
 
 var ModuleStatementsLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_def, Keyword_LeftParen, Token_ID, Token_NUMBER},
+	Types:  []*core.TokenType{Keyword_LeftParen, Token_ID, Token_NUMBER, Keyword_def},
 	Lookup: []int{2: 1, 3: 1, 14: 1, 15: 1},
 }
 
 var PrimaryExpressionAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_LeftParen, Token_NUMBER, Token_ID},
+	Types:  []*core.TokenType{Keyword_LeftParen, Token_ID, Token_NUMBER},
 	Lookup: []int{3: 1, 14: 3, 15: 2},
 }
 
 var StatementAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Keyword_def, Keyword_LeftParen, Token_ID, Token_NUMBER},
+	Types:  []*core.TokenType{Keyword_LeftParen, Token_ID, Token_NUMBER, Keyword_def},
 	Lookup: []int{2: 1, 3: 2, 14: 2, 15: 2},
 }
 
