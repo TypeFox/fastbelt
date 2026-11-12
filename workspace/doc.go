@@ -26,7 +26,7 @@
 //   - [Lock] — read/write coordination with per-document state admission for readers
 //   - [Builder] — runs the build pipeline that takes documents to a linked, validated state
 //   - [DocumentManager] — concurrent in-memory store of all documents, keyed by URI
-//   - [DocumentUpdater] — entry point for edits; serializes mutations and triggers builds
+//   - [DocumentUpdater] — applies edits to the workspace and rebuilds it; called under [Lock.Write]
 //   - [DocumentChangeImpact] — reports cross-document reference dependencies on changed files
 //   - [DocumentValidator] — collects diagnostics for a single document
 //
@@ -78,12 +78,13 @@
 // workspace folders, reads files whose extension matches [FileExtensions], and
 // registers them with [DocumentManager].
 //
-// When a file changes, the LSP document sync layer calls [DocumentUpdater.Update]
-// with the changed and deleted handles. The updater runs under [Lock.Write]: it
-// updates [DocumentManager], collects the documents to rebuild, calls
-// [Builder.Reset] on them, and then calls [Builder.Build]. A newer edit cancels
-// the context of an in-progress build, so superseded builds stop quickly while
-// the latest one runs to completion.
+// When a file changes, the LSP document sync layer acquires [Lock.Write],
+// applies the text change, and calls [DocumentUpdater.Update] with the changed
+// and deleted handles from within the write task. The updater does not take
+// the lock itself: it updates [DocumentManager], collects the documents to
+// rebuild, calls [Builder.Reset] on them, and then calls [Builder.Build]
+// before returning. A newer edit cancels the context of an in-progress build,
+// so superseded builds stop quickly while the latest one runs to completion.
 //
 // Read-only requests run under [Lock.Read] when they may touch arbitrary
 // documents (find references, workspace symbols), or under [Lock.ReadAt] when
@@ -110,6 +111,9 @@
 //
 // Writes have priority: a pending write blocks new readers (including
 // ReadAt), and starting a write cancels any write still in progress so the
-// freshest edit wins. A write acquires the lock only after all readers have
+// freshest edit wins. Writes acquire the lock in the order their [Lock.Write]
+// calls arrived and every write task runs, so edits are applied in order and
+// none is dropped; a superseded task merely receives a cancelled context and
+// skips its build. A write acquires the lock only after all readers have
 // drained, so a reader admitted via ReadAt never observes a document reset.
 package workspace

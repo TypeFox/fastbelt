@@ -57,8 +57,11 @@ func optionsIf[S, O any](sc *service.Container) *O {
 // interface. It contains no feature logic: it delegates each supported LSP
 // method to the registered service. Besides that, it builds the initialize
 // response and, on the initialized notification, runs the
-// [workspace.Initializer] and the initial build in the background while
-// holding the [workspace.Lock] for writing.
+// [workspace.Initializer] and the initial build while holding the
+// [workspace.Lock] for writing. The notification returns once the lock is
+// held; loading the workspace files and the initial build continue in the
+// background. The first document change that follows waits for the files to
+// be loaded, cancels the initial build, and rebuilds the workspace itself.
 //
 // A feature capability is advertised only if its provider service is
 // registered, with two exceptions: text document sync is always advertised,
@@ -203,38 +206,41 @@ func (s *DefaultLanguageServer) Initialized(ctx context.Context, params *lsp.Ini
 			return err
 		}
 		workspaceFolders := s.sc.MustGet[*WorkspaceFolders]().Value
-		// Loading the workspace files can take a while (large workspace, slow disk, etc.)
-		// Run the initializer in parallel and immediately return nil, so that other notifications
-		// can be processed by the language server (like textDocument/didOpen)
-		go func() {
-			// Use a new context, otherwise the initialization gets cancelled when this function returns
-			initializeCtx := context.Background()
-			lock.Write(initializeCtx, func(writeCtx context.Context) {
-				log.Print("Initializer running...")
-				if err := initializer.Initialize(initializeCtx, workspaceFolders); err != nil {
-					// Failed, continue with workspace build anyway
-					log.Printf("Initializer failed: %v", err)
-				} else {
-					log.Println("Initializer done.")
-				}
-				// Initial documents are available, now build the workspace
-				builder, err := s.sc.Get[workspace.Builder]()
-				if err != nil {
-					log.Println("No builder registered")
-					return
-				}
-				documents, err := s.sc.Get[workspace.DocumentManager]()
-				if err != nil {
-					log.Println("No document manager registered")
-					return
-				}
-				docs := slices.Collect(documents.All())
-				err = builder.Build(writeCtx, docs)
-				if err != nil && !errors.Is(err, context.Canceled) {
-					log.Printf("Build failed with non-cancel err: %v", err)
-				}
-			})
-		}()
+		// Run the initializer and the initial build under the write lock in a goroutine.
+		// The notification only waits until the write lock is held, so that later
+		// notifications (like textDocument/didOpen) queue their writes behind this one.
+		// Loading the workspace files can take a while (large workspace, slow disk, etc.),
+		// so it does not wait for that, nor for the initial build, which those writes can cancel.
+		acquired := make(chan struct{})
+		// Use a new context, otherwise the initialization gets cancelled when this function returns
+		initializeCtx := context.Background()
+		go lock.Write(initializeCtx, func(writeCtx context.Context) {
+			close(acquired)
+			log.Print("Initializer running...")
+			if err := initializer.Initialize(initializeCtx, workspaceFolders); err != nil {
+				// Failed, continue with workspace build anyway
+				log.Printf("Initializer failed: %v", err)
+			} else {
+				log.Println("Initializer done.")
+			}
+			// Initial documents are available, now build the workspace
+			builder, err := s.sc.Get[workspace.Builder]()
+			if err != nil {
+				log.Println("No builder registered")
+				return
+			}
+			documents, err := s.sc.Get[workspace.DocumentManager]()
+			if err != nil {
+				log.Println("No document manager registered")
+				return
+			}
+			docs := slices.Collect(documents.All())
+			err = builder.Build(writeCtx, docs)
+			if err != nil && !errors.Is(err, context.Canceled) {
+				log.Printf("Build failed with non-cancel err: %v", err)
+			}
+		})
+		<-acquired
 	}
 	return nil
 }
@@ -294,9 +300,10 @@ func (s *DefaultLanguageServer) DidSave(ctx context.Context, params *lsp.DidSave
 }
 
 // read runs do under a shared lock. It first waits until the
-// [workspace.Initializer] (if registered) has loaded all workspace files,
-// since no lock is held before the initial load starts. The initial build may
-// still be running at that point; the lock takes care of that. If provider implements
+// [workspace.Initializer] (if registered) has loaded all workspace files.
+// This only matters for requests handled before the initialized notification:
+// from then on, the write lock is held for the initial load and build, so the
+// lock alone makes readers wait. If provider implements
 // [DocumentStateRequirements], the lock is scoped via [workspace.Lock.ReadAt]
 // to the required state, and to the single document uri (if given and the
 // provider doesn't need the full workspace). Otherwise it waits for the full

@@ -170,6 +170,8 @@ func (s *DefaultInitializer) loadFile(ctx context.Context, uri core.URI, fs File
 		return
 	}
 	textDoc := textdoc.NewFile(uri.DocumentURI(), languageID, 0, string(content))
+	textStore := s.sc.MustGet[textdoc.Store]()
+	textStore.AddFile(textDoc)
 	doc := core.NewDocument(textDoc)
 	docs.Set(doc)
 }

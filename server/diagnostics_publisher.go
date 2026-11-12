@@ -5,6 +5,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
@@ -108,8 +109,11 @@ func (d *DefaultDiagnosticsPublisher) OnServerInitialize(_ *lsp.ParamInitialize)
 		}
 		uri := core.ParseURI(string(event.Document.URI()))
 		document := docManager.Get(uri)
-		if document != nil {
-			// If the document already exists, publish diagnostics immediately.
+		if document != nil && document.State().Has(core.DocStateValidated) &&
+			bytes.Equal(document.TextDoc.Content(), event.Document.Content()) {
+			// If the user opened a document that has already gone through the workspace build
+			// we can immediately send out the diagnostics.
+			// In all other cases, a build will be triggered, which will publish its own diagnostics.
 			d.PublishDiagnostics(ctx, document)
 		}
 	})
@@ -189,6 +193,9 @@ func (d *DefaultDiagnosticsPublisher) publishDiagnostics(ctx context.Context, ur
 		return
 	}
 	client := lsp.ClientDispatcher(connection.Value)
+	// Never cancel publishing, even if the build that computed the diagnostics
+	// is already cancelled: nothing publishes them again unless the document changes.
+	ctx = context.WithoutCancel(ctx)
 	err = client.PublishDiagnostics(ctx, &lsp.PublishDiagnosticsParams{
 		URI:         uri,
 		Diagnostics: diagnostics,

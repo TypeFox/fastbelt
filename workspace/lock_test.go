@@ -131,8 +131,8 @@ func TestNewWriteCancelsPendingWrite(t *testing.T) {
 	w2 := h.startWrite(context.Background())
 	w2.assertBlocked("W2 was admitted while the reader held the lock") // also lets W2 register (and cancel W1)
 
-	// Admission order between two queued writers is unspecified: pre-release
-	// both callbacks and assert only on the contexts they received.
+	// Pre-release both callbacks and assert only on the contexts they
+	// received; admission order is covered by TestWritesRunInArrivalOrder.
 	w1.release.fire()
 	w2.release.fire()
 	r.finish()
@@ -143,6 +143,56 @@ func TestNewWriteCancelsPendingWrite(t *testing.T) {
 	assert.ErrorIs(t, w1.ctxErr, context.Canceled, "W1 should have received a cancelled context")
 	// W2 is the newest writer and must receive a live context.
 	assert.NoError(t, w2.ctxErr, "W2 should have received a fresh context")
+}
+
+// TestWritesRunInArrivalOrder verifies that writers queued behind a running
+// write are admitted in the order their Write calls arrived, and that only the
+// last one receives a live context.
+func TestWritesRunInArrivalOrder(t *testing.T) {
+	h := newLockHarness(t)
+	lock := h.lock.(*DefaultLock)
+
+	blocker := h.startWrite(context.Background())
+	blocker.awaitEntered("blocking write was not admitted")
+
+	const n = 50
+	var mu sync.Mutex
+	var order []int
+	var ctxErrs []error
+	var wg sync.WaitGroup
+	for i := range n {
+		wg.Go(func() {
+			lock.Write(context.Background(), func(ctx context.Context) {
+				mu.Lock()
+				order = append(order, i)
+				ctxErrs = append(ctxErrs, ctx.Err())
+				mu.Unlock()
+			})
+		})
+		// Wait until writer i is queued before starting the next one, so the
+		// arrival order is well defined.
+		assert.Eventually(t, func() bool {
+			lock.mu.Lock()
+			defer lock.mu.Unlock()
+			return lock.waitingWriters == i+1
+		}, longWait, time.Millisecond, "writer %d did not queue", i)
+	}
+
+	blocker.finish()
+	wg.Wait()
+
+	expected := make([]int, n)
+	for i := range n {
+		expected[i] = i
+	}
+	assert.Equal(t, expected, order, "writers ran out of arrival order")
+	for i, err := range ctxErrs {
+		if i < n-1 {
+			assert.ErrorIs(t, err, context.Canceled, "writer %d should have been cancelled", i)
+		} else {
+			assert.NoError(t, err, "the last writer should have a live context")
+		}
+	}
 }
 
 // TestNewWriteCancelsActiveWrite verifies that a second Write call cancels the
