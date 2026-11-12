@@ -57,6 +57,13 @@ type Builder interface {
 // BuildStepListener is called right after a document completes a build step
 // selected by [Builder.AddBuildStepListener]. If the listener returns an error,
 // it is logged and does not stop other listeners or the build.
+//
+// Listeners run inside the build, under [Lock.Write], and may be called
+// concurrently for different documents. ctx is the context of the build: it
+// may already be cancelled by a newer write when the listener is called. The
+// listener is not called again for the same step unless the document is reset,
+// so work that must not be skipped should detach from ctx with
+// [context.WithoutCancel].
 type BuildStepListener func(ctx context.Context, doc *core.Document) error
 
 type buildStepEntry struct {
@@ -331,9 +338,10 @@ func (s *DefaultBuilder) notifyListeners(ctx context.Context, state core.Documen
 	s.listenersMu.RUnlock()
 
 	for _, listener := range matched {
-		if ctx.Err() != nil {
-			return
-		}
+		// Call the listener even if ctx is already cancelled: the document has
+		// advanced to this state, so no later build repeats the step, and a
+		// listener skipped here would never be called for it.
+		// Listeners that can afford to skip their work check ctx themselves.
 		if err := listener(ctx, doc); err != nil {
 			log.Printf("build step listener error (%s): %v", state, err)
 		}
