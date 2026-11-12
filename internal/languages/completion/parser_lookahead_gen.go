@@ -37,7 +37,7 @@ var RefOrKeywordAlternatives = parser.LL1Lookahead{
 }
 
 var RootObjectsAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_DECLARE, Keyword_seq, Keyword_alt, Keyword_prefix, Keyword_call, Keyword_fqn, Keyword_list, Keyword_ref, Keyword_member, Keyword_nodot, Keyword_choice, Keyword_dedup, Keyword_opt, Keyword_group, Keyword_refgroup, Keyword_action, Keyword_scope, Keyword_loop, Keyword_chain, Keyword_infix, Keyword_wrap, Keyword_shadow, Keyword_nest, Keyword_ambig, Keyword_deep, Keyword_retype, Keyword_dep, Keyword_act, Token_HASH_ID},
+	Types:  []*core.TokenType{Token_DECLARE, Token_HASH_ID, Keyword_act, Keyword_action, Keyword_alt, Keyword_ambig, Keyword_call, Keyword_chain, Keyword_choice, Keyword_dedup, Keyword_deep, Keyword_dep, Keyword_fqn, Keyword_group, Keyword_infix, Keyword_list, Keyword_loop, Keyword_member, Keyword_nest, Keyword_nodot, Keyword_opt, Keyword_prefix, Keyword_ref, Keyword_refgroup, Keyword_retype, Keyword_scope, Keyword_seq, Keyword_shadow, Keyword_wrap},
 	Lookup: []int{1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 11, 11: 12, 14: 13, 15: 14, 16: 15, 17: 16, 18: 17, 20: 18, 21: 19, 22: 20, 23: 21, 24: 22, 25: 23, 26: 24, 27: 25, 28: 26, 29: 27, 30: 28, 34: 1, 51: 29},
 }
 
@@ -47,12 +47,12 @@ var WrapElementAlternatives = parser.LL1Lookahead{
 }
 
 var WrapGroupElementsLoop = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_LBRACE, Token_ID},
+	Types:  []*core.TokenType{Token_ID, Token_LBRACE},
 	Lookup: []int{41: 1, 50: 1},
 }
 
 var WrapGroupOptional = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_LBRACE, Token_ID},
+	Types:  []*core.TokenType{Token_ID, Token_LBRACE},
 	Lookup: []int{41: 1, 50: 1},
 }
 

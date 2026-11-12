@@ -174,3 +174,23 @@ func TestOptionalSemicolonStarRuleBeforePlainRule(t *testing.T) {
 	require.Len(t, g.Rules(), 2)
 	assert.Equal(t, "B", g.Rules()[1].Name())
 }
+
+// An LL(1) decision lists its expected tokens sorted by name, like the ATN
+// simulator does, not in the order of the alternatives.
+func TestNoViableAlternativeListsExpectedTokensByName(t *testing.T) {
+	f := test.New(t, CreateServices())
+	for _, tc := range []struct{ src, msg string }{
+		{
+			"grammar X;\ninterface A { f ; }",
+			"No viable alternative at input ';', expected one of: '*', 'ID', '[', 'bool', 'composite', 'string'.",
+		},
+		{
+			"grammar X;\nA: B=;",
+			"No viable alternative at input ';', expected one of: '(', 'ID', 'StringLiteral', '['.",
+		},
+	} {
+		doc := f.Parse(tc.src)
+		require.Len(t, doc.Document.ParserErrors, 1, tc.src)
+		assert.Equal(t, tc.msg, doc.Document.ParserErrors[0].Msg, tc.src)
+	}
+}

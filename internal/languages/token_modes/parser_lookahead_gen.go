@@ -8,12 +8,12 @@ import (
 )
 
 var PrimaryAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_ID, Token_INT, Keyword_Backtick, Keyword_LeftParen},
+	Types:  []*core.TokenType{Keyword_LeftParen, Token_ID, Token_INT, Keyword_Backtick},
 	Lookup: []int{3: 4, 5: 3, 8: 1, 9: 2},
 }
 
 var StringContentAlternatives = parser.LL1Lookahead{
-	Types:  []*core.TokenType{Token_STRING_CONTENT, Keyword_HashLeftBrace},
+	Types:  []*core.TokenType{Keyword_HashLeftBrace, Token_STRING_CONTENT},
 	Lookup: []int{6: 2, 13: 1},
 }
 
