@@ -18,6 +18,7 @@ import (
 
 // mockDocumentUpdater is a test implementation of DocumentUpdater that tracks calls.
 type mockDocumentUpdater struct {
+	lock        workspace.Lock
 	mu          sync.Mutex
 	updateCalls []updateCall
 }
@@ -34,6 +35,9 @@ func (m *mockDocumentUpdater) Update(ctx context.Context, changed []textdoc.Hand
 }
 
 func (m *mockDocumentUpdater) getUpdateCalls() []updateCall {
+	// The synchronizer returns as soon as the text change is applied and calls
+	// Update later in the same write. Wait for that write to finish.
+	_ = m.lock.Read(context.Background(), func(context.Context) {})
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	result := make([]updateCall, len(m.updateCalls))
@@ -57,6 +61,7 @@ func createTestServicesWithUpdater() (*service.Container, *mockDocumentUpdater) 
 	sc.Override[workspace.DocumentUpdater](updater)
 
 	sc.Seal()
+	updater.lock = sc.MustGet[workspace.Lock]()
 	return sc, updater
 }
 

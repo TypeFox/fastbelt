@@ -12,6 +12,7 @@ import (
 
 	"golang.org/x/exp/jsonrpc2"
 	core "typefox.dev/fastbelt"
+	"typefox.dev/fastbelt/util/parallel"
 	"typefox.dev/fastbelt/util/service"
 	"typefox.dev/fastbelt/workspace"
 	"typefox.dev/lsp"
@@ -57,8 +58,10 @@ func optionsIf[S, O any](sc *service.Container) *O {
 // interface. It contains no feature logic: it delegates each supported LSP
 // method to the registered service. Besides that, it builds the initialize
 // response and, on the initialized notification, runs the
-// [workspace.Initializer] and the initial build in the background while
-// holding the [workspace.Lock] for writing.
+// [workspace.Initializer] and the initial build while holding the
+// [workspace.Lock] for writing. The notification returns once the workspace
+// files are loaded; the initial build continues in the background and is
+// cancelled by the first document change that follows.
 //
 // A feature capability is advertised only if its provider service is
 // registered, with two exceptions: text document sync is always advertised,
@@ -203,9 +206,11 @@ func (s *DefaultLanguageServer) Initialized(ctx context.Context, params *lsp.Ini
 			return err
 		}
 		workspaceFolders := s.sc.MustGet[*WorkspaceFolders]().Value
-		// Loading the workspace files can take a while (large workspace, slow disk, etc.)
-		// Run the initializer in parallel and immediately return nil, so that other notifications
-		// can be processed by the language server (like textDocument/didOpen)
+		waiter := parallel.Waiter{}
+		// Run the initializer and the initial build under the write lock in a goroutine.
+		// The notification waits until the workspace files are loaded, so that later
+		// notifications (like textDocument/didOpen) queue their writes behind this one.
+		// It does not wait for the initial build, which those writes can cancel.
 		go func() {
 			// Use a new context, otherwise the initialization gets cancelled when this function returns
 			initializeCtx := context.Background()
@@ -218,6 +223,8 @@ func (s *DefaultLanguageServer) Initialized(ctx context.Context, params *lsp.Ini
 					log.Println("Initializer done.")
 				}
 				// Initial documents are available, now build the workspace
+				// Also allow listening for document changes, build cancellation, etc.
+				waiter.Close()
 				builder, err := s.sc.Get[workspace.Builder]()
 				if err != nil {
 					log.Println("No builder registered")
@@ -235,6 +242,7 @@ func (s *DefaultLanguageServer) Initialized(ctx context.Context, params *lsp.Ini
 				}
 			})
 		}()
+		waiter.Await()
 	}
 	return nil
 }

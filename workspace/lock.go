@@ -20,10 +20,13 @@ import (
 // states — potentially while a build is still writing other documents.
 type Lock interface {
 	// Write cancels any pending or in-progress write, then acquires an
-	// exclusive lock and calls do with a fresh context. task is always called,
+	// exclusive lock and calls task with a fresh context. Concurrent Write
+	// calls acquire the lock in the order they arrived. task is always called,
 	// even if the context was cancelled by a newer write, so that document
 	// mutations are never silently dropped. Cancelled write actions should
 	// skip expensive work by checking ctx.Err().
+	//
+	// task must not call Write, Read, or ReadAt on the same lock.
 	Write(ctx context.Context, task func(ctx context.Context))
 	// Read acquires a shared lock on the whole workspace, calls task, then
 	// releases the lock. It blocks while a write is in progress or pending.
@@ -56,7 +59,9 @@ type Lock interface {
 //
 // Writes have priority: a pending write blocks new readers (including ReadAt),
 // and starting a write cancels any write still in progress so the freshest
-// edit wins. The next write acquires the lock only after all readers - shared
+// edit wins. Writes acquire the lock in the order their Write calls arrived,
+// so only the last task of a burst runs with a live context.
+// The next write acquires the lock only after all readers - shared
 // and state-scoped - have drained, so readers never observe document resets.
 type DefaultLock struct {
 	sc   *service.Container
@@ -66,6 +71,8 @@ type DefaultLock struct {
 	cond           *sync.Cond
 	writing        bool               // exclusive write phase is active
 	waitingWriters int                // number of goroutines waiting to acquire the write lock
+	nextTicket     uint64             // ticket handed to the next Write call
+	servingTicket  uint64             // ticket of the Write call that may acquire the lock next
 	readers        int                // number of active shared lock holders (Read and ReadAt)
 	stateAdvancing bool               // current write entered the build phase; document states only advance
 	workspaceState core.DocumentState // floor reached by every document; reset when a write acquires the lock
@@ -99,12 +106,17 @@ func (l *DefaultLock) Write(ctx context.Context, task func(ctx context.Context))
 		l.readyCh = make(chan struct{})
 	}
 	l.waitingWriters++
-	// Wait for the current write holder and all active readers to finish.
+	// Tickets are handed out in arrival order and served strictly in that
+	// order, so tasks run in the order their Write calls arrived.
+	ticket := l.nextTicket
+	l.nextTicket++
+	// Wait for our turn, the current write holder and all active readers.
 	// We always proceed even if our context was cancelled by a newer Write call:
 	// do must run so that document mutations are never silently dropped.
-	for l.readers > 0 || l.writing {
+	for l.readers > 0 || l.writing || ticket != l.servingTicket {
 		l.cond.Wait()
 	}
+	l.servingTicket++
 	l.waitingWriters--
 	l.writing = true
 	// Back in the mutation phase: ReadAt must not trust document states, and
